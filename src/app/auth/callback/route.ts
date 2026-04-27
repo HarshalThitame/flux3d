@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { normalizeNextPath } from '@/lib/auth/redirect'
 import { upsertProfileForUser } from '@/lib/auth/profile'
+import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/config'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
@@ -15,8 +16,8 @@ export async function GET(request: NextRequest) {
 
   let response = NextResponse.redirect(new URL(nextPath, request.url))
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    getSupabaseUrl(),
+    getSupabasePublishableKey(),
     {
       cookies: {
         getAll() {
