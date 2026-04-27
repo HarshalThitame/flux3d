@@ -1,6 +1,11 @@
 'use client'
-import {supabase} from '@/lib/supabase'
-import {useState} from 'react'
+
+import { useState } from 'react'
+import {
+    isMissingSupabaseTableError,
+    QUOTES_TABLE_UNAVAILABLE_MESSAGE,
+} from '@/lib/quote/supabase-errors'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
 export default function QuoteForm() {
     const [loading, setLoading] = useState(false)
@@ -8,16 +13,39 @@ export default function QuoteForm() {
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
         setLoading(true)
+        const supabase = getSupabaseBrowserClient()
         const formData = new FormData(e.currentTarget)
+        const {
+            data: { user },
+        } = await supabase.auth.getUser()
+
+        if (!user) {
+            alert('Please log in before submitting a quote.')
+            setLoading(false)
+            return
+        }
 
         const {error} = await supabase.from('quotes').insert({
+            user_id: user.id,
             name: formData.get('name'),
             email: formData.get('email'),
             phone: formData.get('phone'),
             message: formData.get('message'),
         })
 
-        if (!error) alert('Quote submitted! We\'ll WhatsApp you shortly.')
+        if (error) {
+            if (isMissingSupabaseTableError(error, 'quotes')) {
+                alert(QUOTES_TABLE_UNAVAILABLE_MESSAGE)
+                setLoading(false)
+                return
+            }
+
+            alert(error.message)
+            setLoading(false)
+            return
+        }
+
+        alert('Quote submitted! We\'ll WhatsApp you shortly.')
         setLoading(false)
     }
 
