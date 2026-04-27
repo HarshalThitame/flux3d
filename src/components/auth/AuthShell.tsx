@@ -1,0 +1,68 @@
+import Link from 'next/link'
+
+type AuthShellProps = {
+  eyebrow: string
+  title: string
+  description: string
+  children: React.ReactNode
+}
+
+export default function AuthShell({
+  eyebrow,
+  title,
+  description,
+  children,
+}: AuthShellProps) {
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-[#050810] px-4 py-24 text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,92,26,0.22),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(61,115,255,0.16),transparent_28%),linear-gradient(180deg,#050810_0%,#070c17_100%)]" />
+      <div
+        className="absolute inset-0 opacity-25"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+          maskImage: 'radial-gradient(circle at center, black 0%, transparent 82%)',
+        }}
+      />
+
+      <div className="relative mx-auto grid max-w-6xl gap-12 lg:grid-cols-[minmax(0,1fr)_480px] lg:items-center">
+        <div className="max-w-xl">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs uppercase tracking-[0.24em] text-[#9fa8c6]"
+          >
+            Flux3D Auth Layer
+          </Link>
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#ffb493]">
+            {eyebrow}
+          </div>
+          <h1 className="mt-6 font-[var(--font-syne)] text-[clamp(2.6rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-0.04em] text-white">
+            {title}
+          </h1>
+          <p className="mt-5 max-w-lg text-base leading-8 text-[#9ea6c4]">{description}</p>
+
+          <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            {[
+              ['Secure sessions', 'Supabase SSR cookies'],
+              ['Protected quotes', 'Uploads and saved pricing'],
+              ['Fast access', 'Google or email login'],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4 backdrop-blur-xl"
+              >
+                <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">{label}</div>
+                <div className="mt-2 text-sm font-medium text-white">{value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-[32px] border border-white/10 bg-[rgba(9,14,25,0.82)] p-5 shadow-[0_30px_120px_rgba(0,0,0,0.55)] backdrop-blur-2xl sm:p-7">
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}

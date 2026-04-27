@@ -1,0 +1,53 @@
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { normalizeNextPath } from '@/lib/auth/redirect'
+import { upsertProfileForUser } from '@/lib/auth/profile'
+
+export async function GET(request: NextRequest) {
+  const requestUrl = new URL(request.url)
+  const code = requestUrl.searchParams.get('code')
+  const nextPath = normalizeNextPath(requestUrl.searchParams.get('next'))
+
+  if (!code) {
+    return NextResponse.redirect(new URL(`/login?error=missing_code`, request.url))
+  }
+
+  let response = NextResponse.redirect(new URL(nextPath, request.url))
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value)
+          })
+
+          response = NextResponse.redirect(new URL(nextPath, request.url))
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
+    }
+  )
+  const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+  if (error) {
+    return NextResponse.redirect(new URL(`/login?error=auth_callback_failed`, request.url))
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (user) {
+    await upsertProfileForUser(supabase, user)
+  }
+
+  return response
+}
