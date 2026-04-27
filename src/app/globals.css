@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #050810;
+  --foreground: #e8eaf0;
+  --orange: #FF5C1A;
+  --orange-glow: rgba(255,92,26,0.18);
+  --orange-dim: rgba(255,92,26,0.08);
+  --dark: #050810;
+  --card: #0d1120;
+  --border: rgba(255,255,255,0.07);
+  --text-muted: #7a82a0;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-orange: var(--orange);
+  --font-syne: var(--font-syne);
+  --font-dm: var(--font-dm);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-dm), sans-serif;
+  overflow-x: hidden;
+}
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+@keyframes buildUp {
+  from { transform: scaleY(0.3); transform-origin: bottom; opacity: 0.6; }
+  to { transform: scaleY(1); transform-origin: bottom; opacity: 1; }
+}
+
+@keyframes nozzleAnim {
+  from { transform: translateX(-30px); }
+  to { transform: translateX(30px); }
+}
+
+@keyframes flowAnim {
+  to { stroke-dashoffset: -20; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.4; r: 18; }
+  50% { opacity: 0.8; r: 24; }
+}
+
+.animate-fadeUp {
+  animation: fadeUp 0.7s ease both;
+}
+
+.animate-pulse-dot {
+  animation: pulse 2s infinite;
+}
+
+.animate-buildUp {
+  animation: buildUp 3s ease-in-out infinite alternate;
+}
+
+.animate-nozzle {
+  animation: nozzleAnim 2s ease-in-out infinite alternate;
+}
+
+.animate-flow {
+  animation: flowAnim 0.8s linear infinite;
+  stroke-dasharray: 6 4;
+}
+
+.animate-glow {
+  animation: glowPulse 2s ease-in-out infinite;
 }
