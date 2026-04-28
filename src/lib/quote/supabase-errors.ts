@@ -19,3 +19,6 @@ export function isMissingSupabaseTableError(
 
 export const QUOTES_TABLE_UNAVAILABLE_MESSAGE =
   'Saved quotes are not available yet because the Supabase quotes table has not been set up.'
+
+export const ORDERS_TABLE_UNAVAILABLE_MESSAGE =
+  'Orders are not available yet because the Supabase orders table has not been set up.'

@@ -1,6 +1,6 @@
 import { headers } from 'next/headers'
 
-export function normalizeNextPath(value: string | null | undefined, fallback = '/quote') {
+export function normalizeNextPath(value: string | null | undefined, fallback = '/instant-quote') {
   if (!value) {
     return fallback
   }

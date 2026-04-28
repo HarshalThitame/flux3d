@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/proxy'
 
-const protectedPrefixes = ['/quote', '/saved-quotes', '/profile']
+const protectedPrefixes = ['/quote', '/saved-quotes', '/my-orders', '/profile', '/admin']
 const guestOnlyPrefixes = ['/login', '/signup']
 
 export async function proxy(request: NextRequest) {
@@ -20,7 +20,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (guestOnlyPrefixes.some((prefix) => pathname.startsWith(prefix)) && user) {
-    const nextPath = request.nextUrl.searchParams.get('next') ?? '/quote'
+    const nextPath = request.nextUrl.searchParams.get('next') ?? '/instant-quote'
     return NextResponse.redirect(new URL(nextPath, request.url))
   }
 
@@ -28,5 +28,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/quote/:path*', '/saved-quotes/:path*', '/profile/:path*', '/login', '/signup'],
+  matcher: ['/quote/:path*', '/saved-quotes/:path*', '/my-orders/:path*', '/profile/:path*', '/admin/:path*', '/login', '/signup'],
 }

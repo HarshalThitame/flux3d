@@ -4,9 +4,9 @@ import MaterialsTech from '@/app/services/MaterialsTech'
 import { absoluteUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
-  title: '3D Printing Materials and Filament Guide',
+  title: '3D Printing Materials That Shape The Finish',
   description:
-    'Explore Flux3D materials including PLA+, ABS, PETG, ASA, TPU, Resin 4K, Silk Gold, and multi-color workflows.',
+    'Explore the materials that define strength, finish, detail, and durability across Flux3D FDM and resin printing workflows.',
   alternates: {
     canonical: '/materials',
   },

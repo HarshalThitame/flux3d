@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Menu, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ChevronDown, Menu, X } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { AppUserProfile } from '@/lib/auth/server'
@@ -25,6 +25,8 @@ export default function NavbarClient({
   user,
 }: NavbarClientProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const profileMenuRef = useRef<HTMLDivElement | null>(null)
 
   const navLinks = [
     { href: '/', label: 'Home' },
@@ -33,6 +35,28 @@ export default function NavbarClient({
     { href: '/gallery', label: 'Gallery' },
     { href: '/pricing', label: 'Pricing' },
   ]
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!profileMenuRef.current?.contains(event.target as Node)) {
+        setIsProfileOpen(false)
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsProfileOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
 
   return (
     <>
@@ -71,14 +95,19 @@ export default function NavbarClient({
           {user ? (
             <>
               <Link
-                href="/saved-quotes"
-                className="rounded-md border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/[0.07]"
+                href="/instant-quote"
+                className="rounded-md bg-[#FF5C1A] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-95"
               >
-                Saved Quotes
+                Get Instant Quote
               </Link>
-              <Link
-                href="/profile"
-                className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-2 py-2 pr-4 transition-colors hover:bg-white/[0.07]"
+
+              <div ref={profileMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen((current) => !current)}
+                className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-2 py-2 pr-3 transition-colors hover:bg-white/[0.07]"
+                aria-expanded={isProfileOpen}
+                aria-haspopup="menu"
               >
                 {user.avatarUrl ? (
                   <Image
@@ -99,15 +128,63 @@ export default function NavbarClient({
                   </span>
                   <span className="block text-sm font-medium text-white">{user.name}</span>
                 </span>
-              </Link>
-              <form action="/auth/logout" method="post">
-                <button
-                  type="submit"
-                  className="rounded-md border border-white/10 bg-transparent px-4 py-2 text-sm font-medium text-[#c9d0e7] transition-colors hover:border-white/20 hover:text-white"
-                >
-                  Log out
-                </button>
-              </form>
+                <ChevronDown
+                  className={`h-4 w-4 text-[#93a0c4] transition-transform ${
+                    isProfileOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              {isProfileOpen ? (
+                <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[320px] overflow-hidden rounded-[22px] border border-white/10 bg-[#0d1120] shadow-[0_24px_90px_rgba(0,0,0,0.45)]">
+                  <div className="border-b border-white/8 px-4 py-4">
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">
+                      Signed in
+                    </div>
+                    <div className="mt-2 text-lg font-semibold text-white">{user.name}</div>
+                    <div className="mt-1 text-sm text-[#93a0c4]">{user.email}</div>
+                  </div>
+
+                  <div className="p-3">
+                    <Link
+                      href="/saved-quotes"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="mb-2 flex w-full items-center justify-between rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.07]"
+                    >
+                      <span>Saved Quotes</span>
+                      <span className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">HT</span>
+                    </Link>
+                    <Link
+                      href="/my-orders"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="mb-2 flex w-full items-center justify-between rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.07]"
+                    >
+                      <span>My Orders</span>
+                      <span className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Track</span>
+                    </Link>
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="mb-2 flex w-full items-center justify-between rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.07]"
+                    >
+                      <span>Profile</span>
+                      <span className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">View</span>
+                    </Link>
+                    <form action="/auth/logout" method="post">
+                      <button
+                        type="submit"
+                        className="flex w-full items-center justify-between rounded-[16px] border border-white/10 bg-transparent px-4 py-3 text-sm font-medium text-[#c9d0e7] transition-colors hover:border-white/20 hover:text-white"
+                      >
+                        <span>Log out</span>
+                        <span className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">
+                          Exit
+                        </span>
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ) : null}
+              </div>
             </>
           ) : (
             <>
@@ -171,11 +248,11 @@ export default function NavbarClient({
             {user ? (
               <div className="mt-6 space-y-3">
                 <Link
-                  href="/quote"
+                  href="/instant-quote"
                   onClick={() => setIsOpen(false)}
                   className="block w-full rounded-lg bg-[#FF5C1A] py-3 text-center font-medium text-white"
                 >
-                  Open Quote Workspace
+                  Get Instant Quote
                 </Link>
                 <Link
                   href="/saved-quotes"
@@ -183,6 +260,13 @@ export default function NavbarClient({
                   className="block w-full rounded-lg border border-white/10 bg-white/[0.03] py-3 text-center font-medium text-white"
                 >
                   Saved Quotes
+                </Link>
+                <Link
+                  href="/my-orders"
+                  onClick={() => setIsOpen(false)}
+                  className="block w-full rounded-lg border border-white/10 bg-white/[0.03] py-3 text-center font-medium text-white"
+                >
+                  My Orders
                 </Link>
                 <Link
                   href="/profile"

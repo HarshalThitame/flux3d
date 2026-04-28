@@ -8,12 +8,12 @@ export default function MaterialsTech() {
       <div className="max-w-[1200px] mx-auto">
         {/* Section header */}
         <div className="text-center mb-16">
-          <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">Materials</p>
+          <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">Materials That Matter</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-white tracking-[-1px] leading-[1.1]">
-            Materials & <span className="text-[#7a82a0]">Technologies</span>
+            Built for Strength, Finish <br /><span className="text-[#7a82a0]">and the Right First Impression</span>
           </h2>
           <p className="text-[#7a82a0] mt-4 max-w-[600px] mx-auto">
-            Premium filaments and resins for every application — from prototyping to end-use parts.
+            Pick a material that matches how your part needs to look, feel, and perform. We guide you toward the right balance of speed, detail, and durability.
           </p>
         </div>
 
@@ -28,12 +28,12 @@ export default function MaterialsTech() {
                 <span className="text-2xl">🖨️</span>
               </div>
               <div>
-                <h3 className="font-[var(--font-syne)] text-lg font-bold text-white">FDM Technology</h3>
-                <p className="text-sm text-[#7a82a0]">Fused Deposition Modeling</p>
+                <h3 className="font-[var(--font-syne)] text-lg font-bold text-white">FDM Materials</h3>
+                <p className="text-sm text-[#7a82a0]">Functional, reliable, and production-ready</p>
               </div>
             </div>
             <p className="text-sm text-[#7a82a0] leading-[1.6] mb-4">
-              Industrial-grade FDM printing using Bambu Lab X1 Carbon with AMS. Multi-color capability up to 4 colors with precise layer adhesion.
+              Ideal for prototypes, tools, enclosures, fixtures, and branded components that need dependable strength and consistent repeatability.
             </p>
             <ul className="space-y-2">
               {['Layer height: 0.08-0.3mm', 'Build volume: 256×256×256mm', 'Tolerance: ±0.2mm'].map((item, i) => (
@@ -51,12 +51,12 @@ export default function MaterialsTech() {
                 <span className="text-2xl">💎</span>
               </div>
               <div>
-                <h3 className="font-[var(--font-syne)] text-lg font-bold text-white">Resin Technology</h3>
-                <p className="text-sm text-[#7a82a0]">SLA/DLP 4K Printing</p>
+                <h3 className="font-[var(--font-syne)] text-lg font-bold text-white">Resin Materials</h3>
+                <p className="text-sm text-[#7a82a0]">Fine detail for premium finishes</p>
               </div>
             </div>
             <p className="text-sm text-[#7a82a0] leading-[1.6] mb-4">
-              Ultra-high resolution resin printing for miniatures, jewelry molds, and dental models with exceptional surface finish.
+              Best for jewellery masters, miniatures, visual models, and any part where crisp detail and a smooth finish make the difference.
             </p>
             <ul className="space-y-2">
               {['Resolution: 35 microns', 'Build volume: 192×120×200mm', 'Tolerance: ±0.05mm'].map((item, i) => (

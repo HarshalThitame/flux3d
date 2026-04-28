@@ -5,44 +5,44 @@ import { Layers, Gauge, PenTool, Box, Zap, Briefcase } from 'lucide-react'
 const services = [
   {
     icon: Layers,
-    title: 'Rapid Prototyping',
-    description: 'Fast, accurate prototypes for design validation and testing. Iterate quickly with our high-speed FDM printing.',
-    features: ['Same-day quotes', '24-48hr turnaround', 'Multiple materials'],
+    title: 'B2B Prototyping',
+    description: 'Got a product idea stuck in CAD? We print functional prototypes that are strong enough to test and polished enough to show investors.',
+    features: ['Same-day quotes', 'Fast-turnaround builds', 'Engineering materials'],
     price: 'From ₹99 / print'
   },
   {
     icon: Gauge,
     title: 'Automotive Jigs & Fixtures',
-    description: 'Industrial-grade jigs, fixtures, and tooling for automotive manufacturing. Lightweight and durable.',
-    features: ['High-strength materials', 'Custom designs', 'Batch pricing'],
+    description: 'Lightweight, durable tools and production aids built for workshops and manufacturing teams that need repeatable performance.',
+    features: ['High-strength materials', 'Custom-fit production parts', 'Batch pricing'],
     price: 'Custom pricing'
   },
   {
     icon: PenTool,
-    title: 'Product Design & CAD',
-    description: 'End-to-end design services from concept sketches to production-ready 3D models.',
-    features: ['Professional CAD', 'Design optimization', 'GST invoice'],
+    title: 'CAD + Print Package',
+    description: 'No ready file? Send a sketch, image, or concept and get both design support and final print production in one streamlined workflow.',
+    features: ['Professional CAD', 'Design optimization', 'Production-ready output'],
     price: 'From ₹499 / model'
   },
   {
     icon: Box,
     title: 'Custom 3D Printing',
-    description: 'Bespoke printing solutions for unique parts, miniatures, jewelry, and artistic creations.',
-    features: ['High-detail resin', 'Multi-color options', 'Finishing services'],
+    description: 'Unique parts, miniatures, custom products, branded models, and one-of-a-kind builds made to look premium from the first impression.',
+    features: ['High-detail resin', 'Multi-color options', 'Presentation-ready finish'],
     price: 'From ₹199 / print'
   },
   {
     icon: Zap,
-    title: 'Express 24hr Service',
-    description: 'Urgent prints dispatched within 24 hours. Available for Mumbai, Pune, and surrounding areas.',
-    features: ['Priority queue', 'Quality check included', 'Fast shipping'],
+    title: 'Express Production',
+    description: 'When the deadline is real, we move fast. Ideal for demos, investor meetings, urgent client presentations, and launch-ready parts.',
+    features: ['Priority queue', 'Quality check included', 'Rush dispatch'],
     price: 'From ₹349 / print'
   },
   {
     icon: Briefcase,
     title: 'Bulk & Enterprise Orders',
-    description: 'Volume production for startups, colleges, events, and enterprises with dedicated support.',
-    features: ['Volume discounts', 'Dedicated account manager', 'Pan-India delivery'],
+    description: 'Volume production for startups, colleges, gifting brands, and businesses that need consistency, communication, and reliable delivery.',
+    features: ['Volume discounts', 'Dedicated support', 'Pan-India delivery'],
     price: 'Custom quote'
   },
 ]
@@ -53,9 +53,9 @@ export default function ServicesList() {
       <div className="max-w-[1200px] mx-auto">
         {/* Section header */}
         <div className="text-center mb-16">
-          <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">Our Services</p>
+          <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">What We Make For You</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-white tracking-[-1px] leading-[1.1]">
-            Comprehensive 3D Printing <br /><span className="text-[#7a82a0]">Solutions</span>
+            Every Project. Every Material. <br /><span className="text-[#7a82a0]">Every Detail.</span>
           </h2>
         </div>
 

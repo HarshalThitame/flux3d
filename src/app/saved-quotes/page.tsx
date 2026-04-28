@@ -70,7 +70,7 @@ export default async function SavedQuotesPage() {
                 : 'Start with the protected quote workspace and your first saved quote will appear here.'}
             </p>
             <Link
-              href="/quote"
+              href="/instant-quote"
               className="mt-6 inline-flex rounded-2xl bg-[#FF5C1A] px-5 py-3 text-sm font-medium text-white"
             >
               Create a quote

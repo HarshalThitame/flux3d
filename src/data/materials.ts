@@ -29,7 +29,7 @@ export const materials: MaterialSpec[] = [
     tag: 'Easy Print',
     icon: '🧩',
     description:
-      'A tuned version of PLA with better toughness and cleaner surface finish for fast prototypes and presentation-ready parts.',
+      'A refined PLA blend with better toughness and a clean surface finish for fast prototypes and polished presentation pieces.',
     color: '#e8e8e8',
     properties: {
       strength: 'Medium',
@@ -52,7 +52,7 @@ export const materials: MaterialSpec[] = [
     tag: 'High Temp',
     icon: '⚙️',
     description:
-      'A durable engineering plastic suited for functional components that need impact resistance and higher service temperatures.',
+      'A durable engineering plastic for parts that need impact resistance, stronger service temperatures, and real functional use.',
     color: '#222222',
     properties: {
       strength: 'High',
@@ -75,7 +75,7 @@ export const materials: MaterialSpec[] = [
     tag: 'Balanced Strength',
     icon: '🔷',
     description:
-      'A reliable all-rounder that combines strength, layer adhesion, and moderate flexibility for practical end-use parts.',
+      'A reliable all-rounder that balances strength, layer adhesion, and moderate flexibility for practical end-use parts.',
     color: 'rgba(100,200,255,0.75)',
     properties: {
       strength: 'High',
@@ -98,7 +98,7 @@ export const materials: MaterialSpec[] = [
     tag: 'Outdoor UV',
     icon: '☀️',
     description:
-      'An outdoor-ready material with ABS-like performance plus stronger UV and weather resistance for exposed parts.',
+      'An outdoor-ready material with ABS-like performance plus stronger UV and weather resistance for exposed parts that stay outside.',
     color: '#c0392b',
     properties: {
       strength: 'High',
@@ -121,7 +121,7 @@ export const materials: MaterialSpec[] = [
     tag: 'Rubber Flex',
     icon: '🌀',
     description:
-      'A flexible elastomer material used for parts that need grip, impact absorption, or bend without cracking.',
+      'A flexible elastomer used for parts that need grip, impact absorption, or reliable bend without cracking.',
     color: '#27ae60',
     properties: {
       strength: 'Medium',
@@ -190,7 +190,7 @@ export const materials: MaterialSpec[] = [
     tag: 'AMS Ready',
     icon: '🎨',
     description:
-      'A multi-material workflow using the Bambu AMS for color-separated parts, logos, labeling, and presentation models.',
+      'A multi-material workflow using the Bambu AMS for color-separated parts, logos, labeling, and presentation models that need visual impact.',
     gradient: 'linear-gradient(135deg, #3498db, #8b5cf6, #2ecc71, #f39c12)',
     properties: {
       strength: 'Depends on base material',

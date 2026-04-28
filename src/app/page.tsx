@@ -34,19 +34,18 @@ export const metadata: Metadata = {
 
 export default function Home() {
   const serviceCards = [
-    { icon: '🖨️', title: 'FDM Printing', desc: 'High-strength functional parts using PLA, PETG, ABS, and more on our Bambu X1 fleet.', price: 'From ₹99 / print' },
-    { icon: '💎', title: 'Resin Printing', desc: 'Ultra-detail miniatures, jewelry molds, and dental models with 4K resolution.', price: 'From ₹199 / print' },
-    { icon: '🎨', title: 'Multi-Color', desc: 'Up to 4-color prints using Bambu AMS. Perfect for logos, figurines, and prototypes.', price: 'From ₹249 / print' },
-    { icon: '📐', title: '3D Modeling', desc: 'Custom CAD & sculpting from sketches, photos, or reference. GST invoice provided.', price: 'From ₹499 / model' },
-    { icon: '📦', title: 'Bulk Orders', desc: 'Colleges, startups, and events — volume pricing available with pan-India delivery.', price: 'Custom Quote' },
-    { icon: '🚀', title: 'Express 24hr', desc: 'Rush orders dispatched within 24 hours. Available across Mumbai & Pune.', price: 'From ₹349 / print' },
+    { icon: '🖨️', title: 'B2B Prototyping', desc: 'Functional prototypes in ABS, PETG, Nylon, and engineering materials that are strong enough to test and refined enough to present.', price: 'From ₹99 / print' },
+    { icon: '💎', title: 'Jewellery Resin Masters', desc: 'Ultra-fine resin prints with sharp edges, crisp details, and casting-ready accuracy for jewellers who cannot afford compromise.', price: 'From ₹199 / print' },
+    { icon: '🎨', title: 'Custom Gifts & Decor', desc: 'Names, logos, memories, and one-of-a-kind pieces printed to feel personal, memorable, and impossible to ignore.', price: 'From ₹249 / print' },
+    { icon: '📐', title: 'CAD + Print Package', desc: 'No design file yet? Send a sketch, image, or idea and get both design support and final print production under one roof.', price: 'From ₹499 / model' },
+    { icon: '🏛️', title: 'Architecture Models', desc: 'Detailed scale models built for client presentations, concept reviews, and display pieces that look premium the moment they arrive.', price: 'Custom Quote' },
+    { icon: '🚀', title: 'Express Production', desc: 'Fast-turnaround printing for urgent deadlines, demos, investor meetings, and launch-day prototypes that need to move quickly.', price: 'Priority Quote' },
   ]
 
   const processSteps = [
-    { num: '01', title: 'Upload STL / 3MF', desc: 'Drag, drop, or share your file. We support all major 3D formats.' },
-    { num: '02', title: 'Get a Fast Quote', desc: 'We estimate material, print time, and finishing requirements clearly.' },
-    { num: '03', title: 'Production & QC', desc: 'Your parts are printed, inspected, and photographed before dispatch.' },
-    { num: '04', title: 'Delivery Across India', desc: 'Packed safely and shipped with tracking for quick turnaround.' },
+    { num: '01', title: 'Share Your Idea', desc: 'Send us a design file, sketch, or brief on WhatsApp or through the quote form and we respond fast.' },
+    { num: '02', title: 'We Quote & Confirm', desc: 'You get a clear price, material recommendation, and realistic timeline before production starts.' },
+    { num: '03', title: 'We Print & Deliver', desc: 'Your part is printed, quality-checked, and dispatched with a production-focused workflow built for consistency.' },
   ]
 
   return (
@@ -80,7 +79,7 @@ export default function Home() {
         <div className="relative z-10 mx-auto grid min-h-[calc(100vh-10rem)] max-w-[1280px] items-center gap-14 xl:gap-18 lg:grid-cols-[minmax(0,1.02fr)_minmax(420px,0.98fr)]">
           <div className="mx-auto max-w-[640px] text-center lg:mx-0 lg:text-left">
             <div className="inline-flex items-center gap-1 rounded-full border border-[rgba(255,153,0,0.2)] bg-[rgba(255,153,0,0.08)] px-[0.8rem] py-[0.3rem] text-xs text-[#ff9900] animate-fadeUp">
-              🇮🇳 Made in India · Mumbai
+              🇮🇳 Made in India · Precision 3D Printing
             </div>
 
             <div
@@ -88,36 +87,36 @@ export default function Home() {
               style={{ animationDelay: '0.1s' }}
             >
               <span className="h-[6px] w-[6px] rounded-full bg-[#FF5C1A] animate-pulse-dot" />
-              Live printer workflow on Bambu Lab X1 Carbon
+              Trusted by makers, founders, designers, and engineering teams
             </div>
 
             <h1
               className="relative mt-7 font-[var(--font-syne)] text-[clamp(2.8rem,7vw,5.7rem)] font-extrabold leading-[0.98] tracking-[-2.5px] text-white animate-fadeUp"
               style={{ animationDelay: '0.2s' }}
             >
-              Watch Your Ideas
+              Your Idea.
               <br />
-              Become <span className="text-[#FF5C1A]">Printed Parts</span>
+              <span className="text-[#FF5C1A]">Printed.</span> Delivered.
               <br />
-              <span className="font-normal text-[#7a82a0]">Layer by Layer</span>
+              <span className="font-normal text-[#7a82a0]">From concept to reality in days, not weeks.</span>
             </h1>
 
             <p
               className="relative mt-6 max-w-[560px] text-base leading-[1.8] text-[#7a82a0] md:text-lg animate-fadeUp lg:mx-0"
               style={{ animationDelay: '0.3s' }}
             >
-              Premium 3D printing services across India with production-ready FDM, high-detail resin, and fast prototyping support delivered from concept to final part.
+              Professional FDM and resin printing with fast-turnaround support for businesses, architects, jewellery designers, product teams, and ambitious creators across India.
             </p>
 
             <div
               className="relative mt-9 flex flex-col gap-4 sm:flex-row sm:justify-center lg:justify-start animate-fadeUp"
               style={{ animationDelay: '0.4s' }}
             >
-              <Link href="/quote" className="rounded-lg bg-[#FF5C1A] px-[2rem] py-[0.8rem] text-base font-medium text-white transition-transform hover:translate-y-[-2px] hover:opacity-90">
-                Upload Your Model
+              <Link href="/instant-quote" className="rounded-lg bg-[#FF5C1A] px-[2rem] py-[0.8rem] text-base font-medium text-white transition-transform hover:translate-y-[-2px] hover:opacity-90">
+                Get A Free Quote
               </Link>
               <Link href="/gallery" className="rounded-lg border border-[rgba(255,255,255,0.07)] bg-transparent px-[2rem] py-[0.8rem] text-base font-medium text-white transition-colors hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.04)]">
-                View Gallery
+                See What We Print
               </Link>
             </div>
 
@@ -126,9 +125,9 @@ export default function Home() {
               style={{ animationDelay: '0.5s' }}
             >
               {[
-                ['Precision', '0.08mm layer detail'],
-                ['Turnaround', 'Fast quote to dispatch'],
-                ['Coverage', 'Pan-India delivery'],
+                ['Precision', 'Industrial-grade quality with sharp, true-to-spec results'],
+                ['Turnaround', 'Same-week production for fast-moving projects'],
+                ['Trust', 'Direct communication, clear pricing, no hidden surprises'],
               ].map(([label, value]) => (
                 <div
                   key={label}
@@ -147,7 +146,7 @@ export default function Home() {
               <div className="mb-3 flex items-center justify-between rounded-[22px] border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.03)] px-4 py-3">
                 <div>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">Production Feed</div>
-                  <div className="mt-1 text-sm font-medium text-white">Printer in action</div>
+                  <div className="mt-1 text-sm font-medium text-white">Engineering-grade printing in action</div>
                 </div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200">
                   <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.7)]" />
@@ -177,7 +176,7 @@ export default function Home() {
                   </div>
                   <div className="hidden rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[rgba(5,8,16,0.72)] px-4 py-3 text-right backdrop-blur-md sm:block">
                     <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">Focus</div>
-                    <div className="mt-1 text-sm font-medium text-white">Precision, speed, repeatability</div>
+                    <div className="mt-1 text-sm font-medium text-white">Precision, repeatability, premium finish</div>
                   </div>
                 </div>
               </div>
@@ -191,25 +190,25 @@ export default function Home() {
             <div className="font-[var(--font-syne)] text-4xl font-extrabold text-white leading-tight">
               500<span className="text-[#FF5C1A]">+</span>
             </div>
-            <div className="text-sm text-[#7a82a0] mt-1">Orders Delivered</div>
+            <div className="text-sm text-[#7a82a0] mt-1">Parts Printed and Counting</div>
           </div>
           <div className="px-8 py-7 text-center sm:border-l xl:border-l-0 xl:border-r border-b xl:border-b-0 border-[rgba(255,255,255,0.07)]">
             <div className="font-[var(--font-syne)] text-4xl font-extrabold text-white leading-tight">
-              ₹99<span className="text-[#FF5C1A]">↑</span>
+              ±0.05<span className="text-[#FF5C1A]">mm</span>
             </div>
-            <div className="text-sm text-[#7a82a0] mt-1">Starting Price</div>
+            <div className="text-sm text-[#7a82a0] mt-1">Dimensional Accuracy</div>
           </div>
           <div className="px-8 py-7 text-center xl:border-r border-[rgba(255,255,255,0.07)]">
             <div className="font-[var(--font-syne)] text-4xl font-extrabold text-white leading-tight">
-              48<span className="text-[#FF5C1A]">hr</span>
+              3-5<span className="text-[#FF5C1A]">d</span>
             </div>
-            <div className="text-sm text-[#7a82a0] mt-1">Turnaround</div>
+            <div className="text-sm text-[#7a82a0] mt-1">Average Turnaround</div>
           </div>
           <div className="px-8 py-7 text-center sm:border-l xl:border-l-0 border-[rgba(255,255,255,0.07)]">
             <div className="font-[var(--font-syne)] text-4xl font-extrabold text-white leading-tight">
               10<span className="text-[#FF5C1A]">+</span>
             </div>
-            <div className="text-sm text-[#7a82a0] mt-1">Materials</div>
+            <div className="text-sm text-[#7a82a0] mt-1">Materials Available</div>
           </div>
         </div>
       </section>
@@ -219,13 +218,13 @@ export default function Home() {
         <div className="mx-auto max-w-[1200px]">
         <div className="mb-12 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-[640px]">
-            <p className="mb-4 text-sm font-medium uppercase tracking-[3px] text-[#FF5C1A]">What We Offer</p>
+            <p className="mb-4 text-sm font-medium uppercase tracking-[3px] text-[#FF5C1A]">What We Make For You</p>
             <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold leading-[1.05] tracking-[-1px] text-white">
-              Services Built for <br /><span className="text-[#7a82a0]">Prototypes, Products, and Production</span>
+              Every Project. Every Material. <br /><span className="text-[#7a82a0]">Every Detail.</span>
             </h2>
           </div>
           <p className="max-w-[420px] text-sm leading-7 text-[#7a82a0]">
-            From quick concept models to durable end-use parts, the workflow is optimized for speed, consistency, and print quality.
+            From investor-ready prototypes to casting masters and custom gifts, every job is built around precision, material fit, and a finish you can proudly show.
           </p>
         </div>
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -297,13 +296,13 @@ export default function Home() {
         <div className="mx-auto max-w-[1200px]">
           <p className="mb-4 text-sm font-medium uppercase tracking-[3px] text-[#FF5C1A]">How It Works</p>
           <h2 className="mb-12 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold leading-[1.05] tracking-[-1px] text-white">
-            Order in 4 Simple<br /><span className="text-[#7a82a0]">Steps</span>
+            Simple As 3 Steps<br /><span className="text-[#7a82a0]">From Idea to Delivery</span>
           </h2>
           <div className="relative mt-12">
             {/* Connection line */}
-            <div className="absolute left-[12.5%] right-[12.5%] top-7 hidden h-[1px] bg-gradient-to-r from-[#FF5C1A] via-[rgba(255,92,26,0.3)] to-[#FF5C1A] xl:block" />
+            <div className="absolute left-[16.5%] right-[16.5%] top-7 hidden h-[1px] bg-gradient-to-r from-[#FF5C1A] via-[rgba(255,92,26,0.3)] to-[#FF5C1A] xl:block" />
 
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {processSteps.map((step, i) => (
               <div key={i} className="relative z-10 rounded-[28px] border border-[rgba(255,255,255,0.07)] bg-[#0d1120] p-6 text-center">
                 <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full border-2 border-[#FF5C1A] bg-[rgba(255,92,26,0.06)] font-[var(--font-syne)] text-lg font-extrabold text-[#FF5C1A]">
@@ -323,21 +322,21 @@ export default function Home() {
         <div className="relative mx-auto max-w-[1200px] overflow-hidden rounded-[32px] border border-[rgba(255,255,255,0.07)] bg-[#0d1120] px-6 py-12 text-center md:px-12 md:py-16">
           <div className="absolute -top-[100px] left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-[radial-gradient(ellipse,rgba(255,92,26,0.15),transparent_70%)] pointer-events-none" />
           <h2 className="relative mb-4 font-[var(--font-syne)] text-[clamp(2rem,4vw,4rem)] font-extrabold tracking-[-1px] text-white">
-            Ready to Print Your<br />Next Big Idea?
+            Don&apos;t Let Your Idea <br />Stay On A Screen.
           </h2>
           <p className="relative mx-auto mb-8 max-w-[680px] text-base leading-8 text-[#7a82a0]">
-            Join 500+ makers, startups, and engineers across India already using Flux 3D.
+            Your next product, prototype, gift, or presentation model starts with one message. We reply fast and build with precision.
           </p>
           <div className="relative flex flex-col justify-center gap-4 sm:flex-row">
-            <Link href="/quote" className="rounded-lg bg-[#FF5C1A] px-[2.5rem] py-[0.9rem] text-lg font-medium text-white transition-opacity hover:opacity-90">
-              Upload Model Now
+            <Link href="/instant-quote" className="rounded-lg bg-[#FF5C1A] px-[2.5rem] py-[0.9rem] text-lg font-medium text-white transition-opacity hover:opacity-90">
+              Start Your Order
             </Link>
             <button className="rounded-lg border border-[rgba(255,255,255,0.07)] bg-transparent px-[2rem] py-[0.9rem] text-lg font-medium text-white transition-colors hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.04)]">
-              WhatsApp Us
+              WhatsApp Us Now
             </button>
           </div>
           <p className="relative mt-6 text-xs text-[#7a82a0]">
-            📍 Based in Mumbai · 🚚 Shipping across India · 🧾 GST Invoices Provided
+            Trusted by engineers, architects, jewellery designers, and gifting brands across India.
           </p>
         </div>
       </section>

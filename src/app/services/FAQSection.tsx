@@ -48,7 +48,7 @@ export default function FAQSection() {
         <div className="text-center mb-16">
           <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">FAQ</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold text-white tracking-[-1px] leading-[1.1]">
-            Frequently Asked <span className="text-[#7a82a0]">Questions</span>
+            Questions We Get <span className="text-[#7a82a0]">A Lot</span>
           </h2>
         </div>
 
@@ -85,7 +85,7 @@ export default function FAQSection() {
         <div className="text-center mt-12">
           <p className="text-[#7a82a0] mb-4">Still have questions?</p>
           <button className="text-[#FF5C1A] font-medium hover:underline">
-            Chat on WhatsApp →
+            Chat on WhatsApp now →
           </button>
         </div>
       </div>

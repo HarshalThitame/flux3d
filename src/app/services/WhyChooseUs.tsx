@@ -6,28 +6,28 @@ const benefits = [
   {
     icon: Clock,
     title: 'Fast Turnaround',
-    description: '24-48 hour turnaround for most orders. Express service available for urgent needs.',
-    stat: '48hr',
-    statLabel: 'Average delivery'
+    description: 'Most orders move in 3-5 working days, and urgent builds can be prioritized when timing matters.',
+    stat: '3-5d',
+    statLabel: 'Average turnaround'
   },
   {
     icon: CheckCircle2,
     title: 'High Precision',
-    description: '±0.2mm tolerance on FDM, ±0.05mm on resin. Every part inspected for quality.',
+    description: 'We do not just press print and walk away. Every part is checked for finish, fit, and production confidence.',
     stat: '±0.05mm',
     statLabel: 'Resin accuracy'
   },
   {
     icon: Award,
     title: 'Industrial Quality',
-    description: 'Bambu Lab X1 Carbon printers with AMS. Professional-grade materials and processes.',
+    description: 'Professional-grade machines, trusted materials, and a workflow built around repeatable, true-to-spec results.',
     stat: '100%',
     statLabel: 'Quality checked'
   },
   {
     icon: Headphones,
-    title: 'Local Pune Support',
-    description: 'Based in Pune with dedicated local support. Visit us or connect via WhatsApp.',
+    title: 'Direct Support',
+    description: 'You are not talking to a call centre. You are speaking directly with the people planning and printing your part.',
     stat: '24hr',
     statLabel: 'Response time'
   }
@@ -39,12 +39,12 @@ export default function WhyChooseUs() {
       <div className="max-w-[1200px] mx-auto">
         {/* Section header */}
         <div className="text-center mb-16">
-          <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">Why Choose Us</p>
+          <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">Why Clients Come Back</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-white tracking-[-1px] leading-[1.1]">
-            The Flux-3D <span className="text-[#7a82a0]">Advantage</span>
+            The Difference You Can <span className="text-[#7a82a0]">Feel</span>
           </h2>
           <p className="text-[#7a82a0] mt-4 max-w-[500px] mx-auto">
-            Combining cutting-edge technology with personalized service to deliver the best 3D printing experience in Pune.
+            Speed, refined quality, honest pricing, and practical material guidance for teams that need more than a basic print shop.
           </p>
         </div>
 
@@ -90,19 +90,19 @@ export default function WhyChooseUs() {
               <div className="text-3xl font-[var(--font-syne)] font-extrabold text-white mb-1">
                 500<span className="text-[#FF5C1A]">+</span>
               </div>
-              <div className="text-sm text-[#7a82a0]">Happy Customers</div>
+              <div className="text-sm text-[#7a82a0]">Parts Printed</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-[var(--font-syne)] font-extrabold text-white mb-1">
-                4.9<span className="text-[#FF5C1A]">★</span>
+                18<span className="text-[#FF5C1A]">μm</span>
               </div>
-              <div className="text-sm text-[#7a82a0]">Average Rating</div>
+              <div className="text-sm text-[#7a82a0]">Fine resin detail</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-[var(--font-syne)] font-extrabold text-white mb-1">
                 100<span className="text-[#FF5C1A]">%</span>
               </div>
-              <div className="text-sm text-[#7a82a0]">On-time Delivery</div>
+              <div className="text-sm text-[#7a82a0]">Quality-checked workflow</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-[var(--font-syne)] font-extrabold text-white mb-1">
