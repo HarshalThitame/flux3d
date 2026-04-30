@@ -22,7 +22,7 @@ export default function AdminShell({
 
   return (
     <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((current) => !current)} />
+      <Sidebar collapsed={collapsed} onToggleAction={() => setCollapsed((current) => !current)} />
 
       <AnimatePresence>
         {mobileNavOpen && (

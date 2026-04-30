@@ -195,7 +195,7 @@ export default function AdminOrdersPage() {
 
       <Drawer
         open={Boolean(selectedOrder)}
-        onOpenChange={(open) => { if (!open) setSelectedOrder(null) }}
+        onOpenChangeAction={(open) => { if (!open) setSelectedOrder(null) }}
         title={selectedOrder?.orderNumber ?? 'Order details'}
       >
         {selectedOrder && (

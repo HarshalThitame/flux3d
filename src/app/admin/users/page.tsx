@@ -118,7 +118,7 @@ export default function AdminUsersPage() {
 
       <Drawer
         open={Boolean(selectedUser)}
-        onOpenChange={(open) => { if (!open) setSelectedUser(null) }}
+        onOpenChangeAction={(open) => { if (!open) setSelectedUser(null) }}
         title={selectedUser?.name ?? 'User details'}
       >
         {selectedUser && (

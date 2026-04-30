@@ -227,7 +227,7 @@ export default function AdminMaterialsPage() {
 
       <Modal
         open={open}
-        onOpenChange={setOpen}
+        onOpenChangeAction={setOpen}
         title={activeMaterial ? `Edit ${activeMaterial.name}` : 'Add Material'}
         description="Update catalog pricing, density, color availability, and stock state."
       >
