@@ -1,20 +1,9 @@
 import type { Metadata, Viewport } from 'next'
-import { DM_Sans, Syne } from 'next/font/google'
 import { organizationJsonLd, websiteJsonLd } from '@/lib/structured-data'
 import { absoluteUrl, siteConfig } from '@/lib/site'
+import { CartProvider } from '@/lib/cart/context'
+import VisitorTracker from '@/components/VisitorTracker'
 import './globals.css'
-
-const syne = Syne({
-  subsets: ['latin'],
-  variable: '--font-syne',
-  weight: ['400', '700', '800']
-})
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  variable: '--font-dm',
-  weight: ['300', '400', '500', '600', '700']
-})
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -63,7 +52,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning className={`${syne.variable} ${dmSans.variable}`}>
+      <body suppressHydrationWarning>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
@@ -72,7 +61,10 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
-        {children}
+        <CartProvider>
+          <VisitorTracker />
+          {children}
+        </CartProvider>
       </body>
     </html>
   )

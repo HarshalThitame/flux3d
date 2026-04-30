@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import PricingCTA from '@/app/services/PricingCTA'
 import { absoluteUrl } from '@/lib/site'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
+import PricingCards from '@/components/PricingCards'
 
 export const metadata: Metadata = {
   title: '3D Printing Pricing That Feels Clear',
@@ -18,14 +20,23 @@ export const metadata: Metadata = {
   },
 }
 
-const pricingCards = [
-  { title: 'FDM Printing', price: 'From ₹99', desc: 'Reliable functional parts, prototypes, and utility builds with a strong balance of speed and cost.' },
-  { title: 'Resin Printing', price: 'From ₹199', desc: 'Fine-detail prints, casting masters, and polished display pieces where finish matters most.' },
-  { title: 'Multi-Color Prints', price: 'From ₹249', desc: 'AMS-based color separation for logos, branded models, and presentation-ready parts.' },
-  { title: '3D Modeling', price: 'From ₹499', desc: 'Custom CAD support from sketches, references, or rough concepts when the file does not exist yet.' },
-]
+export default async function PricingPage() {
+  let materials: { name: string; price_per_gram: number; density: number }[] = []
+  
+  try {
+    const supabase = await createServerSupabaseClient()
+    const { data, error } = await supabase
+      .from('materials')
+      .select('name, price_per_gram, density')
+      .order('price_per_gram', { ascending: true })
+    
+    if (!error && data) {
+      materials = data
+    }
+  } catch {
+    // Silently fail - will use fallback
+  }
 
-export default function PricingPage() {
   return (
     <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
       <Navbar transparent />
@@ -40,19 +51,7 @@ export default function PricingPage() {
               Your final quote is shaped by material, geometry, print time, finishing, and quantity. The goal here is simple: make the starting point obvious and the next step effortless.
             </p>
 
-            <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {pricingCards.map((item) => (
-                <div
-                  key={item.title}
-                  className="rounded-[28px] border border-[rgba(255,255,255,0.08)] bg-[#0d1120] p-7"
-                >
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">Starting From</div>
-                  <h2 className="mt-4 font-[var(--font-syne)] text-2xl font-bold text-white">{item.title}</h2>
-                  <div className="mt-4 text-lg font-semibold text-[#FF8A57]">{item.price}</div>
-                  <p className="mt-3 text-sm leading-7 text-[#b1b9d5]">{item.desc}</p>
-                </div>
-              ))}
-            </div>
+            <PricingCards materials={materials} />
           </div>
         </section>
 

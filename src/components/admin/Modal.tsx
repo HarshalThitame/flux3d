@@ -2,6 +2,7 @@
 
 import * as Dialog from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function Modal({
   open,
@@ -19,24 +20,43 @@ export default function Modal({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[80] bg-[#03060d]/72 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[90] w-[min(92vw,640px)] -translate-x-1/2 -translate-y-1/2 rounded-[28px] border border-white/10 bg-[#0b1325] p-6 shadow-[0_28px_90px_rgba(0,0,0,0.48)]">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <Dialog.Title className="font-[var(--font-syne)] text-2xl font-bold text-white">
-                {title}
-              </Dialog.Title>
-              {description ? (
-                <Dialog.Description className="mt-2 text-sm leading-6 text-[#96a0c0]">
-                  {description}
-                </Dialog.Description>
-              ) : null}
+        <AnimatePresence>
+          {open && (
+            <Dialog.Overlay asChild>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm"
+              />
+            </Dialog.Overlay>
+          )}
+        </AnimatePresence>
+        <Dialog.Content asChild>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 12 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed left-1/2 top-1/2 z-[90] w-[min(92vw,580px)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0a0f1e] shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-white/[0.06] px-5 py-4">
+              <div>
+                <Dialog.Title className="text-lg font-semibold text-white">
+                  {title}
+                </Dialog.Title>
+                {description && (
+                  <Dialog.Description className="mt-1 text-sm text-[#7a82a0]">
+                    {description}
+                  </Dialog.Description>
+                )}
+              </div>
+              <Dialog.Close className="shrink-0 rounded-lg border border-white/8 bg-white/[0.03] p-2 text-[#7a82a0] transition hover:bg-white/[0.06] hover:text-white">
+                <X className="h-4 w-4" />
+              </Dialog.Close>
             </div>
-            <Dialog.Close className="rounded-xl border border-white/10 bg-white/[0.03] p-2 text-[#c8d0e8] transition hover:bg-white/[0.07]">
-              <X className="h-4 w-4" />
-            </Dialog.Close>
-          </div>
-          <div className="mt-6">{children}</div>
+            <div className="px-5 py-5">{children}</div>
+          </motion.div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

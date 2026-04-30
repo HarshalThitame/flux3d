@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
-import { getAdminAnalyticsData } from '@/lib/admin/queries'
+import { getAdminFullAnalytics } from '@/lib/admin/queries'
 import { requireAdminRequest } from '@/lib/admin/request'
 
 export async function GET() {
@@ -8,7 +8,7 @@ export async function GET() {
   if ('response' in auth) return auth.response
 
   try {
-    const data = await getAdminAnalyticsData()
+    const data = await getAdminFullAnalytics()
     return NextResponse.json(data)
   } catch (error) {
     return getAdminApiErrorResponse(error)

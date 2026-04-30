@@ -33,6 +33,7 @@ export default function DeliveryStepClient({
   savedAddresses,
 }: DeliveryStepClientProps) {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const [draft] = useState<OrderDraft | null>(() => {
     if (typeof window === 'undefined') {
       return null
@@ -78,6 +79,10 @@ export default function DeliveryStepClient({
     () => calculateOrderTotal(draft?.price ?? 0),
     [draft]
   )
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (!draft) {
@@ -223,6 +228,10 @@ export default function DeliveryStepClient({
   }
 
   if (!draft) {
+    return null
+  }
+
+  if (!mounted) {
     return null
   }
 

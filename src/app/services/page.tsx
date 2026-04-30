@@ -1,59 +1,45 @@
 import { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
-import { servicesPageJsonLd } from '@/lib/structured-data'
-import { absoluteUrl } from '@/lib/site'
 import ServicesHero from './ServicesHero'
 import ServicesList from './ServicesList'
-import MaterialsTech from './MaterialsTech'
-import ProcessSteps from './ProcessSteps'
 import WhyChooseUs from './WhyChooseUs'
-import PricingCTA from './PricingCTA'
-import FAQSection from './FAQSection'
+import HowToOrder from './HowToOrder'
+import BottomCTA from './BottomCTA'
 
 export const metadata: Metadata = {
-  title: '3D Printing Services in Pune and Across India',
+  title: '3D Printing Services — Industrial, Medical, Student & More | Flux 3D',
   description:
-    'Professional 3D printing services for prototypes, automotive jigs, fixtures, and custom CAD design with delivery across India.',
+    'From industrial-grade spare parts to custom gifts — Flux 3D delivers precision prints for every need, across India. 7 specializations, Bambu Lab P2S fleet, Pan-India delivery.',
   keywords: [
-    '3D printing services Pune',
-    'rapid prototyping Pune',
-    '3D printing for automotive',
-    'FDM printing Pune',
-    'resin printing India',
-    'custom 3D modeling',
+    '3D printing services India',
+    'industrial spare parts 3D printing',
+    'architecture model printing',
+    'student 3D printing',
+    'medical 3D printing',
+    'corporate gifting 3D',
+    'custom 3D printed products',
+    'creator props 3D printing',
   ],
   alternates: {
     canonical: '/services',
   },
   openGraph: {
-    title: '3D Printing Services in Pune and Across India',
+    title: '3D Printing Services — Industrial, Medical, Student & More | Flux 3D',
     description:
-      'Professional 3D printing services for rapid prototyping, industrial parts, and custom CAD design.',
+      'From industrial-grade spare parts to custom gifts — Flux 3D delivers precision prints for every need, across India.',
     type: 'website',
-    url: absoluteUrl('/services'),
-  },
-  twitter: {
-    title: '3D Printing Services in Pune and Across India',
-    description:
-      'Professional 3D printing services for rapid prototyping, industrial parts, and custom CAD design.',
   },
 }
 
 export default function ServicesPage() {
   return (
     <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(servicesPageJsonLd) }}
-      />
       <Navbar transparent />
       <ServicesHero />
       <ServicesList />
-      <MaterialsTech />
-      <ProcessSteps />
       <WhyChooseUs />
-      <PricingCTA />
-      <FAQSection />
+      <HowToOrder />
+      <BottomCTA />
     </div>
   )
 }

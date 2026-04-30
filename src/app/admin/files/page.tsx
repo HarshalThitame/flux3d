@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { Download, FileArchive, Trash2 } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import DataTable from '@/components/admin/DataTable'
 import EmptyState from '@/components/admin/EmptyState'
@@ -42,11 +44,19 @@ export default function AdminFilesPage() {
   }, [toast])
 
   if (error) {
-    return <div className="rounded-[28px] border border-rose-400/15 bg-rose-400/10 p-6 text-rose-100">{error}</div>
+    return <div className="rounded-xl border border-rose-400/20 bg-rose-400/10 p-5 text-sm text-rose-300">{error}</div>
   }
 
   if (files === null) {
-    return <SkeletonBlock className="h-[420px] w-full" />
+    return (
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <SkeletonBlock className="h-8 w-48" />
+          <SkeletonBlock className="h-5 w-72 max-w-full" />
+        </div>
+        <SkeletonBlock className="h-[420px] w-full" />
+      </div>
+    )
   }
 
   if (files.length === 0) {
@@ -63,38 +73,43 @@ export default function AdminFilesPage() {
   return (
     <>
       <div className="space-y-6">
-        <section className="rounded-[32px] border border-white/10 bg-[rgba(10,16,31,0.94)] p-6">
-          <h1 className="font-[var(--font-syne)] text-4xl font-extrabold text-white">Files</h1>
-          <p className="mt-3 max-w-2xl text-base leading-8 text-[#9ca7c6]">
-            Monitor uploaded STL, OBJ, and 3MF assets with lightweight download and moderation actions.
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-amber-300">
+            <FileArchive className="h-3 w-3" />
+            File Storage
+          </div>
+          <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Files</h1>
+          <p className="mt-2 max-w-xl text-sm text-[#7a82a0]">
+            Monitor uploaded STL, OBJ, and 3MF assets with download and moderation actions.
           </p>
-        </section>
+        </motion.div>
 
         <DataTable
           title="Uploaded Models"
-          description="Storage overview for production and quote uploads."
+          description={`${files.length} files in storage`}
           data={files}
           searchPlaceholder="Search file name or user"
           searchKeys={['name', 'user', 'uploadedAt', 'size']}
           columns={[
             { key: 'name', label: 'File Name', sortable: true, sortValue: (row) => row.name, render: (row) => <span className="font-medium text-white">{row.name}</span> },
-            { key: 'user', label: 'User', sortable: true, sortValue: (row) => row.user, render: (row) => row.user },
-            { key: 'uploadedAt', label: 'Upload Date', sortable: true, sortValue: (row) => row.uploadedAt, render: (row) => row.uploadedAt },
-            { key: 'size', label: 'Size', sortable: true, sortValue: (row) => row.size, render: (row) => row.size },
+            { key: 'user', label: 'User', sortable: true, sortValue: (row) => row.user, render: (row) => <span className="text-[#c6cee5]">{row.user}</span> },
+            { key: 'uploadedAt', label: 'Upload Date', sortable: true, sortValue: (row) => row.uploadedAt, render: (row) => <span className="text-[#8b95b5]">{row.uploadedAt}</span> },
+            { key: 'size', label: 'Size', sortable: true, sortValue: (row) => row.size, render: (row) => <span className="font-medium text-white">{row.size}</span> },
             {
               key: 'actions',
               label: 'Actions',
               render: (row) => (
-                <div className="flex gap-2">
+                <div className="flex items-center gap-1.5">
                   <button
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation()
                       setToast({ type: 'info', message: `Download prepared for ${row.name}.` })
                     }}
-                    className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-white"
+                    className="rounded-lg border border-cyan-400/20 bg-cyan-400/10 p-2 text-cyan-400 transition hover:bg-cyan-400/15"
+                    title="Download"
                   >
-                    Download
+                    <Download className="h-3.5 w-3.5" />
                   </button>
                   <button
                     type="button"
@@ -102,9 +117,10 @@ export default function AdminFilesPage() {
                       event.stopPropagation()
                       setToast({ type: 'error', message: `${row.name} marked for deletion.` })
                     }}
-                    className="rounded-xl border border-rose-400/15 bg-rose-400/10 px-3 py-2 text-xs font-medium text-rose-100"
+                    className="rounded-lg border border-rose-400/20 bg-rose-400/10 p-2 text-rose-400 transition hover:bg-rose-400/15"
+                    title="Delete"
                   >
-                    Delete
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               ),

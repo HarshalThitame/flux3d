@@ -1,7 +1,22 @@
 import { ArrowUpRight, Clock3, IndianRupee, Layers3, PackageOpen } from 'lucide-react'
+import { motion } from 'framer-motion'
 import type { DashboardMetric } from '@/lib/admin/types'
 
 const icons = [PackageOpen, IndianRupee, Clock3, Layers3]
+
+const gradients = [
+  'from-[#FF5C1A]/10 to-transparent',
+  'from-emerald-400/10 to-transparent',
+  'from-cyan-400/10 to-transparent',
+  'from-violet-400/10 to-transparent',
+]
+
+const iconGradients = [
+  'from-[#FF5C1A] to-[#FF9A72]',
+  'from-emerald-400 to-emerald-500',
+  'from-cyan-400 to-cyan-500',
+  'from-violet-400 to-violet-500',
+]
 
 export default function DashboardCards({
   metrics,
@@ -12,34 +27,39 @@ export default function DashboardCards({
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       {metrics.map((metric, index) => {
         const Icon = icons[index] ?? PackageOpen
-        const tone =
-          metric.tone === 'positive'
-            ? 'text-emerald-200 bg-emerald-400/12 border-emerald-400/15'
-            : metric.tone === 'warning'
-              ? 'text-amber-200 bg-amber-400/12 border-amber-400/15'
-              : 'text-sky-200 bg-sky-400/12 border-sky-400/15'
 
         return (
-          <div
+          <motion.div
             key={metric.label}
-            className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(12,19,35,0.96),rgba(8,13,25,0.94))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.18)]"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.06 }}
+            className={`group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-b ${gradients[index % 4]} p-5`}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-sm text-[#93a0c1]">{metric.label}</div>
-                <div className="mt-3 font-[var(--font-syne)] text-4xl font-extrabold text-white">
-                  {metric.value}
+            <div className="relative">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-sm text-[#7a82a0]">{metric.label}</div>
+                  <div className="mt-2 font-[var(--font-syne)] text-3xl font-bold text-white">
+                    {metric.value}
+                  </div>
+                </div>
+                <div className={`rounded-xl bg-gradient-to-br ${iconGradients[index % 4]} p-2.5 text-white shadow-lg`}>
+                  <Icon className="h-4.5 w-4.5" />
                 </div>
               </div>
-              <div className={`rounded-2xl border p-3 ${tone}`}>
-                <Icon className="h-5 w-5" />
+              <div className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${
+                metric.tone === 'positive'
+                  ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300'
+                  : metric.tone === 'warning'
+                    ? 'border-amber-400/20 bg-amber-400/10 text-amber-300'
+                    : 'border-cyan-400/20 bg-cyan-400/10 text-cyan-300'
+              }`}>
+                <ArrowUpRight className="h-3 w-3" />
+                {metric.change}
               </div>
             </div>
-            <div className="mt-4 inline-flex items-center gap-2 text-sm text-[#d7def1]">
-              <ArrowUpRight className="h-4 w-4 text-[#7dd3fc]" />
-              {metric.change}
-            </div>
-          </div>
+          </motion.div>
         )
       })}
     </div>

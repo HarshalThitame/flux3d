@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, Menu, X } from 'lucide-react'
+import { ChevronDown, Menu, ShoppingCart, X, MessageCircle, ArrowUpRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { AppUserProfile } from '@/lib/auth/server'
+import { useCart } from '@/lib/cart/context'
 
 interface NavbarClientProps {
   transparent?: boolean
@@ -20,16 +21,38 @@ function getInitials(name: string) {
     .toUpperCase()
 }
 
+function CartButton() {
+  const { summary, isLoading } = useCart()
+
+  if (isLoading) return null
+
+  return (
+    <Link
+      href="/cart"
+      className="group relative flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3.5 py-2.5 text-sm font-medium text-[#7a82a0] backdrop-blur-sm transition-all hover:border-[#FF5C1A]/30 hover:text-white hover:bg-white/[0.06]"
+    >
+      <ShoppingCart className="h-4 w-4 transition-transform group-hover:scale-110" />
+      <span className="hidden sm:inline">Cart</span>
+      {summary.itemCount > 0 && (
+        <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#FF5C1A] text-[10px] font-bold text-white shadow-[0_0_12px_rgba(255,92,26,0.4)]">
+          {summary.itemCount}
+        </span>
+      )}
+    </Link>
+  )
+}
+
 export default function NavbarClient({
   transparent = false,
   user,
 }: NavbarClientProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const [hoveredLink, setHoveredLink] = useState<string | null>(null)
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
 
   const navLinks = [
-    { href: '/', label: 'Home' },
     { href: '/services', label: 'Services' },
     { href: '/materials', label: 'Materials' },
     { href: '/gallery', label: 'Gallery' },
@@ -37,16 +60,19 @@ export default function NavbarClient({
   ]
 
   useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
       if (!profileMenuRef.current?.contains(event.target as Node)) {
         setIsProfileOpen(false)
       }
     }
-
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsProfileOpen(false)
-      }
+      if (event.key === 'Escape') setIsProfileOpen(false)
     }
 
     document.addEventListener('pointerdown', handlePointerDown)
@@ -61,247 +87,270 @@ export default function NavbarClient({
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-4 transition-colors md:px-12 md:py-5 ${
-          transparent
-            ? 'border-b border-[rgba(255,255,255,0.07)] bg-[#050810]/85 backdrop-blur-xl'
-            : 'border-b border-[rgba(255,255,255,0.07)] bg-[#050810]/95 backdrop-blur-xl'
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          scrolled || !transparent
+            ? 'py-3 bg-[#050810]/90 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.3)]'
+            : 'py-4 bg-transparent border-b border-white/[0.04]'
         }`}
       >
-        <Link href="/" className="flex items-center" aria-label="Flux3D home">
-          <Image
-            src="/logo.png"
-            alt="Flux3D Additive Innovation"
-            width={578}
-            height={432}
-            priority
-            className="h-10 w-auto md:h-12"
-          />
-        </Link>
+        <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 group" aria-label="Flux3D home">
+            <span className="font-[var(--font-syne)] text-xl font-extrabold text-white">
+              Flux<span className="text-[#FF5C1A]">3D</span>
+            </span>
+          </Link>
 
-        <ul className="hidden list-none gap-6 md:flex lg:gap-8">
-          {navLinks.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                className="text-sm text-[#7a82a0] no-underline transition-colors hover:text-white"
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        <div className="hidden items-center gap-3 md:flex">
-          {user ? (
-            <>
-              <Link
-                href="/instant-quote"
-                className="rounded-md bg-[#FF5C1A] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-95"
-              >
-                Get Instant Quote
-              </Link>
-
-              <div ref={profileMenuRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setIsProfileOpen((current) => !current)}
-                className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-2 py-2 pr-3 transition-colors hover:bg-white/[0.07]"
-                aria-expanded={isProfileOpen}
-                aria-haspopup="menu"
-              >
-                {user.avatarUrl ? (
-                  <Image
-                    src={user.avatarUrl}
-                    alt={user.name}
-                    width={32}
-                    height={32}
-                    className="h-8 w-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FF5C1A] text-xs font-bold text-white">
-                    {getInitials(user.name)}
-                  </span>
-                )}
-                <span className="text-left">
-                  <span className="block text-xs uppercase tracking-[0.18em] text-[#7a82a0]">
-                    Signed in
-                  </span>
-                  <span className="block text-sm font-medium text-white">{user.name}</span>
-                </span>
-                <ChevronDown
-                  className={`h-4 w-4 text-[#93a0c4] transition-transform ${
-                    isProfileOpen ? 'rotate-180' : ''
+          {/* Nav Links */}
+          <ul className="hidden md:flex items-center gap-1 list-none">
+            {navLinks.map((link) => (
+              <li key={link.href} className="relative">
+                <Link
+                  href={link.href}
+                  onMouseEnter={() => setHoveredLink(link.href)}
+                  onMouseLeave={() => setHoveredLink(null)}
+                  className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
+                    hoveredLink === link.href ? 'text-white' : 'text-[#7a82a0]'
                   }`}
-                />
-              </button>
+                >
+                  {link.label}
+                  {hoveredLink === link.href && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#FF5C1A] rounded-full" />
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
 
-              {isProfileOpen ? (
-                <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[320px] overflow-hidden rounded-[22px] border border-white/10 bg-[#0d1120] shadow-[0_24px_90px_rgba(0,0,0,0.45)]">
-                  <div className="border-b border-white/8 px-4 py-4">
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">
-                      Signed in
-                    </div>
-                    <div className="mt-2 text-lg font-semibold text-white">{user.name}</div>
-                    <div className="mt-1 text-sm text-[#93a0c4]">{user.email}</div>
-                  </div>
+          {/* Right Actions */}
+          <div className="hidden md:flex items-center gap-3">
+            <CartButton />
 
-                  <div className="p-3">
-                    <Link
-                      href="/saved-quotes"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="mb-2 flex w-full items-center justify-between rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.07]"
-                    >
-                      <span>Saved Quotes</span>
-                      <span className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">HT</span>
-                    </Link>
-                    <Link
-                      href="/my-orders"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="mb-2 flex w-full items-center justify-between rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.07]"
-                    >
-                      <span>My Orders</span>
-                      <span className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Track</span>
-                    </Link>
-                    <Link
-                      href="/profile"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="mb-2 flex w-full items-center justify-between rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.07]"
-                    >
-                      <span>Profile</span>
-                      <span className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">View</span>
-                    </Link>
-                    <form action="/auth/logout" method="post">
-                      <button
-                        type="submit"
-                        className="flex w-full items-center justify-between rounded-[16px] border border-white/10 bg-transparent px-4 py-3 text-sm font-medium text-[#c9d0e7] transition-colors hover:border-white/20 hover:text-white"
-                      >
-                        <span>Log out</span>
-                        <span className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">
-                          Exit
-                        </span>
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              ) : null}
-              </div>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                className="rounded-md border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/[0.07]"
-              >
-                Log In
-              </Link>
-              <Link
-                href="/signup"
-                className="rounded-md bg-[#FF5C1A] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-88 md:px-[1.4rem] md:py-[0.55rem]"
-              >
-                Create Account
-              </Link>
-            </>
-          )}
-        </div>
-
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="p-2 text-white md:hidden"
-          aria-label="Toggle menu"
-        >
-          {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
-      </nav>
-
-      {isOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <div
-            className="absolute inset-0 animate-fadeIn bg-[#050810]/95 backdrop-blur-lg"
-            onClick={() => setIsOpen(false)}
-          />
-
-          <div className="animate-slideDown absolute top-20 left-4 right-4 rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#0d1120] p-6">
-            {user && (
-              <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">
-                  Signed in
-                </div>
-                <div className="mt-2 text-lg font-medium text-white">{user.name}</div>
-                <div className="mt-1 text-sm text-[#93a0c4]">{user.email}</div>
-              </div>
-            )}
-
-            <ul className="space-y-4">
-              {navLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    onClick={() => setIsOpen(false)}
-                    className="block text-lg font-medium text-[#7a82a0] transition-colors hover:text-white"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {/* WhatsApp */}
+            <a
+              href="https://wa.me/919607570731"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 px-4 py-2.5 text-sm font-medium text-[#25D366] transition-all hover:bg-[#25D366]/20 hover:border-[#25D366]/50"
+            >
+              <MessageCircle className="h-4 w-4" />
+              WhatsApp
+            </a>
 
             {user ? (
-              <div className="mt-6 space-y-3">
+              <>
                 <Link
                   href="/instant-quote"
-                  onClick={() => setIsOpen(false)}
-                  className="block w-full rounded-lg bg-[#FF5C1A] py-3 text-center font-medium text-white"
+                  className="group relative flex items-center gap-2 rounded-xl bg-[#FF5C1A] px-5 py-2.5 text-sm font-semibold text-white overflow-hidden transition-all hover:shadow-[0_0_25px_rgba(255,92,26,0.3)]"
                 >
-                  Get Instant Quote
+                  <span className="relative z-10">Get Quote</span>
+                  <ArrowUpRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </Link>
-                <Link
-                  href="/saved-quotes"
-                  onClick={() => setIsOpen(false)}
-                  className="block w-full rounded-lg border border-white/10 bg-white/[0.03] py-3 text-center font-medium text-white"
-                >
-                  Saved Quotes
-                </Link>
-                <Link
-                  href="/my-orders"
-                  onClick={() => setIsOpen(false)}
-                  className="block w-full rounded-lg border border-white/10 bg-white/[0.03] py-3 text-center font-medium text-white"
-                >
-                  My Orders
-                </Link>
-                <Link
-                  href="/profile"
-                  onClick={() => setIsOpen(false)}
-                  className="block w-full rounded-lg border border-white/10 bg-white/[0.03] py-3 text-center font-medium text-white"
-                >
-                  Profile
-                </Link>
-                <form action="/auth/logout" method="post">
+
+                <div ref={profileMenuRef} className="relative">
                   <button
-                    type="submit"
-                    className="block w-full rounded-lg border border-white/10 bg-transparent py-3 text-center font-medium text-[#c9d0e7]"
+                    type="button"
+                    onClick={() => setIsProfileOpen((c) => !c)}
+                    className="flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 pr-3 transition-all hover:bg-white/[0.07] hover:border-white/[0.12]"
                   >
-                    Log out
+                    {user.avatarUrl ? (
+                      <Image
+                        src={user.avatarUrl}
+                        alt={user.name}
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 rounded-full object-cover ring-2 ring-[#FF5C1A]/20"
+                      />
+                    ) : (
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#FF5C1A] to-[#ff7a3d] text-xs font-bold text-white shadow-[0_0_12px_rgba(255,92,26,0.3)]">
+                        {getInitials(user.name)}
+                      </span>
+                    )}
+                    <ChevronDown
+                      className={`h-4 w-4 text-[#93a0c4] transition-transform duration-200 ${
+                        isProfileOpen ? 'rotate-180' : ''
+                      }`}
+                    />
                   </button>
-                </form>
-              </div>
+
+                  {isProfileOpen && (
+                    <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0d1120] shadow-[0_24px_80px_rgba(0,0,0,0.5)] animate-slideDown">
+                      <div className="p-4 border-b border-white/[0.06]">
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-[#7a82a0]">Signed in as</p>
+                        <p className="mt-1.5 text-base font-semibold text-white">{user.name}</p>
+                        <p className="text-sm text-[#93a0c4] truncate">{user.email}</p>
+                      </div>
+
+                      <div className="p-3">
+                        {[
+                          { href: '/saved-quotes', label: 'Saved Quotes' },
+                          { href: '/my-orders', label: 'My Orders' },
+                          { href: '/profile', label: 'Profile' },
+                        ].map((item) => (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setIsProfileOpen(false)}
+                            className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[#7a82a0] transition-colors hover:bg-white/[0.05] hover:text-white"
+                          >
+                            {item.label}
+                          </Link>
+                        ))}
+                        <form action="/auth/logout" method="post">
+                          <button
+                            type="submit"
+                            className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-red-400/80 transition-colors hover:bg-red-500/10 hover:text-red-400"
+                          >
+                            Log out
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
             ) : (
-              <div className="mt-6 space-y-3">
+              <>
                 <Link
                   href="/login"
-                  onClick={() => setIsOpen(false)}
-                  className="block w-full rounded-lg border border-white/10 bg-white/[0.03] py-3 text-center font-medium text-white"
+                  className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-[#7a82a0] transition-all hover:text-white hover:bg-white/[0.07]"
                 >
                   Log In
                 </Link>
                 <Link
                   href="/signup"
-                  onClick={() => setIsOpen(false)}
-                  className="block w-full rounded-lg bg-[#FF5C1A] py-3 text-center font-medium text-white"
+                  className="group relative rounded-xl bg-[#FF5C1A] px-5 py-2.5 text-sm font-semibold text-white overflow-hidden transition-all hover:shadow-[0_0_25px_rgba(255,92,26,0.3)]"
                 >
-                  Create Account
+                  <span className="relative z-10">Sign Up</span>
                 </Link>
-              </div>
+              </>
             )}
+          </div>
+
+          {/* Mobile Toggle */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="relative md:hidden p-2 text-white"
+            aria-label="Toggle menu"
+          >
+            <div className="w-6 h-6 flex items-center justify-center">
+              {isOpen ? (
+                <X className="h-5 w-5 animate-fadeIn" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </div>
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile Menu Overlay */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="absolute inset-0 bg-[#050810]/95 backdrop-blur-2xl animate-fadeIn"
+            onClick={() => setIsOpen(false)}
+          />
+
+          <div className="animate-slideDown absolute top-20 left-4 right-4 rounded-2xl border border-white/[0.08] bg-[#0d1120]/95 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.5)] overflow-hidden">
+            <div className="p-6">
+              {user && (
+                <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  {user.avatarUrl ? (
+                    <Image
+                      src={user.avatarUrl}
+                      alt={user.name}
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#FF5C1A] to-[#ff7a3d] text-sm font-bold text-white">
+                      {getInitials(user.name)}
+                    </span>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">{user.name}</p>
+                    <p className="text-xs text-[#7a82a0] truncate">{user.email}</p>
+                  </div>
+                </div>
+              )}
+
+              <ul className="space-y-1">
+                {navLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center justify-between py-3 px-3 text-base font-medium text-[#7a82a0] rounded-xl transition-colors hover:text-white hover:bg-white/[0.05]"
+                    >
+                      {link.label}
+                      <ArrowUpRight className="h-4 w-4 opacity-0 group-hover:opacity-100" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-6 space-y-3">
+                <Link
+                  href="/instant-quote"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#FF5C1A] py-3.5 text-base font-semibold text-white"
+                >
+                  Get Instant Quote
+                  <ArrowUpRight className="h-4 w-4" />
+                </Link>
+                <a
+                  href="https://wa.me/919607570731"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 py-3.5 text-base font-medium text-[#25D366]"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp Us
+                </a>
+
+                {user ? (
+                  <>
+                    {['/saved-quotes', '/my-orders', '/profile'].map((href) => (
+                      <Link
+                        key={href}
+                        href={href}
+                        onClick={() => setIsOpen(false)}
+                        className="block w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-3.5 text-center text-base font-medium text-[#7a82a0]"
+                      >
+                        {href === '/saved-quotes' ? 'Saved Quotes' : href === '/my-orders' ? 'My Orders' : 'Profile'}
+                      </Link>
+                    ))}
+                    <form action="/auth/logout" method="post">
+                      <button
+                        type="submit"
+                        className="block w-full rounded-xl border border-white/[0.06] py-3.5 text-center text-base font-medium text-red-400/80"
+                      >
+                        Log out
+                      </button>
+                    </form>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={() => setIsOpen(false)}
+                      className="block w-full rounded-xl border border-white/[0.08] bg-white/[0.03] py-3.5 text-center text-base font-medium text-[#7a82a0]"
+                    >
+                      Log In
+                    </Link>
+                    <Link
+                      href="/signup"
+                      onClick={() => setIsOpen(false)}
+                      className="block w-full rounded-xl bg-[#FF5C1A] py-3.5 text-center text-base font-semibold text-white"
+                    >
+                      Create Account
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

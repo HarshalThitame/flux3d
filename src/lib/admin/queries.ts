@@ -3,12 +3,14 @@ import type {
   AdminFile,
   AdminMaterial,
   AdminOrder,
+  AdminOrderItem,
   AdminQuote,
   AdminUser,
   DashboardMetric,
   DonutSlice,
   TrendPoint,
 } from '@/lib/admin/types'
+import { getOrderStatusLabel, orderStatuses, type OrderStatus } from '@/lib/orders'
 import { getAdminEmails } from '@/lib/supabase/config'
 
 const QUOTE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? 'quote-models'
@@ -33,6 +35,225 @@ type StorageListItem = {
   metadata?: {
     size?: number
   } | null
+}
+
+type OrderRow = {
+  id: string | number
+  order_number: string | null
+  group_id: string | null
+  file_url?: string | null
+  material: string | null
+  color?: string | null
+  infill?: number | null
+  price?: number | string | null
+  total_price: number | string | null
+  weight?: number | string | null
+  estimated_time?: number | null
+  status: AdminOrder['status']
+  created_at: string | null
+  notes: string | null
+  full_name: string | null
+  phone?: string | null
+  address_line1?: string | null
+  city?: string | null
+  state?: string | null
+  pincode?: string | null
+  delivery_charge?: number | string | null
+}
+
+type QuoteRow = {
+  id: string | number
+  quote_id: string | null
+  name: string | null
+  email: string | null
+  config: AdminQuote['config']
+  estimate: AdminQuote['estimate']
+  created_at: string | null
+}
+
+type ProfileRow = {
+  id: string
+  name: string | null
+  email: string | null
+  created_at: string | null
+}
+
+function normalizeMoney(value: number | string | null | undefined) {
+  const amount = Number(value ?? 0)
+  return Number.isFinite(amount) ? amount : 0
+}
+
+function normalizeDate(value: string | null | undefined) {
+  const timestamp = new Date(value ?? '').getTime()
+  return Number.isNaN(timestamp) ? null : new Date(timestamp)
+}
+
+function mapOrderRowToAdminOrder(order: OrderRow): AdminOrder {
+  return {
+    id: String(order.id),
+    groupId: order.group_id ?? String(order.id),
+    orderNumber: order.order_number ?? String(order.id),
+    fileUrl: order.file_url ?? undefined,
+    fullName: order.full_name ?? 'Unknown customer',
+    phone: order.phone ?? undefined,
+    addressLine1: order.address_line1 ?? undefined,
+    city: order.city ?? undefined,
+    state: order.state ?? undefined,
+    pincode: order.pincode ?? undefined,
+    deliveryCharge: normalizeMoney(order.delivery_charge),
+    totalPrice: normalizeMoney(order.total_price),
+    material: order.material ?? 'Unknown material',
+    color: order.color ?? '',
+    status: order.status,
+    createdAt: order.created_at ?? '',
+    notes: order.notes,
+    itemCount: 1,
+    items: [{
+      id: String(order.id),
+      fileName: order.file_url?.split('/').pop() ?? '',
+      fileUrl: order.file_url ?? null,
+      material: order.material ?? 'Unknown material',
+      color: order.color ?? '',
+      infill: order.infill ?? 20,
+      price: normalizeMoney(order.price),
+      estimatedTime: order.estimated_time ?? 0,
+      weight: typeof order.weight === 'number' ? order.weight : null,
+      status: order.status,
+    }],
+  }
+}
+
+function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
+  const grouped = rows.reduce<Map<string, AdminOrder>>((acc, row) => {
+    const groupId = row.group_id ?? String(row.id)
+    const existing = acc.get(groupId)
+
+    if (existing) {
+      existing.items.push({
+        id: String(row.id),
+        fileName: row.file_url?.split('/').pop() ?? '',
+        fileUrl: row.file_url ?? null,
+        material: row.material ?? 'Unknown material',
+        color: row.color ?? '',
+        infill: row.infill ?? 20,
+        price: normalizeMoney(row.price),
+        estimatedTime: row.estimated_time ?? 0,
+        weight: typeof row.weight === 'number' ? row.weight : null,
+        status: row.status,
+      })
+      existing.totalPrice += normalizeMoney(row.total_price)
+      existing.deliveryCharge += normalizeMoney(row.delivery_charge)
+      existing.itemCount += 1
+    } else {
+      acc.set(groupId, {
+        id: String(row.id),
+        groupId,
+        orderNumber: row.order_number ?? String(row.id),
+        fileUrl: row.file_url ?? undefined,
+        fullName: row.full_name ?? 'Unknown customer',
+        phone: row.phone ?? undefined,
+        addressLine1: row.address_line1 ?? undefined,
+        city: row.city ?? undefined,
+        state: row.state ?? undefined,
+        pincode: row.pincode ?? undefined,
+        deliveryCharge: normalizeMoney(row.delivery_charge),
+        totalPrice: normalizeMoney(row.total_price),
+        material: row.material ?? 'Unknown material',
+        color: row.color ?? '',
+        status: row.status,
+        createdAt: row.created_at ?? '',
+        notes: row.notes,
+        itemCount: 1,
+        items: [{
+          id: String(row.id),
+          fileName: row.file_url?.split('/').pop() ?? '',
+          fileUrl: row.file_url ?? null,
+          material: row.material ?? 'Unknown material',
+          color: row.color ?? '',
+          infill: row.infill ?? 20,
+          price: normalizeMoney(row.price),
+          estimatedTime: row.estimated_time ?? 0,
+          weight: typeof row.weight === 'number' ? row.weight : null,
+          status: row.status,
+        }],
+      })
+    }
+
+    return acc
+  }, new Map())
+
+  return Array.from(grouped.values()).sort((a, b) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )
+}
+
+function mapQuoteRowToAdminQuote(quote: QuoteRow): AdminQuote {
+  return {
+    id: String(quote.id),
+    quote_id: quote.quote_id,
+    name: quote.name ?? 'Unknown customer',
+    email: quote.email ?? '',
+    config: quote.config,
+    estimate: quote.estimate,
+    status: 'pending',
+    createdAt: quote.created_at ?? '',
+  }
+}
+
+function mapProfileRowToAdminUser(profile: ProfileRow, adminEmails: string[]): AdminUser {
+  const normalizedEmail = (profile.email ?? '').trim().toLowerCase()
+
+  return {
+    id: profile.id,
+    name: profile.name ?? (profile.email?.split('@')[0] ?? 'Flux3D User'),
+    email: profile.email ?? '',
+    signupMethod: 'Email',
+    role: adminEmails.includes(normalizedEmail) ? 'admin' : 'customer-success',
+    lastActive: profile.created_at ? new Date(profile.created_at).toLocaleString('en-IN') : 'Never',
+  }
+}
+
+function getStatusColor(status: OrderStatus) {
+  switch (status) {
+    case 'pending':
+      return '#F59E0B'
+    case 'reviewed':
+      return '#38BDF8'
+    case 'approved':
+      return '#34D399'
+    case 'queued':
+      return '#818CF8'
+    case 'on-hold':
+      return '#E879F9'
+    case 'printing':
+      return '#22D3EE'
+    case 'shipped':
+      return '#A78BFA'
+    case 'completed':
+      return '#10B981'
+    case 'cancelled':
+      return '#94A3B8'
+    case 'rejected':
+      return '#FB7185'
+  }
+}
+
+function buildMonthlySeries(
+  orders: AdminOrder[],
+  getValue: (order: AdminOrder) => number
+) {
+  const buckets = orders.reduce<Record<string, number>>((acc, order) => {
+    const createdAt = normalizeDate(order.createdAt)
+    if (!createdAt) {
+      return acc
+    }
+
+    const label = createdAt.toLocaleString('en-US', { month: 'short' })
+    acc[label] = (acc[label] ?? 0) + getValue(order)
+    return acc
+  }, {})
+
+  return Object.entries(buckets).map(([label, value]) => ({ label, value })) as TrendPoint[]
 }
 
 async function listBucketFiles(prefix = ''): Promise<Array<StorageListItem & { path: string }>> {
@@ -104,9 +325,9 @@ export async function getAdminDashboardData() {
     supabase.from('orders').select('id', { count: 'exact', head: true }).in('status', ['printing', 'approved']),
     supabase
       .from('orders')
-      .select('id, order_number, user_id, material, total_price, status, created_at, notes, full_name')
+      .select('id, order_number, group_id, file_url, material, color, infill, price, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge')
       .order('created_at', { ascending: false })
-      .limit(8),
+      .limit(10),
     supabase
       .from('quotes')
       .select('id, quote_id, name, email, config, estimate, created_at, user_id')
@@ -128,12 +349,32 @@ export async function getAdminDashboardData() {
   ensureNoError(profileRows, 'Users')
   ensureNoError(materialRows, 'Materials')
 
-  const materialUsage = (orderRows.data ?? []).reduce<Record<string, number>>((acc, row) => {
+  const normalizedOrders = groupAdminOrders((orderRows.data ?? []) as OrderRow[])
+  const adminEmails = getAdminEmails()
+  const normalizedQuotes = (quoteRows.data ?? []).map((row) =>
+    mapQuoteRowToAdminQuote(row as QuoteRow)
+  )
+  const normalizedUsers = (profileRows.data ?? []).map((row) =>
+    mapProfileRowToAdminUser(row as ProfileRow, adminEmails)
+  )
+  const normalizedMaterials = (materialRows.data ?? []).map((row) =>
+    normalizeAdminMaterialRow(row as {
+      id: string
+      name: string
+      price_per_gram: number | string
+      density: number | string
+      colors: string[]
+      stock: AdminMaterial['stock']
+      created_at?: string | null
+    })
+  )
+
+  const materialUsage = normalizedOrders.reduce<Record<string, number>>((acc, row) => {
     acc[row.material] = (acc[row.material] ?? 0) + 1
     return acc
   }, {})
 
-  const revenue = (orderRows.data ?? []).reduce((sum, row) => sum + Number(row.total_price ?? 0), 0)
+  const revenue = normalizedOrders.reduce((sum, row) => sum + row.totalPrice, 0)
 
   return {
     metrics: [
@@ -142,10 +383,10 @@ export async function getAdminDashboardData() {
       { label: 'Pending Requests', value: String(pendingOrders.count ?? 0), change: 'Needs review', tone: 'warning' as const },
       { label: 'Active Prints', value: String(activeOrders.count ?? 0), change: 'In production', tone: 'neutral' as const },
     ] satisfies DashboardMetric[],
-    orders: (orderRows.data ?? []) as AdminOrder[],
-    quotes: (quoteRows.data ?? []) as AdminQuote[],
-    users: (profileRows.data ?? []) as AdminUser[],
-    materials: (materialRows.data ?? []) as AdminMaterial[],
+    orders: normalizedOrders,
+    quotes: normalizedQuotes,
+    users: normalizedUsers,
+    materials: normalizedMaterials,
     files: formatAdminFiles(fileRows),
     materialUsage: Object.entries(materialUsage).map(([label, value]) => ({
       label,
@@ -160,63 +401,38 @@ export async function getAdminOrdersData() {
   const { data, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, file_url, material, total_price, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
+      'id, order_number, group_id, file_url, material, color, infill, price, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
     )
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(error.message)
-  return (data ?? []).map((order) => ({
-    id: String(order.id),
-    orderNumber: order.order_number,
-    fileUrl: order.file_url,
-    fullName: order.full_name,
-    phone: order.phone,
-    addressLine1: order.address_line1,
-    city: order.city,
-    state: order.state,
-    pincode: order.pincode,
-    deliveryCharge: Number(order.delivery_charge ?? 0),
-    totalPrice: Number(order.total_price ?? 0),
-    material: order.material,
-    status: order.status,
-    createdAt: order.created_at,
-    notes: order.notes,
-  })) as AdminOrder[]
+  return groupAdminOrders((data ?? []) as OrderRow[])
 }
 
-export async function updateAdminOrderStatus(orderId: string, status: AdminOrder['status']) {
+export async function updateAdminOrderStatus(groupId: string, status: AdminOrder['status']) {
   const supabase = createAdminSupabaseClient()
-  const { data, error } = await supabase
+
+  const { error: updateError } = await supabase
     .from('orders')
     .update({
       status,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', orderId)
+    .eq('group_id', groupId)
+
+  if (updateError) throw new Error(updateError.message)
+
+  const { data, error } = await supabase
+    .from('orders')
     .select(
-      'id, order_number, file_url, material, total_price, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
+      'id, order_number, group_id, file_url, material, color, infill, price, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
     )
-    .single()
+    .eq('group_id', groupId)
+    .order('created_at', { ascending: false })
 
   if (error) throw new Error(error.message)
-
-  return {
-    id: String(data.id),
-    orderNumber: data.order_number,
-    fileUrl: data.file_url,
-    fullName: data.full_name,
-    phone: data.phone,
-    addressLine1: data.address_line1,
-    city: data.city,
-    state: data.state,
-    pincode: data.pincode,
-    deliveryCharge: Number(data.delivery_charge ?? 0),
-    totalPrice: Number(data.total_price ?? 0),
-    material: data.material,
-    status: data.status,
-    createdAt: data.created_at,
-    notes: data.notes,
-  } as AdminOrder
+  const grouped = groupAdminOrders((data ?? []) as OrderRow[])
+  return grouped[0]
 }
 
 export async function getAdminQuotesData() {
@@ -227,16 +443,7 @@ export async function getAdminQuotesData() {
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(error.message)
-  return (data ?? []).map((quote) => ({
-    id: String(quote.id),
-    quote_id: quote.quote_id,
-    name: quote.name,
-    email: quote.email,
-    config: quote.config,
-    estimate: quote.estimate,
-    status: 'pending',
-    createdAt: quote.created_at,
-  })) as AdminQuote[]
+  return (data ?? []).map((quote) => mapQuoteRowToAdminQuote(quote as QuoteRow))
 }
 
 export async function getAdminUsersData() {
@@ -282,7 +489,7 @@ export async function getAdminMaterialsData() {
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(error.message)
-  return (data ?? []) as AdminMaterial[]
+  return (data ?? []).map((material) => normalizeAdminMaterialRow(material))
 }
 
 type AdminMaterialInput = {
@@ -358,31 +565,298 @@ export async function getAdminFilesData() {
 
 export async function getAdminAnalyticsData() {
   const supabase = createAdminSupabaseClient()
-  const { data, error } = await supabase.from('orders').select('created_at, total_price, material, status')
+  const { data, error } = await supabase
+    .from('orders')
+    .select(
+      'id, order_number, group_id, file_url, material, color, infill, price, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge, payment_method, user_id'
+    )
   if (error) throw new Error(error.message)
 
-  const rows = data ?? []
+  const orders = groupAdminOrders((data ?? []) as OrderRow[])
+  const totalOrders = orders.length
 
-  const monthlyBuckets = rows.reduce<Record<string, number>>((acc, row) => {
-    const month = new Date(row.created_at).toLocaleString('en-US', { month: 'short' })
-    acc[month] = (acc[month] ?? 0) + Number(row.total_price ?? 0)
-    return acc
-  }, {})
-
-  const orderBuckets = rows.reduce<Record<string, number>>((acc, row) => {
-    const month = new Date(row.created_at).toLocaleString('en-US', { month: 'short' })
-    acc[month] = (acc[month] ?? 0) + 1
-    return acc
-  }, {})
-
-  const materialBuckets = rows.reduce<Record<string, number>>((acc, row) => {
+  const materialBuckets = orders.reduce<Record<string, number>>((acc, row) => {
     acc[row.material] = (acc[row.material] ?? 0) + 1
     return acc
   }, {})
 
+  const statusBuckets = orders.reduce<Record<OrderStatus, number>>((acc, row) => {
+    acc[row.status] = (acc[row.status] ?? 0) + 1
+    return acc
+  }, {} as Record<OrderStatus, number>)
+
+  const totalRevenue = orders.reduce((sum, order) => sum + order.totalPrice, 0)
+  const averageOrderValue = totalOrders === 0 ? 0 : totalRevenue / totalOrders
+  const activeProduction = (statusBuckets.printing ?? 0) + (statusBuckets.queued ?? 0)
+  const blockedOrders = (statusBuckets['on-hold'] ?? 0) + (statusBuckets.pending ?? 0)
+  const fulfilledOrders = (statusBuckets.completed ?? 0) + (statusBuckets.shipped ?? 0)
+
   return {
-    revenueTrend: Object.entries(monthlyBuckets).map(([label, value]) => ({ label, value })) as TrendPoint[],
-    ordersGrowth: Object.entries(orderBuckets).map(([label, value]) => ({ label, value })) as TrendPoint[],
-    materialUsage: Object.entries(materialBuckets).map(([label, value]) => ({ label, value, color: '#FF7B43' })) as DonutSlice[],
+    metrics: [
+      {
+        label: 'Average Order Value',
+        value: `₹${Math.round(averageOrderValue).toLocaleString('en-IN')}`,
+        change: 'Across all tracked orders',
+        tone: 'positive' as const,
+      },
+      {
+        label: 'Active Production',
+        value: String(activeProduction),
+        change: 'Queued or currently printing',
+        tone: 'neutral' as const,
+      },
+      {
+        label: 'Blocked Orders',
+        value: String(blockedOrders),
+        change: 'Pending review or on hold',
+        tone: blockedOrders > 0 ? 'warning' as const : 'neutral' as const,
+      },
+      {
+        label: 'Fulfilled Orders',
+        value: String(fulfilledOrders),
+        change: 'Shipped or completed',
+        tone: 'positive' as const,
+      },
+    ] satisfies DashboardMetric[],
+    revenueTrend: buildMonthlySeries(orders, (order) => order.totalPrice),
+    ordersGrowth: buildMonthlySeries(orders, () => 1),
+    materialUsage: Object.entries(materialBuckets).map(([label, value]) => ({
+      label,
+      value: totalOrders === 0 ? 0 : Math.round((value / totalOrders) * 100),
+      color: '#FF7B43',
+    })) as DonutSlice[],
+    statusBreakdown: orderStatuses
+      .map((status) => ({
+        label: getOrderStatusLabel(status),
+        value: totalOrders === 0 ? 0 : Math.round(((statusBuckets[status] ?? 0) / totalOrders) * 100),
+        color: getStatusColor(status),
+      }))
+      .filter((slice) => slice.value > 0) as DonutSlice[],
   }
+}
+
+export async function getAdminFullAnalytics() {
+  const supabase = createAdminSupabaseClient()
+
+  const [
+    ordersResult,
+    materialsResult,
+    profilesResult,
+    printersResult,
+  ] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('id, group_id, total_price, status, material, city, payment_method, user_id, created_at'),
+    supabase
+      .from('materials')
+      .select('id, name, price_per_gram, stock, current_stock, min_threshold, sku, type, brand, unit'),
+    supabase
+      .from('profiles')
+      .select('id, email, created_at'),
+    supabase
+      .from('printers')
+      .select('id, name, model, status, job, customer, material, progress, last_active'),
+  ])
+
+  if (ordersResult.error) throw new Error(ordersResult.error.message)
+  if (materialsResult.error) throw new Error(materialsResult.error.message)
+  if (printersResult.error) throw new Error(printersResult.error.message)
+
+  const orders = ordersResult.data ?? []
+  const materials = materialsResult.data ?? []
+  const profiles = profilesResult.data ?? []
+  const printers = printersResult.data ?? []
+
+  const totalRevenue = orders.reduce((sum, o) => sum + normalizeMoney(o.total_price), 0)
+
+  const ordersByStatus = orders.reduce<Record<string, number>>((acc, o) => {
+    acc[o.status] = (acc[o.status] ?? 0) + 1
+    return acc
+  }, {})
+
+  const revenueByPaymentMethod = orders.reduce<Record<string, number>>((acc, o) => {
+    const method = o.payment_method ?? 'Unknown'
+    acc[method] = (acc[method] ?? 0) + normalizeMoney(o.total_price)
+    return acc
+  }, {})
+
+  const topMaterialsByRevenue = Object.entries(
+    orders.reduce<Record<string, number>>((acc, o) => {
+      acc[o.material] = (acc[o.material] ?? 0) + normalizeMoney(o.total_price)
+      return acc
+    }, {})
+  )
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+
+  const ordersByCity = Object.entries(
+    orders.reduce<Record<string, number>>((acc, o) => {
+      const city = o.city ?? 'Unknown'
+      acc[city] = (acc[city] ?? 0) + 1
+      return acc
+    }, {})
+  ).sort((a, b) => b[1] - a[1])
+
+  const customerOrderCounts = orders.reduce<Record<string, number>>((acc, o) => {
+    const userId = o.user_id ?? 'anonymous'
+    acc[userId] = (acc[userId] ?? 0) + 1
+    return acc
+  }, {})
+
+  const newCustomers = Object.values(customerOrderCounts).filter((count) => count === 1).length
+  const returningCustomers = Object.values(customerOrderCounts).filter((count) => count > 1).length
+
+  const printerPerformance = printers.map((printer) => ({
+    id: String(printer.id),
+    name: printer.name ?? 'Unknown Printer',
+    model: printer.model,
+    status: printer.status ?? 'Unknown',
+    job: printer.job,
+    customer: printer.customer,
+    material: printer.material,
+    progress: printer.progress ?? 0,
+    lastActive: printer.last_active,
+  }))
+
+  return {
+    revenueAnalytics: {
+      totalRevenue,
+      revenueByPaymentMethod: Object.entries(revenueByPaymentMethod).map(([method, amount]) => ({
+        method,
+        amount,
+      })),
+    },
+    orderAnalytics: {
+      totalOrders: orders.length,
+      ordersByStatus: Object.entries(ordersByStatus).map(([status, count]) => ({
+        status,
+        count,
+      })),
+      ordersByCity: ordersByCity.map(([city, count]) => ({ city, count })),
+    },
+    materialAnalytics: {
+      topMaterialsByRevenue: topMaterialsByRevenue.map(([material, revenue]) => ({
+        material,
+        revenue,
+      })),
+      materials: materials.map((m) => ({
+        id: String(m.id),
+        name: m.name,
+        sku: m.sku,
+        type: m.type,
+        brand: m.brand,
+        price_per_gram: m.price_per_gram,
+        stock: m.stock,
+        current_stock: m.current_stock,
+        min_threshold: m.min_threshold,
+        unit: m.unit,
+      })),
+    },
+    geographyAnalytics: {
+      ordersByCity: ordersByCity.map(([city, count]) => ({ city, count })),
+    },
+    customerAnalytics: {
+      newCustomers,
+      returningCustomers,
+      totalCustomers: Object.keys(customerOrderCounts).length,
+    },
+    printerPerformance: printerPerformance,
+  }
+}
+
+export async function getAdminPaymentsData() {
+  return {
+    payments: [],
+    summary: {
+      totalCollected: 0,
+      pending: 0,
+      refunded: 0,
+      gatewayFees: 0,
+    },
+  }
+}
+
+export async function getAdminInventoryData() {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('materials')
+    .select('id, name, price_per_gram, density, colors, stock, created_at, updated_at')
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+
+  return (data ?? []).map((m) => ({
+    id: String(m.id),
+    name: m.name,
+    price_per_gram: normalizeMoney(m.price_per_gram),
+    density: normalizeMoney(m.density) ?? 0,
+    colors: Array.isArray(m.colors) ? m.colors : [],
+    stock: m.stock ?? 'Healthy',
+    created_at: m.created_at,
+    updated_at: m.updated_at,
+  }))
+}
+
+export async function getAdminTicketsData() {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('support_tickets')
+    .select('id, ticket_id, customer, customer_email, customer_phone, subject, category, priority, status, assigned_to, created_at, last_updated, description')
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+
+  return (data ?? []).map((t) => ({
+    id: String(t.id),
+    ticketId: t.ticket_id ?? String(t.id),
+    customer: t.customer ?? 'Unknown',
+    customerEmail: t.customer_email,
+    customerPhone: t.customer_phone,
+    subject: t.subject ?? '',
+    category: t.category ?? 'Other',
+    priority: t.priority ?? 'Normal',
+    status: t.status ?? 'Open',
+    assignedTo: t.assigned_to,
+    created: t.created_at ?? '',
+    lastUpdated: t.last_updated ?? t.created_at ?? '',
+    description: t.description,
+  }))
+}
+
+export async function getAdminPrintersData() {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('printers')
+    .select('id, name, model, status, job, customer, material, progress, layer_current, layer_total, eta, temp_nozzle, temp_bed, speed, uv_power, layer_time, last_completed, idle_since, last_active, note, uptime, jobs_completed, build_volume, max_speed, assigned_materials')
+    .order('name', { ascending: true })
+
+  if (error) throw new Error(error.message)
+
+  return (data ?? []).map((p) => ({
+    id: String(p.id),
+    name: p.name ?? 'Unknown Printer',
+    model: p.model,
+    status: p.status ?? 'Offline',
+    job: p.job,
+    customer: p.customer,
+    material: p.material,
+    progress: p.progress ?? 0,
+    layerCurrent: p.layer_current,
+    layerTotal: p.layer_total,
+    eta: p.eta,
+    tempNozzle: p.temp_nozzle,
+    tempBed: p.temp_bed,
+    speed: p.speed,
+    uvPower: p.uv_power,
+    layerTime: p.layer_time,
+    lastCompleted: p.last_completed,
+    idleSince: p.idle_since,
+    lastActive: p.last_active,
+    note: p.note,
+    uptime: p.uptime,
+    jobsCompleted: p.jobs_completed ?? 0,
+    buildVolume: p.build_volume,
+    maxSpeed: p.max_speed,
+    assignedMaterials: Array.isArray(p.assigned_materials) ? p.assigned_materials : [],
+  }))
 }

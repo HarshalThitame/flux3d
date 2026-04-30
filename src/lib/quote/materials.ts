@@ -200,7 +200,34 @@ export const layerHeightOptions: LayerHeightOption[] = [
   },
 ]
 
-export function getMaterialById(materialId: string) {
-  return quoteMaterials.find((material) => material.id === materialId) ?? quoteMaterials[0]
+function normalizeValue(value: string) {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')
 }
 
+const materialAliases: Record<string, string[]> = {
+  'pla-plus': ['pla', 'pla+', 'pla-plus', 'pla-pro'],
+  abs: ['abs', 'abs-tough'],
+  petg: ['petg'],
+  asa: ['asa'],
+  tpu: ['tpu'],
+  'resin-4k': ['resin', 'resin-4k'],
+  'silk-gold': ['silk', 'gold', 'silk-gold'],
+  'multi-color': ['multi', 'multi-color', 'ams', 'color'],
+}
+
+export function getMaterialById(materialId: string, materials: QuoteMaterial[] = quoteMaterials) {
+  const normalizedMaterialId = normalizeValue(materialId)
+
+  return (
+    materials.find((material) => normalizeValue(material.id) === normalizedMaterialId) ??
+    materials.find((material) => normalizeValue(material.name) === normalizedMaterialId) ??
+    materials.find((material) => {
+      const aliases = materialAliases[normalizedMaterialId] ?? [normalizedMaterialId]
+      const normalizedName = normalizeValue(material.name)
+
+      return aliases.some((alias) => normalizedName.includes(normalizeValue(alias)))
+    }) ??
+    materials[0] ??
+    quoteMaterials[0]
+  )
+}

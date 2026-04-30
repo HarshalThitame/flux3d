@@ -11,6 +11,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 type OrderRow = {
   id: string
   order_number: string | null
+  group_id: string | null
   status: OrderStatus
   total_price: number
   delivery_charge: number
@@ -21,6 +22,31 @@ type OrderRow = {
   city: string
   state: string
   pincode: string
+  file_url: string | null
+  price: number
+  estimated_time: number
+}
+
+type GroupedOrder = {
+  groupId: string
+  orderNumber: string
+  status: OrderStatus
+  totalPrice: number
+  deliveryCharge: number
+  createdAt: string
+  fullName: string
+  city: string
+  state: string
+  pincode: string
+  itemCount: number
+  items: {
+    id: string
+    material: string
+    color: string
+    price: number
+    estimatedTime: number
+    fileUrl: string | null
+  }[]
 }
 
 export default async function MyOrdersPage() {
@@ -29,7 +55,7 @@ export default async function MyOrdersPage() {
   const { data: orders, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, status, total_price, delivery_charge, created_at, material, color, full_name, city, state, pincode'
+      'id, order_number, group_id, status, total_price, delivery_charge, created_at, material, color, full_name, city, state, pincode, file_url, price, estimated_time'
     )
     .eq('user_id', auth.user.id)
     .order('created_at', { ascending: false })
@@ -41,6 +67,49 @@ export default async function MyOrdersPage() {
   }
 
   const rows = (orders ?? []) as OrderRow[]
+
+  const groupedOrders = rows.reduce<GroupedOrder[]>((acc, row) => {
+    const groupId = row.group_id ?? row.id
+
+    const existing = acc.find((g) => g.groupId === groupId)
+    if (existing) {
+      existing.items.push({
+        id: row.id,
+        material: row.material,
+        color: row.color,
+        price: Number(row.price),
+        estimatedTime: Number(row.estimated_time),
+        fileUrl: row.file_url,
+      })
+      existing.totalPrice += Number(row.total_price)
+      existing.deliveryCharge += Number(row.delivery_charge)
+      existing.itemCount += 1
+    } else {
+      acc.push({
+        groupId,
+        orderNumber: row.order_number ?? row.id,
+        status: row.status,
+        totalPrice: Number(row.total_price),
+        deliveryCharge: Number(row.delivery_charge),
+        createdAt: row.created_at,
+        fullName: row.full_name,
+        city: row.city,
+        state: row.state,
+        pincode: row.pincode,
+        itemCount: 1,
+        items: [{
+          id: row.id,
+          material: row.material,
+          color: row.color,
+          price: Number(row.price),
+          estimatedTime: Number(row.estimated_time),
+          fileUrl: row.file_url,
+        }],
+      })
+    }
+
+    return acc
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#050810] px-4 pb-16 pt-28 text-white md:px-8">
@@ -58,7 +127,7 @@ export default async function MyOrdersPage() {
           </p>
         </div>
 
-        {rows.length === 0 ? (
+        {groupedOrders.length === 0 ? (
           <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-8 text-center backdrop-blur-xl">
             <div className="text-xl font-medium text-white">
               {ordersTableUnavailable ? 'Orders unavailable' : 'No print requests yet.'}
@@ -76,81 +145,80 @@ export default async function MyOrdersPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-5 lg:grid-cols-2">
-            {rows.map((order) => (
+          <div className="space-y-5">
+            {groupedOrders.map((order) => (
               <Link
-                key={order.id}
-                href={`/my-orders/${order.id}`}
-                className="rounded-[28px] border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl transition-colors hover:border-white/20"
+                key={order.groupId}
+                href={`/my-orders/${order.items[0].id}`}
+                className="block rounded-[28px] border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl transition-colors hover:border-white/20"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">
-                      Order ID
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex flex-1 items-start gap-5">
+                    <div className="rounded-2xl border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 p-3 text-[#FF9A72]">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                      </svg>
                     </div>
-                    <div className="mt-2 font-[var(--font-syne)] text-2xl font-bold text-white">
-                      {order.order_number ?? order.id}
-                    </div>
-                  </div>
-                  <div
-                    className={`rounded-full border px-3 py-1 text-xs ${getOrderStatusClasses(order.status)}`}
-                  >
-                    {getOrderStatusLabel(order.status)}
-                  </div>
-                </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <div className="font-[var(--font-syne)] text-xl font-bold text-white">
+                          {order.orderNumber}
+                        </div>
+                        <div
+                          className={`rounded-full border px-3 py-1 text-xs ${getOrderStatusClasses(order.status)}`}
+                        >
+                          {getOrderStatusLabel(order.status)}
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs text-[#7a82a0]">
+                        {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </div>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">
-                      Total price
-                    </div>
-                    <div className="mt-2 text-lg font-semibold text-white">
-                      ₹{Number(order.total_price).toFixed(0)}
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">
-                      Date
-                    </div>
-                    <div className="mt-2 text-lg font-semibold text-white">
-                      {new Date(order.created_at).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">
-                      Delivery
-                    </div>
-                    <div className="mt-2 text-sm text-white">
-                      {Number(order.delivery_charge) === 0
-                        ? 'Free delivery'
-                        : `₹${Number(order.delivery_charge).toFixed(0)}`}
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">
-                      Material
-                    </div>
-                    <div className="mt-2 text-sm text-white">{order.material}</div>
-                  </div>
-                </div>
+                      {order.itemCount > 1 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {order.items.map((item) => (
+                            <span
+                              key={item.id}
+                              className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-1.5 text-xs text-[#c8d0e9]"
+                            >
+                              {item.material} · {item.color}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">
-                      Recipient
+                      {order.itemCount === 1 && (
+                        <div className="mt-2 text-sm text-white">{order.items[0].material} · {order.items[0].color}</div>
+                      )}
                     </div>
-                    <div className="mt-2 text-sm text-white">{order.full_name}</div>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">
-                      Address
+
+                  <div className="flex items-center gap-8 border-t border-white/8 pt-4 lg:border-t-0 lg:pt-0">
+                    <div className="text-center">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Total</div>
+                      <div className="mt-1 font-[var(--font-syne)] text-xl font-bold text-white">
+                        ₹{order.totalPrice.toFixed(0)}
+                      </div>
                     </div>
-                    <div className="mt-2 text-sm text-white">
-                      {order.city}, {order.state} {order.pincode}
+                    <div className="text-center">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Items</div>
+                      <div className="mt-1 font-[var(--font-syne)] text-xl font-bold text-[#7dd3fc]">
+                        {order.itemCount}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Delivery</div>
+                      <div className="mt-1 text-sm font-medium text-white">
+                        {order.deliveryCharge === 0 ? 'Free' : `₹${order.deliveryCharge.toFixed(0)}`}
+                      </div>
+                    </div>
+                    <div className="hidden text-left sm:block">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Ship to</div>
+                      <div className="mt-1 text-sm text-white">{order.city}, {order.state}</div>
                     </div>
                   </div>
                 </div>

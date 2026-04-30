@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import type { DonutSlice } from '@/lib/admin/types'
 
 export default function DonutChartCard({
@@ -32,30 +33,40 @@ export default function DonutChartCard({
     .join(', ')
 
   return (
-    <div className="rounded-[28px] border border-white/10 bg-[rgba(10,16,31,0.94)] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
+    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0a0f1e] p-5">
       <div>
-        <h3 className="font-[var(--font-syne)] text-2xl font-bold text-white">{title}</h3>
-        <p className="mt-2 text-sm text-[#97a2c3]">{subtitle}</p>
+        <h3 className="text-lg font-semibold text-white">{title}</h3>
+        <p className="mt-1 text-sm text-[#7a82a0]">{subtitle}</p>
       </div>
-      <div className="mt-8 flex flex-col items-center gap-6 lg:flex-row lg:items-center lg:justify-between">
-        <div
-          className="grid h-52 w-52 place-items-center rounded-full"
-          style={{ background: `conic-gradient(${background})` }}
-        >
-          <div className="grid h-34 w-34 place-items-center rounded-full bg-[#08101e] text-center">
-            <div className="font-[var(--font-syne)] text-3xl font-extrabold text-white">{total}%</div>
-            <div className="text-xs uppercase tracking-[0.18em] text-[#8f9abb]">Usage mix</div>
+      <div className="mt-6 flex flex-col items-center gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative">
+          <div
+            className="grid h-44 w-44 place-items-center rounded-full shadow-inner"
+            style={{ background: `conic-gradient(${background})` }}
+          >
+            <div className="grid h-[136px] w-[136px] place-items-center rounded-full bg-[#0a0f1e] text-center">
+              <div>
+                <div className="font-[var(--font-syne)] text-2xl font-bold text-white">{total}</div>
+                <div className="text-[10px] uppercase tracking-[0.15em] text-[#5a6580]">Total</div>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="w-full space-y-3">
-          {slices.map((slice) => (
-            <div key={slice.label} className="flex items-center justify-between rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
-              <div className="inline-flex items-center gap-3">
-                <span className="h-3 w-3 rounded-full" style={{ backgroundColor: slice.color }} />
-                <span className="text-sm text-white">{slice.label}</span>
+        <div className="w-full space-y-2">
+          {slices.map((slice, i) => (
+            <motion.div
+              key={slice.label}
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.08 }}
+              className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.02] px-3 py-2.5"
+            >
+              <div className="inline-flex items-center gap-2.5">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full shadow-sm" style={{ backgroundColor: slice.color }} />
+                <span className="text-xs text-[#c6cee5]">{slice.label}</span>
               </div>
-              <div className="text-sm font-medium text-[#d8def1]">{slice.value}%</div>
-            </div>
+              <div className="text-xs font-medium text-white">{slice.value}</div>
+            </motion.div>
           ))}
         </div>
       </div>

@@ -2,22 +2,28 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { ArrowRight, Clock3, IndianRupee, PackageCheck, Scale, Sparkles, Truck } from 'lucide-react'
+import { ArrowRight, Clock3, IndianRupee, PackageCheck, Scale, ShoppingCart, Sparkles, Truck } from 'lucide-react'
 import { getMaterialById } from '@/lib/quote/materials'
-import type { PriceBreakdown } from '@/lib/quote/types'
+import type { PriceBreakdown, QuoteMaterial } from '@/lib/quote/types'
+import { useCart } from '@/lib/cart/context'
+import type { QuoteConfig } from '@/lib/quote/types'
 
 type QuoteSummaryProps = {
+  materials: QuoteMaterial[]
   materialId: string
   quoteId: string
   priceBreakdown: PriceBreakdown | null
   isSignedIn: boolean
   canOrder: boolean
-  isSubmittingOrder: boolean
-  orderNotes: string
   deliveryCharge: number
   totalPrice: number
-  onOrderNotesChange: (value: string) => void
-  onOrderPrint: () => void
+  selectedModel: {
+    fileName: string
+    dimensionsMm: { x: number; y: number; z: number }
+  } | null
+  config: QuoteConfig
+  onAddToCart: () => void
+  isInCart: boolean
 }
 
 function SummarySkeleton() {
@@ -31,19 +37,20 @@ function SummarySkeleton() {
 }
 
 export default function QuoteSummary({
+  materials,
   materialId,
   quoteId,
   priceBreakdown,
   isSignedIn,
   canOrder,
-  isSubmittingOrder,
-  orderNotes,
   deliveryCharge,
   totalPrice,
-  onOrderNotesChange,
-  onOrderPrint,
+  selectedModel,
+  config,
+  onAddToCart,
+  isInCart,
 }: QuoteSummaryProps) {
-  const material = getMaterialById(materialId)
+  const material = getMaterialById(materialId, materials)
 
   return (
     <motion.aside
@@ -111,7 +118,7 @@ export default function QuoteSummary({
                 </div>
                 <div className="mt-2 inline-flex items-center gap-2 text-xs text-[#7a82a0]">
                   <Clock3 className="h-3.5 w-3.5" />
-                  Calculated from geometry, layer height, infill, and part complexity
+                  Based on print weight, layer height, infill, supports, and part complexity
                 </div>
               </motion.div>
 
@@ -125,22 +132,50 @@ export default function QuoteSummary({
                 </div>
                 <div className="mt-3 grid gap-2 text-sm text-[#ffe0d4]">
                   <div className="flex justify-between">
-                    <span>Print cost</span>
+                    <span>Material cost</span>
+                    <span>₹{priceBreakdown.materialCost.toFixed(0)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Machine cost</span>
+                    <span>₹{priceBreakdown.timeCost.toFixed(0)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Labour cost</span>
+                    <span>₹{priceBreakdown.labourCost.toFixed(0)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Support material</span>
+                    <span>₹{priceBreakdown.supportCost.toFixed(0)}</span>
+                  </div>
+                  <div className="border-t border-white/8 pt-2 mt-1 flex justify-between text-xs text-[#7a82a0]">
+                    <span>Subtotal</span>
+                    <span>₹{priceBreakdown.subtotal.toFixed(0)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-[#7a82a0]">
+                    <span>Overhead (15%)</span>
+                    <span>₹{priceBreakdown.overheadAmount.toFixed(0)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-[#7a82a0]">
+                    <span>Wastage buffer (5%)</span>
+                    <span>₹{priceBreakdown.wastageAmount.toFixed(0)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-[#7a82a0]">
+                    <span>Profit margin (22%)</span>
+                    <span>₹{priceBreakdown.profitMargin.toFixed(0)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-[#7a82a0]">
+                    <span>GST (18%)</span>
+                    <span>₹{priceBreakdown.gstAmount.toFixed(0)}</span>
+                  </div>
+                  <div className="border-t border-white/8 pt-2 mt-1 flex justify-between font-medium text-white">
+                    <span>Print total</span>
                     <span>₹{priceBreakdown.total.toFixed(0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Delivery charge</span>
                     <span>{deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge.toFixed(0)}`}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Setup</span>
-                    <span>₹{priceBreakdown.setupCost.toFixed(0)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Supports</span>
-                    <span>₹{priceBreakdown.supportCost.toFixed(0)}</span>
-                  </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-xs text-[#7a82a0]">
                     <span>Estimated print time</span>
                     <span>{priceBreakdown.estimatedHours.toFixed(1)} hr</span>
                   </div>
@@ -168,30 +203,42 @@ export default function QuoteSummary({
               </div>
             </div>
 
-            <div className="mt-5 rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
-              <label className="block text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">
-                Notes for admin
-              </label>
-              <textarea
-                value={orderNotes}
-                onChange={(event) => onOrderNotesChange(event.target.value)}
-                rows={4}
-                placeholder="Add special instructions, deadlines, or finishing requests."
-                className="mt-3 w-full rounded-[18px] border border-white/10 bg-[#0d1120] px-4 py-3 text-sm text-white outline-none transition focus:border-[#FF5C1A]/40"
-              />
-            </div>
+            <div className="grid gap-3">
+              <motion.button
+                type="button"
+                onClick={onAddToCart}
+                disabled={!canOrder}
+                whileHover={{ y: -2, scale: canOrder && !isInCart ? 1.01 : 1 }}
+                whileTap={{ scale: canOrder && !isInCart ? 0.985 : 1 }}
+                className={`inline-flex w-full items-center justify-center gap-2 rounded-[20px] px-5 py-4 text-sm font-semibold transition-all hover:translate-y-[-1px] hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55 ${
+                  isInCart
+                    ? 'border border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
+                    : 'bg-[#FF5C1A] text-white'
+                }`}
+              >
+                {isInCart ? (
+                  <>
+                    Added to Cart
+                    <PackageCheck className="h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    Add to Cart
+                    <ShoppingCart className="h-4 w-4" />
+                  </>
+                )}
+              </motion.button>
 
-            <motion.button
-              type="button"
-              onClick={onOrderPrint}
-              disabled={!canOrder || isSubmittingOrder}
-              whileHover={{ y: -2, scale: canOrder && !isSubmittingOrder ? 1.01 : 1 }}
-              whileTap={{ scale: canOrder && !isSubmittingOrder ? 0.985 : 1 }}
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[20px] bg-[#FF5C1A] px-5 py-4 text-sm font-semibold text-white transition-all hover:translate-y-[-1px] hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55"
-            >
-              {isSubmittingOrder ? 'Preparing Delivery Step...' : 'Continue to Delivery'}
-              <PackageCheck className="h-4 w-4" />
-            </motion.button>
+              {isInCart && (
+                <Link
+                  href="/cart"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] border border-[#FF5C1A]/30 bg-[#FF5C1A]/10 px-4 py-3 text-sm font-medium text-[#FF9A72] transition-colors hover:bg-[#FF5C1A]/20"
+                >
+                  View Cart
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
+            </div>
 
             {!isSignedIn ? (
               <Link

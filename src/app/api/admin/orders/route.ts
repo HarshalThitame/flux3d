@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { getAdminOrdersData, updateAdminOrderStatus } from '@/lib/admin/queries'
+import { orderStatuses, type OrderStatus } from '@/lib/orders'
 import { requireAdminRequest } from '@/lib/admin/request'
 
 export async function GET() {
@@ -21,19 +22,23 @@ export async function PATCH(request: Request) {
 
   try {
     const body = (await request.json()) as {
-      orderId?: string
-      status?: 'pending' | 'reviewed' | 'approved' | 'printing' | 'completed' | 'rejected'
+      groupId?: string
+      status?: OrderStatus
     }
 
-    if (!body.orderId) {
-      return NextResponse.json({ error: 'Order id is required.' }, { status: 400 })
+    if (!body.groupId) {
+      return NextResponse.json({ error: 'Group id is required.' }, { status: 400 })
     }
 
     if (!body.status) {
       return NextResponse.json({ error: 'Status is required.' }, { status: 400 })
     }
 
-    const order = await updateAdminOrderStatus(body.orderId, body.status)
+    if (!orderStatuses.includes(body.status)) {
+      return NextResponse.json({ error: 'Invalid status.' }, { status: 400 })
+    }
+
+    const order = await updateAdminOrderStatus(body.groupId, body.status)
     return NextResponse.json({ order })
   } catch (error) {
     return getAdminApiErrorResponse(error)

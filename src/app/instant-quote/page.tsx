@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import InstantQuoteWorkspace from '@/components/instant-quote/InstantQuoteWorkspace'
 import { getCurrentUserProfile } from '@/lib/auth/server'
+import { getPublicQuoteMaterials } from '@/lib/public-materials'
 import { absoluteUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
@@ -27,11 +28,16 @@ export const metadata: Metadata = {
 export default async function InstantQuotePage() {
   const auth = await getCurrentUserProfile()
   const initialQuoteId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+  const materials = await getPublicQuoteMaterials()
 
   return (
     <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
       <Navbar transparent />
-      <InstantQuoteWorkspace user={auth?.profile ?? null} initialQuoteId={initialQuoteId} />
+      <InstantQuoteWorkspace
+        user={auth?.profile ?? null}
+        initialQuoteId={initialQuoteId}
+        materials={materials}
+      />
     </div>
   )
 }

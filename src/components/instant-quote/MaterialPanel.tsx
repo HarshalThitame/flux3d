@@ -2,16 +2,19 @@
 
 import { motion } from 'framer-motion'
 import { Check, Palette, Package2 } from 'lucide-react'
-import { getMaterialById, quoteMaterials } from '@/lib/quote/materials'
+import { getMaterialById } from '@/lib/quote/materials'
+import type { QuoteMaterial } from '@/lib/quote/types'
 
 type MaterialPanelProps =
   | {
       variant: 'material'
+      materials: QuoteMaterial[]
       selectedMaterialId: string
       onMaterialChange: (materialId: string) => void
     }
   | {
       variant: 'color'
+      materials: QuoteMaterial[]
       selectedMaterialId: string
       selectedColorHex: string
       onColorChange: (hex: string) => void
@@ -57,7 +60,7 @@ export default function MaterialPanel(props: MaterialPanelProps) {
         description="Pick the material that matches the finish, strength, and performance your part deserves."
       >
         <div className="grid gap-3">
-          {quoteMaterials.map((material) => {
+          {props.materials.map((material) => {
             const isActive = material.id === props.selectedMaterialId
 
             return (
@@ -93,7 +96,7 @@ export default function MaterialPanel(props: MaterialPanelProps) {
     )
   }
 
-  const activeMaterial = getMaterialById(props.selectedMaterialId)
+  const activeMaterial = getMaterialById(props.selectedMaterialId, props.materials)
 
   return (
     <PanelShell

@@ -60,13 +60,18 @@ export type QuoteConfig = {
 export type PriceBreakdown = {
   scaledVolumeCm3: number
   materialWeightGrams: number
+  supportWeightGrams: number
   materialCost: number
   estimatedHours: number
   timeCost: number
+  labourCost: number
   setupCost: number
   supportCost: number
   subtotal: number
+  overheadAmount: number
+  wastageAmount: number
   profitMargin: number
+  gstAmount: number
   total: number
   dimensionsMm: {
     x: number

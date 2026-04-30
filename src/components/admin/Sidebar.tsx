@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ChevronLeft, Printer } from 'lucide-react'
-import { adminNavItems } from '@/lib/admin/mock-data'
+import { ChevronLeft, ChevronRight, Printer } from 'lucide-react'
+import { adminNavItems } from '@/lib/admin/nav-config'
 
 export default function Sidebar({
   collapsed,
@@ -13,10 +13,12 @@ export default function Sidebar({
   onToggle: () => void
 }) {
   const pathname = usePathname()
+  const mainItems = adminNavItems.filter(item => item.section === 'main')
+  const secondaryItems = adminNavItems.filter(item => item.section === 'secondary')
 
   return (
     <aside className={`fixed left-0 top-0 z-40 hidden h-screen border-r border-white/10 bg-[rgba(6,10,20,0.92)] backdrop-blur-xl transition-all md:block ${collapsed ? 'w-[92px]' : 'w-[280px]'}`}>
-      <div className="flex h-full flex-col px-4 py-5">
+      <div className="flex h-full flex-col px-4 py-5 overflow-y-auto scrollbar-hide">
         <div className="flex items-center justify-between gap-3 px-2">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[linear-gradient(135deg,#FF7B43,#39BDF8)] text-white shadow-[0_10px_30px_rgba(57,189,248,0.2)]">
@@ -24,8 +26,8 @@ export default function Sidebar({
             </div>
             {!collapsed ? (
               <div>
-                <div className="font-[var(--font-syne)] text-lg font-bold text-white">Flux3D</div>
-                <div className="text-xs uppercase tracking-[0.18em] text-[#7f8aac]">Admin Console</div>
+                <div className="font-[var(--font-syne)] text-lg font-bold text-white">Flux 3D</div>
+                <div className="text-xs uppercase tracking-[0.18em] text-[#7f8aac]">Admin</div>
               </div>
             ) : null}
           </div>
@@ -39,7 +41,7 @@ export default function Sidebar({
         </div>
 
         <nav className="mt-8 space-y-2">
-          {adminNavItems.map((item) => {
+          {mainItems.map((item) => {
             const active = pathname === item.href
             const Icon = item.icon
 
@@ -60,12 +62,33 @@ export default function Sidebar({
           })}
         </nav>
 
+        {!collapsed && secondaryItems.length > 0 && (
+          <div className="mt-6 border-t border-white/10 pt-4">
+            <div className="mb-2 px-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#7f8aac]">Support</div>
+            <div className="space-y-2">
+              {secondaryItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium text-[#96a2c3] transition hover:bg-white/[0.04] hover:text-white"
+                  >
+                    <Icon className="h-5 w-5 shrink-0" />
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="mt-auto rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,123,67,0.12),rgba(255,255,255,0.03))] p-4">
           {!collapsed ? (
             <>
-              <div className="text-sm font-semibold text-white">Operations Health</div>
+              <div className="text-sm font-semibold text-white">System Healthy</div>
               <div className="mt-2 text-sm leading-6 text-[#cfd7ee]">
-                18 printers active, 94.2% SLA this week, and no material blockers on high-priority jobs.
+                6 printers active · 87% utilization
               </div>
             </>
           ) : (

@@ -2,8 +2,13 @@ export const orderStatuses = [
   'pending',
   'reviewed',
   'approved',
+  'queued',
+  'on-hold',
   'printing',
+  'shipped',
+  'delivered',
   'completed',
+  'cancelled',
   'rejected',
 ] as const
 
@@ -101,10 +106,18 @@ export function getOrderStatusLabel(status: OrderStatus) {
       return 'Reviewed'
     case 'approved':
       return 'Approved'
+    case 'queued':
+      return 'Queued'
+    case 'on-hold':
+      return 'On hold'
     case 'printing':
       return 'Printing'
+    case 'shipped':
+      return 'Shipped'
     case 'completed':
       return 'Completed'
+    case 'cancelled':
+      return 'Cancelled'
     case 'rejected':
       return 'Rejected'
   }
@@ -118,10 +131,18 @@ export function getOrderStatusClasses(status: OrderStatus) {
       return 'border-sky-400/20 bg-sky-400/10 text-sky-100'
     case 'approved':
       return 'border-emerald-400/20 bg-emerald-400/10 text-emerald-100'
+    case 'queued':
+      return 'border-indigo-400/20 bg-indigo-400/10 text-indigo-100'
+    case 'on-hold':
+      return 'border-fuchsia-400/20 bg-fuchsia-400/10 text-fuchsia-100'
     case 'printing':
       return 'border-cyan-400/20 bg-cyan-400/10 text-cyan-100'
+    case 'shipped':
+      return 'border-violet-400/20 bg-violet-400/10 text-violet-100'
     case 'completed':
       return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-50'
+    case 'cancelled':
+      return 'border-slate-400/20 bg-slate-400/10 text-slate-100'
     case 'rejected':
       return 'border-rose-400/20 bg-rose-400/10 text-rose-100'
   }
