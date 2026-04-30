@@ -7,10 +7,10 @@ import { adminNavItems } from '@/lib/admin/nav-config'
 
 export default function Sidebar({
   collapsed,
-  onToggle,
+  onToggleAction,
 }: {
   collapsed: boolean
-  onToggle: () => void
+  onToggleAction: () => void
 }) {
   const pathname = usePathname()
   const mainItems = adminNavItems.filter(item => item.section === 'main')
@@ -33,7 +33,7 @@ export default function Sidebar({
           </div>
           <button
             type="button"
-            onClick={onToggle}
+            onClick={onToggleAction}
             className="rounded-xl border border-white/10 bg-white/[0.03] p-2 text-[#c6cee5] transition hover:bg-white/[0.07]"
           >
             <ChevronLeft className={`h-4 w-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} />

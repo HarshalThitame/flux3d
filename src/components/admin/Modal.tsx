@@ -6,19 +6,19 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 export default function Modal({
   open,
-  onOpenChange,
+  onOpenChangeAction,
   title,
   description,
   children,
 }: {
   open: boolean
-  onOpenChange: (open: boolean) => void
+  onOpenChangeAction: (open: boolean) => void
   title: string
   description?: string
   children: React.ReactNode
 }) {
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={open} onOpenChange={onOpenChangeAction}>
       <Dialog.Portal>
         <AnimatePresence>
           {open && (

@@ -6,17 +6,17 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 export default function Drawer({
   open,
-  onOpenChange,
+  onOpenChangeAction,
   title,
   children,
 }: {
   open: boolean
-  onOpenChange: (open: boolean) => void
+  onOpenChangeAction: (open: boolean) => void
   title: string
   children: React.ReactNode
 }) {
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={open} onOpenChange={onOpenChangeAction}>
       <Dialog.Portal>
         <AnimatePresence>
           {open && (

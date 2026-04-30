@@ -178,11 +178,13 @@ export async function getPublicQuoteMaterials() {
   try {
     const materials = await getAdminMaterialsData()
     if (materials.length === 0) {
+      console.warn('getPublicQuoteMaterials: No materials returned from database')
       return []
     }
 
     return sortMaterials(materials).map(mapAdminMaterialToQuoteMaterial)
-  } catch {
+  } catch (error) {
+    console.error('getPublicQuoteMaterials error:', error)
     return []
   }
 }
