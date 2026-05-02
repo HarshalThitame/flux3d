@@ -11,6 +11,7 @@ export default function AdminMaterialsPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingMaterial, setEditingMaterial] = useState<QuoteMaterial | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [recommendedFor, setRecommendedFor] = useState<string[]>([''])
   const [formData, setFormData] = useState({
     name: '',
@@ -90,13 +91,17 @@ export default function AdminMaterialsPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Are you sure you want to delete this material?')) return
-    
+    setDeleteConfirm(id)
+  }
+
+  async function confirmDelete() {
+    if (!deleteConfirm) return
     try {
-      const res = await fetch(`/api/materials/${id}`, {
+      const res = await fetch(`/api/materials/${deleteConfirm}`, {
         method: 'DELETE',
       })
       if (res.ok) {
+        setDeleteConfirm(null)
         fetchMaterials()
       }
     } catch {
@@ -395,6 +400,42 @@ export default function AdminMaterialsPage() {
                 </motion.div>
               ))}
             </div>
+          )}
+          {/* Delete Confirmation Modal */}
+          {deleteConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.95, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                className="mx-4 w-full max-w-md rounded-2xl border border-rose-400/20 bg-[#0d1120] p-6"
+              >
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-400/10">
+                  <Trash2 className="h-6 w-6 text-rose-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Delete Material?</h3>
+                <p className="mt-2 text-sm text-[#7a82a0]">
+                  This action cannot be undone. This will permanently delete the material and remove it from the system.
+                </p>
+                <div className="mt-6 flex gap-3">
+                  <button
+                    onClick={() => setDeleteConfirm(null)}
+                    className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] py-2.5 text-sm font-medium text-white hover:bg-white/[0.07]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    className="flex-1 rounded-xl bg-rose-500 py-2.5 text-sm font-semibold text-white hover:bg-rose-600"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
           )}
         </div>
       </div>
