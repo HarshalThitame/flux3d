@@ -64,7 +64,8 @@ const colorLookup: Record<string, string> = {
   carbon: '#0f172a',
 }
 
-function normalizeValue(value: string) {
+function normalizeValue(value: unknown): string {
+  if (typeof value !== 'string') return ''
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')
 }
 
@@ -87,6 +88,7 @@ function getFallbackMaterialSpec(name: string) {
 }
 
 function hashColor(value: string) {
+  if (typeof value !== 'string') return '#888888'
   let hash = 0
 
   for (const character of value) {
@@ -98,8 +100,9 @@ function hashColor(value: string) {
   return `#${hex.slice(0, 6)}`
 }
 
-function colorNameToHex(name: string) {
-  const normalized = normalizeValue(name)
+function colorNameToHex(name: unknown): string {
+  const nameStr = typeof name === 'string' ? name : (name as any)?.name || (name as any)?.hex || ''
+  const normalized = normalizeValue(nameStr)
 
   for (const [keyword, hex] of Object.entries(colorLookup)) {
     if (normalized.includes(keyword)) {
@@ -107,20 +110,42 @@ function colorNameToHex(name: string) {
     }
   }
 
-  return hashColor(normalized || name)
+  return hashColor(nameStr || 'default')
 }
 
-function mapAdminColors(colors: string[], fallbackColors: MaterialColor[]) {
-  if (colors.length === 0) {
+function mapAdminColors(colors: unknown[], fallbackColors: MaterialColor[]): MaterialColor[] {
+  if (!Array.isArray(colors) || colors.length === 0) {
     return fallbackColors.length > 0
       ? fallbackColors
       : [{ name: 'Default', hex: '#ff5c1a' }]
   }
 
-  return colors.map((color) => ({
-    name: color,
-    hex: colorNameToHex(color),
-  }))
+  const validColors: MaterialColor[] = []
+  const seenHex = new Set<string>()
+
+  for (const color of colors) {
+    let name: string
+    let hex: string
+
+    if (typeof color === 'string') {
+      // Skip single characters (malformed data)
+      if (color.length <= 1) continue
+      name = color
+      hex = colorNameToHex(color)
+    } else if (color && typeof color === 'object') {
+      const c = color as any
+      name = c.name || c.hex || 'Unknown'
+      hex = c.hex || colorNameToHex(name)
+    } else {
+      continue
+    }
+
+    if (seenHex.has(hex)) continue
+    seenHex.add(hex)
+    validColors.push({ name, hex })
+  }
+
+  return validColors.length > 0 ? validColors : [{ name: 'Default', hex: '#ff5c1a' }]
 }
 
 function mapAdminMaterialToQuoteMaterial(material: AdminMaterial): QuoteMaterial {

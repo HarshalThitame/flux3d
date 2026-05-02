@@ -42,7 +42,7 @@ export default function AdminMaterialsPage() {
       const res = await fetch('/api/materials')
       if (res.ok) {
         const data = await res.json()
-        setMaterials(data)
+        setMaterials(data.materials || data)
       }
     } catch {
       // Failed to fetch

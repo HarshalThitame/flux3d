@@ -595,11 +595,11 @@ function CartEnabledWorkspace({
                         Color — {getMaterialById(config.materialId, materials).name}
                       </label>
                       <div className="flex flex-wrap gap-2">
-                        {getMaterialById(config.materialId, materials).colors.map((color) => {
+                        {getMaterialById(config.materialId, materials).colors.map((color, idx) => {
                           const isActive = color.hex === config.colorHex
                           return (
                             <button
-                              key={color.hex}
+                              key={`${color.hex}-${idx}`}
                               type="button"
                               onClick={() => setConfig((c) => ({ ...c, colorHex: color.hex }))}
                               className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-left transition-all ${
