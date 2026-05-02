@@ -40,6 +40,17 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
   const [materials, setMaterials] = useState<QuoteMaterial[]>([])
   const [loadingMaterials, setLoadingMaterials] = useState(true)
   const [toast, setToast] = useState<ToastState>(null)
+  const [fileError, setFileError] = useState<string | null>(null)
+  const [viewerLoading, setViewerLoading] = useState(false)
+  const [uploadState, setUploadState] = useState<UploadState>(initialUploadState)
+  const [savingQuote, setSavingQuote] = useState(false)
+  const [hasUserSelectedMaterial, setHasUserSelectedMaterial] = useState(false)
+  const [contact, setContact] = useState({
+    name: user.name,
+    email: user.email,
+    phone: '',
+    notes: '',
+  })
 
   useEffect(() => {
     async function fetchMaterials() {
