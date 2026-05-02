@@ -33,7 +33,7 @@ export default function MaterialsCTA() {
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
           <a
-            href="https://wa.me/919607570731?text=Hi%20Flux3D!%20I%20need%20help%20choosing%20a%20material%20for%20my%20project."
+            href="https://wa.me/919623023480?text=Hi%20Flux3D!%20I%20need%20help%20choosing%20a%20material%20for%20my%20project."
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 px-8 py-3.5 text-sm font-medium text-[#25D366] transition-all hover:bg-[#25D366]/20"

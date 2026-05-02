@@ -53,8 +53,10 @@ export default function NavbarClient({
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
 
   const navLinks = [
+    { href: '/', label: 'Home' },
     { href: '/services', label: 'Services' },
     { href: '/materials', label: 'Materials' },
+    { href: '/pre-made-products', label: 'Pre-Made' },
     { href: '/gallery', label: 'Gallery' },
     { href: '/pricing', label: 'Pricing' },
   ]
@@ -128,7 +130,7 @@ export default function NavbarClient({
 
             {/* WhatsApp */}
             <a
-              href="https://wa.me/919607570731"
+              href="https://wa.me/919623023480"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 px-4 py-2.5 text-sm font-medium text-[#25D366] transition-all hover:bg-[#25D366]/20 hover:border-[#25D366]/50"
@@ -301,7 +303,7 @@ export default function NavbarClient({
                   <ArrowUpRight className="h-4 w-4" />
                 </Link>
                 <a
-                  href="https://wa.me/919607570731"
+                  href="https://wa.me/919623023480"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 py-3.5 text-base font-medium text-[#25D366]"

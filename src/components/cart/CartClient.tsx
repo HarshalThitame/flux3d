@@ -16,12 +16,12 @@ type CartClientProps = {
 }
 
 type EditingItem = {
-  quoteId: string
+  id: string
   addedAt: string
-  material: string
-  color: string
-  colorHex: string
-  infill: number
+  material?: string
+  color?: string
+  colorHex?: string
+  infill?: number
 }
 
 export default function CartClient({ user, materials }: CartClientProps) {
@@ -49,27 +49,31 @@ export default function CartClient({ user, materials }: CartClientProps) {
 
   const handleEditItem = (item: typeof items[0]) => {
     setEditingItem({
-      quoteId: item.quoteId,
-      addedAt: item.addedAt,
-      material: item.config.materialId,
-      color: item.colorHex,
-      colorHex: item.colorHex,
-      infill: item.infill,
+      id: item.id ?? '',
+      addedAt: item.addedAt ?? '',
+      material: item.config?.materialId ?? item.material ?? '',
+      color: item.colorHex ?? '',
+      colorHex: item.colorHex ?? '',
+      infill: item.infill ?? 20,
     })
   }
 
   const handleSaveEdit = () => {
     if (!editingItem) return
 
-    const selectedMaterial = materials.find((m) => m.id === editingItem.material)
+    const materialId = editingItem.material || editingItem.id
+    const selectedMaterial = materials.find((m) => m.id === materialId)
     if (!selectedMaterial) return
 
-    const selectedColor = selectedMaterial.colors.find((c) => c.hex === editingItem.colorHex)
+    const selectedColor = editingItem.colorHex
+      ? selectedMaterial.colors.find((c) => c.hex === editingItem.colorHex)
+      : selectedMaterial.colors[0]
     if (!selectedColor) return
 
     const basePrice = items.find((i) => i.addedAt === editingItem.addedAt)?.price ?? 0
     const originalInfill = items.find((i) => i.addedAt === editingItem.addedAt)?.infill ?? 20
-    const priceAdjustment = (editingItem.infill - originalInfill) / 100 * basePrice * 0.3
+    const infillValue = editingItem.infill ?? 20
+    const priceAdjustment = (infillValue - originalInfill) / 100 * basePrice * 0.3
 
     updateItem(editingItem.addedAt, {
       material: selectedMaterial.name,
@@ -77,8 +81,8 @@ export default function CartClient({ user, materials }: CartClientProps) {
       colorHex: selectedColor.hex,
       infill: editingItem.infill,
       config: {
-        materialId: editingItem.material,
-        colorHex: editingItem.colorHex,
+        materialId: editingItem.material ?? '',
+        colorHex: editingItem.colorHex ?? '',
         infill: editingItem.infill,
       },
       price: Math.max(0, basePrice + priceAdjustment),
@@ -148,12 +152,12 @@ export default function CartClient({ user, materials }: CartClientProps) {
         <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
           <div className="space-y-4">
             {items.map((item, index) => {
-              const isEditing = editingItem?.quoteId === item.quoteId && editingItem?.addedAt === item.addedAt
-              const currentMaterial = materials.find((m) => m.id === item.config.materialId) ?? materials.find((m) => m.name === item.material)
+              const isEditing = editingItem?.id === item.id && (editingItem?.addedAt ?? '') === (item.addedAt ?? '')
+              const currentMaterial = materials.find((m) => m.id === (item.config?.materialId ?? '')) ?? materials.find((m) => m.name === item.material)
 
               return (
                 <motion.div
-                  key={`${item.quoteId}-${item.addedAt}-${index}`}
+                  key={`${item.id}-${item.addedAt ?? index}-${index}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
@@ -165,8 +169,8 @@ export default function CartClient({ user, materials }: CartClientProps) {
                     <div className="flex-1">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h3 className="text-lg font-semibold text-white">{item.fileName}</h3>
-                          <p className="mt-1 text-sm text-[#7a82a0]">Quote: {item.quoteId}</p>
+                          <h3 className="text-lg font-semibold text-white">{item.name}</h3>
+                          <p className="mt-1 text-sm text-[#7a82a0]">Quote: {item.id}</p>
                         </div>
                         <div className="flex gap-2">
                           {!isEditing && (
@@ -174,16 +178,16 @@ export default function CartClient({ user, materials }: CartClientProps) {
                               type="button"
                               onClick={() => handleEditItem(item)}
                               className="rounded-lg border border-[#7dd3fc]/20 bg-[#7dd3fc]/10 p-2 text-[#7dd3fc] transition-colors hover:bg-[#7dd3fc]/20"
-                              aria-label={`Edit ${item.fileName} settings`}
+                              aria-label={`Edit ${item.name} settings`}
                             >
                               <Edit2 className="h-4 w-4" />
                             </button>
                           )}
                           <button
                             type="button"
-                            onClick={() => handleRemoveItem(item.addedAt)}
+                            onClick={() => handleRemoveItem(item.addedAt ?? '')}
                             className="rounded-lg border border-rose-400/20 bg-rose-400/10 p-2 text-rose-400 transition-colors hover:bg-rose-400/20"
-                            aria-label={`Remove ${item.fileName} from cart`}
+                            aria-label={`Remove ${item.name} from cart`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -270,12 +274,12 @@ export default function CartClient({ user, materials }: CartClientProps) {
 
                         <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Weight</div>
-                          <div className="mt-1 text-sm font-medium text-white">{item.weight.toFixed(1)} g</div>
+                          <div className="mt-1 text-sm font-medium text-white">{(item.weight ?? 0).toFixed(1)} g</div>
                         </div>
 
                         <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Print Time</div>
-                          <div className="mt-1 text-sm font-medium text-white">{item.estimatedTime.toFixed(1)} hr</div>
+                           <div className="mt-1 text-sm font-medium text-white">{(item.estimatedTime ?? 0).toFixed(1)} hr</div>
                         </div>
                       </div>
 
@@ -301,7 +305,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
 
                       <div className="mt-3 flex flex-wrap gap-2 text-xs text-[#7a82a0]">
                         <span className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-1">
-                          {item.dimensions.x.toFixed(0)} × {item.dimensions.y.toFixed(0)} × {item.dimensions.z.toFixed(0)} mm
+                          {(item.dimensions?.x ?? 0).toFixed(0)} × {(item.dimensions?.y ?? 0).toFixed(0)} × {(item.dimensions?.z ?? 0).toFixed(0)} mm
                         </span>
                         {item.supports && (
                           <span className="rounded-full border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 px-2 py-1 text-[#FF9A72]">

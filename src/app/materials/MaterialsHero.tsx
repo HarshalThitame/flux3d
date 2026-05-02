@@ -2,13 +2,40 @@
 
 import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Layers, MessageCircle, ChevronDown } from 'lucide-react'
+
+function useParticles(count: number) {
+  const [particles, setParticles] = useState<Array<{
+    left: number
+    top: number
+    width: number
+    height: number
+    duration: number
+    delay: number
+  }>>([])
+
+  useEffect(() => {
+    setParticles(
+      Array.from({ length: count }).map(() => ({
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        width: Math.random() * 3 + 1,
+        height: Math.random() * 3 + 1,
+        duration: Math.random() * 3 + 2,
+        delay: Math.random() * 2,
+      }))
+    )
+  }, [count])
+
+  return particles
+}
 
 export default function MaterialsHero() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
+  const particles = useParticles(20)
 
   return (
     <section ref={ref} className="relative overflow-hidden pt-32 pb-16 px-4 md:px-8 lg:px-16">
@@ -20,19 +47,19 @@ export default function MaterialsHero() {
 
       {/* Floating particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+        {particles.map((p, i) => (
           <motion.div
             key={i}
             className="absolute rounded-full bg-[#FF5C1A]"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              width: Math.random() * 3 + 1,
-              height: Math.random() * 3 + 1,
+              left: `${p.left}%`,
+              top: `${p.top}%`,
+              width: p.width,
+              height: p.height,
               opacity: 0.2
             }}
             animate={{ y: [0, -15, 0], opacity: [0.1, 0.3, 0.1] }}
-            transition={{ duration: Math.random() * 3 + 2, repeat: Infinity, delay: Math.random() * 2 }}
+            transition={{ duration: p.duration, repeat: Infinity, delay: p.delay }}
           />
         ))}
       </div>
@@ -90,7 +117,7 @@ export default function MaterialsHero() {
           className="flex items-center gap-2 flex-wrap"
         >
           <a
-            href="https://wa.me/919607570731?text=Hi%20Flux3D!%20I'm%20not%20sure%20which%20material%20to%20choose%20for%20my%20project."
+            href="https://wa.me/919623023480?text=Hi%20Flux3D!%20I'm%20not%20sure%20which%20material%20to%20choose%20for%20my%20project."
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-full border border-[#25D366]/30 bg-[#25D366]/10 px-5 py-2.5 text-sm font-medium text-[#25D366] transition-all hover:bg-[#25D366]/20 hover:border-[#25D366]/50"

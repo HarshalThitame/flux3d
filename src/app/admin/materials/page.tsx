@@ -66,6 +66,7 @@ export default function AdminMaterialsPage() {
   }, [toast])
 
   function openCreateModal() {
+    console.log("openCreateModal called");
     setActiveMaterial(null)
     setForm(emptyForm)
     setOpen(true)

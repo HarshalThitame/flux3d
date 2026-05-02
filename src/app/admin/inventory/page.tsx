@@ -1,13 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { FolderKanban, Plus, Download } from 'lucide-react'
+import { FolderKanban, Download } from 'lucide-react'
 import DataTable from '@/components/admin/DataTable'
 import type { AdminMaterial } from '@/lib/admin/types'
 import SkeletonBlock from '@/components/admin/SkeletonBlock'
 
 export default function InventoryPage() {
+  const router = useRouter()
   const [materials, setMaterials] = useState<AdminMaterial[] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -76,7 +78,7 @@ export default function InventoryPage() {
           className="rounded-[28px] border border-yellow-400/20 bg-yellow-400/10 p-4"
         >
           <div className="flex items-center gap-2 text-yellow-300">
-            <span className="text-sm font-semibold">Warning: {lowStockMaterials.length} materials are below minimum stock threshold. Reorder now to avoid print delays.</span>
+            <span className="text-sm font-semibold">Warning: {lowStockMaterials.length} materials are below minimum stock threshold. Update stock status to avoid print delays.</span>
           </div>
         </motion.div>
       )}
@@ -92,8 +94,12 @@ export default function InventoryPage() {
             <p className="mt-1 text-sm text-[#7a82a0]">Manage filaments, resins, and other materials</p>
           </div>
           <div className="flex gap-2">
-            <button className="rounded-xl bg-[#FF5C1A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#FF5C1A]/90">
-              + Add Material
+            <button
+              type="button"
+              onClick={() => router.push('/admin/materials')}
+              className="rounded-xl bg-[#FF5C1A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#FF5C1A]/90"
+            >
+              Edit Materials
             </button>
             <button className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-[#c6cee5] transition hover:bg-white/[0.06]">
               <Download className="mr-2 inline h-4 w-4" />
@@ -143,8 +149,14 @@ export default function InventoryPage() {
                 {row.stock}
               </span>
             )},
-            { key: 'action', label: 'Action', render: () => (
-              <button className="text-[#FF5C1A] hover:text-[#FF9A72] text-sm">Reorder</button>
+            { key: 'action', label: 'Action', render: (row: AdminMaterial) => (
+              <button
+                type="button"
+                onClick={() => router.push('/admin/materials')}
+                className="text-[#FF5C1A] hover:text-[#FF9A72] text-sm"
+              >
+                Edit
+              </button>
             )},
           ]}
         />

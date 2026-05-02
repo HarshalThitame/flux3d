@@ -142,7 +142,7 @@ export default function FinalCTASection() {
               </Link>
 
               <Link
-                href="https://wa.me/919607570731"
+                href="https://wa.me/919623023480"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-xl text-base font-medium border border-white/30 cursor-pointer transition-all hover:bg-white/20 hover:border-white/50 hover:-translate-y-0.5"

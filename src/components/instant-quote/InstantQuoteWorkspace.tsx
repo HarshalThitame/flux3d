@@ -259,20 +259,29 @@ function CartEnabledWorkspace({
       material.colors.find((color) => color.hex === config.colorHex)?.name ?? config.colorHex
 
     const cartItem: CartItem = {
+      id: initialQuoteId,
+      name: selectedModel?.fileName ?? 'model',
       quoteId: initialQuoteId,
       fileUrl: uploadState.path ?? '',
-      fileName: selectedModel.fileName,
-      material: material.name,
-      color: selectedColor,
-      colorHex: config.colorHex,
+      fileName: selectedModel?.fileName ?? 'model',
+      material: material?.name ?? '',
+      color: selectedColor ?? '',
+      colorHex: selectedColor ?? '',
       infill: config.infill,
       layerHeight: config.layerHeight,
       supports: config.supports,
-      price: priceBreakdown.total,
-      estimatedTime: priceBreakdown.estimatedHours,
-      dimensions: priceBreakdown.dimensionsMm,
-      weight: priceBreakdown.materialWeightGrams,
-      config,
+      price: priceBreakdown?.total ?? 0,
+      estimatedTime: priceBreakdown?.estimatedHours ?? 0,
+      weight: priceBreakdown?.materialWeightGrams ?? 0,
+      dimensions: priceBreakdown?.dimensionsMm ?? { x: 0, y: 0, z: 0 },
+      config: {
+        materialId: material?.id ?? '',
+        colorHex: selectedColor ?? '',
+        infill: config.infill,
+        layerHeight: config.layerHeight,
+        supports: config.supports,
+        scalePercent: config.scalePercent,
+      },
       addedAt: new Date().toISOString(),
     }
 

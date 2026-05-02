@@ -77,7 +77,7 @@ export default function FooterSection() {
               </li>
               <li className="flex items-center gap-2 text-sm text-[#7a82a0]">
                 <Phone className="w-4 h-4 text-[#FF5C1A]" />
-                +91 96075 70731
+                +91 96230 23480
               </li>
               <li className="flex items-center gap-2 text-sm text-[#7a82a0]">
                 <Mail className="w-4 h-4 text-[#FF5C1A]" />

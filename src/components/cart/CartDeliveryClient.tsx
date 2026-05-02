@@ -181,20 +181,20 @@ export default function CartDeliveryClient({
     try {
       setSubmitting(true)
       const result = await createCartOrderAction({
-        items: items.map((item) => ({
-          quoteId: item.quoteId,
-          fileUrl: item.fileUrl,
-          fileName: item.fileName,
-          material: item.material,
-          color: item.color,
-          infill: item.infill,
-          layerHeight: item.layerHeight,
-          supports: item.supports,
-          price: item.price,
-          estimatedTime: item.estimatedTime,
-          weight: item.weight,
-          dimensions: item.dimensions,
-        })),
+      items: items.map((item) => ({
+        quoteId: item.id ?? '',
+        fileUrl: item.image ?? '',
+        fileName: item.name ?? '',
+        material: item.material ?? '',
+        color: item.color ?? '',
+        infill: item.infill ?? 20,
+        layerHeight: item.layerHeight ?? 0.2,
+        supports: item.supports ?? false,
+        price: item.price ?? 0,
+        estimatedTime: item.estimatedTime ?? 0,
+        weight: item.weight ?? 0,
+        dimensions: item.dimensions ?? { x: 0, y: 0, z: 0 },
+      })),
         subtotal: summary.subtotal,
         fullName: address.fullName,
         phone: address.phone,
@@ -356,10 +356,10 @@ export default function CartDeliveryClient({
                 <div className="space-y-2">
                   {items.map((item, index) => (
                     <div
-                      key={`${item.quoteId}-${item.addedAt}-${index}`}
+                      key={`${item.id}-${item.addedAt}-${index}`}
                       className="rounded-[16px] border border-white/8 bg-white/[0.02] p-3"
                     >
-                      <div className="text-sm font-semibold text-white">{item.fileName}</div>
+                      <div className="text-sm font-semibold text-white">{item.name}</div>
                       <div className="mt-1 text-xs text-[#c8d0e9]">
                         {item.material}, {item.color}, {item.infill}% infill
                       </div>

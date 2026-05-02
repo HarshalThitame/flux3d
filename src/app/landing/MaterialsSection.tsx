@@ -163,7 +163,7 @@ export default function MaterialsSection() {
         >
           <p className="text-lg text-white mb-2">Not sure which material is right for you?</p>
           <a
-            href="https://wa.me/919607570731"
+            href="https://wa.me/919623023480"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-[#25D366] text-white px-6 py-3 rounded-xl text-sm font-medium hover:shadow-[0_0_30px_rgba(37,211,102,0.3)] transition-shadow"
