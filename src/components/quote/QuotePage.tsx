@@ -39,6 +39,7 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
   })
   const [materials, setMaterials] = useState<QuoteMaterial[]>([])
   const [loadingMaterials, setLoadingMaterials] = useState(true)
+  const [toast, setToast] = useState<ToastState>(null)
 
   useEffect(() => {
     async function fetchMaterials() {
