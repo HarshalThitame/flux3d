@@ -5,6 +5,7 @@ import { getMaterialById, quoteMaterials } from '@/lib/quote/materials'
 type MaterialSelectorProps = {
   selectedMaterialId: string
   selectedColorHex: string
+  materials: QuoteMaterial[]
   onMaterialChange: (materialId: string) => void
   onColorChange: (hex: string) => void
 }
@@ -12,10 +13,19 @@ type MaterialSelectorProps = {
 export default function MaterialSelector({
   selectedMaterialId,
   selectedColorHex,
+  materials,
   onMaterialChange,
   onColorChange,
 }: MaterialSelectorProps) {
-  const activeMaterial = getMaterialById(selectedMaterialId)
+  const activeMaterial = getMaterialById(selectedMaterialId, materials)
+
+  if (materials.length === 0) {
+    return (
+      <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 text-center text-sm text-[#7a82a0]">
+        No materials available. Please add materials in the admin panel.
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -27,7 +37,7 @@ export default function MaterialSelector({
       </div>
 
       <div className="grid gap-3">
-        {quoteMaterials.map((material) => (
+        {materials.map((material) => (
           <button
             key={material.id}
             type="button"

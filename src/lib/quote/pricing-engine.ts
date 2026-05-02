@@ -19,7 +19,14 @@ export function calculateInstantQuote(
   }
 
   const material = getMaterialById(config.materialId, materials)
-  const layerHeight = layerHeightOptions.find((option) => option.value === config.layerHeight) ?? layerHeightOptions[1]
+  if (!material) {
+    return null
+  }
+
+  const layerHeight = layerHeightOptions.find((option) => option.value === config.layerHeight) ?? layerHeightOptions[0]
+  if (!layerHeight) {
+    return null
+  }
   const scaleFactor = config.scalePercent / 100
   const scaledVolumeMm3 = model.volumeMm3 * Math.pow(scaleFactor, 3)
   const scaledVolumeCm3 = scaledVolumeMm3 / 1000

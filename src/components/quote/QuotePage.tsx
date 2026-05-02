@@ -9,7 +9,7 @@ import FileUpload from '@/components/quote/FileUpload'
 import MaterialSelector from '@/components/quote/MaterialSelector'
 import ModelViewer from '@/components/quote/ModelViewer'
 import Toast, { ToastState } from '@/components/quote/Toast'
-import { getMaterialById, layerHeightOptions, quoteMaterials } from '@/lib/quote/materials'
+import { getMaterialById, layerHeightOptions } from '@/lib/quote/materials'
 import { calculateInstantQuote } from '@/lib/quote/pricing-engine'
 import { parseModelFile } from '@/lib/quote/model-utils'
 import { saveQuoteToSupabase, uploadFileToSupabaseStorage, validateModelFile } from '@/lib/quote/supabase-storage'
@@ -29,25 +29,39 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
   const [quoteId] = useState(initialQuoteId)
   const [selectedModel, setSelectedModel] = useState<ParsedModel | null>(null)
   const [config, setConfig] = useState<QuoteConfig>({
-    materialId: quoteMaterials[0].id,
-    colorHex: quoteMaterials[0].colors[0].hex,
+    materialId: '',
+    colorHex: '',
     infill: 20,
     layerHeight: 0.2,
     supports: false,
     scalePercent: 100,
   })
-  const [uploadState, setUploadState] = useState<UploadState>(initialUploadState)
-  const [viewerLoading, setViewerLoading] = useState(false)
-  const [fileError, setFileError] = useState<string | null>(null)
-  const [toast, setToast] = useState<ToastState>(null)
-  const [hasUserSelectedMaterial, setHasUserSelectedMaterial] = useState(false)
-  const [contact, setContact] = useState({
-    name: user.name,
-    email: user.email,
-    phone: '',
-    notes: '',
-  })
-  const [savingQuote, setSavingQuote] = useState(false)
+  const [materials, setMaterials] = useState<QuoteMaterial[]>([])
+  const [loadingMaterials, setLoadingMaterials] = useState(true)
+
+  useEffect(() => {
+    async function fetchMaterials() {
+      try {
+        const res = await fetch('/api/materials')
+        if (res.ok) {
+          const data = await res.json()
+          setMaterials(data)
+          if (data.length > 0) {
+            setConfig(prev => ({
+              ...prev,
+              materialId: data[0].id,
+              colorHex: data[0].colors[0]?.hex ?? '',
+            }))
+          }
+        }
+      } catch {
+        // Failed to fetch materials
+      } finally {
+        setLoadingMaterials(false)
+      }
+    }
+    fetchMaterials()
+  }, [])
 
   useEffect(() => {
     if (!toast) {
@@ -58,10 +72,10 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
     return () => window.clearTimeout(timer)
   }, [toast])
 
-  const activeMaterial = useMemo(() => getMaterialById(config.materialId), [config.materialId])
+  const activeMaterial = useMemo(() => getMaterialById(config.materialId, materials), [config.materialId, materials])
   const priceBreakdown = useMemo(
-    () => calculateInstantQuote(selectedModel, config),
-    [selectedModel, config]
+    () => calculateInstantQuote(selectedModel, config, materials),
+    [selectedModel, config, materials]
   )
 
   const handleFileSelect = async (file: File) => {
@@ -252,6 +266,7 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
                 <MaterialSelector
                   selectedMaterialId={config.materialId}
                   selectedColorHex={config.colorHex}
+                  materials={materials}
                   onMaterialChange={handleMaterialChange}
                   onColorChange={(hex) => setConfig((current) => ({ ...current, colorHex: hex }))}
                 />

@@ -1,207 +1,24 @@
 import type { LayerHeightOption, QuoteMaterial } from '@/lib/quote/types'
 
-export const quoteMaterials: QuoteMaterial[] = [
-  {
-    id: 'pla-plus',
-    name: 'PLA+',
-    icon: '🧩',
-    summary: 'Fast, dependable, and ideal for prototypes or display pieces.',
-    density: 1.24,
-    pricePerGram: 2.8,
-    machineRate: 180,
-    multiplier: 1,
-    recommendedFor: 'Concept models and presentation parts',
-    properties: {
-      strength: 'Medium',
-      flexibility: 'Low',
-      tempResistance: 'Low',
-      difficulty: 'Easy',
-    },
-    colors: [
-      { name: 'Arctic White', hex: '#f3f4f6' },
-      { name: 'Graphite', hex: '#1f2937' },
-      { name: 'Signal Orange', hex: '#ff5c1a' },
-    ],
-  },
-  {
-    id: 'abs',
-    name: 'ABS',
-    icon: '⚙️',
-    summary: 'A durable engineering plastic for stronger functional parts.',
-    density: 1.04,
-    pricePerGram: 4.1,
-    machineRate: 210,
-    multiplier: 1.2,
-    recommendedFor: 'Enclosures, brackets, workshop fixtures',
-    properties: {
-      strength: 'High',
-      flexibility: 'Medium',
-      tempResistance: 'High',
-      difficulty: 'Advanced',
-    },
-    colors: [
-      { name: 'Industrial Black', hex: '#111827' },
-      { name: 'Slate Gray', hex: '#4b5563' },
-      { name: 'Safety Yellow', hex: '#facc15' },
-    ],
-  },
-  {
-    id: 'petg',
-    name: 'PETG',
-    icon: '🔷',
-    summary: 'Balanced strength, layer adhesion, and outdoor resilience.',
-    density: 1.27,
-    pricePerGram: 3.9,
-    machineRate: 195,
-    multiplier: 1.12,
-    recommendedFor: 'Utility components and end-use parts',
-    properties: {
-      strength: 'High',
-      flexibility: 'Medium',
-      tempResistance: 'Medium',
-      difficulty: 'Easy-Medium',
-    },
-    colors: [
-      { name: 'Clear Blue', hex: '#38bdf8' },
-      { name: 'Smoke Gray', hex: '#475569' },
-      { name: 'Mint Green', hex: '#34d399' },
-    ],
-  },
-  {
-    id: 'asa',
-    name: 'ASA',
-    icon: '☀️',
-    summary: 'Outdoor-ready material with strong UV and weather resistance.',
-    density: 1.07,
-    pricePerGram: 4.8,
-    machineRate: 225,
-    multiplier: 1.28,
-    recommendedFor: 'Exterior housings and automotive applications',
-    properties: {
-      strength: 'High',
-      flexibility: 'Medium',
-      tempResistance: 'High',
-      difficulty: 'Advanced',
-    },
-    colors: [
-      { name: 'Signal Red', hex: '#ef4444' },
-      { name: 'Deep Charcoal', hex: '#1f2937' },
-      { name: 'Ice White', hex: '#e5e7eb' },
-    ],
-  },
-  {
-    id: 'tpu',
-    name: 'TPU',
-    icon: '🌀',
-    summary: 'Flexible, impact-absorbing, and built for grip or cushioning.',
-    density: 1.21,
-    pricePerGram: 5.1,
-    machineRate: 235,
-    multiplier: 1.35,
-    recommendedFor: 'Gaskets, wearables, anti-slip parts',
-    properties: {
-      strength: 'Medium',
-      flexibility: 'High',
-      tempResistance: 'Medium',
-      difficulty: 'Medium',
-    },
-    colors: [
-      { name: 'Neon Lime', hex: '#84cc16' },
-      { name: 'Night Black', hex: '#111827' },
-      { name: 'Cloud White', hex: '#f5f5f5' },
-    ],
-  },
-  {
-    id: 'resin-4k',
-    name: 'Resin 4K',
-    icon: '💎',
-    summary: 'High-detail resin for miniature, jewelry, and premium finish parts.',
-    density: 1.12,
-    pricePerGram: 7.4,
-    machineRate: 260,
-    multiplier: 1.5,
-    recommendedFor: 'Fine-detail visual parts and small precision models',
-    properties: {
-      strength: 'Medium',
-      flexibility: 'Low',
-      tempResistance: 'Low-Medium',
-      difficulty: 'Medium',
-    },
-    colors: [
-      { name: 'Stone Gray', hex: '#94a3b8' },
-      { name: 'Ivory', hex: '#fef3c7' },
-      { name: 'Jet Black', hex: '#020617' },
-    ],
-  },
-  {
-    id: 'silk-gold',
-    name: 'Silk Gold',
-    icon: '✨',
-    summary: 'Decorative filament for premium visual finish and shine.',
-    density: 1.22,
-    pricePerGram: 3.6,
-    machineRate: 185,
-    multiplier: 1.08,
-    recommendedFor: 'Logos, display parts, luxury presentation models',
-    properties: {
-      strength: 'Low-Medium',
-      flexibility: 'Low',
-      tempResistance: 'Low',
-      difficulty: 'Easy',
-    },
-    colors: [
-      { name: 'Silk Gold', hex: '#d4a017' },
-      { name: 'Copper', hex: '#b45309' },
-      { name: 'Silver', hex: '#cbd5e1' },
-    ],
-  },
-  {
-    id: 'multi-color',
-    name: 'Multi-Color (AMS)',
-    icon: '🎨',
-    summary: 'Multi-color workflow for logos, branded models, and color-coded parts.',
-    density: 1.24,
-    pricePerGram: 4.6,
-    machineRate: 245,
-    multiplier: 1.45,
-    recommendedFor: 'Brand models and presentation-ready prototypes',
-    properties: {
-      strength: 'Depends on base material',
-      flexibility: 'Depends on base material',
-      tempResistance: 'Depends on base material',
-      difficulty: 'Advanced',
-    },
-    colors: [
-      { name: 'Gradient Cyan', hex: '#22d3ee' },
-      { name: 'Electric Violet', hex: '#8b5cf6' },
-      { name: 'Bright Orange', hex: '#ff5c1a' },
-    ],
-  },
-]
+export const quoteMaterials: QuoteMaterial[] = []
 
-export const layerHeightOptions: LayerHeightOption[] = [
-  {
-    value: 0.28,
-    label: '0.28mm Draft',
-    multiplier: 0.8,
-    description: 'Fastest output for rough prototypes and validation prints.',
-  },
-  {
-    value: 0.2,
-    label: '0.20mm Standard',
-    multiplier: 1,
-    description: 'Balanced quality and speed for most functional prints.',
-  },
-  {
-    value: 0.16,
-    label: '0.16mm Fine',
-    multiplier: 1.25,
-    description: 'Improved surface finish and detail with longer print time.',
-  },
-]
+export const layerHeightOptions: LayerHeightOption[] = []
 
 function normalizeValue(value: string) {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')
+}
+
+const materialAliases: Record<string, string[]> = {}
+
+export function getMaterialById(materialId: string, materials: QuoteMaterial[] = quoteMaterials) {
+  const normalizedMaterialId = normalizeValue(materialId)
+
+  return (
+    materials.find((material) => normalizeValue(material.id) === normalizedMaterialId) ??
+    materials.find((material) => normalizeValue(material.name) === normalizedMaterialId) ??
+    materials[0] ??
+    null
+  )
 }
 
 const materialAliases: Record<string, string[]> = {
@@ -228,6 +45,6 @@ export function getMaterialById(materialId: string, materials: QuoteMaterial[] =
       return aliases.some((alias) => normalizedName.includes(normalizeValue(alias)))
     }) ??
     materials[0] ??
-    quoteMaterials[0]
+    undefined
   )
 }
