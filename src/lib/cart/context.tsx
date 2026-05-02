@@ -16,17 +16,7 @@ type CartContextType = {
   summary: CartSummary
   addItem: (item: CartItem) => void
   removeItem: (addedAt: string) => void
-  updateItem: (addedAt: string, updates: {
-    material?: string
-    color?: string
-    colorHex?: string
-    infill?: number
-    layerHeight?: number
-    price?: number
-    estimatedTime?: number
-    weight?: number
-    config?: Partial<import('@/lib/quote/types').QuoteConfig>
-  }) => void
+  updateItem: (addedAt: string, updates: Partial<CartItem>) => void
   clearItems: () => void
   isInCart: (quoteId: string) => boolean
   isLoading: boolean
