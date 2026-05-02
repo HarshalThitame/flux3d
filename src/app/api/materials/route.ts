@@ -52,15 +52,14 @@ export async function POST(request: Request) {
       .from('materials')
       .insert([
         {
-          id: body.id,
           name: body.name,
           icon: body.icon,
           summary: body.summary,
           density: body.density,
-          price_per_gram: body.pricePerGram,
-          machine_rate: body.machineRate,
+          price_per_gram: body.price_per_gram,
+          machine_rate: body.machine_rate,
           multiplier: body.multiplier,
-          recommended_for: body.recommendedFor,
+          recommended_for: body.recommended_for,
           properties: body.properties,
           colors: body.colors,
         },
@@ -79,6 +78,80 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to create material' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const supabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
+    const body = await request.json()
+
+    const { data, error } = await supabase
+      .from('materials')
+      .update({
+        name: body.name,
+        icon: body.icon,
+        summary: body.summary,
+        density: body.density,
+        price_per_gram: body.price_per_gram,
+        machine_rate: body.machine_rate,
+        multiplier: body.multiplier,
+        recommended_for: body.recommended_for,
+        properties: body.properties,
+        colors: body.colors,
+      })
+      .eq('id', body.id)
+      .select()
+      .single()
+
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json(data)
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to update material' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Missing material id' },
+        { status: 400 }
+      )
+    }
+
+    const supabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
+
+    const { error } = await supabase
+      .from('materials')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to delete material' },
       { status: 500 }
     )
   }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Plus, Pencil, Trash2, Beaker, ArrowLeft } from 'lucide-react'
+import { Plus, Pencil, Trash2, Beaker, ArrowLeft, X } from 'lucide-react'
 import type { QuoteMaterial } from '@/lib/quote/types'
 
 export default function AdminMaterialsPage() {
@@ -11,8 +11,8 @@ export default function AdminMaterialsPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingMaterial, setEditingMaterial] = useState<QuoteMaterial | null>(null)
+  const [recommendedFor, setRecommendedFor] = useState<string[]>([''])
   const [formData, setFormData] = useState({
-    id: '',
     name: '',
     icon: '🧩',
     summary: '',
@@ -20,7 +20,6 @@ export default function AdminMaterialsPage() {
     pricePerGram: 2.8,
     machineRate: 180,
     multiplier: 1.0,
-    recommendedFor: '',
     properties: { strength: 'Medium', flexibility: 'Low', tempResistance: 'Low', difficulty: 'Easy' },
     colors: [{ name: 'Default', hex: '#ffffff' }],
   })
@@ -47,23 +46,43 @@ export default function AdminMaterialsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     
-    try {
-      const method = editingMaterial ? 'PUT' : 'POST'
-      const url = editingMaterial 
-        ? `/api/materials/${editingMaterial.id}`
-        : '/api/materials'
-      
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
+    const payload = {
+      name: formData.name,
+      icon: formData.icon,
+      summary: formData.summary,
+      density: formData.density,
+      price_per_gram: formData.pricePerGram,
+      machine_rate: formData.machineRate,
+      multiplier: formData.multiplier,
+      recommended_for: recommendedFor.filter(Boolean).join(', '),
+      properties: formData.properties,
+      colors: formData.colors,
+    }
 
-      if (res.ok) {
-        setShowForm(false)
-        setEditingMaterial(null)
-        resetForm()
-        fetchMaterials()
+    try {
+      if (editingMaterial) {
+        const res = await fetch(`/api/materials/${editingMaterial.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        if (res.ok) {
+          setShowForm(false)
+          setEditingMaterial(null)
+          resetForm()
+          fetchMaterials()
+        }
+      } else {
+        const res = await fetch('/api/materials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        if (res.ok) {
+          setShowForm(false)
+          resetForm()
+          fetchMaterials()
+        }
       }
     } catch {
       alert('Failed to save material')
@@ -88,7 +107,6 @@ export default function AdminMaterialsPage() {
   function handleEdit(material: QuoteMaterial) {
     setEditingMaterial(material)
     setFormData({
-      id: material.id,
       name: material.name,
       icon: material.icon,
       summary: material.summary,
@@ -96,16 +114,15 @@ export default function AdminMaterialsPage() {
       pricePerGram: material.pricePerGram,
       machineRate: material.machineRate,
       multiplier: material.multiplier,
-      recommendedFor: material.recommendedFor,
       properties: material.properties,
       colors: material.colors,
     })
+    setRecommendedFor(material.recommendedFor ? material.recommendedFor.split(', ') : [''])
     setShowForm(true)
   }
 
   function resetForm() {
     setFormData({
-      id: '',
       name: '',
       icon: '🧩',
       summary: '',
@@ -113,10 +130,24 @@ export default function AdminMaterialsPage() {
       pricePerGram: 2.8,
       machineRate: 180,
       multiplier: 1.0,
-      recommendedFor: '',
       properties: { strength: 'Medium', flexibility: 'Low', tempResistance: 'Low', difficulty: 'Easy' },
       colors: [{ name: 'Default', hex: '#ffffff' }],
     })
+    setRecommendedFor([''])
+  }
+
+  function addRecommendedFor() {
+    setRecommendedFor([...recommendedFor, ''])
+  }
+
+  function updateRecommendedFor(index: number, value: string) {
+    const updated = [...recommendedFor]
+    updated[index] = value
+    setRecommendedFor(updated)
+  }
+
+  function removeRecommendedFor(index: number) {
+    setRecommendedFor(recommendedFor.filter((_, i) => i !== index))
   }
 
   return (
@@ -177,17 +208,6 @@ export default function AdminMaterialsPage() {
                 </h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-sm text-[#7a82a0]">ID</label>
-                      <input
-                        type="text"
-                        required
-                        disabled={!!editingMaterial}
-                        value={formData.id}
-                        onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
-                      />
-                    </div>
                     <div>
                       <label className="mb-1 block text-sm text-[#7a82a0]">Name</label>
                       <input
@@ -256,15 +276,39 @@ export default function AdminMaterialsPage() {
                       rows={2}
                     />
                   </div>
+
+                  {/* Dynamic Recommended For */}
                   <div>
-                    <label className="mb-1 block text-sm text-[#7a82a0]">Recommended For</label>
-                    <input
-                      type="text"
-                      value={formData.recommendedFor}
-                      onChange={(e) => setFormData({ ...formData, recommendedFor: e.target.value })}
-                      className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
-                    />
+                    <label className="mb-1 block text-sm text-[#7a82a0]">Recommended For (multiple options)</label>
+                    {recommendedFor.map((item, index) => (
+                      <div key={index} className="flex gap-2 mb-2">
+                        <input
+                          type="text"
+                          value={item}
+                          onChange={(e) => updateRecommendedFor(index, e.target.value)}
+                          placeholder="e.g., Concept models, Prototypes"
+                          className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        />
+                        {recommendedFor.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeRecommendedFor(index)}
+                            className="rounded-lg border border-rose-400/20 bg-rose-400/10 p-2 text-rose-400 hover:bg-rose-400/20"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addRecommendedFor}
+                      className="text-sm text-[#FF5C1A] hover:text-[#FF9A72]"
+                    >
+                      + Add another recommendation
+                    </button>
                   </div>
+
                   <div className="flex gap-3 pt-4">
                     <button
                       type="submit"
@@ -322,6 +366,15 @@ export default function AdminMaterialsPage() {
                           <span>×{material.multiplier}</span>
                           <span>{material.density} g/cm³</span>
                         </div>
+                        {material.recommendedFor && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {material.recommendedFor.split(', ').map((item, idx) => (
+                              <span key={idx} className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[11px] text-[#7a82a0]">
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">
