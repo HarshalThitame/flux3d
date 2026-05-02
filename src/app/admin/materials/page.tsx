@@ -13,6 +13,13 @@ export default function AdminMaterialsPage() {
   const [editingMaterial, setEditingMaterial] = useState<QuoteMaterial | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [recommendedFor, setRecommendedFor] = useState<string[]>([''])
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
+  useEffect(() => {
+    if (!toast) return
+    const timer = setTimeout(() => setToast(null), 3000)
+    return () => clearTimeout(timer)
+  }, [toast])
   const [formData, setFormData] = useState({
     name: '',
     icon: '🧩',
@@ -68,10 +75,13 @@ export default function AdminMaterialsPage() {
           body: JSON.stringify(payload),
         })
         if (res.ok) {
+          setToast({ type: 'success', message: 'Material updated successfully!' })
           setShowForm(false)
           setEditingMaterial(null)
           resetForm()
           fetchMaterials()
+        } else {
+          setToast({ type: 'error', message: 'Failed to update material' })
         }
       } else {
         const res = await fetch('/api/materials', {
@@ -80,13 +90,16 @@ export default function AdminMaterialsPage() {
           body: JSON.stringify(payload),
         })
         if (res.ok) {
+          setToast({ type: 'success', message: 'Material created successfully!' })
           setShowForm(false)
           resetForm()
           fetchMaterials()
+        } else {
+          setToast({ type: 'error', message: 'Failed to create material' })
         }
       }
     } catch {
-      alert('Failed to save material')
+      setToast({ type: 'error', message: 'Failed to save material' })
     }
   }
 
@@ -101,11 +114,14 @@ export default function AdminMaterialsPage() {
         method: 'DELETE',
       })
       if (res.ok) {
+        setToast({ type: 'success', message: 'Material deleted successfully!' })
         setDeleteConfirm(null)
         fetchMaterials()
+      } else {
+        setToast({ type: 'error', message: 'Failed to delete material' })
       }
     } catch {
-      alert('Failed to delete material')
+      setToast({ type: 'error', message: 'Failed to delete material' })
     }
   }
 
