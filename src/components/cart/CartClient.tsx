@@ -74,6 +74,8 @@ export default function CartClient({ user, materials }: CartClientProps) {
     const originalInfill = items.find((i) => i.addedAt === editingItem.addedAt)?.infill ?? 20
     const infillValue = editingItem.infill ?? 20
     const priceAdjustment = (infillValue - originalInfill) / 100 * basePrice * 0.3
+    const existingItem = items.find((i) => i.addedAt === editingItem.addedAt)
+    const existingConfig = existingItem?.config ?? { materialId: '', colorHex: '', infill: 20, layerHeight: 0.2, supports: false, scalePercent: 100 }
 
     updateItem(editingItem.addedAt, {
       material: selectedMaterial.name,
@@ -81,9 +83,10 @@ export default function CartClient({ user, materials }: CartClientProps) {
       colorHex: selectedColor.hex,
       infill: editingItem.infill ?? 20,
       config: {
-        materialId: editingItem.material ?? '',
-        colorHex: editingItem.colorHex ?? '',
-        infill: editingItem.infill ?? 20,
+        ...existingConfig,
+        materialId: editingItem.material ?? existingConfig.materialId,
+        colorHex: editingItem.colorHex ?? existingConfig.colorHex,
+        infill: editingItem.infill ?? existingConfig.infill,
       },
       price: Math.max(0, basePrice + priceAdjustment),
     })
