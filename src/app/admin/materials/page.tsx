@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Plus, Pencil, Trash2, Beaker, ArrowLeft, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, Beaker, ArrowLeft, X, Check, AlertTriangle } from 'lucide-react'
 import type { QuoteMaterial } from '@/lib/quote/types'
 
 export default function AdminMaterialsPage() {
@@ -514,6 +514,27 @@ export default function AdminMaterialsPage() {
               </motion.div>
             </motion.div>
           )}
+          {/* Toast Message */}
+          {toast && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className={`fixed top-4 right-4 z-50 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${
+                toast.type === 'success' 
+                  ? 'bg-emerald-500/90 text-white' 
+                  : 'bg-rose-500/90 text-white'
+              }`}
+            >
+              {toast.type === 'success' ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <AlertTriangle className="h-4 w-4" />
+              )}
+              {toast.message}
+            </motion.div>
+          )}
+
         </div>
       </div>
     </div>
