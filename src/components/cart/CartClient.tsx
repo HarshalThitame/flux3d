@@ -79,11 +79,11 @@ export default function CartClient({ user, materials }: CartClientProps) {
       material: selectedMaterial.name,
       color: selectedColor.name,
       colorHex: selectedColor.hex,
-      infill: editingItem.infill,
+      infill: editingItem.infill ?? 20,
       config: {
         materialId: editingItem.material ?? '',
         colorHex: editingItem.colorHex ?? '',
-        infill: editingItem.infill,
+        infill: editingItem.infill ?? 20,
       },
       price: Math.max(0, basePrice + priceAdjustment),
     })
