@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Plus, Pencil, Trash2, Beaker, ArrowLeft } from 'lucide-react'
-import { getSupabaseUrl, getSupabaseServiceRoleKey } from '@/lib/supabase/config'
-import { createClient } from '@supabase/supabase-js'
 import type { QuoteMaterial } from '@/lib/quote/types'
 
 export default function AdminMaterialsPage() {
@@ -27,89 +25,63 @@ export default function AdminMaterialsPage() {
     colors: [{ name: 'Default', hex: '#ffffff' }],
   })
 
-  const supabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
-
   useEffect(() => {
     fetchMaterials()
   }, [])
 
   async function fetchMaterials() {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('materials')
-      .select('*')
-      .order('created_at', { ascending: true })
-
-    if (!error && data) {
-      setMaterials(data.map(row => ({
-        id: row.id,
-        name: row.name,
-        icon: row.icon || '🧩',
-        summary: row.summary || '',
-        density: row.density || 1.24,
-        pricePerGram: row.price_per_gram || 2.8,
-        machineRate: row.machine_rate || 180,
-        multiplier: row.multiplier || 1.0,
-        recommendedFor: row.recommended_for || '',
-        properties: row.properties || {},
-        colors: row.colors || [],
-      })))
+    try {
+      const res = await fetch('/api/materials')
+      if (res.ok) {
+        const data = await res.json()
+        setMaterials(data)
+      }
+    } catch {
+      // Failed to fetch
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     
-    const payload = {
-      id: formData.id,
-      name: formData.name,
-      icon: formData.icon,
-      summary: formData.summary,
-      density: formData.density,
-      price_per_gram: formData.pricePerGram,
-      machine_rate: formData.machineRate,
-      multiplier: formData.multiplier,
-      recommended_for: formData.recommendedFor,
-      properties: formData.properties,
-      colors: formData.colors,
-    }
-
-    if (editingMaterial) {
-      const { error } = await supabase
-        .from('materials')
-        .update(payload)
-        .eq('id', editingMaterial.id)
+    try {
+      const method = editingMaterial ? 'PUT' : 'POST'
+      const url = editingMaterial 
+        ? `/api/materials/${editingMaterial.id}`
+        : '/api/materials'
       
-      if (!error) {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      if (res.ok) {
         setShowForm(false)
         setEditingMaterial(null)
         resetForm()
         fetchMaterials()
       }
-    } else {
-      const { error } = await supabase
-        .from('materials')
-        .insert([payload])
-      
-      if (!error) {
-        setShowForm(false)
-        resetForm()
-        fetchMaterials()
-      }
+    } catch {
+      alert('Failed to save material')
     }
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Are you sure you want to delete this material?')) return
     
-    const { error } = await supabase
-      .from('materials')
-      .delete()
-      .eq('id', id)
-    
-    if (!error) {
-      fetchMaterials()
+    try {
+      const res = await fetch(`/api/materials/${id}`, {
+        method: 'DELETE',
+      })
+      if (res.ok) {
+        fetchMaterials()
+      }
+    } catch {
+      alert('Failed to delete material')
     }
   }
 
