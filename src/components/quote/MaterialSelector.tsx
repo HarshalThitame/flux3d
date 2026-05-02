@@ -1,6 +1,7 @@
 'use client'
 
-import { getMaterialById, quoteMaterials } from '@/lib/quote/materials'
+import type { QuoteMaterial } from '@/lib/quote/types'
+import { getMaterialById } from '@/lib/quote/materials'
 
 type MaterialSelectorProps = {
   selectedMaterialId: string

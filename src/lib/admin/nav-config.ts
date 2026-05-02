@@ -11,6 +11,7 @@ import {
   FileText,
   HelpCircle,
   LogOut,
+  Beaker,
 } from 'lucide-react'
 
 export type NavItem = {
@@ -29,6 +30,7 @@ export const adminNavItems: NavItem[] = [
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3, section: 'main' },
   { label: 'Payments', href: '/admin/payments', icon: CreditCard, section: 'main' },
   { label: 'Inventory', href: '/admin/inventory', icon: Printer, section: 'main' },
+  { label: 'Materials', href: '/admin/materials', icon: Beaker, section: 'main' },
   { label: 'Support Tickets', href: '/admin/tickets', icon: Ticket, section: 'secondary' },
   { label: 'Settings', href: '/admin/settings', icon: Settings, section: 'secondary' },
   { label: 'Documentation', href: '/admin/documentation', icon: FileText, section: 'secondary' },
