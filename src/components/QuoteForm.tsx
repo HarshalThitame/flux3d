@@ -15,9 +15,13 @@ export default function QuoteForm() {
         setLoading(true)
         const supabase = getSupabaseBrowserClient()
         const formData = new FormData(e.currentTarget)
-        const {
-            data: { user },
-        } = await supabase.auth.getUser()
+        let user = null
+        try {
+            const { data } = await supabase.auth.getUser()
+            user = data.user
+        } catch {
+            // Invalid session
+        }
 
         if (!user) {
             alert('Please log in before submitting a quote.')

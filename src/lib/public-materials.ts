@@ -2,6 +2,7 @@ import type { MaterialSpec } from '@/data/materials'
 import { getAdminMaterialsData } from '@/lib/admin/queries'
 import type { AdminMaterial } from '@/lib/admin/types'
 import type { MaterialColor, QuoteMaterial } from '@/lib/quote/types'
+import { materials as staticMaterials } from '@/data/materials'
 
 const presetAliases = [
   { keywords: ['pla', 'pla+'], id: 'pla-plus' },
@@ -177,27 +178,43 @@ function sortMaterials(materials: AdminMaterial[]) {
 export async function getPublicQuoteMaterials() {
   try {
     const materials = await getAdminMaterialsData()
-    if (materials.length === 0) {
-      console.warn('getPublicQuoteMaterials: No materials returned from database')
-      return []
+    if (materials.length > 0) {
+      return sortMaterials(materials).map(mapAdminMaterialToQuoteMaterial)
     }
-
-    return sortMaterials(materials).map(mapAdminMaterialToQuoteMaterial)
   } catch (error) {
     console.error('getPublicQuoteMaterials error:', error)
-    return []
   }
+
+  // Fallback to static materials data
+  return staticMaterials.map((material) => ({
+    id: material.id,
+    name: material.name,
+    icon: material.icon,
+    summary: material.description,
+    density: 1.24,
+    pricePerGram: 2.5,
+    machineRate: 210,
+    multiplier: 1.1,
+    recommendedFor: material.useCases.join(', '),
+    properties: material.properties,
+    colors: material.color ? [{ name: 'Default', hex: material.color }] : [{ name: 'Default', hex: '#ff5c1a' }],
+  }))
 }
 
 export async function getPublicMaterialSpecs() {
   try {
     const materials = await getAdminMaterialsData()
-    if (materials.length === 0) {
-      return []
+    if (materials.length > 0) {
+      return sortMaterials(materials).map(mapAdminMaterialToSpec)
     }
-
-    return sortMaterials(materials).map(mapAdminMaterialToSpec)
-  } catch {
-    return []
+  } catch (error) {
+    console.error('getPublicMaterialSpecs error:', error)
   }
+
+  // Fallback to static materials data
+  return staticMaterials.map((material) => ({
+    ...material,
+    color: material.color || '#ff5c1a',
+    gradient: material.gradient || undefined,
+  }))
 }

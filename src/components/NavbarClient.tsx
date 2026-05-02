@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Menu, ShoppingCart, X, MessageCircle, ArrowUpRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import type { AppUserProfile } from '@/lib/auth/server'
 import { useCart } from '@/lib/cart/context'
 
@@ -46,6 +47,7 @@ export default function NavbarClient({
   transparent = false,
   user,
 }: NavbarClientProps) {
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -86,6 +88,11 @@ export default function NavbarClient({
     }
   }, [])
 
+  useEffect(() => {
+    setIsOpen(false)
+    setIsProfileOpen(false)
+  }, [pathname])
+
   return (
     <>
       <nav
@@ -109,14 +116,20 @@ export default function NavbarClient({
               <li key={link.href} className="relative">
                 <Link
                   href={link.href}
+                  onNavigate={() => {
+                    setIsOpen(false)
+                    setIsProfileOpen(false)
+                  }}
                   onMouseEnter={() => setHoveredLink(link.href)}
                   onMouseLeave={() => setHoveredLink(null)}
                   className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
-                    hoveredLink === link.href ? 'text-white' : 'text-[#7a82a0]'
+                    pathname === link.href || hoveredLink === link.href
+                      ? 'text-white'
+                      : 'text-[#7a82a0]'
                   }`}
                 >
                   {link.label}
-                  {hoveredLink === link.href && (
+                  {(pathname === link.href || hoveredLink === link.href) && (
                     <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#FF5C1A] rounded-full" />
                   )}
                 </Link>
@@ -283,8 +296,15 @@ export default function NavbarClient({
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center justify-between py-3 px-3 text-base font-medium text-[#7a82a0] rounded-xl transition-colors hover:text-white hover:bg-white/[0.05]"
+                      onNavigate={() => {
+                        setIsOpen(false)
+                        setIsProfileOpen(false)
+                      }}
+                      className={`flex items-center justify-between rounded-xl py-3 px-3 text-base font-medium transition-colors ${
+                        pathname === link.href
+                          ? 'bg-white/[0.06] text-white'
+                          : 'text-[#7a82a0] hover:bg-white/[0.05] hover:text-white'
+                      }`}
                     >
                       {link.label}
                       <ArrowUpRight className="h-4 w-4 opacity-0 group-hover:opacity-100" />

@@ -44,7 +44,12 @@ export async function GET(request: NextRequest) {
 
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser()
+
+  if (userError && userError.code !== 'refresh_token_not_found') {
+    // Log non-refresh-token errors if needed
+  }
 
   if (user) {
     await upsertProfileForUser(supabase, user)

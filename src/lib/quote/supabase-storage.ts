@@ -56,6 +56,9 @@ export async function uploadFileToSupabaseStorage(
   } = await supabase.auth.getUser()
 
   if (authError) {
+    if (authError.code === 'refresh_token_not_found') {
+      throw new Error('Session expired. Please log in again.')
+    }
     throw new Error(authError.message)
   }
 
@@ -111,6 +114,9 @@ export async function saveQuoteToSupabase(payload: {
   } = await supabase.auth.getUser()
 
   if (authError) {
+    if (authError.code === 'refresh_token_not_found') {
+      throw new Error('Session expired. Please log in again.')
+    }
     throw new Error(authError.message)
   }
 

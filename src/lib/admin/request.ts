@@ -4,14 +4,16 @@ import { getAdminEmails } from '@/lib/supabase/config'
 
 export async function requireAdminRequest() {
   const supabase = await createServerSupabaseClient()
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
+  const { data, error } = await supabase.auth.getUser()
 
   if (error) {
+    if (error.code === 'refresh_token_not_found') {
+      return { response: NextResponse.json({ error: 'Session expired' }, { status: 401 }) }
+    }
     return { response: NextResponse.json({ error: error.message }, { status: 401 }) }
   }
+
+  const user = data.user
 
   if (!user) {
     return { response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }

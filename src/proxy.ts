@@ -6,9 +6,13 @@ const guestOnlyPrefixes = ['/login', '/signup']
 
 export async function proxy(request: NextRequest) {
   const { response, supabase } = await updateSession(request)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch {
+    // Invalid refresh token — treat as unauthenticated
+  }
   const pathname = request.nextUrl.pathname
   const fullPath = `${pathname}${request.nextUrl.search}`
 

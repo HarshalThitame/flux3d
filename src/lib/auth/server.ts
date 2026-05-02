@@ -18,9 +18,13 @@ export const getCurrentUserProfile = cache(async () => {
   }
 
   const supabase = await createServerSupabaseClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch {
+    return null
+  }
 
   if (!user) {
     return null
