@@ -152,7 +152,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
           </p>
         </motion.div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
           <div className="space-y-4">
             {items.map((item, index) => {
               const isEditing = editingItem?.id === item.id && (editingItem?.addedAt ?? '') === (item.addedAt ?? '')
@@ -168,7 +168,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
                     isEditing ? 'border-[#FF5C1A]/40' : 'border-white/10'
                   }`}
                 >
-                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex-1">
                       <div className="flex items-start justify-between gap-4">
                         <div>
@@ -180,7 +180,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
                             <button
                               type="button"
                               onClick={() => handleEditItem(item)}
-                              className="rounded-lg border border-[#7dd3fc]/20 bg-[#7dd3fc]/10 p-2 text-[#7dd3fc] transition-colors hover:bg-[#7dd3fc]/20"
+                              className="rounded-lg border border-[#7dd3fc]/20 bg-[#7dd3fc]/10 p-2.5 text-[#7dd3fc] transition-colors hover:bg-[#7dd3fc]/20 min-h-[44px] min-w-[44px] flex items-center justify-center"
                               aria-label={`Edit ${item.name} settings`}
                             >
                               <Edit2 className="h-4 w-4" />
@@ -189,7 +189,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
                           <button
                             type="button"
                             onClick={() => handleRemoveItem(item.addedAt ?? '')}
-                            className="rounded-lg border border-rose-400/20 bg-rose-400/10 p-2 text-rose-400 transition-colors hover:bg-rose-400/20"
+                            className="rounded-lg border border-rose-400/20 bg-rose-400/10 p-2.5 text-rose-400 transition-colors hover:bg-rose-400/20 min-h-[44px] min-w-[44px] flex items-center justify-center"
                             aria-label={`Remove ${item.name} from cart`}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -197,7 +197,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
                         </div>
                       </div>
 
-                      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3">
                         <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Material</div>
                           {editingItem ? (
@@ -334,7 +334,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="h-fit rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(12,18,34,0.98),rgba(6,10,20,0.96))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.3)]"
+            className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(12,18,34,0.98),rgba(6,10,20,0.96))] p-5 md:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.3)]"
           >
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
@@ -375,7 +375,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
               <button
                 type="button"
                 onClick={handleCheckout}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] bg-[#FF5C1A] px-4 py-3.5 text-sm font-semibold text-white transition-all hover:translate-y-[-1px] hover:opacity-95"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] bg-[#FF5C1A] px-4 py-4 text-sm font-semibold text-white transition-all hover:translate-y-[-1px] hover:opacity-95 min-h-[52px]"
               >
                 Proceed to Delivery
                 <ArrowRight className="h-4 w-4" />
@@ -383,13 +383,13 @@ export default function CartClient({ user, materials }: CartClientProps) {
               <button
                 type="button"
                 onClick={() => setShowClearConfirm(true)}
-                className="inline-flex w-full items-center justify-center rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.07]"
+                className="inline-flex w-full items-center justify-center rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3.5 text-sm font-medium text-white transition-colors hover:bg-white/[0.07] min-h-[48px]"
               >
                 Clear Cart
               </button>
               <Link
                 href="/instant-quote"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-[16px] border border-white/10 bg-transparent px-4 py-3 text-sm font-medium text-[#7dd3fc] transition-colors hover:border-[#7dd3fc]/30"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-[16px] border border-white/10 bg-transparent px-4 py-3.5 text-sm font-medium text-[#7dd3fc] transition-colors hover:border-[#7dd3fc]/30 min-h-[48px]"
               >
                 <Plus className="h-4 w-4" />
                 Add More Items

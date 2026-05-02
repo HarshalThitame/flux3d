@@ -328,14 +328,14 @@ function CartEnabledWorkspace({
                 </p>
               </div>
 
-              {/* Step Navigator */}
-              <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.03] p-1.5 backdrop-blur-xl">
-                {steps.map((step, i) => (
-                  <button
-                    key={step.id}
-                    onClick={() => step.ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                    className="flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-medium transition-colors hover:bg-white/5"
-                  >
+                {/* Step Navigator */}
+                <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.03] p-1.5 backdrop-blur-xl scrollbar-hide">
+                  {steps.map((step, i) => (
+                    <button
+                      key={step.id}
+                      onClick={() => step.ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                      className="flex items-center gap-2 whitespace-nowrap rounded-xl px-2.5 py-2.5 text-xs font-medium transition-colors hover:bg-white/5 flex-shrink-0 min-h-[44px]"
+                    >
                     <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
                       step.done
                         ? 'bg-emerald-400/20 text-emerald-400'
@@ -361,7 +361,7 @@ function CartEnabledWorkspace({
         {/* Main Content */}
         <div className="px-4 pb-16 md:px-8 xl:px-10">
           <div className="mx-auto max-w-[1500px]">
-            <div className="grid gap-8 xl:grid-cols-[1fr_380px]">
+            <div className="grid gap-6 lg:gap-8 xl:grid-cols-[1fr_380px]">
               {/* Left Column */}
               <div className="space-y-6">
                 {/* Upload Section */}

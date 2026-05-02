@@ -53,22 +53,22 @@ export default function AdminShell({
                 </div>
               </div>
 
-              <nav className="space-y-1.5">
-                {adminNavItems.map((item) => {
-                  const Icon = item.icon
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileNavOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#94a3b8] transition-all hover:bg-white/5 hover:text-white"
-                    >
-                      <Icon className="h-5 w-5" />
-                      {item.label}
-                    </Link>
-                  )
-                })}
-              </nav>
+                <nav className="space-y-1.5">
+                  {adminNavItems.map((item) => {
+                    const Icon = item.icon
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileNavOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-[#94a3b8] transition-all hover:bg-white/5 hover:text-white min-h-[44px]"
+                      >
+                        <Icon className="h-5 w-5" />
+                        {item.label}
+                      </Link>
+                    )
+                  })}
+                </nav>
             </motion.div>
           </>
         )}
@@ -80,7 +80,7 @@ export default function AdminShell({
           onToggleTheme={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
           onOpenMobileNav={() => setMobileNavOpen(true)}
         />
-        <main className="px-4 py-8 md:px-8">
+        <main className="px-4 py-6 md:px-8">
           <div className="mx-auto max-w-[1500px]">{children}</div>
         </main>
       </div>

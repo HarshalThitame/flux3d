@@ -98,7 +98,7 @@ function ServiceCard({ service, index }: { service: typeof services[0]; index: n
       {/* Hover glow */}
       <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
 
-      <div className="relative z-10 p-6 md:p-8">
+       <div className={`relative z-10 p-5 sm:p-6 md:p-8`}>
         {/* Tag */}
         <div className={`inline-flex items-center bg-gradient-to-r ${service.color} text-white text-xs font-semibold px-3 py-1 rounded-full mb-4`}>
           {service.tag}
@@ -112,9 +112,9 @@ function ServiceCard({ service, index }: { service: typeof services[0]; index: n
           </div>
         )}
 
-        <div className="flex flex-col md:flex-row gap-6 mt-4">
-          {/* Icon */}
-          <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${service.color} p-0.5 flex-shrink-0`}>
+         <div className="flex flex-col sm:flex-row gap-4 mt-4">
+           {/* Icon */}
+           <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br ${service.color} p-0.5 flex-shrink-0`}>
             <div className="w-full h-full rounded-xl bg-[#0d1120] flex items-center justify-center group-hover:scale-110 transition-transform">
               <service.icon className="w-7 h-7 text-white" />
             </div>
@@ -122,29 +122,29 @@ function ServiceCard({ service, index }: { service: typeof services[0]; index: n
 
           {/* Content */}
           <div className="flex-1">
-            <h3 className="font-[var(--font-syne)] text-xl font-bold text-white mb-2 group-hover:text-[#FF5C1A] transition-colors">
-              {service.title}
-            </h3>
-
-            <p className="text-sm text-[#7a82a0] leading-[1.6] mb-4">{service.description}</p>
-
-            {/* Pills */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              {service.pills.map((pill, j) => (
-                <span key={j} className="text-xs bg-[rgba(255,255,255,0.05)] text-[#7a82a0] px-2.5 py-1 rounded-full">
-                  {pill}
-                </span>
-              ))}
-            </div>
-
-            {/* Price + CTA */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[#FF5C1A] font-medium">{service.price}</span>
-              <a href="/instant-quote" className="inline-flex items-center gap-1.5 text-sm font-medium text-[#7a82a0] hover:text-[#FF5C1A] transition-colors group/link">
-                {service.cta}
-                <ArrowRight className="w-4 h-4 transition-transform group-hover/link:translate-x-1" />
-              </a>
-            </div>
+             <h3 className="font-[var(--font-syne)] text-lg sm:text-xl font-bold text-white mb-2 group-hover:text-[#FF5C1A] transition-colors">
+               {service.title}
+             </h3>
+ 
+             <p className="text-sm text-[#7a82a0] leading-[1.6] mb-3 sm:mb-4">{service.description}</p>
+ 
+             {/* Pills */}
+             <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+               {service.pills.map((pill, j) => (
+                 <span key={j} className="text-[11px] sm:text-xs bg-[rgba(255,255,255,0.05)] text-[#7a82a0] px-2 py-0.5 sm:py-1 rounded-full">
+                   {pill}
+                 </span>
+               ))}
+             </div>
+ 
+             {/* Price + CTA */}
+             <div className="flex items-center justify-between">
+               <span className="text-sm text-[#FF5C1A] font-medium">{service.price}</span>
+               <a href="/instant-quote" className="inline-flex items-center gap-1.5 text-sm font-medium text-[#7a82a0] hover:text-[#FF5C1A] transition-colors group/link min-h-[44px]">
+                 {service.cta}
+                 <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/link:translate-x-1" />
+               </a>
+             </div>
           </div>
         </div>
       </div>

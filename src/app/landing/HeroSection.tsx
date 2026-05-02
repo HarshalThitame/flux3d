@@ -193,7 +193,7 @@ export default function HeroSection() {
         <div className="w-full h-full rounded-full border border-dashed border-[#FF5C1A]" />
       </motion.div>
 
-      <motion.div className="relative z-10 max-w-[1200px] mx-auto px-6 py-8 w-full" style={{ y, opacity }}>
+      <motion.div className="relative z-10 max-w-[1200px] mx-auto px-4 py-6 w-full sm:px-6 sm:py-8" style={{ y, opacity }}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           {/* Left: Content */}
           <div className="text-center lg:text-left">
@@ -219,11 +219,11 @@ export default function HeroSection() {
             </motion.div>
 
             {/* H1 */}
-            <motion.h1
+             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="font-[var(--font-syne)] text-[clamp(2rem,4.5vw,3.2rem)] font-extrabold text-white leading-[1.1] tracking-[-1px] mb-4 mt-3"
+              className="font-[var(--font-syne)] text-[clamp(1.8rem,7vw,3.2rem)] font-extrabold text-white leading-[1.1] tracking-[-1px] mb-3 mt-3"
             >
               Where Ideas Become{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF5C1A] to-[#ff7a3d] animate-gradient">
@@ -236,11 +236,11 @@ export default function HeroSection() {
             </motion.h1>
 
             {/* H2 / Subheadline */}
-            <motion.p
+             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-sm text-[#7a82a0] max-w-[520px] mx-auto lg:mx-0 mb-3 leading-[1.6]"
+              className="text-sm text-[#7a82a0] max-w-[520px] mx-auto lg:mx-0 mb-3 leading-[1.6] px-2 sm:px-0"
             >
               India&apos;s most trusted 3D printing service. Industrial parts, architecture models, student projects, medical models, creator props & corporate gifts — all printed with micron-level precision.
             </motion.p>
@@ -256,7 +256,7 @@ export default function HeroSection() {
             </motion.p>
 
             {/* CTAs */}
-            <motion.div
+             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
@@ -264,7 +264,7 @@ export default function HeroSection() {
             >
               <Link
                 href="/instant-quote"
-                className="group relative bg-[#FF5C1A] text-white px-6 py-3 rounded-xl text-sm font-semibold border-none cursor-pointer overflow-hidden transition-all hover:shadow-[0_0_30px_rgba(255,92,26,0.3)]"
+                className="group relative bg-[#FF5C1A] text-white px-5 py-3.5 sm:px-6 sm:py-3 rounded-xl text-sm font-semibold border-none cursor-pointer overflow-hidden transition-all hover:shadow-[0_0_30px_rgba(255,92,26,0.3)] text-center min-h-[48px] flex items-center justify-center"
               >
                 <span className="relative z-10 inline-flex items-center gap-2">
                   Upload Your Model & Get Quote
@@ -273,7 +273,7 @@ export default function HeroSection() {
               </Link>
               <a
                 href="#services"
-                className="inline-flex items-center justify-center gap-2 bg-transparent text-white px-6 py-3 rounded-xl text-sm font-medium border border-[rgba(255,255,255,0.1)] cursor-pointer transition-all hover:border-[rgba(255,92,26,0.4)] hover:bg-[rgba(255,92,26,0.05)]"
+                className="inline-flex items-center justify-center gap-2 bg-transparent text-white px-5 py-3.5 sm:px-6 sm:py-3 rounded-xl text-sm font-medium border border-[rgba(255,255,255,0.1)] cursor-pointer transition-all hover:border-[rgba(255,92,26,0.4)] hover:bg-[rgba(255,92,26,0.05)] min-h-[48px]"
               >
                 View Our Work
                 <ArrowDown className="w-4 h-4" />
@@ -304,24 +304,24 @@ export default function HeroSection() {
           </motion.div>
         </div>
 
-        {/* Stats row */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-10"
-        >
+         {/* Stats row */}
+         <motion.div
+           initial={{ opacity: 0, y: 30 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ delay: 0.5 }}
+           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mt-8 sm:mt-10"
+         >
           {stats.map((stat, i) => (
-            <motion.div
-              key={i}
-              className="bg-[rgba(13,17,32,0.6)] border border-white/[0.07] rounded-xl p-4 text-center group hover:border-[rgba(255,92,26,0.3)] transition-colors"
-              whileHover={{ scale: 1.03, y: -4 }}
-            >
-              <div className="font-[var(--font-syne)] text-xl font-extrabold text-[#FF5C1A]">
-                {stat.value}
-              </div>
-              <div className="text-xs text-[#7a82a0] mt-0.5">{stat.label}</div>
-            </motion.div>
+               <motion.div
+                key={i}
+                className="bg-[rgba(13,17,32,0.6)] border border-white/[0.07] rounded-xl p-3 sm:p-4 text-center group hover:border-[rgba(255,92,26,0.3)] transition-colors"
+                whileHover={{ scale: 1.03, y: -4 }}
+              >
+                <div className="font-[var(--font-syne)] text-lg sm:text-xl font-extrabold text-[#FF5C1A]">
+                  {stat.value}
+                </div>
+                <div className="text-[11px] sm:text-xs text-[#7a82a0] mt-0.5">{stat.label}</div>
+              </motion.div>
           ))}
         </motion.div>
       </motion.div>

@@ -93,13 +93,13 @@ export default function DataTable<T extends { id: string }>({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0a0f1e]">
-      <div className="border-b border-white/[0.06] px-5 py-4">
+      <div className="border-b border-white/[0.06] px-4 py-4 md:px-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-white">{title}</h3>
-            <p className="mt-1 text-sm text-[#7a82a0]">{description}</p>
+            <h3 className="text-base md:text-lg font-semibold text-white">{title}</h3>
+            <p className="mt-1 text-xs md:text-sm text-[#7a82a0]">{description}</p>
           </div>
-          {action}
+          {action && <div className="w-full lg:w-auto">{action}</div>}
         </div>
 
         <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -112,16 +112,16 @@ export default function DataTable<T extends { id: string }>({
                 setPage(1)
               }}
               placeholder={searchPlaceholder}
-              className="w-full rounded-xl border border-white/8 bg-white/[0.03] py-2.5 pl-10 pr-4 text-sm text-white outline-none transition focus:border-[#FF5C1A]/30"
+              className="w-full rounded-xl border border-white/8 bg-white/[0.03] py-3 px-10 text-sm text-white outline-none transition focus:border-[#FF5C1A]/30 min-h-[44px]"
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
             {filters.length > 0 && (
               <button
                 type="button"
                 onClick={() => setShowFilters((v) => !v)}
-                className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm transition ${
+                className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm transition whitespace-nowrap min-h-[44px] ${
                   showFilters || activeFilterCount > 0
                     ? 'border-[#FF5C1A]/30 bg-[#FF5C1A]/10 text-[#FF9A72]'
                     : 'border-white/8 bg-white/[0.03] text-[#8b95b5] hover:bg-white/[0.06]'
@@ -159,7 +159,7 @@ export default function DataTable<T extends { id: string }>({
                       }))
                       setPage(1)
                     }}
-                    className="rounded-lg border border-white/8 bg-white/[0.03] px-3 py-2 text-xs text-white outline-none"
+                    className="rounded-lg border border-white/8 bg-white/[0.03] px-3 py-2.5 text-xs text-white outline-none min-h-[44px]"
                   >
                     <option value="all" className="bg-[#0d1120]">
                       {filter.label}: All
@@ -177,7 +177,38 @@ export default function DataTable<T extends { id: string }>({
         </AnimatePresence>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Mobile Card View */}
+      <div className="block md:hidden">
+        {paginatedRows.length === 0 ? (
+          <div className="px-4 py-12 text-center text-sm text-[#7a82a0]">
+            No results found
+          </div>
+        ) : (
+          <div className="divide-y divide-white/[0.03]">
+            {paginatedRows.map((row) => (
+              <div
+                key={row.id}
+                onClick={() => onRowClick?.(row)}
+                className={`p-4 transition-colors ${onRowClick ? 'cursor-pointer hover:bg-white/[0.02]' : ''}`}
+              >
+                {columns.slice(0, 4).map((column) => (
+                  <div key={column.key} className="flex justify-between items-center py-1.5">
+                    <span className="text-[10px] uppercase tracking-[0.15em] text-[#5a6580]">
+                      {column.label}
+                    </span>
+                    <span className="text-sm text-[#c6cee5]">
+                      {column.render(row)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="min-w-full">
           <thead>
             <tr className="border-b border-white/[0.04]">
@@ -242,38 +273,50 @@ export default function DataTable<T extends { id: string }>({
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-white/[0.04] px-5 py-3">
-          <div className="text-xs text-[#5a6580]">
+        <div className="flex flex-col gap-3 border-t border-white/[0.04] px-4 py-3 md:flex-row md:items-center md:justify-between md:px-5">
+          <div className="text-xs text-[#5a6580] text-center md:text-left">
             {rows.length === 0 ? 'No items' : `Showing ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, rows.length)} of ${rows.length}`}
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-center gap-1.5 overflow-x-auto">
             <button
               type="button"
               onClick={() => setPage((current) => Math.max(current - 1, 1))}
               disabled={page === 1}
-              className="rounded-lg border border-white/6 bg-white/[0.02] p-1.5 text-[#7a82a0] transition disabled:opacity-30 hover:enabled:bg-white/[0.06]"
+              className="rounded-lg border border-white/6 bg-white/[0.02] p-2 text-[#7a82a0] transition disabled:opacity-30 hover:enabled:bg-white/[0.06] min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPage(p)}
-                className={`h-7 w-7 rounded-lg text-xs font-medium transition ${
-                  p === page
-                    ? 'bg-[#FF5C1A]/15 text-[#FF9A72]'
-                    : 'text-[#7a82a0] hover:bg-white/[0.04]'
-                }`}
-              >
-                {p}
-              </button>
-            ))}
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              let p;
+              if (totalPages <= 5) {
+                p = i + 1;
+              } else if (page <= 3) {
+                p = i + 1;
+              } else if (page >= totalPages - 2) {
+                p = totalPages - 4 + i;
+              } else {
+                p = page - 2 + i;
+              }
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPage(p)}
+                  className={`h-9 min-w-[36px] rounded-lg text-xs font-medium transition ${
+                    p === page
+                      ? 'bg-[#FF5C1A]/15 text-[#FF9A72]'
+                      : 'text-[#7a82a0] hover:bg-white/[0.04]'
+                  }`}
+                >
+                  {p}
+                </button>
+              );
+            })}
             <button
               type="button"
               onClick={() => setPage((current) => Math.min(current + 1, totalPages))}
               disabled={page === totalPages}
-              className="rounded-lg border border-white/6 bg-white/[0.02] p-1.5 text-[#7a82a0] transition disabled:opacity-30 hover:enabled:bg-white/[0.06]"
+              className="rounded-lg border border-white/6 bg-white/[0.02] p-2 text-[#7a82a0] transition disabled:opacity-30 hover:enabled:bg-white/[0.06] min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <ChevronRight className="h-3.5 w-3.5" />
             </button>

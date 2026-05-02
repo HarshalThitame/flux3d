@@ -117,6 +117,88 @@ body {
   }
 }
 
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Touch target utilities - ensure 44px minimum */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Mobile-optimized text sizes */
+@media (max-width: 640px) {
+  .mobile-text-sm {
+    font-size: 0.8125rem;
+  }
+  .mobile-text-base {
+    font-size: 0.875rem;
+  }
+  .mobile-text-lg {
+    font-size: 1rem;
+  }
+}
+
+/* Prevent zoom on focus for iOS */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Smooth scrolling for mobile */
+@media (max-width: 768px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Mobile card layout for tables */
+@media (max-width: 640px) {
+  .mobile-card {
+    display: block;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border-radius: 0.75rem;
+    background: rgba(13, 17, 32, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  .mobile-card-label {
+    font-size: 0.75rem;
+    color: #7a82a0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .mobile-card-value {
+    font-size: 0.875rem;
+    color: #e8eaf0;
+    font-weight: 500;
+  }
+}
+
+/* Touch feedback for interactive elements */
+@media (max-width: 768px) {
+  button:active, a:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+}
+
+/* Reduce animation complexity on mobile */
+@media (max-width: 768px) {
+  .animate-float,
+  .animate-rotate,
+  .animate-gradient {
+    animation-duration: 4s;
+  }
+}
+
 /* Services page animations */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
