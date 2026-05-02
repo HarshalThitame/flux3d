@@ -66,17 +66,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems(newItems)
   }
 
-  const updateItem = (addedAt: string, updates: {
-    material?: string
-    color?: string
-    colorHex?: string
-    infill?: number
-    layerHeight?: number
-    price?: number
-    estimatedTime?: number
-    weight?: number
-    config?: Partial<import('@/lib/quote/types').QuoteConfig>
-  }) => {
+  const updateItem = (addedAt: string, updates: Partial<CartItem>) => {
     const newItems = updateCartItem(addedAt, updates)
     setItems(newItems)
   }
