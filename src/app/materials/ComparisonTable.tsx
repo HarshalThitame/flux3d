@@ -2,22 +2,19 @@
 
 import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 
-const materials = [
-  { name: 'PLA+', type: 'FDM', price: 8, strength: 3, flex: 1, heat: 2, detail: 3, bestFor: 'Students, Gifts, Prototypes', stock: true },
-  { name: 'PETG', type: 'FDM', price: 9, strength: 4, flex: 2, heat: 3, detail: 3, bestFor: 'Functional Parts, Containers', stock: true },
-  { name: 'ABS', type: 'FDM', price: 10, strength: 4, flex: 2, heat: 4, detail: 3, bestFor: 'Machine Parts, Enclosures', stock: true },
-  { name: 'ASA', type: 'FDM', price: 11, strength: 4, flex: 2, heat: 5, detail: 3, bestFor: 'Outdoor Parts, Automotive', stock: true },
-  { name: 'TPU', type: 'FDM', price: 12, strength: 3, flex: 5, heat: 2, detail: 3, bestFor: 'Grips, Gaskets, Wearables', stock: true },
-  { name: 'Nylon PA12', type: 'FDM', price: 18, strength: 5, flex: 3, heat: 4, detail: 4, bestFor: 'Industrial Jigs, Structural', stock: true },
-  { name: 'Silk PLA', type: 'FDM', price: 10, strength: 3, flex: 1, heat: 2, detail: 5, bestFor: 'Gifts, Trophies, Decor', stock: true },
-  { name: 'Multi-Color PLA', type: 'FDM', price: 14, strength: 3, flex: 1, heat: 2, detail: 4, bestFor: 'Logos, Figurines, Signage', stock: true },
-  { name: 'Standard Resin 4K', type: 'Resin', price: 18, strength: 3, flex: 1, heat: 2, detail: 5, bestFor: 'Dental, Miniatures, Jewelry', stock: true },
-  { name: 'ABS-Like Resin', type: 'Resin', price: 20, strength: 4, flex: 2, heat: 3, detail: 5, bestFor: 'Engineering Prototypes', stock: true },
-  { name: 'Dental Resin', type: 'Resin', price: 28, strength: 4, flex: 2, heat: 3, detail: 5, bestFor: 'Dental Models, Aligners', stock: false },
-  { name: 'Biocompatible Resin', type: 'Resin', price: 35, strength: 4, flex: 2, heat: 3, detail: 5, bestFor: 'Medical, Skin-contact', stock: false },
-]
+type ComparisonMaterial = {
+  name: string
+  type: string
+  price: number
+  strength: number
+  flex: number
+  heat: number
+  detail: number
+  bestFor: string
+  stock: boolean
+}
 
 function Stars({ count }: { count: number }) {
   return (
@@ -32,6 +29,59 @@ function Stars({ count }: { count: number }) {
 export default function ComparisonTable() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
+  const [materials, setMaterials] = useState<ComparisonMaterial[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadMaterials() {
+      try {
+        const res = await fetch('/api/materials')
+        const json = await res.json()
+        if (json.materials && json.materials.length > 0) {
+          const mapped = json.materials.map((m: any) => ({
+            name: m.name,
+            type: m.properties?.type || 'FDM',
+            price: m.price_per_gram || 0,
+            strength: m.properties?.strength === 'High' ? 5 : m.properties?.strength === 'Medium' ? 3 : 1,
+            flex: m.properties?.flexibility === 'High' ? 5 : m.properties?.flexibility === 'Medium' ? 3 : 1,
+            heat: m.properties?.tempResistance === 'High' ? 5 : m.properties?.tempResistance === 'Medium' ? 3 : 1,
+            detail: m.properties?.detail || 3,
+            bestFor: m.recommended_for || 'General printing',
+            stock: m.stock !== 'Paused',
+          }))
+          setMaterials(mapped)
+        }
+      } catch (error) {
+        console.error('Failed to load materials for comparison:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadMaterials()
+  }, [])
+
+  if (loading) {
+    return (
+      <section ref={ref} className="px-4 md:px-8 lg:px-16 py-16">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 w-64 rounded bg-white/[0.04]" />
+            <div className="h-64 rounded-2xl bg-white/[0.04]" />
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (materials.length === 0) {
+    return (
+      <section ref={ref} className="px-4 md:px-8 lg:px-16 py-16">
+        <div className="max-w-[1200px] mx-auto text-center py-12">
+          <p className="text-[#7a82a0]">No materials available for comparison.</p>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section ref={ref} className="px-4 md:px-8 lg:px-16 py-16">

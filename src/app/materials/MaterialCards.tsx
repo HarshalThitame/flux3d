@@ -6,7 +6,30 @@ import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { ArrowRight, Check, X, ChevronDown } from 'lucide-react'
-import type { MaterialSpec } from '@/data/materials'
+
+type MaterialSpec = {
+  id: string
+  name: string
+  tag: string
+  icon: string
+  description: string
+  color?: string
+  gradient?: string
+  properties: {
+    strength: string
+    flexibility: string
+    tempResistance: string
+    difficulty: string
+  }
+  useCases: string[]
+  pros: string[]
+  cons: string[]
+  settings?: {
+    nozzle: string
+    bed: string
+    speed: string
+  }
+}
 
 function MaterialCard({ data, index }: { data: MaterialSpec; index: number }) {
   const [expanded, setExpanded] = useState(false)

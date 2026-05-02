@@ -1,8 +1,30 @@
-import type { MaterialSpec } from '@/data/materials'
+import type { MaterialColor, QuoteMaterial } from '@/lib/quote/types'
 import { getAdminMaterialsData } from '@/lib/admin/queries'
 import type { AdminMaterial } from '@/lib/admin/types'
-import type { MaterialColor, QuoteMaterial } from '@/lib/quote/types'
-import { materials as staticMaterials } from '@/data/materials'
+
+type MaterialSpec = {
+  id: string
+  name: string
+  tag: string
+  icon: string
+  description: string
+  color?: string
+  gradient?: string
+  properties: {
+    strength: string
+    flexibility: string
+    tempResistance: string
+    difficulty: string
+  }
+  useCases: string[]
+  pros: string[]
+  cons: string[]
+  settings?: {
+    nozzle: string
+    bed: string
+    speed: string
+  }
+}
 
 const presetAliases = [
   { keywords: ['pla', 'pla+'], id: 'pla-plus' },
@@ -175,7 +197,7 @@ function sortMaterials(materials: AdminMaterial[]) {
   })
 }
 
-export async function getPublicQuoteMaterials() {
+export async function getPublicQuoteMaterials(): Promise<QuoteMaterial[]> {
   try {
     const materials = await getAdminMaterialsData()
     if (materials.length > 0) {
@@ -185,23 +207,11 @@ export async function getPublicQuoteMaterials() {
     console.error('getPublicQuoteMaterials error:', error)
   }
 
-  // Fallback to static materials data
-  return staticMaterials.map((material) => ({
-    id: material.id,
-    name: material.name,
-    icon: material.icon,
-    summary: material.description,
-    density: 1.24,
-    pricePerGram: 2.5,
-    machineRate: 210,
-    multiplier: 1.1,
-    recommendedFor: material.useCases.join(', '),
-    properties: material.properties,
-    colors: material.color ? [{ name: 'Default', hex: material.color }] : [{ name: 'Default', hex: '#ff5c1a' }],
-  }))
+  // Return empty array - no static fallback, fully database-driven
+  return []
 }
 
-export async function getPublicMaterialSpecs() {
+export async function getPublicMaterialSpecs(): Promise<MaterialSpec[]> {
   try {
     const materials = await getAdminMaterialsData()
     if (materials.length > 0) {
@@ -211,10 +221,6 @@ export async function getPublicMaterialSpecs() {
     console.error('getPublicMaterialSpecs error:', error)
   }
 
-  // Fallback to static materials data
-  return staticMaterials.map((material) => ({
-    ...material,
-    color: material.color || '#ff5c1a',
-    gradient: material.gradient || undefined,
-  }))
+  // Return empty array - no static fallback, fully database-driven
+  return []
 }

@@ -2,7 +2,30 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { Flame, Gauge, Shield, Waves, CheckCircle2, CircleAlert } from 'lucide-react'
-import { MaterialSpec } from '@/data/materials'
+
+type MaterialSpec = {
+  id: string
+  name: string
+  tag: string
+  icon: string
+  description: string
+  color?: string
+  gradient?: string
+  properties: {
+    strength: string
+    flexibility: string
+    tempResistance: string
+    difficulty: string
+  }
+  useCases: string[]
+  pros: string[]
+  cons: string[]
+  settings?: {
+    nozzle: string
+    bed: string
+    speed: string
+  }
+}
 
 type PopupPosition = {
   left: number
@@ -93,11 +116,7 @@ export default function MaterialPopup({
                 <p className="text-sm leading-6 text-[#b0b8d3]">{material.description}</p>
 
                 <div className="mt-4 grid grid-cols-2 gap-2.5">
-                  {(
-                    Object.entries(material.properties) as Array<
-                      [keyof MaterialSpec['properties'], string]
-                    >
-                  ).map(([key, value]) => {
+                  {(Object.entries(material.properties) as Array<[keyof MaterialSpec['properties'], string]>).map(([key, value]) => {
                     const Icon = propertyIcons[key]
 
                     return (

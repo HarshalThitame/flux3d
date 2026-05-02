@@ -3,7 +3,30 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import MaterialCard from '@/components/materials/MaterialCard'
 import MaterialPopup from '@/components/materials/MaterialPopup'
-import { materials, MaterialSpec } from '@/data/materials'
+
+type MaterialSpec = {
+  id: string
+  name: string
+  tag: string
+  icon: string
+  description: string
+  color?: string
+  gradient?: string
+  properties: {
+    strength: string
+    flexibility: string
+    tempResistance: string
+    difficulty: string
+  }
+  useCases: string[]
+  pros: string[]
+  cons: string[]
+  settings?: {
+    nozzle: string
+    bed: string
+    speed: string
+  }
+}
 
 type AnchorRect = {
   left: number
@@ -63,11 +86,30 @@ function getPopupPosition(anchor: AnchorRect, isMobile: boolean): PopupPosition 
 }
 
 export default function MaterialsGrid() {
+  const [materials, setMaterials] = useState<MaterialSpec[]>([])
+  const [loading, setLoading] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [anchorRect, setAnchorRect] = useState<AnchorRect | null>(null)
   const [isMobile, setIsMobile] = useState(false)
   const [activeElement, setActiveElement] = useState<HTMLButtonElement | null>(null)
   const rootRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    async function loadMaterials() {
+      try {
+        const res = await fetch('/api/materials')
+        const json = await res.json()
+        if (json.materials) {
+          setMaterials(json.materials)
+        }
+      } catch (error) {
+        console.error('Failed to load materials:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadMaterials()
+  }, [])
 
   useEffect(() => {
     const media = window.matchMedia('(hover: none), (pointer: coarse)')
@@ -127,7 +169,7 @@ export default function MaterialsGrid() {
 
   const activeMaterial = useMemo(
     () => materials.find((material) => material.id === activeId) ?? null,
-    [activeId]
+    [activeId, materials]
   )
 
   const position = useMemo(() => {
@@ -161,6 +203,26 @@ export default function MaterialsGrid() {
       width: rect.width,
       height: rect.height,
     })
+  }
+
+  if (loading) {
+    return (
+      <div ref={rootRef} className="relative">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="animate-pulse rounded-[24px] bg-white/[0.04] h-48" />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (materials.length === 0) {
+    return (
+      <div ref={rootRef} className="relative text-center py-12">
+        <p className="text-[#7a82a0]">No materials available at the moment.</p>
+      </div>
+    )
   }
 
   return (
