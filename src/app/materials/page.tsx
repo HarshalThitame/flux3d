@@ -10,6 +10,7 @@ import PostProcessing from './PostProcessing'
 import MaterialFAQ from './MaterialFAQ'
 import MaterialsCTA from './MaterialsCTA'
 import { Suspense } from 'react'
+import { getPublicMaterialSpecs } from '@/lib/public-materials'
 
 export const metadata: Metadata = {
   title: '3D Printing Materials & Filaments in India | PLA, PETG, ABS, Resin & More — Flux 3D',
@@ -46,28 +47,36 @@ export const metadata: Metadata = {
   },
 }
 
-function MaterialsPageContent() {
-  return (
-    <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
-      <Navbar transparent />
-      <main>
-        <MaterialsHero />
-        <ComparisonTable />
-        <MaterialCards />
-        <MaterialSelectorTool />
-        <FDMvsResin />
-        <PostProcessing />
-        <MaterialFAQ />
-        <MaterialsCTA />
-      </main>
-    </div>
-  )
-}
+export default async function MaterialsPage() {
+  const materialSpecs = await getPublicMaterialSpecs()
+  // For ComparisonTable, we need to map to ComparisonMaterial type
+  const comparisonMaterials = materialSpecs.map((m: any) => ({
+    name: m.name,
+    type: 'FDM', // Default since we don't have type in MaterialSpec
+    price: parseFloat(m.pricePerGram || 0),
+    strength: m.properties?.strength === 'High' ? 5 : m.properties?.strength === 'Medium' ? 3 : 1,
+    flex: m.properties?.flexibility === 'High' ? 5 : m.properties?.flexibility === 'Medium' ? 3 : 1,
+    heat: m.properties?.tempResistance === 'High' ? 5 : m.properties?.tempResistance === 'Medium' ? 3 : 1,
+    detail: 3,
+    bestFor: m.recommendedFor || m.useCases?.join(', ') || 'General printing',
+    stock: true,
+  }))
 
-export default function MaterialsPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#050810]" />}>
-      <MaterialsPageContent />
+      <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+        <Navbar transparent />
+        <main>
+          <MaterialsHero />
+          <ComparisonTable materials={comparisonMaterials} />
+          <MaterialCards materials={materialSpecs} />
+          <MaterialSelectorTool />
+          <FDMvsResin />
+          <PostProcessing />
+          <MaterialFAQ />
+          <MaterialsCTA />
+        </main>
+      </div>
     </Suspense>
   )
 }

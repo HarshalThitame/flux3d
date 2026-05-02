@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { ArrowRight, Check, X, ChevronDown } from 'lucide-react'
@@ -29,6 +29,10 @@ type MaterialSpec = {
     bed: string
     speed: string
   }
+}
+
+type MaterialCardsProps = {
+  materials: MaterialSpec[]
 }
 
 function MaterialCard({ data, index }: { data: MaterialSpec; index: number }) {
@@ -181,33 +185,14 @@ function MaterialCard({ data, index }: { data: MaterialSpec; index: number }) {
   )
 }
 
-export default function MaterialCards() {
+export default function MaterialCards({ materials }: MaterialCardsProps) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
   const searchParams = useSearchParams()
-  const [materials, setMaterials] = useState<MaterialSpec[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function loadMaterials() {
-      try {
-        const res = await fetch('/api/materials')
-        const json = await res.json()
-        if (json.materials) {
-          setMaterials(json.materials)
-        }
-      } catch (error) {
-        console.error('Failed to load materials:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadMaterials()
-  }, [])
 
   // Handle scroll to selected material
-  useEffect(() => {
-    const materialName = searchParams.get('name')
+  const materialName = searchParams.get('name')
+  useState(() => {
     if (materialName && materials.length > 0) {
       const element = document.getElementById(`material-${materialName.toLowerCase().replace(/\s+/g, '-')}`)
       if (element) {
@@ -218,21 +203,7 @@ export default function MaterialCards() {
         }, 500)
       }
     }
-  }, [searchParams, materials])
-
-  if (loading) {
-    return (
-      <section className="px-4 md:px-8 lg:px-16 py-16">
-        <div className="max-w-[1200px] mx-auto space-y-8">
-          <div className="animate-pulse space-y-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-48 rounded-[28px] bg-white/[0.04]" />
-            ))}
-          </div>
-        </div>
-      </section>
-    )
-  }
+  })
 
   if (materials.length === 0) {
     return (
@@ -264,7 +235,7 @@ export default function MaterialCards() {
         </motion.div>
 
         {materials.map((m, i) => (
-          <MaterialCard key={m.name} data={m} index={i} />
+          <MaterialCard key={m.id} data={m} index={i} />
         ))}
       </div>
     </section>

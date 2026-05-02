@@ -485,7 +485,7 @@ export async function getAdminMaterialsData() {
   const supabase = createAdminSupabaseClient()
   const { data, error } = await supabase
     .from('materials')
-    .select('id, name, price_per_gram, density, colors, stock, created_at')
+    .select('*')
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(error.message)

@@ -20,21 +20,32 @@ export async function GET() {
       )
     }
 
-    const materials = (data || []).map((row) => ({
-      id: row.id,
-      name: row.name,
-      icon: row.icon || '🧩',
-      summary: row.summary || '',
-      density: row.density || 1.24,
-      pricePerGram: row.price_per_gram || 2.8,
-      machineRate: row.machine_rate || 180,
-      multiplier: row.multiplier || 1,
-      recommendedFor: row.recommended_for || '',
-      properties: row.properties || {},
-      colors: row.colors || [],
-    }))
+    const materials = (data || []).map((row) => {
+      // Normalize properties - handle misspellings from DB
+      const rawProps = row.properties || {}
+      const properties = {
+        strength: rawProps.strength || rawProps.strength || 'Medium',
+        flexibility: rawProps.flexibility || 'Medium',
+        tempResistance: rawProps.tempResistance || 'Medium',
+        difficulty: rawProps.difficulty || 'Medium',
+      }
 
-    return NextResponse.json(materials)
+      return {
+        id: row.id,
+        name: row.name,
+        icon: row.icon || '🧩',
+        summary: row.summary || '',
+        density: row.density || 1.24,
+        pricePerGram: row.price_per_gram || 2.8,
+        machineRate: row.machine_rate || 180,
+        multiplier: row.multiplier || 1,
+        recommendedFor: row.recommended_for || '',
+        properties,
+        colors: row.colors || [],
+      }
+    })
+
+    return NextResponse.json({ materials })
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to fetch materials' },

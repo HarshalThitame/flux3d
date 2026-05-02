@@ -85,6 +85,37 @@ function getPopupPosition(anchor: AnchorRect, isMobile: boolean): PopupPosition 
   return { left, top, width }
 }
 
+function mapApiMaterialToSpec(m: any): MaterialSpec {
+  return {
+    id: m.id,
+    name: m.name,
+    tag: 'Admin Catalog',
+    icon: m.icon || '🧩',
+    description: m.summary || `${m.name} is available in the live admin catalog for custom 3D printing jobs.`,
+    color: m.colors?.[0]?.hex || (typeof m.colors?.[0] === 'string' ? m.colors[0] : undefined),
+    properties: m.properties || {
+      strength: 'Medium',
+      flexibility: 'Medium',
+      tempResistance: 'Medium',
+      difficulty: 'Medium',
+    },
+    useCases: m.recommendedFor ? m.recommendedFor.split(',').map((s: string) => s.trim()) : ['Custom printing'],
+    pros: [
+      `Priced at ₹${m.pricePerGram}/g`,
+      `Density ${m.density} g/cm³`,
+      'Available in live catalog',
+    ],
+    cons: [
+      'Lead time depends on part geometry',
+    ],
+    settings: {
+      nozzle: '200-230°C',
+      bed: '50-80°C',
+      speed: '40-100 mm/s',
+    },
+  }
+}
+
 export default function MaterialsGrid() {
   const [materials, setMaterials] = useState<MaterialSpec[]>([])
   const [loading, setLoading] = useState(true)
@@ -99,8 +130,8 @@ export default function MaterialsGrid() {
       try {
         const res = await fetch('/api/materials')
         const json = await res.json()
-        if (json.materials) {
-          setMaterials(json.materials)
+        if (json.materials && json.materials.length > 0) {
+          setMaterials(json.materials.map(mapApiMaterialToSpec))
         }
       } catch (error) {
         console.error('Failed to load materials:', error)
