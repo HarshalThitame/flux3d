@@ -8,19 +8,6 @@ function normalizeValue(value: string) {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')
 }
 
-const materialAliases: Record<string, string[]> = {}
-
-export function getMaterialById(materialId: string, materials: QuoteMaterial[] = quoteMaterials) {
-  const normalizedMaterialId = normalizeValue(materialId)
-
-  return (
-    materials.find((material) => normalizeValue(material.id) === normalizedMaterialId) ??
-    materials.find((material) => normalizeValue(material.name) === normalizedMaterialId) ??
-    materials[0] ??
-    null
-  )
-}
-
 const materialAliases: Record<string, string[]> = {
   'pla-plus': ['pla', 'pla+', 'pla-plus', 'pla-pro'],
   abs: ['abs', 'abs-tough'],
