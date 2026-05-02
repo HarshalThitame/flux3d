@@ -157,6 +157,23 @@ export default function AdminMaterialsPage() {
     setRecommendedFor([''])
   }
 
+  function addColor() {
+    setFormData({
+      ...formData,
+      colors: [...formData.colors, { name: '', hex: '#000000' }],
+    })
+  }
+
+  function updateColor(index: number, field: 'name' | 'hex', value: string) {
+    const updated = [...formData.colors]
+    updated[index] = { ...updated[index], [field]: value }
+    setFormData({ ...formData, colors: updated })
+  }
+
+  function removeColor(index: number) {
+    setFormData({ ...formData, colors: formData.colors.filter((_, i) => i !== index) })
+  }
+
   function addRecommendedFor() {
     setRecommendedFor([...recommendedFor, ''])
   }
@@ -296,6 +313,50 @@ export default function AdminMaterialsPage() {
                       className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
                       rows={2}
                     />
+                  </div>
+
+                  {/* Dynamic Colors */}
+                  <div>
+                    <label className="mb-1 block text-sm text-[#7a82a0]">Colors (name + hex)</label>
+                    {formData.colors.map((color, index) => (
+                      <div key={index} className="flex gap-2 mb-2">
+                        <input
+                          type="text"
+                          value={color.name}
+                          onChange={(e) => updateColor(index, 'name', e.target.value)}
+                          placeholder="Color name"
+                          className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        />
+                        <input
+                          type="color"
+                          value={color.hex}
+                          onChange={(e) => updateColor(index, 'hex', e.target.value)}
+                          className="h-10 w-14 cursor-pointer rounded-lg border border-white/10 bg-white/[0.03]"
+                        />
+                        <input
+                          type="text"
+                          value={color.hex}
+                          onChange={(e) => updateColor(index, 'hex', e.target.value)}
+                          className="w-24 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        />
+                        {formData.colors.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeColor(index)}
+                            className="rounded-lg border border-rose-400/20 bg-rose-400/10 p-2 text-rose-400 hover:bg-rose-400/20"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addColor}
+                      className="text-sm text-[#FF5C1A] hover:text-[#FF9A72]"
+                    >
+                      + Add another color
+                    </button>
                   </div>
 
                   {/* Dynamic Recommended For */}
