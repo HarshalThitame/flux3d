@@ -124,11 +124,11 @@ export default function FooterSection() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#7a82a0]">
           <p>© 2025 Flux 3D Private Limited · All Rights Reserved · GST: 27AXXXXXX1Z5</p>
           <div className="flex items-center gap-4">
-            <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
-            <Link href="#" className="hover:text-white transition-colors">Refund Policy</Link>
-            <Link href="#" className="hover:text-white transition-colors">Shipping Policy</Link>
-          </div>
+             <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
+             <Link href="/terms-of-service" className="hover:text-white transition-colors">Terms of Service</Link>
+             <Link href="/refund-policy" className="hover:text-white transition-colors">Refund Policy</Link>
+             <Link href="/shipping-policy" className="hover:text-white transition-colors">Shipping Policy</Link>
+           </div>
         </div>
 
         {/* SEO footer text */}

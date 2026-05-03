@@ -78,7 +78,13 @@ export async function uploadFileToSupabaseStorage(
     contentType: file.type || getMimeType(extension),
   })
 
-  if (error) {
+   if (error) {
+    // Log full error details for debugging 42704
+    console.error('Storage upload error (raw):', error)
+    console.error('Error message:', error.message)
+    console.error('Error stringified:', JSON.stringify(error, Object.getOwnPropertyNames(error)))
+    console.error('Error keys:', Object.keys(error))
+    
     throw new Error(`Storage upload failed: ${error.message}`)
   }
 

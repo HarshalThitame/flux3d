@@ -229,7 +229,18 @@ export async function getPublicQuoteMaterials(): Promise<QuoteMaterial[]> {
       return sortMaterials(materials).map(mapAdminMaterialToQuoteMaterial)
     }
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
     console.error('getPublicQuoteMaterials error:', error)
+    
+    // Check if it's a schema cache error
+    if (message.includes('Could not find the table') || message.includes('schema cache')) {
+      console.error(
+        'SUPABASE SCHEMA CACHE ERROR: The materials table may not exist or cache needs refresh.\n' +
+        '1. Ensure supabase/auth-schema.sql was run in Supabase SQL Editor\n' +
+        '2. Restart the Next.js server (Ctrl+C, then npm run dev)\n' +
+        '3. The Supabase client caches the schema - a server restart is required.'
+      )
+    }
   }
 
   // Return empty array - no static fallback, fully database-driven

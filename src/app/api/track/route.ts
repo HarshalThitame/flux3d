@@ -3,7 +3,12 @@ import { createAdminSupabaseClient } from '@/lib/admin/server'
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
+    let body: any = {}
+    try {
+      body = await request.json()
+    } catch {
+      // Empty or invalid JSON - just continue with defaults
+    }
     const { anonId, sessionId, pageUrl, pageTitle, referrer, device, location, event } = body
 
     const supabase = createAdminSupabaseClient()
