@@ -23,8 +23,7 @@ export async function POST(request: Request) {
     if (bucketError) {
       return NextResponse.json({ 
         step: 'list_buckets', 
-        error: bucketError.message,
-        code: bucketError.code 
+        error: bucketError.message
       }, { status: 500 })
     }
 
@@ -51,7 +50,6 @@ export async function POST(request: Request) {
         step: 'storage_upload',
         error: uploadError.message,
         errorDetails: uploadError,
-        code: (uploadError as any).code,
         hint: 'This is the exact 42704 error. Check RLS policies on storage.objects'
       }, { status: 500 })
     }
