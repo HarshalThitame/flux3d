@@ -48,17 +48,31 @@ export const metadata: Metadata = {
 }
 
 export default async function MaterialsPage() {
-  const materialSpecs = await getPublicMaterialSpecs()
-  // For ComparisonTable, we need to map to ComparisonMaterial type
+  // Fetch materials from API to get actual database data with new fields
+  let dbMaterials: any[] = []
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/materials`)
+    if (res.ok) {
+      const data = await res.json()
+      dbMaterials = data.materials || data || []
+    }
+  } catch {
+    console.error('Failed to fetch materials from API')
+  }
+
+  // Fallback to static data if API fails
+  const materialSpecs = dbMaterials.length > 0 ? dbMaterials : await getPublicMaterialSpecs()
+
+  // For ComparisonTable, map to ComparisonMaterial type with new fields
   const comparisonMaterials = materialSpecs.map((m: any) => ({
     name: m.name,
-    type: 'FDM', // Default since we don't have type in MaterialSpec
-    price: parseFloat(m.pricePerGram || 0),
-    strength: m.properties?.strength === 'High' ? 5 : m.properties?.strength === 'Medium' ? 3 : 1,
+    type: m.type || 'FDM',
+    price: parseFloat(m.pricePerGram || m.price_per_gram || 0),
+    strength: m.strengthRating === 'High' ? 5 : m.strengthRating === 'Medium' ? 3 : 1,
     flex: m.properties?.flexibility === 'High' ? 5 : m.properties?.flexibility === 'Medium' ? 3 : 1,
-    heat: m.properties?.tempResistance === 'High' ? 5 : m.properties?.tempResistance === 'Medium' ? 3 : 1,
-    detail: 3,
-    bestFor: m.recommendedFor || m.useCases?.join(', ') || 'General printing',
+    heat: m.heatResistance === 'High' ? 5 : m.heatResistance === 'Medium' ? 3 : 1,
+    detail: m.finishQuality === 'Excellent' ? 5 : m.finishQuality === 'Good' ? 3 : 1,
+    bestFor: m.bestFor?.join(', ') || m.recommendedFor || m.useCases?.join(', ') || 'General printing',
     stock: true,
   }))
 
