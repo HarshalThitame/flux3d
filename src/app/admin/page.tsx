@@ -7,6 +7,8 @@ import DonutChartCard from '@/components/admin/DonutChartCard'
 import LineChartCard from '@/components/admin/LineChartCard'
 import SkeletonBlock from '@/components/admin/SkeletonBlock'
 import StatusBadge from '@/components/admin/StatusBadge'
+import { Eye } from 'lucide-react'
+import Link from 'next/link'
 import { type AdminOrder } from '@/lib/admin/types'
 
 type DashboardResponse = {
@@ -79,6 +81,7 @@ export default function AdminDashboardPage() {
           <SkeletonBlock className="h-[420px] w-full" />
           <SkeletonBlock className="h-[420px] w-full" />
         </div>
+        <SkeletonBlock className="h-12 w-48" />
       </div>
     )
   }
@@ -138,34 +141,44 @@ export default function AdminDashboardPage() {
         ]}
       />
 
-      <DataTable
-        title="Live Order Queue"
-        description="The most recent jobs moving through review, approval, printing, and completion."
-        data={data.orders}
-        searchPlaceholder="Search orders"
-        searchKeys={['id', 'fullName', 'material', 'status']}
-        filters={[
-          {
-            key: 'status',
-            label: 'Status',
-            options: [
-              { label: 'Pending', value: 'pending' },
-              { label: 'Reviewed', value: 'reviewed' },
-              { label: 'Approved', value: 'approved' },
-              { label: 'Printing', value: 'printing' },
-              { label: 'Completed', value: 'completed' },
-            ],
-            getValue: (row) => row.status,
-          },
-        ]}
-        columns={[
-          { key: 'id', label: 'Order ID', sortable: true, sortValue: (row) => row.id, render: (row) => <span className="font-medium text-white">{row.orderNumber ?? row.id}</span> },
-          { key: 'fullName', label: 'Customer', sortable: true, sortValue: (row) => row.fullName, render: (row) => row.fullName },
-          { key: 'material', label: 'Material', sortable: true, sortValue: (row) => row.material, render: (row) => row.material },
-          { key: 'status', label: 'Status', sortable: true, sortValue: (row) => row.status, render: (row) => <StatusBadge status={row.status} /> },
-          { key: 'price', label: 'Price', sortable: true, sortValue: (row) => row.totalPrice, render: (row) => `₹${Number(row.totalPrice).toLocaleString('en-IN')}` },
-        ]}
-      />
-    </div>
-  )
+       <DataTable
+         title="Live Order Queue"
+         description="The most recent jobs moving through review, approval, printing, and completion."
+         data={data.orders}
+         searchPlaceholder="Search orders"
+         searchKeys={['id', 'fullName', 'material', 'status']}
+         filters={[
+           {
+             key: 'status',
+             label: 'Status',
+             options: [
+               { label: 'Pending', value: 'pending' },
+               { label: 'Reviewed', value: 'reviewed' },
+               { label: 'Approved', value: 'approved' },
+               { label: 'Printing', value: 'printing' },
+               { label: 'Completed', value: 'completed' },
+             ],
+             getValue: (row) => row.status,
+           },
+         ]}
+         columns={[
+           { key: 'id', label: 'Order ID', sortable: true, sortValue: (row) => row.id, render: (row) => <span className="font-medium text-white">{row.orderNumber ?? row.id}</span> },
+           { key: 'fullName', label: 'Customer', sortable: true, sortValue: (row) => row.fullName, render: (row) => row.fullName },
+           { key: 'material', label: 'Material', sortable: true, sortValue: (row) => row.material, render: (row) => row.material },
+           { key: 'status', label: 'Status', sortable: true, sortValue: (row) => row.status, render: (row) => <StatusBadge status={row.status} /> },
+           { key: 'price', label: 'Price', sortable: true, sortValue: (row) => row.totalPrice, render: (row) => `₹${Number(row.totalPrice).toLocaleString('en-IN')}` },
+         ]}
+       />
+
+       <div className="mt-6 flex items-center gap-4">
+         <Link
+           href="/admin/blog"
+           className="inline-flex items-center gap-2 rounded-xl bg-[#FF5C1A] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+         >
+           <Eye className="h-4 w-4" />
+           Manage Blog Posts
+         </Link>
+       </div>
+     </div>
+   )
 }

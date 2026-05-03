@@ -15,6 +15,13 @@ export type MaterialSpec = {
   useCases: string[]
   pros: string[]
   cons: string[]
+  keyProperties?: string[]
+  bestFor?: string[]
+  difficultyLevel?: 'Easy' | 'Medium' | 'Hard'
+  heatResistance?: 'Low' | 'Medium' | 'High'
+  strengthRating?: 'Low' | 'Medium' | 'High'
+  finishQuality?: 'Basic' | 'Good' | 'Excellent'
+  samplePhoto?: string
   settings?: {
     nozzle: string
     bed: string
@@ -40,6 +47,12 @@ export const materials: MaterialSpec[] = [
     useCases: ['Concept models', 'Display pieces', 'Fit-check prototypes'],
     pros: ['Crisp detail', 'Low warping', 'Budget-friendly'],
     cons: ['Softens with heat', 'Less durable outdoors'],
+    keyProperties: ['Biodegradable', 'Easy to print', 'Great surface finish'],
+    bestFor: ['Students', 'Architects', 'Hobbyists', 'Display models'],
+    difficultyLevel: 'Easy',
+    heatResistance: 'Low',
+    strengthRating: 'Medium',
+    finishQuality: 'Excellent',
     settings: {
       nozzle: '205-220°C',
       bed: '50-60°C',
@@ -109,6 +122,12 @@ export const materials: MaterialSpec[] = [
     useCases: ['Outdoor housings', 'Vehicle exterior parts', 'Weatherproof covers'],
     pros: ['UV stable', 'Heat resistant', 'Durable finish'],
     cons: ['Warping risk', 'Needs controlled environment'],
+    keyProperties: ['UV resistant', 'Weather resistant', 'ABS-like strength'],
+    bestFor: ['Outdoor parts', 'Vehicle parts', 'Exposed components'],
+    difficultyLevel: 'Hard',
+    heatResistance: 'High',
+    strengthRating: 'High',
+    finishQuality: 'Good',
     settings: {
       nozzle: '240-260°C',
       bed: '90-110°C',
@@ -155,6 +174,12 @@ export const materials: MaterialSpec[] = [
     useCases: ['Miniatures', 'Jewelry masters', 'Dental and fine-detail models'],
     pros: ['Very sharp detail', 'Smooth finish', 'Excellent small features'],
     cons: ['More brittle', 'Post-processing required'],
+    keyProperties: ['Ultra-high detail', 'Smooth surface', 'Precise'],
+    bestFor: ['Miniatures', 'Jewelry', 'Dental models', 'Detailed prototypes'],
+    difficultyLevel: 'Medium',
+    heatResistance: 'Medium',
+    strengthRating: 'Medium',
+    finishQuality: 'Excellent',
     settings: {
       nozzle: 'N/A',
       bed: 'N/A',
@@ -178,6 +203,12 @@ export const materials: MaterialSpec[] = [
     useCases: ['Brand models', 'Display items', 'Decorative parts'],
     pros: ['Premium shine', 'Great for visual pieces', 'Easy to print'],
     cons: ['Lower structural performance', 'Shows layer stress on sharp bends'],
+    keyProperties: ['Glossy finish', 'Metallic look', 'Eye-catching'],
+    bestFor: ['Brand displays', 'Decorative items', 'Gifts', 'Showpieces'],
+    difficultyLevel: 'Easy',
+    heatResistance: 'Low',
+    strengthRating: 'Medium',
+    finishQuality: 'Excellent',
     settings: {
       nozzle: '205-220°C',
       bed: '50-60°C',
@@ -201,6 +232,12 @@ export const materials: MaterialSpec[] = [
     useCases: ['Logos', 'Color-coded prototypes', 'Marketing and display models'],
     pros: ['Built-in color separation', 'High visual impact', 'No manual painting needed'],
     cons: ['Longer print time', 'More waste from color swaps'],
+    keyProperties: ['Multi-color', 'AMS compatible', 'Visual impact'],
+    bestFor: ['Logos', 'Marketing materials', 'Color-coded parts', 'Display models'],
+    difficultyLevel: 'Hard',
+    heatResistance: 'Medium',
+    strengthRating: 'Medium',
+    finishQuality: 'Excellent',
     settings: {
       nozzle: 'Material dependent',
       bed: 'Material dependent',

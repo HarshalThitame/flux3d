@@ -24,6 +24,13 @@ export type QuoteMaterial = {
   recommendedFor: string
   properties: MaterialPropertySet
   colors: MaterialColor[]
+  keyProperties?: string[]
+  bestFor?: string[]
+  difficultyLevel?: 'Easy' | 'Medium' | 'Hard'
+  heatResistance?: 'Low' | 'Medium' | 'High'
+  strengthRating?: 'Low' | 'Medium' | 'High'
+  finishQuality?: 'Basic' | 'Good' | 'Excellent'
+  samplePhoto?: string
 }
 
 export type LayerHeightOption = {

@@ -60,6 +60,7 @@ export default function NavbarClient({
     { href: '/materials', label: 'Materials' },
     { href: '/pre-made-products', label: 'Pre-Made' },
     { href: '/gallery', label: 'Gallery' },
+    { href: '/blog', label: 'Blog' },
     { href: '/pricing', label: 'Pricing' },
   ]
 

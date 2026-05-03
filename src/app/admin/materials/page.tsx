@@ -6,6 +6,22 @@ import { motion } from 'framer-motion'
 import { Plus, Pencil, Trash2, Beaker, ArrowLeft, X, Check, AlertTriangle } from 'lucide-react'
 import type { QuoteMaterial } from '@/lib/quote/types'
 
+// Color name to hex mapping
+const colorNameToHex = (input: string): string => {
+  const colorMap: Record<string, string> = {
+    'red': '#EF4444', 'green': '#22C55E', 'blue': '#3B82F6', 'yellow': '#EAB308',
+    'orange': '#FF5C1A', 'purple': '#A855F7', 'pink': '#EC4899', 'white': '#FFFFFF',
+    'black': '#000000', 'gray': '#6B7280', 'grey': '#6B7280', 'cyan': '#06B6D4',
+    'teal': '#14B8A6', 'lime': '#84CC16', 'indigo': '#6366F1', 'violet': '#8B5CF6',
+    'fuchsia': '#D946EF', 'rose': '#F43F5E', 'sky': '#0EA5E9', 'magenta': '#D946EF',
+    'brown': '#92400E', 'navy': '#1E3A5F', 'maroon': '#7F1D1D', 'olive': '#3F6212',
+    'coral': '#F97316', 'salmon': '#FB923C', 'gold': '#F59E0B', 'silver': '#9CA3AF',
+  };
+  const trimmed = input.trim().toLowerCase();
+  if (trimmed.startsWith('#') && /^#[0-9a-f]{3,8}$/i.test(trimmed)) return trimmed;
+  return colorMap[trimmed] || trimmed;
+};
+
 export default function AdminMaterialsPage() {
   const [materials, setMaterials] = useState<QuoteMaterial[]>([])
   const [loading, setLoading] = useState(true)
@@ -20,6 +36,7 @@ export default function AdminMaterialsPage() {
     const timer = setTimeout(() => setToast(null), 3000)
     return () => clearTimeout(timer)
   }, [toast])
+
   const [formData, setFormData] = useState({
     name: '',
     icon: '🧩',
@@ -29,7 +46,14 @@ export default function AdminMaterialsPage() {
     machineRate: 180,
     multiplier: 1.0,
     properties: { strength: 'Medium', flexibility: 'Low', tempResistance: 'Low', difficulty: 'Easy' },
-    colors: [{ name: 'Default', hex: '#ffffff' }],
+    colors: ['#ffffff'],
+    keyProperties: [] as string[],
+    bestFor: [] as string[],
+    difficultyLevel: 'Easy' as 'Easy' | 'Medium' | 'Hard',
+    heatResistance: 'Low' as 'Low' | 'Medium' | 'High',
+    strengthRating: 'Medium' as 'Low' | 'Medium' | 'High',
+    finishQuality: 'Good' as 'Basic' | 'Good' | 'Excellent',
+    samplePhoto: '',
   })
 
   useEffect(() => {
@@ -64,7 +88,14 @@ export default function AdminMaterialsPage() {
       multiplier: formData.multiplier,
       recommended_for: recommendedFor.filter(Boolean).join(', '),
       properties: formData.properties,
-      colors: formData.colors,
+      colors: formData.colors.map(c => ({ name: c, hex: colorNameToHex(c) })),
+      key_properties: formData.keyProperties,
+      best_for: formData.bestFor,
+      difficulty_level: formData.difficultyLevel,
+      heat_resistance: formData.heatResistance,
+      strength_rating: formData.strengthRating,
+      finish_quality: formData.finishQuality,
+      sample_photo: formData.samplePhoto,
     }
 
     try {
@@ -139,7 +170,14 @@ export default function AdminMaterialsPage() {
       machineRate: material.machineRate,
       multiplier: material.multiplier,
       properties: material.properties,
-      colors: material.colors,
+      colors: (material.colors || []).map(c => typeof c === 'string' ? c : c.hex || '#ffffff'),
+      keyProperties: material.keyProperties || [],
+      bestFor: material.bestFor || [],
+      difficultyLevel: material.difficultyLevel || 'Easy',
+      heatResistance: material.heatResistance || 'Low',
+      strengthRating: material.strengthRating || 'Medium',
+      finishQuality: material.finishQuality || 'Good',
+      samplePhoto: material.samplePhoto || '',
     })
     setRecommendedFor(material.recommendedFor ? material.recommendedFor.split(', ') : [''])
     setShowForm(true)
@@ -155,26 +193,16 @@ export default function AdminMaterialsPage() {
       machineRate: 180,
       multiplier: 1.0,
       properties: { strength: 'Medium', flexibility: 'Low', tempResistance: 'Low', difficulty: 'Easy' },
-      colors: [{ name: 'Default', hex: '#ffffff' }],
+      colors: ['#ffffff'],
+      keyProperties: [],
+      bestFor: [],
+      difficultyLevel: 'Easy',
+      heatResistance: 'Low',
+      strengthRating: 'Medium',
+      finishQuality: 'Good',
+      samplePhoto: '',
     })
     setRecommendedFor([''])
-  }
-
-  function addColor() {
-    setFormData({
-      ...formData,
-      colors: [...formData.colors, { name: '', hex: '#000000' }],
-    })
-  }
-
-  function updateColor(index: number, field: 'name' | 'hex', value: string) {
-    const updated = [...formData.colors]
-    updated[index] = { ...updated[index], [field]: value }
-    setFormData({ ...formData, colors: updated })
-  }
-
-  function removeColor(index: number) {
-    setFormData({ ...formData, colors: formData.colors.filter((_, i) => i !== index) })
   }
 
   function addRecommendedFor() {
@@ -201,36 +229,36 @@ export default function AdminMaterialsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-2 text-sm text-[#7a82a0] hover:text-white mb-4"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
-            </Link>
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="font-[var(--font-syne)] text-3xl font-bold text-white">
-                  <Beaker className="inline h-8 w-8 text-[#FF5C1A] mr-2" />
-                  Materials Management
-                </h1>
-                <p className="mt-2 text-sm text-[#7a82a0]">
-                  Manage printing materials, pricing, and properties
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setEditingMaterial(null)
-                  resetForm()
-                  setShowForm(true)
-                }}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#FF5C1A] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
-              >
-                <Plus className="h-4 w-4" />
-                Add Material
-              </button>
-            </div>
-          </motion.div>
+             <Link
+               href="/admin"
+               className="inline-flex items-center gap-2 text-sm text-[#7a82a0] hover:text-white mb-4"
+             >
+               <ArrowLeft className="h-4 w-4" />
+               Back to Dashboard
+             </Link>
+             <div className="flex items-center justify-between">
+               <div>
+                 <h1 className="font-[var(--font-syne)] text-3xl font-bold text-white">
+                   <Beaker className="inline h-8 w-8 text-[#FF5C1A] mr-2" />
+                   Materials Management
+                 </h1>
+                 <p className="mt-2 text-sm text-[#7a82a0]">
+                   Manage printing materials, pricing, and properties
+                 </p>
+               </div>
+               <button
+                 onClick={() => {
+                   setEditingMaterial(null)
+                   resetForm()
+                   setShowForm(true)
+                 }}
+                 className="inline-flex items-center gap-2 rounded-xl bg-[#FF5C1A] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+               >
+                 <Plus className="h-4 w-4" />
+                 Add Material
+               </button>
+             </div>
+           </motion.div>
 
           {/* Form Modal */}
           {showForm && (
@@ -318,48 +346,99 @@ export default function AdminMaterialsPage() {
                     />
                   </div>
 
-                  {/* Dynamic Colors */}
+                  {/* New Material Properties */}
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-1 block text-sm text-[#7a82a0]">Key Properties (comma-separated)</label>
+                      <input
+                        type="text"
+                        value={formData.keyProperties?.join(', ') || ''}
+                        onChange={(e) => setFormData({ ...formData, keyProperties: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                        placeholder="e.g., Biodegradable, Easy to print"
+                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm text-[#7a82a0]">Best For (comma-separated)</label>
+                      <input
+                        type="text"
+                        value={formData.bestFor?.join(', ') || ''}
+                        onChange={(e) => setFormData({ ...formData, bestFor: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                        placeholder="e.g., Students, Architects, Hobbyists"
+                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm text-[#7a82a0]">Difficulty Level</label>
+                      <select
+                        value={formData.difficultyLevel || 'Easy'}
+                        onChange={(e) => setFormData({ ...formData, difficultyLevel: e.target.value as 'Easy' | 'Medium' | 'Hard' })}
+                        className="w-full rounded-lg border border-white/10 bg-[#0d1120] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                      >
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm text-[#7a82a0]">Heat Resistance</label>
+                      <select
+                        value={formData.heatResistance || 'Low'}
+                        onChange={(e) => setFormData({ ...formData, heatResistance: e.target.value as 'Low' | 'Medium' | 'High' })}
+                        className="w-full rounded-lg border border-white/10 bg-[#0d1120] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                      >
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm text-[#7a82a0]">Strength Rating</label>
+                      <select
+                        value={formData.strengthRating || 'Medium'}
+                        onChange={(e) => setFormData({ ...formData, strengthRating: e.target.value as 'Low' | 'Medium' | 'High' })}
+                        className="w-full rounded-lg border border-white/10 bg-[#0d1120] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                      >
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm text-[#7a82a0]">Finish Quality</label>
+                      <select
+                        value={formData.finishQuality || 'Good'}
+                        onChange={(e) => setFormData({ ...formData, finishQuality: e.target.value as 'Basic' | 'Good' | 'Excellent' })}
+                        className="w-full rounded-lg border border-white/10 bg-[#0d1120] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                      >
+                        <option value="Basic">Basic</option>
+                        <option value="Good">Good</option>
+                        <option value="Excellent">Excellent</option>
+                      </select>
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="mb-1 block text-sm text-[#7a82a0]">Colors (name + hex)</label>
-                    {formData.colors.map((color, index) => (
-                      <div key={index} className="flex gap-2 mb-2">
-                        <input
-                          type="text"
-                          value={color.name}
-                          onChange={(e) => updateColor(index, 'name', e.target.value)}
-                          placeholder="Color name"
-                          className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
-                        />
-                        <input
-                          type="color"
-                          value={color.hex}
-                          onChange={(e) => updateColor(index, 'hex', e.target.value)}
-                          className="h-10 w-14 cursor-pointer rounded-lg border border-white/10 bg-white/[0.03]"
-                        />
-                        <input
-                          type="text"
-                          value={color.hex}
-                          onChange={(e) => updateColor(index, 'hex', e.target.value)}
-                          className="w-24 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
-                        />
-                        {formData.colors.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeColor(index)}
-                            className="rounded-lg border border-rose-400/20 bg-rose-400/10 p-2 text-rose-400 hover:bg-rose-400/20"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={addColor}
-                      className="text-sm text-[#FF5C1A] hover:text-[#FF9A72]"
-                    >
-                      + Add another color
-                    </button>
+                    <label className="mb-1 block text-sm text-[#7a82a0]">Sample Photo URL</label>
+                    <input
+                      type="text"
+                      value={formData.samplePhoto || ''}
+                      onChange={(e) => setFormData({ ...formData, samplePhoto: e.target.value })}
+                      placeholder="https://... or upload below"
+                      className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                    />
+                  </div>
+
+                  {/* Colors */}
+                  <div>
+                    <label className="mb-1 block text-sm text-[#7a82a0]">Colors (comma-separated color names or hex codes)</label>
+                    <input
+                      type="text"
+                      value={formData.colors.join(', ')}
+                      onChange={(e) => setFormData({ ...formData, colors: e.target.value.split(',').map(c => c.trim()).filter(Boolean) })}
+                      placeholder="red, blue, green, #FF5C1A"
+                      className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                    />
                   </div>
 
                   {/* Dynamic Recommended For */}
@@ -429,7 +508,7 @@ export default function AdminMaterialsPage() {
               <p className="mt-4 text-sm text-[#7a82a0]">No materials yet. Add your first material!</p>
             </div>
           ) : (
-            <div className="grid gap-4">
+            <div className="space-y-4">
               {materials.map((material, i) => (
                 <motion.div
                   key={material.id}
@@ -439,28 +518,27 @@ export default function AdminMaterialsPage() {
                   className="rounded-2xl border border-white/10 bg-[#0a0f1e] p-5 hover:border-[#FF5C1A]/30 transition-colors"
                 >
                   <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FF5C1A]/10 text-2xl">
-                        {material.icon}
-                      </div>
-                      <div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">{material.icon}</span>
                         <h3 className="text-lg font-semibold text-white">{material.name}</h3>
-                        <p className="mt-1 text-sm text-[#7a82a0]">{material.summary}</p>
-                        <div className="mt-2 flex flex-wrap gap-3 text-xs text-[#7a82a0]">
-                          <span>₹{material.pricePerGram}/g</span>
-                          <span>×{material.multiplier}</span>
-                          <span>{material.density} g/cm³</span>
-                        </div>
-                        {material.recommendedFor && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {material.recommendedFor.split(', ').map((item, idx) => (
-                              <span key={idx} className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[11px] text-[#7a82a0]">
-                                {item}
-                              </span>
-                            ))}
-                          </div>
-                        )}
                       </div>
+                      <p className="mt-1 text-sm text-[#7a82a0]">{material.summary}</p>
+                      <div className="mt-2 flex flex-wrap gap-4 text-xs text-[#7a82a0]">
+                        <span>₹{material.pricePerGram}/g</span>
+                        <span>₹{material.machineRate}/hr</span>
+                        <span>Density: {material.density} g/cm³</span>
+                        <span>Multiplier: {material.multiplier}x</span>
+                      </div>
+                      {material.keyProperties && material.keyProperties.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {material.keyProperties.map((prop, idx) => (
+                            <span key={idx} className="rounded-full bg-[#FF5C1A]/10 px-2 py-1 text-xs text-[#FF5C1A]">
+                              {prop}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -498,7 +576,7 @@ export default function AdminMaterialsPage() {
                 </div>
                 <h3 className="text-lg font-semibold text-white">Delete Material?</h3>
                 <p className="mt-2 text-sm text-[#7a82a0]">
-                  This action cannot be undone. This will permanently delete the material and remove it from the system.
+                  This action cannot be undone. This will permanently delete the material.
                 </p>
                 <div className="mt-6 flex gap-3">
                   <button
@@ -517,6 +595,7 @@ export default function AdminMaterialsPage() {
               </motion.div>
             </motion.div>
           )}
+
           {/* Toast Message */}
           {toast && (
             <motion.div
@@ -537,7 +616,6 @@ export default function AdminMaterialsPage() {
               {toast.message}
             </motion.div>
           )}
-
         </div>
       </div>
     </div>

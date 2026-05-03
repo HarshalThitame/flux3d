@@ -57,10 +57,17 @@ export default function FooterSection() {
           <div>
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</h4>
             <ul className="space-y-2">
-              {['About Flux 3D', 'Our Technology', 'Gallery', 'Pricing', 'Blog', 'Careers'].map((item) => (
-                <li key={item}>
-                  <Link href="#" className="text-sm text-[#7a82a0] hover:text-[#FF5C1A] transition-colors">
-                    {item}
+              {[
+                { label: 'About Flux 3D', href: '/about' },
+                { label: 'Our Technology', href: '#' },
+                { label: 'Gallery', href: '/gallery' },
+                { label: 'Pricing', href: '/pricing' },
+                { label: 'Blog', href: '/blog' },
+                { label: 'Careers', href: '#' },
+              ].map((item) => (
+                <li key={item.label}>
+                  <Link href={item.href} className="text-sm text-[#7a82a0] hover:text-[#FF5C1A] transition-colors">
+                    {item.label}
                   </Link>
                 </li>
               ))}
