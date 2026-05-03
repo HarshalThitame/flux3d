@@ -20,13 +20,12 @@ export async function GET() {
       )
     }
 
-    const materials = (data || []).map((row) => {
-      // Normalize properties - handle misspellings from DB
+    const materials = (data || []).map((row: any) => {
       const rawProps = row.properties || {}
       const properties = {
         strength: rawProps.strength || rawProps.strength || 'Medium',
         flexibility: rawProps.flexibility || 'Medium',
-        tempResistance: rawProps.tempResistance || 'Medium',
+        tempResistance: rawProps.tempResistance || rawProps.tempResistance || 'Medium',
         difficulty: rawProps.difficulty || 'Medium',
       }
 
@@ -42,6 +41,13 @@ export async function GET() {
         recommendedFor: row.recommended_for || '',
         properties,
         colors: row.colors || [],
+        keyProperties: row.key_properties || [],
+        bestFor: row.best_for || [],
+        difficultyLevel: row.difficulty_level || 'Easy',
+        heatResistance: row.heat_resistance || 'Low',
+        strengthRating: row.strength_rating || 'Medium',
+        finishQuality: row.finish_quality || 'Good',
+        samplePhoto: row.sample_photo || '',
       }
     })
 
@@ -73,6 +79,13 @@ export async function POST(request: Request) {
           recommended_for: body.recommended_for,
           properties: body.properties,
           colors: body.colors,
+          key_properties: body.key_properties,
+          best_for: body.best_for,
+          difficulty_level: body.difficulty_level,
+          heat_resistance: body.heat_resistance,
+          strength_rating: body.strength_rating,
+          finish_quality: body.finish_quality,
+          sample_photo: body.sample_photo,
         },
       ])
       .select()
@@ -112,6 +125,13 @@ export async function PUT(request: Request) {
         recommended_for: body.recommended_for,
         properties: body.properties,
         colors: body.colors,
+        key_properties: body.key_properties,
+        best_for: body.best_for,
+        difficulty_level: body.difficulty_level,
+        heat_resistance: body.heat_resistance,
+        strength_rating: body.strength_rating,
+        finish_quality: body.finish_quality,
+        sample_photo: body.sample_photo,
       })
       .eq('id', body.id)
       .select()

@@ -14,6 +14,10 @@ type ComparisonMaterial = {
   detail: number
   bestFor: string
   stock: boolean
+  difficultyLevel?: string
+  heatResistance?: string
+  strengthRating?: string
+  finishQuality?: string
 }
 
 function Stars({ count }: { count: number }) {
