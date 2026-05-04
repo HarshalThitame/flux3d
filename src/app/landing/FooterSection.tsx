@@ -22,11 +22,11 @@ export default function FooterSection() {
             {/* Social */}
             <div className="flex items-center gap-3">
               {[
-                { icon: Camera, href: '#', label: 'Instagram' },
-                { icon: Users, href: '#', label: 'YouTube' },
-                { icon: Globe, href: '#', label: 'LinkedIn' },
-                { icon: Send, href: '#', label: 'Twitter' }
-              ].map((social, i) => (
+                 { icon: Camera, href: 'https://instagram.com/flux3d', label: 'Instagram' },
+                 { icon: Users, href: 'https://youtube.com/@flux3d', label: 'YouTube' },
+                 { icon: Globe, href: 'https://linkedin.com/company/flux3d', label: 'LinkedIn' },
+                 { icon: Send, href: 'https://twitter.com/flux3d', label: 'Twitter' }
+               ].map((social, i) => (
                 <a
                   key={i}
                   href={social.href}
@@ -57,14 +57,14 @@ export default function FooterSection() {
           <div>
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</h4>
             <ul className="space-y-2">
-              {[
-                { label: 'About Flux 3D', href: '/about' },
-                { label: 'Our Technology', href: '#' },
-                { label: 'Gallery', href: '/gallery' },
-                { label: 'Pricing', href: '/pricing' },
-                { label: 'Blog', href: '/blog' },
-                { label: 'Careers', href: '#' },
-              ].map((item) => (
+               {[
+                 { label: 'About Flux 3D', href: '/about' },
+                 { label: 'Our Technology', href: '/#technology' },
+                 { label: 'Gallery', href: '/gallery' },
+                 { label: 'Pricing', href: '/pricing' },
+                 { label: 'Blog', href: '/blog' },
+                 { label: 'Careers', href: '#' },
+               ].map((item) => (
                 <li key={item.label}>
                   <Link href={item.href} className="text-sm text-[#7a82a0] hover:text-[#FF5C1A] transition-colors">
                     {item.label}
