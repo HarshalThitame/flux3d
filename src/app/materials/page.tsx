@@ -70,6 +70,32 @@ export default function MaterialsPage() {
     stock: m.stock || true,
   }))
 
+  // Map materials for MaterialCards
+  const materialCardsData = materials.map((m: any) => ({
+    id: m.id,
+    name: m.name,
+    icon: m.icon || '🧩',
+    description: m.summary || m.recommendedFor || '3D printing material',
+    color: m.properties?.strength === 'High' ? 'orange' : 'blue',
+    gradient: m.properties?.strength === 'High' ? 'from-orange-500 to-red-500' : 'from-blue-500 to-purple-500',
+    properties: {
+      strength: m.properties?.strength || m.strengthRating || 'Medium',
+      flexibility: m.properties?.flexibility || 'Low',
+      tempResistance: m.properties?.tempResistance || m.heatResistance || 'Low',
+      difficulty: m.properties?.difficulty || m.difficultyLevel || 'Easy',
+    },
+    useCases: Array.isArray(m.bestFor) ? m.bestFor : (m.bestFor ? [m.bestFor] : []),
+    keyProperties: m.keyProperties || [],
+    bestFor: m.bestFor || [],
+    difficultyLevel: m.difficultyLevel || 'Easy',
+    heatResistance: m.heatResistance || 'Low',
+    strengthRating: m.strengthRating || 'Medium',
+    finishQuality: m.finishQuality || 'Good',
+    samplePhoto: m.samplePhoto || '',
+    pricePerGram: parseFloat(m.pricePerGram || m.price_per_gram || 0),
+    density: m.density || 1.24,
+  }))
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#050810] flex items-center justify-center">
@@ -85,7 +111,7 @@ export default function MaterialsPage() {
         <main>
           <MaterialsHero />
           <ComparisonTable materials={comparisonMaterials} />
-          <MaterialCards materials={materials} />
+          <MaterialCards materials={materialCardsData} />
           <MaterialSelectorTool />
           <FDMvsResin />
           <PostProcessing />
