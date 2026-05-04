@@ -114,7 +114,7 @@ export default function ProblemSection() {
                     <Icon className="w-6 h-6 text-[#FF5C1A]" />
                   </div>
 
-                  <div className="text-white font-semibold text-lg mb-2 group-hover:text-[#FF5C1A] transition-colors duration-300">
+                  <div className="font-[var(--font-syne)] text-lg font-bold text-white mb-2 group-hover:text-[#FF5C1A] transition-colors duration-300">
                     {point.problem}
                   </div>
 
