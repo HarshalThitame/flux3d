@@ -48,23 +48,20 @@ export const metadata: Metadata = {
 }
 
 export default async function MaterialsPage() {
-  // Fetch materials from API to get actual database data with new fields
-  let dbMaterials: any[] = []
+  // Fetch materials from API - 100% dynamic from database
+  let materials: any[] = []
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/materials`)
     if (res.ok) {
       const data = await res.json()
-      dbMaterials = data.materials || data || []
+      materials = data.materials || data || []
     }
-  } catch {
-    console.error('Failed to fetch materials from API')
+  } catch (error) {
+    console.error('Failed to fetch materials from API:', error)
   }
 
-  // Fallback to static data if API fails
-  const materialSpecs = dbMaterials.length > 0 ? dbMaterials : await getPublicMaterialSpecs()
-
   // For ComparisonTable, map to ComparisonMaterial type with new fields
-  const comparisonMaterials = materialSpecs.map((m: any) => ({
+  const comparisonMaterials = materials.map((m: any) => ({
     name: m.name,
     type: m.type || 'FDM',
     price: parseFloat(m.pricePerGram || m.price_per_gram || 0),
@@ -73,6 +70,10 @@ export default async function MaterialsPage() {
     heat: m.heatResistance === 'High' ? 5 : m.heatResistance === 'Medium' ? 3 : 1,
     detail: m.finishQuality === 'Excellent' ? 5 : m.finishQuality === 'Good' ? 3 : 1,
     bestFor: m.bestFor?.join(', ') || m.recommendedFor || m.useCases?.join(', ') || 'General printing',
+    difficultyLevel: m.difficultyLevel || 'Easy',
+    heatResistance: m.heatResistance || 'Low',
+    strengthRating: m.strengthRating || 'Medium',
+    finishQuality: m.finishQuality || 'Good',
     stock: true,
   }))
 
@@ -83,7 +84,7 @@ export default async function MaterialsPage() {
         <main>
           <MaterialsHero />
           <ComparisonTable materials={comparisonMaterials} />
-          <MaterialCards materials={materialSpecs} />
+          <MaterialCards materials={materials} />
           <MaterialSelectorTool />
           <FDMvsResin />
           <PostProcessing />

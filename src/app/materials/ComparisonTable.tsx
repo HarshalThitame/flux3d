@@ -3,35 +3,26 @@
 import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
 import { useRef } from 'react'
+import Stars from './Stars'
 
-type ComparisonMaterial = {
+type MaterialForComparison = {
   name: string
   type: string
-  price: number
-  strength: number
-  flex: number
-  heat: number
-  detail: number
-  bestFor: string
-  stock: boolean
+  price_per_gram: number
+  strengthRating?: string
+  properties?: {
+    flexibility?: string
+    tempResistance?: string
+  }
   difficultyLevel?: string
   heatResistance?: string
-  strengthRating?: string
   finishQuality?: string
-}
-
-function Stars({ count }: { count: number }) {
-  return (
-    <span className="flex gap-0.5">
-      {[...Array(5)].map((_, i) => (
-        <span key={i} className={`text-xs ${i < count ? 'text-[#FF5C1A]' : 'text-[#2a2f45]'}`}>★</span>
-      ))}
-    </span>
-  )
+  bestFor?: string[]
+  stock?: string
 }
 
 type ComparisonTableProps = {
-  materials?: ComparisonMaterial[]
+  materials?: MaterialForComparison[]
 }
 
 export default function ComparisonTable({ materials = [] }: ComparisonTableProps) {
@@ -63,7 +54,7 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
             All Materials — Quick Comparison
           </h2>
           <p className="text-[#7a82a0] text-sm">
-            Use this table to quickly compare properties before diving into full material guides below.
+            Use this table to quickly compare properties from the database before diving into full material guides below.
           </p>
         </motion.div>
 
@@ -74,10 +65,11 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
                 <th className="text-left px-4 py-3 font-medium">Material</th>
                 <th className="text-left px-4 py-3 font-medium">Type</th>
                 <th className="text-left px-4 py-3 font-medium">Price/g</th>
-                <th className="text-left px-4 py-3 font-medium">Strength</th>
-                <th className="text-left px-4 py-3 font-medium">Flex</th>
-                <th className="text-left px-4 py-3 font-medium">Heat</th>
-                <th className="text-left px-4 py-3 font-medium">Detail</th>
+                <th className="text-left px-4 py-3 font-medium">Strength Rating</th>
+                <th className="text-left px-4 py-3 font-medium">Flexibility</th>
+                <th className="text-left px-4 py-3 font-medium">Heat Resistance</th>
+                <th className="text-left px-4 py-3 font-medium">Finish Quality</th>
+                <th className="text-left px-4 py-3 font-medium">Difficulty</th>
                 <th className="text-left px-4 py-3 font-medium hidden lg:table-cell">Best For</th>
                 <th className="text-left px-4 py-3 font-medium">Availability</th>
               </tr>
@@ -94,20 +86,24 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
                   <td className="px-4 py-3 font-semibold text-white">{m.name}</td>
                   <td className="px-4 py-3 text-[#7a82a0]">
                     <span className={`px-2 py-0.5 rounded-full text-xs ${m.type === 'FDM' ? 'bg-[#FF5C1A]/10 text-[#FF5C1A]' : 'bg-[#5064FF]/10 text-[#5064FF]'}`}>
-                      {m.type}
+                      {m.type || 'FDM'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-[#FF5C1A] font-medium">₹{m.price}</td>
-                  <td className="px-4 py-3"><Stars count={m.strength} /></td>
-                  <td className="px-4 py-3"><Stars count={m.flex} /></td>
-                  <td className="px-4 py-3"><Stars count={m.heat} /></td>
-                  <td className="px-4 py-3"><Stars count={m.detail} /></td>
-                  <td className="px-4 py-3 text-[#7a82a0] hidden lg:table-cell">{m.bestFor}</td>
+                  <td className="px-4 py-3 text-[#FF5C1A] font-medium">₹{m.price_per_gram || 0}</td>
+                  <td className="px-4 py-3 text-[#7a82a0]">{m.strengthRating || <Stars count={3} />}</td>
+                  <td className="px-4 py-3 text-[#7a82a0]">{m.properties?.flexibility || <Stars count={2} />}</td>
+                  <td className="px-4 py-3 text-[#7a82a0]">{m.heatResistance || m.properties?.tempResistance || <Stars count={2} />}</td>
+                  <td className="px-4 py-3 text-[#7a82a0]">{m.finishQuality || <Stars count={3} />}</td>
+                  <td className="px-4 py-3 text-[#7a82a0] text-xs">{m.difficultyLevel || 'Easy'}</td>
+                  <td className="px-4 py-3 text-[#7a82a0] hidden lg:table-cell">{m.bestFor?.join(', ') || 'General'}</td>
                   <td className="px-4 py-3">
-                    {m.stock
-                      ? <span className="text-emerald-400 text-xs">✅ Always</span>
-                      : <span className="text-[#7a82a0] text-xs">📞 Request</span>
-                    }
+                    {m.stock === 'Healthy' || m.stock === 'Healthy' ? (
+                      <span className="text-emerald-400 text-xs">✅ In Stock</span>
+                    ) : m.stock === 'Low' ? (
+                      <span className="text-yellow-400 text-xs">⚠ Low Stock</span>
+                    ) : (
+                      <span className="text-[#7a82a0] text-xs">📞 {m.stock || 'Request'}</span>
+                    )}
                   </td>
                 </motion.tr>
               ))}
