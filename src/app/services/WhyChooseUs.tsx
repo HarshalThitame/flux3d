@@ -8,8 +8,8 @@ const benefits = [
   {
     icon: Clock,
     title: 'Fast Turnaround',
-    description: 'Most orders move in 3-5 working days. Urgent builds can be prioritized when timing matters.',
-    stat: 5,
+    description: 'Most orders move in 3 working days. Urgent builds can be prioritized when timing matters.',
+    stat: 3,
     statLabel: 'Days avg. turnaround',
     statUnit: 'd',
     color: 'from-[#FF5C1A] to-[#ff7a3d]'
@@ -18,7 +18,7 @@ const benefits = [
     icon: Target,
     title: 'High Precision',
     description: 'Every part is checked for finish, fit, and production confidence. We do not just press print and walk away.',
-    stat: 0.05,
+    stat: 0.1,
     statLabel: 'Resin accuracy',
     statUnit: 'mm',
     statPrefix: '±',
@@ -37,7 +37,7 @@ const benefits = [
     icon: MessageCircle,
     title: 'Direct Support',
     description: 'You are speaking directly with the people planning and printing your part. No call centres, no runaround.',
-    stat: 24,
+    stat: 1,
     statLabel: 'Hour response time',
     statUnit: 'hr',
     color: 'from-[#8B5CF6] to-[#a78bfa]'
@@ -130,8 +130,8 @@ function BenefitCard({ benefit, index }: { benefit: typeof benefits[0]; index: n
 
 const trustStats = [
   { value: 500, unit: '+', label: 'Parts Delivered' },
-  { value: 18, unit: 'μm', label: 'Fine resin detail' },
-  { value: 100, unit: '%', label: 'Quality-checked' },
+  { value: 50, unit: 'μm', label: 'Fine resin detail' },
+  { value: 100, unit: '%', label: 'Quality checked' },
   { value: 10, unit: '+', label: 'Materials' }
 ]
 

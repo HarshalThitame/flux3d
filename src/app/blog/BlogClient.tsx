@@ -65,16 +65,14 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
                 whileHover={{ y: -5 }}
                 className="group relative overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#0d1120] transition-colors hover:border-[#FF5C1A]/30"
               >
-                {post.featured_image && (
-                  <div className="relative h-[200px] overflow-hidden">
-                    <img
-                      src={post.featured_image}
-                      alt={post.title}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0d1120] to-transparent" />
-                  </div>
-                )}
+                 <div className="relative h-[200px] overflow-hidden">
+                     <img
+                       src={post.featured_image || '/images/blog-placeholder.jpg'}
+                       alt={post.title}
+                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                     />
+                     <div className="absolute inset-0 bg-gradient-to-t from-[#0d1120] to-transparent" />
+                   </div>
                 <div className="p-6">
                   <div className="mb-3 flex items-center gap-4 text-xs text-[#7a82a0]">
                     <span className="flex items-center gap-1">

@@ -34,7 +34,7 @@ const whyChooseUs = [
   {
     icon: Truck,
     title: 'Pan-India Delivery',
-    description: 'Based in Pune, delivering to Mumbai, Bangalore, Delhi, Hyderabad, Chennai & beyond. Tracked, secure packaging.',
+                 description: 'Based in Mumbai, delivering to Pune, Bangalore, Delhi, Hyderabad, Chennai & beyond. Tracked, secure packaging.',
     color: 'from-[#5064FF] to-[#7a8aff]',
   },
   {
@@ -127,8 +127,8 @@ export default function AboutContent() {
             variants={fadeInUp}
             className="text-lg text-[#7a82a0] max-w-2xl mx-auto leading-[1.7]"
           >
-            Precision additive manufacturing studio in Pune, India — built for makers, 
-            engineers, startups, and businesses who demand excellence.
+             Precision additive manufacturing studio in Mumbai, India — built for makers, 
+                 engineers, startups, and businesses who demand excellence.
           </motion.p>
         </div>
       </motion.section>
@@ -152,9 +152,9 @@ export default function AboutContent() {
           <div className="grid md:grid-cols-2 gap-8">
             <motion.div variants={fadeInUp} className="space-y-4">
               <p className="text-[#7a82a0] leading-[1.8]">
-                Flux 3D is a professional additive manufacturing studio based in{' '}
-                <span className="text-white font-medium">Pune, India</span> — built for makers, 
-                engineers, startups, and businesses who demand precision without compromise.
+                 Flux 3D is a professional additive manufacturing studio based in{' '}
+                 <span className="text-white font-medium">Mumbai, India</span> — built for makers, 
+                 engineers, startups, and businesses who demand precision without compromise.
               </p>
               <p className="text-[#7a82a0] leading-[1.8]">
                 We run industry-grade{' '}

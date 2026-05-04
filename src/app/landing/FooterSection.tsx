@@ -57,14 +57,14 @@ export default function FooterSection() {
           <div>
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</h4>
             <ul className="space-y-2">
-               {[
-                 { label: 'About Flux 3D', href: '/about' },
-                 { label: 'Our Technology', href: '/#technology' },
-                 { label: 'Gallery', href: '/gallery' },
-                 { label: 'Pricing', href: '/pricing' },
-                 { label: 'Blog', href: '/blog' },
-                 { label: 'Careers', href: '/contact' },
-               ].map((item) => (
+                {[
+                  { label: 'About Flux 3D', href: '/about' },
+                  { label: 'Our Technology', href: '/#technology' },
+                  { label: 'Gallery', href: '/gallery' },
+                  { label: 'Pricing', href: '/pricing' },
+                  { label: 'Blog', href: '/blog' },
+                  { label: 'Careers', href: '/contact' },
+                ].map((item) => (
                 <li key={item.label}>
                   <Link href={item.href} className="text-sm text-[#7a82a0] hover:text-[#FF5C1A] transition-colors">
                     {item.label}
@@ -145,7 +145,7 @@ export default function FooterSection() {
           transition={{ delay: 0.5 }}
           className="mt-8 text-[10px] text-[#4a5070] leading-[1.6] text-center"
         >
-          Flux 3D provides professional 3D printing services in Mumbai, Pune, Bangalore, Hyderabad, Chennai, Delhi and across India. Specializing in FDM and resin 3D printing for industrial, architectural, medical, student, and corporate clients. Printed on Bambu Lab P2S. Starting at ₹99.
+           Flux 3D provides professional 3D printing services in Mumbai, Bangalore, Hyderabad, Chennai, Delhi and across India. Specializing in FDM and resin 3D printing for industrial, architectural, medical, student, and corporate clients. Printed on Bambu Lab P2S. Starting at ₹99.
         </motion.p>
       </div>
     </footer>

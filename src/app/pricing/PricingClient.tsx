@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import PricingCTA from '@/app/services/PricingCTA'
 import PricingCards from '@/components/PricingCards'
@@ -9,6 +10,34 @@ export default function PricingClient({
 }: {
   materials: { name: string; price_per_gram: number; density: number }[]
 }) {
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 600)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+        <main className="pt-32">
+          <section className="px-6 md:px-12">
+            <div className="mx-auto max-w-[1200px]">
+              <div className="h-6 w-24 bg-[#0d1120] rounded animate-pulse mb-4" />
+              <div className="h-12 w-96 bg-[#0d1120] rounded animate-pulse mb-6" />
+              <div className="h-4 w-full max-w-[700px] bg-[#0d1120] rounded animate-pulse mb-12" />
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className="h-48 bg-[#0d1120] rounded-[28px] animate-pulse" />
+                ))}
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
       <main className="pt-32">
