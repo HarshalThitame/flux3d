@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { headers } from 'next/headers'
 import { organizationJsonLd, websiteJsonLd } from '@/lib/structured-data'
 import { absoluteUrl, siteConfig } from '@/lib/site'
 import { CartProvider } from '@/lib/cart/context'
@@ -54,14 +55,18 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const nonce = headers().get('x-nonce') ?? ''
+
   return (
     <html lang="en">
       <body suppressHydrationWarning>
         <script
+          nonce={nonce}
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
         <script
+          nonce={nonce}
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
