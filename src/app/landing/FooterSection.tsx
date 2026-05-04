@@ -63,7 +63,7 @@ export default function FooterSection() {
                  { label: 'Gallery', href: '/gallery' },
                  { label: 'Pricing', href: '/pricing' },
                  { label: 'Blog', href: '/blog' },
-                 { label: 'Careers', href: '#' },
+                 { label: 'Careers', href: '/contact' },
                ].map((item) => (
                 <li key={item.label}>
                   <Link href={item.href} className="text-sm text-[#7a82a0] hover:text-[#FF5C1A] transition-colors">

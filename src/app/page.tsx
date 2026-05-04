@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
-import { localBusinessJsonLd } from '@/lib/structured-data'
+import { localBusinessJsonLd, faqPageJsonLd } from '@/lib/structured-data'
 import { absoluteUrl } from '@/lib/site'
 import HeroSection from './landing/HeroSection'
 import LandingPageClient from './landing/LandingPageClient'
@@ -49,6 +49,10 @@ export default function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageJsonLd) }}
       />
       <Navbar transparent />
       <main>
