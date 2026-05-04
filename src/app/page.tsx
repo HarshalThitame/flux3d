@@ -3,18 +3,7 @@ import Navbar from '@/components/Navbar'
 import { localBusinessJsonLd } from '@/lib/structured-data'
 import { absoluteUrl } from '@/lib/site'
 import HeroSection from './landing/HeroSection'
-import ProblemSection from './landing/ProblemSection'
-import MarqueeSection from './landing/MarqueeSection'
-import ServicesSection from './landing/ServicesSection'
-import MaterialsSection from './landing/MaterialsSection'
-import TechnologySection from './landing/TechnologySection'
-import HowItWorksSection from './landing/HowItWorksSection'
-import PricingSection from './landing/PricingSection'
-import TestimonialsSection from './landing/TestimonialsSection'
-import TrustSection from './landing/TrustSection'
-import FAQSection from './landing/FAQSection'
-import FinalCTASection from './landing/FinalCTASection'
-import FooterSection from './landing/FooterSection'
+import LandingPageClient from './landing/LandingPageClient'
 
 export const metadata: Metadata = {
   title: 'Flux 3D — Premium 3D Printing Services in India | Starting ₹99',
@@ -64,19 +53,8 @@ export default function Home() {
       <Navbar transparent />
       <main>
         <HeroSection />
-        <ProblemSection />
-        <MarqueeSection />
-        <ServicesSection />
-        <MaterialsSection />
-        <TechnologySection />
-        <HowItWorksSection />
-        <PricingSection />
-        <TestimonialsSection />
-        <TrustSection />
-        <FAQSection />
-        <FinalCTASection />
+        <LandingPageClient />
       </main>
-      <FooterSection />
     </div>
   )
 }

@@ -122,9 +122,9 @@ function ServiceCard({ service, index }: { service: typeof services[0]; index: n
 
           {/* Content */}
           <div className="flex-1">
-             <h3 className="font-[var(--font-syne)] text-lg sm:text-xl font-bold text-white mb-2 group-hover:text-[#FF5C1A] transition-colors">
+             <div className="font-[var(--font-syne)] text-lg sm:text-xl font-bold text-white mb-2 group-hover:text-[#FF5C1A] transition-colors">
                {service.title}
-             </h3>
+             </div>
  
              <p className="text-sm text-[#7a82a0] leading-[1.6] mb-3 sm:mb-4">{service.description}</p>
  

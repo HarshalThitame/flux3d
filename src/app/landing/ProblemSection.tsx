@@ -114,9 +114,9 @@ export default function ProblemSection() {
                     <Icon className="w-6 h-6 text-[#FF5C1A]" />
                   </div>
 
-                  <h3 className="text-white font-semibold text-lg mb-2 group-hover:text-[#FF5C1A] transition-colors duration-300">
+                  <div className="text-white font-semibold text-lg mb-2 group-hover:text-[#FF5C1A] transition-colors duration-300">
                     {point.problem}
-                  </h3>
+                  </div>
 
                   <div className="flex items-center gap-2 mt-4">
                     <ArrowRight className="w-4 h-4 text-[#FF5C1A]" />

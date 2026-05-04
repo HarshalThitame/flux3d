@@ -68,18 +68,22 @@ body {
 
 .animate-fadeUp {
   animation: fadeUp 0.7s ease both;
+  will-change: transform, opacity;
 }
 
 .animate-pulse-dot {
   animation: pulse 2s infinite;
+  will-change: transform, opacity;
 }
 
 .animate-buildUp {
   animation: buildUp 3s ease-in-out infinite alternate;
+  will-change: transform, opacity;
 }
 
 .animate-nozzle {
   animation: nozzleAnim 2s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
 .animate-flow {
@@ -89,6 +93,7 @@ body {
 
 .animate-glow {
   animation: glowPulse 2s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 /* Mobile menu animations */
@@ -242,6 +247,7 @@ body {
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
+  will-change: transform;
 }
 
 .animate-shimmer {
@@ -252,18 +258,22 @@ body {
 
 .animate-rotate {
   animation: rotate 20s linear infinite;
+  will-change: transform;
 }
 
 .animate-scaleIn {
   animation: scaleIn 0.5s ease both;
+  will-change: transform, opacity;
 }
 
 .animate-slideLeft {
   animation: slideInLeft 0.6s ease both;
+  will-change: transform, opacity;
 }
 
 .animate-slideRight {
   animation: slideInRight 0.6s ease both;
+  will-change: transform, opacity;
 }
 
 .animate-gradient {

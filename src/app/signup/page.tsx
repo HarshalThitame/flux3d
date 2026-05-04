@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Navbar from '@/components/Navbar'
 import AuthShell from '@/components/auth/AuthShell'
 import SignupForm from '@/components/auth/SignupForm'
 import { getCurrentUserProfile } from '@/lib/auth/server'
@@ -20,12 +21,15 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   }
 
   return (
-    <AuthShell
-      eyebrow="Create Account"
-      title="Save every quote behind a real account."
-      description="Create your Flux3D account to keep uploads private, store pricing history, and move from quote to production cleanly."
-    >
-      <SignupForm nextPath={nextPath} />
-    </AuthShell>
+    <>
+      <Navbar />
+      <AuthShell
+        eyebrow="Create Account"
+        title="Save every quote behind a real account."
+        description="Create your Flux3D account to keep uploads private, store pricing history, and move from quote to production cleanly."
+      >
+        <SignupForm nextPath={nextPath} />
+      </AuthShell>
+    </>
   )
 }

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Navbar from '@/components/Navbar'
 import AuthShell from '@/components/auth/AuthShell'
 import LoginForm from '@/components/auth/LoginForm'
 import { getCurrentUserProfile } from '@/lib/auth/server'
@@ -28,12 +29,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         : undefined
 
   return (
-    <AuthShell
-      eyebrow="Secure Login"
-      title="Open your 3D printing workspace."
-      description="Use email or Google to get back to saved quotes, uploads, and account settings."
-    >
-      <LoginForm nextPath={nextPath} errorMessage={errorMessage} />
-    </AuthShell>
+    <>
+      <Navbar />
+      <AuthShell
+        eyebrow="Secure Login"
+        title="Open your 3D printing workspace."
+        description="Use email or Google to get back to saved quotes, uploads, and account settings."
+      >
+        <LoginForm nextPath={nextPath} errorMessage={errorMessage} />
+      </AuthShell>
+    </>
   )
 }

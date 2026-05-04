@@ -3,14 +3,30 @@
 import { useState } from 'react'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
+type OAuthProvider = 'google' | 'facebook'
+
 type OAuthButtonProps = {
   nextPath: string
+  provider?: OAuthProvider
 }
 
-export default function OAuthButton({ nextPath }: OAuthButtonProps) {
+const providerConfig = {
+  google: {
+    label: 'Continue with Google',
+    loadingLabel: 'Redirecting to Google...',
+    icon: <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#050810]">G</span>,
+  },
+  facebook: {
+    label: 'Continue with Facebook',
+    loadingLabel: 'Redirecting to Facebook...',
+    icon: <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1877F2] text-[11px] font-bold text-white">f</span>,
+  },
+}
+
+export default function OAuthButton({ nextPath, provider = 'google' }: OAuthButtonProps) {
   const [loading, setLoading] = useState(false)
 
-  const handleGoogleLogin = async () => {
+  const handleOAuthLogin = async () => {
     setLoading(true)
 
     const supabase = getSupabaseBrowserClient()
@@ -19,13 +35,15 @@ export default function OAuthButton({ nextPath }: OAuthButtonProps) {
     )}`
 
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider,
       options: {
         redirectTo,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        },
+        ...(provider === 'google' && {
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        }),
       },
     })
 
@@ -35,17 +53,17 @@ export default function OAuthButton({ nextPath }: OAuthButtonProps) {
     }
   }
 
+  const config = providerConfig[provider]
+
   return (
     <button
       type="button"
-      onClick={handleGoogleLogin}
+      onClick={handleOAuthLogin}
       disabled={loading}
       className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
     >
-      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#050810]">
-        G
-      </span>
-      {loading ? 'Redirecting to Google...' : 'Continue with Google'}
+      {config.icon}
+      {loading ? config.loadingLabel : config.label}
     </button>
   )
 }
