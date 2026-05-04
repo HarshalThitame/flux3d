@@ -11,10 +11,11 @@ const sections = [
   { id: 'cookies', title: '4. Cookies & Tracking', icon: Database },
   { id: 'security', title: '5. Data Security', icon: Lock },
   { id: 'rights', title: '6. Your Rights', icon: Shield },
-  { id: 'retention', title: '7. Data Retention', icon: Database },
-  { id: 'children', title: '8. Children\'s Privacy', icon: Shield },
-  { id: 'changes', title: '9. Changes to Policy', icon: Eye },
-  { id: 'contact', title: '10. Contact Us', icon: Globe },
+  { id: 'data-deletion', title: '7. Data Deletion Request', icon: Shield },
+  { id: 'retention', title: '8. Data Retention', icon: Database },
+  { id: 'children', title: '9. Children\'s Privacy', icon: Shield },
+  { id: 'changes', title: '10. Changes to Policy', icon: Eye },
+  { id: 'contact', title: '11. Contact Us', icon: Globe },
 ]
 
 export default function PrivacyPolicyClient() {
@@ -272,9 +273,52 @@ export default function PrivacyPolicyClient() {
                 </div>
               </section>
 
-              <section id="retention">
+              <section id="data-deletion">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
                   <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">7</span>
+                  Data Deletion Request
+                </h2>
+                <div className="text-[#7a82a0] leading-relaxed">
+                  <p className="mb-4">
+                    You have the right to request deletion of your account and all associated personal data. We provide multiple ways to request data deletion:
+                  </p>
+                  <div className="space-y-4 ml-6">
+                    <div>
+                      <h3 className="text-white font-semibold mb-2">Option 1: Self-Service (Recommended)</h3>
+                      <p>Visit your <a href="/profile" className="text-[#FF5C1A] hover:underline">Profile Page</a> and click "Delete Account" to permanently remove your account and all data.</p>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold mb-2">Option 2: Email Request</h3>
+                      <p>Send an email to <a href="mailto:privacy@flux3d.com" className="text-[#FF5C1A] hover:underline">privacy@flux3d.com</a> with subject "Data Deletion Request" including:</p>
+                      <ul className="space-y-1 ml-6 mt-2">
+                        {[
+                          'Your registered email address',
+                          'Full name associated with the account',
+                          'Reason for deletion (optional)',
+                        ].map((item) => (
+                          <li key={item} className="flex items-start gap-2">
+                            <span className="text-[#FF5C1A] mt-1.5">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold mb-2">Processing Time</h3>
+                      <p>We will process your deletion request within 30 days. You will receive a confirmation email once your data has been permanently deleted from our systems.</p>
+                    </div>
+                    <div className="bg-[#FF5C1A]/5 border border-[#FF5C1A]/20 rounded-xl p-4">
+                      <p className="text-sm">
+                        <strong className="text-white">Note:</strong> Data deletion is permanent and cannot be undone. After deletion, you will lose access to all saved quotes, order history, and uploaded files.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section id="retention">
+                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">8</span>
                   Data Retention
                 </h2>
                 <p className="text-[#7a82a0] leading-relaxed">
@@ -287,7 +331,7 @@ export default function PrivacyPolicyClient() {
 
               <section id="children">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">8</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">9</span>
                   Children's Privacy
                 </h2>
                 <p className="text-[#7a82a0] leading-relaxed">
@@ -299,7 +343,7 @@ export default function PrivacyPolicyClient() {
 
               <section id="changes">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">9</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">10</span>
                   Changes to This Policy
                 </h2>
                 <p className="text-[#7a82a0] leading-relaxed">
@@ -311,7 +355,7 @@ export default function PrivacyPolicyClient() {
 
               <section id="contact" className="bg-[#0a0f1e] border border-white/10 rounded-2xl p-8">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">10</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">11</span>
                   Contact Us
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
