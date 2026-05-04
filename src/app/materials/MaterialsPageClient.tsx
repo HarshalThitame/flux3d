@@ -39,7 +39,7 @@ export default function MaterialsPageClient() {
   useEffect(() => {
     async function fetchMaterials() {
       try {
-        const res = await fetch('/api/materials')
+        const res = await fetch('/api/materials', { next: { revalidate: 3600 } })
         if (res.ok) {
           const data = await res.json()
           setMaterials(data.materials || data || [])

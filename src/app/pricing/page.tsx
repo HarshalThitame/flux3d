@@ -1,4 +1,8 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
+
+export const dynamic = 'force-static'
+
 import Navbar from '@/components/Navbar'
 import { absoluteUrl } from '@/lib/site'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
@@ -27,6 +31,7 @@ export default async function PricingPage() {
     const { data, error } = await supabase
       .from('materials')
       .select('name, price_per_gram, density')
+      .returns<{ name: string; price_per_gram: number; density: number }[]>()
       .order('price_per_gram', { ascending: true })
 
     if (!error && data) {
@@ -49,7 +54,9 @@ export default async function PricingPage() {
   return (
     <div>
       <Navbar transparent />
-      <PricingClient materials={materials} />
+      <Suspense fallback={<div className="min-h-96 bg-[#0d1120] animate-pulse rounded-2xl mx-6 mt-32" />}>
+        <PricingClient materials={materials} />
+      </Suspense>
     </div>
   )
 }

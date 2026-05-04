@@ -1,4 +1,7 @@
 import { Metadata } from 'next'
+
+export const revalidate = 3600
+
 import MaterialsPageClient from './MaterialsPageClient'
 
 export const metadata: Metadata = {

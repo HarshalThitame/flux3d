@@ -1,4 +1,7 @@
 import type { Metadata } from 'next'
+
+export const revalidate = 86400
+
 import Navbar from '@/components/Navbar'
 import { localBusinessJsonLd, faqPageJsonLd } from '@/lib/structured-data'
 import { absoluteUrl } from '@/lib/site'

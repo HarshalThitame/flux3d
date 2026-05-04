@@ -1,4 +1,7 @@
 import { Metadata } from 'next'
+
+export const dynamic = 'force-static'
+
 import Navbar from '@/components/Navbar'
 import ServicesHero from './ServicesHero'
 import ServicesList from './ServicesList'

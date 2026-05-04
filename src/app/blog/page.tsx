@@ -1,4 +1,8 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
+
+export const revalidate = 3600
+
 import { absoluteUrl, siteConfig } from '@/lib/site'
 import Navbar from '@/components/Navbar'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
@@ -46,6 +50,7 @@ export default async function BlogPage() {
       .select('*')
       .eq('status', 'published')
       .order('created_at', { ascending: false })
+      .returns<any[]>()
 
     if (!error && data) {
       posts = data
@@ -57,7 +62,9 @@ export default async function BlogPage() {
   return (
     <div>
       <Navbar transparent />
-      <BlogClient posts={posts} />
+      <Suspense fallback={<div className="min-h-96 bg-[#0d1120] animate-pulse rounded-2xl mx-6 mt-32" />}>
+        <BlogClient posts={posts} />
+      </Suspense>
     </div>
   )
 }

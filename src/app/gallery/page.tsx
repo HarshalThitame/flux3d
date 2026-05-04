@@ -1,4 +1,7 @@
 import type { Metadata } from 'next'
+
+export const dynamic = 'force-static'
+
 import Navbar from '@/components/Navbar'
 import { absoluteUrl } from '@/lib/site'
 import GalleryClient from './GalleryClient'
