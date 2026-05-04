@@ -1,6 +1,8 @@
-import type { Metadata } from 'next'
-import Navbar from '@/components/Navbar'
-import { absoluteUrl } from '@/lib/site'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import MaterialsHero from './MaterialsHero'
 import ComparisonTable from './ComparisonTable'
 import MaterialCards from './MaterialCards'
@@ -9,58 +11,50 @@ import FDMvsResin from './FDMvsResin'
 import PostProcessing from './PostProcessing'
 import MaterialFAQ from './MaterialFAQ'
 import MaterialsCTA from './MaterialsCTA'
-import { Suspense } from 'react'
-import { getPublicMaterialSpecs } from '@/lib/public-materials'
 
-export const metadata: Metadata = {
-  title: '3D Printing Materials & Filaments in India | PLA, PETG, ABS, Resin & More — Flux 3D',
-  description:
-    'Explore 10+ premium 3D printing materials at Flux 3D — PLA+, PETG, ABS, ASA, TPU, Nylon, Silk PLA, Multi-Color, Resin 4K and more. Find the right material for your project. Starting ₹8/g. GST invoice included. Pan-India delivery.',
-  keywords: [
-    '3D printing materials India',
-    'PLA filament India',
-    'PETG printing India',
-    'ABS 3D printing',
-    'resin 3D printing India',
-    'TPU flexible printing',
-    'Nylon 3D printing',
-    'multi-color 3D printing India',
-    'best filament for 3D printing India',
-    '3D printing material guide',
-    'FDM vs resin printing India',
-    'engineering grade 3D printing materials',
-  ],
-  alternates: {
-    canonical: '/materials',
-  },
-  openGraph: {
-    title: '3D Printing Materials Guide — Flux 3D | PLA · PETG · ABS · Resin & More',
-    description:
-      'Not sure which material is right for your project? Flux 3D stocks 10+ premium filaments and resins. Full guide with properties, use cases, and pricing.',
-    url: absoluteUrl('/materials'),
-    type: 'website',
-  },
-  twitter: {
-    title: '3D Printing Materials Guide — Flux 3D | PLA · PETG · ABS · Resin & More',
-    description:
-      'Not sure which material is right for your project? Flux 3D stocks 10+ premium filaments and resins. Full guide with properties, use cases, and pricing.',
-  },
+const Navbar = dynamic(() => import('@/components/NavbarClient'), { ssr: false })
+const Footer = dynamic(() => import('@/components/Footer'), { ssr: false })
+
+type Material = {
+  id: string
+  name: string
+  type?: string
+  pricePerGram?: number
+  price_per_gram?: number
+  properties?: any
+  keyProperties?: string[]
+  bestFor?: string[]
+  difficultyLevel?: string
+  heatResistance?: string
+  strengthRating?: string
+  finishQuality?: string
+  recommendedFor?: string
+  stock?: string | boolean
+  [key: string]: any
 }
 
-export default async function MaterialsPage() {
-  // Fetch materials from API - 100% dynamic from database
-  let materials: any[] = []
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/materials`)
-    if (res.ok) {
-      const data = await res.json()
-      materials = data.materials || data || []
-    }
-  } catch (error) {
-    console.error('Failed to fetch materials from API:', error)
-  }
+export default function MaterialsPage() {
+  const [materials, setMaterials] = useState<Material[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // For ComparisonTable, map to ComparisonMaterial type with new fields
+  useEffect(() => {
+    async function fetchMaterials() {
+      try {
+        const res = await fetch('/api/materials')
+        if (res.ok) {
+          const data = await res.json()
+          setMaterials(data.materials || data || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch materials:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchMaterials()
+  }, [])
+
+  // Map materials for ComparisonTable
   const comparisonMaterials = materials.map((m: any) => ({
     name: m.name,
     type: m.type || 'FDM',
@@ -74,8 +68,16 @@ export default async function MaterialsPage() {
     heatResistance: m.heatResistance || 'Low',
     strengthRating: m.strengthRating || 'Medium',
     finishQuality: m.finishQuality || 'Good',
-    stock: true,
+    stock: m.stock || true,
   }))
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#050810] flex items-center justify-center">
+        <div className="text-[#7a82a0]">Loading materials...</div>
+      </div>
+    )
+  }
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#050810]" />}>
@@ -91,6 +93,7 @@ export default async function MaterialsPage() {
           <MaterialFAQ />
           <MaterialsCTA />
         </main>
+        <Footer />
       </div>
     </Suspense>
   )
