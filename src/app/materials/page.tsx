@@ -69,7 +69,7 @@ export default async function MaterialsPage() {
     flex: m.properties?.flexibility === 'High' ? 5 : m.properties?.flexibility === 'Medium' ? 3 : 1,
     heat: m.heatResistance === 'High' ? 5 : m.heatResistance === 'Medium' ? 3 : 1,
     detail: m.finishQuality === 'Excellent' ? 5 : m.finishQuality === 'Good' ? 3 : 1,
-    bestFor: m.bestFor?.join(', ') || m.recommendedFor || m.useCases?.join(', ') || 'General printing',
+    bestFor: Array.isArray(m.bestFor) ? m.bestFor : (m.bestFor ? [m.bestFor] : (m.recommendedFor ? [m.recommendedFor] : ['General printing'])),
     difficultyLevel: m.difficultyLevel || 'Easy',
     heatResistance: m.heatResistance || 'Low',
     strengthRating: m.strengthRating || 'Medium',

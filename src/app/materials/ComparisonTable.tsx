@@ -3,12 +3,21 @@
 import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
 import { useRef } from 'react'
-import Stars from './Stars'
+
+function Stars({ count }: { count: number }) {
+  return (
+    <span className="flex gap-0.5">
+      {[...Array(5)].map((_, i) => (
+        <span key={i} className={`text-xs ${i < count ? 'text-[#FF5C1A]' : 'text-[#2a2f45]'}`}>★</span>
+      ))}
+    </span>
+  )
+}
 
 type MaterialForComparison = {
   name: string
   type: string
-  price_per_gram: number
+  price: number
   strengthRating?: string
   properties?: {
     flexibility?: string
@@ -18,7 +27,7 @@ type MaterialForComparison = {
   heatResistance?: string
   finishQuality?: string
   bestFor?: string[]
-  stock?: string
+  stock?: string | boolean
 }
 
 type ComparisonTableProps = {
@@ -89,20 +98,22 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
                       {m.type || 'FDM'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-[#FF5C1A] font-medium">₹{m.price_per_gram || 0}</td>
+                  <td className="px-4 py-3 text-[#FF5C1A] font-medium">₹{m.price || 0}</td>
                   <td className="px-4 py-3 text-[#7a82a0]">{m.strengthRating || <Stars count={3} />}</td>
                   <td className="px-4 py-3 text-[#7a82a0]">{m.properties?.flexibility || <Stars count={2} />}</td>
                   <td className="px-4 py-3 text-[#7a82a0]">{m.heatResistance || m.properties?.tempResistance || <Stars count={2} />}</td>
                   <td className="px-4 py-3 text-[#7a82a0]">{m.finishQuality || <Stars count={3} />}</td>
                   <td className="px-4 py-3 text-[#7a82a0] text-xs">{m.difficultyLevel || 'Easy'}</td>
-                  <td className="px-4 py-3 text-[#7a82a0] hidden lg:table-cell">{m.bestFor?.join(', ') || 'General'}</td>
+                  <td className="px-4 py-3 text-[#7a82a0] hidden lg:table-cell">
+                    {Array.isArray(m.bestFor) ? m.bestFor.join(', ') : (m.bestFor || 'General')}
+                  </td>
                   <td className="px-4 py-3">
-                    {m.stock === 'Healthy' || m.stock === 'Healthy' ? (
+                    {m.stock === true || m.stock === 'Healthy' ? (
                       <span className="text-emerald-400 text-xs">✅ In Stock</span>
-                    ) : m.stock === 'Low' ? (
+                    ) : m.stock === 'Low' || m.stock === false ? (
                       <span className="text-yellow-400 text-xs">⚠ Low Stock</span>
                     ) : (
-                      <span className="text-[#7a82a0] text-xs">📞 {m.stock || 'Request'}</span>
+                      <span className="text-[#7a82a0] text-xs">📞 {typeof m.stock === 'string' ? m.stock : 'Request'}</span>
                     )}
                   </td>
                 </motion.tr>
