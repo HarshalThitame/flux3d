@@ -64,9 +64,9 @@ const whyChooseUs = [
 ]
 
 const values = [
-  { icon: Target, text: 'Precision over speed — though we\'re fast too' },
-  { icon: Zap, text: 'Transparency — you\'ll always know your order status' },
-  { icon: Printer, text: 'Quality by default — no "quick and dirty" options' },
+  { icon: Target, text: 'Precision over speed — though we&apos;re fast too' },
+  { icon: Zap, text: 'Transparency — you&apos;ll always know your order status' },
+  { icon: Printer, text: 'Quality by default — no &ldquo;quick and dirty&rdquo; options' },
   { icon: Globe, text: 'Community first — we love supporting creators' },
 ]
 
@@ -113,7 +113,7 @@ export default function AboutContent() {
             variants={fadeInUp}
             className="font-[var(--font-syne)] text-[clamp(2rem,6vw,4rem)] font-extrabold text-white tracking-[-1px] leading-[1.1] mb-6"
           >
-            We Don't Just Print{' '}
+            We Don&apos;t Just Print{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF5C1A] to-[#ff7a3d]">
               Objects.
             </span>
@@ -171,8 +171,8 @@ export default function AboutContent() {
                 from a first-time creator in a college dorm to an R&D team at a scaling startup.
               </p>
               <p className="text-[#7a82a0] leading-[1.8] italic border-l-2 border-[#FF5C1A] pl-4">
-                "We believe the barrier between an idea and a physical object should be nothing 
-                but a few hours of print time."
+                &ldquo;We believe the barrier between an idea and a physical object should be nothing 
+                but a few hours of print time.&rdquo;
               </p>
             </motion.div>
           </div>
@@ -273,8 +273,8 @@ export default function AboutContent() {
                 </span>
               </h2>
               <p className="text-[#7a82a0] leading-[1.8]">
-                Every print that leaves our studio reflects these core values. They're not just 
-                words on a wall — they're the standards we hold ourselves to, every single day.
+                Every print that leaves our studio reflects these core values. They&apos;re not just 
+                words on a wall — they&apos;re the standards we hold ourselves to, every single day.
               </p>
             </div>
             
@@ -315,10 +315,10 @@ export default function AboutContent() {
             </h2>
             <blockquote className="border-l-4 border-[#FF5C1A] pl-6 py-2">
               <p className="text-lg text-[#7a82a0] leading-[1.8] italic">
-                "Flux 3D started as a frustration with the gap between 3D printing's potential 
+                &ldquo;Flux 3D started as a frustration with the gap between 3D printing&apos;s potential 
                 and what most Indian print services actually delivered. We built the studio we 
                 wished existed — fast machines, honest pricing, and people who actually care 
-                about your project."
+                about your project.&rdquo;
               </p>
               <footer className="mt-4 text-[#FF5C1A] font-medium">— The Flux 3D Team</footer>
             </blockquote>
@@ -369,10 +369,10 @@ export default function AboutContent() {
               Design to Life?
             </span>
           </h2>
-          <p className="text-lg text-[#7a82a0] mb-10 leading-[1.7]">
-            Upload your file or describe your project — we'll handle the rest. 
-            Precision printing with turnaround times that keep your project moving.
-          </p>
+            <p className="text-lg text-[#7a82a0] mb-10 leading-[1.7]">
+              Upload your file or describe your project — we&apos;ll handle the rest. 
+              Precision printing with turnaround times that keep your project moving.
+            </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="/instant-quote"
