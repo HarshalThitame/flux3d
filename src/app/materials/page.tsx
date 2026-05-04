@@ -12,8 +12,7 @@ import PostProcessing from './PostProcessing'
 import MaterialFAQ from './MaterialFAQ'
 import MaterialsCTA from './MaterialsCTA'
 
-const Navbar = dynamic(() => import('@/components/NavbarClient'), { ssr: false })
-const Footer = dynamic(() => import('@/components/Footer'), { ssr: false })
+const NavbarClient = dynamic(() => import('@/components/NavbarClient'), { ssr: false })
 
 type Material = {
   id: string
@@ -82,7 +81,7 @@ export default function MaterialsPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#050810]" />}>
       <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
-        <Navbar transparent />
+        <NavbarClient transparent />
         <main>
           <MaterialsHero />
           <ComparisonTable materials={comparisonMaterials} />
@@ -93,7 +92,6 @@ export default function MaterialsPage() {
           <MaterialFAQ />
           <MaterialsCTA />
         </main>
-        <Footer />
       </div>
     </Suspense>
   )
