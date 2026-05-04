@@ -139,11 +139,17 @@ export async function parseModelFile(file: File): Promise<ParsedModel> {
   if (extension === 'stl') {
     const geometry = new STLLoader().parse(arrayBuffer)
     object = objectFromGeometry(geometry)
+    // STL files often come in with wrong orientation - rotate -90° on X to fix front view
+    object.rotation.x = -Math.PI / 2
   } else if (extension === 'obj') {
     const text = new TextDecoder().decode(arrayBuffer)
     object = new OBJLoader().parse(text)
+    // OBJ files often have Z-up coordinate system - rotate -90° on X to fix front view
+    object.rotation.x = -Math.PI / 2
   } else if (extension === '3mf') {
     object = new ThreeMFLoader().parse(arrayBuffer)
+    // 3MF can also have orientation issues - apply same fix
+    object.rotation.x = -Math.PI / 2
   } else {
     throw new Error('Unsupported file format. Please upload STL, OBJ, or 3MF.')
   }
