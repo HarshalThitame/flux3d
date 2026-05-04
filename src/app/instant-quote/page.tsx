@@ -1,7 +1,5 @@
 import type { Metadata } from 'next'
 
-export const runtime = 'edge'
-
 import Navbar from '@/components/Navbar'
 import InstantQuoteWorkspace from '@/components/instant-quote/InstantQuoteWorkspace'
 import { getCurrentUserProfile } from '@/lib/auth/server'
