@@ -81,7 +81,7 @@ export default function MaterialsPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#050810]" />}>
       <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
-        <NavbarClient transparent />
+        <NavbarClient transparent user={null} />
         <main>
           <MaterialsHero />
           <ComparisonTable materials={comparisonMaterials} />
