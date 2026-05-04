@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { useRouter } from 'next/navigation'
 import {
   UploadCloud,
   CheckCircle2,
@@ -12,7 +11,6 @@ import {
   Layers3,
   ShieldCheck,
   BookmarkPlus,
-  Clock3,
   Scale,
   Truck,
   ShoppingCart,
@@ -85,9 +83,8 @@ function CartEnabledWorkspace({
   user,
   initialQuoteId,
   materials,
-}: InstantQuoteWorkspaceProps) {
+  }: InstantQuoteWorkspaceProps) {
   const { addItem, isInCart } = useCart()
-  const router = useRouter()
   const supabaseEnabled = hasSupabaseConfig()
   const defaultMaterial = materials[0] ?? getMaterialById('pla-plus', materials)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -106,7 +103,6 @@ function CartEnabledWorkspace({
   const [toast, setToast] = useState<ToastState>(null)
   const [hasUserSelectedMaterial, setHasUserSelectedMaterial] = useState(false)
   const [savingQuote, setSavingQuote] = useState(false)
-  const [activeSection, setActiveSection] = useState<string | null>('upload')
   const uploadRef = useRef<HTMLDivElement>(null)
   const viewerRef = useRef<HTMLDivElement>(null)
   const materialRef = useRef<HTMLDivElement>(null)
@@ -289,12 +285,36 @@ function CartEnabledWorkspace({
     setToast({ type: 'success', message: `${selectedModel.fileName} added to cart.` })
   }
 
-  const steps = [
-    { id: 'upload', label: 'Upload', ref: uploadRef, done: uploadState.status === 'success' },
-    { id: 'viewer', label: 'Preview', ref: viewerRef, done: selectedModel !== null },
-    { id: 'material', label: 'Configure', ref: materialRef, done: selectedModel !== null },
-    { id: 'settings', label: 'Settings', ref: settingsRef, done: false },
+  const handleStepClick = (ref: React.RefObject<HTMLDivElement | null>) => {
+    const el = ref.current
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
+  const getStepDone = (stepId: string) => {
+    switch(stepId) {
+      case 'upload': return uploadState.status === 'success'
+      case 'viewer': return selectedModel !== null
+      case 'material': return selectedModel !== null
+      case 'settings': return false
+      default: return false
+    }
+  }
+
+  const stepConfigs = [
+    { id: 'upload', label: 'Upload' },
+    { id: 'viewer', label: 'Preview' },
+    { id: 'material', label: 'Configure' },
+    { id: 'settings', label: 'Settings' },
   ]
+
+  const stepRefs = {
+    upload: uploadRef,
+    viewer: viewerRef,
+    material: materialRef,
+    settings: settingsRef,
+  }
 
   return (
     <>
@@ -330,29 +350,31 @@ function CartEnabledWorkspace({
 
                 {/* Step Navigator */}
                 <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.03] p-1.5 backdrop-blur-xl scrollbar-hide">
-                  {steps.map((step, i) => (
+                  {stepConfigs.map((step, i) => {
+                    const done = getStepDone(step.id)
+                    const ref = stepRefs[step.id as keyof typeof stepRefs]
+                    return (
                     <button
                       key={step.id}
-                      onClick={() => step.ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                      onClick={() => handleStepClick(ref)}
                       className="flex items-center gap-2 whitespace-nowrap rounded-xl px-2.5 py-2.5 text-xs font-medium transition-colors hover:bg-white/5 flex-shrink-0 min-h-[44px]"
                     >
                     <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
-                      step.done
+                      done
                         ? 'bg-emerald-400/20 text-emerald-400'
-                        : activeSection === step.id
-                          ? 'bg-[#FF5C1A]/20 text-[#FF9A72]'
-                          : 'bg-white/10 text-[#7a82a0]'
+                        : 'bg-white/10 text-[#7a82a0]'
                     }`}>
-                      {step.done ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
+                      {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
                     </span>
-                    <span className={step.done ? 'text-emerald-400' : activeSection === step.id ? 'text-white' : 'text-[#7a82a0]'}>
+                    <span className={done ? 'text-emerald-400' : 'text-[#7a82a0]'}>
                       {step.label}
                     </span>
-                    {i < steps.length - 1 && (
+                    {i < stepConfigs.length - 1 && (
                       <ArrowRight className="ml-1 h-3 w-3 text-white/20" />
                     )}
                   </button>
-                ))}
+                    )
+                  })}
               </div>
             </div>
           </div>

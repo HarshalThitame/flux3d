@@ -90,8 +90,11 @@ export default function NavbarClient({
   }, [])
 
   useEffect(() => {
-    setIsOpen(false)
-    setIsProfileOpen(false)
+    const timeoutId = setTimeout(() => {
+      setIsOpen(false)
+      setIsProfileOpen(false)
+    }, 0)
+    return () => clearTimeout(timeoutId)
   }, [pathname])
 
   return (
