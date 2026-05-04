@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
 
   const cspHeader = [
     `default-src 'self'`,
