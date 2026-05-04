@@ -7,8 +7,8 @@ import {
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import type { QuoteConfig, UploadState } from '@/lib/quote/types'
 
-const MAX_FILE_SIZE_MB = 100
-const ALLOWED_EXTENSIONS = ['stl', 'obj', '3mf']
+const MAX_FILE_SIZE_MB = 50
+const ALLOWED_EXTENSIONS = ['stl', 'step', 'obj', '3mf', 'dxf', 'dwg']
 
 function getExtension(fileName: string) {
   return fileName.split('.').pop()?.toLowerCase() ?? ''

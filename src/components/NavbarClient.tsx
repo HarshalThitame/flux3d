@@ -249,13 +249,13 @@ export default function NavbarClient({
         className="relative md:hidden p-3 text-white min-h-[44px] min-w-[44px] flex items-center justify-center"
         aria-label="Toggle menu"
       >
-        <div className="w-6 h-6 flex items-center justify-center">
+        <span className="w-6 h-6 flex items-center justify-center">
           {isOpen ? (
             <X className="h-5 w-5 animate-fadeIn" />
           ) : (
             <Menu className="h-5 w-5" />
           )}
-        </div>
+        </span>
       </button>
         </div>
       </nav>

@@ -378,7 +378,7 @@ function CartEnabledWorkspace({
                       </div>
                       <div>
                         <h2 className="text-lg font-semibold text-white">1. Upload Your Model</h2>
-                        <p className="text-xs text-[#7a82a0]">STL, OBJ, or 3MF files supported</p>
+                        <p className="text-xs text-[#7a82a0]">STL, OBJ, 3MF, STEP, DXF, or DWG files supported</p>
                       </div>
                     </div>
 
@@ -393,7 +393,7 @@ function CartEnabledWorkspace({
                     >
                       <input
                         type="file"
-                        accept=".stl,.obj,.3mf"
+                        accept=".stl,.step,.obj,.3mf,.dxf,.dwg"
                         className="absolute inset-0 cursor-pointer opacity-0"
                         onChange={(e) => {
                           if (e.target.files?.[0]) handleFileSelect(e.target.files[0])
@@ -411,9 +411,9 @@ function CartEnabledWorkspace({
                           {selectedFile ? selectedFile.name : 'Drop your file or click to browse'}
                         </div>
                         {!selectedFile && (
-                          <div className="mt-2 text-xs text-[#7a82a0]">
-                            STL · OBJ · 3MF supported
-                          </div>
+<div className="mt-2 text-xs text-[#7a82a0]">
+  STL · OBJ · 3MF · STEP · DXF · DWG supported
+</div>
                         )}
                         {selectedFile && (
                           <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">

@@ -70,7 +70,7 @@ export default function UploadSection({
       >
         <input
           type="file"
-          accept=".stl,.obj,.3mf"
+          accept=".stl,.step,.obj,.3mf,.dxf,.dwg"
           className="absolute inset-0 cursor-pointer opacity-0"
           onChange={(event) => handleFiles(event.target.files)}
         />
@@ -88,9 +88,9 @@ export default function UploadSection({
           <p className="mt-3 text-sm leading-7 text-[#97a1c2]">
             Click to browse or drop your printable file here. From the first upload, the experience is designed to feel fast, premium, and effortless.
           </p>
-          <div className="mt-4 inline-flex rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">
-            STL · OBJ · 3MF
-          </div>
+<div className="mt-4 inline-flex rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">
+  STL · OBJ · 3MF · STEP · DXF · DWG
+</div>
         </div>
       </motion.div>
 
