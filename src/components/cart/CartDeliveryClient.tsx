@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useEffectEvent, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, PackageCheck, Truck, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -117,7 +117,7 @@ export default function CartDeliveryClient({
     })
   }
 
-  const lookupPincode = useEffectEvent(async (pincode: string) => {
+  const lookupPincode = useCallback(async (pincode: string) => {
     if (!/^\d{6}$/.test(pincode)) {
       return
     }
@@ -146,7 +146,7 @@ export default function CartDeliveryClient({
     } finally {
       setLookupLoading(false)
     }
-  })
+  }, [])
 
   useEffect(() => {
     if (selectedAddressId !== 'new') {

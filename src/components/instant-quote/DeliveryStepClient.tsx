@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useEffectEvent, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, PackageCheck, Truck } from 'lucide-react'
 import Link from 'next/link'
@@ -131,7 +131,7 @@ export default function DeliveryStepClient({
     })
   }
 
-  const lookupPincode = useEffectEvent(async (pincode: string) => {
+  const lookupPincode = useCallback(async (pincode: string) => {
     if (!/^\d{6}$/.test(pincode)) {
       return
     }
@@ -160,7 +160,7 @@ export default function DeliveryStepClient({
     } finally {
       setLookupLoading(false)
     }
-  })
+  }, [])
 
   useEffect(() => {
     if (selectedAddressId !== 'new') {
