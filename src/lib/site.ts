@@ -18,7 +18,7 @@ export const siteConfig = {
   shortName: 'Flux3D',
   title: 'Flux3D | Premium 3D Printing Services in India | ₹99 Onwards',
   description:
-    'India\'s most trusted 3D printing service in Mumbai. Industrial parts, architecture models, student projects & corporate gifts. Starting ₹99. Pan-India delivery with GST invoices.',
+    'India\'s most trusted 3D printing service in Mumbai. Industrial parts, architecture models, student projects & corporate gifts. Starting ₹99. Pan-India delivery.',
   url: normalizeSiteUrl(siteUrlEnv),
   ogImage: '/opengraph-image.png',
   keywords: [

@@ -16,11 +16,6 @@ const trustPoints = [
     body: 'Every order is photographed after printing and before packing. You see your part before it leaves our facility.'
   },
   {
-    icon: FileText,
-    title: 'GST Invoice — Always',
-    body: 'Every single order comes with a proper GST invoice with GSTIN. Perfect for businesses and professionals claiming reimbursements.'
-  },
-  {
     icon: Shield,
     title: 'NDA for Sensitive Projects',
     body: 'Industrial and medical clients can request a Non-Disclosure Agreement before sharing design files. Your IP stays yours.'

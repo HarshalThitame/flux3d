@@ -11,7 +11,7 @@ import LandingPageClient from './landing/LandingPageClient'
 export const metadata: Metadata = {
   title: 'Flux 3D — Premium 3D Printing Services in India | Starting ₹99',
   description:
-    'Flux 3D offers professional FDM & resin 3D printing services across India. Industrial parts, architecture models, dental models, corporate gifts & more. Printed on Bambu Lab P2S. Fast delivery, GST invoices. Starting at ₹99.',
+    'Flux 3D offers professional FDM & resin 3D printing services across India. Industrial parts, architecture models, dental models, corporate gifts & more. Printed on Bambu Lab P2S. Fast delivery. Starting at ₹99.',
   keywords: [
     '3D printing India',
     '3D printing Mumbai',
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Flux 3D — India\'s Premium 3D Printing Service | ₹99 Onwards',
     description:
-      'Professional 3D printing for industrial parts, architecture, students, medical, creators & corporate gifting. Bambu Lab P2S fleet. Pan-India delivery. GST invoices.',
+      'Professional 3D printing for industrial parts, architecture, students, medical, creators & corporate gifting. Bambu Lab P2S fleet. Pan-India delivery.',
     url: absoluteUrl('/'),
     type: 'website',
   },

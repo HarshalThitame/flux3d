@@ -252,7 +252,7 @@ export default function HeroSection() {
               transition={{ delay: 0.25 }}
               className="text-xs text-[#4a5070] max-w-[520px] mx-auto lg:mx-0 mb-6"
             >
-              Powered by Bambu Lab P2S · Starting at ₹99 · Pan-India Delivery · GST Invoice
+              Powered by Bambu Lab P2S · Starting at ₹99 · Pan-India Delivery
             </motion.p>
 
             {/* CTAs */}

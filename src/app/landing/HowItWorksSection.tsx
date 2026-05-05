@@ -33,7 +33,7 @@ const steps = [
     icon: Package,
     step: '5',
     title: 'Delivered to Your Door',
-    description: 'Shipped via Delhivery or Shiprocket with live tracking. GST invoice emailed automatically. Pan-India delivery in 3–5 days.'
+    description: 'Shipped via Delhivery or Shiprocket with live tracking. Pan-India delivery in 3–5 days.'
   }
 ]
 

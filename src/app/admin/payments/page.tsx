@@ -48,7 +48,7 @@ export default function PaymentsPage() {
         </div>
         <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Payments & Invoices</h1>
         <p className="mt-2 max-w-xl text-sm text-[#7a82a0]">
-          Track all transactions and generate GST invoices
+          Track all transactions and invoices
         </p>
       </motion.div>
 

@@ -85,16 +85,15 @@ export type AdminUser = {
   whatsappNumber?: string
   profession?: string
   referredBy?: string
-  preferredDevice?: string
-  preferredBrowser?: string
-  preferredLanguage?: string
-  city?: string
-  state?: string
-  pincode?: string
-  fullAddress?: string
-  gstNumber?: string
-  companyName?: string
-  signupMethod: 'Google' | 'Email' | 'GitHub'
+   preferredDevice?: string
+   preferredBrowser?: string
+   preferredLanguage?: string
+   city?: string
+   state?: string
+   pincode?: string
+   fullAddress?: string
+   companyName?: string
+   signupMethod: 'Google' | 'Email' | 'GitHub'
   role: UserRole
   lastActive: string
   totalOrders?: number

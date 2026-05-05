@@ -87,11 +87,7 @@ export function calculateInstantQuote(
 
   // Profit margin: 22%
   const marginPct = 22
-  const afterMargin = afterWastage * (1 + marginPct / 100)
-
-  // GST: 18% (fixed)
-  const gstPct = 18
-  const finalTotal = afterMargin * (1 + gstPct / 100)
+  const finalTotal = afterWastage * (1 + marginPct / 100)
 
   return {
     scaledVolumeCm3: round(scaledVolumeCm3),
@@ -105,9 +101,8 @@ export function calculateInstantQuote(
     supportCost: round(supportWeightGrams * material.pricePerGram),
     subtotal: round(baseSubtotal),
     overheadAmount: round(subtotalWithOverhead - baseSubtotal),
-    wastageAmount: round(afterWastage - subtotalWithOverhead),
-    profitMargin: round(afterMargin - afterWastage),
-    gstAmount: round(finalTotal - afterMargin),
+    wastageAmount: round(finalTotal - subtotalWithOverhead),
+    profitMargin: round(finalTotal - subtotalWithOverhead),
     total: round(finalTotal),
     dimensionsMm: {
       x: round(model.dimensionsMm.x * scaleFactor, 1),

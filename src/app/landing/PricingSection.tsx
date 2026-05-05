@@ -16,7 +16,6 @@ const tiers = [
       'Standard speed',
       'Up to 50g print weight',
       '3–5 day delivery',
-      'GST invoice',
       'WhatsApp support'
     ],
     cta: 'Start Printing →',
@@ -36,7 +35,6 @@ const tiers = [
       '48hr turnaround available',
       'Priority queue',
       'Photo update before dispatch',
-      'GST invoice',
       'Dedicated support'
     ],
     cta: 'Get Standard Quote →',
@@ -57,7 +55,6 @@ const tiers = [
       'Express 24hr guaranteed',
       'Multi-address delivery',
       'Bulk pricing (up to 30% off)',
-      'GST invoice with company name',
       'Dedicated account manager'
     ],
     cta: 'Talk to Enterprise Team →',
@@ -98,9 +95,9 @@ export default function PricingSection() {
             No Hidden Charges.{' '}
             <span className="text-[#7a82a0]">No Surprises.</span>
           </h2>
-          <p className="text-[#7a82a0] mt-4 max-w-[600px] mx-auto">
-            What you see is what you pay. Every quote includes material cost, print time, and GST.
-          </p>
+            <p className="text-[#7a82a0] mt-4 max-w-[600px] mx-auto">
+              What you see is what you pay. Every quote includes material cost and print time.
+            </p>
         </motion.div>
 
         {/* Pricing Cards */}
@@ -164,7 +161,7 @@ export default function PricingSection() {
           className="bg-[#0d1120] border border-[rgba(255,255,255,0.07)] rounded-xl p-6 mb-16"
         >
           <p className="text-sm text-[#7a82a0] text-center">
-            💡 All prices include 18% GST · Shipping calculated at checkout · Express surcharge: +30% · Student discount: 10% off above ₹500
+            💡 Shipping calculated at checkout · Express surcharge: +30% · Student discount: 10% off above ₹500
           </p>
         </motion.div>
 

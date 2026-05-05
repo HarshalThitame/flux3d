@@ -14,10 +14,6 @@ const faqs = [
     a: 'Standard orders are delivered in 3–5 business days across India. Express orders placed before 10 AM are dispatched the same day within Mumbai and Pune, delivering in 24–48 hours. Bulk and custom industrial orders are quoted with a specific timeline.'
   },
   {
-    q: 'Do you provide GST invoices?',
-    a: 'Yes — every single order, without exception, comes with a proper GST invoice. We are GST registered. Businesses, startups, and professionals can use our invoices for expense claims and input tax credit.'
-  },
-  {
     q: 'What is your minimum order quantity?',
     a: 'There is no minimum order. You can order a single print for ₹99. We print one piece with the same care and quality as a batch of 500.'
   },

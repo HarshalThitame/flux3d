@@ -21,7 +21,7 @@ export async function GET(
       .select(`
         id, name, email, phone, whatsapp_number, profession, referred_by,
         preferred_device, preferred_browser, preferred_language,
-        city, state, pincode, full_address, gst_number, company_name,
+        city, state, pincode, full_address, company_name,
         total_spent, total_orders, avg_order_value, largest_order, smallest_order,
         first_order_date, last_order_date, order_frequency_days, lifetime_value_projection,
         total_site_visits, total_time_spent, avg_session_duration,
@@ -119,7 +119,6 @@ export async function GET(
         state: profile.state,
         pincode: profile.pincode,
         fullAddress: profile.full_address,
-        gstNumber: profile.gst_number,
         companyName: profile.company_name,
         totalSpent: profile.total_spent,
         totalOrders: profile.total_orders,

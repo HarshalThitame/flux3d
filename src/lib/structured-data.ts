@@ -117,14 +117,6 @@ export const faqPageJsonLd = {
     },
     {
       '@type': 'Question',
-      name: 'Do you provide GST invoices?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Yes — every single order, without exception, comes with a proper GST invoice. We are GST registered.',
-      },
-    },
-    {
-      '@type': 'Question',
       name: 'What is your minimum order quantity?',
       acceptedAnswer: {
         '@type': 'Answer',

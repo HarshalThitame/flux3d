@@ -23,7 +23,7 @@ const testimonials = [
   },
   {
     stars: 5,
-    quote: 'We ordered 200 custom logo desk pieces for our Diwali corporate gifting. The quality was exceptional, delivery was coordinated to 12 different offices, and the GST invoice was ready instantly.',
+    quote: 'We ordered 200 custom logo desk pieces for our Diwali corporate gifting. The quality was exceptional, delivery was coordinated to 12 different offices, and the invoice was ready instantly.',
     name: 'Priya Desai',
     title: 'HR Manager',
     company: 'FinTech startup, Mumbai',

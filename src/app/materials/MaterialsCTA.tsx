@@ -51,7 +51,7 @@ export default function MaterialsCTA() {
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-[#7a82a0]">
-          {['Free Quote', 'Expert Recommendation', 'GST Invoice', 'Pan-India Delivery', 'No Minimum Order'].map(item => (
+          {['Free Quote', 'Expert Recommendation', 'Pan-India Delivery', 'No Minimum Order'].map(item => (
             <span key={item} className="inline-flex items-center gap-1">
               <Check className="w-3 h-3 text-[#10B981]" />
               {item}

@@ -115,7 +115,6 @@ export default function AdminSettingsPage() {
                     <InputField label="Email" value="" />
                     <InputField label="Phone" value="" />
                     <InputField label="WhatsApp Business" value="" />
-                    <InputField label="GST Number" value="" />
                     <InputField label="PAN" value="" />
                     <InputField label="Address Line 1" value="" />
                     <InputField label="Address Line 2" value="" />
@@ -222,7 +221,6 @@ export default function AdminSettingsPage() {
                     <InputField label="Shipping — Local (Mumbai)" value="0" />
                     <InputField label="Shipping — Pan India" value="0" />
                     <InputField label="Free Shipping Above" value="0" />
-                    <InputField label="GST Rate" value="0" />
                   </div>
                 </SectionCard>
 
@@ -344,7 +342,7 @@ export default function AdminSettingsPage() {
 
                 <SectionCard title="Accounting & Alerts">
                   <div className="space-y-3">
-                    {['Tally / GST Software', 'Slack Alerts'].map((name) => (
+                    {['Slack Alerts'].map((name) => (
                       <div key={name} className="flex items-center justify-between rounded-xl border border-white/10 bg-[#080c18] p-4">
                         <div>
                           <div className="font-medium text-white">{name}</div>

@@ -72,7 +72,7 @@ const services = [
     icon: Gift,
     tag: 'Corporate',
     title: 'Corporate Gifts That Actually Get Kept',
-    description: 'Custom logo pieces, personalized desk nameplates, and 3D printed trophies and awards that represent your brand with pride. Bulk pricing. GST invoice.',
+    description: 'Custom logo pieces, personalized desk nameplates, and 3D printed trophies and awards that represent your brand with pride. Bulk pricing.',
     pills: ['Logo Pieces', 'Desk Name Plates', 'Awards & Trophies', 'Festive Gifts'],
     price: 'From ₹299 per unit (10+ units)',
     cta: 'Get Corporate Quote →',

@@ -163,10 +163,6 @@ export default function QuoteSummary({
                     <span>Profit margin (22%)</span>
                     <span>₹{priceBreakdown.profitMargin.toFixed(0)}</span>
                   </div>
-                  <div className="flex justify-between text-xs text-[#7a82a0]">
-                    <span>GST (18%)</span>
-                    <span>₹{priceBreakdown.gstAmount.toFixed(0)}</span>
-                  </div>
                   <div className="border-t border-white/8 pt-2 mt-1 flex justify-between font-medium text-white">
                     <span>Print total</span>
                     <span>₹{priceBreakdown.total.toFixed(0)}</span>

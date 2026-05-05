@@ -129,7 +129,7 @@ export default function FooterSection() {
 
         {/* Bottom */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#7a82a0]">
-          <p>© 2025 Flux 3D Private Limited · All Rights Reserved · GST: 27AXXXXXX1Z5</p>
+          <p>© 2025 Flux 3D Private Limited · All Rights Reserved</p>
           <div className="flex items-center gap-4">
              <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
              <Link href="/terms-of-service" className="hover:text-white transition-colors">Terms of Service</Link>

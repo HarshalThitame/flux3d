@@ -43,10 +43,6 @@ export default function PricingCTA() {
             </span>
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#22c55e]" />
-              GST Invoice
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#22c55e]" />
               Pan-India Delivery
             </span>
           </div>

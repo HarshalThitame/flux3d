@@ -29,10 +29,6 @@ const faqs = [
     answer: 'Yes, we use Bambu Lab AMS (Automatic Material System) for 4-color FDM printing. This is perfect for logos, figurines, and prototypes requiring color coding. Each additional color adds to the print time and cost.'
   },
   {
-    question: 'Do you provide GST invoices?',
-    answer: 'Yes, every order includes a proper GST invoice. We serve businesses, startups, colleges, and individual customers across India. B2B customers can claim input credit on their printing expenses.'
-  },
-  {
     question: 'What if my part fails quality check?',
     answer: 'Every print undergoes rigorous quality inspection. If a part doesn\'t meet our standards, we reprint it at no cost. We also provide photos before shipping so you can verify the quality. Customer satisfaction is our priority.'
   }

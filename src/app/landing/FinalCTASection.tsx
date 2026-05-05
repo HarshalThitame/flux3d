@@ -52,7 +52,6 @@ function FloatingOrbs() {
 const reassurancePills = [
   'Free Quote',
   'No Minimum Order',
-  'GST Invoice',
   '24hr Express Available',
   'Reply in 30 Minutes'
 ]

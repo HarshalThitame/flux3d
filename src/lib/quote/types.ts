@@ -78,7 +78,6 @@ export type PriceBreakdown = {
   overheadAmount: number
   wastageAmount: number
   profitMargin: number
-  gstAmount: number
   total: number
   dimensionsMm: {
     x: number
