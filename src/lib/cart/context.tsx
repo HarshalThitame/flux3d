@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import {
   addToCart,
@@ -85,22 +86,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     void bootstrap()
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!active) {
-        return
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event: AuthChangeEvent, session: Session | null) => {
+        if (!active) {
+          return
+        }
+
+        console.info('[Cart] Auth state changed:', event)
+
+        if (session?.user.id) {
+          void syncCartForUser(session.user.id)
+          return
+        }
+
+        setStorageKey(getCartStorageKey(null))
+        setItems([])
+        setIsLoading(false)
       }
-
-      console.info('[Cart] Auth state changed:', event)
-
-      if (session?.user.id) {
-        void syncCartForUser(session.user.id)
-        return
-      }
-
-      setStorageKey(getCartStorageKey(null))
-      setItems([])
-      setIsLoading(false)
-    })
+    )
 
     return () => {
       active = false
