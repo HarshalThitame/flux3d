@@ -182,9 +182,9 @@ export default function CartDeliveryClient({
       setSubmitting(true)
       const result = await createCartOrderAction({
       items: items.map((item) => ({
-        quoteId: item.id ?? '',
-        fileUrl: item.image ?? '',
-        fileName: item.name ?? '',
+        quoteId: item.quoteId ?? item.id ?? '',
+        fileUrl: item.fileUrl ?? '',
+        fileName: item.fileName ?? item.name ?? '',
         material: item.material ?? '',
         color: item.color ?? '',
         infill: item.infill ?? 20,

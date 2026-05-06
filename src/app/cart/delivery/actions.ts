@@ -173,7 +173,15 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
     throw new Error(insertError.message)
   }
 
+  if (!insertedOrders || insertedOrders.length === 0) {
+    throw new Error('Order submission did not return a confirmation. Please try again.')
+  }
+
   for (const order of insertedOrders) {
+    if (order.serial_number == null || !order.created_at) {
+      throw new Error('Order submission returned incomplete confirmation details. Please try again.')
+    }
+
     const orderNumber = formatOrderNumber(order.serial_number, order.created_at)
     const { error: updateError } = await supabase
       .from('orders')
