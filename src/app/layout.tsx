@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
+import { connection } from 'next/server'
 import { organizationJsonLd, websiteJsonLd } from '@/lib/structured-data'
 import { absoluteUrl, siteConfig } from '@/lib/site'
 import { CartProvider } from '@/lib/cart/context'
@@ -50,26 +51,28 @@ export const viewport: Viewport = {
   themeColor: '#050810',
 }
 
+function toJsonLd(value: unknown) {
+  return JSON.stringify(value).replace(/</g, '\\u003c')
+}
+
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const headersList = await headers()
-  const nonce = headersList.get('x-nonce') ?? ''
+  await connection()
+  await headers()
 
   return (
     <html lang="en">
       <body suppressHydrationWarning>
         <script
-          nonce={nonce}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: toJsonLd(organizationJsonLd) }}
         />
         <script
-          nonce={nonce}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: toJsonLd(websiteJsonLd) }}
         />
         <CartProvider>
           <VisitorTracker />

@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { Mail, Phone, MapPin, Clock, Camera, Users, Globe, Send } from 'lucide-react'
 
 export default function FooterSection() {
@@ -41,7 +40,7 @@ export default function FooterSection() {
 
           {/* Services */}
           <div>
-            <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Services</h4>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Services</h3>
             <ul className="space-y-2">
               {['Industrial Parts', 'Architecture Models', 'Student Projects', 'Online Products', 'Medical & Dental', 'Creator Props', 'Corporate Gifting'].map((item) => (
                 <li key={item}>
@@ -55,7 +54,7 @@ export default function FooterSection() {
 
           {/* Company */}
           <div>
-            <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</h4>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</h3>
             <ul className="space-y-2">
                 {[
                   { label: 'About Flux 3D', href: '/about' },
@@ -76,7 +75,7 @@ export default function FooterSection() {
 
           {/* Contact */}
           <div>
-            <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Contact</h4>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Contact</h3>
             <ul className="space-y-3">
               <li className="flex items-start gap-2 text-sm text-[#7a82a0]">
                 <MapPin className="w-4 h-4 mt-0.5 text-[#FF5C1A]" />
@@ -139,14 +138,9 @@ export default function FooterSection() {
         </div>
 
         {/* SEO footer text */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-8 text-[10px] text-[#4a5070] leading-[1.6] text-center"
-        >
+        <p className="mt-8 text-[10px] text-[#4a5070] leading-[1.6] text-center">
            Flux 3D provides professional 3D printing services in Mumbai, Bangalore, Hyderabad, Chennai, Delhi and across India. Specializing in FDM and resin 3D printing for industrial, architectural, medical, student, and corporate clients. Printed on Bambu Lab P2S. Starting at ₹99.
-        </motion.p>
+        </p>
       </div>
     </footer>
   )

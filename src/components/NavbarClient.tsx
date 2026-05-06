@@ -160,7 +160,7 @@ export default function NavbarClient({
               <>
                 <Link
                   href="/instant-quote"
-                  className="group relative flex items-center gap-2 rounded-xl bg-[#FF5C1A] px-5 py-2.5 text-sm font-semibold text-white overflow-hidden transition-all hover:shadow-[0_0_25px_rgba(255,92,26,0.3)]"
+                  className="group relative flex items-center gap-2 rounded-xl bg-[#D94E00] px-5 py-2.5 text-sm font-semibold text-white overflow-hidden transition-all hover:shadow-[0_0_25px_rgba(217,78,0,0.3)]"
                 >
                   <span className="relative z-10">Get Quote</span>
                   <ArrowUpRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -238,7 +238,7 @@ export default function NavbarClient({
                 </Link>
                 <Link
                   href="/signup"
-                  className="group relative rounded-xl bg-[#FF5C1A] px-5 py-2.5 text-sm font-semibold text-white overflow-hidden transition-all hover:shadow-[0_0_25px_rgba(255,92,26,0.3)]"
+                  className="group relative rounded-xl bg-[#D94E00] px-5 py-2.5 text-sm font-semibold text-white overflow-hidden transition-all hover:shadow-[0_0_25px_rgba(217,78,0,0.3)]"
                 >
                   <span className="relative z-10">Sign Up</span>
                 </Link>
@@ -323,7 +323,7 @@ export default function NavbarClient({
                 <Link
                   href="/instant-quote"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#FF5C1A] py-3.5 text-base font-semibold text-white"
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#D94E00] py-3.5 text-base font-semibold text-white"
                 >
                   Get Instant Quote
                   <ArrowUpRight className="h-4 w-4" />
@@ -371,7 +371,7 @@ export default function NavbarClient({
                     <Link
                       href="/signup"
                       onClick={() => setIsOpen(false)}
-                      className="block w-full rounded-xl bg-[#FF5C1A] py-3.5 text-center text-base font-semibold text-white"
+                      className="block w-full rounded-xl bg-[#D94E00] py-3.5 text-center text-base font-semibold text-white"
                     >
                       Create Account
                     </Link>

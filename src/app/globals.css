@@ -3,7 +3,7 @@
 :root {
   --background: #050810;
   --foreground: #e8eaf0;
-  --orange: #FF5C1A;
+  --orange: #D94E00;
   --orange-glow: rgba(255,92,26,0.18);
   --orange-dim: rgba(255,92,26,0.08);
   --dark: #050810;
@@ -66,6 +66,41 @@ body {
   50% { opacity: 0.8; r: 24; }
 }
 
+@keyframes heroIn {
+  from { opacity: 0; transform: translate3d(0, 22px, 0) scale(0.985); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes heroParticle {
+  0%, 100% { transform: translate3d(0, 0, 0); opacity: 0.14; }
+  50% { transform: translate3d(0, -18px, 0); opacity: 0.35; }
+}
+
+@keyframes ringSpin {
+  from { transform: translate3d(-50%, -50%, 0) rotate(0deg); }
+  to { transform: translate3d(-50%, -50%, 0) rotate(360deg); }
+}
+
+@keyframes printHead {
+  0%, 100% { transform: translate3d(-100px, 0, 0); }
+  50% { transform: translate3d(120px, 0, 0); }
+}
+
+@keyframes printBuild {
+  0%, 100% { transform: scaleY(0.15); opacity: 0.7; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes printerFloat {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -3px, 0); }
+}
+
+@keyframes ledPulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
 .animate-fadeUp {
   animation: fadeUp 0.7s ease both;
   will-change: transform, opacity;
@@ -94,6 +129,52 @@ body {
 .animate-glow {
   animation: glowPulse 2s ease-in-out infinite;
   will-change: transform, opacity;
+}
+
+.animate-hero-in {
+  animation: heroIn 0.7s ease both;
+  will-change: transform, opacity;
+}
+
+.animate-delay-1 { animation-delay: 0.05s; }
+.animate-delay-2 { animation-delay: 0.1s; }
+.animate-delay-3 { animation-delay: 0.2s; }
+.animate-delay-4 { animation-delay: 0.25s; }
+.animate-delay-5 { animation-delay: 0.3s; }
+.animate-delay-6 { animation-delay: 0.35s; }
+
+.hero-particle {
+  position: absolute;
+  border-radius: 9999px;
+  background: #d94e00;
+  opacity: 0.2;
+  animation: heroParticle 4.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-ring-spin {
+  animation: ringSpin 60s linear infinite;
+  will-change: transform;
+}
+
+.animate-print-head {
+  animation: printHead 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-print-build {
+  animation: printBuild 2s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-printer-float {
+  animation: printerFloat 2.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-led-pulse {
+  animation: ledPulse 1.8s ease-in-out infinite;
+  will-change: opacity;
 }
 
 /* Mobile menu animations */
