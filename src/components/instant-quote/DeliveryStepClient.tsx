@@ -215,8 +215,13 @@ export default function DeliveryStepClient({
       })
 
       window.sessionStorage.removeItem(ORDER_DRAFT_STORAGE_KEY)
-      setConfirmation(result)
-      setToast({ type: 'success', message: 'Your print request has been submitted.' })
+      const orderData = {
+        orderId: result.id,
+        orderNumber: result.orderNumber,
+        totalPrice: result.totalPrice ?? draft.price,
+      }
+      sessionStorage.setItem('flux3d-order-success', JSON.stringify(orderData))
+      router.push('/order-success')
     } catch (error) {
       setToast({
         type: 'error',

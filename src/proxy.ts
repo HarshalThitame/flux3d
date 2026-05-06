@@ -27,6 +27,7 @@ export async function proxy(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
   const isAuthRoute = [...protectedPrefixes, ...guestOnlyPrefixes].some(prefix => pathname.startsWith(prefix))
+  const isAdminRoute = pathname.startsWith('/admin')
 
   if (isAuthRoute) {
     const { response, supabase } = await updateSession(request)
@@ -62,6 +63,24 @@ export async function proxy(request: NextRequest) {
       redirectResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
       redirectResponse.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
       return redirectResponse
+    }
+
+    if (isAdminRoute && user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (profile?.role !== 'admin') {
+        const redirectResponse = NextResponse.redirect(new URL('/', request.url))
+        redirectResponse.headers.set('Content-Security-Policy', cspHeader)
+        redirectResponse.headers.set('X-Frame-Options', 'DENY')
+        redirectResponse.headers.set('X-Content-Type-Options', 'nosniff')
+        redirectResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+        redirectResponse.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+        return redirectResponse
+      }
     }
 
     response.headers.set('Content-Security-Policy', cspHeader)

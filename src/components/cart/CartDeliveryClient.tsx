@@ -58,6 +58,18 @@ export default function CartDeliveryClient({
     orderNumber: string
     itemCount: number
   } | null>(null)
+
+  useEffect(() => {
+    if (confirmation) {
+      const orderData = {
+        orderId: confirmation.orderId,
+        orderNumber: confirmation.orderNumber,
+        itemCount: confirmation.itemCount,
+      }
+      sessionStorage.setItem('flux3d-order-success', JSON.stringify(orderData))
+      router.push('/order-success')
+    }
+  }, [confirmation, router])
   const [lookupLoading, setLookupLoading] = useState(false)
   const [lastLookupPincode, setLastLookupPincode] = useState(savedAddresses[0]?.pincode ?? '')
 
@@ -207,8 +219,15 @@ export default function CartDeliveryClient({
       })
 
       clearItems()
-      setConfirmation(result)
-      setToast({ type: 'success', message: `Your order with ${result.itemCount} item(s) has been submitted.` })
+      const { totalPrice } = calculateOrderTotal(summary.subtotal)
+      const orderData = {
+        orderId: result.orderId,
+        orderNumber: result.orderNumber,
+        itemCount: result.itemCount,
+        totalPrice,
+      }
+      sessionStorage.setItem('flux3d-order-success', JSON.stringify(orderData))
+      router.push('/order-success')
     } catch (error) {
       setToast({
         type: 'error',

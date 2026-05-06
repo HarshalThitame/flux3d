@@ -10,6 +10,7 @@ export type AppUserProfile = {
   name: string
   avatarUrl: string | null
   createdAt: string | null
+  role: 'user' | 'admin'
 }
 
 export const getCurrentUserProfile = cache(async () => {
@@ -32,7 +33,7 @@ export const getCurrentUserProfile = cache(async () => {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, name, email, avatar_url, created_at')
+    .select('id, name, email, avatar_url, created_at, role')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -56,6 +57,7 @@ export const getCurrentUserProfile = cache(async () => {
             ? user.user_metadata.picture
             : null),
       createdAt: profile?.created_at ?? null,
+      role: profile?.role === 'admin' ? 'admin' : 'user',
     } satisfies AppUserProfile,
   }
 })

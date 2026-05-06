@@ -31,7 +31,7 @@ export function validateModelFile(file: File) {
   const extension = getExtension(file.name)
 
   if (!ALLOWED_EXTENSIONS.includes(extension)) {
-    return 'Unsupported format. Please upload STL, OBJ, or 3MF.'
+    return `Unsupported format ".${extension}". Please upload a 3D model file (STL, OBJ, 3MF, STEP, DXF, or DWG).`
   }
 
   if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {

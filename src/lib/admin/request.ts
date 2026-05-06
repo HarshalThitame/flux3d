@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { getAdminEmails } from '@/lib/supabase/config'
 
 export async function requireAdminRequest() {
   const supabase = await createServerSupabaseClient()
@@ -19,10 +18,17 @@ export async function requireAdminRequest() {
     return { response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
   }
 
-  const adminEmails = getAdminEmails()
-  const email = user.email?.trim().toLowerCase() ?? ''
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
 
-  if (adminEmails.length > 0 && !adminEmails.includes(email)) {
+  if (profileError) {
+    return { response: NextResponse.json({ error: profileError.message }, { status: 500 }) }
+  }
+
+  if (profile?.role !== 'admin') {
     return { response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
   }
 

@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { AppUserProfile } from '@/lib/auth/server'
 import { useCart } from '@/lib/cart/context'
+import { useProfile } from '@/hooks/useProfile'
 
 interface NavbarClientProps {
   transparent?: boolean
@@ -47,6 +48,7 @@ export default function NavbarClient({
   transparent = false,
   user,
 }: NavbarClientProps) {
+  const { profile } = useProfile(user)
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -62,6 +64,7 @@ export default function NavbarClient({
     { href: '/gallery', label: 'Gallery' },
     { href: '/blog', label: 'Blog' },
     { href: '/pricing', label: 'Pricing' },
+    ...(profile?.role === 'admin' ? [{ href: '/admin', label: 'Admin' }] : []),
   ]
 
   useEffect(() => {

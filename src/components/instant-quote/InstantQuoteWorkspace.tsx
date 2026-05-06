@@ -48,13 +48,11 @@ const initialUploadState: UploadState = {
 
 type InstantQuoteWorkspaceProps = {
   user: AppUserProfile | null
-  initialQuoteId: string
   materials: QuoteMaterial[]
 }
 
 export default function InstantQuoteWorkspace({
   user,
-  initialQuoteId,
   materials,
 }: InstantQuoteWorkspaceProps) {
   if (materials.length === 0) {
@@ -73,29 +71,73 @@ export default function InstantQuoteWorkspace({
   return (
     <CartEnabledWorkspace
       user={user}
-      initialQuoteId={initialQuoteId}
       materials={materials}
     />
   )
 }
 
+const WORKSPACE_STORAGE_KEY = 'flux3d-workspace-draft'
+
 function CartEnabledWorkspace({
   user,
-  initialQuoteId,
   materials,
   }: InstantQuoteWorkspaceProps) {
   const { addItem, isInCart } = useCart()
   const supabaseEnabled = hasSupabaseConfig()
   const defaultMaterial = materials[0] ?? getMaterialById('pla-plus', materials)
+  const [initialQuoteId] = useState(() => {
+    if (typeof window === 'undefined') return `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+    const stored = sessionStorage.getItem('flux3d-quote-id')
+    if (stored) return stored
+    const newId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+    sessionStorage.setItem('flux3d-quote-id', newId)
+    return newId
+  })
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedModel, setSelectedModel] = useState<ParsedModel | null>(null)
-  const [config, setConfig] = useState<QuoteConfig>({
-    materialId: defaultMaterial.id,
-    colorHex: defaultMaterial.colors[0]?.hex ?? '#ff5c1a',
-    infill: 20,
-    layerHeight: 0.2,
-    supports: false,
-    scalePercent: 100,
+  const [config, setConfig] = useState<QuoteConfig>(() => {
+    if (typeof window === 'undefined') {
+      return {
+        materialId: defaultMaterial.id,
+        colorHex: defaultMaterial.colors[0]?.hex ?? '#ff5c1a',
+        infill: 20,
+        layerHeight: 0.2,
+        supports: false,
+        scalePercent: 100,
+      }
+    }
+    const raw = sessionStorage.getItem(WORKSPACE_STORAGE_KEY)
+    if (!raw) {
+      return {
+        materialId: defaultMaterial.id,
+        colorHex: defaultMaterial.colors[0]?.hex ?? '#ff5c1a',
+        infill: 20,
+        layerHeight: 0.2,
+        supports: false,
+        scalePercent: 100,
+      }
+    }
+    try {
+      const parsed = JSON.parse(raw) as { model: ParsedModel | null; config: QuoteConfig }
+      return parsed.config ?? {
+        materialId: defaultMaterial.id,
+        colorHex: defaultMaterial.colors[0]?.hex ?? '#ff5c1a',
+        infill: 20,
+        layerHeight: 0.2,
+        supports: false,
+        scalePercent: 100,
+      }
+    } catch {
+      return {
+        materialId: defaultMaterial.id,
+        colorHex: defaultMaterial.colors[0]?.hex ?? '#ff5c1a',
+        infill: 20,
+        layerHeight: 0.2,
+        supports: false,
+        scalePercent: 100,
+      }
+    }
   })
   const [uploadState, setUploadState] = useState<UploadState>(initialUploadState)
   const [viewerLoading, setViewerLoading] = useState(false)
@@ -107,6 +149,26 @@ function CartEnabledWorkspace({
   const viewerRef = useRef<HTMLDivElement>(null)
   const materialRef = useRef<HTMLDivElement>(null)
   const settingsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const draft = { config }
+    sessionStorage.setItem(WORKSPACE_STORAGE_KEY, JSON.stringify(draft))
+  }, [config])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const raw = sessionStorage.getItem(WORKSPACE_STORAGE_KEY)
+    if (!raw) return
+    try {
+      const parsed = JSON.parse(raw) as { config: QuoteConfig }
+      if (parsed.config) {
+        setConfig(parsed.config)
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, [])
 
   useEffect(() => {
     if (!toast) {

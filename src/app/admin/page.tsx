@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import DashboardCards from '@/components/admin/DashboardCards'
 import DataTable from '@/components/admin/DataTable'
 import DonutChartCard from '@/components/admin/DonutChartCard'
@@ -10,6 +11,7 @@ import StatusBadge from '@/components/admin/StatusBadge'
 import { Eye } from 'lucide-react'
 import Link from 'next/link'
 import { type AdminOrder } from '@/lib/admin/types'
+import { useProfile } from '@/hooks/useProfile'
 
 type DashboardResponse = {
   metrics: Array<{ label: string; value: string; change: string; tone: 'neutral' | 'positive' | 'warning' }>
@@ -32,10 +34,16 @@ function timeSeriesFromOrders(orders: AdminOrder[]) {
 }
 
 export default function AdminDashboardPage() {
+  const router = useRouter()
+  const { profile, loading: profileLoading } = useProfile()
   const [data, setData] = useState<DashboardResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (profileLoading || profile?.role !== 'admin') {
+      return
+    }
+
     const controller = new AbortController()
 
     async function load() {
@@ -58,7 +66,30 @@ export default function AdminDashboardPage() {
 
     void load()
     return () => controller.abort()
-  }, [])
+  }, [profile?.role, profileLoading])
+
+  useEffect(() => {
+    if (!profileLoading && profile?.role !== 'admin') {
+      router.replace('/')
+    }
+  }, [profile?.role, profileLoading, router])
+
+  if (profileLoading) {
+    return (
+      <div className="space-y-6">
+        <SkeletonBlock className="h-32 w-full" />
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <SkeletonBlock key={index} className="h-40 w-full" />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (profile?.role !== 'admin') {
+    return null
+  }
 
   if (error) {
     return (
