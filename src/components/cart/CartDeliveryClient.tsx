@@ -57,6 +57,7 @@ export default function CartDeliveryClient({
     orderId: string
     orderNumber: string
     itemCount: number
+    totalPrice: number
   } | null>(null)
 
   useEffect(() => {
@@ -193,20 +194,20 @@ export default function CartDeliveryClient({
     try {
       setSubmitting(true)
       const result = await createCartOrderAction({
-      items: items.map((item) => ({
-        quoteId: item.quoteId ?? item.id ?? '',
-        fileUrl: item.fileUrl ?? '',
-        fileName: item.fileName ?? item.name ?? '',
-        material: item.material ?? '',
-        color: item.color ?? '',
-        infill: item.infill ?? 20,
-        layerHeight: item.layerHeight ?? 0.2,
-        supports: item.supports ?? false,
-        price: item.price ?? 0,
-        estimatedTime: item.estimatedTime ?? 0,
-        weight: item.weight ?? 0,
-        dimensions: item.dimensions ?? { x: 0, y: 0, z: 0 },
-      })),
+        items: items.map((item) => ({
+          quoteId: item.quoteId ?? item.id ?? '',
+          fileUrl: item.fileUrl ?? '',
+          fileName: item.fileName ?? item.name ?? '',
+          material: item.material ?? '',
+          color: item.color ?? '',
+          infill: item.infill ?? 20,
+          layerHeight: item.layerHeight ?? 0.2,
+          supports: item.supports ?? false,
+          price: item.price ?? 0,
+          estimatedTime: item.estimatedTime ?? 0,
+          weight: item.weight ?? 0,
+          dimensions: item.dimensions ?? { x: 0, y: 0, z: 0 },
+        })),
         subtotal: summary.subtotal,
         fullName: address.fullName,
         phone: address.phone,
@@ -218,16 +219,14 @@ export default function CartDeliveryClient({
         landmark: address.landmark,
       })
 
-      clearItems()
       const { totalPrice } = calculateOrderTotal(summary.subtotal)
-      const orderData = {
+      setConfirmation({
         orderId: result.orderId,
         orderNumber: result.orderNumber,
         itemCount: result.itemCount,
         totalPrice,
-      }
-      sessionStorage.setItem('flux3d-order-success', JSON.stringify(orderData))
-      router.push('/order-success')
+      })
+      clearItems()
     } catch (error) {
       setToast({
         type: 'error',
