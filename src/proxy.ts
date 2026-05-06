@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/proxy'
+import { isAdminEmail } from '@/lib/supabase/config'
 
 const protectedPrefixes = ['/quote', '/saved-quotes', '/my-orders', '/profile', '/admin']
 const guestOnlyPrefixes = ['/login', '/signup']
@@ -68,11 +69,11 @@ export async function proxy(request: NextRequest) {
     if (isAdminRoute && user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, email')
         .eq('id', user.id)
         .maybeSingle()
 
-      if (profile?.role !== 'admin') {
+      if (profile?.role !== 'admin' && !isAdminEmail(profile?.email ?? user.email)) {
         const redirectResponse = NextResponse.redirect(new URL('/', request.url))
         redirectResponse.headers.set('Content-Security-Policy', cspHeader)
         redirectResponse.headers.set('X-Frame-Options', 'DENY')

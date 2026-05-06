@@ -1,7 +1,7 @@
 import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { hasSupabaseConfig } from '@/lib/supabase/config'
+import { hasSupabaseConfig, isAdminEmail } from '@/lib/supabase/config'
 import { normalizeNextPath } from '@/lib/auth/redirect'
 
 export type AppUserProfile = {
@@ -54,10 +54,13 @@ export const getCurrentUserProfile = cache(async () => {
         (typeof user.user_metadata.avatar_url === 'string'
           ? user.user_metadata.avatar_url
           : typeof user.user_metadata.picture === 'string'
-            ? user.user_metadata.picture
-            : null),
+          ? user.user_metadata.picture
+          : null),
       createdAt: profile?.created_at ?? null,
-      role: profile?.role === 'admin' ? 'admin' : 'user',
+      role:
+        profile?.role === 'admin' || isAdminEmail(profile?.email ?? user.email)
+          ? 'admin'
+          : 'user',
     } satisfies AppUserProfile,
   }
 })
