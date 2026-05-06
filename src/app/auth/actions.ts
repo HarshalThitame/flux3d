@@ -60,17 +60,30 @@ export async function signupAction(
   })
 
   if (error) {
+    if (error.message?.toLowerCase().includes('confirmation') || error.message?.toLowerCase().includes('confirm')) {
+      return {
+        status: 'error',
+        message: 'Email confirmation is not configured. Please contact support or try signing in with Google.',
+      }
+    }
     return {
       status: 'error',
       message: error.message,
     }
   }
 
-  if (data.user && data.session) {
+  if (!data.user) {
+    return {
+      status: 'error',
+      message: 'Signup succeeded but Supabase did not return a user record.',
+    }
+  }
+
+  if (data.session) {
     try {
       await upsertProfileForUser(supabase, data.user, name)
-    } catch {
-      // Don't block signup if profile sync fails
+    } catch (profileError) {
+      console.error('[Auth] Failed to create profile during signup', profileError)
     }
     redirect(nextPath)
   }
@@ -120,7 +133,11 @@ export async function loginAction(
     }
   }
 
-  await upsertProfileForUser(supabase, data.user)
+  try {
+    await upsertProfileForUser(supabase, data.user)
+  } catch (profileError) {
+    console.error('[Auth] Failed to upsert profile after login', profileError)
+  }
   redirect(nextPath)
 }
 

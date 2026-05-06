@@ -54,3 +54,4 @@ export type CartSummary = {
 }
 
 export const CART_STORAGE_KEY = 'flux3d-cart';
+export const CART_ANONYMOUS_STORAGE_KEY = `${CART_STORAGE_KEY}_anonymous`;

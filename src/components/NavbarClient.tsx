@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Menu, ShoppingCart, X, MessageCircle, ArrowUpRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import type { AppUserProfile } from '@/lib/auth/server'
 import { useCart } from '@/lib/cart/context'
 import { useProfile } from '@/hooks/useProfile'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
 interface NavbarClientProps {
   transparent?: boolean
@@ -49,12 +50,37 @@ export default function NavbarClient({
   user,
 }: NavbarClientProps) {
   const { profile } = useProfile(user)
+  const { resetCartState } = useCart()
+  const router = useRouter()
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [hoveredLink, setHoveredLink] = useState<string | null>(null)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      const supabase = getSupabaseBrowserClient()
+      const { error } = await supabase.auth.signOut()
+
+      if (error) {
+        console.error('[Auth] Failed to sign out', error)
+        return
+      }
+
+      resetCartState()
+      setIsOpen(false)
+      setIsProfileOpen(false)
+      router.push('/login')
+    } catch (error) {
+      console.error('[Auth] Unexpected logout error', error)
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   const navLinks = [
     { href: '/', label: 'Home' },
@@ -218,14 +244,14 @@ export default function NavbarClient({
                             {item.label}
                           </Link>
                         ))}
-                        <form action="/auth/logout" method="post">
-                          <button
-                            type="submit"
-                            className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-red-400/80 transition-colors hover:bg-red-500/10 hover:text-red-400"
-                          >
-                            Log out
-                          </button>
-                        </form>
+                        <button
+                          type="button"
+                          onClick={() => void handleLogout()}
+                          disabled={isLoggingOut}
+                          className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-red-400/80 transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isLoggingOut ? 'Logging out...' : 'Log out'}
+                        </button>
                       </div>
                     </div>
                   )}
@@ -353,14 +379,14 @@ export default function NavbarClient({
                         {href === '/saved-quotes' ? 'Saved Quotes' : href === '/my-orders' ? 'My Orders' : 'Profile'}
                       </Link>
                     ))}
-                    <form action="/auth/logout" method="post">
-                      <button
-                        type="submit"
-                        className="block w-full rounded-xl border border-white/[0.06] py-3.5 text-center text-base font-medium text-red-400/80"
-                      >
-                        Log out
-                      </button>
-                    </form>
+                    <button
+                      type="button"
+                      onClick={() => void handleLogout()}
+                      disabled={isLoggingOut}
+                      className="block w-full rounded-xl border border-white/[0.06] py-3.5 text-center text-base font-medium text-red-400/80 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isLoggingOut ? 'Logging out...' : 'Log out'}
+                    </button>
                   </>
                 ) : (
                   <>

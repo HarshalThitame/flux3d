@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { AppUserProfile } from '@/lib/auth/server'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
@@ -10,10 +10,15 @@ type UseProfileResult = {
 }
 
 export function useProfile(initialProfile: AppUserProfile | null = null): UseProfileResult {
+  const initialProfileRef = useRef(initialProfile)
   const [profile, setProfile] = useState<AppUserProfile | null>(initialProfile)
   const [loading, setLoading] = useState(initialProfile === null)
 
   useEffect(() => {
+    if (initialProfileRef.current) {
+      return
+    }
+
     let cancelled = false
 
     async function loadProfile() {
@@ -22,6 +27,9 @@ export function useProfile(initialProfile: AppUserProfile | null = null): UsePro
         const { data: authData, error: authError } = await supabase.auth.getUser()
 
         if (authError) {
+          if (authError.code === 'refresh_token_not_found') {
+            await supabase.auth.signOut({ scope: 'local' })
+          }
           throw authError
         }
 
