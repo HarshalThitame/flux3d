@@ -67,14 +67,18 @@ export async function signupAction(
   }
 
   if (data.user && data.session) {
-    await upsertProfileForUser(supabase, data.user, name)
+    try {
+      await upsertProfileForUser(supabase, data.user, name)
+    } catch {
+      // Don't block signup if profile sync fails
+    }
     redirect(nextPath)
   }
 
   return {
     status: 'success',
     message:
-      'Account created. Check your email to verify your address before continuing.',
+      'Account created successfully! You can now sign in.',
   }
 }
 
