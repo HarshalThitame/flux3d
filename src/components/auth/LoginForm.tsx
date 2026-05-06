@@ -33,7 +33,6 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
 
       <div className="space-y-3">
         <OAuthButton nextPath={nextPath} provider="google" />
-        <OAuthButton nextPath={nextPath} provider="facebook" />
       </div>
 
       <div className="flex items-center gap-3 text-xs uppercase tracking-[0.24em] text-[#67718e]">

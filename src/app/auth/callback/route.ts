@@ -14,45 +14,55 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL(`/login?error=missing_code`, request.url))
   }
 
-  let response = NextResponse.redirect(new URL(nextPath, request.url))
-  const supabase = createServerClient(
-    getSupabaseUrl(),
-    getSupabasePublishableKey(),
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value)
-          })
+  const redirectUrl = new URL(nextPath, requestUrl.origin)
+  let response = NextResponse.redirect(redirectUrl)
 
-          response = NextResponse.redirect(new URL(nextPath, request.url))
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options)
-          })
+  try {
+    const supabase = createServerClient(
+      getSupabaseUrl(),
+      getSupabasePublishableKey(),
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value }) => {
+              request.cookies.set(name, value)
+            })
+
+            response = NextResponse.redirect(redirectUrl)
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options)
+            })
+          },
         },
-      },
+      }
+    )
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (error) {
+      return NextResponse.redirect(new URL(`/login?error=auth_callback_failed`, requestUrl.origin))
     }
-  )
-  const { error } = await supabase.auth.exchangeCodeForSession(code)
 
-  if (error) {
-    return NextResponse.redirect(new URL(`/login?error=auth_callback_failed`, request.url))
-  }
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
+    if (userError && userError.code !== 'refresh_token_not_found') {
+      return NextResponse.redirect(new URL(`/login?error=auth_callback_failed`, requestUrl.origin))
+    }
 
-  if (userError && userError.code !== 'refresh_token_not_found') {
-    // Log non-refresh-token errors if needed
-  }
-
-  if (user) {
-    await upsertProfileForUser(supabase, user)
+    if (user) {
+      try {
+        await upsertProfileForUser(supabase, user)
+      } catch {
+        // Do not block login if profile sync fails; downstream code can recover.
+      }
+    }
+  } catch {
+    return NextResponse.redirect(new URL(`/login?error=auth_callback_failed`, requestUrl.origin))
   }
 
   return response
