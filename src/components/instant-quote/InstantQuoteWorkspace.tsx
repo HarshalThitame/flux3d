@@ -334,6 +334,14 @@ function CartEnabledWorkspace({
       return
     }
 
+    if (!uploadState.path) {
+      setToast({
+        type: 'error',
+        message: 'Sign in and upload the model to storage before adding this quote to cart.',
+      })
+      return
+    }
+
     const selectedColor =
       selectedMaterial.colors.find((color) => color.hex === config.colorHex)?.name ?? config.colorHex
 
@@ -341,7 +349,7 @@ function CartEnabledWorkspace({
       id: initialQuoteId,
       name: selectedModel?.fileName ?? 'model',
       quoteId: initialQuoteId,
-      fileUrl: uploadState.path ?? '',
+      fileUrl: uploadState.path,
       fileName: selectedModel?.fileName ?? 'model',
       material: selectedMaterial.name ?? '',
       color: selectedColor ?? '',

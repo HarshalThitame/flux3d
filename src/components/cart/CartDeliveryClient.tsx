@@ -10,6 +10,7 @@ import AddressForm from '@/components/instant-quote/AddressForm'
 import Toast, { type ToastState } from '@/components/quote/Toast'
 import { useCart } from '@/lib/cart/context'
 import type { AppUserProfile } from '@/lib/auth/server'
+import { normalizeOwnedStoragePath } from '@/lib/quote/storage-path'
 import {
   addressesEqual,
   calculateOrderTotal,
@@ -32,7 +33,6 @@ export default function CartDeliveryClient({
 }: CartDeliveryClientProps) {
   const router = useRouter()
   const { items, summary, clearItems } = useCart()
-  const [mounted, setMounted] = useState(false)
   const [selectedAddressId, setSelectedAddressId] = useState<string | 'new'>(
     savedAddresses[0]?.id ?? 'new'
   )
@@ -78,10 +78,6 @@ export default function CartDeliveryClient({
     () => calculateOrderTotal(summary.subtotal),
     [summary.subtotal]
   )
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   useEffect(() => {
     if (items.length === 0 && !confirmation) {
@@ -176,11 +172,26 @@ export default function CartDeliveryClient({
     }, 450)
 
     return () => window.clearTimeout(timer)
-  }, [address.pincode, lastLookupPincode, selectedAddressId])
+  }, [address.pincode, lastLookupPincode, lookupPincode, selectedAddressId])
 
   const handleSubmitOrder = async () => {
     if (items.length === 0) {
       setToast({ type: 'error', message: 'Your cart is empty. Add items before ordering.' })
+      return
+    }
+
+    try {
+      items.forEach((item) => {
+        normalizeOwnedStoragePath(item.fileUrl ?? '', user.id)
+      })
+    } catch (error) {
+      setToast({
+        type: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'One or more cart items has an invalid file upload. Re-open the quote and upload the model again.',
+      })
       return
     }
 
@@ -238,10 +249,6 @@ export default function CartDeliveryClient({
   }
 
   if (items.length === 0 && !confirmation) {
-    return null
-  }
-
-  if (!mounted) {
     return null
   }
 
