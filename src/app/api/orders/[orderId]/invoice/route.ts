@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
+import PDFDocument from 'pdfkit'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { formatAddressSummary, getOrderStatusLabel, getOrderStatusClasses } from '@/lib/orders'
+import { formatAddressSummary, getOrderStatusLabel } from '@/lib/orders'
+import { getSupabaseServiceRoleKey, getSupabaseUrl } from '@/lib/supabase/config'
+import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +34,7 @@ type InvoiceRow = {
   created_at: string
 }
 
-function generateInvoiceHtml(order: InvoiceRow, items: InvoiceRow[]) {
+async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buffer> {
   const isMulti = items.length > 1
   const invoiceDate = new Date(order.created_at).toLocaleDateString('en-IN', {
     day: 'numeric', month: 'long', year: 'numeric',
@@ -49,110 +52,126 @@ function generateInvoiceHtml(order: InvoiceRow, items: InvoiceRow[]) {
     landmark: order.landmark ?? '',
   })
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Invoice - ${order.order_number ?? order.id}</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1a1a2e; background: #fff; line-height: 1.6; padding: 40px; }
-  .invoice { max-width: 800px; margin: 0 auto; }
-  .header { display: flex; justify-content: space-between; align-items: start; border-bottom: 2px solid #ff5c1a; padding-bottom: 24px; margin-bottom: 24px; }
-  .header h1 { font-size: 28px; font-weight: 800; color: #0f0f23; }
-  .header h1 span { color: #ff5c1a; }
-  .header .meta { text-align: right; font-size: 13px; color: #666; }
-  .header .meta strong { color: #1a1a2e; }
-  .badge { display: inline-block; padding: 4px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-  .badge-active { background: #d1fae5; color: #065f46; }
-  .section { margin-bottom: 24px; }
-  .section h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.12em; color: #888; margin-bottom: 12px; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th { text-align: left; padding: 8px 12px; background: #f5f5fa; color: #555; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
-  td { padding: 10px 12px; border-bottom: 1px solid #eee; }
-  .num { text-align: right; font-variant-numeric: tabular-nums; }
-  .total-row td { font-weight: 700; font-size: 15px; border-bottom: 2px solid #1a1a2e; }
-  .grand-total td { font-weight: 800; font-size: 18px; color: #ff5c1a; border: none; padding-top: 12px; }
-  .address-box { background: #f8f8fc; border-radius: 12px; padding: 16px; font-size: 14px; line-height: 1.8; }
-  .address-box strong { display: block; margin-bottom: 4px; }
-  .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 12px; color: #888; text-align: center; }
-  @media print { body { padding: 20px; } .no-print { display: none; } }
-</style>
-</head>
-<body>
-<div class="invoice">
-  <div class="header">
-    <div>
-      <h1>Flux<span>3D</span></h1>
-      <p style="font-size:13px;color:#666;margin-top:4px;">3D Printing Service</p>
-    </div>
-    <div class="meta">
-      <div><strong>Invoice</strong></div>
-      <div>${order.order_number ?? order.id}</div>
-      <div>${invoiceDate}</div>
-      <div style="margin-top:6px;"><span class="badge badge-active">${getOrderStatusLabel(order.status as any)}</span></div>
-    </div>
-  </div>
+  const doc = new PDFDocument({ size: 'A4', margin: 50 })
+  const buffers: Buffer[] = []
+  doc.on('data', (chunk: Buffer) => buffers.push(chunk))
 
-  <div class="section">
-    <h2>Bill To</h2>
-    <div class="address-box">
-      <strong>${order.full_name}</strong>
-      <div>${order.phone}</div>
-      ${addressLines.map(l => `<div>${l}</div>`).join('')}
-    </div>
-  </div>
+  const left = doc.page.margins.left
+  let y = doc.page.margins.top
 
-  <div class="section">
-    <h2>${isMulti ? `Order Items (${items.length})` : 'Order Details'}</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Material</th>
-          <th>Color</th>
-          <th>Infill</th>
-          <th class="num">Price</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${items.map(item => `
-        <tr>
-          <td>${item.file_url.split('/').pop() ?? 'Model'}</td>
-          <td>${item.material}</td>
-          <td>${item.color}</td>
-          <td>${item.infill}%</td>
-          <td class="num">₹${Number(item.price).toFixed(0)}</td>
-        </tr>`).join('')}
-        <tr class="total-row">
-          <td colspan="4">Subtotal</td>
-          <td class="num">₹${subtotal.toFixed(0)}</td>
-        </tr>
-        <tr class="total-row">
-          <td colspan="4">Delivery Charge</td>
-          <td class="num">${totalDelivery === 0 ? 'FREE' : '₹' + totalDelivery.toFixed(0)}</td>
-        </tr>
-        <tr class="total-row">
-          <td colspan="4">Est. Print Time</td>
-          <td class="num">${totalTime.toFixed(1)} hr</td>
-        </tr>
-        <tr class="grand-total">
-          <td colspan="4">Total</td>
-          <td class="num">₹${grandTotal.toFixed(0)}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  doc.font('Helvetica-Bold').fontSize(26).fillColor('#0f0f23')
+  doc.text('Flux', left, y, { continued: true })
+  doc.fillColor('#ff5c1a').text('3D')
+  y = doc.y + 4
+  doc.font('Helvetica').fontSize(10).fillColor('#666')
+  doc.text('3D Printing Service', left, y)
+  y = doc.y + 8
 
-  <div class="footer">
-    <p>Flux3D — 3D Printing Service</p>
-    <p>This is a computer-generated invoice. Payment is collected separately.</p>
-    <p style="margin-top:8px;">${order.order_number ?? order.id} · ${invoiceDate}</p>
-  </div>
-</div>
-</body>
-</html>`
+  doc.font('Helvetica-Bold').fontSize(16).fillColor('#0f0f23')
+  doc.text('INVOICE', left, y)
+  doc.font('Helvetica').fontSize(9).fillColor('#555')
+  const rightX = doc.page.width - left
+  const metaLines = [
+    `${order.order_number ?? order.id}`,
+    invoiceDate,
+    getOrderStatusLabel(order.status as any),
+  ]
+  const lineHeight = 13
+  metaLines.forEach((line, i) => {
+    doc.text(line, left, y + i * lineHeight, { width: rightX - left, align: 'right' })
+  })
+  y = y + metaLines.length * lineHeight + 16
+
+  const pageW = doc.page.width - left * 2
+
+  doc.moveTo(left, y).lineTo(left + pageW, y).strokeColor('#ff5c1a').lineWidth(2).stroke()
+  y += 20
+
+  doc.font('Helvetica-Bold').fontSize(10).fillColor('#888')
+  doc.text('BILL TO', left, y)
+  y += 16
+
+  doc.font('Helvetica-Bold').fontSize(11).fillColor('#1a1a2e')
+  doc.text(order.full_name, left, y)
+  y += 14
+  doc.font('Helvetica').fontSize(10).fillColor('#444')
+  doc.text(order.phone, left, y)
+  y += 14
+  addressLines.forEach(line => {
+    doc.text(line, left, y)
+    y += 14
+  })
+  y += 10
+
+  doc.moveTo(left, y).lineTo(left + pageW, y).strokeColor('#ddd').lineWidth(1).stroke()
+  y += 16
+
+  doc.font('Helvetica-Bold').fontSize(10).fillColor('#888')
+  doc.text(isMulti ? `ORDER ITEMS (${items.length})` : 'ORDER DETAILS', left, y)
+  y += 18
+
+  const colX = [left, left + 180, left + 300, left + 370, left + pageW]
+  const colWidths = [colX[1] - colX[0], colX[2] - colX[1], colX[3] - colX[2], colX[4] - colX[3] - 70, 70]
+  const headers = ['Item', 'Material', 'Color', 'Infill', 'Price']
+  doc.font('Helvetica-Bold').fontSize(8).fillColor('#666')
+  doc.rect(left, y - 4, pageW, 18).fill('#f5f5fa')
+  doc.fillColor('#555')
+  let cx = left + 4
+  headers.forEach((h, i) => {
+    doc.text(h, cx, y, { width: colWidths[i], align: i === headers.length - 1 ? 'right' : 'left' })
+    cx += colWidths[i]
+  })
+  y += 18
+
+  doc.font('Helvetica').fontSize(9).fillColor('#333')
+  items.forEach((item) => {
+    const rowValues = [
+      item.file_url.split('/').pop() ?? 'Model',
+      item.material,
+      item.color,
+      `${item.infill}%`,
+      `Rs.${Number(item.price).toFixed(0)}`,
+    ]
+    cx = left + 4
+    rowValues.forEach((val, i) => {
+      doc.text(val, cx, y, { width: colWidths[i], align: i === rowValues.length - 1 ? 'right' : 'left' })
+      cx += colWidths[i]
+    })
+    doc.moveTo(left, y + 16).lineTo(left + pageW, y + 16).strokeColor('#eee').lineWidth(0.5).stroke()
+    y += 20
+  })
+
+  const summaryRows = [
+    { label: 'Subtotal', value: `Rs.${subtotal.toFixed(0)}` },
+    { label: 'Delivery Charge', value: totalDelivery === 0 ? 'FREE' : `Rs.${totalDelivery.toFixed(0)}` },
+    { label: 'Est. Print Time', value: `${totalTime.toFixed(1)} hr` },
+  ]
+  summaryRows.forEach(row => {
+    doc.font('Helvetica-Bold').fontSize(10).fillColor('#1a1a2e')
+    doc.text(row.label, left, y)
+    doc.text(row.value, left, y, { width: pageW, align: 'right' })
+    y += 16
+  })
+
+  doc.moveTo(left, y).lineTo(left + pageW, y).strokeColor('#1a1a2e').lineWidth(2).stroke()
+  y += 14
+  doc.font('Helvetica-Bold').fontSize(14).fillColor('#ff5c1a')
+  doc.text('Total', left, y)
+  doc.text(`Rs.${grandTotal.toFixed(0)}`, left, y, { width: pageW, align: 'right' })
+  y += 30
+
+  doc.moveTo(left, y).lineTo(left + pageW, y).strokeColor('#ddd').lineWidth(1).stroke()
+  y += 16
+  doc.font('Helvetica').fontSize(8).fillColor('#999')
+  doc.text('Flux3D - 3D Printing Service', left, y, { align: 'center', width: pageW })
+  y += 10
+  doc.text(`${order.order_number ?? order.id} - ${invoiceDate}`, left, y, { align: 'center', width: pageW })
+
+  doc.end()
+
+  return new Promise((resolve) => {
+    doc.on('end', () => resolve(Buffer.concat(buffers)))
+  })
 }
 
 export async function GET(
@@ -167,7 +186,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: order, error } = await supabase
+    const adminSupabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
+    const { data: order, error } = await adminSupabase
       .from('orders')
       .select('*')
       .eq('id', orderId)
@@ -181,7 +201,7 @@ export async function GET(
     const row = order as InvoiceRow
     let items: InvoiceRow[] = [row]
     if (row.group_id) {
-      const { data: groupData } = await supabase
+      const { data: groupData } = await adminSupabase
         .from('orders')
         .select('*')
         .eq('group_id', row.group_id)
@@ -192,11 +212,14 @@ export async function GET(
       }
     }
 
-    const html = generateInvoiceHtml(row, items)
-    return new NextResponse(html, {
+    const pdf = await generatePdf(row, items)
+    const filename = `invoice-${order.order_number ?? order.id}.pdf`
+
+    return new NextResponse(pdf, {
       headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': `inline; filename="invoice-${order.order_number ?? order.id}.html"`,
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Length': String(pdf.length),
       },
     })
   } catch {
