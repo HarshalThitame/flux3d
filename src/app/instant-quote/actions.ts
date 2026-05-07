@@ -89,7 +89,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
       .eq('user_id', auth.user.id)
 
     if (addressUpdateError) {
-      throw new Error(addressUpdateError.message)
+      console.error('[orders] Failed to update delivery address:', addressUpdateError)
     }
   } else {
     const { error: addressInsertError } = await supabase.from('delivery_addresses').insert({
@@ -98,7 +98,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
     })
 
     if (addressInsertError) {
-      throw new Error(addressInsertError.message)
+      console.error('[orders] Failed to insert delivery address:', addressInsertError)
     }
   }
 
@@ -150,7 +150,6 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
   revalidatePath('/my-orders')
   revalidatePath(`/my-orders/${insertedOrder.id}`)
   revalidatePath('/profile')
-  revalidatePath('/instant-quote/delivery')
 
   return {
     id: insertedOrder.id,

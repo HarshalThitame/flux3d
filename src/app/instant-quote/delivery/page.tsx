@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import DeliveryStepClient from '@/components/instant-quote/DeliveryStepClient'
 import { requireUser } from '@/lib/auth/server'
+import { isMissingSupabaseTableError } from '@/lib/quote/supabase-errors'
 import type { SavedAddress } from '@/lib/orders'
 import { absoluteUrl } from '@/lib/site'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
@@ -36,13 +37,17 @@ type DeliveryAddressRow = {
 export default async function DeliveryPage() {
   const auth = await requireUser('/instant-quote/delivery')
   const supabase = await createServerSupabaseClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('delivery_addresses')
     .select(
       'id, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, created_at, updated_at'
     )
     .eq('user_id', auth.user.id)
     .order('updated_at', { ascending: false })
+
+  if (error && !isMissingSupabaseTableError(error, 'delivery_addresses')) {
+    console.error('[delivery] Failed to load saved addresses:', error)
+  }
 
   const savedAddresses = ((data ?? []) as DeliveryAddressRow[]).map(
     (address): SavedAddress => ({

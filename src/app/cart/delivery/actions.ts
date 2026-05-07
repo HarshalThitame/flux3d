@@ -128,7 +128,7 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
       .eq('user_id', auth.user.id)
 
     if (addressUpdateError) {
-      throw new Error(addressUpdateError.message)
+      console.error('[orders] Failed to update delivery address:', addressUpdateError)
     }
   } else {
     const { error: addressInsertError } = await supabase.from('delivery_addresses').insert({
@@ -137,7 +137,7 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
     })
 
     if (addressInsertError) {
-      throw new Error(addressInsertError.message)
+      console.error('[orders] Failed to insert delivery address:', addressInsertError)
     }
   }
 
@@ -200,7 +200,6 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
 
   revalidatePath('/my-orders')
   revalidatePath('/cart')
-  revalidatePath('/cart/delivery')
 
   return {
     orderId: insertedOrders[0].id,
