@@ -9,6 +9,7 @@ import { createOrderAction } from '@/app/instant-quote/actions'
 import AddressForm from '@/components/instant-quote/AddressForm'
 import Toast, { type ToastState } from '@/components/quote/Toast'
 import type { AppUserProfile } from '@/lib/auth/server'
+import { normalizeOwnedStoragePath } from '@/lib/quote/storage-path'
 import {
   addressesEqual,
   calculateOrderTotal,
@@ -18,7 +19,6 @@ import {
   validateAddressFields,
   type AddressFieldErrors,
   type AddressFields,
-  type OrderConfirmation,
   type OrderDraft,
   type SavedAddress,
 } from '@/lib/orders'
@@ -33,7 +33,6 @@ export default function DeliveryStepClient({
   savedAddresses,
 }: DeliveryStepClientProps) {
   const router = useRouter()
-  const [mounted, setMounted] = useState(false)
   const [draft] = useState<OrderDraft | null>(() => {
     if (typeof window === 'undefined') {
       return null
@@ -46,7 +45,15 @@ export default function DeliveryStepClient({
 
     try {
       const parsed = JSON.parse(raw) as OrderDraft
-      return parsed.fileUrl && parsed.material ? parsed : null
+      if (!parsed.fileUrl?.trim() || !parsed.material?.trim()) {
+        return null
+      }
+
+      const normalizedFileUrl = normalizeOwnedStoragePath(parsed.fileUrl, user.id)
+      return {
+        ...parsed,
+        fileUrl: normalizedFileUrl,
+      }
     } catch {
       return null
     }
@@ -71,7 +78,6 @@ export default function DeliveryStepClient({
   const [errors, setErrors] = useState<AddressFieldErrors>({})
   const [submitting, setSubmitting] = useState(false)
   const [toast, setToast] = useState<ToastState>(null)
-  const [confirmation, setConfirmation] = useState<OrderConfirmation | null>(null)
   const [lookupLoading, setLookupLoading] = useState(false)
   const [lastLookupPincode, setLastLookupPincode] = useState(savedAddresses[0]?.pincode ?? '')
 
@@ -79,10 +85,6 @@ export default function DeliveryStepClient({
     () => calculateOrderTotal(draft?.price ?? 0),
     [draft]
   )
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   useEffect(() => {
     if (!draft) {
@@ -177,11 +179,24 @@ export default function DeliveryStepClient({
     }, 450)
 
     return () => window.clearTimeout(timer)
-  }, [address.pincode, lastLookupPincode, selectedAddressId])
+  }, [address.pincode, lastLookupPincode, lookupPincode, selectedAddressId])
 
   const handleSubmitOrder = async () => {
     if (!draft) {
       setToast({ type: 'error', message: 'Your quote draft is missing. Start again from instant quote.' })
+      return
+    }
+
+    try {
+      normalizeOwnedStoragePath(draft.fileUrl, user.id)
+    } catch (error) {
+      setToast({
+        type: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Your quote file is missing or invalid. Re-upload the model from instant quote.',
+      })
       return
     }
 
@@ -233,10 +248,6 @@ export default function DeliveryStepClient({
   }
 
   if (!draft) {
-    return null
-  }
-
-  if (!mounted) {
     return null
   }
 
@@ -391,22 +402,6 @@ export default function DeliveryStepClient({
                   </div>
                 </div>
 
-                {confirmation ? (
-                  <div className="rounded-[22px] border border-emerald-400/15 bg-emerald-400/10 p-4">
-                    <div className="text-sm font-semibold text-white">
-                      Your print request has been submitted
-                    </div>
-                    <div className="mt-3 text-sm text-emerald-50">
-                      Order ID: {confirmation.orderNumber}
-                    </div>
-                    <Link
-                      href={`/my-orders/${confirmation.id}`}
-                      className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-white underline underline-offset-4"
-                    >
-                      View order details
-                    </Link>
-                  </div>
-                ) : null}
               </div>
 
               <div className="mt-6 flex flex-col gap-3">
