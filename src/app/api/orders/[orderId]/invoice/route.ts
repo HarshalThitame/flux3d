@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
 import PDFDocument from 'pdfkit'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { formatAddressSummary, getOrderStatusLabel } from '@/lib/orders'
-import { getSupabaseServiceRoleKey, getSupabaseUrl } from '@/lib/supabase/config'
-import { createClient } from '@supabase/supabase-js'
+import { formatAddressSummary, getOrderStatusLabel, type OrderStatus } from '@/lib/orders'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 type InvoiceRow = {
   id: string
@@ -55,6 +54,9 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
   const doc = new PDFDocument({ size: 'A4', margin: 50 })
   const buffers: Buffer[] = []
   doc.on('data', (chunk: Buffer) => buffers.push(chunk))
+  const pdf = new Promise<Buffer>((resolve) => {
+    doc.on('end', () => resolve(Buffer.concat(buffers)))
+  })
 
   const left = doc.page.margins.left
   let y = doc.page.margins.top
@@ -74,7 +76,7 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
   const metaLines = [
     `${order.order_number ?? order.id}`,
     invoiceDate,
-    getOrderStatusLabel(order.status as any),
+    getOrderStatusLabel(order.status as OrderStatus),
   ]
   const lineHeight = 13
   metaLines.forEach((line, i) => {
@@ -168,10 +170,7 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
   doc.text(`${order.order_number ?? order.id} - ${invoiceDate}`, left, y, { align: 'center', width: pageW })
 
   doc.end()
-
-  return new Promise((resolve) => {
-    doc.on('end', () => resolve(Buffer.concat(buffers)))
-  })
+  return pdf
 }
 
 export async function GET(
@@ -186,10 +185,12 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const adminSupabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
-    const { data: order, error } = await adminSupabase
+    const selectColumns =
+      'id, order_number, group_id, file_url, material, color, infill, layer_height, supports, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, estimated_time, status, notes, created_at'
+
+    const { data: order, error } = await supabase
       .from('orders')
-      .select('*')
+      .select(selectColumns)
       .eq('id', orderId)
       .eq('user_id', user.id)
       .maybeSingle()
@@ -201,9 +202,9 @@ export async function GET(
     const row = order as InvoiceRow
     let items: InvoiceRow[] = [row]
     if (row.group_id) {
-      const { data: groupData } = await adminSupabase
+      const { data: groupData } = await supabase
         .from('orders')
-        .select('*')
+        .select(selectColumns)
         .eq('group_id', row.group_id)
         .eq('user_id', user.id)
         .order('created_at', { ascending: true })
