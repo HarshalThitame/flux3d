@@ -217,11 +217,17 @@ export function formatAddressSummary(address: Pick<
   AddressFields,
   'addressLine1' | 'addressLine2' | 'city' | 'state' | 'pincode' | 'landmark'
 >) {
+  const a1 = address.addressLine1?.trim() ?? ''
+  const a2 = address.addressLine2?.trim() ?? ''
+  const lm = address.landmark?.trim() ?? ''
+  const city = address.city?.trim() ?? ''
+  const state = address.state?.trim() ?? ''
+  const pincode = address.pincode?.trim() ?? ''
   return [
-    address.addressLine1.trim(),
-    address.addressLine2.trim(),
-    address.landmark.trim() ? `Landmark: ${address.landmark.trim()}` : '',
-    [address.city.trim(), address.state.trim(), address.pincode.trim()].filter(Boolean).join(', '),
+    a1,
+    a2,
+    lm ? `Landmark: ${lm}` : '',
+    [city, state, pincode].filter(Boolean).join(', '),
   ].filter(Boolean)
 }
 

@@ -222,7 +222,8 @@ export async function GET(
         'Content-Length': String(pdf.length),
       },
     })
-  } catch {
+  } catch (err) {
+    console.error('Invoice generation failed:', err)
     return NextResponse.json({ error: 'Failed to generate invoice' }, { status: 500 })
   }
 }
