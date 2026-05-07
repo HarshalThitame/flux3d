@@ -151,7 +151,6 @@ export default async function SavedQuotesPage() {
                   className="mt-5 flex justify-end"
                 >
                   <input type="hidden" name="quoteId" value={quote.id} />
-                  <input type="hidden" name="filePath" value={quote.file_path ?? ''} />
                   <DeleteSavedQuoteButton quoteLabel={quote.quote_id ?? `Quote ${quote.id}`} />
                 </form>
               </div>

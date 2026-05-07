@@ -13,6 +13,7 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 interface NavbarClientProps {
   transparent?: boolean
   user: AppUserProfile | null
+  showAdminLink?: boolean
 }
 
 function getInitials(name: string) {
@@ -48,8 +49,9 @@ function CartButton() {
 export default function NavbarClient({
   transparent = false,
   user,
+  showAdminLink = false,
 }: NavbarClientProps) {
-  const { profile } = useProfile(user)
+  useProfile(user)
   const { resetCartState } = useCart()
   const router = useRouter()
   const pathname = usePathname()
@@ -90,7 +92,7 @@ export default function NavbarClient({
     { href: '/gallery', label: 'Gallery' },
     { href: '/blog', label: 'Blog' },
     { href: '/pricing', label: 'Pricing' },
-    ...(profile?.role === 'admin' ? [{ href: '/admin', label: 'Admin' }] : []),
+    ...(showAdminLink ? [{ href: '/admin', label: 'Admin' }] : []),
   ]
 
   useEffect(() => {
@@ -202,13 +204,15 @@ export default function NavbarClient({
                     className="flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 pr-3 transition-all hover:bg-white/[0.07] hover:border-white/[0.12]"
                   >
                     {user.avatarUrl ? (
-                      <Image
-                        src={user.avatarUrl}
-                        alt={user.name}
-                        width={32}
-                        height={32}
-                        className="h-8 w-8 rounded-full object-cover ring-2 ring-[#FF5C1A]/20"
-                      />
+                      <span className="relative h-8 w-8 overflow-hidden rounded-full ring-2 ring-[#FF5C1A]/20">
+                        <Image
+                          src={user.avatarUrl}
+                          alt={user.name}
+                          fill
+                          sizes="32px"
+                          className="object-cover"
+                        />
+                      </span>
                     ) : (
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#FF5C1A] to-[#ff7a3d] text-xs font-bold text-white shadow-[0_0_12px_rgba(255,92,26,0.3)]">
                         {getInitials(user.name)}
@@ -305,13 +309,15 @@ export default function NavbarClient({
               {user && (
                 <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
                   {user.avatarUrl ? (
-                    <Image
-                      src={user.avatarUrl}
-                      alt={user.name}
-                      width={40}
-                      height={40}
-                      className="h-10 w-10 rounded-full object-cover"
-                    />
+                    <span className="relative h-10 w-10 overflow-hidden rounded-full">
+                      <Image
+                        src={user.avatarUrl}
+                        alt={user.name}
+                        fill
+                        sizes="40px"
+                        className="object-cover"
+                      />
+                    </span>
                   ) : (
                     <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#FF5C1A] to-[#ff7a3d] text-sm font-bold text-white">
                       {getInitials(user.name)}

@@ -11,7 +11,7 @@ import type {
   TrendPoint,
 } from '@/lib/admin/types'
 import { getOrderStatusLabel, orderStatuses, type OrderStatus } from '@/lib/orders'
-import { getAdminEmails } from '@/lib/supabase/config'
+import { isAdminEmail } from '@/lib/supabase/config'
 
 const QUOTE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? 'quote-models'
 
@@ -200,15 +200,13 @@ function mapQuoteRowToAdminQuote(quote: QuoteRow): AdminQuote {
   }
 }
 
-function mapProfileRowToAdminUser(profile: ProfileRow, adminEmails: string[]): AdminUser {
-  const normalizedEmail = (profile.email ?? '').trim().toLowerCase()
-
+function mapProfileRowToAdminUser(profile: ProfileRow): AdminUser {
   return {
     id: profile.id,
     name: profile.name ?? (profile.email?.split('@')[0] ?? 'Flux3D User'),
     email: profile.email ?? '',
     signupMethod: 'Email',
-    role: adminEmails.includes(normalizedEmail) ? 'admin' : 'customer-success',
+    role: isAdminEmail(profile.email) ? 'admin' : 'customer-success',
     lastActive: profile.created_at ? new Date(profile.created_at).toLocaleString('en-IN') : 'Never',
   }
 }
@@ -350,12 +348,11 @@ export async function getAdminDashboardData() {
   ensureNoError(materialRows, 'Materials')
 
   const normalizedOrders = groupAdminOrders((orderRows.data ?? []) as OrderRow[])
-  const adminEmails = getAdminEmails()
   const normalizedQuotes = (quoteRows.data ?? []).map((row) =>
     mapQuoteRowToAdminQuote(row as QuoteRow)
   )
   const normalizedUsers = (profileRows.data ?? []).map((row) =>
-    mapProfileRowToAdminUser(row as ProfileRow, adminEmails)
+    mapProfileRowToAdminUser(row as ProfileRow)
   )
   const normalizedMaterials = (materialRows.data ?? []).map((row) =>
     normalizeAdminMaterialRow(row as {
@@ -454,11 +451,8 @@ export async function getAdminUsersData() {
 
   const profiles = await supabase.from('profiles').select('id, name, email, created_at')
   if (profiles.error) throw new Error(profiles.error.message)
-  const adminEmails = getAdminEmails()
-
   return (data.users ?? []).map((user) => {
     const profile = (profiles.data ?? []).find((item) => item.id === user.id)
-    const normalizedEmail = (profile?.email ?? user.email ?? '').trim().toLowerCase()
     return {
       id: user.id,
       name:
@@ -475,7 +469,7 @@ export async function getAdminUsersData() {
           : user.app_metadata.provider === 'github'
             ? 'GitHub'
             : 'Email',
-      role: adminEmails.includes(normalizedEmail) ? 'admin' : 'customer-success',
+      role: isAdminEmail(profile?.email ?? user.email) ? 'admin' : 'customer-success',
       lastActive: user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString('en-IN') : 'Never',
     }
   })
@@ -641,7 +635,6 @@ export async function getAdminFullAnalytics() {
   const [
     ordersResult,
     materialsResult,
-    profilesResult,
     printersResult,
   ] = await Promise.all([
     supabase
@@ -650,9 +643,6 @@ export async function getAdminFullAnalytics() {
     supabase
       .from('materials')
       .select('id, name, price_per_gram, stock, current_stock, min_threshold, sku, type, brand, unit'),
-    supabase
-      .from('profiles')
-      .select('id, email, created_at'),
     supabase
       .from('printers')
       .select('id, name, model, status, job, customer, material, progress, last_active'),
@@ -664,7 +654,6 @@ export async function getAdminFullAnalytics() {
 
   const orders = ordersResult.data ?? []
   const materials = materialsResult.data ?? []
-  const profiles = profilesResult.data ?? []
   const printers = printersResult.data ?? []
 
   const totalRevenue = orders.reduce((sum, o) => sum + normalizeMoney(o.total_price), 0)

@@ -12,6 +12,7 @@ import {
   isMissingSupabaseTableError,
   ORDERS_TABLE_UNAVAILABLE_MESSAGE,
 } from '@/lib/quote/supabase-errors'
+import { normalizeOwnedStoragePath } from '@/lib/quote/storage-path'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 type CartOrderItem = {
@@ -91,7 +92,7 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
   }
 
   const subtotal = normalizeNumber(input.subtotal, 'subtotal')
-  const { deliveryCharge, totalPrice } = calculateOrderTotal(subtotal)
+  const { deliveryCharge } = calculateOrderTotal(subtotal)
   const normalizedPhone = normalizePhone(input.phone)
   const trimmedAddress = {
     full_name: input.fullName.trim(),
@@ -145,7 +146,7 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
   const orderItems = input.items.map((item) => ({
     user_id: auth.user.id,
     group_id: groupId,
-    file_url: item.fileUrl.trim(),
+    file_url: normalizeOwnedStoragePath(item.fileUrl, auth.user.id),
     material: item.material.trim(),
     color: item.color.trim(),
     infill: Math.round(normalizeNumber(item.infill, 'infill')),

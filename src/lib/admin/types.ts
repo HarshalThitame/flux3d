@@ -20,7 +20,7 @@ export type DashboardMetric = {
 
 export type QuoteStatus = 'pending' | 'approved' | 'rejected' | 'converted'
 
-export type UserRole = 'admin' | 'operator' | 'customer-success' | 'super-admin' | 'viewer' | 'support-agent'
+export type UserRole = 'admin' | 'customer-success'
 
 export type AdminOrderItem = {
   id: string

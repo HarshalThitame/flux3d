@@ -85,60 +85,30 @@ function CartEnabledWorkspace({
   const { addItem, isInCart } = useCart()
   const supabaseEnabled = hasSupabaseConfig()
   const defaultMaterial = materials[0] ?? getMaterialById('pla-plus', materials)
-  const [initialQuoteId] = useState(() => {
-    if (typeof window === 'undefined') return `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+  const [initialQuoteId, setInitialQuoteId] = useState('')
+  useEffect(() => {
+    if (initialQuoteId) return
     const stored = sessionStorage.getItem('flux3d-quote-id')
-    if (stored) return stored
-    const newId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
-    sessionStorage.setItem('flux3d-quote-id', newId)
-    return newId
-  })
+    if (stored) {
+      setInitialQuoteId(stored)
+    } else {
+      const newId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+      sessionStorage.setItem('flux3d-quote-id', newId)
+      setInitialQuoteId(newId)
+    }
+  }, [initialQuoteId])
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedModel, setSelectedModel] = useState<ParsedModel | null>(null)
-  const [config, setConfig] = useState<QuoteConfig>(() => {
-    if (typeof window === 'undefined') {
-      return {
-        materialId: defaultMaterial.id,
-        colorHex: defaultMaterial.colors[0]?.hex ?? '#ff5c1a',
-        infill: 20,
-        layerHeight: 0.2,
-        supports: false,
-        scalePercent: 100,
-      }
-    }
-    const raw = sessionStorage.getItem(WORKSPACE_STORAGE_KEY)
-    if (!raw) {
-      return {
-        materialId: defaultMaterial.id,
-        colorHex: defaultMaterial.colors[0]?.hex ?? '#ff5c1a',
-        infill: 20,
-        layerHeight: 0.2,
-        supports: false,
-        scalePercent: 100,
-      }
-    }
-    try {
-      const parsed = JSON.parse(raw) as { model: ParsedModel | null; config: QuoteConfig }
-      return parsed.config ?? {
-        materialId: defaultMaterial.id,
-        colorHex: defaultMaterial.colors[0]?.hex ?? '#ff5c1a',
-        infill: 20,
-        layerHeight: 0.2,
-        supports: false,
-        scalePercent: 100,
-      }
-    } catch {
-      return {
-        materialId: defaultMaterial.id,
-        colorHex: defaultMaterial.colors[0]?.hex ?? '#ff5c1a',
-        infill: 20,
-        layerHeight: 0.2,
-        supports: false,
-        scalePercent: 100,
-      }
-    }
-  })
+  const defaultConfig: QuoteConfig = {
+    materialId: defaultMaterial.id,
+    colorHex: typeof defaultMaterial.colors[0] === 'string' ? defaultMaterial.colors[0] : (defaultMaterial.colors[0] as { hex?: string })?.hex ?? '#ff5c1a',
+    infill: 20,
+    layerHeight: 0.2,
+    supports: false,
+    scalePercent: 100,
+  }
+  const [config, setConfig] = useState<QuoteConfig>(defaultConfig)
   const [uploadState, setUploadState] = useState<UploadState>(initialUploadState)
   const [viewerLoading, setViewerLoading] = useState(false)
   const [fileError, setFileError] = useState<string | null>(null)

@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 
 const ANON_ID_KEY = 'flux3d_anon_id'
+const TRACK_TOKEN_COOKIE = 'flux3d_track_token'
 
 function getOrCreateAnonId(): string {
   if (typeof window === 'undefined') return ''
@@ -15,6 +16,13 @@ function getOrCreateAnonId(): string {
   return id
 }
 
+function getCookieValue(name: string) {
+  if (typeof document === 'undefined') return ''
+
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`))
+  return match?.[1] ?? ''
+}
+
 export default function VisitorTracker() {
   const pathname = usePathname()
   const sessionIdRef = useRef<string>('')
@@ -24,6 +32,7 @@ export default function VisitorTracker() {
     if (pathname?.startsWith('/admin')) return
 
     const anonId = getOrCreateAnonId()
+    const trackToken = getCookieValue(TRACK_TOKEN_COOKIE)
     const now = Date.now()
 
     // Start session if not exists
@@ -31,10 +40,17 @@ export default function VisitorTracker() {
       sessionIdRef.current = crypto.randomUUID()
     }
 
+    const requestHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+    if (trackToken) {
+      requestHeaders['x-track-token'] = trackToken
+    }
+
     // Send page_view event
     fetch('/api/track', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: requestHeaders,
       body: JSON.stringify({
         anonId,
         sessionId: sessionIdRef.current,
@@ -55,7 +71,9 @@ export default function VisitorTracker() {
       if (duration > 5000) { // only track sessions > 5 seconds
         fetch('/api/track', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: trackToken
+            ? { 'Content-Type': 'application/json', 'x-track-token': trackToken }
+            : { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             sessionId: sessionIdRef.current,
             event: 'session_end',

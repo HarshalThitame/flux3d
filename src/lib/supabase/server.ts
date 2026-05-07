@@ -11,7 +11,6 @@ export async function createServerSupabaseClient() {
     {
       auth: {
         autoRefreshToken: true,
-        persistSession: false,
       },
       cookies: {
         getAll() {

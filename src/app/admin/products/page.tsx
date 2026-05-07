@@ -80,7 +80,7 @@ export default function ProductsPage() {
               <div className="flex flex-wrap gap-1">
                 {row.colors.map((color, i) => (
                   <span key={i} className="rounded-md border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5 text-[10px] text-[#8b95b5]">
-                    {color}
+                    {typeof color === 'string' ? color : (color as {name?: string}).name ?? JSON.stringify(color)}
                   </span>
                 ))}
               </div>

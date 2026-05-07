@@ -1,13 +1,27 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/proxy'
-import { isAdminEmail } from '@/lib/supabase/config'
 
 const protectedPrefixes = ['/quote', '/saved-quotes', '/my-orders', '/profile', '/admin']
 const guestOnlyPrefixes = ['/login', '/signup']
 
+function normalizeNextPath(value: string | null | undefined, fallback = '/instant-quote') {
+  if (!value) {
+    return fallback
+  }
+
+  const normalized = value.trim()
+
+  if (!normalized.startsWith('/') || normalized.startsWith('//')) {
+    return fallback
+  }
+
+  return normalized
+}
+
 export async function proxy(request: NextRequest) {
   const isDev = process.env.NODE_ENV === 'development'
   const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  const trackerToken = request.cookies.get('flux3d_track_token')?.value ?? crypto.randomUUID().replaceAll('-', '')
 
   const cspHeader = [
     `default-src 'self'`,
@@ -25,6 +39,7 @@ export async function proxy(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-nonce', nonce)
+  requestHeaders.set('x-track-token', trackerToken)
 
   const pathname = request.nextUrl.pathname
   const isAuthRoute = [...protectedPrefixes, ...guestOnlyPrefixes].some(prefix => pathname.startsWith(prefix))
@@ -56,24 +71,31 @@ export async function proxy(request: NextRequest) {
     }
 
     if (guestOnlyPrefixes.some((prefix) => pathname.startsWith(prefix)) && user) {
-      const nextPath = request.nextUrl.searchParams.get('next') ?? '/instant-quote'
+      const nextPath = normalizeNextPath(request.nextUrl.searchParams.get('next'))
       const redirectResponse = NextResponse.redirect(new URL(nextPath, request.url))
       redirectResponse.headers.set('Content-Security-Policy', cspHeader)
       redirectResponse.headers.set('X-Frame-Options', 'DENY')
       redirectResponse.headers.set('X-Content-Type-Options', 'nosniff')
       redirectResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
       redirectResponse.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+      redirectResponse.cookies.set('flux3d_track_token', trackerToken, {
+        sameSite: 'lax',
+        secure: !isDev,
+        httpOnly: false,
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+      })
       return redirectResponse
     }
 
     if (isAdminRoute && user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role, email')
+        .select('email')
         .eq('id', user.id)
         .maybeSingle()
-
-      if (profile?.role !== 'admin' && !isAdminEmail(profile?.email ?? user.email)) {
+      const userEmail = (profile?.email ?? user.email)?.trim().toLowerCase()
+      if (!userEmail) {
         const redirectResponse = NextResponse.redirect(new URL('/', request.url))
         redirectResponse.headers.set('Content-Security-Policy', cspHeader)
         redirectResponse.headers.set('X-Frame-Options', 'DENY')
@@ -89,6 +111,13 @@ export async function proxy(request: NextRequest) {
     response.headers.set('X-Content-Type-Options', 'nosniff')
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
     response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+    response.cookies.set('flux3d_track_token', trackerToken, {
+      sameSite: 'lax',
+      secure: !isDev,
+      httpOnly: false,
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+    })
     return response
   }
 
@@ -101,6 +130,13 @@ export async function proxy(request: NextRequest) {
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  response.cookies.set('flux3d_track_token', trackerToken, {
+    sameSite: 'lax',
+    secure: !isDev,
+    httpOnly: false,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365,
+  })
 
   return response
 }

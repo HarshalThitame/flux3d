@@ -1,12 +1,30 @@
 import { NextResponse } from 'next/server'
-import { getSupabaseUrl, getSupabaseServiceRoleKey } from '@/lib/supabase/config'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { isAdminEmail } from '@/lib/supabase/config'
 
 export const dynamic = 'force-dynamic'
 
-export async function POST(request: Request) {
+const ALLOWED_BUCKETS = new Set(['blog', 'blog-images'])
+const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+
+async function isAdminUser(): Promise<boolean> {
   try {
-    const supabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
+    const supabase = await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    return isAdminEmail(user?.email)
+  } catch {
+    return false
+  }
+}
+
+export async function POST(request: Request) {
+  if (!(await isAdminUser())) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  try {
+    const supabase = createAdminSupabaseClient()
 
     const formData = await request.formData()
     const file = formData.get('file') as File
@@ -16,11 +34,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
-    if (!allowedTypes.includes(file.type)) {
+    if (!ALLOWED_BUCKETS.has(bucket)) {
       return NextResponse.json(
-        { error: 'Invalid file type. Only JPEG, PNG, GIF, WebP, and SVG are allowed.' },
+        { error: 'Invalid bucket. Use an approved media bucket.' },
+        { status: 400 }
+      )
+    }
+
+    // Validate file type
+    if (!ALLOWED_TYPES.has(file.type)) {
+      return NextResponse.json(
+        { error: 'Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.' },
         { status: 400 }
       )
     }
@@ -47,11 +71,10 @@ export async function POST(request: Request) {
     const bucketExists = buckets?.some(b => b.name === bucket)
 
     if (!bucketExists) {
-      await supabase.storage.createBucket(bucket, {
-        public: true,
-        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
-        fileSizeLimit: 5242880, // 5MB
-      })
+      return NextResponse.json(
+        { error: 'Upload bucket not configured.' },
+        { status: 400 }
+      )
     }
 
     // Upload to Supabase Storage

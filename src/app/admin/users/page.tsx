@@ -136,23 +136,20 @@ export default function AdminUsersPage() {
               </div>
             </div>
 
-            <InfoCard label="Role" value={<StatusBadge status={selectedUser.role} />} />
+            <InfoCard label="Role" value={selectedUser.role} />
             <InfoCard label="Signup Method" value={selectedUser.signupMethod} />
             <InfoCard label="Last Active" value={selectedUser.lastActive} />
 
             <div className="space-y-2 border-t border-white/[0.06] pt-4">
               <div className="text-[10px] uppercase tracking-[0.15em] text-[#5a6580]">Actions</div>
               <div className="grid gap-2">
-                {['View activity', 'Block user', 'Delete user'].map((label) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => setToast({ type: label === 'Delete user' ? 'error' : 'info', message: `${label} triggered for ${selectedUser.name}.` })}
-                    className="rounded-lg border border-white/8 bg-white/[0.02] px-4 py-2.5 text-left text-sm text-[#c6cee5] transition hover:bg-white/[0.05]"
-                  >
-                    {label}
-                  </button>
-                ))}
+                <button
+                  type="button"
+                  onClick={() => setToast({ type: 'info', message: `Activity view for ${selectedUser.name}.` })}
+                  className="rounded-lg border border-white/8 bg-white/[0.02] px-4 py-2.5 text-left text-sm text-[#c6cee5] transition hover:bg-white/[0.05]"
+                >
+                  View activity
+                </button>
               </div>
             </div>
           </div>

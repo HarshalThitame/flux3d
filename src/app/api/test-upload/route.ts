@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAdminRequest } from '@/lib/admin/request'
 
-export async function POST(request: Request) {
+export async function POST() {
+  const auth = await requireAdminRequest()
+  if ('response' in auth) return auth.response
+
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -41,7 +45,7 @@ export async function POST(request: Request) {
     const testFile = new File([testContent], 'test-42704.txt', { type: 'text/plain' })
     const testPath = `test-user-${Date.now()}/test-file.txt`
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('quote-models')
       .upload(testPath, testFile, { upsert: true })
 

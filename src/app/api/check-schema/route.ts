@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAdminRequest } from '@/lib/admin/request'
 
 export async function GET() {
+  const auth = await requireAdminRequest()
+  if ('response' in auth) return auth.response
+
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -17,7 +21,7 @@ export async function GET() {
     const supabase = createClient(supabaseUrl, serviceKey)
 
     // 1. Check if materials table exists
-    const { data: columns, error: columnsError } = await supabase
+    await supabase
       .rpc('get_table_columns', { table_name: 'materials', schema_name: 'public' })
       .maybeSingle()
 
@@ -40,7 +44,9 @@ export async function GET() {
       materialsQuery: {
         data: materials,
         error: materialsError?.message,
-        code: (materialsError as any)?.code
+        code: materialsError && typeof materialsError === 'object' && 'code' in materialsError
+          ? String((materialsError as { code?: unknown }).code ?? '')
+          : undefined
       },
       tableInfo,
       hint: materialsError?.message?.includes('Could not find the table') 

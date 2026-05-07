@@ -1,12 +1,23 @@
 import { NextResponse } from 'next/server'
-import { getSupabaseUrl, getSupabaseServiceRoleKey } from '@/lib/supabase/config'
-import { createClient } from '@supabase/supabase-js'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { isAdminEmail } from '@/lib/supabase/config'
 
 export const dynamic = 'force-dynamic'
 
+async function isAdminUser(): Promise<boolean> {
+  try {
+    const supabase = await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    return isAdminEmail(user?.email)
+  } catch {
+    return false
+  }
+}
+
 export async function GET() {
   try {
-    const supabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
+    const supabase = createAdminSupabaseClient()
 
     const { data, error } = await supabase
       .from('materials')
@@ -61,8 +72,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!(await isAdminUser())) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   try {
-    const supabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
+    const supabase = createAdminSupabaseClient()
     const body = await request.json()
 
     const { data, error } = await supabase
@@ -108,8 +123,12 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  if (!(await isAdminUser())) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   try {
-    const supabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
+    const supabase = createAdminSupabaseClient()
     const body = await request.json()
 
     const { data, error } = await supabase
@@ -154,6 +173,10 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  if (!(await isAdminUser())) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
@@ -165,7 +188,7 @@ export async function DELETE(request: Request) {
       )
     }
 
-    const supabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
+    const supabase = createAdminSupabaseClient()
 
     const { error } = await supabase
       .from('materials')

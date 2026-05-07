@@ -31,6 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       .from('blog_posts')
       .select('title, excerpt, featured_image, tags, created_at, updated_at, category, meta_keywords')
       .eq('slug', slug)
+      .eq('status', 'published')
       .single()
 
     if (!data) return {}
@@ -84,6 +85,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       .from('blog_posts')
       .select('*')
       .eq('slug', slug)
+      .eq('status', 'published')
       .single()
 
     if (error || !data) {
@@ -98,12 +100,26 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   const renderContent = (content: string) => {
     if (!content) return ''
-    const trimmed = content.trim()
-    if (trimmed.startsWith('<')) return content
+    const trimmed = content
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<\/(p|div|h1|h2|h3|h4|h5|h6|li|blockquote|section|article)>/gi, '\n\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .trim()
+
+    if (!trimmed) return ''
+
     return trimmed
       .split('\n\n')
-      .map(para => para.trim() ? `<p class="mb-4">${para.replace(/\n/g, '<br/>')}</p>` : '')
+      .map(para => para.trim())
+      .filter(Boolean)
+      .map(para => `<p class="mb-4">${para.replace(/\n/g, '<br/>')}</p>`)
       .join('')
+  }
+
+  function toJsonLd(value: unknown) {
+    return JSON.stringify(value).replace(/</g, '\\u003c')
   }
 
   const blogPostJsonLd = {
@@ -136,7 +152,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: toJsonLd(blogPostJsonLd) }}
       />
       <Navbar transparent />
       <main className="px-6 pb-20 pt-32 md:px-12">

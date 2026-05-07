@@ -1,21 +1,33 @@
 import { NextResponse } from 'next/server'
-import { getSupabaseUrl, getSupabaseServiceRoleKey } from '@/lib/supabase/config'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { isAdminEmail } from '@/lib/supabase/config'
 
 export const dynamic = 'force-dynamic'
+
+async function isAdminUser(): Promise<boolean> {
+  try {
+    const supabase = await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    return isAdminEmail(user?.email)
+  } catch {
+    return false
+  }
+}
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const supabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
+    const supabase = createAdminSupabaseClient()
     const { slug } = await params
 
     const { data, error } = await supabase
       .from('blog_posts')
       .select('*')
       .eq('slug', slug)
+      .eq('status', 'published')
       .single()
 
     if (error || !data) {
@@ -29,7 +41,7 @@ export async function GET(
       .eq('slug', slug)
 
     return NextResponse.json(data)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch blog post' }, { status: 500 })
   }
 }
@@ -38,8 +50,12 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  if (!(await isAdminUser())) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   try {
-    const supabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
+    const supabase = createAdminSupabaseClient()
     const { slug } = await params
     const body = await request.json()
 
@@ -65,7 +81,7 @@ export async function PUT(
     }
 
     return NextResponse.json(data)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update blog post' }, { status: 500 })
   }
 }
@@ -74,8 +90,12 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  if (!(await isAdminUser())) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   try {
-    const supabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
+    const supabase = createAdminSupabaseClient()
     const { slug } = await params
 
     const { error } = await supabase
@@ -88,7 +108,7 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete blog post' }, { status: 500 })
   }
 }

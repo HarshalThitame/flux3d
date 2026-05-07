@@ -138,6 +138,7 @@ export async function loginAction(
   } catch (profileError) {
     console.error('[Auth] Failed to upsert profile after login', profileError)
   }
+
   redirect(nextPath)
 }
 

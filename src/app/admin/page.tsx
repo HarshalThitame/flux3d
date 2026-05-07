@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import DashboardCards from '@/components/admin/DashboardCards'
 import DataTable from '@/components/admin/DataTable'
 import DonutChartCard from '@/components/admin/DonutChartCard'
@@ -34,13 +33,12 @@ function timeSeriesFromOrders(orders: AdminOrder[]) {
 }
 
 export default function AdminDashboardPage() {
-  const router = useRouter()
   const { profile, loading: profileLoading } = useProfile()
   const [data, setData] = useState<DashboardResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (profileLoading || profile?.role !== 'admin') {
+    if (profileLoading) {
       return
     }
 
@@ -66,13 +64,7 @@ export default function AdminDashboardPage() {
 
     void load()
     return () => controller.abort()
-  }, [profile?.role, profileLoading])
-
-  useEffect(() => {
-    if (!profileLoading && profile?.role !== 'admin') {
-      router.replace('/')
-    }
-  }, [profile?.role, profileLoading, router])
+  }, [profileLoading])
 
   if (profileLoading) {
     return (
@@ -85,10 +77,6 @@ export default function AdminDashboardPage() {
         </div>
       </div>
     )
-  }
-
-  if (profile?.role !== 'admin') {
-    return null
   }
 
   if (error) {

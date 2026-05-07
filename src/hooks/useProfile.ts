@@ -45,7 +45,7 @@ export function useProfile(initialProfile: AppUserProfile | null = null): UsePro
 
         const { data: row, error: profileError } = await supabase
           .from('profiles')
-          .select('id, name, email, avatar_url, created_at, role')
+          .select('id, name, email, avatar_url, created_at')
           .eq('id', user.id)
           .maybeSingle()
 
@@ -72,7 +72,6 @@ export function useProfile(initialProfile: AppUserProfile | null = null): UsePro
                   ? user.user_metadata.picture
                   : null),
             createdAt: row?.created_at ?? null,
-            role: row?.role === 'admin' ? 'admin' : 'user',
           })
           setLoading(false)
         }

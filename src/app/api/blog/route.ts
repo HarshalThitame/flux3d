@@ -1,18 +1,40 @@
 import { NextResponse } from 'next/server'
-import { getSupabaseUrl, getSupabaseServiceRoleKey } from '@/lib/supabase/config'
-import { createClient } from '@supabase/supabase-js'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { isAdminEmail } from '@/lib/supabase/config'
 
 export const dynamic = 'force-dynamic'
 
+const allowedStatuses = new Set(['draft', 'published', 'archived', 'all'])
+
+async function isAdminUser(): Promise<boolean> {
+  try {
+    const supabase = await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    return isAdminEmail(user?.email)
+  } catch {
+    return false
+  }
+}
+
 export async function GET(request: Request) {
   try {
-    const supabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
     const { searchParams } = new URL(request.url)
-    
-    const status = searchParams.get('status')
+    const status = searchParams.get('status') || 'published'
+
+    if (!allowedStatuses.has(status)) {
+      return NextResponse.json({ error: 'Invalid status.' }, { status: 400 })
+    }
+
+    const requiresAdmin = status !== 'published'
+    if (requiresAdmin && !(await isAdminUser())) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const supabase = createAdminSupabaseClient()
     const category = searchParams.get('category')
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const page = parseInt(searchParams.get('page') || '1')
+    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '10', 10) || 10, 1), 100)
+    const page = Math.max(parseInt(searchParams.get('page') || '1', 10) || 1, 1)
     const offset = (page - 1) * limit
 
     let query = supabase
@@ -21,7 +43,7 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
-    if (status && status !== 'all') {
+    if (status !== 'all') {
       query = query.eq('status', status)
     }
     if (category) {
@@ -35,14 +57,18 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ posts: data, total: count, page, limit })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch blog posts' }, { status: 500 })
   }
 }
 
 export async function POST(request: Request) {
+  if (!(await isAdminUser())) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   try {
-    const supabase = createClient(getSupabaseUrl(), getSupabaseServiceRoleKey())
+    const supabase = createAdminSupabaseClient()
     const body = await request.json()
 
     const { title, excerpt, content, featured_image, category, tags, meta_keywords, status } = body
@@ -80,7 +106,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(data, { status: 201 })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create blog post' }, { status: 500 })
   }
 }
