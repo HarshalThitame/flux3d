@@ -120,6 +120,8 @@ export function getOrderStatusLabel(status: OrderStatus) {
       return 'Cancelled'
     case 'rejected':
       return 'Rejected'
+    default:
+      return status
   }
 }
 
