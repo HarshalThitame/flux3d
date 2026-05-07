@@ -40,6 +40,8 @@ import { useCart } from '@/lib/cart/context'
 import type { CartItem } from '@/lib/cart/types'
 import Toast, { type ToastState } from '@/components/quote/Toast'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { ORDER_DRAFT_STORAGE_KEY, type OrderDraft } from '@/lib/orders'
 
 const initialUploadState: UploadState = {
   status: 'idle',
@@ -82,21 +84,24 @@ function CartEnabledWorkspace({
   user,
   materials,
   }: InstantQuoteWorkspaceProps) {
+  const router = useRouter()
   const { addItem, isInCart } = useCart()
   const supabaseEnabled = hasSupabaseConfig()
   const defaultMaterial = materials[0] ?? getMaterialById('pla-plus', materials)
-  const [initialQuoteId, setInitialQuoteId] = useState('')
-  useEffect(() => {
-    if (initialQuoteId) return
+  const [initialQuoteId] = useState(() => {
+    if (typeof window === 'undefined') {
+      return ''
+    }
+
     const stored = sessionStorage.getItem('flux3d-quote-id')
     if (stored) {
-      setInitialQuoteId(stored)
-    } else {
-      const newId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
-      sessionStorage.setItem('flux3d-quote-id', newId)
-      setInitialQuoteId(newId)
+      return stored
     }
-  }, [initialQuoteId])
+
+    const newId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+    sessionStorage.setItem('flux3d-quote-id', newId)
+    return newId
+  })
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedModel, setSelectedModel] = useState<ParsedModel | null>(null)
@@ -108,7 +113,23 @@ function CartEnabledWorkspace({
     supports: false,
     scalePercent: 100,
   }
-  const [config, setConfig] = useState<QuoteConfig>(defaultConfig)
+  const [config, setConfig] = useState<QuoteConfig>(() => {
+    if (typeof window === 'undefined') {
+      return defaultConfig
+    }
+
+    const raw = sessionStorage.getItem(WORKSPACE_STORAGE_KEY)
+    if (!raw) {
+      return defaultConfig
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as { config?: QuoteConfig }
+      return parsed.config ?? defaultConfig
+    } catch {
+      return defaultConfig
+    }
+  })
   const [uploadState, setUploadState] = useState<UploadState>(initialUploadState)
   const [viewerLoading, setViewerLoading] = useState(false)
   const [fileError, setFileError] = useState<string | null>(null)
@@ -127,20 +148,6 @@ function CartEnabledWorkspace({
   }, [config])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const raw = sessionStorage.getItem(WORKSPACE_STORAGE_KEY)
-    if (!raw) return
-    try {
-      const parsed = JSON.parse(raw) as { config: QuoteConfig }
-      if (parsed.config) {
-        setConfig(parsed.config)
-      }
-    } catch {
-      // ignore parse errors
-    }
-  }, [])
-
-  useEffect(() => {
     if (!toast) {
       return
     }
@@ -157,6 +164,51 @@ function CartEnabledWorkspace({
     () => calculateOrderTotal(priceBreakdown?.total ?? 0),
     [priceBreakdown]
   )
+  const selectedMaterial = getMaterialById(config.materialId, materials)
+  const selectedColorName =
+    selectedMaterial.colors.find((color) => color.hex === config.colorHex)?.name ?? config.colorHex
+  const orderDraft = useMemo<OrderDraft | null>(() => {
+    if (!initialQuoteId || !selectedModel || !priceBreakdown || uploadState.status !== 'success' || !uploadState.path) {
+      return null
+    }
+
+    return {
+      quoteId: initialQuoteId,
+      fileUrl: uploadState.path,
+      material: selectedMaterial.name,
+      color: selectedColorName,
+      infill: config.infill,
+      layerHeight: config.layerHeight,
+      supports: config.supports,
+      price: priceBreakdown.total,
+      estimatedTime: priceBreakdown.estimatedHours,
+      notes: '',
+    }
+  }, [
+    config.infill,
+    config.layerHeight,
+    config.supports,
+    initialQuoteId,
+    priceBreakdown,
+    selectedColorName,
+    selectedMaterial.name,
+    selectedModel,
+    uploadState.path,
+    uploadState.status,
+  ])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    if (orderDraft) {
+      window.sessionStorage.setItem(ORDER_DRAFT_STORAGE_KEY, JSON.stringify(orderDraft))
+      return
+    }
+
+    window.sessionStorage.removeItem(ORDER_DRAFT_STORAGE_KEY)
+  }, [orderDraft])
 
   const handleFileSelect = async (file: File) => {
     const validationError = validateModelFile(file)
@@ -282,9 +334,8 @@ function CartEnabledWorkspace({
       return
     }
 
-    const material = getMaterialById(config.materialId, materials)
     const selectedColor =
-      material.colors.find((color) => color.hex === config.colorHex)?.name ?? config.colorHex
+      selectedMaterial.colors.find((color) => color.hex === config.colorHex)?.name ?? config.colorHex
 
     const cartItem: CartItem = {
       id: initialQuoteId,
@@ -292,7 +343,7 @@ function CartEnabledWorkspace({
       quoteId: initialQuoteId,
       fileUrl: uploadState.path ?? '',
       fileName: selectedModel?.fileName ?? 'model',
-      material: material?.name ?? '',
+      material: selectedMaterial.name ?? '',
       color: selectedColor ?? '',
       colorHex: selectedColor ?? '',
       infill: config.infill,
@@ -303,7 +354,7 @@ function CartEnabledWorkspace({
       weight: priceBreakdown?.materialWeightGrams ?? 0,
       dimensions: priceBreakdown?.dimensionsMm ?? { x: 0, y: 0, z: 0 },
       config: {
-        materialId: material?.id ?? '',
+        materialId: selectedMaterial.id ?? '',
         colorHex: selectedColor ?? '',
         infill: config.infill,
         layerHeight: config.layerHeight,
@@ -315,6 +366,18 @@ function CartEnabledWorkspace({
 
     addItem(cartItem)
     setToast({ type: 'success', message: `${selectedModel.fileName} added to cart.` })
+  }
+
+  const handleProceedToDelivery = () => {
+    if (!orderDraft) {
+      setToast({
+        type: 'error',
+        message: 'Finish the upload and wait for the quote to complete before continuing to delivery.',
+      })
+      return
+    }
+
+    router.push('/instant-quote/delivery')
   }
 
   const handleStepClick = (ref: React.RefObject<HTMLDivElement | null>) => {
@@ -942,6 +1005,16 @@ function CartEnabledWorkspace({
                               Add to Cart
                             </>
                           )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleProceedToDelivery}
+                          disabled={!orderDraft}
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition-colors hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Truck className="h-4 w-4" />
+                          Proceed to Delivery
                         </button>
 
                         {cartItemCheck && (
