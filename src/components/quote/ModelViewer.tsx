@@ -8,21 +8,17 @@ import type { ParsedModel } from '@/lib/quote/types'
 
 type ModelViewerProps = {
   model: ParsedModel | null
-  scalePercent: number
   isLoading: boolean
 }
 
 function ViewerModel({
   object,
-  scalePercent,
 }: {
   object: Object3D
-  scalePercent: number
 }) {
   const clone = useMemo(() => object.clone(true), [object])
-  const scale = scalePercent / 100
 
-  return <primitive object={clone} scale={[scale, scale, scale]} />
+  return <primitive object={clone} />
 }
 
 function ViewerFallback() {
@@ -33,7 +29,7 @@ function ViewerFallback() {
   )
 }
 
-export default function ModelViewer({ model, scalePercent, isLoading }: ModelViewerProps) {
+export default function ModelViewer({ model, isLoading }: ModelViewerProps) {
   return (
     <div className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,#0a0f1d,#070b15)]">
       <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">
@@ -61,7 +57,7 @@ export default function ModelViewer({ model, scalePercent, isLoading }: ModelVie
               <directionalLight position={[-80, -50, -60]} intensity={0.35} />
               <gridHelper args={[260, 26, '#1f2a44', '#101929']} position={[0, -55, 0]} />
               <Bounds fit clip observe margin={1.3}>
-                <ViewerModel object={model.object} scalePercent={scalePercent} />
+                <ViewerModel object={model.object} />
               </Bounds>
               <OrbitControls makeDefault enablePan enableZoom enableRotate />
             </Canvas>

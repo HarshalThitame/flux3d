@@ -45,6 +45,7 @@ export default function AdminMaterialsPage() {
     pricePerGram: 2.8,
     machineRate: 180,
     multiplier: 1.0,
+    difficultyFactor: 1.1,
     properties: { strength: 'Medium', flexibility: 'Low', tempResistance: 'Low', difficulty: 'Easy' },
     colors: ['#ffffff'],
     keyProperties: [] as string[],
@@ -86,6 +87,7 @@ export default function AdminMaterialsPage() {
       price_per_gram: formData.pricePerGram,
       machine_rate: formData.machineRate,
       multiplier: formData.multiplier,
+      difficulty_factor: formData.difficultyFactor,
       recommended_for: recommendedFor.filter(Boolean).join(', '),
       properties: formData.properties,
       colors: formData.colors.map(c => ({ name: c, hex: colorNameToHex(c) })),
@@ -169,8 +171,9 @@ export default function AdminMaterialsPage() {
       pricePerGram: material.pricePerGram,
       machineRate: material.machineRate,
       multiplier: material.multiplier,
+      difficultyFactor: material.difficultyFactor,
       properties: material.properties,
-      colors: (material.colors || []).map(c => typeof c === 'string' ? c : c.hex || '#ffffff'),
+      colors: (material.colors || []).map(c => typeof c === 'string' ? c : c.name || '#ffffff'),
       keyProperties: material.keyProperties || [],
       bestFor: material.bestFor || [],
       difficultyLevel: material.difficultyLevel || 'Easy',
@@ -192,6 +195,7 @@ export default function AdminMaterialsPage() {
       pricePerGram: 2.8,
       machineRate: 180,
       multiplier: 1.0,
+      difficultyFactor: 1.1,
       properties: { strength: 'Medium', flexibility: 'Low', tempResistance: 'Low', difficulty: 'Easy' },
       colors: ['#ffffff'],
       keyProperties: [],
@@ -334,6 +338,20 @@ export default function AdminMaterialsPage() {
                         onChange={(e) => setFormData({ ...formData, multiplier: parseFloat(e.target.value) })}
                         className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
                       />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm text-[#7a82a0]">Difficulty Factor (Sanding)</label>
+                      <select
+                        value={formData.difficultyFactor}
+                        onChange={(e) => setFormData({ ...formData, difficultyFactor: parseFloat(e.target.value) })}
+                        className="w-full rounded-lg border border-white/10 bg-[#0d1120] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                      >
+                        <option value={1.1}>1.1X</option>
+                        <option value={1.2}>1.2X</option>
+                        <option value={1.3}>1.3X</option>
+                        <option value={1.5}>1.5X</option>
+                        <option value={10}>10X</option>
+                      </select>
                     </div>
                   </div>
                   <div>

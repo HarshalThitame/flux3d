@@ -11,7 +11,6 @@ export type CartItem = {
   quantity?: number;
   material: string;
   color: string;
-  colorHex?: string;
   infill?: number;
   layerHeight?: number;
   supports?: boolean;

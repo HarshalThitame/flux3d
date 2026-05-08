@@ -11,7 +11,6 @@ import {
   Layers3,
   ShieldCheck,
   BookmarkPlus,
-  Scale,
   Truck,
   ShoppingCart,
   PackageCheck,
@@ -20,6 +19,7 @@ import {
   FileArchive,
   Move3D,
   Cuboid,
+  Gauge,
 } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
 import { Bounds, OrbitControls } from '@react-three/drei'
@@ -31,7 +31,7 @@ import {
 } from '@/lib/orders'
 import { getMaterialById, layerHeightOptions } from '@/lib/quote/materials'
 import { parseModelFile } from '@/lib/quote/model-utils'
-import { calculateInstantQuote } from '@/lib/quote/pricing-engine'
+import { calculateInstantQuote, formatDurationMinutes, postProcessingOptions } from '@/lib/quote/pricing-engine'
 import { saveQuoteToSupabase, uploadFileToSupabaseStorage, validateModelFile } from '@/lib/quote/supabase-storage'
 import { hasSupabaseConfig } from '@/lib/supabase/config'
 import type { ParsedModel, QuoteConfig, QuoteMaterial, UploadState } from '@/lib/quote/types'
@@ -107,11 +107,12 @@ function CartEnabledWorkspace({
   const [selectedModel, setSelectedModel] = useState<ParsedModel | null>(null)
   const defaultConfig: QuoteConfig = {
     materialId: defaultMaterial.id,
-    colorHex: typeof defaultMaterial.colors[0] === 'string' ? defaultMaterial.colors[0] : (defaultMaterial.colors[0] as { hex?: string })?.hex ?? '#ff5c1a',
+    color: defaultMaterial.colors[0]?.name ?? 'Default',
     infill: 20,
     layerHeight: 0.2,
+    quantity: 1,
+    postProcessingLevel: 'sanded',
     supports: false,
-    scalePercent: 100,
   }
   const [config, setConfig] = useState<QuoteConfig>(() => {
     if (typeof window === 'undefined') {
@@ -125,7 +126,10 @@ function CartEnabledWorkspace({
 
     try {
       const parsed = JSON.parse(raw) as { config?: QuoteConfig }
-      return parsed.config ?? defaultConfig
+      return {
+        ...defaultConfig,
+        ...parsed.config,
+      }
     } catch {
       return defaultConfig
     }
@@ -165,8 +169,7 @@ function CartEnabledWorkspace({
     [priceBreakdown]
   )
   const selectedMaterial = getMaterialById(config.materialId, materials)
-  const selectedColorName =
-    selectedMaterial.colors.find((color) => color.hex === config.colorHex)?.name ?? config.colorHex
+  const selectedColorName = config.color
   const orderDraft = useMemo<OrderDraft | null>(() => {
     if (!initialQuoteId || !selectedModel || !priceBreakdown || uploadState.status !== 'success' || !uploadState.path) {
       return null
@@ -179,6 +182,8 @@ function CartEnabledWorkspace({
       color: selectedColorName,
       infill: config.infill,
       layerHeight: config.layerHeight,
+      quantity: config.quantity,
+      postProcessingLevel: config.postProcessingLevel,
       supports: config.supports,
       price: priceBreakdown.total,
       estimatedTime: priceBreakdown.estimatedHours,
@@ -187,6 +192,8 @@ function CartEnabledWorkspace({
   }, [
     config.infill,
     config.layerHeight,
+    config.quantity,
+    config.postProcessingLevel,
     config.supports,
     initialQuoteId,
     priceBreakdown,
@@ -232,7 +239,7 @@ function CartEnabledWorkspace({
         setConfig((current) => ({
           ...current,
           materialId: suggestedMaterial.id,
-          colorHex: suggestedMaterial.colors[0]?.hex ?? current.colorHex,
+          color: suggestedMaterial.colors[0]?.name ?? current.color,
         }))
         setToast({
           type: 'info',
@@ -275,7 +282,7 @@ function CartEnabledWorkspace({
     setConfig((current) => ({
       ...current,
       materialId,
-      colorHex: nextMaterial.colors[0]?.hex ?? current.colorHex,
+      color: nextMaterial.colors[0]?.name ?? current.color,
     }))
   }
 
@@ -342,9 +349,6 @@ function CartEnabledWorkspace({
       return
     }
 
-    const selectedColor =
-      selectedMaterial.colors.find((color) => color.hex === config.colorHex)?.name ?? config.colorHex
-
     const cartItem: CartItem = {
       id: initialQuoteId,
       name: selectedModel?.fileName ?? 'model',
@@ -352,10 +356,10 @@ function CartEnabledWorkspace({
       fileUrl: uploadState.path,
       fileName: selectedModel?.fileName ?? 'model',
       material: selectedMaterial.name ?? '',
-      color: selectedColor ?? '',
-      colorHex: selectedColor ?? '',
+      color: selectedColorName ?? '',
       infill: config.infill,
       layerHeight: config.layerHeight,
+      quantity: config.quantity,
       supports: config.supports,
       price: priceBreakdown?.total ?? 0,
       estimatedTime: priceBreakdown?.estimatedHours ?? 0,
@@ -363,11 +367,12 @@ function CartEnabledWorkspace({
       dimensions: priceBreakdown?.dimensionsMm ?? { x: 0, y: 0, z: 0 },
       config: {
         materialId: selectedMaterial.id ?? '',
-        colorHex: selectedColor ?? '',
+        color: selectedColorName ?? '',
         infill: config.infill,
         layerHeight: config.layerHeight,
+        quantity: config.quantity,
+        postProcessingLevel: config.postProcessingLevel,
         supports: config.supports,
-        scalePercent: config.scalePercent,
       },
       addedAt: new Date().toISOString(),
     }
@@ -616,7 +621,7 @@ function CartEnabledWorkspace({
                             <directionalLight position={[-80, -50, -60]} intensity={0.4} />
                             <gridHelper args={[280, 28, '#1f2a44', '#0f172a']} position={[0, -55, 0]} />
                             <Bounds fit clip observe margin={1.3}>
-                              <ViewerModel object={selectedModel.object} scalePercent={config.scalePercent} />
+                              <ViewerModel object={selectedModel.object} />
                             </Bounds>
                             <OrbitControls makeDefault enablePan enableZoom enableRotate />
                           </Canvas>
@@ -721,22 +726,18 @@ function CartEnabledWorkspace({
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {getMaterialById(config.materialId, materials).colors.map((color, idx) => {
-                          const isActive = color.hex === config.colorHex
+                          const isActive = color.name === config.color
                           return (
                             <button
-                              key={`${color.hex}-${idx}`}
+                              key={`${color.name}-${idx}`}
                               type="button"
-                              onClick={() => setConfig((c) => ({ ...c, colorHex: color.hex }))}
+                              onClick={() => setConfig((c) => ({ ...c, color: color.name }))}
                               className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-left transition-all ${
                                 isActive
                                   ? 'border-[#FF8A57]/40 bg-[#11182b]'
                                   : 'border-white/8 bg-white/[0.02] hover:border-white/15'
                               }`}
                             >
-                              <span
-                                className="h-5 w-5 rounded-full border border-white/20 shadow-[0_0_8px_rgba(255,255,255,0.06)]"
-                                style={{ backgroundColor: color.hex }}
-                              />
                               <span className="text-xs font-medium text-white">{color.name}</span>
                               {isActive && <CheckCircle2 className="h-3.5 w-3.5 text-[#FF9A72]" />}
                             </button>
@@ -787,24 +788,47 @@ function CartEnabledWorkspace({
                         </div>
                       </div>
 
-                      {/* Scale */}
+                      {/* Quantity */}
                       <div>
                         <div className="mb-2 flex items-center justify-between text-sm">
-                          <span className="text-[#aeb8d8]">Scale</span>
-                          <span className="font-semibold text-white">{config.scalePercent}%</span>
+                          <span className="text-[#aeb8d8]">Quantity</span>
+                          <span className="font-semibold text-white">{config.quantity} pcs</span>
                         </div>
                         <input
-                          type="range"
-                          min={50}
-                          max={150}
-                          step={5}
-                          value={config.scalePercent}
-                          onChange={(e) => setConfig((c) => ({ ...c, scalePercent: Number(e.target.value) }))}
-                          className="w-full accent-cyan-400"
+                          type="number"
+                          min={1}
+                          max={99}
+                          step={1}
+                          value={config.quantity}
+                          onChange={(e) => setConfig((c) => ({ ...c, quantity: Math.max(1, Math.floor(Number(e.target.value) || 1)) }))}
+                          className="w-full rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2.5 text-sm text-white outline-none"
                         />
-                        <div className="mt-1 flex justify-between text-[10px] text-[#7a82a0]">
-                          <span>50%</span>
-                          <span>150%</span>
+                      </div>
+
+                      {/* Post-processing */}
+                      <div>
+                        <div className="mb-2 text-sm text-[#aeb8d8]">Post-processing</div>
+                        <div className="grid gap-2">
+                          {postProcessingOptions.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => setConfig((c) => ({ ...c, postProcessingLevel: option.value }))}
+                              className={`rounded-xl border px-3 py-2.5 text-left transition-all ${
+                                option.value === config.postProcessingLevel
+                                  ? 'border-[#FF8A57]/35 bg-[#11182b]'
+                                  : 'border-white/8 bg-white/[0.02] hover:border-white/15'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="text-xs font-medium text-white">{option.label}</div>
+                                <div className="text-[10px] uppercase tracking-[0.18em] text-[#FF8A57]">
+                                  ₹{option.cost.toFixed(2)}
+                                </div>
+                              </div>
+                              <div className="mt-0.5 text-[10px] text-[#8d97b8]">{option.description}</div>
+                            </button>
+                          ))}
                         </div>
                       </div>
 
@@ -828,36 +852,6 @@ function CartEnabledWorkspace({
                             </button>
                           ))}
                         </div>
-                      </div>
-
-                      {/* Supports */}
-                      <div>
-                        <div className="mb-2 text-sm text-[#aeb8d8]">Supports</div>
-                        <button
-                          type="button"
-                          onClick={() => setConfig((c) => ({ ...c, supports: !c.supports }))}
-                          className={`w-full rounded-xl border px-4 py-4 text-left transition-all ${
-                            config.supports
-                              ? 'border-[#FF8A57]/35 bg-[#11182b]'
-                              : 'border-white/8 bg-white/[0.02] hover:border-white/15'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-white">
-                              {config.supports ? 'Enabled' : 'Disabled'}
-                            </span>
-                            <div className={`relative h-6 w-11 rounded-full transition-colors ${
-                              config.supports ? 'bg-[#FF5C1A]' : 'bg-white/10'
-                            }`}>
-                              <span className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-transform ${
-                                config.supports ? 'translate-x-6' : 'translate-x-1'
-                              }`} />
-                            </div>
-                          </div>
-                          <div className="mt-2 text-[10px] text-[#8d97b8]">
-                            Add support structures for overhangs
-                          </div>
-                        </button>
                       </div>
                     </div>
 
@@ -915,7 +909,6 @@ function CartEnabledWorkspace({
                       {/* Config Summary */}
                       <div className="mb-4 rounded-xl border border-white/8 bg-white/[0.02] p-3">
                         <div className="flex items-center gap-2 text-xs">
-                          <span className="h-3 w-3 rounded-full border border-white/20" style={{ backgroundColor: config.colorHex }} />
                           <span className="text-white">{getMaterialById(config.materialId, materials).name}</span>
                           <span className="text-[#7a82a0]">·</span>
                           <span className="text-[#aeb8d8]">{config.infill}% infill</span>
@@ -930,25 +923,50 @@ function CartEnabledWorkspace({
                         <div className="mt-1 font-[var(--font-syne)] text-3xl font-bold text-white">
                           ₹{deliveryPricing.totalPrice.toFixed(0)}
                         </div>
+                        <div className="mt-1 text-[10px] uppercase tracking-[0.22em] text-[#ffb493]">
+                          Rounded to nearest ₹5
+                        </div>
                         <div className="mt-3 space-y-1.5 text-xs text-[#ffe0d4]">
                           <div className="flex justify-between">
-                            <span>Material</span>
-                            <span>₹{priceBreakdown.materialCost.toFixed(0)}</span>
+                            <span>Quantity</span>
+                            <span>{priceBreakdown.quantity} pcs</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Material usage</span>
+                            <span>{priceBreakdown.materialWeightGrams.toFixed(2)} g</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Material cost</span>
+                            <span>₹{priceBreakdown.materialCost.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Machine time</span>
-                            <span>₹{priceBreakdown.timeCost.toFixed(0)}</span>
+                            <span>{formatDurationMinutes(priceBreakdown.estimatedMinutes)}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>Labour</span>
-                            <span>₹{priceBreakdown.labourCost.toFixed(0)}</span>
+                            <span>Machine cost</span>
+                            <span>₹{priceBreakdown.timeCost.toFixed(2)}</span>
                           </div>
-                          {priceBreakdown.supportCost > 0 && (
-                            <div className="flex justify-between">
-                              <span>Supports</span>
-                              <span>₹{priceBreakdown.supportCost.toFixed(0)}</span>
-                            </div>
-                          )}
+                          <div className="flex justify-between">
+                            <span>Post-processing</span>
+                            <span>₹{priceBreakdown.labourCost.toFixed(2)}</span>
+                          </div>
+                          <div className="border-t border-white/10 pt-1.5 flex justify-between font-medium text-white">
+                            <span>Subtotal</span>
+                            <span>₹{priceBreakdown.subtotal.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Overhead (15%)</span>
+                            <span>₹{priceBreakdown.overheadAmount.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Margin (40%)</span>
+                            <span>₹{priceBreakdown.profitMargin.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Quantity discount</span>
+                            <span>{priceBreakdown.quantityDiscountPercent}% · {priceBreakdown.quantityDiscountAmount > 0 ? '-' : ''}₹{priceBreakdown.quantityDiscountAmount.toFixed(2)}</span>
+                          </div>
                           <div className="border-t border-white/10 pt-1.5 flex justify-between font-medium text-white">
                             <span>Print total</span>
                             <span>₹{priceBreakdown.total.toFixed(0)}</span>
@@ -964,15 +982,15 @@ function CartEnabledWorkspace({
                       <div className="mt-4 grid grid-cols-2 gap-3">
                         <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Weight</div>
-                          <div className="mt-1 text-sm font-medium text-white">{priceBreakdown.materialWeightGrams.toFixed(1)} g</div>
+                          <div className="mt-1 text-sm font-medium text-white">{priceBreakdown.baseWeightGrams.toFixed(2)} g / unit</div>
                         </div>
                         <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Print time</div>
-                          <div className="mt-1 text-sm font-medium text-white">{priceBreakdown.estimatedHours.toFixed(1)} hr</div>
+                          <div className="mt-1 text-sm font-medium text-white">{formatDurationMinutes(priceBreakdown.estimatedMinutes)}</div>
                         </div>
                         <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3 col-span-2">
                           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">
-                            <Scale className="h-3 w-3" />
+                            <Cuboid className="h-3 w-3" />
                             Dimensions
                           </div>
                           <div className="mt-1 text-xs text-white">
@@ -1061,13 +1079,10 @@ function CartEnabledWorkspace({
 
 function ViewerModel({
   object,
-  scalePercent,
 }: {
   object: Object3D
-  scalePercent: number
 }) {
   const clone = useMemo(() => object.clone(true), [object])
-  const scale = scalePercent / 100
 
-  return <primitive object={clone} scale={[scale, scale, scale]} />
+  return <primitive object={clone} />
 }

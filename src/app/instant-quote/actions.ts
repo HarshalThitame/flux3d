@@ -47,6 +47,8 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
     throw new Error('Select a material and color before placing an order.')
   }
 
+  const normalizedQuantity = Math.max(1, Math.floor(normalizeNumber(input.quantity, 'quantity')))
+
   if (Object.keys(addressErrors).length > 0) {
     throw new Error('Complete the delivery address before placing the order.')
   }
@@ -111,6 +113,8 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
       color: input.color.trim(),
       infill: Math.round(normalizeNumber(input.infill, 'infill')),
       layer_height: normalizeNumber(input.layerHeight, 'layer height'),
+      quantity: normalizedQuantity,
+      post_processing_level: input.postProcessingLevel,
       supports: input.supports,
       ...trimmedAddress,
       delivery_charge: deliveryCharge,
@@ -121,7 +125,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
       notes: input.notes?.trim() ? input.notes.trim() : null,
     })
     .select(
-      'id, serial_number, material, color, infill, layer_height, supports, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, estimated_time, status, notes, created_at'
+      'id, serial_number, material, color, infill, layer_height, quantity, post_processing_level, supports, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, estimated_time, status, notes, created_at'
     )
     .single()
 
@@ -169,6 +173,8 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
     totalPrice: Number(insertedOrder.total_price),
     infill: insertedOrder.infill,
     layerHeight: Number(insertedOrder.layer_height),
+    quantity: insertedOrder.quantity,
+    postProcessingLevel: insertedOrder.post_processing_level,
     supports: insertedOrder.supports,
     price: Number(insertedOrder.price),
     estimatedTime: Number(insertedOrder.estimated_time),

@@ -9,8 +9,15 @@ export type MaterialPropertySet = {
 
 export type MaterialColor = {
   name: string
-  hex: string
 }
+
+export const DIFFICULTY_FACTOR_OPTIONS = [
+  { value: 1.1, label: '1.1X' },
+  { value: 1.2, label: '1.2X' },
+  { value: 1.3, label: '1.3X' },
+  { value: 1.5, label: '1.5X' },
+  { value: 10, label: '10X' },
+] as const
 
 export type QuoteMaterial = {
   id: string
@@ -24,6 +31,7 @@ export type QuoteMaterial = {
   recommendedFor: string
   properties: MaterialPropertySet
   colors: MaterialColor[]
+  difficultyFactor: number
   keyProperties?: string[]
   bestFor?: string[]
   difficultyLevel?: 'Easy' | 'Medium' | 'Hard'
@@ -39,6 +47,8 @@ export type LayerHeightOption = {
   multiplier: number
   description: string
 }
+
+export type PostProcessingLevel = 'none' | 'sanded' | 'sanded-painted'
 
 export type ParsedModel = {
   fileName: string
@@ -57,26 +67,40 @@ export type ParsedModel = {
 
 export type QuoteConfig = {
   materialId: string
-  colorHex: string
+  color: string
   infill: number
   layerHeight: number
+  quantity: number
+  postProcessingLevel: PostProcessingLevel
   supports: boolean
-  scalePercent: number
 }
 
 export type PriceBreakdown = {
   scaledVolumeCm3: number
+  quantity: number
+  baseWeightGrams: number
+  infillMultiplier: number
+  materialUsageGramsPerUnit: number
   materialWeightGrams: number
   supportWeightGrams: number
-  materialCost: number
+  materialRatePerKg: number
+  machineRatePerHour: number
+  basePrintTimeMinutesPerUnit: number
+  estimatedMinutesPerUnit: number
+  estimatedMinutes: number
   estimatedHours: number
+  quantityDiscountPercent: number
+  quantityDiscountAmount: number
+  totalBeforeRounding: number
+  materialCost: number
   timeCost: number
   labourCost: number
   setupCost: number
   supportCost: number
+  postProcessingLevel: PostProcessingLevel
+  postProcessingCostPerUnit: number
   subtotal: number
   overheadAmount: number
-  wastageAmount: number
   profitMargin: number
   total: number
   dimensionsMm: {
@@ -92,4 +116,3 @@ export type UploadState = {
   path?: string
   error?: string
 }
-

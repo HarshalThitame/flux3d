@@ -4,18 +4,19 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowRight, BookmarkPlus, Layers3, ShieldCheck } from 'lucide-react'
 import { layerHeightOptions } from '@/lib/quote/materials'
+import { postProcessingOptions } from '@/lib/quote/pricing-engine'
 
 type SettingsPanelProps =
   | {
       variant: 'settings'
       infill: number
       layerHeight: number
-      supports: boolean
-      scalePercent: number
+      quantity: number
+      postProcessingLevel: 'none' | 'sanded' | 'sanded-painted'
       onInfillChange: (value: number) => void
       onLayerHeightChange: (value: number) => void
-      onSupportsChange: (value: boolean) => void
-      onScaleChange: (value: number) => void
+      onQuantityChange: (value: number) => void
+      onPostProcessingChange: (value: 'none' | 'sanded' | 'sanded-painted') => void
     }
   | {
       variant: 'account'
@@ -84,6 +85,54 @@ export default function SettingsPanel(props: SettingsPanelProps) {
           </div>
 
           <div>
+            <div className="mb-2 flex items-center justify-between text-sm text-white">
+              <span>Quantity</span>
+              <span>{props.quantity} pcs</span>
+            </div>
+            <input
+              type="number"
+              min={1}
+              max={99}
+              step={1}
+              value={props.quantity}
+              onChange={(event) => props.onQuantityChange(Number(event.target.value))}
+              className="w-full rounded-[16px] border border-white/8 bg-white/[0.02] px-3 py-3 text-sm text-white outline-none"
+            />
+          </div>
+
+          <div>
+            <div className="mb-2 text-sm text-white">Post-processing</div>
+            <div className="grid gap-2">
+              {postProcessingOptions.map((option) => {
+                const active = option.value === props.postProcessingLevel
+
+                return (
+                  <motion.button
+                    key={option.value}
+                    type="button"
+                    onClick={() => props.onPostProcessingChange(option.value)}
+                    whileHover={{ x: 4, scale: 1.01 }}
+                    whileTap={{ scale: 0.985 }}
+                    className={`rounded-[16px] border px-3 py-3 text-left transition-all ${
+                      active
+                        ? 'border-[#FF8A57]/35 bg-[#11182b]'
+                        : 'border-white/8 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-medium text-white">{option.label}</div>
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#FF8A57]">
+                        ₹{option.cost.toFixed(2)}
+                      </div>
+                    </div>
+                    <div className="mt-1 text-xs leading-5 text-[#8d97b8]">{option.description}</div>
+                  </motion.button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div>
             <div className="mb-2 text-sm text-white">Layer Height</div>
             <div className="grid gap-2">
               {layerHeightOptions.map((option) => {
@@ -107,47 +156,6 @@ export default function SettingsPanel(props: SettingsPanelProps) {
                   </motion.button>
                 )
               })}
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="rounded-[18px] border border-white/8 bg-white/[0.02] px-3 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm text-white">Supports</span>
-                <button
-                  type="button"
-                  aria-pressed={props.supports}
-                  onClick={() => props.onSupportsChange(!props.supports)}
-                  className={`relative h-7 w-12 rounded-full transition-colors ${
-                    props.supports ? 'bg-[#FF5C1A]' : 'bg-white/10'
-                  }`}
-                >
-                  <span
-                    className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${
-                      props.supports ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-              <div className="mt-2 text-xs leading-5 text-[#8d97b8]">
-                Add support structures for challenging overhangs.
-              </div>
-            </label>
-
-            <div className="rounded-[18px] border border-white/8 bg-white/[0.02] px-3 py-3">
-              <div className="mb-2 flex items-center justify-between text-sm text-white">
-                <span>Scale</span>
-                <span>{props.scalePercent}%</span>
-              </div>
-              <input
-                type="range"
-                min={50}
-                max={150}
-                step={5}
-                value={props.scalePercent}
-                onChange={(event) => props.onScaleChange(Number(event.target.value))}
-                className="w-full accent-cyan-400"
-              />
             </div>
           </div>
         </div>

@@ -491,6 +491,7 @@ type AdminMaterialInput = {
   pricePerGram: number
   density: number
   colors: string[]
+  difficultyFactor: number
   stock: AdminMaterial['stock']
 }
 
@@ -500,6 +501,7 @@ function normalizeAdminMaterialRow(material: {
   price_per_gram: number | string
   density: number | string
   colors: string[]
+  difficulty_factor?: number | string
   stock: AdminMaterial['stock']
   created_at?: string | null
 }) {
@@ -509,6 +511,7 @@ function normalizeAdminMaterialRow(material: {
     price_per_gram: Number(material.price_per_gram ?? 0),
     density: Number(material.density ?? 0),
     colors: Array.isArray(material.colors) ? material.colors : [],
+    difficulty_factor: Number(material.difficulty_factor ?? 1.1),
     stock: material.stock,
     created_at: material.created_at ?? undefined,
   } as AdminMaterial
@@ -523,9 +526,10 @@ export async function createAdminMaterial(input: AdminMaterialInput) {
       price_per_gram: input.pricePerGram,
       density: input.density,
       colors: input.colors,
+      difficulty_factor: input.difficultyFactor,
       stock: input.stock,
     })
-    .select('id, name, price_per_gram, density, colors, stock, created_at')
+    .select('id, name, price_per_gram, density, colors, difficulty_factor, stock, created_at')
     .single()
 
   if (error) throw new Error(error.message)
@@ -541,11 +545,12 @@ export async function updateAdminMaterial(materialId: string, input: AdminMateri
       price_per_gram: input.pricePerGram,
       density: input.density,
       colors: input.colors,
+      difficulty_factor: input.difficultyFactor,
       stock: input.stock,
       updated_at: new Date().toISOString(),
     })
     .eq('id', materialId)
-    .select('id, name, price_per_gram, density, colors, stock, created_at')
+    .select('id, name, price_per_gram, density, colors, difficulty_factor, stock, created_at')
     .single()
 
   if (error) throw new Error(error.message)

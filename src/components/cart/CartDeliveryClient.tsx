@@ -211,6 +211,7 @@ export default function CartDeliveryClient({
           fileName: item.fileName ?? item.name ?? '',
           material: item.material ?? '',
           color: item.color ?? '',
+          quantity: item.quantity ?? 1,
           infill: item.infill ?? 20,
           layerHeight: item.layerHeight ?? 0.2,
           supports: item.supports ?? false,

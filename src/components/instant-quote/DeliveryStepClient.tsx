@@ -215,6 +215,8 @@ export default function DeliveryStepClient({
         color: draft.color,
         infill: draft.infill,
         layerHeight: draft.layerHeight,
+        quantity: draft.quantity,
+        postProcessingLevel: draft.postProcessingLevel,
         supports: draft.supports,
         price: draft.price,
         estimatedTime: draft.estimatedTime,

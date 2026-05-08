@@ -2,11 +2,11 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { ArrowRight, Clock3, IndianRupee, PackageCheck, Scale, ShoppingCart, Sparkles, Truck } from 'lucide-react'
+import { ArrowRight, Clock3, Cuboid, IndianRupee, PackageCheck, ShoppingCart, Sparkles, Truck } from 'lucide-react'
 import { getMaterialById } from '@/lib/quote/materials'
 import type { PriceBreakdown, QuoteMaterial } from '@/lib/quote/types'
-import { useCart } from '@/lib/cart/context'
 import type { QuoteConfig } from '@/lib/quote/types'
+import { formatDurationMinutes, postProcessingOptions } from '@/lib/quote/pricing-engine'
 
 type QuoteSummaryProps = {
   materials: QuoteMaterial[]
@@ -17,10 +17,6 @@ type QuoteSummaryProps = {
   canOrder: boolean
   deliveryCharge: number
   totalPrice: number
-  selectedModel: {
-    fileName: string
-    dimensionsMm: { x: number; y: number; z: number }
-  } | null
   config: QuoteConfig
   onAddToCart: () => void
   isInCart: boolean
@@ -45,7 +41,6 @@ export default function QuoteSummary({
   canOrder,
   deliveryCharge,
   totalPrice,
-  selectedModel,
   config,
   onAddToCart,
   isInCart,
@@ -101,11 +96,11 @@ export default function QuoteSummary({
                 <div className="flex items-center justify-between text-sm text-[#aeb8d8]">
                   <span>Print weight</span>
                   <span className="font-medium text-white">
-                    {priceBreakdown.materialWeightGrams.toFixed(1)} g
+                    {priceBreakdown.materialWeightGrams.toFixed(2)} g
                   </span>
                 </div>
                 <div className="mt-2 text-xs text-[#7a82a0]">
-                  Estimated usage for your selected {material.name} print
+                  Estimated total material usage for your selected {material.name} print
                 </div>
               </motion.div>
 
@@ -113,12 +108,12 @@ export default function QuoteSummary({
                 <div className="flex items-center justify-between text-sm text-[#aeb8d8]">
                   <span>Estimated print time</span>
                   <span className="font-medium text-white">
-                    {priceBreakdown.estimatedHours.toFixed(1)} hr
+                    {formatDurationMinutes(priceBreakdown.estimatedMinutes)}
                   </span>
                 </div>
                 <div className="mt-2 inline-flex items-center gap-2 text-xs text-[#7a82a0]">
                   <Clock3 className="h-3.5 w-3.5" />
-                  Based on print weight, layer height, infill, supports, and part complexity
+                  Based on weight, layer height, infill, post-processing, and quantity
                 </div>
               </motion.div>
 
@@ -130,42 +125,47 @@ export default function QuoteSummary({
                 <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-white">
                   ₹{totalPrice.toFixed(0)}
                 </div>
+                <div className="mt-1 text-[10px] uppercase tracking-[0.22em] text-[#ffb493]">
+                  Rounded to nearest ₹5
+                </div>
                 <div className="mt-3 grid gap-2 text-sm text-[#ffe0d4]">
                   <div className="flex justify-between">
+                    <span>Quantity</span>
+                    <span>{priceBreakdown.quantity} pcs</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span>Material cost</span>
-                    <span>₹{priceBreakdown.materialCost.toFixed(0)}</span>
+                    <span>₹{priceBreakdown.materialCost.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Machine cost</span>
-                    <span>₹{priceBreakdown.timeCost.toFixed(0)}</span>
+                    <span>₹{priceBreakdown.timeCost.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Labour cost</span>
-                    <span>₹{priceBreakdown.labourCost.toFixed(0)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Support material</span>
-                    <span>₹{priceBreakdown.supportCost.toFixed(0)}</span>
+                    <span>Post-processing</span>
+                    <span>
+                      {postProcessingOptions.find((option) => option.value === config.postProcessingLevel)?.label ?? 'None'} · ₹{priceBreakdown.labourCost.toFixed(2)}
+                    </span>
                   </div>
                   <div className="border-t border-white/8 pt-2 mt-1 flex justify-between text-xs text-[#7a82a0]">
                     <span>Subtotal</span>
-                    <span>₹{priceBreakdown.subtotal.toFixed(0)}</span>
+                    <span>₹{priceBreakdown.subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-[#7a82a0]">
                     <span>Overhead (15%)</span>
-                    <span>₹{priceBreakdown.overheadAmount.toFixed(0)}</span>
+                    <span>₹{priceBreakdown.overheadAmount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-[#7a82a0]">
-                    <span>Wastage buffer (5%)</span>
-                    <span>₹{priceBreakdown.wastageAmount.toFixed(0)}</span>
+                    <span>Margin (40%)</span>
+                    <span>₹{priceBreakdown.profitMargin.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-[#7a82a0]">
-                    <span>Profit margin (22%)</span>
-                    <span>₹{priceBreakdown.profitMargin.toFixed(0)}</span>
+                    <span>Quantity discount</span>
+                    <span>{priceBreakdown.quantityDiscountPercent}% · {priceBreakdown.quantityDiscountAmount > 0 ? '-' : ''}₹{priceBreakdown.quantityDiscountAmount.toFixed(2)}</span>
                   </div>
                   <div className="border-t border-white/8 pt-2 mt-1 flex justify-between font-medium text-white">
-                    <span>Print total</span>
-                    <span>₹{priceBreakdown.total.toFixed(0)}</span>
+                    <span>Pre-round total</span>
+                    <span>₹{priceBreakdown.totalBeforeRounding.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Delivery charge</span>
@@ -173,7 +173,7 @@ export default function QuoteSummary({
                   </div>
                   <div className="flex justify-between text-xs text-[#7a82a0]">
                     <span>Estimated print time</span>
-                    <span>{priceBreakdown.estimatedHours.toFixed(1)} hr</span>
+                    <span>{formatDurationMinutes(priceBreakdown.estimatedMinutes)}</span>
                   </div>
                 </div>
               </motion.div>
@@ -181,8 +181,8 @@ export default function QuoteSummary({
               <div className="grid gap-3 sm:grid-cols-2">
                 <motion.div whileHover={{ y: -2 }} className="rounded-[20px] border border-white/8 bg-white/[0.03] p-4">
                   <div className="mb-2 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">
-                    <Scale className="h-3.5 w-3.5" />
-                    Scaled Dimensions
+                    <Cuboid className="h-3.5 w-3.5" />
+                    Dimensions
                   </div>
                   <div className="text-sm text-white">
                     {priceBreakdown.dimensionsMm.x.toFixed(1)} × {priceBreakdown.dimensionsMm.y.toFixed(1)} × {priceBreakdown.dimensionsMm.z.toFixed(1)} mm

@@ -20,7 +20,6 @@ type EditingItem = {
   addedAt: string
   material?: string
   color?: string
-  colorHex?: string
   infill?: number
 }
 
@@ -52,8 +51,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
       id: item.id ?? '',
       addedAt: item.addedAt ?? '',
       material: item.config?.materialId ?? item.material ?? '',
-      color: item.colorHex ?? '',
-      colorHex: item.colorHex ?? '',
+      color: item.color ?? '',
       infill: item.infill ?? 20,
     })
   }
@@ -65,8 +63,8 @@ export default function CartClient({ user, materials }: CartClientProps) {
     const selectedMaterial = materials.find((m) => m.id === materialId)
     if (!selectedMaterial) return
 
-    const selectedColor = editingItem.colorHex
-      ? selectedMaterial.colors.find((c) => c.hex === editingItem.colorHex)
+    const selectedColor = editingItem.color
+      ? selectedMaterial.colors.find((c) => c.name === editingItem.color)
       : selectedMaterial.colors[0]
     if (!selectedColor) return
 
@@ -75,17 +73,16 @@ export default function CartClient({ user, materials }: CartClientProps) {
     const infillValue = editingItem.infill ?? 20
     const priceAdjustment = (infillValue - originalInfill) / 100 * basePrice * 0.3
     const existingItem = items.find((i) => i.addedAt === editingItem.addedAt)
-    const existingConfig = existingItem?.config ?? { materialId: '', colorHex: '', infill: 20, layerHeight: 0.2, supports: false, scalePercent: 100 }
+    const existingConfig = existingItem?.config ?? { materialId: '', color: '', infill: 20, layerHeight: 0.2, quantity: 1, postProcessingLevel: 'sanded' as const, supports: false }
 
     updateItem(editingItem.addedAt, {
       material: selectedMaterial.name,
       color: selectedColor.name,
-      colorHex: selectedColor.hex,
       infill: editingItem.infill ?? 20,
       config: {
         ...existingConfig,
         materialId: editingItem.material ?? existingConfig.materialId,
-        colorHex: editingItem.colorHex ?? existingConfig.colorHex,
+        color: editingItem.color ?? existingConfig.color,
         infill: editingItem.infill ?? existingConfig.infill,
       },
       price: Math.max(0, basePrice + priceAdjustment),
@@ -209,7 +206,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
                                   setEditingItem({
                                     ...editingItem,
                                     material: newMaterial.id,
-                                    colorHex: newMaterial.colors[0]?.hex ?? editingItem.colorHex,
+                                    color: newMaterial.colors[0]?.name ?? editingItem.color,
                                   })
                                 }
                               }}
@@ -230,22 +227,18 @@ export default function CartClient({ user, materials }: CartClientProps) {
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Color</div>
                           {editingItem ? (
                             <select
-                              value={editingItem.colorHex}
-                              onChange={(e) => setEditingItem({ ...editingItem, colorHex: e.target.value })}
+                              value={editingItem.color}
+                              onChange={(e) => setEditingItem({ ...editingItem, color: e.target.value })}
                               className="mt-1 w-full bg-transparent text-sm font-medium text-white outline-none"
                             >
                               {availableColors.map((c) => (
-                                <option key={c.hex} value={c.hex} className="bg-[#0d1120]">
+                                <option key={c.name} value={c.name} className="bg-[#0d1120]">
                                   {c.name}
                                 </option>
                               ))}
                             </select>
                           ) : (
-                            <div className="mt-1 flex items-center gap-2 text-sm font-medium text-white">
-                              <span
-                                className="h-3 w-3 rounded-full border border-white/20"
-                                style={{ backgroundColor: item.colorHex }}
-                              />
+                            <div className="mt-1 text-sm font-medium text-white">
                               {item.color}
                             </div>
                           )}

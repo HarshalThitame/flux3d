@@ -16,8 +16,8 @@ type MaterialPanelProps =
       variant: 'color'
       materials: QuoteMaterial[]
       selectedMaterialId: string
-      selectedColorHex: string
-      onColorChange: (hex: string) => void
+      selectedColor: string
+      onColorChange: (name: string) => void
     }
 
 function PanelShell({
@@ -104,32 +104,25 @@ export default function MaterialPanel(props: MaterialPanelProps) {
       title="Color Selection"
       description={`Choose a finish that makes your ${activeMaterial.name} print feel presentation-ready.`}
     >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="flex flex-wrap gap-2">
         {activeMaterial.colors.map((color) => {
-          const isActive = color.hex === props.selectedColorHex
+          const isActive = color.name === props.selectedColor
 
           return (
             <motion.button
-              key={color.hex}
+              key={color.name}
               type="button"
-              onClick={() => props.onColorChange(color.hex)}
+              onClick={() => props.onColorChange(color.name)}
               whileHover={{ y: -2, scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
-              className={`flex items-center gap-3 rounded-[18px] border px-3 py-3 text-left transition-all duration-200 ${
+              className={`rounded-[18px] border px-4 py-3 text-left transition-all duration-200 ${
                 isActive
                   ? 'border-[#FF8A57]/40 bg-[#11182b]'
                   : 'border-white/8 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]'
               }`}
             >
-              <span
-                className="h-8 w-8 rounded-full border border-white/12 shadow-[0_0_18px_rgba(255,255,255,0.08)]"
-                style={{ backgroundColor: color.hex }}
-              />
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium text-white">{color.name}</span>
-                <span className="block text-xs text-[#8d97b8]">{color.hex}</span>
-              </span>
-              {isActive ? <Check className="h-4 w-4 text-[#FF9A72]" /> : null}
+              <span className="text-sm font-medium text-white">{color.name}</span>
+              {isActive ? <Check className="ml-2 inline h-4 w-4 text-[#FF9A72]" /> : null}
             </motion.button>
           )
         })}

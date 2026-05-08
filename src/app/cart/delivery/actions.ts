@@ -21,6 +21,7 @@ type CartOrderItem = {
   fileName: string
   material: string
   color: string
+  quantity?: number
   infill: number
   layerHeight: number
   supports: boolean
@@ -158,7 +159,7 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
     price: normalizeNumber(item.price, 'price'),
     estimated_time: normalizeNumber(item.estimatedTime, 'estimated time'),
     status: 'pending',
-    notes: `Cart order - ${input.items.length} item(s). File: ${item.fileName}`,
+    notes: `Cart order - ${input.items.length} item(s), ${Math.max(1, Math.floor(item.quantity ?? 1))} pcs. File: ${item.fileName}`,
   }))
 
   const { data: insertedOrders, error: insertError } = await supabase
@@ -204,6 +205,6 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
   return {
     orderId: insertedOrders[0].id,
     orderNumber: formatOrderNumber(insertedOrders[0].serial_number, insertedOrders[0].created_at),
-    itemCount: input.items.length,
+    itemCount: input.items.reduce((sum, item) => sum + Math.max(1, Math.floor(item.quantity ?? 1)), 0),
   }
 }

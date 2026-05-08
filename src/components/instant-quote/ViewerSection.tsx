@@ -10,21 +10,17 @@ import type { ParsedModel } from '@/lib/quote/types'
 
 type ViewerSectionProps = {
   model: ParsedModel | null
-  scalePercent: number
   isLoading: boolean
 }
 
 function ViewerModel({
   object,
-  scalePercent,
 }: {
   object: Object3D
-  scalePercent: number
 }) {
   const clone = useMemo(() => object.clone(true), [object])
-  const scale = scalePercent / 100
 
-  return <primitive object={clone} scale={[scale, scale, scale]} />
+  return <primitive object={clone} />
 }
 
 function ViewerFallback() {
@@ -35,7 +31,6 @@ function ViewerFallback() {
 
 export default function ViewerSection({
   model,
-  scalePercent,
   isLoading,
 }: ViewerSectionProps) {
   return (
@@ -82,7 +77,7 @@ export default function ViewerSection({
               <directionalLight position={[-80, -50, -60]} intensity={0.4} />
               <gridHelper args={[280, 28, '#1f2a44', '#0f172a']} position={[0, -55, 0]} />
               <Bounds fit clip observe margin={1.3}>
-                <ViewerModel object={model.object} scalePercent={scalePercent} />
+                <ViewerModel object={model.object} />
               </Bounds>
               <OrbitControls makeDefault enablePan enableZoom enableRotate />
             </Canvas>

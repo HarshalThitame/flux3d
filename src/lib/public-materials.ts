@@ -117,35 +117,31 @@ function mapAdminColors(colors: unknown[], fallbackColors: MaterialColor[]): Mat
   if (!Array.isArray(colors) || colors.length === 0) {
     return fallbackColors.length > 0
       ? fallbackColors
-      : [{ name: 'Default', hex: '#ff5c1a' }]
+      : [{ name: 'Default' }]
   }
 
   const validColors: MaterialColor[] = []
-  const seenHex = new Set<string>()
+  const seen = new Set<string>()
 
   for (const color of colors) {
     let name: string
-    let hex: string
 
     if (typeof color === 'string') {
-      // Skip single characters (malformed data)
       if (color.length <= 1) continue
       name = color
-      hex = colorNameToHex(color)
     } else if (color && typeof color === 'object') {
       const c = color as any
       name = c.name || c.hex || 'Unknown'
-      hex = c.hex || colorNameToHex(name)
     } else {
       continue
     }
 
-    if (seenHex.has(hex)) continue
-    seenHex.add(hex)
-    validColors.push({ name, hex })
+    if (seen.has(name)) continue
+    seen.add(name)
+    validColors.push({ name })
   }
 
-  return validColors.length > 0 ? validColors : [{ name: 'Default', hex: '#ff5c1a' }]
+  return validColors.length > 0 ? validColors : [{ name: 'Default' }]
 }
 
 function mapAdminMaterialToQuoteMaterial(material: AdminMaterial): QuoteMaterial {
@@ -160,6 +156,7 @@ function mapAdminMaterialToQuoteMaterial(material: AdminMaterial): QuoteMaterial
     pricePerGram: material.price_per_gram,
     machineRate: 210,
     multiplier: 1.1,
+    difficultyFactor: material.difficulty_factor,
     recommendedFor: 'Custom parts, operator-reviewed jobs, and production runs',
     properties: {
       strength: 'Medium',

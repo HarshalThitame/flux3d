@@ -130,6 +130,7 @@ export type AdminMaterial = {
   price_per_gram: number
   density: number
   colors: string[]
+  difficulty_factor: number
   stock: 'Healthy' | 'Low' | 'Paused'
   created_at?: string
   updated_at?: string

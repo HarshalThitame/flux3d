@@ -20,6 +20,8 @@ export type CreateOrderInput = {
   color: string
   infill: number
   layerHeight: number
+  quantity: number
+  postProcessingLevel: 'none' | 'sanded' | 'sanded-painted'
   supports: boolean
   price: number
   estimatedTime: number
@@ -60,6 +62,8 @@ export type OrderDraft = {
   color: string
   infill: number
   layerHeight: number
+  quantity: number
+  postProcessingLevel: 'none' | 'sanded' | 'sanded-painted'
   supports: boolean
   price: number
   estimatedTime: number
@@ -86,6 +90,8 @@ export type OrderConfirmation = {
   totalPrice: number
   infill: number
   layerHeight: number
+  quantity: number
+  postProcessingLevel: string
   supports: boolean
   price: number
   estimatedTime: number

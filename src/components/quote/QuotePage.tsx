@@ -11,7 +11,7 @@ import MaterialSelector from '@/components/quote/MaterialSelector'
 import ModelViewer from '@/components/quote/ModelViewer'
 import Toast, { ToastState } from '@/components/quote/Toast'
 import { getMaterialById, layerHeightOptions } from '@/lib/quote/materials'
-import { calculateInstantQuote } from '@/lib/quote/pricing-engine'
+import { calculateInstantQuote, formatDurationMinutes, postProcessingOptions } from '@/lib/quote/pricing-engine'
 import { parseModelFile } from '@/lib/quote/model-utils'
 import { saveQuoteToSupabase, uploadFileToSupabaseStorage, validateModelFile } from '@/lib/quote/supabase-storage'
 import type { ParsedModel, QuoteConfig, UploadState } from '@/lib/quote/types'
@@ -31,14 +31,14 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
   const [selectedModel, setSelectedModel] = useState<ParsedModel | null>(null)
   const [config, setConfig] = useState<QuoteConfig>({
     materialId: '',
-    colorHex: '',
+    color: '',
     infill: 20,
     layerHeight: 0.2,
+    quantity: 1,
+    postProcessingLevel: 'sanded',
     supports: false,
-    scalePercent: 100,
   })
   const [materials, setMaterials] = useState<QuoteMaterial[]>([])
-  const [loadingMaterials, setLoadingMaterials] = useState(true)
   const [toast, setToast] = useState<ToastState>(null)
   const [fileError, setFileError] = useState<string | null>(null)
   const [viewerLoading, setViewerLoading] = useState(false)
@@ -63,14 +63,12 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
             setConfig(prev => ({
               ...prev,
               materialId: data[0].id,
-              colorHex: data[0].colors[0]?.hex ?? '',
+              color: data[0].colors[0]?.name ?? '',
             }))
           }
         }
       } catch {
         // Failed to fetch materials
-      } finally {
-        setLoadingMaterials(false)
       }
     }
     fetchMaterials()
@@ -90,6 +88,7 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
     () => calculateInstantQuote(selectedModel, config, materials),
     [selectedModel, config, materials]
   )
+  const formatMoney = (value: number) => `₹${value.toFixed(2)}`
 
   const handleFileSelect = async (file: File) => {
     const validationError = validateModelFile(file)
@@ -118,7 +117,7 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
         setConfig((current) => ({
           ...current,
           materialId: suggestedMaterial.id,
-          colorHex: suggestedMaterial.colors[0].hex,
+          color: suggestedMaterial.colors[0]?.name ?? '',
         }))
         setToast({
           type: 'info',
@@ -157,7 +156,7 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
     setConfig((current) => ({
       ...current,
       materialId,
-      colorHex: nextMaterial.colors[0].hex,
+      color: nextMaterial.colors[0]?.name ?? '',
     }))
   }
 
@@ -210,7 +209,7 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
       quoteId,
       model: selectedModel.fileName,
       material: activeMaterial.name,
-      color: config.colorHex,
+      color: config.color,
       dimensionsMm: priceBreakdown.dimensionsMm,
       estimatedHours: priceBreakdown.estimatedHours,
       total: priceBreakdown.total,
@@ -262,7 +261,6 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
 
               <ModelViewer
                 model={selectedModel}
-                scalePercent={config.scalePercent}
                 isLoading={viewerLoading}
               />
             </div>
@@ -278,10 +276,10 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
               <div className="space-y-6 rounded-[30px] border border-white/10 bg-[rgba(8,13,24,0.82)] p-5 backdrop-blur-2xl">
                 <MaterialSelector
                   selectedMaterialId={config.materialId}
-                  selectedColorHex={config.colorHex}
+                  selectedColor={config.color}
                   materials={materials}
                   onMaterialChange={handleMaterialChange}
-                  onColorChange={(hex) => setConfig((current) => ({ ...current, colorHex: hex }))}
+                  onColorChange={(name) => setConfig((current) => ({ ...current, color: name }))}
                 />
 
                 <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
@@ -338,44 +336,60 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
                       </div>
                     </div>
 
+
+
                     <label className="block">
                       <div className="mb-2 flex items-center justify-between text-sm text-white">
-                        <span>Scale</span>
-                        <span className="text-[#FF8A57]">{config.scalePercent}%</span>
+                        <span>Quantity</span>
+                        <span className="text-[#FF8A57]">{config.quantity} pcs</span>
                       </div>
                       <input
-                        type="range"
-                        min={50}
-                        max={200}
-                        step={5}
-                        value={config.scalePercent}
+                        type="number"
+                        min={1}
+                        max={99}
+                        step={1}
+                        value={config.quantity}
                         onChange={(event) =>
                           setConfig((current) => ({
                             ...current,
-                            scalePercent: Number(event.target.value),
+                            quantity: Math.max(1, Math.floor(Number(event.target.value) || 1)),
                           }))
                         }
-                        className="w-full accent-[#FF5C1A]"
+                        className="w-full rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-3 text-sm text-white outline-none"
                       />
                     </label>
 
-                    <label className="flex items-center justify-between rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-3">
-                      <div>
-                        <div className="text-sm font-medium text-white">Supports</div>
-                        <div className="text-xs text-[#7a82a0]">Enable support material for overhangs</div>
+                    <div>
+                      <div className="mb-2 text-sm text-white">Post-processing</div>
+                      <div className="grid gap-2">
+                        {postProcessingOptions.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() =>
+                              setConfig((current) => ({
+                                ...current,
+                                postProcessingLevel: option.value,
+                              }))
+                            }
+                            className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
+                              config.postProcessingLevel === option.value
+                                ? 'border-[#FF8A57]/40 bg-[#11182b]'
+                                : 'border-white/8 bg-white/[0.02] hover:bg-white/[0.05]'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="text-sm font-medium text-white">{option.label}</div>
+                              <div className="text-xs uppercase tracking-[0.18em] text-[#FF8A57]">
+                                {formatMoney(option.cost)}
+                              </div>
+                            </div>
+                            <div className="mt-1 text-xs leading-6 text-[#7a82a0]">{option.description}</div>
+                          </button>
+                        ))}
                       </div>
-                      <input
-                        type="checkbox"
-                        checked={config.supports}
-                        onChange={(event) =>
-                          setConfig((current) => ({
-                            ...current,
-                            supports: event.target.checked,
-                          }))
-                        }
-                        className="h-4 w-4 accent-[#FF5C1A]"
-                      />
-                    </label>
+                    </div>
+
                   </div>
                 </div>
 
@@ -445,21 +459,35 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
                   <div className="mt-3 font-[var(--font-syne)] text-4xl font-extrabold text-white">
                     {priceBreakdown ? `₹${priceBreakdown.total.toFixed(0)}` : '—'}
                   </div>
+                  <div className="mt-1 text-xs uppercase tracking-[0.22em] text-[#ffb493]">
+                    Rounded to nearest ₹5
+                  </div>
                   <div className="mt-2 text-sm text-[#ffd7c5]">
                     {priceBreakdown
-                      ? `${priceBreakdown.estimatedHours.toFixed(1)} machine hours · ${priceBreakdown.materialWeightGrams.toFixed(1)}g material`
+                      ? `${formatDurationMinutes(priceBreakdown.estimatedMinutes)} total · ${priceBreakdown.materialWeightGrams.toFixed(2)}g material`
                       : 'Upload a file to start estimating'}
                   </div>
                 </div>
 
                 <div className="mt-4 space-y-3">
                   {[
-                    ['Material', priceBreakdown ? `₹${priceBreakdown.materialCost.toFixed(0)}` : '—'],
-                    ['Machine Time', priceBreakdown ? `₹${priceBreakdown.timeCost.toFixed(0)}` : '—'],
-                    ['Setup + Supports', priceBreakdown ? `₹${(priceBreakdown.setupCost + priceBreakdown.supportCost).toFixed(0)}` : '—'],
+                    ['Quantity', priceBreakdown ? `${priceBreakdown.quantity} pcs` : '—'],
+                    ['Base weight', priceBreakdown ? `${priceBreakdown.baseWeightGrams.toFixed(2)} g` : '—'],
+                    ['Infill factor', priceBreakdown ? priceBreakdown.infillMultiplier.toFixed(2) : '—'],
+                    ['Material usage / unit', priceBreakdown ? `${priceBreakdown.materialUsageGramsPerUnit.toFixed(2)} g` : '—'],
+                    ['Material cost', priceBreakdown ? formatMoney(priceBreakdown.materialCost) : '—'],
+                    ['Base print time', priceBreakdown ? `${formatDurationMinutes(priceBreakdown.basePrintTimeMinutesPerUnit)} / unit` : '—'],
+                    ['Layer multiplier', priceBreakdown ? `${(0.2 / config.layerHeight).toFixed(2)}x` : '—'],
+                    ['Machine cost', priceBreakdown ? formatMoney(priceBreakdown.timeCost) : '—'],
+                    ['Post-processing', priceBreakdown ? `${postProcessingOptions.find((option) => option.value === config.postProcessingLevel)?.label ?? 'Basic cleanup'} · ${formatMoney(priceBreakdown.labourCost)}` : '—'],
+                    ['Subtotal', priceBreakdown ? formatMoney(priceBreakdown.subtotal) : '—'],
+                    ['Overhead (15%)', priceBreakdown ? formatMoney(priceBreakdown.overheadAmount) : '—'],
+                    ['Margin (40%)', priceBreakdown ? formatMoney(priceBreakdown.profitMargin) : '—'],
+                    ['Quantity discount', priceBreakdown ? `${priceBreakdown.quantityDiscountPercent}% · ${priceBreakdown.quantityDiscountAmount > 0 ? '-' : ''}${formatMoney(priceBreakdown.quantityDiscountAmount)}` : '—'],
+                    ['Pre-round total', priceBreakdown ? formatMoney(priceBreakdown.totalBeforeRounding) : '—'],
                     ['Dimensions', priceBreakdown ? `${priceBreakdown.dimensionsMm.x.toFixed(0)} × ${priceBreakdown.dimensionsMm.y.toFixed(0)} × ${priceBreakdown.dimensionsMm.z.toFixed(0)} mm` : '—'],
                     ['Material Type', activeMaterial.name],
-                    ['Selected Color', activeMaterial.colors.find((color) => color.hex === config.colorHex)?.name ?? 'Custom'],
+                    ['Selected Color', config.color],
                   ].map(([label, value]) => (
                     <div key={label} className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
                       <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">{label}</div>

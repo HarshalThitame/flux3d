@@ -25,6 +25,7 @@ type MaterialPayload = {
   pricePerGram?: number
   density?: number
   colors?: string[]
+  difficultyFactor?: number
   stock?: 'Healthy' | 'Low' | 'Paused'
 }
 
@@ -35,6 +36,7 @@ function validateMaterialPayload(body: MaterialPayload) {
   const colors = Array.isArray(body.colors)
     ? body.colors.map((color) => String(color).trim()).filter(Boolean)
     : []
+  const difficultyFactor = Number(body.difficultyFactor) || 1.1
   const stock = body.stock
 
   if (!name) {
@@ -58,6 +60,7 @@ function validateMaterialPayload(body: MaterialPayload) {
     pricePerGram,
     density,
     colors,
+    difficultyFactor,
     stock,
   } as const
 }

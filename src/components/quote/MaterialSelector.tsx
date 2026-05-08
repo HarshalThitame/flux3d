@@ -5,15 +5,15 @@ import { getMaterialById } from '@/lib/quote/materials'
 
 type MaterialSelectorProps = {
   selectedMaterialId: string
-  selectedColorHex: string
+  selectedColor: string
   materials: QuoteMaterial[]
   onMaterialChange: (materialId: string) => void
-  onColorChange: (hex: string) => void
+  onColorChange: (name: string) => void
 }
 
 export default function MaterialSelector({
   selectedMaterialId,
-  selectedColorHex,
+  selectedColor,
   materials,
   onMaterialChange,
   onColorChange,
@@ -73,19 +73,15 @@ export default function MaterialSelector({
         <div className="mt-3 flex flex-wrap gap-3">
           {activeMaterial.colors.map((color) => (
             <button
-              key={color.hex}
+              key={color.name}
               type="button"
-              onClick={() => onColorChange(color.hex)}
-              className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition-colors ${
-                selectedColorHex === color.hex
+              onClick={() => onColorChange(color.name)}
+              className={`rounded-full border px-4 py-2 text-sm transition-colors ${
+                selectedColor === color.name
                   ? 'border-[#FF8A57]/50 bg-[#FF5C1A]/10 text-white'
                   : 'border-white/10 bg-white/[0.03] text-[#b4bdd8] hover:text-white'
               }`}
             >
-              <span
-                className="h-4 w-4 rounded-full border border-white/12"
-                style={{ backgroundColor: color.hex }}
-              />
               {color.name}
             </button>
           ))}
