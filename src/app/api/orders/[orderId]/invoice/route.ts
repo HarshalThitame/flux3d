@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import PDFDocument from 'pdfkit'
+import PDFDocument from 'pdfkit/js/pdfkit.standalone'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { formatAddressSummary, getOrderStatusLabel, type OrderStatus } from '@/lib/orders'
 
