@@ -59,117 +59,137 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
     doc.on('error', reject)
   })
 
-  const left = doc.page.margins.left
-  let y = doc.page.margins.top
+  const pageW = doc.page.width - 100
+  const rightX = doc.page.width - 50
+  let y = 50
 
-  doc.font('Helvetica-Bold').fontSize(26).fillColor('#0f0f23')
-  doc.text('Flux', left, y, { continued: true })
-  doc.fillColor('#ff5c1a').text('3D')
-  y = doc.y + 4
-  doc.font('Helvetica').fontSize(10).fillColor('#666')
-  doc.text('3D Printing Service', left, y)
-  y = doc.y + 8
+  doc.rect(50, y, pageW, 80)
+  doc.fill('#0f0f23')
+  doc.fillColor('#ffffff')
+  doc.font('Helvetica-Bold').fontSize(28)
+  doc.text('flux', 68, y + 18, { continued: true })
+  doc.fillColor('#ff5c1a').text('3d')
+  doc.fillColor('#8899bb').font('Helvetica').fontSize(9)
+  doc.text('3D PRINTING SERVICE', 68, y + 50)
+  doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(9)
+  doc.text('INVOICE', rightX - 160, y + 18, { width: 140, align: 'right' })
+  doc.fillColor('#8899bb').font('Helvetica').fontSize(8)
+  doc.text(`#${order.order_number ?? order.id}`, rightX - 160, y + 36, { width: 140, align: 'right' })
+  doc.text(invoiceDate, rightX - 160, y + 50, { width: 140, align: 'right' })
+  const statusLabel = getOrderStatusLabel(order.status as OrderStatus)
+  doc.fillColor('#22c55e').font('Helvetica-Bold').fontSize(8)
+  doc.text(statusLabel.toUpperCase(), rightX - 160, y + 64, { width: 140, align: 'right' })
+  y += 100
 
-  doc.font('Helvetica-Bold').fontSize(16).fillColor('#0f0f23')
-  doc.text('INVOICE', left, y)
-  doc.font('Helvetica').fontSize(9).fillColor('#555')
-  const rightX = doc.page.width - left
-  const metaLines = [
-    `${order.order_number ?? order.id}`,
-    invoiceDate,
-    getOrderStatusLabel(order.status as OrderStatus),
+  doc.roundedRect(50, y, pageW, 70, 6)
+  doc.fill('#f8f9fc')
+  doc.fillColor('#0f0f23').font('Helvetica-Bold').fontSize(8)
+  doc.text('BILL TO', 68, y + 14)
+  doc.fillColor('#1a1a2e').font('Helvetica-Bold').fontSize(11)
+  doc.text(order.full_name, 68, y + 28)
+  doc.fillColor('#555').font('Helvetica').fontSize(9)
+  doc.text(order.phone, 68, y + 44)
+  addressLines.forEach((line, i) => {
+    doc.text(line, rightX - 180, y + 14 + i * 13, { width: 160, align: 'right' })
+  })
+  y += 90
+
+  const tableLeft = 50
+  const tableW = pageW
+  const colDefs = [
+    { x: 0, w: 120, align: 'left' as const, label: 'ITEM' },
+    { x: 120, w: 100, align: 'left' as const, label: 'MATERIAL' },
+    { x: 220, w: 90, align: 'left' as const, label: 'COLOR' },
+    { x: 310, w: 70, align: 'center' as const, label: 'INFILL' },
+    { x: 380, w: 65, align: 'center' as const, label: 'LAYER' },
+    { x: 445, w: 60, align: 'right' as const, label: 'PRICE' },
   ]
-  const lineHeight = 13
-  metaLines.forEach((line, i) => {
-    doc.text(line, left, y + i * lineHeight, { width: rightX - left, align: 'right' })
+
+  doc.roundedRect(tableLeft, y, tableW, 22, 4)
+  doc.fill('#ff5c1a')
+  doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(7)
+  colDefs.forEach((col) => {
+    doc.text(col.label, tableLeft + col.x + 6, y + 6, { width: col.w, align: col.align })
   })
-  y = y + metaLines.length * lineHeight + 16
+  y += 30
 
-  const pageW = doc.page.width - left * 2
-
-  doc.moveTo(left, y).lineTo(left + pageW, y).strokeColor('#ff5c1a').lineWidth(2).stroke()
-  y += 20
-
-  doc.font('Helvetica-Bold').fontSize(10).fillColor('#888')
-  doc.text('BILL TO', left, y)
-  y += 16
-
-  doc.font('Helvetica-Bold').fontSize(11).fillColor('#1a1a2e')
-  doc.text(order.full_name, left, y)
-  y += 14
-  doc.font('Helvetica').fontSize(10).fillColor('#444')
-  doc.text(order.phone, left, y)
-  y += 14
-  addressLines.forEach(line => {
-    doc.text(line, left, y)
-    y += 14
-  })
-  y += 10
-
-  doc.moveTo(left, y).lineTo(left + pageW, y).strokeColor('#ddd').lineWidth(1).stroke()
-  y += 16
-
-  doc.font('Helvetica-Bold').fontSize(10).fillColor('#888')
-  doc.text(isMulti ? `ORDER ITEMS (${items.length})` : 'ORDER DETAILS', left, y)
-  y += 18
-
-  const colX = [left, left + 180, left + 300, left + 370, left + pageW]
-  const colWidths = [colX[1] - colX[0], colX[2] - colX[1], colX[3] - colX[2], colX[4] - colX[3] - 70, 70]
-  const headers = ['Item', 'Material', 'Color', 'Infill', 'Price']
-  doc.font('Helvetica-Bold').fontSize(8).fillColor('#666')
-  doc.rect(left, y - 4, pageW, 18).fill('#f5f5fa')
-  doc.fillColor('#555')
-  let cx = left + 4
-  headers.forEach((h, i) => {
-    doc.text(h, cx, y, { width: colWidths[i], align: i === headers.length - 1 ? 'right' : 'left' })
-    cx += colWidths[i]
-  })
-  y += 18
-
-  doc.font('Helvetica').fontSize(9).fillColor('#333')
-  items.forEach((item) => {
+  doc.font('Helvetica').fontSize(9)
+  items.forEach((item, idx) => {
     const fileName = item.file_url ? (String(item.file_url).split('/').pop() ?? 'Model') : 'Model'
-    const rowValues = [
+    const rowH = 20
+    if (idx % 2 === 0) {
+      doc.rect(tableLeft, y - 2, tableW, rowH + 2).fill('#fafbfd')
+    }
+    doc.fillColor('#1a1a2e')
+    const rowVals = [
       fileName,
       item.material ?? '',
       item.color ?? '',
       `${item.infill ?? 0}%`,
-      `Rs.${Number(item.price ?? 0).toFixed(0)}`,
+      `${Number(item.layer_height ?? 0).toFixed(2)} mm`,
+      `₹${Number(item.price ?? 0).toFixed(0)}`,
     ]
-    cx = left + 4
-    rowValues.forEach((val, i) => {
-      doc.text(val, cx, y, { width: colWidths[i], align: i === rowValues.length - 1 ? 'right' : 'left' })
-      cx += colWidths[i]
+    colDefs.forEach((col, ci) => {
+      doc.text(rowVals[ci], tableLeft + col.x + 6, y + 3, { width: col.w, align: col.align })
     })
-    doc.moveTo(left, y + 16).lineTo(left + pageW, y + 16).strokeColor('#eee').lineWidth(0.5).stroke()
-    y += 20
+    if (idx < items.length - 1) {
+      doc.moveTo(tableLeft, y + rowH - 1).lineTo(tableLeft + tableW, y + rowH - 1).strokeColor('#eee').lineWidth(0.5).stroke()
+    }
+    y += rowH + 2
   })
+  y += 10
+
+  doc.roundedRect(tableLeft + 240, y, 310, 85, 6)
+  doc.fill('#fff6f0')
+  const summaryStartX = tableLeft + 256
+  let sy = y + 14
+  doc.fillColor('#888').font('Helvetica-Bold').fontSize(8)
+  doc.text('SUMMARY', summaryStartX, sy)
+  sy += 18
 
   const summaryRows = [
-    { label: 'Subtotal', value: `Rs.${subtotal.toFixed(0)}` },
-    { label: 'Delivery Charge', value: totalDelivery === 0 ? 'FREE' : `Rs.${totalDelivery.toFixed(0)}` },
+    { label: 'Subtotal', value: `₹${subtotal.toFixed(0)}` },
+    { label: 'Delivery Charge', value: totalDelivery === 0 ? 'FREE' : `₹${totalDelivery.toFixed(0)}` },
     { label: 'Est. Print Time', value: `${totalTime.toFixed(1)} hr` },
   ]
-  summaryRows.forEach(row => {
-    doc.font('Helvetica-Bold').fontSize(10).fillColor('#1a1a2e')
-    doc.text(row.label, left, y)
-    doc.text(row.value, left, y, { width: pageW, align: 'right' })
-    y += 16
+  doc.fontSize(9)
+  summaryRows.forEach((row) => {
+    doc.fillColor('#555').font('Helvetica').text(row.label, summaryStartX, sy)
+    doc.fillColor('#1a1a2e').font('Helvetica-Bold').text(row.value, summaryStartX, sy, { width: 280, align: 'right' })
+    sy += 16
   })
 
-  doc.moveTo(left, y).lineTo(left + pageW, y).strokeColor('#1a1a2e').lineWidth(2).stroke()
-  y += 14
-  doc.font('Helvetica-Bold').fontSize(14).fillColor('#ff5c1a')
-  doc.text('Total', left, y)
-  doc.text(`Rs.${grandTotal.toFixed(0)}`, left, y, { width: pageW, align: 'right' })
-  y += 30
+  doc.moveTo(summaryStartX, sy).lineTo(summaryStartX + 280, sy).strokeColor('#ff5c1a').lineWidth(1).stroke()
+  sy += 12
+  doc.fillColor('#ff5c1a').font('Helvetica-Bold').fontSize(14)
+  doc.text('Grand Total', summaryStartX, sy)
+  doc.text(`₹${grandTotal.toFixed(0)}`, summaryStartX, sy, { width: 280, align: 'right' })
+  y += 110
 
-  doc.moveTo(left, y).lineTo(left + pageW, y).strokeColor('#ddd').lineWidth(1).stroke()
-  y += 16
-  doc.font('Helvetica').fontSize(8).fillColor('#999')
-  doc.text('Flux3D - 3D Printing Service', left, y, { align: 'center', width: pageW })
+  if (order.notes?.trim()) {
+    y += 6
+    doc.roundedRect(50, y, pageW, 44, 4)
+    doc.fill('#f8f9fc')
+    doc.fillColor('#888').font('Helvetica-Bold').fontSize(8)
+    doc.text('NOTES', 68, y + 10)
+    doc.fillColor('#555').font('Helvetica').fontSize(9)
+    doc.text(order.notes, 68, y + 24)
+    y += 60
+  }
+
+  const remaining = doc.page.height - y
+  if (remaining > 80) {
+    y = doc.page.height - 60
+  } else {
+    y += 20
+  }
+
+  doc.moveTo(50, y).lineTo(50 + pageW, y).strokeColor('#ddd').lineWidth(0.5).stroke()
+  y += 12
+  doc.fillColor('#999').font('Helvetica').fontSize(7)
+  doc.text('Flux3D — 3D Printing Service', 50, y, { align: 'center', width: pageW })
   y += 10
-  doc.text(`${order.order_number ?? order.id} - ${invoiceDate}`, left, y, { align: 'center', width: pageW })
+  doc.text(`${order.order_number ?? order.id} · Generated on ${invoiceDate}`, 50, y, { align: 'center', width: pageW })
 
   doc.end()
   return pdf
