@@ -61,16 +61,22 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
   const MARGIN = 50
   const pageW = doc.page.width - MARGIN * 2
   const rightEdge = doc.page.width - MARGIN
-  const bottomLimit = doc.page.height - 60
+  const pageBottom = doc.page.height - MARGIN
   let y = MARGIN
 
-  const headerH = 80
-  doc.rect(MARGIN, y, pageW, headerH).fill('#0f0f23')
+  function needSpace(pts: number) {
+    if (y + pts > pageBottom) {
+      doc.addPage()
+      y = MARGIN
+    }
+  }
+
+  doc.rect(MARGIN, y, pageW, 80).fill('#0f0f23')
   doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(28)
   doc.text('flux', MARGIN + 18, y + 18, { continued: true })
   doc.fillColor('#ff5c1a').text('3d')
   doc.fillColor('#8899bb').font('Helvetica').fontSize(9)
-  doc.text('3D PRINTING SERVICE', MARGIN + 18, y + 50)
+  doc.text('3D PRINTING SERVICE', MARGIN + 18, y + 50, { continued: false })
 
   const metaX = rightEdge - 190
   const metaW = 170
@@ -83,9 +89,10 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
   const invoiceStatus = rawStatus === 'Completed' ? 'Paid' : rawStatus
   doc.fillColor('#22c55e').font('Helvetica-Bold').fontSize(8)
   doc.text(invoiceStatus.toUpperCase(), metaX, y + 64, { width: metaW, align: 'right' })
-  y += headerH + 20
+  y += 100
 
-  const billH = 64
+  const billH = 84
+  needSpace(billH + 20)
   doc.roundedRect(MARGIN, y, pageW, billH + 20, 6).fill('#f8f9fc')
   doc.fillColor('#0f0f23').font('Helvetica-Bold').fontSize(8)
   doc.text('BILL TO', MARGIN + 18, y + 14)
@@ -111,6 +118,13 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
   const tableW = colDefs.reduce((s, c) => s + c.w, 0)
   const tableLeft = MARGIN
 
+  const itemRows = items.length
+  const tableH = 22 + itemRows * 22 + 12
+  needSpace(tableH)
+  if (y + tableH > pageBottom) {
+    doc.addPage()
+    y = MARGIN
+  }
   doc.roundedRect(tableLeft, y, tableW, 22, 4).fill('#ff5c1a')
   doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(7)
   colDefs.forEach((col) => {
@@ -122,6 +136,7 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
   items.forEach((item, idx) => {
     const fileName = item.file_url ? (String(item.file_url).split('/').pop() ?? 'Model') : 'Model'
     const rowH = 20
+    needSpace(rowH + 2)
     if (idx % 2 === 0) {
       doc.rect(tableLeft, y - 2, tableW, rowH + 2).fill('#fafbfd')
     }
@@ -147,6 +162,7 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
   const summaryW = 200
   const summaryX = rightEdge - summaryW
   const summaryH = 85
+  needSpace(summaryH + 16)
   doc.roundedRect(summaryX, y, summaryW, summaryH, 6).fill('#fff6f0')
   let sy = y + 12
   doc.fillColor('#888').font('Helvetica-Bold').fontSize(8)
@@ -173,6 +189,7 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
   y += summaryH + 16
 
   if (order.notes?.trim()) {
+    needSpace(50)
     doc.roundedRect(MARGIN, y, pageW, 44, 4).fill('#f8f9fc')
     doc.fillColor('#888').font('Helvetica-Bold').fontSize(8)
     doc.text('NOTES', MARGIN + 18, y + 10)
@@ -181,8 +198,7 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
     y += 56
   }
 
-  if (y < bottomLimit) y = bottomLimit
-
+  needSpace(40)
   doc.moveTo(MARGIN, y).lineTo(MARGIN + pageW, y).strokeColor('#ddd').lineWidth(0.5).stroke()
   y += 11
   doc.fillColor('#999').font('Helvetica').fontSize(7)
