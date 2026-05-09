@@ -71,7 +71,8 @@ export default function UploadSection({
         <input
           type="file"
           accept=".stl,.step,.obj,.3mf,.dxf,.dwg"
-          className="absolute inset-0 cursor-pointer opacity-0"
+          className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
+          disabled={uploadState.status === 'uploading'}
           onChange={(event) => handleFiles(event.target.files)}
         />
         <div className="max-w-md">

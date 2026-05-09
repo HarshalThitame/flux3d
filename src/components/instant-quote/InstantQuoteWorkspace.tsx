@@ -371,18 +371,6 @@ function CartEnabledWorkspace({
     setToast({ type: 'success', message: `${selectedModel.fileName} added to cart.` })
   }
 
-  const handleProceedToDelivery = () => {
-    if (!orderDraft) {
-      setToast({
-        type: 'error',
-        message: 'Finish the upload and wait for the quote to complete before continuing to delivery.',
-      })
-      return
-    }
-
-    router.push('/instant-quote/delivery')
-  }
-
   const handleStepClick = (ref: React.RefObject<HTMLDivElement | null>) => {
     const el = ref.current
     if (el) {
@@ -858,7 +846,7 @@ function CartEnabledWorkspace({
                         <button
                           type="button"
                           onClick={handleSaveQuote}
-                          disabled={!selectedModel || savingQuote}
+                          disabled={!selectedModel || savingQuote || uploadState.status === 'uploading'}
                           className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <BookmarkPlus className="h-3.5 w-3.5" />
@@ -1003,7 +991,7 @@ function CartEnabledWorkspace({
                         <button
                           type="button"
                           onClick={handleAddToCart}
-                          disabled={!selectedModel}
+                          disabled={!selectedModel || uploadState.status === 'uploading'}
                           className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                             cartItemCheck
                               ? 'border border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
@@ -1021,16 +1009,6 @@ function CartEnabledWorkspace({
                               Add to Cart
                             </>
                           )}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={handleProceedToDelivery}
-                          disabled={!orderDraft}
-                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition-colors hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <Truck className="h-4 w-4" />
-                          Proceed to Delivery
                         </button>
 
                         {cartItemCheck && (

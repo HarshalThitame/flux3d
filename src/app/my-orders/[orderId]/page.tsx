@@ -9,8 +9,8 @@ import {
   type OrderStatus,
 } from '@/lib/orders'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { cancelOrderAction } from '@/app/my-orders/actions'
 import { DownloadInvoiceButton } from './DownloadInvoiceButton'
+import { CancelOrderButton } from './CancelOrderButton'
 
 type OrderDetailRow = {
   id: string
@@ -135,14 +135,7 @@ export default async function OrderDetailPage({
               </div>
               <div className="flex gap-2">
                 {['pending', 'reviewed', 'approved', 'queued'].includes(row.status) && (
-                  <form action={cancelOrderAction.bind(null, orderId)}>
-                    <button
-                      type="submit"
-                      className="rounded-xl border border-rose-400/30 bg-rose-400/10 px-4 py-2 text-xs font-semibold text-rose-300 transition-all hover:bg-rose-400/20"
-                    >
-                      Cancel Order
-                    </button>
-                  </form>
+                  <CancelOrderButton orderId={orderId} />
                 )}
                 {['shipped', 'completed'].includes(row.status) && (
                   <DownloadInvoiceButton orderId={orderId} />
