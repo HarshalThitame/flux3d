@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       })
 
     if (uploadError) {
-      if (uploadError.message.includes('bucket')) {
+      if (uploadError.message.toLowerCase().includes('bucket')) {
         const { error: bucketError } = await supabase.storage.createBucket(BRANDING_BUCKET, {
           public: true,
           fileSizeLimit: MAX_FILE_SIZE,
