@@ -47,6 +47,7 @@ type OrderRow = {
   infill?: number | null
   layer_height?: number | null
   price?: number | string | null
+  price_per_unit?: number | string | null
   total_price: number | string | null
   quantity?: number | null
   estimated_time?: number | null
@@ -122,6 +123,7 @@ function mapOrderRowToAdminOrder(order: OrderRow): AdminOrder {
       infill: order.infill ?? 20,
       layerHeight: order.layer_height ?? 0.2,
       price: normalizeMoney(order.price),
+      pricePerUnit: normalizeMoney(order.price_per_unit),
       estimatedTime: order.estimated_time ?? 0,
       quantity: order.quantity ?? 1,
       supports: order.supports ?? false,
@@ -146,6 +148,7 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
         infill: row.infill ?? 20,
         layerHeight: row.layer_height ?? 0.2,
         price: normalizeMoney(row.price),
+        pricePerUnit: normalizeMoney(row.price_per_unit),
         estimatedTime: row.estimated_time ?? 0,
         quantity: row.quantity ?? 1,
         supports: row.supports ?? false,
@@ -184,6 +187,7 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
           infill: row.infill ?? 20,
           layerHeight: row.layer_height ?? 0.2,
           price: normalizeMoney(row.price),
+          pricePerUnit: normalizeMoney(row.price_per_unit),
           estimatedTime: row.estimated_time ?? 0,
           quantity: row.quantity ?? 1,
           supports: row.supports ?? false,
@@ -337,7 +341,7 @@ export async function getAdminDashboardData() {
     supabase.from('orders').select('id', { count: 'exact', head: true }).in('status', ['printing', 'approved']),
     supabase
       .from('orders')
-      .select('id, order_number, group_id, file_url, material, color, infill, price, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge')
+      .select('id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge')
       .order('created_at', { ascending: false })
       .limit(10),
     supabase
@@ -412,7 +416,7 @@ export async function getAdminOrdersData() {
   const { data, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, file_url, material, color, infill, quantity, price, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
+      'id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
     )
     .order('created_at', { ascending: false })
 
@@ -436,7 +440,7 @@ export async function updateAdminOrderStatus(groupId: string, status: AdminOrder
   const { data, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, file_url, material, color, infill, quantity, price, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
+      'id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
     )
     .eq('group_id', groupId)
     .order('created_at', { ascending: false })
@@ -581,7 +585,7 @@ export async function getAdminAnalyticsData() {
   const { data, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, file_url, material, color, infill, price, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge, payment_method, user_id'
+      'id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge, payment_method, user_id'
     )
   if (error) throw new Error(error.message)
 

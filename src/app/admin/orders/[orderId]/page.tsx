@@ -181,7 +181,8 @@ export default function AdminOrderDetailPage() {
                       <Spec label="Infill" value={`${item.infill}%`} icon={<Layers className="h-3 w-3" />} />
                       <Spec label="Layer Ht." value={`${item.layerHeight} mm`} icon={<Ruler className="h-3 w-3" />} />
                       <Spec label="Quantity" value={`${item.quantity}`} icon={<Hash className="h-3 w-3" />} />
-                      <Spec label="Price" value={`₹${item.price.toLocaleString('en-IN')}`} icon={<IndianRupee className="h-3 w-3" />} />
+                      <Spec label="Price/Unit" value={`₹${item.pricePerUnit.toLocaleString('en-IN')}`} icon={<IndianRupee className="h-3 w-3" />} />
+                      <Spec label="Total" value={`₹${item.price.toLocaleString('en-IN')}`} icon={<IndianRupee className="h-3 w-3" />} />
                       <Spec label="Est. Time" value={`${item.estimatedTime}h`} icon={<Clock className="h-3 w-3" />} />
                       <Spec label="Supports" value={item.supports ? 'Yes' : 'No'} icon={<ShieldCheck className="h-3 w-3" />} />
                       <Spec label="Post-Process" value={item.postProcessingLevel ?? '—'} icon={<Wrench className="h-3 w-3" />} />

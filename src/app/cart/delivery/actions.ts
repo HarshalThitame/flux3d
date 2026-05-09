@@ -144,23 +144,28 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
 
   const groupId = crypto.randomUUID()
 
-  const orderItems = input.items.map((item) => ({
-    user_id: auth.user.id,
-    group_id: groupId,
-    file_url: normalizeOwnedStoragePath(item.fileUrl, auth.user.id),
-    material: item.material.trim(),
-    color: item.color.trim(),
-    infill: Math.round(normalizeNumber(item.infill, 'infill')),
-    layer_height: normalizeNumber(item.layerHeight, 'layer height'),
-    supports: item.supports,
-    ...trimmedAddress,
-    delivery_charge: deliveryCharge / input.items.length,
-    total_price: item.price + deliveryCharge / input.items.length,
-    price: normalizeNumber(item.price, 'price'),
-    estimated_time: normalizeNumber(item.estimatedTime, 'estimated time'),
-    status: 'pending',
-    notes: `Cart order - ${input.items.length} item(s), ${Math.max(1, Math.floor(item.quantity ?? 1))} pcs. File: ${item.fileName}`,
-  }))
+  const orderItems = input.items.map((item) => {
+    const normalizedQuantity = Math.max(1, Math.floor(Number(item.quantity ?? 1)))
+    return {
+      user_id: auth.user.id,
+      group_id: groupId,
+      file_url: normalizeOwnedStoragePath(item.fileUrl, auth.user.id),
+      material: item.material.trim(),
+      color: item.color.trim(),
+      infill: Math.round(normalizeNumber(item.infill, 'infill')),
+      layer_height: normalizeNumber(item.layerHeight, 'layer height'),
+      supports: item.supports,
+      quantity: normalizedQuantity,
+      ...trimmedAddress,
+      delivery_charge: deliveryCharge / input.items.length,
+      total_price: item.price + deliveryCharge / input.items.length,
+      price: normalizeNumber(item.price, 'price'),
+      price_per_unit: item.price / normalizedQuantity,
+      estimated_time: normalizeNumber(item.estimatedTime, 'estimated time'),
+      status: 'pending',
+      notes: `Cart order - ${input.items.length} item(s), ${normalizedQuantity} pcs. File: ${item.fileName}`,
+    }
+  })
 
   const { data: insertedOrders, error: insertError } = await supabase
     .from('orders')

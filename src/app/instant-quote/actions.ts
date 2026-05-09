@@ -120,6 +120,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
       delivery_charge: deliveryCharge,
       total_price: totalPrice,
       price: basePrice,
+      price_per_unit: basePrice / normalizedQuantity,
       estimated_time: normalizeNumber(input.estimatedTime, 'estimated time'),
       status: 'pending',
       notes: input.notes?.trim() ? input.notes.trim() : null,

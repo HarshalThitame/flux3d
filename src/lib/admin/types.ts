@@ -31,6 +31,7 @@ export type AdminOrderItem = {
   infill: number
   layerHeight: number
   price: number
+  pricePerUnit: number
   estimatedTime: number
   quantity: number
   supports: boolean
