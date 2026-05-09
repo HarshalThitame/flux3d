@@ -50,7 +50,7 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
     landmark: order.landmark ?? '',
   })
 
-  const doc = new PDFDocument({ size: 'A4', margin: 50 })
+  const doc = new PDFDocument({ size: 'A4', margin: 48 })
   const buffers: Buffer[] = []
   doc.on('data', (chunk: Buffer) => buffers.push(chunk))
   const pdf = new Promise<Buffer>((resolve, reject) => {
@@ -58,153 +58,142 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
     doc.on('error', reject)
   })
 
-  const MARGIN = 50
-  const pageW = doc.page.width - MARGIN * 2
-  const rightEdge = doc.page.width - MARGIN
-  const pageBottom = doc.page.height - MARGIN
-  let y = MARGIN
+  const L = 48
+  const R = doc.page.width - L
+  const pageW = R - L
+  const pageB = doc.page.height - L
+  const colW = pageW
+  let y = L
 
-  function needSpace(pts: number) {
-    if (y + pts > pageBottom) {
+  function bail(pts: number) {
+    if (y + pts > pageB) {
       doc.addPage()
-      y = MARGIN
+      y = L
     }
   }
 
-  doc.rect(MARGIN, y, pageW, 80).fill('#0f0f23')
+  const Rs = (n: number) => `Rs.${n.toFixed(0)}`
+
+  doc.rect(L, y, colW, 80).fill('#0f0f23')
   doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(28)
-  doc.text('flux', MARGIN + 18, y + 18, { continued: true })
+  doc.text('flux', L + 18, y + 18, { continued: true })
   doc.fillColor('#ff5c1a').text('3d')
   doc.fillColor('#8899bb').font('Helvetica').fontSize(9)
-  doc.text('3D PRINTING SERVICE', MARGIN + 18, y + 50, { continued: false })
+  doc.text('3D PRINTING SERVICE', L + 18, y + 50)
 
-  const metaX = rightEdge - 190
-  const metaW = 170
+  const metaX = R - 180
   doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(9)
-  doc.text('INVOICE', metaX, y + 18, { width: metaW, align: 'right' })
+  doc.text('INVOICE', metaX, y + 18, { width: 160, align: 'right' })
   doc.fillColor('#8899bb').font('Helvetica').fontSize(8)
-  doc.text(`#${order.order_number ?? order.id}`, metaX, y + 36, { width: metaW, align: 'right' })
-  doc.text(invoiceDate, metaX, y + 50, { width: metaW, align: 'right' })
+  doc.text(`#${order.order_number ?? order.id}`, metaX, y + 36, { width: 160, align: 'right' })
+  doc.text(invoiceDate, metaX, y + 50, { width: 160, align: 'right' })
   const rawStatus = getOrderStatusLabel(order.status as OrderStatus)
   const invoiceStatus = rawStatus === 'Completed' ? 'Paid' : rawStatus
   doc.fillColor('#22c55e').font('Helvetica-Bold').fontSize(8)
-  doc.text(invoiceStatus.toUpperCase(), metaX, y + 64, { width: metaW, align: 'right' })
+  doc.text(invoiceStatus.toUpperCase(), metaX, y + 64, { width: 160, align: 'right' })
   y += 100
 
-  const billH = 84
-  needSpace(billH + 20)
-  doc.roundedRect(MARGIN, y, pageW, billH + 20, 6).fill('#f8f9fc')
+  const addrH = 30 + addressLines.length * 14
+  const billH = Math.max(72, addrH + 10)
+  bail(billH + 24)
+  doc.roundedRect(L, y, colW, billH + 24, 6).fill('#f8f9fc')
   doc.fillColor('#0f0f23').font('Helvetica-Bold').fontSize(8)
-  doc.text('BILL TO', MARGIN + 18, y + 14)
+  doc.text('BILL TO', L + 18, y + 14)
   doc.fillColor('#1a1a2e').font('Helvetica-Bold').fontSize(11)
-  doc.text(order.full_name, MARGIN + 18, y + 28)
+  doc.text(order.full_name, L + 18, y + 28)
   doc.fillColor('#555').font('Helvetica').fontSize(9)
-  doc.text(order.phone, MARGIN + 18, y + 44)
-  const addrX = rightEdge - 200
-  const addrW = 180
+  doc.text(order.phone, L + 18, y + 44)
+  const addrX = R - 8 - 180
   addressLines.forEach((line, i) => {
-    doc.text(line, addrX, y + 10 + i * 14, { width: addrW, align: 'right' })
+    doc.text(line, addrX, y + 12 + i * 14, { width: 180, align: 'right' })
   })
-  y += billH + 38
+  y += billH + 34
 
-  const colDefs = [
-    { x: 0, w: 115, align: 'left' as const, label: 'ITEM' },
-    { x: 115, w: 95, align: 'left' as const, label: 'MATERIAL' },
-    { x: 210, w: 85, align: 'left' as const, label: 'COLOR' },
-    { x: 295, w: 50, align: 'center' as const, label: 'INFILL' },
-    { x: 345, w: 55, align: 'center' as const, label: 'LAYER' },
-    { x: 400, w: 60, align: 'right' as const, label: 'PRICE' },
+  const cols = [
+    { x: 0, w: 145, a: 'left' as const, label: 'ITEM' },
+    { x: 145, w: 100, a: 'left' as const, label: 'MATERIAL' },
+    { x: 245, w: 80, a: 'left' as const, label: 'COLOR' },
+    { x: 325, w: 54, a: 'center' as const, label: 'INFILL' },
+    { x: 379, w: 50, a: 'center' as const, label: 'LAYER' },
+    { x: 429, w: 70, a: 'right' as const, label: 'PRICE' },
   ]
-  const tableW = colDefs.reduce((s, c) => s + c.w, 0)
-  const tableLeft = MARGIN
+  const tw = cols.reduce((s, c) => s + c.w, 0)
 
-  const itemRows = items.length
-  const tableH = 22 + itemRows * 22 + 12
-  needSpace(tableH)
-  if (y + tableH > pageBottom) {
-    doc.addPage()
-    y = MARGIN
-  }
-  doc.roundedRect(tableLeft, y, tableW, 22, 4).fill('#ff5c1a')
+  const rowsH = 22 + items.length * 22 + 16
+  bail(rowsH)
+  doc.roundedRect(L, y, tw, 22, 4).fill('#ff5c1a')
   doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(7)
-  colDefs.forEach((col) => {
-    doc.text(col.label, tableLeft + col.x + 6, y + 6, { width: col.w, align: col.align })
-  })
+  cols.forEach((c) => doc.text(c.label, L + c.x + 6, y + 6, { width: c.w, align: c.a }))
   y += 28
 
   doc.font('Helvetica').fontSize(9)
   items.forEach((item, idx) => {
-    const fileName = item.file_url ? (String(item.file_url).split('/').pop() ?? 'Model') : 'Model'
-    const rowH = 20
-    needSpace(rowH + 2)
-    if (idx % 2 === 0) {
-      doc.rect(tableLeft, y - 2, tableW, rowH + 2).fill('#fafbfd')
-    }
+    const fn = item.file_url ? (String(item.file_url).split('/').pop() ?? 'Model') : 'Model'
+    bail(22)
+    if (idx % 2 === 0) doc.rect(L, y - 2, tw, 22).fill('#fafbfd')
     doc.fillColor('#1a1a2e')
-    const rowVals = [
-      fileName.length > 20 ? fileName.slice(0, 18) + '..' : fileName,
+    const vals = [
+      fn.length > 22 ? fn.slice(0, 20) + '..' : fn,
       item.material ?? '',
       item.color ?? '',
       `${item.infill ?? 0}%`,
       `${Number(item.layer_height ?? 0).toFixed(2)}`,
-      `₹${Number(item.price ?? 0).toFixed(0)}`,
+      Rs(Number(item.price ?? 0)),
     ]
-    colDefs.forEach((col, ci) => {
-      doc.text(rowVals[ci], tableLeft + col.x + 6, y + 3, { width: col.w, align: col.align })
-    })
+    cols.forEach((c, ci) => doc.text(vals[ci], L + c.x + 6, y + 3, { width: c.w, align: c.a }))
     if (idx < items.length - 1) {
-      doc.moveTo(tableLeft, y + rowH - 1).lineTo(tableLeft + tableW, y + rowH - 1).strokeColor('#eee').lineWidth(0.5).stroke()
+      doc.moveTo(L, y + 19).lineTo(L + tw, y + 19).strokeColor('#eee').lineWidth(0.5).stroke()
     }
-    y += rowH + 2
+    y += 22
   })
-  y += 12
+  y += 16
 
-  const summaryW = 200
-  const summaryX = rightEdge - summaryW
-  const summaryH = 85
-  needSpace(summaryH + 16)
-  doc.roundedRect(summaryX, y, summaryW, summaryH, 6).fill('#fff6f0')
-  let sy = y + 12
+  const sw = 200
+  const sx = R - sw
+  const sh = 85
+  bail(sh + 20)
+  doc.roundedRect(sx, y, sw, sh, 6).fill('#fff6f0')
+  let sy = y + 14
   doc.fillColor('#888').font('Helvetica-Bold').fontSize(8)
-  doc.text('SUMMARY', summaryX + 14, sy)
-  sy += 18
+  doc.text('SUMMARY', sx + 14, sy)
+  sy += 20
 
-  const summaryRows = [
-    { label: 'Subtotal', value: `₹${subtotal.toFixed(0)}` },
-    { label: 'Delivery', value: totalDelivery === 0 ? 'FREE' : `₹${totalDelivery.toFixed(0)}` },
-    { label: 'Print Time', value: `${totalTime.toFixed(1)} hr` },
+  const srows = [
+    { l: 'Subtotal', v: Rs(subtotal) },
+    { l: 'Delivery', v: totalDelivery === 0 ? 'FREE' : Rs(totalDelivery) },
+    { l: 'Print Time', v: `${totalTime.toFixed(1)} hr` },
   ]
   doc.fontSize(9)
-  summaryRows.forEach((row) => {
-    doc.fillColor('#555').font('Helvetica').text(row.label, summaryX + 14, sy)
-    doc.fillColor('#1a1a2e').font('Helvetica-Bold').text(row.value, summaryX + 14, sy, { width: summaryW - 28, align: 'right' })
-    sy += 15
+  srows.forEach((r) => {
+    doc.fillColor('#555').font('Helvetica').text(r.l, sx + 14, sy)
+    doc.fillColor('#1a1a2e').font('Helvetica-Bold').text(r.v, sx + 14, sy, { width: sw - 28, align: 'right' })
+    sy += 16
   })
 
-  doc.moveTo(summaryX + 14, sy).lineTo(summaryX + summaryW - 14, sy).strokeColor('#ff5c1a').lineWidth(1).stroke()
-  sy += 10
+  doc.moveTo(sx + 14, sy).lineTo(sx + sw - 14, sy).strokeColor('#ff5c1a').lineWidth(1).stroke()
+  sy += 11
   doc.fillColor('#ff5c1a').font('Helvetica-Bold').fontSize(13)
-  doc.text('Grand Total', summaryX + 14, sy)
-  doc.text(`₹${grandTotal.toFixed(0)}`, summaryX + 14, sy, { width: summaryW - 28, align: 'right' })
-  y += summaryH + 16
+  doc.text('Grand Total', sx + 14, sy)
+  doc.text(Rs(grandTotal), sx + 14, sy, { width: sw - 28, align: 'right' })
+  y += sh + 20
 
   if (order.notes?.trim()) {
-    needSpace(50)
-    doc.roundedRect(MARGIN, y, pageW, 44, 4).fill('#f8f9fc')
+    bail(52)
+    doc.roundedRect(L, y, colW, 44, 4).fill('#f8f9fc')
     doc.fillColor('#888').font('Helvetica-Bold').fontSize(8)
-    doc.text('NOTES', MARGIN + 18, y + 10)
+    doc.text('NOTES', L + 18, y + 10)
     doc.fillColor('#555').font('Helvetica').fontSize(9)
-    doc.text(order.notes, MARGIN + 18, y + 24, { width: pageW - 36 })
+    doc.text(order.notes, L + 18, y + 24, { width: colW - 36 })
     y += 56
   }
 
-  needSpace(40)
-  doc.moveTo(MARGIN, y).lineTo(MARGIN + pageW, y).strokeColor('#ddd').lineWidth(0.5).stroke()
-  y += 11
+  bail(36)
+  doc.moveTo(L, y).lineTo(R, y).strokeColor('#ddd').lineWidth(0.5).stroke()
+  y += 12
   doc.fillColor('#999').font('Helvetica').fontSize(7)
-  doc.text('Flux3D — 3D Printing Service', MARGIN, y, { align: 'center', width: pageW })
+  doc.text('Flux3D — 3D Printing Service', L, y, { align: 'center', width: colW })
   y += 10
-  doc.text(`${order.order_number ?? order.id} · Generated on ${invoiceDate}`, MARGIN, y, { align: 'center', width: pageW })
+  doc.text(`${order.order_number ?? order.id} · Generated on ${invoiceDate}`, L, y, { align: 'center', width: colW })
 
   doc.end()
   return pdf
