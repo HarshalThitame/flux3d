@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Download, Package2, FileIcon, Layers, Weight, Clock, IndianRupee, Hash, Palette, Cuboid } from 'lucide-react'
+import { ArrowLeft, Download, Package2, FileIcon, Layers, Clock, IndianRupee, Hash, Palette, Cuboid, Ruler, ShieldCheck, Wrench } from 'lucide-react'
 import SkeletonBlock from '@/components/admin/SkeletonBlock'
 import StatusBadge from '@/components/admin/StatusBadge'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
@@ -179,10 +179,12 @@ export default function AdminOrderDetailPage() {
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                       <Spec label="Color" value={item.color} icon={<Palette className="h-3 w-3" />} />
                       <Spec label="Infill" value={`${item.infill}%`} icon={<Layers className="h-3 w-3" />} />
+                      <Spec label="Layer Ht." value={`${item.layerHeight} mm`} icon={<Ruler className="h-3 w-3" />} />
                       <Spec label="Quantity" value={`${item.quantity}`} icon={<Hash className="h-3 w-3" />} />
                       <Spec label="Price" value={`₹${item.price.toLocaleString('en-IN')}`} icon={<IndianRupee className="h-3 w-3" />} />
                       <Spec label="Est. Time" value={`${item.estimatedTime}h`} icon={<Clock className="h-3 w-3" />} />
-                      {item.weight != null && <Spec label="Weight" value={`${item.weight}g`} icon={<Weight className="h-3 w-3" />} />}
+                      <Spec label="Supports" value={item.supports ? 'Yes' : 'No'} icon={<ShieldCheck className="h-3 w-3" />} />
+                      <Spec label="Post-Process" value={item.postProcessingLevel ?? '—'} icon={<Wrench className="h-3 w-3" />} />
                       <Spec label="File" value={item.fileName} icon={<FileIcon className="h-3 w-3" />} />
                     </div>
                   </div>

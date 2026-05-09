@@ -45,20 +45,24 @@ type OrderRow = {
   material: string | null
   color?: string | null
   infill?: number | null
+  layer_height?: number | null
   price?: number | string | null
   total_price: number | string | null
-  weight?: number | string | null
   quantity?: number | null
   estimated_time?: number | null
+  supports?: boolean | null
+  post_processing_level?: string | null
   status: AdminOrder['status']
   created_at: string | null
   notes: string | null
   full_name: string | null
   phone?: string | null
   address_line1?: string | null
+  address_line2?: string | null
   city?: string | null
   state?: string | null
   pincode?: string | null
+  landmark?: string | null
   delivery_charge?: number | string | null
 }
 
@@ -116,10 +120,12 @@ function mapOrderRowToAdminOrder(order: OrderRow): AdminOrder {
       material: order.material ?? 'Unknown material',
       color: order.color ?? '',
       infill: order.infill ?? 20,
+      layerHeight: order.layer_height ?? 0.2,
       price: normalizeMoney(order.price),
       estimatedTime: order.estimated_time ?? 0,
-      weight: typeof order.weight === 'number' ? order.weight : null,
       quantity: order.quantity ?? 1,
+      supports: order.supports ?? false,
+      postProcessingLevel: order.post_processing_level ?? null,
       status: order.status,
     }],
   }
@@ -138,10 +144,12 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
         material: row.material ?? 'Unknown material',
         color: row.color ?? '',
         infill: row.infill ?? 20,
+        layerHeight: row.layer_height ?? 0.2,
         price: normalizeMoney(row.price),
         estimatedTime: row.estimated_time ?? 0,
-        weight: typeof row.weight === 'number' ? row.weight : null,
         quantity: row.quantity ?? 1,
+        supports: row.supports ?? false,
+        postProcessingLevel: row.post_processing_level ?? null,
         status: row.status,
       })
       existing.totalPrice += normalizeMoney(row.total_price)
@@ -174,10 +182,12 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
           material: row.material ?? 'Unknown material',
           color: row.color ?? '',
           infill: row.infill ?? 20,
+          layerHeight: row.layer_height ?? 0.2,
           price: normalizeMoney(row.price),
           estimatedTime: row.estimated_time ?? 0,
-          weight: typeof row.weight === 'number' ? row.weight : null,
           quantity: row.quantity ?? 1,
+          supports: row.supports ?? false,
+          postProcessingLevel: row.post_processing_level ?? null,
           status: row.status,
         }],
       })

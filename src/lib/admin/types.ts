@@ -29,10 +29,12 @@ export type AdminOrderItem = {
   material: string
   color: string
   infill: number
+  layerHeight: number
   price: number
   estimatedTime: number
-  weight: number | null
   quantity: number
+  supports: boolean
+  postProcessingLevel: string | null
   status: OrderStatus
 }
 
