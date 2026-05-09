@@ -306,7 +306,7 @@ export default function AdminMaterialsPage() {
                         type="number"
                         step="0.01"
                         value={formData.density}
-                        onChange={(e) => setFormData({ ...formData, density: parseFloat(e.target.value) })}
+                        onChange={(e) => setFormData({ ...formData, density: parseFloat(e.target.value) || 0 })}
                         className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
                       />
                     </div>
@@ -316,7 +316,7 @@ export default function AdminMaterialsPage() {
                         type="number"
                         step="0.01"
                         value={formData.pricePerGram}
-                        onChange={(e) => setFormData({ ...formData, pricePerGram: parseFloat(e.target.value) })}
+                        onChange={(e) => setFormData({ ...formData, pricePerGram: parseFloat(e.target.value) || 0 })}
                         className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
                       />
                     </div>
@@ -325,7 +325,7 @@ export default function AdminMaterialsPage() {
                       <input
                         type="number"
                         value={formData.machineRate}
-                        onChange={(e) => setFormData({ ...formData, machineRate: parseFloat(e.target.value) })}
+                        onChange={(e) => setFormData({ ...formData, machineRate: parseFloat(e.target.value) || 0 })}
                         className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
                       />
                     </div>
@@ -335,7 +335,7 @@ export default function AdminMaterialsPage() {
                         type="number"
                         step="0.01"
                         value={formData.multiplier}
-                        onChange={(e) => setFormData({ ...formData, multiplier: parseFloat(e.target.value) })}
+                        onChange={(e) => setFormData({ ...formData, multiplier: parseFloat(e.target.value) || 0 })}
                         className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
                       />
                     </div>

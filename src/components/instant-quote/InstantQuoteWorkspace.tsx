@@ -87,21 +87,19 @@ function CartEnabledWorkspace({
   const router = useRouter()
   const { addItem, isInCart } = useCart()
   const supabaseEnabled = hasSupabaseConfig()
-  const defaultMaterial = materials[0] ?? getMaterialById('pla-plus', materials)
-  const [initialQuoteId] = useState(() => {
-    if (typeof window === 'undefined') {
-      return ''
-    }
+  const defaultMaterial = getMaterialById('pla', materials) ?? materials[0] ?? getMaterialById('pla-plus', materials)
+  const [initialQuoteId, setInitialQuoteId] = useState('')
 
+  useEffect(() => {
     const stored = sessionStorage.getItem('flux3d-quote-id')
     if (stored) {
-      return stored
+      setInitialQuoteId(stored)
+      return
     }
-
     const newId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
     sessionStorage.setItem('flux3d-quote-id', newId)
-    return newId
-  })
+    setInitialQuoteId(newId)
+  }, [])
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedModel, setSelectedModel] = useState<ParsedModel | null>(null)
@@ -114,26 +112,7 @@ function CartEnabledWorkspace({
     postProcessingLevel: 'sanded',
     supports: false,
   }
-  const [config, setConfig] = useState<QuoteConfig>(() => {
-    if (typeof window === 'undefined') {
-      return defaultConfig
-    }
-
-    const raw = sessionStorage.getItem(WORKSPACE_STORAGE_KEY)
-    if (!raw) {
-      return defaultConfig
-    }
-
-    try {
-      const parsed = JSON.parse(raw) as { config?: QuoteConfig }
-      return {
-        ...defaultConfig,
-        ...parsed.config,
-      }
-    } catch {
-      return defaultConfig
-    }
-  })
+  const [config, setConfig] = useState<QuoteConfig>(defaultConfig)
   const [uploadState, setUploadState] = useState<UploadState>(initialUploadState)
   const [viewerLoading, setViewerLoading] = useState(false)
   const [fileError, setFileError] = useState<string | null>(null)
@@ -144,6 +123,17 @@ function CartEnabledWorkspace({
   const viewerRef = useRef<HTMLDivElement>(null)
   const materialRef = useRef<HTMLDivElement>(null)
   const settingsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const raw = sessionStorage.getItem(WORKSPACE_STORAGE_KEY)
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as { config?: QuoteConfig }
+        setConfig((prev) => ({ ...prev, ...parsed.config }))
+      } catch { /* ignore */ }
+    }
+  }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined') return

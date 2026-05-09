@@ -60,10 +60,11 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
           const data = await res.json()
           setMaterials(data)
           if (data.length > 0) {
+            const defaultMaterial = getMaterialById('pla', data) ?? data[0]
             setConfig(prev => ({
               ...prev,
-              materialId: data[0].id,
-              color: data[0].colors[0]?.name ?? '',
+              materialId: defaultMaterial.id,
+              color: defaultMaterial.colors[0]?.name ?? '',
             }))
           }
         }

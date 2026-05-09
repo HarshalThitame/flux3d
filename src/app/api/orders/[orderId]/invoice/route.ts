@@ -214,7 +214,7 @@ export async function GET(
     }
 
     const pdf = await generatePdf(row, items)
-    const filename = `invoice-${order.order_number ?? order.id}.pdf`
+    const filename = `${order.id}.pdf`
 
     return new NextResponse(new Uint8Array(pdf), {
       headers: {

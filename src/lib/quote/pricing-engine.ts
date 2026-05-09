@@ -65,21 +65,38 @@ export function calculateInstantQuote(
   }
 
   const quantity = Math.max(1, Math.floor(config.quantity || 1))
-
   const scaledVolumeCm3 = model.volumeMm3 / 1000
+  // --- Weight Calculation ---
 
-  // Treat the parsed geometry volume as the solid reference weight for a single unit.
+  // Shell accounts for ~20% of volume, infill fills the rest
+  const infillFactor = 0.2 + 0.8 * (config.infill / 100)
+  // Supports add ~12% extra material when enabled
+  const supportFactor = config.supports ? 1.12 : 1
+
+  // Solid reference weight (100% infill, no supports)
   const baseWeightGrams = scaledVolumeCm3 * material.density
-  const infillMultiplier = 0.6 + 0.4 * (config.infill / 100)
-  const materialUsageGramsPerUnit = baseWeightGrams * infillMultiplier
-  const materialUsageGramsTotal = materialUsageGramsPerUnit * quantity
+  // Effective weight per unit with infill, supports, and material multiplier
+  const materialWeightGramsPerUnit = baseWeightGrams * infillFactor * material.multiplier * supportFactor
+  // Support portion of the weight
+  const supportWeightGramsPerUnit = config.supports
+    ? materialWeightGramsPerUnit * (0.12 / 1.12)
+    : 0
+
+  const materialWeightGramsTotal = materialWeightGramsPerUnit * quantity
+  const supportWeightGramsTotal = supportWeightGramsPerUnit * quantity
 
   const materialRatePerKg = material.pricePerGram * 1000
-  const materialCostPerUnit = (materialUsageGramsPerUnit / 1000) * materialRatePerKg * 1.15
+  const materialCostPerUnit = (materialWeightGramsPerUnit / 1000) * materialRatePerKg * 1.15
   const materialCost = materialCostPerUnit * quantity
+  const supportCost = config.supports ? (supportWeightGramsTotal * material.pricePerGram) : 0
 
-  const basePrintTimeMinutesPerUnit = (materialUsageGramsPerUnit / 14.5) * 60
-  const estimatedMinutesPerUnit = basePrintTimeMinutesPerUnit * (0.2 / layerHeight.value)
+  // --- Time Calculation ---
+
+  // Base print time derived only from the material weight
+  const basePrintTimeMinutesPerUnit = (materialWeightGramsPerUnit / 14.5) * 60
+  // Layer height multiplier required by the pricing rules
+  const layerHeightMultiplier = 0.2 / layerHeight.value
+  const estimatedMinutesPerUnit = basePrintTimeMinutesPerUnit * layerHeightMultiplier
   const estimatedMinutes = estimatedMinutesPerUnit * quantity
   const estimatedHours = estimatedMinutes / 60
 
@@ -108,10 +125,10 @@ export function calculateInstantQuote(
     scaledVolumeCm3,
     quantity,
     baseWeightGrams,
-    infillMultiplier,
-    materialUsageGramsPerUnit,
-    materialWeightGrams: materialUsageGramsTotal,
-    supportWeightGrams: 0,
+    infillMultiplier: infillFactor,
+    materialUsageGramsPerUnit: materialWeightGramsPerUnit,
+    materialWeightGrams: materialWeightGramsTotal,
+    supportWeightGrams: supportWeightGramsTotal,
     materialRatePerKg,
     machineRatePerHour,
     basePrintTimeMinutesPerUnit,
@@ -125,7 +142,7 @@ export function calculateInstantQuote(
     timeCost: machineCost,
     labourCost: postProcessingCost,
     setupCost: postProcessingCost,
-    supportCost: 0,
+    supportCost,
     postProcessingLevel,
     postProcessingCostPerUnit,
     subtotal,

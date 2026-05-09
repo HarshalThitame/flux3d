@@ -9,6 +9,7 @@ import { useCart } from '@/lib/cart/context'
 import type { AppUserProfile } from '@/lib/auth/server'
 import EmptyState from '@/components/admin/EmptyState'
 import type { QuoteMaterial } from '@/lib/quote/types'
+import { formatDurationMinutes } from '@/lib/quote/pricing-engine'
 
 type CartClientProps = {
   user: AppUserProfile | null
@@ -275,7 +276,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
 
                         <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Print Time</div>
-                           <div className="mt-1 text-sm font-medium text-white">{(item.estimatedTime ?? 0).toFixed(1)} hr</div>
+                           <div className="mt-1 text-sm font-medium text-white">{formatDurationMinutes((item.estimatedTime ?? 0) * 60)}</div>
                         </div>
                       </div>
 
@@ -311,10 +312,27 @@ export default function CartClient({ user, materials }: CartClientProps) {
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-end gap-2 md:w-40">
-                      <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">Price</div>
-                      <div className="font-[var(--font-syne)] text-3xl font-bold text-white">
-                        ₹{item.price.toFixed(0)}
+                    <div className="flex flex-col items-end gap-3 md:w-44">
+                      <div className="w-full">
+                        <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Quantity</div>
+                        <input
+                          type="number"
+                          min={1}
+                          max={99}
+                          value={item.quantity ?? 1}
+                          onChange={(e) => {
+                            const qty = Math.max(1, Math.floor(Number(e.target.value) || 1))
+                            const unitPrice = (item.price ?? 0) / Math.max(1, (item.quantity ?? 1))
+                            updateItem(item.addedAt ?? '', { quantity: qty, price: unitPrice * qty })
+                          }}
+                          className="mt-1 w-full rounded-lg border border-white/8 bg-white/[0.02] px-2.5 py-1.5 text-right text-sm font-medium text-white outline-none"
+                        />
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">Price</div>
+                        <div className="font-[var(--font-syne)] text-3xl font-bold text-white">
+                          ₹{item.price.toFixed(0)}
+                        </div>
                       </div>
                     </div>
                   </div>
