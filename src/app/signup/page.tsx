@@ -1,3 +1,5 @@
+import type { Metadata } from 'next'
+import { getSettings } from '@/lib/settings'
 import { redirect } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import AuthShell from '@/components/auth/AuthShell'
@@ -7,6 +9,14 @@ import { normalizeNextPath } from '@/lib/auth/redirect'
 
 type SignupPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings()
+  return {
+    title: `${settings.businessName} - Create Account`,
+    description: settings.businessDescription || 'Create your account to save quotes and manage orders.',
+  }
 }
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {

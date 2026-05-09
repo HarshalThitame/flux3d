@@ -2,8 +2,27 @@
 
 import Link from 'next/link'
 import { Mail, Phone, MapPin, Clock, Camera, Users, Globe, Send } from 'lucide-react'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 export default function FooterSection() {
+  const { settings } = useBusinessSettings()
+
+  const socialLinks = [
+    { icon: Camera, href: settings.instagramUrl, label: 'Instagram' },
+    { icon: Users, href: settings.youtubeUrl, label: 'YouTube' },
+    { icon: Globe, href: settings.linkedinUrl, label: 'LinkedIn' },
+    { icon: Send, href: settings.twitterUrl, label: 'Twitter' },
+  ].filter(s => s.href)
+
+  const addressParts = [
+    settings.addressLine1,
+    settings.addressLine2,
+    settings.city && settings.state ? `${settings.city}, ${settings.state}` : '',
+    settings.postalCode,
+  ].filter(Boolean).join(' — ')
+
+  const businessYear = new Date().getFullYear()
+
   return (
     <footer className="relative border-t border-[rgba(255,255,255,0.07)] bg-[#050810]">
       <div className="max-w-[1200px] mx-auto px-6 py-16">
@@ -12,30 +31,27 @@ export default function FooterSection() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <div className="font-[var(--font-syne)] text-2xl font-extrabold text-white mb-4">
-              flux<span className="text-[#FF5C1A]">3d</span>
+              <span style={{ color: 'var(--primary, #FF5C1A)' }}>{settings.businessName}</span>
             </div>
             <p className="text-sm text-[#7a82a0] leading-[1.7] max-w-[320px] mb-6">
-              Precision 3D printing for every need — industrial, architectural, medical, student, creator, and corporate. Made in India. Delivered across India.
+              {settings.businessDescription || `Precision 3D printing for every need — industrial, architectural, medical, student, creator, and corporate. Made in India. Delivered across India.`}
             </p>
 
             {/* Social */}
-            <div className="flex items-center gap-3">
-              {[
-                 { icon: Camera, href: 'https://instagram.com/flux3d', label: 'Instagram' },
-                 { icon: Users, href: 'https://youtube.com/@flux3d', label: 'YouTube' },
-                 { icon: Globe, href: 'https://linkedin.com/company/flux3d', label: 'LinkedIn' },
-                 { icon: Send, href: 'https://twitter.com/flux3d', label: 'Twitter' }
-               ].map((social, i) => (
-                <a
-                  key={i}
-                  href={social.href}
-                  aria-label={social.label}
-                  className="w-10 h-10 rounded-lg bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.07)] flex items-center justify-center text-[#7a82a0] hover:text-[#FF5C1A] hover:border-[rgba(255,92,26,0.3)] transition-colors"
-                >
-                  <social.icon className="w-5 h-5" />
-                </a>
-              ))}
-            </div>
+            {socialLinks.length > 0 && (
+              <div className="flex items-center gap-3">
+                {socialLinks.map((social, i) => (
+                  <a
+                    key={i}
+                    href={social.href}
+                    aria-label={social.label}
+                    className="w-10 h-10 rounded-lg bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.07)] flex items-center justify-center text-[#7a82a0] hover:text-[#FF5C1A] hover:border-[rgba(255,92,26,0.3)] transition-colors"
+                  >
+                    <social.icon className="w-5 h-5" />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Services */}
@@ -57,7 +73,7 @@ export default function FooterSection() {
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</h3>
             <ul className="space-y-2">
                 {[
-                  { label: 'About Flux 3D', href: '/about' },
+                  { label: `About ${settings.businessName}`, href: '/about' },
                   { label: 'Our Technology', href: '/#technology' },
                   { label: 'Gallery', href: '/gallery' },
                   { label: 'Pricing', href: '/pricing' },
@@ -77,22 +93,30 @@ export default function FooterSection() {
           <div>
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Contact</h3>
             <ul className="space-y-3">
-              <li className="flex items-start gap-2 text-sm text-[#7a82a0]">
-                <MapPin className="w-4 h-4 mt-0.5 text-[#FF5C1A]" />
-                Mumbai, Maharashtra — 400053
-              </li>
-              <li className="flex items-center gap-2 text-sm text-[#7a82a0]">
-                <Phone className="w-4 h-4 text-[#FF5C1A]" />
-                +91 96230 23480
-              </li>
-              <li className="flex items-center gap-2 text-sm text-[#7a82a0]">
-                <Mail className="w-4 h-4 text-[#FF5C1A]" />
-                hello@flux3d.in
-              </li>
-              <li className="flex items-center gap-2 text-sm text-[#7a82a0]">
-                <Clock className="w-4 h-4 text-[#FF5C1A]" />
-                Mon–Sat: 9 AM – 8 PM IST
-              </li>
+              {(settings.addressLine1 || settings.city) && (
+                <li className="flex items-start gap-2 text-sm text-[#7a82a0]">
+                  <MapPin className="w-4 h-4 mt-0.5 text-[#FF5C1A]" />
+                  {addressParts || 'Mumbai, Maharashtra — 400053'}
+                </li>
+              )}
+              {settings.primaryPhone && (
+                <li className="flex items-center gap-2 text-sm text-[#7a82a0]">
+                  <Phone className="w-4 h-4 text-[#FF5C1A]" />
+                  {settings.primaryPhone}
+                </li>
+              )}
+              {settings.primaryEmail && (
+                <li className="flex items-center gap-2 text-sm text-[#7a82a0]">
+                  <Mail className="w-4 h-4 text-[#FF5C1A]" />
+                  {settings.primaryEmail}
+                </li>
+              )}
+              {settings.businessHours && (
+                <li className="flex items-center gap-2 text-sm text-[#7a82a0]">
+                  <Clock className="w-4 h-4 text-[#FF5C1A]" />
+                  {settings.businessHours}
+                </li>
+              )}
             </ul>
           </div>
         </div>
@@ -128,7 +152,7 @@ export default function FooterSection() {
 
         {/* Bottom */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#7a82a0]">
-          <p>© 2025 Flux 3D Private Limited · All Rights Reserved</p>
+          <p>&copy; {businessYear} {settings.legalBusinessName || settings.businessName} &middot; All Rights Reserved</p>
           <div className="flex items-center gap-4">
              <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
              <Link href="/terms-of-service" className="hover:text-white transition-colors">Terms of Service</Link>
@@ -139,7 +163,7 @@ export default function FooterSection() {
 
         {/* SEO footer text */}
         <p className="mt-8 text-[10px] text-[#4a5070] leading-[1.6] text-center">
-           Flux 3D provides professional 3D printing services in Mumbai, Bangalore, Hyderabad, Chennai, Delhi and across India. Specializing in FDM and resin 3D printing for industrial, architectural, medical, student, and corporate clients. Printed on Bambu Lab P2S. Starting at ₹99.
+           {settings.businessName} provides professional 3D printing services across India. Specializing in FDM and resin 3D printing for industrial, architectural, medical, student, and corporate clients. Starting at &brvbar;99.
         </p>
       </div>
     </footer>

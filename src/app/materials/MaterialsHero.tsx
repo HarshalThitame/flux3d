@@ -5,6 +5,7 @@ import { useInView } from 'framer-motion'
 import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Layers, MessageCircle, ChevronDown } from 'lucide-react'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 function useParticles(count: number) {
   const [particles, setParticles] = useState<Array<{
@@ -33,6 +34,7 @@ function useParticles(count: number) {
 }
 
 export default function MaterialsHero() {
+  const { settings } = useBusinessSettings()
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
   const particles = useParticles(20)
@@ -117,7 +119,7 @@ export default function MaterialsHero() {
           className="flex items-center gap-2 flex-wrap"
         >
           <a
-            href="https://wa.me/919623023480?text=Hi%20Flux3D!%20I'm%20not%20sure%20which%20material%20to%20choose%20for%20my%20project."
+            href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}?text=Hi%20${encodeURIComponent(settings.businessName || 'Flux3D')}!%20I'm%20not%20sure%20which%20material%20to%20choose%20for%20my%20project.`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-full border border-[#25D366]/30 bg-[#25D366]/10 px-5 py-2.5 text-sm font-medium text-[#25D366] transition-all hover:bg-[#25D366]/20 hover:border-[#25D366]/50"

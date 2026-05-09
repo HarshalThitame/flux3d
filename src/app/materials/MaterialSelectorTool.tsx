@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
 import { useRef, useState } from 'react'
 import { MessageCircle } from 'lucide-react'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 const questions = [
   {
@@ -21,6 +22,7 @@ const questions = [
 ]
 
 export default function MaterialSelectorTool() {
+  const { settings } = useBusinessSettings()
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
   const [answers, setAnswers] = useState<Record<number, string>>({})
@@ -110,7 +112,7 @@ export default function MaterialSelectorTool() {
               {getRecommendation()}
             </p>
             <a
-              href="https://wa.me/919623023480?text=Hi%20Flux3D!%20I'd%20like%20a%20quote%20for%20a%20project."
+              href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}?text=Hi%20${encodeURIComponent(settings.businessName || 'Flux3D')}!%20I'd%20like%20a%20quote%20for%20a%20project.`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-xl bg-[#25D366]/15 border border-[#25D366]/30 px-6 py-3 text-sm font-semibold text-[#25D366] transition-all hover:bg-[#25D366]/25"

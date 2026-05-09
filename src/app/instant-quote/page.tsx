@@ -1,28 +1,32 @@
 import type { Metadata } from 'next'
+import { getSettings } from '@/lib/settings'
 import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
 import { getCurrentUserProfile } from '@/lib/auth/server'
 import { getPublicQuoteMaterials } from '@/lib/public-materials'
 import { absoluteUrl } from '@/lib/site'
 
-export const metadata: Metadata = {
-  title: 'Instant 3D Printing Quote Dashboard',
-  description:
-    'Upload STL, OBJ, or 3MF files, inspect the model in 3D, tune print settings, and review a live production quote in a structured dashboard layout.',
-  alternates: {
-    canonical: '/instant-quote',
-  },
-  openGraph: {
-    title: 'Flux3D Instant Quote Dashboard',
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings()
+  return {
+    title: `${settings.businessName} — Instant 3D Printing Quote Dashboard`,
     description:
-      'Structured upload, 3D preview, material controls, and real-time pricing for 3D printing jobs.',
-    url: absoluteUrl('/instant-quote'),
-  },
-  twitter: {
-    title: 'Flux3D Instant Quote Dashboard',
-    description:
-      'Structured upload, 3D preview, material controls, and real-time pricing for 3D printing jobs.',
-  },
+      settings.businessDescription || 'Upload STL, OBJ, or 3MF files, inspect the model in 3D, tune print settings, and review a live production quote in a structured dashboard layout.',
+    alternates: {
+      canonical: '/instant-quote',
+    },
+    openGraph: {
+      title: `${settings.businessName} — Instant Quote Dashboard`,
+      description:
+        settings.businessDescription || 'Structured upload, 3D preview, material controls, and real-time pricing for 3D printing jobs.',
+      url: absoluteUrl('/instant-quote'),
+    },
+    twitter: {
+      title: `${settings.businessName} — Instant Quote Dashboard`,
+      description:
+        settings.businessDescription || 'Structured upload, 3D preview, material controls, and real-time pricing for 3D printing jobs.',
+    },
+  }
 }
 
 const InstantQuoteWorkspace = dynamic(

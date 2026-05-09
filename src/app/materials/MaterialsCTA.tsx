@@ -5,8 +5,10 @@ import { useInView } from 'framer-motion'
 import { useRef } from 'react'
 import Link from 'next/link'
 import { ArrowRight, MessageCircle, Mail, Check } from 'lucide-react'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 export default function MaterialsCTA() {
+  const { settings } = useBusinessSettings()
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
 
@@ -33,7 +35,7 @@ export default function MaterialsCTA() {
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
           <a
-            href="https://wa.me/919623023480?text=Hi%20Flux3D!%20I%20need%20help%20choosing%20a%20material%20for%20my%20project."
+            href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}?text=Hi%20${encodeURIComponent(settings.businessName || 'Flux3D')}!%20I%20need%20help%20choosing%20a%20material%20for%20my%20project.`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 px-8 py-3.5 text-sm font-medium text-[#25D366] transition-all hover:bg-[#25D366]/20"
@@ -45,8 +47,8 @@ export default function MaterialsCTA() {
 
         <div className="flex items-center justify-center gap-2 mb-6">
           <Mail className="w-4 h-4 text-[#7a82a0]" />
-          <a href="mailto:hello@flux3d.in" className="text-sm text-[#7a82a0] hover:text-white transition-colors">
-            hello@flux3d.in
+          <a href={`mailto:${settings.primaryEmail || 'hello@flux3d.in'}`} className="text-sm text-[#7a82a0] hover:text-white transition-colors">
+            {settings.primaryEmail || 'hello@flux3d.in'}
           </a>
         </div>
 

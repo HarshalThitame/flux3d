@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { getSettings } from '@/lib/settings'
 import Link from 'next/link'
 import { ArrowRight, Gift, Home, Joystick, Package, Sparkles } from 'lucide-react'
 import Navbar from '@/components/Navbar'
@@ -27,20 +28,23 @@ const productCategories = [
   },
 ]
 
-export const metadata: Metadata = {
-  title: 'Pre-Made 3D Printed Products | Flux 3D',
-  description:
-    'Browse ready-to-order 3D printed products from Flux 3D, including gaming accessories, desk utilities, home decor, and personalized gifts.',
-  alternates: {
-    canonical: '/pre-made-products',
-  },
-  openGraph: {
-    title: 'Pre-Made 3D Printed Products | Flux 3D',
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings()
+  return {
+    title: `${settings.businessName} — Pre-Made 3D Printed Products`,
     description:
-      'Ready-to-order 3D printed products for desks, gaming setups, gifts, and home decor.',
-    url: absoluteUrl('/pre-made-products'),
-    type: 'website',
-  },
+      settings.businessDescription || 'Browse ready-to-order 3D printed products from Flux 3D, including gaming accessories, desk utilities, home decor, and personalized gifts.',
+    alternates: {
+      canonical: '/pre-made-products',
+    },
+    openGraph: {
+      title: `${settings.businessName} — Pre-Made 3D Printed Products`,
+      description:
+        settings.businessDescription || 'Ready-to-order 3D printed products for desks, gaming setups, gifts, and home decor.',
+      url: absoluteUrl('/pre-made-products'),
+      type: 'website',
+    },
+  }
 }
 
 export default function PreMadeProductsPage() {

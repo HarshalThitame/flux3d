@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
 import { useRef, useEffect, useState } from 'react'
 import { ArrowRight, Sparkles, MessageCircle, Mail, Check } from 'lucide-react'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 function FloatingOrbs() {
   const [orbs, setOrbs] = useState<Array<{ id: number; x: number; y: number; size: number; duration: number }>>([])
@@ -57,6 +58,7 @@ const reassurancePills = [
 ]
 
 export default function FinalCTASection() {
+  const { settings } = useBusinessSettings()
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
@@ -141,7 +143,7 @@ export default function FinalCTASection() {
               </Link>
 
               <Link
-                href="https://wa.me/919623023480"
+                href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-xl text-base font-medium border border-white/30 cursor-pointer transition-all hover:bg-white/20 hover:border-white/50 hover:-translate-y-0.5"
@@ -166,14 +168,14 @@ export default function FinalCTASection() {
             </motion.div>
 
             <motion.a
-              href="mailto:hello@flux3d.in"
+              href={`mailto:${settings.primaryEmail || 'hello@flux3d.in'}`}
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
               transition={{ delay: 0.7 }}
               className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors"
             >
               <Mail className="w-4 h-4" />
-              hello@flux3d.in
+              {settings.primaryEmail || 'hello@flux3d.in'}
             </motion.a>
 
             {/* Reassurance pills */}

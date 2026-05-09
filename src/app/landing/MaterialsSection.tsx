@@ -3,6 +3,7 @@
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 import { MessageCircle, Layers, Droplet, Shield, Wind, Zap, Sparkles, Palette, Gem, Package } from 'lucide-react'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 const materials = [
   {
@@ -88,6 +89,7 @@ const materials = [
 ]
 
 export default function MaterialsSection() {
+  const { settings } = useBusinessSettings()
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
@@ -163,7 +165,7 @@ export default function MaterialsSection() {
         >
           <p className="text-lg text-white mb-2">Not sure which material is right for you?</p>
           <a
-            href="https://wa.me/919623023480"
+            href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-[#25D366] text-white px-6 py-3 rounded-xl text-sm font-medium hover:shadow-[0_0_30px_rgba(37,211,102,0.3)] transition-shadow"

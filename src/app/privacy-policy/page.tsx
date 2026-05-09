@@ -1,9 +1,13 @@
 import type { Metadata } from 'next'
+import { getSettings } from '@/lib/settings'
 import PrivacyPolicyClient from './PrivacyPolicyClient'
 
-export const metadata: Metadata = {
-  title: 'Privacy Policy | FLUX 3D',
-  description: 'Learn how FLUX 3D collects, uses, and protects your personal information.',
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings()
+  return {
+    title: `${settings.businessName} — Privacy Policy`,
+    description: settings.businessDescription || 'Learn how FLUX 3D collects, uses, and protects your personal information.',
+  }
 }
 
 export default function PrivacyPolicyPage() {

@@ -6,8 +6,10 @@ import {
     QUOTES_TABLE_UNAVAILABLE_MESSAGE,
 } from '@/lib/quote/supabase-errors'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 export default function QuoteForm() {
+    const { settings } = useBusinessSettings()
     const [loading, setLoading] = useState(false)
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -49,7 +51,7 @@ export default function QuoteForm() {
             return
         }
 
-        alert('Quote submitted! We\'ll WhatsApp you shortly.')
+        alert(`Quote submitted! We'll contact you at ${settings.primaryPhone || 'our number'} shortly.`)
         setLoading(false)
     }
 

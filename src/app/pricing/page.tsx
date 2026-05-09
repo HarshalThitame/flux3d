@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
+import { getSettings } from '@/lib/settings'
 
 export const dynamic = 'force-static'
 
@@ -8,19 +9,22 @@ import { absoluteUrl } from '@/lib/site'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import PricingClient from './PricingClient'
 
-export const metadata: Metadata = {
-  title: '3D Printing Pricing That Feels Clear',
-  description:
-    'See transparent starting prices for 3D printing, CAD support, and express production, then move into a fast, accurate quote workflow.',
-  alternates: {
-    canonical: '/pricing',
-  },
-  openGraph: {
-    title: 'Flux3D Pricing',
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings()
+  return {
+    title: `${settings.businessName} — 3D Printing Pricing That Feels Clear`,
     description:
-      'Transparent pricing guidance for FDM, resin, multi-color printing, CAD support, and express production.',
-    url: absoluteUrl('/pricing'),
-  },
+      settings.businessDescription || 'See transparent starting prices for 3D printing, CAD support, and express production, then move into a fast, accurate quote workflow.',
+    alternates: {
+      canonical: '/pricing',
+    },
+    openGraph: {
+      title: `${settings.businessName} Pricing`,
+      description:
+        settings.businessDescription || 'Transparent pricing guidance for FDM, resin, multi-color printing, CAD support, and express production.',
+      url: absoluteUrl('/pricing'),
+    },
+  }
 }
 
 export default async function PricingPage() {

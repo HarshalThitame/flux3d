@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { getSettings } from '@/lib/settings'
 
 type AuthShellProps = {
   eyebrow: string
@@ -7,12 +8,13 @@ type AuthShellProps = {
   children: React.ReactNode
 }
 
-export default function AuthShell({
+export default async function AuthShell({
   eyebrow,
   title,
   description,
   children,
 }: AuthShellProps) {
+  const settings = await getSettings()
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#050810] px-4 py-24 text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,92,26,0.22),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(61,115,255,0.16),transparent_28%),linear-gradient(180deg,#050810_0%,#070c17_100%)]" />
@@ -32,7 +34,7 @@ export default function AuthShell({
             href="/"
             className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs uppercase tracking-[0.24em] text-[#9fa8c6]"
           >
-            Flux3D Auth Layer
+            {settings.businessName || 'Flux3D'} Auth Layer
           </Link>
           <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#ffb493]">
             {eyebrow}

@@ -3,8 +3,10 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowLeft, RefreshCw, Clock, AlertTriangle, CheckCircle } from 'lucide-react'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 export default function RefundPolicyClient() {
+  const { settings } = useBusinessSettings()
   return (
     <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
       {/* Header */}
@@ -85,7 +87,7 @@ export default function RefundPolicyClient() {
                   </ul>
                 </div>
                 <p>
-                  To request a refund, contact our support team at support@flux3d.com with your
+                  To request a refund, contact our support team at {settings.supportEmail || 'support@flux3d.com'} with your
                   account email and reason for the refund request.
                 </p>
               </div>
@@ -228,9 +230,9 @@ export default function RefundPolicyClient() {
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 {[
-                  { label: 'Support Email', value: 'support@flux3d.com' },
-                  { label: 'Phone', value: '+91 96230 23480' },
-                  { label: 'Hours', value: 'Mon-Sat: 9 AM – 8 PM IST' },
+                  { label: 'Support Email', value: settings.supportEmail || 'support@flux3d.com' },
+                  { label: 'Phone', value: settings.primaryPhone || '+91 96230 23480' },
+                  { label: 'Hours', value: settings.businessHours || 'Mon-Sat: 9 AM – 8 PM IST' },
                   { label: 'Response Time', value: 'Within 24 hours' },
                 ].map((item) => (
                   <div key={item.label} className="bg-white/[0.03] rounded-xl p-4">

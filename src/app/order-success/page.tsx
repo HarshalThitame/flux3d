@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, PackageCheck, FileText, ArrowRight, Sparkles, PartyPopper } from 'lucide-react'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 type OrderSuccessData = {
   orderId: string
@@ -14,6 +15,7 @@ type OrderSuccessData = {
 }
 
 export default function OrderSuccessPage() {
+  const { settings } = useBusinessSettings()
   const router = useRouter()
   const [orderData, setOrderData] = useState<OrderSuccessData | null>(null)
   const [mounted, setMounted] = useState(false)
@@ -175,7 +177,7 @@ export default function OrderSuccessPage() {
         >
           <div className="flex items-center gap-2">
             <PartyPopper className="h-3.5 w-3.5 text-emerald-400/60" />
-            <span>Thank you for choosing Flux3D</span>
+            <span>Thank you for choosing {settings.businessName}</span>
           </div>
         </motion.div>
       </div>

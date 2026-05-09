@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { getSettings } from '@/lib/settings'
 import Navbar from '@/components/Navbar'
 import DeliveryStepClient from '@/components/instant-quote/DeliveryStepClient'
 import { requireUser } from '@/lib/auth/server'
@@ -7,17 +8,20 @@ import type { SavedAddress } from '@/lib/orders'
 import { absoluteUrl } from '@/lib/site'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-export const metadata: Metadata = {
-  title: 'Delivery Details | Flux3D',
-  description: 'Review your quote, choose a saved delivery address or add a new one, and submit your 3D print request.',
-  alternates: {
-    canonical: '/instant-quote/delivery',
-  },
-  openGraph: {
-    title: 'Flux3D Delivery Details',
-    description: 'Complete delivery details and shipping estimate for your 3D print request.',
-    url: absoluteUrl('/instant-quote/delivery'),
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings()
+  return {
+    title: `${settings.businessName} — Delivery Details`,
+    description: settings.businessDescription || 'Review your quote, choose a saved delivery address or add a new one, and submit your 3D print request.',
+    alternates: {
+      canonical: '/instant-quote/delivery',
+    },
+    openGraph: {
+      title: `${settings.businessName} — Delivery Details`,
+      description: settings.businessDescription || 'Complete delivery details and shipping estimate for your 3D print request.',
+      url: absoluteUrl('/instant-quote/delivery'),
+    },
+  }
 }
 
 type DeliveryAddressRow = {

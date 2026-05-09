@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 const faqs = [
   {
@@ -35,6 +36,7 @@ const faqs = [
 ]
 
 export default function FAQSection() {
+  const { settings } = useBusinessSettings()
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   return (
@@ -80,9 +82,9 @@ export default function FAQSection() {
         {/* Still have questions */}
         <div className="text-center mt-12">
           <p className="text-[#7a82a0] mb-4">Still have questions?</p>
-          <button className="text-[#FF5C1A] font-medium hover:underline">
+          <a href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-[#FF5C1A] font-medium hover:underline">
             Chat on WhatsApp now →
-          </button>
+          </a>
         </div>
       </div>
     </section>

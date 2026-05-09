@@ -1,9 +1,13 @@
 import type { Metadata } from 'next'
+import { getSettings } from '@/lib/settings'
 import ShippingPolicyClient from './ShippingPolicyClient'
 
-export const metadata: Metadata = {
-  title: 'Shipping Policy | FLUX 3D',
-  description: 'Learn about FLUX 3D\'s shipping methods, delivery times, and policies across India.',
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings()
+  return {
+    title: `${settings.businessName} — Shipping Policy`,
+    description: settings.businessDescription || 'Learn about FLUX 3D shipping methods, delivery times, and policies across India.',
+  }
 }
 
 export default function ShippingPolicyPage() {

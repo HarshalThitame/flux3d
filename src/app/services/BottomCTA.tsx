@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
 import { useRef, useEffect, useState } from 'react'
 import { ArrowRight, Sparkles } from 'lucide-react'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 function FloatingOrbs() {
   const [orbs, setOrbs] = useState<Array<{ id: number; x: number; y: number; size: number; duration: number }>>([])
@@ -49,6 +50,7 @@ function FloatingOrbs() {
 }
 
 export default function BottomCTA() {
+  const { settings } = useBusinessSettings()
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
@@ -135,7 +137,7 @@ export default function BottomCTA() {
               </Link>
 
               <Link
-                href="https://wa.me/919623023480"
+                href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-xl text-base font-medium border border-white/30 cursor-pointer transition-all hover:bg-white/20 hover:border-white/50 hover:-translate-y-0.5"

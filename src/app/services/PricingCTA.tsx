@@ -1,8 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 export default function PricingCTA() {
+  const { settings } = useBusinessSettings()
+
   return (
     <section className="py-24 px-6">
       <div className="max-w-[1200px] mx-auto">
@@ -26,9 +29,14 @@ export default function PricingCTA() {
             <Link href="/instant-quote" className="bg-[#FF5C1A] text-white px-8 py-4 rounded-lg text-lg font-medium border-none cursor-pointer transition-transform hover:translate-y-[-2px] hover:opacity-90 shadow-lg shadow-[rgba(255,92,26,0.3)]">
               Start Your Order
             </Link>
-            <button className="bg-transparent text-white px-8 py-4 rounded-lg text-lg font-medium border border-[rgba(255,255,255,0.07)] cursor-pointer transition-colors hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.04)]">
+            <a
+              href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-transparent text-white px-8 py-4 rounded-lg text-lg font-medium border border-[rgba(255,255,255,0.07)] cursor-pointer transition-colors hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.04)]"
+            >
               WhatsApp Us Now
-            </button>
+            </a>
           </div>
 
           {/* Trust badges */}

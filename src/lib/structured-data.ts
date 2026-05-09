@@ -1,99 +1,101 @@
-import { absoluteUrl, siteConfig } from '@/lib/site'
+import { absoluteUrl, siteUrl } from '@/lib/site'
+import type { BusinessSettings } from '@/lib/admin/business-settings'
+import { FALLBACK_SETTINGS } from '@/lib/settings-fallback'
 
-export const organizationJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: siteConfig.company.name,
-  url: siteConfig.url,
-  logo: absoluteUrl('/logo.png'),
-  email: siteConfig.company.email,
-  slogan: siteConfig.company.slogan,
-  areaServed: siteConfig.company.areaServed,
-  telephone: '+919623023480',
-}
+const fallback = FALLBACK_SETTINGS
 
-export const websiteJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: siteConfig.name,
-  url: siteConfig.url,
-  description: siteConfig.description,
-  publisher: {
+export function makeOrganizationJsonLd(settings: BusinessSettings) {
+  return {
+    '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: siteConfig.company.name,
-  },
+    name: settings.legalBusinessName || settings.businessName || fallback.businessName,
+    url: siteUrl,
+    logo: settings.logoUrl ? absoluteUrl(settings.logoUrl) : absoluteUrl('/logo.png'),
+    email: settings.primaryEmail || fallback.primaryEmail,
+    slogan: settings.tagline || fallback.tagline,
+    areaServed: settings.country || 'India',
+    telephone: settings.primaryPhone || fallback.primaryPhone,
+  }
 }
 
-export const localBusinessJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'LocalBusiness',
-  name: siteConfig.company.name,
-  image: absoluteUrl('/logo.png'),
-  url: siteConfig.url,
-  description: siteConfig.description,
-  telephone: '+919623023480',
-  email: siteConfig.company.email,
-  address: {
-    '@type': 'PostalAddress',
-    streetAddress: 'Mumbai, Maharashtra',
-    addressLocality: 'Mumbai',
-    addressRegion: 'Maharashtra',
-    postalCode: '400053',
-    addressCountry: 'IN',
-  },
-  geo: {
-    '@type': 'GeoCoordinates',
-    latitude: '19.0760',
-    longitude: '72.8777',
-  },
-  areaServed: [
-    { '@type': 'Country', name: 'India' },
-    { '@type': 'City', name: 'Mumbai' },
-    { '@type': 'City', name: 'Pune' },
-    { '@type': 'City', name: 'Bangalore' },
-    { '@type': 'City', name: 'Delhi' },
-    { '@type': 'City', name: 'Hyderabad' },
-    { '@type': 'City', name: 'Chennai' },
-  ],
-  serviceType: [
-    '3D Printing',
-    'Rapid Prototyping',
-    'Resin Printing',
-    'FDM Printing',
-    '3D Modeling',
-  ],
-  priceRange: '₹99 - ₹50,000',
-  openingHours: 'Mo-Sa 09:00-20:00',
-  sameAs: [
-    'https://instagram.com/flux3d',
-    'https://linkedin.com/company/flux3d',
-    'https://twitter.com/flux3d',
-  ],
+export function makeWebsiteJsonLd(settings: BusinessSettings) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: settings.businessName || fallback.businessName,
+    url: siteUrl,
+    description: settings.businessDescription || fallback.businessDescription,
+    publisher: {
+      '@type': 'Organization',
+      name: settings.legalBusinessName || settings.businessName || fallback.businessName,
+    },
+  }
 }
 
-export const servicesPageJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Service',
-  name: '3D Printing Services',
-  provider: {
-    '@type': 'Organization',
-    name: siteConfig.company.name,
-    url: siteConfig.url,
-  },
-  areaServed: {
-    '@type': 'Country',
-    name: 'India',
-  },
-  serviceType: [
-    'Rapid Prototyping',
-    'FDM Printing',
-    'Resin Printing',
-    'Custom CAD Design',
-  ],
-  url: absoluteUrl('/services'),
-  description:
-    'Professional 3D printing services for prototypes, production parts, and custom components delivered across India.',
+export function makeLocalBusinessJsonLd(settings: BusinessSettings) {
+  const addressParts = [
+    settings.addressLine1,
+    settings.addressLine2,
+  ].filter(Boolean).join(', ')
+  const sameAs = [
+    settings.instagramUrl,
+    settings.facebookUrl,
+    settings.linkedinUrl,
+    settings.twitterUrl,
+    settings.youtubeUrl,
+  ].filter(Boolean)
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: settings.legalBusinessName || settings.businessName || fallback.businessName,
+    image: settings.logoUrl ? absoluteUrl(settings.logoUrl) : absoluteUrl('/logo.png'),
+    url: siteUrl,
+    description: settings.businessDescription || fallback.businessDescription,
+    telephone: settings.primaryPhone || fallback.primaryPhone,
+    email: settings.primaryEmail || fallback.primaryEmail,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: addressParts || 'Mumbai, Maharashtra',
+      addressLocality: settings.city || 'Mumbai',
+      addressRegion: settings.state || 'Maharashtra',
+      postalCode: settings.postalCode || '400053',
+      addressCountry: 'IN',
+    },
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: '19.0760',
+      longitude: '72.8777',
+    },
+    areaServed: [
+      { '@type': 'Country', name: 'India' },
+      { '@type': 'City', name: 'Mumbai' },
+      { '@type': 'City', name: 'Pune' },
+      { '@type': 'City', name: 'Bangalore' },
+      { '@type': 'City', name: 'Delhi' },
+      { '@type': 'City', name: 'Hyderabad' },
+      { '@type': 'City', name: 'Chennai' },
+    ],
+    serviceType: [
+      '3D Printing',
+      'Rapid Prototyping',
+      'Resin Printing',
+      'FDM Printing',
+      '3D Modeling',
+    ],
+    priceRange: '₹99 - ₹50,000',
+    openingHours: settings.workingDays ? `${settings.workingDays.replace('—', '-').replace('–', '-').slice(0, 2)}-${settings.workingDays.slice(-1)} 09:00-20:00` : 'Mo-Sa 09:00-20:00',
+    sameAs: sameAs.length > 0 ? sameAs : [
+      fallback.instagramUrl,
+      fallback.linkedinUrl,
+      fallback.twitterUrl,
+    ].filter(Boolean),
+  }
 }
+
+export const organizationJsonLd = makeOrganizationJsonLd(FALLBACK_SETTINGS)
+export const websiteJsonLd = makeWebsiteJsonLd(FALLBACK_SETTINGS)
+export const localBusinessJsonLd = makeLocalBusinessJsonLd(FALLBACK_SETTINGS)
 
 export const faqPageJsonLd = {
   '@context': 'https://schema.org',

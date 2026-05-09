@@ -1,46 +1,55 @@
 import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
 import { connection } from 'next/server'
-import { organizationJsonLd, websiteJsonLd } from '@/lib/structured-data'
-import { absoluteUrl, siteConfig } from '@/lib/site'
+import { getSettings } from '@/lib/settings'
+import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data'
+import { absoluteUrl, siteUrl } from '@/lib/site'
 import { CartProvider } from '@/lib/cart/context'
+import { SettingsProvider } from '@/lib/settings-context'
 import VisitorTracker from '@/components/VisitorTracker'
 import './globals.css'
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
-  title: {
-    default: siteConfig.title,
-    template: `%s | ${siteConfig.name}`,
-  },
-  description: siteConfig.description,
-  applicationName: siteConfig.name,
-  keywords: siteConfig.keywords,
-  alternates: {
-    canonical: '/',
-  },
-  openGraph: {
-    type: 'website',
-    url: siteConfig.url,
-    siteName: siteConfig.name,
-    title: siteConfig.title,
-    description: siteConfig.description,
-    locale: 'en_IN',
-    images: [
-      {
-        url: absoluteUrl(siteConfig.ogImage),
-        alt: `${siteConfig.name} logo`,
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: siteConfig.title,
-    description: siteConfig.description,
-    images: [absoluteUrl(siteConfig.ogImage)],
-  },
-  category: 'technology',
-  manifest: '/manifest.webmanifest',
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings()
+  const title = settings.metaTitle || 'Flux3D | Premium 3D Printing Services in India'
+  const description = settings.businessDescription || "India's most trusted 3D printing service"
+  const ogImage = settings.ogImageUrl || '/opengraph-image.png'
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: title,
+      template: `%s | ${settings.businessName || 'Flux3D'}`,
+    },
+    description,
+    applicationName: settings.businessName || 'Flux3D',
+    keywords: settings.metaKeywords ? settings.metaKeywords.split(',').map(k => k.trim()) : undefined,
+    alternates: {
+      canonical: '/',
+    },
+    openGraph: {
+      type: 'website',
+      url: siteUrl,
+      siteName: settings.businessName || 'Flux3D',
+      title,
+      description,
+      locale: 'en_IN',
+      images: [
+        {
+          url: absoluteUrl(ogImage),
+          alt: `${settings.businessName} logo`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [absoluteUrl(ogImage)],
+    },
+    category: 'technology',
+    manifest: '/manifest.webmanifest',
+  }
 }
 
 export const viewport: Viewport = {
@@ -63,20 +72,35 @@ export default async function RootLayout({
   await connection()
   await headers()
 
+  const settings = await getSettings()
+  const orgJsonLd = makeOrganizationJsonLd(settings)
+  const webJsonLd = makeWebsiteJsonLd(settings)
+
+  const cssVars = {
+    '--primary': settings.primaryColor || '#FF5C1A',
+    '--primary-dark': '#D94E00',
+    '--primary-light': '#FF9A72',
+    '--secondary': settings.secondaryColor || '#39BDF8',
+    '--bg-dark': '#050810',
+    '--text-muted': '#7a82a0',
+  } as const
+
   return (
-    <html lang="en">
+    <html lang="en" style={cssVars as React.CSSProperties}>
       <body suppressHydrationWarning>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: toJsonLd(organizationJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: toJsonLd(orgJsonLd) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: toJsonLd(websiteJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: toJsonLd(webJsonLd) }}
         />
         <CartProvider>
-          <VisitorTracker />
-          {children}
+          <SettingsProvider>
+            <VisitorTracker />
+            {children}
+          </SettingsProvider>
         </CartProvider>
       </body>
     </html>

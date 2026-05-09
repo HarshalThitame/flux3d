@@ -3,8 +3,10 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Truck, Package, Clock, MapPin, AlertTriangle } from 'lucide-react'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 export default function ShippingPolicyClient() {
+  const { settings } = useBusinessSettings()
   return (
     <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
       {/* Header */}
@@ -229,10 +231,10 @@ export default function ShippingPolicyClient() {
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { label: 'Support Email', value: 'support@flux3d.com' },
-                  { label: 'Phone', value: '+91 96230 23480' },
-                  { label: 'Address', value: 'Mumbai, Maharashtra - 400053' },
-                  { label: 'Hours', value: 'Mon-Sat: 9 AM – 8 PM IST' },
+                  { label: 'Support Email', value: settings.supportEmail || 'support@flux3d.com' },
+                  { label: 'Phone', value: settings.primaryPhone || '+91 96230 23480' },
+                  { label: 'Address', value: [settings.city, settings.state, settings.postalCode].filter(Boolean).join(' - ') || 'Mumbai, Maharashtra - 400053' },
+                  { label: 'Hours', value: settings.businessHours || 'Mon-Sat: 9 AM – 8 PM IST' },
                 ].map((item) => (
                   <div key={item.label} className="bg-white/[0.03] rounded-xl p-4">
                     <p className="text-sm text-[#7a82a0] mb-1">{item.label}</p>

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import PDFDocument from 'pdfkit/js/pdfkit.standalone'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { formatAddressSummary, getOrderStatusLabel, type OrderStatus } from '@/lib/orders'
+import { getSettings } from '@/lib/settings'
+import type { BusinessSettings } from '@/lib/admin/business-settings'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -33,7 +35,7 @@ type InvoiceRow = {
   created_at: string
 }
 
-async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buffer> {
+async function generatePdf(order: InvoiceRow, items: InvoiceRow[], settings: BusinessSettings): Promise<Buffer> {
   const invoiceDate = new Date(order.created_at).toLocaleDateString('en-IN', {
     day: 'numeric', month: 'long', year: 'numeric',
   })
@@ -49,6 +51,10 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
     pincode: order.pincode,
     landmark: order.landmark ?? '',
   })
+  const businessName = settings.businessName || 'Flux3D'
+  const primaryColor = settings.primaryColor || '#ff5c1a'
+  const tagline = settings.tagline || '3D PRINTING SERVICE'
+  const invoicePrefix = settings.invoicePrefix || 'INV-'
 
   const doc = new PDFDocument({ size: 'A4', margin: 48 })
   const buffers: Buffer[] = []
@@ -76,10 +82,9 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
 
   doc.rect(L, y, colW, 80).fill('#0f0f23')
   doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(28)
-  doc.text('flux', L + 18, y + 18, { continued: true })
-  doc.fillColor('#ff5c1a').text('3d')
+  doc.text(businessName.toLowerCase(), L + 18, y + 18)
   doc.fillColor('#8899bb').font('Helvetica').fontSize(9)
-  doc.text('3D PRINTING SERVICE', L + 18, y + 50)
+  doc.text(tagline.toUpperCase(), L + 18, y + 50)
 
   const metaX = R - 180
   doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(9)
@@ -121,7 +126,7 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
 
   const rowsH = 22 + items.length * 22 + 16
   bail(rowsH)
-  doc.roundedRect(L, y, tw, 22, 4).fill('#ff5c1a')
+  doc.roundedRect(L, y, tw, 22, 4).fill(primaryColor)
   doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(7)
   cols.forEach((c) => doc.text(c.label, L + c.x + 6, y + 6, { width: c.w, align: c.a }))
   y += 28
@@ -170,9 +175,9 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
     sy += 16
   })
 
-  doc.moveTo(sx + 14, sy).lineTo(sx + sw - 14, sy).strokeColor('#ff5c1a').lineWidth(1).stroke()
+  doc.moveTo(sx + 14, sy).lineTo(sx + sw - 14, sy).strokeColor(primaryColor).lineWidth(1).stroke()
   sy += 11
-  doc.fillColor('#ff5c1a').font('Helvetica-Bold').fontSize(13)
+  doc.fillColor(primaryColor).font('Helvetica-Bold').fontSize(13)
   doc.text('Grand Total', sx + 14, sy)
   doc.text(Rs(grandTotal), sx + 14, sy, { width: sw - 28, align: 'right' })
   y += sh + 20
@@ -191,7 +196,7 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
   doc.moveTo(L, y).lineTo(R, y).strokeColor('#ddd').lineWidth(0.5).stroke()
   y += 12
   doc.fillColor('#999').font('Helvetica').fontSize(7)
-  doc.text('Flux3D — 3D Printing Service', L, y, { align: 'center', width: colW })
+  doc.text(`${businessName} — ${tagline}`, L, y, { align: 'center', width: colW })
   y += 10
   doc.text(`${order.order_number ?? order.id} · Generated on ${invoiceDate}`, L, y, { align: 'center', width: colW })
 
@@ -268,9 +273,10 @@ export async function GET(
       }
     }
 
+    const settings = await getSettings()
     let pdf
     try {
-      pdf = await generatePdf(row, items)
+      pdf = await generatePdf(row, items, settings)
     } catch (e) {
       return NextResponse.json({ error: 'PDF generation failed: ' + (e instanceof Error ? e.message : String(e)) }, { status: 500 })
     }

@@ -4,35 +4,38 @@ import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 import NavbarClient from '@/components/NavbarClient'
 import { Mail, Phone, MapPin, Send, ArrowRight } from 'lucide-react'
-
-const contactMethods = [
-  {
-    icon: Mail,
-    title: 'Email Us',
-    description: 'For quotes, support, and general inquiries',
-    value: 'hello@flux3d.in',
-    href: 'mailto:hello@flux3d.in',
-    color: 'from-[#FF5C1A] to-[#ff7a3d]',
-  },
-  {
-    icon: Phone,
-    title: 'Call / WhatsApp',
-    description: 'Mon-Sat, 9 AM – 8 PM IST',
-    value: '+91 96230 23480',
-    href: 'tel:+919623023480',
-    color: 'from-[#5064FF] to-[#7a8aff]',
-  },
-  {
-    icon: MapPin,
-    title: 'Visit / Ship To',
-    description: 'Our studio location in Pune',
-    value: 'Pune, Maharashtra, India',
-    href: '#',
-    color: 'from-[#10B981] to-[#34d399]',
-  },
-]
+import { useBusinessSettings } from '@/lib/settings-context'
 
 export default function ContactContent() {
+  const { settings } = useBusinessSettings()
+
+  const contactMethods = [
+    {
+      icon: Mail,
+      title: 'Email Us',
+      description: 'For quotes, support, and general inquiries',
+      value: settings.primaryEmail || 'hello@flux3d.in',
+      href: `mailto:${settings.primaryEmail || 'hello@flux3d.in'}`,
+      color: 'from-[#FF5C1A] to-[#ff7a3d]',
+    },
+    {
+      icon: Phone,
+      title: 'Call / WhatsApp',
+      description: settings.businessHours || 'Mon-Sat, 9 AM – 8 PM IST',
+      value: settings.primaryPhone || '+91 96230 23480',
+      href: `tel:${(settings.primaryPhone || '+919623023480').replace(/[^0-9]/g, '')}`,
+      color: 'from-[#5064FF] to-[#7a8aff]',
+    },
+    {
+      icon: MapPin,
+      title: 'Visit / Ship To',
+      description: 'Our studio location',
+      value: [settings.city, settings.state, settings.country].filter(Boolean).join(', ') || 'Pune, Maharashtra, India',
+      href: '#',
+      color: 'from-[#10B981] to-[#34d399]',
+    },
+  ]
+
   const heroRef = useRef(null)
   const cardsRef = useRef(null)
   const careersRef = useRef(null)
@@ -162,7 +165,7 @@ export default function ContactContent() {
                   <h2 className="font-[var(--font-syne)] text-[clamp(1.5rem,3vw,2.5rem)] font-extrabold text-white mt-4 mb-6 leading-[1.2]">
                     Careers at{' '}
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF5C1A] to-[#5064FF]">
-                      Flux 3D
+                      {settings.businessName || 'Flux 3D'}
                     </span>
                   </h2>
                 </motion.div>
@@ -185,7 +188,7 @@ export default function ContactContent() {
                   className="flex flex-col sm:flex-row gap-4"
                 >
                   <a
-                    href="mailto:hello@flux3d.in?subject=Career%20Inquiry%20-%20Flux%203D"
+                    href={`mailto:${settings.primaryEmail || 'hello@flux3d.in'}?subject=Career%20Inquiry%20-%20${encodeURIComponent(settings.businessName || 'Flux 3D')}`}
                     className="inline-flex items-center justify-center gap-2 bg-[#FF5C1A] text-white px-8 py-4 rounded-xl text-lg font-semibold hover:shadow-[0_0_40px_rgba(255,92,26,0.3)] transition-shadow"
                   >
                     Send Your Resume
@@ -193,7 +196,7 @@ export default function ContactContent() {
                   </a>
                   
                   <a
-                    href="https://wa.me/919623023480"
+                    href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center gap-2 bg-[#25D366] text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-[#25D366]/90 transition-colors"

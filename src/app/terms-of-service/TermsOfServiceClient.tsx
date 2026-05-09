@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowLeft, FileText, Scale, Shield, AlertTriangle } from 'lucide-react'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 const sections = [
   { id: 'acceptance', title: '1. Acceptance of Terms', icon: FileText },
@@ -25,6 +26,7 @@ const sections = [
 ]
 
 export default function TermsOfServiceClient() {
+  const { settings } = useBusinessSettings()
   return (
     <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
       {/* Header */}
@@ -607,11 +609,11 @@ export default function TermsOfServiceClient() {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
-                    { label: 'General Support', email: 'support@flux3d.com' },
-                    { label: 'Legal & Compliance', email: 'legal@flux3d.com' },
-                    { label: 'Privacy Inquiries', email: 'privacy@flux3d.com' },
-                    { label: 'Website', value: 'www.flux3d.com' },
-                    { label: 'Address', value: 'Mumbai, Maharashtra, India' },
+                    { label: 'General Support', email: settings.supportEmail || 'support@flux3d.com' },
+                    { label: 'Legal & Compliance', email: settings.primaryEmail || 'legal@flux3d.com' },
+                    { label: 'Privacy Inquiries', email: settings.primaryEmail || 'privacy@flux3d.com' },
+                    { label: 'Website', value: settings.websiteUrl || 'www.flux3d.com' },
+                    { label: 'Address', value: [settings.city, settings.state].filter(Boolean).join(', ') || 'Mumbai, Maharashtra, India' },
                   ].map((item) => (
                     <div key={item.label} className="bg-white/[0.03] rounded-xl p-4">
                       <p className="text-sm text-[#7a82a0] mb-1">{item.label}</p>

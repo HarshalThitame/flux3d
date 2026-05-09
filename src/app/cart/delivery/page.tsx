@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { getSettings } from '@/lib/settings'
 import Navbar from '@/components/Navbar'
 import CartDeliveryClient from '@/components/cart/CartDeliveryClient'
 import { requireUser } from '@/lib/auth/server'
@@ -7,17 +8,20 @@ import type { SavedAddress } from '@/lib/orders'
 import { absoluteUrl } from '@/lib/site'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-export const metadata: Metadata = {
-  title: 'Delivery Details | Flux3D Cart',
-  description: 'Review your cart items, choose a saved delivery address or add a new one, and submit your multi-item 3D print order.',
-  alternates: {
-    canonical: '/cart/delivery',
-  },
-  openGraph: {
-    title: 'Flux3D Cart Delivery Details',
-    description: 'Complete delivery details and shipping estimate for your multi-item 3D print order.',
-    url: absoluteUrl('/cart/delivery'),
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings()
+  return {
+    title: `${settings.businessName} — Delivery Details`,
+    description: settings.businessDescription || 'Review your cart items, choose a saved delivery address or add a new one, and submit your multi-item 3D print order.',
+    alternates: {
+      canonical: '/cart/delivery',
+    },
+    openGraph: {
+      title: `${settings.businessName} — Delivery Details`,
+      description: settings.businessDescription || 'Complete delivery details and shipping estimate for your multi-item 3D print order.',
+      url: absoluteUrl('/cart/delivery'),
+    },
+  }
 }
 
 type DeliveryAddressRow = {

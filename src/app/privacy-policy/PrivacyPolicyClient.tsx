@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Shield, Database, Lock, Eye, Globe } from 'lucide-react'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 const sections = [
   { id: 'information', title: '1. Information We Collect', icon: Database },
@@ -19,6 +20,7 @@ const sections = [
 ]
 
 export default function PrivacyPolicyClient() {
+  const { settings } = useBusinessSettings()
   return (
     <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
       {/* Header */}
@@ -267,7 +269,7 @@ export default function PrivacyPolicyClient() {
                     ))}
                   </ul>
                   <p className="mt-4">
-                    To exercise these rights, contact us at privacy@flux3d.com. We will respond within
+                    To exercise these rights, contact us at {settings.primaryEmail || 'privacy@flux3d.com'}. We will respond within
                     30 days of receiving your request.
                   </p>
                 </div>
@@ -289,7 +291,7 @@ export default function PrivacyPolicyClient() {
                     </div>
                     <div>
                       <h3 className="text-white font-semibold mb-2">Option 2: Email Request</h3>
-                      <p>Send an email to <a href="mailto:privacy@flux3d.com" className="text-[#FF5C1A] hover:underline">privacy@flux3d.com</a> with subject "Data Deletion Request" including:</p>
+                      <p>Send an email to <a href={`mailto:${settings.primaryEmail || 'privacy@flux3d.com'}`} className="text-[#FF5C1A] hover:underline">{settings.primaryEmail || 'privacy@flux3d.com'}</a> with subject "Data Deletion Request" including:</p>
                       <ul className="space-y-1 ml-6 mt-2">
                         {[
                           'Your registered email address',
@@ -360,10 +362,10 @@ export default function PrivacyPolicyClient() {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
-                    { label: 'Privacy Inquiries', email: 'privacy@flux3d.com' },
-                    { label: 'General Support', email: 'support@flux3d.com' },
-                    { label: 'Website', value: 'www.flux3d.com' },
-                    { label: 'Address', value: 'Mumbai, Maharashtra, India' },
+                    { label: 'Privacy Inquiries', email: settings.primaryEmail || 'privacy@flux3d.com' },
+                    { label: 'General Support', email: settings.supportEmail || 'support@flux3d.com' },
+                    { label: 'Website', value: settings.websiteUrl || 'www.flux3d.com' },
+                    { label: 'Address', value: [settings.city, settings.state].filter(Boolean).join(', ') || 'Mumbai, Maharashtra, India' },
                   ].map((item) => (
                     <div key={item.label} className="bg-white/[0.03] rounded-xl p-4">
                       <p className="text-sm text-[#7a82a0] mb-1">{item.label}</p>

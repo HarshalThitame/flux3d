@@ -9,6 +9,7 @@ import type { AppUserProfile } from '@/lib/auth/server'
 import { useCart } from '@/lib/cart/context'
 import { useProfile } from '@/hooks/useProfile'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 interface NavbarClientProps {
   transparent?: boolean
@@ -51,6 +52,7 @@ export default function NavbarClient({
   user,
   showAdminLink = false,
 }: NavbarClientProps) {
+  const { settings } = useBusinessSettings()
   useProfile(user)
   const { resetCartState } = useCart()
   const router = useRouter()
@@ -139,10 +141,14 @@ export default function NavbarClient({
       >
         <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group" aria-label="Flux3D home">
-            <span className="font-[var(--font-syne)] text-xl font-extrabold text-white">
-              Flux<span className="text-[#FF5C1A]">3D</span>
-            </span>
+          <Link href="/" className="flex items-center gap-2 group" aria-label={`${settings.businessName} home`}>
+            {settings.logoUrl ? (
+              <Image src={settings.logoUrl} alt={settings.businessName} width={120} height={32} className="h-8 w-auto object-contain" />
+            ) : (
+              <span className="font-[var(--font-syne)] text-xl font-extrabold text-white">
+                <span style={{ color: 'var(--primary, #FF5C1A)' }}>{settings.businessName}</span>
+              </span>
+            )}
           </Link>
 
           {/* Nav Links */}
@@ -178,7 +184,7 @@ export default function NavbarClient({
 
             {/* WhatsApp */}
             <a
-              href="https://wa.me/919623023480"
+              href={`https://wa.me/${settings.whatsappNumber.replace(/[^0-9]/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 px-4 py-2.5 text-sm font-medium text-[#25D366] transition-all hover:bg-[#25D366]/20 hover:border-[#25D366]/50"
@@ -364,7 +370,7 @@ export default function NavbarClient({
                   <ArrowUpRight className="h-4 w-4" />
                 </Link>
                 <a
-                  href="https://wa.me/919623023480"
+                  href={`https://wa.me/${settings.whatsappNumber.replace(/[^0-9]/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 py-3.5 text-base font-medium text-[#25D366]"

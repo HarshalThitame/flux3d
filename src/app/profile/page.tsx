@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import { requireUser } from '@/lib/auth/server'
+import { getSettings } from '@/lib/settings'
 import {
   isMissingSupabaseTableError,
   QUOTES_TABLE_UNAVAILABLE_MESSAGE,
@@ -10,6 +11,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 export default async function ProfilePage() {
   const auth = await requireUser('/profile')
   const supabase = await createServerSupabaseClient()
+  const settings = await getSettings()
   const { count, error } = await supabase
     .from('quotes')
     .select('*', { count: 'exact', head: true })
@@ -32,7 +34,7 @@ export default async function ProfilePage() {
             {auth.profile.name}
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-8 text-[#9ea6c4]">
-            Your secure Flux3D account stores quote history, uploaded model references, and authentication settings.
+            Your secure {settings.businessName} account stores quote history, uploaded model references, and authentication settings.
           </p>
         </div>
 
