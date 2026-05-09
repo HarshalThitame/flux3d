@@ -239,6 +239,11 @@ export default function AdminOrdersPage() {
                             {i + 1}
                           </span>
                           <span className="text-sm font-medium text-white">{item.material}</span>
+                          {item.quantity > 1 && (
+                            <span className="rounded-md border border-amber-400/20 bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
+                              x{item.quantity}
+                            </span>
+                          )}
                         </div>
                         <div className="mt-1.5 flex flex-wrap gap-2 text-xs text-[#7a82a0]">
                           {item.color && <span>Color: {item.color}</span>}

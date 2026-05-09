@@ -32,6 +32,7 @@ export type AdminOrderItem = {
   price: number
   estimatedTime: number
   weight: number | null
+  quantity: number
   status: OrderStatus
 }
 

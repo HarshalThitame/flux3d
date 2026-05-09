@@ -215,6 +215,10 @@ function CartEnabledWorkspace({
       return
     }
 
+    const newQuoteId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+    sessionStorage.setItem('flux3d-quote-id', newQuoteId)
+    setInitialQuoteId(newQuoteId)
+
     setFileError(null)
     setSelectedFile(file)
     setViewerLoading(true)

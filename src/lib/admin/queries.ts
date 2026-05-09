@@ -48,6 +48,7 @@ type OrderRow = {
   price?: number | string | null
   total_price: number | string | null
   weight?: number | string | null
+  quantity?: number | null
   estimated_time?: number | null
   status: AdminOrder['status']
   created_at: string | null
@@ -118,6 +119,7 @@ function mapOrderRowToAdminOrder(order: OrderRow): AdminOrder {
       price: normalizeMoney(order.price),
       estimatedTime: order.estimated_time ?? 0,
       weight: typeof order.weight === 'number' ? order.weight : null,
+      quantity: order.quantity ?? 1,
       status: order.status,
     }],
   }
@@ -139,6 +141,7 @@ function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
         price: normalizeMoney(row.price),
         estimatedTime: row.estimated_time ?? 0,
         weight: typeof row.weight === 'number' ? row.weight : null,
+        quantity: row.quantity ?? 1,
         status: row.status,
       })
       existing.totalPrice += normalizeMoney(row.total_price)
@@ -174,6 +177,7 @@ function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
           price: normalizeMoney(row.price),
           estimatedTime: row.estimated_time ?? 0,
           weight: typeof row.weight === 'number' ? row.weight : null,
+          quantity: row.quantity ?? 1,
           status: row.status,
         }],
       })
@@ -398,7 +402,7 @@ export async function getAdminOrdersData() {
   const { data, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, file_url, material, color, infill, price, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
+      'id, order_number, group_id, file_url, material, color, infill, quantity, price, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
     )
     .order('created_at', { ascending: false })
 
@@ -422,7 +426,7 @@ export async function updateAdminOrderStatus(groupId: string, status: AdminOrder
   const { data, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, file_url, material, color, infill, price, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
+      'id, order_number, group_id, file_url, material, color, infill, quantity, price, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
     )
     .eq('group_id', groupId)
     .order('created_at', { ascending: false })
