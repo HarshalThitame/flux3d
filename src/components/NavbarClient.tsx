@@ -143,7 +143,7 @@ export default function NavbarClient({
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group" aria-label={`${settings.businessName} home`}>
             {settings.logoUrl ? (
-              <Image src={settings.logoUrl} alt={settings.businessName} width={140} height={38} className="h-[38px] w-auto object-contain" />
+              <Image src={settings.logoUrl} alt={settings.businessName} width={180} height={48} className="h-12 w-auto object-contain" />
             ) : (
               <span className="font-[var(--font-syne)] text-xl font-extrabold text-white">
                 <span style={{ color: 'var(--primary, #FF5C1A)' }}>{settings.businessName}</span>

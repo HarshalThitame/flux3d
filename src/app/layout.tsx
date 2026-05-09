@@ -47,6 +47,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description,
       images: [absoluteUrl(ogImage)],
     },
+    icons: settings.faviconUrl && !settings.faviconUrl.endsWith('/favicon.ico') ? [{ rel: 'icon', url: settings.faviconUrl }] : undefined,
     category: 'technology',
     manifest: '/manifest.webmanifest',
   }
