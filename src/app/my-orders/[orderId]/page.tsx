@@ -21,7 +21,11 @@ type OrderDetailRow = {
   color: string
   infill: number
   layer_height: number
+  quantity: number
   supports: boolean
+  post_processing_level: string | null
+  post_processing_charges: number
+  price_per_unit: number
   full_name: string
   phone: string
   address_line1: string
@@ -51,7 +55,7 @@ export default async function OrderDetailPage({
   const { data: order, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, file_url, material, color, infill, layer_height, supports, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, estimated_time, status, notes, created_at'
+      'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, supports, post_processing_level, post_processing_charges, price_per_unit, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, estimated_time, status, notes, created_at'
     )
     .eq('id', orderId)
     .eq('user_id', auth.user.id)
@@ -80,7 +84,7 @@ export default async function OrderDetailPage({
     const { data: groupData } = await supabase
       .from('orders')
       .select(
-        'id, order_number, group_id, file_url, material, color, infill, layer_height, supports, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, estimated_time, status, notes, created_at'
+        'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, supports, post_processing_level, post_processing_charges, price_per_unit, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, estimated_time, status, notes, created_at'
       )
       .eq('group_id', row.group_id)
       .eq('user_id', auth.user.id)
@@ -175,8 +179,20 @@ export default async function OrderDetailPage({
                       <div className="mt-1 text-sm font-medium text-white">{Number(item.layer_height)} mm</div>
                     </div>
                     <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Qty</div>
+                      <div className="mt-1 text-sm font-medium text-white">{item.quantity ?? 1}</div>
+                    </div>
+                    <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Supports</div>
                       <div className="mt-1 text-sm font-medium text-white">{item.supports ? 'Yes' : 'No'}</div>
+                    </div>
+                    <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Post-process</div>
+                      <div className="mt-1 text-sm font-medium text-white">{item.post_processing_level ?? 'None'}</div>
+                    </div>
+                    <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">PP cost</div>
+                      <div className="mt-1 text-sm font-medium text-white">₹{Number(item.post_processing_charges).toFixed(0)}</div>
                     </div>
                   </div>
                   <div className="mt-3 text-[10px] text-[#7a82a0] break-all truncate">
@@ -212,8 +228,16 @@ export default async function OrderDetailPage({
                   <div className="mt-2 text-sm text-white">{Number(row.layer_height)} mm</div>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Quantity</div>
+                  <div className="mt-2 text-sm text-white">{row.quantity ?? 1}</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
                   <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Supports</div>
                   <div className="mt-2 text-sm text-white">{row.supports ? 'Included' : 'Not required'}</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Post-process</div>
+                  <div className="mt-2 text-sm text-white">{row.post_processing_level ?? 'None'}</div>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
                   <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">File</div>
@@ -245,10 +269,20 @@ export default async function OrderDetailPage({
               </div>
               <div className="mt-4 grid gap-2 text-sm text-[#ffe0d4]">
                 {!isMultiItem && (
-                  <div className="flex justify-between">
-                    <span>Print cost</span>
-                    <span>₹{Number(row.price).toFixed(0)}</span>
-                  </div>
+                  <>
+                    <div className="flex justify-between">
+                      <span>Print cost</span>
+                      <span>₹{Number(row.price).toFixed(0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Price per unit</span>
+                      <span>₹{Number(row.price_per_unit).toFixed(0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Post-processing</span>
+                      <span>₹{Number(row.post_processing_charges).toFixed(0)}</span>
+                    </div>
+                  </>
                 )}
                 <div className="flex justify-between">
                   <span>Delivery charge</span>
