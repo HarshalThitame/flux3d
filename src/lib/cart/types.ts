@@ -14,6 +14,7 @@ export type CartItem = {
   infill?: number;
   layerHeight?: number;
   supports?: boolean;
+  postProcessingCharges?: number;
   estimatedTime?: number;
   weight?: number;
   dimensions?: {
@@ -34,6 +35,7 @@ export type CartOrderItem = {
   infill: number;
   layerHeight: number;
   supports: boolean;
+  postProcessingCharges?: number;
   price: number;
   estimatedTime: number;
   weight: number;

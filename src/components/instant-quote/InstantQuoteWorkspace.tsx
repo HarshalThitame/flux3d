@@ -109,7 +109,7 @@ function CartEnabledWorkspace({
     infill: 20,
     layerHeight: 0.2,
     quantity: 1,
-    postProcessingLevel: 'sanded',
+    postProcessingLevel: 'none',
     supports: false,
   }
   const [config, setConfig] = useState<QuoteConfig>(defaultConfig)
@@ -174,6 +174,7 @@ function CartEnabledWorkspace({
       layerHeight: config.layerHeight,
       quantity: config.quantity,
       postProcessingLevel: config.postProcessingLevel,
+      postProcessingCharges: priceBreakdown.labourCost,
       supports: config.supports,
       price: priceBreakdown.total,
       estimatedTime: priceBreakdown.estimatedHours,
@@ -356,6 +357,7 @@ function CartEnabledWorkspace({
       quantity: config.quantity,
       supports: config.supports,
       price: priceBreakdown?.total ?? 0,
+      postProcessingCharges: priceBreakdown?.labourCost ?? 0,
       estimatedTime: priceBreakdown?.estimatedHours ?? 0,
       weight: priceBreakdown?.materialWeightGrams ?? 0,
       dimensions: priceBreakdown?.dimensionsMm ?? { x: 0, y: 0, z: 0 },

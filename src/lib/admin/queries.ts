@@ -53,6 +53,7 @@ type OrderRow = {
   estimated_time?: number | null
   supports?: boolean | null
   post_processing_level?: string | null
+  post_processing_charges?: number | string | null
   status: AdminOrder['status']
   created_at: string | null
   notes: string | null
@@ -128,6 +129,7 @@ function mapOrderRowToAdminOrder(order: OrderRow): AdminOrder {
       quantity: order.quantity ?? 1,
       supports: order.supports ?? false,
       postProcessingLevel: order.post_processing_level ?? null,
+      postProcessingCharges: normalizeMoney(order.post_processing_charges),
       status: order.status,
     }],
   }
@@ -153,6 +155,7 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
         quantity: row.quantity ?? 1,
         supports: row.supports ?? false,
         postProcessingLevel: row.post_processing_level ?? null,
+        postProcessingCharges: normalizeMoney(row.post_processing_charges),
         status: row.status,
       })
       existing.totalPrice += normalizeMoney(row.total_price)
@@ -192,6 +195,7 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
           quantity: row.quantity ?? 1,
           supports: row.supports ?? false,
           postProcessingLevel: row.post_processing_level ?? null,
+          postProcessingCharges: normalizeMoney(row.post_processing_charges),
           status: row.status,
         }],
       })
@@ -341,7 +345,7 @@ export async function getAdminDashboardData() {
     supabase.from('orders').select('id', { count: 'exact', head: true }).in('status', ['printing', 'approved']),
     supabase
       .from('orders')
-      .select('id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge')
+      .select('id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, post_processing_charges, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge')
       .order('created_at', { ascending: false })
       .limit(10),
     supabase
@@ -416,7 +420,7 @@ export async function getAdminOrdersData() {
   const { data, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
+      'id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, post_processing_charges, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
     )
     .order('created_at', { ascending: false })
 
@@ -440,7 +444,7 @@ export async function updateAdminOrderStatus(groupId: string, status: AdminOrder
   const { data, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
+      'id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, post_processing_charges, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
     )
     .eq('group_id', groupId)
     .order('created_at', { ascending: false })
@@ -585,7 +589,7 @@ export async function getAdminAnalyticsData() {
   const { data, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge, payment_method, user_id'
+      'id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, post_processing_charges, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge, payment_method, user_id'
     )
   if (error) throw new Error(error.message)
 

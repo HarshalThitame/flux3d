@@ -25,6 +25,7 @@ type CartOrderItem = {
   infill: number
   layerHeight: number
   supports: boolean
+  postProcessingCharges?: number
   price: number
   estimatedTime: number
   weight: number
@@ -156,6 +157,7 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
       layer_height: normalizeNumber(item.layerHeight, 'layer height'),
       supports: item.supports,
       quantity: normalizedQuantity,
+      post_processing_charges: normalizeNumber(item.postProcessingCharges ?? 0, 'post processing charges'),
       ...trimmedAddress,
       delivery_charge: deliveryCharge / input.items.length,
       total_price: item.price + deliveryCharge / input.items.length,

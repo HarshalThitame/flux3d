@@ -217,6 +217,7 @@ export default function DeliveryStepClient({
         layerHeight: draft.layerHeight,
         quantity: draft.quantity,
         postProcessingLevel: draft.postProcessingLevel,
+        postProcessingCharges: draft.postProcessingCharges,
         supports: draft.supports,
         price: draft.price,
         estimatedTime: draft.estimatedTime,

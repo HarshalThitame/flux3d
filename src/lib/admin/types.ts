@@ -36,6 +36,7 @@ export type AdminOrderItem = {
   quantity: number
   supports: boolean
   postProcessingLevel: string | null
+  postProcessingCharges: number
   status: OrderStatus
 }
 

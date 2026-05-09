@@ -115,6 +115,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
       layer_height: normalizeNumber(input.layerHeight, 'layer height'),
       quantity: normalizedQuantity,
       post_processing_level: input.postProcessingLevel,
+      post_processing_charges: normalizeNumber(input.postProcessingCharges, 'post processing charges'),
       supports: input.supports,
       ...trimmedAddress,
       delivery_charge: deliveryCharge,

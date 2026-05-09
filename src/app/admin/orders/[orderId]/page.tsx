@@ -186,6 +186,7 @@ export default function AdminOrderDetailPage() {
                       <Spec label="Est. Time" value={`${item.estimatedTime}h`} icon={<Clock className="h-3 w-3" />} />
                       <Spec label="Supports" value={item.supports ? 'Yes' : 'No'} icon={<ShieldCheck className="h-3 w-3" />} />
                       <Spec label="Post-Process" value={item.postProcessingLevel ?? '—'} icon={<Wrench className="h-3 w-3" />} />
+                      <Spec label="PP Charges" value={`₹${item.postProcessingCharges.toLocaleString('en-IN')}`} icon={<IndianRupee className="h-3 w-3" />} />
                       <Spec label="File" value={item.fileName} icon={<FileIcon className="h-3 w-3" />} />
                     </div>
                   </div>

@@ -21,7 +21,7 @@ export async function GET(
     const { data, error } = await supabase
       .from('orders')
       .select(
-        'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, price, price_per_unit, total_price, estimated_time, supports, post_processing_level, status, created_at, notes, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge'
+        'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, price, price_per_unit, post_processing_charges, total_price, estimated_time, supports, post_processing_level, status, created_at, notes, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge'
       )
       .or(`id.eq.${orderId},group_id.eq.${orderId}`)
       .order('created_at', { ascending: true })

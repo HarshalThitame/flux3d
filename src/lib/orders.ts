@@ -22,6 +22,7 @@ export type CreateOrderInput = {
   layerHeight: number
   quantity: number
   postProcessingLevel: 'none' | 'sanded' | 'sanded-painted'
+  postProcessingCharges: number
   supports: boolean
   price: number
   estimatedTime: number
@@ -64,6 +65,7 @@ export type OrderDraft = {
   layerHeight: number
   quantity: number
   postProcessingLevel: 'none' | 'sanded' | 'sanded-painted'
+  postProcessingCharges: number
   supports: boolean
   price: number
   estimatedTime: number

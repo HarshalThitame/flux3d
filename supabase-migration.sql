@@ -3,7 +3,7 @@ ALTER TABLE materials
 
 ALTER TABLE orders
   ADD COLUMN IF NOT EXISTS quantity integer NOT NULL DEFAULT 1,
-  ADD COLUMN IF NOT EXISTS post_processing_level text NOT NULL DEFAULT 'sanded';
+  ADD COLUMN IF NOT EXISTS post_processing_level text NOT NULL DEFAULT 'none';
 
 ALTER TABLE orders
   DROP COLUMN IF EXISTS scale_percent,

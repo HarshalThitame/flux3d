@@ -215,6 +215,7 @@ export default function CartDeliveryClient({
           infill: item.infill ?? 20,
           layerHeight: item.layerHeight ?? 0.2,
           supports: item.supports ?? false,
+          postProcessingCharges: item.postProcessingCharges ?? 0,
           price: item.price ?? 0,
           estimatedTime: item.estimatedTime ?? 0,
           weight: item.weight ?? 0,

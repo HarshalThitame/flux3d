@@ -35,7 +35,7 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
     infill: 20,
     layerHeight: 0.2,
     quantity: 1,
-    postProcessingLevel: 'sanded',
+    postProcessingLevel: 'none',
     supports: false,
   })
   const [materials, setMaterials] = useState<QuoteMaterial[]>([])

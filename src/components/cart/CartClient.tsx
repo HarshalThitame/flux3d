@@ -74,7 +74,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
     const infillValue = editingItem.infill ?? 20
     const priceAdjustment = (infillValue - originalInfill) / 100 * basePrice * 0.3
     const existingItem = items.find((i) => i.addedAt === editingItem.addedAt)
-    const existingConfig = existingItem?.config ?? { materialId: '', color: '', infill: 20, layerHeight: 0.2, quantity: 1, postProcessingLevel: 'sanded' as const, supports: false }
+    const existingConfig = existingItem?.config ?? { materialId: '', color: '', infill: 20, layerHeight: 0.2, quantity: 1, postProcessingLevel: 'none' as const, supports: false }
 
     updateItem(editingItem.addedAt, {
       material: selectedMaterial.name,
