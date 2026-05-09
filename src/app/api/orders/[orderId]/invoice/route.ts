@@ -54,8 +54,9 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
   const doc = new PDFDocument({ size: 'A4', margin: 50 })
   const buffers: Buffer[] = []
   doc.on('data', (chunk: Buffer) => buffers.push(chunk))
-  const pdf = new Promise<Buffer>((resolve) => {
+  const pdf = new Promise<Buffer>((resolve, reject) => {
     doc.on('end', () => resolve(Buffer.concat(buffers)))
+    doc.on('error', reject)
   })
 
   const left = doc.page.margins.left
@@ -127,12 +128,13 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[]): Promise<Buff
 
   doc.font('Helvetica').fontSize(9).fillColor('#333')
   items.forEach((item) => {
+    const fileName = item.file_url ? (String(item.file_url).split('/').pop() ?? 'Model') : 'Model'
     const rowValues = [
-      item.file_url.split('/').pop() ?? 'Model',
-      item.material,
-      item.color,
-      `${item.infill}%`,
-      `Rs.${Number(item.price).toFixed(0)}`,
+      fileName,
+      item.material ?? '',
+      item.color ?? '',
+      `${item.infill ?? 0}%`,
+      `Rs.${Number(item.price ?? 0).toFixed(0)}`,
     ]
     cx = left + 4
     rowValues.forEach((val, i) => {
@@ -179,23 +181,52 @@ export async function GET(
 ) {
   try {
     const { orderId } = await params
-    const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
+
+    let supabase
+    try {
+      supabase = await createServerSupabaseClient()
+    } catch {
+      return NextResponse.json({ error: 'Failed to create Supabase client' }, { status: 500 })
+    }
+
+    let user
+    try {
+      const { data, error: authError } = await supabase.auth.getUser()
+      if (authError) {
+        return NextResponse.json({ error: 'Auth error: ' + authError.message }, { status: 401 })
+      }
+      user = data.user
+    } catch (e) {
+      return NextResponse.json({ error: 'Auth exception: ' + (e instanceof Error ? e.message : String(e)) }, { status: 500 })
+    }
+
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized - no user session' }, { status: 401 })
     }
 
     const selectColumns =
       'id, order_number, group_id, file_url, material, color, infill, layer_height, supports, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, estimated_time, status, notes, created_at'
 
-    const { data: order, error } = await supabase
-      .from('orders')
-      .select(selectColumns)
-      .eq('id', orderId)
-      .eq('user_id', user.id)
-      .maybeSingle()
+    let order
+    let error
+    try {
+      const result = await supabase
+        .from('orders')
+        .select(selectColumns)
+        .eq('id', orderId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+      order = result.data
+      error = result.error
+    } catch (e) {
+      return NextResponse.json({ error: 'DB query exception: ' + (e instanceof Error ? e.message : String(e)) }, { status: 500 })
+    }
 
-    if (error || !order) {
+    if (error) {
+      return NextResponse.json({ error: 'DB error: ' + error.message }, { status: 500 })
+    }
+
+    if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
@@ -213,7 +244,13 @@ export async function GET(
       }
     }
 
-    const pdf = await generatePdf(row, items)
+    let pdf
+    try {
+      pdf = await generatePdf(row, items)
+    } catch (e) {
+      return NextResponse.json({ error: 'PDF generation failed: ' + (e instanceof Error ? e.message : String(e)) }, { status: 500 })
+    }
+
     const filename = `${order.id}.pdf`
 
     return new NextResponse(new Uint8Array(pdf), {
@@ -224,7 +261,7 @@ export async function GET(
       },
     })
   } catch (err) {
-    console.error('Invoice generation failed:', err)
-    return NextResponse.json({ error: 'Failed to generate invoice' }, { status: 500 })
+    console.error('Invoice generation fatal error:', err)
+    return NextResponse.json({ error: 'Fatal error: ' + (err instanceof Error ? err.message : String(err)) }, { status: 500 })
   }
 }
