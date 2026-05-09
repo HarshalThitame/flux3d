@@ -125,7 +125,7 @@ function mapOrderRowToAdminOrder(order: OrderRow): AdminOrder {
   }
 }
 
-function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
+export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
   const grouped = rows.reduce<Map<string, AdminOrder>>((acc, row) => {
     const groupId = row.group_id ?? String(row.id)
     const existing = acc.get(groupId)
