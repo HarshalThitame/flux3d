@@ -26,7 +26,7 @@ type Tab = 'overview' | 'sessions' | 'pages' | 'time' | 'quotes' | 'cart' | 'ord
 
 export default function CustomerProfilePage() {
   const params = useParams<{ id: string }>()
-  const customerId = params.id
+  const customerId = params?.id ?? ''
 
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [profile, setProfile] = useState<any | null>(null)
@@ -45,6 +45,12 @@ export default function CustomerProfilePage() {
     const controller = new AbortController()
 
     async function load() {
+      if (!customerId) {
+        setError('Missing customer ID.')
+        setLoading(false)
+        return
+      }
+
       try {
         const response = await fetch(`/api/admin/customers/${customerId}`, { signal: controller.signal })
         if (!response.ok) {
