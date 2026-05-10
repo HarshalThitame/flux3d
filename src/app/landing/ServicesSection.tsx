@@ -105,7 +105,7 @@ function ServiceCard({ service, index }: { service: typeof services[0]; index: n
           </div>
 
           {service.badge && (
-            <div className="inline-flex items-center gap-1 bg-[rgba(16,185,129,0.1)] border border-[rgba(16,185,129,0.3)] text-[#059669] text-xs font-medium px-2 py-0.5 rounded-full">
+            <div className="inline-flex items-center gap-1 bg-[rgba(16,185,129,0.12)] border border-[rgba(16,185,129,0.32)] text-[#047857] text-xs font-medium px-2 py-0.5 rounded-full">
               <Check className="w-3 h-3" />
               {service.badge}
             </div>
@@ -200,7 +200,7 @@ export default function ServicesSection() {
           <p className="text-sm text-[#6F7192] mb-6">We do fully custom projects too.</p>
           <a
             href="/instant-quote"
-            className="inline-flex items-center gap-2 bg-[#7C5CFF] text-white px-6 py-3 rounded-xl text-sm font-medium hover:shadow-[0_0_30px_rgba(124, 92, 255,0.3)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+            className="inline-flex items-center gap-2 bg-[#5B3FD6] text-white px-6 py-3 rounded-xl text-sm font-medium hover:shadow-[0_0_30px_rgba(91,63,214,0.3)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
           >
             Tell Us What You Need
             <ArrowRight className="w-4 h-4" />

@@ -16,7 +16,7 @@ export default function PricingCTA() {
           {/* Heading */}
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] mb-4 relative">
             Your Next Product Starts <br className="hidden md:block" />
-            <span className="text-[#7C5CFF]">With One Message.</span>
+            <span className="text-[#5B3FD6]">With One Message.</span>
           </h2>
 
           {/* Subheading */}
@@ -26,7 +26,7 @@ export default function PricingCTA() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center relative mb-8">
-            <Link href="/instant-quote" className="bg-[#7C5CFF] text-white px-8 py-4 rounded-lg text-lg font-medium border-none cursor-pointer transition-transform hover:translate-y-[-2px] hover:opacity-90 shadow-lg shadow-[rgba(124, 92, 255,0.3)]">
+            <Link href="/instant-quote" className="bg-[#5B3FD6] text-white px-8 py-4 rounded-lg text-lg font-medium border-none cursor-pointer transition-transform hover:translate-y-[-2px] hover:opacity-90 shadow-lg shadow-[rgba(91,63,214,0.3)]">
               Start Your Order
             </Link>
             <a

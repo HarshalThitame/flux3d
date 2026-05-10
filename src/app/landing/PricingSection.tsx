@@ -2,7 +2,7 @@
 
 import { motion, useInView } from '@/lib/motion'
 import { useRef } from 'react'
-import { Check, ArrowRight, Star } from 'lucide-react'
+import { Check, ArrowRight } from 'lucide-react'
 
 const tiers = [
   {
@@ -116,7 +116,7 @@ export default function PricingSection() {
               }`}
             >
               {tier.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#7C5CFF] text-white text-xs font-bold px-4 py-1 rounded-full">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#5B3FD6] text-white text-xs font-bold px-4 py-1 rounded-full">
                   Most Popular
                 </div>
               )}
@@ -142,8 +142,8 @@ export default function PricingSection() {
                 href="/instant-quote"
                 className={`inline-flex items-center justify-center w-full gap-2 py-3 rounded-xl text-sm font-medium transition-all ${
                   tier.popular
-                    ? 'bg-[#7C5CFF] text-white hover:shadow-[0_0_30px_rgba(124, 92, 255,0.3)]'
-                    : 'bg-[rgba(124, 92, 255,0.4)] text-white border border-[rgba(124, 92, 255,0.5)] hover:border-[#7C5CFF]'
+                    ? 'bg-[#5B3FD6] text-white hover:shadow-[0_0_30px_rgba(91,63,214,0.3)]'
+                    : 'bg-white text-[#5B3FD6] border border-[rgba(91,63,214,0.28)] hover:border-[#5B3FD6] hover:bg-[rgba(91,63,214,0.08)]'
                 }`}
               >
                 {tier.cta}

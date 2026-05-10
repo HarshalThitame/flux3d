@@ -278,7 +278,7 @@ export default function HeroSection() {
             <div className="animate-hero-in animate-delay-5 mb-4 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
               <Link
                 href="/instant-quote"
-                className="group relative flex min-h-[48px] items-center justify-center overflow-hidden rounded-xl bg-[#7C5CFF] px-5 py-3.5 text-center text-sm font-semibold text-white transition-all duration-300 hover:shadow-[0_0_40px_rgba(124,92,255,0.4)] hover:scale-[1.03] active:scale-[0.97] sm:px-6 sm:py-3"
+                className="group relative flex min-h-[48px] items-center justify-center overflow-hidden rounded-xl bg-[#5B3FD6] px-5 py-3.5 text-center text-sm font-semibold text-white transition-all duration-300 hover:shadow-[0_0_40px_rgba(91,63,214,0.4)] hover:scale-[1.03] active:scale-[0.97] sm:px-6 sm:py-3"
               >
                 <span className="relative z-10 inline-flex items-center gap-2">
                   Upload Your Model & Get Quote

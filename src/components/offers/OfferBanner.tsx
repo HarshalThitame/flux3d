@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from '@/lib/motion'
-import { X, Gift, Timer, ChevronRight, Percent } from 'lucide-react'
+import { X, Gift, ChevronRight, Percent } from 'lucide-react'
 import Link from 'next/link'
 import CountdownTimer from './CountdownTimer'
 
@@ -70,6 +70,7 @@ export function AnnouncementBar() {
           </Link>
           <button
             onClick={() => setDismissed(true)}
+            aria-label="Dismiss offer banner"
             className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
           >
             <X className="w-4 h-4" />
@@ -106,7 +107,7 @@ export function OfferBanner() {
       <div className="relative z-10 p-6 sm:p-8 md:p-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div className="flex-1">
           {offer.badge_text && (
-            <span className="inline-block bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA] text-white text-xs font-bold px-3 py-1 rounded-full mb-3">
+            <span className="inline-block bg-gradient-to-r from-[#5B3FD6] to-[#8B5CF6] text-white text-xs font-bold px-3 py-1 rounded-full mb-3">
               {offer.badge_text}
             </span>
           )}
@@ -128,7 +129,7 @@ export function OfferBanner() {
             <CountdownTimer targetDate={offer.ends_at} size="sm" />
             <Link
               href="/instant-quote"
-              className="inline-flex items-center gap-2 bg-[#7C5CFF] hover:bg-[#6B4FE0] text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:shadow-[0_0_30px_rgba(124,92,255,0.4)]"
+              className="inline-flex items-center gap-2 bg-[#5B3FD6] hover:bg-[#4A32B0] text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:shadow-[0_0_30px_rgba(91,63,214,0.4)]"
             >
               Shop Now
               <ChevronRight className="w-4 h-4" />
@@ -164,7 +165,7 @@ export function SaleBadge({ label, className = '' }: { label?: string; className
   if (!label) return null
   return (
     <span
-      className={`inline-flex items-center gap-1 bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA] text-white text-[10px] font-bold px-2 py-0.5 rounded-full ${className}`}
+      className={`inline-flex items-center gap-1 bg-gradient-to-r from-[#5B3FD6] to-[#8B5CF6] text-white text-[10px] font-bold px-2 py-0.5 rounded-full ${className}`}
     >
       <Gift className="w-2.5 h-2.5" />
       {label}

@@ -96,7 +96,7 @@ export default function HowItWorksSection() {
                   className="relative w-20 h-20 rounded-full bg-[#FFFFFF] border-2 border-[rgba(124, 92, 255,0.3)] flex items-center justify-center mb-6 hover:border-[#7C5CFF] hover:shadow-[0_0_30px_rgba(124, 92, 255,0.2)] transition-all z-10"
                 >
                   <step.icon className="w-8 h-8 text-[#5B3FD6]" />
-                  <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#7C5CFF] text-white text-xs font-bold flex items-center justify-center shadow-lg">
+                  <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#5B3FD6] text-white text-xs font-bold flex items-center justify-center shadow-lg">
                     {step.step}
                   </div>
                 </motion.div>
@@ -117,7 +117,7 @@ export default function HowItWorksSection() {
           className="text-center mt-16"
         >
           <p className="text-lg text-[#0F1B3D] mb-4">Ready to start?</p>
-          <a href="/instant-quote" className="inline-flex items-center gap-2 bg-[#7C5CFF] text-white px-8 py-3 rounded-xl font-medium hover:shadow-[0_0_30px_rgba(124, 92, 255,0.3)] transition-shadow">
+          <a href="/instant-quote" className="inline-flex items-center gap-2 bg-[#5B3FD6] text-white px-8 py-3 rounded-xl font-medium hover:shadow-[0_0_30px_rgba(91,63,214,0.3)] transition-shadow">
             Upload Your File Now
             <ArrowRight className="w-4 h-4" />
           </a>

@@ -130,7 +130,7 @@ export default function FinalCTASection() {
             >
               <Link
                 href="/instant-quote"
-                className="group relative bg-[#7C5CFF] text-white px-8 py-4 rounded-xl text-base font-semibold border border-[#7C5CFF]/20 cursor-pointer overflow-hidden transition-all hover:shadow-[0_10px_40px_rgba(124,92,255,0.18)] hover:-translate-y-0.5"
+                className="group relative bg-[#5B3FD6] text-white px-8 py-4 rounded-xl text-base font-semibold border border-[#5B3FD6]/20 cursor-pointer overflow-hidden transition-all hover:shadow-[0_10px_40px_rgba(91,63,214,0.18)] hover:-translate-y-0.5"
               >
                 <span className="relative z-10 inline-flex items-center gap-2">
                   Upload Your File & Get a Free Quote
