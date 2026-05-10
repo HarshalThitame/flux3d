@@ -43,7 +43,7 @@ export default function MaterialsHero() {
     <section ref={ref} className="relative overflow-hidden pt-32 pb-16 px-4 md:px-8 lg:px-16">
       {/* Background layers */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(255,92,26,0.12)_0%,transparent_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(124, 92, 255,0.12)_0%,transparent_70%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_80%_60%,rgba(80,100,255,0.06)_0%,transparent_60%)]" />
       </div>
 
@@ -52,7 +52,7 @@ export default function MaterialsHero() {
         {particles.map((p, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full bg-[#FF5C1A]"
+            className="absolute rounded-full bg-[#7C5CFF]"
             style={{
               left: `${p.left}%`,
               top: `${p.top}%`,
@@ -78,17 +78,17 @@ export default function MaterialsHero() {
         {/* Breadcrumb */}
         <motion.div
           variants={{ hidden: { opacity: 0, y: 15 }, visible: { opacity: 1, y: 0 } }}
-          className="flex items-center gap-2 text-sm text-[#7a82a0] mb-6"
+          className="flex items-center gap-2 text-sm text-[#6F7192] mb-6"
         >
-          <Link href="/" className="hover:text-[#FF5C1A] transition-colors">Home</Link>
+          <Link href="/" className="hover:text-[#7C5CFF] transition-colors">Home</Link>
           <ChevronDown className="w-3 h-3 -rotate-90" />
-          <span className="text-white">Materials</span>
+          <span className="text-[#0F1B3D]">Materials</span>
         </motion.div>
 
         {/* Section label */}
         <motion.div
           variants={{ hidden: { opacity: 0, y: 15 }, visible: { opacity: 1, y: 0 } }}
-          className="inline-flex items-center gap-2 bg-[rgba(255,92,26,0.08)] border border-[rgba(255,92,26,0.3)] text-[#FF5C1A] text-sm font-medium px-4 py-1.5 rounded-full mb-4"
+          className="inline-flex items-center gap-2 bg-[rgba(124, 92, 255,0.08)] border border-[rgba(124, 92, 255,0.3)] text-[#7C5CFF] text-sm font-medium px-4 py-1.5 rounded-full mb-4"
         >
           <Layers className="w-4 h-4" />
           Our Materials
@@ -97,10 +97,10 @@ export default function MaterialsHero() {
         {/* H1 */}
         <motion.h1
           variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-          className="font-[var(--font-syne)] text-[clamp(2rem,5vw,3.5rem)] font-extrabold text-white leading-[1.1] tracking-[-1px] mb-4"
+          className="font-[var(--font-syne)] text-[clamp(2rem,5vw,3.5rem)] font-extrabold text-[#0F1B3D] leading-[1.1] tracking-[-1px] mb-4"
         >
           The Right Material<br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF5C1A] to-[#ff7a3d]">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA]">
             Makes All the Difference.
           </span>
         </motion.h1>
@@ -108,7 +108,7 @@ export default function MaterialsHero() {
         {/* Subheading */}
         <motion.p
           variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-          className="text-[#7a82a0] text-lg max-w-[700px] mb-8 leading-[1.7]"
+          className="text-[#6F7192] text-lg max-w-[700px] mb-8 leading-[1.7]"
         >
           Every project has a perfect material. We stock 10+ premium filaments and resins — from beginner-friendly PLA to engineering-grade Nylon and biocompatible resin. This guide helps you choose with confidence.
         </motion.p>

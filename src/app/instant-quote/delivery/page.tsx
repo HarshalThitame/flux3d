@@ -70,7 +70,7 @@ export default async function DeliveryPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       <Navbar transparent />
       <DeliveryStepClient user={auth.profile} savedAddresses={savedAddresses} />
     </div>

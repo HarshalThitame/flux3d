@@ -19,7 +19,7 @@ interface RichTextEditorProps {
 }
 
 const presetColors = [
-  { name: 'Orange', value: '#FF5C1A' },
+  { name: 'Orange', value: '#7C5CFF' },
   { name: 'White', value: '#FFFFFF' },
   { name: 'Red', value: '#EF4444' },
   { name: 'Green', value: '#22C55E' },
@@ -34,7 +34,7 @@ const colorNameToHex: Record<string, string> = {
   'green': '#22C55E',
   'blue': '#3B82F6',
   'yellow': '#EAB308',
-  'orange': '#FF5C1A',
+  'orange': '#7C5CFF',
   'purple': '#A855F7',
   'pink': '#EC4899',
   'white': '#FFFFFF',
@@ -56,7 +56,7 @@ const colorNameToHex: Record<string, string> = {
   'olive': '#3F6212',
   'coral': '#F97316',
   'salmon': '#FB923C',
-  'gold': '#F59E0B',
+  'gold': '#A78BFA',
   'silver': '#9CA3AF',
 }
 
@@ -95,7 +95,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-invert max-w-none min-h-[300px] p-4 focus:outline-none text-[#e8eaf0] leading-7',
+        class: 'prose prose-invert max-w-none min-h-[300px] p-4 focus:outline-none text-[#0F1B3D] leading-7',
       },
     },
   })
@@ -120,12 +120,12 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.03]">
-      <div className="flex flex-wrap items-center gap-1 border-b border-white/10 bg-white/[0.02] p-2">
+    <div className="overflow-hidden rounded-lg border border-[#7C5CFF]/10 bg-white/[0.03]">
+      <div className="flex flex-wrap items-center gap-1 border-b border-[#7C5CFF]/10 bg-white/[0.02] p-2">
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('bold') ? 'bg-[#FF5C1A]/20 text-[#FF5C1A]' : 'text-[#7a82a0]'}`}
+          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('bold') ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
           title="Bold"
         >
           <BoldIcon className="h-4 w-4" />
@@ -133,7 +133,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('italic') ? 'bg-[#FF5C1A]/20 text-[#FF5C1A]' : 'text-[#7a82a0]'}`}
+          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('italic') ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
           title="Italic"
         >
           <ItalicIcon className="h-4 w-4" />
@@ -142,7 +142,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('bulletList') ? 'bg-[#FF5C1A]/20 text-[#FF5C1A]' : 'text-[#7a82a0]'}`}
+          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('bulletList') ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
           title="Bullet List"
         >
           <List className="h-4 w-4" />
@@ -150,7 +150,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('orderedList') ? 'bg-[#FF5C1A]/20 text-[#FF5C1A]' : 'text-[#7a82a0]'}`}
+          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('orderedList') ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
           title="Numbered List"
         >
           <ListOrdered className="h-4 w-4" />
@@ -159,7 +159,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleHighlight().run()}
-          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('highlight') ? 'bg-yellow-400/30 text-yellow-400' : 'text-[#7a82a0]'}`}
+          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('highlight') ? 'bg-yellow-400/30 text-yellow-400' : 'text-[#6F7192]'}`}
           title="Highlight"
         >
           <Highlighter className="h-4 w-4" />
@@ -171,7 +171,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
               key={color.value}
               type="button"
               onClick={() => applyColor(color.value)}
-              className="h-6 w-6 rounded border border-white/20 transition-transform hover:scale-110"
+              className="h-6 w-6 rounded border border-[#7C5CFF]/10 transition-transform hover:scale-110"
               style={{ backgroundColor: color.value }}
               title={color.name}
             />
@@ -187,7 +187,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
               }
             }}
             placeholder="red, blue, green"
-            className="w-32 rounded border border-white/10 bg-transparent px-2 py-1 text-xs text-white placeholder:text-[#7a82a0] focus:outline-none"
+            className="w-32 rounded border border-[#7C5CFF]/10 bg-transparent px-2 py-1 text-xs text-[#0F1B3D] placeholder:text-[#6F7192] focus:outline-none"
             title="Enter color names or hex codes (comma-separated)"
           />
         </div>
@@ -195,7 +195,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         <button
           type="button"
           onClick={() => editor.chain().focus().undo().run()}
-          className="rounded-md p-2 text-[#7a82a0] transition-colors hover:bg-white/10"
+          className="rounded-md p-2 text-[#6F7192] transition-colors hover:bg-white/10"
           title="Undo"
         >
           <Undo className="h-4 w-4" />
@@ -203,7 +203,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         <button
           type="button"
           onClick={() => editor.chain().focus().redo().run()}
-          className="rounded-md p-2 text-[#7a82a0] transition-colors hover:bg-white/10"
+          className="rounded-md p-2 text-[#6F7192] transition-colors hover:bg-white/10"
           title="Redo"
         >
           <Redo className="h-4 w-4" />

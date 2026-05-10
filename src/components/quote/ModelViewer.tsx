@@ -23,7 +23,7 @@ function ViewerModel({
 
 function ViewerFallback() {
   return (
-    <div className="absolute inset-0 flex items-center justify-center text-sm text-[#7a82a0]">
+    <div className="absolute inset-0 flex items-center justify-center text-sm text-[#6F7192]">
       Loading interactive preview...
     </div>
   )
@@ -31,11 +31,11 @@ function ViewerFallback() {
 
 export default function ModelViewer({ model, isLoading }: ModelViewerProps) {
   return (
-    <div className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,#0a0f1d,#070b15)]">
-      <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">
+    <div className="relative overflow-hidden rounded-[30px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,#FFFFFF,#FFFFFF)]">
+      <div className="flex items-center justify-between border-b border-[#7C5CFF]/10 px-5 py-4">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">Interactive Viewer</div>
-          <div className="mt-1 text-sm font-medium text-white">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Interactive Viewer</div>
+          <div className="mt-1 text-sm font-medium text-[#0F1B3D]">
             {model ? model.fileName : 'Upload a model to begin'}
           </div>
         </div>
@@ -51,7 +51,7 @@ export default function ModelViewer({ model, isLoading }: ModelViewerProps) {
               camera={{ position: [140, 120, 140], fov: 34 }}
               dpr={[1, 1.7]}
             >
-              <color attach="background" args={['#070b15']} />
+              <color attach="background" args={['#FFFFFF']} />
               <ambientLight intensity={0.9} />
               <directionalLight position={[120, 120, 80]} intensity={1.1} />
               <directionalLight position={[-80, -50, -60]} intensity={0.35} />
@@ -64,9 +64,9 @@ export default function ModelViewer({ model, isLoading }: ModelViewerProps) {
           </Suspense>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
-            <div className="h-16 w-16 rounded-2xl border border-white/10 bg-white/5" />
-            <div className="font-[var(--font-syne)] text-xl font-bold text-white">Preview unavailable</div>
-            <p className="max-w-[420px] text-sm leading-7 text-[#7a82a0]">
+            <div className="h-16 w-16 rounded-2xl border border-[#7C5CFF]/10 bg-white/5" />
+            <div className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">Preview unavailable</div>
+            <p className="max-w-[420px] text-sm leading-7 text-[#6F7192]">
               Upload a supported 3D model to inspect geometry, auto-fit the camera, and calculate instant pricing.
             </p>
           </div>
@@ -74,31 +74,31 @@ export default function ModelViewer({ model, isLoading }: ModelViewerProps) {
 
         {isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-[rgba(4,8,16,0.56)] backdrop-blur-sm">
-            <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-3 text-sm text-white">
+            <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D]">
               Parsing model geometry...
             </div>
           </div>
         ) : null}
       </div>
 
-      <div className="grid gap-3 border-t border-white/8 px-5 py-4 sm:grid-cols-3">
+      <div className="grid gap-3 border-t border-[#7C5CFF]/10 px-5 py-4 sm:grid-cols-3">
         <div className="rounded-2xl bg-white/[0.03] px-4 py-3">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">Bounding Box</div>
-          <div className="mt-2 text-sm text-white">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Bounding Box</div>
+          <div className="mt-2 text-sm text-[#0F1B3D]">
             {model
               ? `${model.dimensionsMm.x.toFixed(1)} × ${model.dimensionsMm.y.toFixed(1)} × ${model.dimensionsMm.z.toFixed(1)} mm`
               : 'Waiting for file'}
           </div>
         </div>
         <div className="rounded-2xl bg-white/[0.03] px-4 py-3">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">Triangles</div>
-          <div className="mt-2 text-sm text-white">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Triangles</div>
+          <div className="mt-2 text-sm text-[#0F1B3D]">
             {model ? model.triangleCount.toLocaleString() : '0'}
           </div>
         </div>
         <div className="rounded-2xl bg-white/[0.03] px-4 py-3">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">Volume</div>
-          <div className="mt-2 text-sm text-white">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Volume</div>
+          <div className="mt-2 text-sm text-[#0F1B3D]">
             {model ? `${(model.volumeMm3 / 1000).toFixed(2)} cm³` : '0 cm³'}
           </div>
         </div>

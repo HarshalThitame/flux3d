@@ -109,8 +109,8 @@ export default function CartClient({ user, materials }: CartClientProps) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <ShoppingCart className="mx-auto h-12 w-12 animate-pulse text-[#FF5C1A]" />
-          <p className="mt-4 text-sm text-[#7a82a0]">Loading your cart...</p>
+          <ShoppingCart className="mx-auto h-12 w-12 animate-pulse text-[#7C5CFF]" />
+          <p className="mt-4 text-sm text-[#6F7192]">Loading your cart...</p>
         </div>
       </div>
     )
@@ -132,20 +132,20 @@ export default function CartClient({ user, materials }: CartClientProps) {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,92,26,0.08),transparent_24%),radial-gradient(circle_at_right,rgba(34,211,238,0.08),transparent_28%),#050810] px-4 pb-16 pt-28 md:px-8 xl:px-10">
+    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(124, 92, 255,0.08),transparent_24%),radial-gradient(circle_at_right,rgba(183, 167, 255,0.08),transparent_28%),#FFFFFF] px-4 pb-16 pt-28 md:px-8 xl:px-10">
       <div className="mx-auto max-w-[1400px]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#FF5C1A]/25 bg-[#FF5C1A]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#FF9A72]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#A78BFA]">
             Shopping Cart
           </div>
-          <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2rem,4vw,3.5rem)] font-extrabold leading-[0.98] tracking-[-2px] text-white">
+          <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2rem,4vw,3.5rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#0F1B3D]">
             Review Your <span className="text-[#7dd3fc]">Print Items</span>
           </h1>
-          <p className="mt-4 max-w-[600px] text-base leading-7 text-[#7a82a0]">
+          <p className="mt-4 max-w-[600px] text-base leading-7 text-[#6F7192]">
             You have {items.length} item{items.length !== 1 ? 's' : ''} in your cart. Modify settings and proceed to delivery.
           </p>
         </motion.div>
@@ -162,16 +162,16 @@ export default function CartClient({ user, materials }: CartClientProps) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className={`rounded-[24px] border bg-[linear-gradient(180deg,rgba(12,18,34,0.96),rgba(7,11,22,0.92))] p-5 shadow-[0_12px_50px_rgba(0,0,0,0.25)] transition-colors ${
-                    isEditing ? 'border-[#FF5C1A]/40' : 'border-white/10'
+                  className={`rounded-[24px] border bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 shadow-[0_12px_50px_rgba(0,0,0,0.25)] transition-colors ${
+                    isEditing ? 'border-[#7C5CFF]/40' : 'border-[#7C5CFF]/10'
                   }`}
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex-1">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h3 className="text-lg font-semibold text-white">{item.name}</h3>
-                          <p className="mt-1 text-sm text-[#7a82a0]">Quote: {item.id}</p>
+                          <h3 className="text-lg font-semibold text-[#0F1B3D]">{item.name}</h3>
+                          <p className="mt-1 text-sm text-[#6F7192]">Quote: {item.id}</p>
                         </div>
                         <div className="flex gap-2">
                           {!isEditing && (
@@ -196,8 +196,8 @@ export default function CartClient({ user, materials }: CartClientProps) {
                       </div>
 
                         <div className="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3">
-                        <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Material</div>
+                        <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Material</div>
                           {editingItem ? (
                             <select
                               value={editingItem.material}
@@ -211,72 +211,72 @@ export default function CartClient({ user, materials }: CartClientProps) {
                                   })
                                 }
                               }}
-                              className="mt-1 w-full bg-transparent text-sm font-medium text-white outline-none"
+                              className="mt-1 w-full bg-transparent text-sm font-medium text-[#0F1B3D] outline-none"
                             >
                               {materials.map((m) => (
-                                <option key={m.id} value={m.id} className="bg-[#0d1120]">
+                                <option key={m.id} value={m.id} className="bg-[#FFFFFF]">
                                   {m.name}
                                 </option>
                               ))}
                             </select>
                           ) : (
-                            <div className="mt-1 text-sm font-medium text-white">{item.material}</div>
+                            <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.material}</div>
                           )}
                         </div>
 
-                        <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Color</div>
+                        <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Color</div>
                           {editingItem ? (
                             <select
                               value={editingItem.color}
                               onChange={(e) => setEditingItem({ ...editingItem, color: e.target.value })}
-                              className="mt-1 w-full bg-transparent text-sm font-medium text-white outline-none"
+                              className="mt-1 w-full bg-transparent text-sm font-medium text-[#0F1B3D] outline-none"
                             >
                               {availableColors.map((c) => (
-                                <option key={c.name} value={c.name} className="bg-[#0d1120]">
+                                <option key={c.name} value={c.name} className="bg-[#FFFFFF]">
                                   {c.name}
                                 </option>
                               ))}
                             </select>
                           ) : (
-                            <div className="mt-1 text-sm font-medium text-white">
+                            <div className="mt-1 text-sm font-medium text-[#0F1B3D]">
                               {item.color}
                             </div>
                           )}
                         </div>
 
-                        <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Infill</div>
+                        <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Infill</div>
                           {editingItem ? (
                             <select
                               value={editingItem.infill}
                               onChange={(e) => setEditingItem({ ...editingItem, infill: Number(e.target.value) })}
-                              className="mt-1 w-full bg-transparent text-sm font-medium text-white outline-none"
+                              className="mt-1 w-full bg-transparent text-sm font-medium text-[#0F1B3D] outline-none"
                             >
                               {[10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100].map((val) => (
-                                <option key={val} value={val} className="bg-[#0d1120]">
+                                <option key={val} value={val} className="bg-[#FFFFFF]">
                                   {val}%
                                 </option>
                               ))}
                             </select>
                           ) : (
-                            <div className="mt-1 text-sm font-medium text-white">{item.infill}%</div>
+                            <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.infill}%</div>
                           )}
                         </div>
 
-                        <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Layer Height</div>
-                          <div className="mt-1 text-sm font-medium text-white">{item.layerHeight} mm</div>
+                        <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Layer Height</div>
+                          <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.layerHeight} mm</div>
                         </div>
 
-                        <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Weight</div>
-                          <div className="mt-1 text-sm font-medium text-white">{(item.weight ?? 0).toFixed(1)} g</div>
+                        <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Weight</div>
+                          <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{(item.weight ?? 0).toFixed(1)} g</div>
                         </div>
 
-                        <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Print Time</div>
-                           <div className="mt-1 text-sm font-medium text-white">{formatDurationMinutes((item.estimatedTime ?? 0) * 60)}</div>
+                        <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Print Time</div>
+                           <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{formatDurationMinutes((item.estimatedTime ?? 0) * 60)}</div>
                         </div>
                       </div>
 
@@ -285,7 +285,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
                           <button
                             type="button"
                             onClick={handleSaveEdit}
-                            className="inline-flex items-center gap-2 rounded-lg bg-[#FF5C1A] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-95"
+                            className="inline-flex items-center gap-2 rounded-lg bg-[#7C5CFF] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-95"
                           >
                             <Check className="h-4 w-4" />
                             Save Changes
@@ -293,19 +293,19 @@ export default function CartClient({ user, materials }: CartClientProps) {
                           <button
                             type="button"
                             onClick={handleCancelEdit}
-                            className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/[0.07]"
+                            className="inline-flex items-center gap-2 rounded-lg border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
                           >
                             Cancel
                           </button>
                         </div>
                       )}
 
-                      <div className="mt-3 flex flex-wrap gap-2 text-xs text-[#7a82a0]">
-                        <span className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-1">
+                      <div className="mt-3 flex flex-wrap gap-2 text-xs text-[#6F7192]">
+                        <span className="rounded-full border border-[#7C5CFF]/10 bg-white/[0.03] px-2 py-1">
                           {(item.dimensions?.x ?? 0).toFixed(0)} × {(item.dimensions?.y ?? 0).toFixed(0)} × {(item.dimensions?.z ?? 0).toFixed(0)} mm
                         </span>
                         {item.supports && (
-                          <span className="rounded-full border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 px-2 py-1 text-[#FF9A72]">
+                          <span className="rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-2 py-1 text-[#A78BFA]">
                             Supports included
                           </span>
                         )}
@@ -314,7 +314,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
 
                     <div className="flex flex-col items-end gap-3 md:w-44">
                       <div className="w-full">
-                        <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Quantity</div>
+                        <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Quantity</div>
                         <input
                           type="number"
                           min={1}
@@ -325,12 +325,12 @@ export default function CartClient({ user, materials }: CartClientProps) {
                             const unitPrice = (item.price ?? 0) / Math.max(1, (item.quantity ?? 1))
                             updateItem(item.addedAt ?? '', { quantity: qty, price: unitPrice * qty })
                           }}
-                          className="mt-1 w-full rounded-lg border border-white/8 bg-white/[0.02] px-2.5 py-1.5 text-right text-sm font-medium text-white outline-none"
+                          className="mt-1 w-full rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-2.5 py-1.5 text-right text-sm font-medium text-[#0F1B3D] outline-none"
                         />
                       </div>
                       <div className="text-right">
-                        <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">Price</div>
-                        <div className="font-[var(--font-syne)] text-3xl font-bold text-white">
+                        <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Price</div>
+                        <div className="font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">
                           ₹{item.price.toFixed(0)}
                         </div>
                       </div>
@@ -345,37 +345,37 @@ export default function CartClient({ user, materials }: CartClientProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(12,18,34,0.98),rgba(6,10,20,0.96))] p-5 md:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.3)]"
+            className="rounded-[28px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-5 md:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.3)]"
           >
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <h2 className="font-[var(--font-syne)] text-xl font-bold text-white">
+                <h2 className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">
                   Order Summary
                 </h2>
                 <p className="mt-1 text-sm text-[#97a1c2]">
                   Before delivery
                 </p>
               </div>
-              <div className="rounded-xl border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 p-2.5 text-[#FF9A72]">
+              <div className="rounded-xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-2.5 text-[#A78BFA]">
                 <IndianRupee className="h-5 w-5" />
               </div>
             </div>
 
-            <div className="space-y-3 rounded-[20px] border border-white/8 bg-white/[0.03] p-4">
+            <div className="space-y-3 rounded-[20px] border border-[#7C5CFF]/10 bg-white/[0.03] p-4">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-[#aeb8d8]">Items ({summary.itemCount})</span>
-                <span className="font-medium text-white">₹{summary.subtotal.toFixed(0)}</span>
+                <span className="font-medium text-[#0F1B3D]">₹{summary.subtotal.toFixed(0)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-[#aeb8d8]">Delivery</span>
-                <span className="font-medium text-white">
+                <span className="font-medium text-[#0F1B3D]">
                   {summary.deliveryCharge === 0 ? 'FREE' : `₹${summary.deliveryCharge.toFixed(0)}`}
                 </span>
               </div>
-              <div className="border-t border-white/8 pt-3">
+              <div className="border-t border-[#7C5CFF]/10 pt-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-base font-semibold text-white">Total</span>
-                  <span className="font-[var(--font-syne)] text-3xl font-bold text-white">
+                  <span className="text-base font-semibold text-[#0F1B3D]">Total</span>
+                  <span className="font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">
                     ₹{summary.total.toFixed(0)}
                   </span>
                 </div>
@@ -386,7 +386,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
               <button
                 type="button"
                 onClick={handleCheckout}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] bg-[#FF5C1A] px-4 py-4 text-sm font-semibold text-white transition-all hover:translate-y-[-1px] hover:opacity-95 min-h-[52px]"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] bg-[#7C5CFF] px-4 py-4 text-sm font-semibold text-white transition-all hover:translate-y-[-1px] hover:opacity-95 min-h-[52px]"
               >
                 Proceed to Delivery
                 <ArrowRight className="h-4 w-4" />
@@ -394,13 +394,13 @@ export default function CartClient({ user, materials }: CartClientProps) {
               <button
                 type="button"
                 onClick={() => setShowClearConfirm(true)}
-                className="inline-flex w-full items-center justify-center rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3.5 text-sm font-medium text-white transition-colors hover:bg-white/[0.07] min-h-[48px]"
+                className="inline-flex w-full items-center justify-center rounded-[16px] border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3.5 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07] min-h-[48px]"
               >
                 Clear Cart
               </button>
               <Link
                 href="/instant-quote"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-[16px] border border-white/10 bg-transparent px-4 py-3.5 text-sm font-medium text-[#7dd3fc] transition-colors hover:border-[#7dd3fc]/30 min-h-[48px]"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-[16px] border border-[#7C5CFF]/10 bg-transparent px-4 py-3.5 text-sm font-medium text-[#7dd3fc] transition-colors hover:border-[#7dd3fc]/30 min-h-[48px]"
               >
                 <Plus className="h-4 w-4" />
                 Add More Items
@@ -425,13 +425,13 @@ export default function CartClient({ user, materials }: CartClientProps) {
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: 'spring', duration: 0.4, bounce: 0.15 }}
               onClick={(e) => e.stopPropagation()}
-              className="mx-4 w-full max-w-md overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(12,18,34,0.98),rgba(6,10,20,0.96))] shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
+              className="mx-4 w-full max-w-md overflow-hidden rounded-[28px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
             >
               <div className="relative p-6 pb-0">
                 <button
                   type="button"
                   onClick={() => setShowClearConfirm(false)}
-                  className="absolute right-4 top-4 rounded-lg border border-white/10 bg-white/[0.03] p-1.5 text-[#7a82a0] transition-colors hover:bg-white/[0.07] hover:text-white"
+                  className="absolute right-4 top-4 rounded-lg border border-[#7C5CFF]/10 bg-white/[0.03] p-1.5 text-[#6F7192] transition-colors hover:bg-white/[0.07] hover:text-[#0F1B3D]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -440,24 +440,24 @@ export default function CartClient({ user, materials }: CartClientProps) {
                   <AlertTriangle className="h-7 w-7 text-rose-400" />
                 </div>
 
-                <h3 className="text-center text-xl font-semibold text-white">Clear Your Cart?</h3>
-                <p className="mt-2 text-center text-sm leading-6 text-[#7a82a0]">
-                  This will remove all <span className="font-medium text-white">{items.length} item{items.length !== 1 ? 's' : ''}</span> from your cart. This action cannot be undone.
+                <h3 className="text-center text-xl font-semibold text-[#0F1B3D]">Clear Your Cart?</h3>
+                <p className="mt-2 text-center text-sm leading-6 text-[#6F7192]">
+                  This will remove all <span className="font-medium text-[#0F1B3D]">{items.length} item{items.length !== 1 ? 's' : ''}</span> from your cart. This action cannot be undone.
                 </p>
               </div>
 
-              <div className="mt-5 flex gap-3 border-t border-white/8 p-4">
+              <div className="mt-5 flex gap-3 border-t border-[#7C5CFF]/10 p-4">
                 <button
                   type="button"
                   onClick={() => setShowClearConfirm(false)}
-                  className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/[0.07]"
+                  className="flex-1 rounded-xl border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
                 >
                   Keep Items
                 </button>
                 <button
                   type="button"
                   onClick={handleClearCart}
-                  className="flex-1 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-rose-500/90"
+                  className="flex-1 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-[#0F1B3D] transition-all hover:bg-rose-500/90"
                 >
                   Yes, Clear All
                 </button>

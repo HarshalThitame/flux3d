@@ -10,12 +10,12 @@ import type { QuoteMaterial } from '@/lib/quote/types'
 const colorNameToHex = (input: string): string => {
   const colorMap: Record<string, string> = {
     'red': '#EF4444', 'green': '#22C55E', 'blue': '#3B82F6', 'yellow': '#EAB308',
-    'orange': '#FF5C1A', 'purple': '#A855F7', 'pink': '#EC4899', 'white': '#FFFFFF',
+    'orange': '#7C5CFF', 'purple': '#A855F7', 'pink': '#EC4899', 'white': '#FFFFFF',
     'black': '#000000', 'gray': '#6B7280', 'grey': '#6B7280', 'cyan': '#06B6D4',
     'teal': '#14B8A6', 'lime': '#84CC16', 'indigo': '#6366F1', 'violet': '#8B5CF6',
     'fuchsia': '#D946EF', 'rose': '#F43F5E', 'sky': '#0EA5E9', 'magenta': '#D946EF',
     'brown': '#92400E', 'navy': '#1E3A5F', 'maroon': '#7F1D1D', 'olive': '#3F6212',
-    'coral': '#F97316', 'salmon': '#FB923C', 'gold': '#F59E0B', 'silver': '#9CA3AF',
+    'coral': '#F97316', 'salmon': '#FB923C', 'gold': '#A78BFA', 'silver': '#9CA3AF',
   };
   const trimmed = input.trim().toLowerCase();
   if (trimmed.startsWith('#') && /^#[0-9a-f]{3,8}$/i.test(trimmed)) return trimmed;
@@ -224,7 +224,7 @@ export default function AdminMaterialsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+    <div className="min-h-screen bg-[#0A1F2D] text-[#E0E5EC]">
       <div className="px-4 py-8 md:px-8">
         <div className="mx-auto max-w-[1500px]">
           {/* Header */}
@@ -235,7 +235,7 @@ export default function AdminMaterialsPage() {
           >
              <Link
                href="/admin"
-               className="inline-flex items-center gap-2 text-sm text-[#7a82a0] hover:text-white mb-4"
+               className="inline-flex items-center gap-2 text-sm text-[#6F7192] hover:text-white mb-4"
              >
                <ArrowLeft className="h-4 w-4" />
                Back to Dashboard
@@ -243,10 +243,10 @@ export default function AdminMaterialsPage() {
              <div className="flex items-center justify-between">
                <div>
                  <h1 className="font-[var(--font-syne)] text-3xl font-bold text-white">
-                   <Beaker className="inline h-8 w-8 text-[#FF5C1A] mr-2" />
+                   <Beaker className="inline h-8 w-8 text-[#7C5CFF] mr-2" />
                    Materials Management
                  </h1>
-                 <p className="mt-2 text-sm text-[#7a82a0]">
+                 <p className="mt-2 text-sm text-[#6F7192]">
                    Manage printing materials, pricing, and properties
                  </p>
                </div>
@@ -256,7 +256,7 @@ export default function AdminMaterialsPage() {
                    resetForm()
                    setShowForm(true)
                  }}
-                 className="inline-flex items-center gap-2 rounded-xl bg-[#FF5C1A] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+                 className="inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
                >
                  <Plus className="h-4 w-4" />
                  Add Material
@@ -274,7 +274,7 @@ export default function AdminMaterialsPage() {
               <motion.div
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
-                className="mx-4 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0d1120] p-6"
+                className="mx-4 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#142E44] p-6"
               >
                 <h2 className="mb-4 text-xl font-bold text-white">
                   {editingMaterial ? 'Edit Material' : 'Add New Material'}
@@ -282,69 +282,69 @@ export default function AdminMaterialsPage() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="mb-1 block text-sm text-[#7a82a0]">Name</label>
+                      <label className="mb-1 block text-sm text-[#6F7192]">Name</label>
                       <input
                         type="text"
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm text-[#7a82a0]">Icon (Emoji)</label>
+                      <label className="mb-1 block text-sm text-[#6F7192]">Icon (Emoji)</label>
                       <input
                         type="text"
                         value={formData.icon}
                         onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm text-[#7a82a0]">Density (g/cm³)</label>
+                      <label className="mb-1 block text-sm text-[#6F7192]">Density (g/cm³)</label>
                       <input
                         type="number"
                         step="0.01"
                         value={formData.density}
                         onChange={(e) => setFormData({ ...formData, density: parseFloat(e.target.value) || 0 })}
-                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm text-[#7a82a0]">Price per Gram (₹)</label>
+                      <label className="mb-1 block text-sm text-[#6F7192]">Price per Gram (₹)</label>
                       <input
                         type="number"
                         step="0.01"
                         value={formData.pricePerGram}
                         onChange={(e) => setFormData({ ...formData, pricePerGram: parseFloat(e.target.value) || 0 })}
-                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm text-[#7a82a0]">Machine Rate (₹/hr)</label>
+                      <label className="mb-1 block text-sm text-[#6F7192]">Machine Rate (₹/hr)</label>
                       <input
                         type="number"
                         value={formData.machineRate}
                         onChange={(e) => setFormData({ ...formData, machineRate: parseFloat(e.target.value) || 0 })}
-                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm text-[#7a82a0]">Multiplier</label>
+                      <label className="mb-1 block text-sm text-[#6F7192]">Multiplier</label>
                       <input
                         type="number"
                         step="0.01"
                         value={formData.multiplier}
                         onChange={(e) => setFormData({ ...formData, multiplier: parseFloat(e.target.value) || 0 })}
-                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm text-[#7a82a0]">Difficulty Factor (Sanding)</label>
+                      <label className="mb-1 block text-sm text-[#6F7192]">Difficulty Factor (Sanding)</label>
                       <select
                         value={formData.difficultyFactor}
                         onChange={(e) => setFormData({ ...formData, difficultyFactor: parseFloat(e.target.value) })}
-                        className="w-full rounded-lg border border-white/10 bg-[#0d1120] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        className="w-full rounded-lg border border-white/10 bg-[#142E44] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                       >
                         <option value={1.1}>1.1X</option>
                         <option value={1.2}>1.2X</option>
@@ -355,11 +355,11 @@ export default function AdminMaterialsPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm text-[#7a82a0]">Summary</label>
+                    <label className="mb-1 block text-sm text-[#6F7192]">Summary</label>
                     <textarea
                       value={formData.summary}
                       onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-                      className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                      className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                       rows={2}
                     />
                   </div>
@@ -367,31 +367,31 @@ export default function AdminMaterialsPage() {
                   {/* New Material Properties */}
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="mb-1 block text-sm text-[#7a82a0]">Key Properties (comma-separated)</label>
+                      <label className="mb-1 block text-sm text-[#6F7192]">Key Properties (comma-separated)</label>
                       <input
                         type="text"
                         value={formData.keyProperties?.join(', ') || ''}
                         onChange={(e) => setFormData({ ...formData, keyProperties: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
                         placeholder="e.g., Biodegradable, Easy to print"
-                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm text-[#7a82a0]">Best For (comma-separated)</label>
+                      <label className="mb-1 block text-sm text-[#6F7192]">Best For (comma-separated)</label>
                       <input
                         type="text"
                         value={formData.bestFor?.join(', ') || ''}
                         onChange={(e) => setFormData({ ...formData, bestFor: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
                         placeholder="e.g., Students, Architects, Hobbyists"
-                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm text-[#7a82a0]">Difficulty Level</label>
+                      <label className="mb-1 block text-sm text-[#6F7192]">Difficulty Level</label>
                       <select
                         value={formData.difficultyLevel || 'Easy'}
                         onChange={(e) => setFormData({ ...formData, difficultyLevel: e.target.value as 'Easy' | 'Medium' | 'Hard' })}
-                        className="w-full rounded-lg border border-white/10 bg-[#0d1120] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        className="w-full rounded-lg border border-white/10 bg-[#142E44] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                       >
                         <option value="Easy">Easy</option>
                         <option value="Medium">Medium</option>
@@ -399,11 +399,11 @@ export default function AdminMaterialsPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm text-[#7a82a0]">Heat Resistance</label>
+                      <label className="mb-1 block text-sm text-[#6F7192]">Heat Resistance</label>
                       <select
                         value={formData.heatResistance || 'Low'}
                         onChange={(e) => setFormData({ ...formData, heatResistance: e.target.value as 'Low' | 'Medium' | 'High' })}
-                        className="w-full rounded-lg border border-white/10 bg-[#0d1120] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        className="w-full rounded-lg border border-white/10 bg-[#142E44] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                       >
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
@@ -411,11 +411,11 @@ export default function AdminMaterialsPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm text-[#7a82a0]">Strength Rating</label>
+                      <label className="mb-1 block text-sm text-[#6F7192]">Strength Rating</label>
                       <select
                         value={formData.strengthRating || 'Medium'}
                         onChange={(e) => setFormData({ ...formData, strengthRating: e.target.value as 'Low' | 'Medium' | 'High' })}
-                        className="w-full rounded-lg border border-white/10 bg-[#0d1120] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        className="w-full rounded-lg border border-white/10 bg-[#142E44] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                       >
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
@@ -423,11 +423,11 @@ export default function AdminMaterialsPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm text-[#7a82a0]">Finish Quality</label>
+                      <label className="mb-1 block text-sm text-[#6F7192]">Finish Quality</label>
                       <select
                         value={formData.finishQuality || 'Good'}
                         onChange={(e) => setFormData({ ...formData, finishQuality: e.target.value as 'Basic' | 'Good' | 'Excellent' })}
-                        className="w-full rounded-lg border border-white/10 bg-[#0d1120] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                        className="w-full rounded-lg border border-white/10 bg-[#142E44] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                       >
                         <option value="Basic">Basic</option>
                         <option value="Good">Good</option>
@@ -437,31 +437,31 @@ export default function AdminMaterialsPage() {
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-sm text-[#7a82a0]">Sample Photo URL</label>
+                    <label className="mb-1 block text-sm text-[#6F7192]">Sample Photo URL</label>
                     <input
                       type="text"
                       value={formData.samplePhoto || ''}
                       onChange={(e) => setFormData({ ...formData, samplePhoto: e.target.value })}
                       placeholder="https://... or upload below"
-                      className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                      className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                     />
                   </div>
 
                   {/* Colors */}
                   <div>
-                    <label className="mb-1 block text-sm text-[#7a82a0]">Colors (comma-separated color names or hex codes)</label>
+                    <label className="mb-1 block text-sm text-[#6F7192]">Colors (comma-separated color names or hex codes)</label>
                     <input
                       type="text"
                       value={formData.colors.join(', ')}
                       onChange={(e) => setFormData({ ...formData, colors: e.target.value.split(',').map(c => c.trim()).filter(Boolean) })}
-                      placeholder="red, blue, green, #FF5C1A"
-                      className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                      placeholder="red, blue, green, #7C5CFF"
+                      className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                     />
                   </div>
 
                   {/* Dynamic Recommended For */}
                   <div>
-                    <label className="mb-1 block text-sm text-[#7a82a0]">Recommended For (multiple options)</label>
+                    <label className="mb-1 block text-sm text-[#6F7192]">Recommended For (multiple options)</label>
                     {recommendedFor.map((item, index) => (
                       <div key={index} className="flex gap-2 mb-2">
                         <input
@@ -469,7 +469,7 @@ export default function AdminMaterialsPage() {
                           value={item}
                           onChange={(e) => updateRecommendedFor(index, e.target.value)}
                           placeholder="e.g., Concept models, Prototypes"
-                          className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5C1A]/30"
+                          className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
                         />
                         {recommendedFor.length > 1 && (
                           <button
@@ -485,7 +485,7 @@ export default function AdminMaterialsPage() {
                     <button
                       type="button"
                       onClick={addRecommendedFor}
-                      className="text-sm text-[#FF5C1A] hover:text-[#FF9A72]"
+                      className="text-sm text-[#7C5CFF] hover:text-[#A78BFA]"
                     >
                       + Add another recommendation
                     </button>
@@ -494,7 +494,7 @@ export default function AdminMaterialsPage() {
                   <div className="flex gap-3 pt-4">
                     <button
                       type="submit"
-                      className="flex-1 rounded-xl bg-[#FF5C1A] py-2.5 text-sm font-semibold text-white hover:opacity-90"
+                      className="flex-1 rounded-xl bg-[#7C5CFF] py-2.5 text-sm font-semibold text-white hover:opacity-90"
                     >
                       {editingMaterial ? 'Update' : 'Create'}
                     </button>
@@ -517,13 +517,13 @@ export default function AdminMaterialsPage() {
 
           {/* Materials List */}
           {loading ? (
-            <div className="rounded-2xl border border-white/10 bg-[#0a0f1e] p-8 text-center text-sm text-[#7a82a0]">
+            <div className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-8 text-center text-sm text-[#6F7192]">
               Loading materials...
             </div>
           ) : materials.length === 0 ? (
-            <div className="rounded-2xl border border-white/10 bg-[#0a0f1e] p-8 text-center">
-              <Beaker className="mx-auto h-12 w-12 text-[#7a82a0]" />
-              <p className="mt-4 text-sm text-[#7a82a0]">No materials yet. Add your first material!</p>
+            <div className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-8 text-center">
+              <Beaker className="mx-auto h-12 w-12 text-[#6F7192]" />
+              <p className="mt-4 text-sm text-[#6F7192]">No materials yet. Add your first material!</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -533,7 +533,7 @@ export default function AdminMaterialsPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="rounded-2xl border border-white/10 bg-[#0a0f1e] p-5 hover:border-[#FF5C1A]/30 transition-colors"
+                  className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-5 hover:border-[#7C5CFF]/30 transition-colors"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -541,8 +541,8 @@ export default function AdminMaterialsPage() {
                         <span className="text-2xl">{material.icon}</span>
                         <h3 className="text-lg font-semibold text-white">{material.name}</h3>
                       </div>
-                      <p className="mt-1 text-sm text-[#7a82a0]">{material.summary}</p>
-                      <div className="mt-2 flex flex-wrap gap-4 text-xs text-[#7a82a0]">
+                      <p className="mt-1 text-sm text-[#6F7192]">{material.summary}</p>
+                      <div className="mt-2 flex flex-wrap gap-4 text-xs text-[#6F7192]">
                         <span>₹{material.pricePerGram}/g</span>
                         <span>₹{material.machineRate}/hr</span>
                         <span>Density: {material.density} g/cm³</span>
@@ -551,7 +551,7 @@ export default function AdminMaterialsPage() {
                       {material.keyProperties && material.keyProperties.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {material.keyProperties.map((prop, idx) => (
-                            <span key={idx} className="rounded-full bg-[#FF5C1A]/10 px-2 py-1 text-xs text-[#FF5C1A]">
+                            <span key={idx} className="rounded-full bg-[#7C5CFF]/10 px-2 py-1 text-xs text-[#7C5CFF]">
                               {prop}
                             </span>
                           ))}
@@ -587,13 +587,13 @@ export default function AdminMaterialsPage() {
               <motion.div
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
-                className="mx-4 w-full max-w-md rounded-2xl border border-rose-400/20 bg-[#0d1120] p-6"
+                className="mx-4 w-full max-w-md rounded-2xl border border-rose-400/20 bg-[#142E44] p-6"
               >
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-400/10">
                   <Trash2 className="h-6 w-6 text-rose-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-white">Delete Material?</h3>
-                <p className="mt-2 text-sm text-[#7a82a0]">
+                <p className="mt-2 text-sm text-[#6F7192]">
                   This action cannot be undone. This will permanently delete the material.
                 </p>
                 <div className="mt-6 flex gap-3">

@@ -33,7 +33,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
           ? 'border-rose-400/20 bg-rose-400/10 text-rose-300'
           : ['pending', 'reviewed', 'approved', 'queued', 'on-hold', 'printing', 'shipped', 'completed', 'cancelled', 'rejected'].includes(normalized)
             ? getOrderStatusClasses(normalized as OrderStatus)
-            : 'border-white/10 bg-white/[0.04] text-[#8b95b5]'
+            : 'border-[#7C5CFF]/10 bg-white/[0.04] text-[#8b95b5]'
 
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium capitalize ${classes}`}>

@@ -66,7 +66,7 @@ export default async function BlogPage() {
   return (
     <div>
       <Navbar transparent />
-      <Suspense fallback={<div className="min-h-96 bg-[#0d1120] animate-pulse rounded-2xl mx-6 mt-32" />}>
+      <Suspense fallback={<div className="min-h-96 bg-[#FFFFFF] animate-pulse rounded-2xl mx-6 mt-32" />}>
         <BlogClient posts={posts} />
       </Suspense>
     </div>

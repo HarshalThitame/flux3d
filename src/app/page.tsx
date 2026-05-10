@@ -52,7 +52,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}

@@ -112,14 +112,14 @@ export default async function MyOrdersPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#050810] px-4 pb-16 pt-28 text-white md:px-8">
+    <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-28 text-[#0F1B3D] md:px-8">
       <Navbar transparent />
       <div className="mx-auto max-w-6xl space-y-6">
-        <div className="rounded-[32px] border border-white/10 bg-[rgba(9,14,25,0.82)] p-6 backdrop-blur-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#ffb493]">
+        <div className="rounded-[32px] border border-[#7C5CFF]/10 bg-[rgba(255,255,255,0.96)] p-6 backdrop-blur-2xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#A78BFA]">
             Order Requests
           </div>
-          <h1 className="mt-5 font-[var(--font-syne)] text-4xl font-extrabold text-white">
+          <h1 className="mt-5 font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D]">
             My Orders
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-8 text-[#9ea6c4]">
@@ -128,8 +128,8 @@ export default async function MyOrdersPage() {
         </div>
 
         {groupedOrders.length === 0 ? (
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-8 text-center backdrop-blur-xl">
-            <div className="text-xl font-medium text-white">
+          <div className="rounded-[28px] border border-[#7C5CFF]/10 bg-white/[0.03] p-8 text-center backdrop-blur-xl">
+            <div className="text-xl font-medium text-[#0F1B3D]">
               {ordersTableUnavailable ? 'Orders unavailable' : 'No print requests yet.'}
             </div>
             <p className="mt-3 text-sm leading-7 text-[#9ea6c4]">
@@ -139,7 +139,7 @@ export default async function MyOrdersPage() {
             </p>
             <Link
               href="/instant-quote"
-              className="mt-6 inline-flex rounded-2xl bg-[#FF5C1A] px-5 py-3 text-sm font-medium text-white"
+              className="mt-6 inline-flex rounded-2xl bg-[#7C5CFF] px-5 py-3 text-sm font-medium text-white"
             >
               Create a print request
             </Link>
@@ -150,18 +150,18 @@ export default async function MyOrdersPage() {
               <Link
                 key={order.groupId}
                 href={`/my-orders/${order.items[0].id}`}
-                className="block rounded-[28px] border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl transition-colors hover:border-white/20"
+                className="block rounded-[28px] border border-[#7C5CFF]/10 bg-white/[0.03] p-6 backdrop-blur-xl transition-colors hover:border-[#7C5CFF]/10"
               >
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex flex-1 items-start gap-5">
-                    <div className="rounded-2xl border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 p-3 text-[#FF9A72]">
+                    <div className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#A78BFA]">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                       </svg>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
-                        <div className="font-[var(--font-syne)] text-xl font-bold text-white">
+                        <div className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">
                           {order.orderNumber}
                         </div>
                         <div
@@ -170,7 +170,7 @@ export default async function MyOrdersPage() {
                           {getOrderStatusLabel(order.status)}
                         </div>
                       </div>
-                      <div className="mt-2 text-xs text-[#7a82a0]">
+                      <div className="mt-2 text-xs text-[#6F7192]">
                         {new Date(order.createdAt).toLocaleDateString('en-IN', {
                           day: 'numeric',
                           month: 'short',
@@ -183,7 +183,7 @@ export default async function MyOrdersPage() {
                           {order.items.map((item) => (
                             <span
                               key={item.id}
-                              className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-1.5 text-xs text-[#c8d0e9]"
+                              className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-1.5 text-xs text-[#c8d0e9]"
                             >
                               {item.material} · {item.color}
                             </span>
@@ -192,33 +192,33 @@ export default async function MyOrdersPage() {
                       )}
 
                       {order.itemCount === 1 && (
-                        <div className="mt-2 text-sm text-white">{order.items[0].material} · {order.items[0].color}</div>
+                        <div className="mt-2 text-sm text-[#0F1B3D]">{order.items[0].material} · {order.items[0].color}</div>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-8 border-t border-white/8 pt-4 lg:border-t-0 lg:pt-0">
+                  <div className="flex items-center gap-8 border-t border-[#7C5CFF]/10 pt-4 lg:border-t-0 lg:pt-0">
                     <div className="text-center">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Total</div>
-                      <div className="mt-1 font-[var(--font-syne)] text-xl font-bold text-white">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Total</div>
+                      <div className="mt-1 font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">
                         ₹{order.totalPrice.toFixed(0)}
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Items</div>
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Items</div>
                       <div className="mt-1 font-[var(--font-syne)] text-xl font-bold text-[#7dd3fc]">
                         {order.itemCount}
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Delivery</div>
-                      <div className="mt-1 text-sm font-medium text-white">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Delivery</div>
+                      <div className="mt-1 text-sm font-medium text-[#0F1B3D]">
                         {order.deliveryCharge === 0 ? 'Free' : `₹${order.deliveryCharge.toFixed(0)}`}
                       </div>
                     </div>
                     <div className="hidden text-left sm:block">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Ship to</div>
-                      <div className="mt-1 text-sm text-white">{order.city}, {order.state}</div>
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Ship to</div>
+                      <div className="mt-1 text-sm text-[#0F1B3D]">{order.city}, {order.state}</div>
                     </div>
                   </div>
                 </div>

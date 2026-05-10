@@ -40,13 +40,13 @@ export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   return (
-    <section className="py-24 px-6 border-t border-[rgba(255,255,255,0.07)]">
+    <section className="py-24 px-6 border-t border-[rgba(124, 92, 255,0.5)]">
       <div className="max-w-[800px] mx-auto">
         {/* Section header */}
         <div className="text-center mb-16">
-          <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">FAQ</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold text-white tracking-[-1px] leading-[1.1]">
-            Questions We Get <span className="text-[#7a82a0]">A Lot</span>
+          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">FAQ</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
+            Questions We Get <span className="text-[#6F7192]">A Lot</span>
           </h2>
         </div>
 
@@ -55,23 +55,23 @@ export default function FAQSection() {
           {faqs.map((faq, i) => (
             <div
               key={i}
-              className="bg-[#0d1120] border border-[rgba(255,255,255,0.07)] rounded-xl overflow-hidden"
+              className="bg-[#FFFFFF] border border-[rgba(124, 92, 255,0.5)] rounded-xl overflow-hidden"
             >
               <button
                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-[#111827] transition-colors"
+                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-[#FFFFFF] transition-colors"
               >
-                <span className="font-medium text-white pr-8">
+                <span className="font-medium text-[#0F1B3D] pr-8">
                   {faq.question}
                 </span>
                 <ChevronDown
-                  className={`w-5 h-5 text-[#FF5C1A] flex-shrink-0 transition-transform ${
+                  className={`w-5 h-5 text-[#7C5CFF] flex-shrink-0 transition-transform ${
                     openIndex === i ? 'rotate-180' : ''
                   }`}
                 />
               </button>
               {openIndex === i && (
-                <div className="px-6 pb-5 text-[#7a82a0] leading-[1.7]">
+                <div className="px-6 pb-5 text-[#6F7192] leading-[1.7]">
                   {faq.answer}
                 </div>
               )}
@@ -81,8 +81,8 @@ export default function FAQSection() {
 
         {/* Still have questions */}
         <div className="text-center mt-12">
-          <p className="text-[#7a82a0] mb-4">Still have questions?</p>
-          <a href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-[#FF5C1A] font-medium hover:underline">
+          <p className="text-[#6F7192] mb-4">Still have questions?</p>
+          <a href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-[#7C5CFF] font-medium hover:underline">
             Chat on WhatsApp now →
           </a>
         </div>

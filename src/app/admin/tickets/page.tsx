@@ -82,12 +82,12 @@ export default function TicketsPage() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#FF9A72]">
+        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#A78BFA]">
           <Ticket className="h-3 w-3" />
           Support Tickets
         </div>
         <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Support Tickets</h1>
-        <p className="mt-2 max-w-xl text-sm text-[#7a82a0]">
+        <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
           Manage customer queries and issues
         </p>
       </motion.div>
@@ -104,7 +104,7 @@ export default function TicketsPage() {
             onClick={() => setActiveTab(tab.value)}
             className={`rounded-xl border px-3.5 py-2 text-xs font-medium transition ${
               activeTab === tab.value
-                ? 'border-[#FF5C1A]/30 bg-[#FF5C1A]/10 text-[#FF9A72]'
+                ? 'border-[#7C5CFF]/30 bg-[#7C5CFF]/10 text-[#A78BFA]'
                 : 'border-white/8 bg-white/[0.03] text-[#8b95b5] hover:bg-white/[0.06]'
             }`}
           >
@@ -180,7 +180,7 @@ export default function TicketsPage() {
             { key: 'created', label: 'Created', sortable: true, render: (row: SupportTicket) => <span className="text-[#8b95b5]">{row.created}</span> },
             { key: 'lastUpdated', label: 'Last Updated', sortable: true, render: (row: SupportTicket) => <span className="text-[#8b95b5]">{row.lastUpdated}</span> },
             { key: 'action', label: 'Action', render: () => (
-              <button className="text-[#FF5C1A] hover:text-[#FF9A72] text-sm">View</button>
+              <button className="text-[#7C5CFF] hover:text-[#A78BFA] text-sm">View</button>
             )},
           ]}
         />

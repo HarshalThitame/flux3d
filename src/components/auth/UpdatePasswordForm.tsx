@@ -18,7 +18,7 @@ export default function UpdatePasswordForm({ nextPath }: UpdatePasswordFormProps
   return (
     <div className="space-y-5">
       <div className="space-y-2">
-        <h2 className="font-[var(--font-syne)] text-3xl font-bold text-white">Choose a new password</h2>
+        <h2 className="font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">Choose a new password</h2>
         <p className="text-sm leading-7 text-[#8e97b7]">
           Update your account security, then continue back to your authenticated workspace.
         </p>
@@ -27,7 +27,7 @@ export default function UpdatePasswordForm({ nextPath }: UpdatePasswordFormProps
       <form action={action} className="space-y-4">
         <input type="hidden" name="next" value={nextPath} />
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm text-white">
+          <label htmlFor="password" className="text-sm text-[#0F1B3D]">
             New password
           </label>
           <input
@@ -36,7 +36,7 @@ export default function UpdatePasswordForm({ nextPath }: UpdatePasswordFormProps
             type="password"
             autoComplete="new-password"
             placeholder="Strong password"
-            className="w-full rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-3 text-sm text-white outline-none placeholder:text-[#66708e]"
+            className="w-full rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
           />
           {state.fieldErrors?.password?.map((error) => (
             <p key={error} className="text-sm text-rose-300">

@@ -82,7 +82,7 @@ export default function AdminUsersPage() {
             User Management
           </div>
           <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Users</h1>
-          <p className="mt-2 max-w-xl text-sm text-[#7a82a0]">
+          <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
             Audit access, signup methods, and account roles.
           </p>
         </motion.div>
@@ -129,7 +129,7 @@ export default function AdminUsersPage() {
               </div>
               <div>
                 <div className="text-sm font-medium text-white">{selectedUser.name}</div>
-                <div className="flex items-center gap-1.5 text-xs text-[#7a82a0]">
+                <div className="flex items-center gap-1.5 text-xs text-[#6F7192]">
                   <Mail className="h-3 w-3" />
                   {selectedUser.email}
                 </div>

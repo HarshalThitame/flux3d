@@ -58,13 +58,13 @@ export default function MaterialSelectorTool() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-10"
         >
-          <span className="inline-block text-[#FF5C1A] text-xs font-semibold tracking-wider uppercase mb-2">
+          <span className="inline-block text-[#7C5CFF] text-xs font-semibold tracking-wider uppercase mb-2">
             Material Selector
           </span>
-          <h2 className="text-2xl md:text-3xl font-[var(--font-syne)] font-extrabold text-white mb-2">
+          <h2 className="text-2xl md:text-3xl font-[var(--font-syne)] font-extrabold text-[#0F1B3D] mb-2">
             Not Sure Which Material to Choose?
           </h2>
-          <p className="text-[#7a82a0] text-sm">
+          <p className="text-[#6F7192] text-sm">
             Answer 3 quick questions and we'll tell you exactly which material is right for your project.
           </p>
         </motion.div>
@@ -76,10 +76,10 @@ export default function MaterialSelectorTool() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: qIdx * 0.1 }}
-              className="rounded-2xl border border-white/[0.06] bg-[rgba(13,17,32,0.4)] p-6"
+              className="rounded-2xl border border-white/[0.06] bg-[rgba(255,255,255,0.72)] p-6"
             >
-              <p className="text-white font-medium mb-4">
-                <span className="text-[#FF5C1A] mr-2">Q{qIdx + 1}.</span>
+              <p className="text-[#0F1B3D] font-medium mb-4">
+                <span className="text-[#7C5CFF] mr-2">Q{qIdx + 1}.</span>
                 {q.label}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -89,8 +89,8 @@ export default function MaterialSelectorTool() {
                     onClick={() => handleSelect(qIdx, opt)}
                     className={`text-left px-4 py-2.5 rounded-xl text-sm transition-all ${
                       answers[qIdx] === opt
-                        ? 'bg-[#FF5C1A]/15 text-[#FF5C1A] border border-[#FF5C1A]/30'
-                        : 'bg-[rgba(255,255,255,0.02)] text-[#7a82a0] border border-white/[0.04] hover:border-white/[0.12] hover:text-white'
+                        ? 'bg-[#7C5CFF]/15 text-[#7C5CFF] border border-[#7C5CFF]/30'
+                        : 'bg-[rgba(124, 92, 255,0.2)] text-[#6F7192] border border-white/[0.04] hover:border-white/[0.12] hover:text-white'
                     }`}
                   >
                     {opt}
@@ -105,10 +105,10 @@ export default function MaterialSelectorTool() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-8 rounded-2xl border border-[#FF5C1A]/20 bg-[rgba(255,92,26,0.05)] p-6 text-center"
+            className="mt-8 rounded-2xl border border-[#7C5CFF]/20 bg-[rgba(124, 92, 255,0.05)] p-6 text-center"
           >
-            <p className="text-sm text-[#7a82a0] mb-2">We recommend:</p>
-            <p className="text-xl font-[var(--font-syne)] font-extrabold text-[#FF5C1A] mb-4">
+            <p className="text-sm text-[#6F7192] mb-2">We recommend:</p>
+            <p className="text-xl font-[var(--font-syne)] font-extrabold text-[#7C5CFF] mb-4">
               {getRecommendation()}
             </p>
             <a

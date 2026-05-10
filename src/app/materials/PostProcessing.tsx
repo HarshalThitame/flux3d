@@ -61,13 +61,13 @@ export default function PostProcessing() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-12"
         >
-          <span className="inline-block text-[#FF5C1A] text-xs font-semibold tracking-wider uppercase mb-2">
+          <span className="inline-block text-[#7C5CFF] text-xs font-semibold tracking-wider uppercase mb-2">
             Finishing Services
           </span>
-          <h2 className="text-2xl md:text-3xl font-[var(--font-syne)] font-extrabold text-white mb-2">
+          <h2 className="text-2xl md:text-3xl font-[var(--font-syne)] font-extrabold text-[#0F1B3D] mb-2">
             We Don't Just Print.<br />We Finish.
           </h2>
-          <p className="text-[#7a82a0] text-sm max-w-[600px] mx-auto">
+          <p className="text-[#6F7192] text-sm max-w-[600px] mx-auto">
             Raw prints are great. Finished prints are impressive. We offer post-processing services to take your print from good to gallery-worthy.
           </p>
         </motion.div>
@@ -79,14 +79,14 @@ export default function PostProcessing() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: i * 0.08 }}
-              className="rounded-2xl border border-white/[0.06] bg-[rgba(13,17,32,0.4)] p-5 hover:border-[rgba(255,92,26,0.2)] transition-colors group"
+              className="rounded-2xl border border-white/[0.06] bg-[rgba(255,255,255,0.72)] p-5 hover:border-[rgba(124, 92, 255,0.2)] transition-colors group"
             >
               <span className="text-2xl mb-3 block">{s.icon}</span>
-              <h3 className="text-white font-semibold mb-2 group-hover:text-[#FF5C1A] transition-colors">{s.title}</h3>
-              <p className="text-sm text-[#7a82a0] mb-3 leading-relaxed">{s.body}</p>
+              <h3 className="text-[#0F1B3D] font-semibold mb-2 group-hover:text-[#7C5CFF] transition-colors">{s.title}</h3>
+              <p className="text-sm text-[#6F7192] mb-3 leading-relaxed">{s.body}</p>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-[#4a5070]">For: {s.available}</span>
-                <span className="text-[#FF5C1A] font-semibold">{s.price}</span>
+                <span className="text-[#7C5CFF] font-semibold">{s.price}</span>
               </div>
             </motion.div>
           ))}

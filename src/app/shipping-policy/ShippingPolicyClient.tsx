@@ -8,17 +8,17 @@ import { useBusinessSettings } from '@/lib/settings-context'
 export default function ShippingPolicyClient() {
   const { settings } = useBusinessSettings()
   return (
-    <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       {/* Header */}
-      <div className="border-b border-white/10 bg-[#0a0f1e]/50 backdrop-blur-sm sticky top-0 z-50">
+      <div className="border-b border-[#7C5CFF]/10 bg-[#FFFFFF]/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-[1200px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="font-[var(--font-syne)] text-2xl font-extrabold text-white">
-              flux<span className="text-[#FF5C1A]">3d</span>
+            <Link href="/" className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D]">
+              flux<span className="text-[#7C5CFF]">3d</span>
             </Link>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-sm text-[#7a82a0] hover:text-white transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-[#6F7192] hover:text-[#0F1B3D] transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Home
@@ -34,14 +34,14 @@ export default function ShippingPolicyClient() {
         >
           {/* Title Section */}
           <div className="mb-12">
-            <div className="inline-flex items-center gap-2 bg-[#FF5C1A]/10 text-[#FF5C1A] px-4 py-2 rounded-full text-sm font-medium mb-6">
+            <div className="inline-flex items-center gap-2 bg-[#7C5CFF]/10 text-[#7C5CFF] px-4 py-2 rounded-full text-sm font-medium mb-6">
               <Truck className="w-4 h-4" />
               Shipping Policy
             </div>
-            <h1 className="font-[var(--font-syne)] text-4xl md:text-5xl font-extrabold text-white mb-4">
-              Shipping <span className="text-[#FF5C1A]">Policy</span>
+            <h1 className="font-[var(--font-syne)] text-4xl md:text-5xl font-extrabold text-[#0F1B3D] mb-4">
+              Shipping <span className="text-[#7C5CFF]">Policy</span>
             </h1>
-            <div className="flex flex-wrap gap-4 text-sm text-[#7a82a0]">
+            <div className="flex flex-wrap gap-4 text-sm text-[#6F7192]">
               <span>Effective Date: January 1, 2025</span>
               <span>·</span>
               <span>Last Updated: May 3, 2025</span>
@@ -49,12 +49,12 @@ export default function ShippingPolicyClient() {
           </div>
 
           {/* Shipping Coverage */}
-          <div className="bg-gradient-to-r from-[#FF5C1A]/20 to-transparent border border-[#FF5C1A]/30 rounded-2xl p-8 mb-12">
+          <div className="bg-gradient-to-r from-[#7C5CFF]/20 to-transparent border border-[#7C5CFF]/30 rounded-2xl p-8 mb-12">
             <div className="flex items-start gap-4">
-              <MapPin className="w-8 h-8 text-[#FF5C1A] flex-shrink-0 mt-1" />
+              <MapPin className="w-8 h-8 text-[#7C5CFF] flex-shrink-0 mt-1" />
               <div>
-                <h2 className="text-2xl font-bold text-white mb-2">Pan-India Delivery</h2>
-                <p className="text-[#7a82a0] leading-relaxed">
+                <h2 className="text-2xl font-bold text-[#0F1B3D] mb-2">Pan-India Delivery</h2>
+                <p className="text-[#6F7192] leading-relaxed">
                   We ship 3D printed products to all major cities and towns across India.
                   From Mumbai to Delhi, Bangalore to Chennai — we've got you covered.
                 </p>
@@ -66,11 +66,11 @@ export default function ShippingPolicyClient() {
           <div className="space-y-10">
             {/* Processing Time */}
             <section>
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">1</span>
+              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">1</span>
                 Processing Time
               </h2>
-              <div className="bg-[#0a0f1e] border border-white/10 rounded-xl p-6 text-[#7a82a0] leading-relaxed">
+              <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6 text-[#6F7192] leading-relaxed">
                 <p className="mb-4">All orders require processing time before shipment:</p>
                 <ul className="space-y-3">
                   {[
@@ -78,9 +78,9 @@ export default function ShippingPolicyClient() {
                     { label: 'Complex/ Large Prints', time: '3-5 business days' },
                     { label: 'Multi-part Orders', time: '5-7 business days' },
                   ].map((item) => (
-                    <li key={item.label} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0">
+                    <li key={item.label} className="flex items-center justify-between border-b border-[#7C5CFF]/10 pb-3 last:border-0 last:pb-0">
                       <span>{item.label}</span>
-                      <span className="text-white font-medium">{item.time}</span>
+                      <span className="text-[#0F1B3D] font-medium">{item.time}</span>
                     </li>
                   ))}
                 </ul>
@@ -93,16 +93,16 @@ export default function ShippingPolicyClient() {
 
             {/* Shipping Methods */}
             <section>
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">2</span>
+              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">2</span>
                 Shipping Methods & Costs
               </h2>
               <div className="space-y-4">
-                <div className="bg-[#0a0f1e] border border-white/10 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">Delivery Partners</h3>
+                <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-[#0F1B3D] mb-4">Delivery Partners</h3>
                   <div className="flex flex-wrap gap-3 mb-6">
                     {['Delhivery', 'Shiprocket', 'DTDC', 'Bluedart'].map((partner) => (
-                      <span key={partner} className="bg-white/[0.03] border border-white/10 px-4 py-2 rounded-lg text-sm text-white">
+                      <span key={partner} className="bg-white/[0.03] border border-[#7C5CFF]/10 px-4 py-2 rounded-lg text-sm text-[#0F1B3D]">
                         {partner}
                       </span>
                     ))}
@@ -114,15 +114,15 @@ export default function ShippingPolicyClient() {
                       { zone: 'Tier 2 Cities', time: '3-5 days', cost: '₹149' },
                       { zone: 'Rest of India', time: '4-7 days', cost: '₹199' },
                     ].map((item) => (
-                      <div key={item.zone} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0">
-                        <span className="text-[#7a82a0]">{item.zone}</span>
-                        <span className="text-white text-sm">{item.time}</span>
-                        <span className="text-[#FF5C1A] font-semibold">{item.cost}</span>
+                      <div key={item.zone} className="flex items-center justify-between border-b border-[#7C5CFF]/10 pb-3 last:border-0">
+                        <span className="text-[#6F7192]">{item.zone}</span>
+                        <span className="text-[#0F1B3D] text-sm">{item.time}</span>
+                        <span className="text-[#7C5CFF] font-semibold">{item.cost}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-                <p className="text-sm text-[#7a82a0]">
+                <p className="text-sm text-[#6F7192]">
                   Orders above ₹999 qualify for free shipping within Mumbai. Orders above ₹1999
                   qualify for free shipping across India.
                 </p>
@@ -131,11 +131,11 @@ export default function ShippingPolicyClient() {
 
             {/* Order Tracking */}
             <section>
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">3</span>
+              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">3</span>
                 Order Tracking
               </h2>
-              <div className="text-[#7a82a0] leading-relaxed">
+              <div className="text-[#6F7192] leading-relaxed">
                 <p className="mb-4">
                   Once your order ships, you will receive a confirmation email with:
                 </p>
@@ -146,7 +146,7 @@ export default function ShippingPolicyClient() {
                     'Link to track your shipment online',
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2">
-                      <span className="text-[#FF5C1A] mt-1.5">•</span>
+                      <span className="text-[#7C5CFF] mt-1.5">•</span>
                       <span>{item}</span>
                     </li>
                   ))}
@@ -160,14 +160,14 @@ export default function ShippingPolicyClient() {
 
             {/* Delivery Issues */}
             <section>
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">4</span>
+              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">4</span>
                 Delivery Issues
               </h2>
               <div className="space-y-4">
-                <div className="bg-[#0a0f1e] border border-white/10 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-white mb-3">Damaged or Lost Packages</h3>
-                  <p className="text-[#7a82a0] mb-3">
+                <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-[#0F1B3D] mb-3">Damaged or Lost Packages</h3>
+                  <p className="text-[#6F7192] mb-3">
                     If your package arrives damaged or doesn't arrive:
                   </p>
                   <ul className="space-y-2">
@@ -177,16 +177,16 @@ export default function ShippingPolicyClient() {
                       'We will investigate with the courier and arrange replacement',
                       'For lost packages, we will reship or provide a full refund',
                     ].map((item) => (
-                      <li key={item} className="flex items-start gap-2 text-[#7a82a0]">
-                        <span className="text-[#FF5C1A] mt-1.5">•</span>
+                      <li key={item} className="flex items-start gap-2 text-[#6F7192]">
+                        <span className="text-[#7C5CFF] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className="bg-[#0a0f1e] border border-white/10 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-white mb-3">Failed Deliveries</h3>
-                  <p className="text-[#7a82a0] mb-3">
+                <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-[#0F1B3D] mb-3">Failed Deliveries</h3>
+                  <p className="text-[#6F7192] mb-3">
                     If delivery fails due to:
                   </p>
                   <ul className="space-y-2">
@@ -195,8 +195,8 @@ export default function ShippingPolicyClient() {
                       'No one available: Courier will attempt 2 more deliveries',
                       'Refused package: Treated as order cancellation (policy applies)',
                     ].map((item) => (
-                      <li key={item} className="flex items-start gap-2 text-[#7a82a0]">
-                        <span className="text-[#FF5C1A] mt-1.5">•</span>
+                      <li key={item} className="flex items-start gap-2 text-[#6F7192]">
+                        <span className="text-[#7C5CFF] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -207,11 +207,11 @@ export default function ShippingPolicyClient() {
 
             {/* International Shipping */}
             <section>
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">5</span>
+              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">5</span>
                 International Shipping
               </h2>
-              <div className="bg-[#0a0f1e] border border-white/10 rounded-xl p-6 text-[#7a82a0] leading-relaxed">
+              <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6 text-[#6F7192] leading-relaxed">
                 <p className="mb-3">
                   Currently, we only ship within India. We are working on expanding to
                   international markets. Subscribe to our newsletter to be notified when
@@ -221,12 +221,12 @@ export default function ShippingPolicyClient() {
             </section>
 
             {/* Contact */}
-            <section className="bg-[#0a0f1e] border border-white/10 rounded-2xl p-8">
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">6</span>
+            <section className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-2xl p-8">
+              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-6 flex items-center gap-3">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">6</span>
                 Shipping Questions?
               </h2>
-              <p className="text-[#7a82a0] mb-6">
+              <p className="text-[#6F7192] mb-6">
                 For any shipping-related questions or concerns, please contact our support team:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -237,8 +237,8 @@ export default function ShippingPolicyClient() {
                   { label: 'Hours', value: settings.businessHours || 'Mon-Sat: 9 AM – 8 PM IST' },
                 ].map((item) => (
                   <div key={item.label} className="bg-white/[0.03] rounded-xl p-4">
-                    <p className="text-sm text-[#7a82a0] mb-1">{item.label}</p>
-                    <p className="text-sm text-white">{item.value}</p>
+                    <p className="text-sm text-[#6F7192] mb-1">{item.label}</p>
+                    <p className="text-sm text-[#0F1B3D]">{item.value}</p>
                   </div>
                 ))}
               </div>

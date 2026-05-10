@@ -85,7 +85,7 @@ export default function AdminQuotesPage() {
             Quote Management
           </div>
           <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Quotes</h1>
-          <p className="mt-2 max-w-xl text-sm text-[#7a82a0]">
+          <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
             Keep inquiry flow tight with quick review actions and approval decisions.
           </p>
         </motion.div>

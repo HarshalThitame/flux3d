@@ -60,12 +60,12 @@ export default function InventoryPage() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#FF9A72]">
+        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#A78BFA]">
           <FolderKanban className="h-3 w-3" />
           Inventory Management
         </div>
         <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Inventory</h1>
-        <p className="mt-2 max-w-xl text-sm text-[#7a82a0]">
+        <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
           Manage filaments, resins, and other materials
         </p>
       </motion.div>
@@ -91,13 +91,13 @@ export default function InventoryPage() {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="font-[var(--font-syne)] text-xl font-bold text-white">Inventory Status</h2>
-            <p className="mt-1 text-sm text-[#7a82a0]">Manage filaments, resins, and other materials</p>
+            <p className="mt-1 text-sm text-[#6F7192]">Manage filaments, resins, and other materials</p>
           </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => router.push('/admin/materials')}
-              className="rounded-xl bg-[#FF5C1A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#FF5C1A]/90"
+              className="rounded-xl bg-[#7C5CFF] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7C5CFF]/90"
             >
               Edit Materials
             </button>
@@ -153,7 +153,7 @@ export default function InventoryPage() {
               <button
                 type="button"
                 onClick={() => router.push('/admin/materials')}
-                className="text-[#FF5C1A] hover:text-[#FF9A72] text-sm"
+                className="text-[#7C5CFF] hover:text-[#A78BFA] text-sm"
               >
                 Edit
               </button>

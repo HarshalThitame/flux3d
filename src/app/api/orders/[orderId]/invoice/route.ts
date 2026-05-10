@@ -52,7 +52,7 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[], settings: Bus
     landmark: order.landmark ?? '',
   })
   const businessName = settings.businessName || 'Flux3D'
-  const primaryColor = settings.primaryColor || '#ff5c1a'
+  const primaryColor = settings.primaryColor || '#7C5CFF'
   const tagline = settings.tagline || '3D PRINTING SERVICE'
   const invoicePrefix = settings.invoicePrefix || 'INV-'
 

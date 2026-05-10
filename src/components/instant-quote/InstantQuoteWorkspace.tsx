@@ -64,7 +64,7 @@ export default function InstantQuoteWorkspace({
 }: InstantQuoteWorkspaceProps) {
   if (materials.length === 0) {
     return (
-      <div className="min-h-screen bg-[#050810] px-4 pb-16 pt-28 text-[#e8eaf0] md:px-8 xl:px-10">
+      <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-28 text-[#0F1B3D] md:px-8 xl:px-10">
         <div className="mx-auto max-w-[1100px]">
           <EmptyState
             title="No materials available"
@@ -418,12 +418,12 @@ function CartEnabledWorkspace({
 
   return (
     <>
-      <div className="relative min-h-screen bg-[#050810] text-[#e8eaf0]">
+      <div className="relative min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
         <motion.div
           aria-hidden
           animate={{ x: [0, 50, 0], y: [0, -20, 0] }}
           transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
-          className="pointer-events-none absolute left-[-8rem] top-28 h-72 w-72 rounded-full bg-[#FF5C1A]/8 blur-3xl"
+          className="pointer-events-none absolute left-[-8rem] top-28 h-72 w-72 rounded-full bg-[#7C5CFF]/8 blur-3xl"
         />
         <motion.div
           aria-hidden
@@ -437,19 +437,19 @@ function CartEnabledWorkspace({
           <div className="mx-auto max-w-[1500px]">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#FF5C1A]/25 bg-[#FF5C1A]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#FF9A72]">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#A78BFA]">
                   Instant Pricing Experience
                 </div>
-                <h1 className="mt-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3.2rem)] font-extrabold leading-[0.98] tracking-[-2px] text-white">
+                <h1 className="mt-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3.2rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#0F1B3D]">
                   Get Your <span className="text-[#7dd3fc]">Instant Quote</span>
                 </h1>
-                <p className="mt-3 max-w-[600px] text-sm leading-7 text-[#7a82a0]">
+                <p className="mt-3 max-w-[600px] text-sm leading-7 text-[#6F7192]">
                   Upload, preview, configure, and get pricing in one streamlined workflow.
                 </p>
               </div>
 
                 {/* Step Navigator */}
-                <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.03] p-1.5 backdrop-blur-xl scrollbar-hide">
+                <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] p-1.5 backdrop-blur-xl scrollbar-hide">
                   {stepConfigs.map((step, i) => {
                     const done = getStepDone(step.id)
                     const ref = stepRefs[step.id as keyof typeof stepRefs]
@@ -462,15 +462,15 @@ function CartEnabledWorkspace({
                     <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
                       done
                         ? 'bg-emerald-400/20 text-emerald-400'
-                        : 'bg-white/10 text-[#7a82a0]'
+                        : 'bg-white/10 text-[#6F7192]'
                     }`}>
                       {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
                     </span>
-                    <span className={done ? 'text-emerald-400' : 'text-[#7a82a0]'}>
+                    <span className={done ? 'text-emerald-400' : 'text-[#6F7192]'}>
                       {step.label}
                     </span>
                     {i < stepConfigs.length - 1 && (
-                      <ArrowRight className="ml-1 h-3 w-3 text-white/20" />
+                      <ArrowRight className="ml-1 h-3 w-3 text-[#0F1B3D]/20" />
                     )}
                   </button>
                     )
@@ -510,19 +510,19 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.05 }}
                 >
-                  <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(12,18,34,0.96),rgba(7,11,22,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
-                      <div className="rounded-xl border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 p-2.5 text-[#FF9A72]">
+                      <div className="rounded-xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-2.5 text-[#A78BFA]">
                         <UploadCloud className="h-5 w-5" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-white">1. Upload Your Model</h2>
-                        <p className="text-xs text-[#7a82a0]">STL, OBJ, 3MF, STEP, DXF, or DWG files supported</p>
+                        <h2 className="text-lg font-semibold text-[#0F1B3D]">1. Upload Your Model</h2>
+                        <p className="text-xs text-[#6F7192]">STL, OBJ, 3MF, STEP, DXF, or DWG files supported</p>
                       </div>
                     </div>
 
                     <div
-                      className="relative flex min-h-[200px] items-center justify-center rounded-2xl border-2 border-dashed border-white/10 bg-white/[0.02] p-6 text-center transition-colors hover:border-[#FF5C1A]/30"
+                      className="relative flex min-h-[200px] items-center justify-center rounded-2xl border-2 border-dashed border-[#7C5CFF]/10 bg-white/[0.02] p-6 text-center transition-colors hover:border-[#7C5CFF]/30"
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
                         e.preventDefault()
@@ -542,20 +542,20 @@ function CartEnabledWorkspace({
                         <motion.div
                           animate={{ y: [0, -4, 0] }}
                           transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                          className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-[#FF5C1A]/25 bg-[#FF5C1A]/12 text-[#FF9A72]"
+                          className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-[#7C5CFF]/25 bg-[#7C5CFF]/12 text-[#A78BFA]"
                         >
                           <UploadCloud className="h-6 w-6" />
                         </motion.div>
-                        <div className="text-base font-semibold text-white">
+                        <div className="text-base font-semibold text-[#0F1B3D]">
                           {selectedFile ? selectedFile.name : 'Drop your file or click to browse'}
                         </div>
                         {!selectedFile && (
-<div className="mt-2 text-xs text-[#7a82a0]">
+<div className="mt-2 text-xs text-[#6F7192]">
   STL · OBJ · 3MF · STEP · DXF · DWG supported
 </div>
                         )}
                         {selectedFile && (
-                          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">
+                          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#7C5CFF]/10 bg-white/[0.03] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
                             <FileArchive className="h-3 w-3" />
                             {selectedFile.name}
                           </div>
@@ -575,7 +575,7 @@ function CartEnabledWorkspace({
                         </div>
                         <div className="h-1.5 overflow-hidden rounded-full bg-white/8">
                           <div
-                            className="h-full rounded-full bg-[#FF5C1A] transition-all duration-300"
+                            className="h-full rounded-full bg-[#7C5CFF] transition-all duration-300"
                             style={{ width: `${uploadState.progress}%` }}
                           />
                         </div>
@@ -609,22 +609,22 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.1 }}
                 >
-                  <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(12,18,34,0.96),rgba(7,11,22,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
                       <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 p-2.5 text-cyan-200">
                         <Cuboid className="h-5 w-5" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-white">2. 3D Preview</h2>
-                        <p className="text-xs text-[#7a82a0]">Inspect your model from any angle</p>
+                        <h2 className="text-lg font-semibold text-[#0F1B3D]">2. 3D Preview</h2>
+                        <p className="text-xs text-[#6F7192]">Inspect your model from any angle</p>
                       </div>
                     </div>
 
-                    <div className="relative h-[400px] overflow-hidden rounded-2xl border border-white/10 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.08),transparent_42%),linear-gradient(180deg,#09101e,#070b15)]">
+                    <div className="relative h-[400px] overflow-hidden rounded-2xl border border-[#7C5CFF]/10 bg-[radial-gradient(circle_at_top,rgba(183, 167, 255,0.08),transparent_42%),linear-gradient(180deg,#FFFFFF,#FFFFFF)]">
                       {selectedModel ? (
                         <Suspense fallback={<div className="absolute inset-0 animate-pulse rounded-2xl bg-white/[0.03]" />}>
                           <Canvas className="!absolute !inset-0" camera={{ position: [140, 120, 140], fov: 34 }} dpr={[1, 1.7]}>
-                            <color attach="background" args={['#070b15']} />
+                            <color attach="background" args={['#FFFFFF']} />
                             <ambientLight intensity={0.95} />
                             <directionalLight position={[120, 120, 80]} intensity={1.15} />
                             <directionalLight position={[-80, -50, -60]} intensity={0.4} />
@@ -637,11 +637,11 @@ function CartEnabledWorkspace({
                         </Suspense>
                       ) : (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-cyan-200">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-[#7C5CFF]/10 bg-white/[0.03] text-cyan-200">
                             <Move3D className="h-6 w-6" />
                           </div>
-                          <div className="text-sm font-semibold text-white">No model loaded</div>
-                          <p className="max-w-xs text-xs leading-6 text-[#7a82a0]">
+                          <div className="text-sm font-semibold text-[#0F1B3D]">No model loaded</div>
+                          <p className="max-w-xs text-xs leading-6 text-[#6F7192]">
                             Upload a file above to see your model in the interactive 3D viewer.
                           </p>
                         </div>
@@ -649,7 +649,7 @@ function CartEnabledWorkspace({
 
                       {viewerLoading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-[rgba(4,8,16,0.62)] backdrop-blur-sm">
-                          <div className="rounded-xl border border-white/10 bg-[#0d1120] px-4 py-3 text-xs text-white">
+                          <div className="rounded-xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-xs text-[#0F1B3D]">
                             Building 3D preview...
                           </div>
                         </div>
@@ -658,19 +658,19 @@ function CartEnabledWorkspace({
 
                     {selectedModel && (
                       <div className="mt-4 grid grid-cols-3 gap-3">
-                        <div className="rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2.5">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Dimensions</div>
-                          <div className="mt-1 text-xs text-white">
+                        <div className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2.5">
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Dimensions</div>
+                          <div className="mt-1 text-xs text-[#0F1B3D]">
                             {selectedModel.dimensionsMm.x.toFixed(0)} × {selectedModel.dimensionsMm.y.toFixed(0)} × {selectedModel.dimensionsMm.z.toFixed(0)} mm
                           </div>
                         </div>
-                        <div className="rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2.5">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Triangles</div>
-                          <div className="mt-1 text-xs text-white">{selectedModel.triangleCount.toLocaleString()}</div>
+                        <div className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2.5">
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Triangles</div>
+                          <div className="mt-1 text-xs text-[#0F1B3D]">{selectedModel.triangleCount.toLocaleString()}</div>
                         </div>
-                        <div className="rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2.5">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Controls</div>
-                          <div className="mt-1 text-xs text-white">Rotate · Zoom · Pan</div>
+                        <div className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2.5">
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Controls</div>
+                          <div className="mt-1 text-xs text-[#0F1B3D]">Rotate · Zoom · Pan</div>
                         </div>
                       </div>
                     )}
@@ -684,14 +684,14 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.15 }}
                 >
-                  <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(12,18,34,0.96),rgba(7,11,22,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
                       <div className="rounded-xl border border-violet-400/20 bg-violet-400/10 p-2.5 text-violet-200">
                         <Palette className="h-5 w-5" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-white">3. Material & Color</h2>
-                        <p className="text-xs text-[#7a82a0]">Choose the best material and finish for your part</p>
+                        <h2 className="text-lg font-semibold text-[#0F1B3D]">3. Material & Color</h2>
+                        <p className="text-xs text-[#6F7192]">Choose the best material and finish for your part</p>
                       </div>
                     </div>
 
@@ -708,17 +708,17 @@ function CartEnabledWorkspace({
                               onClick={() => handleMaterialChange(material.id)}
                               className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
                                 isActive
-                                  ? 'border-[#FF8A57]/35 bg-[#11182b] shadow-[0_4px_16px_rgba(255,92,26,0.1)]'
-                                  : 'border-white/8 bg-white/[0.02] hover:border-white/15'
+                                  ? 'border-[#7C5CFF]/35 bg-[#1C3B52] shadow-[0_4px_16px_rgba(124, 92, 255,0.1)]'
+                                  : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10'
                               }`}
                             >
-                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FF5C1A]/10 text-base">
+                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#7C5CFF]/10 text-base">
                                 {material.icon}
                               </span>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-2">
-                                  <span className="truncate text-sm font-medium text-white">{material.name}</span>
-                                  {isActive && <CheckCircle2 className="h-4 w-4 shrink-0 text-[#FF9A72]" />}
+                                  <span className="truncate text-sm font-medium text-[#0F1B3D]">{material.name}</span>
+                                  {isActive && <CheckCircle2 className="h-4 w-4 shrink-0 text-[#A78BFA]" />}
                                 </div>
                                 <p className="mt-0.5 truncate text-[11px] text-[#8d97b8]">{material.summary}</p>
                               </div>
@@ -743,12 +743,12 @@ function CartEnabledWorkspace({
                               onClick={() => setConfig((c) => ({ ...c, color: color.name }))}
                               className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-left transition-all ${
                                 isActive
-                                  ? 'border-[#FF8A57]/40 bg-[#11182b]'
-                                  : 'border-white/8 bg-white/[0.02] hover:border-white/15'
+                                  ? 'border-[#7C5CFF]/40 bg-[#1C3B52]'
+                                  : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10'
                               }`}
                             >
-                              <span className="text-xs font-medium text-white">{color.name}</span>
-                              {isActive && <CheckCircle2 className="h-3.5 w-3.5 text-[#FF9A72]" />}
+                              <span className="text-xs font-medium text-[#0F1B3D]">{color.name}</span>
+                              {isActive && <CheckCircle2 className="h-3.5 w-3.5 text-[#A78BFA]" />}
                             </button>
                           )
                         })}
@@ -764,14 +764,14 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.2 }}
                 >
-                  <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(12,18,34,0.96),rgba(7,11,22,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
                       <div className="rounded-xl border border-sky-400/20 bg-sky-400/10 p-2.5 text-sky-200">
                         <Layers3 className="h-5 w-5" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-white">4. Print Settings</h2>
-                        <p className="text-xs text-[#7a82a0]">Fine-tune quality, strength, and scale</p>
+                        <h2 className="text-lg font-semibold text-[#0F1B3D]">4. Print Settings</h2>
+                        <p className="text-xs text-[#6F7192]">Fine-tune quality, strength, and scale</p>
                       </div>
                     </div>
 
@@ -780,7 +780,7 @@ function CartEnabledWorkspace({
                       <div>
                         <div className="mb-2 flex items-center justify-between text-sm">
                           <span className="text-[#aeb8d8]">Infill Density</span>
-                          <span className="font-semibold text-white">{config.infill}%</span>
+                          <span className="font-semibold text-[#0F1B3D]">{config.infill}%</span>
                         </div>
                         <input
                           type="range"
@@ -789,9 +789,9 @@ function CartEnabledWorkspace({
                           step={5}
                           value={config.infill}
                           onChange={(e) => setConfig((c) => ({ ...c, infill: Number(e.target.value) }))}
-                          className="w-full accent-[#FF5C1A]"
+                          className="w-full accent-[#7C5CFF]"
                         />
-                        <div className="mt-1 flex justify-between text-[10px] text-[#7a82a0]">
+                        <div className="mt-1 flex justify-between text-[10px] text-[#6F7192]">
                           <span>Hollow</span>
                           <span>Solid</span>
                         </div>
@@ -801,7 +801,7 @@ function CartEnabledWorkspace({
                       <div>
                         <div className="mb-2 flex items-center justify-between text-sm">
                           <span className="text-[#aeb8d8]">Quantity</span>
-                          <span className="font-semibold text-white">{config.quantity} pcs</span>
+                          <span className="font-semibold text-[#0F1B3D]">{config.quantity} pcs</span>
                         </div>
                         <input
                           type="number"
@@ -810,7 +810,7 @@ function CartEnabledWorkspace({
                           step={1}
                           value={config.quantity}
                           onChange={(e) => setConfig((c) => ({ ...c, quantity: Math.max(1, Math.floor(Number(e.target.value) || 1)) }))}
-                          className="w-full rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2.5 text-sm text-white outline-none"
+                          className="w-full rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
                         />
                       </div>
 
@@ -825,13 +825,13 @@ function CartEnabledWorkspace({
                               onClick={() => setConfig((c) => ({ ...c, postProcessingLevel: option.value }))}
                               className={`rounded-xl border px-3 py-2.5 text-left transition-all ${
                                 option.value === config.postProcessingLevel
-                                  ? 'border-[#FF8A57]/35 bg-[#11182b]'
-                                  : 'border-white/8 bg-white/[0.02] hover:border-white/15'
+                                  ? 'border-[#7C5CFF]/35 bg-[#1C3B52]'
+                                  : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10'
                               }`}
                             >
                               <div className="flex items-center justify-between gap-3">
-                                <div className="text-xs font-medium text-white">{option.label}</div>
-                                <div className="text-[10px] uppercase tracking-[0.18em] text-[#FF8A57]">
+                                <div className="text-xs font-medium text-[#0F1B3D]">{option.label}</div>
+                                <div className="text-[10px] uppercase tracking-[0.18em] text-[#7C5CFF]">
                                   ₹{option.cost.toFixed(2)}
                                 </div>
                               </div>
@@ -852,11 +852,11 @@ function CartEnabledWorkspace({
                               onClick={() => setConfig((c) => ({ ...c, layerHeight: option.value }))}
                               className={`rounded-xl border px-3 py-2.5 text-left transition-all ${
                                 option.value === config.layerHeight
-                                  ? 'border-[#FF8A57]/35 bg-[#11182b]'
-                                  : 'border-white/8 bg-white/[0.02] hover:border-white/15'
+                                  ? 'border-[#7C5CFF]/35 bg-[#1C3B52]'
+                                  : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10'
                               }`}
                             >
-                              <div className="text-xs font-medium text-white">{option.label}</div>
+                              <div className="text-xs font-medium text-[#0F1B3D]">{option.label}</div>
                               <div className="mt-0.5 text-[10px] text-[#8d97b8]">{option.description}</div>
                             </button>
                           ))}
@@ -866,19 +866,19 @@ function CartEnabledWorkspace({
 
                     {/* Save Quote */}
                     {user && (
-                      <div className="mt-6 flex items-center justify-between rounded-xl border border-white/8 bg-white/[0.02] p-4">
+                      <div className="mt-6 flex items-center justify-between rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] p-4">
                         <div className="flex items-center gap-3">
                           <ShieldCheck className="h-5 w-5 text-emerald-400" />
                           <div>
-                            <div className="text-xs font-medium text-white">{user.name}</div>
-                            <div className="text-[10px] text-[#7a82a0]">{user.email}</div>
+                            <div className="text-xs font-medium text-[#0F1B3D]">{user.name}</div>
+                            <div className="text-[10px] text-[#6F7192]">{user.email}</div>
                           </div>
                         </div>
                         <button
                           type="button"
                           onClick={handleSaveQuote}
                           disabled={!selectedModel || savingQuote || uploadState.status === 'uploading'}
-                          className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-4 py-2 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <BookmarkPlus className="h-3.5 w-3.5" />
                           {savingQuote ? 'Saving...' : 'Save Quote'}
@@ -896,13 +896,13 @@ function CartEnabledWorkspace({
                 transition={{ duration: 0.4, delay: 0.25 }}
                 className="xl:sticky xl:top-24 xl:self-start"
               >
-                <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(12,18,34,0.98),rgba(6,10,20,0.96))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.3)]">
+                <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.3)]">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-white">Quote Summary</h2>
-                      <p className="text-xs text-[#7a82a0]">{initialQuoteId}</p>
+                      <h2 className="text-lg font-semibold text-[#0F1B3D]">Quote Summary</h2>
+                      <p className="text-xs text-[#6F7192]">{initialQuoteId}</p>
                     </div>
-                    <div className="rounded-xl border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 p-2 text-[#FF9A72]">
+                    <div className="rounded-xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-2 text-[#A78BFA]">
                       <Package2 className="h-4 w-4" />
                     </div>
                   </div>
@@ -916,23 +916,23 @@ function CartEnabledWorkspace({
                   ) : (
                     <>
                       {/* Config Summary */}
-                      <div className="mb-4 rounded-xl border border-white/8 bg-white/[0.02] p-3">
+                      <div className="mb-4 rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] p-3">
                         <div className="flex items-center gap-2 text-xs">
-                          <span className="text-white">{getMaterialById(config.materialId, materials).name}</span>
-                          <span className="text-[#7a82a0]">·</span>
+                          <span className="text-[#0F1B3D]">{getMaterialById(config.materialId, materials).name}</span>
+                          <span className="text-[#6F7192]">·</span>
                           <span className="text-[#aeb8d8]">{config.infill}% infill</span>
-                          <span className="text-[#7a82a0]">·</span>
+                          <span className="text-[#6F7192]">·</span>
                           <span className="text-[#aeb8d8]">{config.layerHeight}mm</span>
                         </div>
                       </div>
 
                       {/* Price Breakdown */}
-                      <div className="rounded-xl border border-[#FF8A57]/20 bg-[linear-gradient(180deg,rgba(255,92,26,0.12),rgba(255,92,26,0.06))] p-4">
+                      <div className="rounded-xl border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-4">
                         <div className="text-[10px] uppercase tracking-[0.22em] text-[#ffd3c1]">Total Price</div>
-                        <div className="mt-1 font-[var(--font-syne)] text-3xl font-bold text-white">
+                        <div className="mt-1 font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">
                           ₹{deliveryPricing.totalPrice.toFixed(0)}
                         </div>
-                        <div className="mt-1 text-[10px] uppercase tracking-[0.22em] text-[#ffb493]">
+                        <div className="mt-1 text-[10px] uppercase tracking-[0.22em] text-[#A78BFA]">
                           Rounded to nearest ₹5
                         </div>
                         <div className="mt-3 space-y-1.5 text-xs text-[#ffe0d4]">
@@ -960,7 +960,7 @@ function CartEnabledWorkspace({
                             <span>Post-processing</span>
                             <span>₹{priceBreakdown.labourCost.toFixed(2)}</span>
                           </div>
-                          <div className="border-t border-white/10 pt-1.5 flex justify-between font-medium text-white">
+                          <div className="border-t border-[#7C5CFF]/10 pt-1.5 flex justify-between font-medium text-[#0F1B3D]">
                             <span>Subtotal</span>
                             <span>₹{priceBreakdown.subtotal.toFixed(2)}</span>
                           </div>
@@ -976,7 +976,7 @@ function CartEnabledWorkspace({
                             <span>Quantity discount</span>
                             <span>{priceBreakdown.quantityDiscountPercent}% · {priceBreakdown.quantityDiscountAmount > 0 ? '-' : ''}₹{priceBreakdown.quantityDiscountAmount.toFixed(2)}</span>
                           </div>
-                          <div className="border-t border-white/10 pt-1.5 flex justify-between font-medium text-white">
+                          <div className="border-t border-[#7C5CFF]/10 pt-1.5 flex justify-between font-medium text-[#0F1B3D]">
                             <span>Print total</span>
                             <span>₹{priceBreakdown.total.toFixed(0)}</span>
                           </div>
@@ -989,20 +989,20 @@ function CartEnabledWorkspace({
 
                       {/* Quick Stats */}
                       <div className="mt-4 grid grid-cols-2 gap-3">
-                        <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Weight</div>
-                          <div className="mt-1 text-sm font-medium text-white">{priceBreakdown.baseWeightGrams.toFixed(2)} g / unit</div>
+                        <div className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] p-3">
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Weight</div>
+                          <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{priceBreakdown.baseWeightGrams.toFixed(2)} g / unit</div>
                         </div>
-                        <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Print time</div>
-                          <div className="mt-1 text-sm font-medium text-white">{formatDurationMinutes(priceBreakdown.estimatedMinutes)}</div>
+                        <div className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] p-3">
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Print time</div>
+                          <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{formatDurationMinutes(priceBreakdown.estimatedMinutes)}</div>
                         </div>
-                        <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3 col-span-2">
-                          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">
+                        <div className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] p-3 col-span-2">
+                          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
                             <Cuboid className="h-3 w-3" />
                             Dimensions
                           </div>
-                          <div className="mt-1 text-xs text-white">
+                          <div className="mt-1 text-xs text-[#0F1B3D]">
                             {priceBreakdown.dimensionsMm.x.toFixed(0)} × {priceBreakdown.dimensionsMm.y.toFixed(0)} × {priceBreakdown.dimensionsMm.z.toFixed(0)} mm
                           </div>
                         </div>
@@ -1014,7 +1014,7 @@ function CartEnabledWorkspace({
                           <Truck className="h-3 w-3" />
                           Delivery
                         </div>
-                        <div className="mt-1 text-xs font-medium text-white">~48 hour print and delivery</div>
+                        <div className="mt-1 text-xs font-medium text-[#0F1B3D]">~48 hour print and delivery</div>
                       </div>
 
                       {/* Actions */}
@@ -1026,7 +1026,7 @@ function CartEnabledWorkspace({
                           className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                             cartItemCheck
                               ? 'border border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
-                              : 'bg-[#FF5C1A] text-white hover:opacity-95'
+                              : 'bg-[#7C5CFF] text-white hover:opacity-95'
                           }`}
                         >
                           {cartItemCheck ? (
@@ -1045,7 +1045,7 @@ function CartEnabledWorkspace({
                         {cartItemCheck && (
                           <Link
                             href="/cart"
-                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#FF5C1A]/30 bg-[#FF5C1A]/10 px-4 py-2.5 text-xs font-medium text-[#FF9A72] transition-colors hover:bg-[#FF5C1A]/20"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#7C5CFF]/30 bg-[#7C5CFF]/10 px-4 py-2.5 text-xs font-medium text-[#A78BFA] transition-colors hover:bg-[#7C5CFF]/20"
                           >
                             View Cart
                             <ArrowRight className="h-3.5 w-3.5" />
@@ -1056,7 +1056,7 @@ function CartEnabledWorkspace({
                       {!user && (
                         <Link
                           href="/login?next=%2Finstant-quote"
-                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-xs font-medium text-white transition-colors hover:bg-white/[0.07]"
+                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-2.5 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
                         >
                           Sign in to save quotes
                           <ArrowRight className="h-3 w-3" />

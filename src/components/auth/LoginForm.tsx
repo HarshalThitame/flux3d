@@ -25,7 +25,7 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
   return (
     <div className="space-y-5">
       <div className="space-y-2">
-        <h2 className="font-[var(--font-syne)] text-3xl font-bold text-white">Welcome back</h2>
+        <h2 className="font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">Welcome back</h2>
         <p className="text-sm leading-7 text-[#8e97b7]">
           Log in to upload models, save quotes, and access your production history.
         </p>
@@ -44,7 +44,7 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
       <form action={action} className="space-y-4">
         <input type="hidden" name="next" value={nextPath} />
         <div className="space-y-2">
-          <label htmlFor="email" className="text-sm text-white">
+          <label htmlFor="email" className="text-sm text-[#0F1B3D]">
             Email
           </label>
           <input
@@ -53,7 +53,7 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
             type="email"
             autoComplete="email"
             placeholder="you@company.com"
-            className="w-full rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-3 text-sm text-white outline-none placeholder:text-[#66708e]"
+            className="w-full rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
           />
           {state.fieldErrors?.email?.map((error) => (
             <p key={error} className="text-sm text-rose-300">
@@ -63,7 +63,7 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm text-white">
+          <label htmlFor="password" className="text-sm text-[#0F1B3D]">
             Password
           </label>
           <input
@@ -72,7 +72,7 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
             type="password"
             autoComplete="current-password"
             placeholder="Enter your password"
-            className="w-full rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-3 text-sm text-white outline-none placeholder:text-[#66708e]"
+            className="w-full rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
           />
           {state.fieldErrors?.password?.map((error) => (
             <p key={error} className="text-sm text-rose-300">
@@ -86,10 +86,10 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
       </form>
 
       <div className="flex items-center justify-between text-sm text-[#8e97b7]">
-        <Link href={`/forgot-password?next=${encodeURIComponent(nextPath)}`} className="hover:text-white">
+        <Link href={`/forgot-password?next=${encodeURIComponent(nextPath)}`} className="hover:text-[#0F1B3D]">
           Forgot password?
         </Link>
-        <Link href={`/signup?next=${encodeURIComponent(nextPath)}`} className="hover:text-white">
+        <Link href={`/signup?next=${encodeURIComponent(nextPath)}`} className="hover:text-[#0F1B3D]">
           Create account
         </Link>
       </div>

@@ -29,7 +29,7 @@ export default function FilterBar({ onFilterChange }: FilterBarProps) {
     <section className="px-4 md:px-8 lg:px-16 pb-8">
       <div className="max-w-[1200px] mx-auto">
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-sm text-[#7a82a0] font-medium">Filter by:</span>
+          <span className="text-sm text-[#6F7192] font-medium">Filter by:</span>
           <div className="flex gap-2 flex-wrap">
             {categories.map(cat => (
               <motion.button
@@ -38,8 +38,8 @@ export default function FilterBar({ onFilterChange }: FilterBarProps) {
                 whileTap={{ scale: 0.96 }}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   active === cat
-                    ? 'bg-[#FF5C1A] text-white'
-                    : 'bg-[rgba(255,255,255,0.04)] text-[#7a82a0] border border-white/[0.06] hover:border-[rgba(255,92,26,0.3)] hover:text-white'
+                    ? 'bg-[#7C5CFF] text-white'
+                    : 'bg-[rgba(124, 92, 255,0.3)] text-[#6F7192] border border-white/[0.06] hover:border-[rgba(124, 92, 255,0.3)] hover:text-white'
                 }`}
               >
                 {cat}

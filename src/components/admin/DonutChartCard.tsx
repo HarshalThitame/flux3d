@@ -33,10 +33,10 @@ export default function DonutChartCard({
     .join(', ')
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0a0f1e] p-5">
+    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#FFFFFF] p-5">
       <div>
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
-        <p className="mt-1 text-sm text-[#7a82a0]">{subtitle}</p>
+        <h3 className="text-lg font-semibold text-[#0F1B3D]">{title}</h3>
+        <p className="mt-1 text-sm text-[#6F7192]">{subtitle}</p>
       </div>
       <div className="mt-6 flex flex-col items-center gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="relative">
@@ -44,9 +44,9 @@ export default function DonutChartCard({
             className="grid h-44 w-44 place-items-center rounded-full shadow-inner"
             style={{ background: `conic-gradient(${background})` }}
           >
-            <div className="grid h-[136px] w-[136px] place-items-center rounded-full bg-[#0a0f1e] text-center">
+            <div className="grid h-[136px] w-[136px] place-items-center rounded-full bg-[#FFFFFF] text-center">
               <div>
-                <div className="font-[var(--font-syne)] text-2xl font-bold text-white">{total}</div>
+                <div className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">{total}</div>
                 <div className="text-[10px] uppercase tracking-[0.15em] text-[#5a6580]">Total</div>
               </div>
             </div>
@@ -65,7 +65,7 @@ export default function DonutChartCard({
                 <span className="h-2.5 w-2.5 shrink-0 rounded-full shadow-sm" style={{ backgroundColor: slice.color }} />
                 <span className="text-xs text-[#c6cee5]">{slice.label}</span>
               </div>
-              <div className="text-xs font-medium text-white">{slice.value}</div>
+              <div className="text-xs font-medium text-[#0F1B3D]">{slice.value}</div>
             </motion.div>
           ))}
         </div>

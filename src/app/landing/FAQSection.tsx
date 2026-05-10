@@ -53,20 +53,20 @@ function FAQItem({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index:
       initial={{ opacity: 0, y: 20 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ delay: index * 0.05 }}
-      className="border-b border-[rgba(255,255,255,0.07)] last:border-b-0"
+      className="border-b border-[rgba(124, 92, 255,0.5)] last:border-b-0"
     >
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between py-5 px-2 text-left group hover:bg-[rgba(255,255,255,0.02)] rounded-lg transition-colors"
+        className="w-full flex items-center justify-between py-5 px-2 text-left group hover:bg-[rgba(124, 92, 255,0.2)] rounded-lg transition-colors"
       >
-        <span className="text-base font-medium text-white group-hover:text-[#FF5C1A] transition-colors pr-4">
+        <span className="text-base font-medium text-[#0F1B3D] group-hover:text-[#7C5CFF] transition-colors pr-4">
           {faq.q}
         </span>
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[rgba(255,255,255,0.05)] flex items-center justify-center group-hover:bg-[rgba(255,92,26,0.1)] transition-colors">
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[rgba(124, 92, 255,0.4)] flex items-center justify-center group-hover:bg-[rgba(124, 92, 255,0.1)] transition-colors">
           {isOpen ? (
-            <ChevronUp className="w-5 h-5 text-[#FF5C1A]" />
+            <ChevronUp className="w-5 h-5 text-[#7C5CFF]" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-[#7a82a0]" />
+            <ChevronDown className="w-5 h-5 text-[#6F7192]" />
           )}
         </div>
       </button>
@@ -77,7 +77,7 @@ function FAQItem({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index:
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         className="overflow-hidden"
       >
-        <p className="text-sm text-[#7a82a0] leading-[1.7] pb-5 px-2">
+        <p className="text-sm text-[#6F7192] leading-[1.7] pb-5 px-2">
           {faq.a}
         </p>
       </motion.div>
@@ -93,7 +93,7 @@ export default function FAQSection() {
   return (
     <section ref={ref} className="relative py-24 px-6 overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(255,92,26,0.02)] to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(124, 92, 255,0.02)] to-transparent pointer-events-none" />
 
       <div className="max-w-[800px] mx-auto relative z-10">
         {/* Header */}
@@ -102,10 +102,10 @@ export default function FAQSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-12"
         >
-          <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">FAQ</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold text-white tracking-[-1px] leading-[1.1]">
+          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">FAQ</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
             Questions? We&apos;ve Got{' '}
-            <span className="text-[#7a82a0]">Clear Answers.</span>
+            <span className="text-[#6F7192]">Clear Answers.</span>
           </h2>
         </motion.div>
 
@@ -114,7 +114,7 @@ export default function FAQSection() {
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ delay: 0.3 }}
-          className="bg-[#0d1120] border border-[rgba(255,255,255,0.07)] rounded-2xl px-6"
+          className="bg-[#FFFFFF] border border-[rgba(124, 92, 255,0.5)] rounded-2xl px-6"
         >
           {faqs.map((faq, i) => (
             <FAQItem

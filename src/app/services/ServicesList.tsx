@@ -17,8 +17,8 @@ const services = [
       'Low-to-medium volume runs'
     ],
     cta: 'Upload Part Specs',
-    color: 'from-[#FF5C1A] to-[#ff7a3d]',
-    bgGradient: 'from-[rgba(255,92,26,0.08)] to-transparent'
+    color: 'from-[#7C5CFF] to-[#A78BFA]',
+    bgGradient: 'from-[rgba(124, 92, 255,0.08)] to-transparent'
   },
   {
     icon: Building2,
@@ -32,7 +32,7 @@ const services = [
       'SketchUp, Revit, Rhino compatible'
     ],
     cta: 'Get Model Quote',
-    color: 'from-[#5064FF] to-[#7a8aff]',
+    color: 'from-[#A78BFA] to-[#A78BFA]',
     bgGradient: 'from-[rgba(80,100,255,0.08)] to-transparent'
   },
   {
@@ -47,7 +47,7 @@ const services = [
       'All disciplines supported'
     ],
     cta: 'Student Pricing',
-    color: 'from-[#10B981] to-[#34d399]',
+    color: 'from-[#7C5CFF] to-[#7C5CFF]',
     bgGradient: 'from-[rgba(16,185,129,0.08)] to-transparent'
   },
   {
@@ -62,7 +62,7 @@ const services = [
       'Packaging-friendly for resale'
     ],
     cta: 'Start a Product',
-    color: 'from-[#F59E0B] to-[#fbbf24]',
+    color: 'from-[#A78BFA] to-[#A78BFA]',
     bgGradient: 'from-[rgba(245,158,11,0.08)] to-transparent'
   },
   {
@@ -128,38 +128,38 @@ function ServiceCard({ service, index }: { service: typeof services[0]; index: n
         index === 0 ? 'md:col-span-2' : index === 3 ? 'md:col-span-2' : ''
       }`}
     >
-      <div className="relative h-full bg-[#0d1120] border border-[rgba(255,255,255,0.07)] rounded-2xl overflow-hidden hover:border-[rgba(255,92,26,0.3)] transition-all duration-300 hover:shadow-[0_0_40px_rgba(255,92,26,0.08)]">
+      <div className="relative h-full bg-[#FFFFFF] border border-[rgba(124, 92, 255,0.5)] rounded-2xl overflow-hidden hover:border-[rgba(124, 92, 255,0.3)] transition-all duration-300 hover:shadow-[0_0_40px_rgba(124, 92, 255,0.08)]">
         {/* Hover glow effect */}
         <div className={`absolute inset-0 bg-gradient-to-br ${service.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
 
         <div className="relative z-10 p-6 md:p-8">
           {/* Badge */}
-          <div className={`inline-flex items-center gap-1.5 bg-gradient-to-r ${service.color} text-white text-xs font-semibold px-3 py-1 rounded-full mb-4`}>
+          <div className={`inline-flex items-center gap-1.5 bg-gradient-to-r ${service.color} text-[#0F1B3D] text-xs font-semibold px-3 py-1 rounded-full mb-4`}>
             {service.badge}
           </div>
 
           <div className="flex flex-col md:flex-row md:items-start gap-6">
             {/* Icon */}
             <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${service.color} p-0.5 flex-shrink-0`}>
-              <div className="w-full h-full rounded-xl bg-[#0d1120] flex items-center justify-center group-hover:scale-105 transition-transform">
-                <service.icon className="w-7 h-7 text-white" />
+              <div className="w-full h-full rounded-xl bg-[#FFFFFF] flex items-center justify-center group-hover:scale-105 transition-transform">
+                <service.icon className="w-7 h-7 text-[#0F1B3D]" />
               </div>
             </div>
 
             {/* Content */}
             <div className="flex-1">
-              <h3 className="font-[var(--font-syne)] text-xl font-bold text-white mb-2 group-hover:text-[#FF5C1A] transition-colors">
+              <h3 className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D] mb-2 group-hover:text-[#7C5CFF] transition-colors">
                 {service.title}
               </h3>
 
-              <p className="text-sm text-[#7a82a0] leading-[1.6] mb-4">
+              <p className="text-sm text-[#6F7192] leading-[1.6] mb-4">
                 {service.description}
               </p>
 
               {/* Details grid */}
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
                 {service.details.map((detail, j) => (
-                  <li key={j} className="flex items-center gap-2 text-xs text-[#7a82a0]">
+                  <li key={j} className="flex items-center gap-2 text-xs text-[#6F7192]">
                     <span className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${service.color}`} />
                     {detail}
                   </li>
@@ -169,7 +169,7 @@ function ServiceCard({ service, index }: { service: typeof services[0]; index: n
               {/* CTA */}
               <a
                 href="/instant-quote"
-                className="inline-flex items-center gap-2 text-sm font-medium text-[#7a82a0] hover:text-[#FF5C1A] transition-colors group/link"
+                className="inline-flex items-center gap-2 text-sm font-medium text-[#6F7192] hover:text-[#7C5CFF] transition-colors group/link"
               >
                 {service.cta}
                 <ArrowRight className="w-4 h-4 transition-transform group-hover/link:translate-x-1" />
@@ -189,7 +189,7 @@ export default function ServicesList() {
   return (
     <section className="py-24 px-6 relative">
       {/* Background accent */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_30%,rgba(255,92,26,0.04)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_30%,rgba(124, 92, 255,0.04)_0%,transparent_70%)] pointer-events-none" />
 
       <div className="max-w-[1200px] mx-auto relative z-10">
         {/* Section header */}
@@ -199,14 +199,14 @@ export default function ServicesList() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">7 Specializations</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-white tracking-[-1px] leading-[1.1]">
+          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">7 Specializations</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
             Every Industry. Every Need. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF5C1A] to-[#5064FF]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA]">
               One Printing Partner.
             </span>
           </h2>
-          <p className="text-[#7a82a0] mt-4 max-w-[600px] mx-auto">
+          <p className="text-[#6F7192] mt-4 max-w-[600px] mx-auto">
             From heavy-duty engineering parts to delicate presentation models — pick your specialization and we handle the rest.
           </p>
         </motion.div>

@@ -19,7 +19,7 @@ export default function Image() {
           justifyContent: 'space-between',
           padding: '56px 64px',
           background:
-            'radial-gradient(circle at top, rgba(255,92,26,0.28), transparent 42%), linear-gradient(135deg, #050810 0%, #0d1120 58%, #111827 100%)',
+            'radial-gradient(circle at top, rgba(124, 92, 255,0.28), transparent 42%), linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 58%, #FFFFFF 100%)',
           color: 'white',
         }}
       >

@@ -5,14 +5,14 @@ import type { DashboardMetric } from '@/lib/admin/types'
 const icons = [PackageOpen, IndianRupee, Clock3, Layers3]
 
 const gradients = [
-  'from-[#FF5C1A]/10 to-transparent',
+  'from-[#7C5CFF]/10 to-transparent',
   'from-emerald-400/10 to-transparent',
   'from-cyan-400/10 to-transparent',
   'from-violet-400/10 to-transparent',
 ]
 
 const iconGradients = [
-  'from-[#FF5C1A] to-[#FF9A72]',
+  'from-[#7C5CFF] to-[#A78BFA]',
   'from-emerald-400 to-emerald-500',
   'from-cyan-400 to-cyan-500',
   'from-violet-400 to-violet-500',
@@ -39,12 +39,12 @@ export default function DashboardCards({
             <div className="relative">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-sm text-[#7a82a0]">{metric.label}</div>
-                  <div className="mt-2 font-[var(--font-syne)] text-3xl font-bold text-white">
+                  <div className="text-sm text-[#6F7192]">{metric.label}</div>
+                  <div className="mt-2 font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">
                     {metric.value}
                   </div>
                 </div>
-                <div className={`rounded-xl bg-gradient-to-br ${iconGradients[index % 4]} p-2.5 text-white shadow-lg`}>
+                <div className={`rounded-xl bg-gradient-to-br ${iconGradients[index % 4]} p-2.5 text-[#0F1B3D] shadow-lg`}>
                   <Icon className="h-4.5 w-4.5" />
                 </div>
               </div>

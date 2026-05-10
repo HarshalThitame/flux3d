@@ -10,28 +10,28 @@ const specs = [
     label: 'Max Print Speed',
     value: '500 mm/s',
     note: '10× faster than standard printers',
-    color: 'from-[#FF5C1A] to-[#ff7a3d]'
+    color: 'from-[#7C5CFF] to-[#A78BFA]'
   },
   {
     icon: Layers,
     label: 'Layer Resolution',
     value: '0.05mm',
     note: 'Near-invisible layer lines',
-    color: 'from-[#5064FF] to-[#7a8aff]'
+    color: 'from-[#A78BFA] to-[#A78BFA]'
   },
   {
     icon: Box,
     label: 'Build Volume',
     value: '256³mm',
     note: 'Large format single-piece prints',
-    color: 'from-[#10B981] to-[#34d399]'
+    color: 'from-[#7C5CFF] to-[#7C5CFF]'
   },
   {
     icon: Palette,
     label: 'Multi-Color',
     value: '4-Color AMS',
     note: 'Automatic material switching',
-    color: 'from-[#F59E0B] to-[#fbbf24]'
+    color: 'from-[#A78BFA] to-[#A78BFA]'
   },
   {
     icon: Printer,
@@ -56,7 +56,7 @@ export default function TechnologySection() {
   return (
     <section ref={ref} className="relative py-24 px-6 overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(255,92,26,0.06)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(124, 92, 255,0.06)_0%,transparent_70%)] pointer-events-none" />
 
       <div className="max-w-[1200px] mx-auto relative z-10">
         {/* Header */}
@@ -65,16 +65,16 @@ export default function TechnologySection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">Our Equipment</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-white tracking-[-1px] leading-[1.1]">
+          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">Our Equipment</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
             Printed on{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF5C1A] to-[#ff7a3d] animate-gradient">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA] animate-gradient">
               Bambu Lab P2S.
             </span>
             <br />
-            <span className="text-[#7a82a0]">India&apos;s Fastest.</span>
+            <span className="text-[#6F7192]">India&apos;s Fastest.</span>
           </h2>
-          <p className="text-[#7a82a0] mt-4 max-w-[700px] mx-auto leading-[1.7]">
+          <p className="text-[#6F7192] mt-4 max-w-[700px] mx-auto leading-[1.7]">
             We don&apos;t print on hobbyist machines. Our entire FDM fleet runs on Bambu Lab X1 Carbon — the world&apos;s fastest professional desktop 3D printer. Every part benefits from automatic calibration, multi-color AMS capability, and AI-powered quality monitoring.
           </p>
         </motion.div>
@@ -88,21 +88,21 @@ export default function TechnologySection() {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: i * 0.1 }}
               whileHover={{ y: -6, transition: { duration: 0.2 } }}
-              className="group relative bg-[#0d1120] border border-[rgba(255,255,255,0.07)] rounded-2xl p-8 overflow-hidden hover:border-[rgba(255,92,26,0.3)] transition-colors"
+              className="group relative bg-[#FFFFFF] border border-[rgba(124, 92, 255,0.5)] rounded-2xl p-8 overflow-hidden hover:border-[rgba(124, 92, 255,0.3)] transition-colors"
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${spec.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
               <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${spec.color} scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500`} />
 
               <div className="relative z-10">
                 <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${spec.color} p-0.5 mb-6`}>
-                  <div className="w-full h-full rounded-xl bg-[#0d1120] flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <spec.icon className="w-7 h-7 text-white" />
+                  <div className="w-full h-full rounded-xl bg-[#FFFFFF] flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <spec.icon className="w-7 h-7 text-[#0F1B3D]" />
                   </div>
                 </div>
 
-                <p className="text-xs text-[#7a82a0] uppercase tracking-wider mb-1">{spec.label}</p>
-                <p className="font-[var(--font-syne)] text-2xl font-extrabold text-white mb-2">{spec.value}</p>
-                <p className="text-sm text-[#7a82a0]">{spec.note}</p>
+                <p className="text-xs text-[#6F7192] uppercase tracking-wider mb-1">{spec.label}</p>
+                <p className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D] mb-2">{spec.value}</p>
+                <p className="text-sm text-[#6F7192]">{spec.note}</p>
               </div>
             </motion.div>
           ))}
@@ -113,7 +113,7 @@ export default function TechnologySection() {
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ delay: 0.7 }}
-          className="text-center text-sm text-[#7a82a0] mt-12"
+          className="text-center text-sm text-[#6F7192] mt-12"
         >
           All prints are photographed and quality checked before they leave our facility.
         </motion.p>

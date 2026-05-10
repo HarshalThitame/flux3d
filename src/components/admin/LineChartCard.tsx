@@ -21,7 +21,7 @@ export default function LineChartCard({
   subtitle,
   points,
   showOrders = false,
-  accent = '#FF5C1A',
+  accent = '#7C5CFF',
 }: {
   title: string
   subtitle: string
@@ -36,10 +36,10 @@ export default function LineChartCard({
   const gradientId = `gradient-${title.replace(/\s+/g, '-')}`
   
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0a0f1e] p-5">
+    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#FFFFFF] p-5">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
-        <p className="mt-1 text-sm text-[#7a82a0]">{subtitle}</p>
+        <h3 className="text-lg font-semibold text-[#0F1B3D]">{title}</h3>
+        <p className="mt-1 text-sm text-[#6F7192]">{subtitle}</p>
       </div>
       <div className="overflow-hidden rounded-xl bg-white/[0.015] p-3">
         {points.length > 0 ? (
@@ -58,7 +58,7 @@ export default function LineChartCard({
                   x2={width}
                   y1={(height / 4) * line + 5}
                   y2={(height / 4) * line + 5}
-                  stroke="rgba(255,255,255,0.04)"
+                  stroke="rgba(124, 92, 255,0.3)"
                   strokeDasharray="4 8"
                 />
               ))}
@@ -77,9 +77,9 @@ export default function LineChartCard({
               ))}
             </div>
             {showOrders && (
-              <div className="mt-3 flex items-center gap-4 text-[10px] text-[#7a82a0]">
+              <div className="mt-3 flex items-center gap-4 text-[10px] text-[#6F7192]">
                 <div className="flex items-center gap-1">
-                  <div className="h-2 w-4 rounded-full bg-[#FF5C1A]" />
+                  <div className="h-2 w-4 rounded-full bg-[#7C5CFF]" />
                   <span>Revenue (solid line — orange)</span>
                 </div>
                 <div className="flex items-center gap-1">

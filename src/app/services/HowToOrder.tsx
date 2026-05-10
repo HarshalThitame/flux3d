@@ -46,23 +46,23 @@ function StepCard({ step, index, isLast }: { step: typeof steps[0]; index: numbe
       {/* Step number circle */}
       <motion.div
         whileHover={{ scale: 1.1 }}
-        className="relative w-20 h-20 rounded-full bg-[#0d1120] border-2 border-[rgba(255,92,26,0.3)] flex items-center justify-center mb-6 group hover:border-[#FF5C1A] hover:shadow-[0_0_30px_rgba(255,92,26,0.2)] transition-all"
+        className="relative w-20 h-20 rounded-full bg-[#FFFFFF] border-2 border-[rgba(124, 92, 255,0.3)] flex items-center justify-center mb-6 group hover:border-[#7C5CFF] hover:shadow-[0_0_30px_rgba(124, 92, 255,0.2)] transition-all"
       >
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#FF5C1A] to-[#ff7a3d] opacity-0 group-hover:opacity-10 transition-opacity" />
-        <step.icon className="w-8 h-8 text-[#FF5C1A]" />
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#7C5CFF] to-[#A78BFA] opacity-0 group-hover:opacity-10 transition-opacity" />
+        <step.icon className="w-8 h-8 text-[#7C5CFF]" />
 
         {/* Step number badge */}
-        <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#FF5C1A] text-white text-xs font-bold flex items-center justify-center shadow-lg">
+        <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#7C5CFF] text-white text-xs font-bold flex items-center justify-center shadow-lg">
           {step.step}
         </div>
       </motion.div>
 
       {/* Content */}
-      <h3 className="font-[var(--font-syne)] text-lg font-bold text-white mb-3">
+      <h3 className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D] mb-3">
         {step.title}
       </h3>
 
-      <p className="text-sm text-[#7a82a0] leading-[1.6] max-w-[250px]">
+      <p className="text-sm text-[#6F7192] leading-[1.6] max-w-[250px]">
         {step.description}
       </p>
 
@@ -73,7 +73,7 @@ function StepCard({ step, index, isLast }: { step: typeof steps[0]; index: numbe
             initial={{ scaleX: 0, originX: 0 }}
             animate={isInView ? { scaleX: 1 } : {}}
             transition={{ duration: 0.8, delay: index * 0.15 + 0.3 }}
-            className="w-full h-full bg-gradient-to-r from-[#FF5C1A] to-[rgba(255,92,26,0.1)]"
+            className="w-full h-full bg-gradient-to-r from-[#7C5CFF] to-[rgba(124, 92, 255,0.1)]"
           />
         </div>
       )}
@@ -85,11 +85,11 @@ export default function HowToOrder() {
   return (
     <section className="py-24 px-6 relative overflow-hidden">
       {/* Background accents */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(255,92,26,0.03)] to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(124, 92, 255,0.03)] to-transparent pointer-events-none" />
 
       {/* Floating decorative circles */}
       <motion.div
-        className="absolute top-20 left-10 w-32 h-32 rounded-full bg-[rgba(255,92,26,0.05)] blur-xl"
+        className="absolute top-20 left-10 w-32 h-32 rounded-full bg-[rgba(124, 92, 255,0.05)] blur-xl"
         animate={{ y: [0, 20, 0] }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
       />
@@ -107,14 +107,14 @@ export default function HowToOrder() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">Simple Process</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-white tracking-[-1px] leading-[1.1]">
+          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">Simple Process</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
             How It{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF5C1A] to-[#5064FF]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA]">
               Works
             </span>
           </h2>
-          <p className="text-[#7a82a0] mt-4 max-w-[500px] mx-auto">
+          <p className="text-[#6F7192] mt-4 max-w-[500px] mx-auto">
             Four straightforward steps from your idea to a finished, production-ready part in your hands.
           </p>
         </motion.div>
@@ -136,7 +136,7 @@ export default function HowToOrder() {
         >
           <a
             href="/instant-quote"
-            className="inline-flex items-center gap-2 text-[#FF5C1A] font-medium hover:underline"
+            className="inline-flex items-center gap-2 text-[#7C5CFF] font-medium hover:underline"
           >
             Start your project now
             <span className="transition-transform hover:translate-x-1">→</span>

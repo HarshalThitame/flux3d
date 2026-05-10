@@ -27,7 +27,7 @@ export default async function CartPage() {
   const materials = await getPublicQuoteMaterials()
 
   return (
-    <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       <Navbar transparent />
       <CartClient user={auth?.profile ?? null} materials={materials} />
     </div>

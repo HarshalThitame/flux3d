@@ -79,7 +79,7 @@ export default function AdminFilesPage() {
             File Storage
           </div>
           <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Files</h1>
-          <p className="mt-2 max-w-xl text-sm text-[#7a82a0]">
+          <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
             Monitor uploaded STL, OBJ, and 3MF assets with download and moderation actions.
           </p>
         </motion.div>

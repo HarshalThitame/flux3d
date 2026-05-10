@@ -12,7 +12,7 @@ const materials = [
     price: '₹8/g',
     traits: ['Easy to print', 'Biodegradable'],
     bestFor: 'Student projects, gifts, prototypes',
-    color: 'from-[#10B981] to-[#34d399]'
+    color: 'from-[#7C5CFF] to-[#7C5CFF]'
   },
   {
     icon: Shield,
@@ -20,7 +20,7 @@ const materials = [
     price: '₹9/g',
     traits: ['Strong & food-safe', 'Heat resistant'],
     bestFor: 'Functional parts, containers, engineering',
-    color: 'from-[#5064FF] to-[#7a8aff]'
+    color: 'from-[#A78BFA] to-[#A78BFA]'
   },
   {
     icon: Package,
@@ -28,7 +28,7 @@ const materials = [
     price: '₹10/g',
     traits: ['Industrial grade', 'High impact'],
     bestFor: 'Machine parts, enclosures, automotive',
-    color: 'from-[#FF5C1A] to-[#ff7a3d]'
+    color: 'from-[#7C5CFF] to-[#A78BFA]'
   },
   {
     icon: Wind,
@@ -52,7 +52,7 @@ const materials = [
     price: '₹18/g',
     traits: ['Lightweight & strong', 'Chemical resistant'],
     bestFor: 'Industrial jigs, structural parts',
-    color: 'from-[#F59E0B] to-[#fbbf24]'
+    color: 'from-[#A78BFA] to-[#A78BFA]'
   },
   {
     icon: Sparkles,
@@ -68,7 +68,7 @@ const materials = [
     price: 'From ₹14/g',
     traits: ['4-color AMS system'],
     bestFor: 'Logos, figurines, prototypes, signage',
-    color: 'from-[#FF5C1A] to-[#5064FF]'
+    color: 'from-[#7C5CFF] to-[#A78BFA]'
   },
   {
     icon: Gem,
@@ -76,7 +76,7 @@ const materials = [
     price: '₹18/g',
     traits: ['Ultra fine detail', 'Smooth surface'],
     bestFor: 'Dental, miniatures, jewelry, props',
-    color: 'from-[#10B981] to-[#5064FF]'
+    color: 'from-[#7C5CFF] to-[#A78BFA]'
   },
   {
     icon: Shield,
@@ -84,7 +84,7 @@ const materials = [
     price: '₹20/g',
     traits: ['Tough & durable'],
     bestFor: 'Engineering prototypes, functional resin parts',
-    color: 'from-[#F59E0B] to-[#FF5C1A]'
+    color: 'from-[#A78BFA] to-[#7C5CFF]'
   }
 ]
 
@@ -105,12 +105,12 @@ export default function MaterialsSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">Our Materials</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-white tracking-[-1px] leading-[1.1]">
+          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">Our Materials</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
             10+ Premium Materials.{' '}
-            <span className="text-[#7a82a0]">One Trusted Printer.</span>
+            <span className="text-[#6F7192]">One Trusted Printer.</span>
           </h2>
-          <p className="text-[#7a82a0] mt-4 max-w-[600px] mx-auto">
+          <p className="text-[#6F7192] mt-4 max-w-[600px] mx-auto">
             Every filament and resin we stock is sourced from trusted brands — Bambu Lab, eSUN, Elegoo, and Sunlu. Quality you can see and feel in every layer.
           </p>
         </motion.div>
@@ -124,27 +124,27 @@ export default function MaterialsSection() {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: i * 0.06 }}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="group bg-[#0d1120] border border-[rgba(255,255,255,0.07)] rounded-xl p-6 hover:border-[rgba(255,92,26,0.2)] transition-colors"
+              className="group bg-[#FFFFFF] border border-[rgba(124, 92, 255,0.5)] rounded-xl p-6 hover:border-[rgba(124, 92, 255,0.2)] transition-colors"
             >
               {/* Icon */}
               <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${material.color} p-0.5 mb-4`}>
-                <div className="w-full h-full rounded-lg bg-[#0d1120] flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <material.icon className="w-5 h-5 text-white" />
+                <div className="w-full h-full rounded-lg bg-[#FFFFFF] flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <material.icon className="w-5 h-5 text-[#0F1B3D]" />
                 </div>
               </div>
 
               {/* Name + Price */}
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-[var(--font-syne)] text-base font-bold text-white group-hover:text-[#FF5C1A] transition-colors">
+                <h3 className="font-[var(--font-syne)] text-base font-bold text-[#0F1B3D] group-hover:text-[#7C5CFF] transition-colors">
                   {material.name}
                 </h3>
-                <span className="text-sm text-[#FF5C1A] font-semibold">{material.price}</span>
+                <span className="text-sm text-[#7C5CFF] font-semibold">{material.price}</span>
               </div>
 
               {/* Traits */}
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {material.traits.map((trait, j) => (
-                  <span key={j} className="text-[10px] bg-[rgba(255,255,255,0.05)] text-[#7a82a0] px-2 py-0.5 rounded-full">
+                  <span key={j} className="text-[10px] bg-[rgba(124, 92, 255,0.4)] text-[#6F7192] px-2 py-0.5 rounded-full">
                     {trait}
                   </span>
                 ))}
@@ -161,14 +161,14 @@ export default function MaterialsSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.7 }}
-          className="text-center bg-[#0d1120] border border-[rgba(255,255,255,0.07)] rounded-2xl p-8"
+          className="text-center bg-[#FFFFFF] border border-[rgba(124, 92, 255,0.5)] rounded-2xl p-8"
         >
-          <p className="text-lg text-white mb-2">Not sure which material is right for you?</p>
+          <p className="text-lg text-[#0F1B3D] mb-2">Not sure which material is right for you?</p>
           <a
             href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-[#25D366] text-white px-6 py-3 rounded-xl text-sm font-medium hover:shadow-[0_0_30px_rgba(37,211,102,0.3)] transition-shadow"
+            className="inline-flex items-center gap-2 bg-[#25D366] text-[#0F1B3D] px-6 py-3 rounded-xl text-sm font-medium hover:shadow-[0_0_30px_rgba(37,211,102,0.3)] transition-shadow"
           >
             <MessageCircle className="w-4 h-4" />
             Talk to Our Expert on WhatsApp

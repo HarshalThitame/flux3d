@@ -12,7 +12,7 @@ const benefits = [
     stat: 3,
     statLabel: 'Days avg. turnaround',
     statUnit: 'd',
-    color: 'from-[#FF5C1A] to-[#ff7a3d]'
+    color: 'from-[#7C5CFF] to-[#A78BFA]'
   },
   {
     icon: Target,
@@ -22,7 +22,7 @@ const benefits = [
     statLabel: 'Resin accuracy',
     statUnit: 'mm',
     statPrefix: '±',
-    color: 'from-[#5064FF] to-[#7a8aff]'
+    color: 'from-[#A78BFA] to-[#A78BFA]'
   },
   {
     icon: Award,
@@ -31,7 +31,7 @@ const benefits = [
     stat: 100,
     statLabel: 'Quality checked',
     statUnit: '%',
-    color: 'from-[#10B981] to-[#34d399]'
+    color: 'from-[#7C5CFF] to-[#7C5CFF]'
   },
   {
     icon: MessageCircle,
@@ -70,7 +70,7 @@ function AnimatedCounter({ target, unit, prefix = '', suffix = '', duration = 2 
 
   return (
     <span ref={ref}>
-      {prefix}{displayValue}{unit ? <span className="text-[#FF5C1A]">{unit}</span> : ''}{suffix}
+      {prefix}{displayValue}{unit ? <span className="text-[#7C5CFF]">{unit}</span> : ''}{suffix}
     </span>
   )
 }
@@ -86,7 +86,7 @@ function BenefitCard({ benefit, index }: { benefit: typeof benefits[0]; index: n
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       whileHover={{ y: -6, transition: { duration: 0.2 } }}
-      className="group relative bg-[#0d1120] border border-[rgba(255,255,255,0.07)] rounded-2xl p-8 overflow-hidden hover:border-[rgba(255,92,26,0.3)] transition-colors"
+      className="group relative bg-[#FFFFFF] border border-[rgba(124, 92, 255,0.5)] rounded-2xl p-8 overflow-hidden hover:border-[rgba(124, 92, 255,0.3)] transition-colors"
     >
       {/* Background gradient on hover */}
       <div className={`absolute inset-0 bg-gradient-to-br ${benefit.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
@@ -97,31 +97,31 @@ function BenefitCard({ benefit, index }: { benefit: typeof benefits[0]; index: n
       <div className="relative z-10">
         {/* Icon */}
         <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${benefit.color} p-0.5 mb-6`}>
-          <div className="w-full h-full rounded-xl bg-[#0d1120] flex items-center justify-center group-hover:scale-110 transition-transform">
-            <benefit.icon className="w-7 h-7 text-white" />
+          <div className="w-full h-full rounded-xl bg-[#FFFFFF] flex items-center justify-center group-hover:scale-110 transition-transform">
+            <benefit.icon className="w-7 h-7 text-[#0F1B3D]" />
           </div>
         </div>
 
         {/* Title */}
-        <h3 className="font-[var(--font-syne)] text-lg font-bold text-white mb-2 group-hover:text-[#FF5C1A] transition-colors">
+        <h3 className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D] mb-2 group-hover:text-[#7C5CFF] transition-colors">
           {benefit.title}
         </h3>
 
         {/* Description */}
-        <p className="text-sm text-[#7a82a0] leading-[1.6] mb-6">
+        <p className="text-sm text-[#6F7192] leading-[1.6] mb-6">
           {benefit.description}
         </p>
 
         {/* Stat */}
-        <div className="bg-[rgba(255,255,255,0.03)] rounded-xl p-4 text-center border border-[rgba(255,255,255,0.05)]">
-          <div className="font-[var(--font-syne)] text-3xl font-extrabold text-white">
+        <div className="bg-[rgba(124, 92, 255,0.25)] rounded-xl p-4 text-center border border-[rgba(124, 92, 255,0.4)]">
+          <div className="font-[var(--font-syne)] text-3xl font-extrabold text-[#0F1B3D]">
             <AnimatedCounter
               target={benefit.stat}
               unit={benefit.statUnit}
               prefix={benefit.statPrefix || ''}
             />
           </div>
-          <div className="text-xs text-[#7a82a0] mt-1">{benefit.statLabel}</div>
+          <div className="text-xs text-[#6F7192] mt-1">{benefit.statLabel}</div>
         </div>
       </div>
     </motion.div>
@@ -147,10 +147,10 @@ function TrustStat({ stat, index }: { stat: typeof trustStats[0]; index: number 
       transition={{ delay: index * 0.1 }}
       className="text-center"
     >
-      <div className="text-3xl md:text-4xl font-[var(--font-syne)] font-extrabold text-white mb-1">
+      <div className="text-3xl md:text-4xl font-[var(--font-syne)] font-extrabold text-[#0F1B3D] mb-1">
         <AnimatedCounter target={stat.value} unit={stat.unit} />
       </div>
-      <div className="text-sm text-[#7a82a0]">{stat.label}</div>
+      <div className="text-sm text-[#6F7192]">{stat.label}</div>
     </motion.div>
   )
 }
@@ -169,14 +169,14 @@ export default function WhyChooseUs() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">Why Clients Come Back</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-white tracking-[-1px] leading-[1.1]">
+          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">Why Clients Come Back</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
             The Difference You Can{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF5C1A] to-[#5064FF]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA]">
               Feel
             </span>
           </h2>
-          <p className="text-[#7a82a0] mt-4 max-w-[500px] mx-auto">
+          <p className="text-[#6F7192] mt-4 max-w-[500px] mx-auto">
             Speed, refined quality, honest pricing, and practical material guidance for teams that need more than a basic print shop.
           </p>
         </motion.div>
@@ -193,7 +193,7 @@ export default function WhyChooseUs() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="bg-[#0d1120] border border-[rgba(255,255,255,0.07)] rounded-2xl p-8 md:p-12"
+          className="bg-[#FFFFFF] border border-[rgba(124, 92, 255,0.5)] rounded-2xl p-8 md:p-12"
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {trustStats.map((stat, i) => (

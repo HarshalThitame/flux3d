@@ -107,15 +107,15 @@ export default function MaterialsPageClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+      <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
         <NavbarClient transparent user={null} />
         <main className="px-6 py-32">
           <div className="mx-auto max-w-[1200px]">
-            <div className="h-8 w-48 bg-[#0d1120] rounded animate-pulse mb-6" />
-            <div className="h-12 w-96 bg-[#0d1120] rounded animate-pulse mb-12" />
+            <div className="h-8 w-48 bg-[#FFFFFF] rounded animate-pulse mb-6" />
+            <div className="h-12 w-96 bg-[#FFFFFF] rounded animate-pulse mb-12" />
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1,2,3,4,5,6].map(i => (
-                <div key={i} className="h-64 bg-[#0d1120] rounded-2xl animate-pulse" />
+                <div key={i} className="h-64 bg-[#FFFFFF] rounded-2xl animate-pulse" />
               ))}
             </div>
           </div>
@@ -125,8 +125,8 @@ export default function MaterialsPageClient() {
   }
 
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#050810]" />}>
-      <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+    <Suspense fallback={<div className="min-h-screen bg-[#FFFFFF]" />}>
+      <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
         <NavbarClient transparent user={null} />
         <main>
           <MaterialsHero />

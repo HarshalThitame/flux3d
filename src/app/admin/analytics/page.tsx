@@ -96,12 +96,12 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#FF9A72]">
+        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#A78BFA]">
           <BarChart3 className="h-3 w-3" />
           Customer Intelligence Center
         </div>
         <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Analytics</h1>
-        <p className="mt-2 max-w-xl text-sm text-[#7a82a0]">
+        <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
           Every click, every visit, every intent — tracked and actionable.
         </p>
       </motion.div>
@@ -120,9 +120,9 @@ export default function AnalyticsPage() {
           className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
         >
           {kpis.map((kpi, i) => (
-            <div key={i} className="rounded-2xl border border-white/10 bg-[#0a0f1e] p-5">
+            <div key={i} className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-5">
               <div className="mb-3 flex items-center justify-between">
-                <div className="text-[10px] uppercase tracking-[0.15em] text-[#7a82a0]">{kpi.label}</div>
+                <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">{kpi.label}</div>
                 {kpi.icon}
               </div>
               <div className="text-2xl font-bold text-white">{kpi.value}</div>
@@ -145,25 +145,25 @@ export default function AnalyticsPage() {
       >
         <div className="mb-4">
           <h2 className="font-[var(--font-syne)] text-xl font-bold text-white">Anonymous Visitor Intelligence</h2>
-          <p className="mt-1 text-sm text-[#7a82a0]">Monitor every unregistered user — what they look at, how long, and where they drop off.</p>
+          <p className="mt-1 text-sm text-[#6F7192]">Monitor every unregistered user — what they look at, how long, and where they drop off.</p>
         </div>
 
         {!kpis ? (
           <SkeletonBlock className="h-48 w-full" />
         ) : (
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-[#0a0f1e] p-5">
-              <div className="text-[10px] uppercase tracking-[0.15em] text-[#7a82a0]">Anonymous Visitors Today</div>
+            <div className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-5">
+              <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Anonymous Visitors Today</div>
               <div className="mt-2 text-2xl font-bold text-white">{kpis[0]?.breakdown?.split(' · ')[0]?.replace('Unregistered: ', '') || '0'}</div>
               <div className="mt-1 text-xs text-[#8b95b5]">{kpis[0]?.breakdown || ''}</div>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-[#0a0f1e] p-5">
-              <div className="text-[10px] uppercase tracking-[0.15em] text-[#7a82a0]">First-Time Anonymous</div>
+            <div className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-5">
+              <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">First-Time Anonymous</div>
               <div className="mt-2 text-2xl font-bold text-white">748</div>
               <div className="mt-1 text-xs text-[#8b95b5]">Never visited before</div>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-[#0a0f1e] p-5">
-              <div className="text-[10px] uppercase tracking-[0.15em] text-[#7a82a0]">Anonymous → Registered</div>
+            <div className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-5">
+              <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Anonymous → Registered</div>
               <div className="mt-2 text-2xl font-bold text-white">182</div>
               <div className="mt-1 text-xs text-emerald-400">16.5% conversion rate</div>
             </div>
@@ -184,7 +184,7 @@ export default function AnalyticsPage() {
         {!funnel ? (
           <SkeletonBlock className="h-64 w-full" />
         ) : (
-          <div className="rounded-2xl border border-white/10 bg-[#0a0f1e] p-6">
+          <div className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-6">
             <div className="space-y-3">
               {[
                 { step: 'Site Visited', value: funnel.siteVisited, percent: 100 },
@@ -197,14 +197,14 @@ export default function AnalyticsPage() {
                 { step: 'Order Confirmed', value: funnel.ordersToday, percent: ((funnel.ordersToday / funnel.siteVisited) * 100).toFixed(1) },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-4">
-                  <div className="w-48 text-xs text-[#7a82a0]">Step {i + 1}</div>
+                  <div className="w-48 text-xs text-[#6F7192]">Step {i + 1}</div>
                   <div className="flex-1">
                     <div className="mb-1 flex justify-between text-sm">
                       <span className="text-white">{item.step}</span>
                       <span className="text-[#8b95b5]">{item.value} visitors ({item.percent}%)</span>
                     </div>
                     <div className="h-2 rounded-full bg-white/10">
-                      <div className="h-full rounded-full bg-gradient-to-r from-[#FF5C1A] to-cyan-400" style={{ width: `${item.percent}%` }} />
+                      <div className="h-full rounded-full bg-gradient-to-r from-[#7C5CFF] to-cyan-400" style={{ width: `${item.percent}%` }} />
                     </div>
                   </div>
                 </div>
@@ -212,7 +212,7 @@ export default function AnalyticsPage() {
             </div>
             <div className="mt-6 rounded-xl bg-rose-400/10 p-4">
               <div className="text-sm font-medium text-rose-300">Biggest Drop-Off: {funnel.biggestDropOff}</div>
-              <div className="mt-1 text-xs text-[#7a82a0]">Action: {funnel.dropOffAction}</div>
+              <div className="mt-1 text-xs text-[#6F7192]">Action: {funnel.dropOffAction}</div>
             </div>
           </div>
         )}
@@ -231,7 +231,7 @@ export default function AnalyticsPage() {
         {!sources ? (
           <SkeletonBlock className="h-96 w-full" />
         ) : (
-          <div className="rounded-2xl border border-white/10 bg-[#0a0f1e] p-6">
+          <div className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-6">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/10 text-left text-[10px] uppercase tracking-[0.12em] text-[#5a6580]">

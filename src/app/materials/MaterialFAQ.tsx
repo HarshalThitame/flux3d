@@ -49,13 +49,13 @@ function FAQItem({ faq, idx }: { faq: { q: string; a: string }; idx: number }) {
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between py-4 text-left group"
       >
-        <span className="text-white font-medium text-sm pr-4 group-hover:text-[#FF5C1A] transition-colors">
+        <span className="text-[#0F1B3D] font-medium text-sm pr-4 group-hover:text-[#7C5CFF] transition-colors">
           {faq.q}
         </span>
-        <ChevronDown className={`w-4 h-4 text-[#7a82a0] flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-[#6F7192] flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <p className="text-sm text-[#7a82a0] leading-relaxed pb-4">{faq.a}</p>
+        <p className="text-sm text-[#6F7192] leading-relaxed pb-4">{faq.a}</p>
       )}
     </div>
   )
@@ -73,7 +73,7 @@ export default function MaterialFAQ() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-10"
         >
-          <h2 className="text-2xl md:text-3xl font-[var(--font-syne)] font-extrabold text-white mb-2">
+          <h2 className="text-2xl md:text-3xl font-[var(--font-syne)] font-extrabold text-[#0F1B3D] mb-2">
             Material Questions —<br />Answered Honestly.
           </h2>
         </motion.div>
@@ -82,7 +82,7 @@ export default function MaterialFAQ() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-white/[0.06] bg-[rgba(13,17,32,0.4)] px-6 md:px-8"
+          className="rounded-2xl border border-white/[0.06] bg-[rgba(255,255,255,0.72)] px-6 md:px-8"
         >
           {faqs.map((faq, i) => (
             <FAQItem key={i} faq={faq} idx={i} />

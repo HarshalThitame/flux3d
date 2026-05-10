@@ -49,16 +49,16 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function PreMadeProductsPage() {
   return (
-    <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       <Navbar transparent />
       <main className="px-6 pt-32 pb-20">
         <section className="mx-auto max-w-6xl">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#FF5C1A]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#7C5CFF]">
               <Sparkles className="h-4 w-4" />
               Pre-Made Products
             </div>
-            <h1 className="mt-6 font-[var(--font-syne)] text-4xl font-extrabold tracking-[-0.03em] text-white sm:text-5xl">
+            <h1 className="mt-6 font-[var(--font-syne)] text-4xl font-extrabold tracking-[-0.03em] text-[#0F1B3D] sm:text-5xl">
               Ready-to-order 3D printed products.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-[#93a0c4]">
@@ -67,14 +67,14 @@ export default function PreMadeProductsPage() {
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
                 href="/instant-quote"
-                className="inline-flex items-center gap-2 rounded-xl bg-[#FF5C1A] px-5 py-3 text-sm font-semibold text-white transition-all hover:shadow-[0_0_25px_rgba(255,92,26,0.28)]"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-5 py-3 text-sm font-semibold text-white transition-all hover:shadow-[0_0_25px_rgba(124, 92, 255,0.28)]"
               >
                 Request a custom product
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/materials"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-5 py-3 text-sm font-semibold text-[#c6cee5] transition-colors hover:border-white/[0.14] hover:text-white"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-5 py-3 text-sm font-semibold text-[#c6cee5] transition-colors hover:border-white/[0.14] hover:text-[#0F1B3D]"
               >
                 View materials only
               </Link>
@@ -85,23 +85,23 @@ export default function PreMadeProductsPage() {
             {productCategories.map((category) => (
               <article
                 key={category.name}
-                className="rounded-3xl border border-white/[0.08] bg-[#0d1120] p-7 shadow-[0_24px_80px_rgba(0,0,0,0.24)]"
+                className="rounded-3xl border border-white/[0.08] bg-[#FFFFFF] p-7 shadow-[0_24px_80px_rgba(0,0,0,0.24)]"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FF5C1A]/12 text-[#FF5C1A]">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7C5CFF]/12 text-[#7C5CFF]">
                   <category.icon className="h-6 w-6" />
                 </div>
-                <h2 className="mt-5 font-[var(--font-syne)] text-2xl font-bold text-white">{category.name}</h2>
+                <h2 className="mt-5 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">{category.name}</h2>
                 <p className="mt-3 text-sm leading-7 text-[#93a0c4]">{category.description}</p>
               </article>
             ))}
           </div>
 
-          <div className="mt-20 rounded-3xl border border-[#FF5C1A]/20 bg-[#0d1120] p-10 text-center shadow-[0_24px_80px_rgba(0,0,0,0.24)]">
+          <div className="mt-20 rounded-3xl border border-[#7C5CFF]/20 bg-[#FFFFFF] p-10 text-center shadow-[0_24px_80px_rgba(0,0,0,0.24)]">
             <div className="inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-yellow-400">
               <Sparkles className="h-4 w-4" />
               Coming Soon
             </div>
-            <h2 className="mt-6 font-[var(--font-syne)] text-3xl font-bold text-white">
+            <h2 className="mt-6 font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">
               More Products on the Way
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-lg leading-8 text-[#93a0c4]">

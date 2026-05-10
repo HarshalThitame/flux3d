@@ -228,26 +228,26 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
 
   return (
     <>
-      <div className="min-h-screen bg-[#050810] px-4 pb-16 pt-28 text-[#e8eaf0] md:px-8 xl:px-10">
+      <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-28 text-[#0F1B3D] md:px-8 xl:px-10">
         <div className="mx-auto max-w-[1440px]">
           <div className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div className="max-w-[760px]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#FF5C1A]/25 bg-[#FF5C1A]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#FF9A72]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#A78BFA]">
                 <Sparkles className="h-3.5 w-3.5" />
                 Instant Quote Engine
               </div>
-              <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2.5rem,5vw,4.8rem)] font-extrabold leading-[0.98] tracking-[-2px] text-white">
-                Upload a Model, Tune the Print, <span className="text-[#7a82a0]">See the Price Live</span>
+              <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2.5rem,5vw,4.8rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#0F1B3D]">
+                Upload a Model, Tune the Print, <span className="text-[#6F7192]">See the Price Live</span>
               </h1>
-              <p className="mt-5 max-w-[720px] text-base leading-8 text-[#7a82a0]">
+              <p className="mt-5 max-w-[720px] text-base leading-8 text-[#6F7192]">
                 This quote workspace parses your 3D file, previews geometry interactively, and recalculates production pricing instantly as material, quality, infill, and scale change.
               </p>
             </div>
 
-            <div className="rounded-[26px] border border-white/10 bg-white/[0.03] px-5 py-4 backdrop-blur-xl">
-              <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">Quote Session</div>
-              <div className="mt-2 font-[var(--font-syne)] text-2xl font-bold text-white">{quoteId}</div>
-              <div className="mt-1 text-sm text-[#7a82a0]">Supabase storage + live pricing ready</div>
+            <div className="rounded-[26px] border border-[#7C5CFF]/10 bg-white/[0.03] px-5 py-4 backdrop-blur-xl">
+              <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Quote Session</div>
+              <div className="mt-2 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">{quoteId}</div>
+              <div className="mt-1 text-sm text-[#6F7192]">Supabase storage + live pricing ready</div>
             </div>
           </div>
 
@@ -268,13 +268,13 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
 
             <div className="space-y-6 xl:min-w-0">
               <div className="rounded-[24px] border border-emerald-400/15 bg-emerald-400/5 p-4 text-sm leading-7 text-[#d2d8ef]">
-                <div className="font-medium text-white">How to use this quote tool</div>
+                <div className="font-medium text-[#0F1B3D]">How to use this quote tool</div>
                 <div className="mt-2">
                   Upload the model on the left, change materials and print settings here, and keep an eye on the sticky price rail on the right while the estimate updates instantly.
                 </div>
               </div>
 
-              <div className="space-y-6 rounded-[30px] border border-white/10 bg-[rgba(8,13,24,0.82)] p-5 backdrop-blur-2xl">
+              <div className="space-y-6 rounded-[30px] border border-[#7C5CFF]/10 bg-[rgba(255,255,255,0.9)] p-5 backdrop-blur-2xl">
                 <MaterialSelector
                   selectedMaterialId={config.materialId}
                   selectedColor={config.color}
@@ -283,17 +283,17 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
                   onColorChange={(name) => setConfig((current) => ({ ...current, color: name }))}
                 />
 
-                <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-                  <div className="mb-4 flex items-center gap-2 text-sm font-medium text-white">
-                    <Layers2 className="h-4 w-4 text-[#FF8A57]" />
+                <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-white/[0.03] p-4">
+                  <div className="mb-4 flex items-center gap-2 text-sm font-medium text-[#0F1B3D]">
+                    <Layers2 className="h-4 w-4 text-[#7C5CFF]" />
                     Print Settings
                   </div>
 
                   <div className="space-y-5">
                     <label className="block">
-                      <div className="mb-2 flex items-center justify-between text-sm text-white">
+                      <div className="mb-2 flex items-center justify-between text-sm text-[#0F1B3D]">
                         <span>Infill Density</span>
-                        <span className="text-[#FF8A57]">{config.infill}%</span>
+                        <span className="text-[#7C5CFF]">{config.infill}%</span>
                       </div>
                       <input
                         type="range"
@@ -307,12 +307,12 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
                             infill: Number(event.target.value),
                           }))
                         }
-                        className="w-full accent-[#FF5C1A]"
+                        className="w-full accent-[#7C5CFF]"
                       />
                     </label>
 
                     <div>
-                      <div className="mb-2 text-sm text-white">Layer Height</div>
+                      <div className="mb-2 text-sm text-[#0F1B3D]">Layer Height</div>
                       <div className="grid gap-2">
                         {layerHeightOptions.map((option) => (
                           <button
@@ -326,12 +326,12 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
                             }
                             className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
                               config.layerHeight === option.value
-                                ? 'border-[#FF8A57]/40 bg-[#11182b]'
-                                : 'border-white/8 bg-white/[0.02] hover:bg-white/[0.05]'
+                                ? 'border-[#7C5CFF]/40 bg-[#1C3B52]'
+                                : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:bg-white/[0.05]'
                             }`}
                           >
-                            <div className="text-sm font-medium text-white">{option.label}</div>
-                            <div className="mt-1 text-xs leading-6 text-[#7a82a0]">{option.description}</div>
+                            <div className="text-sm font-medium text-[#0F1B3D]">{option.label}</div>
+                            <div className="mt-1 text-xs leading-6 text-[#6F7192]">{option.description}</div>
                           </button>
                         ))}
                       </div>
@@ -340,9 +340,9 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
 
 
                     <label className="block">
-                      <div className="mb-2 flex items-center justify-between text-sm text-white">
+                      <div className="mb-2 flex items-center justify-between text-sm text-[#0F1B3D]">
                         <span>Quantity</span>
-                        <span className="text-[#FF8A57]">{config.quantity} pcs</span>
+                        <span className="text-[#7C5CFF]">{config.quantity} pcs</span>
                       </div>
                       <input
                         type="number"
@@ -356,12 +356,12 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
                             quantity: Math.max(1, Math.floor(Number(event.target.value) || 1)),
                           }))
                         }
-                        className="w-full rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-3 text-sm text-white outline-none"
+                        className="w-full rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.02] px-4 py-3 text-sm text-[#0F1B3D] outline-none"
                       />
                     </label>
 
                     <div>
-                      <div className="mb-2 text-sm text-white">Post-processing</div>
+                      <div className="mb-2 text-sm text-[#0F1B3D]">Post-processing</div>
                       <div className="grid gap-2">
                         {postProcessingOptions.map((option) => (
                           <button
@@ -375,17 +375,17 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
                             }
                             className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
                               config.postProcessingLevel === option.value
-                                ? 'border-[#FF8A57]/40 bg-[#11182b]'
-                                : 'border-white/8 bg-white/[0.02] hover:bg-white/[0.05]'
+                                ? 'border-[#7C5CFF]/40 bg-[#1C3B52]'
+                                : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:bg-white/[0.05]'
                             }`}
                           >
                             <div className="flex items-center justify-between gap-3">
-                              <div className="text-sm font-medium text-white">{option.label}</div>
-                              <div className="text-xs uppercase tracking-[0.18em] text-[#FF8A57]">
+                              <div className="text-sm font-medium text-[#0F1B3D]">{option.label}</div>
+                              <div className="text-xs uppercase tracking-[0.18em] text-[#7C5CFF]">
                                 {formatMoney(option.cost)}
                               </div>
                             </div>
-                            <div className="mt-1 text-xs leading-6 text-[#7a82a0]">{option.description}</div>
+                            <div className="mt-1 text-xs leading-6 text-[#6F7192]">{option.description}</div>
                           </button>
                         ))}
                       </div>
@@ -394,47 +394,47 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
                   </div>
                 </div>
 
-                <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-                  <div className="mb-4 flex items-center gap-2 text-sm font-medium text-white">
-                    <Cpu className="h-4 w-4 text-[#FF8A57]" />
+                <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-white/[0.03] p-4">
+                  <div className="mb-4 flex items-center gap-2 text-sm font-medium text-[#0F1B3D]">
+                    <Cpu className="h-4 w-4 text-[#7C5CFF]" />
                     Saved to Your Account
                   </div>
                   <div className="mb-4 rounded-2xl border border-emerald-400/15 bg-emerald-400/8 px-4 py-3 text-sm text-[#d7f8ea]">
-                    Signed in as <span className="font-medium text-white">{user.email}</span>. Quotes and uploads will be linked to your profile automatically.
+                    Signed in as <span className="font-medium text-[#0F1B3D]">{user.email}</span>. Quotes and uploads will be linked to your profile automatically.
                   </div>
                   <div className="grid gap-3">
                     <input
                       value={contact.name}
                       onChange={(event) => setContact((current) => ({ ...current, name: event.target.value }))}
                       placeholder="Name"
-                      className="rounded-xl border border-white/8 bg-[#0d1120] px-4 py-3 text-sm text-white outline-none placeholder:text-[#66708e]"
+                      className="rounded-xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
                     />
                     <input
                       value={contact.email}
                       onChange={(event) => setContact((current) => ({ ...current, email: event.target.value }))}
                       type="email"
                       placeholder="Email"
-                      className="rounded-xl border border-white/8 bg-[#0d1120] px-4 py-3 text-sm text-white outline-none placeholder:text-[#66708e]"
+                      className="rounded-xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
                     />
                     <input
                       value={contact.phone}
                       onChange={(event) => setContact((current) => ({ ...current, phone: event.target.value }))}
                       placeholder="WhatsApp Number"
-                      className="rounded-xl border border-white/8 bg-[#0d1120] px-4 py-3 text-sm text-white outline-none placeholder:text-[#66708e]"
+                      className="rounded-xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
                     />
                     <textarea
                       value={contact.notes}
                       onChange={(event) => setContact((current) => ({ ...current, notes: event.target.value }))}
                       rows={4}
                       placeholder="Project notes, tolerances, finish requirements..."
-                      className="rounded-xl border border-white/8 bg-[#0d1120] px-4 py-3 text-sm text-white outline-none placeholder:text-[#66708e]"
+                      className="rounded-xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
                     />
                   </div>
                 </div>
 
                 <Link
                   href="/pricing"
-                  className="inline-flex text-sm font-medium text-[#FF8A57] hover:text-[#ffb08e]"
+                  className="inline-flex text-sm font-medium text-[#7C5CFF] hover:text-[#A78BFA]"
                 >
                   Compare with pricing guide →
                 </Link>
@@ -445,22 +445,22 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-[30px] border border-white/10 bg-[rgba(8,13,24,0.9)] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.4)] backdrop-blur-2xl"
+                className="rounded-[30px] border border-[#7C5CFF]/10 bg-[rgba(255,255,255,0.95)] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.4)] backdrop-blur-2xl"
               >
                 <div className="mb-4 flex items-center justify-between">
                   <div>
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">Live Estimate</div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Live Estimate</div>
                     <div className="mt-1 text-sm text-[#b7bed7]">Always visible while you edit</div>
                   </div>
-                  <ReceiptText className="h-5 w-5 text-[#FF8A57]" />
+                  <ReceiptText className="h-5 w-5 text-[#7C5CFF]" />
                 </div>
 
-                <div className="rounded-[24px] border border-[#FF5C1A]/20 bg-[#FF5C1A]/8 px-5 py-4">
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#ffb493]">Estimated Price</div>
-                  <div className="mt-3 font-[var(--font-syne)] text-4xl font-extrabold text-white">
+                <div className="rounded-[24px] border border-[#7C5CFF]/20 bg-[#7C5CFF]/8 px-5 py-4">
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#A78BFA]">Estimated Price</div>
+                  <div className="mt-3 font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D]">
                     {priceBreakdown ? `₹${priceBreakdown.total.toFixed(0)}` : '—'}
                   </div>
-                  <div className="mt-1 text-xs uppercase tracking-[0.22em] text-[#ffb493]">
+                  <div className="mt-1 text-xs uppercase tracking-[0.22em] text-[#A78BFA]">
                     Rounded to nearest ₹5
                   </div>
                   <div className="mt-2 text-sm text-[#ffd7c5]">
@@ -490,9 +490,9 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
                     ['Material Type', activeMaterial.name],
                     ['Selected Color', config.color],
                   ].map(([label, value]) => (
-                    <div key={label} className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">{label}</div>
-                      <div className="mt-2 text-sm text-white">{value}</div>
+                    <div key={label} className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">{label}</div>
+                      <div className="mt-2 text-sm text-[#0F1B3D]">{value}</div>
                     </div>
                   ))}
                 </div>
@@ -502,7 +502,7 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
                     type="button"
                     onClick={handleSaveQuote}
                     disabled={savingQuote}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#FF5C1A] px-4 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7C5CFF] px-4 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
                   >
                     <Save className="h-4 w-4" />
                     {savingQuote ? 'Saving Quote...' : 'Save Quote to Account'}
@@ -510,7 +510,7 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
                   <button
                     type="button"
                     onClick={handleDownloadSummary}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.06]"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.06]"
                   >
                     <Download className="h-4 w-4" />
                     Download Quote Summary
@@ -519,7 +519,7 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
               </motion.div>
 
               <div className="rounded-[24px] border border-emerald-400/15 bg-emerald-400/5 p-4 text-sm leading-7 text-[#d2d8ef]">
-                <div className="font-medium text-white">Advanced guidance</div>
+                <div className="font-medium text-[#0F1B3D]">Advanced guidance</div>
                 <div className="mt-2">
                   {selectedModel
                     ? `Based on your uploaded model, ${getMaterialById(selectedModel.suggestedMaterialId).name} is a reasonable starting point. Switch materials to compare finish, strength, and price instantly.`

@@ -19,16 +19,16 @@ export default function PricingClient({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+      <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
         <main className="pt-32">
           <section className="px-6 md:px-12">
             <div className="mx-auto max-w-[1200px]">
-              <div className="h-6 w-24 bg-[#0d1120] rounded animate-pulse mb-4" />
-              <div className="h-12 w-96 bg-[#0d1120] rounded animate-pulse mb-6" />
-              <div className="h-4 w-full max-w-[700px] bg-[#0d1120] rounded animate-pulse mb-12" />
+              <div className="h-6 w-24 bg-[#FFFFFF] rounded animate-pulse mb-4" />
+              <div className="h-12 w-96 bg-[#FFFFFF] rounded animate-pulse mb-6" />
+              <div className="h-4 w-full max-w-[700px] bg-[#FFFFFF] rounded animate-pulse mb-12" />
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
                 {[1,2,3,4].map(i => (
-                  <div key={i} className="h-48 bg-[#0d1120] rounded-[28px] animate-pulse" />
+                  <div key={i} className="h-48 bg-[#FFFFFF] rounded-[28px] animate-pulse" />
                 ))}
               </div>
             </div>
@@ -39,7 +39,7 @@ export default function PricingClient({
   }
 
   return (
-    <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       <main className="pt-32">
         <section className="px-6 md:px-12">
           <div className="mx-auto max-w-[1200px]">
@@ -47,7 +47,7 @@ export default function PricingClient({
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="mb-4 text-sm font-medium uppercase tracking-[3px] text-[#FF5C1A]"
+              className="mb-4 text-sm font-medium uppercase tracking-[3px] text-[#7C5CFF]"
             >
               Pricing
             </motion.p>
@@ -55,15 +55,15 @@ export default function PricingClient({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="font-[var(--font-syne)] text-[clamp(2.4rem,5vw,4.6rem)] font-extrabold leading-[1.02] tracking-[-2px] text-white"
+              className="font-[var(--font-syne)] text-[clamp(2.4rem,5vw,4.6rem)] font-extrabold leading-[1.02] tracking-[-2px] text-[#0F1B3D]"
             >
-              Clear Pricing for <span className="text-[#7a82a0]">Serious 3D Printing Work</span>
+              Clear Pricing for <span className="text-[#6F7192]">Serious 3D Printing Work</span>
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="mt-6 max-w-[700px] text-base leading-8 text-[#7a82a0]"
+              className="mt-6 max-w-[700px] text-base leading-8 text-[#6F7192]"
             >
               Your final quote is shaped by material, geometry, print time, finishing, and quantity. The goal here is simple: make the starting point obvious and the next step effortless.
             </motion.p>

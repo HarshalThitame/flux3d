@@ -98,22 +98,22 @@ export default async function OrderDetailPage({
   const isMultiItem = groupedItems.length > 1
 
   return (
-    <div className="min-h-screen bg-[#050810] px-4 pb-16 pt-28 text-white md:px-8">
+    <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-28 text-[#0F1B3D] md:px-8">
       <Navbar transparent />
       <div className="mx-auto max-w-5xl space-y-6">
-        <div className="rounded-[32px] border border-white/10 bg-[rgba(9,14,25,0.82)] p-6 backdrop-blur-2xl">
+        <div className="rounded-[32px] border border-[#7C5CFF]/10 bg-[rgba(255,255,255,0.96)] p-6 backdrop-blur-2xl">
           <Link
             href="/my-orders"
-            className="inline-flex text-sm text-[#9ea6c4] transition-colors hover:text-white"
+            className="inline-flex text-sm text-[#9ea6c4] transition-colors hover:text-[#0F1B3D]"
           >
             Back to orders
           </Link>
           <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">
+              <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
                 Order request
               </div>
-              <h1 className="mt-3 font-[var(--font-syne)] text-4xl font-extrabold text-white">
+              <h1 className="mt-3 font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D]">
                 {row.order_number ?? row.id}
               </h1>
               {isMultiItem && (
@@ -150,52 +150,52 @@ export default async function OrderDetailPage({
         </div>
 
         {isMultiItem && (
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl">
-            <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white">
+          <div className="rounded-[28px] border border-[#7C5CFF]/10 bg-white/[0.03] p-6 backdrop-blur-xl">
+            <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
               Order Items ({groupedItems.length})
             </h2>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               {groupedItems.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-[20px] border border-white/10 bg-[#0d1120] p-5"
+                  className="rounded-[20px] border border-[#7C5CFF]/10 bg-[#FFFFFF] p-5"
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="text-sm font-semibold text-white">{item.material}</div>
+                      <div className="text-sm font-semibold text-[#0F1B3D]">{item.material}</div>
                       <div className="mt-1 text-sm text-[#c8d0e9]">{item.color}</div>
                     </div>
-                    <div className="font-[var(--font-syne)] text-xl font-bold text-[#FF9A72]">
+                    <div className="font-[var(--font-syne)] text-xl font-bold text-[#A78BFA]">
                       ₹{Number(item.total_price).toFixed(0)}
                     </div>
                   </div>
                   <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
-                    <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Infill</div>
-                      <div className="mt-1 text-sm font-medium text-white">{item.infill}%</div>
+                    <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Infill</div>
+                      <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.infill}%</div>
                     </div>
-                    <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Layer</div>
-                      <div className="mt-1 text-sm font-medium text-white">{Number(item.layer_height)} mm</div>
+                    <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Layer</div>
+                      <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{Number(item.layer_height)} mm</div>
                     </div>
-                    <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Qty</div>
-                      <div className="mt-1 text-sm font-medium text-white">{item.quantity ?? 1}</div>
+                    <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Qty</div>
+                      <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.quantity ?? 1}</div>
                     </div>
-                    <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Supports</div>
-                      <div className="mt-1 text-sm font-medium text-white">{item.supports ? 'Yes' : 'No'}</div>
+                    <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Supports</div>
+                      <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.supports ? 'Yes' : 'No'}</div>
                     </div>
-                    <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">Post-process</div>
-                      <div className="mt-1 text-sm font-medium text-white">{item.post_processing_level ?? 'None'}</div>
+                    <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Post-process</div>
+                      <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.post_processing_level ?? 'None'}</div>
                     </div>
-                    <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7a82a0]">PP cost</div>
-                      <div className="mt-1 text-sm font-medium text-white">₹{Number(item.post_processing_charges).toFixed(0)}</div>
+                    <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">PP cost</div>
+                      <div className="mt-1 text-sm font-medium text-[#0F1B3D]">₹{Number(item.post_processing_charges).toFixed(0)}</div>
                     </div>
                   </div>
-                  <div className="mt-3 text-[10px] text-[#7a82a0] break-all truncate">
+                  <div className="mt-3 text-[10px] text-[#6F7192] break-all truncate">
                     File: {item.file_url}
                   </div>
                 </div>
@@ -206,65 +206,65 @@ export default async function OrderDetailPage({
 
         <div className="grid gap-6 lg:grid-cols-[1.3fr_0.9fr]">
           {!isMultiItem && (
-            <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl">
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white">
+            <div className="rounded-[28px] border border-[#7C5CFF]/10 bg-white/[0.03] p-6 backdrop-blur-xl">
+              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
                 Configuration
               </h2>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Material</div>
-                  <div className="mt-2 text-sm text-white">{row.material}</div>
+                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Material</div>
+                  <div className="mt-2 text-sm text-[#0F1B3D]">{row.material}</div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Color</div>
-                  <div className="mt-2 text-sm text-white">{row.color}</div>
+                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Color</div>
+                  <div className="mt-2 text-sm text-[#0F1B3D]">{row.color}</div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Infill</div>
-                  <div className="mt-2 text-sm text-white">{row.infill}%</div>
+                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Infill</div>
+                  <div className="mt-2 text-sm text-[#0F1B3D]">{row.infill}%</div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Layer height</div>
-                  <div className="mt-2 text-sm text-white">{Number(row.layer_height)} mm</div>
+                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Layer height</div>
+                  <div className="mt-2 text-sm text-[#0F1B3D]">{Number(row.layer_height)} mm</div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Quantity</div>
-                  <div className="mt-2 text-sm text-white">{row.quantity ?? 1}</div>
+                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Quantity</div>
+                  <div className="mt-2 text-sm text-[#0F1B3D]">{row.quantity ?? 1}</div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Supports</div>
-                  <div className="mt-2 text-sm text-white">{row.supports ? 'Included' : 'Not required'}</div>
+                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Supports</div>
+                  <div className="mt-2 text-sm text-[#0F1B3D]">{row.supports ? 'Included' : 'Not required'}</div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Post-process</div>
-                  <div className="mt-2 text-sm text-white">{row.post_processing_level ?? 'None'}</div>
+                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Post-process</div>
+                  <div className="mt-2 text-sm text-[#0F1B3D]">{row.post_processing_level ?? 'None'}</div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">File</div>
-                  <div className="mt-2 break-all text-sm text-white">{row.file_url}</div>
+                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">File</div>
+                  <div className="mt-2 break-all text-sm text-[#0F1B3D]">{row.file_url}</div>
                 </div>
               </div>
 
-              <div className="mt-5 rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">
+              <div className="mt-5 rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">
                   Notes
                 </div>
-                <div className="mt-2 text-sm leading-7 text-white">
+                <div className="mt-2 text-sm leading-7 text-[#0F1B3D]">
                   {row.notes?.trim() ? row.notes : 'No extra instructions were provided.'}
                 </div>
               </div>
             </div>
           )}
 
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl">
-            <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white">
+          <div className="rounded-[28px] border border-[#7C5CFF]/10 bg-white/[0.03] p-6 backdrop-blur-xl">
+            <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
               {isMultiItem ? 'Order Total' : 'Estimate'}
             </h2>
-            <div className="mt-5 rounded-[24px] border border-[#FF8A57]/20 bg-[linear-gradient(180deg,rgba(255,92,26,0.12),rgba(255,92,26,0.06))] p-5 shadow-[0_12px_48px_rgba(255,92,26,0.1)]">
+            <div className="mt-5 rounded-[24px] border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-5 shadow-[0_12px_48px_rgba(124, 92, 255,0.1)]">
               <div className="text-[11px] uppercase tracking-[0.22em] text-[#ffd3c1]">
                 Total price
               </div>
-              <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-white">
+              <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
                 ₹{Number(row.total_price).toFixed(0)}
               </div>
               <div className="mt-4 grid gap-2 text-sm text-[#ffe0d4]">
@@ -300,7 +300,7 @@ export default async function OrderDetailPage({
                 )}
               </div>
               {isMultiItem && (
-                <div className="mt-4 border-t border-white/10 pt-3">
+                <div className="mt-4 border-t border-[#7C5CFF]/10 pt-3">
                   <div className="text-xs text-[#ffe0d4]">
                     Print subtotal: ₹{groupedItems.reduce((sum, item) => sum + Number(item.price), 0).toFixed(0)}
                   </div>
@@ -311,14 +311,14 @@ export default async function OrderDetailPage({
               )}
             </div>
 
-            <div className="mt-5 rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-              <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">
+            <div className="mt-5 rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+              <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">
                 Delivery address
               </div>
-              <div className="mt-2 text-sm font-medium text-white">
+              <div className="mt-2 text-sm font-medium text-[#0F1B3D]">
                 {row.full_name} · {row.phone}
               </div>
-              <div className="mt-2 space-y-1 text-sm leading-7 text-white">
+              <div className="mt-2 space-y-1 text-sm leading-7 text-[#0F1B3D]">
                 {addressLines.map((line) => (
                   <div key={line}>{line}</div>
                 ))}

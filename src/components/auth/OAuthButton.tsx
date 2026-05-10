@@ -14,7 +14,7 @@ const providerConfig = {
   google: {
     label: 'Continue with Google',
     loadingLabel: 'Redirecting to Google...',
-    icon: <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#050810]">G</span>,
+    icon: <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#FFFFFF]">G</span>,
   },
 }
 
@@ -55,7 +55,7 @@ export default function OAuthButton({ nextPath, provider = 'google' }: OAuthButt
       type="button"
       onClick={handleOAuthLogin}
       disabled={loading}
-      className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.04] px-4 py-3 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
     >
       {config.icon}
       {loading ? config.loadingLabel : config.label}

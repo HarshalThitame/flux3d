@@ -21,7 +21,7 @@ export default function AdminShell({
   }, [theme])
 
   return (
-    <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       <Sidebar collapsed={collapsed} onToggleAction={() => setCollapsed((current) => !current)} />
 
       <AnimatePresence>
@@ -39,17 +39,17 @@ export default function AdminShell({
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 z-50 h-screen w-[280px] border-r border-white/10 bg-[#080c18] p-5 md:hidden"
+              className="fixed left-0 top-0 z-50 h-screen w-[280px] border-r border-[#7C5CFF]/10 bg-[#FFFFFF] p-5 md:hidden"
             >
               <div className="mb-6 flex items-center gap-3 px-2">
-                <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-[#FF5C1A] to-cyan-400 text-white shadow-lg shadow-[#FF5C1A]/20">
+                <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-[#7C5CFF] to-cyan-400 text-[#0F1B3D] shadow-lg shadow-[#7C5CFF]/20">
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                   </svg>
                 </div>
                 <div>
-                  <div className="font-[var(--font-syne)] text-lg font-bold text-white">Flux3D</div>
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-[#7a82a0]">Admin</div>
+                  <div className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D]">Flux3D</div>
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-[#6F7192]">Admin</div>
                 </div>
               </div>
 
@@ -61,7 +61,7 @@ export default function AdminShell({
                         key={item.href}
                         href={item.href}
                         onClick={() => setMobileNavOpen(false)}
-                        className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-[#94a3b8] transition-all hover:bg-white/5 hover:text-white min-h-[44px]"
+                        className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-[#94a3b8] transition-all hover:bg-white/5 hover:text-[#0F1B3D] min-h-[44px]"
                       >
                         <Icon className="h-5 w-5" />
                         {item.label}

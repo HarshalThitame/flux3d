@@ -57,7 +57,7 @@ export default function ProblemSection() {
     <section
       ref={ref}
       className="relative w-full py-24 px-4 md:px-8 lg:px-16 z-10"
-      style={{ backgroundColor: '#050810' }}
+      style={{ backgroundColor: '#FFFFFF' }}
     >
       <motion.div
         variants={containerVariants}
@@ -66,14 +66,14 @@ export default function ProblemSection() {
         className="max-w-7xl mx-auto"
       >
         <motion.div variants={itemVariants} className="mb-4">
-          <span className="inline-block text-[#FF5C1A] text-sm font-semibold tracking-wider uppercase">
+          <span className="inline-block text-[#7C5CFF] text-sm font-semibold tracking-wider uppercase">
             Why Flux 3D
           </span>
         </motion.div>
 
         <motion.h2
           variants={itemVariants}
-          className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight"
+          className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#0F1B3D] mb-6 leading-tight"
         >
           Stop Waiting Weeks.
           <br />
@@ -101,26 +101,26 @@ export default function ProblemSection() {
               <motion.div
                 key={point.id}
                 variants={itemVariants}
-                className="group relative bg-[rgba(13,17,32,0.6)] border border-white/[0.07] rounded-2xl p-6 border-gray-800 hover:border-[#FF5C1A]/50 transition-all duration-300 hover-lift"
+                className="group relative bg-[rgba(255,255,255,0.82)] border border-white/[0.07] rounded-2xl p-6 border-gray-800 hover:border-[#7C5CFF]/50 transition-all duration-300 hover-lift"
                 style={{
-                  backgroundColor: '#0d1120',
+                  backgroundColor: '#FFFFFF',
                   willChange: 'transform',
                 }}
               >
-                <div className="absolute inset-0 rounded-2xl bg-[#FF5C1A]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 rounded-2xl bg-[#7C5CFF]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 <div className="relative z-10">
-                  <div className="w-12 h-12 rounded-xl bg-[#FF5C1A]/10 flex items-center justify-center mb-4 group-hover:bg-[#FF5C1A]/20 transition-colors duration-300">
-                    <Icon className="w-6 h-6 text-[#FF5C1A]" />
+                  <div className="w-12 h-12 rounded-xl bg-[#7C5CFF]/10 flex items-center justify-center mb-4 group-hover:bg-[#7C5CFF]/20 transition-colors duration-300">
+                    <Icon className="w-6 h-6 text-[#7C5CFF]" />
                   </div>
 
-                  <div className="font-[var(--font-syne)] text-lg font-bold text-white mb-2 group-hover:text-[#FF5C1A] transition-colors duration-300">
+                  <div className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D] mb-2 group-hover:text-[#7C5CFF] transition-colors duration-300">
                     {point.problem}
                   </div>
 
                   <div className="flex items-center gap-2 mt-4">
-                    <ArrowRight className="w-4 h-4 text-[#FF5C1A]" />
-                    <span className="text-[#FF5C1A] font-medium text-sm">
+                    <ArrowRight className="w-4 h-4 text-[#7C5CFF]" />
+                    <span className="text-[#7C5CFF] font-medium text-sm">
                       Flux 3D: {point.solution}
                     </span>
                   </div>

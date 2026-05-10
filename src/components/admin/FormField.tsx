@@ -21,8 +21,8 @@ export function InputField({
         value={value}
         onChange={(event) => onChange?.(event.target.value)}
         placeholder={placeholder}
-        className={`w-full rounded-xl border bg-white/[0.03] px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-[#5a6580] ${
-          error ? 'border-rose-400/30 focus:border-rose-400/50' : 'border-white/8 focus:border-[#FF5C1A]/30'
+        className={`w-full rounded-xl border bg-white/[0.03] px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition placeholder:text-[#5a6580] ${
+          error ? 'border-rose-400/30 focus:border-rose-400/50' : 'border-[#7C5CFF]/10 focus:border-[#7C5CFF]/30'
         }`}
       />
       {error && <div className="mt-1 text-[11px] text-rose-400">{error}</div>}
@@ -49,12 +49,12 @@ export function SelectField({
       <select
         value={value}
         onChange={(event) => onChange?.(event.target.value)}
-        className={`w-full rounded-xl border bg-white/[0.03] px-3.5 py-2.5 text-sm text-white outline-none transition ${
-          error ? 'border-rose-400/30' : 'border-white/8 focus:border-[#FF5C1A]/30'
+        className={`w-full rounded-xl border bg-white/[0.03] px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition ${
+          error ? 'border-rose-400/30' : 'border-[#7C5CFF]/10 focus:border-[#7C5CFF]/30'
         }`}
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value} className="bg-[#0d1120]">
+          <option key={option.value} value={option.value} className="bg-[#FFFFFF]">
             {option.label}
           </option>
         ))}
@@ -78,14 +78,14 @@ export function ToggleField({
   return (
     <div className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5">
       <div>
-        <div className="text-sm font-medium text-white">{label}</div>
-        <div className="mt-0.5 text-xs text-[#7a82a0]">{description}</div>
+        <div className="text-sm font-medium text-[#0F1B3D]">{label}</div>
+        <div className="mt-0.5 text-xs text-[#6F7192]">{description}</div>
       </div>
       <button
         type="button"
         aria-pressed={checked}
         onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? 'bg-[#FF5C1A]' : 'bg-white/10'}`}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? 'bg-[#7C5CFF]' : 'bg-white/10'}`}
       >
         <span
           className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}
@@ -118,8 +118,8 @@ export function TextAreaField({
         onChange={(event) => onChange?.(event.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className={`w-full rounded-xl border bg-white/[0.03] px-3.5 py-2.5 text-sm text-white outline-none transition resize-none placeholder:text-[#5a6580] ${
-          error ? 'border-rose-400/30 focus:border-rose-400/50' : 'border-white/8 focus:border-[#FF5C1A]/30'
+        className={`w-full rounded-xl border bg-white/[0.03] px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition resize-none placeholder:text-[#5a6580] ${
+          error ? 'border-rose-400/30 focus:border-rose-400/50' : 'border-[#7C5CFF]/10 focus:border-[#7C5CFF]/30'
         }`}
       />
       {error && <div className="mt-1 text-[11px] text-rose-400">{error}</div>}

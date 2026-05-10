@@ -44,14 +44,14 @@ export default async function SavedQuotesPage() {
   const rows = (quotes ?? []) as SavedQuoteRow[]
 
   return (
-    <div className="min-h-screen bg-[#050810] px-4 pb-16 pt-28 text-white md:px-8">
+    <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-28 text-[#0F1B3D] md:px-8">
       <Navbar transparent />
       <div className="mx-auto max-w-6xl space-y-6">
-        <div className="rounded-[32px] border border-white/10 bg-[rgba(9,14,25,0.82)] p-6 backdrop-blur-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#ffb493]">
+        <div className="rounded-[32px] border border-[#7C5CFF]/10 bg-[rgba(255,255,255,0.96)] p-6 backdrop-blur-2xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#A78BFA]">
             Quote History
           </div>
-          <h1 className="mt-5 font-[var(--font-syne)] text-4xl font-extrabold text-white">
+          <h1 className="mt-5 font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D]">
             Saved Quotes
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-8 text-[#9ea6c4]">
@@ -60,8 +60,8 @@ export default async function SavedQuotesPage() {
         </div>
 
         {rows.length === 0 ? (
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-8 text-center backdrop-blur-xl">
-            <div className="text-xl font-medium text-white">
+          <div className="rounded-[28px] border border-[#7C5CFF]/10 bg-white/[0.03] p-8 text-center backdrop-blur-xl">
+            <div className="text-xl font-medium text-[#0F1B3D]">
               {quotesTableUnavailable ? 'Saved quotes unavailable' : 'No quotes saved yet.'}
             </div>
             <p className="mt-3 text-sm leading-7 text-[#9ea6c4]">
@@ -71,7 +71,7 @@ export default async function SavedQuotesPage() {
             </p>
             <Link
               href="/instant-quote"
-              className="mt-6 inline-flex rounded-2xl bg-[#FF5C1A] px-5 py-3 text-sm font-medium text-white"
+              className="mt-6 inline-flex rounded-2xl bg-[#7C5CFF] px-5 py-3 text-sm font-medium text-white"
             >
               Create a quote
             </Link>
@@ -81,14 +81,14 @@ export default async function SavedQuotesPage() {
             {rows.map((quote) => (
               <div
                 key={quote.id}
-                className="rounded-[28px] border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl"
+                className="rounded-[28px] border border-[#7C5CFF]/10 bg-white/[0.03] p-6 backdrop-blur-xl"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-[#7a82a0]">
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
                       Quote ID
                     </div>
-                    <div className="mt-2 font-[var(--font-syne)] text-2xl font-bold text-white">
+                    <div className="mt-2 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
                       {quote.quote_id ?? `Quote ${quote.id}`}
                     </div>
                   </div>
@@ -102,43 +102,43 @@ export default async function SavedQuotesPage() {
                 </div>
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">
+                  <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                    <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">
                       Estimated total
                     </div>
-                    <div className="mt-2 text-lg font-semibold text-white">
+                    <div className="mt-2 text-lg font-semibold text-[#0F1B3D]">
                       {typeof quote.estimate?.total === 'number'
                         ? `₹${quote.estimate.total.toFixed(0)}`
                         : 'Unavailable'}
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">
+                  <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                    <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">
                       Machine hours
                     </div>
-                    <div className="mt-2 text-lg font-semibold text-white">
+                    <div className="mt-2 text-lg font-semibold text-[#0F1B3D]">
                       {typeof quote.estimate?.estimatedHours === 'number'
                         ? quote.estimate.estimatedHours.toFixed(1)
                         : '—'}
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Material</div>
-                    <div className="mt-2 text-sm text-white">
+                  <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                    <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Material</div>
+                    <div className="mt-2 text-sm text-[#0F1B3D]">
                       {quote.config?.materialId ?? 'Unknown'}
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Storage path</div>
-                    <div className="mt-2 break-all text-sm text-white">
+                  <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                    <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Storage path</div>
+                    <div className="mt-2 break-all text-sm text-[#0F1B3D]">
                       {quote.file_path ?? 'No uploaded file path'}
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-5 rounded-2xl border border-white/10 bg-[#0d1120] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#7a82a0]">Dimensions</div>
-                  <div className="mt-2 text-sm text-white">
+                <div className="mt-5 rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Dimensions</div>
+                  <div className="mt-2 text-sm text-[#0F1B3D]">
                     {quote.estimate?.dimensions
                       ? `${quote.estimate.dimensions.x ?? 0} × ${quote.estimate.dimensions.y ?? 0} × ${quote.estimate.dimensions.z ?? 0} mm`
                       : 'Unavailable'}

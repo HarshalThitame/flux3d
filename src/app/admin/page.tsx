@@ -110,7 +110,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <section className="rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,123,67,0.18),transparent_28%),radial-gradient(circle_at_right,rgba(56,189,248,0.14),transparent_24%),rgba(10,16,31,0.92)] p-6 shadow-[0_20px_70px_rgba(0,0,0,0.24)]">
-        <div className="inline-flex rounded-full border border-[#FF7B43]/25 bg-[#FF7B43]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#FFBF9C]">
+        <div className="inline-flex rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#FFBF9C]">
           Command Center
         </div>
         <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2.4rem,5vw,4.7rem)] font-extrabold tracking-[-2px] text-white">
@@ -192,7 +192,7 @@ export default function AdminDashboardPage() {
        <div className="mt-6 flex items-center gap-4">
          <Link
            href="/admin/blog"
-           className="inline-flex items-center gap-2 rounded-xl bg-[#FF5C1A] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+           className="inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
          >
            <Eye className="h-4 w-4" />
            Manage Blog Posts

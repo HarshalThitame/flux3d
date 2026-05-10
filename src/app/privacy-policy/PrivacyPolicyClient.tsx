@@ -22,17 +22,17 @@ const sections = [
 export default function PrivacyPolicyClient() {
   const { settings } = useBusinessSettings()
   return (
-    <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       {/* Header */}
-      <div className="border-b border-white/10 bg-[#0a0f1e]/50 backdrop-blur-sm sticky top-0 z-50">
+      <div className="border-b border-[#7C5CFF]/10 bg-[#FFFFFF]/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-[1200px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="font-[var(--font-syne)] text-2xl font-extrabold text-white">
-              flux<span className="text-[#FF5C1A]">3d</span>
+            <Link href="/" className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D]">
+              flux<span className="text-[#7C5CFF]">3d</span>
             </Link>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-sm text-[#7a82a0] hover:text-white transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-[#6F7192] hover:text-[#0F1B3D] transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Home
@@ -50,13 +50,13 @@ export default function PrivacyPolicyClient() {
             className="hidden lg:block"
           >
             <div className="sticky top-24">
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Contents</h3>
+              <h3 className="text-sm font-semibold text-[#0F1B3D] uppercase tracking-wider mb-4">Contents</h3>
               <nav className="space-y-1">
                 {sections.map((section) => (
                   <a
                     key={section.id}
                     href={`#${section.id}`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-[#7a82a0] hover:text-white hover:bg-white/[0.03] rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-[#6F7192] hover:text-[#0F1B3D] hover:bg-white/[0.03] rounded-lg transition-colors"
                   >
                     <section.icon className="w-3.5 h-3.5" />
                     <span className="line-clamp-1">{section.title}</span>
@@ -74,14 +74,14 @@ export default function PrivacyPolicyClient() {
           >
             {/* Title Section */}
             <div className="mb-12">
-              <div className="inline-flex items-center gap-2 bg-[#FF5C1A]/10 text-[#FF5C1A] px-4 py-2 rounded-full text-sm font-medium mb-6">
+              <div className="inline-flex items-center gap-2 bg-[#7C5CFF]/10 text-[#7C5CFF] px-4 py-2 rounded-full text-sm font-medium mb-6">
                 <Shield className="w-4 h-4" />
                 Privacy Document
               </div>
-              <h1 className="font-[var(--font-syne)] text-4xl md:text-5xl font-extrabold text-white mb-4">
-                Privacy <span className="text-[#FF5C1A]">Policy</span>
+              <h1 className="font-[var(--font-syne)] text-4xl md:text-5xl font-extrabold text-[#0F1B3D] mb-4">
+                Privacy <span className="text-[#7C5CFF]">Policy</span>
               </h1>
-              <div className="flex flex-wrap gap-4 text-sm text-[#7a82a0]">
+              <div className="flex flex-wrap gap-4 text-sm text-[#6F7192]">
                 <span>Effective Date: January 1, 2025</span>
                 <span>·</span>
                 <span>Last Updated: May 3, 2025</span>
@@ -89,8 +89,8 @@ export default function PrivacyPolicyClient() {
             </div>
 
             {/* Intro */}
-            <div className="bg-[#0a0f1e] border border-white/10 rounded-2xl p-6 mb-12">
-              <p className="text-[#7a82a0] leading-relaxed">
+            <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-2xl p-6 mb-12">
+              <p className="text-[#6F7192] leading-relaxed">
                 At FLUX 3D, we value your privacy and are committed to protecting your personal information.
                 This Privacy Policy explains how we collect, use, disclose, and safeguard your information
                 when you use our application and services. Please read this policy carefully.
@@ -100,13 +100,13 @@ export default function PrivacyPolicyClient() {
             {/* Sections */}
             <div className="space-y-12">
               <section id="information">
-                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">1</span>
+                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">1</span>
                   Information We Collect
                 </h2>
-                <div className="space-y-4 text-[#7a82a0] leading-relaxed">
+                <div className="space-y-4 text-[#6F7192] leading-relaxed">
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-3">Personal Information</h3>
+                    <h3 className="text-lg font-semibold text-[#0F1B3D] mb-3">Personal Information</h3>
                     <ul className="space-y-2 ml-6">
                       {[
                         'Name and email address during account registration',
@@ -115,14 +115,14 @@ export default function PrivacyPolicyClient() {
                         'Communication history with our support team',
                       ].map((item) => (
                         <li key={item} className="flex items-start gap-2">
-                          <span className="text-[#FF5C1A] mt-1.5">•</span>
+                          <span className="text-[#7C5CFF] mt-1.5">•</span>
                           <span>{item}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-3">Usage Information</h3>
+                    <h3 className="text-lg font-semibold text-[#0F1B3D] mb-3">Usage Information</h3>
                     <ul className="space-y-2 ml-6">
                       {[
                         '3D models, projects, and files you create or upload',
@@ -131,7 +131,7 @@ export default function PrivacyPolicyClient() {
                         'Crash reports and performance metrics',
                       ].map((item) => (
                         <li key={item} className="flex items-start gap-2">
-                          <span className="text-[#FF5C1A] mt-1.5">•</span>
+                          <span className="text-[#7C5CFF] mt-1.5">•</span>
                           <span>{item}</span>
                         </li>
                       ))}
@@ -141,11 +141,11 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="usage">
-                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">2</span>
+                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">2</span>
                   How We Use Your Information
                 </h2>
-                <div className="text-[#7a82a0] leading-relaxed">
+                <div className="text-[#6F7192] leading-relaxed">
                   <p className="mb-4">We use the collected information for the following purposes:</p>
                   <ul className="space-y-2 ml-6">
                     {[
@@ -158,7 +158,7 @@ export default function PrivacyPolicyClient() {
                       'Comply with legal obligations and enforce our Terms',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <span className="text-[#FF5C1A] mt-1.5">•</span>
+                        <span className="text-[#7C5CFF] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -167,11 +167,11 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="sharing">
-                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">3</span>
+                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">3</span>
                   Information Sharing
                 </h2>
-                <div className="text-[#7a82a0] leading-relaxed">
+                <div className="text-[#6F7192] leading-relaxed">
                   <p className="mb-4">We do not sell your personal information. We may share information in these circumstances:</p>
                   <ul className="space-y-2 ml-6">
                     {[
@@ -182,7 +182,7 @@ export default function PrivacyPolicyClient() {
                       'With your consent or at your direction',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <span className="text-[#FF5C1A] mt-1.5">•</span>
+                        <span className="text-[#7C5CFF] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -191,11 +191,11 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="cookies">
-                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">4</span>
+                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">4</span>
                   Cookies & Tracking
                 </h2>
-                <div className="text-[#7a82a0] leading-relaxed">
+                <div className="text-[#6F7192] leading-relaxed">
                   <p className="mb-4">We use cookies and similar tracking technologies to:</p>
                   <ul className="space-y-2 ml-6">
                     {[
@@ -205,7 +205,7 @@ export default function PrivacyPolicyClient() {
                       'Provide personalized content and recommendations',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <span className="text-[#FF5C1A] mt-1.5">•</span>
+                        <span className="text-[#7C5CFF] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -218,11 +218,11 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="security">
-                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">5</span>
+                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">5</span>
                   Data Security
                 </h2>
-                <div className="text-[#7a82a0] leading-relaxed">
+                <div className="text-[#6F7192] leading-relaxed">
                   <p className="mb-4">
                     We implement appropriate technical and organizational measures to protect your information:
                   </p>
@@ -234,7 +234,7 @@ export default function PrivacyPolicyClient() {
                       'Employee training on data protection practices',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <span className="text-[#FF5C1A] mt-1.5">•</span>
+                        <span className="text-[#7C5CFF] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -247,11 +247,11 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="rights">
-                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">6</span>
+                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">6</span>
                   Your Rights
                 </h2>
-                <div className="text-[#7a82a0] leading-relaxed">
+                <div className="text-[#6F7192] leading-relaxed">
                   <p className="mb-4">Depending on your location, you may have the following rights:</p>
                   <ul className="space-y-2 ml-6">
                     {[
@@ -263,7 +263,7 @@ export default function PrivacyPolicyClient() {
                       'Withdraw consent where processing is based on consent',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <span className="text-[#FF5C1A] mt-1.5">•</span>
+                        <span className="text-[#7C5CFF] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -276,22 +276,22 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="data-deletion">
-                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">7</span>
+                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">7</span>
                   Data Deletion Request
                 </h2>
-                <div className="text-[#7a82a0] leading-relaxed">
+                <div className="text-[#6F7192] leading-relaxed">
                   <p className="mb-4">
                     You have the right to request deletion of your account and all associated personal data. We provide multiple ways to request data deletion:
                   </p>
                   <div className="space-y-4 ml-6">
                     <div>
-                      <h3 className="text-white font-semibold mb-2">Option 1: Self-Service (Recommended)</h3>
-                      <p>Visit your <a href="/profile" className="text-[#FF5C1A] hover:underline">Profile Page</a> and click "Delete Account" to permanently remove your account and all data.</p>
+                      <h3 className="text-[#0F1B3D] font-semibold mb-2">Option 1: Self-Service (Recommended)</h3>
+                      <p>Visit your <a href="/profile" className="text-[#7C5CFF] hover:underline">Profile Page</a> and click "Delete Account" to permanently remove your account and all data.</p>
                     </div>
                     <div>
-                      <h3 className="text-white font-semibold mb-2">Option 2: Email Request</h3>
-                      <p>Send an email to <a href={`mailto:${settings.primaryEmail || 'privacy@flux3d.com'}`} className="text-[#FF5C1A] hover:underline">{settings.primaryEmail || 'privacy@flux3d.com'}</a> with subject "Data Deletion Request" including:</p>
+                      <h3 className="text-[#0F1B3D] font-semibold mb-2">Option 2: Email Request</h3>
+                      <p>Send an email to <a href={`mailto:${settings.primaryEmail || 'privacy@flux3d.com'}`} className="text-[#7C5CFF] hover:underline">{settings.primaryEmail || 'privacy@flux3d.com'}</a> with subject "Data Deletion Request" including:</p>
                       <ul className="space-y-1 ml-6 mt-2">
                         {[
                           'Your registered email address',
@@ -299,19 +299,19 @@ export default function PrivacyPolicyClient() {
                           'Reason for deletion (optional)',
                         ].map((item) => (
                           <li key={item} className="flex items-start gap-2">
-                            <span className="text-[#FF5C1A] mt-1.5">•</span>
+                            <span className="text-[#7C5CFF] mt-1.5">•</span>
                             <span>{item}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
                     <div>
-                      <h3 className="text-white font-semibold mb-2">Processing Time</h3>
+                      <h3 className="text-[#0F1B3D] font-semibold mb-2">Processing Time</h3>
                       <p>We will process your deletion request within 30 days. You will receive a confirmation email once your data has been permanently deleted from our systems.</p>
                     </div>
-                    <div className="bg-[#FF5C1A]/5 border border-[#FF5C1A]/20 rounded-xl p-4">
+                    <div className="bg-[#7C5CFF]/5 border border-[#7C5CFF]/20 rounded-xl p-4">
                       <p className="text-sm">
-                        <strong className="text-white">Note:</strong> Data deletion is permanent and cannot be undone. After deletion, you will lose access to all saved quotes, order history, and uploaded files.
+                        <strong className="text-[#0F1B3D]">Note:</strong> Data deletion is permanent and cannot be undone. After deletion, you will lose access to all saved quotes, order history, and uploaded files.
                       </p>
                     </div>
                   </div>
@@ -319,11 +319,11 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="retention">
-                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">8</span>
+                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">8</span>
                   Data Retention
                 </h2>
-                <p className="text-[#7a82a0] leading-relaxed">
+                <p className="text-[#6F7192] leading-relaxed">
                   We retain your information for as long as necessary to provide our services and fulfill
                   the purposes outlined in this policy. When you delete your account, we will delete
                   your personal information within 30 days, except where we need to retain it for legal
@@ -332,11 +332,11 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="children">
-                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">9</span>
+                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">9</span>
                   Children's Privacy
                 </h2>
-                <p className="text-[#7a82a0] leading-relaxed">
+                <p className="text-[#6F7192] leading-relaxed">
                   Our Application is not intended for children under 13. We do not knowingly collect
                   personal information from children under 13. If you are a parent or guardian and believe
                   your child has provided us with personal information, please contact us immediately.
@@ -344,20 +344,20 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="changes">
-                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">10</span>
+                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">10</span>
                   Changes to This Policy
                 </h2>
-                <p className="text-[#7a82a0] leading-relaxed">
+                <p className="text-[#6F7192] leading-relaxed">
                   We may update this Privacy Policy from time to time. We will notify you of any material
                   changes via email or in-app notification. Your continued use of the Application after
                   the changes become effective constitutes your acceptance of the revised policy.
                 </p>
               </section>
 
-              <section id="contact" className="bg-[#0a0f1e] border border-white/10 rounded-2xl p-8">
-                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FF5C1A]/10 text-[#FF5C1A] text-sm font-bold">11</span>
+              <section id="contact" className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-2xl p-8">
+                <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-6 flex items-center gap-3">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">11</span>
                   Contact Us
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -368,8 +368,8 @@ export default function PrivacyPolicyClient() {
                     { label: 'Address', value: [settings.city, settings.state].filter(Boolean).join(', ') || 'Mumbai, Maharashtra, India' },
                   ].map((item) => (
                     <div key={item.label} className="bg-white/[0.03] rounded-xl p-4">
-                      <p className="text-sm text-[#7a82a0] mb-1">{item.label}</p>
-                      <p className="text-sm text-white">{item.email || item.value}</p>
+                      <p className="text-sm text-[#6F7192] mb-1">{item.label}</p>
+                      <p className="text-sm text-[#0F1B3D]">{item.email || item.value}</p>
                     </div>
                   ))}
                 </div>

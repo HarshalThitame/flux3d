@@ -149,7 +149,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   }
 
   return (
-    <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: toJsonLd(blogPostJsonLd) }}
@@ -159,7 +159,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <div className="mx-auto max-w-[800px]">
           <Link
             href="/blog"
-            className="mb-8 inline-flex items-center gap-2 text-sm text-[#7a82a0] hover:text-white transition-colors"
+            className="mb-8 inline-flex items-center gap-2 text-sm text-[#6F7192] hover:text-[#0F1B3D] transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Blog
@@ -175,7 +175,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </div>
           )}
 
-          <div className="mb-6 flex items-center gap-4 text-sm text-[#7a82a0]">
+          <div className="mb-6 flex items-center gap-4 text-sm text-[#6F7192]">
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
               {new Date(post.created_at).toLocaleDateString('en-US', {
@@ -196,7 +196,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             )}
           </div>
 
-          <h1 className="font-[var(--font-syne)] text-4xl font-extrabold text-white mb-6">
+          <h1 className="font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D] mb-6">
             {post.title}
           </h1>
 
@@ -209,7 +209,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               {post.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full bg-[#FF5C1A]/10 px-3 py-1 text-xs text-[#FF5C1A]"
+                  className="rounded-full bg-[#7C5CFF]/10 px-3 py-1 text-xs text-[#7C5CFF]"
                 >
                   #{tag}
                 </span>

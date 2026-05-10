@@ -34,12 +34,12 @@ function CartButton() {
   return (
     <Link
       href="/cart"
-      className="group relative flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3.5 py-2.5 text-sm font-medium text-[#7a82a0] backdrop-blur-sm transition-all hover:border-[#FF5C1A]/30 hover:text-white hover:bg-white/[0.06]"
+      className="group relative flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3.5 py-2.5 text-sm font-medium text-[#6F7192] backdrop-blur-sm transition-all hover:border-[#7C5CFF]/30 hover:text-[#0F1B3D] hover:bg-white/[0.06]"
     >
       <ShoppingCart className="h-4 w-4 transition-transform group-hover:scale-110" />
       <span className="hidden sm:inline">Cart</span>
       {summary.itemCount > 0 && (
-        <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#FF5C1A] text-[10px] font-bold text-white shadow-[0_0_12px_rgba(255,92,26,0.4)]">
+        <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#7C5CFF] text-[10px] font-bold text-white shadow-[0_0_12px_rgba(124, 92, 255,0.4)]">
           {summary.itemCount}
         </span>
       )}
@@ -135,7 +135,7 @@ export default function NavbarClient({
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           scrolled || !transparent
-            ? 'py-3 bg-[#050810]/90 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.3)]'
+            ? 'py-3 bg-[#FFFFFF]/90 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.3)]'
             : 'py-4 bg-transparent border-b border-white/[0.04]'
         }`}
       >
@@ -145,8 +145,8 @@ export default function NavbarClient({
             {settings.logoUrl ? (
               <Image src={settings.logoUrl} alt={settings.businessName} width={180} height={48} className="h-12 w-auto object-contain" />
             ) : (
-              <span className="font-[var(--font-syne)] text-xl font-extrabold text-white">
-                <span style={{ color: 'var(--primary, #FF5C1A)' }}>{settings.businessName}</span>
+              <span className="font-[var(--font-syne)] text-xl font-extrabold text-[#0F1B3D]">
+                <span style={{ color: 'var(--primary, #7C5CFF)' }}>{settings.businessName}</span>
               </span>
             )}
           </Link>
@@ -165,13 +165,13 @@ export default function NavbarClient({
                   onMouseLeave={() => setHoveredLink(null)}
                   className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
                     pathname === link.href || hoveredLink === link.href
-                      ? 'text-white'
-                      : 'text-[#7a82a0]'
+                      ? 'text-[#0F1B3D]'
+                      : 'text-[#6F7192]'
                   }`}
                 >
                   {link.label}
                   {(pathname === link.href || hoveredLink === link.href) && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#FF5C1A] rounded-full" />
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#7C5CFF] rounded-full" />
                   )}
                 </Link>
               </li>
@@ -197,7 +197,7 @@ export default function NavbarClient({
               <>
                 <Link
                   href="/instant-quote"
-                  className="group relative flex items-center gap-2 rounded-xl bg-[#D94E00] px-5 py-2.5 text-sm font-semibold text-white overflow-hidden transition-all hover:shadow-[0_0_25px_rgba(217,78,0,0.3)]"
+                  className="group relative flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-5 py-2.5 text-sm font-semibold text-white overflow-hidden transition-all hover:shadow-[0_0_25px_rgba(124, 92, 255,0.3)]"
                 >
                   <span className="relative z-10">Get Quote</span>
                   <ArrowUpRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -210,7 +210,7 @@ export default function NavbarClient({
                     className="flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 pr-3 transition-all hover:bg-white/[0.07] hover:border-white/[0.12]"
                   >
                     {user.avatarUrl ? (
-                      <span className="relative h-8 w-8 overflow-hidden rounded-full ring-2 ring-[#FF5C1A]/20">
+                      <span className="relative h-8 w-8 overflow-hidden rounded-full ring-2 ring-[#7C5CFF]/20">
                         <Image
                           src={user.avatarUrl}
                           alt={user.name}
@@ -220,7 +220,7 @@ export default function NavbarClient({
                         />
                       </span>
                     ) : (
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#FF5C1A] to-[#ff7a3d] text-xs font-bold text-white shadow-[0_0_12px_rgba(255,92,26,0.3)]">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#7C5CFF] to-[#A78BFA] text-xs font-bold text-[#0F1B3D] shadow-[0_0_12px_rgba(124, 92, 255,0.3)]">
                         {getInitials(user.name)}
                       </span>
                     )}
@@ -232,10 +232,10 @@ export default function NavbarClient({
                   </button>
 
                   {isProfileOpen && (
-                    <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0d1120] shadow-[0_24px_80px_rgba(0,0,0,0.5)] animate-slideDown">
+                    <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-white/[0.08] bg-[#FFFFFF] shadow-[0_24px_80px_rgba(0,0,0,0.5)] animate-slideDown">
                       <div className="p-4 border-b border-white/[0.06]">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-[#7a82a0]">Signed in as</p>
-                        <p className="mt-1.5 text-base font-semibold text-white">{user.name}</p>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-[#6F7192]">Signed in as</p>
+                        <p className="mt-1.5 text-base font-semibold text-[#0F1B3D]">{user.name}</p>
                         <p className="text-sm text-[#93a0c4] truncate">{user.email}</p>
                       </div>
 
@@ -249,7 +249,7 @@ export default function NavbarClient({
                             key={item.href}
                             href={item.href}
                             onClick={() => setIsProfileOpen(false)}
-                            className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[#7a82a0] transition-colors hover:bg-white/[0.05] hover:text-white"
+                            className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[#6F7192] transition-colors hover:bg-white/[0.05] hover:text-[#0F1B3D]"
                           >
                             {item.label}
                           </Link>
@@ -271,13 +271,13 @@ export default function NavbarClient({
               <>
                 <Link
                   href="/login"
-                  className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-[#7a82a0] transition-all hover:text-white hover:bg-white/[0.07]"
+                  className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-[#6F7192] transition-all hover:text-[#0F1B3D] hover:bg-white/[0.07]"
                 >
                   Log In
                 </Link>
                 <Link
                   href="/signup"
-                  className="group relative rounded-xl bg-[#D94E00] px-5 py-2.5 text-sm font-semibold text-white overflow-hidden transition-all hover:shadow-[0_0_25px_rgba(217,78,0,0.3)]"
+                  className="group relative rounded-xl bg-[#7C5CFF] px-5 py-2.5 text-sm font-semibold text-white overflow-hidden transition-all hover:shadow-[0_0_25px_rgba(124, 92, 255,0.3)]"
                 >
                   <span className="relative z-10">Sign Up</span>
                 </Link>
@@ -288,7 +288,7 @@ export default function NavbarClient({
       {/* Mobile Toggle */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative md:hidden p-3 text-white min-h-[44px] min-w-[44px] flex items-center justify-center"
+        className="relative md:hidden p-3 text-[#0F1B3D] min-h-[44px] min-w-[44px] flex items-center justify-center"
         aria-label="Toggle menu"
       >
         <span className="w-6 h-6 flex items-center justify-center">
@@ -306,11 +306,11 @@ export default function NavbarClient({
       {isOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div
-            className="absolute inset-0 bg-[#050810]/95 backdrop-blur-2xl animate-fadeIn"
+            className="absolute inset-0 bg-[#FFFFFF]/95 backdrop-blur-2xl animate-fadeIn"
             onClick={() => setIsOpen(false)}
           />
 
-          <div className="animate-slideDown absolute top-20 left-4 right-4 rounded-2xl border border-white/[0.08] bg-[#0d1120]/95 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.5)] overflow-hidden">
+          <div className="animate-slideDown absolute top-20 left-4 right-4 rounded-2xl border border-white/[0.08] bg-[#FFFFFF]/95 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.5)] overflow-hidden">
             <div className="p-6">
               {user && (
                 <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
@@ -325,13 +325,13 @@ export default function NavbarClient({
                       />
                     </span>
                   ) : (
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#FF5C1A] to-[#ff7a3d] text-sm font-bold text-white">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#7C5CFF] to-[#A78BFA] text-sm font-bold text-[#0F1B3D]">
                       {getInitials(user.name)}
                     </span>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{user.name}</p>
-                    <p className="text-xs text-[#7a82a0] truncate">{user.email}</p>
+                    <p className="text-sm font-semibold text-[#0F1B3D] truncate">{user.name}</p>
+                    <p className="text-xs text-[#6F7192] truncate">{user.email}</p>
                   </div>
                 </div>
               )}
@@ -347,13 +347,13 @@ export default function NavbarClient({
                       }}
                       className={`flex items-center justify-between rounded-xl py-3.5 px-4 text-base font-medium transition-colors min-h-[44px] ${
                         pathname === link.href
-                          ? 'bg-white/[0.06] text-white'
-                          : 'text-[#7a82a0] hover:bg-white/[0.05] hover:text-white'
+                          ? 'bg-white/[0.06] text-[#0F1B3D]'
+                          : 'text-[#6F7192] hover:bg-white/[0.05] hover:text-[#0F1B3D]'
                       }`}
                     >
                       {link.label}
                       {pathname === link.href && (
-                        <div className="h-1.5 w-1.5 rounded-full bg-[#FF5C1A]" />
+                        <div className="h-1.5 w-1.5 rounded-full bg-[#7C5CFF]" />
                       )}
                     </Link>
                   </li>
@@ -364,7 +364,7 @@ export default function NavbarClient({
                 <Link
                   href="/instant-quote"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#D94E00] py-3.5 text-base font-semibold text-white"
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#7C5CFF] py-3.5 text-base font-semibold text-white"
                 >
                   Get Instant Quote
                   <ArrowUpRight className="h-4 w-4" />
@@ -386,7 +386,7 @@ export default function NavbarClient({
                         key={href}
                         href={href}
                         onClick={() => setIsOpen(false)}
-                        className="block w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-3.5 text-center text-base font-medium text-[#7a82a0]"
+                        className="block w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-3.5 text-center text-base font-medium text-[#6F7192]"
                       >
                         {href === '/saved-quotes' ? 'Saved Quotes' : href === '/my-orders' ? 'My Orders' : 'Profile'}
                       </Link>
@@ -405,14 +405,14 @@ export default function NavbarClient({
                     <Link
                       href="/login"
                       onClick={() => setIsOpen(false)}
-                      className="block w-full rounded-xl border border-white/[0.08] bg-white/[0.03] py-3.5 text-center text-base font-medium text-[#7a82a0]"
+                      className="block w-full rounded-xl border border-white/[0.08] bg-white/[0.03] py-3.5 text-center text-base font-medium text-[#6F7192]"
                     >
                       Log In
                     </Link>
                     <Link
                       href="/signup"
                       onClick={() => setIsOpen(false)}
-                      className="block w-full rounded-xl bg-[#D94E00] py-3.5 text-center text-base font-semibold text-white"
+                      className="block w-full rounded-xl bg-[#7C5CFF] py-3.5 text-center text-base font-semibold text-white"
                     >
                       Create Account
                     </Link>

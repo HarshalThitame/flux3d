@@ -35,7 +35,7 @@ export default function PricingCards({ materials }: PricingCardsProps) {
         title: m.name,
         price: `From ₹${m.price_per_gram || 0}/g`,
         desc: m.density ? `Density: ${m.density}g/cm³ · Transparent per-gram pricing` : 'Transparent per-gram pricing',
-        color: 'from-[#FF5C1A]',
+        color: 'from-[#7C5CFF]',
         href: `/materials?name=${encodeURIComponent(m.name)}`,
       }))
     : fallbackCards
@@ -57,15 +57,15 @@ export default function PricingCards({ materials }: PricingCardsProps) {
         <Link
           key={i}
           href={item.href}
-          className="group rounded-[28px] border border-[rgba(255,255,255,0.08)] bg-[#0d1120] p-7 transition-all hover:border-[#FF5C1A]/30 hover:bg-[#0d1120]/80"
+          className="group rounded-[28px] border border-[rgba(124, 92, 255,0.5)] bg-[#FFFFFF] p-7 transition-all hover:border-[#7C5CFF]/30 hover:bg-[#FFFFFF]/80"
         >
           <div className={`text-[11px] uppercase tracking-[0.22em] bg-gradient-to-r ${item.color} bg-clip-text text-transparent`}>
             Starting From
           </div>
-          <h2 className="mt-4 font-[var(--font-syne)] text-2xl font-bold text-white group-hover:text-[#FF8A57] transition-colors">{item.title}</h2>
-          <div className="mt-4 text-lg font-semibold text-[#FF8A57]">{item.price}</div>
-          <p className="mt-3 text-sm leading-7 text-[#b1b9d5]">{item.desc}</p>
-          <div className="mt-4 text-xs text-[#FF5C1A] opacity-0 transition-opacity group-hover:opacity-100">
+          <h2 className="mt-4 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] group-hover:text-[#7C5CFF] transition-colors">{item.title}</h2>
+          <div className="mt-4 text-lg font-semibold text-[#7C5CFF]">{item.price}</div>
+          <p className="mt-3 text-sm leading-7 text-[#6F7192]">{item.desc}</p>
+          <div className="mt-4 text-xs text-[#7C5CFF] opacity-0 transition-opacity group-hover:opacity-100">
             Click to explore →
           </div>
         </Link>

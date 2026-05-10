@@ -22,12 +22,12 @@ export default function EmptyState({
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.03]">
         <Inbox className="h-6 w-6 text-[#5a6580]" />
       </div>
-      <div className="text-lg font-semibold text-white">{title}</div>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[#7a82a0]">{description}</p>
+      <div className="text-lg font-semibold text-[#0F1B3D]">{title}</div>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[#6F7192]">{description}</p>
       {ctaLabel && ctaHref && (
         <Link
           href={ctaHref}
-          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#FF5C1A] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
         >
           {ctaLabel}
         </Link>

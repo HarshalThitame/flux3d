@@ -36,13 +36,13 @@ export default function Drawer({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 z-[90] flex h-screen w-[min(100vw,460px)] flex-col border-l border-white/[0.06] bg-[#080c18]"
+            className="fixed right-0 top-0 z-[90] flex h-screen w-[min(100vw,460px)] flex-col border-l border-white/[0.06] bg-[#FFFFFF]"
           >
             <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
-              <Dialog.Title className="text-lg font-semibold text-white">
+              <Dialog.Title className="text-lg font-semibold text-[#0F1B3D]">
                 {title}
               </Dialog.Title>
-              <Dialog.Close className="rounded-lg border border-white/8 bg-white/[0.03] p-2 text-[#7a82a0] transition hover:bg-white/[0.06] hover:text-white">
+              <Dialog.Close className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.03] p-2 text-[#6F7192] transition hover:bg-white/[0.06] hover:text-[#0F1B3D]">
                 <X className="h-4 w-4" />
               </Dialog.Close>
             </div>

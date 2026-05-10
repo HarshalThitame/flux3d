@@ -12,7 +12,7 @@ const statusActions = [
   { label: 'Reviewed', status: 'reviewed' as const, color: 'border-sky-400/20 bg-sky-400/10 text-sky-300 hover:bg-sky-400/15' },
   { label: 'Approved', status: 'approved' as const, color: 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/15' },
   { label: 'Queued', status: 'queued' as const, color: 'border-violet-400/20 bg-violet-400/10 text-violet-300 hover:bg-violet-400/15' },
-  { label: 'Printing', status: 'printing' as const, color: 'border-[#FF5C1A]/20 bg-[#FF5C1A]/10 text-[#FF9A72] hover:bg-[#FF5C1A]/15' },
+  { label: 'Printing', status: 'printing' as const, color: 'border-[#7C5CFF]/20 bg-[#7C5CFF]/10 text-[#A78BFA] hover:bg-[#7C5CFF]/15' },
   { label: 'Shipped', status: 'shipped' as const, color: 'border-amber-400/20 bg-amber-400/10 text-amber-300 hover:bg-amber-400/15' },
   { label: 'Completed', status: 'completed' as const, color: 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/15' },
   { label: 'On Hold', status: 'on-hold' as const, color: 'border-white/10 bg-white/[0.03] text-[#8b95b5] hover:bg-white/[0.06]' },
@@ -116,7 +116,7 @@ export default function AdminOrderDetailPage() {
         <button
           type="button"
           onClick={() => router.push('/admin/orders')}
-          className="inline-flex items-center gap-1.5 text-xs text-[#7a82a0] transition-colors hover:text-white"
+          className="inline-flex items-center gap-1.5 text-xs text-[#6F7192] transition-colors hover:text-white"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to orders
@@ -124,14 +124,14 @@ export default function AdminOrderDetailPage() {
 
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#FF9A72]">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#A78BFA]">
               <Package2 className="h-3 w-3" />
               Order Details
             </div>
             <h1 className="font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">
               {order.orderNumber}
             </h1>
-            <p className="mt-1 text-sm text-[#7a82a0]">
+            <p className="mt-1 text-sm text-[#6F7192]">
               {order.itemCount} item{order.itemCount > 1 ? 's' : ''} · Placed on {createdDate}
             </p>
           </div>
@@ -169,7 +169,7 @@ export default function AdminOrderDetailPage() {
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div className="flex-1 space-y-4">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#FF5C1A]/15 text-xs font-bold text-[#FF9A72]">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#7C5CFF]/15 text-xs font-bold text-[#A78BFA]">
                         {i + 1}
                       </span>
                       <span className="text-base font-semibold text-white">{item.material}</span>
@@ -237,7 +237,7 @@ function InfoCard({ label, value, icon }: { label: string; value: string; icon?:
   return (
     <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-3">
       <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.15em] text-[#5a6580]">
-        {icon && <span className="text-[#7a82a0]">{icon}</span>}
+        {icon && <span className="text-[#6F7192]">{icon}</span>}
         {label}
       </div>
       <div className="mt-1.5 text-sm font-medium text-white">{value}</div>

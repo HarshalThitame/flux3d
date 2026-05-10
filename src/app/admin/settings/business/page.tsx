@@ -276,19 +276,19 @@ export default function BusinessSettingsPage() {
             <button
               type="button"
               onClick={() => router.push('/admin/settings')}
-              className="mb-3 inline-flex items-center gap-1.5 text-xs text-[#7a82a0] transition-colors hover:text-white"
+              className="mb-3 inline-flex items-center gap-1.5 text-xs text-[#6F7192] transition-colors hover:text-white"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               Back to Settings
             </button>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#FF9A72]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#A78BFA]">
               <Building2 className="h-3 w-3" />
               Company
             </div>
             <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">
               Business Settings
             </h1>
-            <p className="mt-1 max-w-xl text-sm text-[#7a82a0]">
+            <p className="mt-1 max-w-xl text-sm text-[#6F7192]">
               Manage your company details, branding, invoices, and operational settings.
             </p>
           </div>
@@ -333,7 +333,7 @@ export default function BusinessSettingsPage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
                       activeTab === tab.id
-                        ? 'bg-[#FF5C1A]/15 text-white'
+                        ? 'bg-[#7C5CFF]/15 text-white'
                         : 'text-[#8b95b5] hover:bg-white/[0.04] hover:text-white'
                     }`}
                   >
@@ -391,11 +391,11 @@ export default function BusinessSettingsPage() {
         </div>
       </div>
 
-      <div className={`fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.06] bg-[#0a0f1e]/95 backdrop-blur-xl transition-all md:left-[280px] ${savingToast ? '' : ''}`}>
+      <div className={`fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.06] bg-[#0A1F2D]/95 backdrop-blur-xl transition-all md:left-[280px] ${savingToast ? '' : ''}`}>
         <div className="mx-auto flex max-w-[1500px] items-center justify-between px-4 py-3 md:px-8">
           <div className="flex items-center gap-2">
             <div className={`h-2 w-2 rounded-full ${dirty ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-            <span className="text-xs text-[#7a82a0]">{dirty ? 'Unsaved changes' : 'All saved'}</span>
+            <span className="text-xs text-[#6F7192]">{dirty ? 'Unsaved changes' : 'All saved'}</span>
           </div>
           <div className="flex gap-2">
             {dirty && (
@@ -412,7 +412,7 @@ export default function BusinessSettingsPage() {
               type="button"
               onClick={handleSave}
               disabled={saving || !dirty}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#FF5C1A] px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#7C5CFF] px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving ? (
                 <>
@@ -443,11 +443,11 @@ function SectionCard({ title, description, children }: { title: string; descript
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-white/[0.06] bg-[#0a0f1e] p-5"
+      className="rounded-2xl border border-white/[0.06] bg-[#0A1F2D] p-5"
     >
       <div className="mb-5">
         <h3 className="text-base font-semibold text-white">{title}</h3>
-        {description && <p className="mt-1 text-xs text-[#7a82a0]">{description}</p>}
+        {description && <p className="mt-1 text-xs text-[#6F7192]">{description}</p>}
       </div>
       {children}
     </motion.div>
@@ -511,7 +511,7 @@ function BusinessInfoTab({ form, updateField, f, fn, fb, copyToClipboard, showSe
           <div className="relative">
             <InputField label="Primary Phone Number" type="tel" value={f('primaryPhone')} onChange={(v) => updateField('primaryPhone', v)} placeholder="+91 98765 43210" />
             {f('primaryPhone') && (
-              <button type="button" onClick={() => copyToClipboard(f('primaryPhone'))} className="absolute right-3 top-8 text-[#7a82a0] hover:text-white">
+              <button type="button" onClick={() => copyToClipboard(f('primaryPhone'))} className="absolute right-3 top-8 text-[#6F7192] hover:text-white">
                 <Copy className="h-3.5 w-3.5" />
               </button>
             )}
@@ -519,7 +519,7 @@ function BusinessInfoTab({ form, updateField, f, fn, fb, copyToClipboard, showSe
           <div className="relative">
             <InputField label="WhatsApp Number" type="tel" value={f('whatsappNumber')} onChange={(v) => updateField('whatsappNumber', v)} placeholder="+91 98765 43210" />
             {f('whatsappNumber') && (
-              <button type="button" onClick={() => copyToClipboard(f('whatsappNumber'))} className="absolute right-3 top-8 text-[#7a82a0] hover:text-white">
+              <button type="button" onClick={() => copyToClipboard(f('whatsappNumber'))} className="absolute right-3 top-8 text-[#6F7192] hover:text-white">
                 <Copy className="h-3.5 w-3.5" />
               </button>
             )}
@@ -641,21 +641,21 @@ function BrandingTab({ form, updateField, f, fb, triggerFileInput, uploading }: 
           <div>
             <div className="mb-1.5 text-xs font-medium text-[#aeb8d8]">Primary Color</div>
             <div className="flex gap-3">
-              <input type="color" value={f('primaryColor') || '#FF5C1A'} onChange={(e) => updateField('primaryColor', e.target.value)}
+              <input type="color" value={f('primaryColor') || '#7C5CFF'} onChange={(e) => updateField('primaryColor', e.target.value)}
                 className="h-10 w-10 cursor-pointer rounded-lg border border-white/10 bg-transparent" />
               <input type="text" value={f('primaryColor')} onChange={(e) => updateField('primaryColor', e.target.value)}
-                className="flex-1 rounded-xl border border-white/8 bg-white/[0.03] px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-[#FF5C1A]/30"
-                placeholder="#FF5C1A" />
+                className="flex-1 rounded-xl border border-white/8 bg-white/[0.03] px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-[#7C5CFF]/30"
+                placeholder="#7C5CFF" />
             </div>
           </div>
           <div>
             <div className="mb-1.5 text-xs font-medium text-[#aeb8d8]">Secondary Color</div>
             <div className="flex gap-3">
-              <input type="color" value={f('secondaryColor') || '#39BDF8'} onChange={(e) => updateField('secondaryColor', e.target.value)}
+              <input type="color" value={f('secondaryColor') || '#A78BFA'} onChange={(e) => updateField('secondaryColor', e.target.value)}
                 className="h-10 w-10 cursor-pointer rounded-lg border border-white/10 bg-transparent" />
               <input type="text" value={f('secondaryColor')} onChange={(e) => updateField('secondaryColor', e.target.value)}
-                className="flex-1 rounded-xl border border-white/8 bg-white/[0.03] px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-[#FF5C1A]/30"
-                placeholder="#39BDF8" />
+                className="flex-1 rounded-xl border border-white/8 bg-white/[0.03] px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-[#7C5CFF]/30"
+                placeholder="#A78BFA" />
             </div>
           </div>
         </div>
@@ -747,7 +747,7 @@ function CommunicationTab({ form, updateField, f, fb, copyToClipboard }: {
           <div className="relative">
             <InputField label="WhatsApp Order Notification Number" type="tel" value={f('whatsappOrderNumber')} onChange={(v) => updateField('whatsappOrderNumber', v)} placeholder="+91 98765 43210" />
             {f('whatsappOrderNumber') && (
-              <button type="button" onClick={() => copyToClipboard(f('whatsappOrderNumber'))} className="absolute right-3 top-8 text-[#7a82a0] hover:text-white">
+              <button type="button" onClick={() => copyToClipboard(f('whatsappOrderNumber'))} className="absolute right-3 top-8 text-[#6F7192] hover:text-white">
                 <Copy className="h-3.5 w-3.5" />
               </button>
             )}
@@ -755,7 +755,7 @@ function CommunicationTab({ form, updateField, f, fb, copyToClipboard }: {
           <div className="relative">
             <InputField label="WhatsApp Support Number" type="tel" value={f('whatsappSupportNumber')} onChange={(v) => updateField('whatsappSupportNumber', v)} placeholder="+91 98765 43210" />
             {f('whatsappSupportNumber') && (
-              <button type="button" onClick={() => copyToClipboard(f('whatsappSupportNumber'))} className="absolute right-3 top-8 text-[#7a82a0] hover:text-white">
+              <button type="button" onClick={() => copyToClipboard(f('whatsappSupportNumber'))} className="absolute right-3 top-8 text-[#6F7192] hover:text-white">
                 <Copy className="h-3.5 w-3.5" />
               </button>
             )}

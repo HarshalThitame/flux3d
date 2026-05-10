@@ -25,7 +25,7 @@ function FloatingOrbs() {
       {orbs.map(orb => (
         <motion.div
           key={orb.id}
-          className="absolute rounded-full bg-[#FF5C1A] blur-3xl"
+          className="absolute rounded-full bg-[#7C5CFF] blur-3xl"
           style={{
             left: `${orb.x}%`,
             top: `${orb.y}%`,
@@ -57,7 +57,7 @@ export default function BottomCTA() {
   return (
     <section ref={ref} className="py-24 px-6 relative overflow-hidden">
       {/* Background accents */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,rgba(255,92,26,0.08)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,rgba(124, 92, 255,0.08)_0%,transparent_70%)] pointer-events-none" />
       <FloatingOrbs />
 
       <motion.div
@@ -66,7 +66,7 @@ export default function BottomCTA() {
         transition={{ duration: 0.7 }}
         className="max-w-[900px] mx-auto relative z-10"
       >
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#FF5C1A] via-[#ff6b2b] to-[#ff7a3d] p-10 md:p-16 text-center">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#7C5CFF] via-[#7C5CFF] to-[#A78BFA] p-10 md:p-16 text-center card-depth-lg">
           {/* Animated dot pattern */}
           <div
             className="absolute inset-0 opacity-10"
@@ -95,7 +95,7 @@ export default function BottomCTA() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
               transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white text-sm font-medium px-4 py-1.5 rounded-full mb-6"
+              className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-[#0F1B3D] text-sm font-medium px-4 py-1.5 rounded-full mb-6"
             >
               <Sparkles className="w-4 h-4" />
               Let&apos;s Build Something Amazing
@@ -105,7 +105,7 @@ export default function BottomCTA() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.3 }}
-              className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.8rem)] font-extrabold text-white tracking-[-1px] leading-[1.1] mb-4"
+              className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.8rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1] mb-4"
             >
               Ready to Bring Your <br />
               Idea to Life?
@@ -115,7 +115,7 @@ export default function BottomCTA() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.4 }}
-              className="text-lg text-white/90 max-w-[600px] mx-auto mb-8 leading-[1.6]"
+              className="text-lg text-[#0F1B3D]/90 max-w-[600px] mx-auto mb-8 leading-[1.6]"
             >
               Whether it is a quick prototype or a full production run, we are here to make it happen fast, precise, and presentation-ready.
             </motion.p>
@@ -128,7 +128,7 @@ export default function BottomCTA() {
             >
               <Link
                 href="/instant-quote"
-                className="group relative bg-white text-[#FF5C1A] px-8 py-4 rounded-xl text-base font-semibold border-none cursor-pointer overflow-hidden transition-all hover:shadow-[0_10px_40px_rgba(0,0,0,0.2)] hover:-translate-y-0.5"
+                className="group relative bg-white text-[#7C5CFF] px-8 py-4 rounded-xl text-base font-semibold border-none cursor-pointer overflow-hidden transition-all hover:shadow-[0_10px_40px_rgba(0,0,0,0.2)] hover:-translate-y-0.5"
               >
                 <span className="relative z-10 inline-flex items-center gap-2">
                   Get A Free Quote
@@ -140,7 +140,7 @@ export default function BottomCTA() {
                 href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-xl text-base font-medium border border-white/30 cursor-pointer transition-all hover:bg-white/20 hover:border-white/50 hover:-translate-y-0.5"
+                className="group bg-white/10 backdrop-blur-sm text-[#0F1B3D] px-8 py-4 rounded-xl text-base font-medium border border-[#7C5CFF]/10 cursor-pointer transition-all hover:bg-white/20 hover:border-[#7C5CFF]/10 hover:-translate-y-0.5"
               >
                 <span className="inline-flex items-center gap-2">
                   Chat on WhatsApp
@@ -154,7 +154,7 @@ export default function BottomCTA() {
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
               transition={{ delay: 0.7 }}
-              className="flex flex-wrap items-center justify-center gap-6 mt-10 text-white/70 text-sm"
+              className="flex flex-wrap items-center justify-center gap-6 mt-10 text-[#0F1B3D]/70 text-sm"
             >
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-white/60" />

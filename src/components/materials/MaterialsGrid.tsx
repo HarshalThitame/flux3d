@@ -251,7 +251,7 @@ export default function MaterialsGrid() {
   if (materials.length === 0) {
     return (
       <div ref={rootRef} className="relative text-center py-12">
-        <p className="text-[#7a82a0]">No materials available at the moment.</p>
+        <p className="text-[#6F7192]">No materials available at the moment.</p>
       </div>
     )
   }

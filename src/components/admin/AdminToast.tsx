@@ -31,7 +31,7 @@ export default function AdminToast({ toast }: { toast: AdminToastState }) {
           initial={{ opacity: 0, y: 16, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 16, scale: 0.96 }}
-          className="fixed bottom-5 right-5 z-[120] max-w-sm overflow-hidden rounded-xl border border-white/[0.06] bg-[#0a0f1e] shadow-2xl backdrop-blur-xl"
+          className="fixed bottom-5 right-5 z-[120] max-w-sm overflow-hidden rounded-xl border border-white/[0.06] bg-[#FFFFFF] shadow-2xl backdrop-blur-xl"
         >
           <div className={`flex items-center gap-3 px-4 py-3 ${style}`}>
             <Icon className="h-4.5 w-4.5 shrink-0" />

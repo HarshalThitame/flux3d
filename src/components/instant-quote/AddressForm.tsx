@@ -26,16 +26,16 @@ function Field({
 }) {
   return (
     <label className="block">
-      <div className="mb-2 text-sm font-medium text-white">
+      <div className="mb-2 text-sm font-medium text-[#0F1B3D]">
         {label}
-        {required ? <span className="ml-1 text-[#FF9A72]">*</span> : null}
+        {required ? <span className="ml-1 text-[#A78BFA]">*</span> : null}
       </div>
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className={`w-full rounded-[18px] border bg-[#0d1120] px-4 py-3 text-sm text-white outline-none transition ${
-          error ? 'border-rose-400/35' : 'border-white/10 focus:border-[#FF5C1A]/40'
+        className={`w-full rounded-[18px] border bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none transition ${
+          error ? 'border-rose-400/35' : 'border-[#7C5CFF]/10 focus:border-[#7C5CFF]/40'
         }`}
       />
       {error ? <div className="mt-2 text-xs text-rose-300">{error}</div> : null}
@@ -49,10 +49,10 @@ export default function AddressForm({ values, errors, onChange }: AddressFormPro
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.18 }}
-      className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(12,18,34,0.96),rgba(7,11,22,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]"
+      className="rounded-[28px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]"
     >
       <div className="mb-5">
-        <h2 className="font-[var(--font-syne)] text-2xl font-bold text-white">
+        <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
           Delivery Address
         </h2>
         <p className="mt-2 text-sm leading-6 text-[#97a1c2]">

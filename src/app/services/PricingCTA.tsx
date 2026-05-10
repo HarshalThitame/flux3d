@@ -9,38 +9,38 @@ export default function PricingCTA() {
   return (
     <section className="py-24 px-6">
       <div className="max-w-[1200px] mx-auto">
-        <div className="bg-[#0d1120] border border-[rgba(255,255,255,0.07)] rounded-[20px] p-8 md:p-16 text-center relative overflow-hidden">
+        <div className="bg-[#FFFFFF] border border-[rgba(124, 92, 255,0.5)] rounded-[20px] p-8 md:p-16 text-center relative overflow-hidden">
           {/* Glow effect */}
-          <div className="absolute -top-[100px] left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-[radial-gradient(ellipse,rgba(255,92,26,0.15),transparent_70%)] pointer-events-none" />
+          <div className="absolute -top-[100px] left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-[radial-gradient(ellipse,rgba(124, 92, 255,0.15),transparent_70%)] pointer-events-none" />
 
           {/* Heading */}
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-white tracking-[-1px] mb-4 relative">
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] mb-4 relative">
             Your Next Product Starts <br className="hidden md:block" />
-            <span className="text-[#FF5C1A]">With One Message.</span>
+            <span className="text-[#7C5CFF]">With One Message.</span>
           </h2>
 
           {/* Subheading */}
-          <p className="text-[#7a82a0] mb-8 max-w-[600px] mx-auto relative">
+          <p className="text-[#6F7192] mb-8 max-w-[600px] mx-auto relative">
             Don&apos;t let your idea stay on a screen. Get a clear price, a fast turnaround, and a printed part that feels ready for production.
           </p>
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center relative mb-8">
-            <Link href="/instant-quote" className="bg-[#FF5C1A] text-white px-8 py-4 rounded-lg text-lg font-medium border-none cursor-pointer transition-transform hover:translate-y-[-2px] hover:opacity-90 shadow-lg shadow-[rgba(255,92,26,0.3)]">
+            <Link href="/instant-quote" className="bg-[#7C5CFF] text-white px-8 py-4 rounded-lg text-lg font-medium border-none cursor-pointer transition-transform hover:translate-y-[-2px] hover:opacity-90 shadow-lg shadow-[rgba(124, 92, 255,0.3)]">
               Start Your Order
             </Link>
             <a
               href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-transparent text-white px-8 py-4 rounded-lg text-lg font-medium border border-[rgba(255,255,255,0.07)] cursor-pointer transition-colors hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.04)]"
+              className="bg-transparent text-[#0F1B3D] px-8 py-4 rounded-lg text-lg font-medium border border-[rgba(124, 92, 255,0.5)] cursor-pointer transition-colors hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(124, 92, 255,0.3)]"
             >
               WhatsApp Us Now
             </a>
           </div>
 
           {/* Trust badges */}
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-[#7a82a0] relative">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-[#6F7192] relative">
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#22c55e]" />
               Fast Quotes
@@ -56,7 +56,7 @@ export default function PricingCTA() {
           </div>
 
           {/* Location tag */}
-          <p className="mt-8 text-xs text-[#7a82a0] relative">
+          <p className="mt-8 text-xs text-[#6F7192] relative">
             Trusted by engineers, architects, jewellery designers, and gifting brands across India.
           </p>
         </div>

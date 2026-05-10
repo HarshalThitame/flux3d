@@ -76,28 +76,28 @@ export default function MaterialPopup({
             width: position.width,
           }}
         >
-          <div className="relative overflow-hidden rounded-[24px] border border-white/12 bg-[rgba(9,14,28,0.88)] shadow-[0_24px_90px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
+          <div className="relative overflow-hidden rounded-[24px] border border-[#7C5CFF]/10 bg-[rgba(255,255,255,0.96)] shadow-[0_24px_90px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
             <div
               className="absolute inset-x-0 top-0 h-24 opacity-80"
               style={{
-                background: material.gradient ?? material.color ?? '#FF5C1A',
+                background: material.gradient ?? material.color ?? '#7C5CFF',
                 filter: 'blur(48px)',
               }}
             />
             <div className="relative flex max-h-[78vh] flex-col">
-              <div className="flex items-start justify-between gap-4 border-b border-white/8 px-4 py-4 sm:px-5">
+              <div className="flex items-start justify-between gap-4 border-b border-[#7C5CFF]/10 px-4 py-4 sm:px-5">
                 <div className="flex items-start gap-3">
                   <div
-                    className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/12 text-lg shadow-[0_0_28px_rgba(255,255,255,0.08)]"
+                    className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#7C5CFF]/10 text-lg shadow-[0_0_28px_rgba(124, 92, 255,0.5)]"
                     style={{ background: material.gradient ?? material.color ?? '#14192c' }}
                   >
                     <span>{material.icon}</span>
                   </div>
                   <div>
-                    <div className="font-[var(--font-syne)] text-lg font-bold text-white">
+                    <div className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D]">
                       {material.name}
                     </div>
-                    <div className="mt-1 inline-flex rounded-full border border-[#FF5C1A]/20 bg-[#FF5C1A]/10 px-2.5 py-1 text-[11px] uppercase tracking-[0.22em] text-[#ff9d72]">
+                    <div className="mt-1 inline-flex rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-2.5 py-1 text-[11px] uppercase tracking-[0.22em] text-[#A78BFA]">
                       {material.tag}
                     </div>
                   </div>
@@ -105,7 +105,7 @@ export default function MaterialPopup({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-[#aeb7d3] transition-colors hover:bg-white/10 hover:text-white"
+                  className="rounded-full border border-[#7C5CFF]/10 bg-white/5 px-2.5 py-1 text-xs text-[#aeb7d3] transition-colors hover:bg-white/10 hover:text-[#0F1B3D]"
                   aria-label="Close material details"
                 >
                   Close
@@ -122,35 +122,35 @@ export default function MaterialPopup({
                     return (
                       <div
                         key={key}
-                        className="rounded-2xl border border-white/8 bg-white/[0.03] p-3"
+                        className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] p-3"
                       >
-                        <div className="mb-1.5 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-[#7a82a0]">
-                          <Icon className="h-3.5 w-3.5 text-[#FF8A57]" />
+                        <div className="mb-1.5 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-[#6F7192]">
+                          <Icon className="h-3.5 w-3.5 text-[#7C5CFF]" />
                           {propertyLabels[key]}
                         </div>
-                        <div className="text-sm font-medium text-white">{value}</div>
+                        <div className="text-sm font-medium text-[#0F1B3D]">{value}</div>
                       </div>
                     )
                   })}
                 </div>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                    <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-[#7a82a0]">
+                  <div className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] p-4">
+                    <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-[#6F7192]">
                       Best Use Cases
                     </div>
                     <ul className="space-y-2 text-sm text-[#d7dcef]">
                       {material.useCases.map((item) => (
                         <li key={item} className="flex items-start gap-2">
-                          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#FF5C1A]" />
+                          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#7C5CFF]" />
                           <span>{item}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
 
-                  <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                    <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-[#7a82a0]">
+                  <div className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] p-4">
+                    <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-[#6F7192]">
                       Print Settings
                     </div>
                     <div className="space-y-2 text-sm text-[#d7dcef]">

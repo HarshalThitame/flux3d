@@ -58,7 +58,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#050810',
+  themeColor: '#FFFFFF',
 }
 
 function toJsonLd(value: unknown) {
@@ -78,12 +78,12 @@ export default async function RootLayout({
   const webJsonLd = makeWebsiteJsonLd(settings)
 
   const cssVars = {
-    '--primary': settings.primaryColor || '#FF5C1A',
-    '--primary-dark': '#D94E00',
-    '--primary-light': '#FF9A72',
-    '--secondary': settings.secondaryColor || '#39BDF8',
-    '--bg-dark': '#050810',
-    '--text-muted': '#7a82a0',
+    '--primary': settings.primaryColor || '#7C5CFF',
+    '--primary-dark': '#5A3CE6',
+    '--primary-light': '#B7A7FF',
+    '--secondary': settings.secondaryColor || '#A78BFA',
+    '--bg-dark': '#0F1B3D',
+    '--text-muted': '#6F7192',
   } as const
 
   return (

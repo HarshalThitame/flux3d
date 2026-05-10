@@ -44,11 +44,11 @@ export default function HowItWorksSection() {
   return (
     <section ref={ref} className="relative py-24 px-6 overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(255,92,26,0.03)] to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(124, 92, 255,0.03)] to-transparent pointer-events-none" />
 
       {/* Floating orbs */}
       <motion.div
-        className="absolute top-20 left-10 w-32 h-32 rounded-full bg-[rgba(255,92,26,0.05)] blur-xl"
+        className="absolute top-20 left-10 w-32 h-32 rounded-full bg-[rgba(124, 92, 255,0.05)] blur-xl"
         style={{ opacity: 1 }}
         animate={{ y: [0, 20, 0] }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
@@ -67,10 +67,10 @@ export default function HowItWorksSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#FF5C1A] uppercase tracking-[3px] mb-4">The Process</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-white tracking-[-1px] leading-[1.1]">
+          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">The Process</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
             From File to Doorstep{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF5C1A] to-[#5064FF]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA]">
               in 5 Steps.
             </span>
           </h2>
@@ -79,7 +79,7 @@ export default function HowItWorksSection() {
         {/* Steps */}
         <div className="relative">
           {/* Connection line (desktop) */}
-          <div className="hidden lg:block absolute top-10 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-[#FF5C1A] via-[rgba(255,92,26,0.3)] to-[#FF5C1A]" />
+          <div className="hidden lg:block absolute top-10 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-[#7C5CFF] via-[rgba(124, 92, 255,0.3)] to-[#7C5CFF]" />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6">
             {steps.map((step, i) => (
@@ -93,17 +93,17 @@ export default function HowItWorksSection() {
                 {/* Step circle */}
                 <motion.div
                   whileHover={{ scale: 1.1 }}
-                  className="relative w-20 h-20 rounded-full bg-[#0d1120] border-2 border-[rgba(255,92,26,0.3)] flex items-center justify-center mb-6 hover:border-[#FF5C1A] hover:shadow-[0_0_30px_rgba(255,92,26,0.2)] transition-all z-10"
+                  className="relative w-20 h-20 rounded-full bg-[#FFFFFF] border-2 border-[rgba(124, 92, 255,0.3)] flex items-center justify-center mb-6 hover:border-[#7C5CFF] hover:shadow-[0_0_30px_rgba(124, 92, 255,0.2)] transition-all z-10"
                 >
-                  <step.icon className="w-8 h-8 text-[#FF5C1A]" />
-                  <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#FF5C1A] text-white text-xs font-bold flex items-center justify-center shadow-lg">
+                  <step.icon className="w-8 h-8 text-[#7C5CFF]" />
+                  <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#7C5CFF] text-white text-xs font-bold flex items-center justify-center shadow-lg">
                     {step.step}
                   </div>
                 </motion.div>
 
                 {/* Content */}
-                <h3 className="font-[var(--font-syne)] text-base font-bold text-white mb-2">{step.title}</h3>
-                <p className="text-xs text-[#7a82a0] leading-[1.6] max-w-[200px]">{step.description}</p>
+                <h3 className="font-[var(--font-syne)] text-base font-bold text-[#0F1B3D] mb-2">{step.title}</h3>
+                <p className="text-xs text-[#6F7192] leading-[1.6] max-w-[200px]">{step.description}</p>
               </motion.div>
             ))}
           </div>
@@ -116,8 +116,8 @@ export default function HowItWorksSection() {
           transition={{ delay: 0.7 }}
           className="text-center mt-16"
         >
-          <p className="text-lg text-white mb-4">Ready to start?</p>
-          <a href="/instant-quote" className="inline-flex items-center gap-2 bg-[#FF5C1A] text-white px-8 py-3 rounded-xl font-medium hover:shadow-[0_0_30px_rgba(255,92,26,0.3)] transition-shadow">
+          <p className="text-lg text-[#0F1B3D] mb-4">Ready to start?</p>
+          <a href="/instant-quote" className="inline-flex items-center gap-2 bg-[#7C5CFF] text-white px-8 py-3 rounded-xl font-medium hover:shadow-[0_0_30px_rgba(124, 92, 255,0.3)] transition-shadow">
             Upload Your File Now
             <ArrowRight className="w-4 h-4" />
           </a>

@@ -92,19 +92,19 @@ export default function DataTable<T extends { id: string }>({
   const activeFilterCount = Object.values(activeFilters).filter((v) => v !== 'all').length
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0a0f1e]">
+    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#FFFFFF]">
       <div className="border-b border-white/[0.06] px-4 py-4 md:px-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h3 className="text-base md:text-lg font-semibold text-white">{title}</h3>
-            <p className="mt-1 text-xs md:text-sm text-[#7a82a0]">{description}</p>
+            <h3 className="text-base md:text-lg font-semibold text-[#0F1B3D]">{title}</h3>
+            <p className="mt-1 text-xs md:text-sm text-[#6F7192]">{description}</p>
           </div>
           {action && <div className="w-full lg:w-auto">{action}</div>}
         </div>
 
         <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative flex-1 lg:max-w-sm">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7a82a0]" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6F7192]" />
             <input
               value={query}
               onChange={(event) => {
@@ -112,7 +112,7 @@ export default function DataTable<T extends { id: string }>({
                 setPage(1)
               }}
               placeholder={searchPlaceholder}
-              className="w-full rounded-xl border border-white/8 bg-white/[0.03] py-3 px-10 text-sm text-white outline-none transition focus:border-[#FF5C1A]/30 min-h-[44px]"
+              className="w-full rounded-xl border border-[#7C5CFF]/10 bg-white/[0.03] py-3 px-10 text-sm text-[#0F1B3D] outline-none transition focus:border-[#7C5CFF]/30 min-h-[44px]"
             />
           </div>
 
@@ -123,14 +123,14 @@ export default function DataTable<T extends { id: string }>({
                 onClick={() => setShowFilters((v) => !v)}
                 className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm transition whitespace-nowrap min-h-[44px] ${
                   showFilters || activeFilterCount > 0
-                    ? 'border-[#FF5C1A]/30 bg-[#FF5C1A]/10 text-[#FF9A72]'
-                    : 'border-white/8 bg-white/[0.03] text-[#8b95b5] hover:bg-white/[0.06]'
+                    ? 'border-[#7C5CFF]/30 bg-[#7C5CFF]/10 text-[#A78BFA]'
+                    : 'border-[#7C5CFF]/10 bg-white/[0.03] text-[#8b95b5] hover:bg-white/[0.06]'
                 }`}
               >
                 <Filter className="h-3.5 w-3.5" />
                 Filters
                 {activeFilterCount > 0 && (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#FF5C1A] text-[9px] font-bold text-white">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#7C5CFF] text-[9px] font-bold text-white">
                     {activeFilterCount}
                   </span>
                 )}
@@ -147,7 +147,7 @@ export default function DataTable<T extends { id: string }>({
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="mt-3 flex flex-wrap gap-2 border-t border-white/6 pt-3">
+              <div className="mt-3 flex flex-wrap gap-2 border-t border-[#7C5CFF]/10 pt-3">
                 {filters.map((filter) => (
                   <select
                     key={filter.key}
@@ -159,13 +159,13 @@ export default function DataTable<T extends { id: string }>({
                       }))
                       setPage(1)
                     }}
-                    className="rounded-lg border border-white/8 bg-white/[0.03] px-3 py-2.5 text-xs text-white outline-none min-h-[44px]"
+                    className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.03] px-3 py-2.5 text-xs text-[#0F1B3D] outline-none min-h-[44px]"
                   >
-                    <option value="all" className="bg-[#0d1120]">
+                    <option value="all" className="bg-[#FFFFFF]">
                       {filter.label}: All
                     </option>
                     {filter.options.map((option) => (
-                      <option key={option.value} value={option.value} className="bg-[#0d1120]">
+                      <option key={option.value} value={option.value} className="bg-[#FFFFFF]">
                         {option.label}
                       </option>
                     ))}
@@ -180,7 +180,7 @@ export default function DataTable<T extends { id: string }>({
       {/* Mobile Card View */}
       <div className="block md:hidden">
         {paginatedRows.length === 0 ? (
-          <div className="px-4 py-12 text-center text-sm text-[#7a82a0]">
+          <div className="px-4 py-12 text-center text-sm text-[#6F7192]">
             No results found
           </div>
         ) : (
@@ -249,7 +249,7 @@ export default function DataTable<T extends { id: string }>({
           <tbody>
             {paginatedRows.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-5 py-12 text-center text-sm text-[#7a82a0]">
+                <td colSpan={columns.length} className="px-5 py-12 text-center text-sm text-[#6F7192]">
                   No results found
                 </td>
               </tr>
@@ -282,7 +282,7 @@ export default function DataTable<T extends { id: string }>({
               type="button"
               onClick={() => setPage((current) => Math.max(current - 1, 1))}
               disabled={page === 1}
-              className="rounded-lg border border-white/6 bg-white/[0.02] p-2 text-[#7a82a0] transition disabled:opacity-30 hover:enabled:bg-white/[0.06] min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] p-2 text-[#6F7192] transition disabled:opacity-30 hover:enabled:bg-white/[0.06] min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
             </button>
@@ -304,8 +304,8 @@ export default function DataTable<T extends { id: string }>({
                   onClick={() => setPage(p)}
                   className={`h-9 min-w-[36px] rounded-lg text-xs font-medium transition ${
                     p === page
-                      ? 'bg-[#FF5C1A]/15 text-[#FF9A72]'
-                      : 'text-[#7a82a0] hover:bg-white/[0.04]'
+                      ? 'bg-[#7C5CFF]/15 text-[#A78BFA]'
+                      : 'text-[#6F7192] hover:bg-white/[0.04]'
                   }`}
                 >
                   {p}
@@ -316,7 +316,7 @@ export default function DataTable<T extends { id: string }>({
               type="button"
               onClick={() => setPage((current) => Math.min(current + 1, totalPages))}
               disabled={page === totalPages}
-              className="rounded-lg border border-white/6 bg-white/[0.02] p-2 text-[#7a82a0] transition disabled:opacity-30 hover:enabled:bg-white/[0.06] min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] p-2 text-[#6F7192] transition disabled:opacity-30 hover:enabled:bg-white/[0.06] min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <ChevronRight className="h-3.5 w-3.5" />
             </button>

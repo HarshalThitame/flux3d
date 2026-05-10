@@ -33,15 +33,15 @@ const InstantQuoteWorkspace = dynamic(
   () => import('@/components/instant-quote/InstantQuoteWorkspace'),
   {
     loading: () => (
-      <div className="flex min-h-screen items-center justify-center bg-[#050810]">
+      <div className="flex min-h-screen items-center justify-center bg-[#FFFFFF]">
         <div className="text-center">
-          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full border border-[#FF5C1A]/20 bg-[#FF5C1A]/10">
-            <svg className="h-8 w-8 text-[#FF5C1A] animate-spin" viewBox="0 0 24 24" fill="none">
+          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10">
+            <svg className="h-8 w-8 text-[#7C5CFF] animate-spin" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
           </div>
-          <p className="text-sm text-[#7a82a0]">Loading quote workspace...</p>
+          <p className="text-sm text-[#6F7192]">Loading quote workspace...</p>
         </div>
       </div>
     ),
@@ -55,7 +55,7 @@ export default async function InstantQuotePage() {
   const settings = await getSettings()
 
   return (
-    <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       <Navbar transparent />
       <InstantQuoteWorkspace
         user={auth?.profile ?? null}
