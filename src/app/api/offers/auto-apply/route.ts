@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 export async function GET() {
   try {
-    const supabase = createAdminSupabaseClient()
+    const supabase = await createServerSupabaseClient()
     const now = new Date().toISOString()
 
     const { data: offers, error } = await supabase
@@ -17,7 +17,8 @@ export async function GET() {
       .limit(1)
 
     if (error) {
-      return NextResponse.json({ valid: false, error: error.message }, { status: 500 })
+      console.error('[offers/auto-apply] Query failed:', error.message)
+      return NextResponse.json({ valid: false, offer: null })
     }
 
     const offer = offers?.[0] ?? null
@@ -41,9 +42,10 @@ export async function GET() {
       },
     })
   } catch (error) {
-    return NextResponse.json(
-      { valid: false, error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
+    console.error(
+      '[offers/auto-apply] Unexpected failure:',
+      error instanceof Error ? error.message : error
     )
+    return NextResponse.json({ valid: false, offer: null })
   }
 }

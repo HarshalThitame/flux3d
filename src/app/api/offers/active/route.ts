@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 export async function GET() {
   try {
-    const supabase = createAdminSupabaseClient()
+    const supabase = await createServerSupabaseClient()
     const now = new Date().toISOString()
 
     const { data: offers, error: offerError } = await supabase
@@ -16,7 +16,8 @@ export async function GET() {
       .order('created_at', { ascending: false })
 
     if (offerError) {
-      return NextResponse.json({ error: offerError.message }, { status: 500 })
+      console.error('[offers/active] Offer query failed:', offerError.message)
+      return NextResponse.json({ offers: [], coupons: [] })
     }
 
     const { data: coupons, error: couponError } = await supabase
@@ -27,14 +28,16 @@ export async function GET() {
       .gte('expires_at', now)
 
     if (couponError) {
-      return NextResponse.json({ error: couponError.message }, { status: 500 })
+      console.error('[offers/active] Coupon query failed:', couponError.message)
+      return NextResponse.json({ offers: offers ?? [], coupons: [] })
     }
 
     return NextResponse.json({ offers, coupons })
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
+    console.error(
+      '[offers/active] Unexpected failure:',
+      error instanceof Error ? error.message : error
     )
+    return NextResponse.json({ offers: [], coupons: [] })
   }
 }
