@@ -55,7 +55,7 @@ export default async function handler(
     const VERIFY_TOKEN = getVerifyToken()
 
     if (mode && token === VERIFY_TOKEN) {
-      res.status(200).send(challenge)
+      res.status(200).send(challenge ?? '')
       return
     }
 
