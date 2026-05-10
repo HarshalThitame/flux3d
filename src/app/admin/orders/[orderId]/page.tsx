@@ -23,7 +23,7 @@ const statusActions = [
 export default function AdminOrderDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const orderId = params.orderId as string
+  const orderId = params?.orderId ?? ''
 
   const [order, setOrder] = useState<AdminOrder | null>(null)
   const [loading, setLoading] = useState(true)
@@ -35,6 +35,12 @@ export default function AdminOrderDetailPage() {
     const controller = new AbortController()
 
     async function load() {
+      if (!orderId) {
+        setError('Missing order ID.')
+        setLoading(false)
+        return
+      }
+
       try {
         const res = await fetch(`/api/admin/orders/${orderId}`, { signal: controller.signal })
         if (!res.ok) {
