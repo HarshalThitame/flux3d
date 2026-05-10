@@ -15,7 +15,7 @@ export default async function handler(
 
     if (req.method === 'GET') {
 
-        const VERIFY_TOKEN = "flux3d_verify";
+        const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN ?? ''
         const mode = first(req.query['hub.mode'])
         const token = first(req.query['hub.verify_token'])
         const challenge = first(req.query['hub.challenge'])
