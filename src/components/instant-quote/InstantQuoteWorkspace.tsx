@@ -51,11 +51,16 @@ const initialUploadState: UploadState = {
 type InstantQuoteWorkspaceProps = {
   user: AppUserProfile | null
   materials: QuoteMaterial[]
+  bulkOrderContact: {
+    email: string
+    whatsappNumber: string
+  }
 }
 
 export default function InstantQuoteWorkspace({
   user,
   materials,
+  bulkOrderContact,
 }: InstantQuoteWorkspaceProps) {
   if (materials.length === 0) {
     return (
@@ -74,6 +79,7 @@ export default function InstantQuoteWorkspace({
     <CartEnabledWorkspace
       user={user}
       materials={materials}
+      bulkOrderContact={bulkOrderContact}
     />
   )
 }
@@ -83,6 +89,7 @@ const WORKSPACE_STORAGE_KEY = 'flux3d-workspace-draft'
 function CartEnabledWorkspace({
   user,
   materials,
+  bulkOrderContact,
   }: InstantQuoteWorkspaceProps) {
   const router = useRouter()
   const { addItem, isInCart } = useCart()
@@ -407,6 +414,7 @@ function CartEnabledWorkspace({
     material: materialRef,
     settings: settingsRef,
   }
+  const whatsappDigits = bulkOrderContact.whatsappNumber.replace(/[^0-9]/g, '')
 
   return (
     <>
@@ -478,6 +486,23 @@ function CartEnabledWorkspace({
             <div className="grid gap-6 lg:gap-8 xl:grid-cols-[1fr_380px]">
               {/* Left Column */}
               <div className="space-y-6">
+                <div className="rounded-2xl border border-cyan-400/15 bg-cyan-400/8 px-4 py-3 text-sm text-[#cfefff]">
+                  For bulk orders contact{' '}
+                  <a className="font-medium text-[#7dd3fc] hover:underline" href={`mailto:${bulkOrderContact.email}`}>
+                    {bulkOrderContact.email}
+                  </a>{' '}
+                  or{' '}
+                  <a
+                    className="font-medium text-[#7dd3fc] hover:underline"
+                    href={`https://wa.me/${whatsappDigits}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    WhatsApp us
+                  </a>
+                  .
+                </div>
+
                 {/* Upload Section */}
                 <motion.div
                   ref={uploadRef}

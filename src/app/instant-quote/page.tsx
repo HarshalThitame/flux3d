@@ -52,6 +52,7 @@ const InstantQuoteWorkspace = dynamic(
 export default async function InstantQuotePage() {
   const auth = await getCurrentUserProfile()
   const materials = await getPublicQuoteMaterials()
+  const settings = await getSettings()
 
   return (
     <div className="min-h-screen bg-[#050810] text-[#e8eaf0]">
@@ -59,6 +60,10 @@ export default async function InstantQuotePage() {
       <InstantQuoteWorkspace
         user={auth?.profile ?? null}
         materials={materials}
+        bulkOrderContact={{
+          email: settings.primaryEmail,
+          whatsappNumber: settings.whatsappNumber || settings.whatsappOrderNumber || settings.primaryPhone,
+        }}
       />
     </div>
   )
