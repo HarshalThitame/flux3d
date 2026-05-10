@@ -54,7 +54,7 @@ export default async function handler(
     const challenge = first(req.query['hub.challenge'])
     const VERIFY_TOKEN = getVerifyToken()
 
-    if (mode && token === VERIFY_TOKEN) {
+    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
       res.status(200).send(challenge ?? '')
       return
     }
