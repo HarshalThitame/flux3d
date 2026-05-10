@@ -62,10 +62,10 @@ export default function PricingCards({ materials }: PricingCardsProps) {
           <div className={`text-[11px] uppercase tracking-[0.22em] bg-gradient-to-r ${item.color} bg-clip-text text-transparent`}>
             Starting From
           </div>
-          <h2 className="mt-4 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] group-hover:text-[#7C5CFF] transition-colors">{item.title}</h2>
-          <div className="mt-4 text-lg font-semibold text-[#7C5CFF]">{item.price}</div>
+          <h2 className="mt-4 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] group-hover:text-[#5B3FD6] transition-colors">{item.title}</h2>
+          <div className="mt-4 text-lg font-semibold text-[#5B3FD6]">{item.price}</div>
           <p className="mt-3 text-sm leading-7 text-[#6F7192]">{item.desc}</p>
-          <div className="mt-4 text-xs text-[#7C5CFF] opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="mt-4 text-xs text-[#5B3FD6] opacity-0 transition-opacity group-hover:opacity-100">
             Click to explore →
           </div>
         </Link>

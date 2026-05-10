@@ -59,12 +59,12 @@ function FAQItem({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index:
         onClick={onToggle}
         className="w-full flex items-center justify-between py-5 px-2 text-left group hover:bg-[rgba(124, 92, 255,0.2)] rounded-lg transition-colors"
       >
-        <span className="text-base font-medium text-[#0F1B3D] group-hover:text-[#7C5CFF] transition-colors pr-4">
+        <span className="text-base font-medium text-[#0F1B3D] group-hover:text-[#5B3FD6] transition-colors pr-4">
           {faq.q}
         </span>
         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[rgba(124, 92, 255,0.4)] flex items-center justify-center group-hover:bg-[rgba(124, 92, 255,0.1)] transition-colors">
           {isOpen ? (
-            <ChevronUp className="w-5 h-5 text-[#7C5CFF]" />
+            <ChevronUp className="w-5 h-5 text-[#5B3FD6]" />
           ) : (
             <ChevronDown className="w-5 h-5 text-[#6F7192]" />
           )}
@@ -102,7 +102,7 @@ export default function FAQSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-12"
         >
-          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">FAQ</p>
+          <p className="text-sm font-medium text-[#5B3FD6] uppercase tracking-[3px] mb-4">FAQ</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
             Questions? We&apos;ve Got{' '}
             <span className="text-[#6F7192]">Clear Answers.</span>

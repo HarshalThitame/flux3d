@@ -120,7 +120,7 @@ function ServiceCard({ service, index }: { service: typeof services[0]; index: n
           </div>
 
           <div className="flex-1 flex flex-col">
-            <h3 className="font-[var(--font-syne)] text-lg sm:text-xl font-bold text-[#0F1B3D] mb-2 group-hover:text-[#7C5CFF] transition-colors duration-300">
+            <h3 className="font-[var(--font-syne)] text-lg sm:text-xl font-bold text-[#0F1B3D] mb-2 group-hover:text-[#5B3FD6] transition-colors duration-300">
               {service.title}
             </h3>
 
@@ -140,10 +140,10 @@ function ServiceCard({ service, index }: { service: typeof services[0]; index: n
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-[rgba(124, 92, 255,0.08)]">
-              <span className="text-sm text-[#7C5CFF] font-semibold">{service.price}</span>
+              <span className="text-sm text-[#5B3FD6] font-semibold">{service.price}</span>
               <a
                 href="/instant-quote"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#6F7192] hover:text-[#7C5CFF] transition-colors group/link min-h-[44px]"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#6F7192] hover:text-[#5B3FD6] transition-colors group/link min-h-[44px]"
               >
                 {service.cta}
                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover/link:translate-x-1" />
@@ -172,7 +172,7 @@ export default function ServicesSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">What We Print</p>
+          <p className="text-sm font-medium text-[#5B3FD6] uppercase tracking-[3px] mb-4">What We Print</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
             One Service.{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA]">

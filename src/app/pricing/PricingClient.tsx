@@ -47,7 +47,7 @@ export default function PricingClient({
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="mb-4 text-sm font-medium uppercase tracking-[3px] text-[#7C5CFF]"
+              className="mb-4 text-sm font-medium uppercase tracking-[3px] text-[#5B3FD6]"
             >
               Pricing
             </motion.p>

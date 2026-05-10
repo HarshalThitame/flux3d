@@ -105,7 +105,7 @@ export default function MaterialsSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">Our Materials</p>
+          <p className="text-sm font-medium text-[#5B3FD6] uppercase tracking-[3px] mb-4">Our Materials</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
             10+ Premium Materials.{' '}
             <span className="text-[#6F7192]">One Trusted Printer.</span>
@@ -135,10 +135,10 @@ export default function MaterialsSection() {
 
               {/* Name + Price */}
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-[var(--font-syne)] text-base font-bold text-[#0F1B3D] group-hover:text-[#7C5CFF] transition-colors">
+                <h3 className="font-[var(--font-syne)] text-base font-bold text-[#0F1B3D] group-hover:text-[#5B3FD6] transition-colors">
                   {material.name}
                 </h3>
-                <span className="text-sm text-[#7C5CFF] font-semibold">{material.price}</span>
+                <span className="text-sm text-[#5B3FD6] font-semibold">{material.price}</span>
               </div>
 
               {/* Traits */}

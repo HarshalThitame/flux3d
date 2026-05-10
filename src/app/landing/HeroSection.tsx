@@ -246,7 +246,7 @@ export default function HeroSection() {
       <div className="relative z-10 w-full">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-8">
           <div className="w-full lg:w-[52%] text-center lg:text-left py-8">
-            <div className="animate-hero-in inline-flex items-center gap-2 rounded-full border border-[rgba(124, 92, 255,0.3)] bg-[rgba(124, 92, 255,0.08)] px-4 py-1.5 text-sm font-medium text-[#7C5CFF] mb-3 animate-borderGlow">
+            <div className="animate-hero-in inline-flex items-center gap-2 rounded-full border border-[rgba(124, 92, 255,0.3)] bg-[rgba(124, 92, 255,0.08)] px-4 py-1.5 text-sm font-medium text-[#5B3FD6] mb-3 animate-borderGlow">
               <Printer className="w-4 h-4" />
               Now Printing on Bambu Lab P2S
             </div>

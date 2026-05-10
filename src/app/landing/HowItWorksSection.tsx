@@ -67,7 +67,7 @@ export default function HowItWorksSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">The Process</p>
+          <p className="text-sm font-medium text-[#5B3FD6] uppercase tracking-[3px] mb-4">The Process</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
             From File to Doorstep{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA]">
@@ -95,7 +95,7 @@ export default function HowItWorksSection() {
                   whileHover={{ scale: 1.1 }}
                   className="relative w-20 h-20 rounded-full bg-[#FFFFFF] border-2 border-[rgba(124, 92, 255,0.3)] flex items-center justify-center mb-6 hover:border-[#7C5CFF] hover:shadow-[0_0_30px_rgba(124, 92, 255,0.2)] transition-all z-10"
                 >
-                  <step.icon className="w-8 h-8 text-[#7C5CFF]" />
+                  <step.icon className="w-8 h-8 text-[#5B3FD6]" />
                   <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#7C5CFF] text-white text-xs font-bold flex items-center justify-center shadow-lg">
                     {step.step}
                   </div>

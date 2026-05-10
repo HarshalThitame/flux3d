@@ -85,7 +85,7 @@ function TestimonialCard({ testimonial, index }: { testimonial: typeof testimoni
       {/* Stars */}
       <div className="flex gap-1 mb-4">
         {Array.from({ length: testimonial.stars }).map((_, i) => (
-          <Star key={i} className="w-4 h-4 fill-[#7C5CFF] text-[#7C5CFF]" />
+          <Star key={i} className="w-4 h-4 fill-[#5B3FD6] text-[#5B3FD6]" />
         ))}
       </div>
 
@@ -124,7 +124,7 @@ export default function TestimonialsSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">What Our Customers Say</p>
+          <p className="text-sm font-medium text-[#5B3FD6] uppercase tracking-[3px] mb-4">What Our Customers Say</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
             500+ Customers.{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA]">
@@ -153,7 +153,7 @@ export default function TestimonialsSection() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
               <div className="flex items-center justify-center gap-1 mb-1">
-                <Star className="w-5 h-5 fill-[#7C5CFF] text-[#7C5CFF]" />
+                <Star className="w-5 h-5 fill-[#5B3FD6] text-[#5B3FD6]" />
                 <span className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D]">4.9</span>
                 <span className="text-[#6F7192] text-sm">/ 5</span>
               </div>
@@ -168,7 +168,7 @@ export default function TestimonialsSection() {
               <p className="text-xs text-[#6F7192]">Platforms</p>
             </div>
             <div>
-              <div className="font-[var(--font-syne)] text-2xl font-extrabold text-[#7C5CFF]">100%</div>
+              <div className="font-[var(--font-syne)] text-2xl font-extrabold text-[#5B3FD6]">100%</div>
               <p className="text-xs text-[#6F7192]">Verified Buyers</p>
             </div>
           </div>

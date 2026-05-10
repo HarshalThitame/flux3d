@@ -90,7 +90,7 @@ export default function PricingSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">Transparent Pricing</p>
+          <p className="text-sm font-medium text-[#5B3FD6] uppercase tracking-[3px] mb-4">Transparent Pricing</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
             No Hidden Charges.{' '}
             <span className="text-[#6F7192]">No Surprises.</span>
@@ -132,7 +132,7 @@ export default function PricingSection() {
               <ul className="space-y-3 mb-8">
                 {tier.features.map((feature, j) => (
                   <li key={j} className="flex items-start gap-2 text-sm text-[#6F7192]">
-                    <Check className="w-4 h-4 text-[#7C5CFF] mt-0.5 flex-shrink-0" />
+                    <Check className="w-4 h-4 text-[#5B3FD6] mt-0.5 flex-shrink-0" />
                     {feature}
                   </li>
                 ))}
@@ -185,7 +185,7 @@ export default function PricingSection() {
                 {priceTable.map((row, i) => (
                   <tr key={i} className="border-b border-[rgba(124, 92, 255,0.25)] hover:bg-[rgba(124, 92, 255,0.2)]">
                     <td className="py-3 px-4 text-[#0F1B3D] font-medium">{row.material}</td>
-                    <td className="py-3 px-4 text-[#7C5CFF]">{row.price}</td>
+                    <td className="py-3 px-4 text-[#5B3FD6]">{row.price}</td>
                     <td className="py-3 px-4 text-[#6F7192] hidden sm:table-cell">{row.notes}</td>
                   </tr>
                 ))}

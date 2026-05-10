@@ -32,7 +32,7 @@ export default function ProblemSection() {
     <section className="relative w-full py-24 px-4 md:px-8 lg:px-16 z-10" style={{ backgroundColor: '#FFFFFF' }}>
       <div className="max-w-7xl mx-auto">
         <Reveal className="mb-4">
-          <span className="inline-block text-[#7C5CFF] text-sm font-semibold tracking-wider uppercase">
+          <span className="inline-block text-[#5B3FD6] text-sm font-semibold tracking-wider uppercase">
             Why Flux 3D
           </span>
         </Reveal>
@@ -71,16 +71,16 @@ export default function ProblemSection() {
 
                   <div className="relative z-10">
                     <div className="w-12 h-12 rounded-xl bg-[#7C5CFF]/10 flex items-center justify-center mb-4 group-hover:bg-[#7C5CFF]/20 transition-colors duration-300">
-                      <Icon className="w-6 h-6 text-[#7C5CFF]" />
+                      <Icon className="w-6 h-6 text-[#5B3FD6]" />
                     </div>
 
-                    <div className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D] mb-2 group-hover:text-[#7C5CFF] transition-colors duration-300">
+                    <div className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D] mb-2 group-hover:text-[#5B3FD6] transition-colors duration-300">
                       {point.problem}
                     </div>
 
                     <div className="flex items-center gap-2 mt-4">
-                      <ArrowRight className="w-4 h-4 text-[#7C5CFF]" />
-                      <span className="text-[#7C5CFF] font-medium text-sm">
+                      <ArrowRight className="w-4 h-4 text-[#5B3FD6]" />
+                      <span className="text-[#5B3FD6] font-medium text-sm">
                         Flux 3D: {point.solution}
                       </span>
                     </div>

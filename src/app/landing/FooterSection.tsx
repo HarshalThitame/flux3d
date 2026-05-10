@@ -31,7 +31,7 @@ export default function FooterSection() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <div className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D] mb-4">
-              <span style={{ color: 'var(--primary, #7C5CFF)' }}>{settings.businessName}</span>
+              <span className="text-[#5B3FD6]">{settings.businessName}</span>
             </div>
             <p className="text-sm text-[#6F7192] leading-[1.7] max-w-[320px] mb-6">
               {settings.businessDescription || `Precision 3D printing for every need — industrial, architectural, medical, student, creator, and corporate. Made in India. Delivered across India.`}
@@ -45,7 +45,7 @@ export default function FooterSection() {
                     key={i}
                     href={social.href}
                     aria-label={social.label}
-                    className="w-10 h-10 rounded-lg bg-[rgba(124, 92, 255,0.4)] border border-[rgba(124, 92, 255,0.5)] flex items-center justify-center text-[#6F7192] hover:text-[#7C5CFF] hover:border-[rgba(124, 92, 255,0.3)] transition-colors"
+                    className="w-10 h-10 rounded-lg bg-[rgba(124, 92, 255,0.4)] border border-[rgba(124, 92, 255,0.5)] flex items-center justify-center text-[#6F7192] hover:text-[#5B3FD6] hover:border-[rgba(124, 92, 255,0.3)] transition-colors"
                   >
                     <social.icon className="w-5 h-5" />
                   </a>
@@ -60,7 +60,7 @@ export default function FooterSection() {
             <ul className="space-y-2">
               {['Industrial Parts', 'Architecture Models', 'Student Projects', 'Online Products', 'Medical & Dental', 'Creator Props', 'Corporate Gifting'].map((item) => (
                 <li key={item}>
-                  <Link href="/services" className="text-sm text-[#6F7192] hover:text-[#7C5CFF] transition-colors">
+                  <Link href="/services" className="text-sm text-[#6F7192] hover:text-[#5B3FD6] transition-colors">
                     {item}
                   </Link>
                 </li>
@@ -81,7 +81,7 @@ export default function FooterSection() {
                   { label: 'Careers', href: '/contact' },
                 ].map((item) => (
                 <li key={item.label}>
-                  <Link href={item.href} className="text-sm text-[#6F7192] hover:text-[#7C5CFF] transition-colors">
+                  <Link href={item.href} className="text-sm text-[#6F7192] hover:text-[#5B3FD6] transition-colors">
                     {item.label}
                   </Link>
                 </li>
@@ -95,25 +95,25 @@ export default function FooterSection() {
             <ul className="space-y-3">
               {(settings.addressLine1 || settings.city) && (
                 <li className="flex items-start gap-2 text-sm text-[#6F7192]">
-                  <MapPin className="w-4 h-4 mt-0.5 text-[#7C5CFF]" />
+                  <MapPin className="w-4 h-4 mt-0.5 text-[#5B3FD6]" />
                   {addressParts || 'Mumbai, Maharashtra — 400053'}
                 </li>
               )}
               {settings.primaryPhone && (
                 <li className="flex items-center gap-2 text-sm text-[#6F7192]">
-                  <Phone className="w-4 h-4 text-[#7C5CFF]" />
+                  <Phone className="w-4 h-4 text-[#5B3FD6]" />
                   {settings.primaryPhone}
                 </li>
               )}
               {settings.primaryEmail && (
                 <li className="flex items-center gap-2 text-sm text-[#6F7192]">
-                  <Mail className="w-4 h-4 text-[#7C5CFF]" />
+                  <Mail className="w-4 h-4 text-[#5B3FD6]" />
                   {settings.primaryEmail}
                 </li>
               )}
               {settings.businessHours && (
                 <li className="flex items-center gap-2 text-sm text-[#6F7192]">
-                  <Clock className="w-4 h-4 text-[#7C5CFF]" />
+                  <Clock className="w-4 h-4 text-[#5B3FD6]" />
                   {settings.businessHours}
                 </li>
               )}
