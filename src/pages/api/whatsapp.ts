@@ -10,7 +10,7 @@ export default async function handler(
     res: NextApiResponse
 ) {
 
-    // META WEBHOOK VERIFICATION
+    // WEBHOOK VERIFICATION
     if (req.method === "GET") {
 
         const VERIFY_TOKEN = "flux3d_verify";
@@ -29,7 +29,7 @@ export default async function handler(
     // INCOMING WHATSAPP MESSAGE
     if (req.method === "POST") {
 
-        console.log("WHATSAPP WEBHOOK:");
+        console.log("WHATSAPP EVENT RECEIVED");
         console.log(JSON.stringify(req.body, null, 2));
 
         return res.status(200).json({
