@@ -44,7 +44,9 @@ function extractUserMessage(body: unknown) {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<{ error?: string; received?: boolean; reply?: string }>
+  res: NextApiResponse<
+    string | { error?: string; received?: boolean; reply?: string }
+  >
 ) {
   if (req.method === 'GET') {
     const mode = first(req.query['hub.mode'])
