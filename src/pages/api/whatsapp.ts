@@ -1,12 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 
-type WebhookResponse =
-  | string
-  | {
-      error: string
-      received?: boolean
-    }
+type WebhookResponse = {
+  error?: string
+  received?: boolean
+}
 
 function first(value: string | string[] | undefined) {
   if (Array.isArray(value)) return value[0]
