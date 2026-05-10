@@ -1,11 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 
-type WebhookResponse = {
-  error?: string
-  received?: boolean
-}
-
 function first(value: string | string[] | undefined) {
   if (Array.isArray(value)) return value[0]
   return value
@@ -22,7 +17,7 @@ function getVerifyToken() {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<WebhookResponse>
+  res: NextApiResponse<{ error?: string; received?: boolean }>
 ) {
   if (req.method === 'GET') {
     const mode = first(req.query['hub.mode'])
@@ -31,7 +26,7 @@ export default async function handler(
     const expectedToken = getVerifyToken()
 
     if (mode === 'subscribe' && challenge && (expectedToken === '' || token === expectedToken)) {
-      res.status(200).send(challenge)
+      res.status(200).end(challenge)
       return
     }
 
