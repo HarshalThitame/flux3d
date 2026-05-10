@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView } from '@/lib/motion'
 import { useRef, useState } from 'react'
 import { ArrowRight, Sparkles, MessageCircle, Mail, Check } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'

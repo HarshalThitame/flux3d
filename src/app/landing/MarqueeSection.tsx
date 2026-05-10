@@ -1,7 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
-
 const marqueeItems = [
   'IIT Bombay Students', 'Manufacturing Units', 'Dental Clinics', 'Architecture Firms',
   'YouTubers & Creators', 'Corporate HR Teams', 'Robotics Clubs', 'Interior Designers',
@@ -15,18 +13,14 @@ export default function MarqueeSection() {
         <span className="text-xs text-[#4a5070] uppercase tracking-wider">Trusted by</span>
         <div className="flex-1 h-px bg-[rgba(124, 92, 255,0.4)]" />
       </div>
-      <motion.div
-        className="flex whitespace-nowrap"
-        animate={{ x: ['0%', '-50%'] }}
-        transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-      >
+      <div className="marquee-track flex whitespace-nowrap">
         {[...marqueeItems, ...marqueeItems].map((item, i) => (
           <div key={i} className="mx-6 text-sm text-[#6F7192] flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFF]" />
             {item}
           </div>
         ))}
-      </motion.div>
+      </div>
     </div>
   )
 }

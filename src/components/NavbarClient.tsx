@@ -151,21 +151,15 @@ export default function NavbarClient({
         }`}>
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group" aria-label={`${settings.businessName} home`}>
-            {settings.logoUrl ? (
-              <Image
-                src={settings.logoUrl}
-                alt={settings.businessName}
-                width={180}
-                height={48}
-                sizes="180px"
-                priority
-                className="h-12 w-auto object-contain"
-              />
-            ) : (
-              <span className="font-[var(--font-syne)] text-xl font-extrabold text-[#0F1B3D]">
-                <span style={{ color: 'var(--primary, #7C5CFF)' }}>{settings.businessName}</span>
-              </span>
-            )}
+            <Image
+              src="/logo.png"
+              alt="Flux3D"
+              width={180}
+              height={48}
+              sizes="180px"
+              priority
+              className="h-12 w-auto object-contain"
+            />
           </Link>
 
           {/* Nav Links */}

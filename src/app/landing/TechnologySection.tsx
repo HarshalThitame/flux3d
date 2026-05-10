@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView } from '@/lib/motion'
 import { useRef } from 'react'
 import { Gauge, Layers, Box, Palette, Printer, Eye } from 'lucide-react'
 

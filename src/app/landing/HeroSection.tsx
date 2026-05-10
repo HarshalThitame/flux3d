@@ -309,12 +309,12 @@ export default function HeroSection() {
           <div className="absolute inset-y-0 right-0 w-[140%] bg-[radial-gradient(ellipse_50%_50%_at_50%_50%,rgba(124, 92, 255,0.15)_0%,transparent_70%)] blur-2xl" />
           <div className="relative w-full h-full animate-float-slow2">
             <Image
-              src="/pot.png"
+              src="/pot.webp"
               alt="3D printed pot showcase"
               fill
               priority
               sizes="(max-width: 768px) 100vw, 48vw"
-              quality={75}
+              quality={65}
               className="object-contain object-right drop-shadow-2xl"
             />
           </div>
@@ -323,11 +323,12 @@ export default function HeroSection() {
         <div className="lg:hidden flex items-center justify-center max-md:mt-4 animate-hero-in animate-delay-4 px-4">
           <div className="relative w-full max-w-[280px] aspect-[3/4]">
             <Image
-              src="/pot.png"
+              src="/pot.webp"
               alt="3D printed pot showcase"
               fill
+              priority
               sizes="280px"
-              quality={75}
+              quality={65}
               className="object-contain drop-shadow-2xl"
             />
           </div>
