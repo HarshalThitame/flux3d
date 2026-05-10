@@ -76,11 +76,11 @@ export default function FDMvsResin() {
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-[#A78BFA]/15 flex items-center justify-center">
-                <span className="text-[#A78BFA] font-bold text-sm">R</span>
+                <span className="text-[#7C5CFF] font-bold text-sm">R</span>
               </div>
               <div>
                 <h3 className="text-lg font-bold text-[#0F1B3D]">Resin Printing</h3>
-                <p className="text-xs text-[#A78BFA]">Detail, surface finish, and precision</p>
+                <p className="text-xs text-[#7C5CFF]">Detail, surface finish, and precision</p>
               </div>
             </div>
 

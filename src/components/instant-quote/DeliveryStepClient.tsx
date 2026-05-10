@@ -256,15 +256,15 @@ export default function DeliveryStepClient({
 
   return (
     <>
-      <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(124, 92, 255,0.08),transparent_24%),radial-gradient(circle_at_right,rgba(183, 167, 255,0.08),transparent_28%),#FFFFFF] px-4 pb-16 pt-28 text-[#0F1B3D] md:px-8 xl:px-10">
+      <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(124, 92, 255,0.08),transparent_24%),radial-gradient(circle_at_right,rgba(183, 167, 255,0.08),transparent_28%),#FFFFFF] px-4 pb-16 pt-32 text-[#0F1B3D] md:px-8 xl:px-10 md:pt-28">
         <div className="mx-auto max-w-[1500px]">
           <div className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div className="max-w-[760px]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#A78BFA]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#7C5CFF]">
                 Delivery Step
               </div>
               <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2.3rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#0F1B3D]">
-                Confirm Delivery and Submit <span className="text-[#7dd3fc]">Your Print Request</span>
+                Confirm Delivery and Submit <span className="text-[#7C5CFF]">Your Print Request</span>
               </h1>
               <p className="mt-5 max-w-[720px] text-base leading-8 text-[#6F7192]">
                 Review your quote, choose a saved address or add a new one, and we will calculate shipping automatically before your order request is sent.
@@ -285,14 +285,14 @@ export default function DeliveryStepClient({
                   initial={{ opacity: 0, y: 18 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35 }}
-                  className="rounded-[28px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]"
+                  className="rounded-[28px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_10px_40px_rgba(0,0,0,0.2)] sm:shadow-[0_18px_70px_rgba(0,0,0,0.28)]"
                 >
                   <div className="mb-5 flex items-start justify-between gap-4">
                     <div>
                       <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
                         Saved Addresses
                       </h2>
-                      <p className="mt-2 text-sm leading-6 text-[#97a1c2]">
+                      <p className="mt-2 text-sm leading-6 text-[#6F7192]">
                         Use an existing delivery address or switch to a new one.
                       </p>
                     </div>
@@ -316,9 +316,9 @@ export default function DeliveryStepClient({
                               : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10 hover:bg-white/[0.04]'
                           }`}
                         >
-                          <div className="text-sm font-semibold text-[#0F1B3D]">{savedAddress.fullName}</div>
-                          <div className="mt-1 text-sm text-[#c8d0e9]">{savedAddress.phone}</div>
-                          <div className="mt-3 space-y-1 text-xs leading-6 text-[#8d97b8]">
+                          <div className={`text-sm font-semibold ${selectedAddressId === savedAddress.id ? 'text-white' : 'text-[#0F1B3D]'}`}>{savedAddress.fullName}</div>
+                          <div className={`mt-1 text-sm ${selectedAddressId === savedAddress.id ? 'text-[#c9d0e7]' : 'text-[#6F7192]'}`}>{savedAddress.phone}</div>
+                          <div className={`mt-3 space-y-1 text-xs leading-6 ${selectedAddressId === savedAddress.id ? 'text-[#c9d0e7]' : 'text-[#6F7192]'}`}>
                             {summary.map((line) => (
                               <div key={line}>{line}</div>
                             ))}
@@ -335,7 +335,7 @@ export default function DeliveryStepClient({
                       setLastLookupPincode('')
                       setAddress(initialAddressFields)
                     }}
-                    className="mt-4 text-sm font-medium text-[#7dd3fc]"
+                    className="mt-4 text-sm font-medium text-[#7C5CFF]"
                   >
                     Use a new address
                   </button>
@@ -344,7 +344,7 @@ export default function DeliveryStepClient({
 
               <AddressForm values={address} errors={errors} onChange={handleAddressChange} />
 
-              <div className="text-sm text-[#8d97b8]">
+              <div className="text-sm text-[#6F7192]">
                 {lookupLoading
                   ? 'Fetching city and state from your pincode...'
                   : 'City and state will auto-fill after you enter a valid 6-digit pincode.'}
@@ -362,11 +362,11 @@ export default function DeliveryStepClient({
                   <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
                     Delivery Summary
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-[#97a1c2]">
+                  <p className="mt-2 text-sm leading-6 text-[#6F7192]">
                     Final review before your request is submitted to the admin.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#A78BFA]">
+                <div className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#7C5CFF]">
                   <Truck className="h-5 w-5" />
                 </div>
               </div>
@@ -375,17 +375,17 @@ export default function DeliveryStepClient({
                 <div className="rounded-[20px] border border-[#7C5CFF]/10 bg-white/[0.03] p-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Quote</div>
                   <div className="mt-2 text-lg font-semibold text-[#0F1B3D]">{draft.quoteId}</div>
-                  <div className="mt-2 text-sm text-[#c8d0e9]">
+                  <div className="mt-2 text-sm text-[#6F7192]">
                     {draft.material}, {draft.color}, {draft.infill}% infill, {draft.layerHeight} mm
                   </div>
                 </div>
 
                 <div className="rounded-[24px] border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-5 shadow-[0_12px_48px_rgba(124, 92, 255,0.1)]">
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#ffd3c1]">Total Price</div>
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Total Price</div>
                   <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
                     ₹{pricing.totalPrice.toFixed(0)}
                   </div>
-                  <div className="mt-3 grid gap-2 text-sm text-[#ffe0d4]">
+                  <div className="mt-3 grid gap-2 text-sm text-[#6F7192]">
                     <div className="flex justify-between">
                       <span>Print cost</span>
                       <span>₹{draft.price.toFixed(0)}</span>

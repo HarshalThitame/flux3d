@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import {
@@ -13,7 +13,7 @@ import {
   saveCartToStorage,
   updateCartItem,
 } from '@/lib/cart/utils'
-import type { CartItem, CartSummary } from '@/lib/cart/types'
+import type { AppliedCoupon, CartItem, CartSummary } from '@/lib/cart/types'
 
 const CART_SKIP_RESTORE_FLAG = 'flux3d-cart-skip-restore'
 
@@ -27,6 +27,9 @@ type CartContextType = {
   resetCartState: () => void
   isInCart: (quoteId: string) => boolean
   isLoading: boolean
+  appliedCoupon: AppliedCoupon | null
+  setAppliedCoupon: (coupon: AppliedCoupon | null) => void
+  autoApplyOffer: AppliedCoupon | null
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -35,8 +38,68 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [storageKey, setStorageKey] = useState(() => getCartStorageKey())
+  const [userCoupon, setUserCoupon] = useState<AppliedCoupon | null>(null)
+  const [autoApplyOffer, setAutoApplyOffer] = useState<AppliedCoupon | null>(null)
 
-  const summary = calculateCartSummary(items)
+  const itemsRef = useRef(items)
+  itemsRef.current = items
+
+  const appliedCoupon = userCoupon ?? autoApplyOffer
+
+  function recalculateDiscount(coupon: AppliedCoupon | null, currentItems: CartItem[]): AppliedCoupon | null {
+    if (!coupon) return null
+    const subtotal = currentItems.reduce((sum, item) => sum + item.price, 0)
+    if (subtotal < (coupon.min_order_value ?? 0)) return null
+
+    let discountAmount = 0
+    if (coupon.discount_type === 'percentage') {
+      discountAmount = (subtotal * coupon.discount_value) / 100
+      if (coupon.max_discount && discountAmount > coupon.max_discount) {
+        discountAmount = coupon.max_discount
+      }
+    } else if (coupon.discount_type === 'fixed_amount') {
+      discountAmount = Math.min(coupon.discount_value, subtotal)
+    }
+
+    return { ...coupon, discount_amount: discountAmount }
+  }
+
+  function setAppliedCoupon(coupon: AppliedCoupon | null) {
+    const recalculated = recalculateDiscount(coupon, itemsRef.current)
+    setUserCoupon(recalculated)
+  }
+
+  useEffect(() => {
+    if (isLoading) return
+    let cancelled = false
+    fetch('/api/offers/auto-apply')
+      .then(r => r.json())
+      .then(data => {
+        if (cancelled || !data.valid || !data.offer) {
+          if (!cancelled) setAutoApplyOffer(null)
+          return
+        }
+        const recalculated = recalculateDiscount(data.offer, itemsRef.current)
+        if (!cancelled) setAutoApplyOffer(recalculated)
+      })
+      .catch(() => {
+        if (!cancelled) setAutoApplyOffer(null)
+      })
+    return () => { cancelled = true }
+  }, [isLoading])
+
+  useEffect(() => {
+    if (isLoading) return
+    if (userCoupon) {
+      const recalculated = recalculateDiscount(userCoupon, itemsRef.current)
+      setUserCoupon(recalculated)
+    } else if (autoApplyOffer) {
+      const recalculated = recalculateDiscount(autoApplyOffer, itemsRef.current)
+      setAutoApplyOffer(recalculated)
+    }
+  }, [items, isLoading])
+
+  const summary = calculateCartSummary(items, appliedCoupon)
 
   useEffect(() => {
     let active = true
@@ -137,6 +200,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearItems = () => {
     clearCart(storageKey)
     setItems([])
+    setUserCoupon(null)
   }
 
   const resetCartState = () => {
@@ -165,6 +229,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         resetCartState,
         isInCart,
         isLoading,
+        appliedCoupon,
+        setAppliedCoupon,
+        autoApplyOffer,
       }}
     >
       {children}

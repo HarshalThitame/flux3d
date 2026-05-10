@@ -50,7 +50,7 @@ export default function ViewerSection({
           <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
             3D File Viewer
           </h2>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-[#97a1c2]">
+          <p className="mt-2 max-w-xl text-sm leading-6 text-[#6F7192]">
             Explore your part in a clean interactive viewer, inspect the geometry from every angle, and move forward with more confidence before printing.
           </p>
         </div>
@@ -94,7 +94,7 @@ export default function ViewerSection({
             <div className="font-[var(--font-syne)] text-2xl font-semibold text-[#0F1B3D]">
               Awaiting model preview
             </div>
-            <p className="max-w-md text-sm leading-7 text-[#97a1c2]">
+            <p className="max-w-md text-sm leading-7 text-[#6F7192]">
               Your model will appear here with smooth rotate, zoom, and pan controls as soon as a supported file is loaded.
             </p>
           </div>

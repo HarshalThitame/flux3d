@@ -165,7 +165,7 @@ export default async function OrderDetailPage({
                       <div className="text-sm font-semibold text-[#0F1B3D]">{item.material}</div>
                       <div className="mt-1 text-sm text-[#c8d0e9]">{item.color}</div>
                     </div>
-                    <div className="font-[var(--font-syne)] text-xl font-bold text-[#A78BFA]">
+                    <div className="font-[var(--font-syne)] text-xl font-bold text-[#7C5CFF]">
                       ₹{Number(item.total_price).toFixed(0)}
                     </div>
                   </div>

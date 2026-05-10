@@ -281,7 +281,7 @@ export default function BusinessSettingsPage() {
               <ArrowLeft className="h-3.5 w-3.5" />
               Back to Settings
             </button>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#A78BFA]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#7C5CFF]">
               <Building2 className="h-3 w-3" />
               Company
             </div>

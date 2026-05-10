@@ -10,6 +10,7 @@ import { useCart } from '@/lib/cart/context'
 import { useProfile } from '@/hooks/useProfile'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { useBusinessSettings } from '@/lib/settings-context'
+import { AnnouncementBar } from '@/components/offers/OfferBanner'
 
 interface NavbarClientProps {
   transparent?: boolean
@@ -135,11 +136,14 @@ export default function NavbarClient({
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           scrolled || !transparent
-            ? 'py-3 bg-[#FFFFFF]/90 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.3)]'
-            : 'py-4 bg-transparent border-b border-white/[0.04]'
+            ? 'bg-[#FFFFFF]/90 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.3)]'
+            : 'bg-transparent border-b border-white/[0.04]'
         }`}
       >
-        <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between">
+        <AnnouncementBar />
+        <div className={`max-w-[1400px] mx-auto px-6 flex items-center justify-between ${
+          scrolled || !transparent ? 'py-3' : 'py-4'
+        }`}>
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group" aria-label={`${settings.businessName} home`}>
             {settings.logoUrl ? (

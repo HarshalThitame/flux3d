@@ -123,7 +123,7 @@ export default function DataTable<T extends { id: string }>({
                 onClick={() => setShowFilters((v) => !v)}
                 className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm transition whitespace-nowrap min-h-[44px] ${
                   showFilters || activeFilterCount > 0
-                    ? 'border-[#7C5CFF]/30 bg-[#7C5CFF]/10 text-[#A78BFA]'
+                    ? 'border-[#7C5CFF]/30 bg-[#7C5CFF]/10 text-[#7C5CFF]'
                     : 'border-[#7C5CFF]/10 bg-white/[0.03] text-[#8b95b5] hover:bg-white/[0.06]'
                 }`}
               >
@@ -304,7 +304,7 @@ export default function DataTable<T extends { id: string }>({
                   onClick={() => setPage(p)}
                   className={`h-9 min-w-[36px] rounded-lg text-xs font-medium transition ${
                     p === page
-                      ? 'bg-[#7C5CFF]/15 text-[#A78BFA]'
+                      ? 'bg-[#7C5CFF]/15 text-[#7C5CFF]'
                       : 'text-[#6F7192] hover:bg-white/[0.04]'
                   }`}
                 >

@@ -60,7 +60,7 @@ export default function InventoryPage() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#A78BFA]">
+        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#7C5CFF]">
           <FolderKanban className="h-3 w-3" />
           Inventory Management
         </div>
@@ -153,7 +153,7 @@ export default function InventoryPage() {
               <button
                 type="button"
                 onClick={() => router.push('/admin/materials')}
-                className="text-[#7C5CFF] hover:text-[#A78BFA] text-sm"
+                className="text-[#7C5CFF] hover:text-[#7C5CFF] text-sm"
               >
                 Edit
               </button>

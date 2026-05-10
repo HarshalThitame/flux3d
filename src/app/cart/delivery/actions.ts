@@ -47,6 +47,11 @@ type CreateCartOrderInput = {
   state: string
   pincode: string
   landmark: string
+  discount?: number
+  couponCode?: string | null
+  couponId?: string | null
+  discountType?: string | null
+  offerId?: string | null
 }
 
 function normalizeNumber(value: number, field: string) {
@@ -145,8 +150,12 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
 
   const groupId = crypto.randomUUID()
 
+  const discountPerItem = input.discount ? input.discount / input.items.length : 0
+
   const orderItems = input.items.map((item) => {
     const normalizedQuantity = Math.max(1, Math.floor(Number(item.quantity ?? 1)))
+    const itemDelivery = deliveryCharge / input.items.length
+    const itemTotal = item.price + itemDelivery - discountPerItem
     return {
       user_id: auth.user.id,
       group_id: groupId,
@@ -159,12 +168,17 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
       quantity: normalizedQuantity,
       post_processing_charges: normalizeNumber(item.postProcessingCharges ?? 0, 'post processing charges'),
       ...trimmedAddress,
-      delivery_charge: deliveryCharge / input.items.length,
-      total_price: item.price + deliveryCharge / input.items.length,
+      delivery_charge: itemDelivery,
+      total_price: Math.max(0, itemTotal),
       price: normalizeNumber(item.price, 'price'),
       price_per_unit: item.price / normalizedQuantity,
       estimated_time: normalizeNumber(item.estimatedTime, 'estimated time'),
       status: 'pending',
+      discount: input.discount ?? 0,
+      coupon_code: input.couponCode ?? null,
+      coupon_id: input.couponId ?? null,
+      offer_id: input.offerId ?? null,
+      discount_type: input.discountType ?? null,
       notes: `Cart order - ${input.items.length} item(s), ${normalizedQuantity} pcs. File: ${item.fileName}`,
     }
   })
@@ -203,6 +217,60 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
 
     if (updateError) {
       throw new Error(updateError.message)
+    }
+  }
+
+  if (input.discount && input.discount > 0) {
+    const firstOrder = insertedOrders[0]
+    const orderNumber = formatOrderNumber(firstOrder.serial_number, firstOrder.created_at)
+
+    if (input.offerId) {
+      const { error: redemptionError } = await supabase
+        .from('redemptions')
+        .insert({
+          user_id: auth.user.id,
+          order_id: orderNumber,
+          offer_id: input.offerId,
+          discount_type: input.discountType ?? 'percentage',
+          discount_value: input.discount ?? 0,
+          discount_applied: input.discount,
+          order_amount: input.subtotal,
+        })
+
+      if (redemptionError) {
+        console.error('[orders] Failed to record offer redemption:', redemptionError)
+      }
+    }
+
+    if (input.couponId) {
+      const { error: redemptionError } = await supabase
+        .from('redemptions')
+        .insert({
+          user_id: auth.user.id,
+          order_id: orderNumber,
+          coupon_id: input.couponId,
+          discount_type: input.discountType ?? 'percentage',
+          discount_value: input.discount ?? 0,
+          discount_applied: input.discount,
+          order_amount: input.subtotal,
+        })
+
+      if (redemptionError) {
+        console.error('[orders] Failed to record coupon redemption:', redemptionError)
+      }
+
+      const { data: currentCoupon } = await supabase
+        .from('coupons')
+        .select('used_count')
+        .eq('id', input.couponId)
+        .single()
+
+      if (currentCoupon) {
+        await supabase
+          .from('coupons')
+          .update({ used_count: (currentCoupon.used_count as number) + 1 })
+          .eq('id', input.couponId)
+      }
     }
   }
 

@@ -17,7 +17,7 @@ export default async function AuthShell({
   const settings = await getSettings()
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#FFFFFF] px-4 py-24 text-[#0F1B3D]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(124, 92, 255,0.22),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(61,115,255,0.16),transparent_28%),linear-gradient(180deg,#FFFFFF_0%,#FFFFFF_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(124, 92, 255,0.22),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(124,92,255,0.16),transparent_28%),linear-gradient(180deg,#FFFFFF_0%,#FFFFFF_100%)]" />
       <div
         className="absolute inset-0 opacity-25"
         style={{
@@ -36,7 +36,7 @@ export default async function AuthShell({
           >
             {settings.businessName || 'Flux3D'} Auth Layer
           </Link>
-          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#A78BFA]">
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#7C5CFF]">
             {eyebrow}
           </div>
           <h1 className="mt-6 font-[var(--font-syne)] text-[clamp(2.6rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-0.04em] text-[#0F1B3D]">

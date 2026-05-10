@@ -34,7 +34,7 @@ const colorNameToHex: Record<string, string> = {
   'green': '#22C55E',
   'blue': '#3B82F6',
   'yellow': '#EAB308',
-  'orange': '#7C5CFF',
+  'orange': '#F97316',
   'purple': '#A855F7',
   'pink': '#EC4899',
   'white': '#FFFFFF',
@@ -56,7 +56,7 @@ const colorNameToHex: Record<string, string> = {
   'olive': '#3F6212',
   'coral': '#F97316',
   'salmon': '#FB923C',
-  'gold': '#A78BFA',
+  'gold': '#D4A017',
   'silver': '#9CA3AF',
 }
 

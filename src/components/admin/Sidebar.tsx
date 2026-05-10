@@ -21,7 +21,7 @@ export default function Sidebar({
       <div className="flex h-full flex-col px-4 py-5 overflow-y-auto scrollbar-hide">
         <div className="flex items-center justify-between gap-3 px-2">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[linear-gradient(135deg,#7C5CFF,#A78BFA)] text-[#0F1B3D] shadow-[0_10px_30px_rgba(57,189,248,0.2)]">
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[linear-gradient(135deg,#7C5CFF,#A78BFA)] text-[#0F1B3D] shadow-[0_10px_30px_rgba(124,92,255,0.2)]">
               <Printer className="h-5 w-5" />
             </div>
             {!collapsed ? (
@@ -51,7 +51,7 @@ export default function Sidebar({
                 href={item.href}
                 className={`group flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition ${
                   active
-                    ? 'bg-[linear-gradient(90deg,rgba(255,123,67,0.18),rgba(57,189,248,0.12))] text-[#0F1B3D] shadow-[inset_0_0_0_1px_rgba(124, 92, 255,0.4)]'
+                    ? 'bg-[linear-gradient(90deg,rgba(124,92,255,0.15),rgba(167,139,250,0.12))] text-[#0F1B3D] shadow-[inset_0_0_0_1px_rgba(124, 92, 255,0.4)]'
                     : 'text-[#96a2c3] hover:bg-white/[0.04] hover:text-[#0F1B3D]'
                 }`}
               >
@@ -83,7 +83,7 @@ export default function Sidebar({
           </div>
         )}
 
-        <div className="mt-auto rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,123,67,0.12),rgba(124, 92, 255,0.25))] p-4">
+        <div className="mt-auto rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(124,92,255,0.12),rgba(167,139,250,0.25))] p-4">
           {!collapsed ? (
             <>
               <div className="text-sm font-semibold text-[#0F1B3D]">System Healthy</div>

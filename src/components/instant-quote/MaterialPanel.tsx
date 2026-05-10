@@ -39,8 +39,8 @@ function PanelShell({
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-[#0F1B3D]">{title}</h3>
-          <p className="mt-1 text-sm leading-6 text-[#8d97b8]">{description}</p>
+          <h3 className="text-base font-semibold text-white">{title}</h3>
+          <p className="mt-1 text-sm leading-6 text-[#c9d0e7]">{description}</p>
         </div>
         <div className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] p-2 text-[#c9d0e7]">
           {icon}
@@ -82,10 +82,10 @@ export default function MaterialPanel(props: MaterialPanelProps) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm font-medium text-[#0F1B3D]">{material.name}</span>
-                      {isActive ? <Check className="h-4 w-4 text-[#A78BFA]" /> : null}
+                      <span className="text-sm font-medium text-white">{material.name}</span>
+                      {isActive ? <Check className="h-4 w-4 text-[#7C5CFF]" /> : null}
                     </div>
-                    <p className="mt-1 text-xs leading-5 text-[#8d97b8]">{material.summary}</p>
+                    <p className="mt-1 text-xs leading-5 text-[#c9d0e7]">{material.summary}</p>
                   </div>
                 </div>
               </motion.button>
@@ -121,8 +121,8 @@ export default function MaterialPanel(props: MaterialPanelProps) {
                   : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10 hover:bg-white/[0.04]'
               }`}
             >
-              <span className="text-sm font-medium text-[#0F1B3D]">{color.name}</span>
-              {isActive ? <Check className="ml-2 inline h-4 w-4 text-[#A78BFA]" /> : null}
+              <span className="text-sm font-medium text-white">{color.name}</span>
+              {isActive ? <Check className="ml-2 inline h-4 w-4 text-[#7C5CFF]" /> : null}
             </motion.button>
           )
         })}

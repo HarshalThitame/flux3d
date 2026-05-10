@@ -12,7 +12,7 @@ const statusActions = [
   { label: 'Reviewed', status: 'reviewed' as const, color: 'border-sky-400/20 bg-sky-400/10 text-sky-300 hover:bg-sky-400/15' },
   { label: 'Approved', status: 'approved' as const, color: 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/15' },
   { label: 'Queued', status: 'queued' as const, color: 'border-violet-400/20 bg-violet-400/10 text-violet-300 hover:bg-violet-400/15' },
-  { label: 'Printing', status: 'printing' as const, color: 'border-[#7C5CFF]/20 bg-[#7C5CFF]/10 text-[#A78BFA] hover:bg-[#7C5CFF]/15' },
+  { label: 'Printing', status: 'printing' as const, color: 'border-[#7C5CFF]/20 bg-[#7C5CFF]/10 text-[#7C5CFF] hover:bg-[#7C5CFF]/15' },
   { label: 'Shipped', status: 'shipped' as const, color: 'border-amber-400/20 bg-amber-400/10 text-amber-300 hover:bg-amber-400/15' },
   { label: 'Completed', status: 'completed' as const, color: 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/15' },
   { label: 'On Hold', status: 'on-hold' as const, color: 'border-white/10 bg-white/[0.03] text-[#8b95b5] hover:bg-white/[0.06]' },
@@ -124,7 +124,7 @@ export default function AdminOrderDetailPage() {
 
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#A78BFA]">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#7C5CFF]">
               <Package2 className="h-3 w-3" />
               Order Details
             </div>
@@ -169,7 +169,7 @@ export default function AdminOrderDetailPage() {
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div className="flex-1 space-y-4">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#7C5CFF]/15 text-xs font-bold text-[#A78BFA]">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#7C5CFF]/15 text-xs font-bold text-[#7C5CFF]">
                         {i + 1}
                       </span>
                       <span className="text-base font-semibold text-white">{item.material}</span>

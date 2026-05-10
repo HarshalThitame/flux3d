@@ -65,11 +65,11 @@ export default function QuoteSummary({
             <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
               Price & Quotation
             </h2>
-            <p className="mt-2 text-sm leading-6 text-[#97a1c2]">
+            <p className="mt-2 text-sm leading-6 text-[#6F7192]">
               Your live estimate updates instantly so you can make smarter decisions without second-guessing the print.
             </p>
           </div>
-          <div className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#A78BFA]">
+          <div className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#7C5CFF]">
             <IndianRupee className="h-5 w-5" />
           </div>
         </div>
@@ -82,7 +82,7 @@ export default function QuoteSummary({
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Quote Session</div>
           <div className="mt-2 text-xl font-semibold text-[#0F1B3D]">{quoteId}</div>
           <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/10 bg-white/[0.03] px-3 py-1 text-xs text-[#d6dcf2]">
-            <Sparkles className="h-3.5 w-3.5 text-[#A78BFA]" />
+            <Sparkles className="h-3.5 w-3.5 text-[#7C5CFF]" />
             {material.name}
           </div>
         </motion.div>
@@ -125,7 +125,7 @@ export default function QuoteSummary({
                 <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
                   ₹{totalPrice.toFixed(0)}
                 </div>
-                <div className="mt-1 text-[10px] uppercase tracking-[0.22em] text-[#A78BFA]">
+                <div className="mt-1 text-[10px] uppercase tracking-[0.22em] text-[#7C5CFF]">
                   Rounded to nearest ₹5
                 </div>
                 <div className="mt-3 grid gap-2 text-sm text-[#ffe0d4]">
@@ -228,7 +228,7 @@ export default function QuoteSummary({
               {isInCart && (
                 <Link
                   href="/cart"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] border border-[#7C5CFF]/30 bg-[#7C5CFF]/10 px-4 py-3 text-sm font-medium text-[#A78BFA] transition-colors hover:bg-[#7C5CFF]/20"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] border border-[#7C5CFF]/30 bg-[#7C5CFF]/10 px-4 py-3 text-sm font-medium text-[#7C5CFF] transition-colors hover:bg-[#7C5CFF]/20"
                 >
                   View Cart
                   <ArrowRight className="h-4 w-4" />

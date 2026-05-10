@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Trash2, ShoppingCart, ArrowRight, Plus, IndianRupee, ChevronDown, Edit2, Check, AlertTriangle, X } from 'lucide-react'
+import { Trash2, ShoppingCart, ArrowRight, Plus, IndianRupee, ChevronDown, Edit2, Check, AlertTriangle, X, Tag } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/cart/context'
@@ -10,6 +10,7 @@ import type { AppUserProfile } from '@/lib/auth/server'
 import EmptyState from '@/components/admin/EmptyState'
 import type { QuoteMaterial } from '@/lib/quote/types'
 import { formatDurationMinutes } from '@/lib/quote/pricing-engine'
+import CouponInput, { type CouponResult } from '@/components/offers/CouponInput'
 
 type CartClientProps = {
   user: AppUserProfile | null
@@ -26,7 +27,7 @@ type EditingItem = {
 
 export default function CartClient({ user, materials }: CartClientProps) {
   const router = useRouter()
-  const { items, summary, removeItem, updateItem, clearItems, isLoading } = useCart()
+  const { items, summary, removeItem, updateItem, clearItems, isLoading, appliedCoupon, setAppliedCoupon, autoApplyOffer } = useCart()
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
 
@@ -139,7 +140,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#A78BFA]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#7C5CFF]">
             Shopping Cart
           </div>
           <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2rem,4vw,3.5rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#0F1B3D]">
@@ -305,7 +306,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
                           {(item.dimensions?.x ?? 0).toFixed(0)} × {(item.dimensions?.y ?? 0).toFixed(0)} × {(item.dimensions?.z ?? 0).toFixed(0)} mm
                         </span>
                         {item.supports && (
-                          <span className="rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-2 py-1 text-[#A78BFA]">
+                          <span className="rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-2 py-1 text-[#7C5CFF]">
                             Supports included
                           </span>
                         )}
@@ -352,11 +353,11 @@ export default function CartClient({ user, materials }: CartClientProps) {
                 <h2 className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">
                   Order Summary
                 </h2>
-                <p className="mt-1 text-sm text-[#97a1c2]">
+                <p className="mt-1 text-sm text-[#6F7192]">
                   Before delivery
                 </p>
               </div>
-              <div className="rounded-xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-2.5 text-[#A78BFA]">
+              <div className="rounded-xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-2.5 text-[#7C5CFF]">
                 <IndianRupee className="h-5 w-5" />
               </div>
             </div>
@@ -372,6 +373,17 @@ export default function CartClient({ user, materials }: CartClientProps) {
                   {summary.deliveryCharge === 0 ? 'FREE' : `₹${summary.deliveryCharge.toFixed(0)}`}
                 </span>
               </div>
+              {summary.discount > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="inline-flex items-center gap-1 text-[#10B981]">
+                    <Tag className="w-3 h-3" />
+                    {autoApplyOffer && appliedCoupon?.id === autoApplyOffer.id
+                      ? 'Sale Discount'
+                      : `Discount (${appliedCoupon?.code})`}
+                  </span>
+                  <span className="font-medium text-[#10B981]">-₹{summary.discount.toFixed(0)}</span>
+                </div>
+              )}
               <div className="border-t border-[#7C5CFF]/10 pt-3">
                 <div className="flex items-center justify-between">
                   <span className="text-base font-semibold text-[#0F1B3D]">Total</span>
@@ -379,6 +391,35 @@ export default function CartClient({ user, materials }: CartClientProps) {
                     ₹{summary.total.toFixed(0)}
                   </span>
                 </div>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {autoApplyOffer && appliedCoupon?.id === autoApplyOffer.id && (
+                <div className="rounded-xl border border-[rgba(124,92,255,0.2)] bg-[rgba(124,92,255,0.06)] px-3 py-2.5">
+                  <div className="flex items-center gap-2 text-sm text-[#7C5CFF]">
+                    <Tag className="w-3.5 h-3.5" />
+                    <span className="font-semibold">Sale Applied</span>
+                    <span className="text-xs opacity-70">-₹{summary.discount.toFixed(0)}</span>
+                  </div>
+                </div>
+              )}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Tag className="w-3.5 h-3.5 text-[#6F7192]" />
+                  <span className="text-xs font-medium text-[#6F7192] uppercase tracking-wider">Have a coupon?</span>
+                </div>
+                <CouponInput
+                  orderAmount={summary.subtotal}
+                  userId={user?.id ?? null}
+                  onApply={(result: CouponResult) => {
+                    if (result.valid && result.coupon) {
+                      setAppliedCoupon(result.coupon)
+                    }
+                  }}
+                  appliedCoupon={appliedCoupon && (!autoApplyOffer || appliedCoupon.id !== autoApplyOffer.id) ? { valid: true, coupon: appliedCoupon } : null}
+                  onRemove={() => setAppliedCoupon(null)}
+                />
               </div>
             </div>
 

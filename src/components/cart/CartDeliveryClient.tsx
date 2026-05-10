@@ -32,7 +32,7 @@ export default function CartDeliveryClient({
   savedAddresses,
 }: CartDeliveryClientProps) {
   const router = useRouter()
-  const { items, summary, clearItems } = useCart()
+  const { items, summary, clearItems, appliedCoupon, setAppliedCoupon, autoApplyOffer } = useCart()
   const [selectedAddressId, setSelectedAddressId] = useState<string | 'new'>(
     savedAddresses[0]?.id ?? 'new'
   )
@@ -222,6 +222,11 @@ export default function CartDeliveryClient({
           dimensions: item.dimensions ?? { x: 0, y: 0, z: 0 },
         })),
         subtotal: summary.subtotal,
+        discount: summary.discount,
+        couponCode: appliedCoupon?.code ?? null,
+        couponId: appliedCoupon?.id !== autoApplyOffer?.id ? (appliedCoupon?.id ?? null) : null,
+        offerId: autoApplyOffer && appliedCoupon?.id === autoApplyOffer.id ? autoApplyOffer.id : null,
+        discountType: appliedCoupon?.discount_type ?? null,
         fullName: address.fullName,
         phone: address.phone,
         addressLine1: address.addressLine1,
@@ -232,12 +237,11 @@ export default function CartDeliveryClient({
         landmark: address.landmark,
       })
 
-      const { totalPrice } = calculateOrderTotal(summary.subtotal)
       setConfirmation({
         orderId: result.orderId,
         orderNumber: result.orderNumber,
         itemCount: result.itemCount,
-        totalPrice,
+        totalPrice: summary.total,
       })
       clearItems()
     } catch (error) {
@@ -268,7 +272,7 @@ export default function CartDeliveryClient({
 
           <div className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div className="max-w-[760px]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#A78BFA]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#7C5CFF]">
                 Cart Delivery
               </div>
               <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2.3rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#0F1B3D]">
@@ -300,7 +304,7 @@ export default function CartDeliveryClient({
                       <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
                         Saved Addresses
                       </h2>
-                      <p className="mt-2 text-sm leading-6 text-[#97a1c2]">
+                      <p className="mt-2 text-sm leading-6 text-[#6F7192]">
                         Use an existing delivery address or switch to a new one.
                       </p>
                     </div>
@@ -370,11 +374,11 @@ export default function CartDeliveryClient({
                   <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
                     Order Summary
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-[#97a1c2]">
+                  <p className="mt-2 text-sm leading-6 text-[#6F7192]">
                     Final review before your {items.length} item{items.length !== 1 ? 's are' : ' is'} submitted.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#A78BFA]">
+                <div className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#7C5CFF]">
                   <Truck className="h-5 w-5" />
                 </div>
               </div>
@@ -390,7 +394,7 @@ export default function CartDeliveryClient({
                       <div className="mt-1 text-xs text-[#c8d0e9]">
                         {item.material}, {item.color}, {item.infill}% infill
                       </div>
-                      <div className="mt-1 text-sm font-medium text-[#A78BFA]">
+                      <div className="mt-1 text-sm font-medium text-[#7C5CFF]">
                         ₹{item.price.toFixed(0)}
                       </div>
                     </div>
@@ -400,7 +404,7 @@ export default function CartDeliveryClient({
                 <div className="rounded-[24px] border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-5 shadow-[0_12px_48px_rgba(124, 92, 255,0.1)]">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[#ffd3c1]">Total Price</div>
                   <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
-                    ₹{pricing.totalPrice.toFixed(0)}
+                    ₹{summary.total.toFixed(0)}
                   </div>
                   <div className="mt-3 grid gap-2 text-sm text-[#ffe0d4]">
                     <div className="flex justify-between">
@@ -415,6 +419,16 @@ export default function CartDeliveryClient({
                           : `₹${pricing.deliveryCharge.toFixed(0)}`}
                       </span>
                     </div>
+                    {summary.discount > 0 && (
+                      <div className="flex justify-between text-[#10B981]">
+                        <span>
+                          {autoApplyOffer && appliedCoupon?.id === autoApplyOffer.id
+                            ? 'Sale Discount'
+                            : `Discount (${appliedCoupon?.code})`}
+                        </span>
+                        <span>-₹{summary.discount.toFixed(0)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 

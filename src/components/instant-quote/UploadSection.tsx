@@ -45,14 +45,14 @@ export default function UploadSection({
           <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
             Upload your file
           </h2>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-[#97a1c2]">
+          <p className="mt-2 max-w-xl text-sm leading-6 text-[#6F7192]">
             Drop in your STL, OBJ, or 3MF file to instantly begin a polished quote workflow built for speed, accuracy, and production-ready decisions.
           </p>
         </div>
         <motion.div
           animate={{ y: [0, -4, 0] }}
           transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-          className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#A78BFA]"
+          className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#7C5CFF]"
         >
           <UploadCloud className="h-5 w-5" />
         </motion.div>
@@ -79,14 +79,14 @@ export default function UploadSection({
           <motion.div
             animate={{ scale: [1, 1.04, 1], boxShadow: ['0 0 28px rgba(124, 92, 255,0.18)', '0 0 42px rgba(124, 92, 255,0.24)', '0 0 28px rgba(124, 92, 255,0.18)'] }}
             transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
-            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[20px] border border-[#7C5CFF]/25 bg-[#7C5CFF]/12 text-[#A78BFA] shadow-[0_0_28px_rgba(124, 92, 255,0.18)]"
+            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[20px] border border-[#7C5CFF]/25 bg-[#7C5CFF]/12 text-[#7C5CFF] shadow-[0_0_28px_rgba(124, 92, 255,0.18)]"
           >
             <UploadCloud className="h-7 w-7" />
           </motion.div>
           <div className="font-[var(--font-syne)] text-2xl font-semibold text-[#0F1B3D]">
             Drag and drop your model
           </div>
-          <p className="mt-3 text-sm leading-7 text-[#97a1c2]">
+          <p className="mt-3 text-sm leading-7 text-[#6F7192]">
             Click to browse or drop your printable file here. From the first upload, the experience is designed to feel fast, premium, and effortless.
           </p>
 <div className="mt-4 inline-flex rounded-full border border-[#7C5CFF]/10 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
@@ -137,7 +137,7 @@ export default function UploadSection({
               {isSignedIn ? 'Uploaded successfully and connected to your workspace' : 'Loaded instantly for local preview'}
             </div>
           ) : (
-            <div className="mt-3 text-sm text-[#97a1c2]">Your upload progress will appear here in real time.</div>
+            <div className="mt-3 text-sm text-[#6F7192]">Your upload progress will appear here in real time.</div>
           )}
         </motion.div>
       </div>

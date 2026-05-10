@@ -83,7 +83,7 @@ export default async function RootLayout({
     '--primary-light': '#B7A7FF',
     '--secondary': settings.secondaryColor || '#A78BFA',
     '--bg-dark': '#0F1B3D',
-    '--text-muted': '#6F7192',
+    '--text-muted': '#505880',
   } as const
 
   return (

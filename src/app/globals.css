@@ -9,7 +9,7 @@
   --dark: #0F1B3D;
   --card: #FFFFFF;
   --border: rgba(124,92,255,0.18);
-  --text-muted: #6F7192;
+  --text-muted: #505880;
   --admin-bg: #0F1B3D;
   --admin-fg: #F7F2FF;
   --font-syne: "Avenir Next Condensed", "Arial Narrow", "Franklin Gothic Medium", "Segoe UI", sans-serif;
@@ -501,7 +501,7 @@ body::before {
   }
   .mobile-card-label {
     font-size: 0.75rem;
-    color: #6F7192;
+    color: #505880;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }

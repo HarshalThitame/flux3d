@@ -3,6 +3,7 @@
 import {
   CART_STORAGE_KEY,
   getAnonymousCartKey,
+  type AppliedCoupon,
   type CartItem,
   type CartSummary,
 } from '@/lib/cart/types'
@@ -60,17 +61,28 @@ export function clearCart(storageKey = getAnonymousCartKey()) {
   window.localStorage.removeItem(storageKey)
 }
 
-export function calculateCartSummary(items: CartItem[]): CartSummary {
+export function calculateCartSummary(items: CartItem[], appliedCoupon: AppliedCoupon | null = null): CartSummary {
   const itemCount = items.reduce((sum, item) => sum + (item.quantity ?? 1), 0)
   const subtotal = items.reduce((sum, item) => sum + item.price, 0)
-  const deliveryCharge = calculateDeliveryCharge(subtotal)
+  let deliveryCharge = calculateDeliveryCharge(subtotal)
+  let discount = 0
+
+  if (appliedCoupon) {
+    if (appliedCoupon.discount_type === 'free_shipping') {
+      deliveryCharge = 0
+    } else {
+      discount = appliedCoupon.discount_amount
+    }
+  }
 
   return {
     items,
     itemCount,
     subtotal,
     deliveryCharge,
-    total: subtotal + deliveryCharge,
+    discount,
+    total: Math.max(0, subtotal + deliveryCharge - discount),
+    appliedCoupon,
   }
 }
 

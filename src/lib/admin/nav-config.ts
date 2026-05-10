@@ -14,6 +14,8 @@ import {
   LogOut,
   Beaker,
   Eye,
+  Gift,
+  TicketCheck,
 } from 'lucide-react'
 
 export type NavItem = {
@@ -33,6 +35,8 @@ export const adminNavItems: NavItem[] = [
   { label: 'Payments', href: '/admin/payments', icon: CreditCard, section: 'main' },
   { label: 'Inventory', href: '/admin/inventory', icon: Printer, section: 'main' },
   { label: 'Materials', href: '/admin/materials', icon: Beaker, section: 'main' },
+  { label: 'Offers', href: '/admin/offers', icon: Gift, section: 'main' },
+  { label: 'Coupons', href: '/admin/coupons', icon: TicketCheck, section: 'main' },
   { label: 'Blog', href: '/admin/blog', icon: Eye, section: 'main' },
   { label: 'Support Tickets', href: '/admin/tickets', icon: Ticket, section: 'secondary' },
   { label: 'Settings', href: '/admin/settings', icon: Settings, section: 'secondary' },

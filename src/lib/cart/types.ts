@@ -46,12 +46,24 @@ export type CartOrderItem = {
   };
 }
 
+export type AppliedCoupon = {
+  id: string
+  code: string
+  discount_type: 'percentage' | 'fixed_amount' | 'free_shipping'
+  discount_value: number
+  max_discount: number | null
+  min_order_value: number
+  discount_amount: number
+}
+
 export type CartSummary = {
   items: CartItem[];
   itemCount: number;
   subtotal: number;
   deliveryCharge: number;
+  discount: number;
   total: number;
+  appliedCoupon: AppliedCoupon | null;
 }
 
 export const CART_STORAGE_KEY = 'flux3d-cart';

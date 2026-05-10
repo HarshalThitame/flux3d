@@ -94,7 +94,7 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
                 >
                   <td className="px-4 py-3 font-semibold text-[#0F1B3D]">{m.name}</td>
                   <td className="px-4 py-3 text-[#6F7192]">
-                    <span className={`px-2 py-0.5 rounded-full text-xs ${m.type === 'FDM' ? 'bg-[#7C5CFF]/10 text-[#7C5CFF]' : 'bg-[#A78BFA]/10 text-[#A78BFA]'}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${m.type === 'FDM' ? 'bg-[#7C5CFF]/10 text-[#7C5CFF]' : 'bg-[#A78BFA]/10 text-[#7C5CFF]'}`}>
                       {m.type || 'FDM'}
                     </span>
                   </td>

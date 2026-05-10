@@ -28,7 +28,7 @@ function Field({
     <label className="block">
       <div className="mb-2 text-sm font-medium text-[#0F1B3D]">
         {label}
-        {required ? <span className="ml-1 text-[#A78BFA]">*</span> : null}
+        {required ? <span className="ml-1 text-[#7C5CFF]">*</span> : null}
       </div>
       <input
         value={value}
@@ -55,7 +55,7 @@ export default function AddressForm({ values, errors, onChange }: AddressFormPro
         <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
           Delivery Address
         </h2>
-        <p className="mt-2 text-sm leading-6 text-[#97a1c2]">
+        <p className="mt-2 text-sm leading-6 text-[#6F7192]">
           Add the delivery details before submitting your print request. Shipping is free for orders of ₹499 or more.
         </p>
       </div>

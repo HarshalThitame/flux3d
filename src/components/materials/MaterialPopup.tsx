@@ -97,7 +97,7 @@ export default function MaterialPopup({
                     <div className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D]">
                       {material.name}
                     </div>
-                    <div className="mt-1 inline-flex rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-2.5 py-1 text-[11px] uppercase tracking-[0.22em] text-[#A78BFA]">
+                    <div className="mt-1 inline-flex rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-2.5 py-1 text-[11px] uppercase tracking-[0.22em] text-[#7C5CFF]">
                       {material.tag}
                     </div>
                   </div>

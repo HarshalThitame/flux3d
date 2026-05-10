@@ -1,0 +1,173 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { X, Gift, Timer, ChevronRight, Percent } from 'lucide-react'
+import Link from 'next/link'
+import CountdownTimer from './CountdownTimer'
+
+type Offer = {
+  id: string
+  title: string
+  description: string | null
+  banner_url: string | null
+  offer_type: string
+  discount_value: number
+  badge_text: string | null
+  badge_color: string
+  sale_label: string | null
+  ends_at: string
+  is_featured: boolean
+  coupon_code: string | null
+  min_order_value: number
+}
+
+export function AnnouncementBar() {
+  const [offer, setOffer] = useState<Offer | null>(null)
+  const [dismissed, setDismissed] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/offers/active')
+      .then(r => r.json())
+      .then(d => {
+        const featured = d.offers?.find((o: Offer) => o.is_featured) ?? d.offers?.[0]
+        if (featured) setOffer(featured)
+      })
+      .catch(() => {})
+  }, [])
+
+  if (!offer || dismissed) return null
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: 'auto', opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }}
+        className="relative bg-gradient-to-r from-[#7C5CFF] via-[#8B6CF7] to-[#A78BFA] overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_100%_at_50%_0%,rgba(255,255,255,0.15),transparent_60%)]" />
+        <div className="relative max-w-[1400px] mx-auto px-4 py-2.5 flex items-center justify-center gap-3 text-white text-sm">
+          <Gift className="w-4 h-4 flex-shrink-0 hidden sm:block" />
+          <span className="font-medium truncate max-w-[300px] sm:max-w-none">
+            {offer.badge_text && (
+              <span className="inline-block bg-white/20 rounded-full px-2 py-0.5 text-xs font-bold mr-2 uppercase">
+                {offer.badge_text}
+              </span>
+            )}
+            {offer.sale_label && (
+              <span className="font-bold mr-1">{offer.sale_label}</span>
+            )}
+            {offer.title}
+          </span>
+          <CountdownTimer targetDate={offer.ends_at} size="sm" className="flex-shrink-0" />
+          <Link
+            href="/instant-quote"
+            className="inline-flex items-center gap-1 text-xs font-semibold bg-white/20 hover:bg-white/30 rounded-full px-3 py-1 transition-colors flex-shrink-0"
+          >
+            Grab Deal
+            <ChevronRight className="w-3 h-3" />
+          </Link>
+          <button
+            onClick={() => setDismissed(true)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
+export function OfferBanner() {
+  const [offers, setOffers] = useState<Offer[]>([])
+  const [current, setCurrent] = useState(0)
+
+  useEffect(() => {
+    fetch('/api/offers/active')
+      .then(r => r.json())
+      .then(d => {
+        const featured = d.offers?.filter((o: Offer) => o.is_featured) ?? []
+        if (featured.length > 0) setOffers(featured)
+      })
+      .catch(() => {})
+  }, [])
+
+  if (offers.length === 0) return null
+
+  const offer = offers[current]
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#0F1B3D] via-[#1a1f4e] to-[#2d1b69] min-h-[200px] sm:min-h-[260px]">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_30%_50%,rgba(124,92,255,0.3),transparent_60%),radial-gradient(ellipse_40%_40%_at_70%_30%,rgba(167,139,250,0.15),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(255,255,255,0.05),transparent_40%)]" />
+
+      <div className="relative z-10 p-6 sm:p-8 md:p-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="flex-1">
+          {offer.badge_text && (
+            <span className="inline-block bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA] text-white text-xs font-bold px-3 py-1 rounded-full mb-3">
+              {offer.badge_text}
+            </span>
+          )}
+          <h3 className="text-white font-bold text-xl sm:text-2xl md:text-3xl mb-2">
+            {offer.title}
+          </h3>
+          {offer.description && (
+            <p className="text-[rgba(255,255,255,0.7)] text-sm max-w-[500px] mb-4">
+              {offer.description}
+            </p>
+          )}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            {offer.sale_label && (
+              <span className="inline-flex items-center gap-1.5 bg-[rgba(255,255,255,0.15)] text-white rounded-full px-3 py-1 text-sm font-semibold">
+                <Percent className="w-3.5 h-3.5" />
+                {offer.sale_label}
+              </span>
+            )}
+            <CountdownTimer targetDate={offer.ends_at} size="sm" />
+            <Link
+              href="/instant-quote"
+              className="inline-flex items-center gap-2 bg-[#7C5CFF] hover:bg-[#6B4FE0] text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:shadow-[0_0_30px_rgba(124,92,255,0.4)]"
+            >
+              Shop Now
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+          {offer.coupon_code && (
+            <div className="mt-3 inline-flex items-center gap-2 bg-[rgba(255,255,255,0.1)] rounded-lg px-3 py-1.5">
+              <span className="text-[rgba(255,255,255,0.6)] text-xs">Use code:</span>
+              <code className="font-mono font-bold text-white text-sm">{offer.coupon_code}</code>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {offers.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+          {offers.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`w-2 h-2 rounded-full transition-all ${
+                i === current ? 'bg-white w-6' : 'bg-white/30 hover:bg-white/50'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function SaleBadge({ label, className = '' }: { label?: string; className?: string }) {
+  if (!label) return null
+  return (
+    <span
+      className={`inline-flex items-center gap-1 bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA] text-white text-[10px] font-bold px-2 py-0.5 rounded-full ${className}`}
+    >
+      <Gift className="w-2.5 h-2.5" />
+      {label}
+    </span>
+  )
+}

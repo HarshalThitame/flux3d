@@ -110,20 +110,20 @@ export default function OrderSuccessPage() {
             <div className="space-y-3">
               {orderData.itemCount !== undefined && (
                 <div className="flex items-center justify-between rounded-[16px] border border-[#7C5CFF]/10 bg-white/[0.02] px-4 py-3">
-                  <span className="text-sm text-[#97a1c2]">Items</span>
+                  <span className="text-sm text-[#6F7192]">Items</span>
                   <span className="text-sm font-semibold text-[#0F1B3D]">{orderData.itemCount} item{orderData.itemCount !== 1 ? 's' : ''}</span>
                 </div>
               )}
 
               {orderData.totalPrice !== undefined && (
                 <div className="flex items-center justify-between rounded-[16px] border border-[#7C5CFF]/10 bg-white/[0.02] px-4 py-3">
-                  <span className="text-sm text-[#97a1c2]">Total Amount</span>
-                  <span className="text-sm font-semibold text-[#A78BFA]">₹{orderData.totalPrice.toFixed(0)}</span>
+                  <span className="text-sm text-[#6F7192]">Total Amount</span>
+                  <span className="text-sm font-semibold text-[#7C5CFF]">₹{orderData.totalPrice.toFixed(0)}</span>
                 </div>
               )}
 
               <div className="flex items-center justify-between rounded-[16px] border border-[#7C5CFF]/10 bg-white/[0.02] px-4 py-3">
-                <span className="text-sm text-[#97a1c2]">Status</span>
+                <span className="text-sm text-[#6F7192]">Status</span>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-xs font-medium text-amber-100">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
                   Pending Review
@@ -152,7 +152,7 @@ export default function OrderSuccessPage() {
 
           <Link
             href="/instant-quote"
-            className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-[20px] border border-[#7C5CFF]/30 bg-[linear-gradient(135deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] px-6 py-4 text-sm font-semibold text-[#A78BFA] transition-all hover:border-[#7C5CFF]/50 hover:bg-[rgba(124, 92, 255,0.15)]"
+            className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-[20px] border border-[#7C5CFF]/30 bg-[linear-gradient(135deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] px-6 py-4 text-sm font-semibold text-[#7C5CFF] transition-all hover:border-[#7C5CFF]/50 hover:bg-[rgba(124, 92, 255,0.15)]"
           >
             <span className="relative z-10 flex items-center gap-2">
               <FileText className="h-4 w-4" />

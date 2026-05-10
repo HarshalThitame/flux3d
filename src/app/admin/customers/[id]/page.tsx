@@ -523,7 +523,7 @@ export default function CustomerProfilePage() {
                   <label className="mb-2 block text-xs font-medium text-[#6F7192]">Tags</label>
                   <div className="flex flex-wrap gap-2">
                     {(profile?.tags || []).map((tag: string, index: number) => (
-                      <span key={index} className="rounded-full bg-[#7C5CFF]/20 px-3 py-1 text-xs text-[#A78BFA]">
+                      <span key={index} className="rounded-full bg-[#7C5CFF]/20 px-3 py-1 text-xs text-[#7C5CFF]">
                         {tag}
                       </span>
                     ))}

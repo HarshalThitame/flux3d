@@ -232,7 +232,7 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
         <div className="mx-auto max-w-[1440px]">
           <div className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div className="max-w-[760px]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#A78BFA]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#7C5CFF]">
                 <Sparkles className="h-3.5 w-3.5" />
                 Instant Quote Engine
               </div>
@@ -434,7 +434,7 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
 
                 <Link
                   href="/pricing"
-                  className="inline-flex text-sm font-medium text-[#7C5CFF] hover:text-[#A78BFA]"
+                  className="inline-flex text-sm font-medium text-[#7C5CFF] hover:text-[#7C5CFF]"
                 >
                   Compare with pricing guide →
                 </Link>
@@ -456,11 +456,11 @@ export default function QuotePage({ user, initialQuoteId }: QuotePageProps) {
                 </div>
 
                 <div className="rounded-[24px] border border-[#7C5CFF]/20 bg-[#7C5CFF]/8 px-5 py-4">
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#A78BFA]">Estimated Price</div>
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#7C5CFF]">Estimated Price</div>
                   <div className="mt-3 font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D]">
                     {priceBreakdown ? `₹${priceBreakdown.total.toFixed(0)}` : '—'}
                   </div>
-                  <div className="mt-1 text-xs uppercase tracking-[0.22em] text-[#A78BFA]">
+                  <div className="mt-1 text-xs uppercase tracking-[0.22em] text-[#7C5CFF]">
                     Rounded to nearest ₹5
                   </div>
                   <div className="mt-2 text-sm text-[#ffd7c5]">

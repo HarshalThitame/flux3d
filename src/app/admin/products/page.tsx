@@ -51,7 +51,7 @@ export default function ProductsPage() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#A78BFA]">
+        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#7C5CFF]">
           <Package className="h-3 w-3" />
           Product Catalog
         </div>
@@ -95,7 +95,7 @@ export default function ProductsPage() {
               </span>
             )},
             { key: 'action', label: 'Action', render: () => (
-              <button className="text-[#7C5CFF] hover:text-[#A78BFA] text-sm">Edit</button>
+              <button className="text-[#7C5CFF] hover:text-[#7C5CFF] text-sm">Edit</button>
             )},
           ]}
         />

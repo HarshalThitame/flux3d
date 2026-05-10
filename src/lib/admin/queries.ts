@@ -6,8 +6,11 @@ import type {
   AdminOrderItem,
   AdminQuote,
   AdminUser,
+  Coupon,
   DashboardMetric,
   DonutSlice,
+  Offer,
+  Redemption,
   TrendPoint,
 } from '@/lib/admin/types'
 import { getOrderStatusLabel, orderStatuses, type OrderStatus } from '@/lib/orders'
@@ -875,4 +878,214 @@ export async function getAdminPrintersData() {
     maxSpeed: p.max_speed,
     assignedMaterials: Array.isArray(p.assigned_materials) ? p.assigned_materials : [],
   }))
+}
+
+// ============================================================
+// OFFERS QUERIES
+// ============================================================
+
+export async function getAdminOffersData() {
+  const supabase = createAdminSupabaseClient()
+  const { data, error, count } = await supabase
+    .from('offers')
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(`Failed to fetch offers: ${error.message}`)
+  return { data: data as unknown as Offer[], count }
+}
+
+export async function getAdminOfferById(id: string) {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('offers')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw new Error(`Failed to fetch offer: ${error.message}`)
+  return data as unknown as Offer
+}
+
+export async function createAdminOffer(input: Partial<Offer>) {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('offers')
+    .insert({
+      title: input.title,
+      description: input.description,
+      banner_url: input.banner_url,
+      offer_type: input.offer_type ?? 'percentage',
+      discount_value: input.discount_value ?? 0,
+      max_discount: input.max_discount,
+      min_order_value: input.min_order_value ?? 0,
+      starts_at: input.starts_at,
+      ends_at: input.ends_at,
+      is_active: input.is_active ?? true,
+      is_featured: input.is_featured ?? false,
+      auto_apply: input.auto_apply ?? false,
+      coupon_code: input.coupon_code,
+      applicable_categories: input.applicable_categories,
+      applicable_materials: input.applicable_materials,
+      applicable_products: input.applicable_products,
+      usage_limit: input.usage_limit,
+      usage_per_user: input.usage_per_user,
+      badge_text: input.badge_text,
+      badge_color: input.badge_color ?? 'from-[#7C5CFF] to-[#A78BFA]',
+      sale_label: input.sale_label,
+      theme_config: input.theme_config ?? {},
+    })
+    .select()
+    .single()
+
+  if (error) throw new Error(`Failed to create offer: ${error.message}`)
+  return data as unknown as Offer
+}
+
+export async function updateAdminOffer(id: string, input: Partial<Offer>) {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('offers')
+    .update({
+      ...input,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw new Error(`Failed to update offer: ${error.message}`)
+  return data as unknown as Offer
+}
+
+export async function deleteAdminOffer(id: string) {
+  const supabase = createAdminSupabaseClient()
+  const { error } = await supabase
+    .from('offers')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw new Error(`Failed to delete offer: ${error.message}`)
+}
+
+export async function toggleAdminOfferStatus(id: string, isActive: boolean) {
+  return updateAdminOffer(id, { is_active: isActive } as Partial<Offer>)
+}
+
+// ============================================================
+// COUPONS QUERIES
+// ============================================================
+
+export async function getAdminCouponsData() {
+  const supabase = createAdminSupabaseClient()
+  const { data, error, count } = await supabase
+    .from('coupons')
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(`Failed to fetch coupons: ${error.message}`)
+  return { data: data as unknown as Coupon[], count }
+}
+
+export async function getAdminCouponById(id: string) {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('coupons')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw new Error(`Failed to fetch coupon: ${error.message}`)
+  return data as unknown as Coupon
+}
+
+export async function createAdminCoupon(input: Partial<Coupon>) {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('coupons')
+    .insert({
+      code: input.code?.toUpperCase().replace(/\s+/g, ''),
+      description: input.description,
+      discount_type: input.discount_type ?? 'percentage',
+      discount_value: input.discount_value ?? 0,
+      max_discount: input.max_discount,
+      min_order_value: input.min_order_value ?? 0,
+      starts_at: input.starts_at,
+      expires_at: input.expires_at,
+      is_active: input.is_active ?? true,
+      usage_limit: input.usage_limit,
+      usage_per_user: input.usage_per_user,
+      applicable_categories: input.applicable_categories,
+      applicable_materials: input.applicable_materials,
+      applicable_products: input.applicable_products,
+      first_order_only: input.first_order_only ?? false,
+    })
+    .select()
+    .single()
+
+  if (error) throw new Error(`Failed to create coupon: ${error.message}`)
+  return data as unknown as Coupon
+}
+
+export async function updateAdminCoupon(id: string, input: Partial<Coupon>) {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('coupons')
+    .update({
+      ...input,
+      code: input.code?.toUpperCase().replace(/\s+/g, ''),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw new Error(`Failed to update coupon: ${error.message}`)
+  return data as unknown as Coupon
+}
+
+export async function deleteAdminCoupon(id: string) {
+  const supabase = createAdminSupabaseClient()
+  const { error } = await supabase
+    .from('coupons')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw new Error(`Failed to delete coupon: ${error.message}`)
+}
+
+export async function toggleAdminCouponStatus(id: string, isActive: boolean) {
+  return updateAdminCoupon(id, { is_active: isActive } as Partial<Coupon>)
+}
+
+// ============================================================
+// REDEMPTIONS QUERIES
+// ============================================================
+
+export async function getAdminRedemptionsData(limit = 50) {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('redemptions')
+    .select('*')
+    .order('redeemed_at', { ascending: false })
+    .limit(limit)
+
+  if (error) throw new Error(`Failed to fetch redemptions: ${error.message}`)
+  return data as unknown as Redemption[]
+}
+
+export async function getAdminRedemptionStats() {
+  const supabase = createAdminSupabaseClient()
+  const { data: totalData, error: totalError } = await supabase
+    .from('redemptions')
+    .select('discount_applied, order_amount')
+
+  if (totalError) throw new Error(`Failed to fetch redemption stats: ${totalError.message}`)
+
+  const items = totalData as unknown as Array<{ discount_applied: number; order_amount: number }>
+  return {
+    total_redemptions: items.length,
+    total_discount_given: items.reduce((s, r) => s + Number(r.discount_applied), 0),
+    total_revenue_from_offers: items.reduce((s, r) => s + Number(r.order_amount), 0),
+  }
 }

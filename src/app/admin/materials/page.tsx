@@ -10,12 +10,12 @@ import type { QuoteMaterial } from '@/lib/quote/types'
 const colorNameToHex = (input: string): string => {
   const colorMap: Record<string, string> = {
     'red': '#EF4444', 'green': '#22C55E', 'blue': '#3B82F6', 'yellow': '#EAB308',
-    'orange': '#7C5CFF', 'purple': '#A855F7', 'pink': '#EC4899', 'white': '#FFFFFF',
+    'orange': '#F97316', 'purple': '#A855F7', 'pink': '#EC4899', 'white': '#FFFFFF',
     'black': '#000000', 'gray': '#6B7280', 'grey': '#6B7280', 'cyan': '#06B6D4',
     'teal': '#14B8A6', 'lime': '#84CC16', 'indigo': '#6366F1', 'violet': '#8B5CF6',
     'fuchsia': '#D946EF', 'rose': '#F43F5E', 'sky': '#0EA5E9', 'magenta': '#D946EF',
     'brown': '#92400E', 'navy': '#1E3A5F', 'maroon': '#7F1D1D', 'olive': '#3F6212',
-    'coral': '#F97316', 'salmon': '#FB923C', 'gold': '#A78BFA', 'silver': '#9CA3AF',
+    'coral': '#F97316', 'salmon': '#FB923C', 'gold': '#D4A017', 'silver': '#9CA3AF',
   };
   const trimmed = input.trim().toLowerCase();
   if (trimmed.startsWith('#') && /^#[0-9a-f]{3,8}$/i.test(trimmed)) return trimmed;

@@ -257,3 +257,67 @@ export type BillingInfo = {
   paymentMethod: string
   features: string[]
 }
+
+export type Offer = {
+  id: string
+  title: string
+  description: string | null
+  banner_url: string | null
+  offer_type: 'percentage' | 'fixed_amount' | 'free_shipping' | 'buy_x_get_y'
+  discount_value: number
+  max_discount: number | null
+  min_order_value: number
+  starts_at: string
+  ends_at: string
+  is_active: boolean
+  is_featured: boolean
+  auto_apply: boolean
+  coupon_code: string | null
+  applicable_categories: string[] | null
+  applicable_materials: string[] | null
+  applicable_products: string[] | null
+  usage_limit: number | null
+  usage_per_user: number | null
+  used_count: number
+  badge_text: string | null
+  badge_color: string
+  sale_label: string | null
+  theme_config: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
+export type Coupon = {
+  id: string
+  code: string
+  description: string | null
+  discount_type: 'percentage' | 'fixed_amount' | 'free_shipping'
+  discount_value: number
+  max_discount: number | null
+  min_order_value: number
+  starts_at: string
+  expires_at: string
+  is_active: boolean
+  usage_limit: number | null
+  usage_per_user: number | null
+  used_count: number
+  applicable_categories: string[] | null
+  applicable_materials: string[] | null
+  applicable_products: string[] | null
+  first_order_only: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type Redemption = {
+  id: string
+  user_id: string | null
+  order_id: string | null
+  offer_id: string | null
+  coupon_id: string | null
+  discount_type: string
+  discount_value: number
+  discount_applied: number
+  order_amount: number
+  redeemed_at: string
+}

@@ -6,6 +6,7 @@ import { startTransition, useEffect, useRef, useState } from 'react'
 const ProblemSection = dynamic(() => import('./ProblemSection'), { ssr: false })
 const MarqueeSection = dynamic(() => import('./MarqueeSection'), { ssr: false })
 const ServicesSection = dynamic(() => import('./ServicesSection'), { ssr: false })
+const OfferBanner = dynamic(() => import('@/components/offers/OfferBanner').then(m => ({ default: m.OfferBanner })), { ssr: false })
 const MaterialsSection = dynamic(() => import('./MaterialsSection'), { ssr: false })
 const TechnologySection = dynamic(() => import('./TechnologySection'), { ssr: false })
 const HowItWorksSection = dynamic(() => import('./HowItWorksSection'), { ssr: false })
@@ -64,6 +65,9 @@ export default function LandingPageClient() {
       <LazySection minHeight={760}>
         <ServicesSection />
       </LazySection>
+      <section className="max-w-[1200px] mx-auto px-6 mb-16">
+        <OfferBanner />
+      </section>
       <LazySection minHeight={760}>
         <MaterialsSection />
       </LazySection>

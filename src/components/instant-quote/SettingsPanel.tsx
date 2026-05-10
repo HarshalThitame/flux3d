@@ -47,8 +47,8 @@ function PanelShell({
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-[#0F1B3D]">{title}</h3>
-          <p className="mt-1 text-sm leading-6 text-[#8d97b8]">{description}</p>
+          <h3 className="text-base font-semibold text-white">{title}</h3>
+          <p className="mt-1 text-sm leading-6 text-[#c9d0e7]">{description}</p>
         </div>
         <div className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] p-2 text-[#c9d0e7]">
           {icon}
@@ -69,7 +69,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
       >
         <div className="space-y-5">
           <div>
-            <div className="mb-2 flex items-center justify-between text-sm text-[#0F1B3D]">
+            <div className="mb-2 flex items-center justify-between text-sm text-white">
               <span>Infill</span>
               <span>{props.infill}%</span>
             </div>
@@ -85,7 +85,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
           </div>
 
           <div>
-            <div className="mb-2 flex items-center justify-between text-sm text-[#0F1B3D]">
+            <div className="mb-2 flex items-center justify-between text-sm text-white">
               <span>Quantity</span>
               <span>{props.quantity} pcs</span>
             </div>
@@ -96,12 +96,12 @@ export default function SettingsPanel(props: SettingsPanelProps) {
               step={1}
               value={props.quantity}
               onChange={(event) => props.onQuantityChange(Number(event.target.value))}
-              className="w-full rounded-[16px] border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-3 text-sm text-[#0F1B3D] outline-none"
+              className="w-full rounded-[16px] border border-[#7C5CFF]/10 bg-white/[0.05] px-3 py-3 text-sm text-white outline-none"
             />
           </div>
 
           <div>
-            <div className="mb-2 text-sm text-[#0F1B3D]">Post-processing</div>
+            <div className="mb-2 text-sm text-white">Post-processing</div>
             <div className="grid gap-2">
               {postProcessingOptions.map((option) => {
                 const active = option.value === props.postProcessingLevel
@@ -120,7 +120,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <div className="text-sm font-medium text-[#0F1B3D]">{option.label}</div>
+                      <div className="text-sm font-medium text-white">{option.label}</div>
                       <div className="text-[10px] uppercase tracking-[0.18em] text-[#7C5CFF]">
                         ₹{option.cost.toFixed(2)}
                       </div>
@@ -133,7 +133,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
           </div>
 
           <div>
-            <div className="mb-2 text-sm text-[#0F1B3D]">Layer Height</div>
+            <div className="mb-2 text-sm text-white">Layer Height</div>
             <div className="grid gap-2">
               {layerHeightOptions.map((option) => {
                 const active = option.value === props.layerHeight
@@ -151,8 +151,8 @@ export default function SettingsPanel(props: SettingsPanelProps) {
                         : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10 hover:bg-white/[0.04]'
                     }`}
                   >
-                    <div className="text-sm font-medium text-[#0F1B3D]">{option.label}</div>
-                    <div className="mt-1 text-xs leading-5 text-[#8d97b8]">{option.description}</div>
+                    <div className="text-sm font-medium text-white">{option.label}</div>
+                    <div className="mt-1 text-xs leading-5 text-[#c9d0e7]">{option.description}</div>
                   </motion.button>
                 )
               })}
@@ -175,15 +175,15 @@ export default function SettingsPanel(props: SettingsPanelProps) {
             <div className="flex items-start gap-3">
               <ShieldCheck className="mt-0.5 h-5 w-5 text-emerald-200" />
               <div>
-                <div className="text-sm font-medium text-[#0F1B3D]">{props.userName ?? 'Signed in'}</div>
-                <div className="mt-1 text-xs text-emerald-100/80">{props.userEmail}</div>
+                <div className="text-sm font-medium text-white">{props.userName ?? 'Signed in'}</div>
+                <div className="mt-1 text-xs text-emerald-200">{props.userEmail}</div>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-[#7C5CFF]/10 bg-white/[0.02] p-4 text-sm leading-6 text-[#8d97b8]">
-            Save your file, settings, and estimate in one place so you can revisit, compare, and place your order faster.
-          </div>
+            <div className="rounded-[18px] border border-[#7C5CFF]/10 bg-white/[0.02] p-4 text-sm leading-6 text-[#c9d0e7]">
+              Save your file, settings, and estimate in one place so you can revisit, compare, and place your order faster.
+            </div>
 
           <motion.button
             type="button"
@@ -198,14 +198,14 @@ export default function SettingsPanel(props: SettingsPanelProps) {
         </div>
       ) : (
         <div className="flex h-full flex-col justify-between gap-4">
-          <div className="rounded-[18px] border border-sky-400/15 bg-sky-400/10 p-4 text-sm leading-6 text-sky-100">
-            You can explore the quote instantly without an account, but login unlocks saved quotes, synced uploads, and a smoother buying journey.
-          </div>
+            <div className="rounded-[18px] border border-sky-400/15 bg-sky-400/10 p-4 text-sm leading-6 text-sky-200">
+              You can explore the quote instantly without an account, but login unlocks saved quotes, synced uploads, and a smoother buying journey.
+            </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Link
               href="/login?next=%2Finstant-quote"
-              className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
+              className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.07]"
             >
               Log In
             </Link>
