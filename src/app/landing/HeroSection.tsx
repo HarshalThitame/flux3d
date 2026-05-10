@@ -313,7 +313,8 @@ export default function HeroSection() {
               alt="3D printed pot showcase"
               fill
               priority
-              sizes="48vw"
+              sizes="(max-width: 768px) 100vw, 48vw"
+              quality={75}
               className="object-contain object-right drop-shadow-2xl"
             />
           </div>
@@ -325,8 +326,8 @@ export default function HeroSection() {
               src="/pot.png"
               alt="3D printed pot showcase"
               fill
-              priority
               sizes="280px"
+              quality={75}
               className="object-contain drop-shadow-2xl"
             />
           </div>

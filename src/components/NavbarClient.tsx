@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Menu, ShoppingCart, X, MessageCircle, ArrowUpRight } from 'lucide-react'
 import Image from 'next/image'
@@ -10,7 +11,11 @@ import { useCart } from '@/lib/cart/context'
 import { useProfile } from '@/hooks/useProfile'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { useBusinessSettings } from '@/lib/settings-context'
-import { AnnouncementBar } from '@/components/offers/OfferBanner'
+
+const AnnouncementBar = dynamic(
+  () => import('@/components/offers/OfferBanner').then((mod) => mod.AnnouncementBar),
+  { ssr: false, loading: () => null }
+)
 
 interface NavbarClientProps {
   transparent?: boolean
@@ -147,7 +152,15 @@ export default function NavbarClient({
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group" aria-label={`${settings.businessName} home`}>
             {settings.logoUrl ? (
-              <Image src={settings.logoUrl} alt={settings.businessName} width={180} height={48} className="h-12 w-auto object-contain" />
+              <Image
+                src={settings.logoUrl}
+                alt={settings.businessName}
+                width={180}
+                height={48}
+                sizes="180px"
+                priority
+                className="h-12 w-auto object-contain"
+              />
             ) : (
               <span className="font-[var(--font-syne)] text-xl font-extrabold text-[#0F1B3D]">
                 <span style={{ color: 'var(--primary, #7C5CFF)' }}>{settings.businessName}</span>
