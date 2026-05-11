@@ -21,6 +21,7 @@ type InvoiceRow = {
   infill: number
   layer_height: number
   supports: boolean
+  quantity?: number
   full_name: string
   phone: string
   address_line1: string
@@ -483,7 +484,7 @@ export async function GET(
     }
 
     const selectColumns =
-      'id, order_number, group_id, file_url, material, color, infill, layer_height, supports, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, discount, coupon_code, coupon_id, discount_type, estimated_time, status, notes, created_at'
+      'id, order_number, group_id, file_url, material, color, infill, layer_height, supports, quantity, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, discount, coupon_code, coupon_id, discount_type, estimated_time, status, notes, created_at'
 
     let order
     let error
@@ -523,7 +524,7 @@ export async function GET(
     }
 
     const settings = await getSettings()
-    const discountSummary = await loadOrderDiscountSummary(createAdminSupabaseClient(), items)
+    const discountSummary = await (loadOrderDiscountSummary as any)(createAdminSupabaseClient(), items)
     let pdf
     try {
       pdf = await generatePdf(
