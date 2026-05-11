@@ -27,6 +27,9 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: {
       canonical: '/',
     },
+other: {
+      'facebook-domain-verification': '2so08kooblq8716z4823mqn6etbbg6',
+    },
     openGraph: {
       type: 'website',
       url: siteUrl,
