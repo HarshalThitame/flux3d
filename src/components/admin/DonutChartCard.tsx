@@ -33,7 +33,7 @@ export default function DonutChartCard({
     .join(', ')
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#FFFFFF] p-5">
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-[#FFFFFF] p-5">
       <div>
         <h3 className="text-lg font-semibold text-[#0F1B3D]">{title}</h3>
         <p className="mt-1 text-sm text-[#6F7192]">{subtitle}</p>
@@ -47,7 +47,7 @@ export default function DonutChartCard({
             <div className="grid h-[136px] w-[136px] place-items-center rounded-full bg-[#FFFFFF] text-center">
               <div>
                 <div className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">{total}</div>
-                <div className="text-[10px] uppercase tracking-[0.15em] text-[#5a6580]">Total</div>
+                <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Total</div>
               </div>
             </div>
           </div>
@@ -59,11 +59,11 @@ export default function DonutChartCard({
               initial={{ opacity: 0, x: 8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.08 }}
-              className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.02] px-3 py-2.5"
+              className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5"
             >
               <div className="inline-flex items-center gap-2.5">
                 <span className="h-2.5 w-2.5 shrink-0 rounded-full shadow-sm" style={{ backgroundColor: slice.color }} />
-                <span className="text-xs text-[#c6cee5]">{slice.label}</span>
+                <span className="text-xs text-[#6F7192]">{slice.label}</span>
               </div>
               <div className="text-xs font-medium text-[#0F1B3D]">{slice.value}</div>
             </motion.div>

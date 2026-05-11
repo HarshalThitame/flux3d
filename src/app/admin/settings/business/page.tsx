@@ -262,7 +262,7 @@ export default function BusinessSettingsPage() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-rose-400/20 bg-rose-400/10 p-5 text-sm text-rose-300">
+      <div className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-600">
         {error}
       </div>
     )
@@ -276,7 +276,7 @@ export default function BusinessSettingsPage() {
             <button
               type="button"
               onClick={() => router.push('/admin/settings')}
-              className="mb-3 inline-flex items-center gap-1.5 text-xs text-[#6F7192] transition-colors hover:text-white"
+              className="mb-3 inline-flex items-center gap-1.5 text-xs text-[#6F7192] transition-colors hover:text-[#0F1B3D]"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               Back to Settings
@@ -285,7 +285,7 @@ export default function BusinessSettingsPage() {
               <Building2 className="h-3 w-3" />
               Company
             </div>
-            <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">
+            <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">
               Business Settings
             </h1>
             <p className="mt-1 max-w-xl text-sm text-[#6F7192]">
@@ -296,7 +296,7 @@ export default function BusinessSettingsPage() {
             <button
               type="button"
               onClick={handleExport}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-xs font-medium text-[#c6cee5] transition hover:bg-white/[0.07]"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-xs font-medium text-[#6F7192] transition hover:bg-gray-200"
             >
               <Download className="h-3.5 w-3.5" />
               Export
@@ -304,7 +304,7 @@ export default function BusinessSettingsPage() {
             <button
               type="button"
               onClick={handleImport}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-xs font-medium text-[#c6cee5] transition hover:bg-white/[0.07]"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-xs font-medium text-[#6F7192] transition hover:bg-gray-200"
             >
               <Upload className="h-3.5 w-3.5" />
               Import
@@ -313,8 +313,8 @@ export default function BusinessSettingsPage() {
         </div>
 
         {settings && (
-          <div className="rounded-xl border border-emerald-400/15 bg-emerald-400/8 px-4 py-3">
-            <div className="flex items-center gap-2 text-xs text-emerald-300">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <div className="flex items-center gap-2 text-xs text-emerald-600">
               <Check className="h-3.5 w-3.5" />
               Last updated {new Date(settings.updatedAt).toLocaleString('en-IN')}
             </div>
@@ -333,8 +333,8 @@ export default function BusinessSettingsPage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
                       activeTab === tab.id
-                        ? 'bg-[#7C5CFF]/15 text-white'
-                        : 'text-[#8b95b5] hover:bg-white/[0.04] hover:text-white'
+                        ? 'bg-[#7C5CFF]/15 text-[#0F1B3D]'
+                        : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#0F1B3D]'
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -391,7 +391,7 @@ export default function BusinessSettingsPage() {
         </div>
       </div>
 
-      <div className={`fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.06] bg-[#0A1F2D]/95 backdrop-blur-xl transition-all md:left-[280px] ${savingToast ? '' : ''}`}>
+      <div className={`fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur-xl transition-all md:left-[280px] ${savingToast ? '' : ''}`}>
         <div className="mx-auto flex max-w-[1500px] items-center justify-between px-4 py-3 md:px-8">
           <div className="flex items-center gap-2">
             <div className={`h-2 w-2 rounded-full ${dirty ? 'bg-amber-400' : 'bg-emerald-400'}`} />
@@ -402,7 +402,7 @@ export default function BusinessSettingsPage() {
               <button
                 type="button"
                 onClick={handleReset}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-xs font-medium text-[#c6cee5] transition hover:bg-white/[0.07]"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-[#6F7192] transition hover:bg-gray-200"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 Revert
@@ -412,7 +412,7 @@ export default function BusinessSettingsPage() {
               type="button"
               onClick={handleSave}
               disabled={saving || !dirty}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#7C5CFF] px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#7C5CFF] px-4 py-2 text-xs font-semibold text-[#0F1B3D] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving ? (
                 <>
@@ -443,10 +443,10 @@ function SectionCard({ title, description, children }: { title: string; descript
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-white/[0.06] bg-[#0A1F2D] p-5"
+      className="rounded-2xl border border-gray-200 bg-white p-5"
     >
       <div className="mb-5">
-        <h3 className="text-base font-semibold text-white">{title}</h3>
+        <h3 className="text-base font-semibold text-[#0F1B3D]">{title}</h3>
         {description && <p className="mt-1 text-xs text-[#6F7192]">{description}</p>}
       </div>
       {children}
@@ -463,7 +463,7 @@ function Grid({ children, cols = 2 }: { children: React.ReactNode; cols?: number
 }
 
 function Divider() {
-  return <div className="my-5 border-t border-white/[0.06]" />
+  return <div className="my-5 border-t border-gray-200" />
 }
 
 function BusinessInfoTab({ form, updateField, f, fn, fb, copyToClipboard, showSensitive, setShowSensitive, billingSame }: {
@@ -511,7 +511,7 @@ function BusinessInfoTab({ form, updateField, f, fn, fb, copyToClipboard, showSe
           <div className="relative">
             <InputField label="Primary Phone Number" type="tel" value={f('primaryPhone')} onChange={(v) => updateField('primaryPhone', v)} placeholder="+91 98765 43210" />
             {f('primaryPhone') && (
-              <button type="button" onClick={() => copyToClipboard(f('primaryPhone'))} className="absolute right-3 top-8 text-[#6F7192] hover:text-white">
+              <button type="button" onClick={() => copyToClipboard(f('primaryPhone'))} className="absolute right-3 top-8 text-[#6F7192] hover:text-[#0F1B3D]">
                 <Copy className="h-3.5 w-3.5" />
               </button>
             )}
@@ -519,7 +519,7 @@ function BusinessInfoTab({ form, updateField, f, fn, fb, copyToClipboard, showSe
           <div className="relative">
             <InputField label="WhatsApp Number" type="tel" value={f('whatsappNumber')} onChange={(v) => updateField('whatsappNumber', v)} placeholder="+91 98765 43210" />
             {f('whatsappNumber') && (
-              <button type="button" onClick={() => copyToClipboard(f('whatsappNumber'))} className="absolute right-3 top-8 text-[#6F7192] hover:text-white">
+              <button type="button" onClick={() => copyToClipboard(f('whatsappNumber'))} className="absolute right-3 top-8 text-[#6F7192] hover:text-[#0F1B3D]">
                 <Copy className="h-3.5 w-3.5" />
               </button>
             )}
@@ -545,8 +545,8 @@ function BusinessInfoTab({ form, updateField, f, fn, fb, copyToClipboard, showSe
           <Divider />
           <ToggleField label="Billing address same as office address" description="Use the same address for billing purposes." checked={billingSame} onChange={(v) => updateField('billingSameAsOffice', v)} />
           {!billingSame && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.15em] text-[#5a6580]">Billing Address</div>
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.15em] text-[#6F7192]">Billing Address</div>
               <InputField label="Billing Address Line 1" value={f('billingAddressLine1')} onChange={(v) => updateField('billingAddressLine1', v)} />
               <div className="grid gap-4 md:grid-cols-2">
                 <InputField label="Billing Address Line 2" value={f('billingAddressLine2')} onChange={(v) => updateField('billingAddressLine2', v)} />
@@ -603,21 +603,21 @@ function BrandingTab({ form, updateField, f, fb, triggerFileInput, uploading }: 
       <SectionCard title="Branding Images" description="Upload logos and icons used across the website, invoices, and emails.">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {imageFields.map(({ key, label }) => (
-            <div key={key} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div key={key} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
               <div className="mb-2 text-xs font-medium text-[#aeb8d8]">{label}</div>
               {f(key) ? (
                 <div className="space-y-2">
-                  <div className="relative flex items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.01] p-3">
+                  <div className="relative flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50/50 p-3">
                     <img src={f(key)} alt={label} className="max-h-20 max-w-full object-contain" />
                   </div>
                   <div className="flex gap-2">
                     <button type="button" onClick={() => triggerFileInput(key)} disabled={uploading === key}
-                      className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[10px] text-[#c6cee5] transition hover:bg-white/[0.07] disabled:opacity-50"
+                      className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-[10px] text-[#6F7192] transition hover:bg-gray-200 disabled:opacity-50"
                     >
                       {uploading === key ? 'Uploading...' : 'Replace'}
                     </button>
                     <button type="button" onClick={() => updateField(key, '')}
-                      className="rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-1.5 text-[10px] text-rose-300 transition hover:bg-rose-400/15"
+                      className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-[10px] text-rose-600 transition hover:bg-rose-400/15"
                     >
                       Remove
                     </button>
@@ -625,12 +625,12 @@ function BrandingTab({ form, updateField, f, fb, triggerFileInput, uploading }: 
                 </div>
               ) : (
                 <button type="button" onClick={() => triggerFileInput(key)} disabled={uploading === key}
-                  className="flex w-full items-center justify-center rounded-lg border border-dashed border-white/[0.08] bg-white/[0.01] py-8 text-[11px] text-[#5a6580] transition hover:border-white/20 hover:bg-white/[0.03] disabled:opacity-50"
+                  className="flex w-full items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50/50 py-8 text-[11px] text-[#6F7192] transition hover:border-gray-400 hover:bg-gray-50 disabled:opacity-50"
                 >
                   {uploading === key ? 'Uploading...' : 'Click to upload'}
                 </button>
               )}
-              <div className="mt-1.5 text-[9px] text-[#5a6580]">PNG, WebP, SVG. Max 2MB</div>
+              <div className="mt-1.5 text-[9px] text-[#6F7192]">PNG, WebP, SVG. Max 2MB</div>
             </div>
           ))}
         </div>
@@ -642,9 +642,9 @@ function BrandingTab({ form, updateField, f, fb, triggerFileInput, uploading }: 
             <div className="mb-1.5 text-xs font-medium text-[#aeb8d8]">Primary Color</div>
             <div className="flex gap-3">
               <input type="color" value={f('primaryColor') || '#7C5CFF'} onChange={(e) => updateField('primaryColor', e.target.value)}
-                className="h-10 w-10 cursor-pointer rounded-lg border border-white/10 bg-transparent" />
+                className="h-10 w-10 cursor-pointer rounded-lg border border-gray-200 bg-transparent" />
               <input type="text" value={f('primaryColor')} onChange={(e) => updateField('primaryColor', e.target.value)}
-                className="flex-1 rounded-xl border border-white/8 bg-white/[0.03] px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-[#7C5CFF]/30"
+                className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition focus:border-[#7C5CFF]/30"
                 placeholder="#7C5CFF" />
             </div>
           </div>
@@ -652,9 +652,9 @@ function BrandingTab({ form, updateField, f, fb, triggerFileInput, uploading }: 
             <div className="mb-1.5 text-xs font-medium text-[#aeb8d8]">Secondary Color</div>
             <div className="flex gap-3">
               <input type="color" value={f('secondaryColor') || '#A78BFA'} onChange={(e) => updateField('secondaryColor', e.target.value)}
-                className="h-10 w-10 cursor-pointer rounded-lg border border-white/10 bg-transparent" />
+                className="h-10 w-10 cursor-pointer rounded-lg border border-gray-200 bg-transparent" />
               <input type="text" value={f('secondaryColor')} onChange={(e) => updateField('secondaryColor', e.target.value)}
-                className="flex-1 rounded-xl border border-white/8 bg-white/[0.03] px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-[#7C5CFF]/30"
+                className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition focus:border-[#7C5CFF]/30"
                 placeholder="#A78BFA" />
             </div>
           </div>
@@ -703,17 +703,17 @@ function InvoicingTab({ form, updateField, f, fn, triggerFileInput, uploading }:
             <div className="mb-1.5 text-xs font-medium text-[#aeb8d8]">UPI QR Code</div>
             {f('upiQrCodeUrl') ? (
               <div className="space-y-2">
-                <div className="flex items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.01] p-3">
+                <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50/50 p-3">
                   <img src={f('upiQrCodeUrl')} alt="UPI QR Code" className="max-h-28 max-w-full object-contain" />
                 </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => triggerFileInput('upiQrCodeUrl')} disabled={uploading === 'upiQrCodeUrl'}
-                    className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[10px] text-[#c6cee5] hover:bg-white/[0.07] disabled:opacity-50"
+                    className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-[10px] text-[#6F7192] hover:bg-gray-200 disabled:opacity-50"
                   >
                     {uploading === 'upiQrCodeUrl' ? 'Uploading...' : 'Replace'}
                   </button>
                   <button type="button" onClick={() => updateField('upiQrCodeUrl', '')}
-                    className="rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-1.5 text-[10px] text-rose-300 hover:bg-rose-400/15"
+                    className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-[10px] text-rose-600 hover:bg-rose-400/15"
                   >
                     Remove
                   </button>
@@ -721,7 +721,7 @@ function InvoicingTab({ form, updateField, f, fn, triggerFileInput, uploading }:
               </div>
             ) : (
               <button type="button" onClick={() => triggerFileInput('upiQrCodeUrl')} disabled={uploading === 'upiQrCodeUrl'}
-                className="flex items-center justify-center rounded-lg border border-dashed border-white/[0.08] bg-white/[0.01] py-8 text-[11px] text-[#5a6580] hover:border-white/20 hover:bg-white/[0.03] disabled:opacity-50"
+                className="flex items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50/50 py-8 text-[11px] text-[#6F7192] hover:border-gray-400 hover:bg-gray-50 disabled:opacity-50"
               >
                 {uploading === 'upiQrCodeUrl' ? 'Uploading...' : 'Click to upload QR Code'}
               </button>
@@ -747,7 +747,7 @@ function CommunicationTab({ form, updateField, f, fb, copyToClipboard }: {
           <div className="relative">
             <InputField label="WhatsApp Order Notification Number" type="tel" value={f('whatsappOrderNumber')} onChange={(v) => updateField('whatsappOrderNumber', v)} placeholder="+91 98765 43210" />
             {f('whatsappOrderNumber') && (
-              <button type="button" onClick={() => copyToClipboard(f('whatsappOrderNumber'))} className="absolute right-3 top-8 text-[#6F7192] hover:text-white">
+              <button type="button" onClick={() => copyToClipboard(f('whatsappOrderNumber'))} className="absolute right-3 top-8 text-[#6F7192] hover:text-[#0F1B3D]">
                 <Copy className="h-3.5 w-3.5" />
               </button>
             )}
@@ -755,7 +755,7 @@ function CommunicationTab({ form, updateField, f, fb, copyToClipboard }: {
           <div className="relative">
             <InputField label="WhatsApp Support Number" type="tel" value={f('whatsappSupportNumber')} onChange={(v) => updateField('whatsappSupportNumber', v)} placeholder="+91 98765 43210" />
             {f('whatsappSupportNumber') && (
-              <button type="button" onClick={() => copyToClipboard(f('whatsappSupportNumber'))} className="absolute right-3 top-8 text-[#6F7192] hover:text-white">
+              <button type="button" onClick={() => copyToClipboard(f('whatsappSupportNumber'))} className="absolute right-3 top-8 text-[#6F7192] hover:text-[#0F1B3D]">
                 <Copy className="h-3.5 w-3.5" />
               </button>
             )}
@@ -765,7 +765,7 @@ function CommunicationTab({ form, updateField, f, fb, copyToClipboard }: {
         <div className="space-y-4">
           <div>
             <TextAreaField label="Default WhatsApp Message Template" value={f('defaultWhatsappTemplate')} onChange={(v) => updateField('defaultWhatsappTemplate', v)} rows={3} placeholder="Hi {name}, your order #{orderNumber} has been received..." />
-            <div className="mt-1 flex justify-between text-[10px] text-[#5a6580]">
+            <div className="mt-1 flex justify-between text-[10px] text-[#6F7192]">
               <span>Available variables: {'{name}'}, {'{orderNumber}'}, {'{orderStatus}'}</span>
               <span>{f('defaultWhatsappTemplate').length} / 1000</span>
             </div>
@@ -806,17 +806,17 @@ function SEOTab({ form, updateField, f, fb, triggerFileInput, uploading }: {
             <div className="mb-1.5 text-xs font-medium text-[#aeb8d8]">Open Graph Image (1200x630)</div>
             {f('ogImageUrl') ? (
               <div className="space-y-2">
-                <div className="flex items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.01] p-2">
+                <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50/50 p-2">
                   <img src={f('ogImageUrl')} alt="OG" className="max-h-24 max-w-full rounded object-contain" />
                 </div>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => triggerFileInput('ogImageUrl')} className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[10px] text-[#c6cee5] hover:bg-white/[0.07]">Replace</button>
-                  <button type="button" onClick={() => updateField('ogImageUrl', '')} className="rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-1.5 text-[10px] text-rose-300 hover:bg-rose-400/15">Remove</button>
+                  <button type="button" onClick={() => triggerFileInput('ogImageUrl')} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-[10px] text-[#6F7192] hover:bg-gray-200">Replace</button>
+                  <button type="button" onClick={() => updateField('ogImageUrl', '')} className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-[10px] text-rose-600 hover:bg-rose-400/15">Remove</button>
                 </div>
               </div>
             ) : (
               <button type="button" onClick={() => triggerFileInput('ogImageUrl')} disabled={uploading === 'ogImageUrl'}
-                className="flex w-full items-center justify-center rounded-lg border border-dashed border-white/[0.08] bg-white/[0.01] py-8 text-[11px] text-[#5a6580] hover:border-white/20 hover:bg-white/[0.03] disabled:opacity-50"
+                className="flex w-full items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50/50 py-8 text-[11px] text-[#6F7192] hover:border-gray-400 hover:bg-gray-50 disabled:opacity-50"
               >
                 {uploading === 'ogImageUrl' ? 'Uploading...' : 'Click to upload'}
               </button>
@@ -826,17 +826,17 @@ function SEOTab({ form, updateField, f, fb, triggerFileInput, uploading }: {
             <div className="mb-1.5 text-xs font-medium text-[#aeb8d8]">Twitter Meta Image (1200x600)</div>
             {f('twitterImageUrl') ? (
               <div className="space-y-2">
-                <div className="flex items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.01] p-2">
+                <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50/50 p-2">
                   <img src={f('twitterImageUrl')} alt="Twitter" className="max-h-24 max-w-full rounded object-contain" />
                 </div>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => triggerFileInput('twitterImageUrl')} className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[10px] text-[#c6cee5] hover:bg-white/[0.07]">Replace</button>
-                  <button type="button" onClick={() => updateField('twitterImageUrl', '')} className="rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-1.5 text-[10px] text-rose-300 hover:bg-rose-400/15">Remove</button>
+                  <button type="button" onClick={() => triggerFileInput('twitterImageUrl')} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-[10px] text-[#6F7192] hover:bg-gray-200">Replace</button>
+                  <button type="button" onClick={() => updateField('twitterImageUrl', '')} className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-[10px] text-rose-600 hover:bg-rose-400/15">Remove</button>
                 </div>
               </div>
             ) : (
               <button type="button" onClick={() => triggerFileInput('twitterImageUrl')} disabled={uploading === 'twitterImageUrl'}
-                className="flex w-full items-center justify-center rounded-lg border border-dashed border-white/[0.08] bg-white/[0.01] py-8 text-[11px] text-[#5a6580] hover:border-white/20 hover:bg-white/[0.03] disabled:opacity-50"
+                className="flex w-full items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50/50 py-8 text-[11px] text-[#6F7192] hover:border-gray-400 hover:bg-gray-50 disabled:opacity-50"
               >
                 {uploading === 'twitterImageUrl' ? 'Uploading...' : 'Click to upload'}
               </button>
@@ -878,7 +878,7 @@ function EmailTab({ form, updateField, f, fn }: {
           type="button"
           onClick={handleTestEmail}
           disabled={testing || !f('smtpHost') || !f('smtpUsername')}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-2.5 text-xs font-medium text-cyan-300 transition hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-xs font-medium text-cyan-600 transition hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {testing ? 'Sending...' : 'Test Email Configuration'}
         </button>

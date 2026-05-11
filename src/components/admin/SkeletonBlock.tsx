@@ -3,5 +3,5 @@ export default function SkeletonBlock({
 }: {
   className: string
 }) {
-  return <div className={`animate-pulse rounded-xl bg-white/[0.04] ${className}`} />
+  return <div className={`animate-pulse rounded-xl bg-gray-200 ${className}`} />
 }

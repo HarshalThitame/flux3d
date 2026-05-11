@@ -59,7 +59,7 @@ export default function TicketsPage() {
 
   if (error) {
     return (
-      <div className="rounded-[28px] border border-rose-400/15 bg-rose-400/10 p-6 text-rose-100">
+      <div className="rounded-[28px] border border-rose-400/15 bg-rose-50 p-6 text-rose-100">
         {error}
       </div>
     )
@@ -86,7 +86,7 @@ export default function TicketsPage() {
           <Ticket className="h-3 w-3" />
           Support Tickets
         </div>
-        <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Support Tickets</h1>
+        <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">Support Tickets</h1>
         <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
           Manage customer queries and issues
         </p>
@@ -105,7 +105,7 @@ export default function TicketsPage() {
             className={`rounded-xl border px-3.5 py-2 text-xs font-medium transition ${
               activeTab === tab.value
                 ? 'border-[#7C5CFF]/30 bg-[#7C5CFF]/10 text-[#7C5CFF]'
-                : 'border-white/8 bg-white/[0.03] text-[#8b95b5] hover:bg-white/[0.06]'
+                : 'border-gray-200 bg-gray-50 text-[#6F7192] hover:bg-gray-100'
             }`}
           >
             {tab.label} ({tabCounts[tab.value as keyof typeof tabCounts]})
@@ -152,33 +152,33 @@ export default function TicketsPage() {
             },
           ]}
           columns={[
-            { key: 'ticketId', label: 'Ticket ID', sortable: true, render: (row: SupportTicket) => <span className="font-medium text-white">{row.ticketId}</span> },
-            { key: 'customer', label: 'Customer', sortable: true, render: (row: SupportTicket) => <span className="text-[#c6cee5]">{row.customer}</span> },
-            { key: 'subject', label: 'Subject', sortable: true, render: (row: SupportTicket) => <span className="text-[#c6cee5]">{row.subject}</span> },
-            { key: 'category', label: 'Category', sortable: true, render: (row: SupportTicket) => <span className="text-[#c6cee5]">{row.category}</span> },
+            { key: 'ticketId', label: 'Ticket ID', sortable: true, render: (row: SupportTicket) => <span className="font-medium text-[#0F1B3D]">{row.ticketId}</span> },
+            { key: 'customer', label: 'Customer', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.customer}</span> },
+            { key: 'subject', label: 'Subject', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.subject}</span> },
+            { key: 'category', label: 'Category', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.category}</span> },
             { key: 'priority', label: 'Priority', sortable: true, render: (row: SupportTicket) => (
               <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                row.priority === 'Urgent' ? 'bg-red-400/20 text-red-400' :
-                row.priority === 'High' ? 'bg-orange-400/20 text-orange-400' :
-                row.priority === 'Normal' ? 'bg-blue-400/20 text-blue-400' :
-                'bg-gray-400/20 text-gray-400'
+                row.priority === 'Urgent' ? 'bg-red-100 text-red-700' :
+                row.priority === 'High' ? 'bg-orange-100 text-orange-700' :
+                row.priority === 'Normal' ? 'bg-blue-100 text-blue-700' :
+                'bg-gray-100 text-gray-700'
               }`}>
                 {row.priority}
               </span>
             )},
             { key: 'status', label: 'Status', sortable: true, render: (row: SupportTicket) => (
               <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                row.status === 'Open' ? 'bg-red-400/20 text-red-400' :
-                row.status === 'In Progress' ? 'bg-yellow-400/20 text-yellow-400' :
-                row.status === 'Resolved' ? 'bg-emerald-400/20 text-emerald-400' :
-                'bg-gray-400/20 text-gray-400'
+                row.status === 'Open' ? 'bg-red-100 text-red-700' :
+                row.status === 'In Progress' ? 'bg-yellow-100 text-yellow-700' :
+                row.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' :
+                'bg-gray-100 text-gray-700'
               }`}>
                 {row.status}
               </span>
             )},
-            { key: 'assignedTo', label: 'Assigned To', sortable: true, render: (row: SupportTicket) => <span className="text-[#c6cee5]">{row.assignedTo}</span> },
-            { key: 'created', label: 'Created', sortable: true, render: (row: SupportTicket) => <span className="text-[#8b95b5]">{row.created}</span> },
-            { key: 'lastUpdated', label: 'Last Updated', sortable: true, render: (row: SupportTicket) => <span className="text-[#8b95b5]">{row.lastUpdated}</span> },
+            { key: 'assignedTo', label: 'Assigned To', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.assignedTo}</span> },
+            { key: 'created', label: 'Created', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.created}</span> },
+            { key: 'lastUpdated', label: 'Last Updated', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.lastUpdated}</span> },
             { key: 'action', label: 'Action', render: () => (
               <button className="text-[#7C5CFF] hover:text-[#7C5CFF] text-sm">View</button>
             )},

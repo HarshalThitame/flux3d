@@ -177,7 +177,6 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
       discount: input.discount ?? 0,
       coupon_code: input.couponCode ?? null,
       coupon_id: input.couponId ?? null,
-      offer_id: input.offerId ?? null,
       discount_type: input.discountType ?? null,
       notes: `Cart order - ${input.items.length} item(s), ${normalizedQuantity} pcs. File: ${item.fileName}`,
     }

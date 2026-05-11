@@ -38,7 +38,7 @@ export default function CustomersPage() {
 
   if (error) {
     return (
-      <div className="rounded-[28px] border border-rose-400/15 bg-rose-400/10 p-6 text-rose-100">
+      <div className="rounded-[28px] border border-rose-400/15 bg-rose-50 p-6 text-rose-100">
         {error}
       </div>
     )
@@ -60,7 +60,7 @@ export default function CustomersPage() {
           <Users className="h-3 w-3" />
           Customer Management
         </div>
-        <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Customers</h1>
+        <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">Customers</h1>
         <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
           View and manage your customer base
         </p>
@@ -92,20 +92,20 @@ export default function CustomersPage() {
             },
           ]}
           columns={[
-            { key: 'customerId', label: 'Customer ID', sortable: true, render: (row) => <span className="font-medium text-white">{row.customerId}</span> },
-            { key: 'name', label: 'Name', sortable: true, render: (row) => <span className="text-[#c6cee5]">{row.name}</span> },
-            { key: 'email', label: 'Email', render: (row) => <span className="text-[#c6cee5]">{row.email}</span> },
-            { key: 'phone', label: 'Phone', render: (row) => <span className="text-[#c6cee5]">{row.phone}</span> },
-            { key: 'city', label: 'City', sortable: true, render: (row) => <span className="text-[#c6cee5]">{row.city}</span> },
-            { key: 'totalOrders', label: 'Total Orders', sortable: true, render: (row) => <span className="text-white">{row.totalOrders || 0}</span> },
-            { key: 'totalSpent', label: 'Total Spent', sortable: true, render: (row) => <span className="font-medium text-white">₹{(row.totalSpent || 0).toLocaleString('en-IN')}</span> },
-            { key: 'lastOrderDate', label: 'Last Order', sortable: true, render: (row) => <span className="text-[#8b95b5]">{row.lastOrderDate || 'N/A'}</span> },
+            { key: 'customerId', label: 'Customer ID', sortable: true, render: (row) => <span className="font-medium text-[#0F1B3D]">{row.customerId}</span> },
+            { key: 'name', label: 'Name', sortable: true, render: (row) => <span className="text-[#6F7192]">{row.name}</span> },
+            { key: 'email', label: 'Email', render: (row) => <span className="text-[#6F7192]">{row.email}</span> },
+            { key: 'phone', label: 'Phone', render: (row) => <span className="text-[#6F7192]">{row.phone}</span> },
+            { key: 'city', label: 'City', sortable: true, render: (row) => <span className="text-[#6F7192]">{row.city}</span> },
+            { key: 'totalOrders', label: 'Total Orders', sortable: true, render: (row) => <span className="text-[#0F1B3D]">{row.totalOrders || 0}</span> },
+            { key: 'totalSpent', label: 'Total Spent', sortable: true, render: (row) => <span className="font-medium text-[#0F1B3D]">₹{(row.totalSpent || 0).toLocaleString('en-IN')}</span> },
+            { key: 'lastOrderDate', label: 'Last Order', sortable: true, render: (row) => <span className="text-[#6F7192]">{row.lastOrderDate || 'N/A'}</span> },
             { key: 'status', label: 'Status', sortable: true, render: (row) => (
               <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                row.status === 'VIP' ? 'bg-purple-400/20 text-purple-400' :
-                row.status === 'Active' ? 'bg-emerald-400/20 text-emerald-400' :
-                row.status === 'Inactive' ? 'bg-yellow-400/20 text-yellow-400' :
-                'bg-red-400/20 text-red-400'
+                row.status === 'VIP' ? 'bg-purple-100 text-purple-700' :
+                row.status === 'Active' ? 'bg-emerald-100 text-emerald-700' :
+                row.status === 'Inactive' ? 'bg-yellow-100 text-yellow-700' :
+                'bg-red-100 text-red-700'
               }`}>
                 {row.status || 'Active'}
               </span>

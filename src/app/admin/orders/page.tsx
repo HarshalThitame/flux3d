@@ -47,7 +47,7 @@ export default function AdminOrdersPage() {
   }, [toast])
 
   if (error) {
-    return <div className="rounded-xl border border-rose-400/20 bg-rose-400/10 p-5 text-sm text-rose-300">{error}</div>
+    return <div className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-300">{error}</div>
   }
 
   if (orders === null) {
@@ -83,7 +83,7 @@ export default function AdminOrdersPage() {
             <PackageOpen className="h-3 w-3" />
             Order Management
           </div>
-          <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Orders</h1>
+          <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">Orders</h1>
           <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
             {orders.length} order{orders.length !== 1 ? 's' : ''} · {totalItems} item{totalItems !== 1 ? 's' : ''} total
           </p>
@@ -123,9 +123,9 @@ export default function AdminOrdersPage() {
               sortValue: (row) => row.orderNumber,
               render: (row) => (
                 <div>
-                  <span className="font-medium text-white">{row.orderNumber}</span>
+                  <span className="font-medium text-[#0F1B3D]">{row.orderNumber}</span>
                   {row.itemCount > 1 && (
-                    <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-violet-400/20 bg-violet-400/10 px-1.5 py-0.5 text-[10px] font-medium text-violet-300">
+                    <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-600">
                       <Boxes className="h-2.5 w-2.5" />
                       {row.itemCount} items
                     </span>
@@ -133,7 +133,7 @@ export default function AdminOrdersPage() {
                 </div>
               ),
             },
-            { key: 'fullName', label: 'Customer', sortable: true, sortValue: (row) => row.fullName, render: (row) => <span className="text-[#c6cee5]">{row.fullName}</span> },
+            { key: 'fullName', label: 'Customer', sortable: true, sortValue: (row) => row.fullName, render: (row) => <span className="text-[#6F7192]">{row.fullName}</span> },
             {
               key: 'material',
               label: 'Materials',
@@ -142,19 +142,19 @@ export default function AdminOrdersPage() {
               render: (row) => (
                 <div className="flex flex-wrap gap-1">
                   {row.items.slice(0, 2).map((item) => (
-                    <span key={item.id} className="rounded-md border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5 text-[10px] text-[#8b95b5]">
+                    <span key={item.id} className="rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] text-[#6F7192]">
                       {item.material}
                     </span>
                   ))}
                   {row.items.length > 2 && (
-                    <span className="rounded-md border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5 text-[10px] text-[#5a6580]">
+                    <span className="rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] text-[#6F7192]">
                       +{row.items.length - 2}
                     </span>
                   )}
                 </div>
               ),
             },
-            { key: 'totalPrice', label: 'Total', sortable: true, sortValue: (row) => row.totalPrice, render: (row) => <span className="font-medium text-white">₹{row.totalPrice.toLocaleString('en-IN')}</span> },
+            { key: 'totalPrice', label: 'Total', sortable: true, sortValue: (row) => row.totalPrice, render: (row) => <span className="font-medium text-[#0F1B3D]">₹{row.totalPrice.toLocaleString('en-IN')}</span> },
             { key: 'status', label: 'Status', sortable: true, sortValue: (row) => row.status, render: (row) => <StatusBadge status={row.status} /> },
           ]}
         />

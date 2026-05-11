@@ -38,9 +38,9 @@ export default function Modal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 12 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed left-1/2 top-1/2 z-[90] w-[min(92vw,580px)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-white/[0.06] bg-[#FFFFFF] shadow-2xl"
+            className="fixed left-1/2 top-1/2 z-[90] w-[min(92vw,580px)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-gray-200 bg-[#FFFFFF] shadow-2xl"
           >
-            <div className="flex items-start justify-between gap-4 border-b border-white/[0.06] px-5 py-4">
+            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4">
               <div>
                 <Dialog.Title className="text-lg font-semibold text-[#0F1B3D]">
                   {title}
@@ -51,7 +51,7 @@ export default function Modal({
                   </Dialog.Description>
                 )}
               </div>
-              <Dialog.Close className="shrink-0 rounded-lg border border-[#7C5CFF]/10 bg-white/[0.03] p-2 text-[#6F7192] transition hover:bg-white/[0.06] hover:text-[#0F1B3D]">
+              <Dialog.Close className="shrink-0 rounded-lg border border-[#7C5CFF]/10 bg-gray-50 p-2 text-[#6F7192] transition hover:bg-gray-100 hover:text-[#0F1B3D]">
                 <X className="h-4 w-4" />
               </Dialog.Close>
             </div>

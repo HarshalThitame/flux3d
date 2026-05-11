@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { use, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { ArrowLeft, Download, Package2, FileIcon, Layers, Clock, IndianRupee, Hash, Palette, Cuboid, Ruler, ShieldCheck, Wrench } from 'lucide-react'
 import SkeletonBlock from '@/components/admin/SkeletonBlock'
 import StatusBadge from '@/components/admin/StatusBadge'
@@ -9,21 +9,20 @@ import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import type { AdminOrder } from '@/lib/admin/types'
 
 const statusActions = [
-  { label: 'Reviewed', status: 'reviewed' as const, color: 'border-sky-400/20 bg-sky-400/10 text-sky-300 hover:bg-sky-400/15' },
-  { label: 'Approved', status: 'approved' as const, color: 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/15' },
-  { label: 'Queued', status: 'queued' as const, color: 'border-violet-400/20 bg-violet-400/10 text-violet-300 hover:bg-violet-400/15' },
+  { label: 'Reviewed', status: 'reviewed' as const, color: 'border-sky-400/20 bg-sky-400/10 text-sky-600 hover:bg-sky-400/15' },
+  { label: 'Approved', status: 'approved' as const, color: 'border-emerald-400/20 bg-emerald-50 text-emerald-600 hover:bg-emerald-400/15' },
+  { label: 'Queued', status: 'queued' as const, color: 'border-violet-200 bg-violet-50 text-violet-600 hover:bg-violet-400/15' },
   { label: 'Printing', status: 'printing' as const, color: 'border-[#7C5CFF]/20 bg-[#7C5CFF]/10 text-[#7C5CFF] hover:bg-[#7C5CFF]/15' },
-  { label: 'Shipped', status: 'shipped' as const, color: 'border-amber-400/20 bg-amber-400/10 text-amber-300 hover:bg-amber-400/15' },
-  { label: 'Completed', status: 'completed' as const, color: 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/15' },
-  { label: 'On Hold', status: 'on-hold' as const, color: 'border-white/10 bg-white/[0.03] text-[#8b95b5] hover:bg-white/[0.06]' },
-  { label: 'Cancel', status: 'cancelled' as const, color: 'border-rose-400/20 bg-rose-400/10 text-rose-300 hover:bg-rose-400/15' },
-  { label: 'Reject', status: 'rejected' as const, color: 'border-rose-400/20 bg-rose-400/10 text-rose-300 hover:bg-rose-400/15' },
+  { label: 'Shipped', status: 'shipped' as const, color: 'border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-400/15' },
+  { label: 'Completed', status: 'completed' as const, color: 'border-emerald-400/20 bg-emerald-50 text-emerald-600 hover:bg-emerald-400/15' },
+  { label: 'On Hold', status: 'on-hold' as const, color: 'border-gray-200 bg-gray-50 text-[#6F7192] hover:bg-gray-100' },
+  { label: 'Cancel', status: 'cancelled' as const, color: 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-400/15' },
+  { label: 'Reject', status: 'rejected' as const, color: 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-400/15' },
 ]
 
-export default function AdminOrderDetailPage() {
-  const params = useParams()
+export default function AdminOrderDetailPage({ params }: { params: Promise<{ orderId: string }> }) {
+  const { orderId } = use(params)
   const router = useRouter()
-  const orderId = params?.orderId ?? ''
 
   const [order, setOrder] = useState<AdminOrder | null>(null)
   const [loading, setLoading] = useState(true)
@@ -32,15 +31,16 @@ export default function AdminOrderDetailPage() {
   const [toast, setToast] = useState<AdminToastState>(null)
 
   useEffect(() => {
+    if (!orderId) {
+      return
+    }
+
     const controller = new AbortController()
 
     async function load() {
-      if (!orderId) {
-        setError('Missing order ID.')
-        setLoading(false)
-        return
-      }
-
+      setLoading(true)
+      setError(null)
+      setOrder(null)
       try {
         const res = await fetch(`/api/admin/orders/${orderId}`, { signal: controller.signal })
         if (!res.ok) {
@@ -104,9 +104,9 @@ export default function AdminOrderDetailPage() {
     )
   }
 
-  if (error || !order) {
+  if (!loading && (error || !order)) {
     return (
-      <div className="rounded-xl border border-rose-400/20 bg-rose-400/10 p-5 text-sm text-rose-300">
+      <div className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-600">
         {error ?? 'Order not found.'}
       </div>
     )
@@ -122,7 +122,7 @@ export default function AdminOrderDetailPage() {
         <button
           type="button"
           onClick={() => router.push('/admin/orders')}
-          className="inline-flex items-center gap-1.5 text-xs text-[#6F7192] transition-colors hover:text-white"
+          className="inline-flex items-center gap-1.5 text-xs text-[#6F7192] transition-colors hover:text-[#0F1B3D]"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to orders
@@ -134,7 +134,7 @@ export default function AdminOrderDetailPage() {
               <Package2 className="h-3 w-3" />
               Order Details
             </div>
-            <h1 className="font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">
+            <h1 className="font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">
               {order.orderNumber}
             </h1>
             <p className="mt-1 text-sm text-[#6F7192]">
@@ -150,35 +150,52 @@ export default function AdminOrderDetailPage() {
           <InfoCard label="Delivery" value={order.deliveryCharge === 0 ? 'Free' : `₹${order.deliveryCharge.toFixed(0)}`} icon={<IndianRupee className="h-3.5 w-3.5" />} />
         </div>
 
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-          <div className="text-[10px] uppercase tracking-[0.15em] text-[#5a6580]">Delivery Address</div>
-          <div className="mt-1.5 text-sm leading-6 text-white">
+        <div className="rounded-xl border border-emerald-400/20 bg-emerald-50 px-4 py-4">
+          <div className="text-[10px] uppercase tracking-[0.15em] text-emerald-700">Discount Summary</div>
+          <div className="mt-1.5 text-sm font-medium text-[#0F1B3D]">
+            {order.discountAmount && order.discountAmount > 0
+              ? `₹${order.discountAmount.toLocaleString('en-IN')} saved`
+              : 'No discount applied'}
+          </div>
+          <div className="mt-1 text-sm text-[#6F7192]">
+            {order.discountLabel ?? order.offerName ?? order.couponCode ?? order.discountType ?? 'No offer or coupon linked to this order'}
+          </div>
+          <div className="mt-1 text-xs text-[#6F7192]">
+            {order.discountSource
+              ? `Source: ${order.discountSource}`
+              : 'Source not recorded'}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+          <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Delivery Address</div>
+          <div className="mt-1.5 text-sm leading-6 text-[#0F1B3D]">
             {[order.addressLine1, order.addressLine2, order.city, order.state, order.pincode].filter(Boolean).join(', ')}
           </div>
         </div>
 
         {order.notes && (
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-            <div className="text-[10px] uppercase tracking-[0.15em] text-[#5a6580]">Notes</div>
-            <div className="mt-1.5 text-sm text-white">{order.notes}</div>
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+            <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Notes</div>
+            <div className="mt-1.5 text-sm text-[#0F1B3D]">{order.notes}</div>
           </div>
         )}
 
         <div>
-          <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-[#5a6580]">
+          <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-[#6F7192]">
             <Cuboid className="h-3.5 w-3.5" />
             Order Items ({order.items.length})
           </div>
           <div className="space-y-4">
             {order.items.map((item, i) => (
-              <div key={item.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <div key={item.id} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div className="flex-1 space-y-4">
                     <div className="flex items-center gap-3">
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#7C5CFF]/15 text-xs font-bold text-[#7C5CFF]">
                         {i + 1}
                       </span>
-                      <span className="text-base font-semibold text-white">{item.material}</span>
+                      <span className="text-base font-semibold text-[#0F1B3D]">{item.material}</span>
                       <StatusBadge status={item.status} />
                     </div>
 
@@ -204,7 +221,7 @@ export default function AdminOrderDetailPage() {
                       href={`/api/admin/orders/${item.id}/file`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/15 bg-cyan-400/8 px-3 py-1.5 text-xs text-cyan-300 transition hover:bg-cyan-400/12"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/15 bg-cyan-400/8 px-3 py-1.5 text-xs text-cyan-600 transition hover:bg-cyan-400/12"
                     >
                       <Download className="h-3 w-3" />
                       Download File
@@ -216,8 +233,8 @@ export default function AdminOrderDetailPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/[0.06] p-4">
-          <div className="mb-3 text-xs uppercase tracking-[0.15em] text-[#5a6580]">Update Status</div>
+        <div className="rounded-xl border border-gray-200 p-4">
+          <div className="mb-3 text-xs uppercase tracking-[0.15em] text-[#6F7192]">Update Status</div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {statusActions.map((action) => (
               <button
@@ -241,24 +258,24 @@ export default function AdminOrderDetailPage() {
 
 function InfoCard({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-3">
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.15em] text-[#5a6580]">
+    <div className="rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">
         {icon && <span className="text-[#6F7192]">{icon}</span>}
         {label}
       </div>
-      <div className="mt-1.5 text-sm font-medium text-white">{value}</div>
+      <div className="mt-1.5 text-sm font-medium text-[#0F1B3D]">{value}</div>
     </div>
   )
 }
 
 function Spec({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-white/[0.04] bg-white/[0.01] px-3 py-2">
-      <div className="flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] text-[#5a6580]">
+    <div className="rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-2">
+      <div className="flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] text-[#6F7192]">
         {icon && <span className="text-[#6a7595]">{icon}</span>}
         {label}
       </div>
-      <div className="mt-0.5 text-sm text-white">{value}</div>
+      <div className="mt-0.5 text-sm text-[#0F1B3D]">{value}</div>
     </div>
   )
 }

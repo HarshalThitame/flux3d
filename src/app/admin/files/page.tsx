@@ -44,7 +44,7 @@ export default function AdminFilesPage() {
   }, [toast])
 
   if (error) {
-    return <div className="rounded-xl border border-rose-400/20 bg-rose-400/10 p-5 text-sm text-rose-300">{error}</div>
+    return <div className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-600">{error}</div>
   }
 
   if (files === null) {
@@ -74,11 +74,11 @@ export default function AdminFilesPage() {
     <>
       <div className="space-y-6">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-amber-300">
+          <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-amber-600">
             <FileArchive className="h-3 w-3" />
             File Storage
           </div>
-          <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Files</h1>
+          <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">Files</h1>
           <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
             Monitor uploaded STL, OBJ, and 3MF assets with download and moderation actions.
           </p>
@@ -91,10 +91,10 @@ export default function AdminFilesPage() {
           searchPlaceholder="Search file name or user"
           searchKeys={['name', 'user', 'uploadedAt', 'size']}
           columns={[
-            { key: 'name', label: 'File Name', sortable: true, sortValue: (row) => row.name, render: (row) => <span className="font-medium text-white">{row.name}</span> },
-            { key: 'user', label: 'User', sortable: true, sortValue: (row) => row.user, render: (row) => <span className="text-[#c6cee5]">{row.user}</span> },
-            { key: 'uploadedAt', label: 'Upload Date', sortable: true, sortValue: (row) => row.uploadedAt, render: (row) => <span className="text-[#8b95b5]">{row.uploadedAt}</span> },
-            { key: 'size', label: 'Size', sortable: true, sortValue: (row) => row.size, render: (row) => <span className="font-medium text-white">{row.size}</span> },
+            { key: 'name', label: 'File Name', sortable: true, sortValue: (row) => row.name, render: (row) => <span className="font-medium text-[#0F1B3D]">{row.name}</span> },
+            { key: 'user', label: 'User', sortable: true, sortValue: (row) => row.user, render: (row) => <span className="text-[#6F7192]">{row.user}</span> },
+            { key: 'uploadedAt', label: 'Upload Date', sortable: true, sortValue: (row) => row.uploadedAt, render: (row) => <span className="text-[#6F7192]">{row.uploadedAt}</span> },
+            { key: 'size', label: 'Size', sortable: true, sortValue: (row) => row.size, render: (row) => <span className="font-medium text-[#0F1B3D]">{row.size}</span> },
             {
               key: 'actions',
               label: 'Actions',
@@ -106,7 +106,7 @@ export default function AdminFilesPage() {
                       event.stopPropagation()
                       setToast({ type: 'info', message: `Download prepared for ${row.name}.` })
                     }}
-                    className="rounded-lg border border-cyan-400/20 bg-cyan-400/10 p-2 text-cyan-400 transition hover:bg-cyan-400/15"
+                    className="rounded-lg border border-cyan-200 bg-cyan-50 p-2 text-cyan-400 transition hover:bg-cyan-400/15"
                     title="Download"
                   >
                     <Download className="h-3.5 w-3.5" />
@@ -117,7 +117,7 @@ export default function AdminFilesPage() {
                       event.stopPropagation()
                       setToast({ type: 'error', message: `${row.name} marked for deletion.` })
                     }}
-                    className="rounded-lg border border-rose-400/20 bg-rose-400/10 p-2 text-rose-400 transition hover:bg-rose-400/15"
+                    className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-400 transition hover:bg-rose-400/15"
                     title="Delete"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

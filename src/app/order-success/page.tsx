@@ -71,7 +71,7 @@ export default function OrderSuccessPage() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-center"
         >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-emerald-300">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-emerald-600">
             <Sparkles className="h-3.5 w-3.5" />
             Order Confirmed
           </div>
@@ -124,8 +124,8 @@ export default function OrderSuccessPage() {
 
               <div className="flex items-center justify-between rounded-[16px] border border-[#7C5CFF]/10 bg-white/[0.02] px-4 py-3">
                 <span className="text-sm text-[#6F7192]">Status</span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-xs font-medium text-amber-100">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-xs font-medium text-amber-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
                   Pending Review
                 </span>
               </div>
@@ -141,7 +141,7 @@ export default function OrderSuccessPage() {
         >
           <Link
             href={`/my-orders/${orderData.orderId}`}
-            className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#7C5CFF,#A78BFA)] px-6 py-4 text-sm font-semibold text-[#0F1B3D] transition-all hover:opacity-95 hover:shadow-[0_8px_30px_rgba(124, 92, 255,0.3)]"
+            className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#7C5CFF,#A78BFA)] px-6 py-4 text-sm font-semibold text-white transition-all hover:opacity-95 hover:shadow-[0_8px_30px_rgba(124, 92, 255,0.3)]"
           >
             <span className="relative z-10 flex items-center gap-2">
               View Order Details
@@ -163,7 +163,7 @@ export default function OrderSuccessPage() {
 
           <Link
             href="/my-orders"
-            className="inline-flex w-full items-center justify-center rounded-[18px] border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-[#c8d0e9] transition-colors hover:bg-white/[0.07]"
+            className="inline-flex w-full items-center justify-center rounded-[18px] border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-[#6F7192] transition-colors hover:bg-white/[0.07]"
           >
             View All Orders
           </Link>

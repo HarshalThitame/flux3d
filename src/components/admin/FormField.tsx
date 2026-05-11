@@ -21,7 +21,7 @@ export function InputField({
         value={value}
         onChange={(event) => onChange?.(event.target.value)}
         placeholder={placeholder}
-        className={`w-full rounded-xl border bg-white/[0.03] px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition placeholder:text-[#5a6580] ${
+        className={`w-full rounded-xl border bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition placeholder:text-[#6F7192] ${
           error ? 'border-rose-400/30 focus:border-rose-400/50' : 'border-[#7C5CFF]/10 focus:border-[#7C5CFF]/30'
         }`}
       />
@@ -49,7 +49,7 @@ export function SelectField({
       <select
         value={value}
         onChange={(event) => onChange?.(event.target.value)}
-        className={`w-full rounded-xl border bg-white/[0.03] px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition ${
+        className={`w-full rounded-xl border bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition ${
           error ? 'border-rose-400/30' : 'border-[#7C5CFF]/10 focus:border-[#7C5CFF]/30'
         }`}
       >
@@ -76,7 +76,7 @@ export function ToggleField({
   onChange: (checked: boolean) => void
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5">
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5">
       <div>
         <div className="text-sm font-medium text-[#0F1B3D]">{label}</div>
         <div className="mt-0.5 text-xs text-[#6F7192]">{description}</div>
@@ -85,7 +85,7 @@ export function ToggleField({
         type="button"
         aria-pressed={checked}
         onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? 'bg-[#7C5CFF]' : 'bg-white/10'}`}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? 'bg-[#7C5CFF]' : 'bg-gray-200'}`}
       >
         <span
           className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}
@@ -118,7 +118,7 @@ export function TextAreaField({
         onChange={(event) => onChange?.(event.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className={`w-full rounded-xl border bg-white/[0.03] px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition resize-none placeholder:text-[#5a6580] ${
+        className={`w-full rounded-xl border bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition resize-none placeholder:text-[#6F7192] ${
           error ? 'border-rose-400/30 focus:border-rose-400/50' : 'border-[#7C5CFF]/10 focus:border-[#7C5CFF]/30'
         }`}
       />

@@ -55,7 +55,7 @@ export default function AnalyticsPage() {
         const json = await response.json()
         setKpis([
           { label: 'Total Visitors Today', value: json.kpis.totalVisitorsToday.toLocaleString(), breakdown: `${json.kpis.unregistered} Unregistered · ${json.kpis.registered} Registered`, change: `+34% vs yesterday`, icon: <Eye className="h-4 w-4" /> },
-          { label: 'Active Right Now', value: json.kpis.activeNow.toString(), breakdown: `${json.kpis.anonymous} anonymous · ${json.kpis.loggedIn} logged in`, icon: <Users className="h-4 w-4 text-emerald-400" /> },
+          { label: 'Active Right Now', value: json.kpis.activeNow.toString(), breakdown: `${json.kpis.anonymous} anonymous · ${json.kpis.loggedIn} logged in`, icon: <Users className="h-4 w-4 text-emerald-600" /> },
           { label: 'New vs Returning', value: `${json.kpis.newVsReturning.new} · ${json.kpis.newVsReturning.returning}`, change: `${json.kpis.newVsReturning.newPercent} New · ${json.kpis.newVsReturning.returningPercent} Returning`, icon: <TrendingUp className="h-4 w-4" /> },
           { label: 'Avg. Session Duration', value: json.kpis.avgSessionDuration, change: '+18 sec vs last week', icon: <Clock className="h-4 w-4" /> },
           { label: 'Bounce Rate', value: `${json.kpis.bounceRate}%`, change: '-2.1% (improving)', icon: <BarChart3 className="h-4 w-4" /> },
@@ -90,7 +90,7 @@ export default function AnalyticsPage() {
   }, [])
 
   if (error) {
-    return <div className="rounded-xl border border-rose-400/20 bg-rose-400/10 p-5 text-sm text-rose-300">{error}</div>
+    return <div className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-600">{error}</div>
   }
 
   return (
@@ -100,7 +100,7 @@ export default function AnalyticsPage() {
           <BarChart3 className="h-3 w-3" />
           Customer Intelligence Center
         </div>
-        <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Analytics</h1>
+        <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">Analytics</h1>
         <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
           Every click, every visit, every intent — tracked and actionable.
         </p>
@@ -120,17 +120,17 @@ export default function AnalyticsPage() {
           className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
         >
           {kpis.map((kpi, i) => (
-            <div key={i} className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-5">
+            <div key={i} className="rounded-2xl border border-gray-200 bg-white p-5">
               <div className="mb-3 flex items-center justify-between">
                 <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">{kpi.label}</div>
                 {kpi.icon}
               </div>
-              <div className="text-2xl font-bold text-white">{kpi.value}</div>
+              <div className="text-2xl font-bold text-[#0F1B3D]">{kpi.value}</div>
               {kpi.breakdown && (
-                <div className="mt-1 text-xs text-[#8b95b5]">{kpi.breakdown}</div>
+                <div className="mt-1 text-xs text-[#6F7192]">{kpi.breakdown}</div>
               )}
               {kpi.change && (
-                <div className="mt-2 text-[10px] text-emerald-400">{kpi.change}</div>
+                <div className="mt-2 text-[10px] text-emerald-600">{kpi.change}</div>
               )}
             </div>
           ))}
@@ -144,7 +144,7 @@ export default function AnalyticsPage() {
         transition={{ delay: 0.2 }}
       >
         <div className="mb-4">
-          <h2 className="font-[var(--font-syne)] text-xl font-bold text-white">Anonymous Visitor Intelligence</h2>
+          <h2 className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">Anonymous Visitor Intelligence</h2>
           <p className="mt-1 text-sm text-[#6F7192]">Monitor every unregistered user — what they look at, how long, and where they drop off.</p>
         </div>
 
@@ -152,20 +152,20 @@ export default function AnalyticsPage() {
           <SkeletonBlock className="h-48 w-full" />
         ) : (
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-5">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5">
               <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Anonymous Visitors Today</div>
-              <div className="mt-2 text-2xl font-bold text-white">{kpis[0]?.breakdown?.split(' · ')[0]?.replace('Unregistered: ', '') || '0'}</div>
-              <div className="mt-1 text-xs text-[#8b95b5]">{kpis[0]?.breakdown || ''}</div>
+              <div className="mt-2 text-2xl font-bold text-[#0F1B3D]">{kpis[0]?.breakdown?.split(' · ')[0]?.replace('Unregistered: ', '') || '0'}</div>
+              <div className="mt-1 text-xs text-[#6F7192]">{kpis[0]?.breakdown || ''}</div>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-5">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5">
               <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">First-Time Anonymous</div>
-              <div className="mt-2 text-2xl font-bold text-white">748</div>
-              <div className="mt-1 text-xs text-[#8b95b5]">Never visited before</div>
+              <div className="mt-2 text-2xl font-bold text-[#0F1B3D]">748</div>
+              <div className="mt-1 text-xs text-[#6F7192]">Never visited before</div>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-5">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5">
               <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Anonymous → Registered</div>
-              <div className="mt-2 text-2xl font-bold text-white">182</div>
-              <div className="mt-1 text-xs text-emerald-400">16.5% conversion rate</div>
+              <div className="mt-2 text-2xl font-bold text-[#0F1B3D]">182</div>
+              <div className="mt-1 text-xs text-emerald-600">16.5% conversion rate</div>
             </div>
           </div>
         )}
@@ -178,13 +178,13 @@ export default function AnalyticsPage() {
         transition={{ delay: 0.3 }}
       >
         <div className="mb-4">
-          <h2 className="font-[var(--font-syne)] text-xl font-bold text-white">Conversion Funnel — Today</h2>
+          <h2 className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">Conversion Funnel — Today</h2>
         </div>
 
         {!funnel ? (
           <SkeletonBlock className="h-64 w-full" />
         ) : (
-          <div className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-6">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6">
             <div className="space-y-3">
               {[
                 { step: 'Site Visited', value: funnel.siteVisited, percent: 100 },
@@ -200,18 +200,18 @@ export default function AnalyticsPage() {
                   <div className="w-48 text-xs text-[#6F7192]">Step {i + 1}</div>
                   <div className="flex-1">
                     <div className="mb-1 flex justify-between text-sm">
-                      <span className="text-white">{item.step}</span>
-                      <span className="text-[#8b95b5]">{item.value} visitors ({item.percent}%)</span>
+                      <span className="text-[#0F1B3D]">{item.step}</span>
+                      <span className="text-[#6F7192]">{item.value} visitors ({item.percent}%)</span>
                     </div>
-                    <div className="h-2 rounded-full bg-white/10">
+                    <div className="h-2 rounded-full bg-gray-100">
                       <div className="h-full rounded-full bg-gradient-to-r from-[#7C5CFF] to-cyan-400" style={{ width: `${item.percent}%` }} />
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="mt-6 rounded-xl bg-rose-400/10 p-4">
-              <div className="text-sm font-medium text-rose-300">Biggest Drop-Off: {funnel.biggestDropOff}</div>
+            <div className="mt-6 rounded-xl bg-rose-50 p-4">
+              <div className="text-sm font-medium text-rose-600">Biggest Drop-Off: {funnel.biggestDropOff}</div>
               <div className="mt-1 text-xs text-[#6F7192]">Action: {funnel.dropOffAction}</div>
             </div>
           </div>
@@ -225,16 +225,16 @@ export default function AnalyticsPage() {
         transition={{ delay: 0.4 }}
       >
         <div className="mb-4">
-          <h2 className="font-[var(--font-syne)] text-xl font-bold text-white">Traffic Source Performance — Today</h2>
+          <h2 className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">Traffic Source Performance — Today</h2>
         </div>
 
         {!sources ? (
           <SkeletonBlock className="h-96 w-full" />
         ) : (
-          <div className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-6">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/10 text-left text-[10px] uppercase tracking-[0.12em] text-[#5a6580]">
+                <tr className="border-b border-gray-200 text-left text-[10px] uppercase tracking-[0.12em] text-[#6F7192]">
                   <th className="pb-3 font-medium">Source</th>
                   <th className="pb-3 font-medium text-right">Visitors</th>
                   <th className="pb-3 font-medium text-right">Quotes</th>
@@ -245,13 +245,13 @@ export default function AnalyticsPage() {
               </thead>
               <tbody>
                 {sources.map((source, i) => (
-                  <tr key={i} className="border-b border-white/5 text-sm">
-                    <td className="py-3 text-white">{source.source}</td>
-                    <td className="py-3 text-right text-[#c6cee5]">{source.visitors}</td>
-                    <td className="py-3 text-right text-[#c6cee5]">{source.quotes}</td>
-                    <td className="py-3 text-right text-[#c6cee5]">{source.orders}</td>
-                    <td className="py-3 text-right text-white">{source.revenue}</td>
-                    <td className="py-3 text-right text-[#8b95b5]">{source.roi}</td>
+                  <tr key={i} className="border-b border-gray-100 text-sm">
+                    <td className="py-3 text-[#0F1B3D]">{source.source}</td>
+                    <td className="py-3 text-right text-[#6F7192]">{source.visitors}</td>
+                    <td className="py-3 text-right text-[#6F7192]">{source.quotes}</td>
+                    <td className="py-3 text-right text-[#6F7192]">{source.orders}</td>
+                    <td className="py-3 text-right text-[#0F1B3D]">{source.revenue}</td>
+                    <td className="py-3 text-right text-[#6F7192]">{source.roi}</td>
                   </tr>
                 ))}
               </tbody>

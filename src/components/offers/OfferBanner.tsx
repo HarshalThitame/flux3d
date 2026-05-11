@@ -44,12 +44,12 @@ export function AnnouncementBar() {
         initial={{ height: 0, opacity: 0 }}
         animate={{ height: 'auto', opacity: 1 }}
         exit={{ height: 0, opacity: 0 }}
-        className="relative bg-gradient-to-r from-[#7C5CFF] via-[#8B6CF7] to-[#A78BFA] overflow-hidden"
+        className="relative bg-gradient-to-r from-[#4A32B0] via-[#5B3FD6] to-[#6B4FE0] overflow-hidden"
       >
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_100%_at_50%_0%,rgba(255,255,255,0.15),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_100%_at_50%_0%,rgba(255,255,255,0.08),transparent_60%)]" />
         <div className="relative max-w-[1400px] mx-auto px-4 py-2.5 flex items-center justify-center gap-3 text-white text-sm">
           <Gift className="w-4 h-4 flex-shrink-0 hidden sm:block" />
-          <span className="font-medium truncate max-w-[300px] sm:max-w-none">
+          <span className="font-medium min-w-0">
             {offer.badge_text && (
               <span className="inline-block bg-white/20 rounded-full px-2 py-0.5 text-xs font-bold mr-2 uppercase">
                 {offer.badge_text}
@@ -60,7 +60,7 @@ export function AnnouncementBar() {
             )}
             {offer.title}
           </span>
-          <CountdownTimer targetDate={offer.ends_at} size="sm" className="flex-shrink-0" />
+          <CountdownTimer targetDate={offer.ends_at} size="sm" light className="flex-shrink-0" />
           <Link
             href="/instant-quote"
             className="inline-flex items-center gap-1 text-xs font-semibold bg-white/20 hover:bg-white/30 rounded-full px-3 py-1 transition-colors flex-shrink-0"

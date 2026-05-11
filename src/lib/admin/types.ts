@@ -55,6 +55,12 @@ export type AdminOrder = {
   pincode?: string
   deliveryCharge: number
   totalPrice: number
+  discountAmount?: number
+  discountLabel?: string | null
+  discountType?: string | null
+  couponCode?: string | null
+  offerName?: string | null
+  discountSource?: 'offer' | 'coupon' | 'order' | null
   material: string
   color: string
   status: OrderStatus

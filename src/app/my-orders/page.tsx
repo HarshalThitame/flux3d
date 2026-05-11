@@ -15,6 +15,9 @@ type OrderRow = {
   status: OrderStatus
   total_price: number
   delivery_charge: number
+  discount: number | null
+  coupon_code: string | null
+  discount_type: string | null
   created_at: string
   material: string
   color: string
@@ -33,6 +36,8 @@ type GroupedOrder = {
   status: OrderStatus
   totalPrice: number
   deliveryCharge: number
+  discountAmount: number
+  discountLabel: string | null
   createdAt: string
   fullName: string
   city: string
@@ -55,7 +60,7 @@ export default async function MyOrdersPage() {
   const { data: orders, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, status, total_price, delivery_charge, created_at, material, color, full_name, city, state, pincode, file_url, price, estimated_time'
+      'id, order_number, group_id, status, total_price, delivery_charge, discount, coupon_code, discount_type, created_at, material, color, full_name, city, state, pincode, file_url, price, estimated_time'
     )
     .eq('user_id', auth.user.id)
     .order('created_at', { ascending: false })
@@ -91,6 +96,8 @@ export default async function MyOrdersPage() {
         status: row.status,
         totalPrice: Number(row.total_price),
         deliveryCharge: Number(row.delivery_charge),
+        discountAmount: Number(row.discount ?? 0),
+        discountLabel: row.coupon_code ?? (Number(row.discount ?? 0) > 0 ? 'Applied discount' : null),
         createdAt: row.created_at,
         fullName: row.full_name,
         city: row.city,
@@ -122,7 +129,7 @@ export default async function MyOrdersPage() {
           <h1 className="mt-5 font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D]">
             My Orders
           </h1>
-          <p className="mt-3 max-w-2xl text-base leading-8 text-[#9ea6c4]">
+          <p className="mt-3 max-w-2xl text-base leading-8 text-[#6F7192]">
             Track every print request, current status, and pricing snapshot from one authenticated workspace.
           </p>
         </div>
@@ -132,7 +139,7 @@ export default async function MyOrdersPage() {
             <div className="text-xl font-medium text-[#0F1B3D]">
               {ordersTableUnavailable ? 'Orders unavailable' : 'No print requests yet.'}
             </div>
-            <p className="mt-3 text-sm leading-7 text-[#9ea6c4]">
+            <p className="mt-3 text-sm leading-7 text-[#6F7192]">
               {ordersTableUnavailable
                 ? ORDERS_TABLE_UNAVAILABLE_MESSAGE
                 : 'Create an instant quote and submit your first print request to start tracking it here.'}
@@ -183,7 +190,7 @@ export default async function MyOrdersPage() {
                           {order.items.map((item) => (
                             <span
                               key={item.id}
-                              className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-1.5 text-xs text-[#c8d0e9]"
+                              className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-1.5 text-xs text-[#6F7192]"
                             >
                               {item.material} · {item.color}
                             </span>
@@ -203,10 +210,16 @@ export default async function MyOrdersPage() {
                       <div className="mt-1 font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">
                         ₹{order.totalPrice.toFixed(0)}
                       </div>
+                      {order.discountAmount > 0 && (
+                        <div className="mt-1 text-[10px] text-emerald-700">
+                          Saved ₹{order.discountAmount.toFixed(0)}
+                          {order.discountLabel ? ` · ${order.discountLabel}` : ''}
+                        </div>
+                      )}
                     </div>
                     <div className="text-center">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Items</div>
-                      <div className="mt-1 font-[var(--font-syne)] text-xl font-bold text-[#7dd3fc]">
+                      <div className="mt-1 font-[var(--font-syne)] text-xl font-bold text-[#7C5CFF]">
                         {order.itemCount}
                       </div>
                     </div>
@@ -214,6 +227,12 @@ export default async function MyOrdersPage() {
                       <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Delivery</div>
                       <div className="mt-1 text-sm font-medium text-[#0F1B3D]">
                         {order.deliveryCharge === 0 ? 'Free' : `₹${order.deliveryCharge.toFixed(0)}`}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Saved</div>
+                      <div className="mt-1 text-sm font-medium text-emerald-700">
+                        {order.discountAmount > 0 ? `₹${order.discountAmount.toFixed(0)}` : '₹0'}
                       </div>
                     </div>
                     <div className="hidden text-left sm:block">

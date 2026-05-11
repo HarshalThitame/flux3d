@@ -173,7 +173,7 @@ export default function AdminBlogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A1F2D] text-[#E0E5EC]">
+    <div className="min-h-screen bg-white text-[#E0E5EC]">
       <div className="px-4 py-8 md:px-8">
         <div className="mx-auto max-w-[1500px]">
           <motion.div
@@ -183,14 +183,14 @@ export default function AdminBlogPage() {
           >
             <Link
               href="/admin"
-              className="inline-flex items-center gap-2 text-sm text-[#6F7192] hover:text-white mb-4"
+              className="inline-flex items-center gap-2 text-sm text-[#6F7192] hover:text-[#0F1B3D] mb-4"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Dashboard
             </Link>
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="font-[var(--font-syne)] text-3xl font-bold text-white">
+                <h1 className="font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">
                   <Eye className="inline h-8 w-8 text-[#7C5CFF] mr-2" />
                   Blog Management
                 </h1>
@@ -204,7 +204,7 @@ export default function AdminBlogPage() {
                   resetForm()
                   setShowForm(true)
                 }}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-4 py-2.5 text-sm font-semibold text-[#0F1B3D] hover:opacity-90"
               >
                 <Plus className="h-4 w-4" />
                 New Post
@@ -222,9 +222,9 @@ export default function AdminBlogPage() {
               <motion.div
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
-                className="mx-4 w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#142E44] p-6"
+                className="mx-4 w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-xl"
               >
-                <h2 className="mb-4 text-xl font-bold text-white">
+                <h2 className="mb-4 text-xl font-bold text-[#0F1B3D]">
                   {editingPost ? 'Edit Post' : 'New Blog Post'}
                 </h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -235,7 +235,7 @@ export default function AdminBlogPage() {
                       required
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
                     />
                   </div>
 
@@ -245,7 +245,7 @@ export default function AdminBlogPage() {
                       value={formData.excerpt}
                       onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
                       rows={2}
-                      className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
                     />
                   </div>
 
@@ -266,9 +266,9 @@ export default function AdminBlogPage() {
                         value={formData.featured_image}
                         onChange={(e) => setFormData({ ...formData, featured_image: e.target.value })}
                         placeholder="Image URL"
-                        className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
+                        className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
                       />
-                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-[#6F7192] hover:text-white">
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-[#6F7192] hover:text-[#0F1B3D]">
                         {uploading ? 'Uploading...' : 'Upload'}
                         <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                       </label>
@@ -285,7 +285,7 @@ export default function AdminBlogPage() {
                         type="text"
                         value={formData.category}
                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
                       />
                     </div>
                     <div>
@@ -295,7 +295,7 @@ export default function AdminBlogPage() {
                         value={formData.tags}
                         onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                         placeholder="3D Printing, Tips, Tutorial"
-                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
                       />
                     </div>
                     <div>
@@ -305,7 +305,7 @@ export default function AdminBlogPage() {
                         value={formData.meta_keywords}
                         onChange={(e) => setFormData({ ...formData, meta_keywords: e.target.value })}
                         placeholder="3D printing India, Flux3D blog, rapid prototyping tips"
-                        className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
                       />
                     </div>
                   </div>
@@ -315,7 +315,7 @@ export default function AdminBlogPage() {
                     <select
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value as 'draft' | 'published' })}
-                      className="w-full rounded-lg border border-white/10 bg-[#142E44] px-3 py-2 text-sm text-white outline-none focus:border-[#7C5CFF]/30"
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
                     >
                       <option value="draft">Draft</option>
                       <option value="published">Published</option>
@@ -325,7 +325,7 @@ export default function AdminBlogPage() {
                   <div className="flex gap-3 pt-4">
                     <button
                       type="submit"
-                      className="flex-1 rounded-xl bg-[#7C5CFF] py-2.5 text-sm font-semibold text-white hover:opacity-90"
+                      className="flex-1 rounded-xl bg-[#7C5CFF] py-2.5 text-sm font-semibold text-[#0F1B3D] hover:opacity-90"
                     >
                       {editingPost ? 'Update' : 'Create'}
                     </button>
@@ -336,7 +336,7 @@ export default function AdminBlogPage() {
                         setEditingPost(null)
                         resetForm()
                       }}
-                      className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] py-2.5 text-sm font-medium text-white hover:bg-white/[0.07]"
+                      className="flex-1 rounded-xl border border-gray-200 bg-gray-50 py-2.5 text-sm font-medium text-[#0F1B3D] hover:bg-gray-200"
                     >
                       Cancel
                     </button>
@@ -348,11 +348,11 @@ export default function AdminBlogPage() {
 
           {/* Posts List */}
           {loading ? (
-            <div className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-8 text-center text-sm text-[#6F7192]">
+            <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-sm text-[#6F7192]">
               Loading posts...
             </div>
           ) : posts.length === 0 ? (
-            <div className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-8 text-center">
+            <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center">
               <Eye className="mx-auto h-12 w-12 text-[#6F7192]" />
               <p className="mt-4 text-sm text-[#6F7192]">No blog posts yet. Create your first post!</p>
             </div>
@@ -364,7 +364,7 @@ export default function AdminBlogPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="rounded-2xl border border-white/10 bg-[#0A1F2D] p-5 hover:border-[#7C5CFF]/30 transition-colors"
+                  className="rounded-2xl border border-gray-200 bg-white p-5 hover:border-[#7C5CFF]/30 transition-colors"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4 flex-1">
@@ -377,9 +377,9 @@ export default function AdminBlogPage() {
                       )}
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-lg font-semibold text-white">{post.title}</h3>
+                          <h3 className="text-lg font-semibold text-[#0F1B3D]">{post.title}</h3>
                           {post.status === 'published' ? (
-                            <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-400">
+                            <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-600">
                               <Eye className="h-3 w-3" />
                               Published
                             </span>
@@ -413,7 +413,7 @@ export default function AdminBlogPage() {
                       </button>
                       <button
                         onClick={() => setDeleteConfirm(post.slug)}
-                        className="rounded-lg border border-rose-400/20 bg-rose-400/10 p-2 text-rose-400 hover:bg-rose-400/20"
+                        className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-400 hover:bg-rose-400/20"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -434,25 +434,25 @@ export default function AdminBlogPage() {
               <motion.div
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
-                className="mx-4 w-full max-w-md rounded-2xl border border-rose-400/20 bg-[#142E44] p-6"
+                className="mx-4 w-full max-w-md rounded-2xl border border-rose-200 bg-white p-6 shadow-xl"
               >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-400/10">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50">
                   <Trash2 className="h-6 w-6 text-rose-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">Delete Post?</h3>
+                <h3 className="text-lg font-semibold text-[#0F1B3D]">Delete Post?</h3>
                 <p className="mt-2 text-sm text-[#6F7192]">
                   This action cannot be undone. This will permanently delete the blog post.
                 </p>
                 <div className="mt-6 flex gap-3">
                   <button
                     onClick={() => setDeleteConfirm(null)}
-                    className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] py-2.5 text-sm font-medium text-white hover:bg-white/[0.07]"
+                    className="flex-1 rounded-xl border border-gray-200 bg-gray-50 py-2.5 text-sm font-medium text-[#0F1B3D] hover:bg-gray-200"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => handleDelete(deleteConfirm)}
-                    className="flex-1 rounded-xl bg-rose-500 py-2.5 text-sm font-semibold text-white hover:bg-rose-600"
+                    className="flex-1 rounded-xl bg-rose-500 py-2.5 text-sm font-semibold text-[#0F1B3D] hover:bg-rose-600"
                   >
                     Delete
                   </button>
@@ -469,8 +469,8 @@ export default function AdminBlogPage() {
               exit={{ opacity: 0 }}
               className={`fixed top-4 right-4 z-50 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${
                 toast.type === 'success' 
-                  ? 'bg-emerald-500/90 text-white' 
-                  : 'bg-rose-500/90 text-white'
+                  ? 'bg-emerald-500/90 text-[#0F1B3D]' 
+                  : 'bg-rose-500/90 text-[#0F1B3D]'
               }`}
             >
               {toast.type === 'success' ? (

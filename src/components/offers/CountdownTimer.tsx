@@ -6,6 +6,7 @@ type CountdownProps = {
   targetDate: string
   className?: string
   size?: 'sm' | 'md' | 'lg'
+  light?: boolean
 }
 
 function getTimeLeft(target: string) {
@@ -19,7 +20,7 @@ function getTimeLeft(target: string) {
   }
 }
 
-export default function CountdownTimer({ targetDate, className = '', size = 'md' }: CountdownProps) {
+export default function CountdownTimer({ targetDate, className = '', size = 'md', light = false }: CountdownProps) {
   const [timeLeft, setTimeLeft] = useState(getTimeLeft(targetDate))
 
   useEffect(() => {
@@ -45,14 +46,14 @@ export default function CountdownTimer({ targetDate, className = '', size = 'md'
       ].map((unit, i) => (
         <div key={unit.label} className="flex items-center">
           <div className="flex flex-col items-center">
-            <span className={`font-bold ${numClasses} text-[#7C5CFF] tabular-nums`}>
+            <span className={`font-bold ${numClasses} tabular-nums ${light ? 'text-white' : 'text-[#7C5CFF]'}`}>
               {String(unit.value).padStart(2, '0')}
             </span>
-            <span className={`uppercase tracking-wider ${labelClasses} text-[#6F7192]`}>
+            <span className={`uppercase tracking-wider ${labelClasses} ${light ? 'text-white/70' : 'text-[#6F7192]'}`}>
               {unit.label}
             </span>
           </div>
-          {i < 3 && <span className={`font-bold ${numClasses} text-[#7C5CFF] mx-1 sm:mx-1.5`}>:</span>}
+          {i < 3 && <span className={`font-bold ${numClasses} ${light ? 'text-white' : 'text-[#7C5CFF]'} mx-1 sm:mx-1.5`}>:</span>}
         </div>
       ))}
     </div>

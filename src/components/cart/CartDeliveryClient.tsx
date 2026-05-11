@@ -264,7 +264,7 @@ export default function CartDeliveryClient({
         <div className="mx-auto max-w-[1500px]">
           <Link
             href="/cart"
-            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[#7dd3fc] transition-colors hover:text-[#0F1B3D]"
+            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[#7C5CFF] transition-colors hover:text-[#0F1B3D]"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Cart
@@ -276,7 +276,7 @@ export default function CartDeliveryClient({
                 Cart Delivery
               </div>
               <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2.3rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#0F1B3D]">
-                Confirm Delivery for <span className="text-[#7dd3fc]">{items.length} Item{items.length !== 1 ? 's' : ''}</span>
+                Confirm Delivery for <span className="text-[#7C5CFF]">{items.length} Item{items.length !== 1 ? 's' : ''}</span>
               </h1>
               <p className="mt-5 max-w-[720px] text-base leading-8 text-[#6F7192]">
                 Review your cart items, choose a saved address or add a new one, and we will calculate shipping automatically before your order is sent.
@@ -308,7 +308,7 @@ export default function CartDeliveryClient({
                         Use an existing delivery address or switch to a new one.
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] p-3 text-[#c9d0e7]">
+                    <div className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#7C5CFF]">
                       <MapPin className="h-5 w-5" />
                     </div>
                   </div>
@@ -324,13 +324,13 @@ export default function CartDeliveryClient({
                           onClick={() => handleSavedAddressSelect(savedAddress)}
                           className={`rounded-[22px] border p-4 text-left transition ${
                             selectedAddressId === savedAddress.id
-                              ? 'border-[#7C5CFF]/35 bg-[#1C3B52]'
+                              ? 'border-[#7C5CFF] bg-[#7C5CFF]/12'
                               : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10 hover:bg-white/[0.04]'
                           }`}
                         >
                           <div className="text-sm font-semibold text-[#0F1B3D]">{savedAddress.fullName}</div>
-                          <div className="mt-1 text-sm text-[#c8d0e9]">{savedAddress.phone}</div>
-                          <div className="mt-3 space-y-1 text-xs leading-6 text-[#8d97b8]">
+                          <div className="mt-1 text-sm text-[#6F7192]">{savedAddress.phone}</div>
+                          <div className="mt-3 space-y-1 text-xs leading-6 text-[#6F7192]">
                             {summaryText.map((line) => (
                               <div key={line}>{line}</div>
                             ))}
@@ -347,7 +347,7 @@ export default function CartDeliveryClient({
                       setLastLookupPincode('')
                       setAddress(initialAddressFields)
                     }}
-                    className="mt-4 text-sm font-medium text-[#7dd3fc]"
+                    className="mt-4 text-sm font-medium text-[#7C5CFF]"
                   >
                     Use a new address
                   </button>
@@ -356,7 +356,7 @@ export default function CartDeliveryClient({
 
               <AddressForm values={address} errors={errors} onChange={handleAddressChange} />
 
-              <div className="text-sm text-[#8d97b8]">
+              <div className="text-sm text-[#6F7192]">
                 {lookupLoading
                   ? 'Fetching city and state from your pincode...'
                   : 'City and state will auto-fill after you enter a valid 6-digit pincode.'}
@@ -391,7 +391,7 @@ export default function CartDeliveryClient({
                       className="rounded-[16px] border border-[#7C5CFF]/10 bg-white/[0.02] p-3"
                     >
                       <div className="text-sm font-semibold text-[#0F1B3D]">{item.name}</div>
-                      <div className="mt-1 text-xs text-[#c8d0e9]">
+                      <div className="mt-1 text-xs text-[#6F7192]">
                         {item.material}, {item.color}, {item.infill}% infill
                       </div>
                       <div className="mt-1 text-sm font-medium text-[#7C5CFF]">
@@ -402,11 +402,11 @@ export default function CartDeliveryClient({
                 </div>
 
                 <div className="rounded-[24px] border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-5 shadow-[0_12px_48px_rgba(124, 92, 255,0.1)]">
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#ffd3c1]">Total Price</div>
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Total Price</div>
                   <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
                     ₹{summary.total.toFixed(0)}
                   </div>
-                  <div className="mt-3 grid gap-2 text-sm text-[#ffe0d4]">
+                  <div className="mt-3 grid gap-2 text-sm text-[#6F7192]">
                     <div className="flex justify-between">
                       <span>Print cost ({items.length} items)</span>
                       <span>₹{summary.subtotal.toFixed(0)}</span>

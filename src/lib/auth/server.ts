@@ -1,4 +1,3 @@
-import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { hasSupabaseConfig } from '@/lib/supabase/config'
@@ -12,7 +11,7 @@ export type AppUserProfile = {
   createdAt: string | null
 }
 
-export const getCurrentUserProfile = cache(async () => {
+export async function getCurrentUserProfile() {
   if (!hasSupabaseConfig()) {
     return null
   }
@@ -58,7 +57,7 @@ export const getCurrentUserProfile = cache(async () => {
       createdAt: profile?.created_at ?? null,
     } satisfies AppUserProfile,
   }
-})
+}
 
 export async function requireUser(nextPath: string) {
   const auth = await getCurrentUserProfile()

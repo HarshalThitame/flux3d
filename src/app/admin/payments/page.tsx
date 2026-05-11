@@ -33,7 +33,7 @@ export default function PaymentsPage() {
   }, [])
 
   const summaryCards = [
-    { label: 'Total Collected', value: '₹0', tone: 'text-emerald-400' },
+    { label: 'Total Collected', value: '₹0', tone: 'text-emerald-600' },
     { label: 'Pending', value: '₹0', tone: 'text-yellow-400' },
     { label: 'Refunded', value: '₹0', tone: 'text-red-400' },
     { label: 'Gateway Fees', value: '₹0', tone: 'text-[#6F7192]' },
@@ -46,7 +46,7 @@ export default function PaymentsPage() {
           <CreditCard className="h-3 w-3" />
           Payments & Invoices
         </div>
-        <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Payments & Invoices</h1>
+        <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">Payments & Invoices</h1>
         <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
           Track all transactions and invoices
         </p>
@@ -59,7 +59,7 @@ export default function PaymentsPage() {
         className="grid grid-cols-2 gap-4 lg:grid-cols-4"
       >
         {summaryCards.map((card) => (
-          <div key={card.label} className="rounded-2xl border border-white/[0.06] bg-[#0A1F2D] p-5">
+          <div key={card.label} className="rounded-2xl border border-gray-200 bg-white p-5">
             <p className="text-xs text-[#6F7192]">{card.label}</p>
             <p className={`mt-1 text-xl font-bold ${card.tone}`}>{card.value}</p>
           </div>
@@ -78,23 +78,23 @@ export default function PaymentsPage() {
           searchPlaceholder="Search by transaction ID, order ID, customer..."
           searchKeys={['transactionId', 'orderId', 'customer']}
           columns={[
-            { key: 'transactionId', label: 'Transaction ID', sortable: true, render: (row: PaymentData) => <span className="font-medium text-white">{row.transactionId}</span> },
-            { key: 'orderId', label: 'Order ID', sortable: true, render: (row: PaymentData) => <span className="text-[#c6cee5]">{row.orderId}</span> },
-            { key: 'customer', label: 'Customer', sortable: true, render: (row: PaymentData) => <span className="text-[#c6cee5]">{row.customer}</span> },
-            { key: 'amount', label: 'Amount', sortable: true, render: (row: PaymentData) => <span className="font-medium text-white">₹{row.amount.toLocaleString('en-IN')}</span> },
-            { key: 'method', label: 'Method', sortable: true, render: (row: PaymentData) => <span className="text-[#c6cee5]">{row.method}</span> },
+            { key: 'transactionId', label: 'Transaction ID', sortable: true, render: (row: PaymentData) => <span className="font-medium text-[#0F1B3D]">{row.transactionId}</span> },
+            { key: 'orderId', label: 'Order ID', sortable: true, render: (row: PaymentData) => <span className="text-[#6F7192]">{row.orderId}</span> },
+            { key: 'customer', label: 'Customer', sortable: true, render: (row: PaymentData) => <span className="text-[#6F7192]">{row.customer}</span> },
+            { key: 'amount', label: 'Amount', sortable: true, render: (row: PaymentData) => <span className="font-medium text-[#0F1B3D]">₹{row.amount.toLocaleString('en-IN')}</span> },
+            { key: 'method', label: 'Method', sortable: true, render: (row: PaymentData) => <span className="text-[#6F7192]">{row.method}</span> },
             { key: 'status', label: 'Status', sortable: true, render: (row: PaymentData) => (
               <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                row.status === 'Paid' ? 'bg-emerald-400/20 text-emerald-400' :
-                row.status === 'Pending' ? 'bg-yellow-400/20 text-yellow-400' :
-                row.status === 'Refunded' ? 'bg-red-400/20 text-red-400' :
-                'bg-gray-400/20 text-gray-400'
+                row.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
+                row.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
+                row.status === 'Refunded' ? 'bg-red-100 text-red-700' :
+                'bg-gray-100 text-gray-700'
               }`}>
                 {row.status}
               </span>
             )},
-            { key: 'gateway', label: 'Gateway', sortable: true, render: (row: PaymentData) => <span className="text-[#c6cee5]">{row.gateway}</span> },
-            { key: 'date', label: 'Date', sortable: true, render: (row: PaymentData) => <span className="text-[#8b95b5]">{row.date}</span> },
+            { key: 'gateway', label: 'Gateway', sortable: true, render: (row: PaymentData) => <span className="text-[#6F7192]">{row.gateway}</span> },
+            { key: 'date', label: 'Date', sortable: true, render: (row: PaymentData) => <span className="text-[#6F7192]">{row.date}</span> },
             { key: 'invoice', label: 'Invoice', render: () => (
               <button className="text-[#7C5CFF] hover:text-[#7C5CFF] text-sm">Generate</button>
             )},

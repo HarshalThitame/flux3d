@@ -20,17 +20,25 @@ const SettingsContext = createContext<SettingsContextValue>({
   refresh: async () => {},
 })
 
-export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<BusinessSettings>(FALLBACK)
-  const [loading, setLoading] = useState(true)
+export function SettingsProvider({
+  children,
+  initialSettings,
+}: {
+  children: React.ReactNode
+  initialSettings?: BusinessSettings
+}) {
+  const [settings, setSettings] = useState<BusinessSettings>(initialSettings ?? FALLBACK)
+  const [loading, setLoading] = useState(initialSettings ? false : true)
   const [error, setError] = useState<string | null>(null)
   const fetched = useRef(false)
 
   const fetchSettings = useCallback(async () => {
     try {
+      setError(null)
       const res = await fetch('/api/public/settings')
       if (!res.ok) {
         setSettings(FALLBACK)
+        setError('Failed to load business settings.')
         return
       }
       const json = await res.json() as { settings: BusinessSettings }
@@ -39,6 +47,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       }
     } catch {
       setSettings(FALLBACK)
+      setError('Failed to load business settings.')
     } finally {
       setLoading(false)
       fetched.current = true

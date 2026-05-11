@@ -34,7 +34,7 @@ export default function DashboardCards({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.06 }}
-            className={`group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-b ${gradients[index % 4]} p-5`}
+            className={`group relative overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-b ${gradients[index % 4]} p-5`}
           >
             <div className="relative">
               <div className="flex items-start justify-between gap-4">
@@ -50,10 +50,10 @@ export default function DashboardCards({
               </div>
               <div className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${
                 metric.tone === 'positive'
-                  ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300'
+                  ? 'border-emerald-400/20 bg-emerald-50 text-emerald-600'
                   : metric.tone === 'warning'
-                    ? 'border-amber-400/20 bg-amber-400/10 text-amber-300'
-                    : 'border-cyan-400/20 bg-cyan-400/10 text-cyan-300'
+                    ? 'border-amber-200 bg-amber-50 text-amber-600'
+                    : 'border-cyan-200 bg-cyan-50 text-cyan-600'
               }`}>
                 <ArrowUpRight className="h-3 w-3" />
                 {metric.change}

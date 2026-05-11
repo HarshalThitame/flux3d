@@ -17,24 +17,24 @@ export default function Sidebar({
   const secondaryItems = adminNavItems.filter(item => item.section === 'secondary')
 
   return (
-    <aside className={`fixed left-0 top-0 z-40 hidden h-screen border-r border-[#7C5CFF]/10 bg-[rgba(6,10,20,0.92)] backdrop-blur-xl transition-all md:block ${collapsed ? 'w-[92px]' : 'w-[280px]'}`}>
+    <aside className={`fixed left-0 top-0 z-40 hidden h-screen border-r border-gray-200 bg-white backdrop-blur-xl transition-all md:block ${collapsed ? 'w-[92px]' : 'w-[280px]'}`}>
       <div className="flex h-full flex-col px-4 py-5 overflow-y-auto scrollbar-hide">
         <div className="flex items-center justify-between gap-3 px-2">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[linear-gradient(135deg,#7C5CFF,#A78BFA)] text-[#0F1B3D] shadow-[0_10px_30px_rgba(124,92,255,0.2)]">
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[linear-gradient(135deg,#7C5CFF,#A78BFA)] text-white shadow-[0_10px_30px_rgba(124,92,255,0.2)]">
               <Printer className="h-5 w-5" />
             </div>
             {!collapsed ? (
               <div>
                 <div className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D]">Flux 3D</div>
-                <div className="text-xs uppercase tracking-[0.18em] text-[#7f8aac]">Admin</div>
+                <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Admin</div>
               </div>
             ) : null}
           </div>
           <button
             type="button"
             onClick={onToggleAction}
-            className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.03] p-2 text-[#c6cee5] transition hover:bg-white/[0.07]"
+            className="rounded-xl border border-gray-200 bg-gray-100 p-2 text-[#6F7192] transition hover:bg-gray-200"
           >
             <ChevronLeft className={`h-4 w-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
           </button>
@@ -52,7 +52,7 @@ export default function Sidebar({
                 className={`group flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition ${
                   active
                     ? 'bg-[linear-gradient(90deg,rgba(124,92,255,0.15),rgba(167,139,250,0.12))] text-[#0F1B3D] shadow-[inset_0_0_0_1px_rgba(124, 92, 255,0.4)]'
-                    : 'text-[#96a2c3] hover:bg-white/[0.04] hover:text-[#0F1B3D]'
+                    : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#0F1B3D]'
                 }`}
               >
                 <Icon className="h-5 w-5 shrink-0" />
@@ -63,8 +63,8 @@ export default function Sidebar({
         </nav>
 
         {!collapsed && secondaryItems.length > 0 && (
-          <div className="mt-6 border-t border-[#7C5CFF]/10 pt-4">
-            <div className="mb-2 px-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#7f8aac]">Support</div>
+          <div className="mt-6 border-t border-gray-200 pt-4">
+            <div className="mb-2 px-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#6F7192]">Support</div>
             <div className="space-y-2">
               {secondaryItems.map((item) => {
                 const Icon = item.icon
@@ -72,7 +72,7 @@ export default function Sidebar({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium text-[#96a2c3] transition hover:bg-white/[0.04] hover:text-[#0F1B3D]"
+                    className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium text-[#6F7192] transition hover:bg-gray-100 hover:text-[#0F1B3D]"
                   >
                     <Icon className="h-5 w-5 shrink-0" />
                     <span>{item.label}</span>
@@ -87,12 +87,12 @@ export default function Sidebar({
           {!collapsed ? (
             <>
               <div className="text-sm font-semibold text-[#0F1B3D]">System Healthy</div>
-              <div className="mt-2 text-sm leading-6 text-[#cfd7ee]">
+              <div className="mt-2 text-sm leading-6 text-[#505880]">
                 6 printers active · 87% utilization
               </div>
             </>
           ) : (
-            <div className="mx-auto h-3 w-3 rounded-full bg-emerald-400" />
+            <div className="mx-auto h-3 w-3 rounded-full bg-emerald-500" />
           )}
         </div>
       </div>

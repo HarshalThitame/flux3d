@@ -72,11 +72,11 @@ export default function AdminSettingsPage() {
     <>
       <div className="space-y-6">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#6F7192]/20 bg-[#6F7192]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#8b95b5]">
+          <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#6F7192]/20 bg-[#6F7192]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#6F7192]">
             <Settings className="h-3 w-3" />
             Configuration
           </div>
-          <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Settings</h1>
+          <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">Settings</h1>
           <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
             Manage your business configuration
           </p>
@@ -93,8 +93,8 @@ export default function AdminSettingsPage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
                       activeTab === tab.id
-                        ? 'bg-[#7C5CFF]/15 text-white'
-                        : 'text-[#8b95b5] hover:bg-white/[0.04] hover:text-white'
+                        ? 'bg-[#7C5CFF]/15 text-[#0F1B3D]'
+                        : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#0F1B3D]'
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -144,7 +144,7 @@ export default function AdminSettingsPage() {
                   <button
                     type="button"
                     onClick={handleSave}
-                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-5 py-2.5 text-sm font-medium text-[#0F1B3D] transition hover:opacity-90"
                   >
                     <Save className="h-4 w-4" />
                     Save Changes
@@ -157,12 +157,12 @@ export default function AdminSettingsPage() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                 <SectionCard title="Printer Management">
                   <div className="mb-4">
-                    <button className="rounded-xl bg-[#7C5CFF] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7C5CFF]/90">
+                    <button className="rounded-xl bg-[#7C5CFF] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#7C5CFF]/90">
                       + Add Printer
                     </button>
                   </div>
                   {printersError ? (
-                    <div className="rounded-xl border border-rose-400/15 bg-rose-400/10 p-4 text-rose-100">
+                    <div className="rounded-xl border border-rose-400/15 bg-rose-50 p-4 text-rose-100">
                       {printersError}
                     </div>
                   ) : !printers ? (
@@ -172,18 +172,18 @@ export default function AdminSettingsPage() {
                       ))}
                     </div>
                   ) : printers.length === 0 ? (
-                    <div className="rounded-xl border border-white/10 bg-[#080c18] p-8 text-center text-sm text-[#6F7192]">
+                    <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-[#6F7192]">
                       No printers configured yet. Click "+ Add Printer" to get started.
                     </div>
                   ) : (
                     <div className="space-y-3">
                       {printers.map((printer) => (
-                        <div key={printer.id} className="rounded-xl border border-white/10 bg-[#080c18] p-4">
+                        <div key={printer.id} className="rounded-xl border border-gray-200 bg-white p-4">
                           <div className="mb-2 flex items-center justify-between">
-                            <div className="font-medium text-white">{printer.name}</div>
+                            <div className="font-medium text-[#0F1B3D]">{printer.name}</div>
                             <div className="flex gap-2">
                               <button className="text-[#7C5CFF] hover:text-[#A78BFA] text-sm">Edit</button>
-                              <button className="text-[#8b95b5] hover:text-white text-sm">Deactivate</button>
+                              <button className="text-[#6F7192] hover:text-[#0F1B3D] text-sm">Deactivate</button>
                             </div>
                           </div>
                           <div className="text-xs text-[#6F7192]">
@@ -193,9 +193,9 @@ export default function AdminSettingsPage() {
                           </div>
                           <div className="mt-2">
                             <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                              printer.status === 'Printing' || printer.status === 'Idle' ? 'bg-emerald-400/20 text-emerald-400' :
-                              printer.status === 'Maintenance' ? 'bg-yellow-400/20 text-yellow-400' :
-                              'bg-gray-400/20 text-gray-400'
+                              printer.status === 'Printing' || printer.status === 'Idle' ? 'bg-emerald-100 text-emerald-700' :
+                              printer.status === 'Maintenance' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-gray-100 text-gray-700'
                             }`}>
                               {printer.status}
                             </span>
@@ -228,7 +228,7 @@ export default function AdminSettingsPage() {
                   <button
                     type="button"
                     onClick={handleSave}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-5 py-2.5 text-sm font-medium text-[#0F1B3D] transition hover:opacity-90"
                   >
                     <Save className="h-4 w-4" />
                     Save Changes
@@ -266,11 +266,11 @@ export default function AdminSettingsPage() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                 <SectionCard title="Team Members">
                   <div className="mb-4">
-                    <button className="rounded-xl bg-[#7C5CFF] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7C5CFF]/90">
+                    <button className="rounded-xl bg-[#7C5CFF] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#7C5CFF]/90">
                       + Invite Member
                     </button>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-[#080c18] p-8 text-center text-sm text-[#6F7192]">
+                  <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-[#6F7192]">
                     No team members yet. Click "+ Invite Member" to get started.
                   </div>
                 </SectionCard>
@@ -280,7 +280,7 @@ export default function AdminSettingsPage() {
                     <InputField label="Email Address" placeholder="email@example.com" />
                     <div>
                       <label className="mb-1 block text-xs font-medium text-[#6F7192]">Role</label>
-                      <select className="rounded-xl border border-white/10 bg-[#080c18] px-4 py-2.5 text-sm text-white">
+                      <select className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-[#0F1B3D]">
                         <option value="super-admin">Super Admin</option>
                         <option value="admin">Admin</option>
                         <option value="operator">Operator</option>
@@ -288,7 +288,7 @@ export default function AdminSettingsPage() {
                         <option value="viewer">Viewer</option>
                       </select>
                     </div>
-                    <button className="rounded-xl bg-[#7C5CFF] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7C5CFF]/90">
+                    <button className="rounded-xl bg-[#7C5CFF] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#7C5CFF]/90">
                       Send Invite
                     </button>
                   </div>
@@ -296,11 +296,11 @@ export default function AdminSettingsPage() {
 
                 <SectionCard title="Roles Explained">
                   <div className="space-y-2 text-sm text-[#6F7192]">
-                    <div><strong className="text-white">Super Admin:</strong> Full access including billing and settings</div>
-                    <div><strong className="text-white">Admin:</strong> Access to all except billing</div>
-                    <div><strong className="text-white">Operator:</strong> Orders, printers, inventory only</div>
-                    <div><strong className="text-white">Support Agent:</strong> Tickets and customers only</div>
-                    <div><strong className="text-white">Viewer:</strong> Read-only access</div>
+                    <div><strong className="text-[#0F1B3D]">Super Admin:</strong> Full access including billing and settings</div>
+                    <div><strong className="text-[#0F1B3D]">Admin:</strong> Access to all except billing</div>
+                    <div><strong className="text-[#0F1B3D]">Operator:</strong> Orders, printers, inventory only</div>
+                    <div><strong className="text-[#0F1B3D]">Support Agent:</strong> Tickets and customers only</div>
+                    <div><strong className="text-[#0F1B3D]">Viewer:</strong> Read-only access</div>
                   </div>
                 </SectionCard>
               </motion.div>
@@ -311,12 +311,12 @@ export default function AdminSettingsPage() {
                 <SectionCard title="Payment & Shipping Integrations">
                   <div className="space-y-3">
                     {['Razorpay', 'Shiprocket', 'Delhivery'].map((name) => (
-                      <div key={name} className="flex items-center justify-between rounded-xl border border-white/10 bg-[#080c18] p-4">
+                      <div key={name} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4">
                         <div>
-                          <div className="font-medium text-white">{name}</div>
+                          <div className="font-medium text-[#0F1B3D]">{name}</div>
                           <div className="text-sm text-[#6F7192]">Not Connected</div>
                         </div>
-                        <button className="rounded-lg bg-[#7C5CFF] px-3 py-1.5 text-xs font-semibold text-white">
+                        <button className="rounded-lg bg-[#7C5CFF] px-3 py-1.5 text-xs font-semibold text-[#0F1B3D]">
                           Connect
                         </button>
                       </div>
@@ -327,12 +327,12 @@ export default function AdminSettingsPage() {
                 <SectionCard title="Communication & Storage">
                   <div className="space-y-3">
                     {['WhatsApp Business API', 'Google Analytics', 'Supabase Storage'].map((name) => (
-                      <div key={name} className="flex items-center justify-between rounded-xl border border-white/10 bg-[#080c18] p-4">
+                      <div key={name} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4">
                         <div>
-                          <div className="font-medium text-white">{name}</div>
+                          <div className="font-medium text-[#0F1B3D]">{name}</div>
                           <div className="text-sm text-[#6F7192]">Not Connected</div>
                         </div>
-                        <button className="rounded-lg bg-[#7C5CFF] px-3 py-1.5 text-xs font-semibold text-white">
+                        <button className="rounded-lg bg-[#7C5CFF] px-3 py-1.5 text-xs font-semibold text-[#0F1B3D]">
                           Connect
                         </button>
                       </div>
@@ -343,12 +343,12 @@ export default function AdminSettingsPage() {
                 <SectionCard title="Accounting & Alerts">
                   <div className="space-y-3">
                     {['Slack Alerts'].map((name) => (
-                      <div key={name} className="flex items-center justify-between rounded-xl border border-white/10 bg-[#080c18] p-4">
+                      <div key={name} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4">
                         <div>
-                          <div className="font-medium text-white">{name}</div>
+                          <div className="font-medium text-[#0F1B3D]">{name}</div>
                           <div className="text-sm text-[#6F7192]">Not Connected</div>
                         </div>
-                        <button className="rounded-lg bg-[#7C5CFF] px-3 py-1.5 text-xs font-semibold text-white">
+                        <button className="rounded-lg bg-[#7C5CFF] px-3 py-1.5 text-xs font-semibold text-[#0F1B3D]">
                           Connect
                         </button>
                       </div>
@@ -362,25 +362,25 @@ export default function AdminSettingsPage() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                 <SectionCard title="Your SaaS Plan">
                   <div className="mb-4">
-                    <div className="mb-2 text-2xl font-bold text-white">No Plan Selected</div>
+                    <div className="mb-2 text-2xl font-bold text-[#0F1B3D]">No Plan Selected</div>
                     <div className="mb-4 text-sm text-[#6F7192]">
                       Next Billing Date: N/A · Payment Method: Not Set
                     </div>
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-[#c6cee5]">
+                      <div className="flex items-center gap-2 text-sm text-[#6F7192]">
                         <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                         No features enabled
                       </div>
                     </div>
                   </div>
                   <div className="flex gap-3">
-                    <button className="rounded-xl bg-[#7C5CFF] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7C5CFF]/90">
+                    <button className="rounded-xl bg-[#7C5CFF] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#7C5CFF]/90">
                       Upgrade to Enterprise
                     </button>
-                    <button className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-[#c6cee5] transition hover:bg-white/[0.04]">
+                    <button className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-[#6F7192] transition hover:bg-gray-100">
                       Manage Billing
                     </button>
-                    <button className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-[#c6cee5] transition hover:bg-white/[0.04]">
+                    <button className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-[#6F7192] transition hover:bg-gray-100">
                       Download Invoice
                     </button>
                   </div>
@@ -397,8 +397,8 @@ export default function AdminSettingsPage() {
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-[#0A1F2D] p-5">
-      <h2 className="text-base font-semibold text-white">{title}</h2>
+    <div className="rounded-2xl border border-gray-200 bg-white p-5">
+      <h2 className="text-base font-semibold text-[#0F1B3D]">{title}</h2>
       <div className="mt-4">{children}</div>
     </div>
   )

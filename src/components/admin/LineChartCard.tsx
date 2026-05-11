@@ -36,12 +36,12 @@ export default function LineChartCard({
   const gradientId = `gradient-${title.replace(/\s+/g, '-')}`
   
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#FFFFFF] p-5">
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-[#FFFFFF] p-5">
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-[#0F1B3D]">{title}</h3>
         <p className="mt-1 text-sm text-[#6F7192]">{subtitle}</p>
       </div>
-      <div className="overflow-hidden rounded-xl bg-white/[0.015] p-3">
+      <div className="overflow-hidden rounded-xl bg-gray-50 p-3">
         {points.length > 0 ? (
           <>
             <svg viewBox={`0 0 ${width} ${height}`} className="h-48 w-full">
@@ -71,7 +71,7 @@ export default function LineChartCard({
                 <path d={orderPath} fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="8 4" />
               )}
             </svg>
-            <div className="mt-2 flex justify-between px-1 text-[10px] uppercase tracking-[0.12em] text-[#5a6580]">
+            <div className="mt-2 flex justify-between px-1 text-[10px] uppercase tracking-[0.12em] text-[#6F7192]">
               {points.map((point) => (
                 <div key={point.label} className="text-center">{point.label}</div>
               ))}
@@ -90,7 +90,7 @@ export default function LineChartCard({
             )}
           </>
         ) : (
-          <div className="flex h-48 items-center justify-center text-sm text-[#5a6580]">
+          <div className="flex h-48 items-center justify-center text-sm text-[#6F7192]">
             No data available
           </div>
         )}

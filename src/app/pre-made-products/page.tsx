@@ -105,7 +105,7 @@ export default function PreMadeProductsPage() {
               More Products on the Way
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-lg leading-8 text-[#93a0c4]">
-              We're expanding our catalog with new 3D printed products including controller stands, mobile stands, jewelry, and many more exciting models.
+              We&apos;re expanding our catalog with new 3D printed products including controller stands, mobile stands, jewelry, and many more exciting models.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               {['Controller Stands', 'Mobile Stands', 'Jewelry', 'Other 3D Models'].map((item) => (

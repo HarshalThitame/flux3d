@@ -47,7 +47,7 @@ export default function AdminUsersPage() {
   }, [toast])
 
   if (error) {
-    return <div className="rounded-xl border border-rose-400/20 bg-rose-400/10 p-5 text-sm text-rose-300">{error}</div>
+    return <div className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-600">{error}</div>
   }
 
   if (users === null) {
@@ -77,11 +77,11 @@ export default function AdminUsersPage() {
     <>
       <div className="space-y-6">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-cyan-300">
+          <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-cyan-600">
             <Users className="h-3 w-3" />
             User Management
           </div>
-          <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Users</h1>
+          <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">Users</h1>
           <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
             Audit access, signup methods, and account roles.
           </p>
@@ -107,11 +107,11 @@ export default function AdminUsersPage() {
             },
           ]}
           columns={[
-            { key: 'name', label: 'Name', sortable: true, sortValue: (row) => row.name, render: (row) => <span className="font-medium text-white">{row.name}</span> },
-            { key: 'email', label: 'Email', sortable: true, sortValue: (row) => row.email, render: (row) => <span className="text-[#c6cee5]">{row.email}</span> },
-            { key: 'signupMethod', label: 'Signup Method', sortable: true, sortValue: (row) => row.signupMethod, render: (row) => <span className="text-[#c6cee5]">{row.signupMethod}</span> },
+            { key: 'name', label: 'Name', sortable: true, sortValue: (row) => row.name, render: (row) => <span className="font-medium text-[#0F1B3D]">{row.name}</span> },
+            { key: 'email', label: 'Email', sortable: true, sortValue: (row) => row.email, render: (row) => <span className="text-[#6F7192]">{row.email}</span> },
+            { key: 'signupMethod', label: 'Signup Method', sortable: true, sortValue: (row) => row.signupMethod, render: (row) => <span className="text-[#6F7192]">{row.signupMethod}</span> },
             { key: 'role', label: 'Role', sortable: true, sortValue: (row) => row.role, render: (row) => <StatusBadge status={row.role} /> },
-            { key: 'lastActive', label: 'Last Active', sortable: true, sortValue: (row) => row.lastActive, render: (row) => <span className="text-[#8b95b5]">{row.lastActive}</span> },
+            { key: 'lastActive', label: 'Last Active', sortable: true, sortValue: (row) => row.lastActive, render: (row) => <span className="text-[#6F7192]">{row.lastActive}</span> },
           ]}
         />
       </div>
@@ -123,12 +123,12 @@ export default function AdminUsersPage() {
       >
         {selectedUser && (
           <div className="space-y-5">
-            <div className="flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-              <div className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-violet-400 text-sm font-bold text-white">
+            <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <div className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-violet-400 text-sm font-bold text-[#0F1B3D]">
                 {selectedUser.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
               </div>
               <div>
-                <div className="text-sm font-medium text-white">{selectedUser.name}</div>
+                <div className="text-sm font-medium text-[#0F1B3D]">{selectedUser.name}</div>
                 <div className="flex items-center gap-1.5 text-xs text-[#6F7192]">
                   <Mail className="h-3 w-3" />
                   {selectedUser.email}
@@ -140,13 +140,13 @@ export default function AdminUsersPage() {
             <InfoCard label="Signup Method" value={selectedUser.signupMethod} />
             <InfoCard label="Last Active" value={selectedUser.lastActive} />
 
-            <div className="space-y-2 border-t border-white/[0.06] pt-4">
-              <div className="text-[10px] uppercase tracking-[0.15em] text-[#5a6580]">Actions</div>
+            <div className="space-y-2 border-t border-gray-200 pt-4">
+              <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Actions</div>
               <div className="grid gap-2">
                 <button
                   type="button"
                   onClick={() => setToast({ type: 'info', message: `Activity view for ${selectedUser.name}.` })}
-                  className="rounded-lg border border-white/8 bg-white/[0.02] px-4 py-2.5 text-left text-sm text-[#c6cee5] transition hover:bg-white/[0.05]"
+                  className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-left text-sm text-[#6F7192] transition hover:bg-gray-100"
                 >
                   View activity
                 </button>
@@ -162,9 +162,9 @@ export default function AdminUsersPage() {
 
 function InfoCard({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-3">
-      <div className="text-[10px] uppercase tracking-[0.15em] text-[#5a6580]">{label}</div>
-      <div className="mt-1.5 text-sm text-white">{value}</div>
+    <div className="rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3">
+      <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">{label}</div>
+      <div className="mt-1.5 text-sm text-[#0F1B3D]">{value}</div>
     </div>
   )
 }

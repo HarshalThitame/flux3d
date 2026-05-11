@@ -45,7 +45,7 @@ export default function AdminQuotesPage() {
   }, [toast])
 
   if (error) {
-    return <div className="rounded-xl border border-rose-400/20 bg-rose-400/10 p-5 text-sm text-rose-300">{error}</div>
+    return <div className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-600">{error}</div>
   }
 
   if (quotes === null) {
@@ -80,11 +80,11 @@ export default function AdminQuotesPage() {
     <>
       <div className="space-y-6">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-violet-300">
+          <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-violet-600">
             <FileText className="h-3 w-3" />
             Quote Management
           </div>
-          <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Quotes</h1>
+          <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">Quotes</h1>
           <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
             Keep inquiry flow tight with quick review actions and approval decisions.
           </p>
@@ -110,10 +110,10 @@ export default function AdminQuotesPage() {
             },
           ]}
           columns={[
-            { key: 'id', label: 'Quote ID', sortable: true, sortValue: (row) => row.quote_id ?? String(row.id), render: (row) => <span className="font-medium text-white">{row.quote_id ?? `Q-${row.id}`}</span> },
-            { key: 'customer', label: 'Customer', sortable: true, sortValue: (row) => row.name, render: (row) => <span className="text-[#c6cee5]">{row.name}</span> },
-            { key: 'material', label: 'Material', sortable: true, sortValue: (row) => row.config?.materialId ?? '', render: (row) => <span className="text-[#c6cee5]">{row.config?.materialId ?? 'Unknown'}</span> },
-            { key: 'estimate', label: 'Estimate', sortable: true, sortValue: (row) => row.estimate?.total ?? 0, render: (row) => <span className="font-medium text-white">₹{Number(row.estimate?.total ?? 0).toLocaleString('en-IN')}</span> },
+            { key: 'id', label: 'Quote ID', sortable: true, sortValue: (row) => row.quote_id ?? String(row.id), render: (row) => <span className="font-medium text-[#0F1B3D]">{row.quote_id ?? `Q-${row.id}`}</span> },
+            { key: 'customer', label: 'Customer', sortable: true, sortValue: (row) => row.name, render: (row) => <span className="text-[#6F7192]">{row.name}</span> },
+            { key: 'material', label: 'Material', sortable: true, sortValue: (row) => row.config?.materialId ?? '', render: (row) => <span className="text-[#6F7192]">{row.config?.materialId ?? 'Unknown'}</span> },
+            { key: 'estimate', label: 'Estimate', sortable: true, sortValue: (row) => row.estimate?.total ?? 0, render: (row) => <span className="font-medium text-[#0F1B3D]">₹{Number(row.estimate?.total ?? 0).toLocaleString('en-IN')}</span> },
             { key: 'status', label: 'Status', sortable: true, sortValue: (row) => row.status, render: (row) => <StatusBadge status={row.status} /> },
             {
               key: 'actions',
@@ -126,7 +126,7 @@ export default function AdminQuotesPage() {
                       event.stopPropagation()
                       updateQuoteStatus(row, 'approved', `${row.quote_id ?? row.id} approved.`)
                     }}
-                    className="rounded-lg border border-emerald-400/20 bg-emerald-400/10 p-2 text-emerald-400 transition hover:bg-emerald-400/15"
+                    className="rounded-lg border border-emerald-400/20 bg-emerald-50 p-2 text-emerald-600 transition hover:bg-emerald-400/15"
                     title="Approve"
                   >
                     <Check className="h-3.5 w-3.5" />
@@ -137,7 +137,7 @@ export default function AdminQuotesPage() {
                       event.stopPropagation()
                       updateQuoteStatus(row, 'rejected', `${row.quote_id ?? row.id} rejected.`)
                     }}
-                    className="rounded-lg border border-rose-400/20 bg-rose-400/10 p-2 text-rose-400 transition hover:bg-rose-400/15"
+                    className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-400 transition hover:bg-rose-400/15"
                     title="Reject"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -148,7 +148,7 @@ export default function AdminQuotesPage() {
                       event.stopPropagation()
                       updateQuoteStatus(row, 'converted', `${row.quote_id ?? row.id} converted to order.`)
                     }}
-                    className="rounded-lg border border-cyan-400/20 bg-cyan-400/10 p-2 text-cyan-400 transition hover:bg-cyan-400/15"
+                    className="rounded-lg border border-cyan-200 bg-cyan-50 p-2 text-cyan-400 transition hover:bg-cyan-400/15"
                     title="Convert to order"
                   >
                     <Zap className="h-3.5 w-3.5" />

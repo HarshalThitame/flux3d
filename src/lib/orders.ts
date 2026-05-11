@@ -136,25 +136,25 @@ export function getOrderStatusLabel(status: OrderStatus) {
 export function getOrderStatusClasses(status: OrderStatus) {
   switch (status) {
     case 'pending':
-      return 'border-amber-400/20 bg-amber-400/10 text-amber-100'
+      return 'border-amber-400/20 bg-amber-400/10 text-amber-700'
     case 'reviewed':
-      return 'border-sky-400/20 bg-sky-400/10 text-sky-100'
+      return 'border-sky-400/20 bg-sky-400/10 text-sky-700'
     case 'approved':
-      return 'border-emerald-400/20 bg-emerald-400/10 text-emerald-100'
+      return 'border-emerald-400/20 bg-emerald-400/10 text-emerald-700'
     case 'queued':
-      return 'border-indigo-400/20 bg-indigo-400/10 text-indigo-100'
+      return 'border-indigo-400/20 bg-indigo-400/10 text-indigo-700'
     case 'on-hold':
-      return 'border-fuchsia-400/20 bg-fuchsia-400/10 text-fuchsia-100'
+      return 'border-fuchsia-400/20 bg-fuchsia-400/10 text-fuchsia-700'
     case 'printing':
-      return 'border-cyan-400/20 bg-cyan-400/10 text-cyan-100'
+      return 'border-cyan-400/20 bg-cyan-400/10 text-cyan-700'
     case 'shipped':
-      return 'border-violet-400/20 bg-violet-400/10 text-violet-100'
+      return 'border-violet-400/20 bg-violet-400/10 text-violet-700'
     case 'completed':
-      return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-50'
+      return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700'
     case 'cancelled':
-      return 'border-slate-400/20 bg-slate-400/10 text-slate-100'
+      return 'border-slate-400/20 bg-slate-400/10 text-slate-700'
     case 'rejected':
-      return 'border-rose-400/20 bg-rose-400/10 text-rose-100'
+      return 'border-rose-400/20 bg-rose-400/10 text-rose-700'
   }
 }
 

@@ -59,7 +59,7 @@ export default function NavbarClient({
   showAdminLink = false,
 }: NavbarClientProps) {
   const { settings } = useBusinessSettings()
-  useProfile(user)
+  const { profile: liveProfile, loading } = useProfile(user)
   const { resetCartState } = useCart()
   const router = useRouter()
   const pathname = usePathname()
@@ -69,6 +69,9 @@ export default function NavbarClient({
   const [hoveredLink, setHoveredLink] = useState<string | null>(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
+  const logoSrc = settings.logoUrl || settings.darkLogoUrl || '/logo.png'
+  const currentUser = liveProfile ?? user
+  const isAuthPending = loading && !currentUser
 
   const handleLogout = async () => {
     try {
@@ -147,18 +150,18 @@ export default function NavbarClient({
       >
         <AnnouncementBar />
         <div className={`max-w-[1400px] mx-auto px-6 flex items-center justify-between ${
-          scrolled || !transparent ? 'py-3' : 'py-4'
+          scrolled || !transparent ? 'py-2.5' : 'py-3'
         }`}>
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group" aria-label={`${settings.businessName} home`}>
             <Image
-              src="/logo.png"
-              alt="Flux3D"
-              width={180}
-              height={48}
-              sizes="180px"
+              src={logoSrc}
+              alt={`${settings.businessName} logo`}
+              width={150}
+              height={40}
+              sizes="150px"
               priority
-              className="h-12 w-auto object-contain"
+              className="h-9 w-auto object-contain sm:h-10"
             />
           </Link>
 
@@ -198,17 +201,22 @@ export default function NavbarClient({
               href={`https://wa.me/${settings.whatsappNumber.replace(/[^0-9]/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 px-4 py-2.5 text-sm font-medium text-[#25D366] transition-all hover:bg-[#25D366]/20 hover:border-[#25D366]/50"
+              className="flex items-center gap-2 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 px-3.5 py-2 text-sm font-medium text-[#25D366] transition-all hover:bg-[#25D366]/20 hover:border-[#25D366]/50"
             >
               <MessageCircle className="h-4 w-4" />
               WhatsApp
             </a>
 
-            {user ? (
+            {isAuthPending ? (
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-[78px] rounded-xl border border-white/[0.08] bg-white/[0.03]" />
+                <div className="h-10 w-[96px] rounded-xl bg-[#5B3FD6]/40" />
+              </div>
+            ) : currentUser ? (
               <>
                 <Link
                   href="/instant-quote"
-                  className="group relative flex items-center gap-2 rounded-xl bg-[#5B3FD6] px-5 py-2.5 text-sm font-semibold text-white overflow-hidden transition-all hover:shadow-[0_0_25px_rgba(91,63,214,0.3)]"
+                  className="group relative flex items-center gap-2 rounded-xl bg-[#5B3FD6] px-4 py-2 text-sm font-semibold text-white overflow-hidden transition-all hover:shadow-[0_0_25px_rgba(91,63,214,0.3)]"
                 >
                   <span className="relative z-10">Get Quote</span>
                   <ArrowUpRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -218,25 +226,25 @@ export default function NavbarClient({
                   <button
                     type="button"
                     onClick={() => setIsProfileOpen((c) => !c)}
-                    className="flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 pr-3 transition-all hover:bg-white/[0.07] hover:border-white/[0.12]"
+                    className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-2 py-1 pr-2.5 transition-all hover:bg-white/[0.07] hover:border-white/[0.12]"
                   >
-                    {user.avatarUrl ? (
-                      <span className="relative h-8 w-8 overflow-hidden rounded-full ring-2 ring-[#7C5CFF]/20">
+                    {currentUser.avatarUrl ? (
+                      <span className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-[#7C5CFF]/20">
                         <Image
-                          src={user.avatarUrl}
-                          alt={user.name}
+                          src={currentUser.avatarUrl}
+                          alt={currentUser.name}
                           fill
-                          sizes="32px"
+                          sizes="28px"
                           className="object-cover"
                         />
                       </span>
                     ) : (
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#7C5CFF] to-[#A78BFA] text-xs font-bold text-[#0F1B3D] shadow-[0_0_12px_rgba(124, 92, 255,0.3)]">
-                        {getInitials(user.name)}
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#7C5CFF] to-[#A78BFA] text-[10px] font-bold text-[#0F1B3D] shadow-[0_0_12px_rgba(124, 92, 255,0.3)]">
+                        {getInitials(currentUser.name)}
                       </span>
                     )}
                     <ChevronDown
-                      className={`h-4 w-4 text-[#93a0c4] transition-transform duration-200 ${
+                      className={`h-3.5 w-3.5 text-[#93a0c4] transition-transform duration-200 ${
                         isProfileOpen ? 'rotate-180' : ''
                       }`}
                     />
@@ -246,8 +254,8 @@ export default function NavbarClient({
                     <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-white/[0.08] bg-[#FFFFFF] shadow-[0_24px_80px_rgba(0,0,0,0.5)] animate-slideDown">
                       <div className="p-4 border-b border-white/[0.06]">
                         <p className="text-[10px] uppercase tracking-[0.2em] text-[#6F7192]">Signed in as</p>
-                        <p className="mt-1.5 text-base font-semibold text-[#0F1B3D]">{user.name}</p>
-                        <p className="text-sm text-[#93a0c4] truncate">{user.email}</p>
+                        <p className="mt-1.5 text-base font-semibold text-[#0F1B3D]">{currentUser.name}</p>
+                        <p className="text-sm text-[#93a0c4] truncate">{currentUser.email}</p>
                       </div>
 
                       <div className="p-3">
@@ -323,13 +331,13 @@ export default function NavbarClient({
 
           <div className="animate-slideDown absolute top-20 left-4 right-4 rounded-2xl border border-white/[0.08] bg-[#FFFFFF]/95 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.5)] overflow-hidden">
             <div className="p-6">
-              {user && (
+              {currentUser && (
                 <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                  {user.avatarUrl ? (
+                  {currentUser.avatarUrl ? (
                     <span className="relative h-10 w-10 overflow-hidden rounded-full">
                       <Image
-                        src={user.avatarUrl}
-                        alt={user.name}
+                        src={currentUser.avatarUrl}
+                        alt={currentUser.name}
                         fill
                         sizes="40px"
                         className="object-cover"
@@ -337,12 +345,12 @@ export default function NavbarClient({
                     </span>
                   ) : (
                     <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#7C5CFF] to-[#A78BFA] text-sm font-bold text-[#0F1B3D]">
-                      {getInitials(user.name)}
+                      {getInitials(currentUser.name)}
                     </span>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#0F1B3D] truncate">{user.name}</p>
-                    <p className="text-xs text-[#6F7192] truncate">{user.email}</p>
+                    <p className="text-sm font-semibold text-[#0F1B3D] truncate">{currentUser.name}</p>
+                    <p className="text-xs text-[#6F7192] truncate">{currentUser.email}</p>
                   </div>
                 </div>
               )}
@@ -390,7 +398,12 @@ export default function NavbarClient({
                   WhatsApp Us
                 </a>
 
-                {user ? (
+                {isAuthPending ? (
+                  <>
+                    <div className="block w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-3.5" />
+                    <div className="block w-full rounded-xl bg-[#5B3FD6]/40 py-3.5" />
+                  </>
+                ) : currentUser ? (
                   <>
                     {['/saved-quotes', '/my-orders', '/profile'].map((href) => (
                       <Link

@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server'
 import PDFDocument from 'pdfkit/js/pdfkit.standalone'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { loadOrderDiscountSummary } from '@/lib/order-discounts'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { formatAddressSummary, getOrderStatusLabel, type OrderStatus } from '@/lib/orders'
+import { formatAddressSummary } from '@/lib/orders'
 import { getSettings } from '@/lib/settings'
+import { siteUrl } from '@/lib/site'
 import type { BusinessSettings } from '@/lib/admin/business-settings'
 
 export const dynamic = 'force-dynamic'
@@ -29,20 +32,82 @@ type InvoiceRow = {
   delivery_charge: number
   total_price: number
   price: number
+  discount: number | null
+  coupon_code: string | null
+  coupon_id: string | null
+  discount_type: string | null
   estimated_time: number
   status: string
   notes: string | null
   created_at: string
 }
 
-async function generatePdf(order: InvoiceRow, items: InvoiceRow[], settings: BusinessSettings): Promise<Buffer> {
-  const invoiceDate = new Date(order.created_at).toLocaleDateString('en-IN', {
+type InvoiceDiscountSummary = {
+  amount: number
+  label: string | null
+}
+
+function numberToWords(value: number) {
+  const ones = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
+  const teens = ['ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
+  const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety']
+
+  function underThousand(n: number) {
+    const parts: string[] = []
+    const hundreds = Math.floor(n / 100)
+    const rest = n % 100
+
+    if (hundreds > 0) {
+      parts.push(`${ones[hundreds]} hundred`)
+    }
+
+    if (rest >= 10 && rest < 20) {
+      parts.push(teens[rest - 10])
+    } else if (rest >= 20) {
+      const ten = Math.floor(rest / 10)
+      const unit = rest % 10
+      parts.push(unit > 0 ? `${tens[ten]} ${ones[unit]}` : tens[ten])
+    } else if (rest > 0) {
+      parts.push(ones[rest])
+    }
+
+    return parts.join(' ').trim()
+  }
+
+  const n = Math.max(0, Math.round(value))
+  if (n === 0) return 'zero rupees only'
+
+  const crore = Math.floor(n / 10000000)
+  const lakh = Math.floor((n % 10000000) / 100000)
+  const thousand = Math.floor((n % 100000) / 1000)
+  const remainder = n % 1000
+  const parts: string[] = []
+
+  if (crore) parts.push(`${underThousand(crore)} crore`)
+  if (lakh) parts.push(`${underThousand(lakh)} lakh`)
+  if (thousand) parts.push(`${underThousand(thousand)} thousand`)
+  if (remainder) parts.push(underThousand(remainder))
+
+  return `${parts.join(' ').replace(/\s+/g, ' ').trim()} rupees only`
+}
+
+async function generatePdf(
+  order: InvoiceRow,
+  items: InvoiceRow[],
+  settings: BusinessSettings,
+  discountSummary: InvoiceDiscountSummary,
+): Promise<Buffer> {
+  const invoiceDateObj = new Date(order.created_at)
+  const invoiceDate = invoiceDateObj.toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  })
+  const dueDateObj = new Date(invoiceDateObj)
+  dueDateObj.setDate(dueDateObj.getDate() + 7)
+  const dueDate = dueDateObj.toLocaleDateString('en-IN', {
     day: 'numeric', month: 'long', year: 'numeric',
   })
   const subtotal = items.reduce((s, i) => s + Number(i.price), 0)
-  const totalDelivery = items.reduce((s, i) => s + Number(i.delivery_charge), 0)
   const grandTotal = items.reduce((s, i) => s + Number(i.total_price), 0)
-  const totalTime = items.reduce((s, i) => s + Number(i.estimated_time), 0)
   const addressLines = formatAddressSummary({
     addressLine1: order.address_line1,
     addressLine2: order.address_line2 ?? '',
@@ -51,12 +116,17 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[], settings: Bus
     pincode: order.pincode,
     landmark: order.landmark ?? '',
   })
-  const businessName = settings.businessName || 'Flux3D'
-  const primaryColor = settings.primaryColor || '#7C5CFF'
-  const tagline = settings.tagline || '3D PRINTING SERVICE'
-  const invoicePrefix = settings.invoicePrefix || 'INV-'
+  const companyName = settings.businessName || settings.brandName || 'Flux3D'
+  const tagline = settings.tagline || 'Premium manufacturing solutions'
+  const websiteValue = settings.websiteUrl || siteUrl
+  const projectValue = items[0]?.file_url ? (items[0].file_url.split('/').pop() ?? order.order_number ?? order.id) : (order.order_number ?? order.id)
+  const taxRate = 0.09
+  const cgst = subtotal * taxRate
+  const sgst = subtotal * taxRate
+  const itemDiscount = items.length > 0 ? discountSummary.amount / items.length : discountSummary.amount
+  const amountWords = numberToWords(grandTotal)
 
-  const doc = new PDFDocument({ size: 'A4', margin: 48 })
+  const doc = new PDFDocument({ size: 'A4', margin: 0 })
   const buffers: Buffer[] = []
   doc.on('data', (chunk: Buffer) => buffers.push(chunk))
   const pdf = new Promise<Buffer>((resolve, reject) => {
@@ -64,141 +134,320 @@ async function generatePdf(order: InvoiceRow, items: InvoiceRow[], settings: Bus
     doc.on('error', reject)
   })
 
-  const L = 48
-  const R = doc.page.width - L
-  const pageW = R - L
-  const pageB = doc.page.height - L
-  const colW = pageW
-  let y = L
+  const pageW = doc.page.width
+  const pageH = doc.page.height
+  const sidebarW = 6
+  const headerH = 130
+  const footerH = 32
+  const contentLeft = 24
+  const contentRight = 24
+  const contentX = sidebarW + contentLeft
+  const contentW = pageW - contentX - contentRight
+  const bottomLimit = pageH - footerH - 16
+  const colors = {
+    page: '#F8FAFD',
+    navy: '#0D1B2A',
+    accent: '#1E90FF',
+    accentDark: '#0A6EBD',
+    row: '#F4F7FB',
+    label: '#8A9BB0',
+    text: '#1A2B3C',
+    border: '#D6E4F0',
+    paid: '#00B67A',
+    contact: '#A8C8E8',
+    separator: '#1E3A52',
+  }
 
-  function bail(pts: number) {
-    if (y + pts > pageB) {
-      doc.addPage()
-      y = L
+  let y = headerH + 14
+  let inTable = false
+
+  function drawBase() {
+    doc.save()
+    doc.rect(0, 0, pageW, pageH).fill(colors.page)
+    doc.rect(0, 0, sidebarW, pageH).fill(colors.navy)
+    doc.restore()
+  }
+
+  function drawHeader() {
+    doc.save()
+    doc.rect(sidebarW, 0, pageW - sidebarW, headerH).fill(colors.navy)
+
+    const sliceStart = sidebarW + (pageW - sidebarW) * 0.56
+    const sliceEnd = sidebarW + (pageW - sidebarW) * 0.74
+    doc.moveTo(sliceStart, 0)
+      .lineTo(sliceEnd, 0)
+      .lineTo(sliceEnd + 48, headerH)
+      .lineTo(sliceStart - 36, headerH)
+      .closePath()
+      .fill(colors.accentDark)
+
+    doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(26)
+    doc.text(companyName, contentX, 22)
+    doc.fillColor(colors.accent).font('Helvetica').fontSize(9)
+    doc.text(tagline, contentX, 54)
+    doc.moveTo(contentX, 68).lineTo(contentX + 170, 68).strokeColor(colors.accent).lineWidth(0.8).stroke()
+    doc.fillColor(colors.contact).font('Helvetica').fontSize(8)
+    doc.text(`${websiteValue} | ${settings.primaryEmail || settings.businessName?.toLowerCase() || ''}`.trim(), contentX, 76)
+    doc.text(`${settings.primaryPhone || ''} | ${settings.city || ''}`.trim(), contentX, 88)
+
+    const invoiceRight = pageW - contentRight
+    doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(36)
+    doc.text('INVOICE', invoiceRight - 210, 20, { width: 210, align: 'right' })
+    doc.fillColor(colors.accent).font('Helvetica').fontSize(9)
+    doc.text(`#${order.order_number ?? order.id}`, invoiceRight - 210, 63, { width: 210, align: 'right' })
+
+    const badgeW = 88
+    const badgeH = 20
+    const badgeX = invoiceRight - badgeW
+    const badgeY = headerH - badgeH - 10
+    doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 5).fill(colors.paid)
+    doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(9)
+    doc.text('PAID', badgeX, badgeY + 5, { width: badgeW, align: 'center' })
+    doc.restore()
+  }
+
+  function startPage() {
+    if (doc.page) {
+      drawBase()
+      drawHeader()
+      y = headerH + 14
     }
   }
 
-  const Rs = (n: number) => `Rs.${n.toFixed(0)}`
+  function ensureSpace(needed: number) {
+    if (y + needed <= bottomLimit) return
+    doc.addPage({ size: 'A4', margin: 0 })
+    startPage()
+    if (inTable) {
+      y = drawTableHeader(y)
+    }
+  }
 
-  doc.rect(L, y, colW, 80).fill('#0f0f23')
-  doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(28)
-  doc.text(businessName.toLowerCase(), L + 18, y + 18)
-  doc.fillColor('#8899bb').font('Helvetica').fontSize(9)
-  doc.text(tagline.toUpperCase(), L + 18, y + 50)
+  function drawCard(x: number, cardY: number, w: number, h: number, fill: string, stroke: string) {
+    doc.save()
+    doc.roundedRect(x, cardY, w, h, 5)
+    doc.fillColor(fill)
+    doc.strokeColor(stroke)
+    doc.lineWidth(1)
+    doc.fillAndStroke()
+    doc.restore()
+  }
 
-  const metaX = R - 180
-  doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(9)
-  doc.text('INVOICE', metaX, y + 18, { width: 160, align: 'right' })
-  doc.fillColor('#8899bb').font('Helvetica').fontSize(8)
-  doc.text(`#${order.order_number ?? order.id}`, metaX, y + 36, { width: 160, align: 'right' })
-  doc.text(invoiceDate, metaX, y + 50, { width: 160, align: 'right' })
-  const rawStatus = getOrderStatusLabel(order.status as OrderStatus)
-  const invoiceStatus = rawStatus === 'Completed' ? 'Paid' : rawStatus
-  doc.fillColor('#22c55e').font('Helvetica-Bold').fontSize(8)
-  doc.text(invoiceStatus.toUpperCase(), metaX, y + 64, { width: 160, align: 'right' })
-  y += 100
+  function drawPartyCard(x: number, cardY: number, w: number, title: string, lines: string[]) {
+    const h = Math.max(90, doc.heightOfString(lines.join('\n'), { width: w - 20, lineGap: 2 }) + 38)
+    drawCard(x, cardY, w, h, '#FFFFFF', colors.border)
+    doc.fillColor(colors.accent).font('Helvetica-Bold').fontSize(7)
+    doc.text(title, x + 16, cardY + 12)
+    doc.fillColor(colors.text).font('Helvetica-Bold').fontSize(11)
+    doc.text(lines[0] ?? '', x + 16, cardY + 25, { width: w - 32 })
+    doc.fillColor(colors.label).font('Helvetica').fontSize(8.5)
+    const body = lines.slice(1).join('\n')
+    if (body) {
+      doc.text(body, x + 16, cardY + 41, { width: w - 32, lineGap: 2 })
+    }
+    return h
+  }
 
-  const addrH = 30 + addressLines.length * 14
-  const billH = Math.max(72, addrH + 10)
-  bail(billH + 24)
-  doc.roundedRect(L, y, colW, billH + 24, 6).fill('#f8f9fc')
-  doc.fillColor('#0f0f23').font('Helvetica-Bold').fontSize(8)
-  doc.text('BILL TO', L + 18, y + 14)
-  doc.fillColor('#1a1a2e').font('Helvetica-Bold').fontSize(11)
-  doc.text(order.full_name, L + 18, y + 28)
-  doc.fillColor('#555').font('Helvetica').fontSize(9)
-  doc.text(order.phone, L + 18, y + 44)
-  const addrX = R - 8 - 180
-  addressLines.forEach((line, i) => {
-    doc.text(line, addrX, y + 12 + i * 14, { width: 180, align: 'right' })
-  })
-  y += billH + 34
-
-  const cols = [
-    { x: 0, w: 145, a: 'left' as const, label: 'ITEM' },
-    { x: 145, w: 100, a: 'left' as const, label: 'MATERIAL' },
-    { x: 245, w: 80, a: 'left' as const, label: 'COLOR' },
-    { x: 325, w: 54, a: 'center' as const, label: 'INFILL' },
-    { x: 379, w: 50, a: 'center' as const, label: 'LAYER' },
-    { x: 429, w: 70, a: 'right' as const, label: 'PRICE' },
-  ]
-  const tw = cols.reduce((s, c) => s + c.w, 0)
-
-  const rowsH = 22 + items.length * 22 + 16
-  bail(rowsH)
-  doc.roundedRect(L, y, tw, 22, 4).fill(primaryColor)
-  doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(7)
-  cols.forEach((c) => doc.text(c.label, L + c.x + 6, y + 6, { width: c.w, align: c.a }))
-  y += 28
-
-  doc.font('Helvetica').fontSize(9)
-  items.forEach((item, idx) => {
-    const fn = item.file_url ? (String(item.file_url).split('/').pop() ?? 'Model') : 'Model'
-    bail(22)
-    if (idx % 2 === 0) doc.rect(L, y - 2, tw, 22).fill('#fafbfd')
-    doc.fillColor('#1a1a2e')
-    const vals = [
-      fn.length > 22 ? fn.slice(0, 20) + '..' : fn,
-      item.material ?? '',
-      item.color ?? '',
-      `${item.infill ?? 0}%`,
-      `${Number(item.layer_height ?? 0).toFixed(2)}`,
-      Rs(Number(item.price ?? 0)),
+  function drawMetaCard(x: number, cardY: number, w: number) {
+    const h = 90
+    drawCard(x, cardY, w, h, colors.navy, colors.navy)
+    const rows = [
+      { label: 'Invoice Date', value: invoiceDate },
+      { label: 'Due Date', value: dueDate },
+      { label: 'Project', value: projectValue },
+      { label: 'Payment', value: 'PAID' },
     ]
-    cols.forEach((c, ci) => doc.text(vals[ci], L + c.x + 6, y + 3, { width: c.w, align: c.a }))
-    if (idx < items.length - 1) {
-      doc.moveTo(L, y + 19).lineTo(L + tw, y + 19).strokeColor('#eee').lineWidth(0.5).stroke()
-    }
-    y += 22
-  })
-  y += 16
-
-  const sw = 200
-  const sx = R - sw
-  const sh = 85
-  bail(sh + 20)
-  doc.roundedRect(sx, y, sw, sh, 6).fill('#fff6f0')
-  let sy = y + 14
-  doc.fillColor('#888').font('Helvetica-Bold').fontSize(8)
-  doc.text('SUMMARY', sx + 14, sy)
-  sy += 20
-
-  const srows = [
-    { l: 'Subtotal', v: Rs(subtotal) },
-    { l: 'Delivery', v: totalDelivery === 0 ? 'FREE' : Rs(totalDelivery) },
-    { l: 'Print Time', v: `${totalTime.toFixed(1)} hr` },
-  ]
-  doc.fontSize(9)
-  srows.forEach((r) => {
-    doc.fillColor('#555').font('Helvetica').text(r.l, sx + 14, sy)
-    doc.fillColor('#1a1a2e').font('Helvetica-Bold').text(r.v, sx + 14, sy, { width: sw - 28, align: 'right' })
-    sy += 16
-  })
-
-  doc.moveTo(sx + 14, sy).lineTo(sx + sw - 14, sy).strokeColor(primaryColor).lineWidth(1).stroke()
-  sy += 11
-  doc.fillColor(primaryColor).font('Helvetica-Bold').fontSize(13)
-  doc.text('Grand Total', sx + 14, sy)
-  doc.text(Rs(grandTotal), sx + 14, sy, { width: sw - 28, align: 'right' })
-  y += sh + 20
-
-  if (order.notes?.trim()) {
-    bail(52)
-    doc.roundedRect(L, y, colW, 44, 4).fill('#f8f9fc')
-    doc.fillColor('#888').font('Helvetica-Bold').fontSize(8)
-    doc.text('NOTES', L + 18, y + 10)
-    doc.fillColor('#555').font('Helvetica').fontSize(9)
-    doc.text(order.notes, L + 18, y + 24, { width: colW - 36 })
-    y += 56
+    const rowH = h / rows.length
+    rows.forEach((row, index) => {
+      const ry = cardY + index * rowH
+      if (index > 0) {
+        doc.moveTo(x + 14, ry).lineTo(x + w - 14, ry).strokeColor(colors.separator).lineWidth(0.6).stroke()
+      }
+      doc.fillColor('#7EA8CC').font('Helvetica').fontSize(7)
+      doc.text(row.label.toUpperCase(), x + 14, ry + 10, { width: w - 85 })
+      doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(9)
+      doc.text(row.value, x + 14, ry + 8, { width: w - 28, align: 'right' })
+    })
   }
 
-  bail(36)
-  doc.moveTo(L, y).lineTo(R, y).strokeColor('#ddd').lineWidth(0.5).stroke()
-  y += 12
-  doc.fillColor('#999').font('Helvetica').fontSize(7)
-  doc.text(`${businessName} — ${tagline}`, L, y, { align: 'center', width: colW })
+  function drawTableHeader(tableY: number) {
+    const cols = [
+      { key: '#', x: 0, w: 18, align: 'center' as const },
+      { key: 'DESCRIPTION', x: 18, w: 268, align: 'left' as const },
+      { key: 'QTY', x: 286, w: 38, align: 'center' as const },
+      { key: 'UNIT PRICE', x: 324, w: 84, align: 'right' as const },
+      { key: 'DISC.', x: 408, w: 60, align: 'right' as const },
+      { key: 'AMOUNT', x: 468, w: 73, align: 'right' as const },
+    ]
+    doc.save()
+    doc.roundedRect(contentX, tableY, contentW, 26, 5)
+    doc.fillColor(colors.navy)
+    doc.fill()
+    doc.restore()
+    doc.fillColor(colors.accent).font('Helvetica-Bold').fontSize(7.5)
+    cols.forEach((col) => {
+      doc.text(col.key, contentX + col.x + 6, tableY + 8, { width: col.w - 12, align: col.align })
+    })
+    return tableY + 30
+  }
+
+  function drawTableRow(rowY: number, item: InvoiceRow, index: number) {
+    const cols = [
+      { x: 0, w: 18, align: 'center' as const },
+      { x: 18, w: 268, align: 'left' as const },
+      { x: 286, w: 38, align: 'center' as const },
+      { x: 324, w: 84, align: 'right' as const },
+      { x: 408, w: 60, align: 'right' as const },
+      { x: 468, w: 73, align: 'right' as const },
+    ]
+    const rowH = 30
+    const fill = index % 2 === 0 ? '#FFFFFF' : colors.row
+    doc.save()
+    doc.rect(contentX, rowY, contentW, rowH).fill(fill)
+    doc.restore()
+    const fileName = item.file_url ? (item.file_url.split('/').pop() ?? 'File') : 'File'
+    const displayDiscount = discountSummary.amount > 0 ? `-₹${Math.max(0, itemDiscount).toFixed(0)}` : '—'
+    const displayAmount = `₹${Number(item.total_price).toLocaleString('en-IN')}`
+    const values = [
+      String(index + 1),
+      fileName,
+      String(item.quantity ?? 1),
+      `₹${Number(item.price).toLocaleString('en-IN')}`,
+      displayDiscount,
+      displayAmount,
+    ]
+
+    doc.fillColor(colors.label).font('Helvetica').fontSize(7.5)
+    doc.text(values[0], contentX + cols[0].x, rowY + 10, { width: cols[0].w, align: cols[0].align })
+
+    doc.fillColor(colors.text).font('Helvetica-Bold').fontSize(8.5)
+    doc.text(values[1], contentX + cols[1].x + 6, rowY + 6, { width: cols[1].w - 12, ellipsis: true })
+    doc.fillColor(colors.label).font('Helvetica').fontSize(7)
+    doc.text(`${item.material} · ${item.color}`, contentX + cols[1].x + 6, rowY + 17, { width: cols[1].w - 12, ellipsis: true })
+
+    doc.fillColor(colors.text).font('Helvetica').fontSize(8.5)
+    doc.text(values[2], contentX + cols[2].x, rowY + 10, { width: cols[2].w, align: cols[2].align })
+    doc.text(values[3], contentX + cols[3].x, rowY + 10, { width: cols[3].w - 6, align: cols[3].align })
+    doc.text(values[4], contentX + cols[4].x, rowY + 10, { width: cols[4].w - 6, align: cols[4].align })
+    doc.text(values[5], contentX + cols[5].x, rowY + 10, { width: cols[5].w - 6, align: cols[5].align })
+    doc.font('Helvetica-Bold')
+
+    doc.moveTo(contentX, rowY + rowH).lineTo(contentX + contentW, rowY + rowH).strokeColor(colors.border).lineWidth(0.4).stroke()
+    return rowY + rowH
+  }
+
+  function drawTotalsBlock(blockY: number) {
+    const blockW = 230
+    const blockX = contentX + contentW - blockW
+    const rowH = 20
+    const rows = [
+      { label: 'Subtotal', value: `₹${subtotal.toLocaleString('en-IN')}` },
+      { label: 'CGST @9%', value: `₹${cgst.toLocaleString('en-IN')}` },
+      { label: 'SGST @9%', value: `₹${sgst.toLocaleString('en-IN')}` },
+      { label: 'Discount', value: discountSummary.amount > 0 ? `-₹${discountSummary.amount.toLocaleString('en-IN')}` : '₹0' },
+    ]
+
+    rows.forEach((row, index) => {
+      const ry = blockY + index * rowH
+      doc.fillColor(colors.label).font('Helvetica').fontSize(8.5)
+      doc.text(row.label, blockX + 8, ry + 5, { width: blockW - 100, align: 'right' })
+      doc.fillColor(colors.text).font('Helvetica').fontSize(8.5)
+      doc.text(row.value, blockX + 92, ry + 5, { width: blockW - 100, align: 'right' })
+      doc.moveTo(blockX + 8, ry + rowH - 1).lineTo(blockX + blockW - 8, ry + rowH - 1).strokeColor(colors.border).lineWidth(0.3).stroke()
+    })
+
+    const bandY = blockY + rows.length * rowH + 8
+    doc.roundedRect(blockX, bandY, blockW, 34, 5).fill(colors.navy)
+    doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(10)
+    doc.text('TOTAL DUE', blockX + 12, bandY + 11)
+    doc.fillColor(colors.accent).font('Helvetica-Bold').fontSize(13)
+    doc.text(`₹${grandTotal.toLocaleString('en-IN')}`, blockX + 12, bandY + 8, { width: blockW - 24, align: 'right' })
+    doc.fillColor(colors.label).font('Helvetica-Oblique').fontSize(7.5)
+    doc.text(`₹${grandTotal.toLocaleString('en-IN')} (${amountWords})`, blockX, bandY + 42, { width: blockW, align: 'right' })
+    return bandY + 58
+  }
+
+  function drawNotesAndTerms(blockY: number) {
+    const boxX = contentX
+    const boxW = contentW
+    const bullets = [
+      'This is a computer-generated invoice and does not require a physical signature.',
+      'Please review the order details carefully before approval or dispatch.',
+      'Minor variations in finish or color may occur due to the 3D printing process.',
+      'Once produced or dispatched, orders are subject to the applicable service terms.',
+    ]
+    const leftHeight = Math.max(90, bullets.length * 16 + 26)
+    drawCard(boxX, blockY, boxW, leftHeight, '#FFFFFF', colors.border)
+    doc.fillColor(colors.navy).font('Helvetica-Bold').fontSize(7.5)
+    doc.text('NOTES & TERMS', boxX + 14, blockY + 12)
+    doc.moveTo(boxX + 14, blockY + 25).lineTo(boxX + 162, blockY + 25).strokeColor(colors.accent).lineWidth(1.2).stroke()
+    doc.fillColor(colors.label).font('Helvetica').fontSize(7.5)
+    bullets.slice(0, 6).forEach((line, index) => {
+      doc.text(`• ${line}`, boxX + 14, blockY + 34 + index * 14, { width: boxW - 28, lineGap: 1.5 })
+    })
+    return blockY + leftHeight + 14
+  }
+
+  function drawSignatureArea(blockY: number) {
+    const lineY = blockY + 12
+    doc.moveTo(contentX + contentW - 180, lineY).lineTo(contentX + contentW, lineY).strokeColor(colors.navy).lineWidth(0.7).stroke()
+    doc.fillColor(colors.label).font('Helvetica').fontSize(7.5)
+    doc.text('Authorised Signatory', contentX + contentW - 180, lineY + 6, { width: 180, align: 'right' })
+    doc.fillColor(colors.navy).font('Helvetica-Bold').fontSize(8)
+    doc.text(companyName, contentX + contentW - 180, lineY + 18, { width: 180, align: 'right' })
+    return lineY + 30
+  }
+
+  function drawFooter() {
+    const footerY = pageH - footerH
+    doc.save()
+    doc.rect(sidebarW, footerY, pageW - sidebarW, footerH).fill(colors.navy)
+    doc.rect(sidebarW, footerY, pageW - sidebarW, 2).fill(colors.accent)
+    doc.restore()
+    doc.fillColor('#7EA8CC').font('Helvetica').fontSize(7)
+    doc.text(
+      `${settings.gstNumber || 'GSTIN: —'} | ${settings.cinNumber || 'CIN: —'} | ${websiteValue.replace(/^https?:\/\//, '')}`,
+      sidebarW,
+      footerY + 8,
+      { width: pageW - sidebarW, align: 'center' }
+    )
+    doc.fillColor('#4A6A80').font('Helvetica').fontSize(6.5)
+    doc.text('computer-generated invoice', sidebarW, footerY + 18, { width: pageW - sidebarW, align: 'center' })
+  }
+
+  drawBase()
+  drawHeader()
+
+  const partyGap = 12
+  const cardW = (contentW - partyGap * 2) / 3
+  const cardY = y
+  const addressBlock = [
+    ...addressLines,
+    settings.gstNumber ? `GSTIN: ${settings.gstNumber}` : 'GSTIN: —',
+  ]
+  const billH = drawPartyCard(contentX, cardY, cardW, 'BILL TO', [order.full_name, ...addressBlock])
+  drawPartyCard(contentX + cardW + partyGap, cardY, cardW, 'SHIP TO', [order.full_name, ...addressBlock])
+  drawMetaCard(contentX + (cardW + partyGap) * 2, cardY, cardW)
+  y = cardY + Math.max(billH, 90) + 14
+
+  inTable = true
+  y = drawTableHeader(y)
+  items.forEach((item, index) => {
+    ensureSpace(30)
+    y = drawTableRow(y, item, index)
+  })
+  inTable = false
   y += 10
-  doc.text(`${order.order_number ?? order.id} · Generated on ${invoiceDate}`, L, y, { align: 'center', width: colW })
+  ensureSpace(170)
+  y = drawTotalsBlock(y)
+
+  ensureSpace(170)
+  y = drawNotesAndTerms(y)
+
+  ensureSpace(40)
+  y = drawSignatureArea(y)
+
+  drawFooter()
 
   doc.end()
   return pdf
@@ -234,7 +483,7 @@ export async function GET(
     }
 
     const selectColumns =
-      'id, order_number, group_id, file_url, material, color, infill, layer_height, supports, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, estimated_time, status, notes, created_at'
+      'id, order_number, group_id, file_url, material, color, infill, layer_height, supports, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, discount, coupon_code, coupon_id, discount_type, estimated_time, status, notes, created_at'
 
     let order
     let error
@@ -274,9 +523,18 @@ export async function GET(
     }
 
     const settings = await getSettings()
+    const discountSummary = await loadOrderDiscountSummary(createAdminSupabaseClient(), items)
     let pdf
     try {
-      pdf = await generatePdf(row, items, settings)
+      pdf = await generatePdf(
+        row,
+        items,
+        settings,
+        {
+          amount: discountSummary.amount,
+          label: discountSummary.label,
+        },
+      )
     } catch (e) {
       return NextResponse.json({ error: 'PDF generation failed: ' + (e instanceof Error ? e.message : String(e)) }, { status: 500 })
     }

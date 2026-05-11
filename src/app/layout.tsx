@@ -98,7 +98,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: toJsonLd(webJsonLd) }}
         />
         <CartProvider>
-          <SettingsProvider>
+          <SettingsProvider initialSettings={settings}>
             <VisitorTracker />
             {children}
           </SettingsProvider>

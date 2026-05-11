@@ -8,6 +8,8 @@ import {
   getOrderStatusLabel,
   type OrderStatus,
 } from '@/lib/orders'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { loadOrderDiscountSummary } from '@/lib/order-discounts'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { DownloadInvoiceButton } from './DownloadInvoiceButton'
 import { CancelOrderButton } from './CancelOrderButton'
@@ -37,6 +39,10 @@ type OrderDetailRow = {
   delivery_charge: number
   total_price: number
   price: number
+  discount: number | null
+  coupon_code: string | null
+  coupon_id: string | null
+  discount_type: string | null
   estimated_time: number
   status: OrderStatus
   notes: string | null
@@ -55,7 +61,7 @@ export default async function OrderDetailPage({
   const { data: order, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, supports, post_processing_level, post_processing_charges, price_per_unit, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, estimated_time, status, notes, created_at'
+      'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, supports, post_processing_level, post_processing_charges, price_per_unit, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, discount, coupon_code, coupon_id, discount_type, estimated_time, status, notes, created_at'
     )
     .eq('id', orderId)
     .eq('user_id', auth.user.id)
@@ -84,7 +90,7 @@ export default async function OrderDetailPage({
     const { data: groupData } = await supabase
       .from('orders')
       .select(
-        'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, supports, post_processing_level, post_processing_charges, price_per_unit, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, estimated_time, status, notes, created_at'
+        'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, supports, post_processing_level, post_processing_charges, price_per_unit, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, discount, coupon_code, coupon_id, discount_type, estimated_time, status, notes, created_at'
       )
       .eq('group_id', row.group_id)
       .eq('user_id', auth.user.id)
@@ -96,6 +102,7 @@ export default async function OrderDetailPage({
   }
 
   const isMultiItem = groupedItems.length > 1
+  const discountSummary = await loadOrderDiscountSummary(createAdminSupabaseClient(), groupedItems)
 
   return (
     <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-28 text-[#0F1B3D] md:px-8">
@@ -104,7 +111,7 @@ export default async function OrderDetailPage({
         <div className="rounded-[32px] border border-[#7C5CFF]/10 bg-[rgba(255,255,255,0.96)] p-6 backdrop-blur-2xl">
           <Link
             href="/my-orders"
-            className="inline-flex text-sm text-[#9ea6c4] transition-colors hover:text-[#0F1B3D]"
+            className="inline-flex text-sm text-[#6F7192] transition-colors hover:text-[#0F1B3D]"
           >
             Back to orders
           </Link>
@@ -117,11 +124,11 @@ export default async function OrderDetailPage({
                 {row.order_number ?? row.id}
               </h1>
               {isMultiItem && (
-                <div className="mt-2 text-sm text-[#7dd3fc]">
+                <div className="mt-2 text-sm text-[#7C5CFF]">
                   {groupedItems.length} items in this order
                 </div>
               )}
-              <p className="mt-3 max-w-2xl text-base leading-8 text-[#9ea6c4]">
+              <p className="mt-3 max-w-2xl text-base leading-8 text-[#6F7192]">
                 Submitted on{' '}
                 {new Date(row.created_at).toLocaleDateString('en-IN', {
                   day: 'numeric',
@@ -163,7 +170,7 @@ export default async function OrderDetailPage({
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="text-sm font-semibold text-[#0F1B3D]">{item.material}</div>
-                      <div className="mt-1 text-sm text-[#c8d0e9]">{item.color}</div>
+                      <div className="mt-1 text-sm text-[#6F7192]">{item.color}</div>
                     </div>
                     <div className="font-[var(--font-syne)] text-xl font-bold text-[#7C5CFF]">
                       ₹{Number(item.total_price).toFixed(0)}
@@ -261,13 +268,13 @@ export default async function OrderDetailPage({
               {isMultiItem ? 'Order Total' : 'Estimate'}
             </h2>
             <div className="mt-5 rounded-[24px] border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-5 shadow-[0_12px_48px_rgba(124, 92, 255,0.1)]">
-              <div className="text-[11px] uppercase tracking-[0.22em] text-[#ffd3c1]">
+              <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
                 Total price
               </div>
               <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
                 ₹{Number(row.total_price).toFixed(0)}
               </div>
-              <div className="mt-4 grid gap-2 text-sm text-[#ffe0d4]">
+              <div className="mt-4 grid gap-2 text-sm text-[#6F7192]">
                 {!isMultiItem && (
                   <>
                     <div className="flex justify-between">
@@ -301,14 +308,39 @@ export default async function OrderDetailPage({
               </div>
               {isMultiItem && (
                 <div className="mt-4 border-t border-[#7C5CFF]/10 pt-3">
-                  <div className="text-xs text-[#ffe0d4]">
+                  <div className="text-xs text-[#6F7192]">
                     Print subtotal: ₹{groupedItems.reduce((sum, item) => sum + Number(item.price), 0).toFixed(0)}
                   </div>
-                  <div className="text-xs text-[#ffe0d4]">
+                  <div className="text-xs text-[#6F7192]">
                     Total print time: {groupedItems.reduce((sum, item) => sum + Number(item.estimated_time), 0).toFixed(1)} hr
                   </div>
                 </div>
               )}
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-4">
+              <div className="text-xs uppercase tracking-[0.18em] text-emerald-700">
+                Discount summary
+              </div>
+              <div className="mt-2 text-sm font-medium text-[#0F1B3D]">
+                {discountSummary.amount > 0
+                  ? `You saved ₹${discountSummary.amount.toFixed(0)}`
+                  : 'No discount was applied'}
+              </div>
+              {discountSummary.label && discountSummary.amount > 0 && (
+                <div className="mt-1 text-xs text-[#6F7192]">
+                  Applied via {discountSummary.label}
+                </div>
+              )}
+              <div className="mt-2 text-xs text-[#6F7192]">
+                {discountSummary.offerName
+                  ? `Offer: ${discountSummary.offerName}`
+                  : discountSummary.couponCode
+                    ? `Coupon: ${discountSummary.couponCode}`
+                    : discountSummary.type
+                      ? `Discount type: ${discountSummary.type}`
+                      : 'Tracked from the order record'}
+              </div>
             </div>
 
             <div className="mt-5 rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">

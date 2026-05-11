@@ -35,7 +35,7 @@ export default function ProductsPage() {
   }, [])
 
   if (error) {
-    return <div className="rounded-xl border border-rose-400/20 bg-rose-400/10 p-5 text-sm text-rose-300">{error}</div>
+    return <div className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-600">{error}</div>
   }
 
   if (!materials) {
@@ -55,7 +55,7 @@ export default function ProductsPage() {
           <Package className="h-3 w-3" />
           Product Catalog
         </div>
-        <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-white">Products / Catalog</h1>
+        <h1 className="mt-2 font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">Products / Catalog</h1>
         <p className="mt-2 max-w-xl text-sm text-[#6F7192]">
           Manage your product catalog and pricing
         </p>
@@ -73,13 +73,13 @@ export default function ProductsPage() {
           searchPlaceholder="Search products..."
           searchKeys={['name']}
           columns={[
-            { key: 'name', label: 'Product Name', sortable: true, render: (row: AdminMaterial) => <span className="font-medium text-white">{row.name}</span> },
-            { key: 'price_per_gram', label: 'Price/Gram', sortable: true, render: (row: AdminMaterial) => <span className="font-medium text-white">₹{row.price_per_gram}</span> },
-            { key: 'density', label: 'Density', sortable: true, render: (row: AdminMaterial) => <span className="text-[#c6cee5]">{row.density}</span> },
+            { key: 'name', label: 'Product Name', sortable: true, render: (row: AdminMaterial) => <span className="font-medium text-[#0F1B3D]">{row.name}</span> },
+            { key: 'price_per_gram', label: 'Price/Gram', sortable: true, render: (row: AdminMaterial) => <span className="font-medium text-[#0F1B3D]">₹{row.price_per_gram}</span> },
+            { key: 'density', label: 'Density', sortable: true, render: (row: AdminMaterial) => <span className="text-[#6F7192]">{row.density}</span> },
             { key: 'colors', label: 'Colors', render: (row: AdminMaterial) => (
               <div className="flex flex-wrap gap-1">
                 {row.colors.map((color, i) => (
-                  <span key={i} className="rounded-md border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5 text-[10px] text-[#8b95b5]">
+                  <span key={i} className="rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] text-[#6F7192]">
                     {typeof color === 'string' ? color : (color as {name?: string}).name ?? JSON.stringify(color)}
                   </span>
                 ))}
@@ -87,9 +87,9 @@ export default function ProductsPage() {
             )},
             { key: 'stock', label: 'Status', sortable: true, render: (row: AdminMaterial) => (
               <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                row.stock === 'Healthy' ? 'bg-emerald-400/20 text-emerald-400' :
-                row.stock === 'Low' ? 'bg-yellow-400/20 text-yellow-400' :
-                'bg-gray-400/20 text-gray-400'
+                row.stock === 'Healthy' ? 'bg-emerald-100 text-emerald-700' :
+                row.stock === 'Low' ? 'bg-yellow-100 text-yellow-700' :
+                'bg-gray-100 text-gray-700'
               }`}>
                 {row.stock}
               </span>
