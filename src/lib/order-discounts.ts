@@ -46,14 +46,7 @@ function uniqueValues(values: Array<string | null | undefined>) {
 }
 
 export async function loadOrderDiscountSummary(
-  supabase: {
-    from: (table: string) => {
-      select: (columns: string) => {
-        in: (column: string, values: string[]) => Promise<{ data: unknown[] | null; error: { message: string } | null }>
-        order: (column: string, options: { ascending: boolean }) => Promise<{ data: unknown[] | null; error: { message: string } | null }>
-      }
-    }
-  },
+  supabase: any,
   rows: DiscountLookupRow[],
 ): Promise<OrderDiscountSummary> {
   if (rows.length === 0) {

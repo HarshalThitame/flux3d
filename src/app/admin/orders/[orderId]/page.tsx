@@ -68,12 +68,16 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ ord
   }, [toast])
 
   async function handleStatusUpdate(status: string, label: string) {
+    if (!order) {
+      return
+    }
+
     setUpdatingStatus(status)
     try {
       const res = await fetch('/api/admin/orders', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ groupId: order!.groupId, status }),
+        body: JSON.stringify({ groupId: order.groupId, status }),
       })
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string }
@@ -104,15 +108,24 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ ord
     )
   }
 
-  if (!loading && (error || !order)) {
+  if (error) {
     return (
       <div className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-600">
-        {error ?? 'Order not found.'}
+        {error}
       </div>
     )
   }
 
-  const createdDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
+  if (!order) {
+    return (
+      <div className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-600">
+        Order not found.
+      </div>
+    )
+  }
+
+  const currentOrder = order
+  const createdDate = new Date(currentOrder.createdAt).toLocaleDateString('en-IN', {
     day: 'numeric', month: 'long', year: 'numeric',
   })
 
@@ -135,34 +148,34 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ ord
               Order Details
             </div>
             <h1 className="font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">
-              {order.orderNumber}
+              {currentOrder.orderNumber}
             </h1>
             <p className="mt-1 text-sm text-[#6F7192]">
-              {order.itemCount} item{order.itemCount > 1 ? 's' : ''} · Placed on {createdDate}
+              {currentOrder.itemCount} item{currentOrder.itemCount > 1 ? 's' : ''} · Placed on {createdDate}
             </p>
           </div>
-          <StatusBadge status={order.status} />
+          <StatusBadge status={currentOrder.status} />
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <InfoCard label="Customer" value={order.fullName} icon={<Hash className="h-3.5 w-3.5" />} />
-          <InfoCard label="Phone" value={order.phone ?? '—'} icon={<Hash className="h-3.5 w-3.5" />} />
-          <InfoCard label="Delivery" value={order.deliveryCharge === 0 ? 'Free' : `₹${order.deliveryCharge.toFixed(0)}`} icon={<IndianRupee className="h-3.5 w-3.5" />} />
+          <InfoCard label="Customer" value={currentOrder.fullName} icon={<Hash className="h-3.5 w-3.5" />} />
+          <InfoCard label="Phone" value={currentOrder.phone ?? '—'} icon={<Hash className="h-3.5 w-3.5" />} />
+          <InfoCard label="Delivery" value={currentOrder.deliveryCharge === 0 ? 'Free' : `₹${currentOrder.deliveryCharge.toFixed(0)}`} icon={<IndianRupee className="h-3.5 w-3.5" />} />
         </div>
 
         <div className="rounded-xl border border-emerald-400/20 bg-emerald-50 px-4 py-4">
           <div className="text-[10px] uppercase tracking-[0.15em] text-emerald-700">Discount Summary</div>
           <div className="mt-1.5 text-sm font-medium text-[#0F1B3D]">
-            {order.discountAmount && order.discountAmount > 0
-              ? `₹${order.discountAmount.toLocaleString('en-IN')} saved`
+            {currentOrder.discountAmount && currentOrder.discountAmount > 0
+              ? `₹${currentOrder.discountAmount.toLocaleString('en-IN')} saved`
               : 'No discount applied'}
           </div>
           <div className="mt-1 text-sm text-[#6F7192]">
-            {order.discountLabel ?? order.offerName ?? order.couponCode ?? order.discountType ?? 'No offer or coupon linked to this order'}
+            {currentOrder.discountLabel ?? currentOrder.offerName ?? currentOrder.couponCode ?? currentOrder.discountType ?? 'No offer or coupon linked to this order'}
           </div>
           <div className="mt-1 text-xs text-[#6F7192]">
-            {order.discountSource
-              ? `Source: ${order.discountSource}`
+            {currentOrder.discountSource
+              ? `Source: ${currentOrder.discountSource}`
               : 'Source not recorded'}
           </div>
         </div>
@@ -170,24 +183,24 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ ord
         <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
           <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Delivery Address</div>
           <div className="mt-1.5 text-sm leading-6 text-[#0F1B3D]">
-            {[order.addressLine1, order.addressLine2, order.city, order.state, order.pincode].filter(Boolean).join(', ')}
+            {[currentOrder.addressLine1, currentOrder.addressLine2, currentOrder.city, currentOrder.state, currentOrder.pincode].filter(Boolean).join(', ')}
           </div>
         </div>
 
-        {order.notes && (
+        {currentOrder.notes && (
           <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
             <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Notes</div>
-            <div className="mt-1.5 text-sm text-[#0F1B3D]">{order.notes}</div>
+            <div className="mt-1.5 text-sm text-[#0F1B3D]">{currentOrder.notes}</div>
           </div>
         )}
 
         <div>
           <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-[#6F7192]">
             <Cuboid className="h-3.5 w-3.5" />
-            Order Items ({order.items.length})
+            Order Items ({currentOrder.items.length})
           </div>
           <div className="space-y-4">
-            {order.items.map((item, i) => (
+            {currentOrder.items.map((item, i) => (
               <div key={item.id} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div className="flex-1 space-y-4">

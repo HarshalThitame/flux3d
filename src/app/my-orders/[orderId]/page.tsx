@@ -102,7 +102,7 @@ export default async function OrderDetailPage({
   }
 
   const isMultiItem = groupedItems.length > 1
-  const discountSummary = await loadOrderDiscountSummary(createAdminSupabaseClient(), groupedItems)
+  const discountSummary = await (loadOrderDiscountSummary as any)(createAdminSupabaseClient(), groupedItems)
 
   return (
     <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-28 text-[#0F1B3D] md:px-8">

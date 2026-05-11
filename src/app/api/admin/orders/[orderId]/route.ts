@@ -4,9 +4,54 @@ import { groupAdminOrders } from '@/lib/admin/queries'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { loadOrderDiscountSummary } from '@/lib/order-discounts'
 import { requireAdminRequest } from '@/lib/admin/request'
+import type { OrderStatus } from '@/lib/orders'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+
+type AdminOrderRow = {
+  id: string | number
+  order_number: string | null
+  group_id: string | null
+  file_url?: string | null
+  material: string | null
+  color?: string | null
+  infill?: number | null
+  layer_height?: number | null
+  price?: number | string | null
+  price_per_unit?: number | string | null
+  total_price: number | string | null
+  quantity?: number | null
+  estimated_time?: number | null
+  supports?: boolean | null
+  post_processing_level?: string | null
+  post_processing_charges?: number | string | null
+  status: OrderStatus
+  created_at: string | null
+  notes: string | null
+  full_name: string | null
+  phone?: string | null
+  address_line1?: string | null
+  address_line2?: string | null
+  city?: string | null
+  state?: string | null
+  pincode?: string | null
+  landmark?: string | null
+  delivery_charge?: number | string | null
+  discount?: number | string | null
+  coupon_code?: string | null
+  coupon_id?: string | null
+  discount_type?: string | null
+}
+
+type DiscountLookupRow = {
+  id: string
+  order_number: string | null
+  discount?: number | string | null
+  coupon_code?: string | null
+  coupon_id?: string | null
+  discount_type?: string | null
+}
 
 export async function GET(
   _request: Request,
@@ -59,15 +104,16 @@ export async function GET(
       }
     }
 
-    const grouped = groupAdminOrders(rows as Parameters<typeof groupAdminOrders>[0])
-    const discountSummary = await loadOrderDiscountSummary(supabase, rows as Array<{
-      id: string
-      order_number: string | null
-      discount?: number | string | null
-      coupon_code?: string | null
-      coupon_id?: string | null
-      discount_type?: string | null
-    }>)
+    const grouped = groupAdminOrders(rows as AdminOrderRow[])
+    const discountRows: DiscountLookupRow[] = rows.map((row) => ({
+      id: String(row.id),
+      order_number: row.order_number ?? null,
+      discount: row.discount ?? null,
+      coupon_code: row.coupon_code ?? null,
+      coupon_id: row.coupon_id ?? null,
+      discount_type: row.discount_type ?? null,
+    }))
+    const discountSummary = await (loadOrderDiscountSummary as any)(supabase, discountRows)
 
     return NextResponse.json({
       order: {
