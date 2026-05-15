@@ -56,10 +56,6 @@ export default async function handler(
     if (req.method === "POST") {
 
         try {
-
-            console.log("WHATSAPP EVENT:");
-            console.log(JSON.stringify(req.body, null, 2));
-
             const message =
                 req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
 
@@ -71,9 +67,6 @@ export default async function handler(
 
             const from = message.from;
             const text = message.text?.body;
-
-            console.log("FROM:", from);
-            console.log("TEXT:", text);
 
             // OPENAI RESPONSE
             const completion = await openai.chat.completions.create({
@@ -94,8 +87,6 @@ export default async function handler(
             const aiReply =
                 completion.choices[0]?.message?.content ||
                 "Sorry, I could not process that.";
-
-            console.log("AI REPLY:", aiReply);
 
             // SEND WHATSAPP REPLY
             await sendWhatsAppMessage(from, aiReply);

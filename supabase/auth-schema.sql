@@ -43,17 +43,49 @@ CREATE TABLE IF NOT EXISTS public.orders (
   pincode text NOT NULL DEFAULT '',
   landmark text,
   delivery_charge numeric(10,2) NOT NULL DEFAULT 0,
+  material_cost numeric(10,2) NOT NULL DEFAULT 0,
+  machine_cost numeric(10,2) NOT NULL DEFAULT 0,
+  post_processing_level text NOT NULL DEFAULT 'none',
+  post_processing_charges numeric(10,2) NOT NULL DEFAULT 0,
+  subtotal numeric(10,2) NOT NULL DEFAULT 0,
+  overhead_percent numeric(5,2) NOT NULL DEFAULT 0,
+  overhead_amount numeric(10,2) NOT NULL DEFAULT 0,
+  margin_percent numeric(5,2) NOT NULL DEFAULT 0,
+  margin_amount numeric(10,2) NOT NULL DEFAULT 0,
   total_price numeric(10,2) NOT NULL DEFAULT 0,
+  final_price numeric(10,2) NOT NULL DEFAULT 0,
+  grand_total numeric(10,2) NOT NULL DEFAULT 0,
   price numeric(10,2) NOT NULL,
+  price_per_unit numeric(10,2) NOT NULL DEFAULT 0,
   estimated_time numeric(10,2) NOT NULL,
+  quantity integer NOT NULL DEFAULT 1,
+  weight numeric(10,2) NOT NULL DEFAULT 0,
+  difficulty_factor numeric(10,2) NOT NULL DEFAULT 1,
+  discount numeric(10,2) NOT NULL DEFAULT 0,
+  cart_discount numeric(10,2) NOT NULL DEFAULT 0,
+  cart_discount_percent numeric(5,2) NOT NULL DEFAULT 0,
+  coupon_discount numeric(10,2) NOT NULL DEFAULT 0,
+  coupon_code text,
+  coupon_id uuid,
+  discount_type text,
+  offer_id uuid,
+  offer_discount numeric(10,2) NOT NULL DEFAULT 0,
+  offer_name text,
+  cancel_requested boolean NOT NULL DEFAULT false,
   status text NOT NULL DEFAULT 'pending',
   notes text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT orders_status_check CHECK (
-    status IN ('pending', 'reviewed', 'approved', 'queued', 'on-hold', 'printing', 'shipped', 'completed', 'rejected', 'cancelled')
+    status IN ('pending', 'confirmed', 'printing', 'shipped', 'delivered', 'completed', 'cancelled')
   )
 );
+
+CREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_created_at_desc ON public.orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_group_id ON public.orders(group_id);
+CREATE INDEX IF NOT EXISTS idx_orders_order_number ON public.orders(order_number);
 
 -- 3. Quotes table (references orders via converted_to_order_id)
 CREATE TABLE IF NOT EXISTS public.quotes (
@@ -106,6 +138,123 @@ CREATE TABLE IF NOT EXISTS public.materials (
   CONSTRAINT materials_stock_check CHECK (stock IN ('Healthy', 'Low', 'Paused'))
 );
 
+-- 6. Business settings table
+CREATE TABLE IF NOT EXISTS public.business_settings (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_name text,
+  legal_business_name text,
+  brand_name text,
+  tagline text,
+  business_description text,
+  gst_number text,
+  pan_number text,
+  cin_number text,
+  msme_number text,
+  business_type text DEFAULT 'Individual',
+  primary_email text,
+  support_email text,
+  sales_email text,
+  billing_email text,
+  primary_phone text,
+  whatsapp_number text,
+  alternate_phone text,
+  toll_free_number text,
+  address_line_1 text,
+  address_line_2 text,
+  landmark text,
+  city text,
+  state text,
+  country text DEFAULT 'India',
+  postal_code text,
+  billing_same_as_office boolean DEFAULT true,
+  billing_address_line_1 text,
+  billing_address_line_2 text,
+  billing_city text,
+  billing_state text,
+  billing_country text,
+  billing_postal_code text,
+  instagram_url text,
+  facebook_url text,
+  linkedin_url text,
+  twitter_url text,
+  youtube_url text,
+  threads_url text,
+  pinterest_url text,
+  github_url text,
+  website_url text,
+  logo_url text,
+  dark_logo_url text,
+  favicon_url text,
+  invoice_logo_url text,
+  email_logo_url text,
+  primary_color text DEFAULT '#FF5C1A',
+  secondary_color text DEFAULT '#39BDF8',
+  invoice_prefix text DEFAULT 'INV-',
+  quotation_prefix text DEFAULT 'QTN-',
+  invoice_start_number integer DEFAULT 1001,
+  quotation_start_number integer DEFAULT 1001,
+  currency text DEFAULT 'INR',
+  currency_symbol text DEFAULT '₹',
+  tax_percentage numeric(5,2) DEFAULT 0,
+  gst_enabled boolean NOT NULL DEFAULT false,
+  cgst_percent numeric(5,2) NOT NULL DEFAULT 0,
+  sgst_percent numeric(5,2) NOT NULL DEFAULT 0,
+  sac_hsn_code text,
+  payment_terms text,
+  bank_account_name text,
+  bank_name text,
+  account_number text,
+  ifsc_code text,
+  upi_id text,
+  upi_qr_code_url text,
+  whatsapp_order_number text,
+  whatsapp_support_number text,
+  default_whatsapp_template text,
+  auto_reply_message text,
+  business_hours text,
+  support_availability_message text,
+  meta_title text,
+  meta_description text,
+  meta_keywords text,
+  og_image_url text,
+  twitter_image_url text,
+  canonical_url text,
+  robots_index boolean DEFAULT true,
+  smtp_host text,
+  smtp_port integer,
+  smtp_username text,
+  smtp_password text,
+  smtp_sender_name text,
+  smtp_sender_email text,
+  privacy_policy_url text,
+  terms_url text,
+  refund_policy_url text,
+  shipping_policy_url text,
+  working_days text,
+  working_hours text,
+  holiday_message text,
+  emergency_contact text,
+  order_processing_time text,
+  delivery_charge_threshold numeric(10,2) DEFAULT 499,
+  default_delivery_charge numeric(10,2) DEFAULT 50,
+  overhead_percent numeric(5,2) NOT NULL DEFAULT 15,
+  margin_percentage numeric(5,2) NOT NULL DEFAULT 30,
+  material_markup_percent numeric(5,2) NOT NULL DEFAULT 15,
+  print_speed_grams_per_hour numeric(10,2) NOT NULL DEFAULT 14.5,
+  post_processing_multipliers jsonb NOT NULL DEFAULT '{"none":0,"sanded":0.25,"sanded-painted":0.6}'::jsonb,
+  cart_discount_enabled boolean NOT NULL DEFAULT true,
+  cart_discount_tiers jsonb NOT NULL DEFAULT '[]'::jsonb,
+  pickup_available boolean DEFAULT false,
+  cod_available boolean DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  deleted_at timestamptz
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_business_settings_single_row
+ON public.business_settings ((deleted_at IS NULL))
+WHERE deleted_at IS NULL;
+
 -- Insert default materials
 INSERT INTO public.materials (name, price_per_gram, density, colors, stock)
 VALUES 
@@ -113,7 +262,7 @@ VALUES
   ('abs', 4.10, 1.04, '[{"name": "Industrial Black", "hex": "#111827"}, {"name": "Slate Gray", "hex": "#4b5563"}, {"name": "Safety Yellow", "hex": "#facc15"}]', 'Healthy')
 ON CONFLICT (name) DO NOTHING;
 
--- 6. Create storage bucket
+-- 7. Create storage bucket
 INSERT INTO storage.buckets (id, name, public, file_size_limit)
 VALUES ('quote-models', 'quote-models', false, 104857600)
 ON CONFLICT (id) DO NOTHING;
@@ -124,6 +273,7 @@ ALTER TABLE public.quotes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.delivery_addresses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.materials ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.business_settings ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
 DROP POLICY IF EXISTS "profiles_select_own" ON public.profiles;
@@ -190,6 +340,21 @@ DROP POLICY IF EXISTS "orders_update_own" ON public.orders;
 CREATE POLICY "orders_update_own" ON public.orders FOR UPDATE TO authenticated
 USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
+REVOKE UPDATE ON public.orders FROM authenticated;
+GRANT UPDATE (
+  full_name,
+  phone,
+  address_line1,
+  address_line2,
+  city,
+  state,
+  pincode,
+  landmark,
+  notes,
+  cancel_requested,
+  updated_at
+) ON public.orders TO authenticated;
+
 -- Delivery addresses policies
 DROP POLICY IF EXISTS "delivery_addresses_select_own" ON public.delivery_addresses;
 CREATE POLICY "delivery_addresses_select_own" ON public.delivery_addresses FOR SELECT TO authenticated
@@ -224,6 +389,10 @@ WITH CHECK (auth.jwt() ->> 'role' = 'admin' OR auth.jwt() -> 'email' = 'admin@fl
 DROP POLICY IF EXISTS "materials_delete_admin" ON public.materials;
 CREATE POLICY "materials_delete_admin" ON public.materials FOR DELETE TO authenticated
 USING (auth.jwt() ->> 'role' = 'admin' OR auth.jwt() -> 'email' = 'admin@flux3d.com');
+
+DROP POLICY IF EXISTS "business_settings_public_read" ON public.business_settings;
+CREATE POLICY "business_settings_public_read" ON public.business_settings FOR SELECT
+USING (deleted_at IS NULL);
 
 -- Storage policies (fixes 42704 error - storage.foldername() now exists)
 DROP POLICY IF EXISTS "quote_models_select_own" ON storage.objects;

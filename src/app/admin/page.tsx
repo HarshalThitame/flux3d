@@ -172,9 +172,9 @@ export default function AdminDashboardPage() {
              label: 'Status',
              options: [
                { label: 'Pending', value: 'pending' },
-               { label: 'Reviewed', value: 'reviewed' },
-               { label: 'Approved', value: 'approved' },
+               { label: 'Confirmed', value: 'confirmed' },
                { label: 'Printing', value: 'printing' },
+               { label: 'Delivered', value: 'delivered' },
                { label: 'Completed', value: 'completed' },
              ],
              getValue: (row) => row.status,

@@ -3,17 +3,25 @@
 import { revalidatePath } from 'next/cache'
 import { requireUser } from '@/lib/auth/server'
 import {
-  calculateOrderTotal,
   formatOrderNumber,
   normalizePhone,
   validateAddressFields,
 } from '@/lib/orders'
+import { getSettings } from '@/lib/settings'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
 import {
   isMissingSupabaseTableError,
   ORDERS_TABLE_UNAVAILABLE_MESSAGE,
 } from '@/lib/quote/supabase-errors'
 import { normalizeOwnedStoragePath } from '@/lib/quote/storage-path'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import {
+  calculatePricingWaterfall,
+  getHighestCartDiscountTier,
+  roundMoney,
+  type PromotionInput,
+} from '@/lib/quote/pricing-waterfall'
+import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 
 type CartOrderItem = {
   quoteId: string
@@ -24,11 +32,26 @@ type CartOrderItem = {
   quantity?: number
   infill: number
   layerHeight: number
+  postProcessingLevel: 'none' | 'sanded' | 'sanded-painted'
   supports: boolean
   postProcessingCharges?: number
+  materialCost?: number
+  machineCost?: number
+  subtotal?: number
+  overheadPercentage?: number
+  overheadAmount?: number
+  marginPercentage?: number
+  marginAmount?: number
+  totalPrice?: number
+  cartDiscountAmount?: number
+  cartDiscountPercent?: number
+  finalPrice?: number
+  deliveryCharge?: number
+  grandTotal?: number
   price: number
   estimatedTime: number
   weight: number
+  difficultyFactor?: number
   dimensions: {
     x: number
     y: number
@@ -39,6 +62,21 @@ type CartOrderItem = {
 type CreateCartOrderInput = {
   items: CartOrderItem[]
   subtotal: number
+  itemsTotal?: number
+  cartDiscountAmount?: number
+  cartDiscountPercent?: number
+  couponDiscountAmount?: number
+  couponCode?: string | null
+  couponId?: string | null
+  couponDiscountType?: string | null
+  offerId?: string | null
+  offerDiscountAmount?: number
+  offerName?: string | null
+  offerCode?: string | null
+  offerDiscountType?: string | null
+  finalPrice?: number
+  deliveryCharge?: number
+  grandTotal?: number
   fullName: string
   phone: string
   addressLine1: string
@@ -48,10 +86,6 @@ type CreateCartOrderInput = {
   pincode: string
   landmark: string
   discount?: number
-  couponCode?: string | null
-  couponId?: string | null
-  discountType?: string | null
-  offerId?: string | null
 }
 
 function normalizeNumber(value: number, field: string) {
@@ -62,6 +96,58 @@ function normalizeNumber(value: number, field: string) {
   return value
 }
 
+function allocateAmount(total: number, bases: number[]) {
+  if (bases.length === 0) {
+    return []
+  }
+
+  const safeTotal = roundMoney(total)
+  const safeBases = bases.map((base) => Math.max(0, base))
+  const baseSum = safeBases.reduce((sum, value) => sum + value, 0)
+
+  if (safeTotal === 0) {
+    return bases.map(() => 0)
+  }
+
+  if (baseSum === 0) {
+    const equalShare = roundMoney(safeTotal / safeBases.length)
+    let remaining = safeTotal
+    return safeBases.map((_, index) => {
+      if (index === safeBases.length - 1) {
+        return roundMoney(remaining)
+      }
+      const share = equalShare
+      remaining = roundMoney(remaining - share)
+      return share
+    })
+  }
+
+  let remaining = safeTotal
+
+  return safeBases.map((base, index) => {
+    if (index === safeBases.length - 1) {
+      return roundMoney(remaining)
+    }
+
+    const share = roundMoney(safeTotal * (base / baseSum))
+    remaining = roundMoney(remaining - share)
+    return share
+  })
+}
+
+type PreparedCartOrderItem = CartOrderItem & {
+  normalizedQuantity: number
+  materialCost: number
+  machineCost: number
+  subtotal: number
+  postProcessingCharges: number
+  overheadPercent: number
+  overheadAmount: number
+  marginPercent: number
+  marginAmount: number
+  totalPrice: number
+}
+
 export async function createCartOrderAction(input: CreateCartOrderInput): Promise<{
   orderId: string
   orderNumber: string
@@ -69,6 +155,7 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
 }> {
   const auth = await requireUser('/cart/delivery')
   const supabase = await createServerSupabaseClient()
+  const adminSupabase = createAdminSupabaseClient()
 
   if (input.items.length === 0) {
     throw new Error('Your cart is empty. Add items before ordering.')
@@ -98,8 +185,6 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
     throw new Error('Complete the delivery address before placing the order.')
   }
 
-  const subtotal = normalizeNumber(input.subtotal, 'subtotal')
-  const { deliveryCharge } = calculateOrderTotal(subtotal)
   const normalizedPhone = normalizePhone(input.phone)
   const trimmedAddress = {
     full_name: input.fullName.trim(),
@@ -149,13 +234,223 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
   }
 
   const groupId = crypto.randomUUID()
-
-  const discountPerItem = input.discount ? input.discount / input.items.length : 0
-
-  const orderItems = input.items.map((item) => {
+  const settings = await getSettings()
+  const preparedItems: PreparedCartOrderItem[] = input.items.map((item) => {
     const normalizedQuantity = Math.max(1, Math.floor(Number(item.quantity ?? 1)))
-    const itemDelivery = deliveryCharge / input.items.length
-    const itemTotal = item.price + itemDelivery - discountPerItem
+    const itemMaterialCost = normalizeNumber(item.materialCost ?? 0, 'material cost')
+    const itemMachineCost = normalizeNumber(item.machineCost ?? 0, 'machine cost')
+    const postProcessingCharges = normalizeNumber(item.postProcessingCharges ?? 0, 'post processing charges')
+    const providedOverheadPercent = Number(item.overheadPercentage ?? 0)
+    const overheadPercent = normalizeNumber(
+      providedOverheadPercent > 0 ? providedOverheadPercent : settings.overheadPercentage,
+      'overhead percent'
+    )
+    const providedMarginPercent = Number(item.marginPercentage ?? 0)
+    const marginPercent = normalizeNumber(
+      providedMarginPercent > 0 ? providedMarginPercent : settings.marginPercentage,
+      'margin percent'
+    )
+    const itemWaterfall = calculatePricingWaterfall({
+      materialCost: itemMaterialCost,
+      machineCost: itemMachineCost,
+      postProcessingCharges,
+      quantity: normalizedQuantity,
+      overheadPercent,
+      marginPercent,
+      deliveryCharge: 0,
+      deliveryThreshold: settings.deliveryChargeThreshold,
+      defaultDeliveryCharge: settings.defaultDeliveryCharge,
+    })
+
+    return {
+      ...item,
+      normalizedQuantity,
+      materialCost: itemMaterialCost,
+      machineCost: itemMachineCost,
+      subtotal: itemWaterfall.subtotal,
+      postProcessingCharges,
+      overheadPercent,
+      overheadAmount: itemWaterfall.overheadAmount,
+      marginPercent,
+      marginAmount: itemWaterfall.marginAmount,
+      totalPrice: itemWaterfall.priceBeforeDiscount,
+    }
+  })
+  const basePrices = preparedItems.map((item) => item.totalPrice)
+  const totalPriceTotal = roundMoney(basePrices.reduce((sum, price) => sum + price, 0))
+  const cartTier = getHighestCartDiscountTier(
+    totalPriceTotal,
+    settings.cartDiscountTiers,
+    settings.cartDiscountEnabled
+  )
+  const cartDiscountPercent = normalizeNumber(cartTier?.discountPercent ?? 0, 'cart discount percent')
+  const cartWaterfall = calculatePricingWaterfall({
+    materialCost: totalPriceTotal,
+    machineCost: 0,
+    postProcessingCharges: 0,
+    quantity: preparedItems.reduce((sum, item) => sum + item.normalizedQuantity, 0),
+    overheadPercent: 0,
+    marginPercent: 0,
+    cartDiscountPercent,
+    deliveryCharge: 0,
+    deliveryThreshold: settings.deliveryChargeThreshold,
+    defaultDeliveryCharge: settings.defaultDeliveryCharge,
+  })
+  const cartDiscountAmount = cartWaterfall.cartDiscountAmount
+  const afterCartTotal = cartWaterfall.afterCart
+
+  let couponPromotion: PromotionInput | null = null
+  let couponDiscountType = input.couponDiscountType ?? null
+  let couponId = input.couponId ?? null
+  let couponCode = input.couponCode ?? null
+  let couponFreeShipping = false
+
+  if (couponId || couponCode) {
+    let couponQuery = adminSupabase
+      .from('coupons')
+      .select('id, code, discount_type, discount_value, max_discount, min_order_value, starts_at, expires_at, is_active, usage_limit, usage_per_user, used_count, first_order_only')
+
+    couponQuery = couponId ? couponQuery.eq('id', couponId) : couponQuery.eq('code', couponCode)
+    const { data: coupon, error: couponError } = await couponQuery.maybeSingle()
+
+    if (couponError) throw new Error(couponError.message)
+    if (!coupon) throw new Error('Coupon no longer exists. Remove it and try again.')
+
+    const now = new Date()
+    const startsAt = new Date(String(coupon.starts_at))
+    const expiresAt = new Date(String(coupon.expires_at))
+    if (!coupon.is_active) throw new Error('This coupon is no longer active.')
+    if (Number.isFinite(startsAt.getTime()) && now < startsAt) throw new Error('This coupon is not active yet.')
+    if (Number.isFinite(expiresAt.getTime()) && now > expiresAt) throw new Error('This coupon has expired.')
+    if (coupon.usage_limit != null && Number(coupon.used_count ?? 0) >= Number(coupon.usage_limit)) {
+      throw new Error('This coupon has reached its usage limit.')
+    }
+    if (afterCartTotal < Number(coupon.min_order_value ?? 0)) {
+      throw new Error(`Minimum order value of ₹${Number(coupon.min_order_value ?? 0).toLocaleString('en-IN')} required for this coupon.`)
+    }
+    if (coupon.usage_per_user != null) {
+      const { count, error: usageError } = await supabase
+        .from('redemptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('coupon_id', coupon.id)
+        .eq('user_id', auth.user.id)
+
+      if (usageError) throw new Error(usageError.message)
+      if ((count ?? 0) >= Number(coupon.usage_per_user)) {
+        throw new Error('You have already used this coupon the maximum number of times.')
+      }
+    }
+    if (coupon.first_order_only) {
+      const { count, error: firstOrderError } = await supabase
+        .from('orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', auth.user.id)
+
+      if (firstOrderError) throw new Error(firstOrderError.message)
+      if ((count ?? 0) > 0) throw new Error('This coupon is for first-time orders only.')
+    }
+
+    couponId = coupon.id as string
+    couponCode = coupon.code as string
+    couponDiscountType = String(coupon.discount_type)
+    couponFreeShipping = couponDiscountType === 'free_shipping'
+    couponPromotion = couponFreeShipping
+      ? null
+      : {
+          discountType: couponDiscountType,
+          discountValue: Number(coupon.discount_value ?? 0),
+          maxDiscount: coupon.max_discount == null ? null : Number(coupon.max_discount),
+        }
+  }
+
+  let offerDiscountType = input.offerDiscountType ?? null
+  let offerName = input.offerName ?? null
+  let offerId = input.offerId ?? null
+  let offerPromotion: PromotionInput | null = null
+  let offerFreeShipping = false
+
+  if (offerId) {
+    const { data: offer, error: offerError } = await adminSupabase
+      .from('offers')
+      .select('id, title, badge_text, sale_label, offer_type, discount_value, max_discount, starts_at, ends_at, is_active, usage_limit, used_count')
+      .eq('id', offerId)
+      .maybeSingle()
+
+    if (offerError) throw new Error(offerError.message)
+
+    const now = new Date()
+    const startsAt = offer ? new Date(String(offer.starts_at)) : null
+    const endsAt = offer ? new Date(String(offer.ends_at)) : null
+    const isOfferValid = Boolean(
+      offer &&
+      offer.is_active &&
+      (!startsAt || !Number.isFinite(startsAt.getTime()) || now >= startsAt) &&
+      (!endsAt || !Number.isFinite(endsAt.getTime()) || now <= endsAt) &&
+      (offer.usage_limit == null || Number(offer.used_count ?? 0) < Number(offer.usage_limit))
+    )
+
+    if (isOfferValid && offer) {
+      offerId = offer.id as string
+      offerDiscountType = offer.offer_type === 'buy_x_get_y' ? 'percentage' : String(offer.offer_type)
+      offerName = String(offer.title ?? offer.badge_text ?? offer.sale_label ?? input.offerCode ?? 'Offer')
+      offerFreeShipping = offerDiscountType === 'free_shipping'
+      offerPromotion = offerFreeShipping
+        ? null
+        : {
+            discountType: offerDiscountType,
+            discountValue: Number(offer.discount_value ?? 0),
+            maxDiscount: offer.max_discount == null ? null : Number(offer.max_discount),
+          }
+    } else {
+      offerId = null
+      offerDiscountType = null
+      offerName = null
+    }
+  }
+
+  const groupWaterfall = calculatePricingWaterfall({
+    materialCost: totalPriceTotal,
+    machineCost: 0,
+    postProcessingCharges: 0,
+    quantity: preparedItems.reduce((sum, item) => sum + item.normalizedQuantity, 0),
+    overheadPercent: 0,
+    marginPercent: 0,
+    cartDiscountPercent,
+    coupon: couponPromotion,
+    offer: offerPromotion,
+    deliveryCharge: couponFreeShipping || offerFreeShipping ? 0 : null,
+    deliveryThreshold: settings.deliveryChargeThreshold,
+    defaultDeliveryCharge: settings.defaultDeliveryCharge,
+  })
+  const couponDiscountAmount = groupWaterfall.couponDiscountAmount
+  const offerDiscountAmount = groupWaterfall.offerDiscountAmount
+  const resolvedDeliveryChargeTotal = groupWaterfall.deliveryCharge
+  const afterCouponTotal = groupWaterfall.afterCoupon
+  const cartDiscountShares = allocateAmount(cartDiscountAmount, basePrices)
+  const couponDiscountShares = allocateAmount(couponDiscountAmount, basePrices)
+  const offerDiscountShares = allocateAmount(offerDiscountAmount, basePrices)
+  const afterAllDiscounts = basePrices.map((base, index) =>
+    roundMoney(base - cartDiscountShares[index] - couponDiscountShares[index] - offerDiscountShares[index])
+  )
+  const deliveryShares = allocateAmount(resolvedDeliveryChargeTotal, afterAllDiscounts)
+
+  const orderItems = preparedItems.map((item, index) => {
+    const normalizedQuantity = item.normalizedQuantity
+    const itemMaterialCost = item.materialCost
+    const itemMachineCost = item.machineCost
+    const itemSubtotal = item.subtotal
+    const postProcessingCharges = item.postProcessingCharges
+    const totalPrice = normalizeNumber(basePrices[index], 'total price')
+    const overheadPercent = item.overheadPercent
+    const overheadAmount = item.overheadAmount
+    const marginPercent = item.marginPercent
+    const marginAmount = item.marginAmount
+    const cartDiscountForItem = cartDiscountShares[index] ?? 0
+    const couponDiscountForItem = couponDiscountShares[index] ?? 0
+    const offerDiscountForItem = offerDiscountShares[index] ?? 0
+    const finalPrice = Math.max(0, afterAllDiscounts[index] ?? 0)
+    const itemDelivery = deliveryShares[index] ?? 0
+    const grandTotal = Math.max(0, finalPrice + itemDelivery)
     return {
       user_id: auth.user.id,
       group_id: groupId,
@@ -164,20 +459,38 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
       color: item.color.trim(),
       infill: Math.round(normalizeNumber(item.infill, 'infill')),
       layer_height: normalizeNumber(item.layerHeight, 'layer height'),
+      post_processing_level: item.postProcessingLevel,
       supports: item.supports,
       quantity: normalizedQuantity,
-      post_processing_charges: normalizeNumber(item.postProcessingCharges ?? 0, 'post processing charges'),
+      weight: roundMoney(item.weight ?? 0),
+      difficulty_factor: normalizeNumber(item.difficultyFactor ?? 1, 'difficulty factor'),
+      material_cost: itemMaterialCost,
+      machine_cost: itemMachineCost,
+      subtotal: itemSubtotal,
+      post_processing_charges: postProcessingCharges,
+      overhead_percent: overheadPercent,
+      overhead_amount: overheadAmount,
+      margin_percent: marginPercent,
+      margin_amount: marginAmount,
       ...trimmedAddress,
       delivery_charge: itemDelivery,
-      total_price: Math.max(0, itemTotal),
-      price: normalizeNumber(item.price, 'price'),
-      price_per_unit: item.price / normalizedQuantity,
+      total_price: totalPrice,
+      cart_discount_percent: cartDiscountPercent,
+      cart_discount: cartDiscountForItem,
+      coupon_discount: couponDiscountForItem,
+      offer_discount: offerDiscountForItem,
+      final_price: finalPrice,
+      grand_total: grandTotal,
+      price: finalPrice,
+      price_per_unit: roundMoney(totalPrice / normalizedQuantity),
       estimated_time: normalizeNumber(item.estimatedTime, 'estimated time'),
       status: 'pending',
-      discount: input.discount ?? 0,
-      coupon_code: input.couponCode ?? null,
-      coupon_id: input.couponId ?? null,
-      discount_type: input.discountType ?? null,
+      discount: roundMoney(cartDiscountForItem + couponDiscountForItem + offerDiscountForItem),
+      coupon_code: couponCode,
+      coupon_id: couponId,
+      offer_id: offerId,
+      offer_name: offerName,
+      discount_type: couponDiscountType ?? offerDiscountType ?? null,
       notes: `Cart order - ${input.items.length} item(s), ${normalizedQuantity} pcs. File: ${item.fileName}`,
     }
   })
@@ -205,73 +518,77 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
     }
 
     const orderNumber = formatOrderNumber(order.serial_number, order.created_at)
-    const { error: updateError } = await supabase
+    const { error: updateError } = await adminSupabase
       .from('orders')
       .update({
         order_number: orderNumber,
         updated_at: new Date().toISOString(),
       })
       .eq('id', order.id)
-      .eq('user_id', auth.user.id)
 
     if (updateError) {
       throw new Error(updateError.message)
     }
   }
 
-  if (input.discount && input.discount > 0) {
+  if (couponId) {
     const firstOrder = insertedOrders[0]
     const orderNumber = formatOrderNumber(firstOrder.serial_number, firstOrder.created_at)
 
-    if (input.offerId) {
-      const { error: redemptionError } = await supabase
-        .from('redemptions')
-        .insert({
-          user_id: auth.user.id,
-          order_id: orderNumber,
-          offer_id: input.offerId,
-          discount_type: input.discountType ?? 'percentage',
-          discount_value: input.discount ?? 0,
-          discount_applied: input.discount,
-          order_amount: input.subtotal,
-        })
+    const { error: redemptionError } = await adminSupabase
+      .from('redemptions')
+      .insert({
+        user_id: auth.user.id,
+        order_id: orderNumber,
+        coupon_id: couponId,
+        discount_type: couponDiscountType ?? 'percentage',
+        discount_value: couponDiscountAmount,
+        discount_applied: couponDiscountAmount,
+        order_amount: afterCartTotal,
+      })
 
-      if (redemptionError) {
-        console.error('[orders] Failed to record offer redemption:', redemptionError)
-      }
+    if (redemptionError) {
+      throw new Error(redemptionError.message)
     }
 
-    if (input.couponId) {
-      const { error: redemptionError } = await supabase
-        .from('redemptions')
-        .insert({
-          user_id: auth.user.id,
-          order_id: orderNumber,
-          coupon_id: input.couponId,
-          discount_type: input.discountType ?? 'percentage',
-          discount_value: input.discount ?? 0,
-          discount_applied: input.discount,
-          order_amount: input.subtotal,
-        })
-
-      if (redemptionError) {
-        console.error('[orders] Failed to record coupon redemption:', redemptionError)
-      }
-
-      const { data: currentCoupon } = await supabase
-        .from('coupons')
-        .select('used_count')
-        .eq('id', input.couponId)
-        .single()
-
-      if (currentCoupon) {
-        await supabase
-          .from('coupons')
-          .update({ used_count: (currentCoupon.used_count as number) + 1 })
-          .eq('id', input.couponId)
-      }
-    }
+    const { error: incrementError } = await adminSupabase.rpc('increment_coupon_used_count', { coupon_id: couponId })
+    if (incrementError) throw new Error(incrementError.message)
   }
+
+  if (offerId) {
+    const firstOrder = insertedOrders[0]
+    const orderNumber = formatOrderNumber(firstOrder.serial_number, firstOrder.created_at)
+
+    const { error: redemptionError } = await adminSupabase
+      .from('redemptions')
+      .insert({
+        user_id: auth.user.id,
+        order_id: orderNumber,
+        offer_id: offerId,
+        discount_type: offerDiscountType ?? 'percentage',
+        discount_value: offerDiscountAmount,
+        discount_applied: offerDiscountAmount,
+        order_amount: afterCouponTotal,
+      })
+
+    if (redemptionError) {
+      throw new Error(redemptionError.message)
+    }
+
+    const { error: incrementError } = await adminSupabase.rpc('increment_offer_used_count', { offer_id: offerId })
+    if (incrementError) throw new Error(incrementError.message)
+  }
+
+  void trackFeatureUsage(auth.user.id, 'order_placed', {
+    source: 'cart',
+    groupId,
+    orderId: insertedOrders[0].id,
+    itemCount: input.items.length,
+    unitCount: input.items.reduce((sum, item) => sum + Math.max(1, Math.floor(item.quantity ?? 1)), 0),
+    couponCode,
+    offerId,
+    grandTotal: groupWaterfall.grandTotal,
+  }).catch(() => {})
 
   revalidatePath('/my-orders')
   revalidatePath('/cart')

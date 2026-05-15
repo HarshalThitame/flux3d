@@ -1,12 +1,17 @@
 import type { Metadata, Viewport } from 'next'
-import { headers } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { connection } from 'next/server'
 import { getSettings } from '@/lib/settings'
 import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data'
 import { absoluteUrl, siteUrl } from '@/lib/site'
 import { CartProvider } from '@/lib/cart/context'
 import { SettingsProvider } from '@/lib/settings-context'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { trackPageVisit } from '@/lib/tracking/pageVisit'
 import VisitorTracker from '@/components/VisitorTracker'
+import TrackingBootstrap from '@/components/TrackingBootstrap'
+import SessionTracker from '@/components/SessionTracker'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import './globals.css'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -68,13 +73,52 @@ function toJsonLd(value: unknown) {
   return JSON.stringify(value).replace(/</g, '\\u003c')
 }
 
+async function trackInitialPageVisit(params: {
+  sessionId: string
+  pageUrl: string
+  referrerUrl: string | null
+}) {
+  try {
+    const supabase = await createServerSupabaseClient()
+    const { data } = await supabase.auth.getUser()
+    await trackPageVisit({
+      user_id: data.user?.id ?? null,
+      session_id: params.sessionId,
+      page_url: params.pageUrl,
+      page_name: null,
+      referrer_url: params.referrerUrl,
+    })
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[tracking] Failed to enqueue initial page visit:', error)
+    }
+  }
+}
+
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   await connection()
-  await headers()
+  const headerStore = await headers()
+  const cookieStore = await cookies()
+  const currentPath = headerStore.get('x-current-path') ?? '/'
+  const currentUrl = headerStore.get('x-current-url') ?? currentPath
+  const referrerUrl = headerStore.get('referer')
+  const sessionId =
+    cookieStore.get('flux3d_session_id')?.value ??
+    cookieStore.get('flux3d_track_token')?.value ??
+    headerStore.get('x-track-token') ??
+    crypto.randomUUID()
+
+  if (!currentPath.startsWith('/admin')) {
+    void trackInitialPageVisit({
+      sessionId,
+      pageUrl: currentUrl,
+      referrerUrl,
+    })
+  }
 
   const settings = await getSettings()
   const orgJsonLd = makeOrganizationJsonLd(settings)
@@ -102,8 +146,12 @@ export default async function RootLayout({
         />
         <CartProvider>
           <SettingsProvider initialSettings={settings}>
-            <VisitorTracker />
-            {children}
+            <ErrorBoundary>
+              <VisitorTracker />
+              <SessionTracker />
+              <TrackingBootstrap />
+              {children}
+            </ErrorBoundary>
           </SettingsProvider>
         </CartProvider>
       </body>

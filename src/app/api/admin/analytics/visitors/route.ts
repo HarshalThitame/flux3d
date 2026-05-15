@@ -158,19 +158,30 @@ export async function GET() {
         count: converted || 0,
         rate: `${conversionRate}%`,
       },
-      visitorBehavior: (visitorBehavior || []).map(v => ({
+      visitorBehavior: (visitorBehavior || []).map((v) => ({
         visitorId: v.visitor_id,
         location: v.location,
         device: v.device,
         source: v.source,
-        sessions: (v.sessions || []).map((s: any) => ({
+        sessions: (v.sessions || []).map((s: {
+          session_id: string
+          duration_seconds: number | null
+          page_views_count: number | null
+          quote_checked: boolean | null
+          file_uploaded: boolean | null
+          order_placed: boolean | null
+          page_views?: Array<{
+            page_url: string
+            time_spent_seconds: number | null
+          }>
+        }) => ({
           sessionId: s.session_id,
           duration: s.duration_seconds,
           pagesVisited: s.page_views_count,
           quoteChecked: s.quote_checked,
           fileUploaded: s.file_uploaded,
           orderPlaced: s.order_placed,
-          pages: (s.page_views || []).map((p: any) => ({
+          pages: (s.page_views || []).map((p) => ({
             pageUrl: p.page_url,
             timeSpent: p.time_spent_seconds,
           })),

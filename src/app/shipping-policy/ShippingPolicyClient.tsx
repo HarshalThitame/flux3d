@@ -56,7 +56,7 @@ export default function ShippingPolicyClient() {
                 <h2 className="text-2xl font-bold text-[#0F1B3D] mb-2">Pan-India Delivery</h2>
                 <p className="text-[#6F7192] leading-relaxed">
                   We ship 3D printed products to all major cities and towns across India.
-                  From Mumbai to Delhi, Bangalore to Chennai — we've got you covered.
+                  From Mumbai to Delhi, Bangalore to Chennai — we&apos;ve got you covered.
                 </p>
               </div>
             </div>
@@ -168,7 +168,7 @@ export default function ShippingPolicyClient() {
                 <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-[#0F1B3D] mb-3">Damaged or Lost Packages</h3>
                   <p className="text-[#6F7192] mb-3">
-                    If your package arrives damaged or doesn't arrive:
+                    If your package arrives damaged or doesn&apos;t arrive:
                   </p>
                   <ul className="space-y-2">
                     {[

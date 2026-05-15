@@ -1,15 +1,15 @@
+import type { PriceBreakdown } from '@/lib/quote/types'
+import { FALLBACK_SETTINGS } from '@/lib/settings-fallback'
+import { calculateDeliveryChargeFromSettings } from '@/lib/quote/pricing-waterfall'
+
 export const orderStatuses = [
   'pending',
-  'reviewed',
-  'approved',
-  'queued',
-  'on-hold',
+  'confirmed',
   'printing',
   'shipped',
   'delivered',
   'completed',
   'cancelled',
-  'rejected',
 ] as const
 
 export type OrderStatus = (typeof orderStatuses)[number]
@@ -24,8 +24,23 @@ export type CreateOrderInput = {
   postProcessingLevel: 'none' | 'sanded' | 'sanded-painted'
   postProcessingCharges: number
   supports: boolean
+  materialCost?: number
+  machineCost?: number
+  subtotal?: number
+  overheadPercentage?: number
+  overheadAmount?: number
+  marginPercentage?: number
+  marginAmount?: number
+  totalPrice?: number
+  cartDiscountAmount?: number
+  cartDiscountPercent?: number
+  finalPrice?: number
+  deliveryCharge?: number
+  grandTotal?: number
   price: number
   estimatedTime: number
+  weight?: number
+  difficultyFactor?: number
   fullName: string
   phone: string
   addressLine1: string
@@ -35,6 +50,23 @@ export type CreateOrderInput = {
   pincode: string
   landmark?: string
   notes?: string
+  priceBreakdown?: Pick<
+    PriceBreakdown,
+    | 'materialCost'
+    | 'machineCost'
+    | 'postProcessingCharges'
+    | 'subtotal'
+    | 'overheadPercentage'
+    | 'overheadAmount'
+    | 'marginPercentage'
+    | 'marginAmount'
+    | 'totalPrice'
+    | 'cartDiscountAmount'
+    | 'cartDiscountPercent'
+    | 'finalPrice'
+    | 'deliveryCharge'
+    | 'grandTotal'
+  >
 }
 
 export type AddressFields = {
@@ -67,8 +99,40 @@ export type OrderDraft = {
   postProcessingLevel: 'none' | 'sanded' | 'sanded-painted'
   postProcessingCharges: number
   supports: boolean
+  materialCost: number
+  machineCost: number
+  subtotal: number
+  overheadPercentage: number
+  overheadAmount: number
+  marginPercentage: number
+  marginAmount: number
+  totalPrice: number
+  cartDiscountAmount: number
+  cartDiscountPercent: number
+  finalPrice: number
+  deliveryCharge: number
+  grandTotal: number
   price: number
   estimatedTime: number
+  weight: number
+  difficultyFactor: number
+  priceBreakdown: Pick<
+    PriceBreakdown,
+    | 'materialCost'
+    | 'machineCost'
+    | 'postProcessingCharges'
+    | 'subtotal'
+    | 'overheadPercentage'
+    | 'overheadAmount'
+    | 'marginPercentage'
+    | 'marginAmount'
+    | 'totalPrice'
+    | 'cartDiscountAmount'
+    | 'cartDiscountPercent'
+    | 'finalPrice'
+    | 'deliveryCharge'
+    | 'grandTotal'
+  >
   notes: string
 }
 
@@ -90,11 +154,22 @@ export type OrderConfirmation = {
   landmark: string | null
   deliveryCharge: number
   totalPrice: number
+  finalPrice: number
+  grandTotal: number
   infill: number
   layerHeight: number
   quantity: number
   postProcessingLevel: string
   supports: boolean
+  materialCost?: number
+  machineCost?: number
+  subtotal?: number
+  overheadPercentage?: number
+  overheadAmount?: number
+  marginPercentage?: number
+  marginAmount?: number
+  cartDiscountAmount?: number
+  cartDiscountPercent?: number
   price: number
   estimatedTime: number
   notes: string | null
@@ -110,24 +185,18 @@ export function getOrderStatusLabel(status: OrderStatus) {
   switch (status) {
     case 'pending':
       return 'Pending review'
-    case 'reviewed':
-      return 'Reviewed'
-    case 'approved':
-      return 'Approved'
-    case 'queued':
-      return 'Queued'
-    case 'on-hold':
-      return 'On hold'
+    case 'confirmed':
+      return 'Confirmed'
     case 'printing':
       return 'Printing'
     case 'shipped':
       return 'Shipped'
+    case 'delivered':
+      return 'Delivered'
     case 'completed':
       return 'Completed'
     case 'cancelled':
       return 'Cancelled'
-    case 'rejected':
-      return 'Rejected'
     default:
       return status
   }
@@ -137,24 +206,18 @@ export function getOrderStatusClasses(status: OrderStatus) {
   switch (status) {
     case 'pending':
       return 'border-amber-400/20 bg-amber-400/10 text-amber-700'
-    case 'reviewed':
-      return 'border-sky-400/20 bg-sky-400/10 text-sky-700'
-    case 'approved':
+    case 'confirmed':
       return 'border-emerald-400/20 bg-emerald-400/10 text-emerald-700'
-    case 'queued':
-      return 'border-indigo-400/20 bg-indigo-400/10 text-indigo-700'
-    case 'on-hold':
-      return 'border-fuchsia-400/20 bg-fuchsia-400/10 text-fuchsia-700'
     case 'printing':
       return 'border-cyan-400/20 bg-cyan-400/10 text-cyan-700'
     case 'shipped':
       return 'border-violet-400/20 bg-violet-400/10 text-violet-700'
+    case 'delivered':
+      return 'border-sky-400/20 bg-sky-400/10 text-sky-700'
     case 'completed':
       return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700'
     case 'cancelled':
       return 'border-slate-400/20 bg-slate-400/10 text-slate-700'
-    case 'rejected':
-      return 'border-rose-400/20 bg-rose-400/10 text-rose-700'
   }
 }
 
@@ -173,12 +236,18 @@ export function normalizePhone(phone: string) {
   return phone.replace(/\D/g, '')
 }
 
-export function calculateDeliveryCharge(price: number) {
-  return price < 499 ? 50 : 0
+export function calculateDeliveryCharge(
+  price: number,
+  settings: Pick<typeof FALLBACK_SETTINGS, 'deliveryChargeThreshold' | 'defaultDeliveryCharge'> = FALLBACK_SETTINGS
+) {
+  return calculateDeliveryChargeFromSettings(price, settings)
 }
 
-export function calculateOrderTotal(price: number) {
-  const deliveryCharge = calculateDeliveryCharge(price)
+export function calculateOrderTotal(
+  price: number,
+  settings: Pick<typeof FALLBACK_SETTINGS, 'deliveryChargeThreshold' | 'defaultDeliveryCharge'> = FALLBACK_SETTINGS
+) {
+  const deliveryCharge = calculateDeliveryCharge(price, settings)
 
   return {
     deliveryCharge,

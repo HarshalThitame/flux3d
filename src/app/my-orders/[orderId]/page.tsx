@@ -8,8 +8,6 @@ import {
   getOrderStatusLabel,
   type OrderStatus,
 } from '@/lib/orders'
-import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { loadOrderDiscountSummary } from '@/lib/order-discounts'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { DownloadInvoiceButton } from './DownloadInvoiceButton'
 import { CancelOrderButton } from './CancelOrderButton'
@@ -28,6 +26,9 @@ type OrderDetailRow = {
   post_processing_level: string | null
   post_processing_charges: number
   price_per_unit: number
+  material_cost: number
+  machine_cost: number
+  subtotal: number
   full_name: string
   phone: string
   address_line1: string
@@ -38,8 +39,20 @@ type OrderDetailRow = {
   landmark: string | null
   delivery_charge: number
   total_price: number
+  final_price: number | null
+  grand_total: number | null
   price: number
   discount: number | null
+  cart_discount: number | null
+  cart_discount_percent: number | null
+  coupon_discount: number | null
+  offer_discount: number | null
+  offer_name: string | null
+  cancel_requested: boolean | null
+  overhead_percent: number | null
+  overhead_amount: number | null
+  margin_percent: number | null
+  margin_amount: number | null
   coupon_code: string | null
   coupon_id: string | null
   discount_type: string | null
@@ -61,7 +74,7 @@ export default async function OrderDetailPage({
   const { data: order, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, supports, post_processing_level, post_processing_charges, price_per_unit, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, discount, coupon_code, coupon_id, discount_type, estimated_time, status, notes, created_at'
+      'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, supports, post_processing_level, post_processing_charges, price_per_unit, material_cost, machine_cost, subtotal, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, final_price, grand_total, price, discount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, overhead_percent, overhead_amount, margin_percent, margin_amount, coupon_code, coupon_id, discount_type, estimated_time, status, cancel_requested, notes, created_at'
     )
     .eq('id', orderId)
     .eq('user_id', auth.user.id)
@@ -90,7 +103,7 @@ export default async function OrderDetailPage({
     const { data: groupData } = await supabase
       .from('orders')
       .select(
-        'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, supports, post_processing_level, post_processing_charges, price_per_unit, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, discount, coupon_code, coupon_id, discount_type, estimated_time, status, notes, created_at'
+        'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, supports, post_processing_level, post_processing_charges, price_per_unit, material_cost, machine_cost, subtotal, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, final_price, grand_total, price, discount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, overhead_percent, overhead_amount, margin_percent, margin_amount, coupon_code, coupon_id, discount_type, estimated_time, status, cancel_requested, notes, created_at'
       )
       .eq('group_id', row.group_id)
       .eq('user_id', auth.user.id)
@@ -102,7 +115,31 @@ export default async function OrderDetailPage({
   }
 
   const isMultiItem = groupedItems.length > 1
-  const discountSummary = await (loadOrderDiscountSummary as any)(createAdminSupabaseClient(), groupedItems)
+  const orderSubtotal = groupedItems.reduce((sum, item) => sum + Number(item.subtotal ?? item.price), 0)
+  const orderMaterialCost = groupedItems.reduce((sum, item) => sum + Number(item.material_cost ?? 0), 0)
+  const orderMachineCost = groupedItems.reduce((sum, item) => sum + Number(item.machine_cost ?? 0), 0)
+  const orderOverheadAmount = groupedItems.reduce((sum, item) => sum + Number(item.overhead_amount ?? 0), 0)
+  const orderMarginAmount = groupedItems.reduce((sum, item) => sum + Number(item.margin_amount ?? 0), 0)
+  const orderTotalPrice = groupedItems.reduce((sum, item) => sum + Number(item.total_price), 0)
+  const orderFinalPrice = groupedItems.reduce((sum, item) => sum + Number(item.final_price ?? 0), 0)
+  const orderDeliveryCharge = groupedItems.reduce((sum, item) => sum + Number(item.delivery_charge), 0)
+  const orderGrandTotal = groupedItems.reduce((sum, item) => sum + Number(item.grand_total ?? 0), 0)
+  const cartDiscountAmount = groupedItems.reduce((sum, item) => sum + Number(item.cart_discount ?? 0), 0)
+  const couponDiscountAmount = groupedItems.reduce((sum, item) => sum + Number(item.coupon_discount ?? 0), 0)
+  const offerDiscountAmount = groupedItems.reduce((sum, item) => sum + Number(item.offer_discount ?? 0), 0)
+  const cartDiscountPercent = Number(
+    groupedItems.find((item) => Number(item.cart_discount_percent ?? 0) > 0)?.cart_discount_percent ?? row.cart_discount_percent ?? 0
+  )
+  const offerName = groupedItems.find((item) => item.offer_name)?.offer_name ?? null
+  const cartDiscountLabel =
+    cartDiscountAmount > 0
+      ? cartDiscountPercent > 0
+        ? `Cart discount ${cartDiscountPercent}% · -₹${cartDiscountAmount.toFixed(2)}`
+        : `Cart discount · -₹${cartDiscountAmount.toFixed(2)}`
+      : null
+  const overheadPercent = Number(row.overhead_percent ?? 0)
+  const marginPercent = Number(row.margin_percent ?? 0)
+  const hasAnyDiscount = cartDiscountAmount > 0 || couponDiscountAmount > 0 || offerDiscountAmount > 0
 
   return (
     <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-28 text-[#0F1B3D] md:px-8">
@@ -145,13 +182,16 @@ export default async function OrderDetailPage({
                 {getOrderStatusLabel(row.status)}
               </div>
               <div className="flex gap-2">
-                {['pending', 'reviewed', 'approved', 'queued'].includes(row.status) && (
+                {['pending', 'confirmed'].includes(row.status) && !row.cancel_requested && (
                   <CancelOrderButton orderId={orderId} />
                 )}
-                {['shipped', 'completed'].includes(row.status) && (
+                {['confirmed', 'printing', 'shipped', 'delivered', 'completed'].includes(row.status) && (
                   <DownloadInvoiceButton orderId={orderId} />
                 )}
               </div>
+              {row.cancel_requested && (
+                <div className="text-xs font-medium text-rose-600">Cancellation requested</div>
+              )}
             </div>
           </div>
         </div>
@@ -269,35 +309,57 @@ export default async function OrderDetailPage({
             </h2>
             <div className="mt-5 rounded-[24px] border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-5 shadow-[0_12px_48px_rgba(124, 92, 255,0.1)]">
               <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
-                Total price
+                Final price
               </div>
               <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
-                ₹{Number(row.total_price).toFixed(0)}
+                ₹{orderGrandTotal.toFixed(0)}
               </div>
               <div className="mt-4 grid gap-2 text-sm text-[#6F7192]">
-                {!isMultiItem && (
-                  <>
-                    <div className="flex justify-between">
-                      <span>Print cost</span>
-                      <span>₹{Number(row.price).toFixed(0)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Price per unit</span>
-                      <span>₹{Number(row.price_per_unit).toFixed(0)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Post-processing</span>
-                      <span>₹{Number(row.post_processing_charges).toFixed(0)}</span>
-                    </div>
-                  </>
-                )}
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span>₹{orderSubtotal.toFixed(0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Overhead{overheadPercent > 0 ? ` (${overheadPercent}%)` : ''}</span>
+                  <span>₹{orderOverheadAmount.toFixed(0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Margin{marginPercent > 0 ? ` (${marginPercent}%)` : ''}</span>
+                  <span>₹{orderMarginAmount.toFixed(0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total price</span>
+                  <span>₹{orderTotalPrice.toFixed(0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Cart discount{cartDiscountPercent > 0 ? ` ${cartDiscountPercent}%` : ''}</span>
+                  <span className={cartDiscountAmount > 0 ? 'text-rose-600' : ''}>
+                    {cartDiscountAmount > 0 ? `-₹${cartDiscountAmount.toFixed(0)}` : '₹0'}
+                  </span>
+                </div>
+                <div className="flex justify-between border-t border-[#7C5CFF]/10 pt-2 text-[#0F1B3D]">
+                  <span className="font-medium">Final price</span>
+                  <span className="font-medium">₹{orderFinalPrice.toFixed(0)}</span>
+                </div>
                 <div className="flex justify-between">
                   <span>Delivery charge</span>
                   <span>
-                    {Number(row.delivery_charge) === 0
+                    {orderDeliveryCharge === 0
                       ? 'FREE'
-                      : `₹${Number(row.delivery_charge).toFixed(0)}`}
+                      : `₹${orderDeliveryCharge.toFixed(0)}`}
                   </span>
+                </div>
+                <div className="flex justify-between border-t border-[#7C5CFF]/10 pt-2 text-[#0F1B3D]">
+                  <span className="font-medium">Grand total</span>
+                  <span className="font-medium">₹{orderGrandTotal.toFixed(0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Price per unit</span>
+                  <span>₹{Number(row.price_per_unit).toFixed(0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Post-processing</span>
+                  <span>₹{Number(row.post_processing_charges).toFixed(0)}</span>
                 </div>
                 {!isMultiItem && (
                   <div className="flex justify-between">
@@ -309,7 +371,13 @@ export default async function OrderDetailPage({
               {isMultiItem && (
                 <div className="mt-4 border-t border-[#7C5CFF]/10 pt-3">
                   <div className="text-xs text-[#6F7192]">
-                    Print subtotal: ₹{groupedItems.reduce((sum, item) => sum + Number(item.price), 0).toFixed(0)}
+                    Material cost: ₹{orderMaterialCost.toFixed(0)}
+                  </div>
+                  <div className="text-xs text-[#6F7192]">
+                    Machine cost: ₹{orderMachineCost.toFixed(0)}
+                  </div>
+                  <div className="text-xs text-[#6F7192]">
+                    Print subtotal: ₹{orderSubtotal.toFixed(0)}
                   </div>
                   <div className="text-xs text-[#6F7192]">
                     Total print time: {groupedItems.reduce((sum, item) => sum + Number(item.estimated_time), 0).toFixed(1)} hr
@@ -323,24 +391,28 @@ export default async function OrderDetailPage({
                 Discount summary
               </div>
               <div className="mt-2 text-sm font-medium text-[#0F1B3D]">
-                {discountSummary.amount > 0
-                  ? `You saved ₹${discountSummary.amount.toFixed(0)}`
-                  : 'No discount was applied'}
+                {hasAnyDiscount ? 'Discounts applied to this order' : 'No discount applied'}
               </div>
-              {discountSummary.label && discountSummary.amount > 0 && (
+              {cartDiscountLabel && (
                 <div className="mt-1 text-xs text-[#6F7192]">
-                  Applied via {discountSummary.label}
+                  {cartDiscountLabel}
                 </div>
               )}
-              <div className="mt-2 text-xs text-[#6F7192]">
-                {discountSummary.offerName
-                  ? `Offer: ${discountSummary.offerName}`
-                  : discountSummary.couponCode
-                    ? `Coupon: ${discountSummary.couponCode}`
-                    : discountSummary.type
-                      ? `Discount type: ${discountSummary.type}`
-                      : 'Tracked from the order record'}
-              </div>
+              {couponDiscountAmount > 0 && (
+                <div className="mt-1 text-xs text-[#6F7192]">
+                  Coupon{row.coupon_code ? ` (${row.coupon_code})` : ''}: -₹{couponDiscountAmount.toFixed(2)}
+                </div>
+              )}
+              {offerDiscountAmount > 0 && (
+                <div className="mt-1 text-xs text-[#6F7192]">
+                  Offer{offerName ? ` (${offerName})` : ''}: -₹{offerDiscountAmount.toFixed(2)}
+                </div>
+              )}
+              {!hasAnyDiscount && (
+                <div className="mt-1 text-xs text-[#6F7192]">
+                  No discount applied
+                </div>
+              )}
             </div>
 
             <div className="mt-5 rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">

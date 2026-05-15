@@ -14,22 +14,33 @@ import MaterialsCTA from './MaterialsCTA'
 
 const NavbarClient = dynamic(() => import('@/components/NavbarClient'), { ssr: false })
 
+type MaterialProperties = {
+  strength?: string
+  flexibility?: string
+  tempResistance?: string
+  difficulty?: string
+}
+
 type Material = {
   id: string
   name: string
   type?: string
   pricePerGram?: number
   price_per_gram?: number
-  properties?: any
+  properties?: MaterialProperties
   keyProperties?: string[]
-  bestFor?: string[]
+  bestFor?: string[] | string
   difficultyLevel?: string
   heatResistance?: string
   strengthRating?: string
   finishQuality?: string
   recommendedFor?: string
+  summary?: string
+  icon?: string
+  samplePhoto?: string
+  density?: number
   stock?: string | boolean
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export default function MaterialsPageClient() {
@@ -63,10 +74,10 @@ export default function MaterialsPageClient() {
   const displayMaterials = materials.length > 0 ? materials : fallbackMaterials
 
   // Map display materials for ComparisonTable
-  const displayComparisonMaterials = displayMaterials.map((m: any) => ({
+  const displayComparisonMaterials = displayMaterials.map((m) => ({
     name: m.name,
     type: m.type || 'FDM',
-    price: parseFloat(m.pricePerGram || m.price_per_gram || 0),
+    price: Number(m.pricePerGram || m.price_per_gram || 0),
     strength: m.strengthRating === 'High' ? 5 : m.strengthRating === 'Medium' ? 3 : 1,
     flex: m.properties?.flexibility === 'High' ? 5 : m.properties?.flexibility === 'Medium' ? 3 : 1,
     heat: m.heatResistance === 'High' ? 5 : m.heatResistance === 'Medium' ? 3 : 1,
@@ -80,7 +91,10 @@ export default function MaterialsPageClient() {
   }))
 
   // Map display materials for MaterialCards
-  const displayMaterialCardsData = displayMaterials.map((m: any) => ({
+  const displayMaterialCardsData = displayMaterials.map((m) => {
+    const bestFor = Array.isArray(m.bestFor) ? m.bestFor : (m.bestFor ? [m.bestFor] : [])
+
+    return {
     id: m.id,
     name: m.name,
     icon: m.icon || '🧩',
@@ -93,17 +107,18 @@ export default function MaterialsPageClient() {
       tempResistance: m.properties?.tempResistance || m.heatResistance || 'Low',
       difficulty: m.properties?.difficulty || m.difficultyLevel || 'Easy',
     },
-    useCases: Array.isArray(m.bestFor) ? m.bestFor : (m.bestFor ? [m.bestFor] : []),
+    useCases: bestFor,
     keyProperties: m.keyProperties || [],
-    bestFor: m.bestFor || [],
+    bestFor,
     difficultyLevel: m.difficultyLevel || 'Easy',
     heatResistance: m.heatResistance || 'Low',
     strengthRating: m.strengthRating || 'Medium',
     finishQuality: m.finishQuality || 'Good',
     samplePhoto: m.samplePhoto || '',
-    pricePerGram: parseFloat(m.pricePerGram || m.price_per_gram || 0),
+    pricePerGram: Number(m.pricePerGram || m.price_per_gram || 0),
     density: m.density || 1.24,
-  }))
+    }
+  })
 
   if (loading) {
     return (

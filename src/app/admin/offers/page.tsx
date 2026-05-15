@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Search, Percent, Calendar, Tag, Eye, EyeOff, Pencil, Trash2, IndianRupee, Gift } from 'lucide-react'
+import { logSearch } from '@/lib/tracking/searchLogger'
 
 type Offer = {
   id: string
@@ -67,6 +68,20 @@ export default function AdminOffersPage() {
     if (search && !o.title.toLowerCase().includes(search.toLowerCase()) && !o.badge_text?.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
+
+  useEffect(() => {
+    const hasTrackingValue = search.trim().length > 0 || filter !== 'all'
+    if (!hasTrackingValue) return
+
+    const timeout = window.setTimeout(() => {
+      void logSearch(null, search.trim() || null, {
+        area: 'admin_offers',
+        filter,
+      }, filtered.length).catch(() => {})
+    }, 500)
+
+    return () => window.clearTimeout(timeout)
+  }, [filter, filtered.length, search])
 
   async function toggleStatus(id: string, current: boolean) {
     await fetch(`/api/admin/offers/${id}`, {

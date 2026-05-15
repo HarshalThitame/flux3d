@@ -9,6 +9,22 @@ export async function GET() {
 
   try {
     const supabase = createAdminSupabaseClient()
+    type AbandonedCartRow = {
+      estimated_cost?: number | string | null
+      profiles?: { name?: string | null; city?: string | null } | null
+    }
+    type WishlistRow = {
+      product_name?: string | null
+      material?: string | null
+      added_at: string
+      profiles?: { name?: string | null } | null
+    }
+    type NoFileQuoteRow = {
+      anonymous_visitors?: { visitor_id?: string | null } | null
+    }
+    type NewCustomerRow = {
+      city?: string | null
+    }
 
     // Get alerts (low stock)
     const { data: lowStock } = await supabase
@@ -55,10 +71,10 @@ export async function GET() {
 
     const revenueToday = (await supabase
       .from('orders')
-      .select('total_price')
+      .select('grand_total')
       .gte('created_at', today.toISOString())).data || []
     
-    const totalRevenue = revenueToday.reduce((sum, o) => sum + (o.total_price || 0), 0)
+    const totalRevenue = revenueToday.reduce((sum, o) => sum + (o.grand_total || 0), 0)
 
     const { data: newCustomers } = await supabase
       .from('profiles')
@@ -68,7 +84,7 @@ export async function GET() {
 
     return NextResponse.json({
       alerts: [
-        ...(abandonedCarts || []).map((c: any) => ({
+        ...((abandonedCarts ?? []) as AbandonedCartRow[]).map((c) => ({
           type: '🔴 URGENT',
           message: `Cart abandoned with ₹${c.estimated_cost} value (${c.profiles?.name || 'Anonymous'} · ${c.profiles?.city || 'Unknown'}) — Send WhatsApp recovery →`,
         })),
@@ -80,18 +96,18 @@ export async function GET() {
           type: '🔴 URGENT',
           message: `${p.name} — ${p.status} · ${p.note || 'Requires attention'}`,
         })),
-        ...(wishlistItems || []).map((w: any) => ({
+        ...((wishlistItems ?? []) as WishlistRow[]).map((w) => ({
           type: '🟢 FOLLOW-UP',
           message: `${w.profiles?.name} has ${w.product_name || w.material} in wishlist for ${Math.floor((Date.now() - new Date(w.added_at).getTime()) / (1000 * 60 * 60 * 24))} days — Send nudge →`,
         })),
-        ...(noFileQuotes || []).map((s: any) => ({
+        ...((noFileQuotes ?? []) as NoFileQuoteRow[]).map((s) => ({
           type: '🟡 FOLLOW-UP',
           message: `${s.anonymous_visitors?.visitor_id || 'Visitor'} opened quote tool but did not upload a file — Review quote UX`,
         })),
       ],
       info: [
         { type: '🟢 INFO', message: `${ordersToday || 0} orders received today · ₹${totalRevenue.toLocaleString('en-IN')} revenue · On track for monthly target` },
-        ...(newCustomers || []).map((c: any) => ({
+        ...((newCustomers ?? []) as NewCustomerRow[]).map((c) => ({
           type: '🟢 INFO',
           message: `New customer registered from ${c.city || 'Unknown'} — first order pending · Welcome message sent`,
         })),

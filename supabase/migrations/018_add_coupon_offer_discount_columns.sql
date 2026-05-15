@@ -1,0 +1,4 @@
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS coupon_discount numeric(10,2) NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS offer_discount numeric(10,2) NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS offer_name text;

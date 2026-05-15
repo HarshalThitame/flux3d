@@ -287,11 +287,11 @@ export default function PrivacyPolicyClient() {
                   <div className="space-y-4 ml-6">
                     <div>
                       <h3 className="text-[#0F1B3D] font-semibold mb-2">Option 1: Self-Service (Recommended)</h3>
-                      <p>Visit your <a href="/profile" className="text-[#7C5CFF] hover:underline">Profile Page</a> and click "Delete Account" to permanently remove your account and all data.</p>
+                      <p>Visit your <a href="/profile" className="text-[#7C5CFF] hover:underline">Profile Page</a> and click &quot;Delete Account&quot; to permanently remove your account and all data.</p>
                     </div>
                     <div>
                       <h3 className="text-[#0F1B3D] font-semibold mb-2">Option 2: Email Request</h3>
-                      <p>Send an email to <a href={`mailto:${settings.primaryEmail || 'privacy@flux3d.com'}`} className="text-[#7C5CFF] hover:underline">{settings.primaryEmail || 'privacy@flux3d.com'}</a> with subject "Data Deletion Request" including:</p>
+                      <p>Send an email to <a href={`mailto:${settings.primaryEmail || 'privacy@flux3d.com'}`} className="text-[#7C5CFF] hover:underline">{settings.primaryEmail || 'privacy@flux3d.com'}</a> with subject &quot;Data Deletion Request&quot; including:</p>
                       <ul className="space-y-1 ml-6 mt-2">
                         {[
                           'Your registered email address',
@@ -334,7 +334,7 @@ export default function PrivacyPolicyClient() {
               <section id="children">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
                   <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">9</span>
-                  Children's Privacy
+                  Children&apos;s Privacy
                 </h2>
                 <p className="text-[#6F7192] leading-relaxed">
                   Our Application is not intended for children under 13. We do not knowingly collect

@@ -1,5 +1,3 @@
-import { headers } from 'next/headers'
-
 export function normalizeNextPath(value: string | null | undefined, fallback = '/instant-quote') {
   if (!value) {
     return fallback
@@ -15,12 +13,11 @@ export function normalizeNextPath(value: string | null | undefined, fallback = '
 }
 
 export async function getAuthCallbackUrl(nextPath: string) {
-  const headerStore = await headers()
-  const origin =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ??
-    headerStore.get('origin') ??
-    'http://localhost:3000'
+  const origin = process.env.NEXT_PUBLIC_SITE_URL
 
-  return `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
+  if (!origin) {
+    throw new Error('NEXT_PUBLIC_SITE_URL is required to build auth callback URLs.')
+  }
+
+  return `${origin.replace(/\/+$/, '')}/auth/callback?next=${encodeURIComponent(nextPath)}`
 }

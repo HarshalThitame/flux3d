@@ -21,6 +21,7 @@ export type DashboardMetric = {
 export type QuoteStatus = 'pending' | 'approved' | 'rejected' | 'converted'
 
 export type UserRole = 'admin' | 'customer-success'
+export type AdminCustomerStatus = 'Active' | 'Suspended' | 'Unverified'
 
 export type AdminOrderItem = {
   id: string
@@ -37,7 +38,26 @@ export type AdminOrderItem = {
   supports: boolean
   postProcessingLevel: string | null
   postProcessingCharges: number
+  weight: number
+  difficultyFactor: number
+  materialCost: number
+  machineCost: number
+  subtotal: number
+  overheadPercentage: number
+  overheadAmount: number
+  marginPercentage: number
+  marginAmount: number
+  totalPriceBeforeDiscount: number
+  cartDiscountAmount: number
+  cartDiscountPercent: number
+  couponDiscountAmount: number
+  offerDiscountAmount: number
+  offerName: string | null
+  finalPrice: number
+  deliveryCharge: number
+  grandTotal: number
   status: OrderStatus
+  cancelRequested: boolean
 }
 
 export type AdminOrder = {
@@ -53,8 +73,23 @@ export type AdminOrder = {
   city?: string
   state?: string
   pincode?: string
+  landmark?: string
   deliveryCharge: number
   totalPrice: number
+  totalPriceBeforeDiscount: number
+  finalPrice: number
+  grandTotal: number
+  materialCost: number
+  machineCost: number
+  subtotal: number
+  overheadPercentage: number
+  overheadAmount: number
+  marginPercentage: number
+  marginAmount: number
+  cartDiscountAmount: number
+  cartDiscountPercent: number
+  couponDiscountAmount: number
+  offerDiscountAmount: number
   discountAmount?: number
   discountLabel?: string | null
   discountType?: string | null
@@ -64,7 +99,9 @@ export type AdminOrder = {
   material: string
   color: string
   status: OrderStatus
+  cancelRequested: boolean
   createdAt: string
+  updatedAt?: string
   dueDate?: string
   notes?: string | null
   itemCount: number
@@ -107,6 +144,7 @@ export type AdminUser = {
    signupMethod: 'Google' | 'Email' | 'GitHub'
   role: UserRole
   lastActive: string
+  lastSeenAt?: string
   totalOrders?: number
   totalSpent?: number
   avgOrderValue?: number
@@ -130,18 +168,69 @@ export type AdminUser = {
   referralsMade?: number
   engagementScore?: number
   joinedDate?: string
-  status?: 'Active' | 'VIP' | 'Inactive' | 'Blacklisted' | 'New'
+  status?: AdminCustomerStatus | 'VIP' | 'Inactive' | 'Blacklisted' | 'New'
   tags?: string[]
   notes?: string
+  manualCoupon?: string
+  manualCredit?: number
+  orders?: AdminCustomerOrder[]
+  files?: AdminCustomerFile[]
+  invoices?: AdminCustomerInvoice[]
+}
+
+export type AdminCustomerOrder = {
+  id: string
+  groupId: string
+  orderNumber: string
+  createdAt: string
+  status: OrderStatus
+  grandTotal: number
+  itemCount: number
+  materialSummary: string
+}
+
+export type AdminCustomerFile = {
+  id: string
+  fileName: string
+  fileUrl: string | null
+  size?: number
+  uploadedAt: string
+  downloadUrl: string
+}
+
+export type AdminCustomerInvoice = {
+  id: string
+  orderNumber: string
+  createdAt: string
+  grandTotal: number
+  downloadUrl: string
 }
 
 export type AdminMaterial = {
   id: string
   name: string
-  price_per_gram: number
+  icon: string
+  summary: string
   density: number
+  price_per_gram: number
+  machine_rate: number
+  multiplier: number
+  recommended_for: string
+  properties: {
+    strength?: string
+    flexibility?: string
+    tempResistance?: string
+    difficulty?: string
+  }
   colors: string[]
   difficulty_factor: number
+  key_properties?: string[]
+  best_for?: string[]
+  difficulty_level?: 'Easy' | 'Medium' | 'Hard'
+  heat_resistance?: 'Low' | 'Medium' | 'High'
+  strength_rating?: 'Low' | 'Medium' | 'High'
+  finish_quality?: 'Basic' | 'Good' | 'Excellent'
+  sample_photo?: string
   stock: 'Healthy' | 'Low' | 'Paused'
   created_at?: string
   updated_at?: string

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 
 export async function GET(request: Request) {
   try {
@@ -91,6 +92,14 @@ export async function GET(request: Request) {
       discountAmount = Math.min(coupon.discount_value, orderAmount)
     }
     // free_shipping -- handled client-side by setting delivery charge to 0
+
+    void trackFeatureUsage(userId ?? null, 'coupon_applied', {
+      code: coupon.code,
+      couponId: coupon.id,
+      discountType: coupon.discount_type,
+      discountAmount,
+      orderAmount,
+    }).catch(() => {})
 
     return NextResponse.json({
       valid: true,

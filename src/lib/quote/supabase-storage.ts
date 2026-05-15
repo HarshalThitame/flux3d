@@ -5,6 +5,7 @@ import {
   QUOTES_TABLE_UNAVAILABLE_MESSAGE,
 } from '@/lib/quote/supabase-errors'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 import type { QuoteConfig, UploadState } from '@/lib/quote/types'
 
 const MAX_FILE_SIZE_MB = 50
@@ -89,6 +90,14 @@ export async function uploadFileToSupabaseStorage(
   }
 
   onProgress(100)
+
+  void trackFeatureUsage(user.id, 'stl_uploaded', {
+    quoteId,
+    fileName: sanitizedFileName,
+    extension,
+    sizeBytes: file.size,
+    path: objectPath,
+  }).catch(() => {})
 
   return {
     status: 'success',

@@ -17,27 +17,27 @@ type OrderSuccessData = {
 export default function OrderSuccessPage() {
   const { settings } = useBusinessSettings()
   const router = useRouter()
-  const [orderData, setOrderData] = useState<OrderSuccessData | null>(null)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
+  const [orderData] = useState<OrderSuccessData | null>(() => {
     if (typeof window !== 'undefined') {
       const raw = sessionStorage.getItem('flux3d-order-success')
       if (raw) {
         try {
-          const data = JSON.parse(raw) as OrderSuccessData
-          setOrderData(data)
+          return JSON.parse(raw) as OrderSuccessData
         } catch {
-          router.replace('/')
+          return null
         }
-      } else {
-        router.replace('/')
       }
     }
-  }, [router])
+    return null
+  })
 
-  if (!mounted || !orderData) {
+  useEffect(() => {
+    if (!orderData) {
+      router.replace('/')
+    }
+  }, [orderData, router])
+
+  if (!orderData) {
     return null
   }
 
@@ -84,7 +84,7 @@ export default function OrderSuccessPage() {
           </h1>
 
           <p className="mx-auto mt-5 max-w-[520px] text-base leading-relaxed text-[#6F7192]">
-            Your order has been successfully submitted and is now being reviewed by our team. You'll receive updates as your order progresses.
+            Your order has been successfully submitted and is now being reviewed by our team. You&apos;ll receive updates as your order progresses.
           </p>
         </motion.div>
 

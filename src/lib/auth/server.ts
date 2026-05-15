@@ -9,6 +9,7 @@ export type AppUserProfile = {
   name: string
   avatarUrl: string | null
   createdAt: string | null
+  isAdmin: boolean
 }
 
 export async function getCurrentUserProfile() {
@@ -31,7 +32,7 @@ export async function getCurrentUserProfile() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, name, email, avatar_url, created_at')
+    .select('id, name, full_name, email, avatar_url, created_at, is_admin')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -41,6 +42,7 @@ export async function getCurrentUserProfile() {
       id: user.id,
       email: profile?.email ?? user.email ?? '',
       name:
+        profile?.full_name ??
         profile?.name ??
         (typeof user.user_metadata.full_name === 'string'
           ? user.user_metadata.full_name
@@ -55,6 +57,7 @@ export async function getCurrentUserProfile() {
           ? user.user_metadata.picture
           : null),
       createdAt: profile?.created_at ?? null,
+      isAdmin: Boolean(profile?.is_admin),
     } satisfies AppUserProfile,
   }
 }

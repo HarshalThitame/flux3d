@@ -173,7 +173,7 @@ export default function AdminSettingsPage() {
                     </div>
                   ) : printers.length === 0 ? (
                     <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-[#6F7192]">
-                      No printers configured yet. Click "+ Add Printer" to get started.
+                      No printers configured yet. Click &quot;+ Add Printer&quot; to get started.
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -271,7 +271,7 @@ export default function AdminSettingsPage() {
                     </button>
                   </div>
                   <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-[#6F7192]">
-                    No team members yet. Click "+ Invite Member" to get started.
+                    No team members yet. Click &quot;+ Invite Member&quot; to get started.
                   </div>
                 </SectionCard>
 

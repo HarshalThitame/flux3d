@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import {
@@ -13,7 +13,8 @@ import {
   saveCartToStorage,
   updateCartItem,
 } from '@/lib/cart/utils'
-import type { AppliedCoupon, CartItem, CartSummary } from '@/lib/cart/types'
+import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
+import type { AppliedCoupon, AppliedOffer, CartDiscountTier, CartItem, CartSummary } from '@/lib/cart/types'
 
 const CART_SKIP_RESTORE_FLAG = 'flux3d-cart-skip-restore'
 
@@ -29,7 +30,7 @@ type CartContextType = {
   isLoading: boolean
   appliedCoupon: AppliedCoupon | null
   setAppliedCoupon: (coupon: AppliedCoupon | null) => void
-  autoApplyOffer: AppliedCoupon | null
+  autoApplyOffer: AppliedOffer | null
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -39,39 +40,50 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [storageKey, setStorageKey] = useState(() => getCartStorageKey())
   const [userCoupon, setUserCoupon] = useState<AppliedCoupon | null>(null)
-  const [autoApplyOffer, setAutoApplyOffer] = useState<AppliedCoupon | null>(null)
+  const [autoApplyOffer, setAutoApplyOffer] = useState<AppliedOffer | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [cartDiscountEnabled, setCartDiscountEnabled] = useState(true)
+  const [cartDiscountTiers, setCartDiscountTiers] = useState<CartDiscountTier[]>([])
+  const [deliveryChargeThreshold, setDeliveryChargeThreshold] = useState<number | undefined>(undefined)
+  const [defaultDeliveryCharge, setDefaultDeliveryCharge] = useState<number | undefined>(undefined)
 
-  const itemsRef = useRef(items)
-  itemsRef.current = items
-
-  const appliedCoupon = userCoupon ?? autoApplyOffer
-
-  function recalculateDiscount(coupon: AppliedCoupon | null, currentItems: CartItem[]): AppliedCoupon | null {
-    if (!coupon) return null
-    const subtotal = currentItems.reduce((sum, item) => sum + item.price, 0)
-    if (subtotal < (coupon.min_order_value ?? 0)) return null
-
-    let discountAmount = 0
-    if (coupon.discount_type === 'percentage') {
-      discountAmount = (subtotal * coupon.discount_value) / 100
-      if (coupon.max_discount && discountAmount > coupon.max_discount) {
-        discountAmount = coupon.max_discount
-      }
-    } else if (coupon.discount_type === 'fixed_amount') {
-      discountAmount = Math.min(coupon.discount_value, subtotal)
-    }
-
-    return { ...coupon, discount_amount: discountAmount }
-  }
+  const appliedCoupon = userCoupon
 
   function setAppliedCoupon(coupon: AppliedCoupon | null) {
-    const recalculated = recalculateDiscount(coupon, itemsRef.current)
-    setUserCoupon(recalculated)
+    setUserCoupon(coupon)
   }
 
   useEffect(() => {
     if (isLoading) return
     let cancelled = false
+    fetch('/api/public/settings')
+      .then(r => r.json())
+      .then(data => {
+        if (cancelled) return
+        const nextEnabled = data?.settings?.cartDiscountEnabled
+        const nextTiers = data?.settings?.cartDiscountTiers
+        const nextDeliveryThreshold = Number(data?.settings?.deliveryChargeThreshold)
+        const nextDeliveryCharge = Number(data?.settings?.defaultDeliveryCharge)
+        if (typeof nextEnabled === 'boolean') {
+          setCartDiscountEnabled(nextEnabled)
+        }
+        if (Array.isArray(nextTiers)) {
+          setCartDiscountTiers(
+            nextTiers
+              .map((tier: { minCartValue?: number; discountPercent?: number }) => ({
+                minCartValue: Number(tier.minCartValue ?? 0),
+                discountPercent: Number(tier.discountPercent ?? 0),
+              }))
+              .filter((tier: CartDiscountTier) => Number.isFinite(tier.minCartValue) && Number.isFinite(tier.discountPercent))
+          )
+        }
+        if (Number.isFinite(nextDeliveryThreshold)) setDeliveryChargeThreshold(nextDeliveryThreshold)
+        if (Number.isFinite(nextDeliveryCharge)) setDefaultDeliveryCharge(nextDeliveryCharge)
+      })
+      .catch(() => {
+        // Fall back to defaults if public settings cannot be loaded.
+      })
+
     fetch('/api/offers/auto-apply')
       .then(r => r.json())
       .then(data => {
@@ -79,8 +91,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           if (!cancelled) setAutoApplyOffer(null)
           return
         }
-        const recalculated = recalculateDiscount(data.offer, itemsRef.current)
-        if (!cancelled) setAutoApplyOffer(recalculated)
+        if (!cancelled) setAutoApplyOffer(data.offer)
       })
       .catch(() => {
         if (!cancelled) setAutoApplyOffer(null)
@@ -88,18 +99,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true }
   }, [isLoading])
 
-  useEffect(() => {
-    if (isLoading) return
-    if (userCoupon) {
-      const recalculated = recalculateDiscount(userCoupon, itemsRef.current)
-      setUserCoupon(recalculated)
-    } else if (autoApplyOffer) {
-      const recalculated = recalculateDiscount(autoApplyOffer, itemsRef.current)
-      setAutoApplyOffer(recalculated)
-    }
-  }, [items, isLoading])
-
-  const summary = calculateCartSummary(items, appliedCoupon)
+  const summary = calculateCartSummary(items, {
+    appliedCoupon: userCoupon,
+    appliedOffer: autoApplyOffer,
+    cartDiscountEnabled,
+    cartDiscountTiers,
+    deliveryChargeThreshold,
+    defaultDeliveryCharge,
+  })
 
   useEffect(() => {
     let active = true
@@ -119,6 +126,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
 
         setStorageKey(getCartStorageKey(null))
+        setCurrentUserId(null)
         setItems([])
         setIsLoading(false)
         return
@@ -131,8 +139,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      console.info('[Cart] Loaded cart for', userId ?? 'anonymous')
       setStorageKey(nextStorageKey)
+      setCurrentUserId(userId)
       setItems(nextItems)
       setIsLoading(false)
     }
@@ -141,8 +149,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       try {
         const { data } = await supabase.auth.getSession()
         await syncCartForUser(data.session?.user.id ?? null)
-      } catch (error) {
-        console.error('[Cart] Failed to resolve auth session. Falling back to anonymous cart.', error)
+      } catch {
         await syncCartForUser(null)
       }
     }
@@ -155,14 +162,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           return
         }
 
-        console.info('[Cart] Auth state changed:', event)
-
         if (session?.user.id) {
           void syncCartForUser(session.user.id)
           return
         }
 
         setStorageKey(getCartStorageKey(null))
+        setCurrentUserId(null)
         setItems([])
         setIsLoading(false)
       }
@@ -185,6 +191,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const addItem = (item: CartItem) => {
     const newItems = addToCart(item, storageKey)
     setItems(newItems)
+    void trackFeatureUsage(currentUserId, 'item_added_to_cart', {
+      quoteId: item.quoteId,
+      material: item.material,
+      quantity: item.quantity,
+      total: item.totalPrice ?? item.price,
+    }).catch(() => {})
   }
 
   const removeItem = (addedAt: string) => {
@@ -209,6 +221,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
 
     setStorageKey(getCartStorageKey(null))
+    setCurrentUserId(null)
     setItems([])
     setIsLoading(false)
   }

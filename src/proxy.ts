@@ -40,13 +40,15 @@ export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-nonce', nonce)
   requestHeaders.set('x-track-token', trackerToken)
+  requestHeaders.set('x-current-url', request.nextUrl.href)
+  requestHeaders.set('x-current-path', `${request.nextUrl.pathname}${request.nextUrl.search}`)
 
   const pathname = request.nextUrl.pathname
   const isAuthRoute = [...protectedPrefixes, ...guestOnlyPrefixes].some(prefix => pathname.startsWith(prefix))
   const isAdminRoute = pathname.startsWith('/admin')
 
   if (isAuthRoute) {
-    const { response, supabase } = await updateSession(request)
+    const { response, supabase } = await updateSession(request, requestHeaders)
     let user = null
     try {
       const { data } = await supabase.auth.getUser()

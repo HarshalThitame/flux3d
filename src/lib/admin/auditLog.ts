@@ -1,0 +1,38 @@
+'use server'
+
+import { createAdminClient } from '@/lib/supabase/admin'
+import type { AdminAuditTargetType, Json } from '../../../types/database'
+
+type LogAdminActionParams = {
+  admin_id: string
+  action: string
+  target_type: AdminAuditTargetType
+  target_id: string
+  old_value?: unknown
+  new_value?: unknown
+}
+
+function normalizeJson(value: unknown): Json | null {
+  if (value === undefined || value === null) {
+    return null
+  }
+
+  try {
+    return JSON.parse(JSON.stringify(value)) as Json
+  } catch {
+    return null
+  }
+}
+
+export async function logAdminAction(params: LogAdminActionParams) {
+  if (!params.admin_id || !params.action || !params.target_type || !params.target_id) return
+  const supabase = createAdminClient()
+  await supabase.from('admin_audit_logs').insert({
+    admin_id: params.admin_id,
+    action: params.action.slice(0, 128),
+    target_type: params.target_type,
+    target_id: params.target_id,
+    old_value: normalizeJson(params.old_value),
+    new_value: normalizeJson(params.new_value),
+  })
+}

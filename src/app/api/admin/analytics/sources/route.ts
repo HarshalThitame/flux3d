@@ -11,6 +11,10 @@ export async function GET() {
     const supabase = createAdminSupabaseClient()
     const today = new Date()
     today.setHours(0, 0, 0, 0)
+    type SourceOrderRow = {
+      grand_total?: number | string | null
+      profiles?: { source?: string | null; city?: string | null } | null
+    }
 
     // Traffic source performance
     const { data: sourceData } = await supabase
@@ -30,14 +34,14 @@ export async function GET() {
     // Get orders by source (join with profiles)
     const { data: ordersBySource } = await supabase
       .from('orders')
-      .select('total_price, profiles(source)')
+      .select('grand_total, profiles(source)')
       .gte('created_at', today.toISOString())
 
-    ;(ordersBySource || []).forEach(o => {
-      const source = (o as any).profiles?.source || 'Other'
+    ;((ordersBySource ?? []) as SourceOrderRow[]).forEach((o) => {
+      const source = o.profiles?.source || 'Other'
       if (sourceBreakdown[source]) {
         sourceBreakdown[source].orders++
-        sourceBreakdown[source].revenue += o.total_price || 0
+        sourceBreakdown[source].revenue += Number(o.grand_total || 0)
       }
     })
 
@@ -119,11 +123,11 @@ export async function GET() {
     // Get orders by city
     const { data: ordersByCity } = await supabase
       .from('orders')
-      .select('total_price, profiles(city)')
+      .select('grand_total, profiles(city)')
       .gte('created_at', today.toISOString())
 
-    ;(ordersByCity || []).forEach(o => {
-      const city = (o as any).profiles?.city || 'Unknown'
+    ;((ordersByCity ?? []) as SourceOrderRow[]).forEach((o) => {
+      const city = o.profiles?.city || 'Unknown'
       if (geoBreakdown[city]) {
         geoBreakdown[city].orders++
       }

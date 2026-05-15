@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { isAdminEmail } from '@/lib/supabase/config'
+import { createAdminSupabaseClient, isCurrentUserAdmin } from '@/lib/admin/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,9 +8,7 @@ const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/we
 
 async function isAdminUser(): Promise<boolean> {
   try {
-    const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    return isAdminEmail(user?.email)
+    return await isCurrentUserAdmin()
   } catch {
     return false
   }

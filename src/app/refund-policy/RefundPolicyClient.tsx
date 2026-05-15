@@ -118,7 +118,7 @@ export default function RefundPolicyClient() {
                 <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-[#0F1B3D] mb-3">Defective or Incorrect Orders</h3>
                   <p className="mb-3">
-                    If your order arrives defective or doesn't match your specifications:
+                    If your order arrives defective or doesn&apos;t match your specifications:
                   </p>
                   <ul className="space-y-2">
                     {[

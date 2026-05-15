@@ -1,18 +1,25 @@
 import { NextResponse } from 'next/server'
 import PDFDocument from 'pdfkit/js/pdfkit.standalone'
-import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { loadOrderDiscountSummary } from '@/lib/order-discounts'
+import { readFile } from 'node:fs/promises'
+import path from 'node:path'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { formatAddressSummary } from '@/lib/orders'
 import { getSettings } from '@/lib/settings'
-import { siteUrl } from '@/lib/site'
 import type { BusinessSettings } from '@/lib/admin/business-settings'
+import { createAdminSupabaseClient, isCurrentUserAdmin } from '@/lib/admin/server'
+import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
+const INVOICE_FONT_REGULAR = 'InvoiceSans'
+const INVOICE_FONT_BOLD = 'InvoiceSans-Bold'
+const INVOICE_FONT_REGULAR_PATH = path.join(process.cwd(), 'public/fonts/NotoSans-Regular.ttf')
+const INVOICE_FONT_BOLD_PATH = path.join(process.cwd(), 'public/fonts/NotoSans-Bold.ttf')
+
 type InvoiceRow = {
   id: string
+  user_id: string | null
   order_number: string | null
   group_id: string | null
   file_url: string
@@ -22,6 +29,10 @@ type InvoiceRow = {
   layer_height: number
   supports: boolean
   quantity?: number
+  material_cost?: number | string | null
+  machine_cost?: number | string | null
+  post_processing_charges?: number | string | null
+  subtotal?: number | string | null
   full_name: string
   phone: string
   address_line1: string
@@ -32,8 +43,20 @@ type InvoiceRow = {
   landmark: string | null
   delivery_charge: number
   total_price: number
+  final_price: number | null
+  grand_total: number | null
   price: number
+  price_per_unit: number | null
   discount: number | null
+  cart_discount: number | null
+  cart_discount_percent: number | null
+  coupon_discount: number | null
+  offer_discount: number | null
+  offer_name: string | null
+  overhead_percent: number | null
+  overhead_amount: number | null
+  margin_percent: number | null
+  margin_amount: number | null
   coupon_code: string | null
   coupon_id: string | null
   discount_type: string | null
@@ -41,11 +64,6 @@ type InvoiceRow = {
   status: string
   notes: string | null
   created_at: string
-}
-
-type InvoiceDiscountSummary = {
-  amount: number
-  label: string | null
 }
 
 function numberToWords(value: number) {
@@ -96,19 +114,12 @@ async function generatePdf(
   order: InvoiceRow,
   items: InvoiceRow[],
   settings: BusinessSettings,
-  discountSummary: InvoiceDiscountSummary,
 ): Promise<Buffer> {
   const invoiceDateObj = new Date(order.created_at)
   const invoiceDate = invoiceDateObj.toLocaleDateString('en-IN', {
     day: 'numeric', month: 'long', year: 'numeric',
   })
-  const dueDateObj = new Date(invoiceDateObj)
-  dueDateObj.setDate(dueDateObj.getDate() + 7)
-  const dueDate = dueDateObj.toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'long', year: 'numeric',
-  })
-  const subtotal = items.reduce((s, i) => s + Number(i.price), 0)
-  const grandTotal = items.reduce((s, i) => s + Number(i.total_price), 0)
+  const subtotal = items.reduce((s, i) => s + Number(i.subtotal ?? i.price), 0)
   const addressLines = formatAddressSummary({
     addressLine1: order.address_line1,
     addressLine2: order.address_line2 ?? '',
@@ -119,15 +130,36 @@ async function generatePdf(
   })
   const companyName = settings.businessName || settings.brandName || 'Flux3D'
   const tagline = settings.tagline || 'Premium manufacturing solutions'
-  const websiteValue = settings.websiteUrl || siteUrl
-  const projectValue = items[0]?.file_url ? (items[0].file_url.split('/').pop() ?? order.order_number ?? order.id) : (order.order_number ?? order.id)
-  const taxRate = 0.09
-  const cgst = subtotal * taxRate
-  const sgst = subtotal * taxRate
-  const itemDiscount = items.length > 0 ? discountSummary.amount / items.length : discountSummary.amount
-  const amountWords = numberToWords(grandTotal)
+  const websiteValue = settings.websiteUrl || settings.canonicalUrl || ''
+  const contactEmail = (settings.primaryEmail || '').replace(/hello@fux3d\.com/gi, 'hello@flux3d.com')
+  const totalPrice = items.reduce((sum, item) => sum + Number(item.total_price), 0)
+  const cartDiscountAmount = items.reduce((sum, item) => sum + Number(item.cart_discount ?? 0), 0)
+  const couponDiscountAmount = items.reduce((sum, item) => sum + Number(item.coupon_discount ?? 0), 0)
+  const offerDiscountAmount = items.reduce((sum, item) => sum + Number(item.offer_discount ?? 0), 0)
+  const overheadAmount = items.reduce((sum, item) => sum + Number(item.overhead_amount ?? 0), 0)
+  const marginAmount = items.reduce((sum, item) => sum + Number(item.margin_amount ?? 0), 0)
+  const postProcessingCharges = items.reduce((sum, item) => sum + Number(item.post_processing_charges ?? 0), 0)
+  const finalPrice = items.reduce((sum, item) => sum + Number(item.final_price ?? Number(item.total_price) - Number(item.discount ?? 0)), 0)
+  const deliveryCharge = items.reduce((sum, item) => sum + Number(item.delivery_charge), 0)
+  const cgstPercent = settings.gstEnabled ? Number(settings.cgstPercent ?? 0) : 0
+  const sgstPercent = settings.gstEnabled ? Number(settings.sgstPercent ?? 0) : 0
+  const cgstAmount = (finalPrice * cgstPercent) / 100
+  const sgstAmount = (finalPrice * sgstPercent) / 100
+  const invoiceTotal = finalPrice + cgstAmount + sgstAmount + deliveryCharge
+  const separateDiscountAmount = cartDiscountAmount + couponDiscountAmount + offerDiscountAmount
+  const fallbackDiscountAmount = separateDiscountAmount > 0
+    ? 0
+    : items.reduce((sum, item) => sum + Number(item.discount ?? 0), 0)
+  const amountWords = numberToWords(invoiceTotal)
+  const [regularFont, boldFont] = await Promise.all([
+    readFile(INVOICE_FONT_REGULAR_PATH),
+    readFile(INVOICE_FONT_BOLD_PATH),
+  ])
 
   const doc = new PDFDocument({ size: 'A4', margin: 0 })
+  doc.registerFont(INVOICE_FONT_REGULAR, regularFont)
+  doc.registerFont(INVOICE_FONT_BOLD, boldFont)
+  doc.font(INVOICE_FONT_REGULAR)
   const buffers: Buffer[] = []
   doc.on('data', (chunk: Buffer) => buffers.push(chunk))
   const pdf = new Promise<Buffer>((resolve, reject) => {
@@ -182,19 +214,19 @@ async function generatePdf(
       .closePath()
       .fill(colors.accentDark)
 
-    doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(26)
+    doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(26)
     doc.text(companyName, contentX, 22)
-    doc.fillColor(colors.accent).font('Helvetica').fontSize(9)
+    doc.fillColor(colors.accent).font(INVOICE_FONT_REGULAR).fontSize(9)
     doc.text(tagline, contentX, 54)
     doc.moveTo(contentX, 68).lineTo(contentX + 170, 68).strokeColor(colors.accent).lineWidth(0.8).stroke()
-    doc.fillColor(colors.contact).font('Helvetica').fontSize(8)
-    doc.text(`${websiteValue} | ${settings.primaryEmail || settings.businessName?.toLowerCase() || ''}`.trim(), contentX, 76)
+    doc.fillColor(colors.contact).font(INVOICE_FONT_REGULAR).fontSize(8)
+    doc.text(`${websiteValue} | ${contactEmail || settings.businessName?.toLowerCase() || ''}`.trim(), contentX, 76)
     doc.text(`${settings.primaryPhone || ''} | ${settings.city || ''}`.trim(), contentX, 88)
 
     const invoiceRight = pageW - contentRight
-    doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(36)
+    doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(36)
     doc.text('INVOICE', invoiceRight - 210, 20, { width: 210, align: 'right' })
-    doc.fillColor(colors.accent).font('Helvetica').fontSize(9)
+    doc.fillColor(colors.accent).font(INVOICE_FONT_REGULAR).fontSize(9)
     doc.text(`#${order.order_number ?? order.id}`, invoiceRight - 210, 63, { width: 210, align: 'right' })
 
     const badgeW = 88
@@ -202,7 +234,7 @@ async function generatePdf(
     const badgeX = invoiceRight - badgeW
     const badgeY = headerH - badgeH - 10
     doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 5).fill(colors.paid)
-    doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(9)
+    doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(9)
     doc.text('PAID', badgeX, badgeY + 5, { width: badgeW, align: 'center' })
     doc.restore()
   }
@@ -237,11 +269,11 @@ async function generatePdf(
   function drawPartyCard(x: number, cardY: number, w: number, title: string, lines: string[]) {
     const h = Math.max(90, doc.heightOfString(lines.join('\n'), { width: w - 20, lineGap: 2 }) + 38)
     drawCard(x, cardY, w, h, '#FFFFFF', colors.border)
-    doc.fillColor(colors.accent).font('Helvetica-Bold').fontSize(7)
+    doc.fillColor(colors.accent).font(INVOICE_FONT_BOLD).fontSize(7)
     doc.text(title, x + 16, cardY + 12)
-    doc.fillColor(colors.text).font('Helvetica-Bold').fontSize(11)
+    doc.fillColor(colors.text).font(INVOICE_FONT_BOLD).fontSize(11)
     doc.text(lines[0] ?? '', x + 16, cardY + 25, { width: w - 32 })
-    doc.fillColor(colors.label).font('Helvetica').fontSize(8.5)
+    doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(8.5)
     const body = lines.slice(1).join('\n')
     if (body) {
       doc.text(body, x + 16, cardY + 41, { width: w - 32, lineGap: 2 })
@@ -250,12 +282,10 @@ async function generatePdf(
   }
 
   function drawMetaCard(x: number, cardY: number, w: number) {
-    const h = 90
+    const h = 66
     drawCard(x, cardY, w, h, colors.navy, colors.navy)
     const rows = [
       { label: 'Invoice Date', value: invoiceDate },
-      { label: 'Due Date', value: dueDate },
-      { label: 'Project', value: projectValue },
       { label: 'Payment', value: 'PAID' },
     ]
     const rowH = h / rows.length
@@ -264,9 +294,9 @@ async function generatePdf(
       if (index > 0) {
         doc.moveTo(x + 14, ry).lineTo(x + w - 14, ry).strokeColor(colors.separator).lineWidth(0.6).stroke()
       }
-      doc.fillColor('#7EA8CC').font('Helvetica').fontSize(7)
+      doc.fillColor('#7EA8CC').font(INVOICE_FONT_REGULAR).fontSize(7)
       doc.text(row.label.toUpperCase(), x + 14, ry + 10, { width: w - 85 })
-      doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(9)
+      doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(9)
       doc.text(row.value, x + 14, ry + 8, { width: w - 28, align: 'right' })
     })
   }
@@ -274,10 +304,9 @@ async function generatePdf(
   function drawTableHeader(tableY: number) {
     const cols = [
       { key: '#', x: 0, w: 18, align: 'center' as const },
-      { key: 'DESCRIPTION', x: 18, w: 268, align: 'left' as const },
-      { key: 'QTY', x: 286, w: 38, align: 'center' as const },
-      { key: 'UNIT PRICE', x: 324, w: 84, align: 'right' as const },
-      { key: 'DISC.', x: 408, w: 60, align: 'right' as const },
+      { key: 'DESCRIPTION', x: 18, w: 328, align: 'left' as const },
+      { key: 'QTY', x: 346, w: 38, align: 'center' as const },
+      { key: 'UNIT PRICE', x: 384, w: 84, align: 'right' as const },
       { key: 'AMOUNT', x: 468, w: 73, align: 'right' as const },
     ]
     doc.save()
@@ -285,7 +314,7 @@ async function generatePdf(
     doc.fillColor(colors.navy)
     doc.fill()
     doc.restore()
-    doc.fillColor(colors.accent).font('Helvetica-Bold').fontSize(7.5)
+    doc.fillColor(colors.accent).font(INVOICE_FONT_BOLD).fontSize(7.5)
     cols.forEach((col) => {
       doc.text(col.key, contentX + col.x + 6, tableY + 8, { width: col.w - 12, align: col.align })
     })
@@ -295,10 +324,9 @@ async function generatePdf(
   function drawTableRow(rowY: number, item: InvoiceRow, index: number) {
     const cols = [
       { x: 0, w: 18, align: 'center' as const },
-      { x: 18, w: 268, align: 'left' as const },
-      { x: 286, w: 38, align: 'center' as const },
-      { x: 324, w: 84, align: 'right' as const },
-      { x: 408, w: 60, align: 'right' as const },
+      { x: 18, w: 328, align: 'left' as const },
+      { x: 346, w: 38, align: 'center' as const },
+      { x: 384, w: 84, align: 'right' as const },
       { x: 468, w: 73, align: 'right' as const },
     ]
     const rowH = 30
@@ -307,31 +335,28 @@ async function generatePdf(
     doc.rect(contentX, rowY, contentW, rowH).fill(fill)
     doc.restore()
     const fileName = item.file_url ? (item.file_url.split('/').pop() ?? 'File') : 'File'
-    const displayDiscount = discountSummary.amount > 0 ? `-₹${Math.max(0, itemDiscount).toFixed(0)}` : '—'
     const displayAmount = `₹${Number(item.total_price).toLocaleString('en-IN')}`
     const values = [
       String(index + 1),
       fileName,
       String(item.quantity ?? 1),
-      `₹${Number(item.price).toLocaleString('en-IN')}`,
-      displayDiscount,
+      `₹${Number(item.price_per_unit ?? item.total_price / Math.max(1, item.quantity ?? 1)).toLocaleString('en-IN')}`,
       displayAmount,
     ]
 
-    doc.fillColor(colors.label).font('Helvetica').fontSize(7.5)
+    doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(7.5)
     doc.text(values[0], contentX + cols[0].x, rowY + 10, { width: cols[0].w, align: cols[0].align })
 
-    doc.fillColor(colors.text).font('Helvetica-Bold').fontSize(8.5)
+    doc.fillColor(colors.text).font(INVOICE_FONT_BOLD).fontSize(8.5)
     doc.text(values[1], contentX + cols[1].x + 6, rowY + 6, { width: cols[1].w - 12, ellipsis: true })
-    doc.fillColor(colors.label).font('Helvetica').fontSize(7)
+    doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(7)
     doc.text(`${item.material} · ${item.color}`, contentX + cols[1].x + 6, rowY + 17, { width: cols[1].w - 12, ellipsis: true })
 
-    doc.fillColor(colors.text).font('Helvetica').fontSize(8.5)
+    doc.fillColor(colors.text).font(INVOICE_FONT_REGULAR).fontSize(8.5)
     doc.text(values[2], contentX + cols[2].x, rowY + 10, { width: cols[2].w, align: cols[2].align })
     doc.text(values[3], contentX + cols[3].x, rowY + 10, { width: cols[3].w - 6, align: cols[3].align })
     doc.text(values[4], contentX + cols[4].x, rowY + 10, { width: cols[4].w - 6, align: cols[4].align })
-    doc.text(values[5], contentX + cols[5].x, rowY + 10, { width: cols[5].w - 6, align: cols[5].align })
-    doc.font('Helvetica-Bold')
+    doc.font(INVOICE_FONT_BOLD)
 
     doc.moveTo(contentX, rowY + rowH).lineTo(contentX + contentW, rowY + rowH).strokeColor(colors.border).lineWidth(0.4).stroke()
     return rowY + rowH
@@ -343,28 +368,37 @@ async function generatePdf(
     const rowH = 20
     const rows = [
       { label: 'Subtotal', value: `₹${subtotal.toLocaleString('en-IN')}` },
-      { label: 'CGST @9%', value: `₹${cgst.toLocaleString('en-IN')}` },
-      { label: 'SGST @9%', value: `₹${sgst.toLocaleString('en-IN')}` },
-      { label: 'Discount', value: discountSummary.amount > 0 ? `-₹${discountSummary.amount.toLocaleString('en-IN')}` : '₹0' },
+      { label: 'Post-processing', value: `₹${postProcessingCharges.toLocaleString('en-IN')}` },
+      { label: 'Overhead', value: `₹${overheadAmount.toLocaleString('en-IN')}` },
+      { label: 'Margin', value: `₹${marginAmount.toLocaleString('en-IN')}` },
+      { label: 'Total price', value: `₹${totalPrice.toLocaleString('en-IN')}` },
+      ...(cartDiscountAmount > 0 ? [{ label: `Cart discount ${Number(order.cart_discount_percent ?? 0).toLocaleString('en-IN')}%`, value: `-₹${cartDiscountAmount.toLocaleString('en-IN')}` }] : []),
+      ...(couponDiscountAmount > 0 ? [{ label: `Coupon${order.coupon_code ? ` (${order.coupon_code})` : ''}`, value: `-₹${couponDiscountAmount.toLocaleString('en-IN')}` }] : []),
+      ...(offerDiscountAmount > 0 ? [{ label: `Offer${order.offer_name ? ` (${order.offer_name})` : ''}`, value: `-₹${offerDiscountAmount.toLocaleString('en-IN')}` }] : []),
+      ...(fallbackDiscountAmount > 0 ? [{ label: 'Discount', value: `-₹${fallbackDiscountAmount.toLocaleString('en-IN')}` }] : []),
+      { label: 'Final price', value: `₹${finalPrice.toLocaleString('en-IN')}` },
+      ...(cgstAmount > 0 ? [{ label: `CGST (${cgstPercent}%)`, value: `₹${cgstAmount.toLocaleString('en-IN')}` }] : []),
+      ...(sgstAmount > 0 ? [{ label: `SGST (${sgstPercent}%)`, value: `₹${sgstAmount.toLocaleString('en-IN')}` }] : []),
+      { label: 'Delivery', value: deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge.toLocaleString('en-IN')}` },
     ]
 
     rows.forEach((row, index) => {
       const ry = blockY + index * rowH
-      doc.fillColor(colors.label).font('Helvetica').fontSize(8.5)
+      doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(8.5)
       doc.text(row.label, blockX + 8, ry + 5, { width: blockW - 100, align: 'right' })
-      doc.fillColor(colors.text).font('Helvetica').fontSize(8.5)
+      doc.fillColor(colors.text).font(INVOICE_FONT_REGULAR).fontSize(8.5)
       doc.text(row.value, blockX + 92, ry + 5, { width: blockW - 100, align: 'right' })
       doc.moveTo(blockX + 8, ry + rowH - 1).lineTo(blockX + blockW - 8, ry + rowH - 1).strokeColor(colors.border).lineWidth(0.3).stroke()
     })
 
     const bandY = blockY + rows.length * rowH + 8
     doc.roundedRect(blockX, bandY, blockW, 34, 5).fill(colors.navy)
-    doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(10)
-    doc.text('TOTAL DUE', blockX + 12, bandY + 11)
-    doc.fillColor(colors.accent).font('Helvetica-Bold').fontSize(13)
-    doc.text(`₹${grandTotal.toLocaleString('en-IN')}`, blockX + 12, bandY + 8, { width: blockW - 24, align: 'right' })
-    doc.fillColor(colors.label).font('Helvetica-Oblique').fontSize(7.5)
-    doc.text(`₹${grandTotal.toLocaleString('en-IN')} (${amountWords})`, blockX, bandY + 42, { width: blockW, align: 'right' })
+    doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(10)
+    doc.text('TOTAL', blockX + 12, bandY + 11)
+    doc.fillColor(colors.accent).font(INVOICE_FONT_BOLD).fontSize(13)
+    doc.text(`₹${invoiceTotal.toLocaleString('en-IN')}`, blockX + 12, bandY + 8, { width: blockW - 24, align: 'right' })
+    doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(7.5)
+    doc.text(`₹${invoiceTotal.toLocaleString('en-IN')} (${amountWords})`, blockX, bandY + 42, { width: blockW, align: 'right' })
     return bandY + 58
   }
 
@@ -379,10 +413,10 @@ async function generatePdf(
     ]
     const leftHeight = Math.max(90, bullets.length * 16 + 26)
     drawCard(boxX, blockY, boxW, leftHeight, '#FFFFFF', colors.border)
-    doc.fillColor(colors.navy).font('Helvetica-Bold').fontSize(7.5)
+    doc.fillColor(colors.navy).font(INVOICE_FONT_BOLD).fontSize(7.5)
     doc.text('NOTES & TERMS', boxX + 14, blockY + 12)
     doc.moveTo(boxX + 14, blockY + 25).lineTo(boxX + 162, blockY + 25).strokeColor(colors.accent).lineWidth(1.2).stroke()
-    doc.fillColor(colors.label).font('Helvetica').fontSize(7.5)
+    doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(7.5)
     bullets.slice(0, 6).forEach((line, index) => {
       doc.text(`• ${line}`, boxX + 14, blockY + 34 + index * 14, { width: boxW - 28, lineGap: 1.5 })
     })
@@ -392,9 +426,9 @@ async function generatePdf(
   function drawSignatureArea(blockY: number) {
     const lineY = blockY + 12
     doc.moveTo(contentX + contentW - 180, lineY).lineTo(contentX + contentW, lineY).strokeColor(colors.navy).lineWidth(0.7).stroke()
-    doc.fillColor(colors.label).font('Helvetica').fontSize(7.5)
+    doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(7.5)
     doc.text('Authorised Signatory', contentX + contentW - 180, lineY + 6, { width: 180, align: 'right' })
-    doc.fillColor(colors.navy).font('Helvetica-Bold').fontSize(8)
+    doc.fillColor(colors.navy).font(INVOICE_FONT_BOLD).fontSize(8)
     doc.text(companyName, contentX + contentW - 180, lineY + 18, { width: 180, align: 'right' })
     return lineY + 30
   }
@@ -405,14 +439,14 @@ async function generatePdf(
     doc.rect(sidebarW, footerY, pageW - sidebarW, footerH).fill(colors.navy)
     doc.rect(sidebarW, footerY, pageW - sidebarW, 2).fill(colors.accent)
     doc.restore()
-    doc.fillColor('#7EA8CC').font('Helvetica').fontSize(7)
+    doc.fillColor('#7EA8CC').font(INVOICE_FONT_REGULAR).fontSize(7)
     doc.text(
       `${settings.gstNumber || 'GSTIN: —'} | ${settings.cinNumber || 'CIN: —'} | ${websiteValue.replace(/^https?:\/\//, '')}`,
       sidebarW,
       footerY + 8,
       { width: pageW - sidebarW, align: 'center' }
     )
-    doc.fillColor('#4A6A80').font('Helvetica').fontSize(6.5)
+    doc.fillColor('#4A6A80').font(INVOICE_FONT_REGULAR).fontSize(6.5)
     doc.text('computer-generated invoice', sidebarW, footerY + 18, { width: pageW - sidebarW, align: 'center' })
   }
 
@@ -429,7 +463,7 @@ async function generatePdf(
   const billH = drawPartyCard(contentX, cardY, cardW, 'BILL TO', [order.full_name, ...addressBlock])
   drawPartyCard(contentX + cardW + partyGap, cardY, cardW, 'SHIP TO', [order.full_name, ...addressBlock])
   drawMetaCard(contentX + (cardW + partyGap) * 2, cardY, cardW)
-  y = cardY + Math.max(billH, 90) + 14
+  y = cardY + Math.max(billH, 66) + 14
 
   inTable = true
   y = drawTableHeader(y)
@@ -482,19 +516,23 @@ export async function GET(
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized - no user session' }, { status: 401 })
     }
+    const isAdmin = await isCurrentUserAdmin()
+    const orderSupabase = isAdmin ? createAdminSupabaseClient() : supabase
 
     const selectColumns =
-      'id, order_number, group_id, file_url, material, color, infill, layer_height, supports, quantity, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, price, discount, coupon_code, coupon_id, discount_type, estimated_time, status, notes, created_at'
+      'id, user_id, order_number, group_id, file_url, material, color, infill, layer_height, supports, quantity, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, material_cost, machine_cost, post_processing_charges, subtotal, total_price, final_price, grand_total, price, price_per_unit, discount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, overhead_percent, overhead_amount, margin_percent, margin_amount, coupon_code, coupon_id, discount_type, estimated_time, status, notes, created_at'
 
     let order
     let error
     try {
-      const result = await supabase
+      let query = orderSupabase
         .from('orders')
         .select(selectColumns)
         .eq('id', orderId)
-        .eq('user_id', user.id)
-        .maybeSingle()
+      if (!isAdmin) {
+        query = query.eq('user_id', user.id)
+      }
+      const result = await query.maybeSingle()
       order = result.data
       error = result.error
     } catch (e) {
@@ -512,35 +550,38 @@ export async function GET(
     const row = order as InvoiceRow
     let items: InvoiceRow[] = [row]
     if (row.group_id) {
-      const { data: groupData } = await supabase
+      let groupQuery = orderSupabase
         .from('orders')
         .select(selectColumns)
         .eq('group_id', row.group_id)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true })
+      if (!isAdmin) {
+        groupQuery = groupQuery.eq('user_id', user.id)
+      }
+      const { data: groupData } = await groupQuery.order('created_at', { ascending: true })
       if (groupData && groupData.length > 0) {
         items = groupData as InvoiceRow[]
       }
     }
 
     const settings = await getSettings()
-    const discountSummary = await (loadOrderDiscountSummary as any)(createAdminSupabaseClient(), items)
     let pdf
     try {
       pdf = await generatePdf(
         row,
         items,
         settings,
-        {
-          amount: discountSummary.amount,
-          label: discountSummary.label,
-        },
       )
     } catch (e) {
       return NextResponse.json({ error: 'PDF generation failed: ' + (e instanceof Error ? e.message : String(e)) }, { status: 500 })
     }
 
     const filename = `${order.id}.pdf`
+
+    void trackFeatureUsage(row.user_id ?? user.id, 'invoice_downloaded', {
+      orderId: row.id,
+      orderNumber: row.order_number,
+      itemCount: items.length,
+    }).catch(() => {})
 
     return new NextResponse(new Uint8Array(pdf), {
       headers: {

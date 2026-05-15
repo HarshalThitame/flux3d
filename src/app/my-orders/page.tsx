@@ -13,9 +13,20 @@ type OrderRow = {
   order_number: string | null
   group_id: string | null
   status: OrderStatus
+  material_cost: number
+  machine_cost: number
+  subtotal: number
   total_price: number
+  final_price: number | null
+  grand_total: number | null
   delivery_charge: number
   discount: number | null
+  cart_discount: number | null
+  cart_discount_percent: number | null
+  overhead_percent: number | null
+  overhead_amount: number | null
+  margin_percent: number | null
+  margin_amount: number | null
   coupon_code: string | null
   discount_type: string | null
   created_at: string
@@ -35,8 +46,19 @@ type GroupedOrder = {
   orderNumber: string
   status: OrderStatus
   totalPrice: number
+  totalPriceBeforeDiscount: number
+  finalPrice: number
+  grandTotal: number
+  subtotal: number
+  materialCost: number
+  machineCost: number
   deliveryCharge: number
-  discountAmount: number
+  cartDiscountAmount: number
+  cartDiscountPercent: number
+  overheadPercent: number
+  overheadAmount: number
+  marginPercent: number
+  marginAmount: number
   discountLabel: string | null
   createdAt: string
   fullName: string
@@ -60,7 +82,7 @@ export default async function MyOrdersPage() {
   const { data: orders, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, status, total_price, delivery_charge, discount, coupon_code, discount_type, created_at, material, color, full_name, city, state, pincode, file_url, price, estimated_time'
+      'id, order_number, group_id, status, material_cost, machine_cost, subtotal, total_price, final_price, grand_total, delivery_charge, discount, cart_discount, cart_discount_percent, overhead_percent, overhead_amount, margin_percent, margin_amount, coupon_code, discount_type, created_at, material, color, full_name, city, state, pincode, file_url, price, estimated_time'
     )
     .eq('user_id', auth.user.id)
     .order('created_at', { ascending: false })
@@ -86,18 +108,43 @@ export default async function MyOrdersPage() {
         estimatedTime: Number(row.estimated_time),
         fileUrl: row.file_url,
       })
-      existing.totalPrice += Number(row.total_price)
+      existing.totalPriceBeforeDiscount += Number(row.total_price)
+      existing.finalPrice += Number(row.final_price ?? Number(row.total_price) - Number(row.cart_discount ?? 0))
+      existing.grandTotal += Number(row.grand_total ?? Number(row.final_price ?? Number(row.total_price) - Number(row.cart_discount ?? 0)) + Number(row.delivery_charge))
+      existing.totalPrice = existing.grandTotal
+      existing.subtotal += Number(row.subtotal ?? row.price)
+      existing.materialCost += Number(row.material_cost)
+      existing.machineCost += Number(row.machine_cost)
       existing.deliveryCharge += Number(row.delivery_charge)
+      existing.cartDiscountAmount += Number(row.cart_discount ?? 0)
+      existing.overheadAmount += Number(row.overhead_amount ?? 0)
+      existing.marginAmount += Number(row.margin_amount ?? 0)
       existing.itemCount += 1
     } else {
       acc.push({
         groupId,
         orderNumber: row.order_number ?? row.id,
         status: row.status,
-        totalPrice: Number(row.total_price),
+        totalPrice: Number(row.grand_total ?? Number(row.final_price ?? Number(row.total_price) - Number(row.cart_discount ?? 0)) + Number(row.delivery_charge)),
+        totalPriceBeforeDiscount: Number(row.total_price),
+        finalPrice: Number(row.final_price ?? Number(row.total_price) - Number(row.cart_discount ?? 0)),
+        grandTotal: Number(row.grand_total ?? Number(row.final_price ?? Number(row.total_price) - Number(row.cart_discount ?? 0)) + Number(row.delivery_charge)),
+        subtotal: Number(row.subtotal ?? row.price),
+        materialCost: Number(row.material_cost),
+        machineCost: Number(row.machine_cost),
         deliveryCharge: Number(row.delivery_charge),
-        discountAmount: Number(row.discount ?? 0),
-        discountLabel: row.coupon_code ?? (Number(row.discount ?? 0) > 0 ? 'Applied discount' : null),
+        cartDiscountAmount: Number(row.cart_discount ?? 0),
+        cartDiscountPercent: Number(row.cart_discount_percent ?? 0),
+        overheadPercent: Number(row.overhead_percent ?? 0),
+        overheadAmount: Number(row.overhead_amount ?? 0),
+        marginPercent: Number(row.margin_percent ?? 0),
+        marginAmount: Number(row.margin_amount ?? 0),
+        discountLabel:
+          Number(row.cart_discount ?? 0) > 0
+            ? row.cart_discount_percent
+              ? `Cart discount ${Number(row.cart_discount_percent)}%`
+              : 'Cart discount applied'
+            : row.coupon_code ?? (Number(row.discount ?? 0) > 0 ? 'Applied discount' : null),
         createdAt: row.created_at,
         fullName: row.full_name,
         city: row.city,
@@ -208,12 +255,17 @@ export default async function MyOrdersPage() {
                     <div className="text-center">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Total</div>
                       <div className="mt-1 font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">
-                        ₹{order.totalPrice.toFixed(0)}
+                        ₹{order.grandTotal.toFixed(0)}
                       </div>
-                      {order.discountAmount > 0 && (
+                      {order.cartDiscountAmount > 0 && (
                         <div className="mt-1 text-[10px] text-emerald-700">
-                          Saved ₹{order.discountAmount.toFixed(0)}
+                          Saved ₹{order.cartDiscountAmount.toFixed(0)}
                           {order.discountLabel ? ` · ${order.discountLabel}` : ''}
+                        </div>
+                      )}
+                      {order.cartDiscountAmount === 0 && order.discountLabel && (
+                        <div className="mt-1 text-[10px] text-[#6F7192]">
+                          {order.discountLabel}
                         </div>
                       )}
                     </div>
@@ -232,7 +284,7 @@ export default async function MyOrdersPage() {
                     <div className="text-center">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Saved</div>
                       <div className="mt-1 text-sm font-medium text-emerald-700">
-                        {order.discountAmount > 0 ? `₹${order.discountAmount.toFixed(0)}` : '₹0'}
+                        {order.cartDiscountAmount > 0 ? `₹${order.cartDiscountAmount.toFixed(0)}` : '₹0'}
                       </div>
                     </div>
                     <div className="hidden text-left sm:block">

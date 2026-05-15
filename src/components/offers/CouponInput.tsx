@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Ticket, Check, X, Percent, IndianRupee, Loader2 } from 'lucide-react'
+import { Ticket, Check, X, Percent, Loader2 } from 'lucide-react'
 
 export type CouponResult = {
   valid: boolean

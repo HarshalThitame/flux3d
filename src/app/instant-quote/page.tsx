@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getSettings } from '@/lib/settings'
+import { getPublicSettings } from '@/lib/settings'
 import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
 import { getCurrentUserProfile } from '@/lib/auth/server'
@@ -7,7 +7,7 @@ import { getPublicQuoteMaterials } from '@/lib/public-materials'
 import { absoluteUrl } from '@/lib/site'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSettings()
+  const settings = await getPublicSettings()
   return {
     title: `${settings.businessName} — Instant 3D Printing Quote Dashboard`,
     description:
@@ -49,10 +49,16 @@ const InstantQuoteWorkspace = dynamic(
   }
 )
 
-export default async function InstantQuotePage() {
+type InstantQuotePageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+export default async function InstantQuotePage({ searchParams }: InstantQuotePageProps) {
+  const params = await searchParams
+  const initialMaterialId = typeof params.material === 'string' ? params.material : undefined
   const auth = await getCurrentUserProfile()
   const materials = await getPublicQuoteMaterials()
-  const settings = await getSettings()
+  const settings = await getPublicSettings()
 
   return (
     <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
@@ -60,6 +66,18 @@ export default async function InstantQuotePage() {
       <InstantQuoteWorkspace
         user={auth?.profile ?? null}
         materials={materials}
+        initialMaterialId={initialMaterialId}
+        pricingSettings={{
+          overheadPercentage: settings.overheadPercentage,
+          marginPercentage: settings.marginPercentage,
+          materialMarkupPercent: settings.materialMarkupPercent,
+          printSpeedGramsPerHour: settings.printSpeedGramsPerHour,
+          postProcessingMultipliers: settings.postProcessingMultipliers,
+          deliveryChargeThreshold: settings.deliveryChargeThreshold,
+          defaultDeliveryCharge: settings.defaultDeliveryCharge,
+          cartDiscountEnabled: settings.cartDiscountEnabled,
+          cartDiscountTiers: settings.cartDiscountTiers,
+        }}
         bulkOrderContact={{
           email: settings.primaryEmail,
           whatsappNumber: settings.whatsappNumber || settings.whatsappOrderNumber || settings.primaryPhone,

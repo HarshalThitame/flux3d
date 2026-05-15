@@ -1,5 +1,12 @@
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 
+export type CartDiscountTier = {
+  minCartValue: number
+  discountPercent: number
+}
+
+export type PostProcessingMultipliers = Record<string, number>
+
 export type BusinessSettings = {
   id: string
   businessName: string
@@ -62,6 +69,9 @@ export type BusinessSettings = {
   currency: string
   currencySymbol: string
   taxPercentage: number
+  gstEnabled: boolean
+  cgstPercent: number
+  sgstPercent: number
   sacHsnCode: string
   paymentTerms: string
   bankAccountName: string
@@ -105,6 +115,13 @@ export type BusinessSettings = {
   orderProcessingTime: string
   deliveryChargeThreshold: number
   defaultDeliveryCharge: number
+  overheadPercentage: number
+  marginPercentage: number
+  materialMarkupPercent: number
+  printSpeedGramsPerHour: number
+  postProcessingMultipliers: PostProcessingMultipliers
+  cartDiscountEnabled: boolean
+  cartDiscountTiers: CartDiscountTier[]
   pickupAvailable: boolean
   codAvailable: boolean
 
@@ -174,6 +191,9 @@ export type BusinessSettingsRow = {
   currency: string | null
   currency_symbol: string | null
   tax_percentage: number | null
+  gst_enabled: boolean | null
+  cgst_percent: number | null
+  sgst_percent: number | null
   sac_hsn_code: string | null
   payment_terms: string | null
   bank_account_name: string | null
@@ -217,6 +237,13 @@ export type BusinessSettingsRow = {
   order_processing_time: string | null
   delivery_charge_threshold: number | null
   default_delivery_charge: number | null
+  overhead_percent: number | null
+  margin_percentage: number | null
+  material_markup_percent: number | null
+  print_speed_grams_per_hour: number | null
+  post_processing_multipliers: unknown | null
+  cart_discount_enabled: boolean | null
+  cart_discount_tiers: unknown | null
   pickup_available: boolean | null
   cod_available: boolean | null
 
@@ -234,6 +261,49 @@ function bool(value: boolean | null | undefined): boolean {
 
 function num(value: number | null | undefined): number {
   return value ?? 0
+}
+
+function parseCartDiscountTiers(value: unknown): CartDiscountTier[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .map((tier) => {
+      if (!tier || typeof tier !== 'object') return null
+      const record = tier as Record<string, unknown>
+      const minCartValue = Number(record.min_cart_value ?? record.minCartValue)
+      const discountPercent = Number(record.discount_percent ?? record.discountPercent)
+
+      if (!Number.isFinite(minCartValue) || !Number.isFinite(discountPercent)) {
+        return null
+      }
+
+      return {
+        minCartValue: Math.max(0, minCartValue),
+        discountPercent: Math.max(0, discountPercent),
+      }
+    })
+    .filter((tier): tier is CartDiscountTier => Boolean(tier))
+    .sort((left, right) => left.minCartValue - right.minCartValue)
+}
+
+function parsePostProcessingMultipliers(value: unknown): PostProcessingMultipliers {
+  const defaults: PostProcessingMultipliers = {
+    none: 0,
+    sanded: 0.25,
+    'sanded-painted': 0.6,
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return defaults
+  }
+
+  return Object.entries(value as Record<string, unknown>).reduce<PostProcessingMultipliers>((acc, [key, raw]) => {
+    const next = Number(raw)
+    acc[key] = Number.isFinite(next) ? Math.max(0, next) : defaults[key] ?? 0
+    return acc
+  }, { ...defaults })
 }
 
 export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettings {
@@ -299,6 +369,9 @@ export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettin
     currency: n(row.currency),
     currencySymbol: n(row.currency_symbol),
     taxPercentage: num(row.tax_percentage),
+    gstEnabled: bool(row.gst_enabled),
+    cgstPercent: num(row.cgst_percent),
+    sgstPercent: num(row.sgst_percent),
     sacHsnCode: n(row.sac_hsn_code),
     paymentTerms: n(row.payment_terms),
     bankAccountName: n(row.bank_account_name),
@@ -342,6 +415,13 @@ export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettin
     orderProcessingTime: n(row.order_processing_time),
     deliveryChargeThreshold: num(row.delivery_charge_threshold),
     defaultDeliveryCharge: num(row.default_delivery_charge),
+    overheadPercentage: row.overhead_percent ?? 15,
+    marginPercentage: row.margin_percentage ?? 30,
+    materialMarkupPercent: row.material_markup_percent ?? 15,
+    printSpeedGramsPerHour: row.print_speed_grams_per_hour ?? 14.5,
+    postProcessingMultipliers: parsePostProcessingMultipliers(row.post_processing_multipliers),
+    cartDiscountEnabled: bool(row.cart_discount_enabled ?? true),
+    cartDiscountTiers: parseCartDiscountTiers(row.cart_discount_tiers),
     pickupAvailable: bool(row.pickup_available),
     codAvailable: bool(row.cod_available),
 
@@ -408,6 +488,9 @@ export function toSnakeCase(data: Partial<BusinessSettings>): Record<string, unk
     currency: 'currency',
     currencySymbol: 'currency_symbol',
     taxPercentage: 'tax_percentage',
+    gstEnabled: 'gst_enabled',
+    cgstPercent: 'cgst_percent',
+    sgstPercent: 'sgst_percent',
     sacHsnCode: 'sac_hsn_code',
     paymentTerms: 'payment_terms',
     bankAccountName: 'bank_account_name',
@@ -446,6 +529,13 @@ export function toSnakeCase(data: Partial<BusinessSettings>): Record<string, unk
     orderProcessingTime: 'order_processing_time',
     deliveryChargeThreshold: 'delivery_charge_threshold',
     defaultDeliveryCharge: 'default_delivery_charge',
+    overheadPercentage: 'overhead_percent',
+    marginPercentage: 'margin_percentage',
+    materialMarkupPercent: 'material_markup_percent',
+    printSpeedGramsPerHour: 'print_speed_grams_per_hour',
+    postProcessingMultipliers: 'post_processing_multipliers',
+    cartDiscountEnabled: 'cart_discount_enabled',
+    cartDiscountTiers: 'cart_discount_tiers',
     pickupAvailable: 'pickup_available',
     codAvailable: 'cod_available',
   }

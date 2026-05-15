@@ -6,13 +6,13 @@ import {
   Building2, Phone, MapPin, Share2, Palette, FileText, MessageSquare,
   Search, Mail, Scale, Settings2, Save, RotateCcw, Download, Upload,
   Copy, Eye, EyeOff, ChevronDown, ChevronUp, Check, AlertCircle,
-  ArrowLeft,
+  ArrowLeft, Plus, Trash2,
 } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import { InputField, SelectField, ToggleField, TextAreaField } from '@/components/admin/FormField'
 import SkeletonBlock from '@/components/admin/SkeletonBlock'
 import { useRouter } from 'next/navigation'
-import type { BusinessSettings } from '@/lib/admin/business-settings'
+import type { BusinessSettings, CartDiscountTier } from '@/lib/admin/business-settings'
 
 type Tab = 'business' | 'branding' | 'invoicing' | 'communication' | 'seo' | 'email' | 'legal-ops'
 
@@ -81,6 +81,34 @@ function bool(value: boolean | null | undefined): boolean {
 
 function num(value: number | null | undefined): number {
   return value ?? 0
+}
+
+function normalizeCartDiscountTiers(value: unknown): CartDiscountTier[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .map((tier) => {
+      if (!tier || typeof tier !== 'object') {
+        return null
+      }
+
+      const record = tier as Record<string, unknown>
+      const minCartValue = Number(record.minCartValue ?? record.min_cart_value ?? 0)
+      const discountPercent = Number(record.discountPercent ?? record.discount_percent ?? 0)
+
+      if (!Number.isFinite(minCartValue) || !Number.isFinite(discountPercent)) {
+        return null
+      }
+
+      return {
+        minCartValue: Math.max(0, minCartValue),
+        discountPercent: Math.max(0, discountPercent),
+      }
+    })
+    .filter((tier): tier is CartDiscountTier => Boolean(tier))
+    .sort((left, right) => left.minCartValue - right.minCartValue)
 }
 
 export default function BusinessSettingsPage() {
@@ -227,6 +255,25 @@ export default function BusinessSettingsPage() {
   const f = (key: string): string => n(form[key] as string | null | undefined)
   const fb = (key: string): boolean => bool(form[key] as boolean | null | undefined)
   const fn = (key: string): number => num(form[key] as number | null | undefined)
+  const cartDiscountTiers = normalizeCartDiscountTiers(form.cartDiscountTiers)
+
+  const updateCartDiscountTier = useCallback((index: number, field: keyof CartDiscountTier, value: number) => {
+    const next = cartDiscountTiers.map((tier, tierIndex) =>
+      tierIndex === index ? { ...tier, [field]: value } : tier
+    )
+    updateField('cartDiscountTiers', next)
+  }, [cartDiscountTiers, updateField])
+
+  const addCartDiscountTier = useCallback(() => {
+    updateField('cartDiscountTiers', [
+      ...cartDiscountTiers,
+      { minCartValue: 0, discountPercent: 0 },
+    ])
+  }, [cartDiscountTiers, updateField])
+
+  const deleteCartDiscountTier = useCallback((index: number) => {
+    updateField('cartDiscountTiers', cartDiscountTiers.filter((_, tierIndex) => tierIndex !== index))
+  }, [cartDiscountTiers, updateField])
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -369,7 +416,19 @@ export default function BusinessSettingsPage() {
             )}
 
             {activeTab === 'invoicing' && (
-              <InvoicingTab form={form} updateField={updateField} f={f} fn={fn} triggerFileInput={triggerFileInput} uploading={uploading} />
+      <InvoicingTab
+        form={form}
+        updateField={updateField}
+        f={f}
+        fn={fn}
+        fb={fb}
+        triggerFileInput={triggerFileInput}
+        uploading={uploading}
+        cartDiscountTiers={cartDiscountTiers}
+        onAddCartDiscountTier={addCartDiscountTier}
+        onDeleteCartDiscountTier={deleteCartDiscountTier}
+        onUpdateCartDiscountTier={updateCartDiscountTier}
+      />
             )}
 
             {activeTab === 'communication' && (
@@ -664,13 +723,18 @@ function BrandingTab({ form, updateField, f, fb, triggerFileInput, uploading }: 
   )
 }
 
-function InvoicingTab({ form, updateField, f, fn, triggerFileInput, uploading }: {
+function InvoicingTab({ form, updateField, f, fn, fb, triggerFileInput, uploading, cartDiscountTiers, onAddCartDiscountTier, onDeleteCartDiscountTier, onUpdateCartDiscountTier }: {
   form: Record<string, unknown>
   updateField: (key: string, value: unknown) => void
   f: (key: string) => string
   fn: (key: string) => number
+  fb: (key: string) => boolean
   triggerFileInput: (field: string) => void
   uploading: string | null
+  cartDiscountTiers: CartDiscountTier[]
+  onAddCartDiscountTier: () => void
+  onDeleteCartDiscountTier: (index: number) => void
+  onUpdateCartDiscountTier: (index: number, field: keyof CartDiscountTier, value: number) => void
 }) {
   return (
     <div className="space-y-6">
@@ -683,10 +747,126 @@ function InvoicingTab({ form, updateField, f, fn, triggerFileInput, uploading }:
           <SelectField label="Default Currency" options={CURRENCIES} value={f('currency')} onChange={(v) => updateField('currency', v)} />
           <SelectField label="Currency Symbol" options={CURRENCY_SYMBOLS} value={f('currencySymbol')} onChange={(v) => updateField('currencySymbol', v)} />
           <InputField label="Tax Percentage (%)" type="number" value={String(fn('taxPercentage'))} onChange={(v) => updateField('taxPercentage', Number(v))} />
+          <InputField
+            label="Overhead Percentage (%)"
+            type="number"
+            value={String(fn('overheadPercentage'))}
+            onChange={(v) => updateField('overheadPercentage', Number(v))}
+            placeholder="15"
+          />
+          <InputField
+            label="Margin Percentage (%)"
+            type="number"
+            value={String(fn('marginPercentage'))}
+            onChange={(v) => updateField('marginPercentage', Number(v))}
+            placeholder="30"
+          />
+          <InputField
+            label="Material Markup (%)"
+            type="number"
+            value={String(fn('materialMarkupPercent'))}
+            onChange={(v) => updateField('materialMarkupPercent', Number(v))}
+            placeholder="15"
+          />
+          <InputField
+            label="Print Speed (g/hour)"
+            type="number"
+            value={String(fn('printSpeedGramsPerHour'))}
+            onChange={(v) => updateField('printSpeedGramsPerHour', Number(v))}
+            placeholder="14.5"
+          />
           <InputField label="SAC / HSN Code" value={f('sacHsnCode')} onChange={(v) => updateField('sacHsnCode', v)} placeholder="9983" />
         </div>
         <Divider />
         <TextAreaField label="Payment Terms" value={f('paymentTerms')} onChange={(v) => updateField('paymentTerms', v)} rows={2} placeholder="Payment due within 15 days from invoice date." />
+      </SectionCard>
+
+      <SectionCard title="Post-processing Multipliers" description="Configure finishing charges as multipliers applied to item production cost and difficulty.">
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            { key: 'none', label: 'None' },
+            { key: 'sanded', label: 'Sanded' },
+            { key: 'sanded-painted', label: 'Sanded + Painted' },
+          ].map((option) => {
+            const multipliers = form.postProcessingMultipliers as Record<string, number> | undefined
+            return (
+              <InputField
+                key={option.key}
+                label={option.label}
+                type="number"
+                value={String(Number(multipliers?.[option.key] ?? 0))}
+                onChange={(v) => updateField('postProcessingMultipliers', {
+                  ...(multipliers ?? {}),
+                  [option.key]: Number(v),
+                })}
+              />
+            )
+          })}
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Cart Discount" description="Configure value-based discount tiers for instant quote pricing.">
+        <div className="space-y-4">
+          <ToggleField
+            label="Enable Cart Discounts"
+            description="Apply the highest matching cart discount tier when the subtotal reaches the threshold."
+            checked={fb('cartDiscountEnabled')}
+            onChange={(v) => updateField('cartDiscountEnabled', v)}
+          />
+
+          <div className="overflow-hidden rounded-2xl border border-gray-200">
+            <div className="grid grid-cols-[1.2fr_1fr_auto] gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6F7192]">
+              <div>Min cart value (₹)</div>
+              <div>Discount %</div>
+              <div className="text-right">Action</div>
+            </div>
+            <div className="divide-y divide-gray-200 bg-white">
+              {cartDiscountTiers.length === 0 ? (
+                <div className="px-4 py-5 text-sm text-[#6F7192]">
+                  No tiers configured. Add one to enable cart-value discounts.
+                </div>
+              ) : (
+                cartDiscountTiers.map((tier, index) => (
+                  <div key={`${tier.minCartValue}-${tier.discountPercent}-${index}`} className="grid grid-cols-[1.2fr_1fr_auto] gap-3 px-4 py-3">
+                    <InputField
+                      label=""
+                      type="number"
+                      value={String(tier.minCartValue)}
+                      onChange={(v) => onUpdateCartDiscountTier(index, 'minCartValue', Number(v))}
+                      placeholder="2000"
+                    />
+                    <InputField
+                      label=""
+                      type="number"
+                      value={String(tier.discountPercent)}
+                      onChange={(v) => onUpdateCartDiscountTier(index, 'discountPercent', Number(v))}
+                      placeholder="5"
+                    />
+                    <div className="flex items-end justify-end">
+                      <button
+                        type="button"
+                        onClick={() => onDeleteCartDiscountTier(index)}
+                        className="inline-flex h-10 items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-3 text-xs font-medium text-rose-600 transition hover:bg-rose-100"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onAddCartDiscountTier}
+            className="inline-flex items-center gap-2 rounded-xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-4 py-2.5 text-sm font-medium text-[#7C5CFF] transition hover:bg-[#7C5CFF]/15"
+          >
+            <Plus className="h-4 w-4" />
+            Add Tier
+          </button>
+        </div>
       </SectionCard>
 
       <SectionCard title="Bank Details" description="Bank account information for payments and refunds.">

@@ -1,15 +1,38 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { isAdminEmail } from '@/lib/supabase/config'
+import { createAdminSupabaseClient, isCurrentUserAdmin } from '@/lib/admin/server'
 
 export const dynamic = 'force-dynamic'
 
+type MaterialRow = {
+  id: string
+  name: string
+  icon?: string | null
+  summary?: string | null
+  density?: number | null
+  price_per_gram?: number | null
+  machine_rate?: number | null
+  multiplier?: number | null
+  recommended_for?: string | null
+  properties?: {
+    strength?: string
+    flexibility?: string
+    tempResistance?: string
+    difficulty?: string
+  } | null
+  colors?: unknown[] | null
+  difficulty_factor?: number | null
+  key_properties?: string[] | null
+  best_for?: string[] | null
+  difficulty_level?: string | null
+  heat_resistance?: string | null
+  strength_rating?: string | null
+  finish_quality?: string | null
+  sample_photo?: string | null
+}
+
 async function isAdminUser(): Promise<boolean> {
   try {
-    const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    return isAdminEmail(user?.email)
+    return await isCurrentUserAdmin()
   } catch {
     return false
   }
@@ -31,35 +54,35 @@ export async function GET() {
       )
     }
 
-    const materials = (data || []).map((row: any) => {
+    const materials = ((data || []) as MaterialRow[]).map((row) => {
       const rawProps = row.properties || {}
       const properties = {
-        strength: rawProps.strength || rawProps.strength || 'Medium',
+        strength: rawProps.strength || 'Medium',
         flexibility: rawProps.flexibility || 'Medium',
-        tempResistance: rawProps.tempResistance || rawProps.tempResistance || 'Medium',
+        tempResistance: rawProps.tempResistance || 'Medium',
         difficulty: rawProps.difficulty || 'Medium',
       }
 
       return {
         id: row.id,
         name: row.name,
-        icon: row.icon || '🧩',
-        summary: row.summary || '',
-        density: row.density || 1.24,
-        pricePerGram: row.price_per_gram || 2.8,
-        machineRate: row.machine_rate || 180,
-        multiplier: row.multiplier || 1,
-        recommendedFor: row.recommended_for || '',
+        icon: row.icon ?? '🧩',
+        summary: row.summary ?? '',
+        density: row.density ?? 1.24,
+        pricePerGram: row.price_per_gram ?? 2.8,
+        machineRate: row.machine_rate ?? 180,
+        multiplier: row.multiplier ?? 1,
+        recommendedFor: row.recommended_for ?? '',
         properties,
-        colors: row.colors || [],
+        colors: row.colors ?? [],
         difficultyFactor: row.difficulty_factor ?? 1.1,
-        keyProperties: row.key_properties || [],
-        bestFor: row.best_for || [],
-        difficultyLevel: row.difficulty_level || 'Easy',
-        heatResistance: row.heat_resistance || 'Low',
-        strengthRating: row.strength_rating || 'Medium',
-        finishQuality: row.finish_quality || 'Good',
-        samplePhoto: row.sample_photo || '',
+        keyProperties: row.key_properties ?? [],
+        bestFor: row.best_for ?? [],
+        difficultyLevel: row.difficulty_level ?? 'Easy',
+        heatResistance: row.heat_resistance ?? 'Low',
+        strengthRating: row.strength_rating ?? 'Medium',
+        finishQuality: row.finish_quality ?? 'Good',
+        samplePhoto: row.sample_photo ?? '',
       }
     })
 

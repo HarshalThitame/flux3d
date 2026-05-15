@@ -9,15 +9,20 @@ export const layerHeightOptions: LayerHeightOption[] = [
 ]
 
 function normalizeValue(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')
+  return value.trim().toLowerCase().replace(/[^a-z0-9+]+/g, '-')
 }
 
 const materialAliases: Record<string, string[]> = {
+  pla: ['pla', 'pla+', 'pla-plus', 'pla-pro'],
   'pla-plus': ['pla', 'pla+', 'pla-plus', 'pla-pro'],
   abs: ['abs', 'abs-tough'],
   petg: ['petg'],
   asa: ['asa'],
   tpu: ['tpu'],
+  nylon: ['nylon', 'pa12', 'nylon-pa12'],
+  pc: ['pc', 'polycarbonate'],
+  polycarbonate: ['pc', 'polycarbonate'],
+  resin: ['resin', 'resin-4k', 'standard-resin'],
   'resin-4k': ['resin', 'resin-4k'],
   'silk-gold': ['silk', 'gold', 'silk-gold'],
   'multi-color': ['multi', 'multi-color', 'ams', 'color'],
@@ -25,14 +30,28 @@ const materialAliases: Record<string, string[]> = {
 
 export function getMaterialById(materialId: string, materials: QuoteMaterial[] = quoteMaterials) {
   const normalizedMaterialId = normalizeValue(materialId)
+  const exactMaterial = materials.find((material) =>
+    normalizeValue(material.id) === normalizedMaterialId ||
+    normalizeValue(material.name) === normalizedMaterialId
+  )
+
+  if (exactMaterial) {
+    return exactMaterial
+  }
+
+  const aliases = materialAliases[normalizedMaterialId] ?? [normalizedMaterialId]
+
+  for (const alias of aliases) {
+    const normalizedAlias = normalizeValue(alias)
+    const exactAliasMatch = materials.find((material) => normalizeValue(material.name) === normalizedAlias)
+    if (exactAliasMatch) {
+      return exactAliasMatch
+    }
+  }
 
   return (
-    materials.find((material) => normalizeValue(material.id) === normalizedMaterialId) ??
-    materials.find((material) => normalizeValue(material.name) === normalizedMaterialId) ??
     materials.find((material) => {
-      const aliases = materialAliases[normalizedMaterialId] ?? [normalizedMaterialId]
       const normalizedName = normalizeValue(material.name)
-
       return aliases.some((alias) => normalizedName.includes(normalizeValue(alias)))
     }) ??
     materials[0] ??
