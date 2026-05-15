@@ -210,7 +210,7 @@ export async function GET(
         material: o.material,
         parts: o.parts,
         weightGrams: o.weight_grams,
-        amount: o.total_price,
+        amount: o.grand_total ?? o.final_price ?? o.total_price,
         status: o.status,
         deliveryDate: o.delivery_date,
         rating: o.rating,

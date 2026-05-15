@@ -1,9 +1,13 @@
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import type { User } from '@supabase/supabase-js'
 import type {
   AdminFile,
+  AdminCustomerFile,
+  AdminCustomerInvoice,
+  AdminCustomerOrder,
+  AdminCustomerStatus,
   AdminMaterial,
   AdminOrder,
-  AdminOrderItem,
   AdminQuote,
   AdminUser,
   Coupon,
@@ -14,9 +18,10 @@ import type {
   TrendPoint,
 } from '@/lib/admin/types'
 import { getOrderStatusLabel, orderStatuses, type OrderStatus } from '@/lib/orders'
-import { isAdminEmail } from '@/lib/supabase/config'
 
 const QUOTE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? 'quote-models'
+const ADMIN_ORDER_SELECT =
+  'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, price, price_per_unit, material_cost, machine_cost, subtotal, post_processing_charges, weight, difficulty_factor, total_price, final_price, grand_total, overhead_percent, overhead_amount, margin_percent, margin_amount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, coupon_code, coupon_id, discount_type, estimated_time, supports, post_processing_level, status, cancel_requested, created_at, updated_at, notes, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge'
 
 type QueryResult<T> = {
   data: T[] | null
@@ -51,14 +56,34 @@ type OrderRow = {
   layer_height?: number | null
   price?: number | string | null
   price_per_unit?: number | string | null
+  material_cost?: number | string | null
+  machine_cost?: number | string | null
+  subtotal?: number | string | null
   total_price: number | string | null
+  final_price?: number | string | null
+  grand_total?: number | string | null
   quantity?: number | null
   estimated_time?: number | null
   supports?: boolean | null
   post_processing_level?: string | null
   post_processing_charges?: number | string | null
+  weight?: number | string | null
+  difficulty_factor?: number | string | null
+  overhead_percent?: number | string | null
+  overhead_amount?: number | string | null
+  margin_percent?: number | string | null
+  margin_amount?: number | string | null
+  cart_discount?: number | string | null
+  cart_discount_percent?: number | string | null
+  coupon_discount?: number | string | null
+  offer_discount?: number | string | null
+  offer_name?: string | null
+  coupon_code?: string | null
+  coupon_id?: string | null
+  discount_type?: string | null
   status: AdminOrder['status']
   created_at: string | null
+  updated_at?: string | null
   notes: string | null
   full_name: string | null
   phone?: string | null
@@ -69,6 +94,7 @@ type OrderRow = {
   pincode?: string | null
   landmark?: string | null
   delivery_charge?: number | string | null
+  cancel_requested?: boolean | null
 }
 
 type QuoteRow = {
@@ -84,7 +110,32 @@ type QuoteRow = {
 type ProfileRow = {
   id: string
   name: string | null
+  full_name?: string | null
   email: string | null
+  is_admin?: boolean | null
+  avatar_url?: string | null
+  created_at: string | null
+}
+
+type CustomerOrderRow = {
+  id: string
+  user_id: string | null
+  group_id: string | null
+  order_number: string | null
+  file_url: string | null
+  material: string | null
+  grand_total?: number | string | null
+  final_price?: number | string | null
+  total_price?: number | string | null
+  status: OrderStatus
+  full_name?: string | null
+  phone?: string | null
+  address_line1?: string | null
+  address_line2?: string | null
+  city?: string | null
+  state?: string | null
+  pincode?: string | null
+  landmark?: string | null
   created_at: string | null
 }
 
@@ -98,44 +149,15 @@ function normalizeDate(value: string | null | undefined) {
   return Number.isNaN(timestamp) ? null : new Date(timestamp)
 }
 
-function mapOrderRowToAdminOrder(order: OrderRow): AdminOrder {
-  return {
-    id: String(order.id),
-    groupId: order.group_id ?? String(order.id),
-    orderNumber: order.order_number ?? String(order.id),
-    fileUrl: order.file_url ?? undefined,
-    fullName: order.full_name ?? 'Unknown customer',
-    phone: order.phone ?? undefined,
-    addressLine1: order.address_line1 ?? undefined,
-    city: order.city ?? undefined,
-    state: order.state ?? undefined,
-    pincode: order.pincode ?? undefined,
-    deliveryCharge: normalizeMoney(order.delivery_charge),
-    totalPrice: normalizeMoney(order.total_price),
-    material: order.material ?? 'Unknown material',
-    color: order.color ?? '',
-    status: order.status,
-    createdAt: order.created_at ?? '',
-    notes: order.notes,
-    itemCount: 1,
-    items: [{
-      id: String(order.id),
-      fileName: order.file_url?.split('/').pop() ?? '',
-      fileUrl: order.file_url ?? null,
-      material: order.material ?? 'Unknown material',
-      color: order.color ?? '',
-      infill: order.infill ?? 20,
-      layerHeight: order.layer_height ?? 0.2,
-      price: normalizeMoney(order.price),
-      pricePerUnit: normalizeMoney(order.price_per_unit),
-      estimatedTime: order.estimated_time ?? 0,
-      quantity: order.quantity ?? 1,
-      supports: order.supports ?? false,
-      postProcessingLevel: order.post_processing_level ?? null,
-      postProcessingCharges: normalizeMoney(order.post_processing_charges),
-      status: order.status,
-    }],
-  }
+function resolveGrandTotal(row: Pick<OrderRow, 'grand_total' | 'final_price' | 'total_price' | 'delivery_charge' | 'cart_discount'>) {
+  return normalizeMoney(
+    row.grand_total ??
+    resolveFinalPrice(row) + normalizeMoney(row.delivery_charge)
+  )
+}
+
+function resolveFinalPrice(row: Pick<OrderRow, 'final_price' | 'total_price' | 'cart_discount'>) {
+  return normalizeMoney(row.final_price ?? normalizeMoney(row.total_price) - normalizeMoney(row.cart_discount))
 }
 
 export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
@@ -159,10 +181,48 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
         supports: row.supports ?? false,
         postProcessingLevel: row.post_processing_level ?? null,
         postProcessingCharges: normalizeMoney(row.post_processing_charges),
+        weight: normalizeMoney(row.weight),
+        difficultyFactor: normalizeMoney(row.difficulty_factor),
+        materialCost: normalizeMoney(row.material_cost),
+        machineCost: normalizeMoney(row.machine_cost),
+        subtotal: normalizeMoney(row.subtotal ?? row.price),
+        overheadPercentage: normalizeMoney(row.overhead_percent),
+        overheadAmount: normalizeMoney(row.overhead_amount),
+        marginPercentage: normalizeMoney(row.margin_percent),
+        marginAmount: normalizeMoney(row.margin_amount),
+        totalPriceBeforeDiscount: normalizeMoney(row.total_price),
+        cartDiscountAmount: normalizeMoney(row.cart_discount),
+        cartDiscountPercent: normalizeMoney(row.cart_discount_percent),
+        couponDiscountAmount: normalizeMoney(row.coupon_discount),
+        offerDiscountAmount: normalizeMoney(row.offer_discount),
+        offerName: row.offer_name ?? null,
+        finalPrice: resolveFinalPrice(row),
+        deliveryCharge: normalizeMoney(row.delivery_charge),
+        grandTotal: resolveGrandTotal(row),
         status: row.status,
+        cancelRequested: Boolean(row.cancel_requested),
       })
-      existing.totalPrice += normalizeMoney(row.total_price)
+      existing.cancelRequested = existing.cancelRequested || Boolean(row.cancel_requested)
+      if (row.updated_at && (!existing.updatedAt || new Date(row.updated_at).getTime() > new Date(existing.updatedAt).getTime())) {
+        existing.updatedAt = row.updated_at
+      }
+      existing.totalPriceBeforeDiscount += normalizeMoney(row.total_price)
+      existing.finalPrice += resolveFinalPrice(row)
+      existing.grandTotal += resolveGrandTotal(row)
+      existing.totalPrice += resolveGrandTotal(row)
       existing.deliveryCharge += normalizeMoney(row.delivery_charge)
+      existing.materialCost += normalizeMoney(row.material_cost)
+      existing.machineCost += normalizeMoney(row.machine_cost)
+      existing.subtotal += normalizeMoney(row.subtotal ?? row.price)
+      existing.overheadAmount += normalizeMoney(row.overhead_amount)
+      existing.marginAmount += normalizeMoney(row.margin_amount)
+      existing.cartDiscountAmount += normalizeMoney(row.cart_discount)
+      existing.couponDiscountAmount += normalizeMoney(row.coupon_discount)
+      existing.offerDiscountAmount += normalizeMoney(row.offer_discount)
+      existing.discountAmount = normalizeMoney(existing.discountAmount) + normalizeMoney(row.cart_discount) + normalizeMoney(row.coupon_discount) + normalizeMoney(row.offer_discount)
+      existing.couponCode = existing.couponCode ?? row.coupon_code ?? null
+      existing.offerName = existing.offerName ?? row.offer_name ?? null
+      existing.discountType = existing.discountType ?? row.discount_type ?? null
       existing.itemCount += 1
     } else {
       acc.set(groupId, {
@@ -173,15 +233,38 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
         fullName: row.full_name ?? 'Unknown customer',
         phone: row.phone ?? undefined,
         addressLine1: row.address_line1 ?? undefined,
+        addressLine2: row.address_line2 ?? undefined,
         city: row.city ?? undefined,
         state: row.state ?? undefined,
         pincode: row.pincode ?? undefined,
+        landmark: row.landmark ?? undefined,
         deliveryCharge: normalizeMoney(row.delivery_charge),
-        totalPrice: normalizeMoney(row.total_price),
+        totalPrice: resolveGrandTotal(row),
+        totalPriceBeforeDiscount: normalizeMoney(row.total_price),
+        finalPrice: resolveFinalPrice(row),
+        grandTotal: resolveGrandTotal(row),
+        materialCost: normalizeMoney(row.material_cost),
+        machineCost: normalizeMoney(row.machine_cost),
+        subtotal: normalizeMoney(row.subtotal ?? row.price),
+        overheadPercentage: normalizeMoney(row.overhead_percent),
+        overheadAmount: normalizeMoney(row.overhead_amount),
+        marginPercentage: normalizeMoney(row.margin_percent),
+        marginAmount: normalizeMoney(row.margin_amount),
+        cartDiscountAmount: normalizeMoney(row.cart_discount),
+        cartDiscountPercent: normalizeMoney(row.cart_discount_percent),
+        couponDiscountAmount: normalizeMoney(row.coupon_discount),
+        offerDiscountAmount: normalizeMoney(row.offer_discount),
+        discountAmount: normalizeMoney(row.cart_discount) + normalizeMoney(row.coupon_discount) + normalizeMoney(row.offer_discount),
+        couponCode: row.coupon_code ?? null,
+        offerName: row.offer_name ?? null,
+        discountType: row.discount_type ?? null,
+        discountSource: row.offer_name ? 'offer' : row.coupon_code ? 'coupon' : normalizeMoney(row.cart_discount) > 0 ? 'order' : null,
         material: row.material ?? 'Unknown material',
         color: row.color ?? '',
         status: row.status,
+        cancelRequested: Boolean(row.cancel_requested),
         createdAt: row.created_at ?? '',
+        updatedAt: row.updated_at ?? row.created_at ?? '',
         notes: row.notes,
         itemCount: 1,
         items: [{
@@ -199,7 +282,26 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
           supports: row.supports ?? false,
           postProcessingLevel: row.post_processing_level ?? null,
           postProcessingCharges: normalizeMoney(row.post_processing_charges),
+          weight: normalizeMoney(row.weight),
+          difficultyFactor: normalizeMoney(row.difficulty_factor),
+          materialCost: normalizeMoney(row.material_cost),
+          machineCost: normalizeMoney(row.machine_cost),
+          subtotal: normalizeMoney(row.subtotal ?? row.price),
+          overheadPercentage: normalizeMoney(row.overhead_percent),
+          overheadAmount: normalizeMoney(row.overhead_amount),
+          marginPercentage: normalizeMoney(row.margin_percent),
+          marginAmount: normalizeMoney(row.margin_amount),
+          totalPriceBeforeDiscount: normalizeMoney(row.total_price),
+          cartDiscountAmount: normalizeMoney(row.cart_discount),
+          cartDiscountPercent: normalizeMoney(row.cart_discount_percent),
+          couponDiscountAmount: normalizeMoney(row.coupon_discount),
+          offerDiscountAmount: normalizeMoney(row.offer_discount),
+          offerName: row.offer_name ?? null,
+          finalPrice: resolveFinalPrice(row),
+          deliveryCharge: normalizeMoney(row.delivery_charge),
+          grandTotal: resolveGrandTotal(row),
           status: row.status,
+          cancelRequested: Boolean(row.cancel_requested),
         }],
       })
     }
@@ -228,36 +330,128 @@ function mapQuoteRowToAdminQuote(quote: QuoteRow): AdminQuote {
 function mapProfileRowToAdminUser(profile: ProfileRow): AdminUser {
   return {
     id: profile.id,
-    name: profile.name ?? (profile.email?.split('@')[0] ?? 'Flux3D User'),
+    name: profile.full_name ?? profile.name ?? (profile.email?.split('@')[0] ?? 'Flux3D User'),
     email: profile.email ?? '',
     signupMethod: 'Email',
-    role: isAdminEmail(profile.email) ? 'admin' : 'customer-success',
+    role: profile.is_admin ? 'admin' : 'customer-success',
     lastActive: profile.created_at ? new Date(profile.created_at).toLocaleString('en-IN') : 'Never',
   }
+}
+
+function getCustomerStatus(user: User): AdminCustomerStatus {
+  if (user.banned_until && new Date(user.banned_until).getTime() > Date.now()) {
+    return 'Suspended'
+  }
+
+  if (!user.email_confirmed_at) {
+    return 'Unverified'
+  }
+
+  return 'Active'
+}
+
+function getSignupMethod(user: User): AdminUser['signupMethod'] {
+  const provider = String(user.app_metadata.provider ?? '').toLowerCase()
+  if (provider === 'google') return 'Google'
+  if (provider === 'github') return 'GitHub'
+  return 'Email'
+}
+
+async function listAllAuthUsers() {
+  const supabase = createAdminSupabaseClient()
+  const users: User[] = []
+  let page = 1
+  let lastPage = 1
+
+  do {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage: 1000,
+    })
+    if (error) throw new Error(error.message)
+    users.push(...(data.users ?? []))
+    lastPage = data.lastPage || page
+    page += 1
+  } while (page <= lastPage)
+
+  return users
+}
+
+function groupCustomerOrders(rows: CustomerOrderRow[]) {
+  const groups = rows.reduce<Map<string, CustomerOrderRow[]>>((acc, row) => {
+    const key = row.group_id ?? row.id
+    const existing = acc.get(key) ?? []
+    existing.push(row)
+    acc.set(key, existing)
+    return acc
+  }, new Map())
+
+  return Array.from(groups.entries()).map(([groupId, groupRows]) => {
+    const sortedRows = [...groupRows].sort((left, right) =>
+      new Date(left.created_at ?? 0).getTime() - new Date(right.created_at ?? 0).getTime()
+    )
+    const first = sortedRows[0]
+    const latest = sortedRows[sortedRows.length - 1]
+    const materialSummary = Array.from(new Set(sortedRows.map((row) => row.material).filter(Boolean))).join(', ') || '—'
+    const grandTotal = sortedRows.reduce(
+      (sum, row) => sum + normalizeMoney(row.grand_total ?? row.final_price ?? row.total_price),
+      0
+    )
+
+    return {
+      id: first.id,
+      groupId,
+      orderNumber: first.order_number ?? groupId,
+      createdAt: first.created_at ?? '',
+      status: latest.status,
+      grandTotal,
+      itemCount: sortedRows.length,
+      materialSummary,
+    } satisfies AdminCustomerOrder
+  }).sort((left, right) =>
+    new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+  )
+}
+
+function formatAddressFromOrder(row?: CustomerOrderRow) {
+  if (!row) return undefined
+  return [
+    row.address_line1,
+    row.address_line2,
+    [row.city, row.state].filter(Boolean).join(', '),
+    row.pincode,
+    row.landmark ? `Landmark: ${row.landmark}` : null,
+  ].filter(Boolean).join(', ') || undefined
+}
+
+function mapOrderRowsToFiles(rows: CustomerOrderRow[]): AdminCustomerFile[] {
+  return rows
+    .filter((row) => row.file_url)
+    .map((row) => ({
+      id: row.id,
+      fileName: row.file_url?.split('/').pop() ?? 'STL file',
+      fileUrl: row.file_url ?? null,
+      uploadedAt: row.created_at ?? '',
+      downloadUrl: `/api/admin/orders/${row.id}/file`,
+    }))
 }
 
 function getStatusColor(status: OrderStatus) {
   switch (status) {
     case 'pending':
       return '#F59E0B'
-    case 'reviewed':
-      return '#38BDF8'
-    case 'approved':
+    case 'confirmed':
       return '#34D399'
-    case 'queued':
-      return '#818CF8'
-    case 'on-hold':
-      return '#E879F9'
     case 'printing':
       return '#22D3EE'
     case 'shipped':
       return '#A78BFA'
+    case 'delivered':
+      return '#38BDF8'
     case 'completed':
       return '#10B981'
     case 'cancelled':
       return '#94A3B8'
-    case 'rejected':
-      return '#FB7185'
   }
 }
 
@@ -345,21 +539,20 @@ export async function getAdminDashboardData() {
   ] = await Promise.all([
     supabase.from('orders').select('id', { count: 'exact', head: true }),
     supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-    supabase.from('orders').select('id', { count: 'exact', head: true }).in('status', ['printing', 'approved']),
+    supabase.from('orders').select('id', { count: 'exact', head: true }).in('status', ['confirmed', 'printing']),
     supabase
       .from('orders')
-      .select('id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, post_processing_charges, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge')
-      .order('created_at', { ascending: false })
-      .limit(10),
+      .select(ADMIN_ORDER_SELECT)
+      .order('created_at', { ascending: false }),
     supabase
       .from('quotes')
       .select('id, quote_id, name, email, config, estimate, created_at, user_id')
       .order('created_at', { ascending: false })
       .limit(8),
-    supabase.from('profiles').select('id, name, email, created_at').order('created_at', { ascending: false }).limit(8),
+    supabase.from('profiles').select('id, name, full_name, email, is_admin, created_at').order('created_at', { ascending: false }).limit(8),
     supabase
       .from('materials')
-      .select('id, name, price_per_gram, density, colors, stock, created_at')
+      .select('id, name, icon, summary, density, price_per_gram, machine_rate, multiplier, recommended_for, properties, colors, difficulty_factor, key_properties, best_for, difficulty_level, heat_resistance, strength_rating, finish_quality, sample_photo, stock, created_at, updated_at')
       .order('created_at', { ascending: false }),
     listBucketFiles(),
   ])
@@ -383,11 +576,26 @@ export async function getAdminDashboardData() {
     normalizeAdminMaterialRow(row as {
       id: string
       name: string
-      price_per_gram: number | string
+      icon: string
+      summary: string
       density: number | string
+      price_per_gram: number | string
+      machine_rate: number | string
+      multiplier: number | string
+      recommended_for: string | null
+      properties: Record<string, unknown> | null
       colors: string[]
       stock: AdminMaterial['stock']
+      difficulty_factor?: number | string
+      key_properties?: string[] | null
+      best_for?: string[] | null
+      difficulty_level?: AdminMaterial['difficulty_level']
+      heat_resistance?: AdminMaterial['heat_resistance']
+      strength_rating?: AdminMaterial['strength_rating']
+      finish_quality?: AdminMaterial['finish_quality']
+      sample_photo?: string | null
       created_at?: string | null
+      updated_at?: string | null
     })
   )
 
@@ -396,7 +604,7 @@ export async function getAdminDashboardData() {
     return acc
   }, {})
 
-  const revenue = normalizedOrders.reduce((sum, row) => sum + row.totalPrice, 0)
+  const revenue = normalizedOrders.reduce((sum, row) => sum + row.grandTotal, 0)
 
   return {
     metrics: [
@@ -422,9 +630,7 @@ export async function getAdminOrdersData() {
   const supabase = createAdminSupabaseClient()
   const { data, error } = await supabase
     .from('orders')
-    .select(
-      'id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, post_processing_charges, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
-    )
+    .select(ADMIN_ORDER_SELECT)
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(error.message)
@@ -440,21 +646,82 @@ export async function updateAdminOrderStatus(groupId: string, status: AdminOrder
       status,
       updated_at: new Date().toISOString(),
     })
-    .eq('group_id', groupId)
+    .or(`group_id.eq.${groupId},id.eq.${groupId}`)
 
   if (updateError) throw new Error(updateError.message)
 
   const { data, error } = await supabase
     .from('orders')
-    .select(
-      'id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, post_processing_charges, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge'
-    )
-    .eq('group_id', groupId)
+    .select(ADMIN_ORDER_SELECT)
+    .or(`group_id.eq.${groupId},id.eq.${groupId}`)
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(error.message)
   const grouped = groupAdminOrders((data ?? []) as OrderRow[])
   return grouped[0]
+}
+
+export async function updateAdminOrderNotes(groupId: string, notes: string | null) {
+  const supabase = createAdminSupabaseClient()
+
+  const { error: updateError } = await supabase
+    .from('orders')
+    .update({
+      notes,
+      updated_at: new Date().toISOString(),
+    })
+    .or(`group_id.eq.${groupId},id.eq.${groupId}`)
+
+  if (updateError) throw new Error(updateError.message)
+
+  const { data, error } = await supabase
+    .from('orders')
+    .select(ADMIN_ORDER_SELECT)
+    .or(`group_id.eq.${groupId},id.eq.${groupId}`)
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  const grouped = groupAdminOrders((data ?? []) as OrderRow[])
+  return grouped[0]
+}
+
+export async function getAdminOrderById(orderId: string) {
+  const supabase = createAdminSupabaseClient()
+  const { data: groupedRows, error: groupedError } = await supabase
+    .from('orders')
+    .select(ADMIN_ORDER_SELECT)
+    .eq('group_id', orderId)
+    .order('created_at', { ascending: true })
+
+  if (groupedError) throw new Error(groupedError.message)
+
+  let rows = groupedRows ?? []
+
+  if (rows.length === 0) {
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select(ADMIN_ORDER_SELECT)
+      .eq('id', orderId)
+      .maybeSingle()
+
+    if (orderError) throw new Error(orderError.message)
+    if (!order) return null
+
+    if (order.group_id) {
+      const { data: orderGroupRows, error: orderGroupError } = await supabase
+        .from('orders')
+        .select(ADMIN_ORDER_SELECT)
+        .eq('group_id', order.group_id)
+        .order('created_at', { ascending: true })
+
+      if (orderGroupError) throw new Error(orderGroupError.message)
+      rows = orderGroupRows?.length ? orderGroupRows : [order]
+    } else {
+      rows = [order]
+    }
+  }
+
+  return groupAdminOrders(rows as OrderRow[])[0] ?? null
 }
 
 export async function getAdminQuotesData() {
@@ -470,17 +737,70 @@ export async function getAdminQuotesData() {
 
 export async function getAdminUsersData() {
   const supabase = createAdminSupabaseClient()
-  const { data, error } = await supabase.auth.admin.listUsers()
-
-  if (error) throw new Error(error.message)
-
-  const profiles = await supabase.from('profiles').select('id, name, email, created_at')
+  const users = await listAllAuthUsers()
+  const profiles = await supabase.from('profiles').select('id, name, full_name, email, is_admin, avatar_url, created_at')
   if (profiles.error) throw new Error(profiles.error.message)
-  return (data.users ?? []).map((user) => {
-    const profile = (profiles.data ?? []).find((item) => item.id === user.id)
+
+  const { data: orderRows, error: ordersError } = await supabase
+    .from('orders')
+    .select('id, user_id, group_id, order_number, file_url, material, grand_total, final_price, total_price, status, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, created_at')
+    .order('created_at', { ascending: false })
+
+  if (ordersError) throw new Error(ordersError.message)
+
+  const { data: noteRows, error: notesError } = await supabase
+    .from('admin_customer_notes')
+    .select('user_id, note, created_at')
+    .order('created_at', { ascending: false })
+
+  if (notesError) throw new Error(notesError.message)
+
+  const profilesById = new Map((profiles.data ?? []).map((profile) => [profile.id, profile as ProfileRow]))
+  const ordersByUser = ((orderRows ?? []) as CustomerOrderRow[]).reduce<Map<string, CustomerOrderRow[]>>((acc, row) => {
+    if (!row.user_id) return acc
+    const existing = acc.get(row.user_id) ?? []
+    existing.push(row)
+    acc.set(row.user_id, existing)
+    return acc
+  }, new Map())
+  const notesByUser = (noteRows ?? []).reduce<Map<string, string[]>>((acc, row) => {
+    const userId = typeof row.user_id === 'string' ? row.user_id : ''
+    if (!userId) return acc
+    const existing = acc.get(userId) ?? []
+    if (typeof row.note === 'string') existing.push(row.note)
+    acc.set(userId, existing)
+    return acc
+  }, new Map())
+
+  return users.map((user) => {
+    const profile = profilesById.get(user.id)
+    const customerOrders = ordersByUser.get(user.id) ?? []
+    const groupedOrders = groupCustomerOrders(customerOrders)
+    const latestOrder = [...customerOrders].sort((left, right) =>
+      new Date(right.created_at ?? 0).getTime() - new Date(left.created_at ?? 0).getTime()
+    )[0]
+    const invoices = groupedOrders.map((order) => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      createdAt: order.createdAt,
+      grandTotal: order.grandTotal,
+      downloadUrl: `/api/orders/${order.id}/invoice`,
+    })) satisfies AdminCustomerInvoice[]
+    const appMetadata = user.app_metadata as Record<string, unknown>
+    const userMetadata = user.user_metadata as Record<string, unknown>
+    const phone = typeof userMetadata.phone === 'string'
+      ? userMetadata.phone
+      : typeof userMetadata.whatsapp_number === 'string'
+        ? userMetadata.whatsapp_number
+        : latestOrder?.phone ?? undefined
+    const joinedDate = profile?.created_at ?? user.created_at ?? ''
+    const totalSpent = groupedOrders.reduce((sum, order) => sum + order.grandTotal, 0)
+
     return {
       id: user.id,
+      customerId: `CUS-${user.id.slice(0, 8).toUpperCase()}`,
       name:
+        profile?.full_name ??
         profile?.name ??
         (typeof user.user_metadata.full_name === 'string'
           ? user.user_metadata.full_name
@@ -488,14 +808,30 @@ export async function getAdminUsersData() {
             ? user.user_metadata.name
             : user.email?.split('@')[0] ?? 'Flux3D User'),
       email: profile?.email ?? user.email ?? '',
-      signupMethod:
-        user.app_metadata.provider === 'google'
-          ? 'Google'
-          : user.app_metadata.provider === 'github'
-            ? 'GitHub'
-            : 'Email',
-      role: isAdminEmail(profile?.email ?? user.email) ? 'admin' : 'customer-success',
-      lastActive: user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString('en-IN') : 'Never',
+      phone,
+      whatsappNumber: phone,
+      city: latestOrder?.city ?? undefined,
+      state: latestOrder?.state ?? undefined,
+      pincode: latestOrder?.pincode ?? undefined,
+      fullAddress: formatAddressFromOrder(latestOrder),
+      signupMethod: getSignupMethod(user),
+      role: profile?.is_admin ? 'admin' as const : 'customer-success' as const,
+      lastActive: user.last_sign_in_at ?? '',
+      lastSeenAt: user.last_sign_in_at ?? '',
+      totalOrders: groupedOrders.length,
+      totalSpent,
+      avgOrderValue: groupedOrders.length === 0 ? 0 : totalSpent / groupedOrders.length,
+      firstOrderDate: groupedOrders.at(-1)?.createdAt,
+      lastOrderDate: groupedOrders[0]?.createdAt,
+      filesUploaded: customerOrders.filter((order) => order.file_url).length,
+      joinedDate,
+      status: getCustomerStatus(user),
+      notes: notesByUser.get(user.id)?.join('\n\n') ?? (typeof appMetadata.admin_notes === 'string' ? appMetadata.admin_notes : ''),
+      manualCoupon: typeof appMetadata.manual_coupon === 'string' ? appMetadata.manual_coupon : '',
+      manualCredit: typeof appMetadata.manual_credit === 'number' ? appMetadata.manual_credit : 0,
+      orders: groupedOrders,
+      files: mapOrderRowsToFiles(customerOrders),
+      invoices,
     }
   })
 }
@@ -513,32 +849,73 @@ export async function getAdminMaterialsData() {
 
 type AdminMaterialInput = {
   name: string
-  pricePerGram: number
+  icon: string
+  summary: string
   density: number
+  pricePerGram: number
+  machineRate: number
+  multiplier: number
+  recommendedFor: string
+  properties: Record<string, unknown>
   colors: string[]
   difficultyFactor: number
+  keyProperties?: string[]
+  bestFor?: string[]
+  difficultyLevel?: AdminMaterial['difficulty_level']
+  heatResistance?: AdminMaterial['heat_resistance']
+  strengthRating?: AdminMaterial['strength_rating']
+  finishQuality?: AdminMaterial['finish_quality']
+  samplePhoto?: string
   stock: AdminMaterial['stock']
 }
 
 function normalizeAdminMaterialRow(material: {
   id: string
   name: string
-  price_per_gram: number | string
+  icon?: string | null
+  summary?: string | null
   density: number | string
+  price_per_gram: number | string
+  machine_rate?: number | string | null
+  multiplier?: number | string | null
+  recommended_for?: string | null
+  properties?: Record<string, unknown> | null
   colors: string[]
   difficulty_factor?: number | string
+  key_properties?: string[] | null
+  best_for?: string[] | null
+  difficulty_level?: AdminMaterial['difficulty_level']
+  heat_resistance?: AdminMaterial['heat_resistance']
+  strength_rating?: AdminMaterial['strength_rating']
+  finish_quality?: AdminMaterial['finish_quality']
+  sample_photo?: string | null
   stock: AdminMaterial['stock']
   created_at?: string | null
+  updated_at?: string | null
 }) {
   return {
     id: String(material.id),
     name: material.name,
-    price_per_gram: Number(material.price_per_gram ?? 0),
+    icon: material.icon ?? '🧩',
+    summary: material.summary ?? '',
     density: Number(material.density ?? 0),
+    price_per_gram: Number(material.price_per_gram ?? 0),
+    machine_rate: Number(material.machine_rate ?? 180),
+    multiplier: Number(material.multiplier ?? 1),
+    recommended_for: material.recommended_for ?? '',
+    properties: material.properties ?? {},
     colors: Array.isArray(material.colors) ? material.colors : [],
     difficulty_factor: Number(material.difficulty_factor ?? 1.1),
+    key_properties: Array.isArray(material.key_properties) ? material.key_properties : [],
+    best_for: Array.isArray(material.best_for) ? material.best_for : [],
+    difficulty_level: material.difficulty_level ?? 'Easy',
+    heat_resistance: material.heat_resistance ?? 'Low',
+    strength_rating: material.strength_rating ?? 'Medium',
+    finish_quality: material.finish_quality ?? 'Good',
+    sample_photo: material.sample_photo ?? '',
     stock: material.stock,
     created_at: material.created_at ?? undefined,
+    updated_at: material.updated_at ?? undefined,
   } as AdminMaterial
 }
 
@@ -548,13 +925,26 @@ export async function createAdminMaterial(input: AdminMaterialInput) {
     .from('materials')
     .insert({
       name: input.name,
-      price_per_gram: input.pricePerGram,
+      icon: input.icon,
+      summary: input.summary,
       density: input.density,
+      price_per_gram: input.pricePerGram,
+      machine_rate: input.machineRate,
+      multiplier: input.multiplier,
+      recommended_for: input.recommendedFor,
+      properties: input.properties,
       colors: input.colors,
       difficulty_factor: input.difficultyFactor,
+      key_properties: input.keyProperties,
+      best_for: input.bestFor,
+      difficulty_level: input.difficultyLevel,
+      heat_resistance: input.heatResistance,
+      strength_rating: input.strengthRating,
+      finish_quality: input.finishQuality,
+      sample_photo: input.samplePhoto,
       stock: input.stock,
     })
-    .select('id, name, price_per_gram, density, colors, difficulty_factor, stock, created_at')
+    .select('id, name, icon, summary, density, price_per_gram, machine_rate, multiplier, recommended_for, properties, colors, difficulty_factor, key_properties, best_for, difficulty_level, heat_resistance, strength_rating, finish_quality, sample_photo, stock, created_at, updated_at')
     .single()
 
   if (error) throw new Error(error.message)
@@ -567,15 +957,28 @@ export async function updateAdminMaterial(materialId: string, input: AdminMateri
     .from('materials')
     .update({
       name: input.name,
-      price_per_gram: input.pricePerGram,
+      icon: input.icon,
+      summary: input.summary,
       density: input.density,
+      price_per_gram: input.pricePerGram,
+      machine_rate: input.machineRate,
+      multiplier: input.multiplier,
+      recommended_for: input.recommendedFor,
+      properties: input.properties,
       colors: input.colors,
       difficulty_factor: input.difficultyFactor,
+      key_properties: input.keyProperties,
+      best_for: input.bestFor,
+      difficulty_level: input.difficultyLevel,
+      heat_resistance: input.heatResistance,
+      strength_rating: input.strengthRating,
+      finish_quality: input.finishQuality,
+      sample_photo: input.samplePhoto,
       stock: input.stock,
       updated_at: new Date().toISOString(),
     })
     .eq('id', materialId)
-    .select('id, name, price_per_gram, density, colors, difficulty_factor, stock, created_at')
+    .select('id, name, icon, summary, density, price_per_gram, machine_rate, multiplier, recommended_for, properties, colors, difficulty_factor, key_properties, best_for, difficulty_level, heat_resistance, strength_rating, finish_quality, sample_photo, stock, created_at, updated_at')
     .single()
 
   if (error) throw new Error(error.message)
@@ -592,7 +995,7 @@ export async function getAdminAnalyticsData() {
   const { data, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, post_processing_charges, total_price, estimated_time, status, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge, payment_method, user_id'
+      'id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, material_cost, machine_cost, subtotal, post_processing_charges, weight, difficulty_factor, total_price, final_price, grand_total, overhead_percent, overhead_amount, margin_percent, margin_amount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, coupon_code, coupon_id, discount_type, estimated_time, status, cancel_requested, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge, user_id'
     )
   if (error) throw new Error(error.message)
 
@@ -609,11 +1012,11 @@ export async function getAdminAnalyticsData() {
     return acc
   }, {} as Record<OrderStatus, number>)
 
-  const totalRevenue = orders.reduce((sum, order) => sum + order.totalPrice, 0)
+  const totalRevenue = orders.reduce((sum, order) => sum + order.grandTotal, 0)
   const averageOrderValue = totalOrders === 0 ? 0 : totalRevenue / totalOrders
-  const activeProduction = (statusBuckets.printing ?? 0) + (statusBuckets.queued ?? 0)
-  const blockedOrders = (statusBuckets['on-hold'] ?? 0) + (statusBuckets.pending ?? 0)
-  const fulfilledOrders = (statusBuckets.completed ?? 0) + (statusBuckets.shipped ?? 0)
+  const activeProduction = (statusBuckets.printing ?? 0) + (statusBuckets.confirmed ?? 0)
+  const blockedOrders = statusBuckets.pending ?? 0
+  const fulfilledOrders = (statusBuckets.completed ?? 0) + (statusBuckets.delivered ?? 0) + (statusBuckets.shipped ?? 0)
 
   return {
     metrics: [
@@ -626,13 +1029,13 @@ export async function getAdminAnalyticsData() {
       {
         label: 'Active Production',
         value: String(activeProduction),
-        change: 'Queued or currently printing',
+        change: 'Confirmed or currently printing',
         tone: 'neutral' as const,
       },
       {
         label: 'Blocked Orders',
         value: String(blockedOrders),
-        change: 'Pending review or on hold',
+        change: 'Pending review',
         tone: blockedOrders > 0 ? 'warning' as const : 'neutral' as const,
       },
       {
@@ -669,7 +1072,7 @@ export async function getAdminFullAnalytics() {
   ] = await Promise.all([
     supabase
       .from('orders')
-      .select('id, group_id, total_price, status, material, city, payment_method, user_id, created_at'),
+      .select('id, group_id, total_price, final_price, grand_total, status, material, city, user_id, created_at'),
     supabase
       .from('materials')
       .select('id, name, price_per_gram, stock, current_stock, min_threshold, sku, type, brand, unit'),
@@ -686,22 +1089,16 @@ export async function getAdminFullAnalytics() {
   const materials = materialsResult.data ?? []
   const printers = printersResult.data ?? []
 
-  const totalRevenue = orders.reduce((sum, o) => sum + normalizeMoney(o.total_price), 0)
+  const totalRevenue = orders.reduce((sum, o) => sum + normalizeMoney(o.grand_total ?? o.final_price ?? o.total_price), 0)
 
   const ordersByStatus = orders.reduce<Record<string, number>>((acc, o) => {
     acc[o.status] = (acc[o.status] ?? 0) + 1
     return acc
   }, {})
 
-  const revenueByPaymentMethod = orders.reduce<Record<string, number>>((acc, o) => {
-    const method = o.payment_method ?? 'Unknown'
-    acc[method] = (acc[method] ?? 0) + normalizeMoney(o.total_price)
-    return acc
-  }, {})
-
   const topMaterialsByRevenue = Object.entries(
     orders.reduce<Record<string, number>>((acc, o) => {
-      acc[o.material] = (acc[o.material] ?? 0) + normalizeMoney(o.total_price)
+      acc[o.material] = (acc[o.material] ?? 0) + normalizeMoney(o.grand_total ?? o.final_price ?? o.total_price)
       return acc
     }, {})
   )
@@ -740,10 +1137,7 @@ export async function getAdminFullAnalytics() {
   return {
     revenueAnalytics: {
       totalRevenue,
-      revenueByPaymentMethod: Object.entries(revenueByPaymentMethod).map(([method, amount]) => ({
-        method,
-        amount,
-      })),
+      revenueByPaymentMethod: totalRevenue > 0 ? [{ method: 'Orders', amount: totalRevenue }] : [],
     },
     orderAnalytics: {
       totalOrders: orders.length,
@@ -947,7 +1341,28 @@ export async function updateAdminOffer(id: string, input: Partial<Offer>) {
   const { data, error } = await supabase
     .from('offers')
     .update({
-      ...input,
+      title: input.title,
+      description: input.description,
+      banner_url: input.banner_url,
+      offer_type: input.offer_type,
+      discount_value: input.discount_value,
+      max_discount: input.max_discount,
+      min_order_value: input.min_order_value,
+      starts_at: input.starts_at,
+      ends_at: input.ends_at,
+      is_active: input.is_active,
+      is_featured: input.is_featured,
+      auto_apply: input.auto_apply,
+      coupon_code: input.coupon_code,
+      applicable_categories: input.applicable_categories,
+      applicable_materials: input.applicable_materials,
+      applicable_products: input.applicable_products,
+      usage_limit: input.usage_limit,
+      usage_per_user: input.usage_per_user,
+      badge_text: input.badge_text,
+      badge_color: input.badge_color,
+      sale_label: input.sale_label,
+      theme_config: input.theme_config,
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)

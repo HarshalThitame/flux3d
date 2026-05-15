@@ -6,6 +6,8 @@ import {
   updateAdminMaterial,
 } from '@/lib/admin/queries'
 import { requireAdminRequest } from '@/lib/admin/request'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { logAdminAction } from '@/lib/admin/auditLog'
 
 export async function GET() {
   const auth = await requireAdminRequest()
@@ -22,21 +24,51 @@ export async function GET() {
 type MaterialPayload = {
   id?: string
   name?: string
-  pricePerGram?: number
+  icon?: string
+  summary?: string
   density?: number
+  pricePerGram?: number
+  machineRate?: number
+  multiplier?: number
+  recommendedFor?: string
+  properties?: Record<string, unknown>
   colors?: string[]
   difficultyFactor?: number
+  keyProperties?: string[]
+  bestFor?: string[]
+  difficultyLevel?: 'Easy' | 'Medium' | 'Hard'
+  heatResistance?: 'Low' | 'Medium' | 'High'
+  strengthRating?: 'Low' | 'Medium' | 'High'
+  finishQuality?: 'Basic' | 'Good' | 'Excellent'
+  samplePhoto?: string
   stock?: 'Healthy' | 'Low' | 'Paused'
 }
 
 function validateMaterialPayload(body: MaterialPayload) {
   const name = typeof body.name === 'string' ? body.name.trim() : ''
+  const icon = typeof body.icon === 'string' && body.icon.trim() ? body.icon.trim() : '🧩'
+  const summary = typeof body.summary === 'string' ? body.summary.trim() : ''
   const pricePerGram = Number(body.pricePerGram)
   const density = Number(body.density)
+  const machineRate = Number(body.machineRate) || 180
+  const multiplier = Number(body.multiplier) || 1
   const colors = Array.isArray(body.colors)
     ? body.colors.map((color) => String(color).trim()).filter(Boolean)
     : []
   const difficultyFactor = Number(body.difficultyFactor) || 1.1
+  const recommendedFor = typeof body.recommendedFor === 'string' ? body.recommendedFor.trim() : ''
+  const properties = body.properties && typeof body.properties === 'object' ? body.properties : {}
+  const keyProperties = Array.isArray(body.keyProperties)
+    ? body.keyProperties.map((value) => String(value).trim()).filter(Boolean)
+    : []
+  const bestFor = Array.isArray(body.bestFor)
+    ? body.bestFor.map((value) => String(value).trim()).filter(Boolean)
+    : []
+  const difficultyLevel = body.difficultyLevel ?? 'Easy'
+  const heatResistance = body.heatResistance ?? 'Low'
+  const strengthRating = body.strengthRating ?? 'Medium'
+  const finishQuality = body.finishQuality ?? 'Good'
+  const samplePhoto = typeof body.samplePhoto === 'string' ? body.samplePhoto.trim() : ''
   const stock = body.stock
 
   if (!name) {
@@ -57,10 +89,23 @@ function validateMaterialPayload(body: MaterialPayload) {
 
   return {
     name,
+    icon,
+    summary,
     pricePerGram,
     density,
+    machineRate,
+    multiplier,
+    recommendedFor,
+    properties,
     colors,
     difficultyFactor,
+    keyProperties,
+    bestFor,
+    difficultyLevel,
+    heatResistance,
+    strengthRating,
+    finishQuality,
+    samplePhoto,
     stock,
   } as const
 }
@@ -72,6 +117,14 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as MaterialPayload
     const material = await createAdminMaterial(validateMaterialPayload(body))
+    await logAdminAction({
+      admin_id: auth.user.id,
+      action: 'create_material',
+      target_type: 'material',
+      target_id: material.id,
+      old_value: null,
+      new_value: material as Record<string, unknown>,
+    })
     return NextResponse.json({ material }, { status: 201 })
   } catch (error) {
     return getAdminApiErrorResponse(error)
@@ -89,7 +142,21 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Material id is required.' }, { status: 400 })
     }
 
+    const supabase = createAdminSupabaseClient()
+    const { data: oldMaterial } = await supabase
+      .from('materials')
+      .select('id, name, density, price_per_gram, machine_rate, multiplier, stock')
+      .eq('id', body.id)
+      .maybeSingle()
     const material = await updateAdminMaterial(body.id, validateMaterialPayload(body))
+    await logAdminAction({
+      admin_id: auth.user.id,
+      action: 'update_material',
+      target_type: 'material',
+      target_id: body.id,
+      old_value: oldMaterial ?? null,
+      new_value: material as Record<string, unknown>,
+    })
     return NextResponse.json({ material })
   } catch (error) {
     return getAdminApiErrorResponse(error)

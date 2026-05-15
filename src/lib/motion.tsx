@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { forwardRef, useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, useEffect, useMemo, useState } from 'react'
 
 type MotionProps = Record<string, unknown> & {
   children?: React.ReactNode
@@ -50,8 +50,7 @@ function createMotionComponent<Tag extends keyof React.JSX.IntrinsicElements>(ta
       className,
       style,
       ...filteredProps,
-      children,
-    })
+    }, children as React.ReactNode)
   })
 }
 

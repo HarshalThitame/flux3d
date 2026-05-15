@@ -12,7 +12,6 @@ import type { AppUserProfile } from '@/lib/auth/server'
 import { normalizeOwnedStoragePath } from '@/lib/quote/storage-path'
 import {
   addressesEqual,
-  calculateOrderTotal,
   formatAddressSummary,
   initialAddressFields,
   ORDER_DRAFT_STORAGE_KEY,
@@ -52,6 +51,22 @@ export default function DeliveryStepClient({
       const normalizedFileUrl = normalizeOwnedStoragePath(parsed.fileUrl, user.id)
       return {
         ...parsed,
+        priceBreakdown: parsed.priceBreakdown ?? {
+          materialCost: parsed.materialCost ?? 0,
+          machineCost: parsed.machineCost ?? 0,
+          postProcessingCharges: parsed.postProcessingCharges ?? 0,
+          subtotal: parsed.subtotal ?? 0,
+          cartDiscountAmount: parsed.cartDiscountAmount ?? 0,
+          cartDiscountPercent: parsed.cartDiscountPercent ?? 0,
+          overheadPercentage: parsed.overheadPercentage ?? 0,
+          overheadAmount: parsed.overheadAmount ?? 0,
+          marginPercentage: parsed.marginPercentage ?? 0,
+          marginAmount: parsed.marginAmount ?? 0,
+          totalPrice: parsed.totalPrice ?? 0,
+          finalPrice: parsed.finalPrice ?? 0,
+          deliveryCharge: parsed.deliveryCharge ?? 0,
+          grandTotal: parsed.grandTotal ?? 0,
+        },
         fileUrl: normalizedFileUrl,
       }
     } catch {
@@ -82,7 +97,10 @@ export default function DeliveryStepClient({
   const [lastLookupPincode, setLastLookupPincode] = useState(savedAddresses[0]?.pincode ?? '')
 
   const pricing = useMemo(
-    () => calculateOrderTotal(draft?.price ?? 0),
+    () => ({
+      deliveryCharge: draft?.deliveryCharge ?? 0,
+      totalPrice: draft?.grandTotal ?? ((draft?.finalPrice ?? draft?.price ?? 0) + (draft?.deliveryCharge ?? 0)),
+    }),
     [draft]
   )
 
@@ -219,8 +237,24 @@ export default function DeliveryStepClient({
         postProcessingLevel: draft.postProcessingLevel,
         postProcessingCharges: draft.postProcessingCharges,
         supports: draft.supports,
+        materialCost: draft.materialCost,
+        machineCost: draft.machineCost,
+        subtotal: draft.subtotal,
+        totalPrice: draft.totalPrice,
+        cartDiscountAmount: draft.priceBreakdown?.cartDiscountAmount ?? draft.cartDiscountAmount,
+        cartDiscountPercent: draft.priceBreakdown?.cartDiscountPercent ?? draft.cartDiscountPercent,
+        finalPrice: draft.finalPrice,
+        deliveryCharge: draft.deliveryCharge,
+        grandTotal: draft.grandTotal,
         price: draft.price,
         estimatedTime: draft.estimatedTime,
+        weight: draft.weight,
+        difficultyFactor: draft.difficultyFactor,
+        overheadPercentage: draft.priceBreakdown?.overheadPercentage ?? draft.overheadPercentage,
+        overheadAmount: draft.priceBreakdown?.overheadAmount ?? draft.overheadAmount,
+        marginPercentage: draft.priceBreakdown?.marginPercentage ?? draft.marginPercentage,
+        marginAmount: draft.priceBreakdown?.marginAmount ?? draft.marginAmount,
+        priceBreakdown: draft.priceBreakdown,
         fullName: address.fullName,
         phone: address.phone,
         addressLine1: address.addressLine1,
@@ -236,7 +270,7 @@ export default function DeliveryStepClient({
       const orderData = {
         orderId: result.id,
         orderNumber: result.orderNumber,
-        totalPrice: result.totalPrice ?? draft.price,
+        totalPrice: result.grandTotal ?? result.totalPrice ?? draft.grandTotal ?? draft.finalPrice,
       }
       sessionStorage.setItem('flux3d-order-success', JSON.stringify(orderData))
       router.push('/order-success')
@@ -381,21 +415,25 @@ export default function DeliveryStepClient({
                 </div>
 
                 <div className="rounded-[24px] border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-5 shadow-[0_12px_48px_rgba(124, 92, 255,0.1)]">
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Total Price</div>
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Grand Total</div>
                   <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
                     ₹{pricing.totalPrice.toFixed(0)}
                   </div>
                   <div className="mt-3 grid gap-2 text-sm text-[#6F7192]">
                     <div className="flex justify-between">
-                      <span>Print cost</span>
-                      <span>₹{draft.price.toFixed(0)}</span>
+                      <span>Total price</span>
+                      <span>₹{draft.totalPrice.toFixed(0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Final price</span>
+                      <span>₹{draft.finalPrice.toFixed(0)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Delivery charge</span>
                       <span>
-                        {pricing.deliveryCharge === 0
+                        {draft.deliveryCharge === 0
                           ? 'FREE'
-                          : `₹${pricing.deliveryCharge.toFixed(0)}`}
+                          : `₹${draft.deliveryCharge.toFixed(0)}`}
                       </span>
                     </div>
                     <div className="flex justify-between">

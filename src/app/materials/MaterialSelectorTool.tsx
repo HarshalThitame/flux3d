@@ -1,54 +1,113 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
-import { useRef, useState } from 'react'
-import { MessageCircle } from 'lucide-react'
-import { useBusinessSettings } from '@/lib/settings-context'
+import Link from 'next/link'
+import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react'
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  IndianRupee,
+  MoveHorizontal,
+  RotateCcw,
+  ShieldCheck,
+  Sparkles,
+  Thermometer,
+} from 'lucide-react'
+import {
+  MATERIAL_QUIZ_QUESTIONS,
+  recommendMaterial,
+  type MaterialQuizAnswers,
+  type MaterialRecommendationInfo,
+} from '@/lib/materialRecommender'
 
-const questions = [
-  {
-    label: 'What is your print primarily for?',
-    options: ['Decorative / Display', 'Functional / Mechanical', 'Outdoor Use', 'Medical / Dental', 'Gift / Corporate', 'Student Project'],
-  },
-  {
-    label: 'How important is surface finish?',
-    options: ['Ultra fine detail (resin level)', 'Clean and smooth (standard)', 'Functional is fine, finish secondary'],
-  },
-  {
-    label: "What's your budget per gram?",
-    options: ['Under ₹10', '₹10–₹15', '₹15–₹20', '₹20+ — best quality'],
-  },
-]
+function hasCompleteAnswers(answers: Partial<MaterialQuizAnswers>): answers is MaterialQuizAnswers {
+  return MATERIAL_QUIZ_QUESTIONS.every((question) => Boolean(answers[question.key]))
+}
+
+function PropertyBadge({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: ComponentType<{ className?: string }>
+  label: string
+  value: string
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+      <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-gray-500">
+        <Icon className="h-3.5 w-3.5 text-[#7C5CFF]" />
+        {label}
+      </div>
+      <div className="text-sm font-semibold text-[#0F1B3D]">{value}</div>
+    </div>
+  )
+}
+
+function buildBadges(material: MaterialRecommendationInfo) {
+  return [
+    { label: 'Heat resistance', value: material.heatResistance, icon: Thermometer },
+    { label: 'Strength', value: material.strength, icon: ShieldCheck },
+    { label: 'Surface finish', value: material.surfaceFinish, icon: Sparkles },
+    { label: 'Flexibility', value: material.flexibility, icon: MoveHorizontal },
+    { label: 'Price per gram', value: material.priceRange, icon: IndianRupee },
+  ]
+}
 
 export default function MaterialSelectorTool() {
-  const { settings } = useBusinessSettings()
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
-  const [answers, setAnswers] = useState<Record<number, string>>({})
+  const advanceTimerRef = useRef<number | null>(null)
+  const [answers, setAnswers] = useState<Partial<MaterialQuizAnswers>>({})
+  const [activeQuestion, setActiveQuestion] = useState(0)
+  const [completed, setCompleted] = useState(false)
 
-  const handleSelect = (qIdx: number, option: string) => {
-    setAnswers(prev => ({ ...prev, [qIdx]: option }))
+  useEffect(() => {
+    return () => {
+      if (advanceTimerRef.current) {
+        window.clearTimeout(advanceTimerRef.current)
+      }
+    }
+  }, [])
+
+  const handleSelect = (option: string) => {
+    const question = MATERIAL_QUIZ_QUESTIONS[activeQuestion]
+    if (!question) return
+
+    if (advanceTimerRef.current) {
+      window.clearTimeout(advanceTimerRef.current)
+    }
+
+    setAnswers((prev) => ({ ...prev, [question.key]: option }))
+
+    advanceTimerRef.current = window.setTimeout(() => {
+      if (activeQuestion < MATERIAL_QUIZ_QUESTIONS.length - 1) {
+        setActiveQuestion((current) => current + 1)
+        return
+      }
+
+      setCompleted(true)
+    }, 300)
   }
 
-  const allAnswered = questions.every((_, i) => answers[i])
-
-  const getRecommendation = () => {
-    const use = answers[0]
-    const finish = answers[1]
-    const budget = answers[2]
-
-    if (use === 'Medical / Dental') return 'Dental Resin or Biocompatible Resin'
-    if (use === 'Outdoor Use') return 'ASA'
-    if (use === 'Gift / Corporate' && finish === 'Ultra fine detail (resin level)') return 'Silk PLA or Standard Resin'
-    if (use === 'Gift / Corporate') return 'Silk PLA'
-    if (use === 'Student Project') return 'PLA+'
-    if (use === 'Functional / Mechanical' && finish === 'Ultra fine detail (resin level)') return 'ABS-Like Resin'
-    if (use === 'Functional / Mechanical' && budget === '₹20+ — best quality') return 'Nylon PA12'
-    if (use === 'Functional / Mechanical') return 'PETG'
-    if (finish === 'Ultra fine detail (resin level)') return 'Standard Resin 4K'
-    return 'PLA+'
+  const handleRetake = () => {
+    if (advanceTimerRef.current) {
+      window.clearTimeout(advanceTimerRef.current)
+    }
+    setAnswers({})
+    setActiveQuestion(0)
+    setCompleted(false)
   }
+
+  const currentQuestion = MATERIAL_QUIZ_QUESTIONS[activeQuestion]
+  const recommendation = useMemo(
+    () => completed && hasCompleteAnswers(answers) ? recommendMaterial(answers) : null,
+    [answers, completed]
+  )
+  const progressIndex = Math.min(activeQuestion + 1, MATERIAL_QUIZ_QUESTIONS.length)
+  const progressPercent = (progressIndex / MATERIAL_QUIZ_QUESTIONS.length) * 100
 
   return (
     <section ref={ref} className="px-4 md:px-8 lg:px-16 py-20">
@@ -65,64 +124,149 @@ export default function MaterialSelectorTool() {
             Not Sure Which Material to Choose?
           </h2>
           <p className="text-[#6F7192] text-sm">
-            Answer 3 quick questions and we'll tell you exactly which material is right for your project.
+            Answer 4 quick questions and we&apos;ll recommend the right material for your print conditions.
           </p>
         </motion.div>
 
-        <div className="space-y-6">
-          {questions.map((q, qIdx) => (
-            <motion.div
-              key={qIdx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: qIdx * 0.1 }}
-              className="rounded-2xl border border-white/[0.06] bg-[rgba(255,255,255,0.72)] p-6"
-            >
-              <p className="text-[#0F1B3D] font-medium mb-4">
-                <span className="text-[#7C5CFF] mr-2">Q{qIdx + 1}.</span>
-                {q.label}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {q.options.map(opt => (
-                  <button
-                    key={opt}
-                    onClick={() => handleSelect(qIdx, opt)}
-                    className={`text-left px-4 py-2.5 rounded-xl text-sm transition-all ${
-                      answers[qIdx] === opt
-                        ? 'bg-[#7C5CFF]/15 text-[#7C5CFF] border border-[#7C5CFF]/30'
-                        : 'bg-[rgba(124, 92, 255,0.2)] text-[#6F7192] border border-white/[0.04] hover:border-white/[0.12] hover:text-white'
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          ))}
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          className="overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:p-6"
+        >
+          <div className="mb-6">
+            <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <span>Q{progressIndex}/{MATERIAL_QUIZ_QUESTIONS.length}</span>
+              <span>{Math.round(progressPercent)}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+              <div
+                className="h-full rounded-full bg-[#7C5CFF] transition-all duration-300"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
 
-        {allAnswered && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-8 rounded-2xl border border-[#7C5CFF]/20 bg-[rgba(124, 92, 255,0.05)] p-6 text-center"
-          >
-            <p className="text-sm text-[#6F7192] mb-2">We recommend:</p>
-            <p className="text-xl font-[var(--font-syne)] font-extrabold text-[#7C5CFF] mb-4">
-              {getRecommendation()}
-            </p>
-            <a
-              href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}?text=Hi%20${encodeURIComponent(settings.businessName || 'Flux3D')}!%20I'd%20like%20a%20quote%20for%20a%20project.`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#25D366]/15 border border-[#25D366]/30 px-6 py-3 text-sm font-semibold text-[#25D366] transition-all hover:bg-[#25D366]/25"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Get Material Recommendation on WhatsApp
-              <MessageCircle className="w-4 h-4" />
-            </a>
-          </motion.div>
-        )}
+          <AnimatePresence mode="wait">
+            {!completed && currentQuestion && (
+              <motion.div
+                key={currentQuestion.key}
+                initial={{ opacity: 0, x: 28 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -28 }}
+                transition={{ duration: 0.22 }}
+              >
+                <p className="mb-4 font-medium text-[#0F1B3D]">
+                  <span className="mr-2 text-[#7C5CFF]">Q{activeQuestion + 1}.</span>
+                  {currentQuestion.label}
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {currentQuestion.options.map((option) => {
+                    const selected = answers[currentQuestion.key] === option
+
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => handleSelect(option)}
+                        className={`min-h-12 rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all ${
+                          selected
+                            ? 'border-[#7C5CFF] bg-[#7C5CFF]/10 text-[#5B3FD6] shadow-sm'
+                            : 'border-gray-200 bg-gray-50 text-[#4B5563] hover:border-[#7C5CFF]/40 hover:bg-white hover:text-[#0F1B3D]'
+                        }`}
+                      >
+                        <span className="flex items-start gap-2">
+                          {selected && <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#7C5CFF]" />}
+                          <span>{option}</span>
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {recommendation && (
+              <motion.div
+                key="material-result"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 18 }}
+                transition={{ duration: 0.24 }}
+                className="space-y-5"
+              >
+                <div className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/5 p-5">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#7C5CFF]">
+                    Primary Recommendation
+                  </p>
+                  <h3 className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D]">
+                    {recommendation.primary.material.displayName}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-[#4B5563]">
+                    <span className="font-semibold text-[#0F1B3D]">Recommended because:</span>{' '}
+                    {recommendation.primary.reason}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-[#6F7192]">
+                    {recommendation.primary.material.summary}
+                  </p>
+
+                  <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {buildBadges(recommendation.primary.material).map((badge) => (
+                      <PropertyBadge
+                        key={badge.label}
+                        icon={badge.icon}
+                        label={badge.label}
+                        value={badge.value}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="mt-5">
+                    <Link
+                      href={`/instant-quote?material=${encodeURIComponent(recommendation.primary.material.materialId)}`}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#7C5CFF] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#6D4DE8] sm:w-auto"
+                    >
+                      Use This Material
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </div>
+                </div>
+
+                {recommendation.secondary && (
+                  <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                    <p className="text-sm text-[#4B5563]">
+                      <span className="font-semibold text-[#0F1B3D]">
+                        Also consider: {recommendation.secondary.material.displayName}
+                      </span>{' '}
+                      — {recommendation.secondary.tradeoff}.
+                    </p>
+                  </div>
+                )}
+
+                {(recommendation.warnings.length > 0 || recommendation.primary.notes.length > 0) && (
+                  <div className="space-y-2 rounded-2xl border border-orange-200 bg-orange-50 p-4">
+                    {[...recommendation.primary.notes, ...recommendation.warnings].map((note) => (
+                      <div key={note} className="flex gap-2 text-sm leading-6 text-orange-700">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                        <span>{note}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleRetake}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-[#4B5563] transition hover:bg-gray-50 hover:text-[#0F1B3D] sm:w-auto"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Retake Quiz
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </div>
     </section>
   )

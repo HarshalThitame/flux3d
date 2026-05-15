@@ -43,6 +43,18 @@ type PopupPosition = {
   width: number
 }
 
+type ApiMaterial = {
+  id: string
+  name: string
+  icon?: string
+  summary?: string
+  colors?: Array<string | { hex?: string }>
+  properties?: MaterialSpec['properties']
+  recommendedFor?: string
+  pricePerGram?: number
+  density?: number
+}
+
 function getPopupPosition(anchor: AnchorRect, isMobile: boolean): PopupPosition {
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
@@ -85,14 +97,16 @@ function getPopupPosition(anchor: AnchorRect, isMobile: boolean): PopupPosition 
   return { left, top, width }
 }
 
-function mapApiMaterialToSpec(m: any): MaterialSpec {
+function mapApiMaterialToSpec(m: ApiMaterial): MaterialSpec {
+  const firstColor = m.colors?.[0]
+
   return {
     id: m.id,
     name: m.name,
     tag: 'Admin Catalog',
     icon: m.icon || '🧩',
     description: m.summary || `${m.name} is available in the live admin catalog for custom 3D printing jobs.`,
-    color: m.colors?.[0]?.hex || (typeof m.colors?.[0] === 'string' ? m.colors[0] : undefined),
+    color: typeof firstColor === 'string' ? firstColor : firstColor?.hex,
     properties: m.properties || {
       strength: 'Medium',
       flexibility: 'Medium',

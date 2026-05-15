@@ -101,7 +101,16 @@ function hashColor(value: string) {
 }
 
 function colorNameToHex(name: unknown): string {
-  const nameStr = typeof name === 'string' ? name : (name as any)?.name || (name as any)?.hex || ''
+  const colorRecord = name && typeof name === 'object'
+    ? name as { name?: unknown; hex?: unknown }
+    : null
+  const nameStr = typeof name === 'string'
+    ? name
+    : typeof colorRecord?.name === 'string'
+      ? colorRecord.name
+      : typeof colorRecord?.hex === 'string'
+        ? colorRecord.hex
+        : ''
   const normalized = normalizeValue(nameStr)
 
   for (const [keyword, hex] of Object.entries(colorLookup)) {
@@ -130,8 +139,12 @@ function mapAdminColors(colors: unknown[], fallbackColors: MaterialColor[]): Mat
       if (color.length <= 1) continue
       name = color
     } else if (color && typeof color === 'object') {
-      const c = color as any
-      name = c.name || c.hex || 'Unknown'
+      const c = color as { name?: unknown; hex?: unknown }
+      name = typeof c.name === 'string'
+        ? c.name
+        : typeof c.hex === 'string'
+          ? c.hex
+          : 'Unknown'
     } else {
       continue
     }
@@ -150,19 +163,19 @@ function mapAdminMaterialToQuoteMaterial(material: AdminMaterial): QuoteMaterial
   return {
     id: material.id,
     name: material.name,
-    icon: fallbackMaterialId === 'resin-4k' ? '💎' : fallbackMaterialId === 'multi-color' ? '🎨' : '🧱',
-    summary: `${material.name} is available in the live admin catalog for custom 3D printing jobs.`,
+    icon: material.icon || (fallbackMaterialId === 'resin-4k' ? '💎' : fallbackMaterialId === 'multi-color' ? '🎨' : '🧱'),
+    summary: material.summary || `${material.name} is available in the live admin catalog for custom 3D printing jobs.`,
     density: material.density,
     pricePerGram: material.price_per_gram,
-    machineRate: 210,
-    multiplier: 1.1,
+    machineRate: material.machine_rate,
+    multiplier: material.multiplier,
     difficultyFactor: material.difficulty_factor,
-    recommendedFor: 'Custom parts, operator-reviewed jobs, and production runs',
+    recommendedFor: material.recommended_for || 'Custom parts, operator-reviewed jobs, and production runs',
     properties: {
-      strength: 'Medium',
-      flexibility: 'Medium',
-      tempResistance: 'Medium',
-      difficulty: 'Medium',
+      strength: material.properties?.strength || 'Medium',
+      flexibility: material.properties?.flexibility || 'Medium',
+      tempResistance: material.properties?.tempResistance || 'Medium',
+      difficulty: material.properties?.difficulty || 'Medium',
     },
     colors: mapAdminColors(material.colors, []),
   }

@@ -123,10 +123,7 @@ export default function QuoteSummary({
               >
                 <div className="text-[11px] uppercase tracking-[0.22em] text-[#ffd3c1]">Total Price</div>
                 <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
-                  ₹{totalPrice.toFixed(0)}
-                </div>
-                <div className="mt-1 text-[10px] uppercase tracking-[0.22em] text-[#7C5CFF]">
-                  Rounded to nearest ₹5
+                  ₹{priceBreakdown.priceBeforeDiscount.toFixed(0)}
                 </div>
                 <div className="mt-3 grid gap-2 text-sm text-[#ffe0d4]">
                   <div className="flex justify-between">
@@ -139,12 +136,12 @@ export default function QuoteSummary({
                   </div>
                   <div className="flex justify-between">
                     <span>Machine cost</span>
-                    <span>₹{priceBreakdown.timeCost.toFixed(2)}</span>
+                    <span>₹{priceBreakdown.machineCost.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Post-processing</span>
                     <span>
-                      {postProcessingOptions.find((option) => option.value === config.postProcessingLevel)?.label ?? 'None'} · ₹{priceBreakdown.labourCost.toFixed(2)}
+                      {postProcessingOptions.find((option) => option.value === config.postProcessingLevel)?.label ?? 'None'} · ₹{priceBreakdown.postProcessingCharges.toFixed(2)}
                     </span>
                   </div>
                   <div className="border-t border-[#7C5CFF]/10 pt-2 mt-1 flex justify-between text-xs text-[#6F7192]">
@@ -152,24 +149,32 @@ export default function QuoteSummary({
                     <span>₹{priceBreakdown.subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-[#6F7192]">
-                    <span>Overhead (15%)</span>
+                    <span>Overhead ({priceBreakdown.overheadPercentage}%)</span>
                     <span>₹{priceBreakdown.overheadAmount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-[#6F7192]">
-                    <span>Margin (40%)</span>
-                    <span>₹{priceBreakdown.profitMargin.toFixed(2)}</span>
+                    <span>Margin ({priceBreakdown.marginPercentage}%)</span>
+                    <span>₹{priceBreakdown.marginAmount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-[#6F7192]">
-                    <span>Quantity discount</span>
-                    <span>{priceBreakdown.quantityDiscountPercent}% · {priceBreakdown.quantityDiscountAmount > 0 ? '-' : ''}₹{priceBreakdown.quantityDiscountAmount.toFixed(2)}</span>
+                    <span>Cart discount</span>
+                    <span>{priceBreakdown.cartDiscountPercent}% · {priceBreakdown.cartDiscountAmount > 0 ? '-' : ''}₹{priceBreakdown.cartDiscountAmount.toFixed(2)}</span>
                   </div>
                   <div className="border-t border-[#7C5CFF]/10 pt-2 mt-1 flex justify-between font-medium text-[#0F1B3D]">
-                    <span>Pre-round total</span>
-                    <span>₹{priceBreakdown.totalBeforeRounding.toFixed(2)}</span>
+                    <span>Total price</span>
+                    <span>₹{priceBreakdown.priceBeforeDiscount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-[#6F7192]">
+                    <span>Final price</span>
+                    <span>₹{priceBreakdown.finalPrice.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Delivery charge</span>
-                    <span>{deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge.toFixed(0)}`}</span>
+                    <span>{priceBreakdown.deliveryCharge === 0 ? 'FREE' : `₹${priceBreakdown.deliveryCharge.toFixed(0)}`}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-[#6F7192]">
+                    <span>Grand total</span>
+                    <span>₹{priceBreakdown.grandTotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-[#6F7192]">
                     <span>Estimated print time</span>

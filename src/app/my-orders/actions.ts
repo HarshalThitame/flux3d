@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { requireUser } from '@/lib/auth/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-const cancelableStatuses = ['pending', 'reviewed', 'approved', 'queued']
+const cancelableStatuses = ['pending', 'confirmed']
 
 export async function cancelOrderAction(orderId: string) {
   const auth = await requireUser(`/my-orders/${orderId}`)
@@ -29,7 +29,7 @@ export async function cancelOrderAction(orderId: string) {
   const now = new Date().toISOString()
   const { error: updateError } = await supabase
     .from('orders')
-    .update({ status: 'cancelled', updated_at: now })
+    .update({ cancel_requested: true, updated_at: now })
     .eq('id', orderId)
     .eq('user_id', auth.user.id)
 
@@ -40,7 +40,7 @@ export async function cancelOrderAction(orderId: string) {
   if (order.group_id) {
     await supabase
       .from('orders')
-      .update({ status: 'cancelled', updated_at: now })
+      .update({ cancel_requested: true, updated_at: now })
       .eq('group_id', order.group_id)
       .eq('user_id', auth.user.id)
       .in('status', cancelableStatuses)

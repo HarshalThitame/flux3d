@@ -2,33 +2,27 @@
 
 import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Layers, MessageCircle, ChevronDown } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
 
 function useParticles(count: number) {
-  const [particles, setParticles] = useState<Array<{
+  const [particles] = useState<Array<{
     left: number
     top: number
     width: number
     height: number
     duration: number
     delay: number
-  }>>([])
-
-  useEffect(() => {
-    setParticles(
-      Array.from({ length: count }).map(() => ({
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        width: Math.random() * 3 + 1,
-        height: Math.random() * 3 + 1,
-        duration: Math.random() * 3 + 2,
-        delay: Math.random() * 2,
-      }))
-    )
-  }, [count])
+  }>>(() => Array.from({ length: count }).map(() => ({
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    width: Math.random() * 3 + 1,
+    height: Math.random() * 3 + 1,
+    duration: Math.random() * 3 + 2,
+    delay: Math.random() * 2,
+  })))
 
   return particles
 }

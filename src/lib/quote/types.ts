@@ -75,6 +75,11 @@ export type QuoteConfig = {
   supports: boolean
 }
 
+export type CartDiscountTier = {
+  minCartValue: number
+  discountPercent: number
+}
+
 export type PriceBreakdown = {
   scaledVolumeCm3: number
   quantity: number
@@ -89,20 +94,39 @@ export type PriceBreakdown = {
   estimatedMinutesPerUnit: number
   estimatedMinutes: number
   estimatedHours: number
-  quantityDiscountPercent: number
-  quantityDiscountAmount: number
-  totalBeforeRounding: number
   materialCost: number
+  machineCost: number
+  postProcessingCharges: number
+  subtotal: number
+  overheadPercent: number
+  overheadPercentage: number
+  marginPercent: number
+  marginPercentage: number
+  overheadAmount: number
+  marginAmount: number
+  priceBeforeDiscount: number
+  /** Database-compatible alias for priceBeforeDiscount / orders.total_price. */
+  totalPrice: number
+  cartDiscountPercent: number
+  cartDiscountAmount: number
+  afterCart: number
+  couponDiscountAmount: number
+  afterCoupon: number
+  offerDiscountAmount: number
+  discount: number
+  finalPrice: number
+  deliveryCharge: number
+  grandTotal: number
+  price: number
+  pricePerUnit: number
   timeCost: number
   labourCost: number
   setupCost: number
   supportCost: number
   postProcessingLevel: PostProcessingLevel
   postProcessingCostPerUnit: number
-  subtotal: number
-  overheadAmount: number
   profitMargin: number
-  total: number
+  difficultyFactor: number
   dimensionsMm: {
     x: number
     y: number

@@ -24,25 +24,122 @@ import { InputField } from '@/components/admin/FormField'
 
 type Tab = 'overview' | 'sessions' | 'pages' | 'time' | 'quotes' | 'cart' | 'orders' | 'payments' | 'files' | 'whatsapp' | 'tickets' | 'notes'
 
+type CustomerProfile = {
+  name?: string
+  email?: string
+  phone?: string
+  whatsappNumber?: string
+  city?: string
+  state?: string
+  profession?: string
+  totalSpent?: number
+  totalOrders?: number
+  engagementScore?: number
+  totalTimeSpent?: string
+  avgSessionDuration?: string
+  totalSiteVisits?: number
+  tags?: string[]
+  notes?: string
+}
+
+type CustomerSession = {
+  id: string
+  sessionId?: string
+  startedAt: string
+  device?: string
+  durationSeconds?: number
+  pageViewsCount?: number
+}
+
+type CustomerPageView = {
+  id: string
+  pageTitle?: string
+  pageUrl?: string
+  enteredAt: string
+  timeSpentSeconds?: number
+  scrollDepthPercent?: number
+}
+
+type CustomerQuote = {
+  id: string
+  quoteId?: string
+  material?: string
+  weightGrams?: number
+  estimatedCost?: number
+  convertedToOrder?: boolean
+}
+
+type CustomerCart = {
+  id: string
+  material?: string
+  weightGrams?: number
+  estimatedCost?: number
+  status?: string
+}
+
+type CustomerOrder = {
+  id: string
+  orderNumber?: string
+  material?: string
+  weightGrams?: number
+  amount?: number
+  status?: string
+}
+
+type CustomerFile = {
+  name?: string
+  size?: number
+  uploadedAt?: string
+}
+
+type CustomerWhatsAppMessage = {
+  id: string
+  direction?: string
+  messageText?: string
+  createdAt: string
+  automated?: boolean
+}
+
+type CustomerSupportTicket = {
+  id: string
+  ticketId?: string
+  subject?: string
+  category?: string
+  status?: string
+}
+
+type CustomerProfileResponse = {
+  profile?: CustomerProfile
+  sessions?: CustomerSession[]
+  pageViews?: CustomerPageView[]
+  quotes?: CustomerQuote[]
+  carts?: CustomerCart[]
+  orders?: CustomerOrder[]
+  files?: CustomerFile[]
+  whatsappMessages?: CustomerWhatsAppMessage[]
+  supportTickets?: CustomerSupportTicket[]
+}
+
 export default function CustomerProfilePage() {
   const params = useParams<{ id: string }>()
   const customerId = params?.id ?? ''
 
   const [activeTab, setActiveTab] = useState<Tab>('overview')
-  const [profile, setProfile] = useState<any | null>(null)
-  const [sessions, setSessions] = useState<any[] | null>(null)
-  const [pageViews, setPageViews] = useState<any[] | null>(null)
-  const [quotes, setQuotes] = useState<any[] | null>(null)
-  const [carts, setCarts] = useState<any[] | null>(null)
-  const [orders, setOrders] = useState<any[] | null>(null)
-  const [files, setFiles] = useState<any[] | null>(null)
-  const [whatsappMessages, setWhatsappMessages] = useState<any[] | null>(null)
-  const [supportTickets, setSupportTickets] = useState<any[] | null>(null)
+  const [profile, setProfile] = useState<CustomerProfile | null>(null)
+  const [sessions, setSessions] = useState<CustomerSession[] | null>(null)
+  const [pageViews, setPageViews] = useState<CustomerPageView[] | null>(null)
+  const [quotes, setQuotes] = useState<CustomerQuote[] | null>(null)
+  const [carts, setCarts] = useState<CustomerCart[] | null>(null)
+  const [orders, setOrders] = useState<CustomerOrder[] | null>(null)
+  const [files, setFiles] = useState<CustomerFile[] | null>(null)
+  const [whatsappMessages, setWhatsappMessages] = useState<CustomerWhatsAppMessage[] | null>(null)
+  const [supportTickets, setSupportTickets] = useState<CustomerSupportTicket[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
+    let cancelled = false
 
     async function load() {
       if (!customerId) {
@@ -57,26 +154,35 @@ export default function CustomerProfilePage() {
           const body = (await response.json().catch(() => ({}))) as { error?: string }
           throw new Error(body.error ?? 'Failed to load customer profile.')
         }
-        const json = await response.json()
-        setProfile(json.profile)
-        setSessions(json.sessions || [])
-        setPageViews(json.pageViews || [])
-        setQuotes(json.quotes || [])
-        setCarts(json.carts || [])
-        setOrders(json.orders || [])
-        setFiles(json.files || [])
-        setWhatsappMessages(json.whatsappMessages || [])
-        setSupportTickets(json.supportTickets || [])
+        const json = (await response.json()) as CustomerProfileResponse
+        if (!cancelled) {
+          setProfile(json.profile ?? null)
+          setSessions(json.sessions || [])
+          setPageViews(json.pageViews || [])
+          setQuotes(json.quotes || [])
+          setCarts(json.carts || [])
+          setOrders(json.orders || [])
+          setFiles(json.files || [])
+          setWhatsappMessages(json.whatsappMessages || [])
+          setSupportTickets(json.supportTickets || [])
+        }
       } catch (loadError) {
-        if ((loadError as Error).name === 'AbortError') return
-        setError(loadError instanceof Error ? loadError.message : 'Failed to load customer profile.')
+        if ((loadError as Error).name === 'AbortError') {
+          cancelled = true
+          return
+        }
+        if (!cancelled) {
+          setError(loadError instanceof Error ? loadError.message : 'Failed to load customer profile.')
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
     void load()
-    return () => controller.abort()
+    return () => { cancelled = true; controller.abort() }
   }, [customerId])
 
   const tabs = [

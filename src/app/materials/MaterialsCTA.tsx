@@ -23,7 +23,7 @@ export default function MaterialsCTA() {
           Ready to Choose<br />Your Material?
         </h2>
         <p className="text-[#6F7192] text-sm mb-8 max-w-[500px] mx-auto">
-          Upload your file and we'll recommend the perfect material and give you an instant quote. No account, no commitment — just a fast answer.
+          Upload your file and we&apos;ll recommend the perfect material and give you an instant quote. No account, no commitment — just a fast answer.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">

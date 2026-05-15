@@ -2,23 +2,20 @@
 
 import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useState } from 'react'
 import { ArrowRight, Sparkles } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
 
 function FloatingOrbs() {
-  const [orbs, setOrbs] = useState<Array<{ id: number; x: number; y: number; size: number; duration: number }>>([])
-
-  useEffect(() => {
-    const newOrbs = Array.from({ length: 6 }, (_, i) => ({
+  const [orbs] = useState<Array<{ id: number; x: number; y: number; size: number; duration: number }>>(
+    () => Array.from({ length: 6 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
       size: Math.random() * 60 + 30,
       duration: Math.random() * 4 + 3
     }))
-    setOrbs(newOrbs)
-  }, [])
+  )
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">

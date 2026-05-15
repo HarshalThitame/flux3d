@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Search, Percent, Calendar, Tag, Eye, EyeOff, Pencil, Trash2, IndianRupee, Ticket } from 'lucide-react'
+import { logSearch } from '@/lib/tracking/searchLogger'
 
 type Coupon = {
   id: string
@@ -54,6 +55,18 @@ export default function AdminCouponsPage() {
     const q = search.toLowerCase()
     return c.code.toLowerCase().includes(q) || c.description?.toLowerCase().includes(q)
   })
+
+  useEffect(() => {
+    if (!search.trim()) return
+
+    const timeout = window.setTimeout(() => {
+      void logSearch(null, search.trim(), {
+        area: 'admin_coupons',
+      }, filtered.length).catch(() => {})
+    }, 500)
+
+    return () => window.clearTimeout(timeout)
+  }, [filtered.length, search])
 
   async function toggleStatus(id: string, current: boolean) {
     await fetch(`/api/admin/coupons/${id}`, {

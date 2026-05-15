@@ -1,8 +1,9 @@
 'use client'
 
-import { useDeferredValue, useState } from 'react'
+import { useDeferredValue, useEffect, useState } from 'react'
 import { ArrowDownWideNarrow, ArrowUpWideNarrow, ChevronLeft, ChevronRight, Search, Filter } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { logSearch } from '@/lib/tracking/searchLogger'
 
 type FilterOption = {
   label: string
@@ -90,6 +91,24 @@ export default function DataTable<T extends { id: string }>({
   const paginatedRows = rows.slice((page - 1) * pageSize, page * pageSize)
 
   const activeFilterCount = Object.values(activeFilters).filter((v) => v !== 'all').length
+  const activeFiltersKey = JSON.stringify(activeFilters)
+
+  useEffect(() => {
+    const hasSearch = deferredQuery.trim().length > 0
+    const hasFilters = Object.values(activeFilters).some((value) => value !== 'all')
+    if (!hasSearch && !hasFilters) return
+
+    const timeout = window.setTimeout(() => {
+      void logSearch(null, deferredQuery.trim() || null, {
+        table: title,
+        filters: activeFilters,
+        sortKey,
+        sortDirection,
+      }, rows.length).catch(() => {})
+    }, 500)
+
+    return () => window.clearTimeout(timeout)
+  }, [activeFilters, activeFiltersKey, deferredQuery, rows.length, sortDirection, sortKey, title])
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-[#FFFFFF]">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, PackageCheck, Truck, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -13,7 +13,6 @@ import type { AppUserProfile } from '@/lib/auth/server'
 import { normalizeOwnedStoragePath } from '@/lib/quote/storage-path'
 import {
   addressesEqual,
-  calculateOrderTotal,
   formatAddressSummary,
   initialAddressFields,
   validateAddressFields,
@@ -32,7 +31,7 @@ export default function CartDeliveryClient({
   savedAddresses,
 }: CartDeliveryClientProps) {
   const router = useRouter()
-  const { items, summary, clearItems, appliedCoupon, setAppliedCoupon, autoApplyOffer } = useCart()
+  const { items, summary, clearItems } = useCart()
   const [selectedAddressId, setSelectedAddressId] = useState<string | 'new'>(
     savedAddresses[0]?.id ?? 'new'
   )
@@ -74,10 +73,9 @@ export default function CartDeliveryClient({
   const [lookupLoading, setLookupLoading] = useState(false)
   const [lastLookupPincode, setLastLookupPincode] = useState(savedAddresses[0]?.pincode ?? '')
 
-  const pricing = useMemo(
-    () => calculateOrderTotal(summary.subtotal),
-    [summary.subtotal]
-  )
+  const payableTotal = summary.grandTotal
+  const itemsTotal = summary.itemsTotal
+  const cartDiscountPercent = Math.round(summary.cartDiscountPercent)
 
   useEffect(() => {
     if (items.length === 0 && !confirmation) {
@@ -214,19 +212,45 @@ export default function CartDeliveryClient({
           quantity: item.quantity ?? 1,
           infill: item.infill ?? 20,
           layerHeight: item.layerHeight ?? 0.2,
+          postProcessingLevel: item.config?.postProcessingLevel ?? 'none',
           supports: item.supports ?? false,
+          materialCost: item.materialCost ?? 0,
+          machineCost: item.machineCost ?? 0,
+          subtotal: item.subtotal ?? item.price ?? 0,
           postProcessingCharges: item.postProcessingCharges ?? 0,
+          overheadPercentage: item.overheadPercentage ?? 0,
+          overheadAmount: item.overheadAmount ?? 0,
+          marginPercentage: item.marginPercentage ?? 0,
+          marginAmount: item.marginAmount ?? 0,
+          totalPrice: item.totalPrice ?? item.price ?? 0,
+          cartDiscountAmount: item.cartDiscountAmount ?? 0,
+          cartDiscountPercent: item.cartDiscountPercent ?? 0,
+          finalPrice: item.finalPrice ?? item.totalPrice ?? item.price ?? 0,
+          deliveryCharge: item.deliveryCharge ?? 0,
+          grandTotal: item.grandTotal ?? (item.finalPrice ?? item.totalPrice ?? item.price ?? 0) + (item.deliveryCharge ?? 0),
           price: item.price ?? 0,
-          estimatedTime: item.estimatedTime ?? 0,
-          weight: item.weight ?? 0,
-          dimensions: item.dimensions ?? { x: 0, y: 0, z: 0 },
+	          estimatedTime: item.estimatedTime ?? 0,
+	          weight: item.weight ?? 0,
+	          difficultyFactor: item.difficultyFactor ?? 1,
+	          dimensions: item.dimensions ?? { x: 0, y: 0, z: 0 },
         })),
-        subtotal: summary.subtotal,
+        subtotal: summary.itemsTotal,
+        itemsTotal: summary.itemsTotal,
+        cartDiscountAmount: summary.cartDiscountAmount,
+        cartDiscountPercent: summary.cartDiscountPercent,
+        couponDiscountAmount: summary.couponDiscountAmount,
+        couponCode: summary.couponCode,
+        couponId: summary.couponId,
+        couponDiscountType: summary.couponDiscountType,
+        offerId: summary.offerId,
+        offerDiscountAmount: summary.offerDiscountAmount,
+        offerName: summary.offerName,
+        offerCode: summary.offerCode,
+        offerDiscountType: summary.offerDiscountType,
         discount: summary.discount,
-        couponCode: appliedCoupon?.code ?? null,
-        couponId: appliedCoupon?.id !== autoApplyOffer?.id ? (appliedCoupon?.id ?? null) : null,
-        offerId: autoApplyOffer && appliedCoupon?.id === autoApplyOffer.id ? autoApplyOffer.id : null,
-        discountType: appliedCoupon?.discount_type ?? null,
+        finalPrice: summary.finalPrice,
+        deliveryCharge: summary.deliveryCharge,
+        grandTotal: summary.grandTotal,
         fullName: address.fullName,
         phone: address.phone,
         addressLine1: address.addressLine1,
@@ -241,7 +265,7 @@ export default function CartDeliveryClient({
         orderId: result.orderId,
         orderNumber: result.orderNumber,
         itemCount: result.itemCount,
-        totalPrice: summary.total,
+        totalPrice: payableTotal,
       })
       clearItems()
     } catch (error) {
@@ -401,34 +425,46 @@ export default function CartDeliveryClient({
                   ))}
                 </div>
 
-                <div className="rounded-[24px] border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-5 shadow-[0_12px_48px_rgba(124, 92, 255,0.1)]">
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Total Price</div>
+              <div className="rounded-[24px] border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-5 shadow-[0_12px_48px_rgba(124, 92, 255,0.1)]">
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Grand Total</div>
                   <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
-                    ₹{summary.total.toFixed(0)}
+                    ₹{payableTotal.toFixed(2)}
                   </div>
                   <div className="mt-3 grid gap-2 text-sm text-[#6F7192]">
-                    <div className="flex justify-between">
-                      <span>Print cost ({items.length} items)</span>
-                      <span>₹{summary.subtotal.toFixed(0)}</span>
-                    </div>
+	                    <div className="flex justify-between">
+	                      <span>Items Total ({items.length} items)</span>
+	                      <span>₹{itemsTotal.toFixed(2)}</span>
+	                    </div>
+                    {summary.cartDiscountAmount > 0 && (
+                      <div className="flex justify-between text-emerald-700">
+                        <span>Cart Discount {cartDiscountPercent}%</span>
+                        <span>-₹{summary.cartDiscountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {summary.couponDiscountAmount > 0 && summary.appliedCoupon && (
+                      <div className="flex justify-between text-emerald-700">
+                        <span>Coupon ({summary.appliedCoupon.code})</span>
+                        <span>-₹{summary.couponDiscountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {summary.offerDiscountAmount > 0 && summary.appliedOffer && (
+                      <div className="flex justify-between text-emerald-700">
+                        <span>Offer ({summary.appliedOffer.title})</span>
+                        <span>-₹{summary.offerDiscountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+	                    <div className="flex justify-between">
+	                      <span>Final Price</span>
+	                      <span>₹{summary.finalPrice.toFixed(2)}</span>
+	                    </div>
                     <div className="flex justify-between">
                       <span>Delivery charge</span>
                       <span>
-                        {pricing.deliveryCharge === 0
+                        {summary.deliveryCharge === 0
                           ? 'FREE'
-                          : `₹${pricing.deliveryCharge.toFixed(0)}`}
+                          : `₹${summary.deliveryCharge.toFixed(0)}`}
                       </span>
                     </div>
-                    {summary.discount > 0 && (
-                      <div className="flex justify-between text-[#10B981]">
-                        <span>
-                          {autoApplyOffer && appliedCoupon?.id === autoApplyOffer.id
-                            ? 'Sale Discount'
-                            : `Discount (${appliedCoupon?.code})`}
-                        </span>
-                        <span>-₹{summary.discount.toFixed(0)}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
 

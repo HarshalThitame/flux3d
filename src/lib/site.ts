@@ -3,14 +3,16 @@ import type { BusinessSettings } from '@/lib/admin/business-settings'
 
 const fallback = FALLBACK_SETTINGS
 
-const siteUrlEnv =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  process.env.VERCEL_PROJECT_PRODUCTION_URL ??
-  process.env.VERCEL_URL
+const siteUrlEnv = process.env.NEXT_PUBLIC_SITE_URL
+const DEV_PLACEHOLDER_SITE_URL = 'https://flux3d.local.invalid'
 
 function normalizeSiteUrl(value?: string) {
   if (!value) {
-    return 'http://localhost:3000'
+    if (process.env.NODE_ENV !== 'production') {
+      return DEV_PLACEHOLDER_SITE_URL
+    }
+
+    throw new Error('NEXT_PUBLIC_SITE_URL is required to build absolute site URLs.')
   }
 
   const withProtocol = value.startsWith('http') ? value : `https://${value}`

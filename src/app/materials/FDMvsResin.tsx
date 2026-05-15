@@ -20,10 +20,10 @@ export default function FDMvsResin() {
             Technology Guide
           </span>
           <h2 className="text-2xl md:text-3xl font-[var(--font-syne)] font-extrabold text-[#0F1B3D] mb-2">
-            FDM or Resin?<br />Here's How to Decide.
+            FDM or Resin?<br />Here&apos;s How to Decide.
           </h2>
           <p className="text-[#6F7192] text-sm max-w-[600px] mx-auto">
-            The two most common 3D printing technologies have very different strengths. Here's what you actually need to know — without the jargon.
+            The two most common 3D printing technologies have very different strengths. Here&apos;s what you actually need to know — without the jargon.
           </p>
         </motion.div>
 

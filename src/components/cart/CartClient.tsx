@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Trash2, ShoppingCart, ArrowRight, Plus, IndianRupee, ChevronDown, Edit2, Check, AlertTriangle, X, Tag } from 'lucide-react'
+import { Trash2, ShoppingCart, ArrowRight, Plus, IndianRupee, Edit2, AlertTriangle, X, Tag } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/cart/context'
@@ -11,6 +11,7 @@ import EmptyState from '@/components/admin/EmptyState'
 import type { QuoteMaterial } from '@/lib/quote/types'
 import { formatDurationMinutes } from '@/lib/quote/pricing-engine'
 import CouponInput, { type CouponResult } from '@/components/offers/CouponInput'
+import { calculatePricingWaterfall } from '@/lib/quote/pricing-waterfall'
 
 type CartClientProps = {
   user: AppUserProfile | null
@@ -20,16 +21,15 @@ type CartClientProps = {
 type EditingItem = {
   id: string
   addedAt: string
-  material?: string
-  color?: string
-  infill?: number
 }
 
-export default function CartClient({ user, materials }: CartClientProps) {
+export default function CartClient({ user }: CartClientProps) {
   const router = useRouter()
-  const { items, summary, removeItem, updateItem, clearItems, isLoading, appliedCoupon, setAppliedCoupon, autoApplyOffer } = useCart()
+  const { items, summary, removeItem, updateItem, clearItems, isLoading, setAppliedCoupon } = useCart()
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const couponOrderAmount = Math.max(0, summary.itemsTotal - summary.cartDiscountAmount)
+  const cartDiscountPercent = Math.round(summary.cartDiscountPercent)
 
   const handleRemoveItem = (addedAt: string) => {
     removeItem(addedAt)
@@ -52,59 +52,40 @@ export default function CartClient({ user, materials }: CartClientProps) {
     setEditingItem({
       id: item.id ?? '',
       addedAt: item.addedAt ?? '',
-      material: item.config?.materialId ?? item.material ?? '',
-      color: item.color ?? '',
-      infill: item.infill ?? 20,
     })
   }
 
-  const handleSaveEdit = () => {
-    if (!editingItem) return
-
-    const materialId = editingItem.material || editingItem.id
-    const selectedMaterial = materials.find((m) => m.id === materialId)
-    if (!selectedMaterial) return
-
-    const selectedColor = editingItem.color
-      ? selectedMaterial.colors.find((c) => c.name === editingItem.color)
-      : selectedMaterial.colors[0]
-    if (!selectedColor) return
-
-    const basePrice = items.find((i) => i.addedAt === editingItem.addedAt)?.price ?? 0
-    const originalInfill = items.find((i) => i.addedAt === editingItem.addedAt)?.infill ?? 20
-    const infillValue = editingItem.infill ?? 20
-    const priceAdjustment = (infillValue - originalInfill) / 100 * basePrice * 0.3
-    const existingItem = items.find((i) => i.addedAt === editingItem.addedAt)
-    const existingConfig = existingItem?.config ?? { materialId: '', color: '', infill: 20, layerHeight: 0.2, quantity: 1, postProcessingLevel: 'none' as const, supports: false }
-
-    updateItem(editingItem.addedAt, {
-      material: selectedMaterial.name,
-      color: selectedColor.name,
-      infill: editingItem.infill ?? 20,
-      config: {
-        ...existingConfig,
-        materialId: editingItem.material ?? existingConfig.materialId,
-        color: editingItem.color ?? existingConfig.color,
-        infill: editingItem.infill ?? existingConfig.infill,
-      },
-      price: Math.max(0, basePrice + priceAdjustment),
+  const getQuantityPricingSnapshot = (item: typeof items[number], nextQuantity: number) => {
+    const currentQuantity = Math.max(1, item.quantity ?? 1)
+    const quantity = Math.max(1, nextQuantity)
+    const waterfall = calculatePricingWaterfall({
+      materialCost: (Number(item.materialCost ?? 0) / currentQuantity) * quantity,
+      machineCost: (Number(item.machineCost ?? 0) / currentQuantity) * quantity,
+      postProcessingCharges: (Number(item.postProcessingCharges ?? 0) / currentQuantity) * quantity,
+      quantity,
+      overheadPercent: Number(item.overheadPercentage ?? 0),
+      marginPercent: Number(item.marginPercentage ?? 0),
+      deliveryCharge: 0,
     })
 
-    setEditingItem(null)
+    return {
+      materialCost: waterfall.materialCost,
+      machineCost: waterfall.machineCost,
+      subtotal: waterfall.subtotal,
+      postProcessingCharges: waterfall.postProcessingCharges,
+      overheadAmount: waterfall.overheadAmount,
+      marginAmount: waterfall.marginAmount,
+      totalPrice: waterfall.priceBeforeDiscount,
+      finalPrice: waterfall.finalPrice,
+      deliveryCharge: 0,
+      grandTotal: waterfall.finalPrice,
+      price: waterfall.finalPrice,
+    }
   }
 
   const handleCancelEdit = () => {
     setEditingItem(null)
   }
-
-  const selectedMaterial = useMemo(() => {
-    if (!editingItem) return null
-    return materials.find((m) => m.id === editingItem.material)
-  }, [editingItem, materials])
-
-  const availableColors = useMemo(() => {
-    return selectedMaterial?.colors ?? []
-  }, [selectedMaterial])
 
   if (isLoading) {
     return (
@@ -155,8 +136,6 @@ export default function CartClient({ user, materials }: CartClientProps) {
           <div className="space-y-4">
             {items.map((item, index) => {
               const isEditing = editingItem?.id === item.id && (editingItem?.addedAt ?? '') === (item.addedAt ?? '')
-              const currentMaterial = materials.find((m) => m.id === (item.config?.materialId ?? '')) ?? materials.find((m) => m.name === item.material)
-
               return (
                 <motion.div
                   key={`${item.id}-${item.addedAt ?? index}-${index}`}
@@ -199,70 +178,19 @@ export default function CartClient({ user, materials }: CartClientProps) {
                         <div className="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3">
                         <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Material</div>
-                          {editingItem ? (
-                            <select
-                              value={editingItem.material}
-                              onChange={(e) => {
-                                const newMaterial = materials.find((m) => m.id === e.target.value)
-                                if (newMaterial) {
-                                  setEditingItem({
-                                    ...editingItem,
-                                    material: newMaterial.id,
-                                    color: newMaterial.colors[0]?.name ?? editingItem.color,
-                                  })
-                                }
-                              }}
-                              className="mt-1 w-full bg-transparent text-sm font-medium text-[#0F1B3D] outline-none"
-                            >
-                              {materials.map((m) => (
-                                <option key={m.id} value={m.id} className="bg-[#FFFFFF]">
-                                  {m.name}
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.material}</div>
-                          )}
+                          <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.material}</div>
                         </div>
 
                         <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Color</div>
-                          {editingItem ? (
-                            <select
-                              value={editingItem.color}
-                              onChange={(e) => setEditingItem({ ...editingItem, color: e.target.value })}
-                              className="mt-1 w-full bg-transparent text-sm font-medium text-[#0F1B3D] outline-none"
-                            >
-                              {availableColors.map((c) => (
-                                <option key={c.name} value={c.name} className="bg-[#FFFFFF]">
-                                  {c.name}
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            <div className="mt-1 text-sm font-medium text-[#0F1B3D]">
-                              {item.color}
-                            </div>
-                          )}
+                          <div className="mt-1 text-sm font-medium text-[#0F1B3D]">
+                            {item.color}
+                          </div>
                         </div>
 
                         <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Infill</div>
-                          {editingItem ? (
-                            <select
-                              value={editingItem.infill}
-                              onChange={(e) => setEditingItem({ ...editingItem, infill: Number(e.target.value) })}
-                              className="mt-1 w-full bg-transparent text-sm font-medium text-[#0F1B3D] outline-none"
-                            >
-                              {[10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100].map((val) => (
-                                <option key={val} value={val} className="bg-[#FFFFFF]">
-                                  {val}%
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.infill}%</div>
-                          )}
+                          <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.infill}%</div>
                         </div>
 
                         <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
@@ -282,15 +210,17 @@ export default function CartClient({ user, materials }: CartClientProps) {
                       </div>
 
                       {isEditing && (
-                        <div className="mt-4 flex gap-3">
-                          <button
-                            type="button"
-                            onClick={handleSaveEdit}
-                            className="inline-flex items-center gap-2 rounded-lg bg-[#7C5CFF] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-95"
-                          >
-                            <Check className="h-4 w-4" />
-                            Save Changes
-                          </button>
+                        <div className="mt-4 rounded-2xl border border-amber-300/40 bg-amber-50 px-4 py-3">
+                          <p className="text-sm font-medium text-amber-800">
+                            Re-upload or re-quote to change material settings. Cart items do not keep the STL mesh data required for an exact recalculation.
+                          </p>
+                          <div className="mt-3 flex gap-3">
+                            <Link
+                              href="/instant-quote"
+                              className="inline-flex items-center gap-2 rounded-lg bg-[#7C5CFF] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-95"
+                            >
+                              Re-quote item
+                            </Link>
                           <button
                             type="button"
                             onClick={handleCancelEdit}
@@ -298,6 +228,7 @@ export default function CartClient({ user, materials }: CartClientProps) {
                           >
                             Cancel
                           </button>
+                          </div>
                         </div>
                       )}
 
@@ -323,8 +254,10 @@ export default function CartClient({ user, materials }: CartClientProps) {
                           value={item.quantity ?? 1}
                           onChange={(e) => {
                             const qty = Math.max(1, Math.floor(Number(e.target.value) || 1))
-                            const unitPrice = (item.price ?? 0) / Math.max(1, (item.quantity ?? 1))
-                            updateItem(item.addedAt ?? '', { quantity: qty, price: unitPrice * qty })
+                            updateItem(item.addedAt ?? '', {
+                              quantity: qty,
+                              ...getQuantityPricingSnapshot(item, qty),
+                            })
                           }}
                           className="mt-1 w-full rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-2.5 py-1.5 text-right text-sm font-medium text-[#0F1B3D] outline-none"
                         />
@@ -364,8 +297,34 @@ export default function CartClient({ user, materials }: CartClientProps) {
 
             <div className="space-y-3 rounded-[20px] border border-[#7C5CFF]/10 bg-white/[0.03] p-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-[#aeb8d8]">Items ({summary.itemCount})</span>
-                <span className="font-medium text-[#0F1B3D]">₹{summary.subtotal.toFixed(0)}</span>
+                <span className="text-[#aeb8d8]">Items Total ({summary.itemCount})</span>
+                <span className="font-medium text-[#0F1B3D]">₹{summary.itemsTotal.toFixed(0)}</span>
+              </div>
+              {summary.cartDiscountAmount > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-[#10B981]">Cart Discount {cartDiscountPercent}%</span>
+                  <span className="font-medium text-[#10B981]">-₹{summary.cartDiscountAmount.toFixed(2)}</span>
+                </div>
+              )}
+              {summary.couponDiscountAmount > 0 && summary.appliedCoupon && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-[#10B981]">
+                    Coupon ({summary.appliedCoupon.code})
+                  </span>
+                  <span className="font-medium text-[#10B981]">-₹{summary.couponDiscountAmount.toFixed(2)}</span>
+                </div>
+              )}
+              {summary.offerDiscountAmount > 0 && summary.appliedOffer && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-[#10B981]">
+                    Offer ({summary.appliedOffer.title})
+                  </span>
+                  <span className="font-medium text-[#10B981]">-₹{summary.offerDiscountAmount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-[#aeb8d8]">Final Price</span>
+                <span className="font-medium text-[#0F1B3D]">₹{summary.finalPrice.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-[#aeb8d8]">Delivery</span>
@@ -373,34 +332,26 @@ export default function CartClient({ user, materials }: CartClientProps) {
                   {summary.deliveryCharge === 0 ? 'FREE' : `₹${summary.deliveryCharge.toFixed(0)}`}
                 </span>
               </div>
-              {summary.discount > 0 && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="inline-flex items-center gap-1 text-[#10B981]">
-                    <Tag className="w-3 h-3" />
-                    {autoApplyOffer && appliedCoupon?.id === autoApplyOffer.id
-                      ? 'Sale Discount'
-                      : `Discount (${appliedCoupon?.code})`}
-                  </span>
-                  <span className="font-medium text-[#10B981]">-₹{summary.discount.toFixed(0)}</span>
-                </div>
-              )}
               <div className="border-t border-[#7C5CFF]/10 pt-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-base font-semibold text-[#0F1B3D]">Total</span>
+                  <span className="text-base font-semibold text-[#0F1B3D]">Grand Total</span>
                   <span className="font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">
-                    ₹{summary.total.toFixed(0)}
+                    ₹{summary.grandTotal.toFixed(2)}
                   </span>
                 </div>
               </div>
             </div>
 
             <div className="mt-4 space-y-3">
-              {autoApplyOffer && appliedCoupon?.id === autoApplyOffer.id && (
+              {summary.appliedOffer && summary.offerDiscountAmount > 0 && (
                 <div className="rounded-xl border border-[rgba(124,92,255,0.2)] bg-[rgba(124,92,255,0.06)] px-3 py-2.5">
                   <div className="flex items-center gap-2 text-sm text-[#7C5CFF]">
                     <Tag className="w-3.5 h-3.5" />
-                    <span className="font-semibold">Sale Applied</span>
-                    <span className="text-xs opacity-70">-₹{summary.discount.toFixed(0)}</span>
+                    <span className="font-semibold">
+                      {summary.appliedOffer.badge_text ??
+                        `${summary.appliedOffer.title} — ${summary.appliedOffer.sale_label ?? `${summary.appliedOffer.discount_value}% Off`} Applied 🎉`}
+                    </span>
+                    <span className="text-xs opacity-70">-₹{summary.offerDiscountAmount.toFixed(2)}</span>
                   </div>
                 </div>
               )}
@@ -410,14 +361,14 @@ export default function CartClient({ user, materials }: CartClientProps) {
                   <span className="text-xs font-medium text-[#6F7192] uppercase tracking-wider">Have a coupon?</span>
                 </div>
                 <CouponInput
-                  orderAmount={summary.subtotal}
+                  orderAmount={couponOrderAmount}
                   userId={user?.id ?? null}
                   onApply={(result: CouponResult) => {
                     if (result.valid && result.coupon) {
                       setAppliedCoupon(result.coupon)
                     }
                   }}
-                  appliedCoupon={appliedCoupon && (!autoApplyOffer || appliedCoupon.id !== autoApplyOffer.id) ? { valid: true, coupon: appliedCoupon } : null}
+                  appliedCoupon={summary.appliedCoupon ? { valid: true, coupon: summary.appliedCoupon } : null}
                   onRemove={() => setAppliedCoupon(null)}
                 />
               </div>

@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import 'server-only'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { getBusinessSettings } from '@/lib/admin/business-settings'
 import type { BusinessSettings, BusinessSettingsRow } from '@/lib/admin/business-settings'
 import { FALLBACK_SETTINGS, getFallbackSettings } from '@/lib/settings-fallback'
 
@@ -18,6 +19,51 @@ function bool(value: boolean | null | undefined): boolean {
 
 function num(value: number | null | undefined): number {
   return value ?? 0
+}
+
+function parseCartDiscountTiers(
+  value: unknown,
+  fallback: BusinessSettings['cartDiscountTiers']
+): BusinessSettings['cartDiscountTiers'] {
+  if (!Array.isArray(value)) {
+    return fallback
+  }
+
+  const tiers = value
+    .map((tier) => {
+      if (!tier || typeof tier !== 'object') return null
+      const record = tier as Record<string, unknown>
+      const minCartValue = Number(record.min_cart_value ?? record.minCartValue)
+      const discountPercent = Number(record.discount_percent ?? record.discountPercent)
+
+      if (!Number.isFinite(minCartValue) || !Number.isFinite(discountPercent)) {
+        return null
+      }
+
+      return {
+        minCartValue: Math.max(0, minCartValue),
+        discountPercent: Math.max(0, discountPercent),
+      }
+    })
+    .filter((tier): tier is BusinessSettings['cartDiscountTiers'][number] => Boolean(tier))
+    .sort((left, right) => left.minCartValue - right.minCartValue)
+
+  return tiers.length > 0 ? tiers : fallback
+}
+
+function parsePostProcessingMultipliers(
+  value: unknown,
+  fallback: BusinessSettings['postProcessingMultipliers']
+): BusinessSettings['postProcessingMultipliers'] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return fallback
+  }
+
+  return Object.entries(value as Record<string, unknown>).reduce<BusinessSettings['postProcessingMultipliers']>((acc, [key, raw]) => {
+    const next = Number(raw)
+    acc[key] = Number.isFinite(next) ? Math.max(0, next) : fallback[key] ?? 0
+    return acc
+  }, { ...fallback })
 }
 
 function mapRow(row: BusinessSettingsRow): BusinessSettings {
@@ -78,6 +124,9 @@ function mapRow(row: BusinessSettingsRow): BusinessSettings {
     currency: n(row.currency) || FALLBACK.currency,
     currencySymbol: n(row.currency_symbol) || FALLBACK.currencySymbol,
     taxPercentage: row.tax_percentage ?? FALLBACK.taxPercentage,
+    gstEnabled: row.gst_enabled ?? FALLBACK.gstEnabled,
+    cgstPercent: row.cgst_percent ?? FALLBACK.cgstPercent,
+    sgstPercent: row.sgst_percent ?? FALLBACK.sgstPercent,
     sacHsnCode: n(row.sac_hsn_code),
     paymentTerms: n(row.payment_terms),
     bankAccountName: n(row.bank_account_name),
@@ -116,6 +165,13 @@ function mapRow(row: BusinessSettingsRow): BusinessSettings {
     orderProcessingTime: n(row.order_processing_time) || FALLBACK.orderProcessingTime,
     deliveryChargeThreshold: row.delivery_charge_threshold ?? FALLBACK.deliveryChargeThreshold,
     defaultDeliveryCharge: row.default_delivery_charge ?? FALLBACK.defaultDeliveryCharge,
+    overheadPercentage: row.overhead_percent ?? FALLBACK.overheadPercentage,
+    marginPercentage: row.margin_percentage ?? FALLBACK.marginPercentage,
+    materialMarkupPercent: row.material_markup_percent ?? FALLBACK.materialMarkupPercent,
+    printSpeedGramsPerHour: row.print_speed_grams_per_hour ?? FALLBACK.printSpeedGramsPerHour,
+    postProcessingMultipliers: parsePostProcessingMultipliers(row.post_processing_multipliers, FALLBACK.postProcessingMultipliers),
+    cartDiscountEnabled: row.cart_discount_enabled ?? FALLBACK.cartDiscountEnabled,
+    cartDiscountTiers: parseCartDiscountTiers(row.cart_discount_tiers, FALLBACK.cartDiscountTiers),
     pickupAvailable: bool(row.pickup_available),
     codAvailable: bool(row.cod_available),
     createdAt: row.created_at ?? '',
@@ -176,7 +232,8 @@ export type PublicBusinessSettings = Omit<BusinessSettings,
   'upiQrCodeUrl'>
 
 export async function getPublicSettings(): Promise<PublicBusinessSettings> {
-  const settings = await getSettings()
+  const settings = await getBusinessSettings()
+  if (!settings) return FALLBACK as PublicBusinessSettings
   const publicSettings = { ...settings }
   delete (publicSettings as Record<string, unknown>).smtpHost
   delete (publicSettings as Record<string, unknown>).smtpPort

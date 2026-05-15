@@ -121,16 +121,16 @@ export default function TermsOfServiceClient() {
                 </h2>
                 <div className="space-y-4 text-[#6F7192] leading-relaxed">
                   <p>
-                    By downloading, installing, accessing, or using the Flux 3D application (the "Application"),
-                    you ("User" or "you") agree to be legally bound by these Terms of Service ("Terms"),
+                    By downloading, installing, accessing, or using the Flux 3D application (the &quot;Application&quot;),
+                    you (&quot;User&quot; or &quot;you&quot;) agree to be legally bound by these Terms of Service (&quot;Terms&quot;),
                     our Privacy Policy, and any other policies or guidelines incorporated herein.
                   </p>
                   <p>
-                    These Terms constitute a binding legal agreement between you and Flux 3D ("we," "us," or "our").
+                    These Terms constitute a binding legal agreement between you and Flux 3D (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;).
                   </p>
                   <p>
                     If you are using the Application on behalf of an organization, you represent that you have authority
-                    to bind that organization to these Terms, and all references to "you" also apply to that organization.
+                    to bind that organization to these Terms, and all references to &quot;you&quot; also apply to that organization.
                   </p>
                   <p>
                     We reserve the right to modify these Terms at any time. We will provide notice of significant changes
@@ -247,7 +247,7 @@ export default function TermsOfServiceClient() {
                     <h3 className="text-lg font-semibold text-[#0F1B3D] mb-3">4.2 User-Created Content</h3>
                     <p>
                       You retain full ownership of all 3D models, scenes, animations, renders, and other original
-                      content you create using the Application ("User Content"). We do not claim any ownership rights
+                      content you create using the Application (&quot;User Content&quot;). We do not claim any ownership rights
                       over your User Content.
                     </p>
                     <p className="mt-3">
@@ -340,7 +340,7 @@ export default function TermsOfServiceClient() {
                 <div className="space-y-4 text-[#6F7192] leading-relaxed">
                   <p>
                     If the Application includes community features, asset sharing, or collaborative workspaces,
-                    the following terms apply to any content you upload, share, or publish within the platform ("Community Content"):
+                    the following terms apply to any content you upload, share, or publish within the platform (&quot;Community Content&quot;):
                   </p>
                   <ul className="space-y-2 ml-6">
                     {[
@@ -371,7 +371,7 @@ export default function TermsOfServiceClient() {
                     <p>
                       Flux 3D offers both free and paid subscription plans. Paid plans provide access to premium
                       features including advanced rendering, extended cloud storage, collaboration tools, and priority
-                      support. Current pricing is available at our website and may be updated with 30 days' advance notice.
+                      support. Current pricing is available at our website and may be updated with 30 days&apos; advance notice.
                     </p>
                   </div>
                   <div>
@@ -474,7 +474,7 @@ export default function TermsOfServiceClient() {
                   10. Disclaimers & Warranties
                 </h2>
                 <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-2xl p-6 text-[#6F7192] leading-relaxed">
-                  <p className="font-semibold text-[#0F1B3D] mb-3">THE APPLICATION IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:</p>
+                  <p className="font-semibold text-[#0F1B3D] mb-3">THE APPLICATION IS PROVIDED ON AN &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; BASIS WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:</p>
                   <ul className="space-y-2 ml-6 mb-4">
                     {[
                       'Warranties of merchantability, fitness for a particular purpose, or non-infringement',

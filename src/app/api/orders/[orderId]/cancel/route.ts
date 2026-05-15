@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-const cancelableStatuses = ['pending', 'reviewed', 'approved', 'queued']
+const cancelableStatuses = ['pending', 'confirmed']
 
 export async function POST(
   _request: Request,
@@ -39,7 +39,7 @@ export async function POST(
     const now = new Date().toISOString()
     const { error: updateError } = await supabase
       .from('orders')
-      .update({ status: 'cancelled', updated_at: now })
+      .update({ cancel_requested: true, updated_at: now })
       .eq('id', orderId)
       .eq('user_id', user.id)
 
@@ -50,7 +50,7 @@ export async function POST(
     if (order.group_id) {
       await supabase
         .from('orders')
-        .update({ status: 'cancelled', updated_at: now })
+        .update({ cancel_requested: true, updated_at: now })
         .eq('group_id', order.group_id)
         .eq('user_id', user.id)
         .in('status', cancelableStatuses)

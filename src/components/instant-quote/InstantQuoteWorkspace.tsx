@@ -19,28 +19,25 @@ import {
   FileArchive,
   Move3D,
   Cuboid,
-  Gauge,
 } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
 import { Bounds, OrbitControls } from '@react-three/drei'
 import { Suspense } from 'react'
 import EmptyState from '@/components/admin/EmptyState'
 import type { AppUserProfile } from '@/lib/auth/server'
-import {
-  calculateOrderTotal,
-} from '@/lib/orders'
 import { getMaterialById, layerHeightOptions } from '@/lib/quote/materials'
 import { parseModelFile } from '@/lib/quote/model-utils'
-import { calculateInstantQuote, formatDurationMinutes, postProcessingOptions } from '@/lib/quote/pricing-engine'
+import { calculateInstantQuote, formatDurationMinutes, getPostProcessingCharge, postProcessingOptions } from '@/lib/quote/pricing-engine'
+import type { PricingSettingsInput } from '@/lib/quote/pricing-waterfall'
 import { saveQuoteToSupabase, uploadFileToSupabaseStorage, validateModelFile } from '@/lib/quote/supabase-storage'
 import { hasSupabaseConfig } from '@/lib/supabase/config'
+import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 import type { ParsedModel, QuoteConfig, QuoteMaterial, UploadState } from '@/lib/quote/types'
 import type { Object3D } from 'three'
 import { useCart } from '@/lib/cart/context'
 import type { CartItem } from '@/lib/cart/types'
 import Toast, { type ToastState } from '@/components/quote/Toast'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { ORDER_DRAFT_STORAGE_KEY, type OrderDraft } from '@/lib/orders'
 
 const initialUploadState: UploadState = {
@@ -51,6 +48,8 @@ const initialUploadState: UploadState = {
 type InstantQuoteWorkspaceProps = {
   user: AppUserProfile | null
   materials: QuoteMaterial[]
+  initialMaterialId?: string
+  pricingSettings: PricingSettingsInput
   bulkOrderContact: {
     email: string
     whatsappNumber: string
@@ -60,6 +59,8 @@ type InstantQuoteWorkspaceProps = {
 export default function InstantQuoteWorkspace({
   user,
   materials,
+  initialMaterialId,
+  pricingSettings,
   bulkOrderContact,
 }: InstantQuoteWorkspaceProps) {
   if (materials.length === 0) {
@@ -79,34 +80,64 @@ export default function InstantQuoteWorkspace({
     <CartEnabledWorkspace
       user={user}
       materials={materials}
+      initialMaterialId={initialMaterialId}
+      pricingSettings={pricingSettings}
       bulkOrderContact={bulkOrderContact}
     />
   )
 }
 
 const WORKSPACE_STORAGE_KEY = 'flux3d-workspace-draft'
+const QUOTE_ID_STORAGE_KEY = 'flux3d-quote-id'
+
+function getInitialQuoteId() {
+  if (typeof window === 'undefined') {
+    return ''
+  }
+
+  const stored = sessionStorage.getItem(QUOTE_ID_STORAGE_KEY)
+  if (stored) {
+    return stored
+  }
+
+  const newId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+  sessionStorage.setItem(QUOTE_ID_STORAGE_KEY, newId)
+  return newId
+}
+
+function getInitialWorkspaceConfig(defaultConfig: QuoteConfig, forceMaterialSelection: boolean) {
+  if (typeof window === 'undefined') {
+    return defaultConfig
+  }
+
+  const raw = sessionStorage.getItem(WORKSPACE_STORAGE_KEY)
+  if (!raw) {
+    return defaultConfig
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as { config?: QuoteConfig }
+    const merged = { ...defaultConfig, ...parsed.config }
+    return forceMaterialSelection
+      ? { ...merged, materialId: defaultConfig.materialId, color: defaultConfig.color }
+      : merged
+  } catch {
+    return defaultConfig
+  }
+}
 
 function CartEnabledWorkspace({
   user,
   materials,
+  initialMaterialId,
+  pricingSettings,
   bulkOrderContact,
-  }: InstantQuoteWorkspaceProps) {
-  const router = useRouter()
+}: InstantQuoteWorkspaceProps) {
   const { addItem, isInCart } = useCart()
   const supabaseEnabled = hasSupabaseConfig()
-  const defaultMaterial = getMaterialById('pla', materials) ?? materials[0] ?? getMaterialById('pla-plus', materials)
-  const [initialQuoteId, setInitialQuoteId] = useState('')
-
-  useEffect(() => {
-    const stored = sessionStorage.getItem('flux3d-quote-id')
-    if (stored) {
-      setInitialQuoteId(stored)
-      return
-    }
-    const newId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
-    sessionStorage.setItem('flux3d-quote-id', newId)
-    setInitialQuoteId(newId)
-  }, [])
+  const preferredMaterial = initialMaterialId ? getMaterialById(initialMaterialId, materials) : undefined
+  const defaultMaterial = preferredMaterial ?? getMaterialById('pla', materials) ?? getMaterialById('pla-plus', materials) ?? materials[0]
+  const [initialQuoteId, setInitialQuoteId] = useState(getInitialQuoteId)
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedModel, setSelectedModel] = useState<ParsedModel | null>(null)
@@ -119,28 +150,18 @@ function CartEnabledWorkspace({
     postProcessingLevel: 'none',
     supports: false,
   }
-  const [config, setConfig] = useState<QuoteConfig>(defaultConfig)
+  const [config, setConfig] = useState<QuoteConfig>(() => getInitialWorkspaceConfig(defaultConfig, Boolean(initialMaterialId)))
   const [uploadState, setUploadState] = useState<UploadState>(initialUploadState)
   const [viewerLoading, setViewerLoading] = useState(false)
   const [fileError, setFileError] = useState<string | null>(null)
   const [toast, setToast] = useState<ToastState>(null)
-  const [hasUserSelectedMaterial, setHasUserSelectedMaterial] = useState(false)
+  const [hasUserSelectedMaterial, setHasUserSelectedMaterial] = useState(Boolean(initialMaterialId))
   const [savingQuote, setSavingQuote] = useState(false)
   const uploadRef = useRef<HTMLDivElement>(null)
   const viewerRef = useRef<HTMLDivElement>(null)
   const materialRef = useRef<HTMLDivElement>(null)
   const settingsRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const raw = sessionStorage.getItem(WORKSPACE_STORAGE_KEY)
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw) as { config?: QuoteConfig }
-        setConfig((prev) => ({ ...prev, ...parsed.config }))
-      } catch { /* ignore */ }
-    }
-  }, [])
+  const trackedQuoteRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -158,17 +179,30 @@ function CartEnabledWorkspace({
   }, [toast])
 
   const priceBreakdown = useMemo(
-    () => calculateInstantQuote(selectedModel, config, materials),
-    [selectedModel, config, materials]
+    () => calculateInstantQuote(selectedModel, config, materials, pricingSettings),
+    [selectedModel, config, materials, pricingSettings]
   )
-  const deliveryPricing = useMemo(
-    () => calculateOrderTotal(priceBreakdown?.total ?? 0),
-    [priceBreakdown]
-  )
+
+  useEffect(() => {
+    if (!selectedModel || !priceBreakdown || !initialQuoteId || trackedQuoteRef.current === initialQuoteId) {
+      return
+    }
+
+    trackedQuoteRef.current = initialQuoteId
+    void trackFeatureUsage(user?.id ?? null, 'instant_quote', {
+      quoteId: initialQuoteId,
+      fileName: selectedModel.fileName,
+      materialId: config.materialId,
+      color: config.color,
+      quantity: config.quantity,
+      grandTotal: priceBreakdown.grandTotal,
+    }).catch(() => {})
+  }, [config.color, config.materialId, config.quantity, initialQuoteId, priceBreakdown, selectedModel, user?.id])
   const selectedMaterial = getMaterialById(config.materialId, materials)
+  const postProcessingBaseAmount = priceBreakdown ? priceBreakdown.materialCost + priceBreakdown.machineCost : 0
   const selectedColorName = config.color
   const orderDraft = useMemo<OrderDraft | null>(() => {
-    if (!initialQuoteId || !selectedModel || !priceBreakdown || uploadState.status !== 'success' || !uploadState.path) {
+    if (!initialQuoteId || !selectedMaterial || !selectedModel || !priceBreakdown || uploadState.status !== 'success' || !uploadState.path) {
       return null
     }
 
@@ -181,10 +215,41 @@ function CartEnabledWorkspace({
       layerHeight: config.layerHeight,
       quantity: config.quantity,
       postProcessingLevel: config.postProcessingLevel,
-      postProcessingCharges: priceBreakdown.labourCost,
+      materialCost: priceBreakdown.materialCost,
+      machineCost: priceBreakdown.machineCost,
+      subtotal: priceBreakdown.subtotal,
+      postProcessingCharges: priceBreakdown.postProcessingCharges,
+      totalPrice: priceBreakdown.priceBeforeDiscount,
+      cartDiscountAmount: priceBreakdown.cartDiscountAmount,
+      cartDiscountPercent: priceBreakdown.cartDiscountPercent,
+      finalPrice: priceBreakdown.finalPrice,
+      deliveryCharge: priceBreakdown.deliveryCharge,
+      grandTotal: priceBreakdown.grandTotal,
       supports: config.supports,
-      price: priceBreakdown.total,
+      price: priceBreakdown.finalPrice,
       estimatedTime: priceBreakdown.estimatedHours,
+      weight: priceBreakdown.materialWeightGrams,
+      difficultyFactor: priceBreakdown.difficultyFactor,
+      overheadPercentage: priceBreakdown.overheadPercentage,
+      overheadAmount: priceBreakdown.overheadAmount,
+      marginPercentage: priceBreakdown.marginPercentage,
+      marginAmount: priceBreakdown.marginAmount,
+      priceBreakdown: {
+        materialCost: priceBreakdown.materialCost,
+        machineCost: priceBreakdown.machineCost,
+        postProcessingCharges: priceBreakdown.postProcessingCharges,
+        subtotal: priceBreakdown.subtotal,
+        overheadPercentage: priceBreakdown.overheadPercentage,
+        overheadAmount: priceBreakdown.overheadAmount,
+        marginPercentage: priceBreakdown.marginPercentage,
+        marginAmount: priceBreakdown.marginAmount,
+        totalPrice: priceBreakdown.priceBeforeDiscount,
+        cartDiscountAmount: priceBreakdown.cartDiscountAmount,
+        cartDiscountPercent: priceBreakdown.cartDiscountPercent,
+        finalPrice: priceBreakdown.finalPrice,
+        deliveryCharge: priceBreakdown.deliveryCharge,
+        grandTotal: priceBreakdown.grandTotal,
+      },
       notes: '',
     }
   }, [
@@ -196,7 +261,7 @@ function CartEnabledWorkspace({
     initialQuoteId,
     priceBreakdown,
     selectedColorName,
-    selectedMaterial.name,
+    selectedMaterial,
     selectedModel,
     uploadState.path,
     uploadState.status,
@@ -237,7 +302,10 @@ function CartEnabledWorkspace({
       setSelectedModel(parsedModel)
 
       if (!hasUserSelectedMaterial) {
-        const suggestedMaterial = getMaterialById(parsedModel.suggestedMaterialId, materials)
+        const suggestedMaterial = getMaterialById(parsedModel.suggestedMaterialId, materials) ?? materials[0]
+        if (!suggestedMaterial) {
+          throw new Error('No printable material is available for this model.')
+        }
         setConfig((current) => ({
           ...current,
           materialId: suggestedMaterial.id,
@@ -253,7 +321,7 @@ function CartEnabledWorkspace({
         const uploadResult = await uploadFileToSupabaseStorage(
           file,
           user.id,
-          initialQuoteId,
+          newQuoteId,
           (progress) => setUploadState({ status: 'uploading', progress })
         )
         setUploadState(uploadResult)
@@ -279,7 +347,10 @@ function CartEnabledWorkspace({
   }
 
   const handleMaterialChange = (materialId: string) => {
-    const nextMaterial = getMaterialById(materialId, materials)
+    const nextMaterial = getMaterialById(materialId, materials) ?? materials[0]
+    if (!nextMaterial) {
+      return
+    }
     setHasUserSelectedMaterial(true)
     setConfig((current) => ({
       ...current,
@@ -319,7 +390,7 @@ function CartEnabledWorkspace({
         config,
         notes: '',
         estimate: {
-          total: priceBreakdown.total,
+          total: priceBreakdown.grandTotal,
           estimatedHours: priceBreakdown.estimatedHours,
           dimensions: priceBreakdown.dimensionsMm,
         },
@@ -338,7 +409,7 @@ function CartEnabledWorkspace({
   const cartItemCheck = isInCart(initialQuoteId)
 
   const handleAddToCart = () => {
-    if (!priceBreakdown || !selectedModel) {
+    if (!priceBreakdown || !selectedModel || !selectedMaterial) {
       setToast({ type: 'error', message: 'Upload a model and generate a quote before adding to cart.' })
       return
     }
@@ -357,19 +428,33 @@ function CartEnabledWorkspace({
       quoteId: initialQuoteId,
       fileUrl: uploadState.path,
       fileName: selectedModel?.fileName ?? 'model',
-      material: selectedMaterial.name ?? '',
+      material: selectedMaterial.name,
       color: selectedColorName ?? '',
       infill: config.infill,
       layerHeight: config.layerHeight,
       quantity: config.quantity,
       supports: config.supports,
-      price: priceBreakdown?.total ?? 0,
-      postProcessingCharges: priceBreakdown?.labourCost ?? 0,
+      materialCost: priceBreakdown?.materialCost ?? 0,
+      machineCost: priceBreakdown?.machineCost ?? 0,
+      subtotal: priceBreakdown?.subtotal ?? 0,
+      postProcessingCharges: priceBreakdown?.postProcessingCharges ?? 0,
+      overheadPercentage: priceBreakdown?.overheadPercentage ?? 0,
+      overheadAmount: priceBreakdown?.overheadAmount ?? 0,
+      marginPercentage: priceBreakdown?.marginPercentage ?? 0,
+      marginAmount: priceBreakdown?.marginAmount ?? 0,
+      totalPrice: priceBreakdown?.priceBeforeDiscount ?? 0,
+      cartDiscountAmount: priceBreakdown?.cartDiscountAmount ?? 0,
+      cartDiscountPercent: priceBreakdown?.cartDiscountPercent ?? 0,
+      finalPrice: priceBreakdown?.finalPrice ?? 0,
+      deliveryCharge: priceBreakdown?.deliveryCharge ?? 0,
+      grandTotal: priceBreakdown?.grandTotal ?? 0,
+      price: priceBreakdown?.finalPrice ?? 0,
       estimatedTime: priceBreakdown?.estimatedHours ?? 0,
       weight: priceBreakdown?.materialWeightGrams ?? 0,
+      difficultyFactor: priceBreakdown?.difficultyFactor ?? selectedMaterial.difficultyFactor,
       dimensions: priceBreakdown?.dimensionsMm ?? { x: 0, y: 0, z: 0 },
       config: {
-        materialId: selectedMaterial.id ?? '',
+        materialId: selectedMaterial.id,
         color: selectedColorName ?? '',
         infill: config.infill,
         layerHeight: config.layerHeight,
@@ -731,10 +816,10 @@ function CartEnabledWorkspace({
                     {/* Color Selection */}
                     <div>
                       <label className="mb-2 block text-xs font-medium text-[#6F7192]">
-                        Color — {getMaterialById(config.materialId, materials).name}
+                        Color — {selectedMaterial?.name ?? 'Material'}
                       </label>
                       <div className="flex flex-wrap gap-2">
-                        {getMaterialById(config.materialId, materials).colors.map((color, idx) => {
+                        {(selectedMaterial?.colors ?? []).map((color, idx) => {
                           const isActive = color.name === config.color
                           return (
                             <button
@@ -832,7 +917,14 @@ function CartEnabledWorkspace({
                               <div className="flex items-center justify-between gap-3">
                                 <div className={`text-xs font-medium ${option.value === config.postProcessingLevel ? 'text-white' : 'text-[#0F1B3D]'}`}>{option.label}</div>
                                 <div className="text-[10px] uppercase tracking-[0.18em] text-[#7C5CFF]">
-                                  ₹{option.cost.toFixed(2)}
+                                  {priceBreakdown
+                                    ? `₹${getPostProcessingCharge(
+                                        option.value,
+                                        postProcessingBaseAmount,
+                                        selectedMaterial?.difficultyFactor ?? 0,
+                                        pricingSettings.postProcessingMultipliers
+                                      ).toFixed(2)}`
+                                    : '—'}
                                 </div>
                               </div>
                               <div className={`mt-0.5 text-[10px] ${option.value === config.postProcessingLevel ? 'text-[#c9d0e7]' : 'text-[#6F7192]'}`}>{option.description}</div>
@@ -918,7 +1010,7 @@ function CartEnabledWorkspace({
                       {/* Config Summary */}
                       <div className="mb-4 rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] p-3">
                         <div className="flex items-center gap-2 text-xs">
-                          <span className="text-[#0F1B3D]">{getMaterialById(config.materialId, materials).name}</span>
+                          <span className="text-[#0F1B3D]">{selectedMaterial?.name ?? 'Material'}</span>
                           <span className="text-[#6F7192]">·</span>
                           <span className="text-[#6F7192]">{config.infill}% infill</span>
                           <span className="text-[#6F7192]">·</span>
@@ -930,10 +1022,7 @@ function CartEnabledWorkspace({
                       <div className="rounded-xl border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-4">
                         <div className="text-[10px] uppercase tracking-[0.22em] text-[#6F7192]">Total Price</div>
                         <div className="mt-1 font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">
-                          ₹{deliveryPricing.totalPrice.toFixed(0)}
-                        </div>
-                        <div className="mt-1 text-[10px] uppercase tracking-[0.22em] text-[#7C5CFF]">
-                          Rounded to nearest ₹5
+                          ₹{priceBreakdown.priceBeforeDiscount.toFixed(0)}
                         </div>
                         <div className="mt-3 space-y-1.5 text-xs text-[#6F7192]">
                           <div className="flex justify-between">
@@ -954,35 +1043,43 @@ function CartEnabledWorkspace({
                           </div>
                           <div className="flex justify-between">
                             <span>Machine cost</span>
-                            <span>₹{priceBreakdown.timeCost.toFixed(2)}</span>
+                            <span>₹{priceBreakdown.machineCost.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Post-processing</span>
-                            <span>₹{priceBreakdown.labourCost.toFixed(2)}</span>
+                            <span>₹{priceBreakdown.postProcessingCharges.toFixed(2)}</span>
                           </div>
                           <div className="border-t border-[#7C5CFF]/10 pt-1.5 flex justify-between font-medium text-[#0F1B3D]">
                             <span>Subtotal</span>
                             <span>₹{priceBreakdown.subtotal.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>Overhead (15%)</span>
+                            <span>Overhead ({priceBreakdown.overheadPercentage}%)</span>
                             <span>₹{priceBreakdown.overheadAmount.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>Margin (40%)</span>
-                            <span>₹{priceBreakdown.profitMargin.toFixed(2)}</span>
+                            <span>Margin ({priceBreakdown.marginPercentage}%)</span>
+                            <span>₹{priceBreakdown.marginAmount.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>Quantity discount</span>
-                            <span>{priceBreakdown.quantityDiscountPercent}% · {priceBreakdown.quantityDiscountAmount > 0 ? '-' : ''}₹{priceBreakdown.quantityDiscountAmount.toFixed(2)}</span>
+                            <span>Cart discount</span>
+                            <span>{priceBreakdown.cartDiscountPercent}% · {priceBreakdown.cartDiscountAmount > 0 ? '-' : ''}₹{priceBreakdown.cartDiscountAmount.toFixed(2)}</span>
                           </div>
                           <div className="border-t border-[#7C5CFF]/10 pt-1.5 flex justify-between font-medium text-[#0F1B3D]">
-                            <span>Print total</span>
-                            <span>₹{priceBreakdown.total.toFixed(0)}</span>
+                            <span>Total price</span>
+                            <span>₹{priceBreakdown.priceBeforeDiscount.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Final price</span>
+                            <span>₹{priceBreakdown.finalPrice.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Delivery</span>
-                            <span>{deliveryPricing.deliveryCharge === 0 ? 'FREE' : `₹${deliveryPricing.deliveryCharge.toFixed(0)}`}</span>
+                            <span>{priceBreakdown.deliveryCharge === 0 ? 'FREE' : `₹${priceBreakdown.deliveryCharge.toFixed(0)}`}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Grand total</span>
+                            <span>₹{priceBreakdown.grandTotal.toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
@@ -991,7 +1088,7 @@ function CartEnabledWorkspace({
                       <div className="mt-4 grid grid-cols-2 gap-3">
                         <div className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] p-3">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Weight</div>
-                          <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{priceBreakdown.baseWeightGrams.toFixed(2)} g / unit</div>
+                          <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{priceBreakdown.materialUsageGramsPerUnit.toFixed(2)} g / unit</div>
                         </div>
                         <div className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] p-3">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Print time</div>

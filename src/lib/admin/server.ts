@@ -1,18 +1,15 @@
 import { cache } from 'react'
 import { redirect } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
 import { getCurrentUserProfile } from '@/lib/auth/server'
-import { getSupabaseServiceRoleKey, getSupabaseUrl } from '@/lib/supabase/config'
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL?.trim().toLowerCase()
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export function createAdminSupabaseClient() {
-  return createClient(getSupabaseUrl(), getSupabaseServiceRoleKey(), {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  })
+  return createAdminClient()
+}
+
+export async function isCurrentUserAdmin() {
+  const auth = await getCurrentUserProfile()
+  return Boolean(auth?.profile.isAdmin)
 }
 
 export const requireAdminUser = cache(async () => {
@@ -22,8 +19,7 @@ export const requireAdminUser = cache(async () => {
     redirect('/login?next=%2Fadmin')
   }
 
-  const userEmail = auth.profile.email.trim().toLowerCase()
-  if (userEmail !== ADMIN_EMAIL) {
+  if (!auth.profile.isAdmin) {
     redirect('/')
   }
 

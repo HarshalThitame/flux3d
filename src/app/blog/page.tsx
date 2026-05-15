@@ -8,6 +8,7 @@ import { absoluteUrl, siteConfig } from '@/lib/site'
 import Navbar from '@/components/Navbar'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import BlogClient from './BlogClient'
+import type { BlogPost } from '@/lib/blog/types'
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings()
@@ -45,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BlogPage() {
-  let posts: any[] = []
+  let posts: BlogPost[] = []
 
   try {
     const supabase = await createServerSupabaseClient()
@@ -54,7 +55,7 @@ export default async function BlogPage() {
       .select('*')
       .eq('status', 'published')
       .order('created_at', { ascending: false })
-      .returns<any[]>()
+      .returns<BlogPost[]>()
 
     if (!error && data) {
       posts = data

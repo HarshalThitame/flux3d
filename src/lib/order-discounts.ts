@@ -1,7 +1,11 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+
 type DiscountLookupRow = {
   id: string
   order_number: string | null
   discount?: number | string | null
+  cart_discount?: number | string | null
+  cart_discount_percent?: number | string | null
   coupon_code?: string | null
   coupon_id?: string | null
   discount_type?: string | null
@@ -33,6 +37,8 @@ export type OrderDiscountSummary = {
   label: string | null
   offerName: string | null
   couponCode: string | null
+  couponAmount: number
+  offerAmount: number
   source: 'offer' | 'coupon' | 'order' | null
 }
 
@@ -46,7 +52,7 @@ function uniqueValues(values: Array<string | null | undefined>) {
 }
 
 export async function loadOrderDiscountSummary(
-  supabase: any,
+  supabase: SupabaseClient,
   rows: DiscountLookupRow[],
 ): Promise<OrderDiscountSummary> {
   if (rows.length === 0) {
@@ -56,6 +62,8 @@ export async function loadOrderDiscountSummary(
       label: null,
       offerName: null,
       couponCode: null,
+      couponAmount: 0,
+      offerAmount: 0,
       source: null,
     }
   }
@@ -64,13 +72,16 @@ export async function loadOrderDiscountSummary(
   const fallbackRow = rows[0]
 
   if (lookupKeys.length === 0) {
-    const fallbackAmount = normalizeAmount(fallbackRow.discount)
+    const fallbackCartAmount = normalizeAmount(fallbackRow.cart_discount)
+    const fallbackAmount = fallbackCartAmount > 0 ? fallbackCartAmount : normalizeAmount(fallbackRow.discount)
     return {
       amount: fallbackAmount,
       type: fallbackRow.discount_type ?? null,
-      label: fallbackAmount > 0 ? fallbackRow.coupon_code ?? 'Applied discount' : null,
+      label: fallbackAmount > 0 ? (fallbackCartAmount > 0 ? 'Cart discount' : fallbackRow.coupon_code ?? 'Applied discount') : null,
       offerName: null,
       couponCode: fallbackRow.coupon_code ?? null,
+      couponAmount: fallbackAmount,
+      offerAmount: 0,
       source: fallbackAmount > 0 ? 'order' : null,
     }
   }
@@ -112,17 +123,41 @@ export async function loadOrderDiscountSummary(
 
   const offers = (offersResult.data ?? []) as OfferRow[]
   const coupons = (couponsResult.data ?? []) as CouponRow[]
-  const matchedOffer = redemption?.offer_id ? offers.find((offer) => offer.id === redemption.offer_id) ?? null : null
-  const matchedCoupon = redemption?.coupon_id
-    ? coupons.find((coupon) => coupon.id === redemption.coupon_id) ?? null
-    : fallbackRow.coupon_id
+  const matchedOffer = redemptions
+    .filter((row) => row.offer_id)
+    .map((row) => ({
+      row,
+      offer: offers.find((offer) => offer.id === row.offer_id) ?? null,
+    }))
+    .find((entry) => entry.offer)?.offer ?? null
+  const matchedCoupon = redemptions
+    .filter((row) => row.coupon_id)
+    .map((row) => ({
+      row,
+      coupon: coupons.find((coupon) => coupon.id === row.coupon_id) ?? null,
+    }))
+    .find((entry) => entry.coupon)?.coupon
+    ?? (fallbackRow.coupon_id
       ? coupons.find((coupon) => coupon.id === fallbackRow.coupon_id) ?? null
-      : null
+      : null)
 
-  const amount = redemption ? normalizeAmount(redemption.discount_applied) : normalizeAmount(fallbackRow.discount)
+  const cartAmount = normalizeAmount(fallbackRow.cart_discount)
+  const amount = cartAmount > 0
+    ? cartAmount
+    : redemption
+      ? normalizeAmount(redemption.discount_applied)
+      : normalizeAmount(fallbackRow.discount)
   const couponCode = matchedCoupon?.code ?? fallbackRow.coupon_code ?? null
   const offerName = matchedOffer?.title ?? null
-  const label = offerName ?? couponCode ?? (amount > 0 ? 'Applied discount' : null)
+  const couponAmount = redemptions
+    .filter((row) => row.coupon_id)
+    .reduce((sum, row) => sum + normalizeAmount(row.discount_applied), 0)
+  const offerAmount = redemptions
+    .filter((row) => row.offer_id)
+    .reduce((sum, row) => sum + normalizeAmount(row.discount_applied), 0)
+  const label = cartAmount > 0
+    ? 'Cart discount'
+    : offerName ?? couponCode ?? (amount > 0 ? 'Applied discount' : null)
 
   return {
     amount,
@@ -130,6 +165,8 @@ export async function loadOrderDiscountSummary(
     label,
     offerName,
     couponCode,
-    source: matchedOffer ? 'offer' : matchedCoupon ? 'coupon' : amount > 0 ? 'order' : null,
+    couponAmount,
+    offerAmount,
+    source: cartAmount > 0 ? 'order' : matchedOffer ? 'offer' : matchedCoupon ? 'coupon' : amount > 0 ? 'order' : null,
   }
 }

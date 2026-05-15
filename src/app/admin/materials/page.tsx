@@ -274,7 +274,7 @@ export default function AdminMaterialsPage() {
               <motion.div
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
-                className="mx-4 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 bg-[#142E44] p-6"
+                className="mx-4 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6"
               >
                 <h2 className="mb-4 text-xl font-bold text-[#0F1B3D]">
                   {editingMaterial ? 'Edit Material' : 'Add New Material'}
@@ -344,7 +344,7 @@ export default function AdminMaterialsPage() {
                       <select
                         value={formData.difficultyFactor}
                         onChange={(e) => setFormData({ ...formData, difficultyFactor: parseFloat(e.target.value) })}
-                        className="w-full rounded-lg border border-gray-200 bg-[#142E44] px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
                       >
                         <option value={1.1}>1.1X</option>
                         <option value={1.2}>1.2X</option>
@@ -391,7 +391,7 @@ export default function AdminMaterialsPage() {
                       <select
                         value={formData.difficultyLevel || 'Easy'}
                         onChange={(e) => setFormData({ ...formData, difficultyLevel: e.target.value as 'Easy' | 'Medium' | 'Hard' })}
-                        className="w-full rounded-lg border border-gray-200 bg-[#142E44] px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
                       >
                         <option value="Easy">Easy</option>
                         <option value="Medium">Medium</option>
@@ -403,7 +403,7 @@ export default function AdminMaterialsPage() {
                       <select
                         value={formData.heatResistance || 'Low'}
                         onChange={(e) => setFormData({ ...formData, heatResistance: e.target.value as 'Low' | 'Medium' | 'High' })}
-                        className="w-full rounded-lg border border-gray-200 bg-[#142E44] px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
                       >
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
@@ -415,7 +415,7 @@ export default function AdminMaterialsPage() {
                       <select
                         value={formData.strengthRating || 'Medium'}
                         onChange={(e) => setFormData({ ...formData, strengthRating: e.target.value as 'Low' | 'Medium' | 'High' })}
-                        className="w-full rounded-lg border border-gray-200 bg-[#142E44] px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
                       >
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
@@ -427,7 +427,7 @@ export default function AdminMaterialsPage() {
                       <select
                         value={formData.finishQuality || 'Good'}
                         onChange={(e) => setFormData({ ...formData, finishQuality: e.target.value as 'Basic' | 'Good' | 'Excellent' })}
-                        className="w-full rounded-lg border border-gray-200 bg-[#142E44] px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
                       >
                         <option value="Basic">Basic</option>
                         <option value="Good">Good</option>
@@ -587,7 +587,7 @@ export default function AdminMaterialsPage() {
               <motion.div
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
-                className="mx-4 w-full max-w-md rounded-2xl border border-rose-200 bg-[#142E44] p-6"
+                className="mx-4 w-full max-w-md rounded-2xl border border-rose-200 bg-white p-6"
               >
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50">
                   <Trash2 className="h-6 w-6 text-rose-400" />

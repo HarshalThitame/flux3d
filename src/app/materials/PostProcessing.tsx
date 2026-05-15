@@ -65,7 +65,7 @@ export default function PostProcessing() {
             Finishing Services
           </span>
           <h2 className="text-2xl md:text-3xl font-[var(--font-syne)] font-extrabold text-[#0F1B3D] mb-2">
-            We Don't Just Print.<br />We Finish.
+            We Don&apos;t Just Print.<br />We Finish.
           </h2>
           <p className="text-[#6F7192] text-sm max-w-[600px] mx-auto">
             Raw prints are great. Finished prints are impressive. We offer post-processing services to take your print from good to gallery-worthy.

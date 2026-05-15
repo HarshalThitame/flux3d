@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowRight, BookmarkPlus, Layers3, ShieldCheck } from 'lucide-react'
 import { layerHeightOptions } from '@/lib/quote/materials'
 import { postProcessingOptions } from '@/lib/quote/pricing-engine'
+import type { PostProcessingLevel } from '@/lib/quote/types'
 
 type SettingsPanelProps =
   | {
@@ -12,11 +13,12 @@ type SettingsPanelProps =
       infill: number
       layerHeight: number
       quantity: number
-      postProcessingLevel: 'none' | 'sanded' | 'sanded-painted'
+      postProcessingLevel: PostProcessingLevel
+      postProcessingChargeEstimate?: (level: PostProcessingLevel) => number
       onInfillChange: (value: number) => void
       onLayerHeightChange: (value: number) => void
       onQuantityChange: (value: number) => void
-      onPostProcessingChange: (value: 'none' | 'sanded' | 'sanded-painted') => void
+      onPostProcessingChange: (value: PostProcessingLevel) => void
     }
   | {
       variant: 'account'
@@ -119,12 +121,14 @@ export default function SettingsPanel(props: SettingsPanelProps) {
                         : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10 hover:bg-white/[0.04]'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-sm font-medium text-white">{option.label}</div>
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#7C5CFF]">
-                        ₹{option.cost.toFixed(2)}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-medium text-white">{option.label}</div>
+                        <div className="text-[10px] uppercase tracking-[0.18em] text-[#7C5CFF]">
+                          {props.postProcessingChargeEstimate
+                            ? `₹${props.postProcessingChargeEstimate(option.value).toFixed(2)}`
+                            : '—'}
+                        </div>
                       </div>
-                    </div>
                     <div className="mt-1 text-xs leading-5 text-[#8d97b8]">{option.description}</div>
                   </motion.button>
                 )

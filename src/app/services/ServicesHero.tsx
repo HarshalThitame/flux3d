@@ -2,13 +2,11 @@
 
 import Link from 'next/link'
 import { motion, useScroll, useTransform } from 'framer-motion'
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useState } from 'react'
 
 function FloatingParticles() {
-  const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; size: number; duration: number; delay: number }>>([])
-
-  useEffect(() => {
-    const newParticles = Array.from({ length: 30 }, (_, i) => ({
+  const [particles] = useState<Array<{ id: number; x: number; y: number; size: number; duration: number; delay: number }>>(
+    () => Array.from({ length: 30 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
@@ -16,8 +14,7 @@ function FloatingParticles() {
       duration: Math.random() * 3 + 2,
       delay: Math.random() * 2
     }))
-    setParticles(newParticles)
-  }, [])
+  )
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">

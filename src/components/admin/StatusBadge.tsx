@@ -7,15 +7,12 @@ type StatusBadgeProps = {
 
 const statusIcons: Record<string, string> = {
   pending: '⏳',
-  reviewed: '🔍',
-  approved: '✅',
-  queued: '📋',
-  'on-hold': '⏸',
+  confirmed: '✅',
   printing: '🖨',
   shipped: '📦',
+  delivered: '✅',
   completed: '🎉',
   cancelled: '❌',
-  rejected: '🚫',
   admin: '👑',
   operator: '🔧',
 }
@@ -31,7 +28,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
         ? 'border-cyan-200 bg-cyan-50 text-cyan-600'
         : normalized === 'paused'
           ? 'border-rose-200 bg-rose-50 text-rose-600'
-          : ['pending', 'reviewed', 'approved', 'queued', 'on-hold', 'printing', 'shipped', 'completed', 'cancelled', 'rejected'].includes(normalized)
+          : ['pending', 'confirmed', 'printing', 'shipped', 'delivered', 'completed', 'cancelled'].includes(normalized)
             ? getOrderStatusClasses(normalized as OrderStatus)
             : 'border-[#7C5CFF]/10 bg-gray-100 text-[#6F7192]'
 
