@@ -1,3 +1,5 @@
+import { siteUrl } from '@/lib/site'
+
 export function normalizeNextPath(value: string | null | undefined, fallback = '/instant-quote') {
   if (!value) {
     return fallback
@@ -13,11 +15,5 @@ export function normalizeNextPath(value: string | null | undefined, fallback = '
 }
 
 export async function getAuthCallbackUrl(nextPath: string) {
-  const origin = process.env.NEXT_PUBLIC_SITE_URL
-
-  if (!origin) {
-    throw new Error('NEXT_PUBLIC_SITE_URL is required to build auth callback URLs.')
-  }
-
-  return `${origin.replace(/\/+$/, '')}/auth/callback?next=${encodeURIComponent(nextPath)}`
+  return `${siteUrl}/auth/callback?next=${encodeURIComponent(nextPath)}`
 }

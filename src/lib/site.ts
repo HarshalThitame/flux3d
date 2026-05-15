@@ -3,8 +3,16 @@ import type { BusinessSettings } from '@/lib/admin/business-settings'
 
 const fallback = FALLBACK_SETTINGS
 
-const siteUrlEnv = process.env.NEXT_PUBLIC_SITE_URL
 const DEV_PLACEHOLDER_SITE_URL = 'https://flux3d.local.invalid'
+const PRODUCTION_PLACEHOLDER_SITE_URL = 'https://flux3d.in'
+
+function getConfiguredSiteUrl() {
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+    process.env.VERCEL_URL
+  )
+}
 
 function normalizeSiteUrl(value?: string) {
   if (!value) {
@@ -12,7 +20,7 @@ function normalizeSiteUrl(value?: string) {
       return DEV_PLACEHOLDER_SITE_URL
     }
 
-    throw new Error('NEXT_PUBLIC_SITE_URL is required to build absolute site URLs.')
+    return PRODUCTION_PLACEHOLDER_SITE_URL
   }
 
   const withProtocol = value.startsWith('http') ? value : `https://${value}`
@@ -20,7 +28,7 @@ function normalizeSiteUrl(value?: string) {
   return withProtocol.replace(/\/+$/, '')
 }
 
-export const siteUrl = normalizeSiteUrl(siteUrlEnv)
+export const siteUrl = normalizeSiteUrl(getConfiguredSiteUrl())
 
 export function makeSiteConfig(settings: BusinessSettings) {
   return {
