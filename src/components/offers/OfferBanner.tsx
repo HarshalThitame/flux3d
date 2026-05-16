@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from '@/lib/motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { X, Gift, ChevronRight, Percent } from 'lucide-react'
 import Link from 'next/link'
 import CountdownTimer from './CountdownTimer'
@@ -100,9 +100,9 @@ export function OfferBanner() {
   const offer = offers[current]
 
   return (
-    <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#0F1B3D] via-[#1a1f4e] to-[#2d1b69] min-h-[200px] sm:min-h-[260px]">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_30%_50%,rgba(124,92,255,0.3),transparent_60%),radial-gradient(ellipse_40%_40%_at_70%_30%,rgba(167,139,250,0.15),transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(255,255,255,0.05),transparent_40%)]" />
+    <div className="relative min-h-[200px] overflow-hidden rounded-2xl border border-[var(--border-light)] bg-[var(--gradient-soft)] shadow-[var(--shadow-md)] sm:min-h-[260px]">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_30%_50%,rgba(109,40,217,0.14),transparent_60%),radial-gradient(ellipse_40%_40%_at_70%_30%,rgba(8,145,178,0.12),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(255,255,255,0.72),transparent_40%)]" />
 
       <div className="relative z-10 p-6 sm:p-8 md:p-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div className="flex-1">
@@ -111,17 +111,17 @@ export function OfferBanner() {
               {offer.badge_text}
             </span>
           )}
-          <h3 className="text-white font-bold text-xl sm:text-2xl md:text-3xl mb-2">
+          <h3 className="mb-2 text-xl font-bold text-[var(--text-primary)] sm:text-2xl md:text-3xl">
             {offer.title}
           </h3>
           {offer.description && (
-            <p className="text-[rgba(255,255,255,0.7)] text-sm max-w-[500px] mb-4">
+            <p className="mb-4 max-w-[500px] text-sm text-[var(--text-secondary)]">
               {offer.description}
             </p>
           )}
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             {offer.sale_label && (
-              <span className="inline-flex items-center gap-1.5 bg-[rgba(255,255,255,0.15)] text-white rounded-full px-3 py-1 text-sm font-semibold">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-faint)] px-3 py-1 text-sm font-semibold text-[var(--brand-primary)]">
                 <Percent className="w-3.5 h-3.5" />
                 {offer.sale_label}
               </span>
@@ -136,9 +136,9 @@ export function OfferBanner() {
             </Link>
           </div>
           {offer.coupon_code && (
-            <div className="mt-3 inline-flex items-center gap-2 bg-[rgba(255,255,255,0.1)] rounded-lg px-3 py-1.5">
-              <span className="text-[rgba(255,255,255,0.6)] text-xs">Use code:</span>
-              <code className="font-mono font-bold text-white text-sm">{offer.coupon_code}</code>
+            <div className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[var(--border-brand)] bg-white/80 px-3 py-1.5">
+              <span className="text-xs text-[var(--text-muted)]">Use code:</span>
+              <code className="font-mono text-sm font-bold text-[var(--brand-primary)]">{offer.coupon_code}</code>
             </div>
           )}
         </div>
@@ -151,7 +151,7 @@ export function OfferBanner() {
               key={i}
               onClick={() => setCurrent(i)}
               className={`w-2 h-2 rounded-full transition-all ${
-                i === current ? 'bg-white w-6' : 'bg-white/30 hover:bg-white/50'
+                i === current ? 'w-6 bg-[var(--brand-primary)]' : 'bg-[var(--border-medium)] hover:bg-[var(--brand-light)]/50'
               }`}
             />
           ))}

@@ -22,7 +22,7 @@ export default function MaterialSelector({
 
   if (materials.length === 0) {
     return (
-      <div className="rounded-[22px] border border-[#7C5CFF]/10 bg-white/[0.03] p-4 text-center text-sm text-[#6F7192]">
+      <div className="rounded-[22px] border border-[#7C5CFF]/10 bg-[var(--bg-elevated)] p-4 text-center text-sm text-[#6F7192]">
         No materials available. Please add materials in the admin panel.
       </div>
     )
@@ -45,8 +45,8 @@ export default function MaterialSelector({
             onClick={() => onMaterialChange(material.id)}
             className={`rounded-[22px] border p-4 text-left transition-all ${
               selectedMaterialId === material.id
-                ? 'border-[#7C5CFF]/40 bg-[#1C3B52] shadow-[0_12px_44px_rgba(124, 92, 255,0.12)]'
-                : 'border-[#7C5CFF]/10 bg-white/[0.03] hover:border-[#7C5CFF]/10 hover:bg-white/[0.05]'
+                ? 'border-[#7C5CFF]/40 bg-[var(--brand-faint)] shadow-[0_12px_44px_rgba(124, 92, 255,0.12)]'
+                : 'border-[#7C5CFF]/10 bg-white hover:border-[#7C5CFF]/10 hover:bg-[var(--bg-soft)]'
             }`}
           >
             <div className="flex items-start gap-3">
@@ -68,7 +68,7 @@ export default function MaterialSelector({
         ))}
       </div>
 
-      <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-white/[0.03] p-4">
+      <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-[var(--bg-elevated)] p-4">
         <div className="text-sm font-medium text-[#0F1B3D]">Color Selection</div>
         <div className="mt-3 flex flex-wrap gap-3">
           {activeMaterial.colors.map((color) => (
@@ -78,8 +78,8 @@ export default function MaterialSelector({
               onClick={() => onColorChange(color.name)}
               className={`rounded-full border px-4 py-2 text-sm transition-colors ${
                 selectedColor === color.name
-                  ? 'border-[#7C5CFF]/50 bg-[#7C5CFF]/10 text-white'
-                  : 'border-[#7C5CFF]/10 bg-white/[0.03] text-[#b4bdd8] hover:text-[#0F1B3D]'
+                  ? 'border-[#7C5CFF]/50 bg-[#7C5CFF]/10 text-[var(--brand-primary)]'
+                  : 'border-[#7C5CFF]/10 bg-white text-[var(--text-secondary)] hover:text-[#0F1B3D]'
               }`}
             >
               {color.name}
@@ -90,4 +90,3 @@ export default function MaterialSelector({
     </div>
   )
 }
-

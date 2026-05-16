@@ -696,7 +696,7 @@ function CartEnabledWorkspace({
                 >
                   <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
-                      <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 p-2.5 text-cyan-200">
+                      <div className="rounded-xl border border-cyan-400/20 bg-cyan-50 p-2.5 text-cyan-700">
                         <Cuboid className="h-5 w-5" />
                       </div>
                       <div>
@@ -722,7 +722,7 @@ function CartEnabledWorkspace({
                         </Suspense>
                       ) : (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-[#7C5CFF]/10 bg-white/[0.03] text-cyan-200">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-[#7C5CFF]/10 bg-white text-cyan-700">
                             <Move3D className="h-6 w-6" />
                           </div>
                           <div className="text-sm font-semibold text-[#0F1B3D]">No model loaded</div>
@@ -793,7 +793,7 @@ function CartEnabledWorkspace({
                               onClick={() => handleMaterialChange(material.id)}
                               className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
                                 isActive
-                                  ? 'border-[#7C5CFF]/35 bg-[#1C3B52] shadow-[0_4px_16px_rgba(124, 92, 255,0.1)]'
+                                  ? 'border-[#7C5CFF]/35 bg-[var(--brand-faint)] shadow-[0_4px_16px_rgba(124, 92, 255,0.1)]'
                                   : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10'
                               }`}
                             >
@@ -802,10 +802,10 @@ function CartEnabledWorkspace({
                               </span>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-2">
-                                  <span className={`truncate text-sm font-medium ${isActive ? 'text-white' : 'text-[#0F1B3D]'}`}>{material.name}</span>
+                                  <span className={`truncate text-sm font-medium ${isActive ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{material.name}</span>
                                   {isActive && <CheckCircle2 className="h-4 w-4 shrink-0 text-[#7C5CFF]" />}
                                 </div>
-                                <p className={`mt-0.5 truncate text-[11px] ${isActive ? 'text-[#c9d0e7]' : 'text-[#6F7192]'}`}>{material.summary}</p>
+                                <p className={`mt-0.5 truncate text-[11px] ${isActive ? 'text-[var(--text-secondary)]' : 'text-[#6F7192]'}`}>{material.summary}</p>
                               </div>
                             </button>
                           )
@@ -828,11 +828,11 @@ function CartEnabledWorkspace({
                               onClick={() => setConfig((c) => ({ ...c, color: color.name }))}
                               className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-left transition-all ${
                                 isActive
-                                  ? 'border-[#7C5CFF]/40 bg-[#1C3B52]'
+                                  ? 'border-[#7C5CFF]/40 bg-[var(--brand-faint)]'
                                   : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10'
                               }`}
                             >
-                              <span className={`text-xs font-medium ${isActive ? 'text-white' : 'text-[#0F1B3D]'}`}>{color.name}</span>
+                              <span className={`text-xs font-medium ${isActive ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{color.name}</span>
                               {isActive && <CheckCircle2 className="h-3.5 w-3.5 text-[#7C5CFF]" />}
                             </button>
                           )
@@ -851,7 +851,7 @@ function CartEnabledWorkspace({
                 >
                   <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
-                      <div className="rounded-xl border border-sky-400/20 bg-sky-400/10 p-2.5 text-sky-200">
+                      <div className="rounded-xl border border-sky-400/20 bg-sky-50 p-2.5 text-sky-700">
                         <Layers3 className="h-5 w-5" />
                       </div>
                       <div>
@@ -910,12 +910,12 @@ function CartEnabledWorkspace({
                               onClick={() => setConfig((c) => ({ ...c, postProcessingLevel: option.value }))}
                               className={`rounded-xl border px-3 py-2.5 text-left transition-all ${
                                 option.value === config.postProcessingLevel
-                                  ? 'border-[#7C5CFF]/35 bg-[#1C3B52]'
+                                  ? 'border-[#7C5CFF]/35 bg-[var(--brand-faint)]'
                                   : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10'
                               }`}
                             >
                               <div className="flex items-center justify-between gap-3">
-                                <div className={`text-xs font-medium ${option.value === config.postProcessingLevel ? 'text-white' : 'text-[#0F1B3D]'}`}>{option.label}</div>
+                                <div className={`text-xs font-medium ${option.value === config.postProcessingLevel ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{option.label}</div>
                                 <div className="text-[10px] uppercase tracking-[0.18em] text-[#7C5CFF]">
                                   {priceBreakdown
                                     ? `₹${getPostProcessingCharge(
@@ -927,7 +927,7 @@ function CartEnabledWorkspace({
                                     : '—'}
                                 </div>
                               </div>
-                              <div className={`mt-0.5 text-[10px] ${option.value === config.postProcessingLevel ? 'text-[#c9d0e7]' : 'text-[#6F7192]'}`}>{option.description}</div>
+                              <div className={`mt-0.5 text-[10px] ${option.value === config.postProcessingLevel ? 'text-[var(--text-secondary)]' : 'text-[#6F7192]'}`}>{option.description}</div>
                             </button>
                           ))}
                         </div>
@@ -944,12 +944,12 @@ function CartEnabledWorkspace({
                               onClick={() => setConfig((c) => ({ ...c, layerHeight: option.value }))}
                               className={`rounded-xl border px-3 py-2.5 text-left transition-all ${
                                 option.value === config.layerHeight
-                                  ? 'border-[#7C5CFF]/35 bg-[#1C3B52]'
+                                  ? 'border-[#7C5CFF]/35 bg-[var(--brand-faint)]'
                                   : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10'
                               }`}
                             >
-                              <div className={`text-xs font-medium ${option.value === config.layerHeight ? 'text-white' : 'text-[#0F1B3D]'}`}>{option.label}</div>
-                              <div className={`mt-0.5 text-[10px] ${option.value === config.layerHeight ? 'text-[#c9d0e7]' : 'text-[#6F7192]'}`}>{option.description}</div>
+                              <div className={`text-xs font-medium ${option.value === config.layerHeight ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{option.label}</div>
+                              <div className={`mt-0.5 text-[10px] ${option.value === config.layerHeight ? 'text-[var(--text-secondary)]' : 'text-[#6F7192]'}`}>{option.description}</div>
                             </button>
                           ))}
                         </div>

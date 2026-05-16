@@ -40,13 +40,21 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function ServicesPage() {
   return (
-    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
+    <div className="public-shell">
       <Navbar transparent />
       <ServicesHero />
-      <ServicesList />
-      <WhyChooseUs />
-      <HowToOrder />
-      <BottomCTA />
+      <div className="bg-[var(--bg-soft)]">
+        <ServicesList />
+      </div>
+      <div className="bg-white">
+        <WhyChooseUs />
+      </div>
+      <div className="bg-[var(--bg-soft)]">
+        <HowToOrder />
+      </div>
+      <div className="bg-white">
+        <BottomCTA />
+      </div>
     </div>
   )
 }

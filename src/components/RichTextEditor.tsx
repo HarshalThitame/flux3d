@@ -9,8 +9,9 @@ import Highlight from '@tiptap/extension-highlight'
 import { BulletList } from '@tiptap/extension-bullet-list'
 import { OrderedList } from '@tiptap/extension-ordered-list'
 import { ListItem } from '@tiptap/extension-list-item'
-import { useState } from 'react'
-import { Bold as BoldIcon, Italic as ItalicIcon, List, ListOrdered, Highlighter, Undo, Redo } from 'lucide-react'
+import LinkExtension from '@tiptap/extension-link'
+import { useEffect, useState } from 'react'
+import { Bold as BoldIcon, Italic as ItalicIcon, List, ListOrdered, Highlighter, Undo, Redo, Link as LinkIcon, Unlink } from 'lucide-react'
 
 interface RichTextEditorProps {
   content: string
@@ -87,6 +88,13 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
       BulletList,
       OrderedList,
       ListItem,
+      LinkExtension.configure({
+        autolink: true,
+        openOnClick: false,
+        HTMLAttributes: {
+          rel: 'noopener noreferrer',
+        },
+      }),
     ],
     content: content || '',
     immediatelyRender: false,
@@ -96,9 +104,17 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
     editorProps: {
       attributes: {
         class: 'prose prose-invert max-w-none min-h-[300px] p-4 focus:outline-none text-[#0F1B3D] leading-7',
+        'aria-label': placeholder,
       },
     },
   })
+
+  useEffect(() => {
+    if (!editor) return
+    if (content !== editor.getHTML()) {
+      editor.commands.setContent(content || '')
+    }
+  }, [content, editor])
 
   if (!editor) return null
 
@@ -117,6 +133,19 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         }
       }
     }
+  }
+
+  const setLink = () => {
+    const current = editor.getAttributes('link').href as string | undefined
+    const href = window.prompt('Enter URL', current || '')
+
+    if (href === null) return
+    if (!href.trim()) {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run()
+      return
+    }
+
+    editor.chain().focus().extendMarkRange('link').setLink({ href: href.trim() }).run()
   }
 
   return (
@@ -141,6 +170,23 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         <div className="mx-1 h-6 w-px bg-white/10" />
         <button
           type="button"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          className={`rounded-md px-2 py-1.5 text-xs font-semibold transition-colors hover:bg-white/10 ${editor.isActive('heading', { level: 2 }) ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
+          title="Heading 2"
+        >
+          H2
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          className={`rounded-md px-2 py-1.5 text-xs font-semibold transition-colors hover:bg-white/10 ${editor.isActive('heading', { level: 3 }) ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
+          title="Heading 3"
+        >
+          H3
+        </button>
+        <div className="mx-1 h-6 w-px bg-white/10" />
+        <button
+          type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('bulletList') ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
           title="Bullet List"
@@ -154,6 +200,23 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
           title="Numbered List"
         >
           <ListOrdered className="h-4 w-4" />
+        </button>
+        <div className="mx-1 h-6 w-px bg-white/10" />
+        <button
+          type="button"
+          onClick={setLink}
+          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('link') ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
+          title="Add or edit link"
+        >
+          <LinkIcon className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().unsetLink().run()}
+          className="rounded-md p-2 text-[#6F7192] transition-colors hover:bg-white/10"
+          title="Remove link"
+        >
+          <Unlink className="h-4 w-4" />
         </button>
         <div className="mx-1 h-6 w-px bg-white/10" />
         <button

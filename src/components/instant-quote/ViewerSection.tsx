@@ -57,7 +57,7 @@ export default function ViewerSection({
         <motion.div
           animate={{ rotate: [0, 4, 0, -4, 0] }}
           transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-          className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-3 text-cyan-200"
+          className="rounded-2xl border border-cyan-400/20 bg-cyan-50 p-3 text-cyan-700"
         >
           <Cuboid className="h-5 w-5" />
         </motion.div>
@@ -87,7 +87,7 @@ export default function ViewerSection({
             <motion.div
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
-              className="flex h-18 w-18 items-center justify-center rounded-[22px] border border-[#7C5CFF]/10 bg-white/[0.03] text-cyan-200"
+              className="flex h-18 w-18 items-center justify-center rounded-[22px] border border-[#7C5CFF]/10 bg-white text-cyan-700"
             >
               <Move3D className="h-7 w-7" />
             </motion.div>

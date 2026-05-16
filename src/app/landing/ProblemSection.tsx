@@ -61,7 +61,7 @@ export default function ProblemSection() {
             return (
               <Reveal key={point.id} delay={200 + index * 90}>
                 <div
-                  className="group relative bg-[rgba(255,255,255,0.82)] border border-white/[0.07] rounded-2xl p-6 border-gray-800 hover:border-[#7C5CFF]/50 transition-all duration-300 hover-lift"
+                  className="group relative rounded-2xl border border-[var(--border-light)] bg-white p-6 shadow-[var(--shadow-sm)] transition-all duration-300 hover:border-[var(--border-brand)] hover:shadow-[var(--shadow-md)] hover-lift"
                   style={{
                     backgroundColor: '#FFFFFF',
                     willChange: 'transform',

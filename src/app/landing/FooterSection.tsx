@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { Mail, Phone, MapPin, Clock, Camera, Users, Globe, Send } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
 
@@ -22,18 +23,29 @@ export default function FooterSection() {
   ].filter(Boolean).join(' — ')
 
   const businessYear = new Date().getFullYear()
+  const footerLinkClass = "text-sm text-slate-400 transition-colors hover:text-white"
+  const footerHeadingClass = "mb-4 font-[var(--font-dm)] text-[13px] font-semibold uppercase tracking-[0.08em] text-white"
+  const badgeClass = "rounded border border-white/10 bg-white/5 px-2 py-1 font-[var(--font-mono)] text-xs text-slate-300"
 
   return (
-    <footer className="relative border-t border-[rgba(124, 92, 255,0.5)] bg-[#FFFFFF]">
-      <div className="max-w-[1200px] mx-auto px-6 py-16">
+    <footer className="footer">
+      <div className="footer-watermark">FLUX3D</div>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,rgba(109,40,217,0.22),transparent_70%)]" />
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 mx-auto max-w-[1200px] px-6"
+      >
         {/* Top section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
+        <div className="mb-12 grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <div className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D] mb-4">
-              <span className="text-[#5B3FD6]">{settings.businessName}</span>
+            <div className="footer-brand">
+              <span>{settings.businessName}</span>
             </div>
-            <p className="text-sm text-[#6F7192] leading-[1.7] max-w-[320px] mb-6">
+            <p className="mb-6 max-w-[320px] text-sm leading-[1.7] text-slate-400">
               {settings.businessDescription || `Precision 3D printing for every need — industrial, architectural, medical, student, creator, and corporate. Made in India. Delivered across India.`}
             </p>
 
@@ -41,14 +53,16 @@ export default function FooterSection() {
             {socialLinks.length > 0 && (
               <div className="flex items-center gap-3">
                 {socialLinks.map((social, i) => (
-                  <a
+                  <motion.a
                     key={i}
                     href={social.href}
                     aria-label={social.label}
-                    className="w-10 h-10 rounded-lg bg-[rgba(124, 92, 255,0.4)] border border-[rgba(124, 92, 255,0.5)] flex items-center justify-center text-[#6F7192] hover:text-[#5B3FD6] hover:border-[rgba(124, 92, 255,0.3)] transition-colors"
+                    whileHover={{ y: -2, scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-400 transition-colors hover:border-white/25 hover:text-white"
                   >
                     <social.icon className="w-5 h-5" />
-                  </a>
+                  </motion.a>
                 ))}
               </div>
             )}
@@ -56,11 +70,11 @@ export default function FooterSection() {
 
           {/* Services */}
           <div>
-            <h3 className="text-sm font-semibold text-[#0F1B3D] uppercase tracking-wider mb-4">Services</h3>
+            <h3 className={footerHeadingClass}>Services</h3>
             <ul className="space-y-2">
               {['Industrial Parts', 'Architecture Models', 'Student Projects', 'Online Products', 'Medical & Dental', 'Creator Props', 'Corporate Gifting'].map((item) => (
                 <li key={item}>
-                  <Link href="/services" className="text-sm text-[#6F7192] hover:text-[#5B3FD6] transition-colors">
+                  <Link href="/services" className={footerLinkClass}>
                     {item}
                   </Link>
                 </li>
@@ -70,7 +84,7 @@ export default function FooterSection() {
 
           {/* Company */}
           <div>
-            <h3 className="text-sm font-semibold text-[#0F1B3D] uppercase tracking-wider mb-4">Company</h3>
+            <h3 className={footerHeadingClass}>Company</h3>
             <ul className="space-y-2">
                 {[
                   { label: `About ${settings.businessName}`, href: '/about' },
@@ -81,7 +95,7 @@ export default function FooterSection() {
                   { label: 'Careers', href: '/contact' },
                 ].map((item) => (
                 <li key={item.label}>
-                  <Link href={item.href} className="text-sm text-[#6F7192] hover:text-[#5B3FD6] transition-colors">
+                  <Link href={item.href} className={footerLinkClass}>
                     {item.label}
                   </Link>
                 </li>
@@ -91,29 +105,29 @@ export default function FooterSection() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-semibold text-[#0F1B3D] uppercase tracking-wider mb-4">Contact</h3>
+            <h3 className={footerHeadingClass}>Contact</h3>
             <ul className="space-y-3">
               {(settings.addressLine1 || settings.city) && (
-                <li className="flex items-start gap-2 text-sm text-[#6F7192]">
-                  <MapPin className="w-4 h-4 mt-0.5 text-[#5B3FD6]" />
+                <li className="flex items-start gap-2 text-sm text-slate-400">
+                  <MapPin className="mt-0.5 h-4 w-4 text-cyan-300" />
                   {addressParts || 'Mumbai, Maharashtra — 400053'}
                 </li>
               )}
               {settings.primaryPhone && (
-                <li className="flex items-center gap-2 text-sm text-[#6F7192]">
-                  <Phone className="w-4 h-4 text-[#5B3FD6]" />
+                <li className="flex items-center gap-2 text-sm text-slate-400">
+                  <Phone className="h-4 w-4 text-cyan-300" />
                   {settings.primaryPhone}
                 </li>
               )}
               {settings.primaryEmail && (
-                <li className="flex items-center gap-2 text-sm text-[#6F7192]">
-                  <Mail className="w-4 h-4 text-[#5B3FD6]" />
+                <li className="flex items-center gap-2 text-sm text-slate-400">
+                  <Mail className="h-4 w-4 text-cyan-300" />
                   {settings.primaryEmail}
                 </li>
               )}
               {settings.businessHours && (
-                <li className="flex items-center gap-2 text-sm text-[#6F7192]">
-                  <Clock className="w-4 h-4 text-[#5B3FD6]" />
+                <li className="flex items-center gap-2 text-sm text-slate-400">
+                  <Clock className="h-4 w-4 text-cyan-300" />
                   {settings.businessHours}
                 </li>
               )}
@@ -122,14 +136,14 @@ export default function FooterSection() {
         </div>
 
         {/* Payment & Delivery */}
-        <div className="border-t border-[rgba(124, 92, 255,0.5)] pt-8 mb-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="mb-8 border-t border-white/10 pt-8">
+          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             {/* Payment */}
             <div>
-              <p className="text-xs text-[#6F7192] mb-2">Payment Methods</p>
+              <p className="mb-2 font-[var(--font-mono)] text-xs uppercase tracking-[0.12em] text-slate-500">Payment Methods</p>
               <div className="flex flex-wrap gap-2">
                 {['UPI', 'Razorpay', 'Google Pay', 'PhonePe', 'Visa', 'Mastercard'].map((method) => (
-                  <span key={method} className="text-xs bg-[rgba(124, 92, 255,0.4)] border border-[rgba(124, 92, 255,0.5)] text-[#6F7192] px-2 py-1 rounded">
+                  <span key={method} className={badgeClass}>
                     {method}
                   </span>
                 ))}
@@ -138,10 +152,10 @@ export default function FooterSection() {
 
             {/* Delivery */}
             <div>
-              <p className="text-xs text-[#6F7192] mb-2">Delivery Partners</p>
+              <p className="mb-2 font-[var(--font-mono)] text-xs uppercase tracking-[0.12em] text-slate-500">Delivery Partners</p>
               <div className="flex flex-wrap gap-2">
                 {['Delhivery', 'Shiprocket', 'DTDC'].map((partner) => (
-                  <span key={partner} className="text-xs bg-[rgba(124, 92, 255,0.4)] border border-[rgba(124, 92, 255,0.5)] text-[#6F7192] px-2 py-1 rounded">
+                  <span key={partner} className={badgeClass}>
                     {partner}
                   </span>
                 ))}
@@ -151,21 +165,21 @@ export default function FooterSection() {
         </div>
 
         {/* Bottom */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#6F7192]">
+        <div className="footer-bottom flex-col items-center gap-4 text-xs md:flex-row">
           <p>&copy; {businessYear} {settings.legalBusinessName || settings.businessName} &middot; All Rights Reserved</p>
-          <div className="flex items-center gap-4">
-             <Link href="/privacy-policy" className="hover:text-[#0F1B3D] transition-colors">Privacy Policy</Link>
-             <Link href="/terms-of-service" className="hover:text-[#0F1B3D] transition-colors">Terms of Service</Link>
-             <Link href="/refund-policy" className="hover:text-[#0F1B3D] transition-colors">Refund Policy</Link>
-             <Link href="/shipping-policy" className="hover:text-[#0F1B3D] transition-colors">Shipping Policy</Link>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+             <Link href="/privacy-policy" className="transition-colors hover:text-white">Privacy Policy</Link>
+             <Link href="/terms-of-service" className="transition-colors hover:text-white">Terms of Service</Link>
+             <Link href="/refund-policy" className="transition-colors hover:text-white">Refund Policy</Link>
+             <Link href="/shipping-policy" className="transition-colors hover:text-white">Shipping Policy</Link>
            </div>
         </div>
 
         {/* SEO footer text */}
-        <p className="mt-8 text-[10px] text-[#4a5070] leading-[1.6] text-center">
-           {settings.businessName} provides professional 3D printing services across India. Specializing in FDM and resin 3D printing for industrial, architectural, medical, student, and corporate clients. Starting at &brvbar;99.
+        <p className="mt-8 text-center text-[10px] leading-[1.6] text-slate-500">
+           {settings.businessName} provides professional 3D printing services across India. Specializing in FDM and resin 3D printing for industrial, architectural, medical, student, and corporate clients. Starting at ₹99.
         </p>
-      </div>
+      </motion.div>
     </footer>
   )
 }

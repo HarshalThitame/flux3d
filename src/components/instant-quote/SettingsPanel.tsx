@@ -45,14 +45,14 @@ function PanelShell({
     <motion.section
       whileHover={{ y: -3 }}
       transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-      className="flex h-full flex-col rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(11,17,31,0.94),rgba(7,11,20,0.9))] p-4 transition-all duration-300 hover:border-[#7C5CFF]/10 hover:bg-[linear-gradient(180deg,rgba(15,21,38,0.96),rgba(8,12,22,0.92))]"
+      className="flex h-full flex-col rounded-[24px] border border-[#7C5CFF]/10 bg-[var(--bg-elevated)] p-4 shadow-[var(--shadow-sm)] transition-all duration-300 hover:border-[#7C5CFF]/20 hover:shadow-[var(--shadow-md)]"
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-white">{title}</h3>
-          <p className="mt-1 text-sm leading-6 text-[#c9d0e7]">{description}</p>
+          <h3 className="text-base font-semibold text-[var(--text-primary)]">{title}</h3>
+          <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">{description}</p>
         </div>
-        <div className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] p-2 text-[#c9d0e7]">
+        <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[var(--brand-faint)] p-2 text-[var(--brand-primary)]">
           {icon}
         </div>
       </div>
@@ -71,7 +71,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
       >
         <div className="space-y-5">
           <div>
-            <div className="mb-2 flex items-center justify-between text-sm text-white">
+            <div className="mb-2 flex items-center justify-between text-sm text-[var(--text-secondary)]">
               <span>Infill</span>
               <span>{props.infill}%</span>
             </div>
@@ -87,7 +87,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
           </div>
 
           <div>
-            <div className="mb-2 flex items-center justify-between text-sm text-white">
+            <div className="mb-2 flex items-center justify-between text-sm text-[var(--text-secondary)]">
               <span>Quantity</span>
               <span>{props.quantity} pcs</span>
             </div>
@@ -98,12 +98,12 @@ export default function SettingsPanel(props: SettingsPanelProps) {
               step={1}
               value={props.quantity}
               onChange={(event) => props.onQuantityChange(Number(event.target.value))}
-              className="w-full rounded-[16px] border border-[#7C5CFF]/10 bg-white/[0.05] px-3 py-3 text-sm text-white outline-none"
+              className="w-full rounded-[16px] border border-[#7C5CFF]/10 bg-white px-3 py-3 text-sm text-[var(--text-primary)] outline-none"
             />
           </div>
 
           <div>
-            <div className="mb-2 text-sm text-white">Post-processing</div>
+            <div className="mb-2 text-sm text-[var(--text-secondary)]">Post-processing</div>
             <div className="grid gap-2">
               {postProcessingOptions.map((option) => {
                 const active = option.value === props.postProcessingLevel
@@ -117,12 +117,12 @@ export default function SettingsPanel(props: SettingsPanelProps) {
                     whileTap={{ scale: 0.985 }}
                     className={`rounded-[16px] border px-3 py-3 text-left transition-all ${
                       active
-                        ? 'border-[#7C5CFF]/35 bg-[#1C3B52]'
-                        : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10 hover:bg-white/[0.04]'
+                        ? 'border-[#7C5CFF]/35 bg-[var(--brand-faint)]'
+                        : 'border-[#7C5CFF]/10 bg-white hover:border-[#7C5CFF]/10 hover:bg-[var(--bg-soft)]'
                     }`}
                   >
                       <div className="flex items-center justify-between gap-3">
-                        <div className="text-sm font-medium text-white">{option.label}</div>
+                        <div className="text-sm font-medium text-[var(--text-primary)]">{option.label}</div>
                         <div className="text-[10px] uppercase tracking-[0.18em] text-[#7C5CFF]">
                           {props.postProcessingChargeEstimate
                             ? `₹${props.postProcessingChargeEstimate(option.value).toFixed(2)}`
@@ -137,7 +137,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
           </div>
 
           <div>
-            <div className="mb-2 text-sm text-white">Layer Height</div>
+            <div className="mb-2 text-sm text-[var(--text-secondary)]">Layer Height</div>
             <div className="grid gap-2">
               {layerHeightOptions.map((option) => {
                 const active = option.value === props.layerHeight
@@ -151,12 +151,12 @@ export default function SettingsPanel(props: SettingsPanelProps) {
                     whileTap={{ scale: 0.985 }}
                     className={`rounded-[16px] border px-3 py-3 text-left transition-all ${
                       active
-                        ? 'border-[#7C5CFF]/35 bg-[#1C3B52]'
-                        : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10 hover:bg-white/[0.04]'
+                        ? 'border-[#7C5CFF]/35 bg-[var(--brand-faint)]'
+                        : 'border-[#7C5CFF]/10 bg-white hover:border-[#7C5CFF]/10 hover:bg-[var(--bg-soft)]'
                     }`}
                   >
-                    <div className="text-sm font-medium text-white">{option.label}</div>
-                    <div className="mt-1 text-xs leading-5 text-[#c9d0e7]">{option.description}</div>
+                    <div className="text-sm font-medium text-[var(--text-primary)]">{option.label}</div>
+                    <div className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{option.description}</div>
                   </motion.button>
                 )
               })}
@@ -177,15 +177,15 @@ export default function SettingsPanel(props: SettingsPanelProps) {
         <div className="flex h-full flex-col justify-between gap-4">
           <div className="rounded-[18px] border border-emerald-400/15 bg-emerald-400/10 p-4">
             <div className="flex items-start gap-3">
-              <ShieldCheck className="mt-0.5 h-5 w-5 text-emerald-200" />
+              <ShieldCheck className="mt-0.5 h-5 w-5 text-emerald-700" />
               <div>
-                <div className="text-sm font-medium text-white">{props.userName ?? 'Signed in'}</div>
-                <div className="mt-1 text-xs text-emerald-200">{props.userEmail}</div>
+                <div className="text-sm font-medium text-[var(--text-primary)]">{props.userName ?? 'Signed in'}</div>
+                <div className="mt-1 text-xs text-emerald-700">{props.userEmail}</div>
               </div>
             </div>
           </div>
 
-            <div className="rounded-[18px] border border-[#7C5CFF]/10 bg-white/[0.02] p-4 text-sm leading-6 text-[#c9d0e7]">
+            <div className="rounded-[18px] border border-[#7C5CFF]/10 bg-[var(--bg-soft)] p-4 text-sm leading-6 text-[var(--text-secondary)]">
               Save your file, settings, and estimate in one place so you can revisit, compare, and place your order faster.
             </div>
 
@@ -202,14 +202,14 @@ export default function SettingsPanel(props: SettingsPanelProps) {
         </div>
       ) : (
         <div className="flex h-full flex-col justify-between gap-4">
-            <div className="rounded-[18px] border border-sky-400/15 bg-sky-400/10 p-4 text-sm leading-6 text-sky-200">
+            <div className="rounded-[18px] border border-sky-400/20 bg-sky-50 p-4 text-sm leading-6 text-sky-800">
               You can explore the quote instantly without an account, but login unlocks saved quotes, synced uploads, and a smoother buying journey.
             </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Link
               href="/login?next=%2Finstant-quote"
-              className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.07]"
+              className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#7C5CFF]/10 bg-white px-4 py-3 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-soft)]"
             >
               Log In
             </Link>

@@ -1,21 +1,16 @@
 'use client'
 
-import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Menu, ShoppingCart, X, MessageCircle, ArrowUpRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { AnimatePresence, motion } from 'framer-motion'
 import type { AppUserProfile } from '@/lib/auth/server'
 import { useCart } from '@/lib/cart/context'
 import { useProfile } from '@/hooks/useProfile'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { useBusinessSettings } from '@/lib/settings-context'
-
-const AnnouncementBar = dynamic(
-  () => import('@/components/offers/OfferBanner').then((mod) => mod.AnnouncementBar),
-  { ssr: false, loading: () => null }
-)
 
 interface NavbarClientProps {
   transparent?: boolean
@@ -38,18 +33,20 @@ function CartButton() {
   if (isLoading) return null
 
   return (
-    <Link
-      href="/cart"
-      className="group relative flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3.5 py-2.5 text-sm font-medium text-[#6F7192] backdrop-blur-sm transition-all hover:border-[#7C5CFF]/30 hover:text-[#0F1B3D] hover:bg-white/[0.06]"
-    >
-      <ShoppingCart className="h-4 w-4 transition-transform group-hover:scale-110" />
-      <span className="hidden sm:inline">Cart</span>
-      {summary.itemCount > 0 && (
-        <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#7C5CFF] text-[10px] font-bold text-white shadow-[0_0_12px_rgba(124, 92, 255,0.4)]">
-          {summary.itemCount}
-        </span>
-      )}
-    </Link>
+    <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+      <Link
+        href="/cart"
+        className="group relative flex items-center gap-2 rounded-lg border border-[var(--border-light)] bg-white px-3 py-2 text-sm font-medium text-[var(--text-secondary)] shadow-[var(--shadow-sm)] transition-colors hover:border-[var(--border-brand)] hover:text-[var(--text-primary)]"
+      >
+        <ShoppingCart className="h-4 w-4" />
+        <span className="hidden sm:inline">Cart</span>
+        {summary.itemCount > 0 && (
+          <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--brand-primary)] text-[10px] font-bold text-white shadow-[var(--shadow-brand)]">
+            {summary.itemCount}
+          </span>
+        )}
+      </Link>
+    </motion.div>
   )
 }
 
@@ -66,12 +63,12 @@ export default function NavbarClient({
   const [isOpen, setIsOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [hoveredLink, setHoveredLink] = useState<string | null>(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
-  const logoSrc = settings.logoUrl || settings.darkLogoUrl || '/logo.png'
   const currentUser = liveProfile ?? user
   const isAuthPending = loading && !currentUser
+  const whatsappNumber = (settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')
+  const navIsElevated = scrolled || !transparent
 
   const handleLogout = async () => {
     try {
@@ -105,6 +102,9 @@ export default function NavbarClient({
     { href: '/pricing', label: 'Pricing' },
     ...(showAdminLink ? [{ href: '/admin', label: 'Admin' }] : []),
   ]
+
+  const currentPath = pathname ?? '/'
+  const isActive = (href: string) => (href === '/' ? currentPath === '/' : currentPath.startsWith(href))
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -141,121 +141,116 @@ export default function NavbarClient({
 
   return (
     <>
-      <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled || !transparent
-            ? 'bg-[#FFFFFF]/90 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.3)]'
-            : 'bg-transparent border-b border-white/[0.04]'
-        }`}
+      <motion.nav
+        initial={{ y: -20, opacity: 1 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="navbar"
+        style={{
+          boxShadow: navIsElevated ? '0 6px 24px rgba(15,23,42,0.08)' : 'none',
+        }}
       >
-        <AnnouncementBar />
-        <div className={`max-w-[1400px] mx-auto px-6 flex items-center justify-between ${
-          scrolled || !transparent ? 'py-2.5' : 'py-3'
-        }`}>
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group" aria-label={`${settings.businessName} home`}>
-            <Image
-              src={logoSrc}
-              alt={`${settings.businessName} logo`}
-              width={150}
-              height={40}
-              sizes="150px"
-              priority
-              className="h-9 w-auto object-contain sm:h-10"
-            />
+        <div className="flex min-w-0 items-center gap-8">
+          <Link href="/" className="group flex items-center gap-2" aria-label={`${settings.businessName} home`}>
+            <span className="logo text-xl leading-none">flux3d</span>
+            <span className="hidden rounded-full border border-[var(--border-light)] bg-[var(--brand-faint)] px-2 py-0.5 font-[var(--font-mono)] text-[10px] uppercase tracking-[0.18em] text-[var(--brand-primary)] sm:inline">
+              Pune
+            </span>
           </Link>
 
-          {/* Nav Links */}
-          <ul className="hidden md:flex items-center gap-1 list-none">
+          <ul className="hidden list-none items-center gap-1 lg:flex">
             {navLinks.map((link) => (
-              <li key={link.href} className="relative">
+              <li key={link.href}>
                 <Link
                   href={link.href}
                   onNavigate={() => {
                     setIsOpen(false)
                     setIsProfileOpen(false)
                   }}
-                  onMouseEnter={() => setHoveredLink(link.href)}
-                  onMouseLeave={() => setHoveredLink(null)}
-                  className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
-                    pathname === link.href || hoveredLink === link.href
-                      ? 'text-[#0F1B3D]'
-                      : 'text-[#6F7192]'
-                  }`}
+                  className={`nav-link whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium ${isActive(link.href) ? 'nav-link-active' : ''}`}
                 >
                   {link.label}
-                  {(pathname === link.href || hoveredLink === link.href) && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#7C5CFF] rounded-full" />
-                  )}
                 </Link>
               </li>
             ))}
           </ul>
+        </div>
 
-          {/* Right Actions */}
-          <div className="hidden md:flex items-center gap-3">
-            <CartButton />
+        <div className="hidden items-center gap-3 lg:flex">
+          <CartButton />
 
-            {/* WhatsApp */}
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
             <a
-              href={`https://wa.me/${settings.whatsappNumber.replace(/[^0-9]/g, '')}`}
+              href={`https://wa.me/${whatsappNumber}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 px-3.5 py-2 text-sm font-medium text-[#25D366] transition-all hover:bg-[#25D366]/20 hover:border-[#25D366]/50"
+              className="flex items-center gap-2 whitespace-nowrap rounded-lg border border-[#25D366]/30 bg-[#25D366]/10 px-3 py-2 text-sm font-medium text-[#25D366] transition-colors hover:bg-[#25D366]/20"
             >
               <MessageCircle className="h-4 w-4" />
               WhatsApp
             </a>
+          </motion.div>
 
-            {isAuthPending ? (
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-[78px] rounded-xl border border-white/[0.08] bg-white/[0.03]" />
-                <div className="h-10 w-[96px] rounded-xl bg-[#5B3FD6]/40" />
-              </div>
-            ) : currentUser ? (
-              <>
+          {isAuthPending ? (
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-[74px] rounded-lg border border-[var(--border-light)] bg-[var(--bg-soft)]" />
+              <div className="h-9 w-[94px] rounded-lg bg-[var(--accent)]/40" />
+            </div>
+          ) : currentUser ? (
+            <>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   href="/instant-quote"
-                  className="group relative flex items-center gap-2 rounded-xl bg-[#5B3FD6] px-4 py-2 text-sm font-semibold text-white overflow-hidden transition-all hover:shadow-[0_0_25px_rgba(91,63,214,0.3)]"
+                  className="btn-primary flex items-center gap-2 whitespace-nowrap px-[18px] py-2"
                 >
                   <span className="relative z-10">Get Quote</span>
-                  <ArrowUpRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  <ArrowUpRight className="relative z-10 h-4 w-4" />
                 </Link>
+              </motion.div>
 
-                <div ref={profileMenuRef} className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setIsProfileOpen((c) => !c)}
-                    className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-2 py-1 pr-2.5 transition-all hover:bg-white/[0.07] hover:border-white/[0.12]"
-                  >
-                    {currentUser.avatarUrl ? (
-                      <span className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-[#7C5CFF]/20">
-                        <Image
-                          src={currentUser.avatarUrl}
-                          alt={currentUser.name}
-                          fill
-                          sizes="28px"
-                          className="object-cover"
-                        />
-                      </span>
-                    ) : (
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#7C5CFF] to-[#A78BFA] text-[10px] font-bold text-[#0F1B3D] shadow-[0_0_12px_rgba(124, 92, 255,0.3)]">
-                        {getInitials(currentUser.name)}
-                      </span>
-                    )}
-                    <ChevronDown
-                      className={`h-3.5 w-3.5 text-[#93a0c4] transition-transform duration-200 ${
-                        isProfileOpen ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </button>
+              <div ref={profileMenuRef} className="relative">
+                <motion.button
+                  type="button"
+                  onClick={() => setIsProfileOpen((current) => !current)}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex items-center gap-2 rounded-lg border border-[var(--border-light)] bg-white px-2 py-1 pr-2.5 shadow-[var(--shadow-sm)] transition-colors hover:border-[var(--border-brand)]"
+                >
+                  {currentUser.avatarUrl ? (
+                    <span className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-[var(--accent)]/20">
+                      <Image
+                        src={currentUser.avatarUrl}
+                        alt={currentUser.name}
+                        fill
+                        sizes="28px"
+                        className="object-cover"
+                      />
+                    </span>
+                  ) : (
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--gradient-brand)] text-[10px] font-bold text-white shadow-[var(--shadow-brand)]">
+                      {getInitials(currentUser.name)}
+                    </span>
+                  )}
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 text-[var(--text-secondary)] transition-transform duration-200 ${
+                      isProfileOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </motion.button>
 
+                <AnimatePresence>
                   {isProfileOpen && (
-                    <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-white/[0.08] bg-[#FFFFFF] shadow-[0_24px_80px_rgba(0,0,0,0.5)] animate-slideDown">
-                      <div className="p-4 border-b border-white/[0.06]">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-[#6F7192]">Signed in as</p>
-                        <p className="mt-1.5 text-base font-semibold text-[#0F1B3D]">{currentUser.name}</p>
-                        <p className="text-sm text-[#93a0c4] truncate">{currentUser.email}</p>
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                      transition={{ duration: 0.18 }}
+                      className="absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl"
+                    >
+                      <div className="border-b border-[var(--border-light)] p-4">
+                        <p className="font-[var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Signed in as</p>
+                        <p className="mt-1.5 text-base font-semibold text-[var(--text-primary)]">{currentUser.name}</p>
+                        <p className="truncate text-sm text-[var(--text-secondary)]">{currentUser.email}</p>
                       </div>
 
                       <div className="p-3">
@@ -268,7 +263,7 @@ export default function NavbarClient({
                             key={item.href}
                             href={item.href}
                             onClick={() => setIsProfileOpen(false)}
-                            className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[#6F7192] transition-colors hover:bg-white/[0.05] hover:text-[#0F1B3D]"
+                            className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
                           >
                             {item.label}
                           </Link>
@@ -277,176 +272,201 @@ export default function NavbarClient({
                           type="button"
                           onClick={() => void handleLogout()}
                           disabled={isLoggingOut}
-                          className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-red-400/80 transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isLoggingOut ? 'Logging out...' : 'Log out'}
                         </button>
                       </div>
-                    </div>
+                    </motion.div>
                   )}
-                </div>
-              </>
-            ) : (
-              <>
+                </AnimatePresence>
+              </div>
+            </>
+          ) : (
+            <>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   href="/login"
-                  className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-[#6F7192] transition-all hover:text-[#0F1B3D] hover:bg-white/[0.07]"
+                  className="whitespace-nowrap rounded-lg border border-[var(--border-light)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-secondary)] shadow-[var(--shadow-sm)] transition-colors hover:border-[var(--border-brand)] hover:text-[var(--text-primary)]"
                 >
                   Log In
                 </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   href="/signup"
-                  className="group relative rounded-xl bg-[#5B3FD6] px-5 py-2.5 text-sm font-semibold text-white overflow-hidden transition-all hover:shadow-[0_0_25px_rgba(91,63,214,0.3)]"
+                  className="btn-primary whitespace-nowrap px-[18px] py-2"
                 >
-                  <span className="relative z-10">Sign Up</span>
+                  Sign Up
                 </Link>
-              </>
-            )}
-          </div>
-
-      {/* Mobile Toggle */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative md:hidden p-3 text-[#0F1B3D] min-h-[44px] min-w-[44px] flex items-center justify-center"
-        aria-label={isOpen ? 'Close menu' : 'Open menu'}
-      >
-        <span className="w-6 h-6 flex items-center justify-center">
-          {isOpen ? (
-            <X className="h-5 w-5 animate-fadeIn" />
-          ) : (
-            <Menu className="h-5 w-5" />
+              </motion.div>
+            </>
           )}
-        </span>
-      </button>
         </div>
-      </nav>
 
-      {/* Mobile Menu Overlay */}
-      {isOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div
-            className="absolute inset-0 bg-[#FFFFFF]/95 backdrop-blur-2xl animate-fadeIn"
-            onClick={() => setIsOpen(false)}
-          />
+        <motion.button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          className="relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-[var(--border)] text-[var(--text-primary)] lg:hidden"
+          aria-label={isOpen ? 'Close menu' : 'Open menu'}
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={isOpen ? 'close' : 'open'}
+              initial={{ opacity: 0, rotate: -8, scale: 0.9 }}
+              animate={{ opacity: 1, rotate: 0, scale: 1 }}
+              exit={{ opacity: 0, rotate: 8, scale: 0.9 }}
+              transition={{ duration: 0.15 }}
+              className="flex h-6 w-6 items-center justify-center"
+            >
+              {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </motion.span>
+          </AnimatePresence>
+        </motion.button>
+      </motion.nav>
 
-          <div className="animate-slideDown absolute top-20 left-4 right-4 rounded-2xl border border-white/[0.08] bg-[#FFFFFF]/95 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.5)] overflow-hidden">
-            <div className="p-6">
-              {currentUser && (
-                <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                  {currentUser.avatarUrl ? (
-                    <span className="relative h-10 w-10 overflow-hidden rounded-full">
-                      <Image
-                        src={currentUser.avatarUrl}
-                        alt={currentUser.name}
-                        fill
-                        sizes="40px"
-                        className="object-cover"
-                      />
-                    </span>
-                  ) : (
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#7C5CFF] to-[#A78BFA] text-sm font-bold text-[#0F1B3D]">
-                      {getInitials(currentUser.name)}
-                    </span>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#0F1B3D] truncate">{currentUser.name}</p>
-                    <p className="text-xs text-[#6F7192] truncate">{currentUser.email}</p>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="fixed inset-0 z-[90] lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <button
+              type="button"
+              aria-label="Close menu"
+              className="absolute inset-0 bg-slate-900/20 backdrop-blur-xl"
+              onClick={() => setIsOpen(false)}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, y: -12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -12, scale: 0.98 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute left-4 right-4 top-24 overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl"
+            >
+              <div className="p-6">
+                {currentUser && (
+                  <div className="mb-6 flex items-center gap-3 rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3">
+                    {currentUser.avatarUrl ? (
+                      <span className="relative h-10 w-10 overflow-hidden rounded-full">
+                        <Image
+                          src={currentUser.avatarUrl}
+                          alt={currentUser.name}
+                          fill
+                          sizes="40px"
+                          className="object-cover"
+                        />
+                      </span>
+                    ) : (
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--gradient-brand)] text-sm font-bold text-white">
+                        {getInitials(currentUser.name)}
+                      </span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{currentUser.name}</p>
+                      <p className="truncate text-xs text-[var(--text-secondary)]">{currentUser.email}</p>
+                    </div>
                   </div>
-                </div>
-              )}
-
-              <ul className="space-y-1">
-                {navLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      onClick={() => {
-                        setIsOpen(false)
-                        setIsProfileOpen(false)
-                      }}
-                      className={`flex items-center justify-between rounded-xl py-3.5 px-4 text-base font-medium transition-colors min-h-[44px] ${
-                        pathname === link.href
-                          ? 'bg-white/[0.06] text-[#0F1B3D]'
-                          : 'text-[#6F7192] hover:bg-white/[0.05] hover:text-[#0F1B3D]'
-                      }`}
-                    >
-                      {link.label}
-                      {pathname === link.href && (
-                        <div className="h-1.5 w-1.5 rounded-full bg-[#7C5CFF]" />
-                      )}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-6 space-y-3">
-                <Link
-                  href="/instant-quote"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#5B3FD6] py-3.5 text-base font-semibold text-white"
-                >
-                  Get Instant Quote
-                  <ArrowUpRight className="h-4 w-4" />
-                </Link>
-                <a
-                  href={`https://wa.me/${settings.whatsappNumber.replace(/[^0-9]/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 py-3.5 text-base font-medium text-[#25D366]"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  WhatsApp Us
-                </a>
-
-                {isAuthPending ? (
-                  <>
-                    <div className="block w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-3.5" />
-                    <div className="block w-full rounded-xl bg-[#5B3FD6]/40 py-3.5" />
-                  </>
-                ) : currentUser ? (
-                  <>
-                    {['/saved-quotes', '/my-orders', '/profile'].map((href) => (
-                      <Link
-                        key={href}
-                        href={href}
-                        onClick={() => setIsOpen(false)}
-                        className="block w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-3.5 text-center text-base font-medium text-[#6F7192]"
-                      >
-                        {href === '/saved-quotes' ? 'Saved Quotes' : href === '/my-orders' ? 'My Orders' : 'Profile'}
-                      </Link>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => void handleLogout()}
-                      disabled={isLoggingOut}
-                      className="block w-full rounded-xl border border-white/[0.06] py-3.5 text-center text-base font-medium text-red-400/80 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {isLoggingOut ? 'Logging out...' : 'Log out'}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      href="/login"
-                      onClick={() => setIsOpen(false)}
-                      className="block w-full rounded-xl border border-white/[0.08] bg-white/[0.03] py-3.5 text-center text-base font-medium text-[#6F7192]"
-                    >
-                      Log In
-                    </Link>
-                    <Link
-                      href="/signup"
-                      onClick={() => setIsOpen(false)}
-                      className="block w-full rounded-xl bg-[#5B3FD6] py-3.5 text-center text-base font-semibold text-white"
-                    >
-                      Create Account
-                    </Link>
-                  </>
                 )}
+
+                <ul className="space-y-1">
+                  {navLinks.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        onClick={() => {
+                          setIsOpen(false)
+                          setIsProfileOpen(false)
+                        }}
+                        className={`flex min-h-[44px] items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-colors ${
+                          isActive(link.href)
+                            ? 'bg-[var(--brand-faint)] text-[var(--brand-primary)]'
+                            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]'
+                        }`}
+                      >
+                        {link.label}
+                        {isActive(link.href) && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+                        )}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-6 space-y-3">
+                  <Link
+                    href="/instant-quote"
+                    onClick={() => setIsOpen(false)}
+                    className="btn-primary flex w-full items-center justify-center gap-2 py-3.5 text-base"
+                  >
+                    Get Instant Quote
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                  <a
+                    href={`https://wa.me/${whatsappNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 py-3.5 text-base font-medium text-[#25D366]"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    WhatsApp Us
+                  </a>
+
+                  {isAuthPending ? (
+                    <>
+                      <div className="block w-full rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] py-3.5" />
+                      <div className="block w-full rounded-xl bg-[var(--accent)]/40 py-3.5" />
+                    </>
+                  ) : currentUser ? (
+                    <>
+                      {['/saved-quotes', '/my-orders', '/profile'].map((href) => (
+                        <Link
+                          key={href}
+                          href={href}
+                          onClick={() => setIsOpen(false)}
+                          className="block w-full rounded-xl border border-[var(--border-light)] bg-white py-3.5 text-center text-base font-medium text-[var(--text-secondary)]"
+                        >
+                          {href === '/saved-quotes' ? 'Saved Quotes' : href === '/my-orders' ? 'My Orders' : 'Profile'}
+                        </Link>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => void handleLogout()}
+                        disabled={isLoggingOut}
+                        className="block w-full rounded-xl border border-[var(--border-light)] py-3.5 text-center text-base font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isLoggingOut ? 'Logging out...' : 'Log out'}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/login"
+                        onClick={() => setIsOpen(false)}
+                        className="block w-full rounded-xl border border-[var(--border-light)] bg-white py-3.5 text-center text-base font-medium text-[var(--text-secondary)]"
+                      >
+                        Log In
+                      </Link>
+                      <Link
+                        href="/signup"
+                        onClick={() => setIsOpen(false)}
+                        className="btn-primary block w-full py-3.5 text-center text-base"
+                      >
+                        Create Account
+                      </Link>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }

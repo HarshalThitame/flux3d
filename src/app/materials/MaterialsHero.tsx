@@ -2,36 +2,24 @@
 
 import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Layers, MessageCircle, ChevronDown } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
 
-function useParticles(count: number) {
-  const [particles] = useState<Array<{
-    left: number
-    top: number
-    width: number
-    height: number
-    duration: number
-    delay: number
-  }>>(() => Array.from({ length: count }).map(() => ({
-    left: Math.random() * 100,
-    top: Math.random() * 100,
-    width: Math.random() * 3 + 1,
-    height: Math.random() * 3 + 1,
-    duration: Math.random() * 3 + 2,
-    delay: Math.random() * 2,
-  })))
-
-  return particles
-}
+const materialParticles = Array.from({ length: 20 }, (_, i) => ({
+  left: (i * 29 + 13) % 100,
+  top: (i * 47 + 9) % 100,
+  width: 1 + (i % 3) * 0.75,
+  height: 1 + (i % 3) * 0.75,
+  duration: 2 + (i % 5) * 0.35,
+  delay: (i % 6) * 0.18,
+}))
 
 export default function MaterialsHero() {
   const { settings } = useBusinessSettings()
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
-  const particles = useParticles(20)
 
   return (
     <section ref={ref} className="relative overflow-hidden pt-32 pb-16 px-4 md:px-8 lg:px-16">
@@ -43,10 +31,10 @@ export default function MaterialsHero() {
 
       {/* Floating particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {particles.map((p, i) => (
+        {materialParticles.map((p, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full bg-[#7C5CFF]"
+            className="absolute rounded-full bg-[var(--brand-primary)]"
             style={{
               left: `${p.left}%`,
               top: `${p.top}%`,

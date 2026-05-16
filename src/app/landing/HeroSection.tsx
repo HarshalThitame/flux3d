@@ -1,6 +1,10 @@
+'use client'
+
+import { animate, motion, useInView, useMotionValue, useTransform, type Variants } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, ArrowDown, Printer, MapPin } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { ArrowRight, ArrowDown, MapPin } from 'lucide-react'
 
 const particles = [
   { id: 0, x: 8, y: 18, size: 3, duration: 4.2, delay: 0.1 },
@@ -25,16 +29,22 @@ function FloatingParticles() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
       {particles.map((particle) => (
-        <span
+        <motion.span
           key={particle.id}
-          className="hero-particle"
+          className="absolute rounded-full bg-[var(--accent)]"
           style={{
             left: `${particle.x}%`,
             top: `${particle.y}%`,
             width: `${particle.size * 4}px`,
             height: `${particle.size * 4}px`,
-            animationDuration: `${particle.duration}s`,
-            animationDelay: `${particle.delay}s`,
+          }}
+          initial={{ opacity: 0.12, y: 0 }}
+          animate={{ opacity: [0.12, 0.36, 0.12], y: [0, -18, 0] }}
+          transition={{
+            duration: particle.duration,
+            delay: particle.delay,
+            repeat: Infinity,
+            ease: 'easeInOut',
           }}
         />
       ))}
@@ -44,18 +54,18 @@ function FloatingParticles() {
 
 
 const orbs = [
-  { id: 'a', x: '15%', y: '20%', w: 500, h: 500, anim: 'animate-orb-1', blur: 'blur-3xl', op: 0.15, grad: 'from-[#7C5CFF]/20 to-[#A78BFA]/10' },
-  { id: 'b', x: '70%', y: '60%', w: 400, h: 400, anim: 'animate-orb-2', blur: 'blur-3xl', op: 0.12, grad: 'from-[#A78BFA]/20 to-[#7C5CFF]/10' },
-  { id: 'c', x: '50%', y: '80%', w: 350, h: 350, anim: 'animate-orb-3', blur: 'blur-3xl', op: 0.1, grad: 'from-[#7C5CFF]/15 to-transparent' },
+  { id: 'a', x: '15%', y: '20%', w: 500, h: 500, op: 0.15, grad: 'from-[#7C5CFF]/20 to-[#A78BFA]/10', motion: { x: [-20, 28, -20], y: [0, -36, 0], scale: [1, 1.06, 1] } },
+  { id: 'b', x: '70%', y: '60%', w: 400, h: 400, op: 0.12, grad: 'from-[#A78BFA]/20 to-[#06B6D4]/10', motion: { x: [24, -22, 24], y: [-18, 18, -18], scale: [1, 0.94, 1] } },
+  { id: 'c', x: '50%', y: '80%', w: 350, h: 350, op: 0.1, grad: 'from-[#06B6D4]/15 to-transparent', motion: { x: [-14, 20, -14], y: [18, -16, 18], scale: [0.96, 1.04, 0.96] } },
 ]
 
 function FloatingOrbs() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
       {orbs.map((orb) => (
-        <div
+        <motion.div
           key={orb.id}
-          className={`absolute ${orb.anim}`}
+          className="absolute"
           style={{
             left: orb.x,
             top: orb.y,
@@ -64,12 +74,14 @@ function FloatingOrbs() {
             marginLeft: -orb.w / 2,
             marginTop: -orb.h / 2,
           }}
+          animate={orb.motion}
+          transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
         >
           <div
-            className={`w-full h-full rounded-full bg-gradient-to-br ${orb.grad} ${orb.blur} opacity-[var(--op)]`}
+            className={`h-full w-full rounded-full bg-gradient-to-br ${orb.grad} opacity-[var(--op)] blur-3xl`}
             style={{ '--op': orb.op } as React.CSSProperties}
           />
-        </div>
+        </motion.div>
       ))}
     </div>
   )
@@ -92,17 +104,18 @@ function BubbleParticles() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
       {bubbles.map((b) => (
-        <span
+        <motion.span
           key={b.id}
-          className="hero-bubble"
+          className="absolute rounded-full border border-[var(--accent)]/15 bg-[radial-gradient(circle_at_30%_30%,rgba(124,58,237,0.12),rgba(6,182,212,0.04))]"
           style={{
             left: `${b.x}%`,
             bottom: '-10%',
             width: b.size,
             height: b.size,
-            animationDuration: `${b.dur}s`,
-            animationDelay: `${b.del}s`,
           }}
+          initial={{ opacity: 0, y: 0, scale: 1 }}
+          animate={{ opacity: [0, 0.2, 0.08, 0], y: ['0vh', '-100vh'], scale: [1, 0.8, 0.6] }}
+          transition={{ duration: b.dur, delay: b.del, repeat: Infinity, ease: 'easeInOut' }}
         />
       ))}
     </div>
@@ -128,17 +141,18 @@ function TwinkleStars() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
       {twinkles.map((t) => (
-        <span
+        <motion.span
           key={t.id}
-          className="hero-twinkle"
+          className="absolute rounded-full bg-[var(--accent-2)]"
           style={{
             left: `${t.x}%`,
             top: `${t.y}%`,
             width: t.s,
             height: t.s,
-            animationDuration: `${t.dur}s`,
-            animationDelay: `${t.del}s`,
           }}
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: [0, 0.28, 0.05, 0.2, 0], scale: [0.5, 1, 0.8, 1.1, 0.7] }}
+          transition={{ duration: t.dur, delay: t.del, repeat: Infinity, ease: 'easeInOut' }}
         />
       ))}
     </div>
@@ -157,9 +171,9 @@ function RippleRings() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
       {ripples.map((r) => (
-        <span
+        <motion.span
           key={r.id}
-          className="hero-ripple"
+          className="absolute rounded-full border border-[var(--accent)]/20"
           style={{
             left: `${r.x}%`,
             top: `${r.y}%`,
@@ -167,9 +181,10 @@ function RippleRings() {
             height: r.s,
             marginLeft: -r.s / 2,
             marginTop: -r.s / 2,
-            animationDuration: `${r.dur}s`,
-            animationDelay: `${r.del}s`,
           }}
+          initial={{ opacity: 0.3, scale: 0.3 }}
+          animate={{ opacity: [0.3, 0], scale: [0.3, 2] }}
+          transition={{ duration: r.dur, delay: r.del, repeat: Infinity, ease: 'easeOut' }}
         />
       ))}
     </div>
@@ -177,48 +192,117 @@ function RippleRings() {
 }
 
 const stats = [
-  { value: '₹99', label: 'Prints Start At' },
-  { value: '48hr', label: 'Express Turnaround' },
-  { value: '500+', label: 'Orders Delivered' },
-  { value: '10+', label: 'Materials in Stock' },
-  { value: '19,000+', label: 'Pin Codes Delivered' }
+  { value: 99, prefix: '₹', suffix: '', label: 'Prints Start At' },
+  { value: 48, prefix: '', suffix: 'hr', label: 'Express Turnaround' },
+  { value: 500, prefix: '', suffix: '+', label: 'Orders Delivered' },
+  { value: 10, prefix: '', suffix: '+', label: 'Materials in Stock' },
+  { value: 19000, prefix: '', suffix: '+', label: 'Pin Codes Delivered' }
 ]
+
+function CountStat({
+  stat,
+  index,
+}: {
+  stat: { value: number; prefix: string; suffix: string; label: string }
+  index: number
+}) {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const isInView = useInView(ref, { once: true, margin: '-80px' })
+  const count = useMotionValue(0)
+  const display = useTransform(count, (latest) => {
+    const value = Math.round(latest).toLocaleString('en-IN')
+    return `${stat.prefix}${value}${stat.suffix}`
+  })
+
+  useEffect(() => {
+    if (!isInView) return
+    const controls = animate(count, stat.value, {
+      duration: 1.2,
+      delay: 0.25 + index * 0.08,
+      ease: 'easeOut',
+    })
+    return () => controls.stop()
+  }, [count, index, isInView, stat.value])
+
+  return (
+    <motion.div
+      ref={ref}
+      className="stat-item group relative"
+      variants={item}
+      whileHover={{ y: -4, scale: 1.02 }}
+      transition={{ duration: 0.2 }}
+    >
+      <motion.span
+        className="mx-auto mb-2 block h-1.5 w-1.5 rotate-45 rounded-sm bg-[var(--gradient-accent)] opacity-70"
+        whileHover={{ scale: 1.25, opacity: 1 }}
+      />
+      <motion.div className="stat-number">{display}</motion.div>
+      <div className="stat-label">{stat.label}</div>
+    </motion.div>
+  )
+}
 
 function ImageAura() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-      <div
-        className="absolute right-[10%] top-1/2 -translate-y-1/2 w-[40vw] h-[60vh] animate-pulse-glow"
+      <motion.div
+        className="absolute right-[10%] top-1/2 h-[60vh] w-[40vw] -translate-y-1/2"
         style={{ isolation: 'isolate' }}
+        animate={{ opacity: [0.75, 1, 0.75], scale: [1, 1.04, 1] }}
+        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <div
-          className="w-full h-full rounded-[40%_60%_50%_50%/50%_40%_60%_50%] animate-morph"
+        <motion.div
+          className="h-full w-full rounded-[40%_60%_50%_50%/50%_40%_60%_50%]"
           style={{
             background: 'radial-gradient(ellipse at center, rgba(124,92,255,0.2) 0%, rgba(167,139,250,0.1) 40%, transparent 70%)',
           }}
+          animate={{ borderRadius: ['40% 60% 50% 50% / 50% 40% 60% 50%', '50% 40% 60% 50% / 60% 50% 40% 50%', '40% 60% 50% 50% / 50% 40% 60% 50%'] }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
         />
-        <div
-          className="absolute inset-4 rounded-[50%_40%_60%_50%/60%_50%_40%_50%] animate-morph"
+        <motion.div
+          className="absolute inset-4 rounded-[50%_40%_60%_50%/60%_50%_40%_50%]"
           style={{
-            animationDelay: '-3s',
             background: 'radial-gradient(ellipse at center, rgba(183,167,255,0.12) 0%, transparent 60%)',
           }}
+          animate={{ borderRadius: ['50% 40% 60% 50% / 60% 50% 40% 50%', '42% 58% 45% 55% / 45% 60% 50% 55%', '50% 40% 60% 50% / 60% 50% 40% 50%'] }}
+          transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
         />
-      </div>
+      </motion.div>
     </div>
   )
 }
 
+const container: Variants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.12 }
+  }
+}
+
+const item: Variants = {
+  hidden: { opacity: 1, y: 24 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
+  }
+}
+
 export default function HeroSection() {
   return (
-    <section className="relative min-h-screen flex flex-col justify-center overflow-hidden pt-24">
+    <section className="dot-grid-bg relative flex min-h-screen flex-col justify-center overflow-hidden pt-28">
       <FloatingOrbs />
+      <div className="hero-glow hero-glow-1" />
+      <div className="hero-glow hero-glow-2" />
 
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(124, 92, 255,0.18)_0%,transparent_70%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_80%_70%,rgba(183, 167, 255,0.1)_0%,transparent_55%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_40%_30%_at_20%_80%,rgba(124, 92, 255,0.05)_0%,transparent_50%)]" />
-        <div className="absolute inset-0 animate-breathe bg-[radial-gradient(ellipse_100%_50%_at_50%_0%,rgba(124, 92, 255,0.04)_0%,transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(124,58,237,0.18)_0%,transparent_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_80%_70%,rgba(6,182,212,0.08)_0%,transparent_55%)]" />
+        <motion.div
+          className="absolute inset-0 bg-[radial-gradient(ellipse_100%_50%_at_50%_0%,rgba(124,58,237,0.05)_0%,transparent_60%)]"
+          animate={{ opacity: [0.35, 0.7, 0.35] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        />
       </div>
 
       <div
@@ -236,91 +320,119 @@ export default function HeroSection() {
       <TwinkleStars />
       <RippleRings />
 
-      <div
-        className="animate-ring-spin absolute top-1/2 left-1/2 h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 opacity-10"
+      <motion.div
+        className="absolute left-1/2 top-1/2 h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 opacity-10"
         aria-hidden="true"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
       >
-        <div className="w-full h-full rounded-full border border-dashed border-[#7C5CFF]" />
-      </div>
+        <div className="h-full w-full rounded-full border border-dashed border-[var(--accent)]" />
+      </motion.div>
 
       <div className="relative z-10 w-full">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-8">
-          <div className="w-full lg:w-[52%] text-center lg:text-left py-8">
-            <div className="animate-hero-in inline-flex items-center gap-2 rounded-full border border-[rgba(124, 92, 255,0.3)] bg-[rgba(124, 92, 255,0.08)] px-4 py-1.5 text-sm font-medium text-[#5B3FD6] mb-3 animate-borderGlow">
-              <Printer className="w-4 h-4" />
-              Now Printing on Bambu Lab P2S
-            </div>
+          <motion.div
+            className="hero-copy py-8 text-center lg:text-left"
+            variants={container}
+            initial="hidden"
+            animate="show"
+          >
+            <motion.div className="hero-badge" variants={item}>
+              <motion.span
+                className="badge-dot"
+                animate={{ opacity: [1, 0.45, 1], scale: [1, 0.82, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              <span className="hidden sm:inline">Now Printing on Bambu Lab P2S · Pune, India</span>
+              <span className="sm:hidden">Bambu Lab P2S · Pune</span>
+            </motion.div>
 
-            <div className="animate-hero-in animate-delay-1 inline-flex items-center gap-1.5 text-[#6F7192] text-sm ml-2">
-              <MapPin className="w-3.5 h-3.5" />
-              Proudly Made in India
-            </div>
+            <motion.div variants={item} className="mb-3 flex items-center justify-center gap-1.5 font-[var(--font-mono)] text-xs uppercase tracking-[0.12em] text-[var(--text-muted)] lg:justify-start">
+              <MapPin className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Precision engineering · Pan-India delivery</span>
+              <span className="sm:hidden">Precision engineering</span>
+            </motion.div>
 
-            <h1 className="animate-hero-in animate-delay-2 mt-3 mb-3 font-[var(--font-syne)] text-[clamp(1.8rem,7vw,3.2rem)] font-extrabold leading-[1.1] tracking-[-1px] text-[#0F1B3D]">
-              Where Ideas Become{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA] to-[#7C5CFF] animate-slide-glow">
-                Reality
+            <motion.h1
+              variants={item}
+              className="mb-5 font-[var(--font-syne)] text-[clamp(2.15rem,9vw,4.5rem)] font-extrabold leading-[1.05] text-[var(--text-primary)]"
+            >
+              <span className="block sm:inline">Where</span>{' '}
+              <span className="block sm:inline">Ideas</span>{' '}
+              <span className="block sm:inline">
+                Become <span className="gradient-text">Reality</span>
               </span>
               <br />
-              <span className="text-[#6F7192] font-normal text-[clamp(1rem,2.5vw,1.6rem)]">
-                Layer by Layer.
-              </span>
-            </h1>
+              <span className="block sm:inline">Layer by</span>{' '}
+              <span className="block sm:inline">Layer.</span>
+            </motion.h1>
 
-            <p className="animate-hero-in animate-delay-3 mb-3 max-w-[520px] px-2 text-sm leading-[1.6] text-[#6F7192] mx-auto lg:mx-0 sm:px-0">
+            <motion.p variants={item} className="mx-auto mb-3 max-w-[340px] px-2 text-sm leading-[1.75] text-[var(--text-secondary)] sm:max-w-[560px] sm:px-0 sm:text-base lg:mx-0">
               India&apos;s most trusted 3D printing service. Industrial parts, architecture models, student projects, medical models, creator props & corporate gifts — all printed with micron-level precision.
-            </p>
+            </motion.p>
 
-            <p className="animate-hero-in animate-delay-4 mx-auto mb-6 max-w-[520px] text-xs text-[#4a5070] lg:mx-0">
+            <motion.p variants={item} className="mx-auto mb-7 max-w-[340px] font-[var(--font-mono)] text-[11px] leading-5 text-[var(--text-muted)] sm:max-w-[520px] sm:text-xs lg:mx-0">
               Powered by Bambu Lab P2S · Starting at ₹99 · Pan-India Delivery
-            </p>
+            </motion.p>
 
-            <div className="animate-hero-in animate-delay-5 mb-4 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-              <Link
-                href="/instant-quote"
-                className="group relative flex min-h-[48px] items-center justify-center overflow-hidden rounded-xl bg-[#5B3FD6] px-5 py-3.5 text-center text-sm font-semibold text-white transition-all duration-300 hover:shadow-[0_0_40px_rgba(91,63,214,0.4)] hover:scale-[1.03] active:scale-[0.97] sm:px-6 sm:py-3"
-              >
-                <span className="relative z-10 inline-flex items-center gap-2">
+            <motion.div variants={item} className="mb-4 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+                <Link
+                  href="/instant-quote"
+                  className="btn-primary flex min-h-[48px] items-center justify-center gap-2 px-5 py-3.5 text-center text-sm sm:px-6 sm:py-3"
+                >
                   Upload Your Model & Get Quote
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </span>
-                <span className="absolute inset-0 overflow-hidden rounded-xl">
-                  <span className="absolute inset-0 translate-x-[-100%] skew-x-[25deg] bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-[100%]" />
-                </span>
-                <span className="absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.15),transparent_60%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-              </Link>
-              <a
-                href="#services"
-                className="inline-flex items-center justify-center gap-2 bg-transparent text-[#0F1B3D] px-5 py-3.5 sm:px-6 sm:py-3 rounded-xl text-sm font-medium border border-[rgba(124, 92, 255,0.5)] cursor-pointer transition-all duration-300 hover:border-[rgba(124, 92, 255,0.6)] hover:bg-[rgba(124, 92, 255,0.08)] hover:shadow-[0_0_20px_rgba(124,92,255,0.15)] min-h-[48px] active:scale-[0.97]"
-              >
-                View Our Work
-                <ArrowDown className="w-4 h-4 animate-float-slow" />
-              </a>
-            </div>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+                <a
+                  href="#services"
+                  className="btn-secondary flex min-h-[48px] items-center justify-center gap-2 px-5 py-3.5 text-sm sm:px-6 sm:py-3"
+                >
+                  View Our Work
+                  <motion.span
+                    animate={{ y: [0, 4, 0] }}
+                    transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                  </motion.span>
+                </a>
+              </motion.div>
+            </motion.div>
 
-            <p className="animate-hero-in animate-delay-6 text-center text-xs text-[#4a5070] lg:text-left">
+            <motion.p variants={item} className="text-center font-[var(--font-mono)] text-xs text-[var(--text-muted)] lg:text-left">
               No account needed · Free quote in 2 minutes · 500+ happy customers
-            </p>
-          </div>
+            </motion.p>
+          </motion.div>
         </div>
 
         <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 w-[50vw] h-[92vh] pointer-events-none" style={{ isolation: 'isolate' }}>
           <ImageAura />
           <div className="absolute inset-y-0 right-0 w-[140%] bg-[radial-gradient(ellipse_50%_50%_at_50%_50%,rgba(124, 92, 255,0.15)_0%,transparent_70%)] blur-2xl" />
-          <div className="relative w-full h-full animate-float-slow2">
+          <motion.div
+            className="relative h-full w-full"
+            animate={{ y: [0, -10, 5, 0], x: [0, 8, -5, 0] }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          >
             <Image
               src="/pot.webp"
               alt="3D printed pot showcase"
               fill
               priority
               sizes="(max-width: 768px) 100vw, 48vw"
-              quality={65}
+              quality={75}
               className="object-contain object-right drop-shadow-2xl"
             />
-          </div>
+          </motion.div>
         </div>
 
-        <div className="lg:hidden flex items-center justify-center max-md:mt-4 animate-hero-in animate-delay-4 px-4">
+        <motion.div
+          className="flex items-center justify-center px-4 max-md:mt-4 lg:hidden"
+          initial={{ opacity: 1, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        >
           <div className="relative w-full max-w-[280px] aspect-[3/4]">
             <Image
               src="/pot.webp"
@@ -328,35 +440,25 @@ export default function HeroSection() {
               fill
               priority
               sizes="280px"
-              quality={65}
+              quality={75}
               className="object-contain drop-shadow-2xl"
             />
           </div>
-        </div>
+        </motion.div>
 
-        <div className="animate-hero-in animate-delay-6 mt-8 grid grid-cols-2 gap-3 sm:mt-10 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+        <motion.div
+          className="stats-row"
+          variants={container}
+          initial="hidden"
+          animate="show"
+        >
           {stats.map((stat, i) => (
-              <div
-                key={stat.label}
-                className="group relative rounded-2xl border border-[rgba(124,92,255,0.2)] bg-white/70 p-4 text-center transition-all duration-300 hover:-translate-y-1.5 hover:border-[rgba(124,92,255,0.35)] hover:bg-white/85 hover:shadow-[0_8px_32px_rgba(124,92,255,0.1)] sm:p-5"
-                style={{
-                  animation: `fadeScaleIn 0.5s ease both`,
-                  animationDelay: `${0.35 + i * 0.08}s`,
-                  boxShadow: '0 2px 16px rgba(124,92,255,0.06), 0 1px 4px rgba(124,92,255,0.04)',
-                }}
-              >
-                <span className="mx-auto mb-2 block h-1.5 w-1.5 rotate-45 rounded-sm bg-gradient-to-br from-[#7C5CFF] to-[#A78BFA] opacity-60 transition-all duration-300 group-hover:opacity-100 group-hover:scale-125" />
-                <div className="font-[var(--font-syne)] text-xl font-extrabold sm:text-2xl bg-gradient-to-br from-[#7C5CFF] to-[#A78BFA] bg-clip-text text-transparent">
-                  {stat.value}
-                </div>
-                <div className="text-[11px] sm:text-xs text-[#6F7192] mt-1 font-medium tracking-wide">{stat.label}</div>
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-[rgba(124,92,255,0.03)] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
-              </div>
+            <CountStat key={stat.label} stat={stat} index={i} />
           ))}
-        </div>
+        </motion.div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#FFFFFF] to-transparent pointer-events-none" />
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[var(--bg-primary)] to-transparent" />
     </section>
   )
 }

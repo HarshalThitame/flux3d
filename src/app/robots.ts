@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: '*',
-        allow: '/',
+        allow: ['/', '/blog', '/blog/*'],
       },
     ],
     host: siteConfig.url,
