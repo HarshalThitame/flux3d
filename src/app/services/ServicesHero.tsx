@@ -2,26 +2,24 @@
 
 import Link from 'next/link'
 import { motion, useScroll, useTransform } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
+
+const serviceParticles = Array.from({ length: 30 }, (_, i) => ({
+  id: i,
+  x: (i * 37 + 11) % 100,
+  y: (i * 53 + 17) % 100,
+  size: 1 + (i % 4) * 0.6,
+  duration: 2 + (i % 5) * 0.45,
+  delay: (i % 7) * 0.2,
+}))
 
 function FloatingParticles() {
-  const [particles] = useState<Array<{ id: number; x: number; y: number; size: number; duration: number; delay: number }>>(
-    () => Array.from({ length: 30 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 3 + 1,
-      duration: Math.random() * 3 + 2,
-      delay: Math.random() * 2
-    }))
-  )
-
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {particles.map(p => (
+      {serviceParticles.map(p => (
         <motion.div
           key={p.id}
-          className="absolute rounded-full bg-[#7C5CFF]"
+          className="absolute rounded-full bg-[var(--brand-primary)]"
           style={{
             left: `${p.x}%`,
             top: `${p.y}%`,
@@ -51,7 +49,7 @@ function PrinterSVG() {
       viewBox="0 0 200 160"
       className="w-full max-w-[320px] mx-auto"
       style={{ contain: 'layout style paint' }}
-      initial={{ opacity: 0, scale: 0.8 }}
+      initial={{ opacity: 1, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.8, ease: 'easeOut' }}
     >
@@ -135,12 +133,13 @@ export default function ServicesHero() {
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
 
   return (
-    <section ref={ref} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+    <section ref={ref} className="dot-grid-bg relative flex min-h-screen items-center justify-center overflow-hidden pt-24">
+      <div className="hero-glow hero-glow-1" />
+      <div className="hero-glow hero-glow-2" />
       {/* Layered backgrounds */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(124, 92, 255,0.15)_0%,transparent_70%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_80%_60%,rgba(80,100,255,0.08)_0%,transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_40%_40%_at_20%_90%,rgba(124, 92, 255,0.06)_0%,transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(124,58,237,0.15)_0%,transparent_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_80%_60%,rgba(6,182,212,0.08)_0%,transparent_60%)]" />
       </div>
 
       {/* Grid overlay */}
@@ -169,51 +168,54 @@ export default function ServicesHero() {
           {/* Left: Content */}
           <div className="text-center lg:text-left">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 bg-[rgba(124, 92, 255,0.08)] border border-[rgba(124, 92, 255,0.3)] text-[#7C5CFF] text-sm font-medium px-4 py-1.5 rounded-full mb-6"
+              className="hero-badge"
             >
-              <span className="w-2 h-2 rounded-full bg-[#7C5CFF] animate-pulse-dot" />
+              <motion.span
+                className="badge-dot"
+                animate={{ opacity: [1, 0.45, 1], scale: [1, 0.82, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              />
               7 Specialized Services
             </motion.div>
 
             <motion.h1
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="font-[var(--font-syne)] text-[clamp(2.2rem,5vw,3.8rem)] font-extrabold text-[#0F1B3D] leading-[1.1] tracking-[-1px] mb-6"
+              className="mb-6 font-[var(--font-syne)] text-[clamp(2.4rem,5vw,4.2rem)] font-extrabold leading-[1.08] text-[var(--text-primary)]"
             >
               We Print What <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA] animate-gradient">
+              <span className="gradient-text">
                 Others Can&apos;t
               </span>
             </motion.h1>
 
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-lg text-[#6F7192] max-w-[500px] mx-auto lg:mx-0 mb-8 leading-[1.7]"
+              className="mx-auto mb-8 max-w-[520px] text-lg leading-[1.7] text-[var(--text-secondary)] lg:mx-0"
             >
               From industrial spare parts and medical models to student projects and creator props — precision prints across India using Bambu Lab P2S fleet.
             </motion.p>
 
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
               className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
               <Link
                 href="/instant-quote"
-                className="group relative bg-[#7C5CFF] text-white px-8 py-3.5 rounded-xl text-base font-semibold border-none cursor-pointer overflow-hidden transition-all hover:shadow-[0_0_30px_rgba(124, 92, 255,0.3)]"
+                className="btn-primary group relative px-8 py-3.5 text-base"
               >
                 <span className="relative z-10">Get A Free Quote</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#A78BFA] to-[#7C5CFF] opacity-0 group-hover:opacity-100 transition-opacity" />
               </Link>
               <Link
                 href="/materials"
-                className="bg-transparent text-[#0F1B3D] px-8 py-3.5 rounded-xl text-base font-medium border border-[rgba(124, 92, 255,0.5)] cursor-pointer transition-all hover:border-[rgba(124, 92, 255,0.4)] hover:bg-[rgba(124, 92, 255,0.05)]"
+                className="btn-secondary px-8 py-3.5 text-base"
               >
                 See Materials
               </Link>
@@ -222,7 +224,7 @@ export default function ServicesHero() {
 
           {/* Right: SVG Animation */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, x: 40 }}
+            initial={{ opacity: 1, scale: 0.9, x: 40 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.8 }}
             className="relative"
@@ -234,7 +236,7 @@ export default function ServicesHero() {
 
         {/* Stats row */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 1, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16"
@@ -242,20 +244,20 @@ export default function ServicesHero() {
           {stats.map((stat, i) => (
             <motion.div
               key={i}
-              className="bg-[rgba(255,255,255,0.82)] border border-white/[0.07] rounded-2xl p-6 text-center group hover:border-[rgba(124, 92, 255,0.3)] transition-colors"
+              className="card p-6 text-center"
               whileHover={{ scale: 1.03, y: -4 }}
             >
-              <div className="font-[var(--font-syne)] text-3xl md:text-4xl font-extrabold text-[#0F1B3D]">
-                {stat.prefix}{stat.value}<span className="text-[#7C5CFF]">{stat.unit}</span>
+              <div className="font-[var(--font-syne)] text-3xl font-extrabold text-[var(--text-primary)] md:text-4xl">
+                {stat.prefix}{stat.value}<span className="gradient-text">{stat.unit}</span>
               </div>
-              <div className="text-sm text-[#6F7192] mt-1">{stat.label}</div>
+              <div className="mt-1 font-[var(--font-mono)] text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">{stat.label}</div>
             </motion.div>
           ))}
         </motion.div>
       </motion.div>
 
       {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#FFFFFF] to-transparent pointer-events-none" />
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[var(--bg-primary)] to-transparent" />
     </section>
   )
 }

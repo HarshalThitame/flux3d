@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { DM_Sans, JetBrains_Mono, Syne } from 'next/font/google'
 import { cookies, headers } from 'next/headers'
 import { connection } from 'next/server'
 import { getSettings } from '@/lib/settings'
@@ -13,6 +14,27 @@ import TrackingBootstrap from '@/components/TrackingBootstrap'
 import SessionTracker from '@/components/SessionTracker'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import './globals.css'
+
+const syne = Syne({
+  subsets: ['latin'],
+  weight: ['600', '700', '800'],
+  variable: '--font-syne-next',
+  display: 'swap',
+})
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-dm-next',
+  display: 'swap',
+})
+
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-mono-next',
+  display: 'swap',
+})
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings()
@@ -66,7 +88,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#FFFFFF',
+  themeColor: '#ffffff',
 }
 
 function toJsonLd(value: unknown) {
@@ -124,17 +146,12 @@ export default async function RootLayout({
   const orgJsonLd = makeOrganizationJsonLd(settings)
   const webJsonLd = makeWebsiteJsonLd(settings)
 
-  const cssVars = {
-    '--primary': settings.primaryColor || '#7C5CFF',
-    '--primary-dark': '#5A3CE6',
-    '--primary-light': '#B7A7FF',
-    '--secondary': settings.secondaryColor || '#A78BFA',
-    '--bg-dark': '#0F1B3D',
-    '--text-muted': '#505880',
-  } as const
-
   return (
-    <html lang="en" style={cssVars as React.CSSProperties}>
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className={`${syne.variable} ${dmSans.variable} ${jetBrainsMono.variable}`}
+    >
       <body suppressHydrationWarning>
         <script
           type="application/ld+json"

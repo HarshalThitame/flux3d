@@ -185,7 +185,7 @@ export default function AboutContent() {
         variants={staggerContainer}
         initial="hidden"
         animate={whyInView ? 'visible' : 'hidden'}
-        className="relative py-20 px-6 bg-[#0a0e1a]"
+        className="relative py-20 px-6 bg-[var(--bg-soft)]"
       >
         <div className="max-w-6xl mx-auto">
           <motion.div variants={fadeInUp} className="text-center mb-16">
@@ -260,7 +260,7 @@ export default function AboutContent() {
         variants={fadeInUp}
         initial="hidden"
         animate={storyInView ? 'visible' : 'hidden'}
-        className="relative py-20 px-6 bg-[#0a0e1a]"
+        className="relative py-20 px-6 bg-[var(--bg-soft)]"
       >
         <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -327,7 +327,7 @@ export default function AboutContent() {
       </motion.section>
 
       {/* Stats */}
-      <section className="relative py-20 px-6 bg-[#0a0e1a]">
+      <section className="relative py-20 px-6 bg-[var(--bg-soft)]">
         <div className="max-w-5xl mx-auto">
           <motion.div
             variants={staggerContainer}

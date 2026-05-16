@@ -35,14 +35,14 @@ function PanelShell({
     <motion.section
       whileHover={{ y: -3 }}
       transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-      className="flex h-full flex-col rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(11,17,31,0.94),rgba(7,11,20,0.9))] p-4 transition-all duration-300 hover:border-[#7C5CFF]/10 hover:bg-[linear-gradient(180deg,rgba(15,21,38,0.96),rgba(8,12,22,0.92))]"
+      className="flex h-full flex-col rounded-[24px] border border-[#7C5CFF]/10 bg-[var(--bg-elevated)] p-4 shadow-[var(--shadow-sm)] transition-all duration-300 hover:border-[#7C5CFF]/20 hover:shadow-[var(--shadow-md)]"
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-white">{title}</h3>
-          <p className="mt-1 text-sm leading-6 text-[#c9d0e7]">{description}</p>
+          <h3 className="text-base font-semibold text-[var(--text-primary)]">{title}</h3>
+          <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">{description}</p>
         </div>
-        <div className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] p-2 text-[#c9d0e7]">
+        <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[var(--brand-faint)] p-2 text-[var(--brand-primary)]">
           {icon}
         </div>
       </div>
@@ -72,8 +72,8 @@ export default function MaterialPanel(props: MaterialPanelProps) {
                 whileTap={{ scale: 0.985 }}
                 className={`rounded-[20px] border p-3 text-left transition-all duration-200 ${
                   isActive
-                    ? 'border-[#7C5CFF]/35 bg-[#1C3B52] shadow-[0_10px_36px_rgba(124, 92, 255,0.1)]'
-                    : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10 hover:bg-white/[0.04]'
+                    ? 'border-[#7C5CFF]/35 bg-[var(--brand-faint)] shadow-[0_10px_36px_rgba(124, 92, 255,0.1)]'
+                    : 'border-[#7C5CFF]/10 bg-white hover:border-[#7C5CFF]/10 hover:bg-[var(--bg-soft)]'
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -82,10 +82,10 @@ export default function MaterialPanel(props: MaterialPanelProps) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm font-medium text-white">{material.name}</span>
+                      <span className="text-sm font-medium text-[var(--text-primary)]">{material.name}</span>
                       {isActive ? <Check className="h-4 w-4 text-[#7C5CFF]" /> : null}
                     </div>
-                    <p className="mt-1 text-xs leading-5 text-[#c9d0e7]">{material.summary}</p>
+                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{material.summary}</p>
                   </div>
                 </div>
               </motion.button>
@@ -117,11 +117,11 @@ export default function MaterialPanel(props: MaterialPanelProps) {
               whileTap={{ scale: 0.98 }}
               className={`rounded-[18px] border px-4 py-3 text-left transition-all duration-200 ${
                 isActive
-                  ? 'border-[#7C5CFF]/40 bg-[#1C3B52]'
-                  : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10 hover:bg-white/[0.04]'
+                  ? 'border-[#7C5CFF]/40 bg-[var(--brand-faint)]'
+                  : 'border-[#7C5CFF]/10 bg-white hover:border-[#7C5CFF]/10 hover:bg-[var(--bg-soft)]'
               }`}
             >
-              <span className="text-sm font-medium text-white">{color.name}</span>
+              <span className="text-sm font-medium text-[var(--text-primary)]">{color.name}</span>
               {isActive ? <Check className="ml-2 inline h-4 w-4 text-[#7C5CFF]" /> : null}
             </motion.button>
           )

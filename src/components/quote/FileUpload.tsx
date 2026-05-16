@@ -32,7 +32,7 @@ export default function FileUpload({
           event.preventDefault()
           handleFiles(event.dataTransfer.files)
         }}
-        className="relative rounded-[24px] border border-dashed border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] px-5 py-8 text-center"
+        className="relative rounded-[24px] border border-dashed border-[#7C5CFF]/10 bg-[var(--bg-elevated)] px-5 py-8 text-center shadow-[var(--shadow-sm)]"
       >
         <input
           type="file"
@@ -56,8 +56,8 @@ export default function FileUpload({
 
       <div className="mt-4 space-y-3">
         {selectedFileName ? (
-          <div className="flex items-center gap-3 rounded-2xl border border-[#7C5CFF]/10 bg-[#0c1222] px-4 py-3">
-            <div className="rounded-xl bg-white/5 p-2 text-[#8da2ff]">
+          <div className="flex items-center gap-3 rounded-2xl border border-[#7C5CFF]/10 bg-[var(--bg-muted)] px-4 py-3">
+            <div className="rounded-xl bg-[#7C5CFF]/10 p-2 text-[#7C5CFF]">
               <FileArchive className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
@@ -72,14 +72,14 @@ export default function FileUpload({
 
         {uploadState.status === 'uploading' ? (
           <div className="rounded-2xl border border-[#7C5CFF]/15 bg-[#7C5CFF]/5 px-4 py-3">
-            <div className="mb-2 flex items-center justify-between text-sm text-[#f4d0bf]">
+            <div className="mb-2 flex items-center justify-between text-sm text-[var(--text-secondary)]">
               <span className="inline-flex items-center gap-2">
                 <LoaderCircle className="h-4 w-4 animate-spin" />
                 Uploading to Supabase Storage
               </span>
               <span>{uploadState.progress}%</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-white/8">
+            <div className="h-2 overflow-hidden rounded-full bg-[var(--bg-muted)]">
               <div
                 className="h-full rounded-full bg-[#7C5CFF] transition-all"
                 style={{ width: `${uploadState.progress}%` }}
@@ -89,7 +89,7 @@ export default function FileUpload({
         ) : null}
 
         {uploadState.status === 'error' && uploadState.error ? (
-          <div className="flex items-start gap-3 rounded-2xl border border-rose-400/15 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+          <div className="flex items-start gap-3 rounded-2xl border border-rose-400/20 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{uploadState.error}</span>
           </div>

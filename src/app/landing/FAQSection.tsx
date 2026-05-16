@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, useInView } from '@/lib/motion'
+import { motion, useInView } from 'framer-motion'
 import { useRef, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 

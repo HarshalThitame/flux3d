@@ -1,28 +1,26 @@
 'use client'
 
 import Link from 'next/link'
-import { motion, useInView } from '@/lib/motion'
-import { useRef, useState } from 'react'
+import { motion, useInView } from 'framer-motion'
+import { useRef } from 'react'
 import { ArrowRight, Sparkles, MessageCircle, Mail, Check } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
 
-function FloatingOrbs() {
-  const [orbs] = useState<Array<{ id: number; x: number; y: number; size: number; duration: number }>>(() =>
-    Array.from({ length: 12 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 80 + 40,
-      duration: Math.random() * 4 + 3
-    }))
-  )
+const finalCtaOrbs = Array.from({ length: 12 }, (_, i) => ({
+  id: i,
+  x: (i * 31 + 9) % 100,
+  y: (i * 43 + 21) % 100,
+  size: 44 + (i % 5) * 11,
+  duration: 3 + (i % 4) * 0.7,
+}))
 
+function FloatingOrbs() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {orbs.map(orb => (
+      {finalCtaOrbs.map(orb => (
         <motion.div
           key={orb.id}
-          className="absolute rounded-full bg-[#7C5CFF] blur-3xl"
+          className="absolute rounded-full bg-white blur-3xl"
           style={{
             left: `${orb.x}%`,
             top: `${orb.y}%`,
@@ -69,12 +67,12 @@ export default function FinalCTASection() {
         transition={{ duration: 0.7 }}
         className="max-w-[1000px] mx-auto relative z-10"
       >
-        <div className="relative overflow-hidden rounded-3xl border border-[rgba(124,92,255,0.18)] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,242,255,0.92))] p-10 md:p-16 text-center card-depth-lg">
+        <div className="cta-banner p-10 md:p-16">
           {/* Animated dot pattern */}
           <div
             className="absolute inset-0 opacity-10"
             style={{
-              backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+              backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.2) 1px, transparent 0)`,
               backgroundSize: '28px 28px'
             }}
           />
@@ -97,7 +95,7 @@ export default function FinalCTASection() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
               transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 bg-white/70 backdrop-blur-sm text-[#0F1B3D] text-sm font-medium px-4 py-1.5 rounded-full mb-6 border border-[rgba(124,92,255,0.12)]"
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-sm"
             >
               <Sparkles className="w-4 h-4" />
               Get Started
@@ -107,7 +105,7 @@ export default function FinalCTASection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.3 }}
-            className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1] mb-4"
+            className="mb-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold leading-[1.1] text-white"
             >
               Your Next Great Idea Deserves <br />
               to Exist in the Real World.
@@ -117,7 +115,7 @@ export default function FinalCTASection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.4 }}
-              className="text-lg text-[#4a5070] max-w-[600px] mx-auto mb-8 leading-[1.6]"
+              className="mx-auto mb-8 max-w-[600px] text-lg leading-[1.6] text-white/80"
             >
               Upload your file and get a quote in under 2 minutes. No account needed. No commitment required. Just the fastest path from idea to object.
             </motion.p>
@@ -130,7 +128,7 @@ export default function FinalCTASection() {
             >
               <Link
                 href="/instant-quote"
-                className="group relative bg-[#5B3FD6] text-white px-8 py-4 rounded-xl text-base font-semibold border border-[#5B3FD6]/20 cursor-pointer overflow-hidden transition-all hover:shadow-[0_10px_40px_rgba(91,63,214,0.18)] hover:-translate-y-0.5"
+                className="btn-primary group px-8 py-4 text-base"
               >
                 <span className="relative z-10 inline-flex items-center gap-2">
                   Upload Your File & Get a Free Quote
@@ -142,7 +140,7 @@ export default function FinalCTASection() {
                 href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group bg-white/70 backdrop-blur-sm text-[#0F1B3D] px-8 py-4 rounded-xl text-base font-medium border border-[#7C5CFF]/10 cursor-pointer transition-all hover:bg-white hover:border-[#7C5CFF]/20 hover:-translate-y-0.5"
+                className="btn-secondary group px-8 py-4 text-base"
               >
                 <span className="inline-flex items-center gap-2">
                   <MessageCircle className="w-5 h-5" />
@@ -159,7 +157,7 @@ export default function FinalCTASection() {
               className="flex items-center justify-center gap-4 mb-6"
             >
               <div className="w-12 h-px bg-[rgba(124,92,255,0.25)]" />
-              <span className="text-[#6F7192] text-sm">or email us</span>
+              <span className="text-sm text-white/70">or email us</span>
               <div className="w-12 h-px bg-[rgba(124,92,255,0.25)]" />
             </motion.div>
 
@@ -168,7 +166,7 @@ export default function FinalCTASection() {
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
               transition={{ delay: 0.7 }}
-              className="inline-flex items-center gap-2 text-[#6F7192] hover:text-[#0F1B3D] transition-colors"
+              className="inline-flex items-center gap-2 text-white/75 transition-colors hover:text-white"
             >
               <Mail className="w-4 h-4" />
               {settings.primaryEmail || 'hello@flux3d.in'}
@@ -184,7 +182,7 @@ export default function FinalCTASection() {
               {reassurancePills.map((pill, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center gap-1.5 bg-white/70 backdrop-blur-sm text-[#0F1B3D] text-xs px-3 py-1.5 rounded-full border border-[rgba(124,92,255,0.12)]"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-3 py-1.5 text-xs text-white backdrop-blur-sm"
                 >
                   <Check className="w-3 h-3" />
                   {pill}
@@ -197,7 +195,7 @@ export default function FinalCTASection() {
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
               transition={{ delay: 0.9 }}
-              className="text-[#6F7192] text-xs mt-8"
+              className="mt-8 text-xs text-white/65"
             >
               Delivering across India · Bambu Lab P2S · Est. 2024
             </motion.p>

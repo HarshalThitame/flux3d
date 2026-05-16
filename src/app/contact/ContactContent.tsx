@@ -149,7 +149,7 @@ export default function ContactContent() {
           initial={{ opacity: 0, y: 30 }}
           animate={careersInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="relative py-20 px-6 bg-[#0a0e1a]"
+          className="relative py-20 px-6 bg-[var(--bg-soft)]"
         >
           <div className="max-w-4xl mx-auto">
             <div className="bg-[#FFFFFF] border border-white/[0.07] rounded-3xl p-8 md:p-12 relative overflow-hidden">

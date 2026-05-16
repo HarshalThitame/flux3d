@@ -31,7 +31,7 @@ export default function AdminShell({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm md:hidden"
+              className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm md:hidden"
               onClick={() => setMobileNavOpen(false)}
             />
             <motion.div

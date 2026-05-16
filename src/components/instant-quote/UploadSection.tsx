@@ -99,7 +99,7 @@ export default function UploadSection({
         <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">File Input</div>
           <div className="mt-2 flex items-center gap-3">
-            <div className="rounded-xl bg-white/5 p-2 text-[#9ca9d5]">
+            <div className="rounded-xl bg-[#7C5CFF]/10 p-2 text-[#7C5CFF]">
               <FileArchive className="h-4 w-4" />
             </div>
             <div className="min-w-0">
@@ -117,14 +117,14 @@ export default function UploadSection({
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Upload Progress</div>
           {uploadState.status === 'uploading' ? (
             <div className="mt-3">
-              <div className="mb-2 flex items-center justify-between text-sm text-[#f4d0bf]">
+              <div className="mb-2 flex items-center justify-between text-sm text-[var(--text-secondary)]">
                 <span className="inline-flex items-center gap-2">
                   <LoaderCircle className="h-4 w-4 animate-spin" />
                   Processing model
                 </span>
                 <span>{uploadState.progress}%</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-white/8">
+              <div className="h-2 overflow-hidden rounded-full bg-[var(--bg-muted)]">
                 <div
                   className="h-full rounded-full bg-[#7C5CFF] transition-all duration-300"
                   style={{ width: `${uploadState.progress}%` }}
@@ -132,7 +132,7 @@ export default function UploadSection({
               </div>
             </div>
           ) : uploadState.status === 'success' ? (
-            <div className="mt-3 inline-flex items-center gap-2 text-sm text-emerald-200">
+            <div className="mt-3 inline-flex items-center gap-2 text-sm text-emerald-700">
               <CheckCircle2 className="h-4 w-4" />
               {isSignedIn ? 'Uploaded successfully and connected to your workspace' : 'Loaded instantly for local preview'}
             </div>
@@ -143,20 +143,20 @@ export default function UploadSection({
       </div>
 
       {!isSignedIn ? (
-        <div className="mt-4 rounded-2xl border border-sky-400/15 bg-sky-400/10 px-4 py-3 text-sm text-sky-100">
+        <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-50 px-4 py-3 text-sm text-sky-800">
           Explore the experience without logging in. <Link href="/login?next=%2Finstant-quote" className="font-medium text-[#0F1B3D] underline underline-offset-4">Sign in</Link> when you want synced uploads, saved quotes, and a smoother ordering flow.
         </div>
       ) : null}
 
       {uploadState.status === 'error' && uploadState.error ? (
-        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-rose-400/15 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-rose-400/20 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{uploadState.error}</span>
         </div>
       ) : null}
 
       {error ? (
-        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-400/15 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-400/20 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>

@@ -3,3 +3,6 @@ Allow: /
 
 User-agent: *
 Allow: /
+Allow: /blog/
+
+Sitemap: https://flux3d.in/sitemap.xml

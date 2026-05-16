@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, useInView } from '@/lib/motion'
+import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 import { MessageCircle, Layers, Droplet, Shield, Wind, Zap, Sparkles, Palette, Gem, Package } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'

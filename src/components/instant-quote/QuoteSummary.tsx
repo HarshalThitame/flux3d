@@ -25,9 +25,9 @@ type QuoteSummaryProps = {
 function SummarySkeleton() {
   return (
     <div className="space-y-3">
-      <div className="h-16 animate-pulse rounded-2xl bg-white/[0.04]" />
-      <div className="h-16 animate-pulse rounded-2xl bg-white/[0.04]" />
-      <div className="h-24 animate-pulse rounded-2xl bg-white/[0.04]" />
+      <div className="h-16 animate-pulse rounded-2xl bg-[var(--bg-muted)]" />
+      <div className="h-16 animate-pulse rounded-2xl bg-[var(--bg-muted)]" />
+      <div className="h-24 animate-pulse rounded-2xl bg-[var(--bg-muted)]" />
     </div>
   )
 }
@@ -81,7 +81,7 @@ export default function QuoteSummary({
         >
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Quote Session</div>
           <div className="mt-2 text-xl font-semibold text-[#0F1B3D]">{quoteId}</div>
-          <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/10 bg-white/[0.03] px-3 py-1 text-xs text-[#d6dcf2]">
+          <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/10 bg-white px-3 py-1 text-xs text-[var(--text-secondary)]">
             <Sparkles className="h-3.5 w-3.5 text-[#7C5CFF]" />
             {material.name}
           </div>
@@ -92,8 +92,8 @@ export default function QuoteSummary({
         ) : (
           <>
             <div className="grid gap-3">
-              <motion.div whileHover={{ y: -2 }} className="rounded-[20px] border border-[#7C5CFF]/10 bg-white/[0.03] p-4">
-                <div className="flex items-center justify-between text-sm text-[#aeb8d8]">
+              <motion.div whileHover={{ y: -2 }} className="rounded-[20px] border border-[#7C5CFF]/10 bg-white p-4">
+                <div className="flex items-center justify-between text-sm text-[var(--text-secondary)]">
                   <span>Print weight</span>
                   <span className="font-medium text-[#0F1B3D]">
                     {priceBreakdown.materialWeightGrams.toFixed(2)} g
@@ -104,8 +104,8 @@ export default function QuoteSummary({
                 </div>
               </motion.div>
 
-              <motion.div whileHover={{ y: -2 }} className="rounded-[20px] border border-[#7C5CFF]/10 bg-white/[0.03] p-4">
-                <div className="flex items-center justify-between text-sm text-[#aeb8d8]">
+              <motion.div whileHover={{ y: -2 }} className="rounded-[20px] border border-[#7C5CFF]/10 bg-white p-4">
+                <div className="flex items-center justify-between text-sm text-[var(--text-secondary)]">
                   <span>Estimated print time</span>
                   <span className="font-medium text-[#0F1B3D]">
                     {formatDurationMinutes(priceBreakdown.estimatedMinutes)}
@@ -121,11 +121,11 @@ export default function QuoteSummary({
                 whileHover={{ scale: 1.015 }}
                 className="rounded-[24px] border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-5 shadow-[0_12px_48px_rgba(124, 92, 255,0.1)]"
               >
-                <div className="text-[11px] uppercase tracking-[0.22em] text-[#ffd3c1]">Total Price</div>
+                <div className="text-[11px] uppercase tracking-[0.22em] text-[var(--brand-primary)]">Total Price</div>
                 <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
                   ₹{priceBreakdown.priceBeforeDiscount.toFixed(0)}
                 </div>
-                <div className="mt-3 grid gap-2 text-sm text-[#ffe0d4]">
+                <div className="mt-3 grid gap-2 text-sm text-[var(--text-secondary)]">
                   <div className="flex justify-between">
                     <span>Quantity</span>
                     <span>{priceBreakdown.quantity} pcs</span>
@@ -184,7 +184,7 @@ export default function QuoteSummary({
               </motion.div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <motion.div whileHover={{ y: -2 }} className="rounded-[20px] border border-[#7C5CFF]/10 bg-white/[0.03] p-4">
+                <motion.div whileHover={{ y: -2 }} className="rounded-[20px] border border-[#7C5CFF]/10 bg-white p-4">
                   <div className="mb-2 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
                     <Cuboid className="h-3.5 w-3.5" />
                     Dimensions
@@ -195,7 +195,7 @@ export default function QuoteSummary({
                 </motion.div>
 
                 <motion.div whileHover={{ y: -2 }} className="rounded-[20px] border border-emerald-400/15 bg-emerald-400/10 p-4">
-                  <div className="mb-2 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-emerald-200">
+                  <div className="mb-2 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-emerald-700">
                     <Truck className="h-3.5 w-3.5" />
                     Delivery Window
                   </div>
@@ -244,7 +244,7 @@ export default function QuoteSummary({
             {!isSignedIn ? (
               <Link
                 href="/login?next=%2Finstant-quote"
-                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[18px] border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[18px] border border-[#7C5CFF]/10 bg-white px-4 py-3 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-[var(--bg-soft)]"
               >
                 Sign in to save and order faster
                 <ArrowRight className="h-4 w-4" />

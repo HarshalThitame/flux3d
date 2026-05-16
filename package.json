@@ -20,6 +20,7 @@
     "@tiptap/extension-highlight": "^3.22.5",
     "@tiptap/extension-italic": "^3.22.5",
     "@tiptap/extension-list-item": "^3.22.5",
+    "@tiptap/extension-link": "^3.22.5",
     "@tiptap/extension-ordered-list": "^3.22.5",
     "@tiptap/pm": "^3.22.5",
     "@tiptap/react": "^3.22.5",

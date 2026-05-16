@@ -330,7 +330,7 @@ export default function DeliveryStepClient({
                         Use an existing delivery address or switch to a new one.
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] p-3 text-[#c9d0e7]">
+                    <div className="rounded-2xl border border-[#7C5CFF]/10 bg-white p-3 text-[var(--brand-primary)]">
                       <MapPin className="h-5 w-5" />
                     </div>
                   </div>
@@ -346,13 +346,13 @@ export default function DeliveryStepClient({
                           onClick={() => handleSavedAddressSelect(savedAddress)}
                           className={`rounded-[22px] border p-4 text-left transition ${
                             selectedAddressId === savedAddress.id
-                              ? 'border-[#7C5CFF]/35 bg-[#1C3B52]'
+                              ? 'border-[#7C5CFF]/35 bg-[var(--brand-faint)]'
                               : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10 hover:bg-white/[0.04]'
                           }`}
                         >
-                          <div className={`text-sm font-semibold ${selectedAddressId === savedAddress.id ? 'text-white' : 'text-[#0F1B3D]'}`}>{savedAddress.fullName}</div>
-                          <div className={`mt-1 text-sm ${selectedAddressId === savedAddress.id ? 'text-[#c9d0e7]' : 'text-[#6F7192]'}`}>{savedAddress.phone}</div>
-                          <div className={`mt-3 space-y-1 text-xs leading-6 ${selectedAddressId === savedAddress.id ? 'text-[#c9d0e7]' : 'text-[#6F7192]'}`}>
+                          <div className={`text-sm font-semibold ${selectedAddressId === savedAddress.id ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{savedAddress.fullName}</div>
+                          <div className={`mt-1 text-sm ${selectedAddressId === savedAddress.id ? 'text-[var(--text-secondary)]' : 'text-[#6F7192]'}`}>{savedAddress.phone}</div>
+                          <div className={`mt-3 space-y-1 text-xs leading-6 ${selectedAddressId === savedAddress.id ? 'text-[var(--text-secondary)]' : 'text-[#6F7192]'}`}>
                             {summary.map((line) => (
                               <div key={line}>{line}</div>
                             ))}

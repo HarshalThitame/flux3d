@@ -491,7 +491,7 @@ function CustomerDrawer({
   ]
 
   return (
-    <motion.div className="fixed inset-0 z-[110] bg-gray-900/30 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <motion.div className="fixed inset-0 z-[110] bg-slate-900/30 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <button type="button" aria-label="Close customer drawer" className="absolute inset-0 h-full w-full cursor-default" onClick={onClose} />
       <motion.aside
         initial={{ x: 520 }}
