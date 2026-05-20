@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { DM_Sans, JetBrains_Mono, Syne } from 'next/font/google'
+import { DM_Sans, Inter, JetBrains_Mono } from 'next/font/google'
 import { cookies, headers } from 'next/headers'
 import { connection } from 'next/server'
 import { getSettings } from '@/lib/settings'
@@ -15,10 +15,10 @@ import SessionTracker from '@/components/SessionTracker'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import './globals.css'
 
-const syne = Syne({
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['600', '700', '800'],
-  variable: '--font-syne-next',
+  weight: ['300', '400', '500', '600', '700', '800'],
+  variable: '--font-inter-next',
   display: 'swap',
 })
 
@@ -88,7 +88,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#ffffff',
+  themeColor: '#f8f6f2',
 }
 
 function toJsonLd(value: unknown) {
@@ -150,7 +150,7 @@ export default async function RootLayout({
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${syne.variable} ${dmSans.variable} ${jetBrainsMono.variable}`}
+      className={`${inter.variable} ${dmSans.variable} ${jetBrainsMono.variable}`}
     >
       <body suppressHydrationWarning>
         <script

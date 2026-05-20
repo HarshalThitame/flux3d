@@ -29,16 +29,16 @@ const painPoints = [
 
 export default function ProblemSection() {
   return (
-    <section className="relative w-full py-24 px-4 md:px-8 lg:px-16 z-10" style={{ backgroundColor: '#FFFFFF' }}>
+    <section className="relative z-10 w-full bg-[var(--bg-base)] px-4 py-24 md:px-8 lg:px-16">
       <div className="max-w-7xl mx-auto">
         <Reveal className="mb-4">
-          <span className="inline-block text-[#5B3FD6] text-sm font-semibold tracking-wider uppercase">
+          <span className="inline-block text-sm font-semibold uppercase tracking-normal text-[#f97316]">
             Why Flux 3D
           </span>
         </Reveal>
 
         <Reveal delay={80} className="mb-6">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#0F1B3D] leading-tight">
+          <h2 className="text-3xl font-semibold leading-tight tracking-normal text-[#1a1a1a] md:text-4xl lg:text-5xl">
             Stop Waiting Weeks.
             <br />
             Stop Overpaying Factories.
@@ -46,7 +46,7 @@ export default function ProblemSection() {
         </Reveal>
 
         <Reveal delay={140}>
-          <p className="text-gray-400 text-lg md:text-xl max-w-3xl mb-16 leading-relaxed">
+          <p className="mb-16 max-w-3xl text-lg font-normal leading-relaxed text-[#4b4b4b] md:text-xl">
             Traditional manufacturing is slow, expensive, and inflexible. Minimum
             order quantities, long lead times, and high tooling costs kill great
             ideas before they even start. Flux 3D changes that. We print exactly
@@ -61,26 +61,25 @@ export default function ProblemSection() {
             return (
               <Reveal key={point.id} delay={200 + index * 90}>
                 <div
-                  className="group relative rounded-2xl border border-[var(--border-light)] bg-white p-6 shadow-[var(--shadow-sm)] transition-all duration-300 hover:border-[var(--border-brand)] hover:shadow-[var(--shadow-md)] hover-lift"
+                  className="hover-lift group relative rounded-2xl border border-[#e8e4df] bg-[#faf9f7] p-6 shadow-[var(--shadow-sm)] transition-all duration-300 hover:border-[var(--border-brand)] hover:shadow-[var(--shadow-md)]"
                   style={{
-                    backgroundColor: '#FFFFFF',
                     willChange: 'transform',
                   }}
                 >
-                  <div className="absolute inset-0 rounded-2xl bg-[#7C5CFF]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 rounded-2xl bg-[#f97316]/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
                   <div className="relative z-10">
-                    <div className="w-12 h-12 rounded-xl bg-[#7C5CFF]/10 flex items-center justify-center mb-4 group-hover:bg-[#7C5CFF]/20 transition-colors duration-300">
-                      <Icon className="w-6 h-6 text-[#5B3FD6]" />
+                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#f97316]/10 transition-colors duration-300 group-hover:bg-[#f97316]/20">
+                      <Icon className="h-6 w-6 text-[#f97316]" />
                     </div>
 
-                    <div className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D] mb-2 group-hover:text-[#5B3FD6] transition-colors duration-300">
+                    <div className="mb-2 text-lg font-semibold text-[#1a1a1a] transition-colors duration-300 group-hover:text-[#f97316]">
                       {point.problem}
                     </div>
 
                     <div className="flex items-center gap-2 mt-4">
-                      <ArrowRight className="w-4 h-4 text-[#5B3FD6]" />
-                      <span className="text-[#5B3FD6] font-medium text-sm">
+                      <ArrowRight className="h-4 w-4 text-[#f97316]" />
+                      <span className="text-sm font-medium text-[#f97316]">
                         Flux 3D: {point.solution}
                       </span>
                     </div>
