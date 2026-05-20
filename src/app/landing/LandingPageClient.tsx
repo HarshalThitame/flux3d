@@ -2,7 +2,9 @@
 
 import dynamic from 'next/dynamic'
 import { startTransition, useEffect, useRef, useState } from 'react'
+import { MessageCircle } from 'lucide-react'
 import FadeIn from '@/components/FadeIn'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 const ProblemSection = dynamic(() => import('./ProblemSection'), { ssr: false })
 const MarqueeSection = dynamic(() => import('./MarqueeSection'), { ssr: false })
@@ -17,6 +19,23 @@ const TrustSection = dynamic(() => import('./TrustSection'), { ssr: false })
 const FAQSection = dynamic(() => import('./FAQSection'), { ssr: false })
 const FinalCTASection = dynamic(() => import('./FinalCTASection'), { ssr: false })
 const FooterSection = dynamic(() => import('./FooterSection'), { ssr: false })
+
+function FloatingWhatsAppButton() {
+  const { settings } = useBusinessSettings()
+  const whatsappNumber = (settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')
+
+  return (
+    <a
+      href={`https://wa.me/${whatsappNumber}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Chat with Flux 3D on WhatsApp"
+      className="fixed bottom-20 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_16px_36px_rgba(37,211,102,0.28)] transition-all duration-200 hover:scale-105 hover:shadow-[0_18px_42px_rgba(37,211,102,0.34)] md:bottom-8 md:right-6 md:h-14 md:w-14"
+    >
+      <MessageCircle className="h-5 w-5 md:h-6 md:w-6" />
+    </a>
+  )
+}
 
 function LazySection({
   children,
@@ -59,10 +78,11 @@ function LazySection({
 export default function LandingPageClient() {
   return (
     <>
-      <LazySection minHeight={520} className="bg-white">
+      <FloatingWhatsAppButton />
+      <LazySection minHeight={520} className="bg-[var(--bg-base)]">
         <ProblemSection />
       </LazySection>
-      <LazySection minHeight={140} className="bg-white">
+      <LazySection minHeight={140} className="bg-[var(--bg-base)]">
         <MarqueeSection />
       </LazySection>
       <LazySection minHeight={760} className="bg-[var(--bg-soft)]">
@@ -76,25 +96,25 @@ export default function LandingPageClient() {
       <LazySection minHeight={760} className="bg-[var(--bg-soft)]">
         <MaterialsSection />
       </LazySection>
-      <LazySection minHeight={680} className="bg-white">
+      <LazySection minHeight={680} className="bg-[var(--bg-base)]">
         <TechnologySection />
       </LazySection>
-      <LazySection minHeight={720} className="bg-white">
+      <LazySection minHeight={720} className="bg-[var(--bg-base)]">
         <HowItWorksSection />
       </LazySection>
       <LazySection minHeight={860} className="bg-[var(--bg-soft)]">
         <PricingSection />
       </LazySection>
-      <LazySection minHeight={720} className="bg-white">
+      <LazySection minHeight={720} className="bg-[var(--bg-base)]">
         <TestimonialsSection />
       </LazySection>
-      <LazySection minHeight={620} className="bg-white">
+      <LazySection minHeight={620} className="bg-[var(--bg-base)]">
         <TrustSection />
       </LazySection>
       <LazySection minHeight={720} className="bg-[var(--bg-soft)]">
         <FAQSection />
       </LazySection>
-      <LazySection minHeight={560} className="bg-white">
+      <LazySection minHeight={560} className="bg-[var(--bg-base)]">
         <FinalCTASection />
       </LazySection>
       <LazySection minHeight={640}>

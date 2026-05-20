@@ -20,7 +20,7 @@ const tiers = [
     ],
     cta: 'Start Printing →',
     popular: false,
-    color: 'from-[#A78BFA] to-[#A78BFA]'
+    color: 'from-[#f59e0b] to-[#f59e0b]'
   },
   {
     name: 'Standard',
@@ -39,7 +39,7 @@ const tiers = [
     ],
     cta: 'Get Standard Quote →',
     popular: true,
-    color: 'from-[#7C5CFF] to-[#A78BFA]'
+    color: 'from-[#f97316] to-[#f59e0b]'
   },
   {
     name: 'Enterprise',
@@ -59,7 +59,7 @@ const tiers = [
     ],
     cta: 'Talk to Enterprise Team →',
     popular: false,
-    color: 'from-[#7C5CFF] to-[#7C5CFF]'
+    color: 'from-[#f97316] to-[#f97316]'
   }
 ]
 
@@ -81,7 +81,7 @@ export default function PricingSection() {
   return (
     <section ref={ref} className="relative py-24 px-6 overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_50%_30%,rgba(124, 92, 255,0.05)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_50%_30%,rgba(249, 115, 22,0.05)_0%,transparent_70%)] pointer-events-none" />
 
       <div className="max-w-[1200px] mx-auto relative z-10">
         {/* Header */}
@@ -90,8 +90,8 @@ export default function PricingSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#5B3FD6] uppercase tracking-[3px] mb-4">Transparent Pricing</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
+          <p className="text-sm font-medium text-[#f97316] uppercase tracking-normal mb-4">Transparent Pricing</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
             No Hidden Charges.{' '}
             <span className="text-[#6F7192]">No Surprises.</span>
           </h2>
@@ -109,19 +109,19 @@ export default function PricingSection() {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: i * 0.15 }}
               whileHover={{ y: -8, transition: { duration: 0.2 } }}
-              className={`relative bg-[#FFFFFF] border rounded-2xl p-8 ${
+              className={`relative bg-[#faf9f7] border rounded-2xl p-8 ${
                 tier.popular
-                  ? 'border-[#7C5CFF] shadow-[0_0_40px_rgba(124, 92, 255,0.15)]'
-                  : 'border-[rgba(124, 92, 255,0.5)]'
+                  ? 'border-[#f97316] shadow-[0_0_40px_rgba(249, 115, 22,0.15)]'
+                  : 'border-[rgba(249, 115, 22,0.5)]'
               }`}
             >
               {tier.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#5B3FD6] text-white text-xs font-bold px-4 py-1 rounded-full">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#f97316] text-white text-xs font-bold px-4 py-1 rounded-full">
                   Most Popular
                 </div>
               )}
 
-              <p className="text-xs text-[#6F7192] uppercase tracking-wider mb-1">Best for: {tier.bestFor}</p>
+              <p className="mb-1 text-xs uppercase tracking-normal text-[#6F7192]">Best for: {tier.bestFor}</p>
               <h3 className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D] mb-2">{tier.name}</h3>
               <div className="flex items-baseline gap-1 mb-2">
                 {tier.priceLabel && <span className="text-sm text-[#6F7192]">{tier.priceLabel}</span>}
@@ -132,7 +132,7 @@ export default function PricingSection() {
               <ul className="space-y-3 mb-8">
                 {tier.features.map((feature, j) => (
                   <li key={j} className="flex items-start gap-2 text-sm text-[#6F7192]">
-                    <Check className="w-4 h-4 text-[#5B3FD6] mt-0.5 flex-shrink-0" />
+                    <Check className="w-4 h-4 text-[#f97316] mt-0.5 flex-shrink-0" />
                     {feature}
                   </li>
                 ))}
@@ -142,8 +142,8 @@ export default function PricingSection() {
                 href="/instant-quote"
                 className={`inline-flex items-center justify-center w-full gap-2 py-3 rounded-xl text-sm font-medium transition-all ${
                   tier.popular
-                    ? 'bg-[#5B3FD6] text-white hover:shadow-[0_0_30px_rgba(91,63,214,0.3)]'
-                    : 'bg-white text-[#5B3FD6] border border-[rgba(91,63,214,0.28)] hover:border-[#5B3FD6] hover:bg-[rgba(91,63,214,0.08)]'
+                    ? 'bg-[#f97316] text-white hover:shadow-[0_0_30px_rgba(249,115,22,0.3)]'
+                    : 'bg-[#faf9f7] text-[#f97316] border border-[rgba(249,115,22,0.28)] hover:border-[#f97316] hover:bg-[rgba(249,115,22,0.08)]'
                 }`}
               >
                 {tier.cta}
@@ -158,7 +158,7 @@ export default function PricingSection() {
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ delay: 0.5 }}
-          className="bg-[#FFFFFF] border border-[rgba(124, 92, 255,0.5)] rounded-xl p-6 mb-16"
+          className="bg-[#faf9f7] border border-[rgba(249, 115, 22,0.5)] rounded-xl p-6 mb-16"
         >
           <p className="text-sm text-[#6F7192] text-center">
             💡 Shipping calculated at checkout · Express surcharge: +30% · Student discount: 10% off above ₹500
@@ -175,7 +175,7 @@ export default function PricingSection() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[rgba(124, 92, 255,0.5)]">
+                <tr className="border-b border-[rgba(249, 115, 22,0.5)]">
                   <th className="text-left py-3 px-4 text-[#6F7192] font-medium">Material</th>
                   <th className="text-left py-3 px-4 text-[#6F7192] font-medium">Price</th>
                   <th className="text-left py-3 px-4 text-[#6F7192] font-medium hidden sm:table-cell">Notes</th>
@@ -183,9 +183,9 @@ export default function PricingSection() {
               </thead>
               <tbody>
                 {priceTable.map((row, i) => (
-                  <tr key={i} className="border-b border-[rgba(124, 92, 255,0.25)] hover:bg-[rgba(124, 92, 255,0.2)]">
+                  <tr key={i} className="border-b border-[rgba(249, 115, 22,0.25)] hover:bg-[rgba(249, 115, 22,0.2)]">
                     <td className="py-3 px-4 text-[#0F1B3D] font-medium">{row.material}</td>
-                    <td className="py-3 px-4 text-[#5B3FD6]">{row.price}</td>
+                    <td className="py-3 px-4 text-[#f97316]">{row.price}</td>
                     <td className="py-3 px-4 text-[#6F7192] hidden sm:table-cell">{row.notes}</td>
                   </tr>
                 ))}
@@ -194,23 +194,23 @@ export default function PricingSection() {
           </div>
 
           {/* Shipping */}
-          <div className="mt-8 bg-[rgba(124, 92, 255,0.25)] rounded-xl p-6">
+          <div className="mt-8 bg-[rgba(249, 115, 22,0.25)] rounded-xl p-6">
             <h4 className="text-sm font-semibold text-[#0F1B3D] mb-3">Shipping</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
               <div className="flex items-center gap-2 text-[#6F7192]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFF]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#f97316]" />
                 Mumbai & Pune: ₹60 flat
               </div>
               <div className="flex items-center gap-2 text-[#6F7192]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFF]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#f97316]" />
                 Pan India: ₹100 flat
               </div>
               <div className="flex items-center gap-2 text-[#6F7192]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFF]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#f97316]" />
                 Free above ₹2,000
               </div>
               <div className="flex items-center gap-2 text-[#6F7192]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFF]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#f97316]" />
                 Express 24hr: Mumbai & Pune
               </div>
             </div>

@@ -24,13 +24,13 @@ export default function FooterSection() {
 
   const businessYear = new Date().getFullYear()
   const footerLinkClass = "text-sm text-slate-400 transition-colors hover:text-white"
-  const footerHeadingClass = "mb-4 font-[var(--font-dm)] text-[13px] font-semibold uppercase tracking-[0.08em] text-white"
-  const badgeClass = "rounded border border-white/10 bg-white/5 px-2 py-1 font-[var(--font-mono)] text-xs text-slate-300"
+  const footerHeadingClass = "mb-4 font-[var(--font-dm)] text-[13px] font-semibold uppercase tracking-normal text-white"
+  const badgeClass = "rounded border border-white/10 bg-white/5 px-2 py-1 text-xs font-medium text-slate-300"
 
   return (
     <footer className="footer">
       <div className="footer-watermark">FLUX3D</div>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,rgba(109,40,217,0.22),transparent_70%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[#f97316]/30" />
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -140,7 +140,7 @@ export default function FooterSection() {
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             {/* Payment */}
             <div>
-              <p className="mb-2 font-[var(--font-mono)] text-xs uppercase tracking-[0.12em] text-slate-500">Payment Methods</p>
+              <p className="mb-2 text-xs font-medium uppercase tracking-normal text-slate-500">Payment Methods</p>
               <div className="flex flex-wrap gap-2">
                 {['UPI', 'Razorpay', 'Google Pay', 'PhonePe', 'Visa', 'Mastercard'].map((method) => (
                   <span key={method} className={badgeClass}>
@@ -152,7 +152,7 @@ export default function FooterSection() {
 
             {/* Delivery */}
             <div>
-              <p className="mb-2 font-[var(--font-mono)] text-xs uppercase tracking-[0.12em] text-slate-500">Delivery Partners</p>
+              <p className="mb-2 text-xs font-medium uppercase tracking-normal text-slate-500">Delivery Partners</p>
               <div className="flex flex-wrap gap-2">
                 {['Delhivery', 'Shiprocket', 'DTDC'].map((partner) => (
                   <span key={partner} className={badgeClass}>
