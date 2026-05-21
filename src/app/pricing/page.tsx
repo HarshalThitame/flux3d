@@ -47,9 +47,9 @@ export default async function PricingPage() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-[#F7F8FB]">
       <Navbar transparent />
-      <Suspense fallback={<div className="min-h-96 bg-[#FFFFFF] animate-pulse rounded-2xl mx-6 mt-8 md:mt-10" />}>
+      <Suspense fallback={<div className="mx-4 mt-20 min-h-96 animate-pulse rounded-lg border border-gray-200 bg-white shadow-sm sm:mx-6 md:mx-10 lg:mx-12" />}>
         <PricingClient materials={materials} />
       </Suspense>
     </div>
