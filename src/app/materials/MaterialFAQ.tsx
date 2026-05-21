@@ -40,22 +40,22 @@ const faqs = [
   },
 ]
 
-function FAQItem({ faq, idx }: { faq: { q: string; a: string }; idx: number }) {
+function FAQItem({ faq }: { faq: { q: string; a: string } }) {
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="border-b border-white/[0.06] last:border-0">
+    <div className="border-b border-gray-100 last:border-0">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between py-4 text-left group"
+        className="group flex w-full items-center justify-between py-5 text-left"
       >
-        <span className="text-[#0F1B3D] font-medium text-sm pr-4 group-hover:text-[#7C5CFF] transition-colors">
+        <span className="pr-4 text-sm font-extrabold leading-6 text-[#111827] transition-colors group-hover:text-[#6d28d9]">
           {faq.q}
         </span>
-        <ChevronDown className={`w-4 h-4 text-[#6F7192] flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`h-4 w-4 flex-shrink-0 text-[#6F7192] transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <p className="text-sm text-[#6F7192] leading-relaxed pb-4">{faq.a}</p>
+        <p className="pb-5 text-sm leading-7 text-[#6F7192]">{faq.a}</p>
       )}
     </div>
   )
@@ -66,15 +66,18 @@ export default function MaterialFAQ() {
   const isInView = useInView(ref, { once: true, margin: '-50px' })
 
   return (
-    <section ref={ref} className="px-4 md:px-8 lg:px-16 py-20">
-      <div className="max-w-[800px] mx-auto">
+    <section ref={ref} className="px-4 py-16 md:px-8 lg:px-16">
+      <div className="mx-auto max-w-[900px]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="text-center mb-10"
+          className="mb-9 text-center"
         >
-          <h2 className="text-2xl md:text-3xl font-[var(--font-syne)] font-extrabold text-[#0F1B3D] mb-2">
-            Material Questions —<br />Answered Honestly.
+          <span className="mb-2 inline-block text-xs font-bold uppercase text-[#6d28d9]">
+            Buying guidance
+          </span>
+          <h2 className="text-3xl font-extrabold text-[#111827] md:text-4xl">
+            Material questions, answered plainly.
           </h2>
         </motion.div>
 
@@ -82,10 +85,10 @@ export default function MaterialFAQ() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-white/[0.06] bg-[rgba(255,255,255,0.72)] px-6 md:px-8"
+          className="rounded-[1.75rem] border border-gray-200 bg-white px-5 shadow-[0_18px_50px_rgba(17,24,39,0.08)] md:px-8"
         >
           {faqs.map((faq, i) => (
-            <FAQItem key={i} faq={faq} idx={i} />
+            <FAQItem key={i} faq={faq} />
           ))}
         </motion.div>
       </div>

@@ -284,11 +284,11 @@ export default function CartDeliveryClient({
 
   return (
     <>
-      <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(124, 92, 255,0.08),transparent_24%),radial-gradient(circle_at_right,rgba(183, 167, 255,0.08),transparent_28%),#FFFFFF] px-4 pb-16 pt-28 text-[#0F1B3D] md:px-8 xl:px-10">
+      <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(109, 40, 217,0.08),transparent_24%),radial-gradient(circle_at_right,rgba(168, 85, 247,0.08),transparent_28%),#FFFFFF] px-4 pb-16 pt-8 text-[#0F1B3D] md:px-8 md:pt-10 xl:px-10">
         <div className="mx-auto max-w-[1500px]">
           <Link
             href="/cart"
-            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[#7C5CFF] transition-colors hover:text-[#0F1B3D]"
+            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[#6d28d9] transition-colors hover:text-[#0F1B3D]"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Cart
@@ -296,18 +296,18 @@ export default function CartDeliveryClient({
 
           <div className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div className="max-w-[760px]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#7C5CFF]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/25 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#6d28d9]">
                 Cart Delivery
               </div>
               <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2.3rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#0F1B3D]">
-                Confirm Delivery for <span className="text-[#7C5CFF]">{items.length} Item{items.length !== 1 ? 's' : ''}</span>
+                Confirm Delivery for <span className="text-[#6d28d9]">{items.length} Item{items.length !== 1 ? 's' : ''}</span>
               </h1>
               <p className="mt-5 max-w-[720px] text-base leading-8 text-[#6F7192]">
                 Review your cart items, choose a saved address or add a new one, and we will calculate shipping automatically before your order is sent.
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-white/[0.03] px-5 py-4 backdrop-blur-xl">
+            <div className="rounded-[24px] border border-[#6d28d9]/10 bg-white/[0.03] px-5 py-4 backdrop-blur-xl">
               <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Signed in</div>
               <div className="mt-2 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">{user.name}</div>
               <div className="mt-1 text-sm text-[#6F7192]">{user.email}</div>
@@ -321,7 +321,7 @@ export default function CartDeliveryClient({
                   initial={{ opacity: 0, y: 18 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35 }}
-                  className="rounded-[28px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]"
+                  className="rounded-[28px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]"
                 >
                   <div className="mb-5 flex items-start justify-between gap-4">
                     <div>
@@ -332,7 +332,7 @@ export default function CartDeliveryClient({
                         Use an existing delivery address or switch to a new one.
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#7C5CFF]">
+                    <div className="rounded-2xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-3 text-[#6d28d9]">
                       <MapPin className="h-5 w-5" />
                     </div>
                   </div>
@@ -348,8 +348,8 @@ export default function CartDeliveryClient({
                           onClick={() => handleSavedAddressSelect(savedAddress)}
                           className={`rounded-[22px] border p-4 text-left transition ${
                             selectedAddressId === savedAddress.id
-                              ? 'border-[#7C5CFF] bg-[#7C5CFF]/12'
-                              : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10 hover:bg-white/[0.04]'
+                              ? 'border-[#6d28d9] bg-[#6d28d9]/12'
+                              : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10 hover:bg-white/[0.04]'
                           }`}
                         >
                           <div className="text-sm font-semibold text-[#0F1B3D]">{savedAddress.fullName}</div>
@@ -371,7 +371,7 @@ export default function CartDeliveryClient({
                       setLastLookupPincode('')
                       setAddress(initialAddressFields)
                     }}
-                    className="mt-4 text-sm font-medium text-[#7C5CFF]"
+                    className="mt-4 text-sm font-medium text-[#6d28d9]"
                   >
                     Use a new address
                   </button>
@@ -391,7 +391,7 @@ export default function CartDeliveryClient({
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.08 }}
-              className="h-fit rounded-[28px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.3)]"
+              className="h-fit rounded-[28px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.3)]"
             >
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
@@ -402,7 +402,7 @@ export default function CartDeliveryClient({
                     Final review before your {items.length} item{items.length !== 1 ? 's are' : ' is'} submitted.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#7C5CFF]">
+                <div className="rounded-2xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-3 text-[#6d28d9]">
                   <Truck className="h-5 w-5" />
                 </div>
               </div>
@@ -412,20 +412,20 @@ export default function CartDeliveryClient({
                   {items.map((item, index) => (
                     <div
                       key={`${item.id}-${item.addedAt}-${index}`}
-                      className="rounded-[16px] border border-[#7C5CFF]/10 bg-white/[0.02] p-3"
+                      className="rounded-[16px] border border-[#6d28d9]/10 bg-white/[0.02] p-3"
                     >
                       <div className="text-sm font-semibold text-[#0F1B3D]">{item.name}</div>
                       <div className="mt-1 text-xs text-[#6F7192]">
                         {item.material}, {item.color}, {item.infill}% infill
                       </div>
-                      <div className="mt-1 text-sm font-medium text-[#7C5CFF]">
+                      <div className="mt-1 text-sm font-medium text-[#6d28d9]">
                         ₹{item.price.toFixed(0)}
                       </div>
                     </div>
                   ))}
                 </div>
 
-              <div className="rounded-[24px] border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-5 shadow-[0_12px_48px_rgba(124, 92, 255,0.1)]">
+              <div className="rounded-[24px] border border-[#6d28d9]/20 bg-[linear-gradient(180deg,rgba(109, 40, 217,0.12),rgba(109, 40, 217,0.06))] p-5 shadow-[0_12px_48px_rgba(109, 40, 217,0.1)]">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Grand Total</div>
                   <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
                     ₹{payableTotal.toFixed(2)}
@@ -494,14 +494,14 @@ export default function CartDeliveryClient({
                   type="button"
                   onClick={handleSubmitOrder}
                   disabled={submitting || confirmation !== null}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-[20px] bg-[#7C5CFF] px-5 py-4 text-sm font-semibold text-white transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-[20px] bg-[#6d28d9] px-5 py-4 text-sm font-semibold text-white transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55"
                 >
                   {submitting ? 'Submitting Order...' : confirmation ? 'Order Submitted' : `Place Order (${items.length} items)`}
                   <PackageCheck className="h-4 w-4" />
                 </button>
                 <Link
                   href="/cart"
-                  className="inline-flex w-full items-center justify-center rounded-[18px] border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
+                  className="inline-flex w-full items-center justify-center rounded-[18px] border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
                 >
                   Back to cart
                 </Link>

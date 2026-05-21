@@ -1,263 +1,147 @@
 'use client'
 
 import Link from 'next/link'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-
-const serviceParticles = Array.from({ length: 30 }, (_, i) => ({
-  id: i,
-  x: (i * 37 + 11) % 100,
-  y: (i * 53 + 17) % 100,
-  size: 1 + (i % 4) * 0.6,
-  duration: 2 + (i % 5) * 0.45,
-  delay: (i % 7) * 0.2,
-}))
-
-function FloatingParticles() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {serviceParticles.map(p => (
-        <motion.div
-          key={p.id}
-          className="absolute rounded-full bg-[var(--brand-primary)]"
-          style={{
-            left: `${p.x}%`,
-            top: `${p.y}%`,
-            width: p.size,
-            height: p.size,
-            opacity: 0.3
-          }}
-          animate={{
-            y: [0, -20, 0],
-            opacity: [0.1, 0.4, 0.1]
-          }}
-          transition={{
-            duration: p.duration,
-            repeat: Infinity,
-            delay: p.delay,
-            ease: 'easeInOut'
-          }}
-        />
-      ))}
-    </div>
-  )
-}
-
-function PrinterSVG() {
-  return (
-    <motion.svg
-      viewBox="0 0 200 160"
-      className="w-full max-w-[320px] mx-auto"
-      style={{ contain: 'layout style paint' }}
-      initial={{ opacity: 1, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.8, ease: 'easeOut' }}
-    >
-      <defs>
-        <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#7C5CFF" stopOpacity="0.6" />
-          <stop offset="100%" stopColor="#7C5CFF" stopOpacity="0" />
-        </linearGradient>
-        <filter id="glow-filter" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-          <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
-
-      <motion.g
-        animate={{ y: [0, -2, 0] }}
-        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        {/* Printer body */}
-        <rect x="40" y="60" width="120" height="80" rx="8" fill="#FFFFFF" stroke="rgba(124, 92, 255,0.3)" strokeWidth="2" />
-
-        {/* Print bed */}
-        <rect x="50" y="115" width="100" height="8" rx="2" fill="rgba(124, 92, 255,0.15)" />
-
-        {/* Printed object (growing) */}
-        <motion.rect
-          x="85"
-          y="115"
-          width="30"
-          height="0"
-          fill="url(#glow)"
-          filter="url(#glow-filter)"
-          animate={{ height: [0, 25, 25] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        />
-
-        {/* Nozzle */}
-        <motion.g
-          animate={{ x: [60, 140, 60] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <rect x="0" y="30" width="12" height="25" rx="2" fill="#7C5CFF" />
-          <polygon points="0,55 12,55 8,62 4,62" fill="#7C5CFF" />
-        </motion.g>
-
-        {/* Top frame */}
-        <rect x="35" y="20" width="130" height="10" rx="3" fill="#FFFFFF" stroke="rgba(124, 92, 255,0.3)" strokeWidth="2" />
-
-        {/* Vertical rails */}
-        <line x1="45" y1="30" x2="45" y2="60" stroke="rgba(124, 92, 255,0.2)" strokeWidth="2" />
-        <line x1="155" y1="30" x2="155" y2="60" stroke="rgba(124, 92, 255,0.2)" strokeWidth="2" />
-
-        {/* Status light */}
-        <motion.circle
-          cx="150"
-          cy="70"
-          r="3"
-          fill="#7C5CFF"
-          animate={{ opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
-      </motion.g>
-    </motion.svg>
-  )
-}
+import { ArrowRight, CheckCircle2, Layers3, MessageCircle, Ruler, ShieldCheck, Sparkles } from 'lucide-react'
+import { useBusinessSettings } from '@/lib/settings-context'
 
 const stats = [
-  { value: '0.1', unit: 'mm', label: 'Print Accuracy', suffix: '±' },
-  { value: '256', unit: '³', label: 'Build Volume (mm)', prefix: '', suffix: '' },
-  { value: '10', unit: '+', label: 'Materials Available', suffix: '' },
-  { value: 'Pan', unit: '-IN', label: 'India Delivery', suffix: '' }
+  { value: '±0.1mm', label: 'Print accuracy' },
+  { value: '10+', label: 'Material options' },
+  { value: '3-5d', label: 'Typical delivery' },
+  { value: 'Pan-India', label: 'Shipping coverage' },
+]
+
+const capabilities = [
+  { icon: ShieldCheck, label: 'Functional parts' },
+  { icon: Ruler, label: 'Architectural models' },
+  { icon: Sparkles, label: 'Premium finishing' },
 ]
 
 export default function ServicesHero() {
+  const { settings } = useBusinessSettings()
   const ref = useRef(null)
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '30%'])
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
+  const isInView = useInView(ref, { once: true, margin: '-50px' })
+  const whatsappNumber = (settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')
 
   return (
-    <section ref={ref} className="dot-grid-bg relative flex min-h-screen items-center justify-center overflow-hidden pt-24">
-      <div className="hero-glow hero-glow-1" />
-      <div className="hero-glow hero-glow-2" />
-      {/* Layered backgrounds */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(124,58,237,0.15)_0%,transparent_70%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_80%_60%,rgba(6,182,212,0.08)_0%,transparent_60%)]" />
-      </div>
+    <section ref={ref} className="relative overflow-hidden px-4 pb-14 pt-6 md:px-8 lg:px-16">
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#F7F8FB_0%,#FFFFFF_58%,#F7F8FB_100%)]" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#6d28d9]/30 to-transparent" />
 
-      {/* Grid overlay */}
       <motion.div
-        className="absolute inset-0 opacity-20"
-        style={{
-          backgroundImage: `linear-gradient(rgba(124, 92, 255,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(124, 92, 255,0.25) 1px, transparent 1px)`,
-          backgroundSize: '80px 80px',
-          maskImage: 'radial-gradient(ellipse 70% 70% at 50% 40%, black 0%, transparent 70%)'
+        variants={{
+          hidden: { opacity: 0 },
+          visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
         }}
-      />
-
-      <FloatingParticles />
-
-      {/* Rotating ring decoration */}
-      <motion.div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-10"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+        initial="hidden"
+        animate={isInView ? 'visible' : 'hidden'}
+        className="relative z-10 mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[minmax(0,1.02fr)_minmax(360px,0.78fr)] lg:items-center"
       >
-        <div className="w-full h-full rounded-full border border-dashed border-[#7C5CFF]" />
-      </motion.div>
-
-      <motion.div className="relative z-10 max-w-[1200px] mx-auto px-6 py-12 md:py-20 w-full" style={{ y, opacity }}>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left: Content */}
-          <div className="text-center lg:text-left">
-            <motion.div
-              initial={{ opacity: 1, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="hero-badge"
-            >
-              <motion.span
-                className="badge-dot"
-                animate={{ opacity: [1, 0.45, 1], scale: [1, 0.82, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              />
-              7 Specialized Services
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 1, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="mb-6 font-[var(--font-syne)] text-[clamp(2.4rem,5vw,4.2rem)] font-extrabold leading-[1.08] text-[var(--text-primary)]"
-            >
-              We Print What <br />
-              <span className="gradient-text">
-                Others Can&apos;t
-              </span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 1, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="mx-auto mb-8 max-w-[520px] text-lg leading-[1.7] text-[var(--text-secondary)] lg:mx-0"
-            >
-              From industrial spare parts and medical models to student projects and creator props — precision prints across India using Bambu Lab P2S fleet.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 1, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
-            >
-              <Link
-                href="/instant-quote"
-                className="btn-primary group relative px-8 py-3.5 text-base"
-              >
-                <span className="relative z-10">Get A Free Quote</span>
-              </Link>
-              <Link
-                href="/materials"
-                className="btn-secondary px-8 py-3.5 text-base"
-              >
-                See Materials
-              </Link>
-            </motion.div>
-          </div>
-
-          {/* Right: SVG Animation */}
+        <div className="min-w-0">
           <motion.div
-            initial={{ opacity: 1, scale: 0.9, x: 40 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="relative"
+            variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
+            className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/15 bg-white px-4 py-2 text-xs font-bold uppercase text-[#6d28d9] shadow-sm"
           >
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_50%_50%,rgba(124, 92, 255,0.15)_0%,transparent_70%)] blur-2xl" />
-            <PrinterSVG />
+            <Layers3 className="h-4 w-4" />
+            Premium 3D printing services
+          </motion.div>
+
+          <motion.h1
+            variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
+            className="max-w-4xl text-4xl font-extrabold leading-[1.05] text-[#111827] sm:text-5xl lg:text-6xl"
+          >
+            Precision 3D printing for parts that need to look and perform right.
+          </motion.h1>
+
+          <motion.p
+            variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
+            className="mt-6 max-w-2xl text-base leading-8 text-[#4B5563] sm:text-lg"
+          >
+            From industrial prototypes to presentation models and branded products, Flux3D manages material selection, print planning, finishing, and delivery with a production-minded workflow.
+          </motion.p>
+
+          <motion.div
+            variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
+            className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
+          >
+            <Link
+              href="/instant-quote"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#111827] px-6 text-sm font-bold text-white shadow-[0_16px_36px_rgba(17,24,39,0.18)] transition hover:bg-[#2f3341]"
+            >
+              Get Instant Quote
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <a
+              href={`https://wa.me/${whatsappNumber}?text=Hi%20${encodeURIComponent(settings.businessName || 'Flux3D')}!%20I%20want%20to%20discuss%20a%203D%20printing%20project.`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#25D366]/25 bg-white px-6 text-sm font-bold text-[#138a42] shadow-sm transition hover:border-[#25D366]/40 hover:bg-[#EAFBF2]"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Discuss Project
+            </a>
+          </motion.div>
+
+          <motion.div
+            variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
+            className="mt-8 grid gap-3 sm:grid-cols-3"
+          >
+            {capabilities.map((item) => (
+              <div key={item.label} className="flex min-h-14 items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 shadow-sm">
+                <item.icon className="h-4 w-4 shrink-0 text-[#6d28d9]" />
+                <span className="text-sm font-semibold leading-5 text-[#374151]">{item.label}</span>
+              </div>
+            ))}
           </motion.div>
         </div>
 
-        {/* Stats row */}
         <motion.div
-          initial={{ opacity: 1, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16"
+          variants={{ hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0 } }}
+          className="relative"
         >
-          {stats.map((stat, i) => (
-            <motion.div
-              key={i}
-              className="card p-6 text-center"
-              whileHover={{ scale: 1.03, y: -4 }}
-            >
-              <div className="font-[var(--font-syne)] text-3xl font-extrabold text-[var(--text-primary)] md:text-4xl">
-                {stat.prefix}{stat.value}<span className="gradient-text">{stat.unit}</span>
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-[0_24px_70px_rgba(17,24,39,0.14)]">
+            <div className="relative aspect-[4/5] overflow-hidden bg-[#111827] sm:aspect-[16/11] lg:aspect-[4/5]">
+              <video
+                className="h-full w-full object-cover opacity-90"
+                src="/printer.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+              />
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#111827] via-[#111827]/70 to-transparent p-5 text-white">
+                <p className="text-xs font-bold uppercase text-white/60">Live production workflow</p>
+                <h2 className="mt-2 text-2xl font-extrabold">From file to finished part.</h2>
+                <div className="mt-4 grid gap-2">
+                  {['Material guidance', 'Print orientation review', 'Finish and delivery planning'].map((item) => (
+                    <div key={item} className="flex items-center gap-2 text-sm font-semibold text-white/90">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                      {item}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="mt-1 font-[var(--font-mono)] text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">{stat.label}</div>
-            </motion.div>
-          ))}
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
+          className="lg:col-span-2"
+        >
+          <div className="grid overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm sm:grid-cols-4">
+            {stats.map((stat) => (
+              <div key={stat.label} className="border-b border-gray-100 p-5 text-center last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
+                <div className="text-2xl font-extrabold text-[#111827]">{stat.value}</div>
+                <div className="mt-1 text-xs font-bold uppercase text-[#6F7192]">{stat.label}</div>
+              </div>
+            ))}
+          </div>
         </motion.div>
       </motion.div>
-
-      {/* Bottom gradient fade */}
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[var(--bg-primary)] to-transparent" />
     </section>
   )
 }

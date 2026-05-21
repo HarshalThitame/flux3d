@@ -32,7 +32,7 @@ export default function ProblemSection() {
     <section className="relative z-10 w-full bg-[var(--bg-base)] px-4 py-24 md:px-8 lg:px-16">
       <div className="max-w-7xl mx-auto">
         <Reveal className="mb-4">
-          <span className="inline-block text-sm font-semibold uppercase tracking-normal text-[#f97316]">
+          <span className="inline-block text-sm font-semibold uppercase tracking-normal text-[#6d28d9]">
             Why Flux 3D
           </span>
         </Reveal>
@@ -66,20 +66,20 @@ export default function ProblemSection() {
                     willChange: 'transform',
                   }}
                 >
-                  <div className="absolute inset-0 rounded-2xl bg-[#f97316]/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <div className="absolute inset-0 rounded-2xl bg-[#6d28d9]/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
                   <div className="relative z-10">
-                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#f97316]/10 transition-colors duration-300 group-hover:bg-[#f97316]/20">
-                      <Icon className="h-6 w-6 text-[#f97316]" />
+                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#6d28d9]/10 transition-colors duration-300 group-hover:bg-[#6d28d9]/20">
+                      <Icon className="h-6 w-6 text-[#6d28d9]" />
                     </div>
 
-                    <div className="mb-2 text-lg font-semibold text-[#1a1a1a] transition-colors duration-300 group-hover:text-[#f97316]">
+                    <div className="mb-2 text-lg font-semibold text-[#1a1a1a] transition-colors duration-300 group-hover:text-[#6d28d9]">
                       {point.problem}
                     </div>
 
                     <div className="flex items-center gap-2 mt-4">
-                      <ArrowRight className="h-4 w-4 text-[#f97316]" />
-                      <span className="text-sm font-medium text-[#f97316]">
+                      <ArrowRight className="h-4 w-4 text-[#6d28d9]" />
+                      <span className="text-sm font-medium text-[#6d28d9]">
                         Flux 3D: {point.solution}
                       </span>
                     </div>

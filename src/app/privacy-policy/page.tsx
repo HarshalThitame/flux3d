@@ -6,7 +6,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings()
   return {
     title: `${settings.businessName} — Privacy Policy`,
-    description: settings.businessDescription || 'Learn how FLUX 3D collects, uses, and protects your personal information.',
+    description: 'Learn how Flux3D collects, uses, and protects your personal information.',
+    alternates: { canonical: '/privacy-policy' },
   }
 }
 

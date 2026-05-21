@@ -18,7 +18,12 @@ import {
 } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import type { AdminOrder } from '@/lib/admin/types'
-import type { OrderStatus } from '@/lib/orders'
+import {
+  getAllowedOrderStatusTransitions,
+  getOrderStatusTransitionError,
+  isSequentialOrderStatusTransition,
+  type OrderStatus,
+} from '@/lib/orders'
 import { logSearch } from '@/lib/tracking/searchLogger'
 import {
   ADMIN_ORDER_STATUSES,
@@ -170,6 +175,11 @@ export default function OrdersListClient({ initialOrders }: Props) {
 
   async function updateOrderStatus(order: AdminOrder, status: OrderStatus) {
     if (status === order.status) return
+    if (!isSequentialOrderStatusTransition(order.status, status)) {
+      showToast({ type: 'error', message: getOrderStatusTransitionError(order.status, status) })
+      return
+    }
+
     const previousOrders = orders
     setUpdatingGroupId(order.groupId)
     setOrders((current) =>
@@ -468,6 +478,7 @@ function OrderRow({
   const totalDiscount = order.discountAmount ?? order.cartDiscountAmount + order.couponDiscountAmount + order.offerDiscountAmount
   const totalDiscountPercent = discountPercent(order.totalPriceBeforeDiscount, totalDiscount)
   const rowTone = rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'
+  const statusOptions = getAllowedOrderStatusTransitions(order.status)
 
   return (
     <tr
@@ -542,7 +553,7 @@ function OrderRow({
             onChange={(event) => onStatusChange(event.target.value as OrderStatus)}
             className="h-9 rounded-lg border border-gray-300 bg-white px-2 text-xs text-gray-700 outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-100 disabled:opacity-50"
           >
-            {ADMIN_ORDER_STATUSES.map((status) => (
+            {statusOptions.map((status) => (
               <option key={status} value={status}>
                 {STATUS_LABELS[status]}
               </option>
@@ -570,6 +581,7 @@ function MobileOrderCard({
   const printTime = order.items.reduce((sum, item) => sum + item.estimatedTime, 0)
   const totalDiscount = order.discountAmount ?? order.cartDiscountAmount + order.couponDiscountAmount + order.offerDiscountAmount
   const totalDiscountPercent = discountPercent(order.totalPriceBeforeDiscount, totalDiscount)
+  const statusOptions = getAllowedOrderStatusTransitions(order.status)
 
   return (
     <article
@@ -630,7 +642,7 @@ function MobileOrderCard({
             onChange={(event) => onStatusChange(event.target.value as OrderStatus)}
             className="h-9 rounded-lg border border-gray-300 bg-white px-2 text-xs text-gray-700 outline-none"
           >
-            {ADMIN_ORDER_STATUSES.map((status) => (
+            {statusOptions.map((status) => (
               <option key={status} value={status}>
                 {STATUS_LABELS[status]}
               </option>

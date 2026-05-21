@@ -82,12 +82,12 @@ function CountStat({
       whileHover={{ y: -4, scale: 1.02 }}
       transition={{ duration: 0.2 }}
     >
-      <span className="mx-auto mb-3 block h-1.5 w-1.5 rotate-45 rounded-sm bg-[var(--brand-primary)] opacity-80" />
+      <span className="mx-auto mb-3 block h-1.5 w-1.5 rotate-45 rounded-sm bg-gradient-to-r from-violet-600 to-purple-500 opacity-80" />
       <div className="stat-number" suppressHydrationWarning>
         {display}
       </div>
       <div
-        className="mx-auto mt-3 h-0.5 w-16 origin-left rounded-full bg-[var(--brand-primary)] transition-transform duration-[1800ms] ease-out"
+        className="mx-auto mt-3 h-0.5 w-16 origin-left rounded-full bg-gradient-to-r from-violet-600 to-purple-400 transition-transform duration-[1800ms] ease-out"
         style={{ transform: hasStarted ? 'scaleX(1)' : 'scaleX(0)' }}
       />
       <div className="stat-label">{stat.label}</div>
@@ -149,7 +149,7 @@ export default function HeroSection() {
             animate="show"
           >
             <motion.div variants={item} className="mb-0 flex flex-col items-center gap-3 lg:items-start">
-              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-medium text-orange-700">
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[#ded7ff] bg-[#f3f0ff] px-4 py-2 text-sm font-medium text-[#4c1d95]">
                 <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                 Now Printing on Bambu Lab P2S · Pune, India
               </div>
@@ -164,7 +164,7 @@ export default function HeroSection() {
               className="text-5xl font-extrabold leading-[1.1] tracking-tight text-[#1a1a1a] md:text-6xl lg:text-7xl"
             >
               Where Ideas Become Reality,{' '}
-              <span className="text-orange-500">Layer by Layer.</span>
+              <span className="bg-gradient-to-r from-violet-700 to-purple-500 bg-clip-text text-transparent">Layer by Layer.</span>
             </motion.h1>
 
             <motion.p variants={item} className="mx-auto max-w-[560px] text-sm font-normal leading-relaxed text-[var(--text-secondary)] sm:text-base lg:mx-0">
@@ -179,7 +179,7 @@ export default function HeroSection() {
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   href="/instant-quote"
-                  className="relative flex min-h-[52px] items-center justify-center gap-2 overflow-hidden rounded-xl bg-orange-500 px-6 py-4 text-center text-sm font-semibold text-white shadow-[0_12px_32px_rgba(249,115,22,0.18)] transition-all duration-200 after:absolute after:inset-0 after:rounded-xl after:border-2 after:border-orange-400 after:opacity-20 after:animate-ping hover:scale-[1.03] hover:bg-orange-600 hover:shadow-lg"
+                  className="relative flex min-h-[52px] items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#4c1d95] via-[#6d28d9] to-[#7c3aed] px-6 py-4 text-center text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition-all duration-300 after:absolute after:inset-0 after:rounded-xl after:border-2 after:border-purple-400 after:opacity-20 after:animate-ping hover:scale-[1.03] hover:from-[#3b0764] hover:via-[#4c1d95] hover:to-[#6d28d9]"
                 >
                   <span className="relative z-10">Upload Your Model & Get Quote</span>
                   <ArrowRight className="relative z-10 h-4 w-4" />
@@ -213,7 +213,7 @@ export default function HeroSection() {
               >
                 <Image
                   src="/pot.webp"
-                  alt="3D printed pot showcase"
+                  alt="Custom 3D printed pot — Flux3D premium printing service India"
                   priority
                   width={520}
                   height={520}

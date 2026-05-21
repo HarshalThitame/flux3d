@@ -12,6 +12,7 @@ export type AddressInput = {
   city: string
   state: string
   pincode: string
+  landmark?: string | null
   country?: string
   is_default?: boolean
 }
@@ -39,9 +40,10 @@ async function fetchAddressesForCurrentUser() {
 
   const { data, error: addressError } = await supabase
     .from('addresses')
-    .select('id, user_id, full_name, phone, address_line_1, address_line_2, city, state, pincode, country, is_default, created_at')
+    .select('id, user_id, full_name, phone, address_line_1, address_line_2, city, state, pincode, country, landmark, is_default, created_at, updated_at')
     .eq('user_id', user.id)
     .order('is_default', { ascending: false })
+    .order('updated_at', { ascending: false })
     .order('created_at', { ascending: false })
 
   if (addressError) throw addressError
@@ -128,8 +130,10 @@ export function useAddresses(): UseAddressesResult {
       state: input.state,
       pincode: input.pincode,
       country: input.country ?? 'India',
+      landmark: input.landmark ?? null,
       is_default: Boolean(input.is_default),
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     }
     setAddresses((current) => [optimistic, ...current.map((address) => input.is_default ? { ...address, is_default: false } : address)])
     const { error: insertError } = await supabase.from('addresses').insert({ user_id: id, ...input })

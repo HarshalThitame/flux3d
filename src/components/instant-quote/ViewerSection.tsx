@@ -37,7 +37,7 @@ export default function ViewerSection({
     <motion.section
       whileHover={{ y: -4 }}
       transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-      className="group relative flex h-full flex-col overflow-hidden rounded-[28px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.94))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)] transition-all duration-300 hover:border-cyan-400/20 hover:shadow-[0_24px_90px_rgba(56,189,248,0.08)]"
+      className="group relative flex h-full flex-col overflow-hidden rounded-[28px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.94))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)] transition-all duration-300 hover:border-cyan-400/20 hover:shadow-[0_24px_90px_rgba(56,189,248,0.08)]"
     >
       <motion.div
         aria-hidden
@@ -66,7 +66,7 @@ export default function ViewerSection({
       <motion.div
         whileHover={{ scale: 1.01 }}
         transition={{ type: 'spring', stiffness: 240, damping: 22 }}
-        className="relative min-h-[320px] flex-1 overflow-hidden rounded-[24px] border border-[#7C5CFF]/10 bg-[radial-gradient(circle_at_top,rgba(183, 167, 255,0.12),transparent_42%),linear-gradient(180deg,#FFFFFF,#FFFFFF)]"
+        className="relative min-h-[320px] flex-1 overflow-hidden rounded-[24px] border border-[#6d28d9]/10 bg-[radial-gradient(circle_at_top,rgba(168, 85, 247,0.12),transparent_42%),linear-gradient(180deg,#FFFFFF,#FFFFFF)]"
       >
         {model ? (
           <Suspense fallback={<ViewerFallback />}>
@@ -87,7 +87,7 @@ export default function ViewerSection({
             <motion.div
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
-              className="flex h-18 w-18 items-center justify-center rounded-[22px] border border-[#7C5CFF]/10 bg-white text-cyan-700"
+              className="flex h-18 w-18 items-center justify-center rounded-[22px] border border-[#6d28d9]/10 bg-white text-cyan-700"
             >
               <Move3D className="h-7 w-7" />
             </motion.div>
@@ -102,7 +102,7 @@ export default function ViewerSection({
 
         {isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-[rgba(4,8,16,0.62)] backdrop-blur-sm">
-            <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D]">
+            <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D]">
               Building your live 3D preview...
             </div>
           </div>
@@ -110,11 +110,11 @@ export default function ViewerSection({
       </motion.div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3">
+        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Controls</div>
           <div className="mt-2 text-sm text-[#0F1B3D]">Rotate · Zoom · Pan</div>
         </motion.div>
-        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3">
+        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Bounding Box</div>
           <div className="mt-2 text-sm text-[#0F1B3D]">
             {model
@@ -122,7 +122,7 @@ export default function ViewerSection({
               : 'Waiting for geometry'}
           </div>
         </motion.div>
-        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3">
+        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Mesh Density</div>
           <div className="mt-2 text-sm text-[#0F1B3D]">
             {model ? `${model.triangleCount.toLocaleString()} tris` : '0 tris'}

@@ -25,14 +25,14 @@ export default function FileUpload({
   }
 
   return (
-    <div className="rounded-[28px] border border-[#7C5CFF]/10 bg-[rgba(124, 92, 255,0.25)] p-5 backdrop-blur-xl">
+    <div className="rounded-[28px] border border-[#6d28d9]/10 bg-[rgba(109, 40, 217,0.25)] p-5 backdrop-blur-xl">
       <div
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
           event.preventDefault()
           handleFiles(event.dataTransfer.files)
         }}
-        className="relative rounded-[24px] border border-dashed border-[#7C5CFF]/10 bg-[var(--bg-elevated)] px-5 py-8 text-center shadow-[var(--shadow-sm)]"
+        className="relative rounded-[24px] border border-dashed border-[#6d28d9]/10 bg-[var(--bg-elevated)] px-5 py-8 text-center shadow-[var(--shadow-sm)]"
       >
         <input
           type="file"
@@ -40,7 +40,7 @@ export default function FileUpload({
           className="absolute inset-0 cursor-pointer opacity-0"
           onChange={(event) => handleFiles(event.target.files)}
         />
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 text-[#7C5CFF]">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 text-[#6d28d9]">
           <UploadCloud className="h-6 w-6" />
         </div>
         <div className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">
@@ -56,8 +56,8 @@ export default function FileUpload({
 
       <div className="mt-4 space-y-3">
         {selectedFileName ? (
-          <div className="flex items-center gap-3 rounded-2xl border border-[#7C5CFF]/10 bg-[var(--bg-muted)] px-4 py-3">
-            <div className="rounded-xl bg-[#7C5CFF]/10 p-2 text-[#7C5CFF]">
+          <div className="flex items-center gap-3 rounded-2xl border border-[#6d28d9]/10 bg-[var(--bg-muted)] px-4 py-3">
+            <div className="rounded-xl bg-[#6d28d9]/10 p-2 text-[#6d28d9]">
               <FileArchive className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
@@ -71,7 +71,7 @@ export default function FileUpload({
         ) : null}
 
         {uploadState.status === 'uploading' ? (
-          <div className="rounded-2xl border border-[#7C5CFF]/15 bg-[#7C5CFF]/5 px-4 py-3">
+          <div className="rounded-2xl border border-[#6d28d9]/15 bg-[#6d28d9]/5 px-4 py-3">
             <div className="mb-2 flex items-center justify-between text-sm text-[var(--text-secondary)]">
               <span className="inline-flex items-center gap-2">
                 <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -81,7 +81,7 @@ export default function FileUpload({
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-[var(--bg-muted)]">
               <div
-                className="h-full rounded-full bg-[#7C5CFF] transition-all"
+                className="h-full rounded-full bg-[#6d28d9] transition-all"
                 style={{ width: `${uploadState.progress}%` }}
               />
             </div>

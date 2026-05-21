@@ -45,14 +45,14 @@ function PanelShell({
     <motion.section
       whileHover={{ y: -3 }}
       transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-      className="flex h-full flex-col rounded-[24px] border border-[#7C5CFF]/10 bg-[var(--bg-elevated)] p-4 shadow-[var(--shadow-sm)] transition-all duration-300 hover:border-[#7C5CFF]/20 hover:shadow-[var(--shadow-md)]"
+      className="flex h-full flex-col rounded-[24px] border border-[#6d28d9]/10 bg-[var(--bg-elevated)] p-4 shadow-[var(--shadow-sm)] transition-all duration-300 hover:border-[#6d28d9]/20 hover:shadow-[var(--shadow-md)]"
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-[var(--text-primary)]">{title}</h3>
           <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">{description}</p>
         </div>
-        <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[var(--brand-faint)] p-2 text-[var(--brand-primary)]">
+        <div className="rounded-2xl border border-[#6d28d9]/10 bg-[var(--brand-faint)] p-2 text-[var(--brand-primary)]">
           {icon}
         </div>
       </div>
@@ -82,7 +82,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
               step={5}
               value={props.infill}
               onChange={(event) => props.onInfillChange(Number(event.target.value))}
-              className="w-full accent-[#7C5CFF]"
+              className="w-full accent-[#6d28d9]"
             />
           </div>
 
@@ -98,7 +98,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
               step={1}
               value={props.quantity}
               onChange={(event) => props.onQuantityChange(Number(event.target.value))}
-              className="w-full rounded-[16px] border border-[#7C5CFF]/10 bg-white px-3 py-3 text-sm text-[var(--text-primary)] outline-none"
+              className="w-full rounded-[16px] border border-[#6d28d9]/10 bg-white px-3 py-3 text-sm text-[var(--text-primary)] outline-none"
             />
           </div>
 
@@ -117,13 +117,13 @@ export default function SettingsPanel(props: SettingsPanelProps) {
                     whileTap={{ scale: 0.985 }}
                     className={`rounded-[16px] border px-3 py-3 text-left transition-all ${
                       active
-                        ? 'border-[#7C5CFF]/35 bg-[var(--brand-faint)]'
-                        : 'border-[#7C5CFF]/10 bg-white hover:border-[#7C5CFF]/10 hover:bg-[var(--bg-soft)]'
+                        ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)]'
+                        : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10 hover:bg-[var(--bg-soft)]'
                     }`}
                   >
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-sm font-medium text-[var(--text-primary)]">{option.label}</div>
-                        <div className="text-[10px] uppercase tracking-[0.18em] text-[#7C5CFF]">
+                        <div className="text-[10px] uppercase tracking-[0.18em] text-[#6d28d9]">
                           {props.postProcessingChargeEstimate
                             ? `₹${props.postProcessingChargeEstimate(option.value).toFixed(2)}`
                             : '—'}
@@ -151,8 +151,8 @@ export default function SettingsPanel(props: SettingsPanelProps) {
                     whileTap={{ scale: 0.985 }}
                     className={`rounded-[16px] border px-3 py-3 text-left transition-all ${
                       active
-                        ? 'border-[#7C5CFF]/35 bg-[var(--brand-faint)]'
-                        : 'border-[#7C5CFF]/10 bg-white hover:border-[#7C5CFF]/10 hover:bg-[var(--bg-soft)]'
+                        ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)]'
+                        : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10 hover:bg-[var(--bg-soft)]'
                     }`}
                   >
                     <div className="text-sm font-medium text-[var(--text-primary)]">{option.label}</div>
@@ -185,7 +185,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
             </div>
           </div>
 
-            <div className="rounded-[18px] border border-[#7C5CFF]/10 bg-[var(--bg-soft)] p-4 text-sm leading-6 text-[var(--text-secondary)]">
+            <div className="rounded-[18px] border border-[#6d28d9]/10 bg-[var(--bg-soft)] p-4 text-sm leading-6 text-[var(--text-secondary)]">
               Save your file, settings, and estimate in one place so you can revisit, compare, and place your order faster.
             </div>
 
@@ -195,7 +195,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
             disabled={!props.canSave || props.isSaving}
             whileHover={{ y: -2, scale: 1.01 }}
             whileTap={{ scale: 0.985 }}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] bg-[#7C5CFF] px-4 py-3 text-sm font-medium text-white transition-all hover:translate-y-[-1px] hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] bg-[#6d28d9] px-4 py-3 text-sm font-medium text-white transition-all hover:translate-y-[-1px] hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55"
           >
             {props.isSaving ? 'Saving Quote...' : 'Save Quote'}
           </motion.button>
@@ -209,13 +209,13 @@ export default function SettingsPanel(props: SettingsPanelProps) {
           <div className="grid gap-3 sm:grid-cols-2">
             <Link
               href="/login?next=%2Finstant-quote"
-              className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#7C5CFF]/10 bg-white px-4 py-3 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-soft)]"
+              className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#6d28d9]/10 bg-white px-4 py-3 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-soft)]"
             >
               Log In
             </Link>
             <Link
               href="/signup?next=%2Finstant-quote"
-              className="inline-flex items-center justify-center gap-2 rounded-[18px] bg-[#7C5CFF] px-4 py-3 text-sm font-medium text-white transition-opacity hover:opacity-95"
+              className="inline-flex items-center justify-center gap-2 rounded-[18px] bg-[#6d28d9] px-4 py-3 text-sm font-medium text-white transition-opacity hover:opacity-95"
             >
               Create Account
               <ArrowRight className="h-4 w-4" />

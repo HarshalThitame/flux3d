@@ -142,10 +142,11 @@ export default async function OrderDetailPage({
   const hasAnyDiscount = cartDiscountAmount > 0 || couponDiscountAmount > 0 || offerDiscountAmount > 0
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-28 text-[#0F1B3D] md:px-8">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       <Navbar transparent />
+      <main className="px-4 pb-16 pt-8 md:px-8 md:pt-10">
       <div className="mx-auto max-w-5xl space-y-6">
-        <div className="rounded-[32px] border border-[#7C5CFF]/10 bg-[rgba(255,255,255,0.96)] p-6 backdrop-blur-2xl">
+        <div className="rounded-[32px] border border-[#6d28d9]/10 bg-[rgba(255,255,255,0.96)] p-6 backdrop-blur-2xl">
           <Link
             href="/my-orders"
             className="inline-flex text-sm text-[#6F7192] transition-colors hover:text-[#0F1B3D]"
@@ -161,7 +162,7 @@ export default async function OrderDetailPage({
                 {row.order_number ?? row.id}
               </h1>
               {isMultiItem && (
-                <div className="mt-2 text-sm text-[#7C5CFF]">
+                <div className="mt-2 text-sm text-[#6d28d9]">
                   {groupedItems.length} items in this order
                 </div>
               )}
@@ -197,7 +198,7 @@ export default async function OrderDetailPage({
         </div>
 
         {isMultiItem && (
-          <div className="rounded-[28px] border border-[#7C5CFF]/10 bg-white/[0.03] p-6 backdrop-blur-xl">
+          <div className="rounded-[28px] border border-[#6d28d9]/10 bg-white/[0.03] p-6 backdrop-blur-xl">
             <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
               Order Items ({groupedItems.length})
             </h2>
@@ -205,39 +206,39 @@ export default async function OrderDetailPage({
               {groupedItems.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-[20px] border border-[#7C5CFF]/10 bg-[#FFFFFF] p-5"
+                  className="rounded-[20px] border border-[#6d28d9]/10 bg-[#FFFFFF] p-5"
                 >
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="text-sm font-semibold text-[#0F1B3D]">{item.material}</div>
                       <div className="mt-1 text-sm text-[#6F7192]">{item.color}</div>
                     </div>
-                    <div className="font-[var(--font-syne)] text-xl font-bold text-[#7C5CFF]">
+                    <div className="font-[var(--font-syne)] text-xl font-bold text-[#6d28d9]">
                       ₹{Number(item.total_price).toFixed(0)}
                     </div>
                   </div>
                   <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
-                    <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                    <div className="rounded-lg border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Infill</div>
                       <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.infill}%</div>
                     </div>
-                    <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                    <div className="rounded-lg border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Layer</div>
                       <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{Number(item.layer_height)} mm</div>
                     </div>
-                    <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                    <div className="rounded-lg border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Qty</div>
                       <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.quantity ?? 1}</div>
                     </div>
-                    <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                    <div className="rounded-lg border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Supports</div>
                       <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.supports ? 'Yes' : 'No'}</div>
                     </div>
-                    <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                    <div className="rounded-lg border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Post-process</div>
                       <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.post_processing_level ?? 'None'}</div>
                     </div>
-                    <div className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2">
+                    <div className="rounded-lg border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">PP cost</div>
                       <div className="mt-1 text-sm font-medium text-[#0F1B3D]">₹{Number(item.post_processing_charges).toFixed(0)}</div>
                     </div>
@@ -253,46 +254,46 @@ export default async function OrderDetailPage({
 
         <div className="grid gap-6 lg:grid-cols-[1.3fr_0.9fr]">
           {!isMultiItem && (
-            <div className="rounded-[28px] border border-[#7C5CFF]/10 bg-white/[0.03] p-6 backdrop-blur-xl">
+            <div className="rounded-[28px] border border-[#6d28d9]/10 bg-white/[0.03] p-6 backdrop-blur-xl">
               <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
                 Configuration
               </h2>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
                   <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Material</div>
                   <div className="mt-2 text-sm text-[#0F1B3D]">{row.material}</div>
                 </div>
-                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
                   <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Color</div>
                   <div className="mt-2 text-sm text-[#0F1B3D]">{row.color}</div>
                 </div>
-                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
                   <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Infill</div>
                   <div className="mt-2 text-sm text-[#0F1B3D]">{row.infill}%</div>
                 </div>
-                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
                   <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Layer height</div>
                   <div className="mt-2 text-sm text-[#0F1B3D]">{Number(row.layer_height)} mm</div>
                 </div>
-                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
                   <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Quantity</div>
                   <div className="mt-2 text-sm text-[#0F1B3D]">{row.quantity ?? 1}</div>
                 </div>
-                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
                   <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Supports</div>
                   <div className="mt-2 text-sm text-[#0F1B3D]">{row.supports ? 'Included' : 'Not required'}</div>
                 </div>
-                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
                   <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Post-process</div>
                   <div className="mt-2 text-sm text-[#0F1B3D]">{row.post_processing_level ?? 'None'}</div>
                 </div>
-                <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
                   <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">File</div>
                   <div className="mt-2 break-all text-sm text-[#0F1B3D]">{row.file_url}</div>
                 </div>
               </div>
 
-              <div className="mt-5 rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+              <div className="mt-5 rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
                 <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">
                   Notes
                 </div>
@@ -303,11 +304,11 @@ export default async function OrderDetailPage({
             </div>
           )}
 
-          <div className="rounded-[28px] border border-[#7C5CFF]/10 bg-white/[0.03] p-6 backdrop-blur-xl">
+          <div className="rounded-[28px] border border-[#6d28d9]/10 bg-white/[0.03] p-6 backdrop-blur-xl">
             <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
               {isMultiItem ? 'Order Total' : 'Estimate'}
             </h2>
-            <div className="mt-5 rounded-[24px] border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-5 shadow-[0_12px_48px_rgba(124, 92, 255,0.1)]">
+            <div className="mt-5 rounded-[24px] border border-[#6d28d9]/20 bg-[linear-gradient(180deg,rgba(109, 40, 217,0.12),rgba(109, 40, 217,0.06))] p-5 shadow-[0_12px_48px_rgba(109, 40, 217,0.1)]">
               <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
                 Final price
               </div>
@@ -337,7 +338,7 @@ export default async function OrderDetailPage({
                     {cartDiscountAmount > 0 ? `-₹${cartDiscountAmount.toFixed(0)}` : '₹0'}
                   </span>
                 </div>
-                <div className="flex justify-between border-t border-[#7C5CFF]/10 pt-2 text-[#0F1B3D]">
+                <div className="flex justify-between border-t border-[#6d28d9]/10 pt-2 text-[#0F1B3D]">
                   <span className="font-medium">Final price</span>
                   <span className="font-medium">₹{orderFinalPrice.toFixed(0)}</span>
                 </div>
@@ -349,7 +350,7 @@ export default async function OrderDetailPage({
                       : `₹${orderDeliveryCharge.toFixed(0)}`}
                   </span>
                 </div>
-                <div className="flex justify-between border-t border-[#7C5CFF]/10 pt-2 text-[#0F1B3D]">
+                <div className="flex justify-between border-t border-[#6d28d9]/10 pt-2 text-[#0F1B3D]">
                   <span className="font-medium">Grand total</span>
                   <span className="font-medium">₹{orderGrandTotal.toFixed(0)}</span>
                 </div>
@@ -369,7 +370,7 @@ export default async function OrderDetailPage({
                 )}
               </div>
               {isMultiItem && (
-                <div className="mt-4 border-t border-[#7C5CFF]/10 pt-3">
+                <div className="mt-4 border-t border-[#6d28d9]/10 pt-3">
                   <div className="text-xs text-[#6F7192]">
                     Material cost: ₹{orderMaterialCost.toFixed(0)}
                   </div>
@@ -415,7 +416,7 @@ export default async function OrderDetailPage({
               )}
             </div>
 
-            <div className="mt-5 rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+            <div className="mt-5 rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
               <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">
                 Delivery address
               </div>
@@ -431,6 +432,7 @@ export default async function OrderDetailPage({
           </div>
         </div>
       </div>
+      </main>
     </div>
   )
 }

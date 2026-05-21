@@ -20,7 +20,7 @@ interface RichTextEditorProps {
 }
 
 const presetColors = [
-  { name: 'Orange', value: '#7C5CFF' },
+  { name: 'Orange', value: '#6d28d9' },
   { name: 'White', value: '#FFFFFF' },
   { name: 'Red', value: '#EF4444' },
   { name: 'Green', value: '#22C55E' },
@@ -149,12 +149,12 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[#7C5CFF]/10 bg-white/[0.03]">
-      <div className="flex flex-wrap items-center gap-1 border-b border-[#7C5CFF]/10 bg-white/[0.02] p-2">
+    <div className="overflow-hidden rounded-lg border border-[#6d28d9]/10 bg-white/[0.03]">
+      <div className="flex flex-wrap items-center gap-1 border-b border-[#6d28d9]/10 bg-white/[0.02] p-2">
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('bold') ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
+          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('bold') ? 'bg-[#6d28d9]/20 text-[#6d28d9]' : 'text-[#6F7192]'}`}
           title="Bold"
         >
           <BoldIcon className="h-4 w-4" />
@@ -162,7 +162,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('italic') ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
+          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('italic') ? 'bg-[#6d28d9]/20 text-[#6d28d9]' : 'text-[#6F7192]'}`}
           title="Italic"
         >
           <ItalicIcon className="h-4 w-4" />
@@ -171,7 +171,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`rounded-md px-2 py-1.5 text-xs font-semibold transition-colors hover:bg-white/10 ${editor.isActive('heading', { level: 2 }) ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
+          className={`rounded-md px-2 py-1.5 text-xs font-semibold transition-colors hover:bg-white/10 ${editor.isActive('heading', { level: 2 }) ? 'bg-[#6d28d9]/20 text-[#6d28d9]' : 'text-[#6F7192]'}`}
           title="Heading 2"
         >
           H2
@@ -179,7 +179,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={`rounded-md px-2 py-1.5 text-xs font-semibold transition-colors hover:bg-white/10 ${editor.isActive('heading', { level: 3 }) ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
+          className={`rounded-md px-2 py-1.5 text-xs font-semibold transition-colors hover:bg-white/10 ${editor.isActive('heading', { level: 3 }) ? 'bg-[#6d28d9]/20 text-[#6d28d9]' : 'text-[#6F7192]'}`}
           title="Heading 3"
         >
           H3
@@ -188,7 +188,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('bulletList') ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
+          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('bulletList') ? 'bg-[#6d28d9]/20 text-[#6d28d9]' : 'text-[#6F7192]'}`}
           title="Bullet List"
         >
           <List className="h-4 w-4" />
@@ -196,7 +196,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('orderedList') ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
+          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('orderedList') ? 'bg-[#6d28d9]/20 text-[#6d28d9]' : 'text-[#6F7192]'}`}
           title="Numbered List"
         >
           <ListOrdered className="h-4 w-4" />
@@ -205,7 +205,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         <button
           type="button"
           onClick={setLink}
-          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('link') ? 'bg-[#7C5CFF]/20 text-[#7C5CFF]' : 'text-[#6F7192]'}`}
+          className={`rounded-md p-2 transition-colors hover:bg-white/10 ${editor.isActive('link') ? 'bg-[#6d28d9]/20 text-[#6d28d9]' : 'text-[#6F7192]'}`}
           title="Add or edit link"
         >
           <LinkIcon className="h-4 w-4" />
@@ -234,7 +234,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
               key={color.value}
               type="button"
               onClick={() => applyColor(color.value)}
-              className="h-6 w-6 rounded border border-[#7C5CFF]/10 transition-transform hover:scale-110"
+              className="h-6 w-6 rounded border border-[#6d28d9]/10 transition-transform hover:scale-110"
               style={{ backgroundColor: color.value }}
               title={color.name}
             />
@@ -250,7 +250,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
               }
             }}
             placeholder="red, blue, green"
-            className="w-32 rounded border border-[#7C5CFF]/10 bg-transparent px-2 py-1 text-xs text-[#0F1B3D] placeholder:text-[#6F7192] focus:outline-none"
+            className="w-32 rounded border border-[#6d28d9]/10 bg-transparent px-2 py-1 text-xs text-[#0F1B3D] placeholder:text-[#6F7192] focus:outline-none"
             title="Enter color names or hex codes (comma-separated)"
           />
         </div>

@@ -84,7 +84,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   return (
     <div>
       <Navbar transparent />
-      <Suspense fallback={<div className="mx-6 mt-32 min-h-96 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)]" />}>
+      <Suspense fallback={<div className="mx-6 mt-8 min-h-96 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] md:mt-10" />}>
         <BlogClient posts={posts} page={page} totalPages={Math.max(1, Math.ceil(total / limit))} />
       </Suspense>
     </div>

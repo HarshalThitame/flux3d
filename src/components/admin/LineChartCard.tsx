@@ -21,7 +21,7 @@ export default function LineChartCard({
   subtitle,
   points,
   showOrders = false,
-  accent = '#7C5CFF',
+  accent = '#6d28d9',
 }: {
   title: string
   subtitle: string
@@ -58,7 +58,7 @@ export default function LineChartCard({
                   x2={width}
                   y1={(height / 4) * line + 5}
                   y2={(height / 4) * line + 5}
-                  stroke="rgba(124, 92, 255,0.3)"
+                  stroke="rgba(109, 40, 217,0.3)"
                   strokeDasharray="4 8"
                 />
               ))}
@@ -79,7 +79,7 @@ export default function LineChartCard({
             {showOrders && (
               <div className="mt-3 flex items-center gap-4 text-[10px] text-[#6F7192]">
                 <div className="flex items-center gap-1">
-                  <div className="h-2 w-4 rounded-full bg-[#7C5CFF]" />
+                  <div className="h-2 w-4 rounded-full bg-[#6d28d9]" />
                   <span>Revenue (solid line — orange)</span>
                 </div>
                 <div className="flex items-center gap-1">

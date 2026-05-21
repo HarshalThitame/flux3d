@@ -96,7 +96,7 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#7C5CFF]">
+        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/20 bg-[#6d28d9]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#6d28d9]">
           <BarChart3 className="h-3 w-3" />
           Customer Intelligence Center
         </div>
@@ -204,7 +204,7 @@ export default function AnalyticsPage() {
                       <span className="text-[#6F7192]">{item.value} visitors ({item.percent}%)</span>
                     </div>
                     <div className="h-2 rounded-full bg-gray-100">
-                      <div className="h-full rounded-full bg-gradient-to-r from-[#7C5CFF] to-cyan-400" style={{ width: `${item.percent}%` }} />
+                      <div className="h-full rounded-full bg-gradient-to-r from-[#6d28d9] to-cyan-400" style={{ width: `${item.percent}%` }} />
                     </div>
                   </div>
                 </div>

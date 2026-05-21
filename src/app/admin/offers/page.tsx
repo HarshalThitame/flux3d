@@ -101,7 +101,7 @@ export default function AdminOffersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 rounded-full border-2 border-[#7C5CFF] border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-[#6d28d9] border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -115,7 +115,7 @@ export default function AdminOffersPage() {
         </div>
         <button
           onClick={() => router.push('/admin/offers/new')}
-          className="inline-flex items-center gap-2 bg-[#7C5CFF] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#6B4FE0] transition-all min-h-[44px]"
+          className="inline-flex items-center gap-2 bg-[#6d28d9] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#4c1d95] transition-all min-h-[44px]"
         >
           <Plus className="w-4 h-4" />
           New Offer
@@ -130,7 +130,7 @@ export default function AdminOffersPage() {
             placeholder="Search offers..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[rgba(124,92,255,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF] transition-colors"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[rgba(109, 40, 217,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9] transition-colors"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -140,8 +140,8 @@ export default function AdminOffersPage() {
               onClick={() => setFilter(f)}
               className={`px-3 py-2 rounded-xl text-xs font-medium capitalize transition-all min-h-[36px] ${
                 filter === f
-                  ? 'bg-[#7C5CFF] text-white'
-                  : 'bg-white border border-[rgba(124,92,255,0.2)] text-[#6F7192] hover:border-[rgba(124,92,255,0.4)]'
+                  ? 'bg-[#6d28d9] text-white'
+                  : 'bg-white border border-[rgba(109, 40, 217,0.2)] text-[#6F7192] hover:border-[rgba(109, 40, 217,0.4)]'
               }`}
             >
               {f}
@@ -162,7 +162,7 @@ export default function AdminOffersPage() {
           return (
             <div
               key={offer.id}
-              className="group bg-white rounded-2xl border border-[rgba(124,92,255,0.15)] p-5 hover:border-[rgba(124,92,255,0.3)] hover:shadow-[0_4px_20px_rgba(124,92,255,0.06)] transition-all"
+              className="group bg-white rounded-2xl border border-[rgba(109, 40, 217,0.15)] p-5 hover:border-[rgba(109, 40, 217,0.3)] hover:shadow-[0_4px_20px_rgba(109, 40, 217,0.06)] transition-all"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -172,7 +172,7 @@ export default function AdminOffersPage() {
                       {status.label}
                     </span>
                     {offer.is_featured && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium text-[#7C5CFF] bg-[rgba(124,92,255,0.1)] border border-[rgba(124,92,255,0.2)]">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium text-[#6d28d9] bg-[rgba(109, 40, 217,0.1)] border border-[rgba(109, 40, 217,0.2)]">
                         Featured
                       </span>
                     )}
@@ -200,7 +200,7 @@ export default function AdminOffersPage() {
                       </span>
                     )}
                     {offer.badge_text && (
-                      <span className="px-2 py-0.5 rounded-full bg-[rgba(124,92,255,0.08)] text-[#7C5CFF]">
+                      <span className="px-2 py-0.5 rounded-full bg-[rgba(109, 40, 217,0.08)] text-[#6d28d9]">
                         {offer.badge_text}
                       </span>
                     )}
@@ -209,14 +209,14 @@ export default function AdminOffersPage() {
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => toggleStatus(offer.id, offer.is_active)}
-                    className="p-2 rounded-lg border border-[rgba(124,92,255,0.15)] text-[#6F7192] hover:text-[#7C5CFF] hover:border-[rgba(124,92,255,0.3)] transition-all min-h-[36px] min-w-[36px] flex items-center justify-center"
+                    className="p-2 rounded-lg border border-[rgba(109, 40, 217,0.15)] text-[#6F7192] hover:text-[#6d28d9] hover:border-[rgba(109, 40, 217,0.3)] transition-all min-h-[36px] min-w-[36px] flex items-center justify-center"
                     title={offer.is_active ? 'Deactivate' : 'Activate'}
                   >
                     {offer.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                   <button
                     onClick={() => router.push(`/admin/offers/${offer.id}`)}
-                    className="p-2 rounded-lg border border-[rgba(124,92,255,0.15)] text-[#6F7192] hover:text-[#7C5CFF] hover:border-[rgba(124,92,255,0.3)] transition-all min-h-[36px] min-w-[36px] flex items-center justify-center"
+                    className="p-2 rounded-lg border border-[rgba(109, 40, 217,0.15)] text-[#6F7192] hover:text-[#6d28d9] hover:border-[rgba(109, 40, 217,0.3)] transition-all min-h-[36px] min-w-[36px] flex items-center justify-center"
                     title="Edit"
                   >
                     <Pencil className="w-4 h-4" />

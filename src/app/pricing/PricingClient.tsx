@@ -20,7 +20,7 @@ export default function PricingClient({
   if (loading) {
     return (
       <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
-        <main className="pt-32">
+        <main className="pt-8 md:pt-10">
           <section className="px-6 md:px-12">
             <div className="mx-auto max-w-[1200px]">
               <div className="h-6 w-24 bg-[#FFFFFF] rounded animate-pulse mb-4" />
@@ -40,7 +40,7 @@ export default function PricingClient({
 
   return (
     <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
-      <main className="pt-32">
+      <main className="pt-8 md:pt-10">
         <section className="px-6 md:px-12">
           <div className="mx-auto max-w-[1200px]">
             <motion.p

@@ -53,18 +53,18 @@ function FAQItem({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index:
       initial={{ opacity: 0, y: 20 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ delay: index * 0.05 }}
-      className="border-b border-[rgba(249, 115, 22,0.5)] last:border-b-0"
+      className="border-b border-[rgba(109, 40, 217,0.5)] last:border-b-0"
     >
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between py-5 px-2 text-left group hover:bg-[rgba(249, 115, 22,0.2)] rounded-lg transition-colors"
+        className="w-full flex items-center justify-between py-5 px-2 text-left group hover:bg-[rgba(109, 40, 217,0.2)] rounded-lg transition-colors"
       >
-        <span className="text-base font-medium text-[#0F1B3D] group-hover:text-[#f97316] transition-colors pr-4">
+        <span className="text-base font-medium text-[#0F1B3D] group-hover:text-[#6d28d9] transition-colors pr-4">
           {faq.q}
         </span>
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[rgba(249, 115, 22,0.4)] flex items-center justify-center group-hover:bg-[rgba(249, 115, 22,0.1)] transition-colors">
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[rgba(109, 40, 217,0.4)] flex items-center justify-center group-hover:bg-[rgba(109, 40, 217,0.1)] transition-colors">
           {isOpen ? (
-            <ChevronUp className="w-5 h-5 text-[#f97316]" />
+            <ChevronUp className="w-5 h-5 text-[#6d28d9]" />
           ) : (
             <ChevronDown className="w-5 h-5 text-[#6F7192]" />
           )}
@@ -93,7 +93,7 @@ export default function FAQSection() {
   return (
     <section ref={ref} className="relative py-24 px-6 overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(249, 115, 22,0.02)] to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(109, 40, 217,0.02)] to-transparent pointer-events-none" />
 
       <div className="max-w-[800px] mx-auto relative z-10">
         {/* Header */}
@@ -102,7 +102,7 @@ export default function FAQSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-12"
         >
-          <p className="text-sm font-medium text-[#f97316] uppercase tracking-normal mb-4">FAQ</p>
+          <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">FAQ</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
             Questions? We&apos;ve Got{' '}
             <span className="text-[#6F7192]">Clear Answers.</span>
@@ -114,7 +114,7 @@ export default function FAQSection() {
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ delay: 0.3 }}
-          className="bg-[#faf9f7] border border-[rgba(249, 115, 22,0.5)] rounded-2xl px-6"
+          className="bg-[#faf9f7] border border-[rgba(109, 40, 217,0.5)] rounded-2xl px-6"
         >
           {faqs.map((faq, i) => (
             <FAQItem

@@ -36,12 +36,12 @@ function PropertyBadge({
   value: string
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-      <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-gray-500">
-        <Icon className="h-3.5 w-3.5 text-[#7C5CFF]" />
+    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase text-gray-500">
+        <Icon className="h-3.5 w-3.5 text-[#6d28d9]" />
         {label}
       </div>
-      <div className="text-sm font-semibold text-[#0F1B3D]">{value}</div>
+      <div className="text-sm font-extrabold text-[#111827]">{value}</div>
     </div>
   )
 }
@@ -110,37 +110,37 @@ export default function MaterialSelectorTool() {
   const progressPercent = (progressIndex / MATERIAL_QUIZ_QUESTIONS.length) * 100
 
   return (
-    <section ref={ref} className="px-4 md:px-8 lg:px-16 py-20">
-      <div className="max-w-[800px] mx-auto">
+    <section ref={ref} className="px-4 py-16 md:px-8 lg:px-16">
+      <div className="mx-auto max-w-[980px]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="text-center mb-10"
+          className="mb-9 text-center"
         >
-          <span className="inline-block text-[#7C5CFF] text-xs font-semibold tracking-wider uppercase mb-2">
+          <span className="mb-2 inline-block text-xs font-bold uppercase text-[#6d28d9]">
             Material Selector
           </span>
-          <h2 className="text-2xl md:text-3xl font-[var(--font-syne)] font-extrabold text-[#0F1B3D] mb-2">
-            Not Sure Which Material to Choose?
+          <h2 className="mx-auto max-w-2xl text-3xl font-extrabold text-[#111827] md:text-4xl">
+            Let the part decide the material.
           </h2>
-          <p className="text-[#6F7192] text-sm">
-            Answer 4 quick questions and we&apos;ll recommend the right material for your print conditions.
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#6F7192]">
+            Answer 4 quick questions and get a recommendation based on use case, finish, heat, flexibility, and cost.
           </p>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:p-6"
+          className="overflow-hidden rounded-[2rem] border border-gray-200 bg-white p-5 shadow-[0_24px_70px_rgba(17,24,39,0.10)] md:p-7"
         >
           <div className="mb-6">
-            <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <div className="mb-2 flex items-center justify-between text-xs font-bold uppercase text-gray-500">
               <span>Q{progressIndex}/{MATERIAL_QUIZ_QUESTIONS.length}</span>
               <span>{Math.round(progressPercent)}%</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+            <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
               <div
-                className="h-full rounded-full bg-[#7C5CFF] transition-all duration-300"
+                className="h-full rounded-full bg-gradient-to-r from-[#111827] to-[#6d28d9] transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -155,11 +155,11 @@ export default function MaterialSelectorTool() {
                 exit={{ opacity: 0, x: -28 }}
                 transition={{ duration: 0.22 }}
               >
-                <p className="mb-4 font-medium text-[#0F1B3D]">
-                  <span className="mr-2 text-[#7C5CFF]">Q{activeQuestion + 1}.</span>
+                <p className="mb-5 text-lg font-extrabold leading-7 text-[#111827]">
+                  <span className="mr-2 text-[#6d28d9]">Q{activeQuestion + 1}.</span>
                   {currentQuestion.label}
                 </p>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {currentQuestion.options.map((option) => {
                     const selected = answers[currentQuestion.key] === option
 
@@ -168,14 +168,14 @@ export default function MaterialSelectorTool() {
                         key={option}
                         type="button"
                         onClick={() => handleSelect(option)}
-                        className={`min-h-12 rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all ${
+                        className={`min-h-14 rounded-2xl border px-4 py-3 text-left text-sm font-bold transition-all ${
                           selected
-                            ? 'border-[#7C5CFF] bg-[#7C5CFF]/10 text-[#5B3FD6] shadow-sm'
-                            : 'border-gray-200 bg-gray-50 text-[#4B5563] hover:border-[#7C5CFF]/40 hover:bg-white hover:text-[#0F1B3D]'
+                            ? 'border-[#6d28d9] bg-[#f5f3ff] text-[#5B3FD6] shadow-sm'
+                            : 'border-gray-200 bg-[#FAFBFD] text-[#4B5563] hover:border-[#6d28d9]/40 hover:bg-white hover:text-[#111827]'
                         }`}
                       >
                         <span className="flex items-start gap-2">
-                          {selected && <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#7C5CFF]" />}
+                          {selected && <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#6d28d9]" />}
                           <span>{option}</span>
                         </span>
                       </button>
@@ -196,15 +196,15 @@ export default function MaterialSelectorTool() {
                 transition={{ duration: 0.24 }}
                 className="space-y-5"
               >
-                <div className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/5 p-5">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#7C5CFF]">
+                <div className="rounded-[1.75rem] border border-[#6d28d9]/20 bg-[#F7F8FB] p-5 md:p-6">
+                  <p className="mb-2 text-xs font-bold uppercase text-[#6d28d9]">
                     Primary Recommendation
                   </p>
-                  <h3 className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D]">
+                  <h3 className="text-3xl font-extrabold text-[#111827]">
                     {recommendation.primary.material.displayName}
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-[#4B5563]">
-                    <span className="font-semibold text-[#0F1B3D]">Recommended because:</span>{' '}
+                    <span className="font-bold text-[#111827]">Recommended because:</span>{' '}
                     {recommendation.primary.reason}
                   </p>
                   <p className="mt-2 text-sm leading-6 text-[#6F7192]">
@@ -225,7 +225,7 @@ export default function MaterialSelectorTool() {
                   <div className="mt-5">
                     <Link
                       href={`/instant-quote?material=${encodeURIComponent(recommendation.primary.material.materialId)}`}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#7C5CFF] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#6D4DE8] sm:w-auto"
+                      className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#111827] px-5 text-sm font-bold text-white transition hover:bg-[#2f3341] sm:w-auto"
                     >
                       Use This Material
                       <ArrowRight className="h-4 w-4" />
@@ -234,7 +234,7 @@ export default function MaterialSelectorTool() {
                 </div>
 
                 {recommendation.secondary && (
-                  <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                  <div className="rounded-2xl border border-gray-200 bg-[#FAFBFD] p-4">
                     <p className="text-sm text-[#4B5563]">
                       <span className="font-semibold text-[#0F1B3D]">
                         Also consider: {recommendation.secondary.material.displayName}
@@ -245,9 +245,9 @@ export default function MaterialSelectorTool() {
                 )}
 
                 {(recommendation.warnings.length > 0 || recommendation.primary.notes.length > 0) && (
-                  <div className="space-y-2 rounded-2xl border border-orange-200 bg-orange-50 p-4">
+                  <div className="space-y-2 rounded-2xl border border-[#ded7ff] bg-[#f3f0ff] p-4">
                     {[...recommendation.primary.notes, ...recommendation.warnings].map((note) => (
-                      <div key={note} className="flex gap-2 text-sm leading-6 text-orange-700">
+                      <div key={note} className="flex gap-2 text-sm leading-6 text-[#4c1d95]">
                         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                         <span>{note}</span>
                       </div>
@@ -258,7 +258,7 @@ export default function MaterialSelectorTool() {
                 <button
                   type="button"
                   onClick={handleRetake}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-[#4B5563] transition hover:bg-gray-50 hover:text-[#0F1B3D] sm:w-auto"
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-5 text-sm font-bold text-[#4B5563] transition hover:bg-gray-50 hover:text-[#111827] sm:w-auto"
                 >
                   <RotateCcw className="h-4 w-4" />
                   Retake Quiz

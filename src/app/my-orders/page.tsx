@@ -166,11 +166,12 @@ export default async function MyOrdersPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-28 text-[#0F1B3D] md:px-8">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       <Navbar transparent />
+      <main className="px-4 pb-16 pt-8 md:px-8 md:pt-10">
       <div className="mx-auto max-w-6xl space-y-6">
-        <div className="rounded-[32px] border border-[#7C5CFF]/10 bg-[rgba(255,255,255,0.96)] p-6 backdrop-blur-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#7C5CFF]">
+        <div className="rounded-[32px] border border-[#6d28d9]/10 bg-[rgba(255,255,255,0.96)] p-6 backdrop-blur-2xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/20 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#6d28d9]">
             Order Requests
           </div>
           <h1 className="mt-5 font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D]">
@@ -181,8 +182,16 @@ export default async function MyOrdersPage() {
           </p>
         </div>
 
+        <Link
+          href="/3d-shop/orders"
+          className="flex items-center justify-between gap-4 rounded-[24px] border border-[#6d28d9]/10 bg-white p-4 text-sm font-semibold text-[#0F1B3D] shadow-sm transition hover:border-[#6d28d9]/30"
+        >
+          <span>🛍️ Have 3D Shop orders?</span>
+          <span className="text-[#6d28d9]">View Your 3D Shop Orders →</span>
+        </Link>
+
         {groupedOrders.length === 0 ? (
-          <div className="rounded-[28px] border border-[#7C5CFF]/10 bg-white/[0.03] p-8 text-center backdrop-blur-xl">
+          <div className="rounded-[28px] border border-[#6d28d9]/10 bg-white/[0.03] p-8 text-center backdrop-blur-xl">
             <div className="text-xl font-medium text-[#0F1B3D]">
               {ordersTableUnavailable ? 'Orders unavailable' : 'No print requests yet.'}
             </div>
@@ -193,7 +202,7 @@ export default async function MyOrdersPage() {
             </p>
             <Link
               href="/instant-quote"
-              className="mt-6 inline-flex rounded-2xl bg-[#7C5CFF] px-5 py-3 text-sm font-medium text-white"
+              className="mt-6 inline-flex rounded-2xl bg-[#6d28d9] px-5 py-3 text-sm font-medium text-white"
             >
               Create a print request
             </Link>
@@ -204,11 +213,11 @@ export default async function MyOrdersPage() {
               <Link
                 key={order.groupId}
                 href={`/my-orders/${order.items[0].id}`}
-                className="block rounded-[28px] border border-[#7C5CFF]/10 bg-white/[0.03] p-6 backdrop-blur-xl transition-colors hover:border-[#7C5CFF]/10"
+                className="block rounded-[28px] border border-[#6d28d9]/10 bg-white/[0.03] p-6 backdrop-blur-xl transition-colors hover:border-[#6d28d9]/10"
               >
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex flex-1 items-start gap-5">
-                    <div className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#7C5CFF]">
+                    <div className="rounded-2xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-3 text-[#6d28d9]">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                       </svg>
@@ -237,7 +246,7 @@ export default async function MyOrdersPage() {
                           {order.items.map((item) => (
                             <span
                               key={item.id}
-                              className="rounded-lg border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-1.5 text-xs text-[#6F7192]"
+                              className="rounded-lg border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-1.5 text-xs text-[#6F7192]"
                             >
                               {item.material} · {item.color}
                             </span>
@@ -251,7 +260,7 @@ export default async function MyOrdersPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-8 border-t border-[#7C5CFF]/10 pt-4 lg:border-t-0 lg:pt-0">
+                  <div className="flex items-center gap-8 border-t border-[#6d28d9]/10 pt-4 lg:border-t-0 lg:pt-0">
                     <div className="text-center">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Total</div>
                       <div className="mt-1 font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">
@@ -271,7 +280,7 @@ export default async function MyOrdersPage() {
                     </div>
                     <div className="text-center">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Items</div>
-                      <div className="mt-1 font-[var(--font-syne)] text-xl font-bold text-[#7C5CFF]">
+                      <div className="mt-1 font-[var(--font-syne)] text-xl font-bold text-[#6d28d9]">
                         {order.itemCount}
                       </div>
                     </div>
@@ -298,6 +307,7 @@ export default async function MyOrdersPage() {
           </div>
         )}
       </div>
+      </main>
     </div>
   )
 }

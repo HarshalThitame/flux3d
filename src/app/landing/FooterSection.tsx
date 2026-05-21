@@ -30,7 +30,7 @@ export default function FooterSection() {
   return (
     <footer className="footer">
       <div className="footer-watermark">FLUX3D</div>
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[#f97316]/30" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[#6d28d9]/30" />
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}

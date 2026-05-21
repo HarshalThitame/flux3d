@@ -328,7 +328,7 @@ export default function BusinessSettingsPage() {
               <ArrowLeft className="h-3.5 w-3.5" />
               Back to Settings
             </button>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#7C5CFF]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/20 bg-[#6d28d9]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#6d28d9]">
               <Building2 className="h-3 w-3" />
               Company
             </div>
@@ -380,7 +380,7 @@ export default function BusinessSettingsPage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
                       activeTab === tab.id
-                        ? 'bg-[#7C5CFF]/15 text-[#0F1B3D]'
+                        ? 'bg-[#6d28d9]/15 text-[#0F1B3D]'
                         : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#0F1B3D]'
                     }`}
                   >
@@ -471,7 +471,7 @@ export default function BusinessSettingsPage() {
               type="button"
               onClick={handleSave}
               disabled={saving || !dirty}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#7C5CFF] px-4 py-2 text-xs font-semibold text-[#0F1B3D] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#6d28d9] px-4 py-2 text-xs font-semibold text-[#0F1B3D] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving ? (
                 <>
@@ -667,7 +667,7 @@ function BrandingTab({ form, updateField, f, fb, triggerFileInput, uploading }: 
               {f(key) ? (
                 <div className="space-y-2">
                   <div className="relative flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50/50 p-3">
-                    <img src={f(key)} alt={label} className="max-h-20 max-w-full object-contain" />
+                    <img src={f(key)} alt={`${label} preview`} width={320} height={96} loading="lazy" decoding="async" className="max-h-20 max-w-full object-contain" />
                   </div>
                   <div className="flex gap-2">
                     <button type="button" onClick={() => triggerFileInput(key)} disabled={uploading === key}
@@ -700,21 +700,21 @@ function BrandingTab({ form, updateField, f, fb, triggerFileInput, uploading }: 
           <div>
             <div className="mb-1.5 text-xs font-medium text-[#aeb8d8]">Primary Color</div>
             <div className="flex gap-3">
-              <input type="color" value={f('primaryColor') || '#7C5CFF'} onChange={(e) => updateField('primaryColor', e.target.value)}
+              <input type="color" value={f('primaryColor') || '#6d28d9'} onChange={(e) => updateField('primaryColor', e.target.value)}
                 className="h-10 w-10 cursor-pointer rounded-lg border border-gray-200 bg-transparent" />
               <input type="text" value={f('primaryColor')} onChange={(e) => updateField('primaryColor', e.target.value)}
-                className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition focus:border-[#7C5CFF]/30"
-                placeholder="#7C5CFF" />
+                className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition focus:border-[#6d28d9]/30"
+                placeholder="#6d28d9" />
             </div>
           </div>
           <div>
             <div className="mb-1.5 text-xs font-medium text-[#aeb8d8]">Secondary Color</div>
             <div className="flex gap-3">
-              <input type="color" value={f('secondaryColor') || '#A78BFA'} onChange={(e) => updateField('secondaryColor', e.target.value)}
+              <input type="color" value={f('secondaryColor') || '#a855f7'} onChange={(e) => updateField('secondaryColor', e.target.value)}
                 className="h-10 w-10 cursor-pointer rounded-lg border border-gray-200 bg-transparent" />
               <input type="text" value={f('secondaryColor')} onChange={(e) => updateField('secondaryColor', e.target.value)}
-                className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition focus:border-[#7C5CFF]/30"
-                placeholder="#A78BFA" />
+                className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition focus:border-[#6d28d9]/30"
+                placeholder="#a855f7" />
             </div>
           </div>
         </div>
@@ -861,7 +861,7 @@ function InvoicingTab({ form, updateField, f, fn, fb, triggerFileInput, uploadin
           <button
             type="button"
             onClick={onAddCartDiscountTier}
-            className="inline-flex items-center gap-2 rounded-xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-4 py-2.5 text-sm font-medium text-[#7C5CFF] transition hover:bg-[#7C5CFF]/15"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 px-4 py-2.5 text-sm font-medium text-[#6d28d9] transition hover:bg-[#6d28d9]/15"
           >
             <Plus className="h-4 w-4" />
             Add Tier
@@ -884,7 +884,7 @@ function InvoicingTab({ form, updateField, f, fn, fb, triggerFileInput, uploadin
             {f('upiQrCodeUrl') ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50/50 p-3">
-                  <img src={f('upiQrCodeUrl')} alt="UPI QR Code" className="max-h-28 max-w-full object-contain" />
+                  <img src={f('upiQrCodeUrl')} alt="UPI QR Code" width={160} height={160} loading="lazy" decoding="async" className="max-h-28 max-w-full object-contain" />
                 </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => triggerFileInput('upiQrCodeUrl')} disabled={uploading === 'upiQrCodeUrl'}
@@ -987,7 +987,7 @@ function SEOTab({ form, updateField, f, fb, triggerFileInput, uploading }: {
             {f('ogImageUrl') ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50/50 p-2">
-                  <img src={f('ogImageUrl')} alt="OG" className="max-h-24 max-w-full rounded object-contain" />
+                  <img src={f('ogImageUrl')} alt="Open Graph image preview" width={1200} height={630} loading="lazy" decoding="async" className="max-h-24 max-w-full rounded object-contain" />
                 </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => triggerFileInput('ogImageUrl')} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-[10px] text-[#6F7192] hover:bg-gray-200">Replace</button>
@@ -1007,7 +1007,7 @@ function SEOTab({ form, updateField, f, fb, triggerFileInput, uploading }: {
             {f('twitterImageUrl') ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50/50 p-2">
-                  <img src={f('twitterImageUrl')} alt="Twitter" className="max-h-24 max-w-full rounded object-contain" />
+                  <img src={f('twitterImageUrl')} alt="Twitter image preview" width={1200} height={600} loading="lazy" decoding="async" className="max-h-24 max-w-full rounded object-contain" />
                 </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => triggerFileInput('twitterImageUrl')} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-[10px] text-[#6F7192] hover:bg-gray-200">Replace</button>

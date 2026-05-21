@@ -1,146 +1,98 @@
 'use client'
 
 import { motion, useInView } from 'framer-motion'
+import Link from 'next/link'
 import { useRef } from 'react'
-import { Upload, MessageSquare, Printer, Package } from 'lucide-react'
+import { ArrowRight, MessageSquare, PackageCheck, Printer, UploadCloud } from 'lucide-react'
 
 const steps = [
   {
-    icon: Upload,
-    step: '1',
-    title: 'Upload or Describe',
-    description: 'Drop your 3D file or simply share a concept, sketch, or reference image — we handle the rest.'
+    icon: UploadCloud,
+    step: '01',
+    title: 'Upload or describe',
+    description: 'Send an STL, 3MF, STEP, sketch, reference image, or a clear description of what you need.',
   },
   {
     icon: MessageSquare,
-    step: '2',
-    title: 'Quick Consultation',
-    description: 'Our team reviews your requirements, suggests the ideal material, and shares a transparent quote.'
+    step: '02',
+    title: 'Material and quote review',
+    description: 'We review requirements, suggest material and finish, then share a transparent quote and timeline.',
   },
   {
     icon: Printer,
-    step: '3',
-    title: 'Precision Printing',
-    description: 'Your part is printed on professional equipment with careful attention to detail and quality checks.'
+    step: '03',
+    title: 'Print and finish',
+    description: 'Your part is oriented, printed, inspected, and finished based on the selected service level.',
   },
   {
-    icon: Package,
-    step: '4',
-    title: 'Delivery or Pickup',
-    description: 'Collect locally from Pune or receive fast, secure Pan-India shipping with real-time updates.'
-  }
+    icon: PackageCheck,
+    step: '04',
+    title: 'Packed and delivered',
+    description: 'Collect locally or receive secure Pan-India delivery with the finished part ready to use or present.',
+  },
 ]
 
-function StepCard({ step, index, isLast }: { step: typeof steps[0]; index: number; isLast: boolean }) {
+export default function HowToOrder() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
 
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 40 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.6, delay: index * 0.15 }}
-      className="relative flex flex-col items-center text-center"
-    >
-      {/* Step number circle */}
-      <motion.div
-        whileHover={{ scale: 1.1 }}
-        className="relative w-20 h-20 rounded-full bg-[#FFFFFF] border-2 border-[rgba(124, 92, 255,0.3)] flex items-center justify-center mb-6 group hover:border-[#7C5CFF] hover:shadow-[0_0_30px_rgba(124, 92, 255,0.2)] transition-all"
-      >
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#7C5CFF] to-[#A78BFA] opacity-0 group-hover:opacity-10 transition-opacity" />
-        <step.icon className="w-8 h-8 text-[#7C5CFF]" />
-
-        {/* Step number badge */}
-        <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#7C5CFF] text-white text-xs font-bold flex items-center justify-center shadow-lg">
-          {step.step}
-        </div>
-      </motion.div>
-
-      {/* Content */}
-      <h3 className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D] mb-3">
-        {step.title}
-      </h3>
-
-      <p className="text-sm text-[#6F7192] leading-[1.6] max-w-[250px]">
-        {step.description}
-      </p>
-
-      {/* Connector line (except last) */}
-      {!isLast && (
-        <div className="hidden lg:block absolute top-10 left-[60%] w-[80%] h-0.5">
-          <motion.div
-            initial={{ scaleX: 0, originX: 0 }}
-            animate={isInView ? { scaleX: 1 } : {}}
-            transition={{ duration: 0.8, delay: index * 0.15 + 0.3 }}
-            className="w-full h-full bg-gradient-to-r from-[#7C5CFF] to-[rgba(124, 92, 255,0.1)]"
-          />
-        </div>
-      )}
-    </motion.div>
-  )
-}
-
-export default function HowToOrder() {
-  return (
-    <section className="py-24 px-6 relative overflow-hidden">
-      {/* Background accents */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(124, 92, 255,0.03)] to-transparent pointer-events-none" />
-
-      {/* Floating decorative circles */}
-      <motion.div
-        className="absolute top-20 left-10 w-32 h-32 rounded-full bg-[rgba(124, 92, 255,0.05)] blur-xl"
-        animate={{ y: [0, 20, 0] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute bottom-20 right-10 w-40 h-40 rounded-full bg-[rgba(80,100,255,0.05)] blur-xl"
-        animate={{ y: [0, -20, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-      />
-
-      <div className="max-w-[1200px] mx-auto relative z-10">
-        {/* Section header */}
+    <section ref={ref} className="px-4 py-16 md:px-8 lg:px-16">
+      <div className="mx-auto max-w-[1200px]">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
+          initial={{ opacity: 0, y: 24 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          className="mb-9 flex flex-col gap-3 md:flex-row md:items-end md:justify-between"
         >
-          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">Simple Process</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
-            How It{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA]">
-              Works
-            </span>
-          </h2>
-          <p className="text-[#6F7192] mt-4 max-w-[500px] mx-auto">
-            Four straightforward steps from your idea to a finished, production-ready part in your hands.
+          <div>
+            <span className="text-xs font-bold uppercase text-[#6d28d9]">Simple process</span>
+            <h2 className="mt-2 max-w-2xl text-3xl font-extrabold text-[#111827] md:text-4xl">
+              A clear path from file to finished part.
+            </h2>
+          </div>
+          <p className="max-w-md text-sm leading-6 text-[#6F7192]">
+            Four controlled steps keep the job transparent, predictable, and easy to approve.
           </p>
         </motion.div>
 
-        {/* Steps */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
-          {steps.map((step, i) => (
-            <StepCard key={i} step={step} index={i} isLast={i === steps.length - 1} />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {steps.map((step, index) => (
+            <motion.article
+              key={step.title}
+              initial={{ opacity: 0, y: 24 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.45, delay: index * 0.07 }}
+              className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#111827] text-white">
+                  <step.icon className="h-5 w-5" />
+                </div>
+                <span className="text-sm font-extrabold text-[#6d28d9]">{step.step}</span>
+              </div>
+              <h3 className="mt-5 text-lg font-extrabold text-[#111827]">{step.title}</h3>
+              <p className="mt-3 text-sm leading-6 text-[#6F7192]">{step.description}</p>
+            </motion.article>
           ))}
         </div>
 
-        {/* Bottom CTA hint */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.6 }}
-          className="text-center mt-16"
+          initial={{ opacity: 0, y: 18 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.35 }}
+          className="mt-6 rounded-lg border border-gray-200 bg-white p-5 shadow-sm md:flex md:items-center md:justify-between"
         >
-          <a
+          <div>
+            <div className="text-sm font-extrabold text-[#111827]">Need help before uploading?</div>
+            <p className="mt-1 text-sm leading-6 text-[#6F7192]">Send references, measurements, or photos. We can guide the next step.</p>
+          </div>
+          <Link
             href="/instant-quote"
-            className="inline-flex items-center gap-2 text-[#7C5CFF] font-medium hover:underline"
+            className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#111827] px-5 text-sm font-bold text-white transition hover:bg-[#2f3341] md:mt-0"
           >
-            Start your project now
-            <span className="transition-transform hover:translate-x-1">→</span>
-          </a>
+            Start Project
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </motion.div>
       </div>
     </section>

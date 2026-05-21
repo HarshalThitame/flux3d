@@ -13,23 +13,26 @@ export default function MaterialsCTA() {
   const isInView = useInView(ref, { once: true, margin: '-50px' })
 
   return (
-    <section ref={ref} className="px-4 md:px-8 lg:px-16 py-20">
+    <section ref={ref} className="px-4 pb-20 pt-16 md:px-8 lg:px-16">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}
-        className="max-w-[800px] mx-auto rounded-3xl border border-[#7C5CFF]/20 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(124, 92, 255,0.08)_0%,transparent_70%)] bg-[rgba(255,255,255,0.82)] p-8 md:p-12 text-center"
+        className="mx-auto max-w-[940px] overflow-hidden rounded-[2rem] border border-gray-200 bg-white p-7 text-center shadow-[0_28px_80px_rgba(17,24,39,0.14)] md:p-12"
       >
-        <h2 className="text-2xl md:text-3xl font-[var(--font-syne)] font-extrabold text-[#0F1B3D] mb-3">
-          Ready to Choose<br />Your Material?
+        <span className="mb-3 inline-flex items-center rounded-full bg-[#ede9fe] px-4 py-2 text-xs font-bold uppercase text-[#6d28d9]">
+          From material to quote
+        </span>
+        <h2 className="mx-auto max-w-2xl text-3xl font-extrabold text-[#111827] md:text-4xl">
+          Upload once. Get a material recommendation and a production-ready quote.
         </h2>
-        <p className="text-[#6F7192] text-sm mb-8 max-w-[500px] mx-auto">
+        <p className="mx-auto mb-8 mt-4 max-w-[560px] text-sm leading-7 text-[#6F7192]">
           Upload your file and we&apos;ll recommend the perfect material and give you an instant quote. No account, no commitment — just a fast answer.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
+        <div className="mb-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
             href="/instant-quote"
-            className="group inline-flex items-center justify-center gap-2 rounded-xl bg-[#7C5CFF] px-8 py-3.5 text-sm font-semibold text-white transition-all hover:shadow-[0_0_30px_rgba(124, 92, 255,0.3)]"
+            className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#111827] px-8 text-sm font-bold text-white transition hover:bg-[#2f3341]"
           >
             Upload Your File & Get a Quote
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -38,24 +41,24 @@ export default function MaterialsCTA() {
             href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}?text=Hi%20${encodeURIComponent(settings.businessName || 'Flux3D')}!%20I%20need%20help%20choosing%20a%20material%20for%20my%20project.`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 px-8 py-3.5 text-sm font-medium text-[#25D366] transition-all hover:bg-[#25D366]/20"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-[#25D366]/25 bg-[#EAFBF2] px-8 text-sm font-bold text-[#138a42] transition hover:border-[#25D366]/40"
           >
             <MessageCircle className="w-4 h-4" />
             Ask on WhatsApp — 30 min reply
           </a>
         </div>
 
-        <div className="flex items-center justify-center gap-2 mb-6">
+        <div className="mb-6 flex items-center justify-center gap-2">
           <Mail className="w-4 h-4 text-[#6F7192]" />
           <a href={`mailto:${settings.primaryEmail || 'hello@flux3d.in'}`} className="text-sm text-[#6F7192] hover:text-[#0F1B3D] transition-colors">
             {settings.primaryEmail || 'hello@flux3d.in'}
           </a>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-[#6F7192]">
+        <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#6F7192]">
           {['Free Quote', 'Expert Recommendation', 'Pan-India Delivery', 'No Minimum Order'].map(item => (
-            <span key={item} className="inline-flex items-center gap-1">
-              <Check className="w-3 h-3 text-[#7C5CFF]" />
+            <span key={item} className="inline-flex items-center gap-1 rounded-full bg-[#F7F8FB] px-3 py-1.5">
+              <Check className="h-3 w-3 text-[#6d28d9]" />
               {item}
             </span>
           ))}

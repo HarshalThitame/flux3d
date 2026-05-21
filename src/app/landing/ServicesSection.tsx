@@ -13,7 +13,7 @@ const services = [
     pills: ['Prototypes', 'Machine Parts', 'Jigs & Fixtures', 'Custom Enclosures'],
     price: 'From ₹499 per part',
     cta: 'Get Industrial Quote →',
-    color: 'from-[#f97316] to-[#f59e0b]',
+    color: 'from-[#6d28d9] to-[#a855f7]',
     span: true,
   },
   {
@@ -25,7 +25,7 @@ const services = [
     price: 'From ₹799 per model',
     badge: '15% Student Discount',
     cta: 'Get Architecture Quote →',
-    color: 'from-[#f59e0b] to-[#f59e0b]',
+    color: 'from-[#a855f7] to-[#a855f7]',
   },
   {
     icon: GraduationCap,
@@ -36,7 +36,7 @@ const services = [
     price: 'From ₹99 per print',
     badge: '10% off above ₹500',
     cta: 'Order Now →',
-    color: 'from-[#f97316] to-[#f97316]',
+    color: 'from-[#6d28d9] to-[#6d28d9]',
   },
   {
     icon: ShoppingBag,
@@ -46,7 +46,7 @@ const services = [
     pills: ['Controller Stands', 'Gaming Accessories', 'Custom Gifts', 'Home Décor'],
     price: 'From ₹149 per product',
     cta: 'Shop Catalog →',
-    color: 'from-[#f59e0b] to-[#f59e0b]',
+    color: 'from-[#a855f7] to-[#a855f7]',
   },
   {
     icon: Heart,
@@ -56,7 +56,7 @@ const services = [
     pills: ['Dental Models', 'Surgical Planning', 'Anatomical Models', 'Device Enclosures'],
     price: 'From ₹999 per model',
     cta: 'Request Medical Quote →',
-    color: 'from-[#fb7185] to-[#f97316]',
+    color: 'from-[#fb7185] to-[#6d28d9]',
   },
   {
     icon: Clapperboard,
@@ -67,7 +67,7 @@ const services = [
     price: 'From ₹299 per prop',
     badge: 'Tag us and get 15% off',
     cta: 'Build Your Setup →',
-    color: 'from-[#f59e0b] to-[#f97316]',
+    color: 'from-[#a855f7] to-[#6d28d9]',
   },
   {
     icon: Gift,
@@ -92,7 +92,7 @@ function ServiceCard({ service, index }: { service: typeof services[0]; index: n
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ delay: index * 0.08 }}
       whileHover={{ y: -6, transition: { duration: 0.2 } }}
-      className={`group relative bg-[#faf9f7] border border-[rgba(249, 115, 22,0.5)] rounded-2xl overflow-hidden transition-all duration-300 hover:border-[rgba(249, 115, 22,0.3)] hover:shadow-[0_8px_40px_rgba(249,115,22,0.08)] flex flex-col ${
+      className={`group relative bg-[#faf9f7] border border-[rgba(109, 40, 217,0.5)] rounded-2xl overflow-hidden transition-all duration-300 hover:border-[rgba(109, 40, 217,0.3)] hover:shadow-[0_8px_40px_rgba(109, 40, 217,0.08)] flex flex-col ${
         service.span ? 'md:col-span-2' : ''
       }`}
     >
@@ -120,7 +120,7 @@ function ServiceCard({ service, index }: { service: typeof services[0]; index: n
           </div>
 
           <div className="flex-1 flex flex-col">
-            <h3 className="font-[var(--font-syne)] text-lg sm:text-xl font-bold text-[#0F1B3D] mb-2 group-hover:text-[#f97316] transition-colors duration-300">
+            <h3 className="font-[var(--font-syne)] text-lg sm:text-xl font-bold text-[#0F1B3D] mb-2 group-hover:text-[#6d28d9] transition-colors duration-300">
               {service.title}
             </h3>
 
@@ -132,18 +132,18 @@ function ServiceCard({ service, index }: { service: typeof services[0]; index: n
               {service.pills.map((pill, j) => (
                 <span
                   key={j}
-                  className="text-[11px] sm:text-xs bg-[rgba(249, 115, 22,0.08)] text-[#6F7192] px-3 py-1 rounded-full border border-[rgba(249, 115, 22,0.12)]"
+                  className="text-[11px] sm:text-xs bg-[rgba(109, 40, 217,0.08)] text-[#6F7192] px-3 py-1 rounded-full border border-[rgba(109, 40, 217,0.12)]"
                 >
                   {pill}
                 </span>
               ))}
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-[rgba(249, 115, 22,0.08)]">
-              <span className="text-sm text-[#f97316] font-semibold">{service.price}</span>
+            <div className="flex items-center justify-between pt-2 border-t border-[rgba(109, 40, 217,0.08)]">
+              <span className="text-sm text-[#6d28d9] font-semibold">{service.price}</span>
               <a
                 href="/instant-quote"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#6F7192] hover:text-[#f97316] transition-colors group/link min-h-[44px]"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#6F7192] hover:text-[#6d28d9] transition-colors group/link min-h-[44px]"
               >
                 {service.cta}
                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover/link:translate-x-1" />
@@ -164,7 +164,7 @@ export default function ServicesSection() {
 
   return (
     <section id="services" ref={ref} className="relative scroll-mt-20 overflow-hidden px-6 py-24">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_30%,rgba(249, 115, 22,0.04)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_30%,rgba(109, 40, 217,0.04)_0%,transparent_70%)] pointer-events-none" />
 
       <div className="max-w-[1200px] mx-auto relative z-10">
         <motion.div
@@ -172,10 +172,10 @@ export default function ServicesSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#f97316] uppercase tracking-normal mb-4">What We Print</p>
+          <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">What We Print</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
             One Service.{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] to-[#f59e0b]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#a855f7]">
               Every Industry.
             </span>
           </h2>
@@ -194,13 +194,13 @@ export default function ServicesSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.7 }}
-          className="text-center bg-[#faf9f7] border border-[rgba(249, 115, 22,0.5)] rounded-2xl p-8 hover:border-[rgba(249, 115, 22,0.3)] transition-colors duration-300"
+          className="text-center bg-[#faf9f7] border border-[rgba(109, 40, 217,0.5)] rounded-2xl p-8 hover:border-[rgba(109, 40, 217,0.3)] transition-colors duration-300"
         >
           <p className="text-lg text-[#0F1B3D] mb-2">Don&apos;t see your requirement above?</p>
           <p className="text-sm text-[#6F7192] mb-6">We do fully custom projects too.</p>
           <a
             href="/instant-quote"
-            className="inline-flex items-center gap-2 bg-[#f97316] text-white px-6 py-3 rounded-xl text-sm font-medium hover:shadow-[0_0_30px_rgba(249,115,22,0.3)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+            className="inline-flex items-center gap-2 bg-[#6d28d9] text-white px-6 py-3 rounded-xl text-sm font-medium hover:shadow-[0_0_30px_rgba(109, 40, 217,0.3)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
           >
             Tell Us What You Need
             <ArrowRight className="w-4 h-4" />

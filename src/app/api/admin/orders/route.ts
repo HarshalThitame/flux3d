@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
-import { getAdminOrdersData, updateAdminOrderNotes, updateAdminOrderStatus } from '@/lib/admin/queries'
+import {
+  AdminOrderStatusTransitionError,
+  getAdminOrdersData,
+  updateAdminOrderNotes,
+  updateAdminOrderStatus,
+} from '@/lib/admin/queries'
 import { orderStatuses, type OrderStatus } from '@/lib/orders'
 import { requireAdminRequest } from '@/lib/admin/request'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
@@ -41,7 +46,7 @@ export async function PATCH(request: Request) {
       const supabase = createAdminSupabaseClient()
       const { data: oldRows } = await supabase
         .from('orders')
-        .select('id, group_id, status')
+        .select('id, group_id, status, status_timestamps')
         .or(`group_id.eq.${body.groupId},id.eq.${body.groupId}`)
       const order = await updateAdminOrderStatus(body.groupId, body.status)
       await logAdminAction({
@@ -75,6 +80,10 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ error: 'Status or notes are required.' }, { status: 400 })
   } catch (error) {
+    if (error instanceof AdminOrderStatusTransitionError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
     return getAdminApiErrorResponse(error)
   }
 }

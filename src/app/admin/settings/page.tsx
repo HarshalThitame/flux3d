@@ -93,7 +93,7 @@ export default function AdminSettingsPage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
                       activeTab === tab.id
-                        ? 'bg-[#7C5CFF]/15 text-[#0F1B3D]'
+                        ? 'bg-[#6d28d9]/15 text-[#0F1B3D]'
                         : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#0F1B3D]'
                     }`}
                   >
@@ -144,7 +144,7 @@ export default function AdminSettingsPage() {
                   <button
                     type="button"
                     onClick={handleSave}
-                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-5 py-2.5 text-sm font-medium text-[#0F1B3D] transition hover:opacity-90"
+                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-5 py-2.5 text-sm font-medium text-[#0F1B3D] transition hover:opacity-90"
                   >
                     <Save className="h-4 w-4" />
                     Save Changes
@@ -157,7 +157,7 @@ export default function AdminSettingsPage() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                 <SectionCard title="Printer Management">
                   <div className="mb-4">
-                    <button className="rounded-xl bg-[#7C5CFF] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#7C5CFF]/90">
+                    <button className="rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#6d28d9]/90">
                       + Add Printer
                     </button>
                   </div>
@@ -182,7 +182,7 @@ export default function AdminSettingsPage() {
                           <div className="mb-2 flex items-center justify-between">
                             <div className="font-medium text-[#0F1B3D]">{printer.name}</div>
                             <div className="flex gap-2">
-                              <button className="text-[#7C5CFF] hover:text-[#A78BFA] text-sm">Edit</button>
+                              <button className="text-[#6d28d9] hover:text-[#a855f7] text-sm">Edit</button>
                               <button className="text-[#6F7192] hover:text-[#0F1B3D] text-sm">Deactivate</button>
                             </div>
                           </div>
@@ -228,7 +228,7 @@ export default function AdminSettingsPage() {
                   <button
                     type="button"
                     onClick={handleSave}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-5 py-2.5 text-sm font-medium text-[#0F1B3D] transition hover:opacity-90"
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-5 py-2.5 text-sm font-medium text-[#0F1B3D] transition hover:opacity-90"
                   >
                     <Save className="h-4 w-4" />
                     Save Changes
@@ -266,7 +266,7 @@ export default function AdminSettingsPage() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                 <SectionCard title="Team Members">
                   <div className="mb-4">
-                    <button className="rounded-xl bg-[#7C5CFF] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#7C5CFF]/90">
+                    <button className="rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#6d28d9]/90">
                       + Invite Member
                     </button>
                   </div>
@@ -288,7 +288,7 @@ export default function AdminSettingsPage() {
                         <option value="viewer">Viewer</option>
                       </select>
                     </div>
-                    <button className="rounded-xl bg-[#7C5CFF] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#7C5CFF]/90">
+                    <button className="rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#6d28d9]/90">
                       Send Invite
                     </button>
                   </div>
@@ -316,7 +316,7 @@ export default function AdminSettingsPage() {
                           <div className="font-medium text-[#0F1B3D]">{name}</div>
                           <div className="text-sm text-[#6F7192]">Not Connected</div>
                         </div>
-                        <button className="rounded-lg bg-[#7C5CFF] px-3 py-1.5 text-xs font-semibold text-[#0F1B3D]">
+                        <button className="rounded-lg bg-[#6d28d9] px-3 py-1.5 text-xs font-semibold text-[#0F1B3D]">
                           Connect
                         </button>
                       </div>
@@ -332,7 +332,7 @@ export default function AdminSettingsPage() {
                           <div className="font-medium text-[#0F1B3D]">{name}</div>
                           <div className="text-sm text-[#6F7192]">Not Connected</div>
                         </div>
-                        <button className="rounded-lg bg-[#7C5CFF] px-3 py-1.5 text-xs font-semibold text-[#0F1B3D]">
+                        <button className="rounded-lg bg-[#6d28d9] px-3 py-1.5 text-xs font-semibold text-[#0F1B3D]">
                           Connect
                         </button>
                       </div>
@@ -348,7 +348,7 @@ export default function AdminSettingsPage() {
                           <div className="font-medium text-[#0F1B3D]">{name}</div>
                           <div className="text-sm text-[#6F7192]">Not Connected</div>
                         </div>
-                        <button className="rounded-lg bg-[#7C5CFF] px-3 py-1.5 text-xs font-semibold text-[#0F1B3D]">
+                        <button className="rounded-lg bg-[#6d28d9] px-3 py-1.5 text-xs font-semibold text-[#0F1B3D]">
                           Connect
                         </button>
                       </div>
@@ -374,7 +374,7 @@ export default function AdminSettingsPage() {
                     </div>
                   </div>
                   <div className="flex gap-3">
-                    <button className="rounded-xl bg-[#7C5CFF] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#7C5CFF]/90">
+                    <button className="rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#6d28d9]/90">
                       Upgrade to Enterprise
                     </button>
                     <button className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-[#6F7192] transition hover:bg-gray-100">

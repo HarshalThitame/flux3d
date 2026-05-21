@@ -111,12 +111,12 @@ export default function CouponFormPage({ couponId }: { couponId: string }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 rounded-full border-2 border-[#7C5CFF] border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-[#6d28d9] border-t-transparent animate-spin" />
       </div>
     )
   }
 
-  const inputClass = "w-full px-3 py-2.5 rounded-xl border border-[rgba(124,92,255,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF] transition-colors"
+  const inputClass = "w-full px-3 py-2.5 rounded-xl border border-[rgba(109, 40, 217,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9] transition-colors"
   const labelClass = "block text-sm font-medium text-[#0F1B3D] mb-1.5"
   const rowClass = "grid grid-cols-1 sm:grid-cols-2 gap-4"
 
@@ -124,7 +124,7 @@ export default function CouponFormPage({ couponId }: { couponId: string }) {
     <div>
       <button
         onClick={() => router.back()}
-        className="inline-flex items-center gap-2 text-sm text-[#6F7192] hover:text-[#7C5CFF] mb-6 transition-colors"
+        className="inline-flex items-center gap-2 text-sm text-[#6F7192] hover:text-[#6d28d9] mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Back
@@ -135,7 +135,7 @@ export default function CouponFormPage({ couponId }: { couponId: string }) {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center gap-2 bg-[#7C5CFF] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#6B4FE0] disabled:opacity-50 transition-all min-h-[44px]"
+          className="inline-flex items-center gap-2 bg-[#6d28d9] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#4c1d95] disabled:opacity-50 transition-all min-h-[44px]"
         >
           <Save className="w-4 h-4" />
           {saving ? 'Saving...' : 'Save Coupon'}
@@ -192,7 +192,7 @@ export default function CouponFormPage({ couponId }: { couponId: string }) {
           </div>
           <div className="flex items-center pt-6">
             <label className="flex items-center gap-2 text-sm text-[#0F1B3D] cursor-pointer">
-              <input type="checkbox" checked={form.first_order_only} onChange={e => update('first_order_only', e.target.checked)} className="rounded border-[rgba(124,92,255,0.3)] text-[#7C5CFF]" />
+              <input type="checkbox" checked={form.first_order_only} onChange={e => update('first_order_only', e.target.checked)} className="rounded border-[rgba(109, 40, 217,0.3)] text-[#6d28d9]" />
               First Order Only
             </label>
           </div>
@@ -209,7 +209,7 @@ export default function CouponFormPage({ couponId }: { couponId: string }) {
           </div>
         </div>
 
-        <fieldset className="border border-[rgba(124,92,255,0.15)] rounded-2xl p-5">
+        <fieldset className="border border-[rgba(109, 40, 217,0.15)] rounded-2xl p-5">
           <legend className="text-sm font-semibold text-[#0F1B3D] px-2">Applicability</legend>
           <p className="text-xs text-[#6F7192] mb-3">Leave empty to apply to all. Separate with commas.</p>
           <div className="space-y-4">
@@ -231,7 +231,7 @@ export default function CouponFormPage({ couponId }: { couponId: string }) {
         </fieldset>
 
         <label className="flex items-center gap-2 text-sm text-[#0F1B3D] cursor-pointer">
-          <input type="checkbox" checked={form.is_active} onChange={e => update('is_active', e.target.checked)} className="rounded border-[rgba(124,92,255,0.3)] text-[#7C5CFF]" />
+          <input type="checkbox" checked={form.is_active} onChange={e => update('is_active', e.target.checked)} className="rounded border-[rgba(109, 40, 217,0.3)] text-[#6d28d9]" />
           Active
         </label>
       </div>

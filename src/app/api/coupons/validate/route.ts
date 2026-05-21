@@ -111,6 +111,10 @@ export async function GET(request: Request) {
         max_discount: coupon.max_discount,
         min_order_value: coupon.min_order_value,
         discount_amount: discountAmount,
+        applicable_categories: coupon.applicable_categories ?? null,
+        applicable_materials: coupon.applicable_materials ?? null,
+        applicable_products: coupon.applicable_products ?? null,
+        free_shipping: coupon.discount_type === 'free_shipping',
       },
     })
   } catch (error) {

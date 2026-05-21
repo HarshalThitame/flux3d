@@ -6,7 +6,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings()
   return {
     title: `${settings.businessName} — Shipping Policy`,
-    description: settings.businessDescription || 'Learn about FLUX 3D shipping methods, delivery times, and policies across India.',
+    description: 'Learn about Flux3D shipping methods, delivery timelines, and delivery policies across India.',
+    alternates: { canonical: '/shipping-policy' },
   }
 }
 

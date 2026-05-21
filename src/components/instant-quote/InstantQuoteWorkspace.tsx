@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   UploadCloud,
@@ -31,6 +31,7 @@ import { calculateInstantQuote, formatDurationMinutes, getPostProcessingCharge, 
 import type { PricingSettingsInput } from '@/lib/quote/pricing-waterfall'
 import { saveQuoteToSupabase, uploadFileToSupabaseStorage, validateModelFile } from '@/lib/quote/supabase-storage'
 import { hasSupabaseConfig } from '@/lib/supabase/config'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 import type { ParsedModel, QuoteConfig, QuoteMaterial, UploadState } from '@/lib/quote/types'
 import type { Object3D } from 'three'
@@ -49,6 +50,11 @@ type InstantQuoteWorkspaceProps = {
   user: AppUserProfile | null
   materials: QuoteMaterial[]
   initialMaterialId?: string
+  initialModelFile?: {
+    fileName: string
+    fileUrl: string
+    material?: string | null
+  }
   pricingSettings: PricingSettingsInput
   bulkOrderContact: {
     email: string
@@ -60,12 +66,13 @@ export default function InstantQuoteWorkspace({
   user,
   materials,
   initialMaterialId,
+  initialModelFile,
   pricingSettings,
   bulkOrderContact,
 }: InstantQuoteWorkspaceProps) {
   if (materials.length === 0) {
     return (
-      <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-28 text-[#0F1B3D] md:px-8 xl:px-10">
+      <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-8 text-[#0F1B3D] md:px-8 md:pt-10 xl:px-10">
         <div className="mx-auto max-w-[1100px]">
           <EmptyState
             title="No materials available"
@@ -81,6 +88,7 @@ export default function InstantQuoteWorkspace({
       user={user}
       materials={materials}
       initialMaterialId={initialMaterialId}
+      initialModelFile={initialModelFile}
       pricingSettings={pricingSettings}
       bulkOrderContact={bulkOrderContact}
     />
@@ -126,10 +134,33 @@ function getInitialWorkspaceConfig(defaultConfig: QuoteConfig, forceMaterialSele
   }
 }
 
+function getModelStoragePath(value: string) {
+  const bucket = process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? 'quote-models'
+  const trimmed = value.trim()
+
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+    return trimmed
+  }
+
+  try {
+    const parsed = new URL(trimmed)
+    const publicPrefix = `/storage/v1/object/public/${bucket}/`
+    const signedPrefix = `/storage/v1/object/sign/${bucket}/`
+
+    if (parsed.pathname.startsWith(publicPrefix)) return parsed.pathname.slice(publicPrefix.length)
+    if (parsed.pathname.startsWith(signedPrefix)) return parsed.pathname.slice(signedPrefix.length)
+  } catch {
+    return null
+  }
+
+  return null
+}
+
 function CartEnabledWorkspace({
   user,
   materials,
   initialMaterialId,
+  initialModelFile,
   pricingSettings,
   bulkOrderContact,
 }: InstantQuoteWorkspaceProps) {
@@ -162,6 +193,7 @@ function CartEnabledWorkspace({
   const materialRef = useRef<HTMLDivElement>(null)
   const settingsRef = useRef<HTMLDivElement>(null)
   const trackedQuoteRef = useRef<string | null>(null)
+  const prefilledModelRef = useRef(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -280,7 +312,7 @@ function CartEnabledWorkspace({
     window.sessionStorage.removeItem(ORDER_DRAFT_STORAGE_KEY)
   }, [orderDraft])
 
-  const handleFileSelect = async (file: File) => {
+  const handleFileSelect = useCallback(async (file: File) => {
     const validationError = validateModelFile(file)
     if (validationError) {
       setFileError(validationError)
@@ -344,7 +376,43 @@ function CartEnabledWorkspace({
     } finally {
       setViewerLoading(false)
     }
-  }
+  }, [hasUserSelectedMaterial, materials, supabaseEnabled, user])
+
+  useEffect(() => {
+    if (!initialModelFile || prefilledModelRef.current || !user || !supabaseEnabled) {
+      return
+    }
+
+    prefilledModelRef.current = true
+
+    const loadInitialModel = async () => {
+      try {
+        const storagePath = getModelStoragePath(initialModelFile.fileUrl)
+        if (!storagePath) {
+          throw new Error('Could not load the selected model file.')
+        }
+
+        const supabase = getSupabaseBrowserClient()
+        const { data, error } = await supabase
+          .storage
+          .from(process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? 'quote-models')
+          .download(storagePath)
+
+        if (error) throw new Error(error.message)
+
+        const file = new File([data], initialModelFile.fileName, {
+          type: data.type || 'application/octet-stream',
+        })
+
+        await handleFileSelect(file)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Could not load the selected model file.'
+        setToast({ type: 'error', message })
+      }
+    }
+
+    void loadInitialModel()
+  }, [handleFileSelect, initialModelFile, supabaseEnabled, user])
 
   const handleMaterialChange = (materialId: string) => {
     const nextMaterial = getMaterialById(materialId, materials) ?? materials[0]
@@ -508,7 +576,7 @@ function CartEnabledWorkspace({
           aria-hidden
           animate={{ x: [0, 50, 0], y: [0, -20, 0] }}
           transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
-          className="pointer-events-none absolute left-[-8rem] top-28 h-72 w-72 rounded-full bg-[#7C5CFF]/8 blur-3xl"
+          className="pointer-events-none absolute left-[-8rem] top-28 h-72 w-72 rounded-full bg-[#6d28d9]/8 blur-3xl"
         />
         <motion.div
           aria-hidden
@@ -518,15 +586,15 @@ function CartEnabledWorkspace({
         />
 
         {/* Header */}
-        <div className="relative px-4 pb-6 pt-32 md:px-8 xl:px-10 md:pt-28">
+        <div className="relative px-4 pb-6 pt-8 md:px-8 md:pt-10 xl:px-10">
           <div className="mx-auto max-w-[1500px]">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#7C5CFF]">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/25 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#6d28d9]">
                   Instant Pricing Experience
                 </div>
                 <h1 className="mt-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3.2rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#0F1B3D]">
-                  Get Your <span className="text-[#7C5CFF]">Instant Quote</span>
+                  Get Your <span className="text-[#6d28d9]">Instant Quote</span>
                 </h1>
                 <p className="mt-3 max-w-[600px] text-sm leading-7 text-[#6F7192]">
                   Upload, preview, configure, and get pricing in one streamlined workflow.
@@ -534,7 +602,7 @@ function CartEnabledWorkspace({
               </div>
 
                 {/* Step Navigator */}
-                <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] p-1.5 backdrop-blur-xl scrollbar-hide">
+                <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] p-1.5 backdrop-blur-xl scrollbar-hide">
                   {stepConfigs.map((step, i) => {
                     const done = getStepDone(step.id)
                     const ref = stepRefs[step.id as keyof typeof stepRefs]
@@ -573,12 +641,12 @@ function CartEnabledWorkspace({
               <div className="space-y-6">
                 <div className="rounded-2xl border border-cyan-400/15 bg-cyan-400/8 px-4 py-3 text-sm text-[#0F1B3D]">
                   For bulk orders contact{' '}
-                  <a className="font-medium text-[#7C5CFF] hover:underline" href={`mailto:${bulkOrderContact.email}`}>
+                  <a className="font-medium text-[#6d28d9] hover:underline" href={`mailto:${bulkOrderContact.email}`}>
                     {bulkOrderContact.email}
                   </a>{' '}
                   or{' '}
                   <a
-                    className="font-medium text-[#7C5CFF] hover:underline"
+                    className="font-medium text-[#6d28d9] hover:underline"
                     href={`https://wa.me/${whatsappDigits}`}
                     target="_blank"
                     rel="noreferrer"
@@ -595,9 +663,9 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.05 }}
                 >
-                  <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div className="rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
-                      <div className="rounded-xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-2.5 text-[#7C5CFF]">
+                      <div className="rounded-xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-2.5 text-[#6d28d9]">
                         <UploadCloud className="h-5 w-5" />
                       </div>
                       <div>
@@ -607,7 +675,7 @@ function CartEnabledWorkspace({
                     </div>
 
                     <div
-                      className="relative flex min-h-[200px] items-center justify-center rounded-2xl border-2 border-dashed border-[#7C5CFF]/10 bg-white/[0.02] p-6 text-center transition-colors hover:border-[#7C5CFF]/30"
+                      className="relative flex min-h-[200px] items-center justify-center rounded-2xl border-2 border-dashed border-[#6d28d9]/10 bg-white/[0.02] p-6 text-center transition-colors hover:border-[#6d28d9]/30"
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
                         e.preventDefault()
@@ -627,7 +695,7 @@ function CartEnabledWorkspace({
                         <motion.div
                           animate={{ y: [0, -4, 0] }}
                           transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                          className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-[#7C5CFF]/25 bg-[#7C5CFF]/12 text-[#7C5CFF]"
+                          className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-[#6d28d9]/25 bg-[#6d28d9]/12 text-[#6d28d9]"
                         >
                           <UploadCloud className="h-6 w-6" />
                         </motion.div>
@@ -640,7 +708,7 @@ function CartEnabledWorkspace({
 </div>
                         )}
                         {selectedFile && (
-                          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#7C5CFF]/10 bg-white/[0.03] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
+                          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#6d28d9]/10 bg-white/[0.03] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
                             <FileArchive className="h-3 w-3" />
                             {selectedFile.name}
                           </div>
@@ -660,7 +728,7 @@ function CartEnabledWorkspace({
                         </div>
                         <div className="h-1.5 overflow-hidden rounded-full bg-white/8">
                           <div
-                            className="h-full rounded-full bg-[#7C5CFF] transition-all duration-300"
+                            className="h-full rounded-full bg-[#6d28d9] transition-all duration-300"
                             style={{ width: `${uploadState.progress}%` }}
                           />
                         </div>
@@ -694,7 +762,7 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.1 }}
                 >
-                  <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div className="rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
                       <div className="rounded-xl border border-cyan-400/20 bg-cyan-50 p-2.5 text-cyan-700">
                         <Cuboid className="h-5 w-5" />
@@ -705,7 +773,7 @@ function CartEnabledWorkspace({
                       </div>
                     </div>
 
-                    <div className="relative h-[280px] sm:h-[400px] overflow-hidden rounded-2xl border border-[#7C5CFF]/10 bg-[radial-gradient(circle_at_top,rgba(183, 167, 255,0.08),transparent_42%),linear-gradient(180deg,#FFFFFF,#FFFFFF)]">
+                    <div className="relative h-[280px] sm:h-[400px] overflow-hidden rounded-2xl border border-[#6d28d9]/10 bg-[radial-gradient(circle_at_top,rgba(168, 85, 247,0.08),transparent_42%),linear-gradient(180deg,#FFFFFF,#FFFFFF)]">
                       {selectedModel ? (
                         <Suspense fallback={<div className="absolute inset-0 animate-pulse rounded-2xl bg-white/[0.03]" />}>
                           <Canvas className="!absolute !inset-0" camera={{ position: [140, 120, 140], fov: 34 }} dpr={[1, 1.7]}>
@@ -722,7 +790,7 @@ function CartEnabledWorkspace({
                         </Suspense>
                       ) : (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-[#7C5CFF]/10 bg-white text-cyan-700">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-[#6d28d9]/10 bg-white text-cyan-700">
                             <Move3D className="h-6 w-6" />
                           </div>
                           <div className="text-sm font-semibold text-[#0F1B3D]">No model loaded</div>
@@ -734,7 +802,7 @@ function CartEnabledWorkspace({
 
                       {viewerLoading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-[rgba(4,8,16,0.62)] backdrop-blur-sm">
-                          <div className="rounded-xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-xs text-[#0F1B3D]">
+                          <div className="rounded-xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-3 text-xs text-[#0F1B3D]">
                             Building 3D preview...
                           </div>
                         </div>
@@ -743,17 +811,17 @@ function CartEnabledWorkspace({
 
                     {selectedModel && (
                       <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2.5">
+                        <div className="rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2.5">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Dimensions</div>
                           <div className="mt-1 text-xs text-[#0F1B3D]">
                             {selectedModel.dimensionsMm.x.toFixed(0)} × {selectedModel.dimensionsMm.y.toFixed(0)} × {selectedModel.dimensionsMm.z.toFixed(0)} mm
                           </div>
                         </div>
-                        <div className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2.5">
+                        <div className="rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2.5">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Triangles</div>
                           <div className="mt-1 text-xs text-[#0F1B3D]">{selectedModel.triangleCount.toLocaleString()}</div>
                         </div>
-                        <div className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2.5">
+                        <div className="rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2.5">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Controls</div>
                           <div className="mt-1 text-xs text-[#0F1B3D]">Rotate · Zoom · Pan</div>
                         </div>
@@ -769,7 +837,7 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.15 }}
                 >
-                  <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div className="rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
                       <div className="rounded-xl border border-violet-400/20 bg-violet-400/10 p-2.5 text-violet-200">
                         <Palette className="h-5 w-5" />
@@ -793,17 +861,17 @@ function CartEnabledWorkspace({
                               onClick={() => handleMaterialChange(material.id)}
                               className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
                                 isActive
-                                  ? 'border-[#7C5CFF]/35 bg-[var(--brand-faint)] shadow-[0_4px_16px_rgba(124, 92, 255,0.1)]'
-                                  : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10'
+                                  ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)] shadow-[0_4px_16px_rgba(109, 40, 217,0.1)]'
+                                  : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10'
                               }`}
                             >
-                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#7C5CFF]/10 text-base">
+                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-base">
                                 {material.icon}
                               </span>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-2">
                                   <span className={`truncate text-sm font-medium ${isActive ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{material.name}</span>
-                                  {isActive && <CheckCircle2 className="h-4 w-4 shrink-0 text-[#7C5CFF]" />}
+                                  {isActive && <CheckCircle2 className="h-4 w-4 shrink-0 text-[#6d28d9]" />}
                                 </div>
                                 <p className={`mt-0.5 truncate text-[11px] ${isActive ? 'text-[var(--text-secondary)]' : 'text-[#6F7192]'}`}>{material.summary}</p>
                               </div>
@@ -828,12 +896,12 @@ function CartEnabledWorkspace({
                               onClick={() => setConfig((c) => ({ ...c, color: color.name }))}
                               className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-left transition-all ${
                                 isActive
-                                  ? 'border-[#7C5CFF]/40 bg-[var(--brand-faint)]'
-                                  : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10'
+                                  ? 'border-[#6d28d9]/40 bg-[var(--brand-faint)]'
+                                  : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10'
                               }`}
                             >
                               <span className={`text-xs font-medium ${isActive ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{color.name}</span>
-                              {isActive && <CheckCircle2 className="h-3.5 w-3.5 text-[#7C5CFF]" />}
+                              {isActive && <CheckCircle2 className="h-3.5 w-3.5 text-[#6d28d9]" />}
                             </button>
                           )
                         })}
@@ -849,7 +917,7 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.2 }}
                 >
-                  <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div className="rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
                       <div className="rounded-xl border border-sky-400/20 bg-sky-50 p-2.5 text-sky-700">
                         <Layers3 className="h-5 w-5" />
@@ -874,7 +942,7 @@ function CartEnabledWorkspace({
                           step={5}
                           value={config.infill}
                           onChange={(e) => setConfig((c) => ({ ...c, infill: Number(e.target.value) }))}
-                          className="w-full accent-[#7C5CFF]"
+                          className="w-full accent-[#6d28d9]"
                         />
                         <div className="mt-1 flex justify-between text-[10px] text-[#6F7192]">
                           <span>Hollow</span>
@@ -895,7 +963,7 @@ function CartEnabledWorkspace({
                           step={1}
                           value={config.quantity}
                           onChange={(e) => setConfig((c) => ({ ...c, quantity: Math.max(1, Math.floor(Number(e.target.value) || 1)) }))}
-                          className="w-full rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
+                          className="w-full rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
                         />
                       </div>
 
@@ -910,13 +978,13 @@ function CartEnabledWorkspace({
                               onClick={() => setConfig((c) => ({ ...c, postProcessingLevel: option.value }))}
                               className={`rounded-xl border px-3 py-2.5 text-left transition-all ${
                                 option.value === config.postProcessingLevel
-                                  ? 'border-[#7C5CFF]/35 bg-[var(--brand-faint)]'
-                                  : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10'
+                                  ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)]'
+                                  : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10'
                               }`}
                             >
                               <div className="flex items-center justify-between gap-3">
                                 <div className={`text-xs font-medium ${option.value === config.postProcessingLevel ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{option.label}</div>
-                                <div className="text-[10px] uppercase tracking-[0.18em] text-[#7C5CFF]">
+                                <div className="text-[10px] uppercase tracking-[0.18em] text-[#6d28d9]">
                                   {priceBreakdown
                                     ? `₹${getPostProcessingCharge(
                                         option.value,
@@ -944,8 +1012,8 @@ function CartEnabledWorkspace({
                               onClick={() => setConfig((c) => ({ ...c, layerHeight: option.value }))}
                               className={`rounded-xl border px-3 py-2.5 text-left transition-all ${
                                 option.value === config.layerHeight
-                                  ? 'border-[#7C5CFF]/35 bg-[var(--brand-faint)]'
-                                  : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10'
+                                  ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)]'
+                                  : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10'
                               }`}
                             >
                               <div className={`text-xs font-medium ${option.value === config.layerHeight ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{option.label}</div>
@@ -958,7 +1026,7 @@ function CartEnabledWorkspace({
 
                     {/* Save Quote */}
                     {user && (
-                      <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] p-4">
+                      <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-4">
                         <div className="flex items-center gap-3">
                           <ShieldCheck className="h-5 w-5 text-emerald-700" />
                           <div>
@@ -988,13 +1056,13 @@ function CartEnabledWorkspace({
                 transition={{ duration: 0.4, delay: 0.25 }}
                 className="xl:sticky xl:top-24 xl:self-start"
               >
-                <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-5 sm:p-6 shadow-[0_10px_40px_rgba(0,0,0,0.2)] sm:shadow-[0_18px_70px_rgba(0,0,0,0.3)]">
+                <div className="rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-5 sm:p-6 shadow-[0_10px_40px_rgba(0,0,0,0.2)] sm:shadow-[0_18px_70px_rgba(0,0,0,0.3)]">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
                       <h2 className="text-lg font-semibold text-[#0F1B3D]">Quote Summary</h2>
                       <p className="text-xs text-[#6F7192]">{initialQuoteId}</p>
                     </div>
-                    <div className="rounded-xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-2 text-[#7C5CFF]">
+                    <div className="rounded-xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-2 text-[#6d28d9]">
                       <Package2 className="h-4 w-4" />
                     </div>
                   </div>
@@ -1008,7 +1076,7 @@ function CartEnabledWorkspace({
                   ) : (
                     <>
                       {/* Config Summary */}
-                      <div className="mb-4 rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] p-3">
+                      <div className="mb-4 rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3">
                         <div className="flex items-center gap-2 text-xs">
                           <span className="text-[#0F1B3D]">{selectedMaterial?.name ?? 'Material'}</span>
                           <span className="text-[#6F7192]">·</span>
@@ -1019,7 +1087,7 @@ function CartEnabledWorkspace({
                       </div>
 
                       {/* Price Breakdown */}
-                      <div className="rounded-xl border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-4">
+                      <div className="rounded-xl border border-[#6d28d9]/20 bg-[linear-gradient(180deg,rgba(109, 40, 217,0.12),rgba(109, 40, 217,0.06))] p-4">
                         <div className="text-[10px] uppercase tracking-[0.22em] text-[#6F7192]">Total Price</div>
                         <div className="mt-1 font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">
                           ₹{priceBreakdown.priceBeforeDiscount.toFixed(0)}
@@ -1049,7 +1117,7 @@ function CartEnabledWorkspace({
                             <span>Post-processing</span>
                             <span>₹{priceBreakdown.postProcessingCharges.toFixed(2)}</span>
                           </div>
-                          <div className="border-t border-[#7C5CFF]/10 pt-1.5 flex justify-between font-medium text-[#0F1B3D]">
+                          <div className="border-t border-[#6d28d9]/10 pt-1.5 flex justify-between font-medium text-[#0F1B3D]">
                             <span>Subtotal</span>
                             <span>₹{priceBreakdown.subtotal.toFixed(2)}</span>
                           </div>
@@ -1065,7 +1133,7 @@ function CartEnabledWorkspace({
                             <span>Cart discount</span>
                             <span>{priceBreakdown.cartDiscountPercent}% · {priceBreakdown.cartDiscountAmount > 0 ? '-' : ''}₹{priceBreakdown.cartDiscountAmount.toFixed(2)}</span>
                           </div>
-                          <div className="border-t border-[#7C5CFF]/10 pt-1.5 flex justify-between font-medium text-[#0F1B3D]">
+                          <div className="border-t border-[#6d28d9]/10 pt-1.5 flex justify-between font-medium text-[#0F1B3D]">
                             <span>Total price</span>
                             <span>₹{priceBreakdown.priceBeforeDiscount.toFixed(2)}</span>
                           </div>
@@ -1086,15 +1154,15 @@ function CartEnabledWorkspace({
 
                       {/* Quick Stats */}
                       <div className="mt-4 grid grid-cols-2 gap-3">
-                        <div className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] p-3">
+                        <div className="rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Weight</div>
                           <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{priceBreakdown.materialUsageGramsPerUnit.toFixed(2)} g / unit</div>
                         </div>
-                        <div className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] p-3">
+                        <div className="rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Print time</div>
                           <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{formatDurationMinutes(priceBreakdown.estimatedMinutes)}</div>
                         </div>
-                        <div className="rounded-xl border border-[#7C5CFF]/10 bg-white/[0.02] p-3 col-span-2">
+                        <div className="rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3 col-span-2">
                           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
                             <Cuboid className="h-3 w-3" />
                             Dimensions
@@ -1123,7 +1191,7 @@ function CartEnabledWorkspace({
                           className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                             cartItemCheck
                               ? 'border border-emerald-700/30 bg-emerald-700/10 text-emerald-700'
-                              : 'bg-[#7C5CFF] text-white hover:opacity-95'
+                              : 'bg-[#6d28d9] text-white hover:opacity-95'
                           }`}
                         >
                           {cartItemCheck ? (
@@ -1142,7 +1210,7 @@ function CartEnabledWorkspace({
                         {cartItemCheck && (
                           <Link
                             href="/cart"
-                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#7C5CFF]/30 bg-[#7C5CFF]/10 px-4 py-2.5 text-xs font-medium text-[#7C5CFF] transition-colors hover:bg-[#7C5CFF]/20"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/30 bg-[#6d28d9]/10 px-4 py-2.5 text-xs font-medium text-[#6d28d9] transition-colors hover:bg-[#6d28d9]/20"
                           >
                             View Cart
                             <ArrowRight className="h-3.5 w-3.5" />
@@ -1153,7 +1221,7 @@ function CartEnabledWorkspace({
                       {!user && (
                         <Link
                           href="/login?next=%2Finstant-quote"
-                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-2.5 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
+                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-2.5 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
                         >
                           Sign in to save quotes
                           <ArrowRight className="h-3 w-3" />

@@ -99,6 +99,7 @@ export type AdminOrder = {
   material: string
   color: string
   status: OrderStatus
+  statusTimestamps?: Partial<Record<OrderStatus, string>>
   cancelRequested: boolean
   createdAt: string
   updatedAt?: string

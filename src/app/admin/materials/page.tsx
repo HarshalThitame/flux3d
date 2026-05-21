@@ -243,7 +243,7 @@ export default function AdminMaterialsPage() {
              <div className="flex items-center justify-between">
                <div>
                  <h1 className="font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">
-                   <Beaker className="inline h-8 w-8 text-[#7C5CFF] mr-2" />
+                   <Beaker className="inline h-8 w-8 text-[#6d28d9] mr-2" />
                    Materials Management
                  </h1>
                  <p className="mt-2 text-sm text-[#6F7192]">
@@ -256,7 +256,7 @@ export default function AdminMaterialsPage() {
                    resetForm()
                    setShowForm(true)
                  }}
-                 className="inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-4 py-2.5 text-sm font-semibold text-[#0F1B3D] hover:opacity-90"
+                 className="inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2.5 text-sm font-semibold text-[#0F1B3D] hover:opacity-90"
                >
                  <Plus className="h-4 w-4" />
                  Add Material
@@ -288,7 +288,7 @@ export default function AdminMaterialsPage() {
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                       />
                     </div>
                     <div>
@@ -297,7 +297,7 @@ export default function AdminMaterialsPage() {
                         type="text"
                         value={formData.icon}
                         onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                       />
                     </div>
                     <div>
@@ -307,7 +307,7 @@ export default function AdminMaterialsPage() {
                         step="0.01"
                         value={formData.density}
                         onChange={(e) => setFormData({ ...formData, density: parseFloat(e.target.value) || 0 })}
-                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                       />
                     </div>
                     <div>
@@ -317,7 +317,7 @@ export default function AdminMaterialsPage() {
                         step="0.01"
                         value={formData.pricePerGram}
                         onChange={(e) => setFormData({ ...formData, pricePerGram: parseFloat(e.target.value) || 0 })}
-                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                       />
                     </div>
                     <div>
@@ -326,7 +326,7 @@ export default function AdminMaterialsPage() {
                         type="number"
                         value={formData.machineRate}
                         onChange={(e) => setFormData({ ...formData, machineRate: parseFloat(e.target.value) || 0 })}
-                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                       />
                     </div>
                     <div>
@@ -336,7 +336,7 @@ export default function AdminMaterialsPage() {
                         step="0.01"
                         value={formData.multiplier}
                         onChange={(e) => setFormData({ ...formData, multiplier: parseFloat(e.target.value) || 0 })}
-                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                       />
                     </div>
                     <div>
@@ -344,7 +344,7 @@ export default function AdminMaterialsPage() {
                       <select
                         value={formData.difficultyFactor}
                         onChange={(e) => setFormData({ ...formData, difficultyFactor: parseFloat(e.target.value) })}
-                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                       >
                         <option value={1.1}>1.1X</option>
                         <option value={1.2}>1.2X</option>
@@ -359,7 +359,7 @@ export default function AdminMaterialsPage() {
                     <textarea
                       value={formData.summary}
                       onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                       rows={2}
                     />
                   </div>
@@ -373,7 +373,7 @@ export default function AdminMaterialsPage() {
                         value={formData.keyProperties?.join(', ') || ''}
                         onChange={(e) => setFormData({ ...formData, keyProperties: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
                         placeholder="e.g., Biodegradable, Easy to print"
-                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                       />
                     </div>
                     <div>
@@ -383,7 +383,7 @@ export default function AdminMaterialsPage() {
                         value={formData.bestFor?.join(', ') || ''}
                         onChange={(e) => setFormData({ ...formData, bestFor: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
                         placeholder="e.g., Students, Architects, Hobbyists"
-                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                       />
                     </div>
                     <div>
@@ -391,7 +391,7 @@ export default function AdminMaterialsPage() {
                       <select
                         value={formData.difficultyLevel || 'Easy'}
                         onChange={(e) => setFormData({ ...formData, difficultyLevel: e.target.value as 'Easy' | 'Medium' | 'Hard' })}
-                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                       >
                         <option value="Easy">Easy</option>
                         <option value="Medium">Medium</option>
@@ -403,7 +403,7 @@ export default function AdminMaterialsPage() {
                       <select
                         value={formData.heatResistance || 'Low'}
                         onChange={(e) => setFormData({ ...formData, heatResistance: e.target.value as 'Low' | 'Medium' | 'High' })}
-                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                       >
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
@@ -415,7 +415,7 @@ export default function AdminMaterialsPage() {
                       <select
                         value={formData.strengthRating || 'Medium'}
                         onChange={(e) => setFormData({ ...formData, strengthRating: e.target.value as 'Low' | 'Medium' | 'High' })}
-                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                       >
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
@@ -427,7 +427,7 @@ export default function AdminMaterialsPage() {
                       <select
                         value={formData.finishQuality || 'Good'}
                         onChange={(e) => setFormData({ ...formData, finishQuality: e.target.value as 'Basic' | 'Good' | 'Excellent' })}
-                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                       >
                         <option value="Basic">Basic</option>
                         <option value="Good">Good</option>
@@ -443,7 +443,7 @@ export default function AdminMaterialsPage() {
                       value={formData.samplePhoto || ''}
                       onChange={(e) => setFormData({ ...formData, samplePhoto: e.target.value })}
                       placeholder="https://... or upload below"
-                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                     />
                   </div>
 
@@ -454,8 +454,8 @@ export default function AdminMaterialsPage() {
                       type="text"
                       value={formData.colors.join(', ')}
                       onChange={(e) => setFormData({ ...formData, colors: e.target.value.split(',').map(c => c.trim()).filter(Boolean) })}
-                      placeholder="red, blue, green, #7C5CFF"
-                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                      placeholder="red, blue, green, #6d28d9"
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                     />
                   </div>
 
@@ -469,7 +469,7 @@ export default function AdminMaterialsPage() {
                           value={item}
                           onChange={(e) => updateRecommendedFor(index, e.target.value)}
                           placeholder="e.g., Concept models, Prototypes"
-                          className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF]/30"
+                          className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
                         />
                         {recommendedFor.length > 1 && (
                           <button
@@ -485,7 +485,7 @@ export default function AdminMaterialsPage() {
                     <button
                       type="button"
                       onClick={addRecommendedFor}
-                      className="text-sm text-[#7C5CFF] hover:text-[#A78BFA]"
+                      className="text-sm text-[#6d28d9] hover:text-[#a855f7]"
                     >
                       + Add another recommendation
                     </button>
@@ -494,7 +494,7 @@ export default function AdminMaterialsPage() {
                   <div className="flex gap-3 pt-4">
                     <button
                       type="submit"
-                      className="flex-1 rounded-xl bg-[#7C5CFF] py-2.5 text-sm font-semibold text-[#0F1B3D] hover:opacity-90"
+                      className="flex-1 rounded-xl bg-[#6d28d9] py-2.5 text-sm font-semibold text-[#0F1B3D] hover:opacity-90"
                     >
                       {editingMaterial ? 'Update' : 'Create'}
                     </button>
@@ -533,7 +533,7 @@ export default function AdminMaterialsPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="rounded-2xl border border-gray-200 bg-white p-5 hover:border-[#7C5CFF]/30 transition-colors"
+                  className="rounded-2xl border border-gray-200 bg-white p-5 hover:border-[#6d28d9]/30 transition-colors"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -551,7 +551,7 @@ export default function AdminMaterialsPage() {
                       {material.keyProperties && material.keyProperties.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {material.keyProperties.map((prop, idx) => (
-                            <span key={idx} className="rounded-full bg-[#7C5CFF]/10 px-2 py-1 text-xs text-[#7C5CFF]">
+                            <span key={idx} className="rounded-full bg-[#6d28d9]/10 px-2 py-1 text-xs text-[#6d28d9]">
                               {prop}
                             </span>
                           ))}

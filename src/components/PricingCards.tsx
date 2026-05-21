@@ -16,9 +16,9 @@ type PricingCardsProps = {
 
 const fallbackCards = [
   { title: 'FDM Printing', price: 'From ₹99', desc: 'Reliable functional parts, prototypes, and utility builds with a strong balance of speed and cost.', color: 'from-emerald-400', href: '/materials' },
-  { title: 'Resin Printing', price: 'From ₹199', desc: 'Fine-detail prints, casting masters, and polished display pieces where finish matters most.', color: 'from-blue-400', href: '/materials' },
+  { title: 'Resin Printing', price: 'From ₹199', desc: 'Fine-detail prints, casting masters, and polished display pieces where finish matters most.', color: 'from-[#7c3aed]', href: '/materials' },
   { title: 'Multi-Color Prints', price: 'From ₹249', desc: 'AMS-based color separation for logos, branded models, and presentation-ready parts.', color: 'from-purple-400', href: '/materials' },
-  { title: '3D Modeling', price: 'From ₹499', desc: 'Custom CAD support from sketches, references, or rough concepts when the file does not exist yet.', color: 'from-orange-400', href: '/services' },
+  { title: '3D Modeling', price: 'From ₹499', desc: 'Custom CAD support from sketches, references, or rough concepts when the file does not exist yet.', color: 'from-[#6d28d9]', href: '/services' },
 ]
 
 export default function PricingCards({ materials }: PricingCardsProps) {
@@ -35,7 +35,7 @@ export default function PricingCards({ materials }: PricingCardsProps) {
         title: m.name,
         price: `From ₹${m.price_per_gram || 0}/g`,
         desc: m.density ? `Density: ${m.density}g/cm³ · Transparent per-gram pricing` : 'Transparent per-gram pricing',
-        color: 'from-[#7C5CFF]',
+        color: 'from-[#6d28d9]',
         href: `/materials?name=${encodeURIComponent(m.name)}`,
       }))
     : fallbackCards
@@ -57,7 +57,7 @@ export default function PricingCards({ materials }: PricingCardsProps) {
         <Link
           key={i}
           href={item.href}
-          className="group rounded-[28px] border border-[rgba(124, 92, 255,0.5)] bg-[#FFFFFF] p-7 transition-all hover:border-[#7C5CFF]/30 hover:bg-[#FFFFFF]/80"
+          className="group rounded-[28px] border border-[rgba(109, 40, 217,0.5)] bg-[#FFFFFF] p-7 transition-all hover:border-[#6d28d9]/30 hover:bg-[#FFFFFF]/80"
         >
           <div className={`text-[11px] uppercase tracking-[0.22em] bg-gradient-to-r ${item.color} bg-clip-text text-transparent`}>
             Starting From

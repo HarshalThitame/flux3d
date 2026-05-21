@@ -8,7 +8,7 @@ const galleryItems = [
     subtitle: 'Product validation',
     description:
       'Fast design iterations for startups, founders, and engineering teams validating fit, form, and usability.',
-    accent: 'from-[#7C5CFF]/30 via-[#ff7b4d]/10 to-transparent',
+    accent: 'from-[#6d28d9]/30 via-[#ff7b4d]/10 to-transparent',
   },
   {
     title: 'Functional Parts',
@@ -57,13 +57,13 @@ const itemVariants = {
 export default function GalleryClient() {
   return (
     <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
-      <main className="px-6 pb-20 pt-32 md:px-12">
+      <main className="px-6 pb-20 pt-8 md:px-12 md:pt-10">
         <div className="mx-auto max-w-[1200px]">
           <motion.p
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="mb-4 text-sm font-medium uppercase tracking-[3px] text-[#7C5CFF]"
+            className="mb-4 text-sm font-medium uppercase tracking-[3px] text-[#6d28d9]"
           >
             Gallery
           </motion.p>
@@ -95,7 +95,7 @@ export default function GalleryClient() {
                 key={item.title}
                 variants={itemVariants}
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                className="relative overflow-hidden rounded-[30px] border border-[rgba(124, 92, 255,0.5)] bg-[#FFFFFF] p-8"
+                className="relative overflow-hidden rounded-[30px] border border-[rgba(109, 40, 217,0.5)] bg-[#FFFFFF] p-8"
               >
                 <div className={`absolute inset-0 bg-gradient-to-br ${item.accent}`} />
                 <div className="relative">
@@ -103,7 +103,7 @@ export default function GalleryClient() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 + index * 0.1 }}
-                    className="text-[11px] uppercase tracking-[0.22em] text-[#7C5CFF]"
+                    className="text-[11px] uppercase tracking-[0.22em] text-[#6d28d9]"
                   >
                     {item.subtitle}
                   </motion.div>
@@ -113,7 +113,7 @@ export default function GalleryClient() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.4 + index * 0.1, duration: 0.4 }}
-                    className="mt-10 h-[220px] rounded-[24px] border border-[rgba(124, 92, 255,0.5)] bg-[linear-gradient(135deg,rgba(124, 92, 255,0.4),rgba(124, 92, 255,0.2))]"
+                    className="mt-10 h-[220px] rounded-[24px] border border-[rgba(109, 40, 217,0.5)] bg-[linear-gradient(135deg,rgba(109, 40, 217,0.4),rgba(109, 40, 217,0.2))]"
                   />
                 </div>
               </motion.article>

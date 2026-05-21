@@ -109,12 +109,12 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[32px] border border-gray-200 bg-[radial-gradient(circle_at_top_left,rgba(124,92,255,0.18),transparent_28%),radial-gradient(circle_at_right,rgba(167,139,250,0.14),transparent_24%),rgba(10,16,31,0.92)] p-6 shadow-[0_20px_70px_rgba(0,0,0,0.24)]">
-        <div className="inline-flex rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#A78BFA]">
+      <section className="rounded-[32px] border border-gray-200 bg-[radial-gradient(circle_at_top_left,rgba(109, 40, 217,0.18),transparent_28%),radial-gradient(circle_at_right,rgba(168, 85, 247,0.14),transparent_24%),rgba(10,16,31,0.92)] p-6 shadow-[0_20px_70px_rgba(0,0,0,0.24)]">
+        <div className="inline-flex rounded-full border border-[#6d28d9]/25 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#d8b4fe]">
           Command Center
         </div>
           <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2.4rem,5vw,4.7rem)] font-extrabold tracking-[-2px] text-white">
-            Run the entire 3D printing operation from one <span className="text-[#A78BFA]">calm, structured dashboard</span>
+            Run the entire 3D printing operation from one <span className="text-[#d8b4fe]">calm, structured dashboard</span>
           </h1>
           <p className="mt-4 max-w-3xl text-base leading-8 text-[#B0BBD5]">
           Monitor orders, approve quotes, track material utilization, and keep the production floor moving without drowning in tabs.
@@ -192,7 +192,7 @@ export default function AdminDashboardPage() {
        <div className="mt-6 flex items-center gap-4">
          <Link
            href="/admin/blog"
-           className="inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+           className="inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
          >
            <Eye className="h-4 w-4" />
            Manage Blog Posts

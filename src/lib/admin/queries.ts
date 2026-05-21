@@ -17,17 +17,32 @@ import type {
   Redemption,
   TrendPoint,
 } from '@/lib/admin/types'
-import { getOrderStatusLabel, orderStatuses, type OrderStatus } from '@/lib/orders'
+import {
+  getOrderStatusLabel,
+  getOrderStatusTransitionError,
+  isSequentialOrderStatusTransition,
+  orderStatuses,
+  type OrderStatus,
+} from '@/lib/orders'
 
 const QUOTE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? 'quote-models'
 const ADMIN_ORDER_SELECT =
-  'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, price, price_per_unit, material_cost, machine_cost, subtotal, post_processing_charges, weight, difficulty_factor, total_price, final_price, grand_total, overhead_percent, overhead_amount, margin_percent, margin_amount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, coupon_code, coupon_id, discount_type, estimated_time, supports, post_processing_level, status, cancel_requested, created_at, updated_at, notes, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge'
+  'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, price, price_per_unit, material_cost, machine_cost, subtotal, post_processing_charges, weight, difficulty_factor, total_price, final_price, grand_total, overhead_percent, overhead_amount, margin_percent, margin_amount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, coupon_code, coupon_id, discount_type, estimated_time, supports, post_processing_level, status, status_timestamps, cancel_requested, created_at, updated_at, notes, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge'
+
+export class AdminOrderStatusTransitionError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AdminOrderStatusTransitionError'
+  }
+}
 
 type QueryResult<T> = {
   data: T[] | null
   error: { message: string } | null
   count?: number | null
 }
+
+type OrderStatusTimestamps = NonNullable<AdminOrder['statusTimestamps']>
 
 function ensureNoError<T>(result: QueryResult<T>, label: string) {
   if (result.error) {
@@ -82,6 +97,7 @@ type OrderRow = {
   coupon_id?: string | null
   discount_type?: string | null
   status: AdminOrder['status']
+  status_timestamps?: Record<string, unknown> | null
   created_at: string | null
   updated_at?: string | null
   notes: string | null
@@ -149,6 +165,67 @@ function normalizeDate(value: string | null | undefined) {
   return Number.isNaN(timestamp) ? null : new Date(timestamp)
 }
 
+function isOrderStatus(value: string): value is OrderStatus {
+  return orderStatuses.includes(value as OrderStatus)
+}
+
+function normalizeStatusTimestampValue(value: unknown) {
+  if (typeof value !== 'string') return null
+  const timestamp = new Date(value).getTime()
+  return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString()
+}
+
+function mergeStatusTimestamps(
+  current: OrderStatusTimestamps | undefined,
+  next: OrderStatusTimestamps | undefined
+) {
+  const merged: OrderStatusTimestamps = { ...(current ?? {}) }
+
+  Object.entries(next ?? {}).forEach(([status, timestamp]) => {
+    if (!isOrderStatus(status) || !timestamp) return
+    const existingTime = new Date(merged[status] ?? '').getTime()
+    const nextTime = new Date(timestamp).getTime()
+
+    if (Number.isNaN(existingTime) || (!Number.isNaN(nextTime) && nextTime < existingTime)) {
+      merged[status] = timestamp
+    }
+  })
+
+  return merged
+}
+
+function normalizeOrderStatusTimestamps(row: Pick<OrderRow, 'status_timestamps' | 'created_at'>) {
+  const timestamps: OrderStatusTimestamps = {}
+  const rawTimestamps = row.status_timestamps
+
+  if (rawTimestamps && typeof rawTimestamps === 'object' && !Array.isArray(rawTimestamps)) {
+    Object.entries(rawTimestamps).forEach(([status, value]) => {
+      if (!isOrderStatus(status)) return
+      const normalizedValue = normalizeStatusTimestampValue(value)
+      if (normalizedValue) {
+        timestamps[status] = normalizedValue
+      }
+    })
+  }
+
+  const createdAt = normalizeStatusTimestampValue(row.created_at)
+  if (createdAt) {
+    timestamps.pending = timestamps.pending ?? createdAt
+  }
+
+  return timestamps
+}
+
+function buildNextStatusTimestamps(rows: OrderRow[], status: OrderStatus, timestamp: string) {
+  const merged = rows.reduce<OrderStatusTimestamps>(
+    (acc, row) => mergeStatusTimestamps(acc, normalizeOrderStatusTimestamps(row)),
+    {}
+  )
+
+  merged[status] = timestamp
+  return merged
+}
+
 function resolveGrandTotal(row: Pick<OrderRow, 'grand_total' | 'final_price' | 'total_price' | 'delivery_charge' | 'cart_discount'>) {
   return normalizeMoney(
     row.grand_total ??
@@ -203,6 +280,10 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
         cancelRequested: Boolean(row.cancel_requested),
       })
       existing.cancelRequested = existing.cancelRequested || Boolean(row.cancel_requested)
+      existing.statusTimestamps = mergeStatusTimestamps(
+        existing.statusTimestamps,
+        normalizeOrderStatusTimestamps(row)
+      )
       if (row.updated_at && (!existing.updatedAt || new Date(row.updated_at).getTime() > new Date(existing.updatedAt).getTime())) {
         existing.updatedAt = row.updated_at
       }
@@ -262,6 +343,7 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
         material: row.material ?? 'Unknown material',
         color: row.color ?? '',
         status: row.status,
+        statusTimestamps: normalizeOrderStatusTimestamps(row),
         cancelRequested: Boolean(row.cancel_requested),
         createdAt: row.created_at ?? '',
         updatedAt: row.updated_at ?? row.created_at ?? '',
@@ -445,7 +527,7 @@ function getStatusColor(status: OrderStatus) {
     case 'printing':
       return '#22D3EE'
     case 'shipped':
-      return '#A78BFA'
+      return '#a855f7'
     case 'delivered':
       return '#38BDF8'
     case 'completed':
@@ -639,12 +721,39 @@ export async function getAdminOrdersData() {
 
 export async function updateAdminOrderStatus(groupId: string, status: AdminOrder['status']) {
   const supabase = createAdminSupabaseClient()
+  const { data: currentRows, error: currentError } = await supabase
+    .from('orders')
+    .select(ADMIN_ORDER_SELECT)
+    .or(`group_id.eq.${groupId},id.eq.${groupId}`)
+    .order('created_at', { ascending: true })
+
+  if (currentError) throw new Error(currentError.message)
+
+  const rows = (currentRows ?? []) as OrderRow[]
+  if (rows.length === 0) {
+    throw new Error('Order not found.')
+  }
+
+  const currentOrder = groupAdminOrders(rows)[0]
+  const currentStatus = currentOrder?.status ?? rows[0].status
+
+  if (currentStatus === status && currentOrder) {
+    return currentOrder
+  }
+
+  if (!isSequentialOrderStatusTransition(currentStatus, status)) {
+    throw new AdminOrderStatusTransitionError(getOrderStatusTransitionError(currentStatus, status))
+  }
+
+  const updatedAt = new Date().toISOString()
+  const statusTimestamps = buildNextStatusTimestamps(rows, status, updatedAt)
 
   const { error: updateError } = await supabase
     .from('orders')
     .update({
       status,
-      updated_at: new Date().toISOString(),
+      status_timestamps: statusTimestamps,
+      updated_at: updatedAt,
     })
     .or(`group_id.eq.${groupId},id.eq.${groupId}`)
 
@@ -1325,7 +1434,7 @@ export async function createAdminOffer(input: Partial<Offer>) {
       usage_limit: input.usage_limit,
       usage_per_user: input.usage_per_user,
       badge_text: input.badge_text,
-      badge_color: input.badge_color ?? 'from-[#7C5CFF] to-[#A78BFA]',
+      badge_color: input.badge_color ?? 'from-[#6d28d9] to-[#a855f7]',
       sale_label: input.sale_label,
       theme_config: input.theme_config ?? {},
     })

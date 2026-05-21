@@ -23,9 +23,14 @@ import {
 } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import type { AdminOrder, AdminOrderItem } from '@/lib/admin/types'
-import type { OrderStatus } from '@/lib/orders'
 import {
-  ADMIN_ORDER_STATUSES,
+  canCancelOrderStatus,
+  getAllowedOrderStatusTransitions,
+  getOrderStatusTransitionError,
+  isSequentialOrderStatusTransition,
+  type OrderStatus,
+} from '@/lib/orders'
+import {
   STATUS_LABELS,
   colorToCss,
   formatDateTime,
@@ -40,8 +45,11 @@ type Props = {
   initialOrder: AdminOrder
 }
 
-const TIMELINE_STEPS: Array<{ label: string; status?: OrderStatus }> = [
-  { label: 'Order Placed' },
+type TimelineStepConfig = { label: string; status: OrderStatus }
+type TimelineStepState = 'done' | 'current' | 'future' | 'cancelled'
+
+const TIMELINE_STEPS: TimelineStepConfig[] = [
+  { label: 'Order Placed', status: 'pending' },
   { label: 'Confirmed', status: 'confirmed' },
   { label: 'Printing', status: 'printing' },
   { label: 'Shipped', status: 'shipped' },
@@ -78,6 +86,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
     order.pincode ? `PIN ${order.pincode}` : null,
   ].filter(Boolean) as string[]
   const mapQuery = addressLines.join(', ')
+  const statusOptions = getAllowedOrderStatusTransitions(order.status)
 
   function showToast(nextToast: NonNullable<AdminToastState>) {
     setToast(nextToast)
@@ -99,6 +108,11 @@ export default function OrderDetailClient({ initialOrder }: Props) {
 
   async function updateStatus(status: OrderStatus) {
     if (status === order.status) return
+    if (!isSequentialOrderStatusTransition(order.status, status)) {
+      showToast({ type: 'error', message: getOrderStatusTransitionError(order.status, status) })
+      return
+    }
+
     const previous = order
     setUpdatingStatus(true)
     setOrder((current) => ({
@@ -164,7 +178,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                   Back
                 </Link>
                 <div className="flex min-w-0 flex-wrap items-center gap-3">
-                  <h1 className="min-w-0 truncate text-2xl font-bold text-gray-900">
+                  <h1 className="min-w-0 truncate !text-xl font-bold text-gray-900">
                     {order.orderNumber} <span className="font-semibold text-gray-500">· {itemCount} item{itemCount === 1 ? '' : 's'}</span>
                   </h1>
                   <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${statusPillClass(order.status)}`}>
@@ -192,7 +206,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                 <button
                   type="button"
                   onClick={() => updateStatus('cancelled')}
-                  disabled={updatingStatus || order.status === 'cancelled'}
+                  disabled={updatingStatus || !canCancelOrderStatus(order.status)}
                   className="inline-flex h-10 items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 text-sm font-medium text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Ban className="h-4 w-4" />
@@ -205,7 +219,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                   className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-100 disabled:opacity-50"
                   aria-label="Update order status"
                 >
-                  {ADMIN_ORDER_STATUSES.map((status) => (
+                  {statusOptions.map((status) => (
                     <option key={status} value={status}>
                       {STATUS_LABELS[status]}
                     </option>
@@ -238,8 +252,8 @@ export default function OrderDetailClient({ initialOrder }: Props) {
 
               <Card title="Order Timeline">
                 <div className="space-y-4">
-                  {TIMELINE_STEPS.map((step, index) => (
-                    <TimelineStep key={step.label} label={step.label} meta={timelineMeta(order, index)} state={timelineState(order.status, index)} />
+                  {getTimelineSteps(order).map((step, index) => (
+                    <TimelineStep key={step.label} label={step.label} meta={timelineMeta(order, step, index)} state={timelineState(order.status, step, index)} />
                   ))}
                 </div>
               </Card>
@@ -543,7 +557,7 @@ function PricingRow({
 }) {
   const valueClass =
     tone === 'grand'
-      ? 'text-xl font-bold text-gray-900'
+      ? 'text-lg font-bold text-gray-900'
       : tone === 'success'
         ? 'font-bold text-emerald-600'
         : tone === 'discount'
@@ -577,7 +591,16 @@ function extractQuoteId(order: AdminOrder) {
   return fileUrl.match(/F3D-[A-Z0-9-]+/i)?.[0] ?? '—'
 }
 
-function timelineState(status: OrderStatus, index: number): 'done' | 'current' | 'future' {
+function getTimelineSteps(order: AdminOrder) {
+  if (order.status === 'cancelled' || order.statusTimestamps?.cancelled) {
+    return [...TIMELINE_STEPS, { label: 'Cancelled', status: 'cancelled' as const }]
+  }
+
+  return TIMELINE_STEPS
+}
+
+function timelineState(status: OrderStatus, step: TimelineStepConfig, index: number): TimelineStepState {
+  if (step.status === 'cancelled') return 'cancelled'
   if (index === 0) return 'done'
   if (status === 'cancelled' || status === 'pending') return 'future'
   const currentIndex = STATUS_INDEX[status] ?? 0
@@ -586,16 +609,18 @@ function timelineState(status: OrderStatus, index: number): 'done' | 'current' |
   return 'future'
 }
 
-function timelineMeta(order: AdminOrder, index: number) {
-  const state = timelineState(order.status, index)
-  if (index === 0) return formatDateTime(order.createdAt)
+function timelineMeta(order: AdminOrder, step: TimelineStepConfig, index: number) {
+  const state = timelineState(order.status, step, index)
+  const timestamp = order.statusTimestamps?.[step.status] ?? (step.status === 'pending' ? order.createdAt : null)
+
+  if (timestamp) return formatDateTime(timestamp)
   if (state === 'current') return 'In progress...'
-  if (state === 'done') return '—'
+  if (state === 'done' || state === 'cancelled') return 'Not recorded'
   return ''
 }
 
 function SectionTitle({ children }: { children: ReactNode }) {
-  return <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500">{children}</h2>
+  return <h2 className="!text-xs font-semibold uppercase tracking-wider text-gray-500">{children}</h2>
 }
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
@@ -620,10 +645,12 @@ function Divider() {
   return <div className="my-4 border-t border-gray-100" />
 }
 
-function TimelineStep({ label, meta, state }: { label: string; meta: string; state: 'done' | 'current' | 'future' }) {
+function TimelineStep({ label, meta, state }: { label: string; meta: string; state: TimelineStepState }) {
   const icon =
     state === 'done' ? (
       <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+    ) : state === 'cancelled' ? (
+      <Ban className="h-5 w-5 text-red-600" />
     ) : state === 'current' ? (
       <Clock className="h-5 w-5 text-blue-600" />
     ) : (

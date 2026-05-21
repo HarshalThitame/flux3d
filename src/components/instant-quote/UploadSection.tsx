@@ -32,13 +32,13 @@ export default function UploadSection({
     <motion.section
       whileHover={{ y: -4 }}
       transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-      className="group relative flex h-full flex-col overflow-hidden rounded-[28px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)] transition-all duration-300 hover:border-[#7C5CFF]/25 hover:shadow-[0_24px_90px_rgba(124, 92, 255,0.08)]"
+      className="group relative flex h-full flex-col overflow-hidden rounded-[28px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)] transition-all duration-300 hover:border-[#6d28d9]/25 hover:shadow-[0_24px_90px_rgba(109, 40, 217,0.08)]"
     >
       <motion.div
         aria-hidden
         animate={{ x: [0, 16, 0], y: [0, -12, 0], opacity: [0.28, 0.42, 0.28] }}
         transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-        className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#7C5CFF]/10 blur-3xl"
+        className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#6d28d9]/10 blur-3xl"
       />
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
@@ -52,7 +52,7 @@ export default function UploadSection({
         <motion.div
           animate={{ y: [0, -4, 0] }}
           transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-          className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#7C5CFF]"
+          className="rounded-2xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-3 text-[#6d28d9]"
         >
           <UploadCloud className="h-5 w-5" />
         </motion.div>
@@ -64,7 +64,7 @@ export default function UploadSection({
           event.preventDefault()
           handleFiles(event.dataTransfer.files)
         }}
-        className="relative flex min-h-[280px] flex-1 items-center justify-center rounded-[24px] border border-dashed border-[#7C5CFF]/10 bg-[radial-gradient(circle_at_top,rgba(124, 92, 255,0.14),transparent_42%),linear-gradient(180deg,rgba(124, 92, 255,0.3),rgba(124, 92, 255,0.2))] p-6 text-center transition-colors duration-300 group-hover:border-[#7C5CFF]/20"
+        className="relative flex min-h-[280px] flex-1 items-center justify-center rounded-[24px] border border-dashed border-[#6d28d9]/10 bg-[radial-gradient(circle_at_top,rgba(109, 40, 217,0.14),transparent_42%),linear-gradient(180deg,rgba(109, 40, 217,0.3),rgba(109, 40, 217,0.2))] p-6 text-center transition-colors duration-300 group-hover:border-[#6d28d9]/20"
         whileHover={{ scale: 1.01 }}
         transition={{ type: 'spring', stiffness: 240, damping: 22 }}
       >
@@ -77,9 +77,9 @@ export default function UploadSection({
         />
         <div className="max-w-md">
           <motion.div
-            animate={{ scale: [1, 1.04, 1], boxShadow: ['0 0 28px rgba(124, 92, 255,0.18)', '0 0 42px rgba(124, 92, 255,0.24)', '0 0 28px rgba(124, 92, 255,0.18)'] }}
+            animate={{ scale: [1, 1.04, 1], boxShadow: ['0 0 28px rgba(109, 40, 217,0.18)', '0 0 42px rgba(109, 40, 217,0.24)', '0 0 28px rgba(109, 40, 217,0.18)'] }}
             transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
-            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[20px] border border-[#7C5CFF]/25 bg-[#7C5CFF]/12 text-[#7C5CFF] shadow-[0_0_28px_rgba(124, 92, 255,0.18)]"
+            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[20px] border border-[#6d28d9]/25 bg-[#6d28d9]/12 text-[#6d28d9] shadow-[0_0_28px_rgba(109, 40, 217,0.18)]"
           >
             <UploadCloud className="h-7 w-7" />
           </motion.div>
@@ -89,17 +89,17 @@ export default function UploadSection({
           <p className="mt-3 text-sm leading-7 text-[#6F7192]">
             Click to browse or drop your printable file here. From the first upload, the experience is designed to feel fast, premium, and effortless.
           </p>
-<div className="mt-4 inline-flex rounded-full border border-[#7C5CFF]/10 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
+<div className="mt-4 inline-flex rounded-full border border-[#6d28d9]/10 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
   STL · OBJ · 3MF · STEP · DXF · DWG
 </div>
         </div>
       </motion.div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3">
+        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">File Input</div>
           <div className="mt-2 flex items-center gap-3">
-            <div className="rounded-xl bg-[#7C5CFF]/10 p-2 text-[#7C5CFF]">
+            <div className="rounded-xl bg-[#6d28d9]/10 p-2 text-[#6d28d9]">
               <FileArchive className="h-4 w-4" />
             </div>
             <div className="min-w-0">
@@ -113,7 +113,7 @@ export default function UploadSection({
           </div>
         </motion.div>
 
-        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3">
+        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Upload Progress</div>
           {uploadState.status === 'uploading' ? (
             <div className="mt-3">
@@ -126,7 +126,7 @@ export default function UploadSection({
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-[var(--bg-muted)]">
                 <div
-                  className="h-full rounded-full bg-[#7C5CFF] transition-all duration-300"
+                  className="h-full rounded-full bg-[#6d28d9] transition-all duration-300"
                   style={{ width: `${uploadState.progress}%` }}
                 />
               </div>

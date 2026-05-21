@@ -64,7 +64,6 @@ export default function MaterialsPageClient() {
     fetchMaterials()
   }, [])
 
-  // Fallback materials if fetch fails
   const fallbackMaterials: Material[] = [
     { id: '1', name: 'PLA', pricePerGram: 3, price_per_gram: 3, type: 'FDM', strengthRating: 'Medium', finishQuality: 'Good', heatResistance: 'Low', bestFor: ['Prototypes', 'Models'], properties: { strength: 'Medium', flexibility: 'Low' }, icon: '🧩' },
     { id: '2', name: 'ABS', pricePerGram: 5, price_per_gram: 5, type: 'FDM', strengthRating: 'High', finishQuality: 'Good', heatResistance: 'High', bestFor: ['Functional parts'], properties: { strength: 'High', flexibility: 'Medium' }, icon: '⚙️' },
@@ -73,7 +72,6 @@ export default function MaterialsPageClient() {
 
   const displayMaterials = materials.length > 0 ? materials : fallbackMaterials
 
-  // Map display materials for ComparisonTable
   const displayComparisonMaterials = displayMaterials.map((m) => ({
     name: m.name,
     type: m.type || 'FDM',
@@ -90,7 +88,6 @@ export default function MaterialsPageClient() {
     stock: m.stock || true,
   }))
 
-  // Map display materials for MaterialCards
   const displayMaterialCardsData = displayMaterials.map((m) => {
     const bestFor = Array.isArray(m.bestFor) ? m.bestFor : (m.bestFor ? [m.bestFor] : [])
 
@@ -100,7 +97,7 @@ export default function MaterialsPageClient() {
     icon: m.icon || '🧩',
     description: m.summary || m.recommendedFor || '3D printing material',
     color: m.properties?.strength === 'High' ? 'orange' : 'blue',
-    gradient: m.properties?.strength === 'High' ? 'from-orange-500 to-red-500' : 'from-blue-500 to-purple-500',
+    gradient: m.properties?.strength === 'High' ? 'from-[#4c1d95] to-[#a855f7]' : 'from-[#6d28d9] to-[#7c3aed]',
     properties: {
       strength: m.properties?.strength || m.strengthRating || 'Medium',
       flexibility: m.properties?.flexibility || 'Low',
@@ -122,15 +119,16 @@ export default function MaterialsPageClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
+      <div className="min-h-screen bg-[#F7F8FB] text-[#111827]">
         <NavbarClient transparent user={null} />
-        <main className="px-6 py-32">
+        <main className="px-4 py-32 md:px-8 lg:px-16">
           <div className="mx-auto max-w-[1200px]">
-            <div className="h-8 w-48 bg-[#FFFFFF] rounded animate-pulse mb-6" />
-            <div className="h-12 w-96 bg-[#FFFFFF] rounded animate-pulse mb-12" />
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mb-5 h-4 w-40 animate-pulse rounded-full bg-gray-200" />
+            <div className="mb-4 h-12 w-full max-w-xl animate-pulse rounded-2xl bg-gray-200" />
+            <div className="mb-12 h-5 w-full max-w-2xl animate-pulse rounded-full bg-gray-200" />
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {[1,2,3,4,5,6].map(i => (
-                <div key={i} className="h-64 bg-[#FFFFFF] rounded-2xl animate-pulse" />
+                <div key={i} className="h-72 animate-pulse rounded-3xl border border-gray-200 bg-white shadow-sm" />
               ))}
             </div>
           </div>
@@ -140,8 +138,8 @@ export default function MaterialsPageClient() {
   }
 
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#FFFFFF]" />}>
-      <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
+    <Suspense fallback={<div className="min-h-screen bg-[#F7F8FB]" />}>
+      <div className="min-h-screen bg-[#F7F8FB] text-[#111827]">
         <NavbarClient transparent user={null} />
         <main>
           <MaterialsHero />

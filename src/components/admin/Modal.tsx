@@ -51,7 +51,7 @@ export default function Modal({
                   </Dialog.Description>
                 )}
               </div>
-              <Dialog.Close className="shrink-0 rounded-lg border border-[#7C5CFF]/10 bg-gray-50 p-2 text-[#6F7192] transition hover:bg-gray-100 hover:text-[#0F1B3D]">
+              <Dialog.Close className="shrink-0 rounded-lg border border-[#6d28d9]/10 bg-gray-50 p-2 text-[#6F7192] transition hover:bg-gray-100 hover:text-[#0F1B3D]">
                 <X className="h-4 w-4" />
               </Dialog.Close>
             </div>

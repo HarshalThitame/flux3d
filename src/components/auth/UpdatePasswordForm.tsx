@@ -36,7 +36,7 @@ export default function UpdatePasswordForm({ nextPath }: UpdatePasswordFormProps
             type="password"
             autoComplete="new-password"
             placeholder="Strong password"
-            className="w-full rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
+            className="w-full rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
           />
           {state.fieldErrors?.password?.map((error) => (
             <p key={error} className="text-sm text-rose-300">

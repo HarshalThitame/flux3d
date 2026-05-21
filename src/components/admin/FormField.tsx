@@ -22,7 +22,7 @@ export function InputField({
         onChange={(event) => onChange?.(event.target.value)}
         placeholder={placeholder}
         className={`w-full rounded-xl border bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition placeholder:text-[#6F7192] ${
-          error ? 'border-rose-400/30 focus:border-rose-400/50' : 'border-[#7C5CFF]/10 focus:border-[#7C5CFF]/30'
+          error ? 'border-rose-400/30 focus:border-rose-400/50' : 'border-[#6d28d9]/10 focus:border-[#6d28d9]/30'
         }`}
       />
       {error && <div className="mt-1 text-[11px] text-rose-400">{error}</div>}
@@ -50,7 +50,7 @@ export function SelectField({
         value={value}
         onChange={(event) => onChange?.(event.target.value)}
         className={`w-full rounded-xl border bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition ${
-          error ? 'border-rose-400/30' : 'border-[#7C5CFF]/10 focus:border-[#7C5CFF]/30'
+          error ? 'border-rose-400/30' : 'border-[#6d28d9]/10 focus:border-[#6d28d9]/30'
         }`}
       >
         {options.map((option) => (
@@ -85,7 +85,7 @@ export function ToggleField({
         type="button"
         aria-pressed={checked}
         onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? 'bg-[#7C5CFF]' : 'bg-gray-200'}`}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? 'bg-[#6d28d9]' : 'bg-gray-200'}`}
       >
         <span
           className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}
@@ -119,7 +119,7 @@ export function TextAreaField({
         placeholder={placeholder}
         rows={rows}
         className={`w-full rounded-xl border bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition resize-none placeholder:text-[#6F7192] ${
-          error ? 'border-rose-400/30 focus:border-rose-400/50' : 'border-[#7C5CFF]/10 focus:border-[#7C5CFF]/30'
+          error ? 'border-rose-400/30 focus:border-rose-400/50' : 'border-[#6d28d9]/10 focus:border-[#6d28d9]/30'
         }`}
       />
       {error && <div className="mt-1 text-[11px] text-rose-400">{error}</div>}

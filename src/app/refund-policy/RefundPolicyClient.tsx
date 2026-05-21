@@ -10,11 +10,11 @@ export default function RefundPolicyClient() {
   return (
     <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       {/* Header */}
-      <div className="border-b border-[#7C5CFF]/10 bg-[#FFFFFF]/50 backdrop-blur-sm sticky top-0 z-50">
+      <div className="border-b border-[#6d28d9]/10 bg-[#FFFFFF]/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-[1200px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D]">
-              flux<span className="text-[#7C5CFF]">3d</span>
+              flux<span className="text-[#6d28d9]">3d</span>
             </Link>
             <Link
               href="/"
@@ -27,19 +27,19 @@ export default function RefundPolicyClient() {
         </div>
       </div>
 
-      <div className="max-w-[800px] mx-auto px-6 py-12">
+      <div className="max-w-[800px] mx-auto px-6 py-8">
         <motion.main
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
           {/* Title Section */}
           <div className="mb-12">
-            <div className="inline-flex items-center gap-2 bg-[#7C5CFF]/10 text-[#7C5CFF] px-4 py-2 rounded-full text-sm font-medium mb-6">
+            <div className="inline-flex items-center gap-2 bg-[#6d28d9]/10 text-[#6d28d9] px-4 py-2 rounded-full text-sm font-medium mb-6">
               <RefreshCw className="w-4 h-4" />
               Refund Policy
             </div>
             <h1 className="font-[var(--font-syne)] text-4xl md:text-5xl font-extrabold text-[#0F1B3D] mb-4">
-              Refund <span className="text-[#7C5CFF]">Policy</span>
+              Refund <span className="text-[#6d28d9]">Policy</span>
             </h1>
             <div className="flex flex-wrap gap-4 text-sm text-[#6F7192]">
               <span>Effective Date: January 1, 2025</span>
@@ -49,9 +49,9 @@ export default function RefundPolicyClient() {
           </div>
 
           {/* 14-Day Guarantee */}
-          <div className="bg-gradient-to-r from-[#7C5CFF]/20 to-transparent border border-[#7C5CFF]/30 rounded-2xl p-8 mb-12">
+          <div className="bg-gradient-to-r from-[#6d28d9]/20 to-transparent border border-[#6d28d9]/30 rounded-2xl p-8 mb-12">
             <div className="flex items-start gap-4">
-              <CheckCircle className="w-8 h-8 text-[#7C5CFF] flex-shrink-0 mt-1" />
+              <CheckCircle className="w-8 h-8 text-[#6d28d9] flex-shrink-0 mt-1" />
               <div>
                 <h2 className="text-2xl font-bold text-[#0F1B3D] mb-2">14-Day Money-Back Guarantee</h2>
                 <p className="text-[#6F7192] leading-relaxed">
@@ -67,11 +67,11 @@ export default function RefundPolicyClient() {
             {/* Subscription Refunds */}
             <section>
               <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">1</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">1</span>
                 Subscription Refunds
               </h2>
               <div className="text-[#6F7192] leading-relaxed space-y-4">
-                <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6">
+                <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-[#0F1B3D] mb-3">Eligibility Period</h3>
                   <ul className="space-y-2">
                     {[
@@ -80,7 +80,7 @@ export default function RefundPolicyClient() {
                       'Cancelled subscriptions retain access until billing period ends',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <span className="text-[#7C5CFF] mt-1.5">•</span>
+                        <span className="text-[#6d28d9] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -96,11 +96,11 @@ export default function RefundPolicyClient() {
             {/* 3D Printing Services */}
             <section>
               <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">2</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">2</span>
                 3D Printing Service Refunds
               </h2>
               <div className="text-[#6F7192] leading-relaxed space-y-4">
-                <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6">
+                <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-[#0F1B3D] mb-3">Order Cancellation</h3>
                   <ul className="space-y-2">
                     {[
@@ -109,13 +109,13 @@ export default function RefundPolicyClient() {
                       'After shipping: No refund unless item is defective',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <span className="text-[#7C5CFF] mt-1.5">•</span>
+                        <span className="text-[#6d28d9] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6">
+                <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-[#0F1B3D] mb-3">Defective or Incorrect Orders</h3>
                   <p className="mb-3">
                     If your order arrives defective or doesn&apos;t match your specifications:
@@ -127,7 +127,7 @@ export default function RefundPolicyClient() {
                       'We will reprint and reship at no cost, or provide full refund',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <span className="text-[#7C5CFF] mt-1.5">•</span>
+                        <span className="text-[#6d28d9] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -139,10 +139,10 @@ export default function RefundPolicyClient() {
             {/* Non-Refundable Items */}
             <section>
               <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">3</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">3</span>
                 Non-Refundable Items
               </h2>
-              <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6 text-[#6F7192] leading-relaxed">
+              <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6 text-[#6F7192] leading-relaxed">
                 <p className="mb-3">The following are generally not eligible for refunds:</p>
                 <ul className="space-y-2">
                   {[
@@ -153,7 +153,7 @@ export default function RefundPolicyClient() {
                     'Subscription renewals beyond the 14-day window',
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2">
-                      <span className="text-[#7C5CFF] mt-1.5">•</span>
+                      <span className="text-[#6d28d9] mt-1.5">•</span>
                       <span>{item}</span>
                     </li>
                   ))}
@@ -164,12 +164,12 @@ export default function RefundPolicyClient() {
             {/* Processing Time */}
             <section>
               <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">4</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">4</span>
                 Refund Processing Time
               </h2>
               <div className="text-[#6F7192] leading-relaxed">
-                <div className="flex items-start gap-4 bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6">
-                  <Clock className="w-6 h-6 text-[#7C5CFF] flex-shrink-0 mt-1" />
+                <div className="flex items-start gap-4 bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6">
+                  <Clock className="w-6 h-6 text-[#6d28d9] flex-shrink-0 mt-1" />
                   <div>
                     <p className="mb-3">
                       Approved refunds are processed within 5-7 business days. The timing of the
@@ -182,7 +182,7 @@ export default function RefundPolicyClient() {
                         'Net Banking: 3-5 business days',
                       ].map((item) => (
                         <li key={item} className="flex items-start gap-2">
-                          <span className="text-[#7C5CFF] mt-1.5">•</span>
+                          <span className="text-[#6d28d9] mt-1.5">•</span>
                           <span>{item}</span>
                         </li>
                       ))}
@@ -195,7 +195,7 @@ export default function RefundPolicyClient() {
             {/* Exceptions */}
             <section>
               <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">5</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">5</span>
                 Exceptional Circumstances
               </h2>
               <div className="text-[#6F7192] leading-relaxed">
@@ -211,7 +211,7 @@ export default function RefundPolicyClient() {
                     'Force majeure events affecting service delivery',
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2">
-                      <span className="text-[#7C5CFF] mt-1.5">•</span>
+                      <span className="text-[#6d28d9] mt-1.5">•</span>
                       <span>{item}</span>
                     </li>
                   ))}
@@ -220,9 +220,9 @@ export default function RefundPolicyClient() {
             </section>
 
             {/* Contact */}
-            <section className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-2xl p-8">
+            <section className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-2xl p-8">
               <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-6 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">6</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">6</span>
                 Request a Refund
               </h2>
               <p className="text-[#6F7192] mb-6">
@@ -241,8 +241,8 @@ export default function RefundPolicyClient() {
                   </div>
                 ))}
               </div>
-              <div className="bg-[#7C5CFF]/10 border border-[#7C5CFF]/20 rounded-xl p-4 flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-[#7C5CFF] flex-shrink-0 mt-0.5" />
+              <div className="bg-[#6d28d9]/10 border border-[#6d28d9]/20 rounded-xl p-4 flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-[#6d28d9] flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-[#6F7192]">
                   Please include your order ID or account email, reason for refund, and any
                   relevant screenshots or documentation.

@@ -38,8 +38,8 @@ export default function FilterBar({ onFilterChange }: FilterBarProps) {
                 whileTap={{ scale: 0.96 }}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   active === cat
-                    ? 'bg-[#7C5CFF] text-white'
-                    : 'bg-[rgba(124, 92, 255,0.3)] text-[#6F7192] border border-white/[0.06] hover:border-[rgba(124, 92, 255,0.3)] hover:text-white'
+                    ? 'bg-[#6d28d9] text-white'
+                    : 'bg-[rgba(109, 40, 217,0.3)] text-[#6F7192] border border-white/[0.06] hover:border-[rgba(109, 40, 217,0.3)] hover:text-white'
                 }`}
               >
                 {cat}
