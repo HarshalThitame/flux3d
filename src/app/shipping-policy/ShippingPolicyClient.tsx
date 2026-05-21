@@ -10,11 +10,11 @@ export default function ShippingPolicyClient() {
   return (
     <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       {/* Header */}
-      <div className="border-b border-[#7C5CFF]/10 bg-[#FFFFFF]/50 backdrop-blur-sm sticky top-0 z-50">
+      <div className="border-b border-[#6d28d9]/10 bg-[#FFFFFF]/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-[1200px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D]">
-              flux<span className="text-[#7C5CFF]">3d</span>
+              flux<span className="text-[#6d28d9]">3d</span>
             </Link>
             <Link
               href="/"
@@ -27,19 +27,19 @@ export default function ShippingPolicyClient() {
         </div>
       </div>
 
-      <div className="max-w-[800px] mx-auto px-6 py-12">
+      <div className="max-w-[800px] mx-auto px-6 py-8">
         <motion.main
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
           {/* Title Section */}
           <div className="mb-12">
-            <div className="inline-flex items-center gap-2 bg-[#7C5CFF]/10 text-[#7C5CFF] px-4 py-2 rounded-full text-sm font-medium mb-6">
+            <div className="inline-flex items-center gap-2 bg-[#6d28d9]/10 text-[#6d28d9] px-4 py-2 rounded-full text-sm font-medium mb-6">
               <Truck className="w-4 h-4" />
               Shipping Policy
             </div>
             <h1 className="font-[var(--font-syne)] text-4xl md:text-5xl font-extrabold text-[#0F1B3D] mb-4">
-              Shipping <span className="text-[#7C5CFF]">Policy</span>
+              Shipping <span className="text-[#6d28d9]">Policy</span>
             </h1>
             <div className="flex flex-wrap gap-4 text-sm text-[#6F7192]">
               <span>Effective Date: January 1, 2025</span>
@@ -49,9 +49,9 @@ export default function ShippingPolicyClient() {
           </div>
 
           {/* Shipping Coverage */}
-          <div className="bg-gradient-to-r from-[#7C5CFF]/20 to-transparent border border-[#7C5CFF]/30 rounded-2xl p-8 mb-12">
+          <div className="bg-gradient-to-r from-[#6d28d9]/20 to-transparent border border-[#6d28d9]/30 rounded-2xl p-8 mb-12">
             <div className="flex items-start gap-4">
-              <MapPin className="w-8 h-8 text-[#7C5CFF] flex-shrink-0 mt-1" />
+              <MapPin className="w-8 h-8 text-[#6d28d9] flex-shrink-0 mt-1" />
               <div>
                 <h2 className="text-2xl font-bold text-[#0F1B3D] mb-2">Pan-India Delivery</h2>
                 <p className="text-[#6F7192] leading-relaxed">
@@ -67,10 +67,10 @@ export default function ShippingPolicyClient() {
             {/* Processing Time */}
             <section>
               <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">1</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">1</span>
                 Processing Time
               </h2>
-              <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6 text-[#6F7192] leading-relaxed">
+              <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6 text-[#6F7192] leading-relaxed">
                 <p className="mb-4">All orders require processing time before shipment:</p>
                 <ul className="space-y-3">
                   {[
@@ -78,7 +78,7 @@ export default function ShippingPolicyClient() {
                     { label: 'Complex/ Large Prints', time: '3-5 business days' },
                     { label: 'Multi-part Orders', time: '5-7 business days' },
                   ].map((item) => (
-                    <li key={item.label} className="flex items-center justify-between border-b border-[#7C5CFF]/10 pb-3 last:border-0 last:pb-0">
+                    <li key={item.label} className="flex items-center justify-between border-b border-[#6d28d9]/10 pb-3 last:border-0 last:pb-0">
                       <span>{item.label}</span>
                       <span className="text-[#0F1B3D] font-medium">{item.time}</span>
                     </li>
@@ -94,15 +94,15 @@ export default function ShippingPolicyClient() {
             {/* Shipping Methods */}
             <section>
               <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">2</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">2</span>
                 Shipping Methods & Costs
               </h2>
               <div className="space-y-4">
-                <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6">
+                <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-[#0F1B3D] mb-4">Delivery Partners</h3>
                   <div className="flex flex-wrap gap-3 mb-6">
                     {['Delhivery', 'Shiprocket', 'DTDC', 'Bluedart'].map((partner) => (
-                      <span key={partner} className="bg-white/[0.03] border border-[#7C5CFF]/10 px-4 py-2 rounded-lg text-sm text-[#0F1B3D]">
+                      <span key={partner} className="bg-white/[0.03] border border-[#6d28d9]/10 px-4 py-2 rounded-lg text-sm text-[#0F1B3D]">
                         {partner}
                       </span>
                     ))}
@@ -114,10 +114,10 @@ export default function ShippingPolicyClient() {
                       { zone: 'Tier 2 Cities', time: '3-5 days', cost: '₹149' },
                       { zone: 'Rest of India', time: '4-7 days', cost: '₹199' },
                     ].map((item) => (
-                      <div key={item.zone} className="flex items-center justify-between border-b border-[#7C5CFF]/10 pb-3 last:border-0">
+                      <div key={item.zone} className="flex items-center justify-between border-b border-[#6d28d9]/10 pb-3 last:border-0">
                         <span className="text-[#6F7192]">{item.zone}</span>
                         <span className="text-[#0F1B3D] text-sm">{item.time}</span>
-                        <span className="text-[#7C5CFF] font-semibold">{item.cost}</span>
+                        <span className="text-[#6d28d9] font-semibold">{item.cost}</span>
                       </div>
                     ))}
                   </div>
@@ -132,7 +132,7 @@ export default function ShippingPolicyClient() {
             {/* Order Tracking */}
             <section>
               <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">3</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">3</span>
                 Order Tracking
               </h2>
               <div className="text-[#6F7192] leading-relaxed">
@@ -146,7 +146,7 @@ export default function ShippingPolicyClient() {
                     'Link to track your shipment online',
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2">
-                      <span className="text-[#7C5CFF] mt-1.5">•</span>
+                      <span className="text-[#6d28d9] mt-1.5">•</span>
                       <span>{item}</span>
                     </li>
                   ))}
@@ -161,11 +161,11 @@ export default function ShippingPolicyClient() {
             {/* Delivery Issues */}
             <section>
               <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">4</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">4</span>
                 Delivery Issues
               </h2>
               <div className="space-y-4">
-                <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6">
+                <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-[#0F1B3D] mb-3">Damaged or Lost Packages</h3>
                   <p className="text-[#6F7192] mb-3">
                     If your package arrives damaged or doesn&apos;t arrive:
@@ -178,13 +178,13 @@ export default function ShippingPolicyClient() {
                       'For lost packages, we will reship or provide a full refund',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2 text-[#6F7192]">
-                        <span className="text-[#7C5CFF] mt-1.5">•</span>
+                        <span className="text-[#6d28d9] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6">
+                <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-[#0F1B3D] mb-3">Failed Deliveries</h3>
                   <p className="text-[#6F7192] mb-3">
                     If delivery fails due to:
@@ -196,7 +196,7 @@ export default function ShippingPolicyClient() {
                       'Refused package: Treated as order cancellation (policy applies)',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2 text-[#6F7192]">
-                        <span className="text-[#7C5CFF] mt-1.5">•</span>
+                        <span className="text-[#6d28d9] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -208,10 +208,10 @@ export default function ShippingPolicyClient() {
             {/* International Shipping */}
             <section>
               <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">5</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">5</span>
                 International Shipping
               </h2>
-              <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-xl p-6 text-[#6F7192] leading-relaxed">
+              <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6 text-[#6F7192] leading-relaxed">
                 <p className="mb-3">
                   Currently, we only ship within India. We are working on expanding to
                   international markets. Subscribe to our newsletter to be notified when
@@ -221,9 +221,9 @@ export default function ShippingPolicyClient() {
             </section>
 
             {/* Contact */}
-            <section className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-2xl p-8">
+            <section className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-2xl p-8">
               <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-6 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">6</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">6</span>
                 Shipping Questions?
               </h2>
               <p className="text-[#6F7192] mb-6">

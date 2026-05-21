@@ -6,7 +6,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings()
   return {
     title: `${settings.businessName} — Terms of Service`,
-    description: settings.businessDescription || 'Read our Terms of Service to understand your rights and responsibilities when using FLUX 3D application.',
+    description: 'Read the Flux3D Terms of Service for custom 3D printing orders, quotes, payments, and account use.',
+    alternates: { canonical: '/terms-of-service' },
   }
 }
 

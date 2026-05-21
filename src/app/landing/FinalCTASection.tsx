@@ -20,7 +20,7 @@ export default function FinalCTASection() {
 
   return (
     <section ref={ref} className="relative py-24 px-6 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,rgba(249, 115, 22,0.08)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,rgba(109, 40, 217,0.08)_0%,transparent_70%)] pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 40, scale: 0.98 }}
@@ -32,7 +32,7 @@ export default function FinalCTASection() {
           <div
             className="absolute inset-0 opacity-10"
             style={{
-              backgroundImage: `radial-gradient(circle at 2px 2px, rgba(249,115,22,0.2) 1px, transparent 0)`,
+              backgroundImage: `radial-gradient(circle at 2px 2px, rgba(109, 40, 217,0.2) 1px, transparent 0)`,
               backgroundSize: '28px 28px'
             }}
           />
@@ -40,7 +40,7 @@ export default function FinalCTASection() {
           <motion.div
             className="absolute inset-0 rounded-3xl"
             style={{
-              background: 'conic-gradient(from 0deg, transparent, rgba(249,115,22,0.22), transparent, rgba(249,115,22,0.22), transparent)',
+              background: 'conic-gradient(from 0deg, transparent, rgba(109, 40, 217,0.22), transparent, rgba(109, 40, 217,0.22), transparent)',
               mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
               maskComposite: 'exclude',
               padding: 2
@@ -54,7 +54,7 @@ export default function FinalCTASection() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
               transition={{ delay: 0.2 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#f97316]/20 bg-[#fff7ed] px-4 py-1.5 text-sm font-medium text-[#f97316]"
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/20 bg-[#f3f0ff] px-4 py-1.5 text-sm font-medium text-[#6d28d9]"
             >
               <Sparkles className="w-4 h-4" />
               Get Started
@@ -115,9 +115,9 @@ export default function FinalCTASection() {
               transition={{ delay: 0.6 }}
               className="flex items-center justify-center gap-4 mb-6"
             >
-              <div className="w-12 h-px bg-[rgba(249,115,22,0.25)]" />
+              <div className="w-12 h-px bg-[rgba(109, 40, 217,0.25)]" />
               <span className="text-sm text-[#9ca3af]">or email us</span>
-              <div className="w-12 h-px bg-[rgba(249,115,22,0.25)]" />
+              <div className="w-12 h-px bg-[rgba(109, 40, 217,0.25)]" />
             </motion.div>
 
             <motion.a
@@ -125,7 +125,7 @@ export default function FinalCTASection() {
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
               transition={{ delay: 0.7 }}
-              className="inline-flex items-center gap-2 text-[#4b4b4b] transition-colors hover:text-[#f97316]"
+              className="inline-flex items-center gap-2 text-[#4b4b4b] transition-colors hover:text-[#6d28d9]"
             >
               <Mail className="w-4 h-4" />
               {settings.primaryEmail || 'hello@flux3d.in'}
@@ -141,7 +141,7 @@ export default function FinalCTASection() {
               {reassurancePills.map((pill, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#e8e4df] bg-[#fff7ed] px-3 py-1.5 text-xs text-[#4b4b4b]"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#e8e4df] bg-[#f3f0ff] px-3 py-1.5 text-xs text-[#4b4b4b]"
                 >
                   <Check className="w-3 h-3" />
                   {pill}

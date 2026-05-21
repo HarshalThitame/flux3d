@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   offer_name text,
   cancel_requested boolean NOT NULL DEFAULT false,
   status text NOT NULL DEFAULT 'pending',
+  status_timestamps jsonb NOT NULL DEFAULT jsonb_build_object('pending', now()),
   notes text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
@@ -109,21 +110,64 @@ CREATE TABLE IF NOT EXISTS public.quotes (
   layer_height numeric(4,2)
 );
 
--- 4. Delivery addresses table
-CREATE TABLE IF NOT EXISTS public.delivery_addresses (
+-- 4. Addresses table
+CREATE TABLE IF NOT EXISTS public.addresses (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.profiles (id) ON DELETE CASCADE,
   full_name text NOT NULL,
   phone text NOT NULL,
-  address_line1 text NOT NULL,
-  address_line2 text,
+  address_line_1 text NOT NULL,
+  address_line_2 text,
   city text NOT NULL,
   state text NOT NULL,
   pincode text NOT NULL,
+  country text NOT NULL DEFAULT 'India',
   landmark text,
+  is_default boolean DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+CREATE INDEX IF NOT EXISTS idx_addresses_user_id ON public.addresses(user_id);
+CREATE INDEX IF NOT EXISTS idx_addresses_created_at ON public.addresses(created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_addresses_one_default_per_user
+ON public.addresses(user_id)
+WHERE is_default = true;
+
+CREATE OR REPLACE FUNCTION public.update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION public.enforce_single_default_address()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.is_default = TRUE THEN
+    UPDATE public.addresses
+    SET is_default = FALSE
+    WHERE user_id = NEW.user_id AND id != NEW.id AND is_default = TRUE;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS single_default_address ON public.addresses;
+CREATE TRIGGER single_default_address
+  AFTER INSERT OR UPDATE OF is_default ON public.addresses
+  FOR EACH ROW
+  WHEN (NEW.is_default = TRUE)
+  EXECUTE FUNCTION public.enforce_single_default_address();
+
+DROP TRIGGER IF EXISTS addresses_updated_at ON public.addresses;
+CREATE TRIGGER addresses_updated_at
+  BEFORE UPDATE ON public.addresses
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at();
 
 -- 5. Materials table
 CREATE TABLE IF NOT EXISTS public.materials (
@@ -271,7 +315,7 @@ ON CONFLICT (id) DO NOTHING;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.quotes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.delivery_addresses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.addresses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.materials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.business_settings ENABLE ROW LEVEL SECURITY;
 
@@ -355,22 +399,24 @@ GRANT UPDATE (
   updated_at
 ) ON public.orders TO authenticated;
 
--- Delivery addresses policies
-DROP POLICY IF EXISTS "delivery_addresses_select_own" ON public.delivery_addresses;
-CREATE POLICY "delivery_addresses_select_own" ON public.delivery_addresses FOR SELECT TO authenticated
+-- Addresses policies
+DROP POLICY IF EXISTS "addresses_select_own" ON public.addresses;
+CREATE POLICY "addresses_select_own" ON public.addresses FOR SELECT TO authenticated
 USING (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "delivery_addresses_insert_own" ON public.delivery_addresses;
-CREATE POLICY "delivery_addresses_insert_own" ON public.delivery_addresses FOR INSERT TO authenticated
+DROP POLICY IF EXISTS "addresses_insert_own" ON public.addresses;
+CREATE POLICY "addresses_insert_own" ON public.addresses FOR INSERT TO authenticated
 WITH CHECK (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "delivery_addresses_update_own" ON public.delivery_addresses;
-CREATE POLICY "delivery_addresses_update_own" ON public.delivery_addresses FOR UPDATE TO authenticated
+DROP POLICY IF EXISTS "addresses_update_own" ON public.addresses;
+CREATE POLICY "addresses_update_own" ON public.addresses FOR UPDATE TO authenticated
 USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "delivery_addresses_delete_own" ON public.delivery_addresses;
-CREATE POLICY "delivery_addresses_delete_own" ON public.delivery_addresses FOR DELETE TO authenticated
+DROP POLICY IF EXISTS "addresses_delete_own" ON public.addresses;
+CREATE POLICY "addresses_delete_own" ON public.addresses FOR DELETE TO authenticated
 USING (auth.uid() = user_id);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.addresses TO authenticated;
 
 -- Materials policies (allow all authenticated users to read, admin to manage)
 DROP POLICY IF EXISTS "materials_select_all" ON public.materials;

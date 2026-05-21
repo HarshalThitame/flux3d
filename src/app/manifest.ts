@@ -9,8 +9,8 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
         description: settings.businessDescription || '3D printing, rapid prototyping, resin printing, and custom CAD support across India.',
         start_url: '/',
         display: 'standalone',
-        background_color: '#FFFFFF',
-        theme_color: '#7C5CFF',
+        background_color: '#f9f7f4',
+        theme_color: '#6d28d9',
         icons: [
             {
                 src: settings.faviconUrl,

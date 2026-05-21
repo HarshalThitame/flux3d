@@ -42,7 +42,7 @@ export default function PaymentsPage() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#7C5CFF]">
+        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/20 bg-[#6d28d9]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#6d28d9]">
           <CreditCard className="h-3 w-3" />
           Payments & Invoices
         </div>
@@ -96,10 +96,10 @@ export default function PaymentsPage() {
             { key: 'gateway', label: 'Gateway', sortable: true, render: (row: PaymentData) => <span className="text-[#6F7192]">{row.gateway}</span> },
             { key: 'date', label: 'Date', sortable: true, render: (row: PaymentData) => <span className="text-[#6F7192]">{row.date}</span> },
             { key: 'invoice', label: 'Invoice', render: () => (
-              <button className="text-[#7C5CFF] hover:text-[#7C5CFF] text-sm">Generate</button>
+              <button className="text-[#6d28d9] hover:text-[#6d28d9] text-sm">Generate</button>
             )},
             { key: 'action', label: 'Action', render: () => (
-              <button className="text-[#7C5CFF] hover:text-[#7C5CFF] text-sm">View</button>
+              <button className="text-[#6d28d9] hover:text-[#6d28d9] text-sm">View</button>
             )},
           ]}
         />

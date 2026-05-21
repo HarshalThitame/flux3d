@@ -44,11 +44,12 @@ export default async function SavedQuotesPage() {
   const rows = (quotes ?? []) as SavedQuoteRow[]
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-28 text-[#0F1B3D] md:px-8">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       <Navbar transparent />
+      <main className="px-4 pb-16 pt-8 md:px-8 md:pt-10">
       <div className="mx-auto max-w-6xl space-y-6">
-        <div className="rounded-[32px] border border-[#7C5CFF]/10 bg-[rgba(255,255,255,0.96)] p-6 backdrop-blur-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#7C5CFF]">
+        <div className="rounded-[32px] border border-[#6d28d9]/10 bg-[rgba(255,255,255,0.96)] p-6 backdrop-blur-2xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/20 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#6d28d9]">
             Quote History
           </div>
           <h1 className="mt-5 font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D]">
@@ -60,7 +61,7 @@ export default async function SavedQuotesPage() {
         </div>
 
         {rows.length === 0 ? (
-          <div className="rounded-[28px] border border-[#7C5CFF]/10 bg-white/[0.03] p-8 text-center backdrop-blur-xl">
+          <div className="rounded-[28px] border border-[#6d28d9]/10 bg-white/[0.03] p-8 text-center backdrop-blur-xl">
             <div className="text-xl font-medium text-[#0F1B3D]">
               {quotesTableUnavailable ? 'Saved quotes unavailable' : 'No quotes saved yet.'}
             </div>
@@ -71,7 +72,7 @@ export default async function SavedQuotesPage() {
             </p>
             <Link
               href="/instant-quote"
-              className="mt-6 inline-flex rounded-2xl bg-[#7C5CFF] px-5 py-3 text-sm font-medium text-white"
+              className="mt-6 inline-flex rounded-2xl bg-[#6d28d9] px-5 py-3 text-sm font-medium text-white"
             >
               Create a quote
             </Link>
@@ -81,7 +82,7 @@ export default async function SavedQuotesPage() {
             {rows.map((quote) => (
               <div
                 key={quote.id}
-                className="rounded-[28px] border border-[#7C5CFF]/10 bg-white/[0.03] p-6 backdrop-blur-xl"
+                className="rounded-[28px] border border-[#6d28d9]/10 bg-white/[0.03] p-6 backdrop-blur-xl"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -102,7 +103,7 @@ export default async function SavedQuotesPage() {
                 </div>
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                  <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
                     <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">
                       Estimated total
                     </div>
@@ -112,7 +113,7 @@ export default async function SavedQuotesPage() {
                         : 'Unavailable'}
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                  <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
                     <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">
                       Machine hours
                     </div>
@@ -122,13 +123,13 @@ export default async function SavedQuotesPage() {
                         : '—'}
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                  <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
                     <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Material</div>
                     <div className="mt-2 text-sm text-[#0F1B3D]">
                       {quote.config?.materialId ?? 'Unknown'}
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                  <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
                     <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Storage path</div>
                     <div className="mt-2 break-all text-sm text-[#0F1B3D]">
                       {quote.file_path ?? 'No uploaded file path'}
@@ -136,7 +137,7 @@ export default async function SavedQuotesPage() {
                   </div>
                 </div>
 
-                <div className="mt-5 rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-4">
+                <div className="mt-5 rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
                   <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Dimensions</div>
                   <div className="mt-2 text-sm text-[#0F1B3D]">
                     {quote.estimate?.dimensions
@@ -158,6 +159,7 @@ export default async function SavedQuotesPage() {
           </div>
         )}
       </div>
+      </main>
     </div>
   )
 }

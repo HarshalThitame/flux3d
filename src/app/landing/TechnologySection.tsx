@@ -10,42 +10,42 @@ const specs = [
     label: 'Max Print Speed',
     value: '500 mm/s',
     note: '10× faster than standard printers',
-    color: 'from-[#f97316] to-[#f59e0b]'
+    color: 'from-[#6d28d9] to-[#a855f7]'
   },
   {
     icon: Layers,
     label: 'Layer Resolution',
     value: '0.05mm',
     note: 'Near-invisible layer lines',
-    color: 'from-[#f59e0b] to-[#f59e0b]'
+    color: 'from-[#a855f7] to-[#a855f7]'
   },
   {
     icon: Box,
     label: 'Build Volume',
     value: '256³mm',
     note: 'Large format single-piece prints',
-    color: 'from-[#f97316] to-[#f97316]'
+    color: 'from-[#6d28d9] to-[#6d28d9]'
   },
   {
     icon: Palette,
     label: 'Multi-Color',
     value: '4-Color AMS',
     note: 'Automatic material switching',
-    color: 'from-[#f59e0b] to-[#f59e0b]'
+    color: 'from-[#a855f7] to-[#a855f7]'
   },
   {
     icon: Printer,
     label: 'Resin Resolution',
     value: '4K · 0.05mm',
     note: 'Elegoo Saturn 4 fleet',
-    color: 'from-[#fb7185] to-[#f97316]'
+    color: 'from-[#fb7185] to-[#6d28d9]'
   },
   {
     icon: Eye,
     label: 'AI Monitoring',
     value: 'Built-in Camera',
     note: 'Auto-detects print failures',
-    color: 'from-[#f59e0b] to-[#f97316]'
+    color: 'from-[#a855f7] to-[#6d28d9]'
   }
 ]
 
@@ -56,7 +56,7 @@ export default function TechnologySection() {
   return (
     <section ref={ref} className="relative py-24 px-6 overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(249, 115, 22,0.06)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(109, 40, 217,0.06)_0%,transparent_70%)] pointer-events-none" />
 
       <div className="max-w-[1200px] mx-auto relative z-10">
         {/* Header */}
@@ -65,7 +65,7 @@ export default function TechnologySection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#f97316] uppercase tracking-normal mb-4">Our Equipment</p>
+          <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">Our Equipment</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
             Printed on{' '}
             <span className="gradient-text">
@@ -88,7 +88,7 @@ export default function TechnologySection() {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: i * 0.1 }}
               whileHover={{ y: -6, transition: { duration: 0.2 } }}
-              className="group relative bg-[#faf9f7] border border-[rgba(249, 115, 22,0.5)] rounded-2xl p-8 overflow-hidden hover:border-[rgba(249, 115, 22,0.3)] transition-colors"
+              className="group relative bg-[#faf9f7] border border-[rgba(109, 40, 217,0.5)] rounded-2xl p-8 overflow-hidden hover:border-[rgba(109, 40, 217,0.3)] transition-colors"
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${spec.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
               <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${spec.color} scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500`} />

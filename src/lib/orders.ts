@@ -14,6 +14,51 @@ export const orderStatuses = [
 
 export type OrderStatus = (typeof orderStatuses)[number]
 
+export const orderProgressStatuses: Exclude<OrderStatus, 'cancelled'>[] = [
+  'pending',
+  'confirmed',
+  'printing',
+  'shipped',
+  'delivered',
+  'completed',
+]
+
+export function getNextOrderStatus(status: OrderStatus): OrderStatus | null {
+  const currentIndex = orderProgressStatuses.indexOf(status as Exclude<OrderStatus, 'cancelled'>)
+  if (currentIndex === -1) return null
+  return orderProgressStatuses[currentIndex + 1] ?? null
+}
+
+export function canCancelOrderStatus(status: OrderStatus) {
+  return status !== 'cancelled' && status !== 'completed'
+}
+
+export function isSequentialOrderStatusTransition(currentStatus: OrderStatus, nextStatus: OrderStatus) {
+  if (currentStatus === nextStatus) return true
+  if (nextStatus === 'cancelled') return canCancelOrderStatus(currentStatus)
+  return getNextOrderStatus(currentStatus) === nextStatus
+}
+
+export function getAllowedOrderStatusTransitions(status: OrderStatus): OrderStatus[] {
+  const nextStatus = getNextOrderStatus(status)
+  return [
+    status,
+    ...(nextStatus ? [nextStatus] : []),
+    ...(canCancelOrderStatus(status) ? ['cancelled' as const] : []),
+  ]
+}
+
+export function getOrderStatusTransitionError(currentStatus: OrderStatus, nextStatus: OrderStatus) {
+  const nextStatusLabel = getNextOrderStatus(currentStatus)
+  if (nextStatus === 'cancelled' && !canCancelOrderStatus(currentStatus)) {
+    return 'This order can no longer be cancelled.'
+  }
+  if (nextStatusLabel) {
+    return `Move order status one step at a time. Next status is ${nextStatusLabel}.`
+  }
+  return 'This order status cannot be changed.'
+}
+
 export type CreateOrderInput = {
   fileUrl: string
   material: string

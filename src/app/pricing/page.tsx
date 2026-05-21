@@ -1,30 +1,21 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
-import { getSettings } from '@/lib/settings'
 
 export const dynamic = 'force-static'
 
 import Navbar from '@/components/Navbar'
-import { absoluteUrl } from '@/lib/site'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import PricingClient from './PricingClient'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSettings()
-  return {
-    title: `${settings.businessName} — 3D Printing Pricing That Feels Clear`,
-    description:
-      settings.businessDescription || 'See transparent starting prices for 3D printing, CAD support, and express production, then move into a fast, accurate quote workflow.',
-    alternates: {
-      canonical: '/pricing',
-    },
-    openGraph: {
-      title: `${settings.businessName} Pricing`,
-      description:
-        settings.businessDescription || 'Transparent pricing guidance for FDM, resin, multi-color printing, CAD support, and express production.',
-      url: absoluteUrl('/pricing'),
-    },
-  }
+export const metadata: Metadata = {
+  title: {
+    absolute: '3D Printing Pricing — Transparent Costs Starting ₹99 | Flux3D',
+  },
+  description:
+    'Simple, transparent 3D printing pricing. Upload your model and get an instant quote. Starting ₹99. No hidden charges. Pan-India delivery included.',
+  alternates: {
+    canonical: '/pricing',
+  },
 }
 
 export default async function PricingPage() {
@@ -58,7 +49,7 @@ export default async function PricingPage() {
   return (
     <div>
       <Navbar transparent />
-      <Suspense fallback={<div className="min-h-96 bg-[#FFFFFF] animate-pulse rounded-2xl mx-6 mt-32" />}>
+      <Suspense fallback={<div className="min-h-96 bg-[#FFFFFF] animate-pulse rounded-2xl mx-6 mt-8 md:mt-10" />}>
         <PricingClient materials={materials} />
       </Suspense>
     </div>

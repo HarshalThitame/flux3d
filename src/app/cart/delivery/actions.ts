@@ -196,26 +196,45 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
     pincode: input.pincode.trim(),
     landmark: input.landmark?.trim() ? input.landmark.trim() : null,
   }
+  const savedAddress = {
+    full_name: trimmedAddress.full_name,
+    phone: trimmedAddress.phone,
+    address_line_1: trimmedAddress.address_line1,
+    address_line_2: trimmedAddress.address_line2,
+    city: trimmedAddress.city,
+    state: trimmedAddress.state,
+    pincode: trimmedAddress.pincode,
+    landmark: trimmedAddress.landmark,
+    country: 'India',
+    is_default: true,
+    updated_at: new Date().toISOString(),
+  }
 
   const { data: existingAddress } = await supabase
-    .from('delivery_addresses')
+    .from('addresses')
     .select('id')
     .eq('user_id', auth.user.id)
-    .eq('full_name', trimmedAddress.full_name)
-    .eq('phone', trimmedAddress.phone)
-    .eq('address_line1', trimmedAddress.address_line1)
-    .eq('city', trimmedAddress.city)
-    .eq('state', trimmedAddress.state)
-    .eq('pincode', trimmedAddress.pincode)
+    .eq('full_name', savedAddress.full_name)
+    .eq('phone', savedAddress.phone)
+    .eq('address_line_1', savedAddress.address_line_1)
+    .eq('city', savedAddress.city)
+    .eq('state', savedAddress.state)
+    .eq('pincode', savedAddress.pincode)
     .maybeSingle()
+
+  const { error: clearDefaultAddressError } = await supabase
+    .from('addresses')
+    .update({ is_default: false })
+    .eq('user_id', auth.user.id)
+
+  if (clearDefaultAddressError) {
+    console.error('[orders] Failed to clear default delivery addresses:', clearDefaultAddressError)
+  }
 
   if (existingAddress) {
     const { error: addressUpdateError } = await supabase
-      .from('delivery_addresses')
-      .update({
-        ...trimmedAddress,
-        updated_at: new Date().toISOString(),
-      })
+      .from('addresses')
+      .update(savedAddress)
       .eq('id', existingAddress.id)
       .eq('user_id', auth.user.id)
 
@@ -223,9 +242,9 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
       console.error('[orders] Failed to update delivery address:', addressUpdateError)
     }
   } else {
-    const { error: addressInsertError } = await supabase.from('delivery_addresses').insert({
+    const { error: addressInsertError } = await supabase.from('addresses').insert({
       user_id: auth.user.id,
-      ...trimmedAddress,
+      ...savedAddress,
     })
 
     if (addressInsertError) {

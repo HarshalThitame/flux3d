@@ -236,7 +236,7 @@ export default function CustomerProfilePage() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium whitespace-nowrap transition ${
                 activeTab === tab.id
-                  ? 'bg-[#7C5CFF]/15 text-[#0F1B3D]'
+                  ? 'bg-[#6d28d9]/15 text-[#0F1B3D]'
                   : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#0F1B3D]'
               }`}
             >
@@ -635,7 +635,7 @@ export default function CustomerProfilePage() {
                   <label className="mb-2 block text-xs font-medium text-[#6F7192]">Tags</label>
                   <div className="flex flex-wrap gap-2">
                     {(profile?.tags || []).map((tag: string, index: number) => (
-                      <span key={index} className="rounded-full bg-[#7C5CFF]/20 px-3 py-1 text-xs text-[#7C5CFF]">
+                      <span key={index} className="rounded-full bg-[#6d28d9]/20 px-3 py-1 text-xs text-[#6d28d9]">
                         {tag}
                       </span>
                     ))}
@@ -647,12 +647,12 @@ export default function CustomerProfilePage() {
                 <div>
                   <label className="mb-2 block text-xs font-medium text-[#6F7192]">Notes</label>
                   <textarea
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-[#0F1B3D] placeholder-[#5a6580] outline-none transition focus:border-[#7C5CFF]/50"
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-[#0F1B3D] placeholder-[#5a6580] outline-none transition focus:border-[#6d28d9]/50"
                     rows={4}
                     placeholder="Add notes about this customer..."
                     defaultValue={profile?.notes || ''}
                   />
-                  <button className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#7C5CFF] px-4 py-2 text-sm font-medium text-[#0F1B3D] transition hover:opacity-90">
+                  <button className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-medium text-[#0F1B3D] transition hover:opacity-90">
                     <Save className="h-4 w-4" />
                     Save Notes
                   </button>

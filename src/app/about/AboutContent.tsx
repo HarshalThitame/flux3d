@@ -29,31 +29,31 @@ const whyChooseUs = [
     icon: Printer,
     title: 'Bambu-Powered Precision',
     description: 'Industry-grade Bambu Lab printers delivering multi-color, multi-material prints with micron-level accuracy. No compromises.',
-    color: 'from-[#7C5CFF] to-[#A78BFA]',
+    color: 'from-[#6d28d9] to-[#a855f7]',
   },
   {
     icon: Truck,
     title: 'Pan-India Delivery',
                  description: 'Based in Mumbai, delivering to Pune, Bangalore, Delhi, Hyderabad, Chennai & beyond. Tracked, secure packaging.',
-    color: 'from-[#A78BFA] to-[#A78BFA]',
+    color: 'from-[#a855f7] to-[#a855f7]',
   },
   {
     icon: IndianRupee,
     title: 'Made-in-India Pricing',
     description: 'Transparent INR pricing with UPI, NEFT & card support. No dollar conversions, no hidden charges.',
-    color: 'from-[#7C5CFF] to-[#7C5CFF]',
+    color: 'from-[#6d28d9] to-[#6d28d9]',
   },
   {
     icon: Clock,
     title: 'Real Turnaround Times',
     description: 'Standard orders printed & dispatched in 24-72 hours. Rush jobs? Talk to us for expedited options.',
-    color: 'from-[#A78BFA] to-[#A78BFA]',
+    color: 'from-[#a855f7] to-[#a855f7]',
   },
   {
     icon: HeadphonesIcon,
     title: 'White-Glove Support',
     description: 'Material selection to file optimization — we ensure the right print, not just a quick print.',
-    color: 'from-[#8B5CF6] to-[#a78bfa]',
+    color: 'from-[#8B5CF6] to-[#a855f7]',
   },
   {
     icon: Globe,
@@ -97,14 +97,14 @@ export default function AboutContent() {
         initial="hidden"
         animate={heroInView ? 'visible' : 'hidden'}
         variants={fadeInUp}
-        className="relative pt-32 pb-20 px-6 text-center"
+        className="relative pt-10 pb-16 px-6 text-center"
       >
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_30%,rgba(124, 92, 255,0.08)_0%,transparent_70%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_30%,rgba(109, 40, 217,0.08)_0%,transparent_70%)] pointer-events-none" />
         
         <div className="max-w-4xl mx-auto relative z-10">
           <motion.p
             variants={fadeInUp}
-            className="text-[#7C5CFF] text-sm font-semibold tracking-[3px] uppercase mb-6"
+            className="text-[#6d28d9] text-sm font-semibold tracking-[3px] uppercase mb-6"
           >
             About Flux 3D
           </motion.p>
@@ -114,7 +114,7 @@ export default function AboutContent() {
             className="font-[var(--font-syne)] text-[clamp(2rem,6vw,4rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1] mb-6"
           >
             We Don&apos;t Just Print{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#a855f7]">
               Objects.
             </span>
             <br />
@@ -143,7 +143,7 @@ export default function AboutContent() {
       >
         <div className="max-w-5xl mx-auto">
           <motion.div variants={fadeInUp} className="mb-12">
-            <span className="text-[#7C5CFF] text-sm font-semibold tracking-[3px] uppercase">Who We Are</span>
+            <span className="text-[#6d28d9] text-sm font-semibold tracking-[3px] uppercase">Who We Are</span>
             <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] mt-4 leading-[1.2]">
               Precision Meets Passion
             </h2>
@@ -158,7 +158,7 @@ export default function AboutContent() {
               </p>
               <p className="text-[#6F7192] leading-[1.8]">
                 We run industry-grade{' '}
-                <span className="text-[#7C5CFF] font-medium">Bambu Lab printers</span> to deliver 
+                <span className="text-[#6d28d9] font-medium">Bambu Lab printers</span> to deliver 
                 parts, prototypes, and products with tolerances and surface finishes that look 
                 as good as they perform.
               </p>
@@ -170,7 +170,7 @@ export default function AboutContent() {
                 To make high-quality 3D printing accessible to every innovator across India — 
                 from a first-time creator in a college dorm to an R&D team at a scaling startup.
               </p>
-              <p className="text-[#6F7192] leading-[1.8] italic border-l-2 border-[#7C5CFF] pl-4">
+              <p className="text-[#6F7192] leading-[1.8] italic border-l-2 border-[#6d28d9] pl-4">
                 &ldquo;We believe the barrier between an idea and a physical object should be nothing 
                 but a few hours of print time.&rdquo;
               </p>
@@ -189,10 +189,10 @@ export default function AboutContent() {
       >
         <div className="max-w-6xl mx-auto">
           <motion.div variants={fadeInUp} className="text-center mb-16">
-            <span className="text-[#7C5CFF] text-sm font-semibold tracking-[3px] uppercase">Why Flux 3D?</span>
+            <span className="text-[#6d28d9] text-sm font-semibold tracking-[3px] uppercase">Why Flux 3D?</span>
             <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] mt-4 leading-[1.2]">
               Built Different.{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#a855f7]">
                 By Design.
               </span>
             </h2>
@@ -204,7 +204,7 @@ export default function AboutContent() {
                 key={i}
                 variants={fadeInUp}
                 whileHover={{ y: -6, transition: { duration: 0.2 } }}
-                className="group relative bg-[#FFFFFF] border border-white/[0.07] rounded-2xl p-6 hover:border-[rgba(124, 92, 255,0.3)] transition-all duration-300"
+                className="group relative bg-[#FFFFFF] border border-white/[0.07] rounded-2xl p-6 hover:border-[rgba(109, 40, 217,0.3)] transition-all duration-300"
               >
                 <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-2xl`} />
                 <div className={`relative z-10 w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} p-0.5 mb-4`}>
@@ -212,7 +212,7 @@ export default function AboutContent() {
                     <item.icon className="w-6 h-6 text-[#0F1B3D]" />
                   </div>
                 </div>
-                <h3 className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D] mb-2 group-hover:text-[#7C5CFF] transition-colors">
+                <h3 className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D] mb-2 group-hover:text-[#6d28d9] transition-colors">
                   {item.title}
                 </h3>
                 <p className="text-sm text-[#6F7192] leading-[1.7]">
@@ -233,7 +233,7 @@ export default function AboutContent() {
         className="relative py-20 px-6"
       >
         <div className="max-w-4xl mx-auto text-center">
-          <span className="text-[#7C5CFF] text-sm font-semibold tracking-[3px] uppercase">What We Print</span>
+          <span className="text-[#6d28d9] text-sm font-semibold tracking-[3px] uppercase">What We Print</span>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] mt-4 mb-12 leading-[1.2]">
             Every Industry. Every Need.
           </h2>
@@ -245,7 +245,7 @@ export default function AboutContent() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={valuesInView ? { opacity: 1, scale: 1 } : {}}
                 transition={{ delay: i * 0.05 }}
-                className="text-sm bg-[#FFFFFF] border border-white/[0.07] text-[#6F7192] px-4 py-2 rounded-full hover:border-[#7C5CFF]/30 hover:text-[#0F1B3D] transition-colors"
+                className="text-sm bg-[#FFFFFF] border border-white/[0.07] text-[#6F7192] px-4 py-2 rounded-full hover:border-[#6d28d9]/30 hover:text-[#0F1B3D] transition-colors"
               >
                 {type}
               </motion.span>
@@ -265,10 +265,10 @@ export default function AboutContent() {
         <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <span className="text-[#7C5CFF] text-sm font-semibold tracking-[3px] uppercase">Our Values</span>
+              <span className="text-[#6d28d9] text-sm font-semibold tracking-[3px] uppercase">Our Values</span>
               <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] mt-4 mb-6 leading-[1.2]">
                 Principles That{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA]">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#a855f7]">
                   Drive Us.
                 </span>
               </h2>
@@ -287,8 +287,8 @@ export default function AboutContent() {
                   transition={{ delay: i * 0.1 }}
                   className="flex items-start gap-4 bg-[#FFFFFF] border border-white/[0.07] rounded-xl p-4"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-[#7C5CFF]/10 flex items-center justify-center flex-shrink-0">
-                    <value.icon className="w-5 h-5 text-[#7C5CFF]" />
+                  <div className="w-10 h-10 rounded-lg bg-[#6d28d9]/10 flex items-center justify-center flex-shrink-0">
+                    <value.icon className="w-5 h-5 text-[#6d28d9]" />
                   </div>
                   <p className="text-[#0F1B3D] leading-[1.6] pt-2">{value.text}</p>
                 </motion.div>
@@ -308,19 +308,19 @@ export default function AboutContent() {
       >
         <div className="max-w-4xl mx-auto">
           <div className="bg-[#FFFFFF] border border-white/[0.07] rounded-3xl p-8 md:p-12">
-            <span className="text-[#7C5CFF] text-sm font-semibold tracking-[3px] uppercase">The Flux Story</span>
+            <span className="text-[#6d28d9] text-sm font-semibold tracking-[3px] uppercase">The Flux Story</span>
             <h2 className="font-[var(--font-syne)] text-[clamp(1.5rem,3vw,2.5rem)] font-extrabold text-[#0F1B3D] mt-4 mb-6 leading-[1.2]">
               Born From Frustration.{' '}
               <span className="text-[#6F7192]">Built For You.</span>
             </h2>
-            <blockquote className="border-l-4 border-[#7C5CFF] pl-6 py-2">
+            <blockquote className="border-l-4 border-[#6d28d9] pl-6 py-2">
               <p className="text-lg text-[#6F7192] leading-[1.8] italic">
                 &ldquo;Flux 3D started as a frustration with the gap between 3D printing&apos;s potential 
                 and what most Indian print services actually delivered. We built the studio we 
                 wished existed — fast machines, honest pricing, and people who actually care 
                 about your project.&rdquo;
               </p>
-              <footer className="mt-4 text-[#7C5CFF] font-medium">— The Flux 3D Team</footer>
+              <footer className="mt-4 text-[#6d28d9] font-medium">— The Flux 3D Team</footer>
             </blockquote>
           </div>
         </div>
@@ -339,7 +339,7 @@ export default function AboutContent() {
               <motion.div
                 key={i}
                 variants={fadeInUp}
-                className="text-center bg-[#FFFFFF] border border-white/[0.07] rounded-2xl p-6 hover:border-[#7C5CFF]/30 transition-colors"
+                className="text-center bg-[#FFFFFF] border border-white/[0.07] rounded-2xl p-6 hover:border-[#6d28d9]/30 transition-colors"
               >
                 <div className="text-4xl mb-3">{stat.icon}</div>
                 <div className="font-[var(--font-syne)] text-3xl md:text-4xl font-extrabold text-[#0F1B3D] mb-2">
@@ -360,12 +360,12 @@ export default function AboutContent() {
         animate={ctaInView ? 'visible' : 'hidden'}
         className="relative py-32 px-6 text-center"
       >
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(124, 92, 255,0.08)_0%,transparent_70%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(109, 40, 217,0.08)_0%,transparent_70%)] pointer-events-none" />
         
         <div className="max-w-3xl mx-auto relative z-10">
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,5vw,3.5rem)] font-extrabold text-[#0F1B3D] mb-6 leading-[1.1]">
             Ready to Bring Your{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C5CFF] to-[#A78BFA]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#a855f7]">
               Design to Life?
             </span>
           </h2>
@@ -376,7 +376,7 @@ export default function AboutContent() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="/instant-quote"
-              className="inline-flex items-center justify-center gap-2 bg-[#7C5CFF] text-white px-8 py-4 rounded-xl text-lg font-semibold hover:shadow-[0_0_40px_rgba(124, 92, 255,0.3)] transition-shadow"
+              className="inline-flex items-center justify-center gap-2 bg-[#6d28d9] text-white px-8 py-4 rounded-xl text-lg font-semibold hover:shadow-[0_0_40px_rgba(109, 40, 217,0.3)] transition-shadow"
             >
               Get a Quote →
             </a>

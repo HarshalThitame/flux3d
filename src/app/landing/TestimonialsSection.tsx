@@ -60,11 +60,11 @@ function TestimonialCard({ testimonial, index }: { testimonial: typeof testimoni
   const isInView = useInView(ref, { once: true, margin: '-50px' })
 
   const colors = [
-    'from-[#f97316] to-[#f59e0b]',
-    'from-[#f59e0b] to-[#f59e0b]',
-    'from-[#f97316] to-[#f97316]',
-    'from-[#fb7185] to-[#f97316]',
-    'from-[#f59e0b] to-[#f97316]',
+    'from-[#6d28d9] to-[#a855f7]',
+    'from-[#a855f7] to-[#a855f7]',
+    'from-[#6d28d9] to-[#6d28d9]',
+    'from-[#fb7185] to-[#6d28d9]',
+    'from-[#a855f7] to-[#6d28d9]',
     'from-[#0f766e] to-[#14b8a6]'
   ]
 
@@ -75,7 +75,7 @@ function TestimonialCard({ testimonial, index }: { testimonial: typeof testimoni
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ delay: index * 0.1 }}
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
-      className="bg-[#faf9f7] border border-[rgba(249, 115, 22,0.5)] rounded-2xl p-8 hover:border-[rgba(249, 115, 22,0.2)] transition-colors"
+      className="bg-[#faf9f7] border border-[rgba(109, 40, 217,0.5)] rounded-2xl p-8 hover:border-[rgba(109, 40, 217,0.2)] transition-colors"
     >
       {/* Tag */}
       <div className={`inline-flex items-center bg-gradient-to-r ${colors[index]} text-[#0F1B3D] text-xs font-semibold px-3 py-1 rounded-full mb-4`}>
@@ -85,7 +85,7 @@ function TestimonialCard({ testimonial, index }: { testimonial: typeof testimoni
       {/* Stars */}
       <div className="flex gap-1 mb-4">
         {Array.from({ length: testimonial.stars }).map((_, i) => (
-          <Star key={i} className="w-4 h-4 fill-[#f97316] text-[#f97316]" />
+          <Star key={i} className="w-4 h-4 fill-[#6d28d9] text-[#6d28d9]" />
         ))}
       </div>
 
@@ -95,7 +95,7 @@ function TestimonialCard({ testimonial, index }: { testimonial: typeof testimoni
       </p>
 
       {/* Author */}
-      <div className="flex items-center gap-3 pt-4 border-t border-[rgba(249, 115, 22,0.4)]">
+      <div className="flex items-center gap-3 pt-4 border-t border-[rgba(109, 40, 217,0.4)]">
         <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${colors[index]} flex items-center justify-center text-[#0F1B3D] font-bold text-sm`}>
           {testimonial.name.charAt(0)}
         </div>
@@ -115,7 +115,7 @@ export default function TestimonialsSection() {
   return (
     <section ref={ref} className="relative py-24 px-6 overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(249,115,22,0.03)] to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(109, 40, 217,0.03)] to-transparent pointer-events-none" />
 
       <div className="max-w-[1200px] mx-auto relative z-10">
         {/* Header */}
@@ -124,10 +124,10 @@ export default function TestimonialsSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#f97316] uppercase tracking-normal mb-4">What Our Customers Say</p>
+          <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">What Our Customers Say</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
             500+ Customers.{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] to-[#f59e0b]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#a855f7]">
               Zero Compromises.
             </span>
           </h2>
@@ -148,12 +148,12 @@ export default function TestimonialsSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.7 }}
-          className="bg-[#faf9f7] border border-[rgba(249, 115, 22,0.5)] rounded-2xl p-8"
+          className="bg-[#faf9f7] border border-[rgba(109, 40, 217,0.5)] rounded-2xl p-8"
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
               <div className="flex items-center justify-center gap-1 mb-1">
-                <Star className="w-5 h-5 fill-[#f97316] text-[#f97316]" />
+                <Star className="w-5 h-5 fill-[#6d28d9] text-[#6d28d9]" />
                 <span className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D]">4.9</span>
                 <span className="text-[#6F7192] text-sm">/ 5</span>
               </div>
@@ -168,7 +168,7 @@ export default function TestimonialsSection() {
               <p className="text-xs text-[#6F7192]">Platforms</p>
             </div>
             <div>
-              <div className="font-[var(--font-syne)] text-2xl font-extrabold text-[#f97316]">100%</div>
+              <div className="font-[var(--font-syne)] text-2xl font-extrabold text-[#6d28d9]">100%</div>
               <p className="text-xs text-[#6F7192]">Verified Buyers</p>
             </div>
           </div>

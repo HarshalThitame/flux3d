@@ -32,7 +32,7 @@ export default function BlogClient({
 
   return (
     <div className="public-shell bg-[var(--bg-soft)]">
-      <main className="px-6 pb-20 pt-32 md:px-12">
+      <main className="px-6 pb-20 pt-8 md:px-12 md:pt-10">
         <div className="mx-auto max-w-[1200px]">
           <div className="hero-glow hero-glow-1" />
           <div className="hero-glow hero-glow-2" />
@@ -75,6 +75,7 @@ export default function BlogClient({
                     src={featuredPost.featured_image || '/logo.png'}
                     alt={featuredPost.featured_image_alt || featuredPost.title}
                     fill
+                    loading="lazy"
                     sizes="(max-width: 768px) 100vw, 1200px"
                     className="h-full w-full object-cover opacity-60 transition-transform duration-500 group-hover:scale-105"
                   />
@@ -127,6 +128,7 @@ export default function BlogClient({
                       src={post.featured_image || '/logo.png'}
                       alt={post.featured_image_alt || post.title}
                       fill
+                      loading="lazy"
                       sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className="blog-card-image h-full w-full object-cover opacity-85"
                     />

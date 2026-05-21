@@ -82,7 +82,7 @@ export default function TicketsPage() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#7C5CFF]">
+        <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/20 bg-[#6d28d9]/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-[#6d28d9]">
           <Ticket className="h-3 w-3" />
           Support Tickets
         </div>
@@ -104,7 +104,7 @@ export default function TicketsPage() {
             onClick={() => setActiveTab(tab.value)}
             className={`rounded-xl border px-3.5 py-2 text-xs font-medium transition ${
               activeTab === tab.value
-                ? 'border-[#7C5CFF]/30 bg-[#7C5CFF]/10 text-[#7C5CFF]'
+                ? 'border-[#6d28d9]/30 bg-[#6d28d9]/10 text-[#6d28d9]'
                 : 'border-gray-200 bg-gray-50 text-[#6F7192] hover:bg-gray-100'
             }`}
           >
@@ -180,7 +180,7 @@ export default function TicketsPage() {
             { key: 'created', label: 'Created', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.created}</span> },
             { key: 'lastUpdated', label: 'Last Updated', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.lastUpdated}</span> },
             { key: 'action', label: 'Action', render: () => (
-              <button className="text-[#7C5CFF] hover:text-[#7C5CFF] text-sm">View</button>
+              <button className="text-[#6d28d9] hover:text-[#6d28d9] text-sm">View</button>
             )},
           ]}
         />

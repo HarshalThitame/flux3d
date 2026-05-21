@@ -12,7 +12,7 @@ const materials = [
     price: '₹8/g',
     traits: ['Easy to print', 'Biodegradable'],
     bestFor: 'Student projects, gifts, prototypes',
-    color: 'from-[#f97316] to-[#f97316]'
+    color: 'from-[#6d28d9] to-[#6d28d9]'
   },
   {
     icon: Shield,
@@ -20,7 +20,7 @@ const materials = [
     price: '₹9/g',
     traits: ['Strong & food-safe', 'Heat resistant'],
     bestFor: 'Functional parts, containers, engineering',
-    color: 'from-[#f59e0b] to-[#f59e0b]'
+    color: 'from-[#a855f7] to-[#a855f7]'
   },
   {
     icon: Package,
@@ -28,7 +28,7 @@ const materials = [
     price: '₹10/g',
     traits: ['Industrial grade', 'High impact'],
     bestFor: 'Machine parts, enclosures, automotive',
-    color: 'from-[#f97316] to-[#f59e0b]'
+    color: 'from-[#6d28d9] to-[#a855f7]'
   },
   {
     icon: Wind,
@@ -44,7 +44,7 @@ const materials = [
     price: '₹12/g',
     traits: ['Flexible & rubber-like', 'Shock absorbing'],
     bestFor: 'Grips, gaskets, wearables, phone cases',
-    color: 'from-[#f59e0b] to-[#f97316]'
+    color: 'from-[#a855f7] to-[#6d28d9]'
   },
   {
     icon: Zap,
@@ -52,7 +52,7 @@ const materials = [
     price: '₹18/g',
     traits: ['Lightweight & strong', 'Chemical resistant'],
     bestFor: 'Industrial jigs, structural parts',
-    color: 'from-[#f59e0b] to-[#f59e0b]'
+    color: 'from-[#a855f7] to-[#a855f7]'
   },
   {
     icon: Sparkles,
@@ -60,7 +60,7 @@ const materials = [
     price: '₹10/g',
     traits: ['Premium metallic sheen', 'Gorgeous finish'],
     bestFor: 'Gifts, trophies, display models, décor',
-    color: 'from-[#fb7185] to-[#f97316]'
+    color: 'from-[#fb7185] to-[#6d28d9]'
   },
   {
     icon: Palette,
@@ -68,7 +68,7 @@ const materials = [
     price: 'From ₹14/g',
     traits: ['4-color AMS system'],
     bestFor: 'Logos, figurines, prototypes, signage',
-    color: 'from-[#f97316] to-[#f59e0b]'
+    color: 'from-[#6d28d9] to-[#a855f7]'
   },
   {
     icon: Gem,
@@ -76,7 +76,7 @@ const materials = [
     price: '₹18/g',
     traits: ['Ultra fine detail', 'Smooth surface'],
     bestFor: 'Dental, miniatures, jewelry, props',
-    color: 'from-[#f97316] to-[#f59e0b]'
+    color: 'from-[#6d28d9] to-[#a855f7]'
   },
   {
     icon: Shield,
@@ -84,7 +84,7 @@ const materials = [
     price: '₹20/g',
     traits: ['Tough & durable'],
     bestFor: 'Engineering prototypes, functional resin parts',
-    color: 'from-[#f59e0b] to-[#f97316]'
+    color: 'from-[#a855f7] to-[#6d28d9]'
   }
 ]
 
@@ -96,7 +96,7 @@ export default function MaterialsSection() {
   return (
     <section ref={ref} className="relative py-24 px-6 overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(249,115,22,0.03)] to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(109, 40, 217,0.03)] to-transparent pointer-events-none" />
 
       <div className="max-w-[1200px] mx-auto relative z-10">
         {/* Header */}
@@ -105,7 +105,7 @@ export default function MaterialsSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#f97316] uppercase tracking-normal mb-4">Our Materials</p>
+          <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">Our Materials</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
             10+ Premium Materials.{' '}
             <span className="text-[#6F7192]">One Trusted Printer.</span>
@@ -124,7 +124,7 @@ export default function MaterialsSection() {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: i * 0.06 }}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="group bg-[#faf9f7] border border-[rgba(249, 115, 22,0.5)] rounded-xl p-6 hover:border-[rgba(249, 115, 22,0.2)] transition-colors"
+              className="group bg-[#faf9f7] border border-[rgba(109, 40, 217,0.5)] rounded-xl p-6 hover:border-[rgba(109, 40, 217,0.2)] transition-colors"
             >
               {/* Icon */}
               <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${material.color} p-0.5 mb-4`}>
@@ -135,16 +135,16 @@ export default function MaterialsSection() {
 
               {/* Name + Price */}
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-[var(--font-syne)] text-base font-bold text-[#0F1B3D] group-hover:text-[#f97316] transition-colors">
+                <h3 className="font-[var(--font-syne)] text-base font-bold text-[#0F1B3D] group-hover:text-[#6d28d9] transition-colors">
                   {material.name}
                 </h3>
-                <span className="text-sm text-[#f97316] font-semibold">{material.price}</span>
+                <span className="text-sm text-[#6d28d9] font-semibold">{material.price}</span>
               </div>
 
               {/* Traits */}
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {material.traits.map((trait, j) => (
-                  <span key={j} className="text-[10px] bg-[rgba(249, 115, 22,0.4)] text-[#6F7192] px-2 py-0.5 rounded-full">
+                  <span key={j} className="text-[10px] bg-[rgba(109, 40, 217,0.4)] text-[#6F7192] px-2 py-0.5 rounded-full">
                     {trait}
                   </span>
                 ))}
@@ -161,7 +161,7 @@ export default function MaterialsSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.7 }}
-          className="text-center bg-[#faf9f7] border border-[rgba(249, 115, 22,0.5)] rounded-2xl p-8"
+          className="text-center bg-[#faf9f7] border border-[rgba(109, 40, 217,0.5)] rounded-2xl p-8"
         >
           <p className="text-lg text-[#0F1B3D] mb-2">Not sure which material is right for you?</p>
           <a

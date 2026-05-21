@@ -11,6 +11,8 @@ import { useCart } from '@/lib/cart/context'
 import { useProfile } from '@/hooks/useProfile'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { useBusinessSettings } from '@/lib/settings-context'
+import ShopCartDrawer, { ShopCartNavButton } from '@/components/shop/ShopCartDrawer'
+import { useShopWishlistStore } from '@/stores/shopWishlistStore'
 
 interface NavbarClientProps {
   transparent?: boolean
@@ -36,7 +38,7 @@ function CartButton() {
     <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
       <Link
         href="/cart"
-        className="group relative flex items-center gap-2 rounded-lg border border-[var(--border-light)] bg-white px-3 py-2 text-sm font-medium text-[var(--text-secondary)] shadow-[var(--shadow-sm)] transition-colors hover:border-[var(--border-brand)] hover:text-[var(--text-primary)]"
+        className="group relative flex min-h-[42px] items-center gap-2 rounded-full border border-white/80 bg-white/75 px-3.5 text-sm font-semibold text-[var(--text-secondary)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white hover:text-[var(--text-primary)]"
       >
         <ShoppingCart className="h-4 w-4" />
         <span className="hidden sm:inline">Cart</span>
@@ -64,11 +66,14 @@ export default function NavbarClient({
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const setWishlist = useShopWishlistStore((state) => state.setWishlist)
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const currentUser = liveProfile ?? user
   const isAuthPending = loading && !currentUser
   const whatsappNumber = (settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')
   const navIsElevated = scrolled || !transparent
+  const businessName = settings.businessName || 'Flux3D'
+  const logoUrl = settings.logoUrl || '/logo.png'
 
   const handleLogout = async () => {
     try {
@@ -82,6 +87,7 @@ export default function NavbarClient({
       }
 
       resetCartState()
+      setWishlist([])
       setIsOpen(false)
       setIsProfileOpen(false)
       router.push('/login')
@@ -96,11 +102,19 @@ export default function NavbarClient({
     { href: '/', label: 'Home' },
     { href: '/services', label: 'Services' },
     { href: '/materials', label: 'Materials' },
-    { href: '/pre-made-products', label: 'Pre-Made' },
+    { href: '/3d-shop', label: '3D Shop' },
     { href: '/gallery', label: 'Gallery' },
     { href: '/blog', label: 'Blog' },
     { href: '/pricing', label: 'Pricing' },
     ...(showAdminLink ? [{ href: '/admin', label: 'Admin' }] : []),
+  ]
+  const accountLinks = [
+    { href: '/cart', label: 'Cart' },
+    { href: '/saved-quotes', label: 'Saved Quotes' },
+    { href: '/my-orders', label: 'My Orders' },
+    { href: '/3d-shop/orders', label: '3D Shop Orders' },
+    { href: '/3d-shop/wishlist', label: 'My Wishlist ♥' },
+    { href: '/profile', label: 'Profile' },
   ]
 
   const currentPath = pathname ?? '/'
@@ -111,6 +125,30 @@ export default function NavbarClient({
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  useEffect(() => {
+    let active = true
+
+    async function loadWishlist() {
+      if (!currentUser) {
+        setWishlist([])
+        return
+      }
+
+      try {
+        const response = await fetch('/api/3d-shop/wishlist')
+        const data = await response.json().catch(() => ({})) as { productIds?: string[] }
+        if (active && response.ok) setWishlist(data.productIds ?? [])
+      } catch {
+        if (active) setWishlist([])
+      }
+    }
+
+    void loadWishlist()
+    return () => {
+      active = false
+    }
+  }, [currentUser, setWishlist])
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -147,18 +185,29 @@ export default function NavbarClient({
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="navbar"
         style={{
-          boxShadow: navIsElevated ? '0 6px 24px rgba(15,23,42,0.08)' : 'none',
+          boxShadow: navIsElevated
+            ? '0 22px 60px rgba(15,23,42,0.12), inset 0 1px 0 rgba(255,255,255,0.88)'
+            : '0 14px 42px rgba(15,23,42,0.07), inset 0 1px 0 rgba(255,255,255,0.84)',
         }}
       >
-        <div className="flex min-w-0 items-center gap-8">
-          <Link href="/" className="group flex items-center gap-2" aria-label={`${settings.businessName} home`}>
-            <span className="logo text-xl leading-none">flux3d</span>
-            <span className="hidden rounded-full border border-[var(--border-light)] bg-[var(--brand-faint)] px-2 py-0.5 font-[var(--font-mono)] text-[10px] uppercase tracking-[0.18em] text-[var(--brand-primary)] sm:inline">
-              Pune
-            </span>
+        <div className="flex min-w-0 items-center gap-5">
+          <Link
+            href="/"
+            className="group flex min-h-[48px] items-center rounded-2xl bg-white/55 px-2.5 ring-1 ring-white/70 transition hover:bg-white/80"
+            aria-label={`${businessName} home`}
+          >
+            <Image
+              src={logoUrl}
+              alt={`${businessName} logo — Premium 3D printing India`}
+              width={170}
+              height={40}
+              unoptimized
+              preload
+              className="h-9 w-auto max-w-[146px] object-contain transition-transform duration-200 group-hover:scale-[1.02] sm:max-w-[168px]"
+            />
           </Link>
 
-          <ul className="hidden list-none items-center gap-1 lg:flex">
+          <ul className="hidden list-none items-center gap-1 rounded-full border border-white/70 bg-white/55 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur lg:flex">
             {navLinks.map((link) => (
               <li key={link.href}>
                 <Link
@@ -167,7 +216,7 @@ export default function NavbarClient({
                     setIsOpen(false)
                     setIsProfileOpen(false)
                   }}
-                  className={`nav-link whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium ${isActive(link.href) ? 'nav-link-active' : ''}`}
+                  className={`nav-link whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold ${isActive(link.href) ? 'nav-link-active' : ''}`}
                 >
                   {link.label}
                 </Link>
@@ -176,15 +225,16 @@ export default function NavbarClient({
           </ul>
         </div>
 
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="hidden items-center gap-2.5 lg:flex">
           <CartButton />
+          <ShopCartNavButton />
 
           <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
             <a
               href={`https://wa.me/${whatsappNumber}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 whitespace-nowrap rounded-lg border border-[#25D366]/30 bg-[#25D366]/10 px-3 py-2 text-sm font-medium text-[#25D366] transition-colors hover:bg-[#25D366]/20"
+              className="flex min-h-[42px] items-center gap-2 whitespace-nowrap rounded-full border border-[#25D366]/25 bg-white/70 px-3.5 text-sm font-semibold text-[#138a42] shadow-[0_10px_28px_rgba(15,23,42,0.05)] backdrop-blur transition hover:border-[#25D366]/40 hover:bg-[#25D366]/10"
             >
               <MessageCircle className="h-4 w-4" />
               WhatsApp
@@ -201,7 +251,7 @@ export default function NavbarClient({
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   href="/instant-quote"
-                  className="btn-primary flex items-center gap-2 whitespace-nowrap px-[18px] py-2"
+                  className="relative flex min-h-[44px] items-center gap-2 overflow-hidden whitespace-nowrap rounded-full bg-gradient-to-r from-[#4c1d95] via-[#6d28d9] to-[#7c3aed] px-5 font-semibold text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition-all duration-300 before:absolute before:inset-y-0 before:left-0 before:w-1/2 before:-translate-x-full before:bg-white/20 before:blur-xl before:content-[''] hover:from-[#3b0764] hover:to-[#6d28d9] hover:before:translate-x-[220%]"
                 >
                   <span className="relative z-10">Get Quote</span>
                   <ArrowUpRight className="relative z-10 h-4 w-4" />
@@ -214,7 +264,7 @@ export default function NavbarClient({
                   onClick={() => setIsProfileOpen((current) => !current)}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
-                  className="flex items-center gap-2 rounded-lg border border-[var(--border-light)] bg-white px-2 py-1 pr-2.5 shadow-[var(--shadow-sm)] transition-colors hover:border-[var(--border-brand)]"
+                  className="flex min-h-[42px] items-center gap-2 rounded-full border border-white/80 bg-white/75 px-2 py-1 pr-3 shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white"
                 >
                   {currentUser.avatarUrl ? (
                     <span className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-[var(--accent)]/20">
@@ -254,11 +304,7 @@ export default function NavbarClient({
                       </div>
 
                       <div className="p-3">
-                        {[
-                          { href: '/saved-quotes', label: 'Saved Quotes' },
-                          { href: '/my-orders', label: 'My Orders' },
-                          { href: '/profile', label: 'Profile' },
-                        ].map((item) => (
+                        {accountLinks.map((item) => (
                           <Link
                             key={item.href}
                             href={item.href}
@@ -287,7 +333,7 @@ export default function NavbarClient({
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   href="/login"
-                  className="whitespace-nowrap rounded-lg border border-[var(--border-light)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-secondary)] shadow-[var(--shadow-sm)] transition-colors hover:border-[var(--border-brand)] hover:text-[var(--text-primary)]"
+                  className="flex min-h-[42px] items-center whitespace-nowrap rounded-full border border-white/80 bg-white/75 px-4 text-sm font-semibold text-[var(--text-secondary)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white hover:text-[var(--text-primary)]"
                 >
                   Log In
                 </Link>
@@ -295,7 +341,7 @@ export default function NavbarClient({
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   href="/signup"
-                  className="btn-primary whitespace-nowrap px-[18px] py-2"
+                  className="btn-primary flex min-h-[42px] items-center whitespace-nowrap rounded-full px-[18px]"
                 >
                   Sign Up
                 </Link>
@@ -309,7 +355,7 @@ export default function NavbarClient({
           onClick={() => setIsOpen(!isOpen)}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          className="relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-[var(--border)] text-[var(--text-primary)] lg:hidden"
+          className="relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/80 bg-white/70 text-[var(--text-primary)] shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden"
           aria-label={isOpen ? 'Close menu' : 'Open menu'}
         >
           <AnimatePresence mode="wait" initial={false}>
@@ -399,6 +445,7 @@ export default function NavbarClient({
                 </ul>
 
                 <div className="mt-6 space-y-3">
+                  <ShopCartNavButton mobile onOpenAction={() => setIsOpen(false)} />
                   <Link
                     href="/instant-quote"
                     onClick={() => setIsOpen(false)}
@@ -424,14 +471,14 @@ export default function NavbarClient({
                     </>
                   ) : currentUser ? (
                     <>
-                      {['/saved-quotes', '/my-orders', '/profile'].map((href) => (
+                      {accountLinks.map((item) => (
                         <Link
-                          key={href}
-                          href={href}
+                          key={item.href}
+                          href={item.href}
                           onClick={() => setIsOpen(false)}
                           className="block w-full rounded-xl border border-[var(--border-light)] bg-white py-3.5 text-center text-base font-medium text-[var(--text-secondary)]"
                         >
-                          {href === '/saved-quotes' ? 'Saved Quotes' : href === '/my-orders' ? 'My Orders' : 'Profile'}
+                          {item.label}
                         </Link>
                       ))}
                       <button
@@ -467,6 +514,7 @@ export default function NavbarClient({
           </motion.div>
         )}
       </AnimatePresence>
+      <ShopCartDrawer />
     </>
   )
 }

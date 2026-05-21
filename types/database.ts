@@ -43,8 +43,10 @@ export type AddressRow = {
   state: string
   pincode: string
   country: string
+  landmark: string | null
   is_default: boolean | null
   created_at: string | null
+  updated_at: string | null
 }
 
 export type AdminCustomerNoteRow = {

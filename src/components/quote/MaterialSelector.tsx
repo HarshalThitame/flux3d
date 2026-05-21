@@ -22,7 +22,7 @@ export default function MaterialSelector({
 
   if (materials.length === 0) {
     return (
-      <div className="rounded-[22px] border border-[#7C5CFF]/10 bg-[var(--bg-elevated)] p-4 text-center text-sm text-[#6F7192]">
+      <div className="rounded-[22px] border border-[#6d28d9]/10 bg-[var(--bg-elevated)] p-4 text-center text-sm text-[#6F7192]">
         No materials available. Please add materials in the admin panel.
       </div>
     )
@@ -45,18 +45,18 @@ export default function MaterialSelector({
             onClick={() => onMaterialChange(material.id)}
             className={`rounded-[22px] border p-4 text-left transition-all ${
               selectedMaterialId === material.id
-                ? 'border-[#7C5CFF]/40 bg-[var(--brand-faint)] shadow-[0_12px_44px_rgba(124, 92, 255,0.12)]'
-                : 'border-[#7C5CFF]/10 bg-white hover:border-[#7C5CFF]/10 hover:bg-[var(--bg-soft)]'
+                ? 'border-[#6d28d9]/40 bg-[var(--brand-faint)] shadow-[0_12px_44px_rgba(109, 40, 217,0.12)]'
+                : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10 hover:bg-[var(--bg-soft)]'
             }`}
           >
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#7C5CFF]/10 text-lg text-[#7C5CFF]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#6d28d9]/10 text-lg text-[#6d28d9]">
                 <span>{material.icon}</span>
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-3">
                   <div className="font-medium text-[#0F1B3D]">{material.name}</div>
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#7C5CFF]">
+                  <div className="text-xs uppercase tracking-[0.18em] text-[#6d28d9]">
                     ×{material.multiplier.toFixed(2)}
                   </div>
                 </div>
@@ -68,7 +68,7 @@ export default function MaterialSelector({
         ))}
       </div>
 
-      <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-[var(--bg-elevated)] p-4">
+      <div className="rounded-[24px] border border-[#6d28d9]/10 bg-[var(--bg-elevated)] p-4">
         <div className="text-sm font-medium text-[#0F1B3D]">Color Selection</div>
         <div className="mt-3 flex flex-wrap gap-3">
           {activeMaterial.colors.map((color) => (
@@ -78,8 +78,8 @@ export default function MaterialSelector({
               onClick={() => onColorChange(color.name)}
               className={`rounded-full border px-4 py-2 text-sm transition-colors ${
                 selectedColor === color.name
-                  ? 'border-[#7C5CFF]/50 bg-[#7C5CFF]/10 text-[var(--brand-primary)]'
-                  : 'border-[#7C5CFF]/10 bg-white text-[var(--text-secondary)] hover:text-[#0F1B3D]'
+                  ? 'border-[#6d28d9]/50 bg-[#6d28d9]/10 text-[var(--brand-primary)]'
+                  : 'border-[#6d28d9]/10 bg-white text-[var(--text-secondary)] hover:text-[#0F1B3D]'
               }`}
             >
               {color.name}

@@ -28,28 +28,29 @@ type DeliveryAddressRow = {
   id: string
   full_name: string
   phone: string
-  address_line1: string
-  address_line2: string | null
+  address_line_1: string
+  address_line_2: string | null
   city: string
   state: string
   pincode: string
   landmark: string | null
   created_at: string
-  updated_at: string
+  updated_at: string | null
 }
 
 export default async function DeliveryPage() {
   const auth = await requireUser('/instant-quote/delivery')
   const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase
-    .from('delivery_addresses')
+    .from('addresses')
     .select(
-      'id, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, created_at, updated_at'
+      'id, full_name, phone, address_line_1, address_line_2, city, state, pincode, landmark, created_at, updated_at'
     )
     .eq('user_id', auth.user.id)
+    .order('is_default', { ascending: false })
     .order('updated_at', { ascending: false })
 
-  if (error && !isMissingSupabaseTableError(error, 'delivery_addresses')) {
+  if (error && !isMissingSupabaseTableError(error, 'addresses')) {
     console.error('[delivery] Failed to load saved addresses:', error)
   }
 
@@ -58,14 +59,14 @@ export default async function DeliveryPage() {
       id: address.id,
       fullName: address.full_name,
       phone: address.phone,
-      addressLine1: address.address_line1,
-      addressLine2: address.address_line2 ?? '',
+      addressLine1: address.address_line_1,
+      addressLine2: address.address_line_2 ?? '',
       city: address.city,
       state: address.state,
       pincode: address.pincode,
       landmark: address.landmark ?? '',
       createdAt: address.created_at,
-      updatedAt: address.updated_at,
+      updatedAt: address.updated_at ?? address.created_at,
     })
   )
 

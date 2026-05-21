@@ -131,7 +131,7 @@ export default function DataTable<T extends { id: string }>({
                 setPage(1)
               }}
               placeholder={searchPlaceholder}
-              className="w-full rounded-xl border border-[#7C5CFF]/10 bg-gray-50 py-3 px-10 text-sm text-[#0F1B3D] outline-none transition focus:border-[#7C5CFF]/30 min-h-[44px]"
+              className="w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 py-3 px-10 text-sm text-[#0F1B3D] outline-none transition focus:border-[#6d28d9]/30 min-h-[44px]"
             />
           </div>
 
@@ -142,14 +142,14 @@ export default function DataTable<T extends { id: string }>({
                 onClick={() => setShowFilters((v) => !v)}
                 className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm transition whitespace-nowrap min-h-[44px] ${
                   showFilters || activeFilterCount > 0
-                    ? 'border-[#7C5CFF]/30 bg-[#7C5CFF]/10 text-[#7C5CFF]'
-                    : 'border-[#7C5CFF]/10 bg-gray-50 text-[#6F7192] hover:bg-gray-100'
+                    ? 'border-[#6d28d9]/30 bg-[#6d28d9]/10 text-[#6d28d9]'
+                    : 'border-[#6d28d9]/10 bg-gray-50 text-[#6F7192] hover:bg-gray-100'
                 }`}
               >
                 <Filter className="h-3.5 w-3.5" />
                 Filters
                 {activeFilterCount > 0 && (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#7C5CFF] text-[9px] font-bold text-white">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#6d28d9] text-[9px] font-bold text-white">
                     {activeFilterCount}
                   </span>
                 )}
@@ -166,7 +166,7 @@ export default function DataTable<T extends { id: string }>({
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="mt-3 flex flex-wrap gap-2 border-t border-[#7C5CFF]/10 pt-3">
+              <div className="mt-3 flex flex-wrap gap-2 border-t border-[#6d28d9]/10 pt-3">
                 {filters.map((filter) => (
                   <select
                     key={filter.key}
@@ -178,7 +178,7 @@ export default function DataTable<T extends { id: string }>({
                       }))
                       setPage(1)
                     }}
-                    className="rounded-lg border border-[#7C5CFF]/10 bg-gray-50 px-3 py-2.5 text-xs text-[#0F1B3D] outline-none min-h-[44px]"
+                    className="rounded-lg border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-xs text-[#0F1B3D] outline-none min-h-[44px]"
                   >
                     <option value="all" className="bg-[#FFFFFF]">
                       {filter.label}: All
@@ -301,7 +301,7 @@ export default function DataTable<T extends { id: string }>({
               type="button"
               onClick={() => setPage((current) => Math.max(current - 1, 1))}
               disabled={page === 1}
-              className="rounded-lg border border-[#7C5CFF]/10 bg-gray-50 p-2 text-[#6F7192] transition disabled:opacity-30 hover:enabled:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="rounded-lg border border-[#6d28d9]/10 bg-gray-50 p-2 text-[#6F7192] transition disabled:opacity-30 hover:enabled:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
             </button>
@@ -323,7 +323,7 @@ export default function DataTable<T extends { id: string }>({
                   onClick={() => setPage(p)}
                   className={`h-9 min-w-[36px] rounded-lg text-xs font-medium transition ${
                     p === page
-                      ? 'bg-[#7C5CFF]/15 text-[#7C5CFF]'
+                      ? 'bg-[#6d28d9]/15 text-[#6d28d9]'
                       : 'text-[#6F7192] hover:bg-gray-100'
                   }`}
                 >
@@ -335,7 +335,7 @@ export default function DataTable<T extends { id: string }>({
               type="button"
               onClick={() => setPage((current) => Math.min(current + 1, totalPages))}
               disabled={page === totalPages}
-              className="rounded-lg border border-[#7C5CFF]/10 bg-gray-50 p-2 text-[#6F7192] transition disabled:opacity-30 hover:enabled:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="rounded-lg border border-[#6d28d9]/10 bg-gray-50 p-2 text-[#6F7192] transition disabled:opacity-30 hover:enabled:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <ChevronRight className="h-3.5 w-3.5" />
             </button>

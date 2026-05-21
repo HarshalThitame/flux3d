@@ -3,168 +3,59 @@
 import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowRight, CheckCircle2, MessageCircle } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
-
-const serviceCtaOrbs = Array.from({ length: 6 }, (_, i) => ({
-  id: i,
-  x: (i * 23 + 14) % 100,
-  y: (i * 41 + 8) % 100,
-  size: 34 + (i % 4) * 12,
-  duration: 3 + (i % 3) * 0.8,
-}))
-
-function FloatingOrbs() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {serviceCtaOrbs.map(orb => (
-        <motion.div
-          key={orb.id}
-          className="absolute rounded-full bg-white blur-3xl"
-          style={{
-            left: `${orb.x}%`,
-            top: `${orb.y}%`,
-            width: orb.size,
-            height: orb.size,
-            opacity: 0.08
-          }}
-          animate={{
-            y: [0, -30, 0],
-            x: [0, 15, 0],
-            opacity: [0.05, 0.12, 0.05]
-          }}
-          transition={{
-            duration: orb.duration,
-            repeat: Infinity,
-            ease: 'easeInOut'
-          }}
-        />
-      ))}
-    </div>
-  )
-}
 
 export default function BottomCTA() {
   const { settings } = useBusinessSettings()
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
+  const whatsappNumber = (settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')
 
   return (
-    <section ref={ref} className="relative overflow-hidden px-6 py-24">
-      {/* Background accents */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,rgba(124,58,237,0.12)_0%,transparent_70%)]" />
-      <FloatingOrbs />
-
+    <section ref={ref} className="px-4 pb-20 pt-16 md:px-8 lg:px-16">
       <motion.div
-        initial={{ opacity: 0, y: 40, scale: 0.98 }}
-        animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
-        transition={{ duration: 0.7 }}
-        className="max-w-[900px] mx-auto relative z-10"
+        initial={{ opacity: 0, y: 28 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.55 }}
+        className="mx-auto max-w-[980px] overflow-hidden rounded-lg border border-gray-200 bg-white p-7 text-center shadow-[0_28px_80px_rgba(17,24,39,0.14)] md:p-12"
       >
-        <div className="cta-banner p-10 md:p-16">
-          {/* Animated dot pattern */}
-          <div
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.22) 1px, transparent 0)`,
-              backgroundSize: '28px 28px'
-            }}
-          />
+        <span className="mb-3 inline-flex items-center rounded-full bg-[#ede9fe] px-4 py-2 text-xs font-bold uppercase text-[#6d28d9]">
+          Ready when you are
+        </span>
+        <h2 className="mx-auto max-w-2xl text-3xl font-extrabold text-[#111827] md:text-4xl">
+          Send the file. Get the quote. Start the print.
+        </h2>
+        <p className="mx-auto mb-8 mt-4 max-w-[620px] text-sm leading-7 text-[#6F7192]">
+          Whether it is one prototype or a repeatable batch, we will help you choose the right material, finish, and delivery path.
+        </p>
 
-          {/* Rotating border glow */}
-          <motion.div
-            className="absolute inset-0 rounded-3xl"
-            style={{
-              background: 'conic-gradient(from 0deg, transparent, rgba(124,58,237,0.55), transparent, rgba(6,182,212,0.45), transparent)',
-              mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-              maskComposite: 'exclude',
-              padding: 2
-            }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-          />
+        <div className="mb-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link
+            href="/instant-quote"
+            className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#111827] px-8 text-sm font-bold text-white transition hover:bg-[#2f3341]"
+          >
+            Get Instant Quote
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+          <a
+            href={`https://wa.me/${whatsappNumber}?text=Hi%20${encodeURIComponent(settings.businessName || 'Flux3D')}!%20I%20want%20to%20start%20a%203D%20printing%20project.`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#25D366]/25 bg-[#EAFBF2] px-8 text-sm font-bold text-[#138a42] transition hover:border-[#25D366]/40"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Chat on WhatsApp
+          </a>
+        </div>
 
-          {/* Content */}
-          <div className="relative z-10">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={isInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ delay: 0.2 }}
-              className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-4 py-1.5 font-[var(--font-mono)] text-xs uppercase tracking-[0.08em] text-white backdrop-blur-sm"
-            >
-              <Sparkles className="w-4 h-4" />
-              Let&apos;s Build Something Amazing
-            </motion.div>
-
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.3 }}
-              className="mb-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.8rem)] font-extrabold leading-[1.1] text-white"
-            >
-              Ready to Bring Your <br />
-              <span className="text-white">Idea to Life?</span>
-            </motion.h2>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.4 }}
-              className="mx-auto mb-8 max-w-[600px] text-lg leading-[1.6] text-white/80"
-            >
-              Whether it is a quick prototype or a full production run, we are here to make it happen fast, precise, and presentation-ready.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.5 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-            >
-              <Link
-                href="/instant-quote"
-                className="btn-primary group relative px-8 py-4 text-base"
-              >
-                <span className="relative z-10 inline-flex items-center gap-2">
-                  Get A Free Quote
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </span>
-              </Link>
-
-              <Link
-                href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-secondary group px-8 py-4 text-base"
-              >
-                <span className="inline-flex items-center gap-2">
-                  Chat on WhatsApp
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </span>
-              </Link>
-            </motion.div>
-
-            {/* Trust badges */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 1 } : {}}
-              transition={{ delay: 0.7 }}
-              className="mt-10 flex flex-wrap items-center justify-center gap-6 font-[var(--font-mono)] text-xs uppercase tracking-[0.08em] text-white/75"
-            >
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-white/60" />
-                No minimum order
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-white/60" />
-                Pan-India delivery
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-white/60" />
-                3-5 day turnaround
-              </span>
-            </motion.div>
-          </div>
+        <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#6F7192]">
+          {['No minimum order', 'Pan-India delivery', 'Material guidance', 'Quality checked'].map((item) => (
+            <span key={item} className="inline-flex items-center gap-1 rounded-full bg-[#F7F8FB] px-3 py-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-[#6d28d9]" />
+              {item}
+            </span>
+          ))}
         </div>
       </motion.div>
     </section>

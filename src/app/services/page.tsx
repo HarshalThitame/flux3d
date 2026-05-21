@@ -1,5 +1,4 @@
 import { Metadata } from 'next'
-import { getSettings } from '@/lib/settings'
 
 export const dynamic = 'force-static'
 
@@ -8,53 +7,30 @@ import ServicesHero from './ServicesHero'
 import ServicesList from './ServicesList'
 import WhyChooseUs from './WhyChooseUs'
 import HowToOrder from './HowToOrder'
+import FAQSection from './FAQSection'
 import BottomCTA from './BottomCTA'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSettings()
-  return {
-    title: `${settings.businessName} — 3D Printing Services — Industrial, Medical, Student & More`,
-    description:
-      settings.businessDescription || 'From industrial-grade spare parts to custom gifts — Flux 3D delivers precision prints for every need, across India. 7 specializations, Bambu Lab P2S fleet, Pan-India delivery.',
-    keywords: [
-      '3D printing services India',
-      'industrial spare parts 3D printing',
-      'architecture model printing',
-      'student 3D printing',
-      'medical 3D printing',
-      'corporate gifting 3D',
-      'custom 3D printed products',
-      'creator props 3D printing',
-    ],
-    alternates: {
-      canonical: '/services',
-    },
-    openGraph: {
-      title: `${settings.businessName} — 3D Printing Services — Industrial, Medical, Student & More`,
-      description:
-        settings.businessDescription || 'From industrial-grade spare parts to custom gifts — Flux 3D delivers precision prints for every need, across India.',
-      type: 'website',
-    },
-  }
+export const metadata: Metadata = {
+  title: {
+    absolute: '3D Printing Services — FDM, Resin & Rapid Prototyping | Flux3D',
+  },
+  description:
+    "Explore Flux3D's full range of 3D printing services. FDM printing, SLA resin printing, rapid prototyping, custom parts & corporate gifting. Pan-India delivery.",
+  alternates: {
+    canonical: '/services',
+  },
 }
 
 export default function ServicesPage() {
   return (
-    <div className="public-shell">
+    <div className="min-h-screen bg-[#F7F8FB] text-[#111827]">
       <Navbar transparent />
       <ServicesHero />
-      <div className="bg-[var(--bg-soft)]">
-        <ServicesList />
-      </div>
-      <div className="bg-white">
-        <WhyChooseUs />
-      </div>
-      <div className="bg-[var(--bg-soft)]">
-        <HowToOrder />
-      </div>
-      <div className="bg-white">
-        <BottomCTA />
-      </div>
+      <ServicesList />
+      <WhyChooseUs />
+      <HowToOrder />
+      <FAQSection />
+      <BottomCTA />
     </div>
   )
 }

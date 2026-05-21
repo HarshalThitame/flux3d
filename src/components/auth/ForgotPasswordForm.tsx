@@ -37,7 +37,7 @@ export default function ForgotPasswordForm({ nextPath }: ForgotPasswordFormProps
             type="email"
             autoComplete="email"
             placeholder="you@company.com"
-            className="w-full rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
+            className="w-full rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
           />
           {state.fieldErrors?.email?.map((error) => (
             <p key={error} className="text-sm text-rose-300">
@@ -52,7 +52,7 @@ export default function ForgotPasswordForm({ nextPath }: ForgotPasswordFormProps
 
       <div className="text-sm text-[#8e97b7]">
         Remembered it?{' '}
-        <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="text-[#0F1B3D] hover:text-[#A78BFA]">
+        <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="text-[#0F1B3D] hover:text-[#a855f7]">
           Return to login
         </Link>
       </div>

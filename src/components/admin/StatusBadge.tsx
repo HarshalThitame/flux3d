@@ -30,7 +30,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
           ? 'border-rose-200 bg-rose-50 text-rose-600'
           : ['pending', 'confirmed', 'printing', 'shipped', 'delivered', 'completed', 'cancelled'].includes(normalized)
             ? getOrderStatusClasses(normalized as OrderStatus)
-            : 'border-[#7C5CFF]/10 bg-gray-100 text-[#6F7192]'
+            : 'border-[#6d28d9]/10 bg-gray-100 text-[#6F7192]'
 
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium capitalize ${classes}`}>

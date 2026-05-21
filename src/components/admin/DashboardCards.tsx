@@ -5,14 +5,14 @@ import type { DashboardMetric } from '@/lib/admin/types'
 const icons = [PackageOpen, IndianRupee, Clock3, Layers3]
 
 const gradients = [
-  'from-[#7C5CFF]/10 to-transparent',
+  'from-[#6d28d9]/10 to-transparent',
   'from-emerald-400/10 to-transparent',
   'from-cyan-400/10 to-transparent',
   'from-violet-400/10 to-transparent',
 ]
 
 const iconGradients = [
-  'from-[#7C5CFF] to-[#A78BFA]',
+  'from-[#6d28d9] to-[#a855f7]',
   'from-emerald-400 to-emerald-500',
   'from-cyan-400 to-cyan-500',
   'from-violet-400 to-violet-500',

@@ -159,4 +159,19 @@ export async function saveQuoteToSupabase(payload: {
 
     throw new Error(error.message)
   }
+
+  if (payload.filePath) {
+    const fileName = payload.filePath.split('/').pop() || `${payload.quoteId}.stl`
+    await supabase.from('model_files').upsert(
+      {
+        user_id: user.id,
+        file_name: fileName,
+        file_url: payload.filePath,
+        material: payload.config.materialId,
+        status: 'quoted',
+        uploaded_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,file_url' }
+    )
+  }
 }

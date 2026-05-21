@@ -97,13 +97,13 @@ export default function CouponInput({ orderAmount, userId, onApply, appliedCoupo
             onChange={e => { setCode(e.target.value.toUpperCase()); setError('') }}
             onKeyDown={e => e.key === 'Enter' && handleApply()}
             placeholder="Enter coupon code"
-            className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-[rgba(124,92,255,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF] transition-colors"
+            className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-[rgba(109, 40, 217,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9] transition-colors"
           />
         </div>
         <button
           onClick={handleApply}
           disabled={loading || !code.trim()}
-          className="inline-flex items-center gap-1.5 bg-[#7C5CFF] text-white px-4 py-2.5 rounded-xl text-sm font-medium disabled:opacity-40 hover:bg-[#6B4FE0] transition-all min-h-[44px]"
+          className="inline-flex items-center gap-1.5 bg-[#6d28d9] text-white px-4 py-2.5 rounded-xl text-sm font-medium disabled:opacity-40 hover:bg-[#4c1d95] transition-all min-h-[44px]"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Percent className="w-4 h-4" />}
           Apply

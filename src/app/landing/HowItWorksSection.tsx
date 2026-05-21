@@ -44,7 +44,7 @@ export default function HowItWorksSection() {
   return (
     <section ref={ref} className="relative py-24 px-6 overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(249, 115, 22,0.03)] to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(109, 40, 217,0.03)] to-transparent pointer-events-none" />
 
       <div className="max-w-[1200px] mx-auto relative z-10">
         {/* Header */}
@@ -53,10 +53,10 @@ export default function HowItWorksSection() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-16"
         >
-          <p className="text-sm font-medium text-[#f97316] uppercase tracking-normal mb-4">The Process</p>
+          <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">The Process</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
             From File to Doorstep{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] to-[#f59e0b]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#a855f7]">
               in 5 Steps.
             </span>
           </h2>
@@ -65,7 +65,7 @@ export default function HowItWorksSection() {
         {/* Steps */}
         <div className="relative">
           {/* Connection line (desktop) */}
-          <div className="hidden lg:block absolute top-10 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-[#f97316] via-[rgba(249, 115, 22,0.3)] to-[#f97316]" />
+          <div className="hidden lg:block absolute top-10 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-[#6d28d9] via-[rgba(109, 40, 217,0.3)] to-[#6d28d9]" />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6">
             {steps.map((step, i) => (
@@ -79,10 +79,10 @@ export default function HowItWorksSection() {
                 {/* Step circle */}
                 <motion.div
                   whileHover={{ scale: 1.1 }}
-                  className="relative w-20 h-20 rounded-full bg-[#faf9f7] border-2 border-[rgba(249, 115, 22,0.3)] flex items-center justify-center mb-6 hover:border-[#f97316] hover:shadow-[0_0_30px_rgba(249, 115, 22,0.2)] transition-all z-10"
+                  className="relative w-20 h-20 rounded-full bg-[#faf9f7] border-2 border-[rgba(109, 40, 217,0.3)] flex items-center justify-center mb-6 hover:border-[#6d28d9] hover:shadow-[0_0_30px_rgba(109, 40, 217,0.2)] transition-all z-10"
                 >
-                  <step.icon className="w-8 h-8 text-[#f97316]" />
-                  <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#f97316] text-white text-xs font-bold flex items-center justify-center shadow-lg">
+                  <step.icon className="w-8 h-8 text-[#6d28d9]" />
+                  <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#6d28d9] text-white text-xs font-bold flex items-center justify-center shadow-lg">
                     {step.step}
                   </div>
                 </motion.div>
@@ -103,7 +103,7 @@ export default function HowItWorksSection() {
           className="text-center mt-16"
         >
           <p className="text-lg text-[#0F1B3D] mb-4">Ready to start?</p>
-          <a href="/instant-quote" className="inline-flex items-center gap-2 bg-[#f97316] text-white px-8 py-3 rounded-xl font-medium hover:shadow-[0_0_30px_rgba(249,115,22,0.3)] transition-shadow">
+          <a href="/instant-quote" className="inline-flex items-center gap-2 bg-[#6d28d9] text-white px-8 py-3 rounded-xl font-medium hover:shadow-[0_0_30px_rgba(109, 40, 217,0.3)] transition-shadow">
             Upload Your File Now
             <ArrowRight className="w-4 h-4" />
           </a>

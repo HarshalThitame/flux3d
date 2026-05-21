@@ -86,7 +86,7 @@ export default function AdminCouponsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 rounded-full border-2 border-[#7C5CFF] border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-[#6d28d9] border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -100,7 +100,7 @@ export default function AdminCouponsPage() {
         </div>
         <button
           onClick={() => router.push('/admin/coupons/new')}
-          className="inline-flex items-center gap-2 bg-[#7C5CFF] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#6B4FE0] transition-all min-h-[44px]"
+          className="inline-flex items-center gap-2 bg-[#6d28d9] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#4c1d95] transition-all min-h-[44px]"
         >
           <Plus className="w-4 h-4" />
           New Coupon
@@ -114,7 +114,7 @@ export default function AdminCouponsPage() {
           placeholder="Search coupons..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[rgba(124,92,255,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#7C5CFF] transition-colors"
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[rgba(109, 40, 217,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9] transition-colors"
         />
       </div>
 
@@ -130,12 +130,12 @@ export default function AdminCouponsPage() {
           return (
             <div
               key={coupon.id}
-              className="group bg-white rounded-2xl border border-[rgba(124,92,255,0.15)] p-5 hover:border-[rgba(124,92,255,0.3)] hover:shadow-[0_4px_20px_rgba(124,92,255,0.06)] transition-all"
+              className="group bg-white rounded-2xl border border-[rgba(109, 40, 217,0.15)] p-5 hover:border-[rgba(109, 40, 217,0.3)] hover:shadow-[0_4px_20px_rgba(109, 40, 217,0.06)] transition-all"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
-                    <code className="font-mono text-lg font-bold text-[#7C5CFF] bg-[rgba(124,92,255,0.08)] px-3 py-1 rounded-lg">{coupon.code}</code>
+                    <code className="font-mono text-lg font-bold text-[#6d28d9] bg-[rgba(109, 40, 217,0.08)] px-3 py-1 rounded-lg">{coupon.code}</code>
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${status.color}`}>
                       {status.label}
                     </span>
@@ -175,14 +175,14 @@ export default function AdminCouponsPage() {
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => toggleStatus(coupon.id, coupon.is_active)}
-                    className="p-2 rounded-lg border border-[rgba(124,92,255,0.15)] text-[#6F7192] hover:text-[#7C5CFF] hover:border-[rgba(124,92,255,0.3)] transition-all min-h-[36px] min-w-[36px] flex items-center justify-center"
+                    className="p-2 rounded-lg border border-[rgba(109, 40, 217,0.15)] text-[#6F7192] hover:text-[#6d28d9] hover:border-[rgba(109, 40, 217,0.3)] transition-all min-h-[36px] min-w-[36px] flex items-center justify-center"
                     title={coupon.is_active ? 'Deactivate' : 'Activate'}
                   >
                     {coupon.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                   <button
                     onClick={() => router.push(`/admin/coupons/${coupon.id}`)}
-                    className="p-2 rounded-lg border border-[rgba(124,92,255,0.15)] text-[#6F7192] hover:text-[#7C5CFF] hover:border-[rgba(124,92,255,0.3)] transition-all min-h-[36px] min-w-[36px] flex items-center justify-center"
+                    className="p-2 rounded-lg border border-[rgba(109, 40, 217,0.15)] text-[#6F7192] hover:text-[#6d28d9] hover:border-[rgba(109, 40, 217,0.3)] transition-all min-h-[36px] min-w-[36px] flex items-center justify-center"
                     title="Edit"
                   >
                     <Pencil className="w-4 h-4" />

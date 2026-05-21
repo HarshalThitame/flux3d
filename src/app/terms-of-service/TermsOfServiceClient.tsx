@@ -30,11 +30,11 @@ export default function TermsOfServiceClient() {
   return (
     <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       {/* Header */}
-      <div className="border-b border-[#7C5CFF]/10 bg-[#FFFFFF]/50 backdrop-blur-sm sticky top-0 z-50">
+      <div className="border-b border-[#6d28d9]/10 bg-[#FFFFFF]/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-[1200px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D]">
-              flux<span className="text-[#7C5CFF]">3d</span>
+              flux<span className="text-[#6d28d9]">3d</span>
             </Link>
             <Link
               href="/"
@@ -47,7 +47,7 @@ export default function TermsOfServiceClient() {
         </div>
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-6 py-12">
+      <div className="max-w-[1200px] mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-12">
           {/* Sidebar - Table of Contents */}
           <motion.aside
@@ -80,12 +80,12 @@ export default function TermsOfServiceClient() {
           >
             {/* Title Section */}
             <div className="mb-12">
-              <div className="inline-flex items-center gap-2 bg-[#7C5CFF]/10 text-[#7C5CFF] px-4 py-2 rounded-full text-sm font-medium mb-6">
+              <div className="inline-flex items-center gap-2 bg-[#6d28d9]/10 text-[#6d28d9] px-4 py-2 rounded-full text-sm font-medium mb-6">
                 <FileText className="w-4 h-4" />
                 Legal Document
               </div>
               <h1 className="font-[var(--font-syne)] text-4xl md:text-5xl font-extrabold text-[#0F1B3D] mb-4">
-                Terms of <span className="text-[#7C5CFF]">Service</span>
+                Terms of <span className="text-[#6d28d9]">Service</span>
               </h1>
               <div className="flex flex-wrap gap-4 text-sm text-[#6F7192]">
                 <span>Effective Date: January 1, 2025</span>
@@ -97,9 +97,9 @@ export default function TermsOfServiceClient() {
             </div>
 
             {/* Important Notice */}
-            <div className="bg-[#7C5CFF]/10 border border-[#7C5CFF]/20 rounded-2xl p-6 mb-12">
+            <div className="bg-[#6d28d9]/10 border border-[#6d28d9]/20 rounded-2xl p-6 mb-12">
               <div className="flex gap-3">
-                <AlertTriangle className="w-6 h-6 text-[#7C5CFF] flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="w-6 h-6 text-[#6d28d9] flex-shrink-0 mt-0.5" />
                 <div>
                   <h3 className="font-semibold text-[#0F1B3D] mb-2">Important Notice</h3>
                   <p className="text-sm text-[#6F7192] leading-relaxed">
@@ -116,7 +116,7 @@ export default function TermsOfServiceClient() {
               {/* 1. Acceptance of Terms */}
               <section id="acceptance">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">1</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">1</span>
                   1. Acceptance of Terms
                 </h2>
                 <div className="space-y-4 text-[#6F7192] leading-relaxed">
@@ -143,7 +143,7 @@ export default function TermsOfServiceClient() {
               {/* 2. Description of Service */}
               <section id="description">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">2</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">2</span>
                   2. Description of Service
                 </h2>
                 <div className="space-y-4 text-[#6F7192] leading-relaxed">
@@ -162,7 +162,7 @@ export default function TermsOfServiceClient() {
                       'Integrate with third-party plugins and external services',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <span className="text-[#7C5CFF] mt-1.5">•</span>
+                        <span className="text-[#6d28d9] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -178,7 +178,7 @@ export default function TermsOfServiceClient() {
               {/* 3. User Accounts */}
               <section id="accounts">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">3</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">3</span>
                   3. User Accounts & Registration
                 </h2>
                 <div className="space-y-6 text-[#6F7192] leading-relaxed">
@@ -194,7 +194,7 @@ export default function TermsOfServiceClient() {
                         'Accept responsibility for all activities conducted under your account',
                       ].map((item) => (
                         <li key={item} className="flex items-start gap-2">
-                          <span className="text-[#7C5CFF] mt-1.5">•</span>
+                          <span className="text-[#6d28d9] mt-1.5">•</span>
                           <span>{item}</span>
                         </li>
                       ))}
@@ -218,7 +218,7 @@ export default function TermsOfServiceClient() {
                         'Accounts are non-transferable and non-assignable without our prior written consent',
                       ].map((item) => (
                         <li key={item} className="flex items-start gap-2">
-                          <span className="text-[#7C5CFF] mt-1.5">•</span>
+                          <span className="text-[#6d28d9] mt-1.5">•</span>
                           <span>{item}</span>
                         </li>
                       ))}
@@ -230,7 +230,7 @@ export default function TermsOfServiceClient() {
               {/* 4. Intellectual Property */}
               <section id="ip">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">4</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">4</span>
                   4. Intellectual Property Rights
                 </h2>
                 <div className="space-y-6 text-[#6F7192] leading-relaxed">
@@ -271,7 +271,7 @@ export default function TermsOfServiceClient() {
                         'Use our trademarks, logos, or branding without prior written consent',
                       ].map((item) => (
                         <li key={item} className="flex items-start gap-2">
-                          <span className="text-[#7C5CFF] mt-1.5">•</span>
+                          <span className="text-[#6d28d9] mt-1.5">•</span>
                           <span>{item}</span>
                         </li>
                       ))}
@@ -283,7 +283,7 @@ export default function TermsOfServiceClient() {
               {/* 5. Acceptable Use */}
               <section id="acceptable">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">5</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">5</span>
                   5. Acceptable Use Policy
                 </h2>
                 <div className="space-y-6 text-[#6F7192] leading-relaxed">
@@ -301,7 +301,7 @@ export default function TermsOfServiceClient() {
                         'Using the Application for research, prototyping, and development purposes',
                       ].map((item) => (
                         <li key={item} className="flex items-start gap-2">
-                          <span className="text-[#7C5CFF] mt-1.5">•</span>
+                          <span className="text-[#6d28d9] mt-1.5">•</span>
                           <span>{item}</span>
                         </li>
                       ))}
@@ -322,7 +322,7 @@ export default function TermsOfServiceClient() {
                         'Engage in any activity that may damage the reputation or business interests of Flux 3D',
                       ].map((item) => (
                         <li key={item} className="flex items-start gap-2">
-                          <span className="text-[#7C5CFF] mt-1.5">•</span>
+                          <span className="text-[#6d28d9] mt-1.5">•</span>
                           <span>{item}</span>
                         </li>
                       ))}
@@ -334,7 +334,7 @@ export default function TermsOfServiceClient() {
               {/* 6. Community */}
               <section id="community">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">6</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">6</span>
                   6. User-Generated Content & Community
                 </h2>
                 <div className="space-y-4 text-[#6F7192] leading-relaxed">
@@ -351,7 +351,7 @@ export default function TermsOfServiceClient() {
                       'We may, but are not obligated to, monitor or review Community Content for policy compliance',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <span className="text-[#7C5CFF] mt-1.5">•</span>
+                        <span className="text-[#6d28d9] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -362,7 +362,7 @@ export default function TermsOfServiceClient() {
               {/* 7. Subscription */}
               <section id="subscription">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">7</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">7</span>
                   7. Subscription Plans, Payments & Refunds
                 </h2>
                 <div className="space-y-6 text-[#6F7192] leading-relaxed">
@@ -384,7 +384,7 @@ export default function TermsOfServiceClient() {
                         'Taxes and applicable duties are the responsibility of the subscriber',
                       ].map((item) => (
                         <li key={item} className="flex items-start gap-2">
-                          <span className="text-[#7C5CFF] mt-1.5">•</span>
+                          <span className="text-[#6d28d9] mt-1.5">•</span>
                           <span>{item}</span>
                         </li>
                       ))}
@@ -413,7 +413,7 @@ export default function TermsOfServiceClient() {
               {/* 8. Privacy */}
               <section id="privacy">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">8</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">8</span>
                   8. Privacy & Data Protection
                 </h2>
                 <div className="space-y-4 text-[#6F7192] leading-relaxed">
@@ -431,7 +431,7 @@ export default function TermsOfServiceClient() {
                       'Data is processed in accordance with applicable privacy laws, including GDPR and applicable Indian data protection regulations',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <span className="text-[#7C5CFF] mt-1.5">•</span>
+                        <span className="text-[#6d28d9] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -442,7 +442,7 @@ export default function TermsOfServiceClient() {
               {/* 9. Third-Party */}
               <section id="thirdparty">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">9</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">9</span>
                   9. Third-Party Services & Integrations
                 </h2>
                 <div className="space-y-4 text-[#6F7192] leading-relaxed">
@@ -459,7 +459,7 @@ export default function TermsOfServiceClient() {
                       'Any purchases or transactions through third-party services are solely between you and that provider',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <span className="text-[#7C5CFF] mt-1.5">•</span>
+                        <span className="text-[#6d28d9] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -470,10 +470,10 @@ export default function TermsOfServiceClient() {
               {/* 10. Disclaimers */}
               <section id="disclaimers">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">10</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">10</span>
                   10. Disclaimers & Warranties
                 </h2>
-                <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-2xl p-6 text-[#6F7192] leading-relaxed">
+                <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-2xl p-6 text-[#6F7192] leading-relaxed">
                   <p className="font-semibold text-[#0F1B3D] mb-3">THE APPLICATION IS PROVIDED ON AN &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; BASIS WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:</p>
                   <ul className="space-y-2 ml-6 mb-4">
                     {[
@@ -483,7 +483,7 @@ export default function TermsOfServiceClient() {
                       'Warranties that defects or errors will be corrected within a specific timeframe',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <span className="text-[#7C5CFF] mt-1.5">•</span>
+                        <span className="text-[#6d28d9] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -499,10 +499,10 @@ export default function TermsOfServiceClient() {
               {/* 11. Limitation of Liability */}
               <section id="liability">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">11</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">11</span>
                   11. Limitation of Liability
                 </h2>
-                <div className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-2xl p-6 text-[#6F7192] leading-relaxed">
+                <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-2xl p-6 text-[#6F7192] leading-relaxed">
                   <p className="font-semibold text-[#0F1B3D] mb-3">TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, FLUX 3D SHALL NOT BE LIABLE FOR:</p>
                   <ul className="space-y-2 ml-6 mb-4">
                     {[
@@ -513,7 +513,7 @@ export default function TermsOfServiceClient() {
                       'Damage to hardware or other software resulting from use of the Application',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <span className="text-[#7C5CFF] mt-1.5">•</span>
+                        <span className="text-[#6d28d9] mt-1.5">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -528,7 +528,7 @@ export default function TermsOfServiceClient() {
               {/* 12. Indemnification */}
               <section id="indemnification">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">12</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">12</span>
                   12. Indemnification
                 </h2>
                 <p className="text-[#6F7192] leading-relaxed">
@@ -540,7 +540,7 @@ export default function TermsOfServiceClient() {
               {/* 13. Termination */}
               <section id="termination">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">13</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">13</span>
                   13. Termination
                 </h2>
                 <div className="space-y-4 text-[#6F7192] leading-relaxed">
@@ -557,7 +557,7 @@ export default function TermsOfServiceClient() {
               {/* 14. Changes */}
               <section id="changes">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">14</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">14</span>
                   14. Changes to Application & Terms
                 </h2>
                 <p className="text-[#6F7192] leading-relaxed">
@@ -569,7 +569,7 @@ export default function TermsOfServiceClient() {
               {/* 15. Governing Law */}
               <section id="governing">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">15</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">15</span>
                   15. Governing Law & Dispute Resolution
                 </h2>
                 <div className="space-y-4 text-[#6F7192] leading-relaxed">
@@ -583,7 +583,7 @@ export default function TermsOfServiceClient() {
               {/* 16. General */}
               <section id="general">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">16</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">16</span>
                   16. General Provisions
                 </h2>
                 <ul className="space-y-2 text-[#6F7192] leading-relaxed ml-6">
@@ -594,7 +594,7 @@ export default function TermsOfServiceClient() {
                     'Force Majeure: We are not liable for failures due to circumstances beyond our reasonable control',
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2">
-                      <span className="text-[#7C5CFF] mt-1.5">•</span>
+                      <span className="text-[#6d28d9] mt-1.5">•</span>
                       <span>{item}</span>
                     </li>
                   ))}
@@ -602,9 +602,9 @@ export default function TermsOfServiceClient() {
               </section>
 
               {/* 17. Contact */}
-              <section id="contact" className="bg-[#FFFFFF] border border-[#7C5CFF]/10 rounded-2xl p-8">
+              <section id="contact" className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-2xl p-8">
                 <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-6 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#7C5CFF]/10 text-[#7C5CFF] text-sm font-bold">17</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">17</span>
                   17. Contact Information
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -625,7 +625,7 @@ export default function TermsOfServiceClient() {
             </div>
 
             {/* Footer CTA */}
-            <div className="mt-12 pt-8 border-t border-[#7C5CFF]/10">
+            <div className="mt-12 pt-8 border-t border-[#6d28d9]/10">
               <p className="text-sm text-[#6F7192] text-center">
                 By continuing to use our application, you acknowledge that you have read, understood,
                 and agree to be bound by these Terms of Service.

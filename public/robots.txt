@@ -1,8 +1,7 @@
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
-Allow: /blog/
+Disallow: /admin
+Disallow: /profile
+Disallow: /api/
 
 Sitemap: https://flux3d.in/sitemap.xml

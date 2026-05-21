@@ -1,110 +1,43 @@
 import type { MetadataRoute } from 'next'
-import { absoluteUrl } from '@/lib/site'
-import { createAdminSupabaseClient } from '@/lib/admin/server'
-import type { BlogPost } from '@/lib/blog/types'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-export const dynamic = 'force-dynamic'
+type BlogSitemapRow = {
+  slug: string
+  updated_at?: string | null
+  last_modified_at?: string | null
+  published_at?: string | null
+  created_at?: string | null
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const lastModified = new Date()
-  let blogPosts: BlogPost[] = []
+  const supabase = await createServerSupabaseClient()
+  const { data: blogPosts, error } = await supabase
+    .from('blog_posts')
+    .select('slug, updated_at, last_modified_at, published_at, created_at')
+    .eq('status', 'published')
 
-  try {
-    const supabase = createAdminSupabaseClient()
-    const { data } = await supabase
-      .from('blog_posts')
-      .select('slug, updated_at, last_modified_at, published_at, created_at, featured_image')
-      .eq('status', 'published')
-      .returns<BlogPost[]>()
-
-    blogPosts = data || []
-  } catch {
-    blogPosts = []
+  if (error) {
+    console.error('[sitemap] Failed to load blog posts:', error)
   }
 
   const staticRoutes: MetadataRoute.Sitemap = [
-    {
-      url: absoluteUrl('/'),
-      lastModified,
-      changeFrequency: 'weekly',
-      priority: 1,
-      images: [absoluteUrl('/logo.png')],
-    },
-    {
-      url: absoluteUrl('/about'),
-      lastModified,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: absoluteUrl('/services'),
-      lastModified,
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: absoluteUrl('/materials'),
-      lastModified,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: absoluteUrl('/gallery'),
-      lastModified,
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
-    {
-      url: absoluteUrl('/pricing'),
-      lastModified,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: absoluteUrl('/blog'),
-      lastModified,
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
-    {
-      url: absoluteUrl('/instant-quote'),
-      lastModified,
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: absoluteUrl('/privacy-policy'),
-      lastModified,
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-    {
-      url: absoluteUrl('/terms-of-service'),
-      lastModified,
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-    {
-      url: absoluteUrl('/refund-policy'),
-      lastModified,
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-    {
-      url: absoluteUrl('/shipping-policy'),
-      lastModified,
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
+    { url: 'https://flux3d.in', lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
+    { url: 'https://flux3d.in/services', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
+    { url: 'https://flux3d.in/materials', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: 'https://flux3d.in/gallery', lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: 'https://flux3d.in/pricing', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
+    { url: 'https://flux3d.in/instant-quote', lastModified: new Date(), changeFrequency: 'monthly', priority: 1 },
+    { url: 'https://flux3d.in/blog', lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
   ]
 
-  const blogRoutes: MetadataRoute.Sitemap = blogPosts.map((post) => ({
-    url: absoluteUrl(`/blog/${post.slug}`),
-    lastModified: new Date(post.last_modified_at || post.updated_at || post.published_at || post.created_at),
-    changeFrequency: 'weekly',
-    priority: 0.7,
-    images: post.featured_image ? [absoluteUrl(post.featured_image)] : undefined,
-  }))
+  const blogRoutes: MetadataRoute.Sitemap = ((blogPosts ?? []) as BlogSitemapRow[])
+    .filter((post) => post.slug)
+    .map((post) => ({
+      url: `https://flux3d.in/blog/${post.slug}`,
+      lastModified: new Date(post.last_modified_at || post.updated_at || post.published_at || post.created_at || Date.now()),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    }))
 
   return [...staticRoutes, ...blogRoutes]
 }

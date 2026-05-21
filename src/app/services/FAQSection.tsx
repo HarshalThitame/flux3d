@@ -1,89 +1,78 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, MessageCircle } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
 
 const faqs = [
   {
-    question: 'How much does 3D printing cost in Pune?',
-    answer: 'Our 3D printing services start at just ₹99 for small FDM prints. The final cost depends on material type, print size, infill density, and print time. PLA/PETG prints are most economical, while specialized materials like Carbon Fiber or multi-color prints cost more. Upload your STL file for an instant automated quote.'
+    question: 'How do you price a 3D printing job?',
+    answer: 'Pricing depends on material, weight, print time, finishing, complexity, and delivery requirements. Upload your file for an instant estimate, or message us if you need design review before quoting.',
   },
   {
-    question: 'Which material is best for my project?',
-    answer: 'It depends on your requirements: PLA+ is great for prototypes and display models (easy to print, eco-friendly). PETG offers strength and flexibility for functional parts. ABS/ASA provide high temperature resistance for automotive applications. TPU is ideal for flexible, rubber-like parts. Resin is perfect for high-detail miniatures and jewelry. Our team can help you choose the right material.'
+    question: 'Can you help choose the right material?',
+    answer: 'Yes. We recommend materials based on use case, strength, heat resistance, finish, flexibility, and budget. PLA+ is great for prototypes, PETG and ABS for functional parts, and resin for fine detail.',
   },
   {
-    question: 'How fast is delivery in Pune and across India?',
-    answer: 'For Pune customers, we offer 24-48 hour turnaround on most orders with express service available. Pan-India delivery typically takes 3-5 business days via Delhivery or DTDC. Rush orders can be dispatched within 24 hours for an additional fee.'
+    question: 'What files can I send?',
+    answer: 'STL, 3MF, STEP, IGES, and OBJ are preferred. We can also review sketches, photos, or reference images when you need help turning an idea into a printable model.',
   },
   {
-    question: 'What file formats do you accept?',
-    answer: 'We accept STL, 3MF, STEP, IGES, and OBJ files for 3D printing. For CAD design services, we work with Fusion 360, SolidWorks, and Rhino files. If you only have a sketch or photo, our design team can create a 3D model from your reference.'
+    question: 'Do you take bulk or business orders?',
+    answer: 'Yes. We support small-batch production, corporate gifting, event giveaways, educational projects, and repeatable business orders with consistent material and finish settings.',
   },
   {
-    question: 'Do you provide bulk ordering discounts?',
-    answer: 'Yes! We offer volume pricing for bulk orders, startups, colleges, and events. Discounts increase with quantity. For enterprise clients, we provide dedicated account management and custom payment terms. Contact us for a customized quote.'
+    question: 'What happens if a print fails quality check?',
+    answer: 'If a print fails our internal check, we reprint before dispatch. Parts are reviewed for visible defects, support marks, fit-critical areas, and finish expectations.',
   },
-  {
-    question: 'Can you print multi-color parts?',
-    answer: 'Yes, we use Bambu Lab AMS (Automatic Material System) for 4-color FDM printing. This is perfect for logos, figurines, and prototypes requiring color coding. Each additional color adds to the print time and cost.'
-  },
-  {
-    question: 'What if my part fails quality check?',
-    answer: 'Every print undergoes rigorous quality inspection. If a part doesn\'t meet our standards, we reprint it at no cost. We also provide photos before shipping so you can verify the quality. Customer satisfaction is our priority.'
-  }
 ]
 
 export default function FAQSection() {
   const { settings } = useBusinessSettings()
-  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const [openIndex, setOpenIndex] = useState<number | null>(0)
+  const whatsappNumber = (settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')
 
   return (
-    <section className="py-24 px-6 border-t border-[rgba(124, 92, 255,0.5)]">
-      <div className="max-w-[800px] mx-auto">
-        {/* Section header */}
-        <div className="text-center mb-16">
-          <p className="text-sm font-medium text-[#7C5CFF] uppercase tracking-[3px] mb-4">FAQ</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
-            Questions We Get <span className="text-[#6F7192]">A Lot</span>
+    <section className="px-4 py-16 md:px-8 lg:px-16">
+      <div className="mx-auto max-w-[900px]">
+        <div className="mb-8 text-center">
+          <span className="text-xs font-bold uppercase text-[#6d28d9]">FAQ</span>
+          <h2 className="mt-2 text-3xl font-extrabold text-[#111827] md:text-4xl">
+            Questions before you print.
           </h2>
         </div>
 
-        {/* FAQ items */}
-        <div className="space-y-4">
-          {faqs.map((faq, i) => (
-            <div
-              key={i}
-              className="bg-[#FFFFFF] border border-[rgba(124, 92, 255,0.5)] rounded-xl overflow-hidden"
-            >
-              <button
-                onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-[#FFFFFF] transition-colors"
-              >
-                <span className="font-medium text-[#0F1B3D] pr-8">
-                  {faq.question}
-                </span>
-                <ChevronDown
-                  className={`w-5 h-5 text-[#7C5CFF] flex-shrink-0 transition-transform ${
-                    openIndex === i ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-              {openIndex === i && (
-                <div className="px-6 pb-5 text-[#6F7192] leading-[1.7]">
-                  {faq.answer}
-                </div>
-              )}
-            </div>
-          ))}
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-[0_18px_50px_rgba(17,24,39,0.08)]">
+          {faqs.map((faq, index) => {
+            const open = openIndex === index
+
+            return (
+              <div key={faq.question} className="border-b border-gray-100 last:border-b-0">
+                <button
+                  type="button"
+                  onClick={() => setOpenIndex(open ? null : index)}
+                  className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left"
+                >
+                  <span className="text-sm font-extrabold leading-6 text-[#111827]">{faq.question}</span>
+                  <ChevronDown className={`h-4 w-4 shrink-0 text-[#6d28d9] transition-transform ${open ? 'rotate-180' : ''}`} />
+                </button>
+                {open && (
+                  <p className="px-5 pb-5 text-sm leading-7 text-[#6F7192]">{faq.answer}</p>
+                )}
+              </div>
+            )
+          })}
         </div>
 
-        {/* Still have questions */}
-        <div className="text-center mt-12">
-          <p className="text-[#6F7192] mb-4">Still have questions?</p>
-          <a href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-[#7C5CFF] font-medium hover:underline">
-            Chat on WhatsApp now →
+        <div className="mt-6 text-center">
+          <a
+            href={`https://wa.me/${whatsappNumber}?text=Hi%20${encodeURIComponent(settings.businessName || 'Flux3D')}!%20I%20have%20a%20question%20about%203D%20printing%20services.`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[#25D366]/25 bg-white px-5 text-sm font-bold text-[#138a42] shadow-sm transition hover:border-[#25D366]/40 hover:bg-[#EAFBF2]"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Ask on WhatsApp
           </a>
         </div>
       </div>

@@ -23,16 +23,15 @@ export const STATUS_LABELS: Record<OrderStatus, string> = {
 export function statusPillClass(status: OrderStatus) {
   switch (status) {
     case 'pending':
-      return 'border-transparent bg-yellow-100 text-yellow-800'
     case 'confirmed':
-      return 'border-transparent bg-blue-100 text-blue-800'
+      return 'border-yellow-200 bg-yellow-50 text-yellow-700'
     case 'printing':
-      return 'border-transparent bg-purple-100 text-purple-800'
+      return 'border-violet-200 bg-violet-50 text-violet-700'
     case 'shipped':
-      return 'border-transparent bg-cyan-100 text-cyan-800'
+      return 'border-blue-200 bg-blue-50 text-blue-700'
     case 'delivered':
     case 'completed':
-      return 'border-transparent bg-emerald-100 text-emerald-800'
+      return 'border-green-200 bg-green-50 text-green-700'
     case 'cancelled':
       return 'border-transparent bg-red-100 text-red-800'
   }

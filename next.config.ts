@@ -37,6 +37,20 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  async redirects() {
+    return [
+      {
+        source: '/shelf',
+        destination: '/3d-shop',
+        permanent: true,
+      },
+      {
+        source: '/shelf/:path*',
+        destination: '/3d-shop/:path*',
+        permanent: true,
+      },
+    ]
+  },
 }
 
 export default nextConfig

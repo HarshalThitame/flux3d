@@ -302,7 +302,7 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
       <ReadingProgress />
       <Navbar transparent />
 
-      <section className="relative flex min-h-[70vh] items-end overflow-hidden bg-[var(--gradient-hero-bg)] px-6 pb-14 pt-28 md:px-12">
+      <section className="relative flex min-h-[70vh] items-end overflow-hidden bg-[var(--gradient-hero-bg)] px-6 pb-14 pt-8 md:px-12 md:pt-10">
         <div className="hero-glow hero-glow-1" />
         <div className="hero-glow hero-glow-2" />
         {post.featured_image ? (
@@ -406,6 +406,7 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
                     alt={authorName}
                     width={56}
                     height={56}
+                    loading="lazy"
                     className="h-14 w-14 rounded-full object-cover"
                   />
                 )}

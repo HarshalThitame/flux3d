@@ -4,7 +4,6 @@ import { cookies, headers } from 'next/headers'
 import { connection } from 'next/server'
 import { getSettings } from '@/lib/settings'
 import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data'
-import { absoluteUrl, siteUrl } from '@/lib/site'
 import { CartProvider } from '@/lib/cart/context'
 import { SettingsProvider } from '@/lib/settings-context'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
@@ -36,51 +35,78 @@ const jetBrainsMono = JetBrains_Mono({
   display: 'swap',
 })
 
-export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSettings()
-  const title = settings.metaTitle || 'Flux3D | Premium 3D Printing Services in India'
-  const description = settings.businessDescription || "India's most trusted 3D printing service"
-  const ogImage = settings.ogImageUrl || '/opengraph-image.png'
-
-  return {
-    metadataBase: new URL(siteUrl),
-    title: {
-      default: title,
-      template: `%s | ${settings.businessName || 'Flux3D'}`,
+export const metadata: Metadata = {
+  metadataBase: new URL('https://flux3d.in'),
+  title: {
+    default: 'Flux3D — Premium 3D Printing Services in India | Starting ₹99',
+    template: '%s | Flux3D',
+  },
+  description:
+    "India's most trusted 3D printing service. Custom FDM & resin printing for industrial parts, architecture models, student projects, medical models & corporate gifts. Powered by Bambu Lab P2S. Pan-India delivery. Starting ₹99.",
+  keywords: [
+    '3D printing India',
+    '3D printing Pune',
+    '3D printing Mumbai',
+    'custom 3D printing service',
+    'FDM printing India',
+    'resin printing India',
+    'rapid prototyping India',
+    'Bambu Lab P2S',
+    '3D printing near me',
+    'cheap 3D printing India',
+    '3D printing for students',
+    'industrial 3D printing',
+    'architecture models 3D print',
+    'corporate gifting 3D print',
+    'online 3D printing India',
+  ],
+  authors: [{ name: 'Flux3D', url: 'https://flux3d.in' }],
+  creator: 'Flux3D',
+  publisher: 'Flux3D',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
     },
-    description,
-    applicationName: settings.businessName || 'Flux3D',
-    keywords: settings.metaKeywords ? settings.metaKeywords.split(',').map(k => k.trim()) : undefined,
-    alternates: {
-      canonical: '/',
-    },
-other: {
-      'facebook-domain-verification': '2so08kooblq8716z4823mqn6etbbg6',
-    },
-    openGraph: {
-      type: 'website',
-      url: siteUrl,
-      siteName: settings.businessName || 'Flux3D',
-      title,
-      description,
-      locale: 'en_IN',
-      images: [
-        {
-          url: absoluteUrl(ogImage),
-          alt: `${settings.businessName} logo`,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [absoluteUrl(ogImage)],
-    },
-    icons: settings.faviconUrl && !settings.faviconUrl.endsWith('/favicon.ico') ? [{ rel: 'icon', url: settings.faviconUrl }] : undefined,
-    category: 'technology',
-    manifest: '/manifest.webmanifest',
-  }
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_IN',
+    url: 'https://flux3d.in',
+    siteName: 'Flux3D',
+    title: 'Flux3D — Premium 3D Printing Services in India | Starting ₹99',
+    description:
+      'Custom 3D printing for businesses, students & creators. Industrial precision, fast turnaround, pan-India delivery. Starting ₹99.',
+    images: [
+      {
+        url: '/opengraph-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Flux3D — Premium 3D Printing India',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Flux3D — Premium 3D Printing Services in India',
+    description: 'Custom 3D printing starting ₹99. Pan-India delivery. Powered by Bambu Lab P2S.',
+    images: ['/twitter-image.png'],
+  },
+  alternates: {
+    canonical: 'https://flux3d.in',
+  },
+  manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
+  other: {
+    'facebook-domain-verification': '2so08kooblq8716z4823mqn6etbbg6',
+  },
+  category: 'technology',
 }
 
 export const viewport: Viewport = {
@@ -88,7 +114,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#f8f6f2',
+  themeColor: '#6d28d9',
 }
 
 function toJsonLd(value: unknown) {

@@ -4,29 +4,17 @@ import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
 import { getCurrentUserProfile } from '@/lib/auth/server'
 import { getPublicQuoteMaterials } from '@/lib/public-materials'
-import { absoluteUrl } from '@/lib/site'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getPublicSettings()
-  return {
-    title: `${settings.businessName} — Instant 3D Printing Quote Dashboard`,
-    description:
-      settings.businessDescription || 'Upload STL, OBJ, or 3MF files, inspect the model in 3D, tune print settings, and review a live production quote in a structured dashboard layout.',
-    alternates: {
-      canonical: '/instant-quote',
-    },
-    openGraph: {
-      title: `${settings.businessName} — Instant Quote Dashboard`,
-      description:
-        settings.businessDescription || 'Structured upload, 3D preview, material controls, and real-time pricing for 3D printing jobs.',
-      url: absoluteUrl('/instant-quote'),
-    },
-    twitter: {
-      title: `${settings.businessName} — Instant Quote Dashboard`,
-      description:
-        settings.businessDescription || 'Structured upload, 3D preview, material controls, and real-time pricing for 3D printing jobs.',
-    },
-  }
+export const metadata: Metadata = {
+  title: {
+    absolute: 'Get Instant 3D Printing Quote — Upload Your Model | Flux3D',
+  },
+  description:
+    'Upload your STL, OBJ or 3MF file and get a free 3D printing quote in 2 minutes. No account needed. Powered by Bambu Lab P2S.',
+  alternates: {
+    canonical: '/instant-quote',
+  },
 }
 
 const InstantQuoteWorkspace = dynamic(
@@ -35,8 +23,8 @@ const InstantQuoteWorkspace = dynamic(
     loading: () => (
       <div className="flex min-h-screen items-center justify-center bg-[#FFFFFF]">
         <div className="text-center">
-          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full border border-[#7C5CFF]/20 bg-[#7C5CFF]/10">
-            <svg className="h-8 w-8 text-[#7C5CFF] animate-spin" viewBox="0 0 24 24" fill="none">
+          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full border border-[#6d28d9]/20 bg-[#6d28d9]/10">
+            <svg className="h-8 w-8 text-[#6d28d9] animate-spin" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
@@ -55,8 +43,31 @@ type InstantQuotePageProps = {
 
 export default async function InstantQuotePage({ searchParams }: InstantQuotePageProps) {
   const params = await searchParams
-  const initialMaterialId = typeof params.material === 'string' ? params.material : undefined
+  const modelFileId = typeof params.modelFile === 'string' ? params.modelFile : undefined
   const auth = await getCurrentUserProfile()
+  let initialModelFile: { fileName: string; fileUrl: string; material?: string | null } | undefined
+
+  if (auth && modelFileId) {
+    const supabase = await createServerSupabaseClient()
+    const { data } = await supabase
+      .from('model_files')
+      .select('file_name, file_url, material')
+      .eq('id', modelFileId)
+      .eq('user_id', auth.user.id)
+      .maybeSingle()
+
+    if (data?.file_url) {
+      initialModelFile = {
+        fileName: data.file_name || data.file_url.split('/').pop() || 'Uploaded model',
+        fileUrl: data.file_url,
+        material: data.material,
+      }
+    }
+  }
+
+  const initialMaterialId = typeof params.material === 'string'
+    ? params.material
+    : initialModelFile?.material ?? undefined
   const materials = await getPublicQuoteMaterials()
   const settings = await getPublicSettings()
 
@@ -67,6 +78,7 @@ export default async function InstantQuotePage({ searchParams }: InstantQuotePag
         user={auth?.profile ?? null}
         materials={materials}
         initialMaterialId={initialMaterialId}
+        initialModelFile={initialModelFile}
         pricingSettings={{
           overheadPercentage: settings.overheadPercentage,
           marginPercentage: settings.marginPercentage,

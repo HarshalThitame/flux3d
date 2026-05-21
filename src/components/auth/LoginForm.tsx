@@ -53,7 +53,7 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
             type="email"
             autoComplete="email"
             placeholder="you@company.com"
-            className="w-full rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
+            className="w-full rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
           />
           {state.fieldErrors?.email?.map((error) => (
             <p key={error} className="text-sm text-rose-300">
@@ -72,7 +72,7 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
             type="password"
             autoComplete="current-password"
             placeholder="Enter your password"
-            className="w-full rounded-2xl border border-[#7C5CFF]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
+            className="w-full rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
           />
           {state.fieldErrors?.password?.map((error) => (
             <p key={error} className="text-sm text-rose-300">

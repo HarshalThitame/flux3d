@@ -290,22 +290,22 @@ export default function DeliveryStepClient({
 
   return (
     <>
-      <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(124, 92, 255,0.08),transparent_24%),radial-gradient(circle_at_right,rgba(183, 167, 255,0.08),transparent_28%),#FFFFFF] px-4 pb-16 pt-32 text-[#0F1B3D] md:px-8 xl:px-10 md:pt-28">
+      <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(109, 40, 217,0.08),transparent_24%),radial-gradient(circle_at_right,rgba(168, 85, 247,0.08),transparent_28%),#FFFFFF] px-4 pb-16 pt-8 text-[#0F1B3D] md:px-8 md:pt-10 xl:px-10">
         <div className="mx-auto max-w-[1500px]">
           <div className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div className="max-w-[760px]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#7C5CFF]/25 bg-[#7C5CFF]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#7C5CFF]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/25 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#6d28d9]">
                 Delivery Step
               </div>
               <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2.3rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#0F1B3D]">
-                Confirm Delivery and Submit <span className="text-[#7C5CFF]">Your Print Request</span>
+                Confirm Delivery and Submit <span className="text-[#6d28d9]">Your Print Request</span>
               </h1>
               <p className="mt-5 max-w-[720px] text-base leading-8 text-[#6F7192]">
                 Review your quote, choose a saved address or add a new one, and we will calculate shipping automatically before your order request is sent.
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-[#7C5CFF]/10 bg-white/[0.03] px-5 py-4 backdrop-blur-xl">
+            <div className="rounded-[24px] border border-[#6d28d9]/10 bg-white/[0.03] px-5 py-4 backdrop-blur-xl">
               <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Signed in</div>
               <div className="mt-2 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">{user.name}</div>
               <div className="mt-1 text-sm text-[#6F7192]">{user.email}</div>
@@ -319,7 +319,7 @@ export default function DeliveryStepClient({
                   initial={{ opacity: 0, y: 18 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35 }}
-                  className="rounded-[28px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_10px_40px_rgba(0,0,0,0.2)] sm:shadow-[0_18px_70px_rgba(0,0,0,0.28)]"
+                  className="rounded-[28px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_10px_40px_rgba(0,0,0,0.2)] sm:shadow-[0_18px_70px_rgba(0,0,0,0.28)]"
                 >
                   <div className="mb-5 flex items-start justify-between gap-4">
                     <div>
@@ -330,7 +330,7 @@ export default function DeliveryStepClient({
                         Use an existing delivery address or switch to a new one.
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-[#7C5CFF]/10 bg-white p-3 text-[var(--brand-primary)]">
+                    <div className="rounded-2xl border border-[#6d28d9]/10 bg-white p-3 text-[var(--brand-primary)]">
                       <MapPin className="h-5 w-5" />
                     </div>
                   </div>
@@ -346,8 +346,8 @@ export default function DeliveryStepClient({
                           onClick={() => handleSavedAddressSelect(savedAddress)}
                           className={`rounded-[22px] border p-4 text-left transition ${
                             selectedAddressId === savedAddress.id
-                              ? 'border-[#7C5CFF]/35 bg-[var(--brand-faint)]'
-                              : 'border-[#7C5CFF]/10 bg-white/[0.02] hover:border-[#7C5CFF]/10 hover:bg-white/[0.04]'
+                              ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)]'
+                              : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10 hover:bg-white/[0.04]'
                           }`}
                         >
                           <div className={`text-sm font-semibold ${selectedAddressId === savedAddress.id ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{savedAddress.fullName}</div>
@@ -369,7 +369,7 @@ export default function DeliveryStepClient({
                       setLastLookupPincode('')
                       setAddress(initialAddressFields)
                     }}
-                    className="mt-4 text-sm font-medium text-[#7C5CFF]"
+                    className="mt-4 text-sm font-medium text-[#6d28d9]"
                   >
                     Use a new address
                   </button>
@@ -389,7 +389,7 @@ export default function DeliveryStepClient({
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.08 }}
-              className="h-fit rounded-[28px] border border-[#7C5CFF]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.3)]"
+              className="h-fit rounded-[28px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.3)]"
             >
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
@@ -400,13 +400,13 @@ export default function DeliveryStepClient({
                     Final review before your request is submitted to the admin.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-[#7C5CFF]/20 bg-[#7C5CFF]/10 p-3 text-[#7C5CFF]">
+                <div className="rounded-2xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-3 text-[#6d28d9]">
                   <Truck className="h-5 w-5" />
                 </div>
               </div>
 
               <div className="space-y-3">
-                <div className="rounded-[20px] border border-[#7C5CFF]/10 bg-white/[0.03] p-4">
+                <div className="rounded-[20px] border border-[#6d28d9]/10 bg-white/[0.03] p-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Quote</div>
                   <div className="mt-2 text-lg font-semibold text-[#0F1B3D]">{draft.quoteId}</div>
                   <div className="mt-2 text-sm text-[#6F7192]">
@@ -414,7 +414,7 @@ export default function DeliveryStepClient({
                   </div>
                 </div>
 
-                <div className="rounded-[24px] border border-[#7C5CFF]/20 bg-[linear-gradient(180deg,rgba(124, 92, 255,0.12),rgba(124, 92, 255,0.06))] p-5 shadow-[0_12px_48px_rgba(124, 92, 255,0.1)]">
+                <div className="rounded-[24px] border border-[#6d28d9]/20 bg-[linear-gradient(180deg,rgba(109, 40, 217,0.12),rgba(109, 40, 217,0.06))] p-5 shadow-[0_12px_48px_rgba(109, 40, 217,0.1)]">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Grand Total</div>
                   <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
                     ₹{pricing.totalPrice.toFixed(0)}
@@ -450,14 +450,14 @@ export default function DeliveryStepClient({
                   type="button"
                   onClick={handleSubmitOrder}
                   disabled={submitting}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-[20px] bg-[#7C5CFF] px-5 py-4 text-sm font-semibold text-white transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-[20px] bg-[#6d28d9] px-5 py-4 text-sm font-semibold text-white transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55"
                 >
                   {submitting ? 'Submitting Request...' : 'Place Order Request'}
                   <PackageCheck className="h-4 w-4" />
                 </button>
                 <Link
                   href="/instant-quote"
-                  className="inline-flex w-full items-center justify-center rounded-[18px] border border-[#7C5CFF]/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
+                  className="inline-flex w-full items-center justify-center rounded-[18px] border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
                 >
                   Back to quote
                 </Link>

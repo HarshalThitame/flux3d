@@ -670,7 +670,7 @@ export default function AdminBlogPage() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h1 className="font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">
-                  <Eye className="mr-2 inline h-8 w-8 text-[#7C5CFF]" />
+                  <Eye className="mr-2 inline h-8 w-8 text-[#6d28d9]" />
                   Blog Management
                 </h1>
                 <p className="mt-2 text-sm text-[#6F7192]">Create SEO-ready blog posts for Flux3D.</p>
@@ -680,7 +680,7 @@ export default function AdminBlogPage() {
                   resetForm()
                   setShowForm(true)
                 }}
-                className="inline-flex items-center gap-2 rounded-lg bg-[#7C5CFF] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#6948f0]"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#6d28d9] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#4c1d95]"
               >
                 <Plus className="h-4 w-4" />
                 New Post
@@ -751,7 +751,7 @@ export default function AdminBlogPage() {
                       onClick={() => setActiveTab(tab.id)}
                       className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
                         activeTab === tab.id
-                          ? 'border-[#7C5CFF] text-[#7C5CFF]'
+                          ? 'border-[#6d28d9] text-[#6d28d9]'
                           : 'border-transparent text-[#6F7192] hover:text-[#0F1B3D]'
                       }`}
                     >
@@ -778,7 +778,7 @@ export default function AdminBlogPage() {
                             required
                             value={formData.title}
                             onChange={(event) => handleTitleChange(event.target.value)}
-                            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                           />
                         </div>
 
@@ -794,7 +794,7 @@ export default function AdminBlogPage() {
                             value={formData.slug}
                             onChange={(event) => handleSlugChange(event.target.value)}
                             placeholder="best-3d-printing-pune-rapid-prototyping"
-                            className={`w-full rounded-lg border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF] ${
+                            className={`w-full rounded-lg border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9] ${
                               slugDuplicate ? 'border-rose-300' : 'border-gray-200'
                             }`}
                           />
@@ -807,7 +807,7 @@ export default function AdminBlogPage() {
                             value={formData.excerpt}
                             onChange={(event) => updateForm({ excerpt: event.target.value })}
                             rows={3}
-                            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                           />
                         </div>
 
@@ -855,7 +855,7 @@ export default function AdminBlogPage() {
                                   <button
                                     type="button"
                                     onClick={() => insertInternalLink(link)}
-                                    className="rounded-lg bg-[#7C5CFF] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#6948f0]"
+                                    className="rounded-lg bg-[#6d28d9] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#4c1d95]"
                                   >
                                     Insert link
                                   </button>
@@ -873,7 +873,7 @@ export default function AdminBlogPage() {
                       <div className="grid gap-5 xl:grid-cols-2">
                         <div className="rounded-lg border border-gray-200 p-4">
                           <div className="mb-3 flex items-center gap-2">
-                            <ImageIcon className="h-4 w-4 text-[#7C5CFF]" />
+                            <ImageIcon className="h-4 w-4 text-[#6d28d9]" />
                             <h3 className="text-sm font-semibold text-[#0F1B3D]">Featured Image</h3>
                           </div>
                           <input
@@ -881,7 +881,7 @@ export default function AdminBlogPage() {
                             value={formData.featured_image}
                             onChange={(event) => updateForm({ featured_image: event.target.value })}
                             placeholder="Image URL"
-                            className="mb-3 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                            className="mb-3 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                           />
                           <input
                             type="text"
@@ -889,20 +889,20 @@ export default function AdminBlogPage() {
                             value={formData.featured_image_alt}
                             onChange={(event) => updateForm({ featured_image_alt: event.target.value })}
                             placeholder="Alt text for image SEO"
-                            className="mb-3 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                            className="mb-3 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                           />
                           <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-[#0F1B3D] hover:bg-gray-50">
                             {uploading === 'featured' ? 'Uploading...' : 'Upload Featured Image'}
                             <input type="file" accept="image/*" onChange={(event) => handleImageUpload(event, 'featured')} className="hidden" />
                           </label>
                           {formData.featured_image && (
-                            <img src={formData.featured_image} alt={formData.featured_image_alt || 'Featured preview'} className="mt-4 h-48 w-full rounded-lg object-cover" />
+                            <img src={formData.featured_image} alt={formData.featured_image_alt || 'Featured preview'} width={800} height={320} loading="lazy" decoding="async" className="mt-4 h-48 w-full rounded-lg object-cover" />
                           )}
                         </div>
 
                         <div className="rounded-lg border border-gray-200 p-4">
                           <div className="mb-3 flex items-center gap-2">
-                            <Share2 className="h-4 w-4 text-[#7C5CFF]" />
+                            <Share2 className="h-4 w-4 text-[#6d28d9]" />
                             <h3 className="text-sm font-semibold text-[#0F1B3D]">Open Graph Image</h3>
                           </div>
                           <input
@@ -910,14 +910,14 @@ export default function AdminBlogPage() {
                             value={formData.og_image_url}
                             onChange={(event) => updateForm({ og_image_url: event.target.value })}
                             placeholder="1200x630px social image URL"
-                            className="mb-3 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                            className="mb-3 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                           />
                           <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-[#0F1B3D] hover:bg-gray-50">
                             {uploading === 'og' ? 'Uploading...' : 'Upload OG Image'}
                             <input type="file" accept="image/*" onChange={(event) => handleImageUpload(event, 'og')} className="hidden" />
                           </label>
                           {formData.og_image_url && (
-                            <img src={formData.og_image_url} alt="Open Graph preview" className="mt-4 aspect-[1200/630] w-full rounded-lg object-cover" />
+                            <img src={formData.og_image_url} alt="Open Graph preview" width={1200} height={630} loading="lazy" decoding="async" className="mt-4 aspect-[1200/630] w-full rounded-lg object-cover" />
                           )}
                         </div>
 
@@ -950,7 +950,7 @@ export default function AdminBlogPage() {
                                   updateForm({ seo_title: event.target.value })
                                 }}
                                 placeholder="Best 3D Printing Service in Pune | Flux3D"
-                                className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                                className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                               />
                               <button
                                 type="button"
@@ -975,7 +975,7 @@ export default function AdminBlogPage() {
                                       setAutoDirty((prev) => ({ ...prev, seoTitle: true }))
                                       updateForm({ seo_title: title, og_title: autoDirty.ogTitle ? formData.og_title : title })
                                     }}
-                                    className="block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-xs text-[#0F1B3D] hover:border-[#7C5CFF]"
+                                    className="block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-xs text-[#0F1B3D] hover:border-[#6d28d9]"
                                   >
                                     {title}
                                   </button>
@@ -992,7 +992,7 @@ export default function AdminBlogPage() {
                                 value={formData.focus_keyword}
                                 onChange={(event) => updateForm({ focus_keyword: event.target.value })}
                                 placeholder="3D printing Pune"
-                                className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                                className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                               />
                               <button
                                 type="button"
@@ -1023,7 +1023,7 @@ export default function AdminBlogPage() {
                               onChange={(event) => handleMetaDescriptionChange(event.target.value)}
                               rows={3}
                               placeholder="Looking for fast 3D printing in Pune? Flux3D delivers precision prototypes in 24hrs. Serving Hinjewadi, Chakan & beyond."
-                              className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                              className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                             />
                             <button
                               type="button"
@@ -1048,7 +1048,7 @@ export default function AdminBlogPage() {
                               value={formData.secondary_keywords}
                               onChange={(event) => updateForm({ secondary_keywords: event.target.value })}
                               placeholder="rapid prototyping Pune, 3D printing service India, SLA printing Pune, Bambu Lab prints"
-                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                             />
                           </div>
                           <div>
@@ -1058,7 +1058,7 @@ export default function AdminBlogPage() {
                               value={formData.meta_keywords}
                               onChange={(event) => updateForm({ meta_keywords: event.target.value })}
                               placeholder="3D printing India, Flux3D blog, rapid prototyping tips"
-                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                             />
                           </div>
                         </div>
@@ -1066,7 +1066,7 @@ export default function AdminBlogPage() {
                         <div className="grid gap-5 xl:grid-cols-2">
                           <div className="rounded-lg border border-gray-200 p-4">
                             <div className="mb-3 flex items-center gap-2">
-                              <Search className="h-4 w-4 text-[#7C5CFF]" />
+                              <Search className="h-4 w-4 text-[#6d28d9]" />
                               <h3 className="text-sm font-semibold text-[#0F1B3D]">Google Search Preview</h3>
                             </div>
                             <p className="text-xs text-[#188038]">flux3d.in &gt; blog &gt; {formData.slug || 'slug'}</p>
@@ -1079,7 +1079,7 @@ export default function AdminBlogPage() {
                           <div className="rounded-lg border border-gray-200 p-4">
                             <div className="mb-3 flex items-center justify-between gap-3">
                               <div className="flex items-center gap-2">
-                                <Share2 className="h-4 w-4 text-[#7C5CFF]" />
+                                <Share2 className="h-4 w-4 text-[#6d28d9]" />
                                 <h3 className="text-sm font-semibold text-[#0F1B3D]">Social Preview</h3>
                               </div>
                               <div className="flex rounded-lg border border-gray-200 p-1">
@@ -1089,7 +1089,7 @@ export default function AdminBlogPage() {
                                     type="button"
                                     onClick={() => setSocialPreview(item)}
                                     className={`rounded-md px-2 py-1 text-xs font-medium capitalize ${
-                                      socialPreview === item ? 'bg-[#7C5CFF] text-white' : 'text-[#6F7192]'
+                                      socialPreview === item ? 'bg-[#6d28d9] text-white' : 'text-[#6F7192]'
                                     }`}
                                   >
                                     {item}
@@ -1100,7 +1100,7 @@ export default function AdminBlogPage() {
                             <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
                               <div className="aspect-[1200/630] bg-gray-200">
                                 {formData.og_image_url || formData.featured_image ? (
-                                  <img src={formData.og_image_url || formData.featured_image} alt="Social preview" className="h-full w-full object-cover" />
+                                  <img src={formData.og_image_url || formData.featured_image} alt="Social preview" width={1200} height={630} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                                 ) : null}
                               </div>
                               <div className="p-3">
@@ -1128,7 +1128,7 @@ export default function AdminBlogPage() {
                                   author_name: author?.name || 'Flux3D Team',
                                 })
                               }}
-                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                             >
                               <option value="">Flux3D Team</option>
                               {authors.filter((author) => author.id).map((author) => (
@@ -1142,7 +1142,7 @@ export default function AdminBlogPage() {
                               type="text"
                               value={formData.category}
                               onChange={(event) => updateForm({ category: event.target.value })}
-                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                             />
                           </div>
                           <div>
@@ -1150,7 +1150,7 @@ export default function AdminBlogPage() {
                             <select
                               value={formData.status}
                               onChange={(event) => updateForm({ status: event.target.value as 'draft' | 'published' })}
-                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                             >
                               <option value="draft">Draft</option>
                               <option value="published">Published</option>
@@ -1166,7 +1166,7 @@ export default function AdminBlogPage() {
                               value={formData.tags}
                               onChange={(event) => updateForm({ tags: event.target.value })}
                               placeholder="3D Printing, Tips, Tutorial"
-                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                             />
                           </div>
                           <div>
@@ -1175,7 +1175,7 @@ export default function AdminBlogPage() {
                               type="datetime-local"
                               value={toDatetimeLocal(formData.published_at)}
                               onChange={(event) => updateForm({ published_at: fromDatetimeLocal(event.target.value) })}
-                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                             />
                           </div>
                           <div>
@@ -1183,7 +1183,7 @@ export default function AdminBlogPage() {
                             <select
                               value={formData.language}
                               onChange={(event) => updateForm({ language: event.target.value as 'en' | 'hi' | 'mr' })}
-                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                             >
                               <option value="en">English</option>
                               <option value="hi">Hindi</option>
@@ -1206,7 +1206,7 @@ export default function AdminBlogPage() {
                               setAutoDirty((prev) => ({ ...prev, canonical: true }))
                               updateForm({ canonical_url: event.target.value })
                             }}
-                            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                           />
                         </div>
 
@@ -1220,7 +1220,7 @@ export default function AdminBlogPage() {
                                 setAutoDirty((prev) => ({ ...prev, ogTitle: true }))
                                 updateForm({ og_title: event.target.value })
                               }}
-                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                             />
                           </div>
                           <div>
@@ -1232,7 +1232,7 @@ export default function AdminBlogPage() {
                                 setAutoDirty((prev) => ({ ...prev, ogDescription: true }))
                                 updateForm({ og_description: event.target.value })
                               }}
-                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                             />
                           </div>
                         </div>
@@ -1243,7 +1243,7 @@ export default function AdminBlogPage() {
                             <select
                               value={formData.twitter_card_type}
                               onChange={(event) => updateForm({ twitter_card_type: event.target.value as 'summary' | 'summary_large_image' })}
-                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                             >
                               <option value="summary_large_image">summary_large_image</option>
                               <option value="summary">summary</option>
@@ -1254,7 +1254,7 @@ export default function AdminBlogPage() {
                             <select
                               value={formData.schema_type}
                               onChange={(event) => updateForm({ schema_type: event.target.value as BlogSchemaType })}
-                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                             >
                               {BLOG_SCHEMA_TYPES.map((type) => (
                                 <option key={type} value={type}>{type}</option>
@@ -1292,14 +1292,14 @@ export default function AdminBlogPage() {
                                     value={faq.question}
                                     onChange={(event) => updateFaq(index, { question: event.target.value })}
                                     placeholder="Question"
-                                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                                   />
                                   <textarea
                                     value={faq.answer}
                                     onChange={(event) => updateFaq(index, { answer: event.target.value })}
                                     placeholder="Answer"
                                     rows={2}
-                                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                                   />
                                 </div>
                               ))}
@@ -1325,14 +1325,14 @@ export default function AdminBlogPage() {
                                     value={step.name}
                                     onChange={(event) => updateStep(index, { name: event.target.value })}
                                     placeholder="Step title"
-                                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                                   />
                                   <textarea
                                     value={step.text}
                                     onChange={(event) => updateStep(index, { text: event.target.value })}
                                     placeholder="Step instructions"
                                     rows={2}
-                                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#7C5CFF]"
+                                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]"
                                   />
                                 </div>
                               ))}
@@ -1381,19 +1381,19 @@ export default function AdminBlogPage() {
 
                       <div className="mb-4 grid grid-cols-2 gap-2 text-xs">
                         <div className="rounded-lg border border-gray-200 bg-white p-3">
-                          <Clock className="mb-1 h-4 w-4 text-[#7C5CFF]" />
+                          <Clock className="mb-1 h-4 w-4 text-[#6d28d9]" />
                           {seoAnalysis.readingTimeMinutes} min read
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white p-3">
-                          <BookOpen className="mb-1 h-4 w-4 text-[#7C5CFF]" />
+                          <BookOpen className="mb-1 h-4 w-4 text-[#6d28d9]" />
                           {seoAnalysis.wordCount} words
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white p-3">
-                          <Tag className="mb-1 h-4 w-4 text-[#7C5CFF]" />
+                          <Tag className="mb-1 h-4 w-4 text-[#6d28d9]" />
                           {seoAnalysis.keywordDensity}% density
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white p-3">
-                          <Globe2 className="mb-1 h-4 w-4 text-[#7C5CFF]" />
+                          <Globe2 className="mb-1 h-4 w-4 text-[#6d28d9]" />
                           {formData.language.toUpperCase()}
                         </div>
                       </div>
@@ -1436,7 +1436,7 @@ export default function AdminBlogPage() {
                         type="button"
                         onClick={() => savePost('published')}
                         disabled={saving}
-                        className="inline-flex items-center gap-2 rounded-lg bg-[#7C5CFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#6948f0] disabled:opacity-60"
+                        className="inline-flex items-center gap-2 rounded-lg bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4c1d95] disabled:opacity-60"
                       >
                         <Send className="h-4 w-4" />
                         Publish
@@ -1465,12 +1465,12 @@ export default function AdminBlogPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
-                  className="rounded-lg border border-gray-200 bg-white p-5 transition-colors hover:border-[#7C5CFF]/30"
+                  className="rounded-lg border border-gray-200 bg-white p-5 transition-colors hover:border-[#6d28d9]/30"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex min-w-0 flex-1 items-start gap-4">
                       {post.featured_image && (
-                        <img src={post.featured_image} alt={post.featured_image_alt || post.title} className="h-20 w-20 rounded-lg object-cover" />
+                        <img src={post.featured_image} alt={post.featured_image_alt || post.title} width={80} height={80} loading="lazy" decoding="async" className="h-20 w-20 rounded-lg object-cover" />
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">

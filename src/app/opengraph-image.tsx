@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og'
 
-export const alt = 'Flux3D Additive Innovation'
+export const alt = 'Flux3D — Premium 3D Printing India'
 export const size = {
   width: 1200,
   height: 630,
@@ -19,8 +19,8 @@ export default function Image() {
           justifyContent: 'space-between',
           padding: '56px 64px',
           background:
-            'radial-gradient(circle at top, rgba(124, 92, 255,0.28), transparent 42%), linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 58%, #FFFFFF 100%)',
-          color: 'white',
+            'radial-gradient(circle at top, rgba(109, 40, 217,0.22), transparent 42%), linear-gradient(135deg, #f8f6f2 0%, #faf9f7 58%, #ede9fe 100%)',
+          color: '#1a1a1a',
         }}
       >
         <div
@@ -29,7 +29,7 @@ export default function Image() {
             fontSize: 34,
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
-            color: '#ff8c57',
+            color: '#6d28d9',
           }}
         >
           Additive Innovation
@@ -51,7 +51,7 @@ export default function Image() {
               maxWidth: '900px',
               fontSize: 38,
               lineHeight: 1.3,
-              color: '#c6cbd9',
+              color: '#4b4b4b',
             }}
           >
             Precision 3D printing, rapid prototyping, and custom manufacturing support across India.
