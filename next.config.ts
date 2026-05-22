@@ -1,5 +1,14 @@
 import type { NextConfig } from 'next'
 
+if (
+  process.env.NEXT_ADAPTER_PATH &&
+  process.env.VERCEL_PREVIEW_COMMENTS_ENABLED === '1'
+) {
+  // Vercel's Next adapter reads ctx.projectDir during modifyConfig, but Next
+  // 16.2 only provides that field after the build completes.
+  process.env.VERCEL_PREVIEW_COMMENTS_ENABLED = '0'
+}
+
 const nextConfig: NextConfig = {
   compress: true,
   images: {
