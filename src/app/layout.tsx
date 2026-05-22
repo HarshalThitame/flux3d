@@ -186,11 +186,13 @@ export default async function RootLayout({
       <body suppressHydrationWarning>
         <script
           nonce={nonce}
+          suppressHydrationWarning
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: toJsonLd(orgJsonLd) }}
         />
         <script
           nonce={nonce}
+          suppressHydrationWarning
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: toJsonLd(webJsonLd) }}
         />
