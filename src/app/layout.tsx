@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { DM_Sans, Inter, JetBrains_Mono } from 'next/font/google'
 import { cookies, headers } from 'next/headers'
 import { connection } from 'next/server'
+import { Analytics } from '@vercel/analytics/next'
 import { getSettings } from '@/lib/settings'
 import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data'
 import { CartProvider } from '@/lib/cart/context'
@@ -197,6 +198,7 @@ export default async function RootLayout({
             </ErrorBoundary>
           </SettingsProvider>
         </CartProvider>
+        <Analytics />
       </body>
     </html>
   )
