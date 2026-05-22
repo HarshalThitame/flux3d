@@ -38,7 +38,7 @@ type ComparisonTableProps = {
 function Availability({ stock }: { stock?: string | boolean }) {
   if (stock === true || stock === 'Healthy') {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-2.5 py-1 text-xs font-bold text-emerald-200">
         <CheckCircle2 className="h-3.5 w-3.5" />
         In stock
       </span>
@@ -47,7 +47,7 @@ function Availability({ stock }: { stock?: string | boolean }) {
 
   if (stock === 'Low' || stock === false) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/25 bg-amber-400/10 px-2.5 py-1 text-xs font-bold text-amber-200">
         <AlertTriangle className="h-3.5 w-3.5" />
         Low stock
       </span>
@@ -55,7 +55,7 @@ function Availability({ stock }: { stock?: string | boolean }) {
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-600">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-xs font-bold text-cyan-100">
       <PhoneCall className="h-3.5 w-3.5" />
       {typeof stock === 'string' ? stock : 'Request'}
     </span>
@@ -68,8 +68,9 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
 
   if (materials.length === 0) {
     return (
-      <section ref={ref} className="px-4 py-12 md:px-8 lg:px-16">
-        <div className="mx-auto max-w-[1200px] rounded-3xl border border-gray-200 bg-white py-12 text-center shadow-sm">
+      <section ref={ref} className="materials-premium-section relative overflow-hidden px-4 py-12 md:px-8 lg:px-16">
+        <div className="materials-section-grid" aria-hidden="true" />
+        <div className="materials-panel-premium relative z-10 mx-auto max-w-[1200px] rounded-lg border border-gray-200 bg-white py-12 text-center shadow-sm">
           <p className="text-[#6F7192]">No materials available for comparison.</p>
         </div>
       </section>
@@ -77,8 +78,9 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
   }
 
   return (
-    <section ref={ref} className="px-4 py-14 md:px-8 lg:px-16">
-      <div className="mx-auto max-w-[1200px]">
+    <section ref={ref} className="materials-premium-section materials-comparison-section relative overflow-hidden px-4 py-20 md:px-8 lg:px-16">
+      <div className="materials-section-grid" aria-hidden="true" />
+      <div className="relative z-10 mx-auto max-w-[1200px]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -97,7 +99,7 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
           </p>
         </motion.div>
 
-        <div className="overflow-hidden rounded-[1.75rem] border border-gray-200 bg-white shadow-[0_18px_50px_rgba(17,24,39,0.08)]">
+        <div className="materials-table-panel overflow-hidden rounded-lg border border-gray-200 bg-white shadow-[0_18px_50px_rgba(17,24,39,0.08)]">
           <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] text-sm">
             <thead>
@@ -119,7 +121,7 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
                 <motion.tr
                   key={m.name}
                   initial={{ opacity: 0, y: 10 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : {}}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
                   className="border-t border-gray-100 transition-colors hover:bg-[#FAFBFD]"
                 >

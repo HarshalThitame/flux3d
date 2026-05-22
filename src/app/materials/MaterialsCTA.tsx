@@ -13,11 +13,12 @@ export default function MaterialsCTA() {
   const isInView = useInView(ref, { once: true, margin: '-50px' })
 
   return (
-    <section ref={ref} className="px-4 pb-20 pt-16 md:px-8 lg:px-16">
+    <section ref={ref} className="materials-premium-section materials-bottom-cta relative overflow-hidden px-4 pb-24 pt-20 md:px-8 lg:px-16">
+      <div className="materials-section-grid" aria-hidden="true" />
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}
-        className="mx-auto max-w-[940px] overflow-hidden rounded-[2rem] border border-gray-200 bg-white p-7 text-center shadow-[0_28px_80px_rgba(17,24,39,0.14)] md:p-12"
+        className="materials-cta-panel relative z-10 mx-auto max-w-[940px] overflow-hidden rounded-lg border border-gray-200 bg-white p-7 text-center shadow-[0_28px_80px_rgba(17,24,39,0.14)] md:p-12"
       >
         <span className="mb-3 inline-flex items-center rounded-full bg-[#ede9fe] px-4 py-2 text-xs font-bold uppercase text-[#6d28d9]">
           From material to quote

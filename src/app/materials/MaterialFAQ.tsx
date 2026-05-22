@@ -44,7 +44,7 @@ function FAQItem({ faq }: { faq: { q: string; a: string } }) {
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="border-b border-gray-100 last:border-0">
+    <div className="materials-faq-item border-b border-gray-100 last:border-0">
       <button
         onClick={() => setOpen(!open)}
         className="group flex w-full items-center justify-between py-5 text-left"
@@ -66,8 +66,9 @@ export default function MaterialFAQ() {
   const isInView = useInView(ref, { once: true, margin: '-50px' })
 
   return (
-    <section ref={ref} className="px-4 py-16 md:px-8 lg:px-16">
-      <div className="mx-auto max-w-[900px]">
+    <section ref={ref} className="materials-premium-section materials-faq-section relative overflow-hidden px-4 py-20 md:px-8 lg:px-16">
+      <div className="materials-section-grid" aria-hidden="true" />
+      <div className="relative z-10 mx-auto max-w-[900px]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -85,7 +86,7 @@ export default function MaterialFAQ() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.1 }}
-          className="rounded-[1.75rem] border border-gray-200 bg-white px-5 shadow-[0_18px_50px_rgba(17,24,39,0.08)] md:px-8"
+          className="materials-faq-panel rounded-lg border border-gray-200 bg-white px-5 shadow-[0_18px_50px_rgba(17,24,39,0.08)] md:px-8"
         >
           {faqs.map((faq, i) => (
             <FAQItem key={i} faq={faq} />

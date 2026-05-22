@@ -36,7 +36,7 @@ function PropertyBadge({
   value: string
 }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+    <div className="materials-property-badge rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
       <div className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase text-gray-500">
         <Icon className="h-3.5 w-3.5 text-[#6d28d9]" />
         {label}
@@ -110,8 +110,9 @@ export default function MaterialSelectorTool() {
   const progressPercent = (progressIndex / MATERIAL_QUIZ_QUESTIONS.length) * 100
 
   return (
-    <section ref={ref} className="px-4 py-16 md:px-8 lg:px-16">
-      <div className="mx-auto max-w-[980px]">
+    <section ref={ref} className="materials-premium-section materials-selector-section relative overflow-hidden px-4 py-20 md:px-8 lg:px-16">
+      <div className="materials-section-grid" aria-hidden="true" />
+      <div className="relative z-10 mx-auto max-w-[980px]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -131,7 +132,7 @@ export default function MaterialSelectorTool() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="overflow-hidden rounded-[2rem] border border-gray-200 bg-white p-5 shadow-[0_24px_70px_rgba(17,24,39,0.10)] md:p-7"
+          className="materials-quiz-panel overflow-hidden rounded-lg border border-gray-200 bg-white p-5 shadow-[0_24px_70px_rgba(17,24,39,0.10)] md:p-7"
         >
           <div className="mb-6">
             <div className="mb-2 flex items-center justify-between text-xs font-bold uppercase text-gray-500">
@@ -196,7 +197,7 @@ export default function MaterialSelectorTool() {
                 transition={{ duration: 0.24 }}
                 className="space-y-5"
               >
-                <div className="rounded-[1.75rem] border border-[#6d28d9]/20 bg-[#F7F8FB] p-5 md:p-6">
+                <div className="materials-result-card rounded-lg border border-[#6d28d9]/20 bg-[#F7F8FB] p-5 md:p-6">
                   <p className="mb-2 text-xs font-bold uppercase text-[#6d28d9]">
                     Primary Recommendation
                   </p>
@@ -234,7 +235,7 @@ export default function MaterialSelectorTool() {
                 </div>
 
                 {recommendation.secondary && (
-                  <div className="rounded-2xl border border-gray-200 bg-[#FAFBFD] p-4">
+                  <div className="materials-result-card rounded-lg border border-gray-200 bg-[#FAFBFD] p-4">
                     <p className="text-sm text-[#4B5563]">
                       <span className="font-semibold text-[#0F1B3D]">
                         Also consider: {recommendation.secondary.material.displayName}
@@ -245,7 +246,7 @@ export default function MaterialSelectorTool() {
                 )}
 
                 {(recommendation.warnings.length > 0 || recommendation.primary.notes.length > 0) && (
-                  <div className="space-y-2 rounded-2xl border border-[#ded7ff] bg-[#f3f0ff] p-4">
+                  <div className="materials-note-panel space-y-2 rounded-lg border border-[#ded7ff] bg-[#f3f0ff] p-4">
                     {[...recommendation.primary.notes, ...recommendation.warnings].map((note) => (
                       <div key={note} className="flex gap-2 text-sm leading-6 text-[#4c1d95]">
                         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />

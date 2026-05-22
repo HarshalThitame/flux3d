@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { Suspense } from 'react'
 import { getSettings } from '@/lib/settings'
 
 export const revalidate = 3600
@@ -82,11 +81,9 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F8FB]">
+    <div className="blog-premium-shell min-h-screen overflow-hidden bg-[#05060a] text-white">
       <Navbar transparent />
-      <Suspense fallback={<div className="mx-4 mt-20 min-h-96 rounded-lg border border-gray-200 bg-white shadow-sm sm:mx-6 md:mx-10 lg:mx-12" />}>
-        <BlogClient posts={posts} page={page} totalPages={Math.max(1, Math.ceil(total / limit))} />
-      </Suspense>
+      <BlogClient posts={posts} page={page} totalPages={Math.max(1, Math.ceil(total / limit))} />
     </div>
   )
 }

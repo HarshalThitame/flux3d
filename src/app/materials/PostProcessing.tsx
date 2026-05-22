@@ -61,8 +61,9 @@ export default function PostProcessing() {
   const isInView = useInView(ref, { once: true, margin: '-50px' })
 
   return (
-    <section ref={ref} className="px-4 py-16 md:px-8 lg:px-16">
-      <div className="mx-auto max-w-[1200px]">
+    <section ref={ref} className="materials-premium-section materials-finishing-section relative overflow-hidden px-4 py-20 md:px-8 lg:px-16">
+      <div className="materials-section-grid" aria-hidden="true" />
+      <div className="relative z-10 mx-auto max-w-[1200px]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -86,7 +87,7 @@ export default function PostProcessing() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: i * 0.08 }}
-              className="group rounded-[1.5rem] border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-[#6d28d9]/25 hover:shadow-[0_20px_60px_rgba(17,24,39,0.10)]"
+              className="materials-finish-card group rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-[#6d28d9]/25 hover:shadow-[0_20px_60px_rgba(17,24,39,0.10)]"
             >
               <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ede9fe] text-[#6d28d9]">
                 <s.icon className="h-5 w-5" />

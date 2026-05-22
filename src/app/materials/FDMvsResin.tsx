@@ -10,8 +10,9 @@ export default function FDMvsResin() {
   const isInView = useInView(ref, { once: true, margin: '-50px' })
 
   return (
-    <section ref={ref} className="px-4 py-16 md:px-8 lg:px-16">
-      <div className="mx-auto max-w-[1100px]">
+    <section ref={ref} className="materials-premium-section materials-tech-section relative overflow-hidden px-4 py-20 md:px-8 lg:px-16">
+      <div className="materials-section-grid" aria-hidden="true" />
+      <div className="relative z-10 mx-auto max-w-[1100px]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -33,7 +34,7 @@ export default function FDMvsResin() {
             initial={{ opacity: 0, x: -30 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ delay: 0.1 }}
-            className="rounded-[1.75rem] border border-gray-200 bg-white p-6 shadow-[0_18px_50px_rgba(17,24,39,0.08)]"
+            className="materials-tech-card rounded-lg border border-gray-200 bg-white p-6 shadow-[0_18px_50px_rgba(17,24,39,0.08)]"
           >
             <div className="mb-5 flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ede9fe] text-[#6d28d9]">
@@ -71,7 +72,7 @@ export default function FDMvsResin() {
             initial={{ opacity: 0, x: 30 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ delay: 0.2 }}
-            className="rounded-[1.75rem] border border-gray-200 bg-white p-6 shadow-[0_18px_50px_rgba(17,24,39,0.08)]"
+            className="materials-tech-card rounded-lg border border-gray-200 bg-white p-6 shadow-[0_18px_50px_rgba(17,24,39,0.08)]"
           >
             <div className="mb-5 flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eef2ff] text-[#3730a3]">
@@ -110,7 +111,7 @@ export default function FDMvsResin() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.3 }}
-          className="mt-5 flex items-start gap-3 rounded-2xl border border-[#6d28d9]/15 bg-white p-4 text-sm shadow-sm"
+          className="materials-info-panel mt-5 flex items-start gap-3 rounded-lg border border-[#6d28d9]/15 bg-white p-4 text-sm shadow-sm"
         >
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-[#6d28d9]" />
           <span className="font-semibold leading-6 text-[#111827]">

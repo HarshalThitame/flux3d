@@ -1,93 +1,131 @@
 'use client'
 
-import { Hourglass, Banknote, Wrench, ArrowRight } from 'lucide-react'
-import Reveal from '@/components/Reveal'
+import { motion, useInView } from 'framer-motion'
+import { useRef } from 'react'
+import { Hourglass, Banknote, Wrench, ArrowRight, CheckCircle2, ScanLine, Gauge } from 'lucide-react'
 
 const painPoints = [
   {
     id: 1,
-    emoji: '⏳',
     icon: Hourglass,
-    problem: 'Traditional Manufacturing Takes Weeks',
-    solution: '24–48 hour turnaround',
+    metric: 'Weeks',
+    problem: 'Traditional manufacturing stalls while you wait for suppliers.',
+    solution: 'Quote in minutes. Express queue when the deadline is real.',
+    accent: 'from-cyan-300 to-emerald-300',
   },
   {
     id: 2,
-    emoji: '💸',
     icon: Banknote,
-    problem: 'Factories Demand Huge Minimum Orders',
-    solution: 'Order just 1 piece',
+    metric: 'MOQ',
+    problem: 'Factories push high minimums before the part is even proven.',
+    solution: 'Print one fit-check part, then scale to a batch when it works.',
+    accent: 'from-amber-200 to-orange-300',
   },
   {
     id: 3,
-    emoji: '🔧',
     icon: Wrench,
-    problem: 'Design Changes Are Costly and Slow',
-    solution: 'Iterate overnight',
+    metric: 'Rework',
+    problem: 'Every design change turns into another round of delay.',
+    solution: 'Iterate overnight with material guidance and clean revision notes.',
+    accent: 'from-violet-300 to-fuchsia-300',
   },
 ]
 
+const productionLoop = [
+  { icon: ScanLine, label: 'Geometry check', value: 'We inspect wall thickness, overhangs, and orientation.' },
+  { icon: Gauge, label: 'Material match', value: 'PLA+, PETG, ABS, TPU, Nylon, and resin options.' },
+  { icon: CheckCircle2, label: 'Dispatch proof', value: 'Photo update and tracked delivery before it leaves.' },
+]
+
 export default function ProblemSection() {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true, margin: '-100px' })
+
   return (
-    <section className="relative z-10 w-full bg-[var(--bg-base)] px-4 py-24 md:px-8 lg:px-16">
-      <div className="max-w-7xl mx-auto">
-        <Reveal className="mb-4">
-          <span className="inline-block text-sm font-semibold uppercase tracking-normal text-[#6d28d9]">
-            Why Flux 3D
+    <section ref={ref} className="premium-problem relative z-10 w-full overflow-hidden px-4 py-24 md:px-8 lg:px-16">
+      <div className="mx-auto grid max-w-7xl items-start gap-12 lg:grid-cols-[0.9fr_1.1fr]">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          className="lg:sticky lg:top-28"
+        >
+          <span className="premium-eyebrow">
+            Why Flux3D
           </span>
-        </Reveal>
 
-        <Reveal delay={80} className="mb-6">
-          <h2 className="text-3xl font-semibold leading-tight tracking-normal text-[#1a1a1a] md:text-4xl lg:text-5xl">
-            Stop Waiting Weeks.
-            <br />
-            Stop Overpaying Factories.
+          <h2 className="mt-5 text-4xl font-black leading-[0.98] tracking-normal text-white md:text-5xl lg:text-6xl">
+            The faster way to make real parts.
           </h2>
-        </Reveal>
 
-        <Reveal delay={140}>
-          <p className="mb-16 max-w-3xl text-lg font-normal leading-relaxed text-[#4b4b4b] md:text-xl">
-            Traditional manufacturing is slow, expensive, and inflexible. Minimum
-            order quantities, long lead times, and high tooling costs kill great
-            ideas before they even start. Flux 3D changes that. We print exactly
-            what you need — one piece or a hundred — delivered fast, priced fairly,
-            with no compromise on quality.
+          <p className="mt-6 max-w-xl text-base leading-8 text-white/64 md:text-lg">
+            Flux3D gives you a compact production workflow: upload the file, choose the right material, approve the quote, and receive a finished part without factory friction.
           </p>
-        </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="mt-8 space-y-3">
+            {productionLoop.map((item, index) => (
+              <motion.div
+                key={item.label}
+                initial={{ opacity: 0, x: -18 }}
+                animate={isInView ? { opacity: 1, x: 0 } : {}}
+                transition={{ delay: 0.2 + index * 0.08 }}
+                className="premium-loop-row"
+              >
+                <item.icon className="h-5 w-5 text-cyan-200" />
+                <div>
+                  <p className="text-sm font-bold text-white">{item.label}</p>
+                  <p className="text-xs leading-5 text-white/52">{item.value}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        <div className="grid gap-5">
           {painPoints.map((point, index) => {
             const Icon = point.icon
             return (
-              <Reveal key={point.id} delay={200 + index * 90}>
-                <div
-                  className="hover-lift group relative rounded-2xl border border-[#e8e4df] bg-[#faf9f7] p-6 shadow-[var(--shadow-sm)] transition-all duration-300 hover:border-[var(--border-brand)] hover:shadow-[var(--shadow-md)]"
-                  style={{
-                    willChange: 'transform',
-                  }}
-                >
-                  <div className="absolute inset-0 rounded-2xl bg-[#6d28d9]/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <motion.div
+                key={point.id}
+                initial={{ opacity: 0, y: 32 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ delay: 0.12 + index * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                className="premium-problem-card group relative overflow-hidden rounded-2xl border p-6 md:p-7"
+              >
+                <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${point.accent}`} />
+                <div className="grid gap-5 md:grid-cols-[120px_1fr] md:items-center">
+                  <div className="premium-metric-tile">
+                    <Icon className="h-6 w-6 text-white/72" />
+                    <span>{point.metric}</span>
+                  </div>
 
-                  <div className="relative z-10">
-                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#6d28d9]/10 transition-colors duration-300 group-hover:bg-[#6d28d9]/20">
-                      <Icon className="h-6 w-6 text-[#6d28d9]" />
-                    </div>
-
-                    <div className="mb-2 text-lg font-semibold text-[#1a1a1a] transition-colors duration-300 group-hover:text-[#6d28d9]">
+                  <div>
+                    <h3 className="text-2xl font-black text-white">
                       {point.problem}
-                    </div>
-
-                    <div className="flex items-center gap-2 mt-4">
-                      <ArrowRight className="h-4 w-4 text-[#6d28d9]" />
-                      <span className="text-sm font-medium text-[#6d28d9]">
-                        Flux 3D: {point.solution}
-                      </span>
+                    </h3>
+                    <div className="mt-4 flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.045] p-4">
+                      <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-cyan-200" />
+                      <p className="text-sm leading-6 text-white/68">
+                        {point.solution}
+                      </p>
                     </div>
                   </div>
                 </div>
-              </Reveal>
+              </motion.div>
             )
           })}
+
+          <motion.a
+            href="/instant-quote"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ delay: 0.48 }}
+            className="premium-wide-link group"
+          >
+            Start with one file
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </motion.a>
         </div>
       </div>
     </section>

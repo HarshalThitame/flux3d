@@ -1,11 +1,15 @@
 'use client'
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion, type Variants } from 'framer-motion'
+import { useEffect, useRef } from 'react'
 import {
   ArrowRight,
+  Calculator,
   CheckCircle2,
+  ChevronRight,
   Clock3,
+  Gauge,
   IndianRupee,
   Layers3,
   PackageCheck,
@@ -51,10 +55,92 @@ const workflow = [
   'Approve the order and track production through dispatch.',
 ]
 
+const assuranceItems = [
+  'No hidden finishing charges',
+  'Material and print-time review',
+  'Pan-India shipping support',
+]
+
+const commandMetrics = [
+  { icon: Calculator, label: 'Quote mode', value: 'Geometry-led' },
+  { icon: Gauge, label: 'Rate lock', value: 'Before print' },
+  { icon: PackageCheck, label: 'Dispatch', value: 'Tracked' },
+]
+
+const heroStats = [
+  { label: 'Starting rate', value: 'Live materials' },
+  { label: 'Quote inputs', value: '4 key drivers' },
+  { label: 'Review path', value: 'Upload to dispatch' },
+]
+
+const container: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+}
+
+const item: Variants = {
+  hidden: { opacity: 0, y: 18 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.62, ease: [0.16, 1, 0.3, 1] },
+  },
+}
+
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('en-IN', {
     maximumFractionDigits: 2,
   }).format(value)
+}
+
+function PricingPremiumFX() {
+  const meterRef = useRef<HTMLSpanElement | null>(null)
+
+  useEffect(() => {
+    let frame = 0
+
+    const updatePointer = (event: PointerEvent) => {
+      if (!window.matchMedia('(pointer: fine)').matches) return
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty('--pricing-pointer-x', `${event.clientX}px`)
+      })
+    }
+
+    const updateProgress = () => {
+      const page = document.documentElement
+      const maxScroll = Math.max(page.scrollHeight - window.innerHeight, 1)
+      const progress = Math.min(Math.max(window.scrollY / maxScroll, 0), 1)
+      if (meterRef.current) {
+        meterRef.current.style.transform = `scaleX(${progress})`
+      }
+    }
+
+    updateProgress()
+    window.addEventListener('pointermove', updatePointer, { passive: true })
+    window.addEventListener('scroll', updateProgress, { passive: true })
+    window.addEventListener('resize', updateProgress)
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener('pointermove', updatePointer)
+      window.removeEventListener('scroll', updateProgress)
+      window.removeEventListener('resize', updateProgress)
+    }
+  }, [])
+
+  return (
+    <>
+      <div className="pricing-pointer-light" aria-hidden="true" />
+      <div className="pricing-scroll-meter" aria-hidden="true">
+        <span ref={meterRef} />
+      </div>
+    </>
+  )
 }
 
 export default function PricingClient({
@@ -62,208 +148,298 @@ export default function PricingClient({
 }: {
   materials: MaterialPricing[]
 }) {
+  const reduceMotion = useReducedMotion()
   const displayMaterials = materials.filter((material) => material.name).slice(0, 8)
   const startingMaterial = displayMaterials.find((material) => Number(material.price_per_gram) > 0) || displayMaterials[0]
   const startingPrice = startingMaterial?.price_per_gram || 3
+  const costStack = [
+    { label: 'Material baseline', value: `₹${formatCurrency(startingPrice)}/g`, width: '38%' },
+    { label: 'Geometry + supports', value: 'calculated', width: '68%' },
+    { label: 'Finish + quantity', value: 'reviewed', width: '52%' },
+    { label: 'Shipping + timeline', value: 'locked', width: '44%' },
+  ]
 
   return (
-    <div className="min-h-screen bg-[#F7F8FB] text-[#111827]">
-      <main className="px-4 pb-20 pt-20 sm:px-6 md:px-10 lg:px-12">
-        <div className="mx-auto max-w-[1180px]">
-          <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
-            <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55 }}
-              className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm md:p-8 lg:p-10"
-            >
-              <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-[#FAFAFC] px-3 py-1.5 text-xs font-semibold uppercase text-[#5B3FD6]">
-                <IndianRupee className="h-3.5 w-3.5" />
-                Transparent pricing
-              </div>
-              <h1 className="mt-5 max-w-3xl font-[var(--font-syne)] text-4xl font-bold leading-tight text-[#111827] sm:text-5xl lg:text-6xl">
-                Premium 3D printing quotes without guesswork.
-              </h1>
-              <p className="mt-5 max-w-2xl text-base leading-7 text-[#5F6673] md:text-lg">
-                See starting material rates, understand what changes the final price, and upload a file when you want a production-ready quote.
-              </p>
-              <div className="mt-7 flex flex-wrap gap-3">
+    <main className="pricing-premium-content text-white">
+      <PricingPremiumFX />
+
+      <section className="pricing-hero-premium relative isolate overflow-hidden px-4 pb-12 pt-6 text-white sm:px-6 md:px-10 lg:px-12">
+        <video
+          className="pricing-hero-video absolute inset-0 h-full w-full object-cover"
+          src="/printer2.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+        />
+        <div className="pricing-hero-depth" aria-hidden="true" />
+        <div className="pricing-hero-grid" aria-hidden="true" />
+        <div className="pricing-hero-beam" aria-hidden="true" />
+        <div className="pricing-hero-frame" aria-hidden="true" />
+
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="visible"
+          className="relative z-10 mx-auto flex min-h-[82svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-10 pt-8 md:pt-10 lg:pt-12"
+        >
+          <motion.div variants={item} className="mb-4 flex items-center gap-2 text-sm font-medium text-white/[0.64]">
+            <Link href="/" className="transition hover:text-white">Home</Link>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="text-white">Pricing</span>
+          </motion.div>
+
+          <motion.div
+            variants={item}
+            className="pricing-hero-kicker mb-4 inline-flex w-fit items-center gap-2 rounded-lg border border-white/[0.14] bg-white/10 px-4 py-2 text-xs font-bold uppercase text-white shadow-[0_16px_48px_rgba(0,0,0,0.24)] backdrop-blur"
+          >
+            <IndianRupee className="h-4 w-4 text-amber-200" />
+            Transparent quote command
+          </motion.div>
+
+          <div className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-start">
+            <div className="min-w-0">
+              <motion.h1
+                variants={item}
+                className="pricing-hero-title max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.04] text-white sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
+              >
+                Pricing engineered before production starts.
+              </motion.h1>
+
+              <motion.p
+                variants={item}
+                className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-white/[0.74] sm:text-lg lg:max-w-2xl"
+              >
+                See starting material rates, understand the drivers behind the final quote, and upload a file when you want a production-ready price with no hidden finishing surprises.
+              </motion.p>
+
+              <motion.div variants={item} className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Link
                   href="/instant-quote"
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#111827] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#2A3343]"
+                  className="pricing-primary-action group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#080A12] shadow-[0_18px_54px_rgba(255,255,255,0.18)] transition hover:bg-[#ede9fe]"
                 >
                   Upload for quote
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
                 <Link
                   href="/materials"
-                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-[#111827] transition hover:border-[#5B3FD6] hover:text-[#5B3FD6]"
+                  className="pricing-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/[0.18] bg-white/10 px-6 text-sm font-bold text-white backdrop-blur transition hover:border-cyan-300/40 hover:bg-cyan-300/[0.12]"
                 >
                   Compare materials
                 </Link>
-              </div>
-            </motion.div>
+              </motion.div>
 
-            <motion.aside
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, delay: 0.1 }}
-              className="rounded-lg border border-gray-200 bg-[#111827] p-6 text-white shadow-[0_24px_70px_rgba(17,24,39,0.18)] md:p-8"
-            >
-              <div className="flex items-start justify-between gap-4">
+              <motion.div variants={item} className="pricing-hero-stats mt-8 grid gap-3 sm:grid-cols-3">
+                {heroStats.map((stat) => (
+                  <div key={stat.label} className="min-w-0 rounded-lg border border-white/10 bg-white/[0.075] p-4 backdrop-blur">
+                    <div className="text-xs font-bold uppercase text-white/[0.52]">{stat.label}</div>
+                    <div className="mt-2 text-sm font-extrabold text-white">{stat.value}</div>
+                  </div>
+                ))}
+              </motion.div>
+            </div>
+
+            <motion.aside variants={item} className="pricing-command-panel grid min-w-0 gap-4">
+              <div className="pricing-command-topline">
+                <span>Quote command</span>
+                <strong>online</strong>
+              </div>
+
+              <div className="pricing-rate-display">
                 <div>
-                  <p className="text-sm font-semibold text-[#C8BEFF]">Starting from</p>
-                  <p className="mt-3 font-[var(--font-syne)] text-5xl font-bold">₹{formatCurrency(startingPrice)}/g</p>
-                  <p className="mt-2 text-sm text-gray-300">
-                    {startingMaterial?.name || 'PLA'} material rate before geometry, support, finish, and quantity review.
-                  </p>
+                  <p>Starting from</p>
+                  <strong>₹{formatCurrency(startingPrice)}/g</strong>
+                  <span>{startingMaterial?.name || 'PLA'} material baseline</span>
                 </div>
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-white/10">
-                  <ShieldCheck className="h-6 w-6 text-[#C8BEFF]" />
-                </div>
+                <ShieldCheck className="h-7 w-7" />
               </div>
 
-              <div className="mt-8 space-y-3">
-                {[
-                  'No hidden finishing charges',
-                  'Material and print-time review',
-                  'Pan-India shipping support',
-                ].map((item) => (
-                  <div key={item} className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-gray-100">
-                    <CheckCircle2 className="h-4 w-4 shrink-0 text-[#9BE7C2]" />
-                    {item}
+              <div className="grid grid-cols-3 gap-2">
+                {commandMetrics.map((metric) => (
+                  <div key={metric.label} className="pricing-command-metric">
+                    <metric.icon className="h-4 w-4" />
+                    <span>{metric.label}</span>
+                    <strong>{metric.value}</strong>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pricing-cost-stack">
+                {costStack.map((cost, index) => (
+                  <motion.div
+                    key={cost.label}
+                    animate={reduceMotion ? {} : { y: [0, index % 2 === 0 ? -3 : 3, 0] }}
+                    transition={reduceMotion ? undefined : { duration: 4.8 + index * 0.35, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span>{cost.label}</span>
+                      <strong>{cost.value}</strong>
+                    </div>
+                    <i style={{ width: cost.width }} />
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="pricing-assurance-list">
+                {assuranceItems.map((entry) => (
+                  <div key={entry}>
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>{entry}</span>
                   </div>
                 ))}
               </div>
 
               <Link
                 href="/instant-quote"
-                className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-[#111827] transition hover:bg-[#F1EEFF]"
+                className="pricing-panel-action inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-bold text-[#05060a] transition hover:bg-[#f1eeff]"
               >
                 Start quote request
                 <UploadCloud className="h-4 w-4" />
               </Link>
             </motion.aside>
-          </section>
+          </div>
+        </motion.div>
+      </section>
 
-          <section className="pt-12">
-            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold uppercase text-[#5B3FD6]">Quote drivers</p>
-                <h2 className="mt-1 font-[var(--font-syne)] text-2xl font-bold text-[#111827] md:text-3xl">
-                  What shapes the final quote
-                </h2>
+      <section className="pricing-premium-section pricing-drivers-section relative overflow-hidden px-4 py-20 sm:px-6 md:px-10 lg:px-12">
+        <div className="pricing-section-grid" aria-hidden="true" />
+        <div className="relative z-10 mx-auto max-w-[1220px]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
+          >
+            <div>
+              <p className="text-sm font-bold uppercase text-cyan-200">Quote drivers</p>
+              <h2 className="mt-2 text-3xl font-extrabold text-white md:text-5xl">What shapes the final quote</h2>
+            </div>
+            <p className="max-w-md text-sm leading-7 text-white/[0.68]">
+              The listed material rate is only the starting point. The production review locks the final amount.
+            </p>
+          </motion.div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {quoteDrivers.map((driver, index) => (
+              <motion.div
+                key={driver.title}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.45, delay: 0.06 * index }}
+                className="pricing-driver-card rounded-lg border border-white/10 bg-white/[0.07] p-5 shadow-sm"
+              >
+                <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-cyan-200">
+                  <driver.icon className="h-5 w-5" />
+                </div>
+                <h3 className="text-xl font-extrabold text-white">{driver.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-white/[0.64]">{driver.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="pricing-premium-section pricing-rates-section relative overflow-hidden px-4 py-20 sm:px-6 md:px-10 lg:px-12">
+        <div className="pricing-section-grid" aria-hidden="true" />
+        <div className="relative z-10 mx-auto grid max-w-[1220px] gap-6 lg:grid-cols-[0.86fr_1.14fr] lg:items-start">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <p className="text-sm font-bold uppercase text-cyan-200">Material rates</p>
+            <h2 className="mt-2 text-3xl font-extrabold text-white md:text-5xl">Clear per-gram starting points</h2>
+            <p className="mt-4 text-sm leading-7 text-white/[0.68]">
+              Use these rates to compare material direction before upload. The final quote includes print setup, supports, finish, quantity, and delivery needs.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="pricing-rates-panel overflow-hidden rounded-lg border border-white/10 bg-white/[0.07]"
+          >
+            <div className="grid grid-cols-[1.2fr_0.8fr_0.8fr] border-b border-white/10 bg-white/[0.07] px-4 py-3 text-xs font-bold uppercase text-white/[0.58]">
+              <span>Material</span>
+              <span>Rate</span>
+              <span>Density</span>
+            </div>
+            {displayMaterials.map((material) => (
+              <div
+                key={material.name}
+                className="grid grid-cols-[1.2fr_0.8fr_0.8fr] items-center gap-3 border-b border-white/10 px-4 py-4 last:border-b-0"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-extrabold text-white">{material.name}</p>
+                  <p className="mt-1 text-xs text-white/[0.52]">Production material</p>
+                </div>
+                <p className="text-sm font-extrabold text-cyan-200">₹{formatCurrency(Number(material.price_per_gram || 0))}/g</p>
+                <p className="text-sm text-white/[0.68]">{Number(material.density || 0).toFixed(2)} g/cm3</p>
               </div>
-              <p className="max-w-md text-sm leading-6 text-[#6B7280]">
-                The listed material rate is only the starting point. The production review locks the final amount.
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="pricing-premium-section pricing-workflow-section relative overflow-hidden px-4 py-20 sm:px-6 md:px-10 lg:px-12">
+        <div className="pricing-section-grid" aria-hidden="true" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="pricing-workflow-panel relative z-10 mx-auto max-w-[1220px] rounded-lg border border-white/10 bg-white/[0.07] p-6 md:p-8"
+        >
+          <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+            <div>
+              <p className="text-sm font-bold uppercase text-cyan-200">Quote workflow</p>
+              <h2 className="mt-2 text-3xl font-extrabold text-white md:text-5xl">From upload to dispatch</h2>
+              <p className="mt-4 text-sm leading-7 text-white/[0.66]">
+                A clear review path keeps pricing accurate before production starts.
               </p>
             </div>
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {quoteDrivers.map((item, index) => {
-                const Icon = item.icon
-                return (
-                  <motion.div
-                    key={item.title}
-                    initial={{ opacity: 0, y: 18 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45, delay: 0.06 * index }}
-                    className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
-                  >
-                    <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-lg bg-[#F1EEFF] text-[#5B3FD6]">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <h3 className="font-[var(--font-syne)] text-xl font-bold text-[#111827]">{item.title}</h3>
-                    <p className="mt-3 text-sm leading-6 text-[#5F6673]">{item.description}</p>
-                  </motion.div>
-                )
-              })}
-            </div>
-          </section>
-
-          <section className="pt-12">
-            <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-              <div>
-                <p className="text-sm font-semibold uppercase text-[#5B3FD6]">Material rates</p>
-                <h2 className="mt-1 font-[var(--font-syne)] text-2xl font-bold text-[#111827] md:text-3xl">
-                  Clear per-gram starting points
-                </h2>
-                <p className="mt-4 text-sm leading-6 text-[#5F6673]">
-                  Use these rates to compare material direction before upload. The final quote includes print setup, supports, finish, quantity, and delivery needs.
-                </p>
-              </div>
-
-              <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div className="grid grid-cols-[1.2fr_0.8fr_0.8fr] border-b border-gray-200 bg-[#FAFAFC] px-4 py-3 text-xs font-semibold uppercase text-[#6B7280]">
-                  <span>Material</span>
-                  <span>Rate</span>
-                  <span>Density</span>
-                </div>
-                {displayMaterials.map((material) => (
-                  <div
-                    key={material.name}
-                    className="grid grid-cols-[1.2fr_0.8fr_0.8fr] items-center gap-3 border-b border-gray-100 px-4 py-4 last:border-b-0"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-[#111827]">{material.name}</p>
-                      <p className="mt-1 text-xs text-[#6B7280]">Production material</p>
-                    </div>
-                    <p className="text-sm font-bold text-[#5B3FD6]">₹{formatCurrency(Number(material.price_per_gram || 0))}/g</p>
-                    <p className="text-sm text-[#5F6673]">{Number(material.density || 0).toFixed(2)} g/cm³</p>
+            <div className="grid gap-3 md:grid-cols-2">
+              {workflow.map((step, index) => (
+                <div key={step} className="pricing-step-card rounded-lg border border-white/10 bg-white/[0.07] p-4">
+                  <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-black text-[#05060a]">
+                    {index + 1}
                   </div>
-                ))}
-              </div>
+                  <p className="text-sm leading-6 text-white/[0.72]">{step}</p>
+                </div>
+              ))}
             </div>
-          </section>
+          </div>
+        </motion.div>
+      </section>
 
-          <section className="pt-12">
-            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm md:p-8">
-              <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-                <div>
-                  <p className="text-sm font-semibold uppercase text-[#5B3FD6]">Quote workflow</p>
-                  <h2 className="mt-1 font-[var(--font-syne)] text-2xl font-bold text-[#111827] md:text-3xl">
-                    From upload to dispatch
-                  </h2>
-                  <p className="mt-4 text-sm leading-6 text-[#5F6673]">
-                    A clear review path keeps pricing accurate before production starts.
-                  </p>
-                </div>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {workflow.map((step, index) => (
-                    <div key={step} className="rounded-lg border border-gray-200 bg-[#FAFAFC] p-4">
-                      <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg bg-[#111827] text-sm font-bold text-white">
-                        {index + 1}
-                      </div>
-                      <p className="text-sm leading-6 text-[#374151]">{step}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+      <section className="pricing-premium-section pricing-bottom-cta relative overflow-hidden px-4 pb-24 pt-20 sm:px-6 md:px-10 lg:px-12">
+        <div className="pricing-section-grid" aria-hidden="true" />
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="pricing-cta-panel relative z-10 mx-auto grid max-w-[1220px] gap-5 rounded-lg border border-white/10 bg-white/[0.07] p-6 text-white md:grid-cols-[1fr_auto] md:items-center md:p-8"
+        >
+          <div>
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-white/10">
+              <PackageCheck className="h-5 w-5 text-cyan-200" />
             </div>
-          </section>
-
-          <section className="pt-12">
-            <div className="grid gap-5 rounded-lg bg-[#111827] p-6 text-white shadow-[0_24px_70px_rgba(17,24,39,0.18)] md:grid-cols-[1fr_auto] md:items-center md:p-8">
-              <div>
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-white/10">
-                  <PackageCheck className="h-5 w-5 text-[#C8BEFF]" />
-                </div>
-                <h2 className="font-[var(--font-syne)] text-2xl font-bold md:text-3xl">Ready for a real quote?</h2>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300">
-                  Upload your file and Flux3D will price the part around actual geometry, material, finish, and production timeline.
-                </p>
-              </div>
-              <Link
-                href="/instant-quote"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[#111827] transition hover:bg-[#F1EEFF]"
-              >
-                Upload model
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </section>
-        </div>
-      </main>
-    </div>
+            <h2 className="text-3xl font-extrabold text-white md:text-5xl">Ready for a real quote?</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/[0.66]">
+              Upload your file and Flux3D will price the part around actual geometry, material, finish, and production timeline.
+            </p>
+          </div>
+          <Link
+            href="/instant-quote"
+            className="pricing-primary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#05060a] transition hover:bg-[#f1eeff]"
+          >
+            Upload model
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </motion.div>
+      </section>
+    </main>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -81,6 +81,7 @@ function getSkuWeight(item: ShopCartItem, weightsBySkuId: Record<string, number>
 
 export default function ShopCheckoutClient() {
   const router = useRouter()
+  const orderCompletionRef = useRef(false)
   const { addresses, defaultAddress, loading: addressesLoading, addAddress } = useAddresses()
   const items = useShopCartStore((state) => state.items)
   const couponCode = useShopCartStore((state) => state.couponCode)
@@ -126,7 +127,7 @@ export default function ShopCheckoutClient() {
   const showAddressForm = useNewAddress || addresses.length === 0
 
   useEffect(() => {
-    if (items.length === 0) router.replace('/3d-shop/cart')
+    if (items.length === 0 && !orderCompletionRef.current) router.replace('/3d-shop/cart')
   }, [items.length, router])
 
   useEffect(() => {
@@ -302,8 +303,9 @@ export default function ShopCheckoutClient() {
         return
       }
 
+      orderCompletionRef.current = true
       clearCart()
-      router.push(`/3d-shop/order/${data.orderId}?new=1`)
+      router.push(`/3d-shop/order-success?orderId=${encodeURIComponent(data.orderId)}`)
     } catch (error) {
       setToast(error instanceof Error ? error.message : 'Failed to place order.')
     } finally {
