@@ -25,11 +25,11 @@ export async function proxy(request: NextRequest) {
 
   const cspHeader = [
     `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://www.googletagmanager.com${isDev ? " 'unsafe-eval'" : ''}`,
     `style-src 'self' 'unsafe-inline'`,
     `font-src 'self'`,
     `img-src 'self' data: blob: https:`,
-    `connect-src 'self' https://*.supabase.co wss://*.supabase.co`,
+    `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com`,
     `frame-src 'none'`,
     `object-src 'none'`,
     `base-uri 'self'`,
