@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next'
+import { Analytics } from '@vercel/analytics/next'
 import { DM_Sans, Inter, JetBrains_Mono } from 'next/font/google'
 import { cookies, headers } from 'next/headers'
 import { connection } from 'next/server'
+import Script from 'next/script'
 import { getSettings } from '@/lib/settings'
 import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data'
 import { CartProvider } from '@/lib/cart/context'
@@ -13,6 +15,8 @@ import TrackingBootstrap from '@/components/TrackingBootstrap'
 import SessionTracker from '@/components/SessionTracker'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import './globals.css'
+
+const GOOGLE_ANALYTICS_ID = 'G-KCK2459TBQ'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -151,6 +155,7 @@ export default async function RootLayout({
   await connection()
   const headerStore = await headers()
   const cookieStore = await cookies()
+  const nonce = headerStore.get('x-nonce') ?? undefined
   const currentPath = headerStore.get('x-current-path') ?? '/'
   const currentUrl = headerStore.get('x-current-url') ?? currentPath
   const referrerUrl = headerStore.get('referer')
@@ -180,10 +185,12 @@ export default async function RootLayout({
     >
       <body suppressHydrationWarning>
         <script
+          nonce={nonce}
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: toJsonLd(orgJsonLd) }}
         />
         <script
+          nonce={nonce}
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: toJsonLd(webJsonLd) }}
         />
@@ -197,6 +204,20 @@ export default async function RootLayout({
             </ErrorBoundary>
           </SettingsProvider>
         </CartProvider>
+        <Analytics />
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ANALYTICS_ID}`}
+          strategy="afterInteractive"
+          nonce={nonce}
+        />
+        <Script id="google-analytics" strategy="afterInteractive" nonce={nonce}>
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){window.dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GOOGLE_ANALYTICS_ID}');
+          `}
+        </Script>
       </body>
     </html>
   )

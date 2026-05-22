@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { motion } from 'framer-motion'
 import {
   UploadCloud,
@@ -113,6 +113,14 @@ function getInitialQuoteId() {
   return newId
 }
 
+function subscribeQuoteId() {
+  return () => {}
+}
+
+function getServerQuoteId() {
+  return ''
+}
+
 function getInitialWorkspaceConfig(defaultConfig: QuoteConfig, forceMaterialSelection: boolean) {
   if (typeof window === 'undefined') {
     return defaultConfig
@@ -168,7 +176,9 @@ function CartEnabledWorkspace({
   const supabaseEnabled = hasSupabaseConfig()
   const preferredMaterial = initialMaterialId ? getMaterialById(initialMaterialId, materials) : undefined
   const defaultMaterial = preferredMaterial ?? getMaterialById('pla', materials) ?? getMaterialById('pla-plus', materials) ?? materials[0]
-  const [initialQuoteId, setInitialQuoteId] = useState(getInitialQuoteId)
+  const hydratedQuoteId = useSyncExternalStore(subscribeQuoteId, getInitialQuoteId, getServerQuoteId)
+  const [quoteIdOverride, setInitialQuoteId] = useState<string | null>(null)
+  const initialQuoteId = quoteIdOverride ?? hydratedQuoteId
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedModel, setSelectedModel] = useState<ParsedModel | null>(null)
@@ -571,38 +581,41 @@ function CartEnabledWorkspace({
 
   return (
     <>
-      <div className="relative min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
+      <div className="instant-quote-workspace relative min-h-screen overflow-hidden bg-[#05060a] text-white">
+        <div className="quote-premium-grid" aria-hidden="true" />
+        <div className="quote-premium-beam" aria-hidden="true" />
+        <div className="quote-premium-frame" aria-hidden="true" />
         <motion.div
           aria-hidden
           animate={{ x: [0, 50, 0], y: [0, -20, 0] }}
           transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
-          className="pointer-events-none absolute left-[-8rem] top-28 h-72 w-72 rounded-full bg-[#6d28d9]/8 blur-3xl"
+          className="quote-orb quote-orb-left pointer-events-none absolute left-[-8rem] top-28 h-72 w-72 rounded-full bg-[#6d28d9]/8 blur-3xl"
         />
         <motion.div
           aria-hidden
           animate={{ x: [0, -45, 0], y: [0, 25, 0] }}
           transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-          className="pointer-events-none absolute right-[-7rem] top-36 h-80 w-80 rounded-full bg-cyan-400/8 blur-3xl"
+          className="quote-orb quote-orb-right pointer-events-none absolute right-[-7rem] top-36 h-80 w-80 rounded-full bg-cyan-400/8 blur-3xl"
         />
 
         {/* Header */}
-        <div className="relative px-4 pb-6 pt-8 md:px-8 md:pt-10 xl:px-10">
+        <div className="quote-hero relative px-4 pb-6 pt-8 md:px-8 md:pt-10 xl:px-10">
           <div className="mx-auto max-w-[1500px]">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/25 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#6d28d9]">
+                <div className="quote-hero-kicker inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/25 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#6d28d9]">
                   Instant Pricing Experience
                 </div>
-                <h1 className="mt-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3.2rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#0F1B3D]">
-                  Get Your <span className="text-[#6d28d9]">Instant Quote</span>
+                <h1 className="quote-hero-title mt-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3.2rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#0F1B3D]">
+                  Get Your <span className="quote-title-accent text-[#6d28d9]">Instant Quote</span>
                 </h1>
-                <p className="mt-3 max-w-[600px] text-sm leading-7 text-[#6F7192]">
+                <p className="quote-hero-copy mt-3 max-w-[600px] text-sm leading-7 text-[#6F7192]">
                   Upload, preview, configure, and get pricing in one streamlined workflow.
                 </p>
               </div>
 
                 {/* Step Navigator */}
-                <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] p-1.5 backdrop-blur-xl scrollbar-hide">
+                <div className="quote-step-nav flex items-center gap-1 overflow-x-auto rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] p-1.5 backdrop-blur-xl scrollbar-hide">
                   {stepConfigs.map((step, i) => {
                     const done = getStepDone(step.id)
                     const ref = stepRefs[step.id as keyof typeof stepRefs]
@@ -610,7 +623,7 @@ function CartEnabledWorkspace({
                     <button
                       key={step.id}
                       onClick={() => handleStepClick(ref)}
-                      className="flex items-center gap-2 whitespace-nowrap rounded-xl px-2.5 py-2.5 text-xs font-medium transition-colors hover:bg-white/5 flex-shrink-0 min-h-[44px]"
+                      className={`quote-step-button ${done ? 'quote-step-button-done' : ''} flex min-h-[44px] flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 py-2.5 text-xs font-medium transition-colors hover:bg-white/5`}
                     >
                     <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
                       done
@@ -636,10 +649,10 @@ function CartEnabledWorkspace({
         {/* Main Content */}
         <div className="px-4 pb-16 md:px-8 xl:px-10">
           <div className="mx-auto max-w-[1500px]">
-            <div className="grid gap-6 lg:gap-8 xl:grid-cols-[1fr_380px]">
+            <div className="quote-layout-grid grid gap-6 lg:gap-8 xl:grid-cols-[1fr_380px]">
               {/* Left Column */}
               <div className="space-y-6">
-                <div className="rounded-2xl border border-cyan-400/15 bg-cyan-400/8 px-4 py-3 text-sm text-[#0F1B3D]">
+                <div className="quote-bulk-strip rounded-2xl border border-cyan-400/15 bg-cyan-400/8 px-4 py-3 text-sm text-[#0F1B3D]">
                   For bulk orders contact{' '}
                   <a className="font-medium text-[#6d28d9] hover:underline" href={`mailto:${bulkOrderContact.email}`}>
                     {bulkOrderContact.email}
@@ -663,9 +676,9 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.05 }}
                 >
-                  <div className="rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div className="quote-premium-card quote-upload-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
-                      <div className="rounded-xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-2.5 text-[#6d28d9]">
+                      <div className="quote-section-icon rounded-xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-2.5 text-[#6d28d9]">
                         <UploadCloud className="h-5 w-5" />
                       </div>
                       <div>
@@ -675,7 +688,7 @@ function CartEnabledWorkspace({
                     </div>
 
                     <div
-                      className="relative flex min-h-[200px] items-center justify-center rounded-2xl border-2 border-dashed border-[#6d28d9]/10 bg-white/[0.02] p-6 text-center transition-colors hover:border-[#6d28d9]/30"
+                      className="quote-upload-dropzone relative flex min-h-[200px] items-center justify-center rounded-2xl border-2 border-dashed border-[#6d28d9]/10 bg-white/[0.02] p-6 text-center transition-colors hover:border-[#6d28d9]/30"
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
                         e.preventDefault()
@@ -695,7 +708,7 @@ function CartEnabledWorkspace({
                         <motion.div
                           animate={{ y: [0, -4, 0] }}
                           transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                          className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-[#6d28d9]/25 bg-[#6d28d9]/12 text-[#6d28d9]"
+                          className="quote-upload-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-[#6d28d9]/25 bg-[#6d28d9]/12 text-[#6d28d9]"
                         >
                           <UploadCloud className="h-6 w-6" />
                         </motion.div>
@@ -726,9 +739,9 @@ function CartEnabledWorkspace({
                           </span>
                           <span>{uploadState.progress}%</span>
                         </div>
-                        <div className="h-1.5 overflow-hidden rounded-full bg-white/8">
+                        <div className="quote-progress-track h-1.5 overflow-hidden rounded-full bg-white/8">
                           <div
-                            className="h-full rounded-full bg-[#6d28d9] transition-all duration-300"
+                            className="quote-progress-fill h-full rounded-full bg-[#6d28d9] transition-all duration-300"
                             style={{ width: `${uploadState.progress}%` }}
                           />
                         </div>
@@ -762,9 +775,9 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.1 }}
                 >
-                  <div className="rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div className="quote-premium-card quote-viewer-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
-                      <div className="rounded-xl border border-cyan-400/20 bg-cyan-50 p-2.5 text-cyan-700">
+                      <div className="quote-section-icon rounded-xl border border-cyan-400/20 bg-cyan-50 p-2.5 text-cyan-700">
                         <Cuboid className="h-5 w-5" />
                       </div>
                       <div>
@@ -773,15 +786,15 @@ function CartEnabledWorkspace({
                       </div>
                     </div>
 
-                    <div className="relative h-[280px] sm:h-[400px] overflow-hidden rounded-2xl border border-[#6d28d9]/10 bg-[radial-gradient(circle_at_top,rgba(168, 85, 247,0.08),transparent_42%),linear-gradient(180deg,#FFFFFF,#FFFFFF)]">
+                    <div className="quote-viewer-stage relative h-[280px] overflow-hidden rounded-2xl border border-[#6d28d9]/10 bg-[radial-gradient(circle_at_top,rgba(168,85,247,0.08),transparent_42%),linear-gradient(180deg,#FFFFFF,#FFFFFF)] sm:h-[400px]">
                       {selectedModel ? (
                         <Suspense fallback={<div className="absolute inset-0 animate-pulse rounded-2xl bg-white/[0.03]" />}>
                           <Canvas className="!absolute !inset-0" camera={{ position: [140, 120, 140], fov: 34 }} dpr={[1, 1.7]}>
-                            <color attach="background" args={['#FFFFFF']} />
+                            <color attach="background" args={['#070a12']} />
                             <ambientLight intensity={0.95} />
                             <directionalLight position={[120, 120, 80]} intensity={1.15} />
                             <directionalLight position={[-80, -50, -60]} intensity={0.4} />
-                            <gridHelper args={[280, 28, '#1f2a44', '#0f172a']} position={[0, -55, 0]} />
+                            <gridHelper args={[280, 28, '#67e8f9', '#172554']} position={[0, -55, 0]} />
                             <Bounds fit clip observe margin={1.3}>
                               <ViewerModel object={selectedModel.object} />
                             </Bounds>
@@ -790,7 +803,7 @@ function CartEnabledWorkspace({
                         </Suspense>
                       ) : (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-[#6d28d9]/10 bg-white text-cyan-700">
+                          <div className="quote-empty-viewer-icon flex h-14 w-14 items-center justify-center rounded-xl border border-[#6d28d9]/10 bg-white text-cyan-700">
                             <Move3D className="h-6 w-6" />
                           </div>
                           <div className="text-sm font-semibold text-[#0F1B3D]">No model loaded</div>
@@ -811,17 +824,17 @@ function CartEnabledWorkspace({
 
                     {selectedModel && (
                       <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2.5">
+                        <div className="quote-metric-card rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2.5">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Dimensions</div>
                           <div className="mt-1 text-xs text-[#0F1B3D]">
                             {selectedModel.dimensionsMm.x.toFixed(0)} × {selectedModel.dimensionsMm.y.toFixed(0)} × {selectedModel.dimensionsMm.z.toFixed(0)} mm
                           </div>
                         </div>
-                        <div className="rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2.5">
+                        <div className="quote-metric-card rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2.5">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Triangles</div>
                           <div className="mt-1 text-xs text-[#0F1B3D]">{selectedModel.triangleCount.toLocaleString()}</div>
                         </div>
-                        <div className="rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2.5">
+                        <div className="quote-metric-card rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2.5">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Controls</div>
                           <div className="mt-1 text-xs text-[#0F1B3D]">Rotate · Zoom · Pan</div>
                         </div>
@@ -837,9 +850,9 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.15 }}
                 >
-                  <div className="rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div className="quote-premium-card quote-material-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
-                      <div className="rounded-xl border border-violet-400/20 bg-violet-400/10 p-2.5 text-violet-200">
+                      <div className="quote-section-icon rounded-xl border border-violet-400/20 bg-violet-400/10 p-2.5 text-violet-200">
                         <Palette className="h-5 w-5" />
                       </div>
                       <div>
@@ -859,7 +872,7 @@ function CartEnabledWorkspace({
                               key={material.id}
                               type="button"
                               onClick={() => handleMaterialChange(material.id)}
-                              className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
+                              className={`quote-option-card ${isActive ? 'quote-option-card-active' : ''} flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
                                 isActive
                                   ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)] shadow-[0_4px_16px_rgba(109, 40, 217,0.1)]'
                                   : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10'
@@ -894,7 +907,7 @@ function CartEnabledWorkspace({
                               key={`${color.name}-${idx}`}
                               type="button"
                               onClick={() => setConfig((c) => ({ ...c, color: color.name }))}
-                              className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-left transition-all ${
+                              className={`quote-option-card ${isActive ? 'quote-option-card-active' : ''} flex items-center gap-2 rounded-xl border px-4 py-2.5 text-left transition-all ${
                                 isActive
                                   ? 'border-[#6d28d9]/40 bg-[var(--brand-faint)]'
                                   : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10'
@@ -917,9 +930,9 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.2 }}
                 >
-                  <div className="rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div className="quote-premium-card quote-settings-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
-                      <div className="rounded-xl border border-sky-400/20 bg-sky-50 p-2.5 text-sky-700">
+                      <div className="quote-section-icon rounded-xl border border-sky-400/20 bg-sky-50 p-2.5 text-sky-700">
                         <Layers3 className="h-5 w-5" />
                       </div>
                       <div>
@@ -976,7 +989,7 @@ function CartEnabledWorkspace({
                               key={option.value}
                               type="button"
                               onClick={() => setConfig((c) => ({ ...c, postProcessingLevel: option.value }))}
-                              className={`rounded-xl border px-3 py-2.5 text-left transition-all ${
+                              className={`quote-option-card ${option.value === config.postProcessingLevel ? 'quote-option-card-active' : ''} rounded-xl border px-3 py-2.5 text-left transition-all ${
                                 option.value === config.postProcessingLevel
                                   ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)]'
                                   : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10'
@@ -1010,7 +1023,7 @@ function CartEnabledWorkspace({
                               key={option.value}
                               type="button"
                               onClick={() => setConfig((c) => ({ ...c, layerHeight: option.value }))}
-                              className={`rounded-xl border px-3 py-2.5 text-left transition-all ${
+                              className={`quote-option-card ${option.value === config.layerHeight ? 'quote-option-card-active' : ''} rounded-xl border px-3 py-2.5 text-left transition-all ${
                                 option.value === config.layerHeight
                                   ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)]'
                                   : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10'
@@ -1026,7 +1039,7 @@ function CartEnabledWorkspace({
 
                     {/* Save Quote */}
                     {user && (
-                      <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-4">
+                      <div className="quote-save-strip mt-6 flex flex-col items-center justify-between gap-3 rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-4 sm:flex-row">
                         <div className="flex items-center gap-3">
                           <ShieldCheck className="h-5 w-5 text-emerald-700" />
                           <div>
@@ -1038,7 +1051,7 @@ function CartEnabledWorkspace({
                           type="button"
                           onClick={handleSaveQuote}
                           disabled={!selectedModel || savingQuote || uploadState.status === 'uploading'}
-                          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-white/5 px-4 py-2 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="quote-secondary-action inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white/5 px-4 py-2 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                         >
                           <BookmarkPlus className="h-3.5 w-3.5" />
                           {savingQuote ? 'Saving...' : 'Save Quote'}
@@ -1054,9 +1067,9 @@ function CartEnabledWorkspace({
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.25 }}
-                className="xl:sticky xl:top-24 xl:self-start"
+                className="quote-summary-shell xl:sticky xl:top-24 xl:self-start"
               >
-                <div className="rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-5 sm:p-6 shadow-[0_10px_40px_rgba(0,0,0,0.2)] sm:shadow-[0_18px_70px_rgba(0,0,0,0.3)]">
+                <div className="quote-summary-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-5 shadow-[0_10px_40px_rgba(0,0,0,0.2)] sm:p-6 sm:shadow-[0_18px_70px_rgba(0,0,0,0.3)]">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
                       <h2 className="text-lg font-semibold text-[#0F1B3D]">Quote Summary</h2>
@@ -1076,7 +1089,7 @@ function CartEnabledWorkspace({
                   ) : (
                     <>
                       {/* Config Summary */}
-                      <div className="mb-4 rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3">
+                      <div className="quote-config-pill mb-4 rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3">
                         <div className="flex items-center gap-2 text-xs">
                           <span className="text-[#0F1B3D]">{selectedMaterial?.name ?? 'Material'}</span>
                           <span className="text-[#6F7192]">·</span>
@@ -1087,7 +1100,7 @@ function CartEnabledWorkspace({
                       </div>
 
                       {/* Price Breakdown */}
-                      <div className="rounded-xl border border-[#6d28d9]/20 bg-[linear-gradient(180deg,rgba(109, 40, 217,0.12),rgba(109, 40, 217,0.06))] p-4">
+                      <div className="quote-total-card rounded-xl border border-[#6d28d9]/20 bg-[linear-gradient(180deg,rgba(109,40,217,0.12),rgba(109,40,217,0.06))] p-4">
                         <div className="text-[10px] uppercase tracking-[0.22em] text-[#6F7192]">Total Price</div>
                         <div className="mt-1 font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">
                           ₹{priceBreakdown.priceBeforeDiscount.toFixed(0)}
@@ -1154,15 +1167,15 @@ function CartEnabledWorkspace({
 
                       {/* Quick Stats */}
                       <div className="mt-4 grid grid-cols-2 gap-3">
-                        <div className="rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3">
+                        <div className="quote-mini-stat rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Weight</div>
                           <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{priceBreakdown.materialUsageGramsPerUnit.toFixed(2)} g / unit</div>
                         </div>
-                        <div className="rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3">
+                        <div className="quote-mini-stat rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Print time</div>
                           <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{formatDurationMinutes(priceBreakdown.estimatedMinutes)}</div>
                         </div>
-                        <div className="rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3 col-span-2">
+                        <div className="quote-mini-stat col-span-2 rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3">
                           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
                             <Cuboid className="h-3 w-3" />
                             Dimensions
@@ -1174,7 +1187,7 @@ function CartEnabledWorkspace({
                       </div>
 
                       {/* Delivery */}
-                      <div className="mt-4 rounded-xl border border-emerald-400/15 bg-emerald-400/10 p-3">
+                      <div className="quote-delivery-card mt-4 rounded-xl border border-emerald-400/15 bg-emerald-400/10 p-3">
                         <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-emerald-700">
                           <Truck className="h-3 w-3" />
                           Delivery
@@ -1188,7 +1201,7 @@ function CartEnabledWorkspace({
                           type="button"
                           onClick={handleAddToCart}
                           disabled={!selectedModel || uploadState.status === 'uploading'}
-                          className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
+                          className={`quote-primary-action inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                             cartItemCheck
                               ? 'border border-emerald-700/30 bg-emerald-700/10 text-emerald-700'
                               : 'bg-[#6d28d9] text-white hover:opacity-95'
@@ -1210,7 +1223,7 @@ function CartEnabledWorkspace({
                         {cartItemCheck && (
                           <Link
                             href="/cart"
-                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/30 bg-[#6d28d9]/10 px-4 py-2.5 text-xs font-medium text-[#6d28d9] transition-colors hover:bg-[#6d28d9]/20"
+                            className="quote-secondary-action inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/30 bg-[#6d28d9]/10 px-4 py-2.5 text-xs font-medium text-[#6d28d9] transition-colors hover:bg-[#6d28d9]/20"
                           >
                             View Cart
                             <ArrowRight className="h-3.5 w-3.5" />
@@ -1221,7 +1234,7 @@ function CartEnabledWorkspace({
                       {!user && (
                         <Link
                           href="/login?next=%2Finstant-quote"
-                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-2.5 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
+                          className="quote-secondary-action mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-2.5 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
                         >
                           Sign in to save quotes
                           <ArrowRight className="h-3 w-3" />
