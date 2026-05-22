@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { Suspense } from 'react'
 
 export const dynamic = 'force-static'
 
@@ -47,11 +46,9 @@ export default async function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F8FB]">
+    <div className="pricing-premium-shell min-h-screen overflow-hidden bg-[#05060A] text-white">
       <Navbar transparent />
-      <Suspense fallback={<div className="mx-4 mt-20 min-h-96 animate-pulse rounded-lg border border-gray-200 bg-white shadow-sm sm:mx-6 md:mx-10 lg:mx-12" />}>
-        <PricingClient materials={materials} />
-      </Suspense>
+      <PricingClient materials={materials} />
     </div>
   )
 }

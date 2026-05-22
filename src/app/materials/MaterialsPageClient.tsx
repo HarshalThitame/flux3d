@@ -119,16 +119,16 @@ export default function MaterialsPageClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F7F8FB] text-[#111827]">
+      <div className="materials-premium-shell min-h-screen overflow-hidden bg-[#05060A] text-white">
         <NavbarClient transparent user={null} />
         <main className="px-4 py-32 md:px-8 lg:px-16">
           <div className="mx-auto max-w-[1200px]">
-            <div className="mb-5 h-4 w-40 animate-pulse rounded-full bg-gray-200" />
-            <div className="mb-4 h-12 w-full max-w-xl animate-pulse rounded-2xl bg-gray-200" />
-            <div className="mb-12 h-5 w-full max-w-2xl animate-pulse rounded-full bg-gray-200" />
+            <div className="mb-5 h-4 w-40 animate-pulse rounded-full bg-white/10" />
+            <div className="mb-4 h-12 w-full max-w-xl animate-pulse rounded-lg bg-white/10" />
+            <div className="mb-12 h-5 w-full max-w-2xl animate-pulse rounded-full bg-white/10" />
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {[1,2,3,4,5,6].map(i => (
-                <div key={i} className="h-72 animate-pulse rounded-3xl border border-gray-200 bg-white shadow-sm" />
+                <div key={i} className="h-72 animate-pulse rounded-lg border border-white/10 bg-white/[0.06] shadow-sm" />
               ))}
             </div>
           </div>
@@ -138,8 +138,8 @@ export default function MaterialsPageClient() {
   }
 
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#F7F8FB]" />}>
-      <div className="min-h-screen bg-[#F7F8FB] text-[#111827]">
+    <Suspense fallback={<div className="min-h-screen bg-[#05060A]" />}>
+      <div className="materials-premium-shell min-h-screen overflow-hidden bg-[#05060A] text-white">
         <NavbarClient transparent user={null} />
         <main>
           <MaterialsHero />

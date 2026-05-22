@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 import Navbar from '@/components/Navbar'
 import GalleryClient from './GalleryClient'
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function GalleryPage() {
   return (
-    <div>
+    <div className="gallery-premium-shell min-h-screen overflow-hidden bg-[#05060a] text-white">
       <Navbar transparent />
       <GalleryClient />
     </div>

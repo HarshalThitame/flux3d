@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { type CSSProperties, type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react'
 import { ChevronDown, Menu, ShoppingCart, X, MessageCircle, ArrowUpRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -38,7 +38,7 @@ function CartButton() {
     <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
       <Link
         href="/cart"
-        className="group relative flex min-h-[42px] items-center gap-2 rounded-full border border-white/80 bg-white/75 px-3.5 text-sm font-semibold text-[var(--text-secondary)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white hover:text-[var(--text-primary)]"
+        className="navbar-action-button group relative flex min-h-[42px] items-center gap-2 rounded-full border border-white/80 bg-white/75 px-3.5 text-sm font-semibold text-[var(--text-secondary)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white hover:text-[var(--text-primary)]"
       >
         <ShoppingCart className="h-4 w-4" />
         <span className="hidden sm:inline">Cart</span>
@@ -67,6 +67,7 @@ export default function NavbarClient({
   const [scrolled, setScrolled] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const setWishlist = useShopWishlistStore((state) => state.setWishlist)
+  const navRef = useRef<HTMLElement | null>(null)
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const currentUser = liveProfile ?? user
   const isAuthPending = loading && !currentUser
@@ -119,6 +120,19 @@ export default function NavbarClient({
 
   const currentPath = pathname ?? '/'
   const isActive = (href: string) => (href === '/' ? currentPath === '/' : currentPath.startsWith(href))
+  const navStyle = {
+    '--navbar-shadow': navIsElevated
+      ? '0 24px 70px rgba(15,23,42,0.16), 0 8px 24px rgba(109,40,217,0.08), inset 0 1px 0 rgba(255,255,255,0.88)'
+      : '0 18px 56px rgba(15,23,42,0.1), 0 6px 18px rgba(109,40,217,0.06), inset 0 1px 0 rgba(255,255,255,0.84)',
+  } as CSSProperties
+
+  const handleNavPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
+    const nav = navRef.current
+    if (!nav || !window.matchMedia('(pointer: fine)').matches) return
+    const bounds = nav.getBoundingClientRect()
+    nav.style.setProperty('--nav-pointer-x', `${event.clientX - bounds.left}px`)
+    nav.style.setProperty('--nav-pointer-y', `${event.clientY - bounds.top}px`)
+  }
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -180,20 +194,24 @@ export default function NavbarClient({
   return (
     <>
       <motion.nav
+        ref={navRef}
         initial={{ y: -20, opacity: 1 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="navbar"
-        style={{
-          boxShadow: navIsElevated
-            ? '0 22px 60px rgba(15,23,42,0.12), inset 0 1px 0 rgba(255,255,255,0.88)'
-            : '0 14px 42px rgba(15,23,42,0.07), inset 0 1px 0 rgba(255,255,255,0.84)',
+        className={`navbar navbar-premium ${navIsElevated ? 'navbar-premium-elevated' : 'navbar-premium-float'}`}
+        data-elevated={navIsElevated ? 'true' : 'false'}
+        data-transparent={transparent ? 'true' : 'false'}
+        onPointerMove={handleNavPointerMove}
+        onPointerLeave={() => {
+          navRef.current?.style.setProperty('--nav-pointer-x', '50%')
+          navRef.current?.style.setProperty('--nav-pointer-y', '50%')
         }}
+        style={navStyle}
       >
-        <div className="flex min-w-0 items-center gap-5">
+        <div className="navbar-left flex min-w-0 items-center gap-5">
           <Link
             href="/"
-            className="group flex min-h-[48px] items-center rounded-2xl bg-white/55 px-2.5 ring-1 ring-white/70 transition hover:bg-white/80"
+            className="navbar-logo-link group flex min-h-[48px] items-center rounded-2xl bg-white/55 px-2.5 ring-1 ring-white/70 transition hover:bg-white/80"
             aria-label={`${businessName} home`}
           >
             <Image
@@ -207,7 +225,7 @@ export default function NavbarClient({
             />
           </Link>
 
-          <ul className="hidden list-none items-center gap-1 rounded-full border border-white/70 bg-white/55 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur lg:flex">
+          <ul className="navbar-link-cluster hidden list-none items-center gap-1 rounded-full border border-white/70 bg-white/55 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur lg:flex">
             {navLinks.map((link) => (
               <li key={link.href}>
                 <Link
@@ -216,16 +234,16 @@ export default function NavbarClient({
                     setIsOpen(false)
                     setIsProfileOpen(false)
                   }}
-                  className={`nav-link whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold ${isActive(link.href) ? 'nav-link-active' : ''}`}
+                  className={`nav-link navbar-premium-link whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold ${isActive(link.href) ? 'nav-link-active' : ''}`}
                 >
-                  {link.label}
+                  <span>{link.label}</span>
                 </Link>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="hidden items-center gap-2.5 lg:flex">
+        <div className="navbar-actions hidden items-center gap-2.5 lg:flex">
           <CartButton />
           <ShopCartNavButton />
 
@@ -234,7 +252,7 @@ export default function NavbarClient({
               href={`https://wa.me/${whatsappNumber}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex min-h-[42px] items-center gap-2 whitespace-nowrap rounded-full border border-[#25D366]/25 bg-white/70 px-3.5 text-sm font-semibold text-[#138a42] shadow-[0_10px_28px_rgba(15,23,42,0.05)] backdrop-blur transition hover:border-[#25D366]/40 hover:bg-[#25D366]/10"
+              className="navbar-action-button navbar-whatsapp-button flex min-h-[42px] items-center gap-2 whitespace-nowrap rounded-full border border-[#25D366]/25 bg-white/70 px-3.5 text-sm font-semibold text-[#138a42] shadow-[0_10px_28px_rgba(15,23,42,0.05)] backdrop-blur transition hover:border-[#25D366]/40 hover:bg-[#25D366]/10"
             >
               <MessageCircle className="h-4 w-4" />
               WhatsApp
@@ -251,7 +269,7 @@ export default function NavbarClient({
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   href="/instant-quote"
-                  className="relative flex min-h-[44px] items-center gap-2 overflow-hidden whitespace-nowrap rounded-full bg-gradient-to-r from-[#4c1d95] via-[#6d28d9] to-[#7c3aed] px-5 font-semibold text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition-all duration-300 before:absolute before:inset-y-0 before:left-0 before:w-1/2 before:-translate-x-full before:bg-white/20 before:blur-xl before:content-[''] hover:from-[#3b0764] hover:to-[#6d28d9] hover:before:translate-x-[220%]"
+                  className="navbar-quote-button relative flex min-h-[44px] items-center gap-2 overflow-hidden whitespace-nowrap rounded-full bg-gradient-to-r from-[#4c1d95] via-[#6d28d9] to-[#7c3aed] px-5 font-semibold text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition-all duration-300 before:absolute before:inset-y-0 before:left-0 before:w-1/2 before:-translate-x-full before:bg-white/20 before:blur-xl before:content-[''] hover:from-[#3b0764] hover:to-[#6d28d9] hover:before:translate-x-[220%]"
                 >
                   <span className="relative z-10">Get Quote</span>
                   <ArrowUpRight className="relative z-10 h-4 w-4" />
@@ -264,7 +282,7 @@ export default function NavbarClient({
                   onClick={() => setIsProfileOpen((current) => !current)}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
-                  className="flex min-h-[42px] items-center gap-2 rounded-full border border-white/80 bg-white/75 px-2 py-1 pr-3 shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white"
+                  className="navbar-profile-button flex min-h-[42px] items-center gap-2 rounded-full border border-white/80 bg-white/75 px-2 py-1 pr-3 shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white"
                 >
                   {currentUser.avatarUrl ? (
                     <span className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-[var(--accent)]/20">
@@ -295,7 +313,7 @@ export default function NavbarClient({
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -8, scale: 0.98 }}
                       transition={{ duration: 0.18 }}
-                      className="absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl"
+                      className="navbar-profile-menu absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl"
                     >
                       <div className="border-b border-[var(--border-light)] p-4">
                         <p className="font-[var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Signed in as</p>
@@ -333,7 +351,7 @@ export default function NavbarClient({
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   href="/login"
-                  className="flex min-h-[42px] items-center whitespace-nowrap rounded-full border border-white/80 bg-white/75 px-4 text-sm font-semibold text-[var(--text-secondary)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white hover:text-[var(--text-primary)]"
+                  className="navbar-action-button flex min-h-[42px] items-center whitespace-nowrap rounded-full border border-white/80 bg-white/75 px-4 text-sm font-semibold text-[var(--text-secondary)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white hover:text-[var(--text-primary)]"
                 >
                   Log In
                 </Link>
@@ -341,7 +359,7 @@ export default function NavbarClient({
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   href="/signup"
-                  className="btn-primary flex min-h-[42px] items-center whitespace-nowrap rounded-full px-[18px]"
+                  className="navbar-signup-button btn-primary flex min-h-[42px] items-center whitespace-nowrap rounded-full px-[18px]"
                 >
                   Sign Up
                 </Link>
@@ -355,7 +373,7 @@ export default function NavbarClient({
           onClick={() => setIsOpen(!isOpen)}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          className="relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/80 bg-white/70 text-[var(--text-primary)] shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden"
+          className="navbar-menu-button relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/80 bg-white/70 text-[var(--text-primary)] shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden"
           aria-label={isOpen ? 'Close menu' : 'Open menu'}
         >
           <AnimatePresence mode="wait" initial={false}>
@@ -376,7 +394,7 @@ export default function NavbarClient({
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed inset-0 z-[90] lg:hidden"
+            className="navbar-mobile-overlay fixed inset-0 z-[90] lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -393,7 +411,7 @@ export default function NavbarClient({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -12, scale: 0.98 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute left-4 right-4 top-24 overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl"
+              className="navbar-mobile-panel absolute left-4 right-4 top-24 overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl"
             >
               <div className="p-6">
                 {currentUser && (
@@ -429,9 +447,9 @@ export default function NavbarClient({
                           setIsOpen(false)
                           setIsProfileOpen(false)
                         }}
-                        className={`flex min-h-[44px] items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-colors ${
+                        className={`navbar-mobile-link flex min-h-[44px] items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-colors ${
                           isActive(link.href)
-                            ? 'bg-[var(--brand-faint)] text-[var(--brand-primary)]'
+                            ? 'navbar-mobile-link-active bg-[var(--brand-faint)] text-[var(--brand-primary)]'
                             : 'text-[var(--text-secondary)] hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]'
                         }`}
                       >
@@ -476,7 +494,7 @@ export default function NavbarClient({
                           key={item.href}
                           href={item.href}
                           onClick={() => setIsOpen(false)}
-                          className="block w-full rounded-xl border border-[var(--border-light)] bg-white py-3.5 text-center text-base font-medium text-[var(--text-secondary)]"
+                          className="navbar-mobile-action-light block w-full rounded-xl border border-[var(--border-light)] bg-white py-3.5 text-center text-base font-medium text-[var(--text-secondary)]"
                         >
                           {item.label}
                         </Link>
@@ -495,7 +513,7 @@ export default function NavbarClient({
                       <Link
                         href="/login"
                         onClick={() => setIsOpen(false)}
-                        className="block w-full rounded-xl border border-[var(--border-light)] bg-white py-3.5 text-center text-base font-medium text-[var(--text-secondary)]"
+                        className="navbar-mobile-action-light block w-full rounded-xl border border-[var(--border-light)] bg-white py-3.5 text-center text-base font-medium text-[var(--text-secondary)]"
                       >
                         Log In
                       </Link>

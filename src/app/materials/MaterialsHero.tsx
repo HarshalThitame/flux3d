@@ -1,7 +1,7 @@
 'use client'
 
-import { motion, useInView } from 'framer-motion'
-import { useRef } from 'react'
+import { motion, useInView, useReducedMotion, type Variants } from 'framer-motion'
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -12,144 +12,246 @@ import {
   Ruler,
   ShieldCheck,
   Sparkles,
+  Thermometer,
 } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
 
 const materialHighlights = [
-  { label: 'PLA+', value: 'Clean prototypes', tone: 'bg-[#ede9fe] text-[#5b21b6]' },
-  { label: 'PETG', value: 'Balanced strength', tone: 'bg-[#dff7ef] text-[#047857]' },
-  { label: 'ABS', value: 'Heat-ready parts', tone: 'bg-[#fff3d6] text-[#9a5b00]' },
-  { label: 'Resin', value: 'Fine detail', tone: 'bg-[#eef2ff] text-[#3730a3]' },
+  { label: 'PLA+', value: 'Clean prototypes', meta: 'Sharp, light, fast' },
+  { label: 'PETG', value: 'Balanced strength', meta: 'Tough daily-use parts' },
+  { label: 'ABS / ASA', value: 'Heat-ready parts', meta: 'Built for demanding jobs' },
+  { label: 'Resin', value: 'Fine detail', meta: 'Presentation-grade finish' },
 ]
 
 const heroStats = [
-  { icon: Layers, label: '10+ stocked materials' },
-  { icon: ShieldCheck, label: 'Dried, tested batches' },
-  { icon: Ruler, label: 'FDM and resin guidance' },
+  { icon: Layers, label: '10+ stocked materials', value: 'FDM + resin' },
+  { icon: ShieldCheck, label: 'Dried, tested batches', value: 'QC logged' },
+  { icon: Ruler, label: 'Material guidance', value: 'Per part' },
 ]
+
+const labMetrics = [
+  { icon: Thermometer, label: 'Heat range', value: 'Indoor to outdoor' },
+  { icon: ShieldCheck, label: 'Strength map', value: 'Display to load' },
+  { icon: Sparkles, label: 'Finish grade', value: 'Raw to premium' },
+]
+
+const container: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+}
+
+const item: Variants = {
+  hidden: { opacity: 0, y: 18 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.62, ease: [0.16, 1, 0.3, 1] },
+  },
+}
+
+function MaterialsPremiumFX() {
+  const meterRef = useRef<HTMLSpanElement | null>(null)
+
+  useEffect(() => {
+    let frame = 0
+
+    const updatePointer = (event: PointerEvent) => {
+      if (!window.matchMedia('(pointer: fine)').matches) return
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty('--materials-pointer-x', `${event.clientX}px`)
+      })
+    }
+
+    const updateProgress = () => {
+      const page = document.documentElement
+      const maxScroll = Math.max(page.scrollHeight - window.innerHeight, 1)
+      const progress = Math.min(Math.max(window.scrollY / maxScroll, 0), 1)
+      if (meterRef.current) {
+        meterRef.current.style.transform = `scaleX(${progress})`
+      }
+    }
+
+    updateProgress()
+    window.addEventListener('pointermove', updatePointer, { passive: true })
+    window.addEventListener('scroll', updateProgress, { passive: true })
+    window.addEventListener('resize', updateProgress)
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener('pointermove', updatePointer)
+      window.removeEventListener('scroll', updateProgress)
+      window.removeEventListener('resize', updateProgress)
+    }
+  }, [])
+
+  return (
+    <>
+      <div className="materials-pointer-light" aria-hidden="true" />
+      <div className="materials-scroll-meter" aria-hidden="true">
+        <span ref={meterRef} />
+      </div>
+    </>
+  )
+}
 
 export default function MaterialsHero() {
   const { settings } = useBusinessSettings()
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
+  const reduceMotion = useReducedMotion()
   const whatsappNumber = (settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')
 
   return (
-    <section ref={ref} className="relative overflow-hidden px-4 pb-14 pt-6 md:px-8 lg:px-16">
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,#F7F8FB_0%,#FFFFFF_58%,#F7F8FB_100%)]" />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#6d28d9]/30 to-transparent" />
+    <section ref={ref} className="materials-hero-premium relative isolate overflow-hidden px-4 pb-12 pt-8 text-white md:px-8 lg:px-16">
+      <MaterialsPremiumFX />
+      <video
+        className="materials-hero-video absolute inset-0 h-full w-full object-cover"
+        src="/printer2.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+      />
+      <div className="materials-hero-depth" aria-hidden="true" />
+      <div className="materials-hero-grid" aria-hidden="true" />
+      <div className="materials-hero-beam" aria-hidden="true" />
+      <div className="materials-hero-frame" aria-hidden="true" />
 
       <motion.div
-        variants={{
-          hidden: { opacity: 0 },
-          visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
-        }}
+        variants={container}
         initial="hidden"
         animate={isInView ? 'visible' : 'hidden'}
-        className="relative z-10 mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.75fr)] lg:items-center"
+        className="relative z-10 mx-auto flex min-h-[82svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-10 pt-10 md:pt-14 lg:pt-16"
       >
-        <div className="min-w-0">
-          <motion.div
-            variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
-            className="mb-5 flex items-center gap-2 text-sm font-medium text-[#6F7192]"
-          >
-            <Link href="/" className="transition hover:text-[#6d28d9]">Home</Link>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-[#111827]">Materials</span>
-          </motion.div>
+        <motion.div variants={item} className="mb-4 flex items-center gap-2 text-sm font-medium text-white/[0.64]">
+          <Link href="/" className="transition hover:text-white">Home</Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-white">Materials</span>
+        </motion.div>
 
-          <motion.div
-            variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
-            className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/15 bg-white px-4 py-2 text-xs font-bold uppercase text-[#6d28d9] shadow-sm"
-          >
-            <FlaskConical className="h-4 w-4" />
-            Material intelligence
-          </motion.div>
+        <motion.div
+          variants={item}
+          className="materials-hero-kicker mb-4 inline-flex w-fit items-center gap-2 rounded-lg border border-white/[0.14] bg-white/10 px-4 py-2 text-xs font-bold uppercase text-white shadow-[0_16px_48px_rgba(0,0,0,0.24)] backdrop-blur"
+        >
+          <FlaskConical className="h-4 w-4 text-cyan-200" />
+          Material intelligence lab
+        </motion.div>
 
-          <motion.h1
-            variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
-            className="max-w-4xl text-4xl font-extrabold leading-[1.05] text-[#111827] sm:text-5xl lg:text-6xl"
-          >
-            Choose the material that makes your print feel engineered.
-          </motion.h1>
-
-          <motion.p
-            variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
-            className="mt-6 max-w-2xl text-base leading-8 text-[#4B5563] sm:text-lg"
-          >
-            Compare finish, strength, heat resistance, flexibility, and cost before you upload. Flux3D pairs each job with a material that fits the part, not just the printer.
-          </motion.p>
-
-          <motion.div
-            variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
-            className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
-          >
-            <Link
-              href="/instant-quote"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#111827] px-6 text-sm font-bold text-white shadow-[0_16px_36px_rgba(17,24,39,0.18)] transition hover:bg-[#2f3341]"
+        <div className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-start">
+          <div className="min-w-0">
+            <motion.h1
+              variants={item}
+              className="materials-hero-title max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.04] text-white sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
             >
-              Upload File
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <a
-              href={`https://wa.me/${whatsappNumber}?text=Hi%20${encodeURIComponent(settings.businessName || 'Flux3D')}!%20I%20need%20help%20choosing%20a%20material%20for%20my%20project.`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-[#25D366]/25 bg-white px-6 text-sm font-bold text-[#138a42] shadow-sm transition hover:border-[#25D366]/40 hover:bg-[#EAFBF2]"
+              Materials chosen with engineering precision.
+            </motion.h1>
+
+            <motion.p
+              variants={item}
+              className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-white/[0.74] sm:text-lg lg:max-w-2xl"
             >
-              <MessageCircle className="h-4 w-4" />
-              Ask Material Expert
-            </a>
-          </motion.div>
+              Compare finish, strength, heat resistance, flexibility, and cost before you upload. Flux3D pairs each job with a material that fits the part, not just the printer.
+            </motion.p>
+
+            <motion.div
+              variants={item}
+              className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
+            >
+              <Link
+                href="/instant-quote"
+                className="materials-primary-action group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#080A12] shadow-[0_18px_54px_rgba(255,255,255,0.18)] transition hover:bg-[#ede9fe]"
+              >
+                Upload File
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <a
+                href={`https://wa.me/${whatsappNumber}?text=Hi%20${encodeURIComponent(settings.businessName || 'Flux3D')}!%20I%20need%20help%20choosing%20a%20material%20for%20my%20project.`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="materials-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#25D366]/25 bg-white/10 px-6 text-sm font-bold text-white backdrop-blur transition hover:border-[#25D366]/50 hover:bg-[#25D366]/[0.16]"
+              >
+                <MessageCircle className="h-4 w-4 text-[#25D366]" />
+                Ask Material Expert
+              </a>
+            </motion.div>
 
           <motion.div
-            variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
-            className="mt-8 grid gap-3 sm:grid-cols-3"
+            variants={item}
+            className="materials-hero-stats mt-8 grid gap-3 sm:grid-cols-3"
           >
-            {heroStats.map((item) => (
-              <div key={item.label} className="flex min-h-14 items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 shadow-sm">
-                <item.icon className="h-4 w-4 shrink-0 text-[#6d28d9]" />
-                <span className="text-sm font-semibold leading-5 text-[#374151]">{item.label}</span>
+            {heroStats.map((stat) => (
+              <div key={stat.label} className="min-w-0 rounded-lg border border-white/10 bg-white/[0.075] p-4 backdrop-blur">
+                <stat.icon className="mb-4 h-4 w-4 text-cyan-200" />
+                <div className="text-xs font-bold uppercase text-white/[0.52]">{stat.label}</div>
+                <div className="mt-1 text-sm font-extrabold text-white">{stat.value}</div>
               </div>
             ))}
           </motion.div>
-        </div>
+          </div>
 
-        <motion.div
-          variants={{ hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0 } }}
-          className="relative"
-        >
-          <div className="rounded-[2rem] border border-gray-200 bg-white p-5 shadow-[0_24px_70px_rgba(17,24,39,0.12)]">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-              <div>
-                <p className="text-xs font-bold uppercase text-[#6d28d9]">Material shortlist</p>
-                <h2 className="mt-1 text-xl font-extrabold text-[#111827]">What matters most?</h2>
-              </div>
-              <Sparkles className="h-5 w-5 text-[#f59e0b]" />
+          <motion.div
+            variants={item}
+            className="materials-lab-panel grid min-w-0 gap-4"
+          >
+            <div className="materials-lab-topline">
+              <span>Material command</span>
+              <strong>calibrated</strong>
             </div>
 
-            <div className="mt-5 space-y-3">
-              {materialHighlights.map((material) => (
-                <div key={material.label} className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-[#FAFBFD] px-4 py-3">
-                  <div className="min-w-0">
-                    <div className="text-sm font-extrabold text-[#111827]">{material.label}</div>
-                    <div className="mt-0.5 truncate text-xs font-medium text-[#6F7192]">{material.value}</div>
-                  </div>
-                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${material.tone}`}>
-                    Ready
-                  </span>
+            <div className="materials-spool-stage" aria-hidden="true">
+              <div className="materials-spool">
+                <span />
+                <span />
+              </div>
+              <div className="materials-filament-line" />
+              <div className="materials-vial">
+                <span />
+              </div>
+              <div className="materials-scanline" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {labMetrics.map((metric) => (
+                <div key={metric.label} className="materials-lab-metric">
+                  <metric.icon className="h-4 w-4" />
+                  <span>{metric.label}</span>
+                  <strong>{metric.value}</strong>
                 </div>
               ))}
             </div>
 
-            <div className="mt-5 rounded-2xl bg-[#111827] p-4 text-white">
+            <div className="materials-shortlist">
+              {materialHighlights.map((material) => (
+                <motion.div
+                  key={material.label}
+                  animate={reduceMotion ? {} : { y: [0, -4, 0] }}
+                  transition={reduceMotion ? undefined : { duration: 4.8, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  <div className="min-w-0">
+                    <div className="text-sm font-extrabold text-[#111827]">{material.label}</div>
+                    <div className="mt-0.5 text-xs font-medium text-[#6F7192]">{material.value}</div>
+                  </div>
+                  <span>
+                    {material.meta}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="materials-selection-rule">
               <p className="text-xs font-semibold uppercase text-white/60">Selection rule</p>
               <p className="mt-2 text-sm leading-6 text-white/90">
                 Strong parts start with PETG, ABS, ASA, or Nylon. Display pieces start with PLA+, Silk PLA, or Resin.
               </p>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </motion.div>
     </section>
   )

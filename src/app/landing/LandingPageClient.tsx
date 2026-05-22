@@ -30,10 +30,62 @@ function FloatingWhatsAppButton() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with Flux 3D on WhatsApp"
-      className="fixed bottom-20 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_16px_36px_rgba(37,211,102,0.28)] transition-all duration-200 hover:scale-105 hover:shadow-[0_18px_42px_rgba(37,211,102,0.34)] md:bottom-8 md:right-6 md:h-14 md:w-14"
+      className="fixed bottom-20 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-[#25D366] text-white shadow-[0_18px_44px_rgba(37,211,102,0.34)] transition-all duration-200 hover:scale-105 hover:shadow-[0_20px_54px_rgba(37,211,102,0.42)] md:bottom-8 md:right-6 md:h-14 md:w-14"
     >
       <MessageCircle className="h-5 w-5 md:h-6 md:w-6" />
     </a>
+  )
+}
+
+function PremiumLandingFX() {
+  const meterRef = useRef<HTMLSpanElement | null>(null)
+
+  useEffect(() => {
+    let frame = 0
+
+    const updatePointer = (event: PointerEvent) => {
+      if (!window.matchMedia('(pointer: fine)').matches) return
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty('--premium-pointer-x', `${event.clientX}px`)
+        document.documentElement.style.setProperty('--premium-pointer-y', `${event.clientY}px`)
+      })
+    }
+
+    const updateProgress = () => {
+      const page = document.documentElement
+      const maxScroll = Math.max(page.scrollHeight - window.innerHeight, 1)
+      const progress = Math.min(Math.max(window.scrollY / maxScroll, 0), 1)
+      if (meterRef.current) {
+        meterRef.current.style.transform = `scaleX(${progress})`
+      }
+    }
+
+    updateProgress()
+    window.addEventListener('pointermove', updatePointer, { passive: true })
+    window.addEventListener('scroll', updateProgress, { passive: true })
+    window.addEventListener('resize', updateProgress)
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener('pointermove', updatePointer)
+      window.removeEventListener('scroll', updateProgress)
+      window.removeEventListener('resize', updateProgress)
+    }
+  }, [])
+
+  return (
+    <>
+      <div className="premium-pointer-light" aria-hidden="true" />
+      <div className="premium-scroll-meter" aria-hidden="true">
+        <span ref={meterRef} />
+      </div>
+      <div className="premium-page-chrome" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+    </>
   )
 }
 
@@ -77,49 +129,50 @@ function LazySection({
 
 export default function LandingPageClient() {
   return (
-    <>
+    <div className="landing-premium relative">
+      <PremiumLandingFX />
       <FloatingWhatsAppButton />
-      <LazySection minHeight={520} className="bg-[var(--bg-base)]">
+      <LazySection minHeight={520} className="premium-band premium-band-ink">
         <ProblemSection />
       </LazySection>
-      <LazySection minHeight={140} className="bg-[var(--bg-base)]">
+      <LazySection minHeight={140} className="premium-band premium-band-black">
         <MarqueeSection />
       </LazySection>
-      <LazySection minHeight={760} className="bg-[var(--bg-soft)]">
+      <LazySection minHeight={760} className="premium-band premium-band-panel">
         <ServicesSection />
       </LazySection>
-      <div className="bg-[var(--bg-soft)]">
-        <section className="max-w-[1200px] mx-auto px-6 mb-16">
+      <div className="premium-band premium-band-panel">
+        <section className="premium-offer-shell mx-auto mb-16 max-w-[1200px] px-6">
           <OfferBanner />
         </section>
       </div>
-      <LazySection minHeight={760} className="bg-[var(--bg-soft)]">
+      <LazySection minHeight={760} className="premium-band premium-band-panel">
         <MaterialsSection />
       </LazySection>
-      <LazySection minHeight={680} className="bg-[var(--bg-base)]">
+      <LazySection minHeight={680} className="premium-band premium-band-ink">
         <TechnologySection />
       </LazySection>
-      <LazySection minHeight={720} className="bg-[var(--bg-base)]">
+      <LazySection minHeight={720} className="premium-band premium-band-ink">
         <HowItWorksSection />
       </LazySection>
-      <LazySection minHeight={860} className="bg-[var(--bg-soft)]">
+      <LazySection minHeight={860} className="premium-band premium-band-panel">
         <PricingSection />
       </LazySection>
-      <LazySection minHeight={720} className="bg-[var(--bg-base)]">
+      <LazySection minHeight={720} className="premium-band premium-band-ink">
         <TestimonialsSection />
       </LazySection>
-      <LazySection minHeight={620} className="bg-[var(--bg-base)]">
+      <LazySection minHeight={620} className="premium-band premium-band-ink">
         <TrustSection />
       </LazySection>
-      <LazySection minHeight={720} className="bg-[var(--bg-soft)]">
+      <LazySection minHeight={720} className="premium-band premium-band-panel">
         <FAQSection />
       </LazySection>
-      <LazySection minHeight={560} className="bg-[var(--bg-base)]">
+      <LazySection minHeight={560} className="premium-band premium-band-black">
         <FinalCTASection />
       </LazySection>
       <LazySection minHeight={640}>
         <FooterSection />
       </LazySection>
-    </>
+    </div>
   )
 }

@@ -1,14 +1,31 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ChevronDown, ShoppingBag, Star } from 'lucide-react'
+import {
+  AlertCircle,
+  ArrowRight,
+  BadgeCheck,
+  CalendarClock,
+  Check,
+  ChevronDown,
+  Clock3,
+  PackageCheck,
+  RotateCcw,
+  ShoppingBag,
+  Sparkles,
+  Star,
+  Truck,
+  XCircle,
+} from 'lucide-react'
 import { formatShopPrice } from '@/lib/shop/selection'
 import {
   formatShopOrderDate,
   getShopOrderStatusClasses,
   getShopOrderStatusLabel,
+  SHOP_ORDER_PROGRESS,
   type ShopOrder,
 } from '@/lib/shop/orders'
 
@@ -29,12 +46,71 @@ const filters: Array<{ key: FilterKey; label: string }> = [
   { key: 'returns', label: 'Returns' },
 ]
 
+const activeOrderStatuses = ['placed', 'confirmed', 'packed', 'shipped']
+
 function matchesFilter(order: ShopOrder, filter: FilterKey) {
   if (filter === 'all') return true
-  if (filter === 'active') return ['placed', 'confirmed', 'packed', 'shipped'].includes(order.order_status)
+  if (filter === 'active') return activeOrderStatuses.includes(order.order_status)
   if (filter === 'delivered') return order.order_status === 'delivered'
   if (filter === 'cancelled') return order.order_status === 'cancelled'
   return order.order_status === 'return_requested' || order.order_status === 'returned'
+}
+
+function getOrderItemCount(order: ShopOrder) {
+  return order.items.reduce((count, item) => count + Number(item.quantity || 0), 0)
+}
+
+function getCurrentProgressIndex(order: ShopOrder) {
+  const index = SHOP_ORDER_PROGRESS.indexOf(order.order_status)
+  return index === -1 ? 0 : index
+}
+
+function getHeroMetricLabel(filter: FilterKey) {
+  switch (filter) {
+    case 'active':
+      return 'Active orders'
+    case 'delivered':
+      return 'Delivered orders'
+    case 'cancelled':
+      return 'Cancelled orders'
+    case 'returns':
+      return 'Return cases'
+    default:
+      return 'Total orders'
+  }
+}
+
+function LoadingState() {
+  return (
+    <div className="grid gap-4">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.08 }}
+          className="overflow-hidden rounded-[28px] border border-[var(--border-light)] bg-white/85 p-5 shadow-[var(--shadow-sm)]"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-3">
+              <div className="h-4 w-32 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+              <div className="h-6 w-56 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+            </div>
+            <div className="h-9 w-28 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-[72px_1fr_120px]">
+            <div className="aspect-square animate-pulse rounded-2xl bg-[var(--bg-muted)]" />
+            <div className="space-y-3">
+              <div className="h-4 w-full max-w-sm animate-pulse rounded-full bg-[var(--bg-muted)]" />
+              <div className="h-4 w-48 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+              <div className="h-4 w-36 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+            </div>
+            <div className="h-11 animate-pulse rounded-xl bg-[var(--bg-muted)]" />
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  )
 }
 
 export default function ShopOrdersClient() {
@@ -85,141 +161,349 @@ export default function ShopOrdersClient() {
     () => orders.filter((order) => matchesFilter(order, filter)),
     [filter, orders]
   )
+  const filterCounts = useMemo(
+    () =>
+      filters.reduce<Record<FilterKey, number>>((acc, item) => {
+        acc[item.key] = orders.filter((order) => matchesFilter(order, item.key)).length
+        return acc
+      }, {} as Record<FilterKey, number>),
+    [orders]
+  )
+  const activeCount = filterCounts.active ?? 0
+  const deliveredCount = filterCounts.delivered ?? 0
+  const reviewCount = Object.values(eligibleByOrder).reduce((count, items) => count + items.length, 0)
+  const totalSpend = orders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0)
 
   return (
-    <main className="px-4 pb-20 pt-5 md:px-8 lg:px-16">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-8 rounded-3xl border border-[var(--border-light)] bg-white p-6 shadow-[var(--shadow-sm)]">
-          <p className="text-sm font-semibold text-[var(--brand-primary)]">3D Shop</p>
-          <h1 className="mt-2 text-4xl font-extrabold text-[var(--text-primary)]">My 3D Shop Orders</h1>
-          <Link href="/my-orders" className="mt-4 inline-flex text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--brand-primary)]">
-            ← View 3D Print Orders
-          </Link>
-        </div>
+    <main className="relative isolate overflow-hidden px-4 pb-20 pt-5 md:px-8 lg:px-16">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(118deg,#f9f7f4_0%,#ffffff_46%,#f5f3ff_100%)]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.28] [background-image:linear-gradient(rgba(109,40,217,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(109,40,217,0.06)_1px,transparent_1px)] [background-size:42px_42px]" />
+      <div className="mx-auto max-w-7xl">
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-7 overflow-hidden rounded-[30px] border border-white bg-white/78 p-5 shadow-[0_28px_90px_rgba(26,26,26,0.11)] backdrop-blur-2xl md:p-7"
+        >
+          <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-brand)] bg-[var(--brand-faint)] px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <Sparkles className="h-4 w-4" />
+                3D Shop
+              </div>
+              <h1 className="mt-5 max-w-3xl text-[clamp(2.4rem,5vw,5.6rem)] font-black leading-[0.92] tracking-[0] text-[var(--text-primary)]">
+                Your orders, beautifully tracked.
+              </h1>
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <Link
+                  href="/my-orders"
+                  className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[var(--border-light)] bg-white px-4 text-sm font-bold text-[var(--text-secondary)] shadow-[var(--shadow-sm)] transition hover:border-[var(--border-brand)] hover:text-[var(--brand-primary)]"
+                >
+                  3D Print Orders
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/3d-shop"
+                  className="relative inline-flex min-h-[44px] items-center justify-center gap-2 overflow-hidden rounded-xl bg-[linear-gradient(135deg,#4c1d95_0%,#6d28d9_50%,#7c3aed_100%)] px-4 text-sm font-bold text-white shadow-[var(--shadow-brand)] transition hover:bg-[linear-gradient(135deg,#3b0764_0%,#4c1d95_50%,#6d28d9_100%)]"
+                >
+                  <span className="relative z-10">Continue Shopping</span>
+                  <ShoppingBag className="relative z-10 h-4 w-4" />
+                </Link>
+              </div>
+            </div>
 
-        <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
-          {filters.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => setFilter(item.key)}
-              className={`min-h-[42px] shrink-0 rounded-xl border px-4 text-sm font-bold ${
-                filter === item.key
-                  ? 'border-[var(--brand-primary)] bg-[var(--brand-faint)] text-[var(--brand-primary)]'
-                  : 'border-[var(--border-light)] bg-white text-[var(--text-secondary)]'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
+            <div className="grid min-w-[min(100%,420px)] gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-4">
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[var(--text-muted)]">
+                  <PackageCheck className="h-4 w-4 text-[var(--brand-primary)]" />
+                  {getHeroMetricLabel(filter)}
+                </div>
+                <div className="mt-2 text-3xl font-black text-[var(--text-primary)]">{filterCounts[filter] ?? 0}</div>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-4">
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[var(--text-muted)]">
+                  <BadgeCheck className="h-4 w-4 text-emerald-600" />
+                  Lifetime value
+                </div>
+                <div className="mt-2 text-3xl font-black text-[var(--text-primary)]">{formatShopPrice(totalSpend)}</div>
+              </div>
+            </div>
+          </div>
 
-        {loading ? (
-          <div className="rounded-3xl border border-[var(--border-light)] bg-white p-8 text-center text-[var(--text-secondary)] shadow-[var(--shadow-sm)]">
-            Loading orders...
-          </div>
-        ) : error ? (
-          <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8 text-center text-rose-700">
-            {error}
-          </div>
-        ) : visibleOrders.length === 0 ? (
-          <div className="rounded-3xl border border-[var(--border-light)] bg-white p-8 text-center shadow-[var(--shadow-sm)]">
-            <ShoppingBag className="mx-auto h-12 w-12 text-[var(--brand-primary)]" />
-            <h2 className="mt-4 text-2xl font-extrabold text-[var(--text-primary)]">No orders yet.</h2>
-            <Link href="/3d-shop" className="btn-primary mt-6 inline-flex min-h-[48px] items-center px-5">
-              Start shopping
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {visibleOrders.map((order) => {
-              const firstItem = order.items[0]
-              const moreCount = Math.max(0, order.items.length - 1)
-              const isExpanded = Boolean(expanded[order.id])
-
+          <div className="mt-6 grid gap-3 md:grid-cols-3">
+            {[
+              { label: 'In progress', value: activeCount, icon: Truck, tone: 'text-sky-600' },
+              { label: 'Delivered', value: deliveredCount, icon: Check, tone: 'text-emerald-600' },
+              { label: 'Reviews waiting', value: reviewCount, icon: Star, tone: 'text-amber-500' },
+            ].map((metric, index) => {
+              const Icon = metric.icon
               return (
-                <article key={order.id} className="rounded-3xl border border-[var(--border-light)] bg-white p-5 shadow-[var(--shadow-sm)]">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+                <motion.div
+                  key={metric.label}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.12 + index * 0.06 }}
+                  className="rounded-2xl border border-[var(--border-light)] bg-white/78 p-4 shadow-[var(--shadow-sm)]"
+                >
+                  <div className="flex items-center justify-between gap-4">
                     <div>
-                      <div className="flex items-center gap-2 text-xl font-extrabold text-[var(--text-primary)]">
-                        <ShoppingBag className="h-5 w-5 text-[var(--brand-primary)]" />
-                        #{order.order_number}
-                      </div>
-                      <div className="mt-1 text-sm text-[var(--text-secondary)]">Placed {formatShopOrderDate(order.placed_at)}</div>
+                      <div className="text-xs font-black uppercase tracking-[0.16em] text-[var(--text-muted)]">{metric.label}</div>
+                      <div className="mt-1 text-2xl font-black text-[var(--text-primary)]">{metric.value}</div>
                     </div>
-                    <span className={`rounded-full border px-3 py-1 text-xs font-bold ${getShopOrderStatusClasses(order.order_status)}`}>
-                      {getShopOrderStatusLabel(order.order_status)}
-                    </span>
+                    <div className={`grid h-11 w-11 place-items-center rounded-2xl border border-[var(--border-light)] bg-[var(--bg-soft)] ${metric.tone}`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
                   </div>
-
-                  {firstItem && (
-                    <div className="mt-5 border-y border-[var(--border-light)] py-4">
-                      <div className="grid grid-cols-[52px_1fr] gap-3">
-                        <div className="relative h-12 w-12 overflow-hidden rounded-xl bg-[var(--bg-muted)]">
-                          {firstItem.productThumbnail ? (
-                            <Image src={firstItem.productThumbnail} alt={firstItem.productName} fill sizes="48px" className="object-cover" />
-                          ) : (
-                            <div className="grid h-full place-items-center text-lg">🧩</div>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-bold text-[var(--text-primary)]">{firstItem.productName}</div>
-                          <div className="mt-1 text-sm text-[var(--text-muted)]">{firstItem.variantLabel}</div>
-                          <div className="mt-1 text-sm text-[var(--text-secondary)]">
-                            Qty: {firstItem.quantity} · {formatShopPrice(firstItem.unitPrice)}
-                          </div>
-                        </div>
-                      </div>
-
-                      {moreCount > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setExpanded((current) => ({ ...current, [order.id]: !isExpanded }))}
-                          className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[var(--brand-primary)]"
-                        >
-                          {isExpanded ? 'Hide items' : `+${moreCount} more item${moreCount === 1 ? '' : 's'}`}
-                          <ChevronDown className={`h-4 w-4 transition ${isExpanded ? 'rotate-180' : ''}`} />
-                        </button>
-                      )}
-
-                      {isExpanded && (
-                        <div className="mt-3 space-y-2">
-                          {order.items.slice(1).map((item) => (
-                            <div key={`${item.skuId}-${item.customizationText ?? ''}`} className="rounded-xl bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text-secondary)]">
-                              <span className="font-bold text-[var(--text-primary)]">{item.productName}</span>
-                              <span> · {item.variantLabel} · Qty {item.quantity}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="text-sm text-[var(--text-secondary)]">
-                      <span className="font-bold text-[var(--text-primary)]">Total: {formatShopPrice(order.total_amount)}</span>
-                      <span> (incl. {order.shipping_charge === 0 ? 'free shipping' : `${formatShopPrice(order.shipping_charge)} shipping`})</span>
-                      <span className="ml-2 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-bold text-amber-700">COD</span>
-                    </div>
-                    <Link href={`/3d-shop/order/${order.id}`} className="btn-primary inline-flex min-h-[44px] items-center justify-center px-5">
-                      View Order →
-                    </Link>
-                  </div>
-                  {order.order_status === 'delivered' && eligibleByOrder[order.id]?.length > 0 && (
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3">
-                      <div className="flex items-center gap-2 text-sm font-bold text-yellow-800">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-500" />
-                        How was your order?
-                      </div>
-                      <Link href={`/3d-shop/order/${order.id}?reviews=1`} className="text-sm font-extrabold text-[var(--brand-primary)]">
-                        Write a Review
-                      </Link>
-                    </div>
-                  )}
-                </article>
+                </motion.div>
               )
             })}
           </div>
+        </motion.section>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="sticky top-24 z-20 mb-6 overflow-x-auto rounded-2xl border border-white bg-white/80 p-1.5 shadow-[var(--shadow-sm)] backdrop-blur-xl"
+        >
+          <div className="flex min-w-max gap-1">
+            {filters.map((item) => {
+              const active = filter === item.key
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setFilter(item.key)}
+                  className={`relative min-h-[44px] shrink-0 rounded-xl px-4 text-sm font-black transition ${
+                    active ? 'text-[var(--brand-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="shop-orders-filter"
+                      className="absolute inset-0 rounded-xl border border-[var(--border-brand)] bg-[var(--brand-faint)] shadow-[var(--shadow-sm)]"
+                      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                    />
+                  )}
+                  <span className="relative z-10 inline-flex items-center gap-2">
+                    {item.label}
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${active ? 'bg-white text-[var(--brand-primary)]' : 'bg-[var(--bg-muted)] text-[var(--text-muted)]'}`}>
+                      {filterCounts[item.key] ?? 0}
+                    </span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </motion.div>
+
+        {loading ? (
+          <LoadingState />
+        ) : error ? (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-[28px] border border-rose-200 bg-rose-50 p-8 text-center text-rose-700 shadow-[var(--shadow-sm)]"
+          >
+            <AlertCircle className="mx-auto h-12 w-12" />
+            <h2 className="mt-4 text-2xl font-black text-rose-900">Orders could not be loaded</h2>
+            <p className="mt-2 text-sm font-semibold">{error}</p>
+          </motion.div>
+        ) : visibleOrders.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="overflow-hidden rounded-[30px] border border-[var(--border-light)] bg-white/86 p-8 text-center shadow-[var(--shadow-md)] backdrop-blur-xl"
+          >
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-[var(--border-brand)] bg-[var(--brand-faint)] text-[var(--brand-primary)]">
+              <ShoppingBag className="h-8 w-8" />
+            </div>
+            <h2 className="mt-5 text-3xl font-black text-[var(--text-primary)]">No orders here yet.</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm font-semibold leading-6 text-[var(--text-secondary)]">
+              Orders matching this filter will appear here as soon as they are placed.
+            </p>
+            <Link href="/3d-shop" className="btn-primary mt-6 inline-flex min-h-[48px] items-center px-5">
+              <span className="relative z-10">Start Shopping</span>
+            </Link>
+          </motion.div>
+        ) : (
+          <motion.div layout className="grid gap-4">
+            <AnimatePresence mode="popLayout">
+              {visibleOrders.map((order, index) => {
+                const firstItem = order.items[0]
+                const moreCount = Math.max(0, order.items.length - 1)
+                const isExpanded = Boolean(expanded[order.id])
+                const itemCount = getOrderItemCount(order)
+                const currentProgressIndex = getCurrentProgressIndex(order)
+                const reviewItems = eligibleByOrder[order.id] ?? []
+                const hasReviewPrompt = order.order_status === 'delivered' && reviewItems.length > 0
+                const hasException = order.order_status === 'cancelled' || order.order_status === 'return_requested' || order.order_status === 'returned'
+
+                return (
+                  <motion.article
+                    layout
+                    key={order.id}
+                    initial={{ opacity: 0, y: 22, scale: 0.985 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -12, scale: 0.98 }}
+                    transition={{ duration: 0.34, delay: Math.min(index * 0.05, 0.22), ease: [0.16, 1, 0.3, 1] }}
+                    whileHover={{ y: -3 }}
+                    className="group overflow-hidden rounded-[30px] border border-[var(--border-light)] bg-white/88 p-4 shadow-[0_18px_60px_rgba(26,26,26,0.08)] backdrop-blur-xl transition-shadow hover:shadow-[0_28px_90px_rgba(109,40,217,0.14)] md:p-5"
+                  >
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-brand)] bg-[var(--brand-faint)] text-[var(--brand-primary)]">
+                            <ShoppingBag className="h-5 w-5" />
+                          </span>
+                          <div>
+                            <div className="text-xl font-black leading-tight text-[var(--text-primary)]">#{order.order_number}</div>
+                            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-bold text-[var(--text-muted)]">
+                              <CalendarClock className="h-3.5 w-3.5" />
+                              Placed {formatShopOrderDate(order.placed_at)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`rounded-full border px-3 py-1 text-xs font-black ${getShopOrderStatusClasses(order.order_status)}`}>
+                          {getShopOrderStatusLabel(order.order_status)}
+                        </span>
+                        <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">
+                          COD
+                        </span>
+                      </div>
+                    </div>
+
+                    {!hasException && (
+                      <div className="mt-5 grid gap-2 md:grid-cols-5">
+                        {SHOP_ORDER_PROGRESS.map((status, statusIndex) => {
+                          const complete = statusIndex < currentProgressIndex
+                          const current = statusIndex === currentProgressIndex
+                          return (
+                            <div key={status} className="relative rounded-2xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3">
+                              <div className="flex items-center gap-2">
+                                <span className={`grid h-8 w-8 place-items-center rounded-full border text-xs font-black ${
+                                  complete
+                                    ? 'border-emerald-500 bg-emerald-500 text-white'
+                                    : current
+                                      ? 'border-[var(--brand-primary)] bg-[var(--brand-faint)] text-[var(--brand-primary)]'
+                                      : 'border-[var(--border-light)] bg-white text-[var(--text-muted)]'
+                                }`}>
+                                  {complete ? <Check className="h-4 w-4" /> : statusIndex + 1}
+                                </span>
+                                <span className={`text-xs font-black ${complete || current ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
+                                  {getShopOrderStatusLabel(status)}
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {hasException && (
+                      <div className="mt-5 flex items-center gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm font-bold text-orange-800">
+                        {order.order_status === 'cancelled' ? <XCircle className="h-5 w-5 shrink-0" /> : <RotateCcw className="h-5 w-5 shrink-0" />}
+                        {getShopOrderStatusLabel(order.order_status)}
+                      </div>
+                    )}
+
+                    {firstItem && (
+                      <div className="mt-5 rounded-[24px] border border-[var(--border-light)] bg-[var(--bg-soft)] p-3 md:p-4">
+                        <div className="grid gap-4 sm:grid-cols-[72px_minmax(0,1fr)_auto] sm:items-center">
+                          <div className="relative h-[72px] w-[72px] overflow-hidden rounded-2xl bg-[var(--bg-muted)]">
+                            {firstItem.productThumbnail ? (
+                              <Image src={firstItem.productThumbnail} alt={firstItem.productName} fill sizes="72px" className="object-cover transition duration-500 group-hover:scale-105" />
+                            ) : (
+                              <div className="grid h-full place-items-center text-[var(--text-muted)]">
+                                <PackageCheck className="h-7 w-7" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="line-clamp-1 text-lg font-black text-[var(--text-primary)]">{firstItem.productName}</div>
+                            <div className="mt-1 line-clamp-1 text-sm font-bold text-[var(--text-muted)]">{firstItem.variantLabel}</div>
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-[var(--text-secondary)]">
+                              <span>{itemCount} item{itemCount === 1 ? '' : 's'}</span>
+                              <span className="h-1 w-1 rounded-full bg-[var(--border-medium)]" />
+                              <span>{formatShopPrice(firstItem.unitPrice)} first item</span>
+                              <span className="h-1 w-1 rounded-full bg-[var(--border-medium)]" />
+                              <span>{order.shipping_charge === 0 ? 'Free shipping' : `${formatShopPrice(order.shipping_charge)} shipping`}</span>
+                            </div>
+                          </div>
+                          <div className="text-left sm:text-right">
+                            <div className="text-xs font-black uppercase tracking-[0.16em] text-[var(--text-muted)]">Total</div>
+                            <div className="mt-1 text-2xl font-black text-[var(--text-primary)]">{formatShopPrice(order.total_amount)}</div>
+                          </div>
+                        </div>
+
+                        {moreCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setExpanded((current) => ({ ...current, [order.id]: !isExpanded }))}
+                            className="mt-4 inline-flex min-h-[38px] items-center gap-2 rounded-xl border border-[var(--border-light)] bg-white px-3 text-sm font-black text-[var(--brand-primary)] transition hover:border-[var(--border-brand)]"
+                          >
+                            {isExpanded ? 'Hide items' : `${moreCount} more item${moreCount === 1 ? '' : 's'}`}
+                            <ChevronDown className={`h-4 w-4 transition ${isExpanded ? 'rotate-180' : ''}`} />
+                          </button>
+                        )}
+
+                        <AnimatePresence initial={false}>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.24 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="mt-3 grid gap-2">
+                                {order.items.slice(1).map((item) => (
+                                  <div key={`${item.skuId}-${item.customizationText ?? ''}`} className="rounded-2xl border border-[var(--border-light)] bg-white px-3 py-2 text-sm text-[var(--text-secondary)]">
+                                    <span className="font-black text-[var(--text-primary)]">{item.productName}</span>
+                                    <span> · {item.variantLabel} · Qty {item.quantity}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-2 text-sm font-bold text-[var(--text-secondary)]">
+                        <Clock3 className="h-4 w-4 text-[var(--brand-primary)]" />
+                        {order.estimated_delivery ? `Expected by ${formatShopOrderDate(order.estimated_delivery)}` : 'Tracking updates will appear here'}
+                      </div>
+                      <Link href={`/3d-shop/order/${order.id}`} className="btn-primary inline-flex min-h-[46px] items-center justify-center px-5">
+                        <span className="relative z-10">View Order</span>
+                        <ArrowRight className="relative z-10 h-4 w-4" />
+                      </Link>
+                    </div>
+
+                    {hasReviewPrompt && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3"
+                      >
+                        <div className="flex items-center gap-2 text-sm font-black text-yellow-800">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-500" />
+                          {reviewItems.length} review{reviewItems.length === 1 ? '' : 's'} waiting
+                        </div>
+                        <Link href={`/3d-shop/order/${order.id}?reviews=1`} className="inline-flex items-center gap-2 text-sm font-black text-[var(--brand-primary)]">
+                          Write Review
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </motion.div>
+                    )}
+                  </motion.article>
+                )
+              })}
+            </AnimatePresence>
+          </motion.div>
         )}
       </div>
     </main>

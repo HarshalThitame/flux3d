@@ -40,9 +40,9 @@ type MaterialCardsProps = {
 
 function getDifficultyClass(value?: string) {
   const normalized = value?.toLowerCase() ?? ''
-  if (normalized.includes('easy')) return 'bg-emerald-50 text-emerald-700'
-  if (normalized.includes('medium')) return 'bg-amber-50 text-amber-700'
-  return 'bg-rose-50 text-rose-700'
+  if (normalized.includes('easy')) return 'border border-emerald-300/25 bg-emerald-400/10 text-emerald-200'
+  if (normalized.includes('medium')) return 'border border-amber-300/25 bg-amber-400/10 text-amber-200'
+  return 'border border-cyan-300/20 bg-cyan-400/10 text-cyan-100'
 }
 
 function getMaterialInitials(name: string) {
@@ -56,7 +56,7 @@ function getMaterialInitials(name: string) {
 
 function SpecTile({ label, value, icon: Icon }: { label: string; value: string; icon: ComponentType<{ className?: string }> }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-gray-100 bg-[#FAFBFD] px-3 py-3">
+    <div className="materials-spec-tile min-w-0 rounded-lg border border-gray-100 bg-[#FAFBFD] px-3 py-3">
       <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase text-[#6F7192]">
         <Icon className="h-3.5 w-3.5 text-[#6d28d9]" />
         {label}
@@ -78,7 +78,7 @@ function MaterialCard({ data, index }: { data: MaterialCardData; index: number }
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.6, delay: index * 0.1 }}
       id={`material-${data.name.toLowerCase().replace(/\s+/g, '-')}`}
-      className={`overflow-hidden rounded-[1.75rem] border bg-white shadow-[0_16px_50px_rgba(17,24,39,0.07)] transition-all duration-300 ${expanded ? 'border-[#6d28d9]/30' : 'border-gray-200 hover:-translate-y-1 hover:border-[#6d28d9]/25 hover:shadow-[0_24px_70px_rgba(17,24,39,0.12)]'}`}
+      className={`materials-card-premium overflow-hidden rounded-lg border bg-white shadow-[0_16px_50px_rgba(17,24,39,0.07)] transition-all duration-300 ${expanded ? 'border-[#6d28d9]/30' : 'border-gray-200 hover:-translate-y-1 hover:border-[#6d28d9]/25 hover:shadow-[0_24px_70px_rgba(17,24,39,0.12)]'}`}
     >
       <div className="p-5 md:p-6">
         <div className="mb-5 flex items-start justify-between gap-4">
@@ -235,8 +235,9 @@ function MaterialCard({ data, index }: { data: MaterialCardData; index: number }
 export default function MaterialCards({ materials }: MaterialCardsProps) {
   if (!materials || materials.length === 0) {
     return (
-      <section className="px-4 py-12 md:px-8 lg:px-16">
-        <div className="mx-auto max-w-[1200px] rounded-3xl border border-gray-200 bg-white py-12 text-center shadow-sm">
+      <section className="materials-premium-section relative overflow-hidden px-4 py-12 md:px-8 lg:px-16">
+        <div className="materials-section-grid" aria-hidden="true" />
+        <div className="materials-panel-premium relative z-10 mx-auto max-w-[1200px] rounded-lg border border-gray-200 bg-white py-12 text-center shadow-sm">
           <p className="text-[#6F7192]">No materials available. Add materials in the admin panel.</p>
         </div>
       </section>
@@ -244,8 +245,9 @@ export default function MaterialCards({ materials }: MaterialCardsProps) {
   }
 
   return (
-    <section className="px-4 py-14 md:px-8 lg:px-16">
-      <div className="mx-auto max-w-[1200px]">
+    <section className="materials-premium-section materials-cards-section relative overflow-hidden px-4 py-20 md:px-8 lg:px-16">
+      <div className="materials-section-grid" aria-hidden="true" />
+      <div className="relative z-10 mx-auto max-w-[1200px]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
