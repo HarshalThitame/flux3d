@@ -1,4 +1,3 @@
-import { cache } from 'react'
 import 'server-only'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import type { BusinessSettings, BusinessSettingsRow } from '@/lib/admin/business-settings'
@@ -178,46 +177,32 @@ function mapRow(row: BusinessSettingsRow): BusinessSettings {
   }
 }
 
-let cachedSettings: BusinessSettings | null | undefined = undefined
-let cachePromise: Promise<BusinessSettings | null> | null = null
+export async function getCachedBusinessSettings(): Promise<BusinessSettings | null> {
+  try {
+    const supabase = createAdminSupabaseClient()
+    const { data, error } = await supabase
+      .from('business_settings')
+      .select('*')
+      .is('deleted_at', null)
+      .limit(1)
+      .maybeSingle()
 
-export const getCachedBusinessSettings = cache(async (): Promise<BusinessSettings | null> => {
-  if (cachedSettings !== undefined) return cachedSettings
-  if (cachePromise) return cachePromise
-
-  cachePromise = (async () => {
-    try {
-      const supabase = createAdminSupabaseClient()
-      const { data, error } = await supabase
-        .from('business_settings')
-        .select('*')
-        .is('deleted_at', null)
-        .limit(1)
-        .maybeSingle()
-
-      if (error) {
-        if (error.code === '42P01') {
-          cachedSettings = null
-          return null
-        }
-        throw new Error(error.message)
-      }
-
-      if (!data) {
-        cachedSettings = null
+    if (error) {
+      if (error.code === '42P01') {
         return null
       }
+      throw new Error(error.message)
+    }
 
-      cachedSettings = mapRow(data as BusinessSettingsRow)
-      return cachedSettings
-    } catch {
-      cachedSettings = null
+    if (!data) {
       return null
     }
-  })()
 
-  return cachePromise
-})
+    return mapRow(data as BusinessSettingsRow)
+  } catch {
+    return null
+  }
+}
 
 export async function getSettings(): Promise<BusinessSettings> {
   const settings = await getCachedBusinessSettings()
@@ -246,9 +231,4 @@ export async function getPublicSettings(): Promise<PublicBusinessSettings> {
   delete (publicSettings as Record<string, unknown>).upiId
   delete (publicSettings as Record<string, unknown>).upiQrCodeUrl
   return publicSettings as PublicBusinessSettings
-}
-
-export function invalidateSettingsCache() {
-  cachedSettings = undefined
-  cachePromise = null
 }

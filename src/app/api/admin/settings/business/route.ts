@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminRequest } from '@/lib/admin/request'
 import { getBusinessSettings, upsertBusinessSettings, type BusinessSettings } from '@/lib/admin/business-settings'
-import { invalidateSettingsCache } from '@/lib/settings'
 import { logAdminAction } from '@/lib/admin/auditLog'
 
 export const dynamic = 'force-dynamic'
@@ -28,7 +27,6 @@ export async function PUT(request: Request) {
     const body = (await request.json()) as Partial<BusinessSettings>
     const oldSettings = await getBusinessSettings()
     const settings = await upsertBusinessSettings(body)
-    invalidateSettingsCache()
     await logAdminAction({
       admin_id: auth.user.id,
       action: 'update_business_settings',

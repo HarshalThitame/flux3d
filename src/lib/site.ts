@@ -31,17 +31,18 @@ function normalizeSiteUrl(value?: string) {
 export const siteUrl = normalizeSiteUrl(getConfiguredSiteUrl())
 
 export function makeSiteConfig(settings: BusinessSettings) {
+  const publicUrl = settings.websiteUrl || siteUrl
   return {
     name: settings.businessName || 'Flux3D',
     shortName: settings.brandName || 'Flux3D',
     title: settings.metaTitle || `${settings.businessName} | Premium 3D Printing Services`,
     description: settings.businessDescription || fallback.businessDescription,
-    url: siteUrl,
+    url: publicUrl,
     ogImage: settings.ogImageUrl || '/opengraph-image.png',
     keywords: settings.metaKeywords ? settings.metaKeywords.split(',').map(k => k.trim()) : fallback.metaKeywords.split(',').map(k => k.trim()),
     company: {
       name: settings.legalBusinessName || settings.businessName || fallback.businessName,
-      slogan: settings.tagline || fallback.tagline,
+      slogan: settings.businessDescription || fallback.businessDescription,
       email: settings.primaryEmail || fallback.primaryEmail,
       areaServed: settings.country || 'India',
       telephone: settings.primaryPhone || fallback.primaryPhone,
