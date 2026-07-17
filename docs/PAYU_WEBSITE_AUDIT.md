@@ -4,49 +4,49 @@ Date: 2026-07-17
 
 ## Scope
 
-Audit of the public Flux 3D website and legal/business pages, based on the repository plus live production checks already performed against `https://flux3d.in`.
+Audit of the public Flux 3D website, with the implementation focused on a real 3D printing and custom manufacturing business.
 
 ## Executive Finding
 
-The repository and live site are for a 3D printing and custom manufacturing business. They are not a gym management SaaS product. The site can be made PayU-review-friendly for Flux 3D only if the public business identity, address, registrations, and payment flow match the actual company.
+The repository now reflects Flux3D as a custom 3D printing and manufacturing business. The local implementation is complete for the public website, legal pages, footer, sitemap, and payment readiness plumbing. Production still needs a redeploy from the current workspace, so the live domain must be re-verified after deployment.
 
 ## Route Audit
 
 | Route | Exists locally | Public access | Auth required | Local status | Production status | Canonical | Files controlling route | Issues found | Remediation |
 |---|---|---|---|---|---|---|---|---|---|
-| `/` | Yes | Yes | No | 200 | 200 | `https://flux3d.in/` | `src/app/page.tsx`, `src/app/landing/HeroSection.tsx` | Product is 3D printing, not SaaS. | Keep as 3D printing homepage and add clearer business disclosure. |
-| `/about` | Yes | Yes | No | 200 | 200 | `/about` | `src/app/about/page.tsx`, `src/app/about/AboutContent.tsx` | Needed stronger business identity disclosure. | Metadata now uses public-business helper. |
-| `/contact` | Yes | Yes | No | 200 | 200 | `/contact` | `src/app/contact/page.tsx`, `src/app/contact/ContactContent.tsx` | No live contact form backend; only email/WhatsApp/contact cards. | Keep honest contact options; do not fake submission success. |
-| `/services` | Yes | Yes | No | 200 | 200 | `/services` | `src/app/services/page.tsx`, `src/app/services/*` | Good 3D printing service description, but route name is services not features. | Add `/features` alias for review friendliness. |
-| `/features` | Yes, added locally | Yes | No | 200 locally | 404 live at last check | `/features` | `src/app/features/page.tsx` | Missing in production before redeploy. | Deploy local route. |
-| `/pricing` | Yes | Yes | No | 200 | 200 | `/pricing` | `src/app/pricing/page.tsx`, `src/app/pricing/PricingClient.tsx` | Pricing is quote-based, not SaaS subscription pricing. | Keep transparent quote-based pricing. |
-| `/privacy-policy` | Yes | Yes | No | 200 | 200 | `/privacy-policy` | `src/app/privacy-policy/page.tsx`, `src/app/privacy-policy/PrivacyPolicyClient.tsx` | Policy still contains some app-style wording. | Keep privacy policy but align wording to current 3D printing business. |
-| `/refund-policy` | Yes | Yes | No | 200 | 200 | `/refund-policy` | `src/app/refund-policy/page.tsx`, `src/app/refund-policy/RefundPolicyClient.tsx` | Old version had subscription language and an unjustified 14-day guarantee. | Rewrote to custom-order cancellation/refund language. |
-| `/cancellation-policy` | Yes, added locally | Yes | No | 200 locally via redirect | 404 live at last check | Redirect to `/refund-policy` | `src/app/cancellation-policy/page.tsx` | Missing in production before redeploy. | Deploy local redirect. |
-| `/terms-of-service` | Yes | Yes | No | 308 redirect locally to `/terms-and-conditions` | 200 live at last check | `/terms-and-conditions` | `src/app/terms-of-service/page.tsx`, `src/app/terms-of-service/TermsOfServiceClient.tsx` | Production still served old content before redeploy. | Redirect to canonical terms page and deploy. |
-| `/terms-and-conditions` | Yes | Yes | No | 200 locally | 404 live at last check | `/terms-and-conditions` | `src/app/terms-and-conditions/page.tsx`, `src/app/terms-of-service/TermsOfServiceClient.tsx` | Missing in production before redeploy. | Deploy local route. |
-| `/service-delivery-policy` | Yes, added locally | Yes | No | 200 locally | 404 live at last check | `/service-delivery-policy` | `src/app/service-delivery-policy/page.tsx`, `src/app/shipping-policy/ShippingPolicyClient.tsx` | Missing in production before redeploy. | Deploy local route. |
-| `/shipping-policy` | Yes | Yes | No | 308 redirect locally to `/service-delivery-policy` | 200 live at last check | `/service-delivery-policy` | `src/app/shipping-policy/page.tsx`, `src/app/shipping-policy/ShippingPolicyClient.tsx` | Legacy route name no longer preferred. | Keep as redirect for backward compatibility. |
-| `/security` | No | No | N/A | Not implemented | 404 | N/A | N/A | No public security page. | Optional only; add if verified controls exist. |
-| `/sitemap.xml` | Yes | Yes | No | 200 | 200 | `https://flux3d.in/sitemap.xml` | `src/app/sitemap.ts` | Did not include all canonical public pages before patch. | Updated locally to include features and service delivery policy. |
-| `/robots.txt` | Yes | Yes | No | 200 | 200 | `https://flux3d.in/robots.txt` | `src/app/robots.ts`, `src/app/robots.txt` | Fine. | Keep disallowing auth/admin/api paths. |
+| `/` | Yes | Yes | No | 200 | 200 at last live check | `https://flux3d.in/` | `src/app/page.tsx`, `src/app/landing/*` | Now clearly presents Flux3D as custom 3D printing and manufacturing. | Keep in sync with verified public business data. |
+| `/about` | Yes | Yes | No | 200 | 200 at last live check | `https://flux3d.in/about` | `src/app/about/page.tsx`, `src/app/about/AboutContent.tsx` | Updated to show business identity, address, and service category. | Deploy current build so production matches local content. |
+| `/contact` | Yes | Yes | No | 200 | 200 at last live check | `https://flux3d.in/contact` | `src/app/contact/page.tsx`, `src/app/contact/ContactContent.tsx`, `src/app/contact/ContactForm.tsx`, `src/app/api/contact/route.ts` | Form now validates server-side and uses the verified support details. | Verify the live form after redeploy. |
+| `/services` | Yes | Yes | No | 200 | 200 at last live check | `https://flux3d.in/services` | `src/app/services/page.tsx`, `src/app/services/*` | Public service page exists and describes 3D printing work. | Keep links aligned with the new `/features` route. |
+| `/features` | Yes, added locally | Yes | No | 200 | 404 before redeploy | `https://flux3d.in/features` | `src/app/features/page.tsx` | New public services page for review friendliness. | Redeploy so the live site returns 200. |
+| `/pricing` | Yes | Yes | No | 200 | 200 at last live check | `https://flux3d.in/pricing` | `src/app/pricing/page.tsx`, `src/app/pricing/PricingClient.tsx` | Quote-based pricing is shown honestly; no fake SaaS plan pricing. | Keep quote-based disclosure and server-side calculation. |
+| `/privacy-policy` | Yes | Yes | No | 200 | 200 at last live check | `https://flux3d.in/privacy-policy` | `src/app/privacy-policy/page.tsx`, `src/app/privacy-policy/PrivacyPolicyClient.tsx` | Rewritten for the actual custom manufacturing data flow. | Keep in sync with forms, orders, and payment handling. |
+| `/refund-policy` | Yes | Yes | No | 200 | 200 at last live check | `https://flux3d.in/refund-policy` | `src/app/refund-policy/page.tsx`, `src/app/refund-policy/RefundPolicyClient.tsx` | Rewritten to reflect owner-approved cancellation and refund rules. | Keep policy wording aligned with order type and production stage. |
+| `/terms-and-conditions` | Yes, added locally | Yes | No | 200 | 404 before redeploy | `https://flux3d.in/terms-and-conditions` | `src/app/terms-and-conditions/page.tsx`, `src/app/terms-of-service/page.tsx`, `src/app/terms-and-conditions/TermsAndConditionsClient.tsx` | Canonical terms route exists locally. | Redeploy so the live site serves it. |
+| `/terms-of-service` | Yes | Yes | No | 308 redirect locally to `/terms-and-conditions` | 200 old content at last live check | `https://flux3d.in/terms-and-conditions` | `src/app/terms-of-service/page.tsx` | Legacy route still served old live content before redeploy. | Keep the redirect in production. |
+| `/cancellation-policy` | Yes, added locally | Yes | No | 308 redirect locally to `/refund-policy` | 404 before redeploy | `https://flux3d.in/refund-policy` | `src/app/cancellation-policy/page.tsx` | Legacy alias only. | Redeploy redirect. |
+| `/service-delivery-policy` | Yes, added locally | Yes | No | 200 | 404 before redeploy | `https://flux3d.in/service-delivery-policy` | `src/app/service-delivery-policy/page.tsx`, `src/app/shipping-policy/ShippingPolicyClient.tsx` | New delivery policy page exists locally. | Redeploy so production serves it. |
+| `/shipping-policy` | Yes | Yes | No | 308 redirect locally to `/service-delivery-policy` | 200 at last live check | `https://flux3d.in/service-delivery-policy` | `src/app/shipping-policy/page.tsx`, `src/app/shipping-policy/ShippingPolicyClient.tsx` | Legacy route retained for backward compatibility. | Keep as permanent redirect. |
+| `/security` | No | No | N/A | Not implemented | 404 | N/A | N/A | Optional page not added because no verified public security controls were supplied. | Add only if controls can be verified. |
+| `/sitemap.xml` | Yes | Yes | No | 200 | 200 at last live check | `https://flux3d.in/sitemap.xml` | `src/app/sitemap.ts` | Updated locally to include canonical public pages. | Redeploy to publish the updated sitemap. |
+| `/robots.txt` | Yes | Yes | No | 200 | 200 at last live check | `https://flux3d.in/robots.txt` | `src/app/robots.ts`, `src/app/robots.txt` | Fine. | Keep disallow rules for admin/internal routes. |
 
 ## Current Content Quality Notes
 
-- Homepage already communicates 3D printing and custom manufacturing.
-- About and Contact pages are usable but should be deployed with the updated metadata and public-business helper.
-- The old terms page content was mismatched to a SaaS/app product and has been replaced locally with 3D printing terms language.
-- Refund and shipping policy pages were also updated locally to use custom-order language.
+- Homepage, About, Contact, Pricing, Terms, Refund, Privacy, and Delivery policy content now matches a 3D printing and custom manufacturing business.
+- The site no longer presents itself as a gym SaaS product.
+- Public business settings now resolve to the verified Flux3D contact and address details.
+- The public settings API was made dynamic so it no longer serves a stale cached snapshot.
 
 ## Remaining Remediation
 
-- Deploy the local route changes so production returns 200 for `/terms-and-conditions`, `/features`, and `/service-delivery-policy`.
-- Ensure `/terms-of-service` redirects in production after deployment.
-- Verify the public business details in the current production settings remain accurate.
-- Confirm whether a public security page is needed; do not add one unless the controls are verified.
+- Redeploy the current build so the live domain reflects `/features`, `/terms-and-conditions`, `/service-delivery-policy`, and the redirect changes.
+- Recheck the live URLs after deployment.
+- Confirm whether GSTIN or a different registered legal entity name needs to be shown publicly.
 
 ## Final Implementation Status
 
-- Local implementation: mostly complete for the public site and legal routes.
-- Production implementation: pending redeploy from the current workspace.
-- PayU review readiness: blocked until production reflects the updated routes and the owner confirms the missing business inputs in `docs/PAYU_REQUIRED_BUSINESS_INPUTS.md`.
+- Local implementation: complete for the public website and legal/business pages.
+- Build status: passing.
+- Production status: pending redeploy from the current workspace.
+- PayU review readiness: conditionally ready, subject to owner confirmation of any missing legal inputs and live deployment verification.

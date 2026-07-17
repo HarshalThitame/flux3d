@@ -5,25 +5,26 @@ import { FALLBACK_SETTINGS } from '@/lib/settings-fallback'
 const fallback = FALLBACK_SETTINGS
 
 export function makeOrganizationJsonLd(settings: BusinessSettings) {
+  const publicUrl = settings.websiteUrl || siteUrl
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: settings.legalBusinessName || settings.businessName || fallback.businessName,
-    url: siteUrl,
+    url: publicUrl,
     logo: settings.logoUrl ? absoluteUrl(settings.logoUrl) : absoluteUrl('/logo.webp'),
     email: settings.primaryEmail || fallback.primaryEmail,
-    slogan: settings.tagline || fallback.tagline,
     areaServed: settings.country || 'India',
     telephone: settings.primaryPhone || fallback.primaryPhone,
   }
 }
 
 export function makeWebsiteJsonLd(settings: BusinessSettings) {
+  const publicUrl = settings.websiteUrl || siteUrl
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: settings.businessName || fallback.businessName,
-    url: siteUrl,
+    url: publicUrl,
     description: settings.businessDescription || fallback.businessDescription,
     publisher: {
       '@type': 'Organization',

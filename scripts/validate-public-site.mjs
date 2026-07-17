@@ -27,8 +27,8 @@ const placeholderPatterns = [
 ]
 
 const requiredSnippets = [
-  ['src/app/terms-of-service/page.tsx', "redirect('/terms-and-conditions')"],
-  ['src/app/shipping-policy/page.tsx', "redirect('/service-delivery-policy')"],
+  ['src/app/terms-of-service/page.tsx', "permanentRedirect('/terms-and-conditions')"],
+  ['src/app/shipping-policy/page.tsx', "permanentRedirect('/service-delivery-policy')"],
   ['src/app/landing/FooterSection.tsx', '/features'],
   ['src/app/landing/FooterSection.tsx', '/service-delivery-policy'],
   ['src/app/landing/FooterSection.tsx', '/terms-and-conditions'],

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getPublicSettings } from '@/lib/settings'
 
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 export async function GET() {
