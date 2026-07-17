@@ -34,6 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: 'https://flux3d.in/terms-and-conditions', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.6 },
     { url: 'https://flux3d.in/refund-policy', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.6 },
     { url: 'https://flux3d.in/service-delivery-policy', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.6 },
+    { url: 'https://flux3d.in/security', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.5 },
     { url: 'https://flux3d.in/blog', lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
   ]
 
