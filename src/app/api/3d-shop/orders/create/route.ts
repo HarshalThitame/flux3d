@@ -313,7 +313,11 @@ export async function POST(request: Request) {
         if (orderId) {
           const { error: sourceError } = await supabase
             .from('shelf_orders')
-            .update({ order_source: 'shop' })
+            .update({
+              order_source: 'shop',
+              payment_method: 'payu',
+              payment_status: 'pending',
+            })
             .eq('id', orderId)
 
           if (sourceError) {

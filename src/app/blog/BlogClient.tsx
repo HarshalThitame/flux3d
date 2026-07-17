@@ -24,6 +24,8 @@ import {
   Wand2,
 } from 'lucide-react'
 import type { BlogPost } from '@/lib/blog/types'
+import DeferredHeroVideo from '@/components/DeferredHeroVideo'
+import { createRafThrottledCallback } from '@/lib/raf-throttle'
 
 const FALLBACK_IMAGE = '/pot.webp'
 const ALL_TOPICS = 'All'
@@ -125,13 +127,16 @@ function BlogPremiumFX() {
   const meterRef = useRef<HTMLSpanElement | null>(null)
 
   useEffect(() => {
-    let frame = 0
+    let pointerFrame = 0
+    let pointerX = 0
 
     const updatePointer = (event: PointerEvent) => {
       if (!window.matchMedia('(pointer: fine)').matches) return
-      window.cancelAnimationFrame(frame)
-      frame = window.requestAnimationFrame(() => {
-        document.documentElement.style.setProperty('--blog-pointer-x', `${event.clientX}px`)
+      pointerX = event.clientX
+      if (pointerFrame) return
+      pointerFrame = window.requestAnimationFrame(() => {
+        pointerFrame = 0
+        document.documentElement.style.setProperty('--blog-pointer-x', `${pointerX}px`)
       })
     }
 
@@ -143,17 +148,19 @@ function BlogPremiumFX() {
         meterRef.current.style.transform = `scaleX(${progress})`
       }
     }
+    const scheduleProgress = createRafThrottledCallback(updateProgress)
 
     updateProgress()
     window.addEventListener('pointermove', updatePointer, { passive: true })
-    window.addEventListener('scroll', updateProgress, { passive: true })
-    window.addEventListener('resize', updateProgress)
+    window.addEventListener('scroll', scheduleProgress, { passive: true })
+    window.addEventListener('resize', scheduleProgress)
 
     return () => {
-      window.cancelAnimationFrame(frame)
+      if (pointerFrame) window.cancelAnimationFrame(pointerFrame)
+      scheduleProgress.cancel()
       window.removeEventListener('pointermove', updatePointer)
-      window.removeEventListener('scroll', updateProgress)
-      window.removeEventListener('resize', updateProgress)
+      window.removeEventListener('scroll', scheduleProgress)
+      window.removeEventListener('resize', scheduleProgress)
     }
   }, [])
 
@@ -250,14 +257,17 @@ export default function BlogClient({
       <BlogPremiumFX />
 
       <section className="blog-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-white sm:px-6 md:px-10 lg:px-12">
-        <video
+        <Image
+          src="/printer2-poster.webp"
+          alt=""
+          fill
+          preload
+          sizes="100vw"
           className="blog-hero-video absolute inset-0 h-full w-full object-cover"
-          src="/printer2.mp4"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
+        />
+        <DeferredHeroVideo
+          src="/printer2-optimized.mp4"
+          className="blog-hero-video absolute inset-0 h-full w-full object-cover"
         />
         <div className="blog-hero-depth" aria-hidden="true" />
         <div className="blog-hero-grid" aria-hidden="true" />

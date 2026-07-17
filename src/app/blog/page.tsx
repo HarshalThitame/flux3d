@@ -6,7 +6,7 @@ export const revalidate = 3600
 import { absoluteUrl, siteConfig } from '@/lib/site'
 import Navbar from '@/components/Navbar'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import BlogClient from './BlogClient'
+import BlogClientBoundary from './BlogClientBoundary'
 import type { BlogPost } from '@/lib/blog/types'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     keywords: [
       '3D printing blog India',
-      '3D printing Pune',
+      'custom 3D printing India',
       'rapid prototyping tips',
       '3D printing tutorials',
       'Flux3D blog',
@@ -83,7 +83,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   return (
     <div className="blog-premium-shell min-h-screen overflow-hidden bg-[#05060a] text-white">
       <Navbar transparent />
-      <BlogClient posts={posts} page={page} totalPages={Math.max(1, Math.ceil(total / limit))} />
+      <BlogClientBoundary posts={posts} page={page} totalPages={Math.max(1, Math.ceil(total / limit))} />
     </div>
   )
 }

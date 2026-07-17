@@ -2,14 +2,30 @@ import type { Metadata } from 'next'
 import { getSettings } from '@/lib/settings'
 import ContactContent from './ContactContent'
 import FooterSection from '@/app/landing/FooterSection'
+import { buildPublicBusinessProfile, validatePublicBusinessProfile } from '@/lib/public-business'
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings()
+  const profile = buildPublicBusinessProfile(settings)
+  const missing = validatePublicBusinessProfile(profile)
+  if (missing.length > 0) {
+    throw new Error(`Missing required public business fields: ${missing.join(', ')}`)
+  }
   return {
-    title: `${settings.businessName} — Get in Touch`,
-    description: settings.businessDescription || 'Contact Flux 3D for 3D printing inquiries, custom orders, and support. Based in Pune, serving all of India.',
-    keywords: ['contact Flux 3D', '3D printing Pune contact', 'Flux 3D email', '3D printing support India'],
+    title: 'Contact Us',
+    description: `Contact ${profile.brandName} for custom 3D printing quotes, production support, and delivery questions. Based in ${profile.jurisdictionCity}, ${profile.jurisdictionState}.`,
+    keywords: ['contact Flux3D', '3D printing contact India', 'Flux3D support email', 'custom manufacturing support'],
     alternates: { canonical: '/contact' },
+    openGraph: {
+      title: 'Contact Us',
+      description: `Contact ${profile.brandName} for custom 3D printing quotes, production support, and delivery questions. Based in ${profile.jurisdictionCity}, ${profile.jurisdictionState}.`,
+      url: 'https://flux3d.in/contact',
+      type: 'website',
+    },
+    twitter: {
+      title: 'Contact Us',
+      description: `Contact ${profile.brandName} for custom 3D printing quotes, production support, and delivery questions. Based in ${profile.jurisdictionCity}, ${profile.jurisdictionState}.`,
+    },
   }
 }
 

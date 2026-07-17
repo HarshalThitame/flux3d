@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { getSettings } from '@/lib/settings'
 import { redirect } from 'next/navigation'
-import Navbar from '@/components/Navbar'
+import HomeNavbar from '@/app/landing/HomeNavbar'
 import AuthShell from '@/components/auth/AuthShell'
-import LoginForm from '@/components/auth/LoginForm'
+import LoginFormBoundary from '@/components/auth/LoginFormBoundary'
 import { getCurrentUserProfile } from '@/lib/auth/server'
 import { normalizeNextPath } from '@/lib/auth/redirect'
 
@@ -39,15 +39,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         : undefined
 
   return (
-    <>
-      <Navbar />
+    <div className="auth-page-with-navbar">
+      <HomeNavbar />
       <AuthShell
         eyebrow="Secure Login"
-        title="Open your 3D printing workspace."
-        description="Use email or Google to get back to saved quotes, uploads, and account settings."
+        title="Welcome back to your Flux3D workspace."
+        description="Sign in to manage saved quotes, private uploads, checkout details, order tracking, and repeat builds from one production account."
       >
-        <LoginForm nextPath={nextPath} errorMessage={errorMessage} />
+        <LoginFormBoundary nextPath={nextPath} errorMessage={errorMessage} />
       </AuthShell>
-    </>
+    </div>
   )
 }

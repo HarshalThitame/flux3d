@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 
+const PUBLIC_OFFER_CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+}
+
 export async function GET() {
   try {
     const supabase = createAdminSupabaseClient()
@@ -24,11 +28,11 @@ export async function GET() {
     const offer = offers?.[0] ?? null
 
     if (!offer) {
-      return NextResponse.json({ valid: false, offer: null })
+      return NextResponse.json({ valid: false, offer: null }, { headers: PUBLIC_OFFER_CACHE_HEADERS })
     }
 
     if (offer.usage_limit != null && (offer.used_count ?? 0) >= offer.usage_limit) {
-      return NextResponse.json({ valid: false, offer: null })
+      return NextResponse.json({ valid: false, offer: null }, { headers: PUBLIC_OFFER_CACHE_HEADERS })
     }
 
     return NextResponse.json({
@@ -49,7 +53,7 @@ export async function GET() {
         applicable_products: offer.applicable_products ?? null,
         free_shipping: offer.offer_type === 'free_shipping',
       },
-    })
+    }, { headers: PUBLIC_OFFER_CACHE_HEADERS })
   } catch (error) {
     console.error(
       '[offers/auto-apply] Unexpected failure:',

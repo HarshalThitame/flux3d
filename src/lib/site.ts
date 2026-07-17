@@ -47,9 +47,9 @@ export function makeSiteConfig(settings: BusinessSettings) {
       telephone: settings.primaryPhone || fallback.primaryPhone,
       address: {
         streetAddress: `${settings.addressLine1}${settings.addressLine2 ? ', ' + settings.addressLine2 : ''}`,
-        addressLocality: settings.city || 'Mumbai',
-        addressRegion: settings.state || 'Maharashtra',
-        postalCode: settings.postalCode || '400053',
+        addressLocality: settings.city || fallback.city,
+        addressRegion: settings.state || fallback.state,
+        postalCode: settings.postalCode || fallback.postalCode,
         addressCountry: 'IN',
       },
     },

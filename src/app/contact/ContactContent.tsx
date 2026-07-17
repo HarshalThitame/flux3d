@@ -1,243 +1,128 @@
 'use client'
 
+import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 import NavbarClient from '@/components/NavbarClient'
-import { Mail, Phone, MapPin, Send, ArrowRight } from 'lucide-react'
+import { Mail, Phone, MapPin, Clock3, MessageSquareText } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
+import ContactForm from './ContactForm'
 
 export default function ContactContent() {
   const { settings } = useBusinessSettings()
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true })
 
-  const contactMethods = [
-    {
-      icon: Mail,
-      title: 'Email Us',
-      description: 'For quotes, support, and general inquiries',
-      value: settings.primaryEmail || 'hello@flux3d.in',
-      href: `mailto:${settings.primaryEmail || 'hello@flux3d.in'}`,
-      color: 'from-[#6d28d9] to-[#a855f7]',
-    },
-    {
-      icon: Phone,
-      title: 'Call / WhatsApp',
-      description: settings.businessHours || 'Mon-Sat, 9 AM – 8 PM IST',
-      value: settings.primaryPhone || '+91 96230 23480',
-      href: `tel:${(settings.primaryPhone || '+919623023480').replace(/[^0-9]/g, '')}`,
-      color: 'from-[#a855f7] to-[#a855f7]',
-    },
-    {
-      icon: MapPin,
-      title: 'Visit / Ship To',
-      description: 'Our studio location',
-      value: [settings.city, settings.state, settings.country].filter(Boolean).join(', ') || 'Pune, Maharashtra, India',
-      href: '#',
-      color: 'from-[#6d28d9] to-[#6d28d9]',
-    },
-  ]
-
-  const heroRef = useRef(null)
-  const cardsRef = useRef(null)
-  const careersRef = useRef(null)
-  const ctaRef = useRef(null)
-
-  const heroInView = useInView(heroRef, { once: true })
-  const cardsInView = useInView(cardsRef, { once: true })
-  const careersInView = useInView(careersRef, { once: true })
-  const ctaInView = useInView(ctaRef, { once: true })
+  const brandName = settings.brandName || settings.businessName || 'Flux3D'
+  const supportEmail = settings.supportEmail || settings.primaryEmail || 'flux3d.in@gmail.com'
+  const supportPhone = settings.primaryPhone || '+919623023480'
+  const address = [
+    settings.addressLine1,
+    settings.addressLine2,
+    settings.city,
+    settings.state,
+    settings.postalCode,
+    settings.country,
+  ].filter(Boolean).join(', ')
 
   return (
     <>
       <NavbarClient user={null} />
-      
-      <main>
-        {/* Hero Section */}
-        <motion.section
-          ref={heroRef}
-          initial={{ opacity: 0, y: 30 }}
-          animate={heroInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="relative pt-10 pb-16 px-6 text-center"
-        >
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_30%,rgba(109, 40, 217,0.08)_0%,transparent_70%)] pointer-events-none" />
-          
-          <div className="max-w-4xl mx-auto relative z-10">
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={heroInView ? { opacity: 1 } : {}}
-              transition={{ delay: 0.2 }}
-              className="text-[#6d28d9] text-sm font-semibold tracking-[3px] uppercase mb-6"
-            >
-              Get in Touch
-            </motion.p>
-            
-            <h1 className="font-[var(--font-syne)] text-[clamp(2rem,6vw,4rem)] font-extrabold text-[#0F1B3D] mb-6 leading-[1.1]">
-              Let&apos;s Build{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#a855f7]">
-                Something
-              </span>
-              <br />
-              <span className="text-[#6F7192] font-normal text-[clamp(1.2rem,3vw,2rem)]">
-                Amazing Together.
-              </span>
-            </h1>
-            
-            <p className="text-lg text-[#6F7192] max-w-2xl mx-auto leading-[1.7]">
-              Have a question, custom request, or ready to start your next project? 
-              Reach out — we&apos;re here to help bring your ideas to life.
-            </p>
-          </div>
-        </motion.section>
 
-        {/* Contact Cards */}
-        <motion.section
-          ref={cardsRef}
-          initial={{ opacity: 0 }}
-          animate={cardsInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.5 }}
-          className="relative py-20 px-6"
-        >
-          <div className="max-w-5xl mx-auto">
-            <div className="grid md:grid-cols-3 gap-6">
-              {contactMethods.map((method, i) => (
-                <motion.div
-                  key={method.title}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={cardsInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: i * 0.15 }}
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                  className="group relative bg-[#FFFFFF] border border-white/[0.07] rounded-2xl p-8 hover:border-[rgba(109, 40, 217,0.3)] transition-all duration-300"
-                >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${method.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-2xl`} />
-                  
-                  <div className={`relative z-10 w-14 h-14 rounded-xl bg-gradient-to-br ${method.color} p-0.5 mb-6 mx-auto md:mx-0`}>
-                    <div className="w-full h-full rounded-xl bg-[#FFFFFF] flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <method.icon className="w-7 h-7 text-[#0F1B3D]" />
+      <main ref={ref} className="px-6 py-10">
+        <div className="mx-auto max-w-6xl">
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            className="mx-auto max-w-4xl text-center"
+          >
+            <p className="mb-5 text-sm font-semibold uppercase tracking-[3px] text-[#6d28d9]">Contact Us</p>
+            <h1 className="font-[var(--font-syne)] text-[clamp(2rem,6vw,4rem)] font-extrabold leading-[1.1] text-[#0F1B3D]">
+              Speak to {brandName} about a custom print, quote, or delivery question.
+            </h1>
+            <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-[#6F7192]">
+              Use the contact form below to request a quotation or ask about an existing order. We review messages using the public support workflow and respond through the details you provide.
+            </p>
+          </motion.section>
+
+          <section className="mt-12 grid gap-8 lg:grid-cols-[0.92fr_1.08fr]">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: 0.1 }}
+              className="space-y-4"
+            >
+              <div className="rounded-3xl border border-[#6d28d9]/10 bg-white p-6 shadow-sm">
+                <div className="inline-flex items-center gap-2 rounded-full bg-[#6d28d9]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#6d28d9]">
+                  <MessageSquareText className="h-3.5 w-3.5" />
+                  Support Details
+                </div>
+
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Mail className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
+                    <div>
+                      <p className="text-sm font-semibold text-[#0F1B3D]">Email</p>
+                      <a href={`mailto:${supportEmail}`} className="text-sm text-[#6F7192] hover:text-[#6d28d9]">
+                        {supportEmail}
+                      </a>
                     </div>
                   </div>
-                  
-                  <h3 className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D] mb-2 text-center md:text-left group-hover:text-[#6d28d9] transition-colors">
-                    {method.title}
-                  </h3>
-                  
-                  <p className="text-sm text-[#6F7192] mb-4 text-center md:text-left">
-                    {method.description}
-                  </p>
-                  
-                  {method.href !== '#' ? (
-                    <a
-                      href={method.href}
-                      className="inline-flex items-center gap-2 text-[#6d28d9] font-medium text-sm hover:gap-3 transition-all group/link"
-                    >
-                      {method.value}
-                      <ArrowRight className="w-4 h-4 transition-transform group-hover/link:translate-x-1" />
-                    </a>
-                  ) : (
-                    <p className="text-[#0F1B3D] font-medium text-sm">
-                      {method.value}
-                    </p>
-                  )}
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </motion.section>
 
-        {/* Careers Section */}
-        <motion.section
-          ref={careersRef}
-          initial={{ opacity: 0, y: 30 }}
-          animate={careersInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="relative py-20 px-6 bg-[var(--bg-soft)]"
-        >
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-[#FFFFFF] border border-white/[0.07] rounded-3xl p-8 md:p-12 relative overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_80%_20%,rgba(109, 40, 217,0.05)_0%,transparent_70%)] pointer-events-none" />
-              
-              <div className="relative z-10">
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={careersInView ? { opacity: 1, x: 0 } : {}}
-                  transition={{ delay: 0.2 }}
-                >
-                  <span className="text-[#6d28d9] text-sm font-semibold tracking-[3px] uppercase">Join Our Team</span>
-                  <h2 className="font-[var(--font-syne)] text-[clamp(1.5rem,3vw,2.5rem)] font-extrabold text-[#0F1B3D] mt-4 mb-6 leading-[1.2]">
-                    Careers at{' '}
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#a855f7]">
-                      {settings.businessName || 'Flux 3D'}
-                    </span>
-                  </h2>
-                </motion.div>
-                
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={careersInView ? { opacity: 1 } : {}}
-                  transition={{ delay: 0.4 }}
-                  className="text-[#6F7192] leading-[1.8] mb-8 max-w-2xl"
-                >
-                  We&apos;re always looking for talented individuals passionate about additive manufacturing, 
-                  3D printing, and making ideas reality. Whether you&apos;re a 3D printing expert, 
-                  CAD designer, or customer success specialist — we&apos;d love to hear from you.
-                </motion.p>
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={careersInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 0.6 }}
-                  className="flex flex-col sm:flex-row gap-4"
-                >
-                  <a
-                    href={`mailto:${settings.primaryEmail || 'hello@flux3d.in'}?subject=Career%20Inquiry%20-%20${encodeURIComponent(settings.businessName || 'Flux 3D')}`}
-                    className="inline-flex items-center justify-center gap-2 bg-[#6d28d9] text-white px-8 py-4 rounded-xl text-lg font-semibold hover:shadow-[0_0_40px_rgba(109, 40, 217,0.3)] transition-shadow"
-                  >
-                    Send Your Resume
-                    <Send className="w-5 h-5" />
-                  </a>
-                  
-                  <a
-                    href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 bg-[#25D366] text-[#0F1B3D] px-8 py-4 rounded-xl text-lg font-semibold hover:bg-[#25D366]/90 transition-colors"
-                  >
-                    WhatsApp Us
-                    <Send className="w-5 h-5" />
-                  </a>
-                </motion.div>
+                  <div className="flex items-start gap-3">
+                    <Phone className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
+                    <div>
+                      <p className="text-sm font-semibold text-[#0F1B3D]">Phone</p>
+                      <a href={`tel:${supportPhone.replace(/[^0-9+]/g, '')}`} className="text-sm text-[#6F7192] hover:text-[#6d28d9]">
+                        {supportPhone}
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <MapPin className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
+                    <div>
+                      <p className="text-sm font-semibold text-[#0F1B3D]">Address</p>
+                      <p className="text-sm leading-7 text-[#6F7192]">{address || 'Not published'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Clock3 className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
+                    <div>
+                      <p className="text-sm font-semibold text-[#0F1B3D]">Response window</p>
+                      <p className="text-sm leading-7 text-[#6F7192]">We review messages during business hours when available and respond as soon as possible through the contact details you provide.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </motion.section>
 
-        {/* CTA Section */}
-        <motion.section
-          ref={ctaRef}
-          initial={{ opacity: 0 }}
-          animate={ctaInView ? { opacity: 1 } : {}}
-          className="relative py-32 px-6 text-center"
-        >
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(109, 40, 217,0.08)_0%,transparent_70%)] pointer-events-none" />
-          
-          <div className="max-w-3xl mx-auto relative z-10">
-            <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,5vw,3.5rem)] font-extrabold text-[#0F1B3D] mb-6 leading-[1.1]">
-              Ready to Start Your{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#a855f7]">
-                Project?
-              </span>
-            </h2>
-            <p className="text-lg text-[#6F7192] mb-10 leading-[1.7]">
-              Don&apos;t want to wait? Get an instant quote online and see pricing in real-time.
-            </p>
-            <a
-              href="/instant-quote"
-              className="inline-flex items-center justify-center gap-2 bg-[#6d28d9] text-white px-10 py-5 rounded-xl text-lg font-semibold hover:shadow-[0_0_40px_rgba(109, 40, 217,0.3)] transition-shadow"
+              <div className="rounded-3xl border border-[#6d28d9]/10 bg-[#faf9f7] p-6 shadow-sm">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#6d28d9]">For support</p>
+                <p className="mt-3 text-sm leading-7 text-[#6F7192]">
+                  Please include your order number, the product or file name, and any photos that help us understand the issue.
+                  Do not send payment card details, UPI PINs, or passwords.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link href="/privacy-policy" className="rounded-xl border border-[#6d28d9]/20 bg-white px-4 py-3 text-sm font-semibold text-[#0F1B3D]">
+                    Privacy Policy
+                  </Link>
+                  <Link href="/pricing" className="rounded-xl bg-[#6d28d9] px-4 py-3 text-sm font-semibold text-white">
+                    View Pricing
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: 0.2 }}
             >
-              Get Instant Quote
-              <ArrowRight className="w-5 h-5" />
-            </a>
-          </div>
-        </motion.section>
+              <ContactForm />
+            </motion.div>
+          </section>
+        </div>
       </main>
     </>
   )

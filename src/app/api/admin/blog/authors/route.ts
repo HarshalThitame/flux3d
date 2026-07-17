@@ -8,7 +8,7 @@ const fallbackAuthor: BlogAuthor = {
   id: '',
   name: 'Flux3D Team',
   bio: 'Flux3D experts writing about 3D printing, rapid prototyping, materials, and manufacturing workflows.',
-  photo_url: '/logo.png',
+  photo_url: '/logo.webp',
   profile_url: 'https://flux3d.in/about',
 }
 

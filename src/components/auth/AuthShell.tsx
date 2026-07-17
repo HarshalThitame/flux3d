@@ -1,70 +1,150 @@
-import Link from 'next/link'
-import { getSettings } from '@/lib/settings'
+import Image from 'next/image'
+import type { ReactNode } from 'react'
+import { Clock3, Gauge, Layers3, PackageCheck, ShieldCheck } from 'lucide-react'
 
 type AuthShellProps = {
   eyebrow: string
   title: string
   description: string
-  children: React.ReactNode
+  children: ReactNode
 }
 
-export default async function AuthShell({
+const trustItems = [
+  {
+    icon: ShieldCheck,
+    label: 'Private uploads',
+    value: 'Project files stay behind your account',
+  },
+  {
+    icon: PackageCheck,
+    label: 'Quote to order',
+    value: 'Saved estimates, checkout, and tracking',
+  },
+  {
+    icon: Clock3,
+    label: 'Faster repeats',
+    value: 'Reuse profile details on future builds',
+  },
+]
+
+const metrics = [
+  { label: 'Sessions', value: 'Secure' },
+  { label: 'Queue', value: 'Live' },
+  { label: 'Files', value: 'Private' },
+]
+
+export default function AuthShell({
   eyebrow,
   title,
   description,
   children,
 }: AuthShellProps) {
-  const settings = await getSettings()
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#FFFFFF] px-4 py-10 text-[#0F1B3D] md:py-14">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(109, 40, 217,0.22),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(109, 40, 217,0.16),transparent_28%),linear-gradient(180deg,#FFFFFF_0%,#FFFFFF_100%)]" />
-      <div
-        className="absolute inset-0 opacity-25"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(109, 40, 217,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(109, 40, 217,0.25) 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
-          maskImage: 'radial-gradient(circle at center, black 0%, transparent 82%)',
-        }}
-      />
+    <section className="premium-auth-shell relative isolate flex min-h-screen items-center overflow-hidden px-4 py-5 text-white sm:px-6 lg:px-10">
+      <div className="premium-auth-media" aria-hidden="true" style={{ position: 'absolute' }}>
+        <Image
+          src="/bg1.webp"
+          alt=""
+          fill
+          priority
+          quality={75}
+          sizes="100vw"
+          className="premium-auth-poster"
+        />
+      </div>
+      <div className="premium-auth-surface" aria-hidden="true" />
+      <div className="premium-auth-grid" aria-hidden="true" />
+      <div className="premium-auth-lines" aria-hidden="true" />
+      <div className="premium-corner-frame premium-auth-frame" aria-hidden="true" />
 
-      <div className="relative mx-auto grid max-w-6xl gap-12 lg:grid-cols-[minmax(0,1fr)_480px] lg:items-center">
-        <div className="max-w-xl">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-2 text-xs uppercase tracking-[0.24em] text-[#9fa8c6]"
-          >
-            {settings.businessName || 'Flux3D'} Auth Layer
-          </Link>
-          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/20 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#6d28d9]">
-            {eyebrow}
+      <div className="auth-layout-grid relative z-10 mx-auto grid w-full max-w-7xl gap-8 py-2 sm:py-4 md:gap-10 lg:gap-16">
+        <div className="auth-copy-column order-2 mx-auto w-full min-w-0 max-w-2xl text-center md:order-1 md:mx-0 md:text-left">
+          <div className="mb-5 flex flex-col items-center gap-3 md:items-start">
+            <div className="premium-hero-badge">
+              <span className="premium-live-dot" />
+              {eyebrow}
+            </div>
+            <p className="flex max-w-full flex-wrap items-center justify-center gap-2 text-center text-[10px] font-semibold uppercase leading-5 tracking-[0.14em] text-white/58 sm:text-xs sm:tracking-[0.18em] md:justify-start md:text-left">
+              <Gauge className="h-3.5 w-3.5 text-cyan-200" aria-hidden="true" />
+              <span className="min-w-0">Flux3D secure production portal</span>
+            </p>
           </div>
-          <h1 className="mt-6 font-[var(--font-syne)] text-[clamp(2.6rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-0.04em] text-[#0F1B3D]">
+
+          <h1 className="premium-auth-title mx-auto w-full max-w-[19rem] text-3xl font-black leading-tight text-white sm:max-w-3xl sm:text-5xl sm:leading-[0.98] md:mx-0 md:text-6xl">
             {title}
           </h1>
-          <p className="mt-5 max-w-lg text-base leading-8 text-[#9ea6c4]">{description}</p>
+          <p className="mx-auto mt-5 w-full max-w-[20rem] text-base leading-8 text-white/70 sm:max-w-xl md:mx-0">
+            {description}
+          </p>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            {[
-              ['Secure sessions', 'Supabase SSR cookies'],
-              ['Protected quotes', 'Uploads and saved pricing'],
-              ['Fast access', 'Google or email login'],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-4 backdrop-blur-xl"
-              >
-                <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">{label}</div>
-                <div className="mt-2 text-sm font-medium text-[#0F1B3D]">{value}</div>
+          <div className="mt-6 hidden flex-wrap justify-center gap-2 sm:flex md:justify-start">
+            {['NDA ready', 'Saved quotes', 'Tracked orders', 'Pan-India delivery'].map((chip) => (
+              <span key={chip} className="premium-chip">
+                {chip}
+              </span>
+            ))}
+          </div>
+
+          <div className="premium-atelier-strip auth-atelier-strip !hidden sm:!grid">
+            {metrics.map((metric) => (
+              <div key={metric.label} className="premium-atelier-metric">
+                <span>{metric.label}</span>
+                <strong>{metric.value}</strong>
               </div>
             ))}
           </div>
+
+          <div className="premium-auth-command mt-7 hidden lg:block">
+            <div className="premium-console-header">
+              <span>Account Command</span>
+              <strong>READY</strong>
+            </div>
+            <div className="premium-auth-command-body">
+              <div className="premium-auth-command-visual" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </div>
+              <div className="min-w-0 text-left">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-white/42">
+                  Production pass
+                </p>
+                <p className="mt-1 text-xl font-black leading-tight text-white">
+                  Secure access for quotes, files, and orders
+                </p>
+                <p className="mt-2 text-sm leading-6 text-white/58">
+                  One workspace for upload history, checkout details, and repeat builds.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 hidden gap-3 lg:grid">
+            {trustItems.map(({ icon: Icon, label, value }) => (
+              <div key={label} className="premium-auth-feature">
+                <span className="premium-auth-feature-icon">
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <div className="text-sm font-black text-white">{label}</div>
+                  <p className="mt-1 text-xs leading-5 text-white/56">{value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-5 hidden items-center justify-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/44 lg:flex lg:justify-start">
+            <Layers3 className="h-3.5 w-3.5 text-amber-200" aria-hidden="true" />
+            Built for repeat production, prototyping, and secure file handling
+          </p>
         </div>
 
-        <div className="rounded-[32px] border border-[#6d28d9]/10 bg-[rgba(255,255,255,0.96)] p-5 shadow-[0_30px_120px_rgba(0,0,0,0.55)] backdrop-blur-2xl sm:p-7">
-          {children}
+        <div className="auth-form-column order-1 w-full min-w-0 max-w-[520px] justify-self-center md:order-2 md:justify-self-end">
+          <div className="premium-machine-panel auth-form-panel w-full p-5">
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   )
 }

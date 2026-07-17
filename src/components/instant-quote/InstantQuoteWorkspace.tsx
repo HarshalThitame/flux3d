@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import {
   UploadCloud,
@@ -20,13 +21,9 @@ import {
   Move3D,
   Cuboid,
 } from 'lucide-react'
-import { Canvas } from '@react-three/fiber'
-import { Bounds, OrbitControls } from '@react-three/drei'
-import { Suspense } from 'react'
 import EmptyState from '@/components/admin/EmptyState'
 import type { AppUserProfile } from '@/lib/auth/server'
 import { getMaterialById, layerHeightOptions } from '@/lib/quote/materials'
-import { parseModelFile } from '@/lib/quote/model-utils'
 import { calculateInstantQuote, formatDurationMinutes, getPostProcessingCharge, postProcessingOptions } from '@/lib/quote/pricing-engine'
 import type { PricingSettingsInput } from '@/lib/quote/pricing-waterfall'
 import { saveQuoteToSupabase, uploadFileToSupabaseStorage, validateModelFile } from '@/lib/quote/supabase-storage'
@@ -34,7 +31,6 @@ import { hasSupabaseConfig } from '@/lib/supabase/config'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 import type { ParsedModel, QuoteConfig, QuoteMaterial, UploadState } from '@/lib/quote/types'
-import type { Object3D } from 'three'
 import { useCart } from '@/lib/cart/context'
 import type { CartItem } from '@/lib/cart/types'
 import Toast, { type ToastState } from '@/components/quote/Toast'
@@ -46,7 +42,12 @@ const initialUploadState: UploadState = {
   progress: 0,
 }
 
-type InstantQuoteWorkspaceProps = {
+const ModelPreviewCanvas = dynamic(() => import('@/components/instant-quote/ModelPreviewCanvas'), {
+  ssr: false,
+  loading: () => <div className="absolute inset-0 animate-pulse rounded-2xl bg-white/[0.03]" />,
+})
+
+export type InstantQuoteWorkspaceProps = {
   user: AppUserProfile | null
   materials: QuoteMaterial[]
   initialMaterialId?: string
@@ -340,6 +341,7 @@ function CartEnabledWorkspace({
     setUploadState({ status: 'uploading', progress: user && supabaseEnabled ? 0 : 12 })
 
     try {
+      const { parseModelFile } = await import('@/lib/quote/model-utils')
       const parsedModel = await parseModelFile(file)
       setSelectedModel(parsedModel)
 
@@ -788,19 +790,7 @@ function CartEnabledWorkspace({
 
                     <div className="quote-viewer-stage relative h-[280px] overflow-hidden rounded-2xl border border-[#6d28d9]/10 bg-[radial-gradient(circle_at_top,rgba(168,85,247,0.08),transparent_42%),linear-gradient(180deg,#FFFFFF,#FFFFFF)] sm:h-[400px]">
                       {selectedModel ? (
-                        <Suspense fallback={<div className="absolute inset-0 animate-pulse rounded-2xl bg-white/[0.03]" />}>
-                          <Canvas className="!absolute !inset-0" camera={{ position: [140, 120, 140], fov: 34 }} dpr={[1, 1.7]}>
-                            <color attach="background" args={['#070a12']} />
-                            <ambientLight intensity={0.95} />
-                            <directionalLight position={[120, 120, 80]} intensity={1.15} />
-                            <directionalLight position={[-80, -50, -60]} intensity={0.4} />
-                            <gridHelper args={[280, 28, '#67e8f9', '#172554']} position={[0, -55, 0]} />
-                            <Bounds fit clip observe margin={1.3}>
-                              <ViewerModel object={selectedModel.object} />
-                            </Bounds>
-                            <OrbitControls makeDefault enablePan enableZoom enableRotate />
-                          </Canvas>
-                        </Suspense>
+                        <ModelPreviewCanvas object={selectedModel.object} />
                       ) : (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
                           <div className="quote-empty-viewer-icon flex h-14 w-14 items-center justify-center rounded-xl border border-[#6d28d9]/10 bg-white text-cyan-700">
@@ -1252,14 +1242,4 @@ function CartEnabledWorkspace({
       <Toast toast={toast} />
     </>
   )
-}
-
-function ViewerModel({
-  object,
-}: {
-  object: Object3D
-}) {
-  const clone = useMemo(() => object.clone(true), [object])
-
-  return <primitive object={clone} />
 }

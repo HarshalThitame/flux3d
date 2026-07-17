@@ -5,20 +5,31 @@ import { startTransition, useEffect, useRef, useState } from 'react'
 import { MessageCircle } from 'lucide-react'
 import FadeIn from '@/components/FadeIn'
 import { useBusinessSettings } from '@/lib/settings-context'
+import { createRafThrottledCallback } from '@/lib/raf-throttle'
 
 const ProblemSection = dynamic(() => import('./ProblemSection'), { ssr: false })
-const MarqueeSection = dynamic(() => import('./MarqueeSection'), { ssr: false })
 const ServicesSection = dynamic(() => import('./ServicesSection'), { ssr: false })
 const OfferBanner = dynamic(() => import('@/components/offers/OfferBanner').then(m => ({ default: m.OfferBanner })), { ssr: false })
-const MaterialsSection = dynamic(() => import('./MaterialsSection'), { ssr: false })
-const TechnologySection = dynamic(() => import('./TechnologySection'), { ssr: false })
 const HowItWorksSection = dynamic(() => import('./HowItWorksSection'), { ssr: false })
 const PricingSection = dynamic(() => import('./PricingSection'), { ssr: false })
-const TestimonialsSection = dynamic(() => import('./TestimonialsSection'), { ssr: false })
-const TrustSection = dynamic(() => import('./TrustSection'), { ssr: false })
 const FAQSection = dynamic(() => import('./FAQSection'), { ssr: false })
 const FinalCTASection = dynamic(() => import('./FinalCTASection'), { ssr: false })
 const FooterSection = dynamic(() => import('./FooterSection'), { ssr: false })
+
+function runWhenIdle(callback: () => void, timeout = 2500) {
+  const idleWindow = window as Window & {
+    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number
+    cancelIdleCallback?: (id: number) => void
+  }
+
+  if (idleWindow.requestIdleCallback && idleWindow.cancelIdleCallback) {
+    const idleId = idleWindow.requestIdleCallback(callback, { timeout })
+    return () => idleWindow.cancelIdleCallback?.(idleId)
+  }
+
+  const timeoutId = window.setTimeout(callback, Math.min(timeout, 1200))
+  return () => window.clearTimeout(timeoutId)
+}
 
 function FloatingWhatsAppButton() {
   const { settings } = useBusinessSettings()
@@ -41,14 +52,20 @@ function PremiumLandingFX() {
   const meterRef = useRef<HTMLSpanElement | null>(null)
 
   useEffect(() => {
-    let frame = 0
+    let pointerFrame = 0
+    let pointerX = 0
+    let pointerY = 0
+    let removeListeners = () => {}
 
     const updatePointer = (event: PointerEvent) => {
       if (!window.matchMedia('(pointer: fine)').matches) return
-      window.cancelAnimationFrame(frame)
-      frame = window.requestAnimationFrame(() => {
-        document.documentElement.style.setProperty('--premium-pointer-x', `${event.clientX}px`)
-        document.documentElement.style.setProperty('--premium-pointer-y', `${event.clientY}px`)
+      pointerX = event.clientX
+      pointerY = event.clientY
+      if (pointerFrame) return
+      pointerFrame = window.requestAnimationFrame(() => {
+        pointerFrame = 0
+        document.documentElement.style.setProperty('--premium-pointer-x', `${pointerX}px`)
+        document.documentElement.style.setProperty('--premium-pointer-y', `${pointerY}px`)
       })
     }
 
@@ -60,17 +77,26 @@ function PremiumLandingFX() {
         meterRef.current.style.transform = `scaleX(${progress})`
       }
     }
+    const scheduleProgress = createRafThrottledCallback(updateProgress)
 
-    updateProgress()
-    window.addEventListener('pointermove', updatePointer, { passive: true })
-    window.addEventListener('scroll', updateProgress, { passive: true })
-    window.addEventListener('resize', updateProgress)
+    const cancelIdle = runWhenIdle(() => {
+      updateProgress()
+      window.addEventListener('pointermove', updatePointer, { passive: true })
+      window.addEventListener('scroll', scheduleProgress, { passive: true })
+      window.addEventListener('resize', scheduleProgress)
+
+      removeListeners = () => {
+        window.removeEventListener('pointermove', updatePointer)
+        window.removeEventListener('scroll', scheduleProgress)
+        window.removeEventListener('resize', scheduleProgress)
+      }
+    })
 
     return () => {
-      window.cancelAnimationFrame(frame)
-      window.removeEventListener('pointermove', updatePointer)
-      window.removeEventListener('scroll', updateProgress)
-      window.removeEventListener('resize', updateProgress)
+      cancelIdle()
+      if (pointerFrame) window.cancelAnimationFrame(pointerFrame)
+      scheduleProgress.cancel()
+      removeListeners()
     }
   }, [])
 
@@ -121,7 +147,7 @@ function LazySection({
   }, [mounted, rootMargin])
 
   return (
-    <div ref={ref} className={className} style={mounted ? undefined : minHeight ? { minHeight } : undefined}>
+    <div ref={ref} className={className} style={minHeight ? { minHeight } : undefined}>
       {mounted ? <FadeIn>{children}</FadeIn> : null}
     </div>
   )
@@ -135,34 +161,19 @@ export default function LandingPageClient() {
       <LazySection minHeight={520} className="premium-band premium-band-ink">
         <ProblemSection />
       </LazySection>
-      <LazySection minHeight={140} className="premium-band premium-band-black">
-        <MarqueeSection />
-      </LazySection>
       <LazySection minHeight={760} className="premium-band premium-band-panel">
         <ServicesSection />
       </LazySection>
-      <div className="premium-band premium-band-panel">
+      <LazySection minHeight={160} className="premium-band premium-band-panel">
         <section className="premium-offer-shell mx-auto mb-16 max-w-[1200px] px-6">
           <OfferBanner />
         </section>
-      </div>
-      <LazySection minHeight={760} className="premium-band premium-band-panel">
-        <MaterialsSection />
-      </LazySection>
-      <LazySection minHeight={680} className="premium-band premium-band-ink">
-        <TechnologySection />
       </LazySection>
       <LazySection minHeight={720} className="premium-band premium-band-ink">
         <HowItWorksSection />
       </LazySection>
       <LazySection minHeight={860} className="premium-band premium-band-panel">
         <PricingSection />
-      </LazySection>
-      <LazySection minHeight={720} className="premium-band premium-band-ink">
-        <TestimonialsSection />
-      </LazySection>
-      <LazySection minHeight={620} className="premium-band premium-band-ink">
-        <TrustSection />
       </LazySection>
       <LazySection minHeight={720} className="premium-band premium-band-panel">
         <FAQSection />

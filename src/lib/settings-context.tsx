@@ -30,7 +30,7 @@ export function SettingsProvider({
   const [settings, setSettings] = useState<BusinessSettings>(initialSettings ?? FALLBACK)
   const [loading, setLoading] = useState(initialSettings ? false : true)
   const [error, setError] = useState<string | null>(null)
-  const fetched = useRef(false)
+  const fetched = useRef(Boolean(initialSettings))
 
   const fetchSettings = useCallback(async () => {
     try {

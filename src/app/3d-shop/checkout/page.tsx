@@ -6,7 +6,7 @@ import ShopCheckoutClient from './ShopCheckoutClient'
 
 export const metadata: Metadata = {
   title: 'Checkout — 3D Shop',
-  description: 'Place your 3D Shop order with Cash on Delivery.',
+  description: 'Review your 3D Shop order and proceed to secure PayU payment.',
 }
 
 export default async function ShopCheckoutPage() {

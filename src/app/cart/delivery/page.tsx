@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar'
 import CartDeliveryClient from '@/components/cart/CartDeliveryClient'
 import { requireUser } from '@/lib/auth/server'
 import { isMissingSupabaseTableError } from '@/lib/quote/supabase-errors'
+import { CartProvider } from '@/lib/cart/context'
 import type { SavedAddress } from '@/lib/orders'
 import { absoluteUrl } from '@/lib/site'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
@@ -39,7 +40,10 @@ type DeliveryAddressRow = {
 }
 
 export default async function CartDeliveryPage() {
-  const auth = await requireUser('/cart/delivery')
+  const [auth, settings] = await Promise.all([
+    requireUser('/cart/delivery'),
+    getSettings(),
+  ])
   const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase
     .from('addresses')
@@ -73,7 +77,9 @@ export default async function CartDeliveryPage() {
   return (
     <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       <Navbar transparent />
-      <CartDeliveryClient user={auth.profile} savedAddresses={savedAddresses} />
+      <CartProvider initialSettings={settings}>
+        <CartDeliveryClient user={auth.profile} savedAddresses={savedAddresses} />
+      </CartProvider>
     </div>
   )
 }

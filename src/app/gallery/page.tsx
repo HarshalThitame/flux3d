@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-static'
 
 import Navbar from '@/components/Navbar'
-import GalleryClient from './GalleryClient'
+import GalleryClientBoundary from './GalleryClientBoundary'
 
 export const metadata: Metadata = {
   title: {
@@ -20,7 +20,7 @@ export default function GalleryPage() {
   return (
     <div className="gallery-premium-shell min-h-screen overflow-hidden bg-[#05060a] text-white">
       <Navbar transparent />
-      <GalleryClient />
+      <GalleryClientBoundary />
     </div>
   )
 }

@@ -1,16 +1,7 @@
-import type { Metadata } from 'next'
-import { getSettings } from '@/lib/settings'
-import TermsOfServiceClient from './TermsOfServiceClient'
+import { permanentRedirect } from 'next/navigation'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSettings()
-  return {
-    title: `${settings.businessName} — Terms of Service`,
-    description: 'Read the Flux3D Terms of Service for custom 3D printing orders, quotes, payments, and account use.',
-    alternates: { canonical: '/terms-of-service' },
-  }
-}
+export const dynamic = 'force-static'
 
 export default function TermsOfServicePage() {
-  return <TermsOfServiceClient />
+  permanentRedirect('/terms-and-conditions')
 }

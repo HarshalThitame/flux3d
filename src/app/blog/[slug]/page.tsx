@@ -171,7 +171,7 @@ function makePostSchema(post: BlogPostWithAuthor) {
       name: 'Flux3D',
       logo: {
         '@type': 'ImageObject',
-        url: absoluteUrl('/logo.png'),
+        url: absoluteUrl('/logo.webp'),
       },
     },
     datePublished: post.published_at || post.created_at,

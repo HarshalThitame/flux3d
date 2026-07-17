@@ -19,6 +19,8 @@ import {
   X,
   Zap,
 } from 'lucide-react'
+import DeferredHeroVideo from '@/components/DeferredHeroVideo'
+import { createRafThrottledCallback } from '@/lib/raf-throttle'
 
 type GalleryCategory = 'All' | 'Prototypes' | 'Functional' | 'Showcase' | 'Precision' | 'Architecture'
 type ProjectCategory = Exclude<GalleryCategory, 'All'>
@@ -85,7 +87,7 @@ const projects: GalleryProject[] = [
     lead: 'Build validated',
     accent: '#fbbf24',
     backdrop: 'linear-gradient(135deg, #111827 0%, #6d28d9 52%, #f97316 138%)',
-    media: { type: 'video', src: '/printer.mp4', label: '3D printer running a live print job' },
+    media: { type: 'video', src: '/printer-optimized.mp4', label: '3D printer running a live print job' },
     metrics: [
       { label: 'Setup', value: 'Calibrated' },
       { label: 'Use case', value: 'Functional' },
@@ -101,7 +103,7 @@ const projects: GalleryProject[] = [
     lead: 'Iteration ready',
     accent: '#a78bfa',
     backdrop: 'linear-gradient(135deg, #111827 0%, #334155 42%, #7c3aed 128%)',
-    media: { type: 'image', src: '/pot.png', alt: '3D printed prototype object on a clean background', fit: 'contain' },
+    media: { type: 'image', src: '/pot.webp', alt: '3D printed prototype object on a clean background', fit: 'contain' },
     metrics: [
       { label: 'Cycle', value: '2 days' },
       { label: 'Review', value: 'Fit check' },
@@ -117,7 +119,7 @@ const projects: GalleryProject[] = [
     lead: 'Presentation finish',
     accent: '#f472b6',
     backdrop: 'linear-gradient(135deg, #111827 0%, #831843 48%, #22d3ee 145%)',
-    media: { type: 'image', src: '/logo.png', alt: 'Flux3D brand mark used as a printed display reference', fit: 'contain' },
+    media: { type: 'image', src: '/logo.webp', alt: 'Flux3D brand mark used as a printed display reference', fit: 'contain' },
     metrics: [
       { label: 'Detail', value: 'Clean edges' },
       { label: 'Color', value: 'Brand match' },
@@ -149,7 +151,7 @@ const projects: GalleryProject[] = [
     lead: 'Detail checked',
     accent: '#38bdf8',
     backdrop: 'linear-gradient(135deg, #111827 0%, #075985 50%, #fef3c7 150%)',
-    media: { type: 'image', src: '/pot.png', alt: 'Detailed 3D printed sample for surface quality review', fit: 'contain' },
+    media: { type: 'image', src: '/pot.webp', alt: 'Detailed 3D printed sample for surface quality review', fit: 'contain' },
     metrics: [
       { label: 'Tolerance', value: 'Tight' },
       { label: 'Surface', value: 'Smooth' },
@@ -192,13 +194,16 @@ function GalleryPremiumFX() {
   const meterRef = useRef<HTMLSpanElement | null>(null)
 
   useEffect(() => {
-    let frame = 0
+    let pointerFrame = 0
+    let pointerX = 0
 
     const updatePointer = (event: PointerEvent) => {
       if (!window.matchMedia('(pointer: fine)').matches) return
-      window.cancelAnimationFrame(frame)
-      frame = window.requestAnimationFrame(() => {
-        document.documentElement.style.setProperty('--gallery-pointer-x', `${event.clientX}px`)
+      pointerX = event.clientX
+      if (pointerFrame) return
+      pointerFrame = window.requestAnimationFrame(() => {
+        pointerFrame = 0
+        document.documentElement.style.setProperty('--gallery-pointer-x', `${pointerX}px`)
       })
     }
 
@@ -210,17 +215,19 @@ function GalleryPremiumFX() {
         meterRef.current.style.transform = `scaleX(${progress})`
       }
     }
+    const scheduleProgress = createRafThrottledCallback(updateProgress)
 
     updateProgress()
     window.addEventListener('pointermove', updatePointer, { passive: true })
-    window.addEventListener('scroll', updateProgress, { passive: true })
-    window.addEventListener('resize', updateProgress)
+    window.addEventListener('scroll', scheduleProgress, { passive: true })
+    window.addEventListener('resize', scheduleProgress)
 
     return () => {
-      window.cancelAnimationFrame(frame)
+      if (pointerFrame) window.cancelAnimationFrame(pointerFrame)
+      scheduleProgress.cancel()
       window.removeEventListener('pointermove', updatePointer)
-      window.removeEventListener('scroll', updateProgress)
-      window.removeEventListener('resize', updateProgress)
+      window.removeEventListener('scroll', scheduleProgress)
+      window.removeEventListener('resize', scheduleProgress)
     }
   }, [])
 
@@ -253,6 +260,8 @@ function ProjectVisual({ project, large = false, priority = false }: { project: 
           muted
           loop
           playsInline
+          preload="none"
+          poster="/printer-poster.webp"
           aria-label={project.media.label}
         />
       ) : (
@@ -309,15 +318,18 @@ export default function GalleryClient() {
       <GalleryPremiumFX />
 
       <section className="gallery-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-white sm:px-6 md:px-10 lg:px-12">
-        <video
-          src="/printer2.mp4"
+        <Image
+          src="/printer2-poster.webp"
+          alt=""
+          fill
+          preload
+          sizes="100vw"
           className="gallery-hero-video absolute inset-0 h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          aria-label="Flux3D printer motion behind gallery hero"
+        />
+        <DeferredHeroVideo
+          src="/printer2-optimized.mp4"
+          className="gallery-hero-video absolute inset-0 h-full w-full object-cover"
+          ariaLabel="Flux3D printer motion behind gallery hero"
         />
         <div className="gallery-hero-depth" aria-hidden="true" />
         <div className="gallery-hero-grid" aria-hidden="true" />

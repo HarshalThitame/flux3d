@@ -171,7 +171,10 @@ export default function MaterialsGrid() {
       return
     }
 
+    let frame = 0
+
     const updatePosition = () => {
+      frame = 0
       const rect = activeElement.getBoundingClientRect()
       setAnchorRect({
         left: rect.left,
@@ -183,13 +186,19 @@ export default function MaterialsGrid() {
       })
     }
 
+    const schedulePositionUpdate = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(updatePosition)
+    }
+
     updatePosition()
-    window.addEventListener('resize', updatePosition)
-    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', schedulePositionUpdate)
+    window.addEventListener('scroll', schedulePositionUpdate, true)
 
     return () => {
-      window.removeEventListener('resize', updatePosition)
-      window.removeEventListener('scroll', updatePosition, true)
+      if (frame) window.cancelAnimationFrame(frame)
+      window.removeEventListener('resize', schedulePositionUpdate)
+      window.removeEventListener('scroll', schedulePositionUpdate, true)
     }
   }, [activeElement])
 

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, ReactNode } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import {
   AlertTriangle,
@@ -46,7 +48,11 @@ import {
   type HowToStep,
   type SeoCheck,
 } from '@/lib/blog/seo'
-import RichTextEditor from '@/components/RichTextEditor'
+
+const RichTextEditor = dynamic(() => import('@/components/RichTextEditor'), {
+  ssr: false,
+  loading: () => <div className="min-h-[240px] rounded-lg border border-gray-200 bg-gray-50" aria-busy="true" />,
+})
 
 type FormTab = 'content' | 'media' | 'seo' | 'settings'
 type SocialPreview = 'linkedin' | 'whatsapp'
@@ -896,7 +902,7 @@ export default function AdminBlogPage() {
                             <input type="file" accept="image/*" onChange={(event) => handleImageUpload(event, 'featured')} className="hidden" />
                           </label>
                           {formData.featured_image && (
-                            <img src={formData.featured_image} alt={formData.featured_image_alt || 'Featured preview'} width={800} height={320} loading="lazy" decoding="async" className="mt-4 h-48 w-full rounded-lg object-cover" />
+                            <Image src={formData.featured_image} alt={formData.featured_image_alt || 'Featured preview'} width={800} height={320} loading="lazy" unoptimized className="mt-4 h-48 w-full rounded-lg object-cover" />
                           )}
                         </div>
 
@@ -917,7 +923,7 @@ export default function AdminBlogPage() {
                             <input type="file" accept="image/*" onChange={(event) => handleImageUpload(event, 'og')} className="hidden" />
                           </label>
                           {formData.og_image_url && (
-                            <img src={formData.og_image_url} alt="Open Graph preview" width={1200} height={630} loading="lazy" decoding="async" className="mt-4 aspect-[1200/630] w-full rounded-lg object-cover" />
+                            <Image src={formData.og_image_url} alt="Open Graph preview" width={1200} height={630} loading="lazy" unoptimized className="mt-4 aspect-[1200/630] w-full rounded-lg object-cover" />
                           )}
                         </div>
 
@@ -1100,7 +1106,7 @@ export default function AdminBlogPage() {
                             <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
                               <div className="aspect-[1200/630] bg-gray-200">
                                 {formData.og_image_url || formData.featured_image ? (
-                                  <img src={formData.og_image_url || formData.featured_image} alt="Social preview" width={1200} height={630} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                                  <Image src={formData.og_image_url || formData.featured_image} alt="Social preview" width={1200} height={630} loading="lazy" unoptimized className="h-full w-full object-cover" />
                                 ) : null}
                               </div>
                               <div className="p-3">
@@ -1470,7 +1476,7 @@ export default function AdminBlogPage() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex min-w-0 flex-1 items-start gap-4">
                       {post.featured_image && (
-                        <img src={post.featured_image} alt={post.featured_image_alt || post.title} width={80} height={80} loading="lazy" decoding="async" className="h-20 w-20 rounded-lg object-cover" />
+                        <Image src={post.featured_image} alt={post.featured_image_alt || post.title} width={80} height={80} loading="lazy" unoptimized className="h-20 w-20 rounded-lg object-cover" />
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">

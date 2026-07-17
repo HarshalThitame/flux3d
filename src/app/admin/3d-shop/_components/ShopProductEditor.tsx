@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import {
   Archive,
@@ -19,10 +20,14 @@ import {
   Upload,
   X,
 } from 'lucide-react'
-import RichTextEditor from '@/components/RichTextEditor'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import type { ShopCategory, ShopProduct, ShopSku, ShopVariantOption } from '@/lib/shop/admin-types'
 import { slugifyShopValue, stableStringify } from '@/lib/shop/admin-types'
+
+const RichTextEditor = dynamic(() => import('@/components/RichTextEditor'), {
+  ssr: false,
+  loading: () => <div className="min-h-[220px] rounded-xl border border-[#6d28d9]/10 bg-gray-50" aria-busy="true" />,
+})
 
 type ProductForm = {
   id?: string

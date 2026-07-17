@@ -4,6 +4,41 @@ import { updateSession } from '@/lib/supabase/proxy'
 const protectedPrefixes = ['/quote', '/saved-quotes', '/my-orders', '/profile', '/admin']
 const guestOnlyPrefixes = ['/login', '/signup']
 
+function createCspHeader({
+  isDev,
+  nonce,
+}: {
+  isDev: boolean
+  nonce?: string
+}) {
+  const scriptSrc = nonce
+    ? `'self' 'nonce-${nonce}' 'strict-dynamic' https://www.googletagmanager.com https://va.vercel-scripts.com${isDev ? " 'unsafe-eval'" : ''}`
+    : `'self' 'unsafe-inline' https://www.googletagmanager.com https://va.vercel-scripts.com${isDev ? " 'unsafe-eval'" : ''}`
+
+  return [
+    `default-src 'self'`,
+    `script-src ${scriptSrc}`,
+    `style-src 'self' 'unsafe-inline'`,
+    `font-src 'self'`,
+    `img-src 'self' data: blob: https:`,
+    `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://vitals.vercel-insights.com https://va.vercel-scripts.com`,
+    `frame-src 'none'`,
+    `frame-ancestors 'none'`,
+    `object-src 'none'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+    `upgrade-insecure-requests`,
+  ].join('; ')
+}
+
+function applySecurityHeaders(response: NextResponse, cspHeader: string) {
+  response.headers.set('Content-Security-Policy', cspHeader)
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+}
+
 function normalizeNextPath(value: string | null | undefined, fallback = '/instant-quote') {
   if (!value) {
     return fallback
@@ -20,32 +55,20 @@ function normalizeNextPath(value: string | null | undefined, fallback = '/instan
 
 export async function proxy(request: NextRequest) {
   const isDev = process.env.NODE_ENV === 'development'
-  const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
   const trackerToken = request.cookies.get('flux3d_track_token')?.value ?? crypto.randomUUID().replaceAll('-', '')
-
-  const cspHeader = [
-    `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://www.googletagmanager.com${isDev ? " 'unsafe-eval'" : ''}`,
-    `style-src 'self' 'unsafe-inline'`,
-    `font-src 'self'`,
-    `img-src 'self' data: blob: https:`,
-    `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com`,
-    `frame-src 'none'`,
-    `object-src 'none'`,
-    `base-uri 'self'`,
-    `form-action 'self'`,
-    `upgrade-insecure-requests`
-  ].join('; ')
-
-  const requestHeaders = new Headers(request.headers)
-  requestHeaders.set('x-nonce', nonce)
-  requestHeaders.set('x-track-token', trackerToken)
-  requestHeaders.set('x-current-url', request.nextUrl.href)
-  requestHeaders.set('x-current-path', `${request.nextUrl.pathname}${request.nextUrl.search}`)
-
   const pathname = request.nextUrl.pathname
   const isAuthRoute = [...protectedPrefixes, ...guestOnlyPrefixes].some(prefix => pathname.startsWith(prefix))
   const isAdminRoute = pathname.startsWith('/admin')
+  const nonce = isAuthRoute
+    ? Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    : undefined
+  const cspHeader = createCspHeader({ isDev, nonce })
+
+  const requestHeaders = new Headers(request.headers)
+  if (nonce) requestHeaders.set('x-nonce', nonce)
+  requestHeaders.set('x-track-token', trackerToken)
+  requestHeaders.set('x-current-url', request.nextUrl.href)
+  requestHeaders.set('x-current-path', `${request.nextUrl.pathname}${request.nextUrl.search}`)
 
   if (isAuthRoute) {
     const { response, supabase } = await updateSession(request, requestHeaders)
@@ -64,22 +87,14 @@ export async function proxy(request: NextRequest) {
       loginUrl.pathname = '/login'
       loginUrl.searchParams.set('next', fullPath)
       const redirectResponse = NextResponse.redirect(loginUrl)
-      redirectResponse.headers.set('Content-Security-Policy', cspHeader)
-      redirectResponse.headers.set('X-Frame-Options', 'DENY')
-      redirectResponse.headers.set('X-Content-Type-Options', 'nosniff')
-      redirectResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-      redirectResponse.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+      applySecurityHeaders(redirectResponse, cspHeader)
       return redirectResponse
     }
 
     if (guestOnlyPrefixes.some((prefix) => pathname.startsWith(prefix)) && user) {
       const nextPath = normalizeNextPath(request.nextUrl.searchParams.get('next'))
       const redirectResponse = NextResponse.redirect(new URL(nextPath, request.url))
-      redirectResponse.headers.set('Content-Security-Policy', cspHeader)
-      redirectResponse.headers.set('X-Frame-Options', 'DENY')
-      redirectResponse.headers.set('X-Content-Type-Options', 'nosniff')
-      redirectResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-      redirectResponse.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+      applySecurityHeaders(redirectResponse, cspHeader)
       redirectResponse.cookies.set('flux3d_track_token', trackerToken, {
         sameSite: 'lax',
         secure: !isDev,
@@ -99,20 +114,12 @@ export async function proxy(request: NextRequest) {
       const userEmail = (profile?.email ?? user.email)?.trim().toLowerCase()
       if (!userEmail) {
         const redirectResponse = NextResponse.redirect(new URL('/', request.url))
-        redirectResponse.headers.set('Content-Security-Policy', cspHeader)
-        redirectResponse.headers.set('X-Frame-Options', 'DENY')
-        redirectResponse.headers.set('X-Content-Type-Options', 'nosniff')
-        redirectResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-        redirectResponse.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+        applySecurityHeaders(redirectResponse, cspHeader)
         return redirectResponse
       }
     }
 
-    response.headers.set('Content-Security-Policy', cspHeader)
-    response.headers.set('X-Frame-Options', 'DENY')
-    response.headers.set('X-Content-Type-Options', 'nosniff')
-    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+    applySecurityHeaders(response, cspHeader)
     response.cookies.set('flux3d_track_token', trackerToken, {
       sameSite: 'lax',
       secure: !isDev,
@@ -127,11 +134,7 @@ export async function proxy(request: NextRequest) {
     request: { headers: requestHeaders }
   })
 
-  response.headers.set('Content-Security-Policy', cspHeader)
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  applySecurityHeaders(response, cspHeader)
   response.cookies.set('flux3d_track_token', trackerToken, {
     sameSite: 'lax',
     secure: !isDev,

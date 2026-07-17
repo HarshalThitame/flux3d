@@ -6,41 +6,41 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 
 const faqs = [
   {
-    q: 'What file formats do you accept?',
-    a: 'We accept STL, STEP, OBJ, 3MF, DXF, and DWG files. For medical models, we also accept DICOM files and convert them to printable format. Don\'t have a file yet? Just describe your requirement and our design team will create the model for you from ₹499.'
+    q: 'How do I request a quote?',
+    a: 'Share your design file or product requirement through the website or contact page. We review the material, colour, quantity, finish and delivery needs before confirming the price.',
   },
   {
-    q: 'How long does it take to get my print?',
-    a: 'Standard orders are delivered in 3–5 business days across India. Express orders placed before 10 AM are dispatched the same day within Mumbai and Pune, delivering in 24–48 hours. Bulk and custom industrial orders are quoted with a specific timeline.'
+    q: 'What products do you sell?',
+    a: 'Flux 3D sells custom 3D printing services, model printing, prototyping, related manufacturing services, and ready-made products where they are listed.',
   },
   {
-    q: 'What is your minimum order quantity?',
-    a: 'There is no minimum order. You can order a single print for ₹99. We print one piece with the same care and quality as a batch of 500.'
+    q: 'What happens after I place an order?',
+    a: 'Your order is reviewed, the final specifications are confirmed, payment is verified, and production begins only after approval or payment confirmation, depending on the order type.',
   },
   {
-    q: 'What materials do you stock?',
-    a: 'We currently stock PLA+, PETG, ABS, ASA, TPU, Nylon PA12, Silk PLA, Multi-Color PLA, Standard Resin 4K, and ABS-Like Resin. We regularly add new materials — contact us if you need something specific.'
+    q: 'What materials are available?',
+    a: 'Available materials are listed on the materials and product pages when present. If your project needs a different material or finish, contact us for a review.',
   },
   {
     q: 'How do I pay?',
-    a: 'We accept all major payment methods — UPI (Google Pay, PhonePe, Paytm), Razorpay, debit/credit cards, net banking, and cash on delivery in select Mumbai and Pune pin codes.'
+    a: 'Payments are shown in INR before checkout and processed through the configured payment gateway. Order confirmation only happens after server-side payment verification.',
   },
   {
     q: 'Is my design file kept confidential?',
-    a: 'Absolutely. We never share, sell, or use your design files for any purpose other than printing your order. For sensitive projects, we offer a formal NDA — just ask before sending your files.'
+    a: 'We use design files only for quoting, review and order production. Sensitive files are handled under the published privacy policy and only shared with the people needed to fulfill the order.',
   },
   {
-    q: 'Do you offer discounts for bulk orders?',
-    a: 'Yes. Orders of 10+ units get 10% off. 50+ units get 20% off. 100+ units get 30% off. Corporate and industrial clients can contact us for custom volume pricing.'
+    q: 'Do you offer bulk pricing?',
+    a: 'Bulk and repeat orders can be quoted separately. Contact us with the quantity and specifications and we will review the request.',
   },
   {
     q: 'What if my print comes out wrong?',
-    a: 'If the defect is on our side — we reprint it for free. We send a photo of every completed print before dispatch so you can flag any issue before it ships. Your satisfaction is non-negotiable.'
+    a: 'If the issue is caused by Flux 3D or by damage in transit, we review the case and may reprint, replace, repair, partially refund or fully refund according to the published policies.',
   },
   {
-    q: 'Do you ship outside India?',
-    a: 'Currently we ship across all of India. International shipping is available on request for specific orders — contact us to discuss.'
-  }
+    q: 'Where do you deliver?',
+    a: 'Delivery is available across serviceable locations in India. International shipping is not offered unless confirmed separately in writing.',
+  },
 ]
 
 function FAQItem({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index: number; isOpen: boolean; onToggle: () => void }) {
@@ -92,33 +92,30 @@ export default function FAQSection() {
 
   return (
     <section ref={ref} className="relative py-24 px-6 overflow-hidden">
-      {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(109, 40, 217,0.02)] to-transparent pointer-events-none" />
 
-      <div className="max-w-[800px] mx-auto relative z-10">
-        {/* Header */}
+      <div className="mx-auto relative z-10 max-w-[800px]">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="text-center mb-12"
+          className="mb-12 text-center"
         >
-          <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">FAQ</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
+          <p className="mb-4 text-sm font-medium uppercase tracking-normal text-[#6d28d9]">FAQ</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold leading-[1.1] tracking-normal text-[#0F1B3D]">
             Questions? We&apos;ve Got{' '}
             <span className="text-[#6F7192]">Clear Answers.</span>
           </h2>
         </motion.div>
 
-        {/* FAQ list */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ delay: 0.3 }}
-          className="bg-[#faf9f7] border border-[rgba(109, 40, 217,0.5)] rounded-2xl px-6"
+          className="rounded-2xl border border-[rgba(109, 40, 217,0.5)] bg-[#faf9f7] px-6"
         >
           {faqs.map((faq, i) => (
             <FAQItem
-              key={i}
+              key={faq.q}
               faq={faq}
               index={i}
               isOpen={openIndex === i}

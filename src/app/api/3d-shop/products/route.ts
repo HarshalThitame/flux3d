@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server'
 import { getShopProducts } from '@/lib/shop/public-data'
 import type { ShopProductQuery } from '@/lib/shop/public-types'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
+
+const PUBLIC_CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+}
 
 function toNumber(value: string | null) {
   if (value === null || value.trim() === '') return null
@@ -29,7 +33,7 @@ export async function GET(request: Request) {
       limit: Number(searchParams.get('limit') ?? 24),
     }
 
-    return NextResponse.json(await getShopProducts(query))
+    return NextResponse.json(await getShopProducts(query), { headers: PUBLIC_CACHE_HEADERS })
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to load products.' },

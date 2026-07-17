@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 import {
   Building2, Phone, MapPin, Share2, Palette, FileText, MessageSquare,
   Search, Mail, Scale, Settings2, Save, RotateCcw, Download, Upload,
@@ -667,7 +668,7 @@ function BrandingTab({ form, updateField, f, fb, triggerFileInput, uploading }: 
               {f(key) ? (
                 <div className="space-y-2">
                   <div className="relative flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50/50 p-3">
-                    <img src={f(key)} alt={`${label} preview`} width={320} height={96} loading="lazy" decoding="async" className="max-h-20 max-w-full object-contain" />
+                    <Image src={f(key)} alt={`${label} preview`} width={320} height={96} loading="lazy" unoptimized className="max-h-20 max-w-full object-contain" />
                   </div>
                   <div className="flex gap-2">
                     <button type="button" onClick={() => triggerFileInput(key)} disabled={uploading === key}
@@ -884,7 +885,7 @@ function InvoicingTab({ form, updateField, f, fn, fb, triggerFileInput, uploadin
             {f('upiQrCodeUrl') ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50/50 p-3">
-                  <img src={f('upiQrCodeUrl')} alt="UPI QR Code" width={160} height={160} loading="lazy" decoding="async" className="max-h-28 max-w-full object-contain" />
+                  <Image src={f('upiQrCodeUrl')} alt="UPI QR Code" width={160} height={160} loading="lazy" unoptimized className="max-h-28 max-w-full object-contain" />
                 </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => triggerFileInput('upiQrCodeUrl')} disabled={uploading === 'upiQrCodeUrl'}
@@ -987,7 +988,7 @@ function SEOTab({ form, updateField, f, fb, triggerFileInput, uploading }: {
             {f('ogImageUrl') ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50/50 p-2">
-                  <img src={f('ogImageUrl')} alt="Open Graph image preview" width={1200} height={630} loading="lazy" decoding="async" className="max-h-24 max-w-full rounded object-contain" />
+                  <Image src={f('ogImageUrl')} alt="Open Graph image preview" width={1200} height={630} loading="lazy" unoptimized className="max-h-24 max-w-full rounded object-contain" />
                 </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => triggerFileInput('ogImageUrl')} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-[10px] text-[#6F7192] hover:bg-gray-200">Replace</button>
@@ -1007,7 +1008,7 @@ function SEOTab({ form, updateField, f, fb, triggerFileInput, uploading }: {
             {f('twitterImageUrl') ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50/50 p-2">
-                  <img src={f('twitterImageUrl')} alt="Twitter image preview" width={1200} height={600} loading="lazy" decoding="async" className="max-h-24 max-w-full rounded object-contain" />
+                  <Image src={f('twitterImageUrl')} alt="Twitter image preview" width={1200} height={600} loading="lazy" unoptimized className="max-h-24 max-w-full rounded object-contain" />
                 </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => triggerFileInput('twitterImageUrl')} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-[10px] text-[#6F7192] hover:bg-gray-200">Replace</button>

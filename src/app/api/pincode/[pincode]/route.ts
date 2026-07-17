@@ -11,6 +11,10 @@ type IndiaPostResponse = {
   PostOffice?: IndiaPostOffice[] | null
 }
 
+const PINCODE_CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800',
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ pincode: string }> }
@@ -22,7 +26,7 @@ export async function GET(
   }
 
   const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`, {
-    cache: 'no-store',
+    next: { revalidate: 86400 },
   })
 
   if (!response.ok) {
@@ -42,5 +46,5 @@ export async function GET(
     state: postOffice.State,
   }
 
-  return NextResponse.json(result)
+  return NextResponse.json(result, { headers: PINCODE_CACHE_HEADERS })
 }
