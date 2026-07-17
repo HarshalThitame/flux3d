@@ -1,13 +1,21 @@
 import type { Metadata } from 'next'
-import { getSettings } from '@/lib/settings'
 import RefundPolicyClient from './RefundPolicyClient'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSettings()
+export function generateMetadata(): Metadata {
   return {
-    title: `${settings.businessName} — Refund Policy`,
-    description: 'Learn about the Flux3D refund policy for 3D printing services and custom orders.',
+    title: 'Refund & Cancellation Policy',
+    description: 'Learn how Flux3D handles cancellations, refunds, defective items, duplicate payments, and refund request processing.',
     alternates: { canonical: '/refund-policy' },
+    openGraph: {
+      title: 'Refund & Cancellation Policy',
+      description: 'Learn how Flux3D handles cancellations, refunds, defective items, duplicate payments, and refund request processing.',
+      url: 'https://flux3d.in/refund-policy',
+      type: 'website',
+    },
+    twitter: {
+      title: 'Refund & Cancellation Policy',
+      description: 'Learn how Flux3D handles cancellations, refunds, defective items, duplicate payments, and refund request processing.',
+    },
   }
 }
 

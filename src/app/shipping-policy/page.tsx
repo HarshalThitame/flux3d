@@ -1,16 +1,7 @@
-import type { Metadata } from 'next'
-import { getSettings } from '@/lib/settings'
-import ShippingPolicyClient from './ShippingPolicyClient'
+import { permanentRedirect } from 'next/navigation'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSettings()
-  return {
-    title: `${settings.businessName} — Shipping Policy`,
-    description: 'Learn about Flux3D shipping methods, delivery timelines, and delivery policies across India.',
-    alternates: { canonical: '/shipping-policy' },
-  }
-}
+export const dynamic = 'force-static'
 
 export default function ShippingPolicyPage() {
-  return <ShippingPolicyClient />
+  permanentRedirect('/service-delivery-policy')
 }

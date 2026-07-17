@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AppUserProfile } from '@/lib/auth/server'
-import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import type { ProfileRow } from '../../types/database'
 
 export type ClientProfile = AppUserProfile & {
@@ -19,6 +18,10 @@ type UseProfileResult = {
   loading: boolean
   error: string | null
   refetch: () => Promise<void>
+}
+
+type UseProfileOptions = {
+  enabled?: boolean
 }
 
 function mapProfile(userId: string, userEmail: string, metadata: Record<string, unknown>, row: Partial<ProfileRow> | null): ClientProfile {
@@ -53,7 +56,11 @@ function mapProfile(userId: string, userEmail: string, metadata: Record<string, 
   }
 }
 
-export function useProfile(initialProfile: AppUserProfile | null = null): UseProfileResult {
+export function useProfile(
+  initialProfile: AppUserProfile | null = null,
+  options: UseProfileOptions = {}
+): UseProfileResult {
+  const enabled = options.enabled ?? true
   const initialProfileRef = useRef(initialProfile)
   const [profile, setProfile] = useState<ClientProfile | null>(
     initialProfile
@@ -68,13 +75,14 @@ export function useProfile(initialProfile: AppUserProfile | null = null): UsePro
         }
       : null
   )
-  const [loading, setLoading] = useState(initialProfile === null)
+  const [loading, setLoading] = useState(initialProfile === null && enabled)
   const [error, setError] = useState<string | null>(null)
 
   const loadProfile = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
+      const { getSupabaseBrowserClient } = await import('@/lib/supabase/client')
       const supabase = getSupabaseBrowserClient()
       const { data: authData, error: authError } = await supabase.auth.getUser()
 
@@ -133,8 +141,13 @@ export function useProfile(initialProfile: AppUserProfile | null = null): UsePro
 
   useEffect(() => {
     if (initialProfileRef.current) return
-    void loadProfile()
-  }, [loadProfile])
+    if (!enabled) return
+    const timeoutId = window.setTimeout(() => {
+      void loadProfile()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [enabled, loadProfile])
 
   return { profile, loading, error, refetch: loadProfile }
 }

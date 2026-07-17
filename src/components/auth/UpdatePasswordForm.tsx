@@ -7,6 +7,8 @@ import AuthMessage from '@/components/auth/AuthMessage'
 import SubmitButton from '@/components/auth/SubmitButton'
 
 const initialState: AuthFormState = {}
+const fieldClass =
+  'h-12 w-full rounded-2xl border border-white/12 bg-white/[0.075] px-4 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] outline-none transition placeholder:text-white/35 focus:border-cyan-200/70 focus:bg-white/[0.11] focus:ring-4 focus:ring-cyan-300/10'
 
 type UpdatePasswordFormProps = {
   nextPath: string
@@ -16,10 +18,15 @@ export default function UpdatePasswordForm({ nextPath }: UpdatePasswordFormProps
   const [state, action] = useActionState(updatePasswordAction, initialState)
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 text-white">
+      <div className="premium-console-header">
+        <span>Password update</span>
+        <strong>SECURE</strong>
+      </div>
+
       <div className="space-y-2">
-        <h2 className="font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">Choose a new password</h2>
-        <p className="text-sm leading-7 text-[#8e97b7]">
+        <h2 className="text-3xl font-black !text-white">Choose a new password</h2>
+        <p className="text-sm leading-7 text-white/62">
           Update your account security, then continue back to your authenticated workspace.
         </p>
       </div>
@@ -27,7 +34,7 @@ export default function UpdatePasswordForm({ nextPath }: UpdatePasswordFormProps
       <form action={action} className="space-y-4">
         <input type="hidden" name="next" value={nextPath} />
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm text-[#0F1B3D]">
+          <label htmlFor="password" className="text-sm font-bold text-white/78">
             New password
           </label>
           <input
@@ -36,10 +43,10 @@ export default function UpdatePasswordForm({ nextPath }: UpdatePasswordFormProps
             type="password"
             autoComplete="new-password"
             placeholder="Strong password"
-            className="w-full rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none placeholder:text-[#8C7DB8]"
+            className={fieldClass}
           />
           {state.fieldErrors?.password?.map((error) => (
-            <p key={error} className="text-sm text-rose-300">
+            <p key={error} className="text-sm font-semibold text-rose-200">
               {error}
             </p>
           ))}

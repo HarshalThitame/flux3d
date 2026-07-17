@@ -1,77 +1,29 @@
 'use client'
 
+import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { Check, ArrowRight } from 'lucide-react'
+import { ArrowRight, Check, Clock3, IndianRupee, PackageCheck, ShieldCheck } from 'lucide-react'
 
-const tiers = [
+const pricingCards = [
   {
-    name: 'Starter',
-    bestFor: 'Students & hobbyists',
-    price: '₹99',
-    priceLabel: 'From',
-    description: 'Perfect for small, single-color prints under 50g.',
-    features: [
-      'FDM printing (PLA+)',
-      'Standard speed',
-      'Up to 50g print weight',
-      '3–5 day delivery',
-      'WhatsApp support'
-    ],
-    cta: 'Start Printing →',
-    popular: false,
-    color: 'from-[#a855f7] to-[#a855f7]'
+    title: 'Custom 3D Printing',
+    subtitle: 'Quoted after file review',
+    description: 'Upload a model or share a design brief and we confirm the final price after reviewing material, finish, quantity and delivery needs.',
+    points: ['Production reviewed before payment confirmation', 'Suitable for prototypes and custom parts', 'No surprise finishing charges'],
   },
   {
-    name: 'Standard',
-    bestFor: 'Professionals & small businesses',
-    price: '₹499',
-    priceLabel: 'From',
-    description: 'Ideal for functional parts, architecture models, and product prototypes.',
-    features: [
-      'FDM or Resin printing',
-      'All material options',
-      'Multi-color (AMS) available',
-      '48hr turnaround available',
-      'Priority queue',
-      'Photo update before dispatch',
-      'Dedicated support'
-    ],
-    cta: 'Get Standard Quote →',
-    popular: true,
-    color: 'from-[#6d28d9] to-[#a855f7]'
+    title: 'Ready-Made Products',
+    subtitle: 'Price shown on the product page',
+    description: 'Pre-designed, pre-printed products are listed with the price shown on the product page before checkout.',
+    points: ['Direct purchase when listed', 'Shipping shown before payment', 'Payment verified on the server'],
   },
   {
-    name: 'Enterprise',
-    bestFor: 'Industrial, medical & bulk',
-    price: 'Custom',
-    priceLabel: '',
-    description: 'High-volume, high-complexity orders with dedicated account management.',
-    features: [
-      'Unlimited order volume',
-      'Engineering-grade materials',
-      'Tolerances up to ±0.2mm',
-      'NDA / confidentiality',
-      'Express 24hr guaranteed',
-      'Multi-address delivery',
-      'Bulk pricing (up to 30% off)',
-      'Dedicated account manager'
-    ],
-    cta: 'Talk to Enterprise Team →',
-    popular: false,
-    color: 'from-[#6d28d9] to-[#6d28d9]'
-  }
-]
-
-const priceTable = [
-  { material: 'PLA+', price: '₹8/g', notes: 'Most affordable' },
-  { material: 'PETG', price: '₹9/g', notes: 'Food-safe option' },
-  { material: 'ABS', price: '₹10/g', notes: 'Industrial grade' },
-  { material: 'TPU', price: '₹12/g', notes: 'Flexible rubber' },
-  { material: 'Silk PLA', price: '₹10/g', notes: 'Premium finish' },
-  { material: 'Resin 4K', price: '₹18/g', notes: 'Ultra fine detail' },
-  { material: 'Multi-Color', price: 'From ₹14/g', notes: 'AMS system' },
-  { material: 'Nylon PA12', price: '₹18/g', notes: 'Engineering grade' }
+    title: 'Shipping and Support',
+    subtitle: 'Shared before dispatch',
+    description: 'Shipping charges and delivery estimates are displayed before payment or included in the approved quotation.',
+    points: ['India-only serviceable locations', 'Tracking shared when available', 'Contact support by email or phone'],
+  },
 ]
 
 export default function PricingSection() {
@@ -79,143 +31,81 @@ export default function PricingSection() {
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
   return (
-    <section ref={ref} className="relative py-24 px-6 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_50%_30%,rgba(109, 40, 217,0.05)_0%,transparent_70%)] pointer-events-none" />
+    <section ref={ref} className="relative overflow-hidden px-6 py-24">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_50%_30%,rgba(109,40,217,0.05)_0%,transparent_70%)] pointer-events-none" />
 
-      <div className="max-w-[1200px] mx-auto relative z-10">
-        {/* Header */}
+      <div className="relative z-10 mx-auto max-w-[1200px]">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="text-center mb-16"
+          className="mb-16 text-center"
         >
-          <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">Transparent Pricing</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
-            No Hidden Charges.{' '}
-            <span className="text-[#6F7192]">No Surprises.</span>
+          <p className="mb-4 text-sm font-medium uppercase tracking-normal text-[#6d28d9]">Pricing</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold leading-[1.1] text-[#0F1B3D]">
+            Clear pricing starts with a review of the real order.
           </h2>
-            <p className="text-[#6F7192] mt-4 max-w-[600px] mx-auto">
-              What you see is what you pay. Every quote includes material cost and print time.
-            </p>
+          <p className="mx-auto mt-4 max-w-[700px] text-[#6F7192]">
+            Flux 3D quotes custom jobs after reviewing the file and service details. Ready-made products show their price before checkout. Nothing is hidden behind a fake placeholder price.
+          </p>
         </motion.div>
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-          {tiers.map((tier, i) => (
+        <div className="grid gap-6 md:grid-cols-3">
+          {pricingCards.map((card, index) => (
             <motion.div
-              key={i}
+              key={card.title}
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: i * 0.15 }}
-              whileHover={{ y: -8, transition: { duration: 0.2 } }}
-              className={`relative bg-[#faf9f7] border rounded-2xl p-8 ${
-                tier.popular
-                  ? 'border-[#6d28d9] shadow-[0_0_40px_rgba(109, 40, 217,0.15)]'
-                  : 'border-[rgba(109, 40, 217,0.5)]'
-              }`}
+              transition={{ delay: index * 0.12 }}
+              className="rounded-2xl border border-[#6d28d9]/10 bg-white p-6 shadow-sm"
             >
-              {tier.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#6d28d9] text-white text-xs font-bold px-4 py-1 rounded-full">
-                  Most Popular
-                </div>
-              )}
-
-              <p className="mb-1 text-xs uppercase tracking-normal text-[#6F7192]">Best for: {tier.bestFor}</p>
-              <h3 className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D] mb-2">{tier.name}</h3>
-              <div className="flex items-baseline gap-1 mb-2">
-                {tier.priceLabel && <span className="text-sm text-[#6F7192]">{tier.priceLabel}</span>}
-                <span className="font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D]">{tier.price}</span>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#6d28d9]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#6d28d9]">
+                <IndianRupee className="h-3.5 w-3.5" />
+                {card.subtitle}
               </div>
-              <p className="text-sm text-[#6F7192] mb-6">{tier.description}</p>
-
-              <ul className="space-y-3 mb-8">
-                {tier.features.map((feature, j) => (
-                  <li key={j} className="flex items-start gap-2 text-sm text-[#6F7192]">
-                    <Check className="w-4 h-4 text-[#6d28d9] mt-0.5 flex-shrink-0" />
-                    {feature}
+              <h3 className="text-xl font-bold text-[#0F1B3D]">{card.title}</h3>
+              <p className="mt-3 text-sm leading-7 text-[#6F7192]">{card.description}</p>
+              <ul className="mt-5 space-y-3">
+                {card.points.map((point) => (
+                  <li key={point} className="flex items-start gap-2 text-sm text-[#6F7192]">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                    <span>{point}</span>
                   </li>
                 ))}
               </ul>
-
-              <a
-                href="/instant-quote"
-                className={`inline-flex items-center justify-center w-full gap-2 py-3 rounded-xl text-sm font-medium transition-all ${
-                  tier.popular
-                    ? 'bg-[#6d28d9] text-white hover:shadow-[0_0_30px_rgba(109, 40, 217,0.3)]'
-                    : 'bg-[#faf9f7] text-[#6d28d9] border border-[rgba(109, 40, 217,0.28)] hover:border-[#6d28d9] hover:bg-[rgba(109, 40, 217,0.08)]'
-                }`}
-              >
-                {tier.cta}
-                <ArrowRight className="w-4 h-4" />
-              </a>
             </motion.div>
           ))}
         </div>
 
-        {/* Pricing note */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.5 }}
-          className="bg-[#faf9f7] border border-[rgba(109, 40, 217,0.5)] rounded-xl p-6 mb-16"
-        >
-          <p className="text-sm text-[#6F7192] text-center">
-            💡 Shipping calculated at checkout · Express surcharge: +30% · Student discount: 10% off above ₹500
-          </p>
-        </motion.div>
-
-        {/* Price table */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.35 }}
+          className="mt-8 rounded-2xl border border-[#6d28d9]/10 bg-[#faf9f7] p-6"
         >
-          <h3 className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D] mb-6 text-center">Price Per Gram Reference</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[rgba(109, 40, 217,0.5)]">
-                  <th className="text-left py-3 px-4 text-[#6F7192] font-medium">Material</th>
-                  <th className="text-left py-3 px-4 text-[#6F7192] font-medium">Price</th>
-                  <th className="text-left py-3 px-4 text-[#6F7192] font-medium hidden sm:table-cell">Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {priceTable.map((row, i) => (
-                  <tr key={i} className="border-b border-[rgba(109, 40, 217,0.25)] hover:bg-[rgba(109, 40, 217,0.2)]">
-                    <td className="py-3 px-4 text-[#0F1B3D] font-medium">{row.material}</td>
-                    <td className="py-3 px-4 text-[#6d28d9]">{row.price}</td>
-                    <td className="py-3 px-4 text-[#6F7192] hidden sm:table-cell">{row.notes}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Shipping */}
-          <div className="mt-8 bg-[rgba(109, 40, 217,0.25)] rounded-xl p-6">
-            <h4 className="text-sm font-semibold text-[#0F1B3D] mb-3">Shipping</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-              <div className="flex items-center gap-2 text-[#6F7192]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6d28d9]" />
-                Mumbai & Pune: ₹60 flat
-              </div>
-              <div className="flex items-center gap-2 text-[#6F7192]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6d28d9]" />
-                Pan India: ₹100 flat
-              </div>
-              <div className="flex items-center gap-2 text-[#6F7192]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6d28d9]" />
-                Free above ₹2,000
-              </div>
-              <div className="flex items-center gap-2 text-[#6F7192]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6d28d9]" />
-                Express 24hr: Mumbai & Pune
-              </div>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-3">
+              <PackageCheck className="mt-1 h-5 w-5 text-[#6d28d9]" />
+              <p className="text-sm leading-7 text-[#6F7192]">
+                Before payment, customers can review the service type, price, taxes, shipping charge, refund policy, terms and support contact details.
+              </p>
             </div>
+            <Link href="/contact" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#6d28d9] px-5 text-sm font-semibold text-white">
+              Request a quote
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </motion.div>
+
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-xs uppercase tracking-[0.16em] text-[#6F7192]">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#e4dff5] bg-white px-3 py-2">
+            <Clock3 className="h-3.5 w-3.5 text-[#6d28d9]" />
+            Timeline shared before confirmation
+          </span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#e4dff5] bg-white px-3 py-2">
+            <ShieldCheck className="h-3.5 w-3.5 text-[#6d28d9]" />
+            Server-verified payment
+          </span>
+        </div>
       </div>
     </section>
   )

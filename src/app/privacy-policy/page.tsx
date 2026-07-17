@@ -1,13 +1,21 @@
 import type { Metadata } from 'next'
-import { getSettings } from '@/lib/settings'
 import PrivacyPolicyClient from './PrivacyPolicyClient'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSettings()
+export function generateMetadata(): Metadata {
   return {
-    title: `${settings.businessName} — Privacy Policy`,
+    title: 'Privacy Policy',
     description: 'Learn how Flux3D collects, uses, and protects your personal information.',
     alternates: { canonical: '/privacy-policy' },
+    openGraph: {
+      title: 'Privacy Policy',
+      description: 'Learn how Flux3D collects, uses, and protects your personal information.',
+      url: 'https://flux3d.in/privacy-policy',
+      type: 'website',
+    },
+    twitter: {
+      title: 'Privacy Policy',
+      description: 'Learn how Flux3D collects, uses, and protects your personal information.',
+    },
   }
 }
 

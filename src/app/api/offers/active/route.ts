@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
+const PUBLIC_OFFER_CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+}
+
 export async function GET() {
   try {
     const supabase = await createServerSupabaseClient()
@@ -32,7 +36,7 @@ export async function GET() {
       return NextResponse.json({ offers: offers ?? [], coupons: [] })
     }
 
-    return NextResponse.json({ offers, coupons })
+    return NextResponse.json({ offers, coupons }, { headers: PUBLIC_OFFER_CACHE_HEADERS })
   } catch (error) {
     console.error(
       '[offers/active] Unexpected failure:',

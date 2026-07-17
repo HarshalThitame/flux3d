@@ -1,67 +1,41 @@
 import type { Metadata, Viewport } from 'next'
-import { Analytics } from '@vercel/analytics/next'
-import { DM_Sans, Inter, JetBrains_Mono } from 'next/font/google'
-import { cookies, headers } from 'next/headers'
-import { connection } from 'next/server'
-import Script from 'next/script'
+import { headers } from 'next/headers'
 import { getSettings } from '@/lib/settings'
 import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data'
-import { CartProvider } from '@/lib/cart/context'
-import { SettingsProvider } from '@/lib/settings-context'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { trackPageVisit } from '@/lib/tracking/pageVisit'
-import VisitorTracker from '@/components/VisitorTracker'
-import TrackingBootstrap from '@/components/TrackingBootstrap'
-import SessionTracker from '@/components/SessionTracker'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import DeferredTracking from '@/components/DeferredTracking'
+import DeferredGoogleAnalytics from '@/components/DeferredGoogleAnalytics'
 import './globals.css'
 
 const GOOGLE_ANALYTICS_ID = 'G-KCK2459TBQ'
 
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800'],
-  variable: '--font-inter-next',
-  display: 'swap',
-})
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-dm-next',
-  display: 'swap',
-})
-
-const jetBrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500'],
-  variable: '--font-mono-next',
-  display: 'swap',
-})
+const DNS_PREFETCH_ORIGINS = [
+  '//www.googletagmanager.com',
+  '//www.google-analytics.com',
+  '//analytics.google.com',
+  '//region1.google-analytics.com',
+  '//vitals.vercel-insights.com',
+  '//jqgaebdtuasenyojvbsi.supabase.co',
+  '//lh3.googleusercontent.com',
+  '//avatars.githubusercontent.com',
+  '//wa.me',
+]
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://flux3d.in'),
   title: {
-    default: 'Flux3D — Premium 3D Printing Services in India | Starting ₹99',
+    default: 'Flux3D — Custom 3D Printing and Manufacturing Services in India',
     template: '%s | Flux3D',
   },
   description:
-    "India's most trusted 3D printing service. Custom FDM & resin printing for industrial parts, architecture models, student projects, medical models & corporate gifts. Powered by Bambu Lab P2S. Pan-India delivery. Starting ₹99.",
+    'Flux3D provides custom 3D printing, prototyping, model printing, ready-made products, and related manufacturing services in India.',
   keywords: [
     '3D printing India',
-    '3D printing Pune',
-    '3D printing Mumbai',
     'custom 3D printing service',
-    'FDM printing India',
-    'resin printing India',
+    'custom manufacturing India',
     'rapid prototyping India',
-    'Bambu Lab P2S',
-    '3D printing near me',
-    'cheap 3D printing India',
-    '3D printing for students',
-    'industrial 3D printing',
-    'architecture models 3D print',
-    'corporate gifting 3D print',
+    'model printing India',
+    'ready-made 3D products',
     'online 3D printing India',
   ],
   authors: [{ name: 'Flux3D', url: 'https://flux3d.in' }],
@@ -81,9 +55,9 @@ export const metadata: Metadata = {
     locale: 'en_IN',
     url: 'https://flux3d.in',
     siteName: 'Flux3D',
-    title: 'Flux3D — Premium 3D Printing Services in India | Starting ₹99',
+    title: 'Flux3D — Custom 3D Printing and Manufacturing Services in India',
     description:
-      'Custom 3D printing for businesses, students & creators. Industrial precision, fast turnaround, pan-India delivery. Starting ₹99.',
+      'Flux3D provides custom 3D printing, prototyping, model printing, ready-made products, and related manufacturing services in India.',
     images: [
       {
         url: '/opengraph-image.png',
@@ -95,8 +69,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Flux3D — Premium 3D Printing Services in India',
-    description: 'Custom 3D printing starting ₹99. Pan-India delivery. Powered by Bambu Lab P2S.',
+    title: 'Flux3D — Custom 3D Printing and Manufacturing Services in India',
+    description: 'Flux3D provides custom 3D printing, prototyping, model printing, ready-made products, and related manufacturing services in India.',
     images: ['/twitter-image.png'],
   },
   alternates: {
@@ -109,6 +83,7 @@ export const metadata: Metadata = {
   },
   other: {
     'facebook-domain-verification': '2so08kooblq8716z4823mqn6etbbg6',
+    'color-scheme': 'light dark',
   },
   category: 'technology',
 }
@@ -125,53 +100,13 @@ function toJsonLd(value: unknown) {
   return JSON.stringify(value).replace(/</g, '\\u003c')
 }
 
-async function trackInitialPageVisit(params: {
-  sessionId: string
-  pageUrl: string
-  referrerUrl: string | null
-}) {
-  try {
-    const supabase = await createServerSupabaseClient()
-    const { data } = await supabase.auth.getUser()
-    await trackPageVisit({
-      user_id: data.user?.id ?? null,
-      session_id: params.sessionId,
-      page_url: params.pageUrl,
-      page_name: null,
-      referrer_url: params.referrerUrl,
-    })
-  } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[tracking] Failed to enqueue initial page visit:', error)
-    }
-  }
-}
-
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  await connection()
   const headerStore = await headers()
-  const cookieStore = await cookies()
   const nonce = headerStore.get('x-nonce') ?? undefined
-  const currentPath = headerStore.get('x-current-path') ?? '/'
-  const currentUrl = headerStore.get('x-current-url') ?? currentPath
-  const referrerUrl = headerStore.get('referer')
-  const sessionId =
-    cookieStore.get('flux3d_session_id')?.value ??
-    cookieStore.get('flux3d_track_token')?.value ??
-    headerStore.get('x-track-token') ??
-    crypto.randomUUID()
-
-  if (!currentPath.startsWith('/admin')) {
-    void trackInitialPageVisit({
-      sessionId,
-      pageUrl: currentUrl,
-      referrerUrl,
-    })
-  }
 
   const settings = await getSettings()
   const orgJsonLd = makeOrganizationJsonLd(settings)
@@ -181,8 +116,12 @@ export default async function RootLayout({
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${inter.variable} ${dmSans.variable} ${jetBrainsMono.variable}`}
     >
+      <head>
+        {DNS_PREFETCH_ORIGINS.map((href) => (
+          <link key={`dns-prefetch-${href}`} rel="dns-prefetch" href={href} />
+        ))}
+      </head>
       <body suppressHydrationWarning>
         <script
           nonce={nonce}
@@ -196,30 +135,11 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: toJsonLd(webJsonLd) }}
         />
-        <CartProvider>
-          <SettingsProvider initialSettings={settings}>
-            <ErrorBoundary>
-              <VisitorTracker />
-              <SessionTracker />
-              <TrackingBootstrap />
-              {children}
-            </ErrorBoundary>
-          </SettingsProvider>
-        </CartProvider>
-        <Analytics />
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ANALYTICS_ID}`}
-          strategy="afterInteractive"
-          nonce={nonce}
-        />
-        <Script id="google-analytics" strategy="afterInteractive" nonce={nonce}>
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){window.dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GOOGLE_ANALYTICS_ID}');
-          `}
-        </Script>
+        <ErrorBoundary>
+          <DeferredTracking />
+          {children}
+        </ErrorBoundary>
+        <DeferredGoogleAnalytics measurementId={GOOGLE_ANALYTICS_ID} />
       </body>
     </html>
   )

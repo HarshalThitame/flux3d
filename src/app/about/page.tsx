@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { getSettings } from '@/lib/settings'
+import { buildPublicBusinessProfile, validatePublicBusinessProfile } from '@/lib/public-business'
 
 export const dynamic = 'force-static'
 
@@ -9,20 +10,25 @@ import AboutContent from './AboutContent'
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings()
+  const profile = buildPublicBusinessProfile(settings)
+  const missing = validatePublicBusinessProfile(profile)
+  if (missing.length > 0) {
+    throw new Error(`Missing required public business fields: ${missing.join(', ')}`)
+  }
   return {
-    title: `${settings.businessName} — India's Premier 3D Printing Studio | Pune Based`,
-    description: settings.businessDescription || 'Learn about Flux3D, Pune-based 3D printing studio using Bambu Lab printers for precision parts, prototypes, and products across India. Fast turnaround, transparent pricing.',
-    keywords: ['3D printing Pune', 'Bambu Lab 3D printing India', 'additive manufacturing studio', 'Flux 3D about', 'precision 3D printing'],
+    title: 'About Us',
+    description: `${profile.brandName} is the public brand used by ${profile.legalName} for custom 3D printing and manufacturing services in India.`,
+    keywords: ['Flux3D about', 'custom 3D printing India', 'custom manufacturing India', 'Flux3D legal name', '3D printing services'],
     alternates: { canonical: '/about' },
     openGraph: {
-      title: `${settings.businessName} — Where Ideas Become Reality`,
-      description: settings.businessDescription || 'Pune-based additive manufacturing studio using Bambu Lab printers. Serving makers, engineers, startups across India with precision 3D printing.',
-      url: '/about',
+      title: 'About Us',
+      description: `${profile.brandName} is the public brand used by ${profile.legalName} for custom 3D printing and manufacturing services in India.`,
+      url: 'https://flux3d.in/about',
       type: 'website',
     },
     twitter: {
-      title: `${settings.businessName} — India's Premier 3D Printing Studio`,
-      description: settings.businessDescription || 'Precision additive manufacturing studio based in Pune. Bambu Lab-powered 3D printing for all industries across India.',
+      title: 'About Us',
+      description: `${profile.brandName} is the public brand used by ${profile.legalName} for custom 3D printing and manufacturing services in India.`,
     },
   }
 }

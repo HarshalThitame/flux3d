@@ -1,7 +1,6 @@
 import { cache } from 'react'
 import 'server-only'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { getBusinessSettings } from '@/lib/admin/business-settings'
 import type { BusinessSettings, BusinessSettingsRow } from '@/lib/admin/business-settings'
 import { FALLBACK_SETTINGS, getFallbackSettings } from '@/lib/settings-fallback'
 
@@ -232,8 +231,7 @@ export type PublicBusinessSettings = Omit<BusinessSettings,
   'upiQrCodeUrl'>
 
 export async function getPublicSettings(): Promise<PublicBusinessSettings> {
-  const settings = await getBusinessSettings()
-  if (!settings) return FALLBACK as PublicBusinessSettings
+  const settings = await getSettings()
   const publicSettings = { ...settings }
   delete (publicSettings as Record<string, unknown>).smtpHost
   delete (publicSettings as Record<string, unknown>).smtpPort

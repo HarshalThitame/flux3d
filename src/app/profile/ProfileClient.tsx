@@ -634,7 +634,6 @@ export default function ProfileClient({
                   alt={`${profile.name} avatar`}
                   width={80}
                   height={80}
-                  unoptimized
                   className="h-full w-full object-cover"
                 />
               ) : (

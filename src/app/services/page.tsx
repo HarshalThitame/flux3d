@@ -3,12 +3,7 @@ import { Metadata } from 'next'
 export const dynamic = 'force-static'
 
 import Navbar from '@/components/Navbar'
-import ServicesHero from './ServicesHero'
-import ServicesList from './ServicesList'
-import WhyChooseUs from './WhyChooseUs'
-import HowToOrder from './HowToOrder'
-import FAQSection from './FAQSection'
-import BottomCTA from './BottomCTA'
+import ServicesClientBoundary from './ServicesClientBoundary'
 
 export const metadata: Metadata = {
   title: {
@@ -25,12 +20,7 @@ export default function ServicesPage() {
   return (
     <div className="services-premium-shell min-h-screen overflow-hidden bg-[#05060A] text-white">
       <Navbar transparent />
-      <ServicesHero />
-      <ServicesList />
-      <WhyChooseUs />
-      <HowToOrder />
-      <FAQSection />
-      <BottomCTA />
+      <ServicesClientBoundary />
     </div>
   )
 }

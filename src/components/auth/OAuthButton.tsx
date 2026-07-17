@@ -8,17 +8,26 @@ type OAuthProvider = 'google'
 type OAuthButtonProps = {
   nextPath: string
   provider?: OAuthProvider
+  className?: string
 }
 
 const providerConfig = {
   google: {
     label: 'Continue with Google',
     loadingLabel: 'Redirecting to Google...',
-    icon: <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#FFFFFF]">G</span>,
+    icon: (
+      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#4285F4] shadow-sm">
+        G
+      </span>
+    ),
   },
 }
 
-export default function OAuthButton({ nextPath, provider = 'google' }: OAuthButtonProps) {
+export default function OAuthButton({
+  nextPath,
+  provider = 'google',
+  className = '',
+}: OAuthButtonProps) {
   const [loading, setLoading] = useState(false)
 
   const handleOAuthLogin = async () => {
@@ -55,7 +64,7 @@ export default function OAuthButton({ nextPath, provider = 'google' }: OAuthButt
       type="button"
       onClick={handleOAuthLogin}
       disabled={loading}
-      className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border border-[#6d28d9]/10 bg-white/[0.04] px-4 py-3 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
+      className={`inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-white/12 bg-white/[0.075] px-4 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:border-white/22 hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
     >
       {config.icon}
       {loading ? config.loadingLabel : config.label}

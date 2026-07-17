@@ -23,17 +23,31 @@ function getAvatarUrl(user: User) {
   return null
 }
 
+function getProfilePhone(user: User, fallbackPhone?: string) {
+  const metadataPhone =
+    typeof user.user_metadata.phone === 'string'
+      ? user.user_metadata.phone
+      : typeof user.user_metadata.phone_number === 'string'
+        ? user.user_metadata.phone_number
+        : null
+
+  return fallbackPhone?.trim() || metadataPhone
+}
+
 export async function upsertProfileForUser(
   supabase: SupabaseClient,
   user: User,
-  fallbackName?: string
+  fallbackName?: string,
+  fallbackPhone?: string
 ) {
+  const phone = getProfilePhone(user, fallbackPhone)
   const { error } = await supabase.from('profiles').upsert(
     {
       id: user.id,
       email: user.email,
       name: getProfileName(user, fallbackName),
       avatar_url: getAvatarUrl(user),
+      ...(phone ? { phone, phone_number: phone } : {}),
     },
     {
       onConflict: 'id',

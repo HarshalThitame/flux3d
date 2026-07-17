@@ -1,13 +1,20 @@
 'use client'
 
-import { motion, useInView, type Variants } from 'framer-motion'
-import { useRef } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
 type FadeInProps = {
-  children: React.ReactNode
+  children: ReactNode
   className?: string
   delay?: number
   direction?: 'up' | 'down' | 'left' | 'right' | 'none'
+}
+
+const OFFSETS = {
+  up: { x: '0px', y: '24px' },
+  down: { x: '0px', y: '-24px' },
+  left: { x: '24px', y: '0px' },
+  right: { x: '-24px', y: '0px' },
+  none: { x: '0px', y: '0px' },
 }
 
 export default function FadeIn({
@@ -16,36 +23,18 @@ export default function FadeIn({
   delay = 0,
   direction = 'up',
 }: FadeInProps) {
-  const ref = useRef<HTMLDivElement | null>(null)
-  const inView = useInView(ref, { once: true, margin: '-60px' })
-
-  const variants: Variants = {
-    hidden: {
-      opacity: 0,
-      y: direction === 'up' ? 24 : direction === 'down' ? -24 : 0,
-      x: direction === 'left' ? 24 : direction === 'right' ? -24 : 0,
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      x: 0,
-      transition: {
-        duration: 0.6,
-        delay,
-        ease: [0.16, 1, 0.3, 1],
-      },
-    },
-  }
+  const offset = OFFSETS[direction]
 
   return (
-    <motion.div
-      ref={ref}
-      className={className}
-      initial="hidden"
-      animate={inView ? 'visible' : 'hidden'}
-      variants={variants}
+    <div
+      className={`fade-in-section ${className ?? ''}`}
+      style={{
+        '--fade-delay': `${delay}s`,
+        '--fade-x': offset.x,
+        '--fade-y': offset.y,
+      } as CSSProperties}
     >
       {children}
-    </motion.div>
+    </div>
   )
 }

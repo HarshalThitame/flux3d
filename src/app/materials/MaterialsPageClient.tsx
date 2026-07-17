@@ -1,18 +1,42 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Suspense } from 'react'
 import dynamic from 'next/dynamic'
-import MaterialsHero from './MaterialsHero'
-import ComparisonTable from './ComparisonTable'
-import MaterialCards from './MaterialCards'
-import MaterialSelectorTool from './MaterialSelectorTool'
-import FDMvsResin from './FDMvsResin'
-import PostProcessing from './PostProcessing'
-import MaterialFAQ from './MaterialFAQ'
-import MaterialsCTA from './MaterialsCTA'
+import RouteChunkLoader from '@/components/RouteChunkLoader'
 
 const NavbarClient = dynamic(() => import('@/components/NavbarClient'), { ssr: false })
+const MaterialsHero = dynamic(() => import('./MaterialsHero'), {
+  ssr: false,
+  loading: () => <RouteChunkLoader className="text-white" minHeight="82svh" label="Loading materials hero" />,
+})
+const ComparisonTable = dynamic(() => import('./ComparisonTable'), {
+  ssr: false,
+  loading: () => <RouteChunkLoader className="text-white" minHeight="420px" label="Loading comparison table" />,
+})
+const MaterialCards = dynamic(() => import('./MaterialCards'), {
+  ssr: false,
+  loading: () => <RouteChunkLoader className="text-white" minHeight="640px" label="Loading material cards" />,
+})
+const MaterialSelectorTool = dynamic(() => import('./MaterialSelectorTool'), {
+  ssr: false,
+  loading: () => <RouteChunkLoader className="text-white" minHeight="520px" label="Loading material selector" />,
+})
+const FDMvsResin = dynamic(() => import('./FDMvsResin'), {
+  ssr: false,
+  loading: () => <RouteChunkLoader className="text-white" minHeight="420px" label="Loading material comparison" />,
+})
+const PostProcessing = dynamic(() => import('./PostProcessing'), {
+  ssr: false,
+  loading: () => <RouteChunkLoader className="text-white" minHeight="420px" label="Loading post-processing" />,
+})
+const MaterialFAQ = dynamic(() => import('./MaterialFAQ'), {
+  ssr: false,
+  loading: () => <RouteChunkLoader className="text-white" minHeight="360px" label="Loading material FAQs" />,
+})
+const MaterialsCTA = dynamic(() => import('./MaterialsCTA'), {
+  ssr: false,
+  loading: () => <RouteChunkLoader className="text-white" minHeight="320px" label="Loading material call to action" />,
+})
 
 type MaterialProperties = {
   strength?: string
@@ -138,20 +162,18 @@ export default function MaterialsPageClient() {
   }
 
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#05060A]" />}>
-      <div className="materials-premium-shell min-h-screen overflow-hidden bg-[#05060A] text-white">
-        <NavbarClient transparent user={null} />
-        <main>
-          <MaterialsHero />
-          <ComparisonTable materials={displayComparisonMaterials} />
-          <MaterialCards materials={displayMaterialCardsData} />
-          <MaterialSelectorTool />
-          <FDMvsResin />
-          <PostProcessing />
-          <MaterialFAQ />
-          <MaterialsCTA />
-        </main>
-      </div>
-    </Suspense>
+    <div className="materials-premium-shell min-h-screen overflow-hidden bg-[#05060A] text-white">
+      <NavbarClient transparent user={null} />
+      <main>
+        <MaterialsHero />
+        <ComparisonTable materials={displayComparisonMaterials} />
+        <MaterialCards materials={displayMaterialCardsData} />
+        <MaterialSelectorTool />
+        <FDMvsResin />
+        <PostProcessing />
+        <MaterialFAQ />
+        <MaterialsCTA />
+      </main>
+    </div>
   )
 }

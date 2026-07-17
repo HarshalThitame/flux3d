@@ -6,28 +6,115 @@ import { getAuthCallbackUrl, normalizeNextPath } from '@/lib/auth/redirect'
 import { upsertProfileForUser } from '@/lib/auth/profile'
 import {
   type AuthFormState,
+  normalizeName,
   validateEmail,
+  validateName,
   validatePassword,
 } from '@/lib/auth/validation'
 
-function readString(formData: FormData, key: string) {
+function readString(formData: FormData, key: string, options: { trim?: boolean } = {}) {
   const value = formData.get(key)
-  return typeof value === 'string' ? value.trim() : ''
+  if (typeof value !== 'string') {
+    return ''
+  }
+
+  return options.trim === false ? value : value.trim()
+}
+
+function formatSignupError(message?: string) {
+  const fallback = 'Unable to create your account right now. Please try again.'
+  const rawMessage = message || fallback
+  const normalizedMessage = rawMessage.toLowerCase()
+
+  if (normalizedMessage.includes('already') || normalizedMessage.includes('registered')) {
+    return 'An account already exists for this email. Log in or reset your password.'
+  }
+
+  if (normalizedMessage.includes('rate') || normalizedMessage.includes('too many')) {
+    return 'Too many signup attempts. Please wait a moment and try again.'
+  }
+
+  if (normalizedMessage.includes('confirmation') || normalizedMessage.includes('confirm')) {
+    return 'Email confirmation is not configured. Please contact support or try signing in with Google.'
+  }
+
+  return rawMessage
+}
+
+function formatLoginError(message?: string) {
+  const fallback = 'Unable to sign in right now. Please try again.'
+  const rawMessage = message || fallback
+  const normalizedMessage = rawMessage.toLowerCase()
+
+  if (normalizedMessage.includes('invalid login') || normalizedMessage.includes('invalid credentials')) {
+    return 'Email or password is incorrect. Check your details or reset your password.'
+  }
+
+  if (normalizedMessage.includes('email not confirmed') || normalizedMessage.includes('not confirmed')) {
+    return 'Confirm your email before logging in. Check your inbox or continue with Google.'
+  }
+
+  if (normalizedMessage.includes('rate') || normalizedMessage.includes('too many')) {
+    return 'Too many login attempts. Please wait a moment and try again.'
+  }
+
+  return rawMessage
+}
+
+function formatForgotPasswordError(message?: string): AuthFormState {
+  const fallback = 'Unable to send a reset link right now. Please try again.'
+  const rawMessage = message || fallback
+  const normalizedMessage = rawMessage.toLowerCase()
+
+  if (
+    normalizedMessage.includes('user not found') ||
+    normalizedMessage.includes('user does not exist') ||
+    normalizedMessage.includes('not found') ||
+    normalizedMessage.includes('not exist')
+  ) {
+    return {
+      status: 'success',
+      message: 'If an account exists for that email, a secure reset link will arrive shortly.',
+    }
+  }
+
+  if (normalizedMessage.includes('rate') || normalizedMessage.includes('too many')) {
+    return {
+      status: 'error',
+      message: 'Too many reset requests. Please wait a moment and try again.',
+    }
+  }
+
+  if (normalizedMessage.includes('redirect') || normalizedMessage.includes('email')) {
+    return {
+      status: 'error',
+      message: 'Password reset email could not be sent. Please try again or contact support.',
+    }
+  }
+
+  return {
+    status: 'error',
+    message: rawMessage,
+  }
 }
 
 export async function signupAction(
   _prevState: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
-  const name = readString(formData, 'name')
+  const name = normalizeName(readString(formData, 'name'))
   const email = readString(formData, 'email').toLowerCase()
-  const password = readString(formData, 'password')
+  const phone = readString(formData, 'phone')
+  const password = readString(formData, 'password', { trim: false })
+  const confirmPassword = readString(formData, 'confirmPassword', { trim: false })
   const nextPath = normalizeNextPath(readString(formData, 'next'))
+  const acceptedTerms = formData.get('terms') === 'on'
 
   const fieldErrors: AuthFormState['fieldErrors'] = {}
 
-  if (name.length < 2) {
-    fieldErrors.name = ['Enter your full name.']
+  const nameErrors = validateName(name)
+  if (nameErrors.length > 0) {
+    fieldErrors.name = nameErrors
   }
 
   if (!validateEmail(email)) {
@@ -39,7 +126,17 @@ export async function signupAction(
     fieldErrors.password = passwordErrors
   }
 
-  if (fieldErrors.name || fieldErrors.email || fieldErrors.password) {
+  if (!confirmPassword) {
+    fieldErrors.confirmPassword = ['Confirm your password.']
+  } else if (password !== confirmPassword) {
+    fieldErrors.confirmPassword = ['Passwords do not match.']
+  }
+
+  if (!acceptedTerms) {
+    fieldErrors.terms = ['Accept the terms to create your account.']
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
     return {
       status: 'error',
       fieldErrors,
@@ -55,20 +152,15 @@ export async function signupAction(
       emailRedirectTo: callbackUrl,
       data: {
         full_name: name,
+        ...(phone ? { phone, phone_number: phone } : {}),
       },
     },
   })
 
   if (error) {
-    if (error.message?.toLowerCase().includes('confirmation') || error.message?.toLowerCase().includes('confirm')) {
-      return {
-        status: 'error',
-        message: 'Email confirmation is not configured. Please contact support or try signing in with Google.',
-      }
-    }
     return {
       status: 'error',
-      message: error.message,
+      message: formatSignupError(error.message),
     }
   }
 
@@ -81,7 +173,7 @@ export async function signupAction(
 
   if (data.session) {
     try {
-      await upsertProfileForUser(supabase, data.user, name)
+      await upsertProfileForUser(supabase, data.user, name, phone)
     } catch (profileError) {
       console.error('[Auth] Failed to create profile during signup', profileError)
     }
@@ -91,7 +183,7 @@ export async function signupAction(
   return {
     status: 'success',
     message:
-      'Account created successfully! You can now sign in.',
+      'Account created. Check your email to confirm your address, then sign in.',
   }
 }
 
@@ -100,7 +192,7 @@ export async function loginAction(
   formData: FormData
 ): Promise<AuthFormState> {
   const email = readString(formData, 'email').toLowerCase()
-  const password = readString(formData, 'password')
+  const password = readString(formData, 'password', { trim: false })
   const nextPath = normalizeNextPath(readString(formData, 'next'))
 
   const fieldErrors: AuthFormState['fieldErrors'] = {}
@@ -111,9 +203,11 @@ export async function loginAction(
 
   if (!password) {
     fieldErrors.password = ['Enter your password.']
+  } else if (password.length > 128) {
+    fieldErrors.password = ['Use 128 characters or fewer.']
   }
 
-  if (fieldErrors.email || fieldErrors.password) {
+  if (Object.keys(fieldErrors).length > 0) {
     return {
       status: 'error',
       fieldErrors,
@@ -129,7 +223,7 @@ export async function loginAction(
   if (error || !data.user) {
     return {
       status: 'error',
-      message: error?.message ?? 'Unable to sign in.',
+      message: formatLoginError(error?.message),
     }
   }
 
@@ -147,6 +241,7 @@ export async function forgotPasswordAction(
   formData: FormData
 ): Promise<AuthFormState> {
   const email = readString(formData, 'email').toLowerCase()
+  const nextPath = normalizeNextPath(readString(formData, 'next'))
 
   if (!validateEmail(email)) {
     return {
@@ -158,21 +253,20 @@ export async function forgotPasswordAction(
   }
 
   const supabase = await createServerSupabaseClient()
-  const callbackUrl = await getAuthCallbackUrl('/auth/update-password')
+  const callbackUrl = await getAuthCallbackUrl(
+    `/auth/update-password?next=${encodeURIComponent(nextPath)}`
+  )
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: callbackUrl,
   })
 
   if (error) {
-    return {
-      status: 'error',
-      message: error.message,
-    }
+    return formatForgotPasswordError(error.message)
   }
 
   return {
     status: 'success',
-    message: 'Password reset email sent. Open the link there to continue.',
+    message: 'If an account exists for that email, a secure reset link will arrive shortly.',
   }
 }
 
@@ -180,7 +274,7 @@ export async function updatePasswordAction(
   _prevState: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
-  const password = readString(formData, 'password')
+  const password = readString(formData, 'password', { trim: false })
   const nextPath = normalizeNextPath(readString(formData, 'next'), '/profile')
   const passwordErrors = validatePassword(password)
 

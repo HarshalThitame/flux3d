@@ -22,11 +22,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: 'https://flux3d.in', lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
+    { url: 'https://flux3d.in/about', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: 'https://flux3d.in/contact', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: 'https://flux3d.in/features', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: 'https://flux3d.in/services', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: 'https://flux3d.in/materials', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
     { url: 'https://flux3d.in/gallery', lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: 'https://flux3d.in/pricing', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: 'https://flux3d.in/instant-quote', lastModified: new Date(), changeFrequency: 'monthly', priority: 1 },
+    { url: 'https://flux3d.in/privacy-policy', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.6 },
+    { url: 'https://flux3d.in/terms-and-conditions', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.6 },
+    { url: 'https://flux3d.in/refund-policy', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.6 },
+    { url: 'https://flux3d.in/service-delivery-policy', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.6 },
     { url: 'https://flux3d.in/blog', lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
   ]
 

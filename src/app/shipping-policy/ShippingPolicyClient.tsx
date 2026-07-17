@@ -7,240 +7,148 @@ import { useBusinessSettings } from '@/lib/settings-context'
 
 export default function ShippingPolicyClient() {
   const { settings } = useBusinessSettings()
+  const supportEmail = settings.supportEmail || settings.primaryEmail || 'flux3d.in@gmail.com'
+  const supportPhone = settings.primaryPhone || '+919623023480'
+  const address = [
+    settings.addressLine1,
+    settings.addressLine2,
+    settings.city,
+    settings.state,
+    settings.postalCode,
+    settings.country,
+  ].filter(Boolean).join(', ')
+
+  const effectiveDate = 'July 17, 2026'
+  const updatedDate = 'July 17, 2026'
+
   return (
     <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
-      {/* Header */}
-      <div className="border-b border-[#6d28d9]/10 bg-[#FFFFFF]/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-[1200px] mx-auto px-6 py-4">
+      <div className="sticky top-0 z-50 border-b border-[#6d28d9]/10 bg-[#FFFFFF]/50 backdrop-blur-sm">
+        <div className="mx-auto max-w-[1200px] px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D]">
               flux<span className="text-[#6d28d9]">3d</span>
             </Link>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-sm text-[#6F7192] hover:text-[#0F1B3D] transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
+            <Link href="/" className="inline-flex items-center gap-2 text-sm text-[#6F7192] transition-colors hover:text-[#0F1B3D]">
+              <ArrowLeft className="h-4 w-4" />
               Back to Home
             </Link>
           </div>
         </div>
       </div>
 
-      <div className="max-w-[800px] mx-auto px-6 py-8">
-        <motion.main
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          {/* Title Section */}
+      <div className="mx-auto max-w-[800px] px-6 py-8">
+        <motion.main initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="mb-12">
-            <div className="inline-flex items-center gap-2 bg-[#6d28d9]/10 text-[#6d28d9] px-4 py-2 rounded-full text-sm font-medium mb-6">
-              <Truck className="w-4 h-4" />
-              Shipping Policy
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#6d28d9]/10 px-4 py-2 text-sm font-medium text-[#6d28d9]">
+              <Truck className="h-4 w-4" />
+              Shipping & Delivery Policy
             </div>
-            <h1 className="font-[var(--font-syne)] text-4xl md:text-5xl font-extrabold text-[#0F1B3D] mb-4">
-              Shipping <span className="text-[#6d28d9]">Policy</span>
+            <h1 className="mb-4 font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D] md:text-5xl">
+              Shipping & <span className="text-[#6d28d9]">Delivery</span>
             </h1>
             <div className="flex flex-wrap gap-4 text-sm text-[#6F7192]">
-              <span>Effective Date: January 1, 2025</span>
+              <span>Effective Date: {effectiveDate}</span>
               <span>·</span>
-              <span>Last Updated: May 3, 2025</span>
+              <span>Last Updated: {updatedDate}</span>
             </div>
           </div>
 
-          {/* Shipping Coverage */}
-          <div className="bg-gradient-to-r from-[#6d28d9]/20 to-transparent border border-[#6d28d9]/30 rounded-2xl p-8 mb-12">
+          <div className="mb-12 rounded-2xl border border-[#6d28d9]/30 bg-gradient-to-r from-[#6d28d9]/10 to-transparent p-8">
             <div className="flex items-start gap-4">
-              <MapPin className="w-8 h-8 text-[#6d28d9] flex-shrink-0 mt-1" />
+              <MapPin className="mt-1 h-8 w-8 shrink-0 text-[#6d28d9]" />
               <div>
-                <h2 className="text-2xl font-bold text-[#0F1B3D] mb-2">Pan-India Delivery</h2>
-                <p className="text-[#6F7192] leading-relaxed">
-                  We ship 3D printed products to all major cities and towns across India.
-                  From Mumbai to Delhi, Bangalore to Chennai — we&apos;ve got you covered.
+                <h2 className="mb-2 text-2xl font-bold text-[#0F1B3D]">Digital service, physical dispatch</h2>
+                <p className="leading-relaxed text-[#6F7192]">
+                  Flux 3D delivers digitally ordered manufacturing services and ready-made products. No physical goods unrelated to the service are sold, and no shipping charge applies unless it is shown before checkout or included in the approved quotation.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Policy Sections */}
           <div className="space-y-10">
-            {/* Processing Time */}
             <section>
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">1</span>
-                Processing Time
+              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">1</span>
+                Delivery Coverage
               </h2>
-              <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6 text-[#6F7192] leading-relaxed">
-                <p className="mb-4">All orders require processing time before shipment:</p>
-                <ul className="space-y-3">
-                  {[
-                    { label: 'Standard Prints', time: '1-3 business days' },
-                    { label: 'Complex/ Large Prints', time: '3-5 business days' },
-                    { label: 'Multi-part Orders', time: '5-7 business days' },
-                  ].map((item) => (
-                    <li key={item.label} className="flex items-center justify-between border-b border-[#6d28d9]/10 pb-3 last:border-0 last:pb-0">
-                      <span>{item.label}</span>
-                      <span className="text-[#0F1B3D] font-medium">{item.time}</span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-4 text-sm">
-                  Processing time does not include weekends, holidays, or the time required for
-                  you to approve the final design (if applicable).
-                </p>
+              <div className="space-y-4 leading-relaxed text-[#6F7192]">
+                <p>Flux 3D delivers custom 3D-printed orders and ready-made products across serviceable PIN codes in India.</p>
+                <p>Delivery availability depends on courier-service coverage. International shipping is not available unless Flux 3D confirms it separately in writing.</p>
               </div>
             </section>
 
-            {/* Shipping Methods */}
             <section>
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">2</span>
-                Shipping Methods & Costs
+              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">2</span>
+                Production and Processing Time
               </h2>
-              <div className="space-y-4">
-                <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-[#0F1B3D] mb-4">Delivery Partners</h3>
-                  <div className="flex flex-wrap gap-3 mb-6">
-                    {['Delhivery', 'Shiprocket', 'DTDC', 'Bluedart'].map((partner) => (
-                      <span key={partner} className="bg-white/[0.03] border border-[#6d28d9]/10 px-4 py-2 rounded-lg text-sm text-[#0F1B3D]">
-                        {partner}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="space-y-3">
-                    {[
-                      { zone: 'Within Mumbai', time: '1-2 days', cost: '₹49' },
-                      { zone: 'Metro Cities', time: '2-4 days', cost: '₹99' },
-                      { zone: 'Tier 2 Cities', time: '3-5 days', cost: '₹149' },
-                      { zone: 'Rest of India', time: '4-7 days', cost: '₹199' },
-                    ].map((item) => (
-                      <div key={item.zone} className="flex items-center justify-between border-b border-[#6d28d9]/10 pb-3 last:border-0">
-                        <span className="text-[#6F7192]">{item.zone}</span>
-                        <span className="text-[#0F1B3D] text-sm">{item.time}</span>
-                        <span className="text-[#6d28d9] font-semibold">{item.cost}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <p className="text-sm text-[#6F7192]">
-                  Orders above ₹999 qualify for free shipping within Mumbai. Orders above ₹1999
-                  qualify for free shipping across India.
-                </p>
+              <div className="space-y-4 leading-relaxed text-[#6F7192]">
+                <p><strong className="text-[#0F1B3D]">Custom 3D-printed orders:</strong> Production normally begins after payment confirmation and acceptance of the final specifications. Estimated production time is generally 3-7 business days. Large, complex, high-quantity or specially finished orders may require additional time.</p>
+                <p><strong className="text-[#0F1B3D]">Ready-made products:</strong> In-stock ready-made products are normally processed for dispatch within 1-3 business days after payment confirmation. Orders placed on Sundays or public holidays will be processed on the next working day.</p>
+                <p>Production time and courier-delivery time are separate.</p>
               </div>
             </section>
 
-            {/* Order Tracking */}
             <section>
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">3</span>
-                Order Tracking
+              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">3</span>
+                Delivery Time
               </h2>
-              <div className="text-[#6F7192] leading-relaxed">
-                <p className="mb-4">
-                  Once your order ships, you will receive a confirmation email with:
-                </p>
-                <ul className="space-y-2 ml-6 mb-4">
-                  {[
-                    'Tracking number and courier partner details',
-                    'Estimated delivery date',
-                    'Link to track your shipment online',
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <span className="text-[#6d28d9] mt-1.5">•</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <p>
-                  You can also track your order by logging into your account on our website
-                  or contacting our support team.
-                </p>
+              <div className="space-y-4 leading-relaxed text-[#6F7192]">
+                <p>After dispatch, delivery normally takes approximately 3-8 business days, depending on the destination PIN code, courier availability and external conditions.</p>
+                <p>Remote or difficult-to-service locations may take longer. Delivery dates are estimates and are not guaranteed.</p>
+                <p>Delays may occur due to weather, transportation disruption, public holidays, courier limitations, strikes, natural events, regulatory restrictions or other circumstances outside Flux 3D&apos;s reasonable control.</p>
               </div>
             </section>
 
-            {/* Delivery Issues */}
             <section>
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">4</span>
-                Delivery Issues
+              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">4</span>
+                Shipping Charges
               </h2>
-              <div className="space-y-4">
-                <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-[#0F1B3D] mb-3">Damaged or Lost Packages</h3>
-                  <p className="text-[#6F7192] mb-3">
-                    If your package arrives damaged or doesn&apos;t arrive:
-                  </p>
-                  <ul className="space-y-2">
-                    {[
-                      'Contact us within 48 hours of delivery (for damaged items)',
-                      'Provide photos of the damaged package and contents',
-                      'We will investigate with the courier and arrange replacement',
-                      'For lost packages, we will reship or provide a full refund',
-                    ].map((item) => (
-                      <li key={item} className="flex items-start gap-2 text-[#6F7192]">
-                        <span className="text-[#6d28d9] mt-1.5">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-[#0F1B3D] mb-3">Failed Deliveries</h3>
-                  <p className="text-[#6F7192] mb-3">
-                    If delivery fails due to:
-                  </p>
-                  <ul className="space-y-2">
-                    {[
-                      'Incorrect address: Contact us to update and reship (reshipping fee applies)',
-                      'No one available: Courier will attempt 2 more deliveries',
-                      'Refused package: Treated as order cancellation (policy applies)',
-                    ].map((item) => (
-                      <li key={item} className="flex items-start gap-2 text-[#6F7192]">
-                        <span className="text-[#6d28d9] mt-1.5">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              <div className="space-y-4 leading-relaxed text-[#6F7192]">
+                <p>Shipping charges will be displayed before payment or included in the approved quotation. Charges may depend on product weight, dimensions, declared value, destination and courier service.</p>
+                <p>Any free-shipping offer will apply only when clearly displayed for the relevant order. Customers will not be charged an undisclosed shipping amount after payment without their approval.</p>
               </div>
             </section>
 
-            {/* International Shipping */}
             <section>
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-4 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">5</span>
-                International Shipping
+              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">5</span>
+                Order Tracking and Inspection
               </h2>
-              <div className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-xl p-6 text-[#6F7192] leading-relaxed">
-                <p className="mb-3">
-                  Currently, we only ship within India. We are working on expanding to
-                  international markets. Subscribe to our newsletter to be notified when
-                  international shipping becomes available.
-                </p>
+              <div className="space-y-4 leading-relaxed text-[#6F7192]">
+                <p>Tracking details will be shared by email, SMS, WhatsApp or through the customer&apos;s order page when tracking is available. Tracking information may take up to 24 hours after dispatch to become active.</p>
+                <p>Customers should inspect the package at delivery. When packaging appears visibly damaged, the customer should photograph the package before opening it, record an unpacking video where reasonably possible, retain the original packaging, and report the problem within 48 hours.</p>
               </div>
             </section>
 
-            {/* Contact */}
-            <section className="bg-[#FFFFFF] border border-[#6d28d9]/10 rounded-2xl p-8">
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D] mb-6 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#6d28d9]/10 text-[#6d28d9] text-sm font-bold">6</span>
-                Shipping Questions?
+            <section>
+              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">6</span>
+                Lost, Delayed and Returned Shipments
               </h2>
-              <p className="text-[#6F7192] mb-6">
-                For any shipping-related questions or concerns, please contact our support team:
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { label: 'Support Email', value: settings.supportEmail || 'support@flux3d.com' },
-                  { label: 'Phone', value: settings.primaryPhone || '+91 96230 23480' },
-                  { label: 'Address', value: [settings.city, settings.state, settings.postalCode].filter(Boolean).join(' - ') || 'Mumbai, Maharashtra - 400053' },
-                  { label: 'Hours', value: settings.businessHours || 'Mon-Sat: 9 AM – 8 PM IST' },
-                ].map((item) => (
-                  <div key={item.label} className="bg-white/[0.03] rounded-xl p-4">
-                    <p className="text-sm text-[#6F7192] mb-1">{item.label}</p>
-                    <p className="text-sm text-[#0F1B3D]">{item.value}</p>
-                  </div>
-                ))}
+              <div className="space-y-4 leading-relaxed text-[#6F7192]">
+                <p>An order will not be considered lost merely because it is delayed. Flux 3D will first investigate the shipment with the courier partner.</p>
+                <p>When the courier confirms that the package is lost, Flux 3D may provide a replacement, reprinting, reshipment or full refund. The customer will not be charged again when the shipment was lost due to Flux 3D or its courier partner.</p>
+                <p>When a shipment is returned because the address was incorrect, the customer was unavailable, delivery was refused, the courier could not contact the customer, or multiple delivery attempts failed, Flux 3D may request an additional shipping payment before resending the order.</p>
+                <p>For custom products, the manufacturing cost will not normally be refundable where the product was correctly produced but could not be delivered because of customer-provided information or customer unavailability.</p>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-[#6d28d9]/10 bg-[#faf9f7] p-8">
+              <h2 className="mb-6 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">7</span>
+                Customer Responsibility and Support
+              </h2>
+              <div className="space-y-4 leading-relaxed text-[#6F7192]">
+                <p>Customers must provide a complete and accurate shipping address, including recipient name, house or business details, street and locality, city and state, correct PIN code, active mobile number and delivery instructions where necessary.</p>
+                <p>Flux 3D is not responsible for delays or failed deliveries caused by an incomplete or incorrect address supplied by the customer. Any additional shipping cost caused by an incorrect address, refused delivery or repeated delivery attempt may be charged to the customer.</p>
+                <p><strong className="text-[#0F1B3D]">Support email:</strong> <a className="text-[#6d28d9] hover:underline" href={`mailto:${supportEmail}`}>{supportEmail}</a></p>
+                <p><strong className="text-[#0F1B3D]">Support phone:</strong> <a className="text-[#6d28d9] hover:underline" href={`tel:${supportPhone.replace(/[^0-9+]/g, '')}`}>{supportPhone}</a></p>
+                <p><strong className="text-[#0F1B3D]">Address:</strong> {address || 'Not published'}</p>
+                <p>The customer should not discard the product or packaging until the claim has been reviewed.</p>
               </div>
             </section>
           </div>

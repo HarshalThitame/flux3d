@@ -8,32 +8,32 @@ const steps = [
   {
     icon: Upload,
     step: '1',
-    title: 'Upload Your File',
-    description: 'Send us your STL, STEP, DXF, or OBJ file via our website or WhatsApp. Don\'t have a file? Describe your idea — our team will handle the modeling.'
+    title: 'Share Your Requirement',
+    description: 'Upload a design file or describe the part, product or model you need. We review the request before confirming the order.'
   },
   {
     icon: MessageSquare,
     step: '2',
-    title: 'Get an Instant Quote',
-    description: 'Standard prints are auto-quoted in seconds. Custom and industrial orders get a manual quote within 2 hours. No hidden charges, ever.'
+    title: 'Receive a Quotation',
+    description: 'We confirm the material, colour, quantity, finish, shipping and production details, then send the final price or quote.'
   },
   {
     icon: CreditCard,
     step: '3',
     title: 'Pay Securely Online',
-    description: 'UPI · Razorpay · Google Pay · PhonePe · Debit/Credit Cards · Net Banking · Cash on Delivery in select cities.'
+    description: 'Payments are handled through the checkout flow with server-side verification before an order is marked paid.'
   },
   {
     icon: Printer,
     step: '4',
-    title: 'We Print & Quality Check',
-    description: 'Your part is printed on our Bambu Lab P2S fleet, photographed at every stage, and inspected before packing.'
+    title: 'Production and QC',
+    description: 'The order is manufactured, checked, and prepared for dispatch after the final approved specifications are locked in.'
   },
   {
     icon: Package,
     step: '5',
-    title: 'Delivered to Your Door',
-    description: 'Shipped via Delhivery or Shiprocket with live tracking. Pan-India delivery in 3–5 days.'
+    title: 'Delivered to You',
+    description: 'The completed order is shipped to a serviceable location in India. Tracking is shared when available.'
   }
 ]
 
@@ -55,7 +55,7 @@ export default function HowItWorksSection() {
         >
           <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">The Process</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
-            From File to Doorstep{' '}
+            From Requirement to Dispatch{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#a855f7]">
               in 5 Steps.
             </span>
@@ -103,8 +103,8 @@ export default function HowItWorksSection() {
           className="text-center mt-16"
         >
           <p className="text-lg text-[#0F1B3D] mb-4">Ready to start?</p>
-          <a href="/instant-quote" className="inline-flex items-center gap-2 bg-[#6d28d9] text-white px-8 py-3 rounded-xl font-medium hover:shadow-[0_0_30px_rgba(109, 40, 217,0.3)] transition-shadow">
-            Upload Your File Now
+          <a href="/contact" className="inline-flex items-center gap-2 bg-[#6d28d9] text-white px-8 py-3 rounded-xl font-medium hover:shadow-[0_0_30px_rgba(109, 40, 217,0.3)] transition-shadow">
+            Request a Quote
             <ArrowRight className="w-4 h-4" />
           </a>
         </motion.div>

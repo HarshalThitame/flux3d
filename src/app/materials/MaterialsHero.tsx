@@ -2,6 +2,7 @@
 
 import { motion, useInView, useReducedMotion, type Variants } from 'framer-motion'
 import { useEffect, useRef } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -15,6 +16,8 @@ import {
   Thermometer,
 } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
+import DeferredHeroVideo from '@/components/DeferredHeroVideo'
+import { createRafThrottledCallback } from '@/lib/raf-throttle'
 
 const materialHighlights = [
   { label: 'PLA+', value: 'Clean prototypes', meta: 'Sharp, light, fast' },
@@ -57,13 +60,16 @@ function MaterialsPremiumFX() {
   const meterRef = useRef<HTMLSpanElement | null>(null)
 
   useEffect(() => {
-    let frame = 0
+    let pointerFrame = 0
+    let pointerX = 0
 
     const updatePointer = (event: PointerEvent) => {
       if (!window.matchMedia('(pointer: fine)').matches) return
-      window.cancelAnimationFrame(frame)
-      frame = window.requestAnimationFrame(() => {
-        document.documentElement.style.setProperty('--materials-pointer-x', `${event.clientX}px`)
+      pointerX = event.clientX
+      if (pointerFrame) return
+      pointerFrame = window.requestAnimationFrame(() => {
+        pointerFrame = 0
+        document.documentElement.style.setProperty('--materials-pointer-x', `${pointerX}px`)
       })
     }
 
@@ -75,17 +81,19 @@ function MaterialsPremiumFX() {
         meterRef.current.style.transform = `scaleX(${progress})`
       }
     }
+    const scheduleProgress = createRafThrottledCallback(updateProgress)
 
     updateProgress()
     window.addEventListener('pointermove', updatePointer, { passive: true })
-    window.addEventListener('scroll', updateProgress, { passive: true })
-    window.addEventListener('resize', updateProgress)
+    window.addEventListener('scroll', scheduleProgress, { passive: true })
+    window.addEventListener('resize', scheduleProgress)
 
     return () => {
-      window.cancelAnimationFrame(frame)
+      if (pointerFrame) window.cancelAnimationFrame(pointerFrame)
+      scheduleProgress.cancel()
       window.removeEventListener('pointermove', updatePointer)
-      window.removeEventListener('scroll', updateProgress)
-      window.removeEventListener('resize', updateProgress)
+      window.removeEventListener('scroll', scheduleProgress)
+      window.removeEventListener('resize', scheduleProgress)
     }
   }, [])
 
@@ -109,14 +117,17 @@ export default function MaterialsHero() {
   return (
     <section ref={ref} className="materials-hero-premium relative isolate overflow-hidden px-4 pb-12 pt-8 text-white md:px-8 lg:px-16">
       <MaterialsPremiumFX />
-      <video
+      <Image
+        src="/printer2-poster.webp"
+        alt=""
+        fill
+        preload
+        sizes="100vw"
         className="materials-hero-video absolute inset-0 h-full w-full object-cover"
-        src="/printer2.mp4"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
+      />
+      <DeferredHeroVideo
+        src="/printer2-optimized.mp4"
+        className="materials-hero-video absolute inset-0 h-full w-full object-cover"
       />
       <div className="materials-hero-depth" aria-hidden="true" />
       <div className="materials-hero-grid" aria-hidden="true" />

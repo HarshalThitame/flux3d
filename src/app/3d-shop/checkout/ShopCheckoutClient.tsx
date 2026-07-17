@@ -305,7 +305,7 @@ export default function ShopCheckoutClient() {
 
       orderCompletionRef.current = true
       clearCart()
-      router.push(`/3d-shop/order-success?orderId=${encodeURIComponent(data.orderId)}`)
+      router.push(`/3d-shop/payment/${encodeURIComponent(data.orderId)}`)
     } catch (error) {
       setToast(error instanceof Error ? error.message : 'Failed to place order.')
     } finally {
@@ -327,7 +327,7 @@ export default function ShopCheckoutClient() {
         <div className="mb-8">
           <p className="text-sm font-semibold text-[var(--brand-primary)]">3D Shop</p>
           <h1 className="mt-2 text-4xl font-extrabold text-[var(--text-primary)]">Checkout</h1>
-          <p className="mt-2 text-[var(--text-secondary)]">Cash on Delivery for ready-to-ship products.</p>
+          <p className="mt-2 text-[var(--text-secondary)]">Secure online payment through PayU for the confirmed order amount.</p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
@@ -454,8 +454,8 @@ export default function ShopCheckoutClient() {
                 <div className="flex items-center gap-3">
                   <Banknote className="h-6 w-6 text-[var(--brand-primary)]" />
                   <div>
-                    <div className="font-bold text-[var(--text-primary)]">Cash on Delivery</div>
-                    <div className="mt-1 text-sm text-[var(--text-secondary)]">Pay when your order arrives</div>
+                    <div className="font-bold text-[var(--text-primary)]">PayU checkout</div>
+                    <div className="mt-1 text-sm text-[var(--text-secondary)]">Pay securely after the order is created</div>
                   </div>
                   <CheckCircle2 className="ml-auto h-5 w-5 text-emerald-600" />
                 </div>

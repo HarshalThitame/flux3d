@@ -20,12 +20,13 @@ import {
 import Navbar from '@/components/Navbar'
 import ProductCard from '@/components/shop/ProductCard'
 import RecentlyViewedDynamic from '@/components/shop/RecentlyViewedDynamic'
+import DeferredHeroVideo from '@/components/DeferredHeroVideo'
 import { buildShopCategoryTree, getShopHomeData } from '@/lib/shop/public-data'
 import { formatShopPrice } from '@/lib/shop/selection'
 import { absoluteUrl } from '@/lib/site'
 import ShopPremiumFX from './ShopPremiumFX'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export const metadata: Metadata = {
   title: '3D Shop — Flux3D',
@@ -66,7 +67,7 @@ export default async function ShopHomePage() {
   const consoleRows = [
     { label: 'Store signal', value: productCount ? `${productCount} picks` : 'curated', width: '76%' },
     { label: 'Lead item', value: heroProduct?.category_name || 'Flux3D', width: '58%' },
-    { label: 'Checkout', value: 'COD ready', width: '64%' },
+    { label: 'Checkout', value: 'Secure online pay', width: '64%' },
     { label: 'Finish QA', value: 'visual', width: '48%' },
   ]
 
@@ -77,15 +78,18 @@ export default async function ShopHomePage() {
 
       <main className="shop-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-white">
         <section className="shop-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-white sm:px-6 md:px-10 lg:px-12">
-          <video
+          <Image
+            src="/printer2-poster.webp"
+            alt=""
+            fill
+            preload
+            sizes="100vw"
             className="shop-hero-video absolute inset-0 h-full w-full object-cover"
-            src="/printer2.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            aria-label="Flux3D 3D printer motion behind shop hero"
+          />
+          <DeferredHeroVideo
+            src="/printer2-optimized.mp4"
+            className="shop-hero-video absolute inset-0 h-full w-full object-cover"
+            ariaLabel="Flux3D 3D printer motion behind shop hero"
           />
           <div className="shop-hero-depth" aria-hidden="true" />
           <div className="shop-hero-grid" aria-hidden="true" />

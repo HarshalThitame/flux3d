@@ -3,6 +3,10 @@ import { createAdminSupabaseClient, isCurrentUserAdmin } from '@/lib/admin/serve
 
 export const dynamic = 'force-dynamic'
 
+const PUBLIC_CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+}
+
 type MaterialRow = {
   id: string
   name: string
@@ -86,7 +90,7 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json({ materials })
+    return NextResponse.json({ materials }, { headers: PUBLIC_CACHE_HEADERS })
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to fetch materials' },

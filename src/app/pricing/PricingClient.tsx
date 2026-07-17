@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion, useReducedMotion, type Variants } from 'framer-motion'
 import { useEffect, useRef } from 'react'
 import {
@@ -18,6 +19,8 @@ import {
   UploadCloud,
   Wand2,
 } from 'lucide-react'
+import DeferredHeroVideo from '@/components/DeferredHeroVideo'
+import { createRafThrottledCallback } from '@/lib/raf-throttle'
 
 type MaterialPricing = {
   name: string
@@ -101,13 +104,16 @@ function PricingPremiumFX() {
   const meterRef = useRef<HTMLSpanElement | null>(null)
 
   useEffect(() => {
-    let frame = 0
+    let pointerFrame = 0
+    let pointerX = 0
 
     const updatePointer = (event: PointerEvent) => {
       if (!window.matchMedia('(pointer: fine)').matches) return
-      window.cancelAnimationFrame(frame)
-      frame = window.requestAnimationFrame(() => {
-        document.documentElement.style.setProperty('--pricing-pointer-x', `${event.clientX}px`)
+      pointerX = event.clientX
+      if (pointerFrame) return
+      pointerFrame = window.requestAnimationFrame(() => {
+        pointerFrame = 0
+        document.documentElement.style.setProperty('--pricing-pointer-x', `${pointerX}px`)
       })
     }
 
@@ -119,17 +125,19 @@ function PricingPremiumFX() {
         meterRef.current.style.transform = `scaleX(${progress})`
       }
     }
+    const scheduleProgress = createRafThrottledCallback(updateProgress)
 
     updateProgress()
     window.addEventListener('pointermove', updatePointer, { passive: true })
-    window.addEventListener('scroll', updateProgress, { passive: true })
-    window.addEventListener('resize', updateProgress)
+    window.addEventListener('scroll', scheduleProgress, { passive: true })
+    window.addEventListener('resize', scheduleProgress)
 
     return () => {
-      window.cancelAnimationFrame(frame)
+      if (pointerFrame) window.cancelAnimationFrame(pointerFrame)
+      scheduleProgress.cancel()
       window.removeEventListener('pointermove', updatePointer)
-      window.removeEventListener('scroll', updateProgress)
-      window.removeEventListener('resize', updateProgress)
+      window.removeEventListener('scroll', scheduleProgress)
+      window.removeEventListener('resize', scheduleProgress)
     }
   }, [])
 
@@ -150,8 +158,35 @@ export default function PricingClient({
 }) {
   const reduceMotion = useReducedMotion()
   const displayMaterials = materials.filter((material) => material.name).slice(0, 8)
+  if (displayMaterials.length === 0) {
+    return (
+      <main className="pricing-premium-content text-white">
+        <PricingPremiumFX />
+        <section className="relative mx-auto flex min-h-[82svh] w-full max-w-[1220px] items-center px-6 py-20">
+          <div className="max-w-2xl">
+            <p className="text-sm font-bold uppercase text-cyan-200">Pricing unavailable</p>
+            <h1 className="mt-3 text-4xl font-black leading-tight text-white md:text-6xl">
+              Public material pricing is not configured yet.
+            </h1>
+            <p className="mt-4 text-sm leading-7 text-white/[0.72]">
+              Flux 3D can still review your file and provide a custom quotation. Please use the contact page to request a quote and share your requirements.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/contact" className="pricing-primary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#05060a] transition hover:bg-[#f1eeff]">
+                Contact sales
+              </Link>
+              <Link href="/features" className="pricing-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/[0.18] bg-white/10 px-6 text-sm font-bold text-white backdrop-blur transition hover:border-cyan-300/40 hover:bg-cyan-300/[0.12]">
+                View services
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+    )
+  }
+
   const startingMaterial = displayMaterials.find((material) => Number(material.price_per_gram) > 0) || displayMaterials[0]
-  const startingPrice = startingMaterial?.price_per_gram || 3
+  const startingPrice = startingMaterial?.price_per_gram ?? 0
   const costStack = [
     { label: 'Material baseline', value: `₹${formatCurrency(startingPrice)}/g`, width: '38%' },
     { label: 'Geometry + supports', value: 'calculated', width: '68%' },
@@ -164,14 +199,17 @@ export default function PricingClient({
       <PricingPremiumFX />
 
       <section className="pricing-hero-premium relative isolate overflow-hidden px-4 pb-12 pt-6 text-white sm:px-6 md:px-10 lg:px-12">
-        <video
+        <Image
+          src="/printer2-poster.webp"
+          alt=""
+          fill
+          preload
+          sizes="100vw"
           className="pricing-hero-video absolute inset-0 h-full w-full object-cover"
-          src="/printer2.mp4"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
+        />
+        <DeferredHeroVideo
+          src="/printer2-optimized.mp4"
+          className="pricing-hero-video absolute inset-0 h-full w-full object-cover"
         />
         <div className="pricing-hero-depth" aria-hidden="true" />
         <div className="pricing-hero-grid" aria-hidden="true" />

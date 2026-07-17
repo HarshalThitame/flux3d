@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion, useReducedMotion, type Variants } from 'framer-motion'
 import { useEffect, useRef } from 'react'
 import {
@@ -19,6 +20,8 @@ import {
   Zap,
 } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
+import DeferredHeroVideo from '@/components/DeferredHeroVideo'
+import { createRafThrottledCallback } from '@/lib/raf-throttle'
 
 const heroStats = [
   { value: '500+', label: 'orders delivered' },
@@ -79,14 +82,19 @@ function ServicesPremiumFX() {
   const meterRef = useRef<HTMLSpanElement | null>(null)
 
   useEffect(() => {
-    let frame = 0
+    let pointerFrame = 0
+    let pointerX = 0
+    let pointerY = 0
 
     const updatePointer = (event: PointerEvent) => {
       if (!window.matchMedia('(pointer: fine)').matches) return
-      window.cancelAnimationFrame(frame)
-      frame = window.requestAnimationFrame(() => {
-        document.documentElement.style.setProperty('--services-pointer-x', `${event.clientX}px`)
-        document.documentElement.style.setProperty('--services-pointer-y', `${event.clientY}px`)
+      pointerX = event.clientX
+      pointerY = event.clientY
+      if (pointerFrame) return
+      pointerFrame = window.requestAnimationFrame(() => {
+        pointerFrame = 0
+        document.documentElement.style.setProperty('--services-pointer-x', `${pointerX}px`)
+        document.documentElement.style.setProperty('--services-pointer-y', `${pointerY}px`)
       })
     }
 
@@ -98,17 +106,19 @@ function ServicesPremiumFX() {
         meterRef.current.style.transform = `scaleX(${progress})`
       }
     }
+    const scheduleProgress = createRafThrottledCallback(updateProgress)
 
     updateProgress()
     window.addEventListener('pointermove', updatePointer, { passive: true })
-    window.addEventListener('scroll', updateProgress, { passive: true })
-    window.addEventListener('resize', updateProgress)
+    window.addEventListener('scroll', scheduleProgress, { passive: true })
+    window.addEventListener('resize', scheduleProgress)
 
     return () => {
-      window.cancelAnimationFrame(frame)
+      if (pointerFrame) window.cancelAnimationFrame(pointerFrame)
+      scheduleProgress.cancel()
       window.removeEventListener('pointermove', updatePointer)
-      window.removeEventListener('scroll', updateProgress)
-      window.removeEventListener('resize', updateProgress)
+      window.removeEventListener('scroll', scheduleProgress)
+      window.removeEventListener('resize', scheduleProgress)
     }
   }, [])
 
@@ -131,14 +141,17 @@ export default function ServicesHero() {
   return (
     <section className="services-hero-premium relative isolate overflow-hidden px-4 pb-10 pt-8 text-white md:px-8 lg:px-16">
       <ServicesPremiumFX />
-      <video
+      <Image
+        src="/printer2-poster.webp"
+        alt=""
+        fill
+        preload
+        sizes="100vw"
         className="services-hero-video absolute inset-0 h-full w-full object-cover"
-        src="/printer2.mp4"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
+      />
+      <DeferredHeroVideo
+        src="/printer2-optimized.mp4"
+        className="services-hero-video absolute inset-0 h-full w-full object-cover"
       />
       <div className="services-hero-depth" aria-hidden="true" />
       <div className="services-hero-grid" aria-hidden="true" />

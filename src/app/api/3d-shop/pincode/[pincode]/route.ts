@@ -13,6 +13,9 @@ type CachedPincode = {
 
 const pincodeCache = new Map<string, CachedPincode>()
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000
+const PINCODE_CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800',
+}
 
 export async function GET(_request: Request, context: { params: Promise<{ pincode: string }> }) {
   try {
@@ -23,7 +26,9 @@ export async function GET(_request: Request, context: { params: Promise<{ pincod
     }
 
     const cached = pincodeCache.get(normalized)
-    if (cached && cached.expiresAt > Date.now()) return NextResponse.json(cached.value)
+    if (cached && cached.expiresAt > Date.now()) {
+      return NextResponse.json(cached.value, { headers: PINCODE_CACHE_HEADERS })
+    }
 
     const response = await fetch(`https://api.postalpincode.in/pincode/${normalized}`, {
       next: { revalidate: 86400 },
@@ -40,7 +45,7 @@ export async function GET(_request: Request, context: { params: Promise<{ pincod
     }
 
     pincodeCache.set(normalized, { expiresAt: Date.now() + CACHE_TTL_MS, value })
-    return NextResponse.json(value)
+    return NextResponse.json(value, { headers: PINCODE_CACHE_HEADERS })
   } catch {
     return NextResponse.json({ serviceable: false, city: '', state: '', error: 'Could not verify pincode.' }, { status: 500 })
   }

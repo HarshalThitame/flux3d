@@ -52,8 +52,14 @@ function getPrimaryImage(order: ShopOrder) {
 
 function getPaymentModeLabel(value: string | null) {
   const normalized = value?.trim().toLowerCase()
-  if (!normalized || normalized === 'cod' || normalized === 'cash_on_delivery' || normalized === 'cash on delivery') {
-    return 'COD'
+  if (!normalized) {
+    return 'Not set'
+  }
+  if (normalized === 'payu') {
+    return 'PayU'
+  }
+  if (normalized === 'cod' || normalized === 'cash_on_delivery' || normalized === 'cash on delivery') {
+    return 'Cash on Delivery'
   }
   return value
 }

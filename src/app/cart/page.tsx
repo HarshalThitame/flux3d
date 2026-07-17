@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar'
 import CartClient from '@/components/cart/CartClient'
 import { getCurrentUserProfile } from '@/lib/auth/server'
 import { getPublicQuoteMaterials } from '@/lib/public-materials'
+import { CartProvider } from '@/lib/cart/context'
 import { absoluteUrl } from '@/lib/site'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,13 +24,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function CartPage() {
-  const auth = await getCurrentUserProfile()
-  const materials = await getPublicQuoteMaterials()
+  const [auth, materials, settings] = await Promise.all([
+    getCurrentUserProfile(),
+    getPublicQuoteMaterials(),
+    getSettings(),
+  ])
 
   return (
     <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
       <Navbar transparent />
-      <CartClient user={auth?.profile ?? null} materials={materials} />
+      <CartProvider initialSettings={settings}>
+        <CartClient user={auth?.profile ?? null} materials={materials} />
+      </CartProvider>
     </div>
   )
 }

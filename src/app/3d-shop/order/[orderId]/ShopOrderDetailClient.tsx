@@ -79,7 +79,13 @@ function getPrimaryItem(order: ShopOrder) {
 
 function getPaymentModeLabel(value: string | null) {
   const normalized = value?.trim().toLowerCase()
-  if (!normalized || normalized === 'cod' || normalized === 'cash_on_delivery' || normalized === 'cash on delivery') {
+  if (!normalized) {
+    return 'Not set'
+  }
+  if (normalized === 'payu') {
+    return 'PayU'
+  }
+  if (normalized === 'cod' || normalized === 'cash_on_delivery' || normalized === 'cash on delivery') {
     return 'Cash on Delivery'
   }
   return value
@@ -661,6 +667,18 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                     </span>
                   </div>
                 </div>
+                {order.payment_method?.toLowerCase() === 'payu' && order.payment_status !== 'paid' && (
+                  <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-7 text-amber-900">
+                    <p className="font-bold">Payment is still pending or failed.</p>
+                    <p className="mt-1">You can retry the secure PayU checkout for this order.</p>
+                    <Link
+                      href={`/3d-shop/payment/${order.id}`}
+                      className="mt-3 inline-flex min-h-[42px] items-center justify-center rounded-xl bg-[var(--brand-primary)] px-4 text-sm font-black text-white"
+                    >
+                      Complete payment
+                    </Link>
+                  </div>
+                )}
               </motion.section>
             </div>
 

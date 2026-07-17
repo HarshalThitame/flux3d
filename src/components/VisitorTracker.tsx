@@ -6,6 +6,21 @@ import { usePathname } from 'next/navigation'
 const ANON_ID_KEY = 'flux3d_anon_id'
 const TRACK_TOKEN_COOKIE = 'flux3d_track_token'
 
+function runWhenIdle(callback: () => void, timeout = 2500) {
+  const idleWindow = window as Window & {
+    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number
+    cancelIdleCallback?: (id: number) => void
+  }
+
+  if (idleWindow.requestIdleCallback && idleWindow.cancelIdleCallback) {
+    const idleId = idleWindow.requestIdleCallback(callback, { timeout })
+    return () => idleWindow.cancelIdleCallback?.(idleId)
+  }
+
+  const timeoutId = window.setTimeout(callback, Math.min(timeout, 1200))
+  return () => window.clearTimeout(timeoutId)
+}
+
 function getOrCreateAnonId(): string {
   if (typeof window === 'undefined') return ''
   let id = localStorage.getItem(ANON_ID_KEY)
@@ -31,42 +46,50 @@ export default function VisitorTracker() {
     // Skip admin pages
     if (pathname?.startsWith('/admin')) return
 
-    const anonId = getOrCreateAnonId()
-    const trackToken = getCookieValue(TRACK_TOKEN_COOKIE)
-    const now = Date.now()
+    let trackToken = ''
+    let startTime = 0
+    let started = false
 
-    // Start session if not exists
-    if (!sessionIdRef.current) {
-      sessionIdRef.current = crypto.randomUUID()
-    }
+    const cancelIdle = runWhenIdle(() => {
+      const anonId = getOrCreateAnonId()
+      trackToken = getCookieValue(TRACK_TOKEN_COOKIE)
+      startTime = Date.now()
+      started = true
 
-    const requestHeaders: Record<string, string> = {
-      'Content-Type': 'application/json',
-    }
-    if (trackToken) {
-      requestHeaders['x-track-token'] = trackToken
-    }
+      // Start session if not exists
+      if (!sessionIdRef.current) {
+        sessionIdRef.current = crypto.randomUUID()
+      }
 
-    // Send page_view event
-    fetch('/api/track', {
-      method: 'POST',
-      headers: requestHeaders,
-      body: JSON.stringify({
-        anonId,
-        sessionId: sessionIdRef.current,
-        pageUrl: pathname,
-        pageTitle: typeof document !== 'undefined' ? document.title : '',
-        referrer: typeof document !== 'undefined' ? document.referrer : '',
-        device: typeof navigator !== 'undefined' 
-          ? (navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop') 
-          : 'Unknown',
-        event: 'page_view',
-      }),
-    }).catch(() => {}) // silent fail
+      const requestHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      if (trackToken) {
+        requestHeaders['x-track-token'] = trackToken
+      }
+
+      // Send page_view event
+      fetch('/api/track', {
+        method: 'POST',
+        headers: requestHeaders,
+        body: JSON.stringify({
+          anonId,
+          sessionId: sessionIdRef.current,
+          pageUrl: pathname,
+          pageTitle: typeof document !== 'undefined' ? document.title : '',
+          referrer: typeof document !== 'undefined' ? document.referrer : '',
+          device: typeof navigator !== 'undefined'
+            ? (navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop')
+            : 'Unknown',
+          event: 'page_view',
+        }),
+      }).catch(() => {}) // silent fail
+    })
 
     // Track session end on unmount/leave
-    const startTime = now
     return () => {
+      cancelIdle()
+      if (!started) return
       const duration = Date.now() - startTime
       if (duration > 5000) { // only track sessions > 5 seconds
         fetch('/api/track', {
