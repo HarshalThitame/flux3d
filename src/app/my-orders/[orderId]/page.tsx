@@ -58,6 +58,15 @@ type OrderDetailRow = {
   discount_type: string | null
   estimated_time: number
   status: OrderStatus
+  payment_status: string
+  payment_provider: string | null
+  payment_method: string | null
+  payment_amount_paise: number
+  payment_currency: string
+  provider_order_id: string | null
+  provider_payment_id: string | null
+  payment_verified_at: string | null
+  payment_failed_at: string | null
   notes: string | null
   created_at: string
 }
@@ -74,7 +83,7 @@ export default async function OrderDetailPage({
   const { data: order, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, supports, post_processing_level, post_processing_charges, price_per_unit, material_cost, machine_cost, subtotal, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, final_price, grand_total, price, discount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, overhead_percent, overhead_amount, margin_percent, margin_amount, coupon_code, coupon_id, discount_type, estimated_time, status, cancel_requested, notes, created_at'
+      'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, supports, post_processing_level, post_processing_charges, price_per_unit, material_cost, machine_cost, subtotal, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, total_price, final_price, grand_total, price, discount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, overhead_percent, overhead_amount, margin_percent, margin_amount, coupon_code, coupon_id, discount_type, estimated_time, status, payment_status, payment_provider, payment_method, payment_amount_paise, payment_currency, provider_order_id, provider_payment_id, payment_verified_at, payment_failed_at, cancel_requested, notes, created_at'
     )
     .eq('id', orderId)
     .eq('user_id', auth.user.id)
@@ -173,7 +182,9 @@ export default async function OrderDetailPage({
                   month: 'long',
                   year: 'numeric',
                 })}
-                . This request is inquiry-based and does not include payment.
+                {row.payment_status === 'paid'
+                  ? 'This order has a verified payment attached and is moving through production.'
+                  : 'This order can be paid securely through Razorpay once it is ready for checkout.'}
               </p>
             </div>
             <div className="flex flex-col items-end gap-3">
@@ -183,12 +194,12 @@ export default async function OrderDetailPage({
                 {getOrderStatusLabel(row.status)}
               </div>
               <div className="flex gap-2">
-                {['pending', 'confirmed'].includes(row.status) && !row.cancel_requested && (
-                  <CancelOrderButton orderId={orderId} />
-                )}
-                {['confirmed', 'printing', 'shipped', 'delivered', 'completed'].includes(row.status) && (
-                  <DownloadInvoiceButton orderId={orderId} />
-                )}
+              {['pending', 'confirmed'].includes(row.status) && !row.cancel_requested && (
+                <CancelOrderButton orderId={orderId} />
+              )}
+              {['confirmed', 'printing', 'shipped', 'delivered', 'completed'].includes(row.status) && (
+                <DownloadInvoiceButton orderId={orderId} />
+              )}
               </div>
               {row.cancel_requested && (
                 <div className="text-xs font-medium text-rose-600">Cancellation requested</div>
@@ -428,6 +439,30 @@ export default async function OrderDetailPage({
                   <div key={line}>{line}</div>
                 ))}
               </div>
+            </div>
+
+            <div className="rounded-[28px] border border-[#6d28d9]/10 bg-white/[0.03] p-6 backdrop-blur-xl">
+              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                Payment
+              </h2>
+              <div className="mt-4 rounded-[20px] border border-[#6d28d9]/10 bg-white p-5">
+                <div className="text-xs font-semibold uppercase tracking-widest text-[#9ca3af]">Status</div>
+                <div className="mt-2 text-lg font-bold text-[#0F1B3D]">{row.payment_status}</div>
+                <div className="mt-3 text-sm text-[#6F7192]">
+                  Provider: {row.payment_provider ?? row.payment_method ?? 'Not set'}
+                </div>
+                <div className="mt-1 text-sm text-[#6F7192]">
+                  Amount: ₹{Math.round(Number(row.payment_amount_paise ?? 0) / 100).toLocaleString('en-IN')}
+                </div>
+              </div>
+              {row.payment_status !== 'paid' && (
+                <Link
+                  href={`/my-orders/${orderId}/pay`}
+                  className="mt-4 inline-flex min-h-[48px] items-center justify-center rounded-2xl bg-[#6d28d9] px-5 text-sm font-semibold text-white"
+                >
+                  Pay securely with Razorpay
+                </Link>
+              )}
             </div>
           </div>
         </div>

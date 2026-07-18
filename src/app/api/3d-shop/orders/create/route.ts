@@ -315,8 +315,19 @@ export async function POST(request: Request) {
             .from('shelf_orders')
             .update({
               order_source: 'shop',
-              payment_method: 'payu',
+              payment_provider: 'razorpay',
               payment_status: 'pending',
+              payment_purpose: 'shop_order',
+              payment_amount_paise: Math.round(totalAmount * 100),
+              payment_currency: 'INR',
+              payment_snapshot: {
+                subtotal,
+                discountAmount,
+                shippingCharge,
+                totalAmount,
+                items,
+                shippingAddress,
+              },
             })
             .eq('id', orderId)
 

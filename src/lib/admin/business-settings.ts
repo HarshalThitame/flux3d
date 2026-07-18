@@ -124,6 +124,21 @@ export type BusinessSettings = {
   cartDiscountTiers: CartDiscountTier[]
   pickupAvailable: boolean
   codAvailable: boolean
+  paymentsEnabled: boolean
+  razorpayEnabled: boolean
+  razorpayKeyId: string
+  razorpayEnvironment: string
+  razorpayCheckoutName: string
+  razorpayCheckoutDescription: string
+  razorpayBrandColor: string
+  razorpayPaymentMethods: string
+  razorpayTimeoutMinutes: number
+  razorpayOrderBufferMinutes: number
+  razorpayWebhookHealthy: boolean
+  razorpayLastConnectionCheckAt: string
+  razorpayLastConnectionStatus: string
+  razorpayLastConnectionMessage: string
+  razorpayRefundPermissionMode: string
 
   createdAt: string
   updatedAt: string
@@ -246,6 +261,21 @@ export type BusinessSettingsRow = {
   cart_discount_tiers: unknown | null
   pickup_available: boolean | null
   cod_available: boolean | null
+  payments_enabled: boolean | null
+  razorpay_enabled: boolean | null
+  razorpay_key_id: string | null
+  razorpay_environment: string | null
+  razorpay_checkout_name: string | null
+  razorpay_checkout_description: string | null
+  razorpay_brand_color: string | null
+  razorpay_payment_methods: string | null
+  razorpay_timeout_minutes: number | null
+  razorpay_order_buffer_minutes: number | null
+  razorpay_webhook_healthy: boolean | null
+  razorpay_last_connection_check_at: string | null
+  razorpay_last_connection_status: string | null
+  razorpay_last_connection_message: string | null
+  razorpay_refund_permission_mode: string | null
 
   created_at: string | null
   updated_at: string | null
@@ -424,6 +454,21 @@ export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettin
     cartDiscountTiers: parseCartDiscountTiers(row.cart_discount_tiers),
     pickupAvailable: bool(row.pickup_available),
     codAvailable: bool(row.cod_available),
+    paymentsEnabled: bool(row.payments_enabled ?? true),
+    razorpayEnabled: bool(row.razorpay_enabled ?? true),
+    razorpayKeyId: n(row.razorpay_key_id),
+    razorpayEnvironment: n(row.razorpay_environment),
+    razorpayCheckoutName: n(row.razorpay_checkout_name),
+    razorpayCheckoutDescription: n(row.razorpay_checkout_description),
+    razorpayBrandColor: n(row.razorpay_brand_color),
+    razorpayPaymentMethods: n(row.razorpay_payment_methods),
+    razorpayTimeoutMinutes: num(row.razorpay_timeout_minutes),
+    razorpayOrderBufferMinutes: num(row.razorpay_order_buffer_minutes),
+    razorpayWebhookHealthy: bool(row.razorpay_webhook_healthy),
+    razorpayLastConnectionCheckAt: n(row.razorpay_last_connection_check_at),
+    razorpayLastConnectionStatus: n(row.razorpay_last_connection_status),
+    razorpayLastConnectionMessage: n(row.razorpay_last_connection_message),
+    razorpayRefundPermissionMode: n(row.razorpay_refund_permission_mode),
 
     createdAt: row.created_at ?? '',
     updatedAt: row.updated_at ?? '',
@@ -538,6 +583,21 @@ export function toSnakeCase(data: Partial<BusinessSettings>): Record<string, unk
     cartDiscountTiers: 'cart_discount_tiers',
     pickupAvailable: 'pickup_available',
     codAvailable: 'cod_available',
+    paymentsEnabled: 'payments_enabled',
+    razorpayEnabled: 'razorpay_enabled',
+    razorpayKeyId: 'razorpay_key_id',
+    razorpayEnvironment: 'razorpay_environment',
+    razorpayCheckoutName: 'razorpay_checkout_name',
+    razorpayCheckoutDescription: 'razorpay_checkout_description',
+    razorpayBrandColor: 'razorpay_brand_color',
+    razorpayPaymentMethods: 'razorpay_payment_methods',
+    razorpayTimeoutMinutes: 'razorpay_timeout_minutes',
+    razorpayOrderBufferMinutes: 'razorpay_order_buffer_minutes',
+    razorpayWebhookHealthy: 'razorpay_webhook_healthy',
+    razorpayLastConnectionCheckAt: 'razorpay_last_connection_check_at',
+    razorpayLastConnectionStatus: 'razorpay_last_connection_status',
+    razorpayLastConnectionMessage: 'razorpay_last_connection_message',
+    razorpayRefundPermissionMode: 'razorpay_refund_permission_mode',
   }
 
   for (const [camel, snake] of Object.entries(map)) {

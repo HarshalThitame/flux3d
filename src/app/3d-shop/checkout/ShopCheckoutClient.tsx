@@ -327,7 +327,7 @@ export default function ShopCheckoutClient() {
         <div className="mb-8">
           <p className="text-sm font-semibold text-[var(--brand-primary)]">3D Shop</p>
           <h1 className="mt-2 text-4xl font-extrabold text-[var(--text-primary)]">Checkout</h1>
-          <p className="mt-2 text-[var(--text-secondary)]">Secure online payment through PayU for the confirmed order amount.</p>
+          <p className="mt-2 text-[var(--text-secondary)]">Secure online payment through Razorpay for the confirmed order amount.</p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
@@ -454,7 +454,7 @@ export default function ShopCheckoutClient() {
                 <div className="flex items-center gap-3">
                   <Banknote className="h-6 w-6 text-[var(--brand-primary)]" />
                   <div>
-                    <div className="font-bold text-[var(--text-primary)]">PayU checkout</div>
+                    <div className="font-bold text-[var(--text-primary)]">Razorpay checkout</div>
                     <div className="mt-1 text-sm text-[var(--text-secondary)]">Pay securely after the order is created</div>
                   </div>
                   <CheckCircle2 className="ml-auto h-5 w-5 text-emerald-600" />

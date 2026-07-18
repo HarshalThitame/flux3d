@@ -313,15 +313,112 @@ export type SupportTicket = {
 
 export type PaymentData = {
   id: string
-  transactionId: string
-  orderId: string
+  orderNumber: string
+  internalOrderType: 'shop_order' | 'custom_quote'
+  internalOrderId: string
   customer: string
-  amount: number
-  method: 'UPI' | 'Card' | 'Net Banking' | 'Cash on Delivery' | 'Razorpay'
-  status: 'Paid' | 'Pending' | 'Failed' | 'Refunded'
-  gateway: string
-  date: string
-  invoice?: string
+  customerEmail?: string | null
+  amountPaise: number
+  currency: string
+  provider: 'razorpay' | 'payu'
+  providerOrderId?: string | null
+  providerPaymentId?: string | null
+  paymentPurpose: 'shop_order' | 'custom_quote_full_payment' | 'custom_quote_deposit' | 'custom_quote_balance'
+  status: 'created' | 'pending' | 'authorized' | 'captured' | 'paid' | 'failed' | 'cancelled' | 'partially_refunded' | 'refunded' | 'disputed'
+  paymentMethod?: string | null
+  refundStatus?: string | null
+  attemptNumber: number
+  receipt?: string | null
+  createdAt: string
+  capturedAt?: string | null
+  failedAt?: string | null
+}
+
+export type PaymentAuditLogData = {
+  id: string
+  actorId: string | null
+  actorRole: string
+  action: string
+  entityType: string
+  entityId: string
+  previousState: Record<string, unknown> | null
+  newState: Record<string, unknown> | null
+  requestContext: Record<string, unknown> | null
+  createdAt: string
+}
+
+export type PaymentEventData = {
+  id: string
+  provider: 'razorpay' | 'payu'
+  providerEventId: string
+  eventType: string
+  providerOrderId: string | null
+  providerPaymentId: string | null
+  signatureVerified: boolean
+  processingStatus: 'received' | 'processing' | 'processed' | 'ignored' | 'failed'
+  retryCount: number
+  sanitizedPayload: Record<string, unknown>
+  processingError: string | null
+  receivedAt: string
+  processedAt: string | null
+}
+
+export type PaymentRefundData = {
+  id: string
+  paymentAttemptId: string
+  providerRefundId: string | null
+  amountPaise: number
+  status: 'created' | 'pending' | 'processed' | 'failed' | 'cancelled'
+  reason: string
+  speed: 'normal' | 'optimum' | null
+  initiatedByAdminId: string | null
+  providerResponse: Record<string, unknown>
+  createdAt: string
+  processedAt: string | null
+  failedAt: string | null
+}
+
+export type PaymentDetailData = {
+  attempt: PaymentData & {
+    metadata: Record<string, unknown>
+    customerId: string
+  }
+  order: Record<string, unknown> | null
+  refunds: PaymentRefundData[]
+  events: PaymentEventData[]
+  auditLogs: PaymentAuditLogData[]
+  providerDashboard: {
+    paymentUrl: string | null
+    orderUrl: string | null
+  }
+}
+
+export type ReconciliationRunData = {
+  id: string
+  dateRangeStart: string | null
+  dateRangeEnd: string | null
+  initiatedBy: string | null
+  status: string
+  matchedCount: number
+  mismatchCount: number
+  missingCount: number
+  report: Record<string, unknown>
+  startedAt: string
+  completedAt: string | null
+}
+
+export type WebhookHealthData = {
+  health: {
+    total: number
+    processed: number
+    failed: number
+    ignored: number
+    duplicateCount: number
+    lastReceivedAt: string | null
+    lastProcessedAt: string | null
+  }
+  events: PaymentEventData[]
+  reconciliationRuns: ReconciliationRunData[]
 }
 
 export type NotificationItem = {

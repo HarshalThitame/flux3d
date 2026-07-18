@@ -12,8 +12,8 @@ function createCspHeader({
   nonce?: string
 }) {
   const scriptSrc = nonce
-    ? `'self' 'nonce-${nonce}' 'strict-dynamic' https://www.googletagmanager.com https://va.vercel-scripts.com${isDev ? " 'unsafe-eval'" : ''}`
-    : `'self' 'unsafe-inline' https://www.googletagmanager.com https://va.vercel-scripts.com${isDev ? " 'unsafe-eval'" : ''}`
+    ? `'self' 'nonce-${nonce}' 'strict-dynamic' https://www.googletagmanager.com https://va.vercel-scripts.com https://checkout.razorpay.com${isDev ? " 'unsafe-eval'" : ''}`
+    : `'self' 'unsafe-inline' https://www.googletagmanager.com https://va.vercel-scripts.com https://checkout.razorpay.com${isDev ? " 'unsafe-eval'" : ''}`
 
   return [
     `default-src 'self'`,
@@ -21,8 +21,8 @@ function createCspHeader({
     `style-src 'self' 'unsafe-inline'`,
     `font-src 'self'`,
     `img-src 'self' data: blob: https:`,
-    `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://vitals.vercel-insights.com https://va.vercel-scripts.com`,
-    `frame-src 'none'`,
+    `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://vitals.vercel-insights.com https://va.vercel-scripts.com https://api.razorpay.com https://checkout.razorpay.com`,
+    `frame-src https://checkout.razorpay.com https://api.razorpay.com`,
     `frame-ancestors 'none'`,
     `object-src 'none'`,
     `base-uri 'self'`,

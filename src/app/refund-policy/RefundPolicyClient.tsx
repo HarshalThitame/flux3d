@@ -135,7 +135,7 @@ export default function RefundPolicyClient() {
                 <p><strong className="text-[#0F1B3D]">Contact page:</strong> <Link href="/contact" className="text-[#6d28d9] hover:underline">https://flux3d.in/contact</Link></p>
                 <p>The request must include the order number, payment transaction reference, reason for the request, relevant photographs or videos, and customer contact details.</p>
                 <p>Flux 3D will acknowledge the request within 2 business days and normally review it within 5 business days after receiving all required information.</p>
-                <p>Approved refunds will be initiated to the original payment method within 5-7 business days after approval. The time taken for the amount to appear in the customer&apos;s account depends on PayU, the issuing bank and the selected payment method. Once initiated, payment providers and banks may require additional time to complete the credit.</p>
+                <p>Approved refunds will be initiated to the original payment method within 5-7 business days after approval. The time taken for the amount to appear in the customer&apos;s account depends on Razorpay, the issuing bank and the selected payment method. Once initiated, payment providers and banks may require additional time to complete the credit.</p>
                 <p>Cash refunds or refunds to an unrelated bank account will not be provided. Customers will be informed when the refund has been initiated.</p>
                 <p>Depending on the bank and payment method, a processed refund can take approximately 5-21 days to reflect in the customer&apos;s account.</p>
               </div>

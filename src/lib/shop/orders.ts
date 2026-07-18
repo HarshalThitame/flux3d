@@ -9,7 +9,7 @@ export const shopOrderStatuses = [
   'returned',
 ] as const
 
-export const shopPaymentStatuses = ['pending', 'paid', 'failed', 'refunded'] as const
+export const shopPaymentStatuses = ['created', 'pending', 'authorized', 'captured', 'paid', 'failed', 'cancelled', 'partially_refunded', 'refunded', 'disputed'] as const
 
 export type ShopOrderStatus = (typeof shopOrderStatuses)[number]
 export type ShopPaymentStatus = (typeof shopPaymentStatuses)[number]
@@ -49,9 +49,20 @@ export type ShopOrder = {
   shipping_charge: number
   total_amount: number
   shipping_address: ShopShippingAddress
+  payment_provider: string | null
+  payment_purpose: string | null
   payment_method: string | null
   payment_status: ShopPaymentStatus
   payment_id: string | null
+  provider_order_id: string | null
+  provider_payment_id: string | null
+  payment_amount_paise: number
+  payment_currency: string
+  payment_snapshot: Record<string, unknown>
+  payment_verified_at: string | null
+  payment_failed_at: string | null
+  payment_refund_status: string | null
+  payment_refund_amount_paise: number
   order_status: ShopOrderStatus
   tracking_number: string | null
   courier_name: string | null
@@ -136,14 +147,26 @@ export function getShopOrderStatusClasses(status: ShopOrderStatus | string) {
 
 export function getShopPaymentStatusLabel(status: ShopPaymentStatus | string) {
   switch (status) {
+    case 'created':
+      return 'Created'
     case 'pending':
       return 'Pending'
+    case 'authorized':
+      return 'Authorized'
+    case 'captured':
+      return 'Captured'
     case 'paid':
       return 'Paid'
     case 'failed':
       return 'Failed'
+    case 'cancelled':
+      return 'Cancelled'
+    case 'partially_refunded':
+      return 'Partially Refunded'
     case 'refunded':
       return 'Refunded'
+    case 'disputed':
+      return 'Disputed'
     default:
       return String(status)
   }
@@ -151,17 +174,37 @@ export function getShopPaymentStatusLabel(status: ShopPaymentStatus | string) {
 
 export function getShopPaymentStatusClasses(status: ShopPaymentStatus | string) {
   switch (status) {
+    case 'created':
+      return 'border-slate-400/20 bg-slate-400/10 text-slate-700'
     case 'pending':
       return 'border-amber-400/20 bg-amber-400/10 text-amber-700'
+    case 'authorized':
+      return 'border-blue-400/20 bg-blue-400/10 text-blue-700'
+    case 'captured':
+      return 'border-cyan-500/20 bg-cyan-500/10 text-cyan-700'
     case 'paid':
       return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700'
     case 'failed':
       return 'border-rose-400/20 bg-rose-400/10 text-rose-700'
+    case 'cancelled':
+      return 'border-slate-400/20 bg-slate-400/10 text-slate-700'
+    case 'partially_refunded':
+      return 'border-orange-400/20 bg-orange-400/10 text-orange-700'
     case 'refunded':
       return 'border-slate-400/20 bg-slate-400/10 text-slate-700'
+    case 'disputed':
+      return 'border-violet-400/20 bg-violet-400/10 text-violet-700'
     default:
       return 'border-gray-200 bg-gray-50 text-[#6F7192]'
   }
+}
+
+export function getShopPaymentProviderLabel(provider: string | null | undefined) {
+  const normalized = provider?.trim().toLowerCase()
+  if (!normalized) return 'Not set'
+  if (normalized === 'razorpay') return 'Razorpay'
+  if (normalized === 'payu') return 'PayU'
+  return provider
 }
 
 export function formatShopOrderDate(value: string | null | undefined) {
@@ -243,11 +286,22 @@ export function mapShopOrderRow(row: Record<string, unknown>): ShopOrder {
       state: String(address.state ?? ''),
       pincode: String(address.pincode ?? ''),
     },
+    payment_provider: row.payment_provider ? String(row.payment_provider) : null,
+    payment_purpose: row.payment_purpose ? String(row.payment_purpose) : null,
     payment_method: row.payment_method ? String(row.payment_method) : null,
     payment_status: shopPaymentStatuses.includes(row.payment_status as ShopPaymentStatus)
       ? row.payment_status as ShopPaymentStatus
       : 'pending',
     payment_id: row.payment_id ? String(row.payment_id) : null,
+    provider_order_id: row.provider_order_id ? String(row.provider_order_id) : null,
+    provider_payment_id: row.provider_payment_id ? String(row.provider_payment_id) : null,
+    payment_amount_paise: normalizeShopOrderMoney(row.payment_amount_paise),
+    payment_currency: row.payment_currency ? String(row.payment_currency) : 'INR',
+    payment_snapshot: asRecord(row.payment_snapshot),
+    payment_verified_at: row.payment_verified_at ? String(row.payment_verified_at) : null,
+    payment_failed_at: row.payment_failed_at ? String(row.payment_failed_at) : null,
+    payment_refund_status: row.payment_refund_status ? String(row.payment_refund_status) : null,
+    payment_refund_amount_paise: normalizeShopOrderMoney(row.payment_refund_amount_paise),
     order_status: shopOrderStatuses.includes(row.order_status as ShopOrderStatus)
       ? row.order_status as ShopOrderStatus
       : 'placed',

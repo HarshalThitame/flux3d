@@ -55,6 +55,9 @@ function getPaymentModeLabel(value: string | null) {
   if (!normalized) {
     return 'Not set'
   }
+  if (normalized === 'razorpay') {
+    return 'Razorpay'
+  }
   if (normalized === 'payu') {
     return 'PayU'
   }
@@ -236,7 +239,9 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
                       </div>
                       <div className="px-3 py-4">
                         <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Mode</div>
-                        <div className="mt-1 text-sm font-black text-[var(--text-primary)]">{getPaymentModeLabel(order.payment_method)}</div>
+                        <div className="mt-1 text-sm font-black text-[var(--text-primary)]">
+                          {getPaymentModeLabel(order.payment_provider ?? order.payment_method)}
+                        </div>
                       </div>
                     </div>
                   </div>

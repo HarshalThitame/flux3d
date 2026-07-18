@@ -118,7 +118,7 @@ export default function PrivacyPolicyClient() {
                 </h2>
                 <div className="space-y-4 leading-relaxed text-[#6F7192]">
                   <p>We do not sell personal information. We may share information with service providers that help operate the website, payment gateway providers, shipping and courier partners, and professionals who help us comply with law or protect our rights.</p>
-                  <p>When payment is handled through PayU or another gateway, payment processing is completed by that gateway and we do not directly store complete card numbers, CVV, or UPI PINs on our servers.</p>
+                  <p>When payment is handled through Razorpay or another gateway, payment processing is completed by that gateway and we do not directly store complete card numbers, CVV, or UPI PINs on our servers.</p>
                 </div>
               </section>
 

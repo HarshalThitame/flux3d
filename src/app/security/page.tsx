@@ -41,7 +41,7 @@ export default async function SecurityPage() {
     {
       icon: CreditCard,
       title: 'Payment verification',
-      body: 'The PayU flow uses server-generated payment fields and verifies gateway responses before marking a payment successful.',
+      body: 'The Razorpay flow uses server-generated payment fields and verifies gateway responses before marking a payment successful.',
     },
     {
       icon: FileCheck2,
@@ -82,7 +82,7 @@ export default async function SecurityPage() {
             <ul className="mt-5 space-y-3 text-sm leading-7 text-white/75">
               <li>Public pages are served without login.</li>
               <li>Support details shown on the site use the verified Flux3D contact information.</li>
-              <li>PayU payment requests are built on the server, not in the browser.</li>
+              <li>Razorpay payment requests are built on the server, not in the browser.</li>
               <li>Gateway responses are verified before an order is marked paid.</li>
               <li>Customer support, refund, delivery, and legal pages are public and linked in the footer.</li>
             </ul>
