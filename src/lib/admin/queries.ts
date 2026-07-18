@@ -1287,12 +1287,60 @@ export async function getAdminFullAnalytics() {
 }
 
 export async function getAdminPaymentsData() {
+  const { listPaymentAttempts, listPaymentRefunds } = await import('@/lib/payments/repository')
+
+  const attempts = await listPaymentAttempts(200)
+  const refunds = await listPaymentRefunds(200)
+  const refundAmount = refunds
+    .filter((refund) => refund.status === 'processed' || refund.status === 'pending')
+    .reduce((sum, refund) => sum + Number(refund.amount_paise ?? 0), 0)
+
+  const payments = attempts.map((attempt) => {
+    const metadata = attempt.metadata && typeof attempt.metadata === 'object' && !Array.isArray(attempt.metadata)
+      ? attempt.metadata as Record<string, unknown>
+      : {}
+    const customer = metadata.customer && typeof metadata.customer === 'object' && !Array.isArray(metadata.customer)
+      ? metadata.customer as Record<string, unknown>
+      : {}
+
+    return {
+      id: attempt.id,
+      orderNumber: String(metadata.orderNumber ?? metadata.order_number ?? attempt.internal_order_id),
+      internalOrderType: attempt.internal_order_type,
+      internalOrderId: attempt.internal_order_id,
+      customer: String(customer.name ?? metadata.customer_name ?? 'Unknown'),
+      customerEmail: customer.email ? String(customer.email) : null,
+      amountPaise: Number(attempt.amount_paise ?? 0),
+      currency: attempt.currency,
+      provider: attempt.provider,
+      providerOrderId: attempt.provider_order_id,
+      providerPaymentId: attempt.provider_payment_id,
+      paymentPurpose: attempt.payment_purpose,
+      status: attempt.status,
+      paymentMethod: attempt.payment_method,
+      refundStatus: attempt.status === 'partially_refunded' || attempt.status === 'refunded' ? attempt.status : null,
+      attemptNumber: attempt.attempt_number,
+      receipt: attempt.receipt,
+      createdAt: attempt.created_at,
+      capturedAt: attempt.captured_at,
+      failedAt: attempt.failed_at,
+    }
+  })
+
+  const totalCollected = attempts
+    .filter((attempt) => attempt.status === 'paid' || attempt.status === 'captured')
+    .reduce((sum, attempt) => sum + Number(attempt.amount_paise ?? 0), 0)
+
+  const pending = attempts
+    .filter((attempt) => ['created', 'pending', 'authorized'].includes(attempt.status))
+    .reduce((sum, attempt) => sum + Number(attempt.amount_paise ?? 0), 0)
+
   return {
-    payments: [],
+    payments,
     summary: {
-      totalCollected: 0,
-      pending: 0,
-      refunded: 0,
+      totalCollected: totalCollected / 100,
+      pending: pending / 100,
+      refunded: refundAmount / 100,
       gatewayFees: 0,
     },
   }

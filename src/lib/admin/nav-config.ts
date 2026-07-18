@@ -17,6 +17,9 @@ import {
   TicketCheck,
   Star,
   Bell,
+  ReceiptText,
+  ScanSearch,
+  Webhook,
 } from 'lucide-react'
 
 export type NavItem = {
@@ -34,6 +37,9 @@ export const adminNavItems: NavItem[] = [
   { label: 'Products', href: '/admin/products', icon: Package, section: 'main' },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3, section: 'main' },
   { label: 'Payments', href: '/admin/payments', icon: CreditCard, section: 'main' },
+  { label: 'Refunds', href: '/admin/refunds', icon: ReceiptText, section: 'main' },
+  { label: 'Reconciliation', href: '/admin/reconciliation', icon: ScanSearch, section: 'main' },
+  { label: 'Webhook Health', href: '/admin/webhook-health', icon: Webhook, section: 'main' },
   { label: 'Materials', href: '/admin/materials', icon: Beaker, section: 'main' },
   { label: 'Offers', href: '/admin/offers', icon: Gift, section: 'main' },
   { label: 'Coupons', href: '/admin/coupons', icon: TicketCheck, section: 'main' },

@@ -152,7 +152,7 @@ export default function FooterSection() {
             <div>
               <p className="mb-2 text-xs font-medium uppercase tracking-normal text-slate-500">Payment Methods</p>
               <div className="flex flex-wrap gap-2">
-                {['UPI', 'Cards', 'Net Banking', 'PayU'].map((method) => (
+                {['UPI', 'Cards', 'Net Banking', 'Razorpay'].map((method) => (
                   <span key={method} className={badgeClass}>{method}</span>
                 ))}
               </div>

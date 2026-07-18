@@ -82,9 +82,8 @@ function getPaymentModeLabel(value: string | null) {
   if (!normalized) {
     return 'Not set'
   }
-  if (normalized === 'payu') {
-    return 'PayU'
-  }
+  if (normalized === 'razorpay') return 'Razorpay'
+  if (normalized === 'payu') return 'PayU'
   if (normalized === 'cod' || normalized === 'cash_on_delivery' || normalized === 'cash on delivery') {
     return 'Cash on Delivery'
   }
@@ -661,16 +660,20 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                 <div className="mt-4 flex items-center gap-3 rounded-2xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-4">
                   <Banknote className="h-5 w-5 shrink-0 text-[var(--brand-primary)]" />
                   <div className="min-w-0">
-                    <div className="font-black text-[var(--text-primary)]">{getPaymentModeLabel(order.payment_method)}</div>
-                    <span className={`mt-2 inline-flex rounded-full border px-2.5 py-1 text-xs font-black ${getShopPaymentStatusClasses(order.payment_status)}`}>
-                      {getShopPaymentStatusLabel(order.payment_status)}
-                    </span>
-                  </div>
+                <div className="font-black text-[var(--text-primary)]">
+                  {getPaymentModeLabel(order.payment_provider ?? order.payment_method)}
                 </div>
-                {order.payment_method?.toLowerCase() === 'payu' && order.payment_status !== 'paid' && (
+                <span className={`mt-2 inline-flex rounded-full border px-2.5 py-1 text-xs font-black ${getShopPaymentStatusClasses(order.payment_status)}`}>
+                  {getShopPaymentStatusLabel(order.payment_status)}
+                </span>
+              </div>
+            </div>
+                {order.payment_status !== 'paid' && order.payment_method?.toLowerCase() !== 'cod' && (
                   <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-7 text-amber-900">
                     <p className="font-bold">Payment is still pending or failed.</p>
-                    <p className="mt-1">You can retry the secure PayU checkout for this order.</p>
+                    <p className="mt-1">
+                      You can retry the secure Razorpay checkout for this order.
+                    </p>
                     <Link
                       href={`/3d-shop/payment/${order.id}`}
                       className="mt-3 inline-flex min-h-[42px] items-center justify-center rounded-xl bg-[var(--brand-primary)] px-4 text-sm font-black text-white"

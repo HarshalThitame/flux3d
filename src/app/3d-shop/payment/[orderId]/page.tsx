@@ -1,16 +1,14 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import Navbar from '@/components/Navbar'
-import { absoluteUrl } from '@/lib/site'
-import { buildPublicBusinessProfile } from '@/lib/public-business'
-import { getPayuConfig, buildPayuCheckoutFields } from '@/lib/payu'
-import { createAdminSupabaseClient } from '@/lib/admin/server'
+import RazorpayCheckoutClient from '@/components/payments/RazorpayCheckoutClient'
 import { getCurrentUserProfile } from '@/lib/auth/server'
+import { absoluteUrl } from '@/lib/site'
 import { getSettings } from '@/lib/settings'
-import { mapShopOrderRow, type ShopOrder } from '@/lib/shop/orders'
+import { buildPublicBusinessProfile } from '@/lib/public-business'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { formatShopPrice } from '@/lib/shop/selection'
-import PayuPaymentClient from './PayuPaymentClient'
+import { mapShopOrderRow, type ShopOrder } from '@/lib/shop/orders'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,8 +19,8 @@ type PaymentPageProps = {
 export async function generateMetadata({ params }: PaymentPageProps): Promise<Metadata> {
   const { orderId } = await params
   return {
-    title: 'Secure PayU Payment',
-    description: 'Review your Flux3D order summary and complete payment through the PayU checkout flow.',
+    title: 'Secure Razorpay Payment',
+    description: 'Review your Flux3D order summary and complete payment through Razorpay Checkout.',
     alternates: { canonical: absoluteUrl(`/3d-shop/payment/${orderId}`) },
   }
 }
@@ -44,7 +42,11 @@ function getItemCount(order: ShopOrder) {
   return order.items.reduce((count, item) => count + item.quantity, 0)
 }
 
-export default async function PayuPaymentPage({ params }: PaymentPageProps) {
+function getPrimaryImage(order: ShopOrder) {
+  return order.items.find((item) => item.productThumbnail)?.productThumbnail ?? null
+}
+
+export default async function RazorpayShopPaymentPage({ params }: PaymentPageProps) {
   const auth = await getCurrentUserProfile()
   if (!auth) redirect('/login')
 
@@ -52,122 +54,149 @@ export default async function PayuPaymentPage({ params }: PaymentPageProps) {
   const order = await getOrder(orderId, auth.profile.id)
   if (!order) notFound()
 
-  const config = getPayuConfig()
-  const settings = await getSettings()
-  const profile = buildPublicBusinessProfile(settings)
-
-  if (!config) {
-    return (
-      <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
-        <Navbar transparent />
-        <main className="mx-auto flex min-h-[70vh] max-w-3xl flex-col justify-center px-4 py-16">
-          <div className="rounded-3xl border border-[var(--border-light)] bg-white p-8 shadow-[var(--shadow-sm)]">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--brand-primary)]">PayU not configured</p>
-            <h1 className="mt-3 text-3xl font-extrabold text-[var(--text-primary)]">Payment is temporarily unavailable.</h1>
-            <p className="mt-4 text-[var(--text-secondary)]">
-              The order was created, but PayU credentials are not available in this environment yet. Please contact support or try again after the payment configuration is published.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/contact" className="rounded-xl bg-[var(--brand-primary)] px-5 py-3 text-sm font-bold text-white">
-                Contact support
-              </Link>
-              <Link href={`/3d-shop/order/${order.id}`} className="rounded-xl border border-[var(--border-light)] bg-white px-5 py-3 text-sm font-bold text-[var(--text-primary)]">
-                View order
-              </Link>
-            </div>
-          </div>
-        </main>
-      </div>
-    )
+  if (order.payment_status === 'paid') {
+    redirect(`/3d-shop/order/${order.id}`)
   }
 
-  const checkoutFields = buildPayuCheckoutFields(order, profile, config)
+  const settings = await getSettings()
+  const profile = buildPublicBusinessProfile(settings)
+  const itemCount = getItemCount(order)
+  const primaryImage = getPrimaryImage(order)
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.16),_transparent_34%),linear-gradient(180deg,#020617_0%,#0f172a_46%,#111827_100%)] text-white">
       <Navbar transparent />
-      <main className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <section className="rounded-3xl border border-[var(--border-light)] bg-white p-6 shadow-[var(--shadow-sm)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--brand-primary)]">Secure payment</p>
-          <h1 className="mt-2 text-3xl font-extrabold text-[var(--text-primary)]">Complete payment through PayU</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-secondary)]">
-            Review the order summary below, confirm that the amount and delivery details are correct, and proceed to PayU. The order amount is fixed on the server and cannot be changed from the browser.
+      <main className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[minmax(0,1.08fr)_420px]">
+        <section className="overflow-hidden rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-[0_24px_100px_rgba(0,0,0,0.26)] backdrop-blur-2xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-200">
+            Secure payment
+          </div>
+          <h1 className="mt-5 text-[clamp(2.4rem,5vw,4.9rem)] font-black leading-[0.94] tracking-[-0.03em] text-white">
+            Complete payment with Razorpay.
+          </h1>
+          <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
+            The final amount is calculated on the server from the live order record and cannot be changed from the browser.
           </p>
 
-          <div className="mt-6 grid gap-4 rounded-2xl bg-[var(--bg-soft)] p-5 md:grid-cols-2">
-            <div>
-              <div className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Order number</div>
-              <div className="mt-1 text-lg font-black text-[var(--text-primary)]">{order.order_number}</div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Order</div>
+              <div className="mt-2 break-all text-lg font-black text-white">{order.order_number}</div>
             </div>
-            <div>
-              <div className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Amount payable</div>
-              <div className="mt-1 text-lg font-black text-[var(--text-primary)]">{formatShopPrice(order.total_amount)}</div>
+            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Items</div>
+              <div className="mt-2 text-lg font-black text-white">{itemCount} item{itemCount === 1 ? '' : 's'}</div>
             </div>
-            <div>
-              <div className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Billing type</div>
-              <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">INR · Secure online payment</div>
+            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Amount</div>
+              <div className="mt-2 text-lg font-black text-white">{formatShopPrice(order.total_amount)}</div>
             </div>
-            <div>
-              <div className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Items</div>
-              <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{getItemCount(order)} item{getItemCount(order) === 1 ? '' : 's'}</div>
+            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Delivery</div>
+              <div className="mt-2 text-lg font-black text-white">{order.shipping_address.city}</div>
             </div>
           </div>
 
-          <div className="mt-6 rounded-2xl border border-[var(--border-light)] bg-white p-5">
-            <h2 className="text-lg font-bold text-[var(--text-primary)]">PayU payment summary</h2>
-            <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Product</dt>
-                <dd className="mt-1 text-sm text-[var(--text-secondary)]">{checkoutFields.productinfo}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Customer</dt>
-                <dd className="mt-1 text-sm text-[var(--text-secondary)]">{checkoutFields.firstname}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Support email</dt>
-                <dd className="mt-1 text-sm text-[var(--text-secondary)]">
-                  <a href={`mailto:${profile.supportEmail}`} className="text-[var(--brand-primary)] underline-offset-4 hover:underline">
-                    {profile.supportEmail}
-                  </a>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Terms</dt>
-                <dd className="mt-1 text-sm text-[var(--text-secondary)]">
-                  <Link href="/terms-and-conditions" className="text-[var(--brand-primary)] underline-offset-4 hover:underline">
-                    Terms &amp; Conditions
-                  </Link>
-                  {' · '}
-                  <Link href="/refund-policy" className="text-[var(--brand-primary)] underline-offset-4 hover:underline">
-                    Refund Policy
-                  </Link>
-                </dd>
-              </div>
-            </dl>
-          </div>
+          <div className="mt-8 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="overflow-hidden rounded-[28px] border border-white/10 bg-black/25">
+              {primaryImage ? (
+                <div className="relative aspect-[16/10] bg-slate-900">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={primaryImage}
+                    alt={order.items[0]?.productName || '3D Shop order item'}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_40%,rgba(2,6,23,0.9))]" />
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <div className="text-lg font-black text-white">{order.items[0]?.productName}</div>
+                    <div className="mt-1 text-sm font-semibold text-slate-300">{order.items[0]?.variantLabel}</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid aspect-[16/10] place-items-center bg-[linear-gradient(135deg,rgba(14,165,233,0.18),rgba(34,197,94,0.16))]">
+                  <div className="text-sm font-bold text-slate-100">Flux3D production slot</div>
+                </div>
+              )}
+            </div>
 
-          <div className="mt-6 rounded-2xl border border-[var(--border-light)] bg-white p-5">
-            <h2 className="text-lg font-bold text-[var(--text-primary)]">What happens next</h2>
-            <ul className="mt-4 space-y-3 text-sm leading-7 text-[var(--text-secondary)]">
-              <li>1. You confirm the amount and accept the public policies.</li>
-              <li>2. Flux 3D records your consent and sends the transaction to PayU.</li>
-              <li>3. PayU verifies the payment and redirects you back after the gateway response is checked server-side.</li>
-              <li>4. Your order remains on file even if payment is pending or fails, so you can retry from the order page.</li>
-            </ul>
+            <div className="space-y-3 rounded-[28px] border border-white/10 bg-black/25 p-5">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Checkout details</div>
+              <div className="grid gap-4 text-sm text-slate-300">
+                <div className="flex items-start justify-between gap-4">
+                  <span>Customer</span>
+                  <span className="text-right font-semibold text-white">{order.shipping_address.name}</span>
+                </div>
+                <div className="flex items-start justify-between gap-4">
+                  <span>Address</span>
+                  <span className="max-w-[240px] text-right font-semibold text-white">
+                    {order.shipping_address.line1}
+                    {order.shipping_address.line2 ? `, ${order.shipping_address.line2}` : ''}
+                    {`, ${order.shipping_address.city}, ${order.shipping_address.state} ${order.shipping_address.pincode}`}
+                  </span>
+                </div>
+                <div className="flex items-start justify-between gap-4">
+                  <span>Support</span>
+                  <span className="text-right font-semibold text-white">
+                    <a href={`mailto:${profile.supportEmail}`} className="underline-offset-4 hover:underline">{profile.supportEmail}</a>
+                  </span>
+                </div>
+                <div className="flex items-start justify-between gap-4">
+                  <span>Phone</span>
+                  <span className="text-right font-semibold text-white">{profile.supportPhone}</span>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-emerald-400/15 bg-emerald-400/10 p-4 text-sm leading-7 text-emerald-50">
+                Razorpay Standard Checkout will open in a secure modal. Flux3D only receives the order reference and verification data.
+              </div>
+            </div>
           </div>
         </section>
 
-        <aside className="rounded-3xl border border-[var(--border-light)] bg-white p-6 shadow-[var(--shadow-sm)]">
-          <PayuPaymentClient
-            actionUrl={config.paymentUrl}
-            fields={checkoutFields}
-            orderId={order.id}
+        <aside>
+          <RazorpayCheckoutClient
+            internalOrderType="shop_order"
+            internalOrderId={order.id}
+            createOrderEndpoint="/api/payments/razorpay/create-order"
+            verifyEndpoint="/api/payments/razorpay/verify"
+            statusEndpoint={`/api/payments/status/shop_order/${order.id}`}
+            successHref={`/3d-shop/order/${order.id}?payment=success`}
             orderNumber={order.order_number}
-            amount={order.total_amount}
-            totalItems={getItemCount(order)}
+            amountPaise={Math.round(Number(order.total_amount) * 100)}
+            currency="INR"
+            title="Pay securely with Razorpay"
+            subtitle="Verify the order once, then complete checkout in a trusted payment modal."
             supportEmail={profile.supportEmail}
             supportPhone={profile.supportPhone}
+            customer={{
+              name: order.shipping_address.name,
+              email: auth.profile.email,
+              contact: order.shipping_address.phone,
+            }}
+            orderSummary={(
+              <div className="grid gap-3 text-sm text-slate-200">
+                <div className="flex items-center justify-between">
+                  <span>Subtotal</span>
+                  <span className="font-semibold text-white">{formatShopPrice(order.subtotal)}</span>
+                </div>
+                {order.discount_amount > 0 && (
+                  <div className="flex items-center justify-between text-emerald-200">
+                    <span>Discount{order.coupon_code ? ` (${order.coupon_code})` : ''}</span>
+                    <span className="font-semibold">-{formatShopPrice(order.discount_amount)}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span>Shipping</span>
+                  <span className="font-semibold text-white">{order.shipping_charge === 0 ? 'Free' : formatShopPrice(order.shipping_charge)}</span>
+                </div>
+                <div className="border-t border-white/10 pt-3 flex items-center justify-between text-base">
+                  <span className="font-black text-white">Total</span>
+                  <span className="text-lg font-black text-white">{formatShopPrice(order.total_amount)}</span>
+                </div>
+              </div>
+            )}
+            themeColor={settings.primaryColor || settings.secondaryColor || '#0f172a'}
           />
         </aside>
       </main>
