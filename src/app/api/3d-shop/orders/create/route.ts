@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { calculateDeliveryChargeFromSettings } from '@/lib/quote/pricing-waterfall'
+import { getSettings } from '@/lib/settings'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { ShopOrderItem, ShopShippingAddress } from '@/lib/shop/orders'
 
@@ -13,6 +15,8 @@ type CreateShopOrderBody = {
   subtotal?: unknown
   discountAmount?: unknown
   couponCode?: unknown
+  appliedCouponId?: unknown
+  appliedOfferId?: unknown
   shippingCharge?: unknown
   totalAmount?: unknown
   shippingAddress?: unknown
@@ -147,7 +151,10 @@ async function validateCouponCode(
     if (orderAmount < Number(shopCoupon.min_order_value ?? 0)) {
       throw new Error(`Minimum order value of ₹${Number(shopCoupon.min_order_value ?? 0).toFixed(0)} required.`)
     }
-    return code
+    return {
+      code,
+      freeShipping: shopCoupon.discount_type === 'free_shipping',
+    }
   }
 
   const { data: coupon, error: couponError } = await supabase
@@ -191,7 +198,57 @@ async function validateCouponCode(
     if (count && count > 0) throw new Error('This coupon is for first-time orders only.')
   }
 
-  return code
+  return {
+    code,
+    freeShipping: coupon.discount_type === 'free_shipping',
+  }
+}
+
+async function validateOfferId(
+  supabase: ReturnType<typeof createAdminSupabaseClient>,
+  offerId: string,
+  orderAmount: number,
+  userId: string
+) {
+  const id = offerId.trim()
+  if (!id) return null
+
+  const now = new Date().toISOString()
+  const { data: offer, error } = await supabase
+    .from('offers')
+    .select('id, offer_type, min_order_value, starts_at, ends_at, is_active, usage_limit, usage_per_user, used_count')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  if (!offer) throw new Error('Invalid offer code.')
+
+  if (!offer.is_active) throw new Error('This offer is no longer active.')
+  if (offer.starts_at && now < offer.starts_at) throw new Error('This offer is not yet valid.')
+  if (offer.ends_at && now > offer.ends_at) throw new Error('This offer has expired.')
+  if (isLimitReached(offer.usage_limit, offer.used_count)) {
+    throw new Error('This offer has reached its usage limit.')
+  }
+  if (orderAmount < Number(offer.min_order_value ?? 0)) {
+    throw new Error(`Minimum order value of ₹${Number(offer.min_order_value ?? 0).toFixed(0)} required.`)
+  }
+
+  if (offer.usage_per_user) {
+    const { count } = await supabase
+      .from('redemptions')
+      .select('*', { count: 'exact', head: true })
+      .eq('offer_id', offer.id)
+      .eq('user_id', userId)
+
+    if (count && count >= Number(offer.usage_per_user)) {
+      throw new Error('You have already used this offer the maximum number of times.')
+    }
+  }
+
+  return {
+    id: offer.id,
+    freeShipping: offer.offer_type === 'free_shipping',
+  }
 }
 
 async function generateOrderNumber(supabase: ReturnType<typeof createAdminSupabaseClient>, offset = 0) {
@@ -231,30 +288,47 @@ export async function POST(request: Request) {
     const shippingAddress = normalizeShippingAddress(body.shippingAddress)
     const subtotal = normalizeMoney(body.subtotal)
     const discountAmount = normalizeMoney(body.discountAmount ?? 0)
-    const shippingCharge = normalizeMoney(body.shippingCharge ?? 0)
     const totalAmount = normalizeMoney(body.totalAmount)
     const couponCode = typeof body.couponCode === 'string' && body.couponCode.trim()
       ? body.couponCode.trim().toUpperCase()
       : null
+    const appliedCouponId = typeof body.appliedCouponId === 'string' && body.appliedCouponId.trim()
+      ? body.appliedCouponId.trim()
+      : null
+    const appliedOfferId = typeof body.appliedOfferId === 'string' && body.appliedOfferId.trim()
+      ? body.appliedOfferId.trim()
+      : null
+    const supabase = createAdminSupabaseClient()
 
-    if (![subtotal, discountAmount, shippingCharge, totalAmount].every(Number.isFinite)) {
+    if (![subtotal, discountAmount, totalAmount].every(Number.isFinite)) {
       return NextResponse.json({ error: 'Order totals are invalid.' }, { status: 400 })
     }
 
-    if (discountAmount < 0 || discountAmount > subtotal || shippingCharge < 0) {
+    if (discountAmount < 0 || discountAmount > subtotal) {
       return NextResponse.json({ error: 'Order totals are invalid.' }, { status: 400 })
     }
 
     const lineSubtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
-    const expectedTotal = Math.max(0, subtotal - discountAmount) + shippingCharge
-    if (
-      Math.abs(lineSubtotal - subtotal) > MONEY_TOLERANCE ||
-      Math.abs(expectedTotal - totalAmount) > MONEY_TOLERANCE
-    ) {
+    if (Math.abs(lineSubtotal - subtotal) > MONEY_TOLERANCE) {
       return NextResponse.json({ error: 'Order totals could not be verified. Please refresh your cart.' }, { status: 400 })
     }
 
-    const supabase = createAdminSupabaseClient()
+    const settings = await getSettings()
+    const orderBaseAmount = Math.max(0, subtotal - discountAmount)
+    const validatedCoupon = couponCode
+      ? await validateCouponCode(supabase, couponCode, subtotal, authData.user.id)
+      : null
+    const validatedOffer = appliedOfferId
+      ? await validateOfferId(supabase, appliedOfferId, orderBaseAmount, authData.user.id)
+      : null
+    const shippingCharge = validatedCoupon?.freeShipping || validatedOffer?.freeShipping
+      ? 0
+      : calculateDeliveryChargeFromSettings(orderBaseAmount, settings)
+    const expectedTotal = orderBaseAmount + shippingCharge
+    if (Math.abs(expectedTotal - totalAmount) > MONEY_TOLERANCE) {
+      return NextResponse.json({ error: 'Order totals could not be verified. Please refresh your cart.' }, { status: 400 })
+    }
+
     const skuIds = Array.from(new Set(items.map((item) => item.skuId)))
     const { data: skuRows, error: skuError } = await supabase
       .from('shelf_skus')
@@ -282,17 +356,6 @@ export async function POST(request: Request) {
       }
     }
 
-    if (couponCode) {
-      try {
-        await validateCouponCode(supabase, couponCode, subtotal, authData.user.id)
-      } catch (couponError) {
-        return NextResponse.json(
-          { error: couponError instanceof Error ? couponError.message : 'Invalid coupon code.' },
-          { status: 400 }
-        )
-      }
-    }
-
     for (let attempt = 0; attempt < MAX_ORDER_NUMBER_RETRIES; attempt += 1) {
       const orderNumber = await generateOrderNumber(supabase, attempt)
       const { data, error } = await supabase.rpc('create_shelf_order_atomic', {
@@ -301,7 +364,7 @@ export async function POST(request: Request) {
         p_items: items,
         p_subtotal: subtotal,
         p_discount_amount: discountAmount,
-        p_coupon_code: couponCode,
+        p_coupon_code: validatedCoupon?.code ?? couponCode,
         p_shipping_charge: shippingCharge,
         p_total_amount: totalAmount,
         p_shipping_address: shippingAddress,
@@ -320,15 +383,17 @@ export async function POST(request: Request) {
               payment_purpose: 'shop_order',
               payment_amount_paise: Math.round(totalAmount * 100),
               payment_currency: 'INR',
-              payment_snapshot: {
-                subtotal,
-                discountAmount,
-                shippingCharge,
-                totalAmount,
-                items,
-                shippingAddress,
-              },
-            })
+                payment_snapshot: {
+                  subtotal,
+                  discountAmount,
+                  shippingCharge,
+                  totalAmount,
+                  items,
+                  shippingAddress,
+                  appliedCouponId,
+                  appliedOfferId,
+                },
+              })
             .eq('id', orderId)
 
           if (sourceError) {

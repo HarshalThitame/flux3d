@@ -6,12 +6,10 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AlertTriangle, Banknote, CheckCircle2, MapPin, PackageCheck, Plus, ShieldCheck } from 'lucide-react'
 import { useAddresses } from '@/hooks/useAddresses'
+import { calculateDeliveryChargeFromSettings } from '@/lib/quote/pricing-waterfall'
 import { formatShopPrice } from '@/lib/shop/selection'
 import { getShopCartTotals, type ShopCartItem, useShopCartStore } from '@/stores/shopCartStore'
 import type { AddressRow } from '../../../../types/database'
-
-const FREE_SHIPPING_THRESHOLD = 999
-const SHIPPING_RATE = 49
 
 type AddressFormState = {
   name: string
@@ -24,6 +22,11 @@ type AddressFormState = {
 }
 
 type PincodeState = 'idle' | 'checking' | 'serviceable' | 'error'
+
+type ShopCheckoutClientProps = {
+  deliveryChargeThreshold: number
+  defaultDeliveryCharge: number
+}
 
 const emptyAddressForm: AddressFormState = {
   name: '',
@@ -79,7 +82,10 @@ function getSkuWeight(item: ShopCartItem, weightsBySkuId: Record<string, number>
   return weightsBySkuId[item.skuId] ?? 0
 }
 
-export default function ShopCheckoutClient() {
+export default function ShopCheckoutClient({
+  deliveryChargeThreshold,
+  defaultDeliveryCharge,
+}: ShopCheckoutClientProps) {
   const router = useRouter()
   const orderCompletionRef = useRef(false)
   const { addresses, defaultAddress, loading: addressesLoading, addAddress } = useAddresses()
@@ -113,8 +119,13 @@ export default function ShopCheckoutClient() {
       }),
     [appliedCoupon, autoApplyOffer, couponCode, discountAmount, items]
   )
-  const qualifiesForFreeShipping = totals.freeShipping || totals.total > FREE_SHIPPING_THRESHOLD
-  const shippingCharge = qualifiesForFreeShipping ? 0 : SHIPPING_RATE
+  const shippingCharge = totals.freeShipping
+    ? 0
+    : calculateDeliveryChargeFromSettings(totals.total, {
+        deliveryChargeThreshold,
+        defaultDeliveryCharge,
+      })
+  const qualifiesForFreeShipping = totals.freeShipping || shippingCharge === 0
   const payableTotal = totals.total + shippingCharge
   const totalWeight = useMemo(
     () => items.reduce((sum, item) => sum + getSkuWeight(item, weightsBySkuId) * item.quantity, 0),
@@ -279,6 +290,8 @@ export default function ShopCheckoutClient() {
         subtotal: totals.subtotal,
         discountAmount: totals.discount,
         couponCode: totals.couponCode,
+        appliedCouponId: totals.appliedCoupon?.id ?? null,
+        appliedOfferId: totals.appliedOffer?.id ?? null,
         shippingCharge,
         totalAmount: payableTotal,
         shippingAddress,
@@ -533,7 +546,7 @@ export default function ShopCheckoutClient() {
               <div className="rounded-2xl bg-[var(--bg-soft)] px-3 py-2 text-xs font-semibold text-[var(--text-secondary)]">
                 {qualifiesForFreeShipping
                   ? "You've got free shipping!"
-                  : `Free shipping on orders above ${formatShopPrice(FREE_SHIPPING_THRESHOLD)}`}
+                  : `Free shipping on orders above ${formatShopPrice(deliveryChargeThreshold)}`}
               </div>
               <div className="flex justify-between text-[var(--text-secondary)]">
                 <span>Shipping</span>

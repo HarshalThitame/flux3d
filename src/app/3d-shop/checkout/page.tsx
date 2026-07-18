@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import { getCurrentUserProfile } from '@/lib/auth/server'
+import { getSettings } from '@/lib/settings'
 import ShopCheckoutClient from './ShopCheckoutClient'
 
 export const metadata: Metadata = {
@@ -12,11 +13,15 @@ export const metadata: Metadata = {
 export default async function ShopCheckoutPage() {
   const auth = await getCurrentUserProfile()
   if (!auth) redirect('/login?next=%2F3d-shop%2Fcheckout')
+  const settings = await getSettings()
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
       <Navbar transparent />
-      <ShopCheckoutClient />
+      <ShopCheckoutClient
+        deliveryChargeThreshold={settings.deliveryChargeThreshold}
+        defaultDeliveryCharge={settings.defaultDeliveryCharge}
+      />
     </div>
   )
 }
