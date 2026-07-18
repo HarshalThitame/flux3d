@@ -11,9 +11,12 @@ function createCspHeader({
   isDev: boolean
   nonce?: string
 }) {
+  const razorpayScripts =
+    'https://checkout.razorpay.com https://cdn.razorpay.com'
+
   const scriptSrc = nonce
-    ? `'self' 'nonce-${nonce}' 'strict-dynamic' https://www.googletagmanager.com https://va.vercel-scripts.com https://checkout.razorpay.com${isDev ? " 'unsafe-eval'" : ''}`
-    : `'self' 'unsafe-inline' https://www.googletagmanager.com https://va.vercel-scripts.com https://checkout.razorpay.com${isDev ? " 'unsafe-eval'" : ''}`
+    ? `'self' 'nonce-${nonce}' 'strict-dynamic' ${razorpayScripts}${isDev ? " 'unsafe-eval'" : ''}`
+    : `'self' 'unsafe-inline' ${razorpayScripts} https://www.googletagmanager.com https://va.vercel-scripts.com${isDev ? " 'unsafe-eval'" : ''}`
 
   return [
     `default-src 'self'`,
@@ -21,7 +24,7 @@ function createCspHeader({
     `style-src 'self' 'unsafe-inline'`,
     `font-src 'self'`,
     `img-src 'self' data: blob: https:`,
-    `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://vitals.vercel-insights.com https://va.vercel-scripts.com https://api.razorpay.com https://checkout.razorpay.com`,
+    `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://vitals.vercel-insights.com https://va.vercel-scripts.com https://api.razorpay.com https://checkout.razorpay.com https://cdn.razorpay.com https://lumberjack.razorpay.com https://lumberjack-cx.razorpay.com https://lumberjack-metrics.razorpay.com`,
     `frame-src https://checkout.razorpay.com https://api.razorpay.com`,
     `frame-ancestors 'none'`,
     `object-src 'none'`,
@@ -36,7 +39,10 @@ function applySecurityHeaders(response: NextResponse, cspHeader: string) {
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(self "https://checkout.razorpay.com" "https://api.razorpay.com"), microphone=(), geolocation=()'
+  )
 }
 
 function normalizeNextPath(value: string | null | undefined, fallback = '/instant-quote') {
