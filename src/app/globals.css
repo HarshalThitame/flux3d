@@ -19,9 +19,9 @@
   --brand-faint: var(--color-accent-light);
   --brand-cyan: var(--color-accent);
   --brand-cyan-faint: #f5f3ff;
-  --text-primary: #1a1a1a;
-  --text-secondary: #4b4b4b;
-  --text-muted: #5f6271;
+  --text-primary: #111827;
+  --text-secondary: #334155;
+  --text-muted: #475569;
   --text-brand: var(--color-primary-via);
   --border-light: #e8e4df;
   --border-medium: #ddd6cf;
@@ -77,7 +77,7 @@ html[data-admin-theme='light'] {
 
 html {
   background-color: #f9f7f4;
-  color: #1a1a1a;
+  color: #111827;
   scroll-behavior: smooth;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -111,7 +111,7 @@ button:active {
 
 body {
   background-color: #f9f7f4;
-  color: #1a1a1a;
+  color: #111827;
   font-family: var(--font-inter), var(--font-dm), sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -8915,6 +8915,40 @@ body:has(.premium-auth-shell) {
 .instant-quote-workspace .quote-primary-action:disabled {
   opacity: 0.58 !important;
   filter: saturate(0.7);
+}
+
+:is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) {
+  --surface-text-high: #f8fafc;
+  --surface-text-mid: rgba(226, 232, 240, 0.84);
+  --surface-text-low: rgba(226, 232, 240, 0.72);
+}
+
+:is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) :is(p, li, label, small):not([class*="text-white"]):not([class*="text-cyan"]):not([class*="text-amber"]) {
+  color: var(--surface-text-mid) !important;
+}
+
+:is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) :is(.text-slate-300, .text-slate-400, .text-slate-500, .text-gray-300, .text-gray-400, .text-gray-500) {
+  color: var(--surface-text-mid) !important;
+}
+
+:is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) [class*="text-white/"] {
+  color: var(--surface-text-high) !important;
+}
+
+:is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) [class*="text-white/[0.52]"],
+:is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) [class*="text-white/[0.54]"],
+:is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) [class*="text-white/[0.56]"],
+:is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) [class*="text-white/[0.58]"] {
+  color: var(--surface-text-low) !important;
+}
+
+:is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) [class*="text-white/[0.62]"],
+:is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) [class*="text-white/[0.64]"],
+:is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) [class*="text-white/[0.66]"],
+:is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) [class*="text-white/[0.68]"],
+:is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) [class*="text-white/[0.70]"],
+:is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) [class*="text-white/[0.72]"] {
+  color: var(--surface-text-mid) !important;
 }
 
 @media (max-width: 768px) {

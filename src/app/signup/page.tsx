@@ -64,7 +64,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             Start building with <span className="!text-[#67e8f9]">Flux3D</span>.
           </h1>
 
-          <p className="mt-6 max-w-xl text-[15px] leading-7 !text-white/64">
+          <p className="mt-6 max-w-xl text-[15px] leading-7 !text-white/80">
             Upload your files, get instant quotes, track your orders, and manage repeat builds — all from one secure production account.
           </p>
 
@@ -72,7 +72,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             {trustTags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex min-h-8 items-center rounded-lg border border-white/[0.14] bg-white/[0.06] px-3 text-xs font-bold !text-white/76"
+                className="inline-flex min-h-8 items-center rounded-lg border border-white/[0.14] bg-white/[0.06] px-3 text-xs font-bold !text-white/84"
               >
                 {tag}
               </span>
@@ -81,7 +81,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
 
           <div className="mt-10 max-w-xl rounded-lg border border-white/[0.14] bg-[#0f1013]/95 p-4">
             <div className="flex items-center justify-between gap-4 rounded-lg border border-white/[0.11] bg-white/[0.055] px-3 py-3">
-              <span className="text-[11px] font-black uppercase leading-none tracking-[0.18em] !text-white/62">
+              <span className="text-[11px] font-black uppercase leading-none tracking-[0.18em] !text-white/76">
                 Production pass
               </span>
               <strong className="rounded-full bg-emerald-400/15 px-2 py-1.5 text-[10px] font-black uppercase leading-none text-emerald-200">
@@ -96,7 +96,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                   className="min-w-0 rounded-lg border border-white/[0.11] bg-white/[0.065] p-3 text-white/70"
                 >
                   <metric.icon className="h-4 w-4 text-[#67e8f9]" aria-hidden="true" />
-                  <span className="mt-2 block text-[9px] font-black uppercase leading-tight tracking-[0.14em] !text-white/48">
+                  <span className="mt-2 block text-[9px] font-black uppercase leading-tight tracking-[0.14em] !text-white/70">
                     {metric.label}
                   </span>
                   <strong className="mt-1.5 block text-[12px] font-bold leading-tight text-white">
@@ -113,11 +113,11 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                   className="grid min-w-0 grid-cols-[auto_28px_minmax(0,1fr)] items-center gap-2 rounded-lg border border-white/[0.11] bg-white/[0.055] p-3"
                 >
                   <CheckCircle2 className="h-4 w-4 text-[#67e8f9]" aria-hidden="true" />
-                  <span className="text-[9px] font-black uppercase leading-none tracking-[0.14em] !text-white/48">
+                  <span className="text-[9px] font-black uppercase leading-none tracking-[0.14em] !text-white/70">
                     {item.step}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-black uppercase leading-tight tracking-[0.12em] !text-white/62">
+                    <p className="text-[11px] font-black uppercase leading-tight tracking-[0.12em] !text-white/78">
                       {item.label}
                     </p>
                     <strong className="mt-1 block text-[12px] font-bold leading-tight text-white">
