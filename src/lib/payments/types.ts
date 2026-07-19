@@ -22,7 +22,7 @@ export type PaymentStatus =
 
 export type PaymentEventProcessingStatus = 'received' | 'processing' | 'processed' | 'ignored' | 'failed'
 
-export type PaymentRefundStatus = 'created' | 'pending' | 'processed' | 'failed' | 'cancelled'
+export type PaymentRefundStatus = 'pending_approval' | 'created' | 'pending' | 'processed' | 'failed' | 'cancelled'
 
 export type PaymentAttemptRecord = {
   id: string
