@@ -2291,10 +2291,9 @@ samp {
 
 .premium-hero-title {
   max-width: 1040px;
-  color: #ffffff;
+  color: #0F1B3D;
   letter-spacing: 0;
   text-wrap: balance;
-  text-shadow: 0 24px 90px rgba(0, 0, 0, 0.5);
 }
 
 .premium-title-line {
@@ -2305,8 +2304,8 @@ samp {
 .premium-title-brand {
   width: fit-content;
   margin-inline: auto;
-  background: linear-gradient(100deg, #ffffff 0%, #f8fafc 24%, #67e8f9 42%, #fef3c7 56%, #ffffff 76%, #c4b5fd 100%);
-  background-size: 260% 100%;
+  background: linear-gradient(100deg, #6d28d9 0%, #a855f7 32%, #7c3aed 55%, #6d28d9 80%);
+  background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -3044,13 +3043,14 @@ body:has(.premium-auth-shell) {
 }
 
 .premium-stats-row .stat-number {
-  background: linear-gradient(90deg, #ffffff, #67e8f9 45%, #fef3c7);
+  color: transparent;
+  background: linear-gradient(90deg, #0F1B3D, #6d28d9 45%, #a855f7);
   -webkit-background-clip: text;
   background-clip: text;
 }
 
 .premium-stats-row .stat-label {
-  color: rgba(109, 40, 217, 0.52);
+  color: rgba(109, 40, 217, 0.82);
 }
 
 .landing-premium {
@@ -8844,9 +8844,9 @@ body:has(.premium-auth-shell) {
 }
 
 :is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) {
-  --surface-text-high: #0F1B3D;
-  --surface-text-mid: #6F7192;
-  --surface-text-low: #9ca3af;
+  --surface-text-high: #111827;
+  --surface-text-mid: #374151;
+  --surface-text-low: #6b7280;
 }
 
 :is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) :is(p, li, label, small):not([class*="text-white"]):not([class*="text-cyan"]):not([class*="text-amber"]) {
