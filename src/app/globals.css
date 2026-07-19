@@ -8847,9 +8847,9 @@ body:has(.premium-auth-shell) {
 }
 
 :is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) {
-  --surface-text-high: #f8fafc;
-  --surface-text-mid: rgba(226, 232, 240, 0.84);
-  --surface-text-low: rgba(226, 232, 240, 0.72);
+  --surface-text-high: #0F1B3D;
+  --surface-text-mid: #6F7192;
+  --surface-text-low: #9ca3af;
 }
 
 :is(.landing-premium, .pricing-premium-shell, .gallery-premium-shell, .blog-premium-shell, .shop-premium-shell, .instant-quote-workspace, .premium-auth-shell) :is(p, li, label, small):not([class*="text-white"]):not([class*="text-cyan"]):not([class*="text-amber"]) {
