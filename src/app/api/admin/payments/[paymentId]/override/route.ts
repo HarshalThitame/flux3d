@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminPermission } from '@/lib/admin/permissions'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { fetchPaymentAttemptById } from '@/lib/payments/repository'
 import { updateOrderPaymentStatus } from '@/lib/payments/state'
 import { assertPaymentStatusTransition } from '@/lib/payments/logic'
@@ -67,6 +68,16 @@ export async function POST(
         approvedByAdminId: auth.user.id,
       },
     })
+
+    // Convert inventory reservations if payment was successful for a shop order
+    if (newStatus === 'paid' && internalOrderType === 'shop_order') {
+      try {
+        const adminSupabase = createAdminSupabaseClient()
+        await adminSupabase.rpc('convert_inventory_reservations', { p_order_id: internalOrderId })
+      } catch {
+        console.error('[override] Failed to convert reservations')
+      }
+    }
 
     return NextResponse.json({ success: true, paymentId, newStatus })
   } catch (error) {

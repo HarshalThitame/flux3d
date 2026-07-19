@@ -724,6 +724,16 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
       reason: systemReason(attempt.customer_id, `Webhook ${eventName}`),
     })
 
+    // Convert inventory reservations for shop orders on capture
+    if (captured && attempt.internal_order_type === 'shop_order') {
+      try {
+        const adminSupabase = createAdminSupabaseClient()
+        await adminSupabase.rpc('convert_inventory_reservations', { p_order_id: attempt.internal_order_id })
+      } catch {
+        console.error('[webhook] Failed to convert reservations')
+      }
+    }
+
     return { handled: true, processingStatus: 'processed' as const }
   }
 
