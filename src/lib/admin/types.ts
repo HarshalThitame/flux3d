@@ -368,7 +368,7 @@ export type PaymentRefundData = {
   paymentAttemptId: string
   providerRefundId: string | null
   amountPaise: number
-  status: 'created' | 'pending' | 'processed' | 'failed' | 'cancelled'
+  status: 'pending_approval' | 'created' | 'pending' | 'processed' | 'failed' | 'cancelled'
   reason: string
   speed: 'normal' | 'optimum' | null
   initiatedByAdminId: string | null
