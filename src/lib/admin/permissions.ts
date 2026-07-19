@@ -11,6 +11,11 @@ export type AdminPermission =
   | 'refunds.create'
   | 'refunds.approve'
   | 'finance.settings'
+  | 'quotes.approve'
+  | 'printers.manage'
+  | 'manufacturing.manage'
+  | 'admin.users'
+  | 'audit.view'
 
 export type AdminPermissionCheck = {
   user: { id: string; email: string }
@@ -18,6 +23,8 @@ export type AdminPermissionCheck = {
   isAdmin: boolean
   isFinance: boolean
   isOrderManager: boolean
+  isPrinterManager: boolean
+  isQcManager: boolean
 }
 
 export async function getAdminPermissionCheck(): Promise<
@@ -40,7 +47,7 @@ export async function getAdminPermissionCheck(): Promise<
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('is_admin, is_finance, is_order_manager')
+    .select('is_admin, is_finance, is_order_manager, is_printer_manager, is_qc_manager')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -51,8 +58,10 @@ export async function getAdminPermissionCheck(): Promise<
   const isAdmin = Boolean(profile?.is_admin)
   const isFinance = Boolean(profile?.is_finance)
   const isOrderManager = Boolean(profile?.is_order_manager)
+  const isPrinterManager = Boolean(profile?.is_printer_manager)
+  const isQcManager = Boolean(profile?.is_qc_manager)
 
-  if (!isAdmin && !isFinance && !isOrderManager) {
+  if (!isAdmin && !isFinance && !isOrderManager && !isPrinterManager && !isQcManager) {
     return { response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
   }
 
@@ -62,6 +71,8 @@ export async function getAdminPermissionCheck(): Promise<
     isAdmin,
     isFinance,
     isOrderManager,
+    isPrinterManager,
+    isQcManager,
   }
 }
 
@@ -71,6 +82,7 @@ export async function hasPermission(check: AdminPermissionCheck, permission: Adm
   switch (permission) {
     case 'orders.view':
     case 'payments.view':
+    case 'audit.view':
       return true
     case 'orders.update':
       return check.isOrderManager
@@ -79,6 +91,14 @@ export async function hasPermission(check: AdminPermissionCheck, permission: Adm
     case 'refunds.approve':
     case 'finance.settings':
       return check.isFinance
+    case 'quotes.approve':
+      return check.isOrderManager || check.isFinance
+    case 'printers.manage':
+      return check.isPrinterManager
+    case 'manufacturing.manage':
+      return check.isQcManager
+    case 'admin.users':
+      return check.isAdmin
     default:
       return false
   }

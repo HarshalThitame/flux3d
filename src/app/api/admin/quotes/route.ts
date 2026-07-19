@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { getAdminQuotesData } from '@/lib/admin/queries'
-import { requireAdminRequest } from '@/lib/admin/request'
+import { requireAdminPermission } from '@/lib/admin/permissions'
 
 export async function GET() {
-  const auth = await requireAdminRequest()
+  const auth = await requireAdminPermission('quotes.approve')
   if ('response' in auth) return auth.response
 
   try {

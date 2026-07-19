@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { getDb, seedTestData, cleanDb, TEST_USER_ID } from './helpers'
 import { LOCAL_SUPABASE_URL as LOCAL_URL, LOCAL_SERVICE_KEY as SERVICE_KEY } from './env'
 
@@ -15,7 +15,7 @@ afterAll(async () => {
   await cleanDb()
 })
 
-async function createRlsUser(email: string): Promise<{ id: string; client: ReturnType<typeof createClient>; token: string }> {
+async function createRlsUser(email: string): Promise<{ id: string; client: SupabaseClient; token: string }> {
   const { data: created, error: createErr } = await serviceClient.auth.admin.createUser({
     email, password: 'test123456', email_confirm: true,
   })
@@ -40,8 +40,8 @@ async function createRlsUser(email: string): Promise<{ id: string; client: Retur
 }
 
 describe.skip('RLS: shelf_orders isolation', () => {
-  let userA: { id: string; client: ReturnType<typeof createClient> }
-  let userB: { id: string; client: ReturnType<typeof createClient> }
+  let userA: { id: string; client: SupabaseClient }
+  let userB: { id: string; client: SupabaseClient }
 
   beforeAll(async () => {
     userA = await createRlsUser('rls_a@test.com')
@@ -69,29 +69,29 @@ describe.skip('RLS: shelf_orders isolation', () => {
 
   it('user A sees only own orders', async () => {
     const { data } = await userA.client.from('shelf_orders').select('order_number')
-    const numbers = (data ?? []).map((r: any) => r.order_number)
+    const numbers = (data ?? []).map((r: Record<string, unknown>) => r.order_number)
     expect(numbers).toContain('RLS-A-001')
     expect(numbers).not.toContain('RLS-B-001')
   })
 
   it('user B sees only own orders', async () => {
     const { data } = await userB.client.from('shelf_orders').select('order_number')
-    const numbers = (data ?? []).map((r: any) => r.order_number)
+    const numbers = (data ?? []).map((r: Record<string, unknown>) => r.order_number)
     expect(numbers).toContain('RLS-B-001')
     expect(numbers).not.toContain('RLS-A-001')
   })
 
   it('service_role sees all orders', async () => {
     const { data } = await serviceClient.from('shelf_orders').select('order_number')
-    const numbers = (data ?? []).map((r: any) => r.order_number)
+    const numbers = (data ?? []).map((r: Record<string, unknown>) => r.order_number)
     expect(numbers).toContain('RLS-A-001')
     expect(numbers).toContain('RLS-B-001')
   })
 })
 
 describe.skip('RLS: inventory_reservations isolation', () => {
-  let userA: { id: string; client: ReturnType<typeof createClient> }
-  let userB: { id: string; client: ReturnType<typeof createClient> }
+  let userA: { id: string; client: SupabaseClient }
+  let userB: { id: string; client: SupabaseClient }
 
   beforeAll(async () => {
     userA = await createRlsUser('rls_res_a@test.com')
@@ -116,16 +116,22 @@ describe.skip('RLS: inventory_reservations isolation', () => {
     const orderIdB = orderB?.orderId as string | undefined
 
     if (orderIdA) {
-      await serviceClient.from('inventory_reservations').insert({
-        sku_id: (await serviceClient.from('shelf_skus').select('id').limit(1).single()).data.id,
-        order_id: orderIdA, quantity: 1, expires_at: new Date(Date.now() + 86400000).toISOString(),
-      })
+      const { data: skuA } = await serviceClient.from('shelf_skus').select('id').limit(1).single()
+      if (skuA) {
+        await serviceClient.from('inventory_reservations').insert({
+          sku_id: skuA.id, order_id: orderIdA, quantity: 1,
+          expires_at: new Date(Date.now() + 86400000).toISOString(),
+        })
+      }
     }
     if (orderIdB) {
-      await serviceClient.from('inventory_reservations').insert({
-        sku_id: (await serviceClient.from('shelf_skus').select('id').limit(1).single()).data.id,
-        order_id: orderIdB, quantity: 2, expires_at: new Date(Date.now() + 86400000).toISOString(),
-      })
+      const { data: skuB } = await serviceClient.from('shelf_skus').select('id').limit(1).single()
+      if (skuB) {
+        await serviceClient.from('inventory_reservations').insert({
+          sku_id: skuB.id, order_id: orderIdB, quantity: 2,
+          expires_at: new Date(Date.now() + 86400000).toISOString(),
+        })
+      }
     }
   })
 
@@ -133,7 +139,7 @@ describe.skip('RLS: inventory_reservations isolation', () => {
     const { data: orders, error: err } = await userA.client.from('shelf_orders').select('order_number')
     expect(err).toBeNull()
     expect(Array.isArray(orders)).toBe(true)
-    const orderNumbers = (orders ?? []).map((o: any) => o.order_number)
+    const orderNumbers = (orders ?? []).map((o: Record<string, unknown>) => o.order_number)
     expect(orderNumbers).toContain('RLS-RES-A')
   })
 })

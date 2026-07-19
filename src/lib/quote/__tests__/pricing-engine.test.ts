@@ -76,9 +76,10 @@ describe('calculateInstantQuote', () => {
 
   it('calculates pricing for a valid model and material', async () => {
     const { calculateInstantQuote } = await import('../pricing-engine')
-    const model: ParsedModel = {
+    const model = {
       volumeMm3: 20000, dimensionsMm: { x: 20, y: 15, z: 10 }, fileName: 'cube.stl', fileSize: 1000, extension: 'stl', triangleCount: 100, suggestedMaterialId: 'pla',
-    }
+      object: null,
+    } as unknown as ParsedModel
     const material: QuoteMaterial = {
       id: 'pla', name: 'PLA+', icon: '🧩', summary: '', density: 1.24, pricePerGram: 2.80, machineRate: 180,
       multiplier: 1, recommendedFor: '', properties: { strength: 'Medium', flexibility: 'Low', tempResistance: 'Low', difficulty: 'Easy' },
@@ -106,9 +107,10 @@ describe('calculateInstantQuote', () => {
 
   it('supports legacy numeric margin parameter', async () => {
     const { calculateInstantQuote } = await import('../pricing-engine')
-    const model: ParsedModel = {
+    const model = {
       volumeMm3: 10000, dimensionsMm: { x: 10, y: 10, z: 10 }, fileName: 'test.stl', fileSize: 1000, extension: 'stl', triangleCount: 100, suggestedMaterialId: 'abs',
-    }
+      object: null,
+    } as unknown as ParsedModel
     const material: QuoteMaterial = {
       id: 'abs', name: 'ABS', icon: '', summary: '', density: 1.04, pricePerGram: 3.5, machineRate: 200,
       multiplier: 1, recommendedFor: '', properties: { strength: 'High', flexibility: 'Medium', tempResistance: 'Medium', difficulty: 'Medium' },
