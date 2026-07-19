@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { processRazorpayWebhook } from '@/lib/payments/service'
+import { rateLimitCheck } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -11,6 +12,17 @@ export async function POST(request: Request) {
 
   if (!signature || !eventId) {
     return NextResponse.json({ error: 'Missing webhook headers.' }, { status: 400 })
+  }
+
+  const forwarded = request.headers.get('x-forwarded-for')
+  const clientIp = forwarded?.split(',')[0]?.trim() ?? 'razorpay'
+  const rateLimit = await rateLimitCheck(
+    `razorpay_webhook:${clientIp}`,
+    60,
+    30,
+  )
+  if (!rateLimit.success) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 
   try {

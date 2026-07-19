@@ -1,4 +1,5 @@
 import { getSettings } from '@/lib/settings'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
 import {
   fetchInternalOrder,
@@ -18,14 +19,18 @@ import {
   insertReconciliationRun,
   lookupPaymentAttemptByInternalOrder,
   snapshotAmount,
-  updateInternalOrderPaymentState,
-  updatePaymentAttempt,
   updatePaymentEvent,
   updatePaymentRefund,
   upsertPaymentAttempt,
   type InternalOrderLookup,
   type PaymentOrderSnapshot,
 } from './repository'
+import { isQuoteApproved } from '@/lib/quote/approval'
+import {
+  updateOrderPaymentStatus,
+  updatePaymentAttemptStatus,
+  type PaymentStatusUpdateReason,
+} from '@/lib/payments/state'
 import {
   createRazorpayOrder,
   createRazorpayRefund,
@@ -45,7 +50,6 @@ import type {
   RazorpayCheckoutSession,
 } from './types'
 import {
-  assertPaymentStatusTransition,
   calculateRefundableBalance,
   summarizeReconciliation,
   summarizeWebhookHealth,
@@ -70,6 +74,24 @@ function normalizeMoney(value: unknown) {
 
 function getPaymentPurposeForOrder(type: InternalOrderType) {
   return type === 'shop_order' ? 'shop_order' : 'custom_quote_full_payment'
+}
+
+function systemReason(actorId: string, reason = 'Gateway event'): PaymentStatusUpdateReason {
+  return { actorId, actorRole: 'system', reason }
+}
+
+function customerReason(actorId: string, reason: string): PaymentStatusUpdateReason {
+  return { actorId, actorRole: 'customer', reason }
+}
+
+function financeReason(actorId: string, reason: string): PaymentStatusUpdateReason {
+  return { actorId, actorRole: 'finance', reason, approvedByAdminId: actorId }
+}
+
+async function assertQuoteApprovedForPayment(order: Record<string, unknown>, type: InternalOrderType) {
+  if (type !== 'custom_quote') return
+  if (await isQuoteApproved(String(order.id))) return
+  throw new Error('Quote is pending review. Please wait for admin approval before payment.')
 }
 
 function getContactFields(order: Record<string, unknown>, type: InternalOrderType) {
@@ -197,6 +219,7 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
     if (status === 'paid' || status === 'captured') {
       throw new Error('This quote has already been paid.')
     }
+    await assertQuoteApprovedForPayment(order, params.type)
   }
 
   const orderSnapshot = buildOrderSnapshot(order, params.type)
@@ -248,12 +271,17 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
   }
 
   if (existing && existing.amount_paise !== amountPaise && existing.status !== 'paid') {
-    await updatePaymentAttempt(existing.id, {
-      status: 'cancelled',
-      failed_at: new Date().toISOString(),
-      failure_code: 'amount_changed',
-      failure_description: 'A newer payment attempt was created after the order changed.',
-    })
+    await updatePaymentAttemptStatus(
+      existing.id,
+      existing.status,
+      'cancelled',
+      {
+        failed_at: new Date().toISOString(),
+        failure_code: 'amount_changed',
+        failure_description: 'A newer payment attempt was created after the order changed.',
+      },
+      systemReason(String(order.user_id), 'Amount changed before new attempt')
+    )
   }
 
   const attemptNumber = existing && existing.amount_paise === amountPaise
@@ -311,22 +339,31 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
     },
   })
 
-  const updatedAttempt = await updatePaymentAttempt(paymentAttempt.id, {
-    provider_order_id: providerOrder.id,
-    status: 'pending',
-    metadata: {
-      ...paymentAttempt.metadata,
-      razorpay: providerOrder,
+  const updatedAttempt = await updatePaymentAttemptStatus(
+    paymentAttempt.id,
+    paymentAttempt.status,
+    'pending',
+    {
+      provider_order_id: providerOrder.id,
+      metadata: {
+        ...paymentAttempt.metadata,
+        razorpay: providerOrder,
+      },
     },
-  })
+    customerReason(String(order.user_id), 'Payment attempt created')
+  )
 
-  await updateInternalOrderPaymentState({
+  const currentOrderStatus: import('./types').PaymentStatus =
+    (normalizeText(order.payment_status) as import('./types').PaymentStatus) || 'created'
+
+  await updateOrderPaymentStatus({
     type: params.type,
     id: params.id,
+    currentStatus: currentOrderStatus,
+    nextStatus: 'pending',
     patch: {
       payment_provider: 'razorpay',
       payment_purpose: paymentPurpose,
-      payment_status: 'pending',
       payment_attempt_id: updatedAttempt.id,
       provider_order_id: providerOrder.id,
       provider_payment_id: null,
@@ -339,6 +376,7 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
       payment_refund_status: 'none',
       payment_refund_amount_paise: 0,
     },
+    reason: customerReason(String(order.user_id), 'Payment attempt created'),
   })
 
   await insertPaymentAuditLog({
@@ -421,21 +459,28 @@ export async function verifyCheckoutPayment(params: {
     paymentId: params.razorpayPaymentId,
     signature: params.razorpaySignature,
   })) {
-    await updatePaymentAttempt(attempt.id, {
-      status: 'failed',
-      provider_payment_id: params.razorpayPaymentId,
-      failed_at: new Date().toISOString(),
-      failure_code: 'invalid_signature',
-      failure_description: 'Checkout signature validation failed.',
-    })
-    await updateInternalOrderPaymentState({
+    await updatePaymentAttemptStatus(
+      attempt.id,
+      attempt.status,
+      'failed',
+      {
+        provider_payment_id: params.razorpayPaymentId,
+        failed_at: new Date().toISOString(),
+        failure_code: 'invalid_signature',
+        failure_description: 'Checkout signature validation failed.',
+      },
+      systemReason(params.customerId, 'Checkout signature validation failed')
+    )
+    await updateOrderPaymentStatus({
       type: params.internalOrderType,
       id: params.internalOrderId,
+      currentStatus: attempt.status,
+      nextStatus: 'failed',
       patch: {
-        payment_status: 'failed',
         provider_payment_id: params.razorpayPaymentId,
         payment_failed_at: new Date().toISOString(),
       },
+      reason: systemReason(params.customerId, 'Checkout signature validation failed'),
     })
     throw new Error('Payment verification failed.')
   }
@@ -455,43 +500,60 @@ export async function verifyCheckoutPayment(params: {
   const authorized = providerPayment.status === 'authorized'
 
   const nextStatus: PaymentStatus = captured ? 'paid' : authorized ? 'authorized' : 'pending'
-  assertPaymentStatusTransition(attempt.status, nextStatus)
 
-  const updatedAttempt = await updatePaymentAttempt(attempt.id, {
-    provider_payment_id: providerPayment.id,
-    status: nextStatus,
-    payment_method: providerPayment.method ?? attempt.payment_method,
-    captured_at: captured ? new Date().toISOString() : attempt.captured_at,
-    failed_at: providerPayment.status === 'failed' ? new Date().toISOString() : attempt.failed_at,
-    failure_code: providerPayment.error_code ?? null,
-    failure_description: providerPayment.error_description ?? providerPayment.error_reason ?? null,
-    metadata: {
-      ...attempt.metadata,
-      verification: {
-        checkout: {
-          razorpayOrderId: params.razorpayOrderId,
-          razorpayPaymentId: params.razorpayPaymentId,
+  const updatedAttempt = await updatePaymentAttemptStatus(
+    attempt.id,
+    attempt.status,
+    nextStatus,
+    {
+      provider_payment_id: providerPayment.id,
+      payment_method: providerPayment.method ?? attempt.payment_method,
+      captured_at: captured ? new Date().toISOString() : attempt.captured_at,
+      failed_at: providerPayment.status === 'failed' ? new Date().toISOString() : attempt.failed_at,
+      failure_code: providerPayment.error_code ?? null,
+      failure_description: providerPayment.error_description ?? providerPayment.error_reason ?? null,
+      metadata: {
+        ...attempt.metadata,
+        verification: {
+          checkout: {
+            razorpayOrderId: params.razorpayOrderId,
+            razorpayPaymentId: params.razorpayPaymentId,
+          },
+          providerOrder,
+          providerPayment,
         },
-        providerOrder,
-        providerPayment,
       },
     },
+    customerReason(params.customerId, 'Checkout payment verified')
+  )
+
+  await updateOrderPaymentStatus({
+    type: params.internalOrderType,
+    id: params.internalOrderId,
+    currentStatus: attempt.status,
+    nextStatus,
+    patch: {
+      payment_provider: 'razorpay',
+      provider_order_id: params.razorpayOrderId,
+      provider_payment_id: params.razorpayPaymentId,
+      payment_method: providerPayment.method ?? null,
+      payment_verified_at: captured ? new Date().toISOString() : null,
+      payment_failed_at: providerPayment.status === 'failed' ? new Date().toISOString() : null,
+    },
+    reason: customerReason(params.customerId, captured ? 'Payment captured' : `Payment ${nextStatus}`),
   })
 
   if (captured) {
-    await updateInternalOrderPaymentState({
-      type: params.internalOrderType,
-      id: params.internalOrderId,
-      patch: {
-        payment_provider: 'razorpay',
-        payment_status: 'paid',
-        provider_order_id: params.razorpayOrderId,
-        provider_payment_id: params.razorpayPaymentId,
-        payment_method: providerPayment.method ?? null,
-        payment_verified_at: new Date().toISOString(),
-        payment_failed_at: null,
-      },
-    })
+    // Convert inventory reservations on successful payment
+    if (params.internalOrderType === 'shop_order') {
+      const adminSupabase = createAdminSupabaseClient()
+      try {
+        const { error: convError } = await adminSupabase.rpc('convert_inventory_reservations', { p_order_id: params.internalOrderId })
+        if (convError) console.error('[payment] Failed to convert reservations:', convError)
+      } catch {
+        console.error('[payment] Failed to convert reservations')
+      }
+    }
 
     await insertPaymentAuditLog({
       actor_id: params.customerId,
@@ -509,20 +571,6 @@ export async function verifyCheckoutPayment(params: {
       orderSnapshot,
     }
   }
-
-  await updateInternalOrderPaymentState({
-    type: params.internalOrderType,
-    id: params.internalOrderId,
-    patch: {
-      payment_provider: 'razorpay',
-      payment_status: nextStatus,
-      provider_order_id: params.razorpayOrderId,
-      provider_payment_id: params.razorpayPaymentId,
-      payment_method: providerPayment.method ?? null,
-      payment_verified_at: null,
-      payment_failed_at: providerPayment.status === 'failed' ? new Date().toISOString() : null,
-    },
-  })
 
   return {
     status: 'pending',
@@ -593,26 +641,33 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
   }
 
   if (eventName === 'payment.failed') {
-    await updatePaymentAttempt(attempt.id, {
-      status: 'failed',
-      provider_payment_id: providerPaymentId || attempt.provider_payment_id,
-      failed_at: new Date().toISOString(),
-      failure_code: normalizeText(paymentEntity.error_code) || null,
-      failure_description: normalizeText(paymentEntity.error_description) || normalizeText(paymentEntity.error_reason) || null,
-      metadata: {
-        ...attempt.metadata,
-        webhook: sanitizeEventPayload(payload),
+    await updatePaymentAttemptStatus(
+      attempt.id,
+      attempt.status,
+      'failed',
+      {
+        provider_payment_id: providerPaymentId || attempt.provider_payment_id,
+        failed_at: new Date().toISOString(),
+        failure_code: normalizeText(paymentEntity.error_code) || null,
+        failure_description: normalizeText(paymentEntity.error_description) || normalizeText(paymentEntity.error_reason) || null,
+        metadata: {
+          ...attempt.metadata,
+          webhook: sanitizeEventPayload(payload),
+        },
       },
-    })
+      systemReason(attempt.customer_id, `Webhook ${eventName}`)
+    )
 
-    await updateInternalOrderPaymentState({
+    await updateOrderPaymentStatus({
       type: attempt.internal_order_type,
       id: attempt.internal_order_id,
+      currentStatus: attempt.status,
+      nextStatus: 'failed',
       patch: {
-        payment_status: 'failed',
         provider_payment_id: providerPaymentId || attempt.provider_payment_id,
         payment_failed_at: new Date().toISOString(),
       },
+      reason: systemReason(attempt.customer_id, `Webhook ${eventName}`),
     })
 
     return { handled: true, processingStatus: 'processed' as const }
@@ -636,47 +691,38 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
 
     const nextStatus: PaymentStatus = captured ? 'paid' : authorized ? 'authorized' : 'pending'
 
-    await updatePaymentAttempt(attempt.id, {
-      status: nextStatus,
-      provider_order_id: providerOrderId || attempt.provider_order_id,
-      provider_payment_id: providerPaymentId || attempt.provider_payment_id,
-      payment_method: normalizeText((finalPayment as Record<string, unknown>).method) || attempt.payment_method,
-      captured_at: captured ? new Date().toISOString() : attempt.captured_at,
-      metadata: {
-        ...attempt.metadata,
-        webhook: sanitizeEventPayload(payload),
+    await updatePaymentAttemptStatus(
+      attempt.id,
+      attempt.status,
+      nextStatus,
+      {
+        provider_order_id: providerOrderId || attempt.provider_order_id,
+        provider_payment_id: providerPaymentId || attempt.provider_payment_id,
+        payment_method: normalizeText((finalPayment as Record<string, unknown>).method) || attempt.payment_method,
+        captured_at: captured ? new Date().toISOString() : attempt.captured_at,
+        metadata: {
+          ...attempt.metadata,
+          webhook: sanitizeEventPayload(payload),
+        },
       },
-    })
+      systemReason(attempt.customer_id, `Webhook ${eventName}`)
+    )
 
-    if (captured) {
-      await updateInternalOrderPaymentState({
-        type: attempt.internal_order_type,
-        id: attempt.internal_order_id,
-        patch: {
-          payment_provider: 'razorpay',
-          payment_status: 'paid',
-          provider_order_id: providerOrderId || attempt.provider_order_id,
-          provider_payment_id: providerPaymentId || attempt.provider_payment_id,
-          payment_method: normalizeText((finalPayment as Record<string, unknown>).method) || null,
-          payment_verified_at: new Date().toISOString(),
-          payment_failed_at: null,
-        },
-      })
-    } else {
-      await updateInternalOrderPaymentState({
-        type: attempt.internal_order_type,
-        id: attempt.internal_order_id,
-        patch: {
-          payment_provider: 'razorpay',
-          payment_status: nextStatus,
-          provider_order_id: providerOrderId || attempt.provider_order_id,
-          provider_payment_id: providerPaymentId || attempt.provider_payment_id,
-          payment_method: normalizeText((finalPayment as Record<string, unknown>).method) || null,
-          payment_verified_at: null,
-          payment_failed_at: null,
-        },
-      })
-    }
+    await updateOrderPaymentStatus({
+      type: attempt.internal_order_type,
+      id: attempt.internal_order_id,
+      currentStatus: attempt.status,
+      nextStatus,
+      patch: {
+        payment_provider: 'razorpay',
+        provider_order_id: providerOrderId || attempt.provider_order_id,
+        provider_payment_id: providerPaymentId || attempt.provider_payment_id,
+        payment_method: normalizeText((finalPayment as Record<string, unknown>).method) || null,
+        payment_verified_at: captured ? new Date().toISOString() : null,
+        payment_failed_at: null,
+      },
+      reason: systemReason(attempt.customer_id, `Webhook ${eventName}`),
+    })
 
     return { handled: true, processingStatus: 'processed' as const }
   }
@@ -844,19 +890,24 @@ export async function initiateRefund(params: {
   })
 
   const nextStatus = params.amountPaise === attempt.amount_paise ? 'pending' : 'partially_refunded'
-  assertPaymentStatusTransition(attempt.status, nextStatus)
-  await updatePaymentAttempt(attempt.id, {
-    status: nextStatus,
-  })
+  await updatePaymentAttemptStatus(
+    attempt.id,
+    attempt.status,
+    nextStatus,
+    {},
+    financeReason(params.initiatedByAdminId, `Refund initiated: ${params.reason}`)
+  )
 
-  await updateInternalOrderPaymentState({
+  await updateOrderPaymentStatus({
     type: attempt.internal_order_type,
     id: attempt.internal_order_id,
+    currentStatus: attempt.status,
+    nextStatus,
     patch: {
       payment_refund_status: params.amountPaise === attempt.amount_paise ? 'pending' : 'partial',
       payment_refund_amount_paise: refundedAmount + params.amountPaise,
-      payment_status: nextStatus,
     },
+    reason: financeReason(params.initiatedByAdminId, `Refund initiated: ${params.reason}`),
   })
 
   await insertPaymentAuditLog({
@@ -931,31 +982,46 @@ export async function refreshPaymentAttemptFromProvider(attemptId: string) {
   const providerPayment = providerPaymentId ? await fetchRazorpayPayment(providerPaymentId) : null
   const captured = providerPayment?.status === 'captured' || providerOrder.status === 'paid'
 
-  await updatePaymentAttempt(attempt.id, {
-    status: captured ? 'paid' : providerPayment?.status === 'authorized' ? 'authorized' : attempt.status,
-    provider_payment_id: providerPayment?.id ?? attempt.provider_payment_id,
-    payment_method: providerPayment?.method ?? attempt.payment_method,
-    captured_at: captured ? new Date().toISOString() : attempt.captured_at,
-    metadata: {
-      ...attempt.metadata,
-      refresh: {
-        providerOrder,
-        providerPayment,
-      },
-    },
-  })
+  const nextStatus: PaymentStatus = captured
+    ? 'paid'
+    : providerPayment?.status === 'authorized'
+      ? 'authorized'
+      : attempt.status
 
-  await updateInternalOrderPaymentState({
-    type: attempt.internal_order_type,
-    id: attempt.internal_order_id,
-    patch: {
-      payment_status: captured ? 'paid' : providerPayment?.status === 'authorized' ? 'authorized' : attempt.status,
-      provider_order_id: providerOrder.id,
-      provider_payment_id: providerPayment?.id ?? attempt.provider_payment_id,
-      payment_method: providerPayment?.method ?? attempt.payment_method ?? null,
-      payment_verified_at: captured ? new Date().toISOString() : null,
-    },
-  })
+  if (nextStatus !== attempt.status) {
+    await updatePaymentAttemptStatus(
+      attempt.id,
+      attempt.status,
+      nextStatus,
+      {
+        provider_payment_id: providerPayment?.id ?? attempt.provider_payment_id,
+        payment_method: providerPayment?.method ?? attempt.payment_method,
+        captured_at: captured ? new Date().toISOString() : attempt.captured_at,
+        metadata: {
+          ...attempt.metadata,
+          refresh: {
+            providerOrder,
+            providerPayment,
+          },
+        },
+      },
+      systemReason(attempt.customer_id, 'Refreshed payment status from provider')
+    )
+
+    await updateOrderPaymentStatus({
+      type: attempt.internal_order_type,
+      id: attempt.internal_order_id,
+      currentStatus: attempt.status,
+      nextStatus,
+      patch: {
+        provider_order_id: providerOrder.id,
+        provider_payment_id: providerPayment?.id ?? attempt.provider_payment_id,
+        payment_method: providerPayment?.method ?? attempt.payment_method ?? null,
+        payment_verified_at: captured ? new Date().toISOString() : null,
+      },
+      reason: systemReason(attempt.customer_id, 'Refreshed payment status from provider'),
+    })
+  }
 
   return { attempt: await fetchPaymentAttemptById(attempt.id), providerOrder, providerPayment }
 }

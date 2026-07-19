@@ -107,6 +107,7 @@ export default function ShopCheckoutClient({
   const [toast, setToast] = useState('')
   const [reviewBanner, setReviewBanner] = useState(false)
   const [affectedItemIds, setAffectedItemIds] = useState<string[]>([])
+  const [completedOrderId, setCompletedOrderId] = useState<string | null>(null)
 
   const totals = useMemo(
     () =>
@@ -140,6 +141,14 @@ export default function ShopCheckoutClient({
   useEffect(() => {
     if (items.length === 0 && !orderCompletionRef.current) router.replace('/3d-shop/cart')
   }, [items.length, router])
+
+  useEffect(() => {
+    if (!completedOrderId) return
+
+    clearCart()
+    router.push(`/3d-shop/payment/${encodeURIComponent(completedOrderId)}`)
+    window.setTimeout(() => setCompletedOrderId(null), 0)
+  }, [clearCart, completedOrderId, router])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -317,8 +326,7 @@ export default function ShopCheckoutClient({
       }
 
       orderCompletionRef.current = true
-      clearCart()
-      router.push(`/3d-shop/payment/${encodeURIComponent(data.orderId)}`)
+      setCompletedOrderId(data.orderId)
     } catch (error) {
       setToast(error instanceof Error ? error.message : 'Failed to place order.')
     } finally {

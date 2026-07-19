@@ -8,6 +8,7 @@ import { getSettings } from '@/lib/settings'
 import type { BusinessSettings } from '@/lib/admin/business-settings'
 import { createAdminSupabaseClient, isCurrentUserAdmin } from '@/lib/admin/server'
 import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
+import { rateLimitResponse } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -62,7 +63,9 @@ type InvoiceRow = {
   discount_type: string | null
   estimated_time: number
   status: string
+  payment_status: string | null
   notes: string | null
+  invoice_number: string | null
   created_at: string
 }
 
@@ -114,7 +117,10 @@ async function generatePdf(
   order: InvoiceRow,
   items: InvoiceRow[],
   settings: BusinessSettings,
+  options: { isPaid: boolean; providerPaymentId?: string | null },
 ): Promise<Buffer> {
+  const { isPaid, providerPaymentId } = options
+  const invoiceLabel = isPaid ? 'TAX INVOICE' : 'PROFORMA INVOICE'
   const invoiceDateObj = new Date(order.created_at)
   const invoiceDate = invoiceDateObj.toLocaleDateString('en-IN', {
     day: 'numeric', month: 'long', year: 'numeric',
@@ -225,7 +231,7 @@ async function generatePdf(
 
     const invoiceRight = pageW - contentRight
     doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(36)
-    doc.text('INVOICE', invoiceRight - 210, 20, { width: 210, align: 'right' })
+    doc.text(invoiceLabel, invoiceRight - 210, 20, { width: 210, align: 'right' })
     doc.fillColor(colors.accent).font(INVOICE_FONT_REGULAR).fontSize(9)
     doc.text(`#${order.order_number ?? order.id}`, invoiceRight - 210, 63, { width: 210, align: 'right' })
 
@@ -233,9 +239,15 @@ async function generatePdf(
     const badgeH = 20
     const badgeX = invoiceRight - badgeW
     const badgeY = headerH - badgeH - 10
-    doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 5).fill(colors.paid)
-    doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(9)
-    doc.text('PAID', badgeX, badgeY + 5, { width: badgeW, align: 'center' })
+    if (isPaid) {
+      doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 5).fill(colors.paid)
+      doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(9)
+      doc.text('PAID', badgeX, badgeY + 5, { width: badgeW, align: 'center' })
+    } else {
+      doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 5).fill('#A0A0A0')
+      doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(9)
+      doc.text('UNPAID', badgeX, badgeY + 5, { width: badgeW, align: 'center' })
+    }
     doc.restore()
   }
 
@@ -284,9 +296,12 @@ async function generatePdf(
   function drawMetaCard(x: number, cardY: number, w: number) {
     const h = 66
     drawCard(x, cardY, w, h, colors.navy, colors.navy)
+    const paymentLabel = isPaid
+      ? `PAID${providerPaymentId ? ` (${providerPaymentId.slice(-8)})` : ''}`
+      : 'PROFORMA'
     const rows = [
       { label: 'Invoice Date', value: invoiceDate },
-      { label: 'Payment', value: 'PAID' },
+      { label: 'Payment', value: paymentLabel },
     ]
     const rowH = h / rows.length
     rows.forEach((row, index) => {
@@ -516,11 +531,22 @@ export async function GET(
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized - no user session' }, { status: 401 })
     }
+
+    const limit = await rateLimitResponse(_request, {
+      prefix: 'invoice',
+      windowSeconds: 60,
+      maxRequests: 10,
+      userId: user.id,
+    })
+    if (!limit.success) {
+      return NextResponse.json({ error: 'Too many invoice requests' }, { status: 429 })
+    }
+
     const isAdmin = await isCurrentUserAdmin()
     const orderSupabase = isAdmin ? createAdminSupabaseClient() : supabase
 
     const selectColumns =
-      'id, user_id, order_number, group_id, file_url, material, color, infill, layer_height, supports, quantity, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, material_cost, machine_cost, post_processing_charges, subtotal, total_price, final_price, grand_total, price, price_per_unit, discount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, overhead_percent, overhead_amount, margin_percent, margin_amount, coupon_code, coupon_id, discount_type, estimated_time, status, notes, created_at'
+      'id, user_id, order_number, group_id, file_url, material, color, infill, layer_height, supports, quantity, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, material_cost, machine_cost, post_processing_charges, subtotal, total_price, final_price, grand_total, price, price_per_unit, discount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, overhead_percent, overhead_amount, margin_percent, margin_amount, coupon_code, coupon_id, discount_type, estimated_time, status, payment_status, notes, invoice_number, created_at'
 
     let order
     let error
@@ -548,6 +574,52 @@ export async function GET(
     }
 
     const row = order as InvoiceRow
+
+    const allowedPaymentStatuses = new Set(['captured', 'paid', 'succeeded'])
+    const isPaid = allowedPaymentStatuses.has(row.payment_status ?? '')
+
+    if (!isAdmin && !isPaid) {
+      return NextResponse.json(
+        { error: 'Invoice is only available after payment is confirmed.' },
+        { status: 403 }
+      )
+    }
+
+    // Fetch provider payment reference if paid
+    let providerPaymentId: string | null = null
+    if (isPaid) {
+      const { data: attempt } = await orderSupabase
+        .from('payment_attempts')
+        .select('provider_payment_id')
+        .eq('internal_order_id', orderId)
+        .in('status', ['captured', 'paid', 'succeeded'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      providerPaymentId = attempt?.provider_payment_id ?? null
+    }
+
+    // Generate and persist invoice number on first download
+    let invoiceNumber = row.invoice_number ?? ''
+    if (!invoiceNumber && isPaid) {
+      const year = new Date(row.created_at).getFullYear()
+      const { count } = await orderSupabase
+        .from('orders')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', `${year}-01-01T00:00:00.000Z`)
+        .lt('created_at', `${year + 1}-01-01T00:00:00.000Z`)
+      const serial = (count ?? 0) + 1
+      invoiceNumber = `INV-${year}-${String(serial).padStart(5, '0')}`
+      await orderSupabase
+        .from('orders')
+        .update({
+          invoice_number: invoiceNumber,
+          invoice_generated_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId)
+    }
+
     let items: InvoiceRow[] = [row]
     if (row.group_id) {
       let groupQuery = orderSupabase
@@ -570,12 +642,15 @@ export async function GET(
         row,
         items,
         settings,
+        { isPaid, providerPaymentId },
       )
     } catch (e) {
       return NextResponse.json({ error: 'PDF generation failed: ' + (e instanceof Error ? e.message : String(e)) }, { status: 500 })
     }
 
-    const filename = `${order.id}.pdf`
+    const filename = invoiceNumber
+      ? `${invoiceNumber}.pdf`
+      : `${order.id}.pdf`
 
     void trackFeatureUsage(row.user_id ?? user.id, 'invoice_downloaded', {
       orderId: row.id,

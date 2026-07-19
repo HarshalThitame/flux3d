@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { requireUser } from '@/lib/auth/server'
 import {
   formatOrderNumber,
@@ -16,9 +17,10 @@ import {
 import { normalizeOwnedStoragePath } from '@/lib/quote/storage-path'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { getSettings } from '@/lib/settings'
-import { calculatePricingWaterfall, roundMoney } from '@/lib/quote/pricing-waterfall'
+import { calculateServerQuotePricing } from '@/lib/quote/server-pricing'
 import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
+import { redactSensitiveValues } from '@/lib/security/redact'
+import { rateLimitCheck } from '@/lib/rate-limit'
 
 function normalizeNumber(value: number, field: string) {
   if (!Number.isFinite(value) || value < 0) {
@@ -30,9 +32,20 @@ function normalizeNumber(value: number, field: string) {
 
 export async function createOrderAction(input: CreateOrderInput): Promise<OrderConfirmation> {
   const auth = await requireUser('/instant-quote')
+  const headersList = await headers()
+  const forwarded = headersList.get('x-forwarded-for') ?? ''
+  const clientIp = forwarded.split(',')[0]?.trim() || 'unknown'
+  const rateLimit = await rateLimitCheck(
+    `instant_quote_create:${auth.user.id}:${clientIp}`,
+    60,
+    5,
+  )
+  if (!rateLimit.success) {
+    throw new Error('Too many quote submissions. Please wait a moment and try again.')
+  }
   const supabase = await createServerSupabaseClient()
   const adminSupabase = createAdminSupabaseClient()
-  const settings = await getSettings()
+
   const addressErrors = validateAddressFields({
     fullName: input.fullName,
     phone: input.phone,
@@ -44,72 +57,36 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
     landmark: input.landmark ?? '',
   })
 
+  if (Object.keys(addressErrors).length > 0) {
+    throw new Error('Complete the delivery address before placing the order.')
+  }
+
   if (!input.fileUrl.trim()) {
     throw new Error('Upload your model before placing an order.')
   }
 
   if (!input.material.trim() || !input.color.trim()) {
-    throw new Error('Select a material and color before placing an order.')
+    throw new Error('Select a material and color before placing the order.')
+  }
+
+  if (!input.modelMetadata || !input.modelMetadata.volumeMm3) {
+    throw new Error('Model metadata is missing. Re-upload the model and try again.')
   }
 
   const normalizedQuantity = Math.max(1, Math.floor(normalizeNumber(input.quantity, 'quantity')))
-
-  if (Object.keys(addressErrors).length > 0) {
-    throw new Error('Complete the delivery address before placing the order.')
-  }
-
-  const breakdown = input.priceBreakdown
-  const materialCost = normalizeNumber(
-    breakdown?.materialCost ?? input.materialCost ?? 0,
-    'material cost'
-  )
-  const machineCost = normalizeNumber(
-    breakdown?.machineCost ?? input.machineCost ?? 0,
-    'machine cost'
-  )
-  const postProcessingCharges = normalizeNumber(
-    breakdown?.postProcessingCharges ?? input.postProcessingCharges ?? 0,
-    'post processing charges'
-  )
-  const cartDiscountPercent = normalizeNumber(
-    breakdown?.cartDiscountPercent ?? input.cartDiscountPercent ?? 0,
-    'cart discount percent'
-  )
-  const providedOverheadPercent = Number(breakdown?.overheadPercentage ?? input.overheadPercentage ?? 0)
-  const overheadPercentage = normalizeNumber(
-    providedOverheadPercent > 0 ? providedOverheadPercent : settings.overheadPercentage,
-    'overhead percent'
-  )
-  const providedMarginPercent = Number(breakdown?.marginPercentage ?? input.marginPercentage ?? 0)
-  const marginPercentage = normalizeNumber(
-    providedMarginPercent > 0 ? providedMarginPercent : settings.marginPercentage,
-    'margin percent'
-  )
-  const waterfall = calculatePricingWaterfall({
-    materialCost,
-    machineCost,
-    postProcessingCharges,
-    quantity: normalizedQuantity,
-    overheadPercent: overheadPercentage,
-    marginPercent: marginPercentage,
-    cartDiscountPercent,
-    deliveryCharge: breakdown?.deliveryCharge ?? input.deliveryCharge ?? null,
-    deliveryThreshold: settings.deliveryChargeThreshold,
-    defaultDeliveryCharge: settings.defaultDeliveryCharge,
-  })
-  const subtotal = waterfall.subtotal
-  const overheadAmount = waterfall.overheadAmount
-  const marginAmount = waterfall.marginAmount
-  const totalPrice = waterfall.priceBeforeDiscount
-  const cartDiscountAmount = waterfall.cartDiscountAmount
-  const finalPrice = waterfall.finalPrice
-  const resolvedDeliveryCharge = waterfall.deliveryCharge
-  const resolvedGrandTotal = waterfall.grandTotal
-  const pricePerUnit = waterfall.pricePerUnit
-  const weight = roundMoney(input.weight ?? 0)
-  const difficultyFactor = normalizeNumber(input.difficultyFactor ?? 1, 'difficulty factor')
   const safeFileUrl = normalizeOwnedStoragePath(input.fileUrl, auth.user.id)
   const normalizedPhone = normalizePhone(input.phone)
+
+  const { breakdown, material } = await calculateServerQuotePricing(input.modelMetadata, {
+    materialId: input.material,
+    color: input.color,
+    infill: Math.round(normalizeNumber(input.infill, 'infill')),
+    layerHeight: normalizeNumber(input.layerHeight, 'layer height'),
+    quantity: normalizedQuantity,
+    postProcessingLevel: input.postProcessingLevel,
+    supports: input.supports,
+  })
+
   const trimmedAddress = {
     full_name: input.fullName.trim(),
     phone: normalizedPhone,
@@ -120,6 +97,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
     pincode: input.pincode.trim(),
     landmark: input.landmark?.trim() ? input.landmark.trim() : null,
   }
+
   const savedAddress = {
     full_name: trimmedAddress.full_name,
     phone: trimmedAddress.phone,
@@ -187,15 +165,15 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
       layer_height: normalizeNumber(input.layerHeight, 'layer height'),
       quantity: normalizedQuantity,
       post_processing_level: input.postProcessingLevel,
-      post_processing_charges: postProcessingCharges,
-      weight,
-      difficulty_factor: difficultyFactor,
+      post_processing_charges: breakdown.postProcessingCharges,
+      weight: input.modelMetadata.fileSize,
+      difficulty_factor: material.difficultyFactor,
       supports: input.supports,
-      material_cost: materialCost,
-      machine_cost: machineCost,
-      subtotal,
-      cart_discount: cartDiscountAmount,
-      cart_discount_percent: cartDiscountPercent,
+      material_cost: breakdown.materialCost,
+      machine_cost: breakdown.machineCost,
+      subtotal: breakdown.subtotal,
+      cart_discount: breakdown.cartDiscountAmount,
+      cart_discount_percent: breakdown.cartDiscountPercent,
       coupon_discount: 0,
       offer_discount: 0,
       coupon_code: null,
@@ -203,20 +181,20 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
       offer_id: null,
       offer_name: null,
       discount_type: null,
-      overhead_percent: overheadPercentage,
-      overhead_amount: overheadAmount,
-      margin_percent: marginPercentage,
-      margin_amount: marginAmount,
-      total_price: totalPrice,
-      final_price: finalPrice,
-      delivery_charge: resolvedDeliveryCharge,
-      grand_total: resolvedGrandTotal,
+      overhead_percent: breakdown.overheadPercentage,
+      overhead_amount: breakdown.overheadAmount,
+      margin_percent: breakdown.marginPercentage,
+      margin_amount: breakdown.marginAmount,
+      total_price: breakdown.totalPrice,
+      final_price: breakdown.finalPrice,
+      delivery_charge: breakdown.deliveryCharge,
+      grand_total: breakdown.grandTotal,
       ...trimmedAddress,
-      price: finalPrice,
-      price_per_unit: pricePerUnit,
-      estimated_time: normalizeNumber(input.estimatedTime, 'estimated time'),
-      status: 'pending',
-      discount: waterfall.discount,
+      price: breakdown.finalPrice,
+      price_per_unit: breakdown.pricePerUnit,
+      estimated_time: breakdown.estimatedHours,
+      status: 'pending_review',
+      discount: breakdown.discount,
       notes: input.notes?.trim() ? input.notes.trim() : null,
     })
     .select(
@@ -245,13 +223,38 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
     throw new Error(updateError.message)
   }
 
+  // Create a quote version snapshot for the approval workflow
+  const { error: quoteVersionError } = await adminSupabase.from('quote_versions').insert({
+    quote_id: `F3D-${orderNumber}`,
+    order_id: insertedOrder.id,
+    user_id: auth.user.id,
+    version_number: 1,
+    status: 'pending_review',
+    pricing_snapshot: redactSensitiveValues(breakdown),
+    material_id: input.material,
+    config: {
+      materialId: input.material,
+      color: input.color,
+      infill: input.infill,
+      layerHeight: input.layerHeight,
+      quantity: normalizedQuantity,
+      postProcessingLevel: input.postProcessingLevel,
+      supports: input.supports,
+    },
+    model_metadata: redactSensitiveValues(input.modelMetadata),
+  })
+
+  if (quoteVersionError) {
+    console.error('[orders] Failed to create quote version:', quoteVersionError)
+  }
+
   void trackFeatureUsage(auth.user.id, 'order_placed', {
     source: 'instant_quote',
     orderId: insertedOrder.id,
     orderNumber,
     material: insertedOrder.material,
     quantity: insertedOrder.quantity,
-    grandTotal: Number(insertedOrder.grand_total ?? resolvedGrandTotal),
+    grandTotal: Number(insertedOrder.grand_total ?? breakdown.grandTotal),
   }).catch(() => {})
 
   revalidatePath('/my-orders')
@@ -273,9 +276,9 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
     pincode: insertedOrder.pincode,
     landmark: insertedOrder.landmark,
     deliveryCharge: Number(insertedOrder.delivery_charge),
-    totalPrice: Number(insertedOrder.grand_total ?? resolvedGrandTotal),
+    totalPrice: Number(insertedOrder.grand_total ?? breakdown.grandTotal),
     finalPrice: Number(insertedOrder.final_price ?? 0),
-    grandTotal: Number(insertedOrder.grand_total ?? resolvedGrandTotal),
+    grandTotal: Number(insertedOrder.grand_total ?? breakdown.grandTotal),
     infill: insertedOrder.infill,
     layerHeight: Number(insertedOrder.layer_height),
     quantity: insertedOrder.quantity,

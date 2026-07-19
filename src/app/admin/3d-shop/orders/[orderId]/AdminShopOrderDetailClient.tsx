@@ -10,27 +10,24 @@ import { formatShopPrice } from '@/lib/shop/selection'
 import {
   formatShopOrderDate,
   formatShopOrderDateTime,
+  getShopFulfilmentStatusClasses,
+  getShopFulfilmentStatusLabel,
   getShopOrderLineTotal,
   getShopOrderStatusClasses,
   getShopOrderStatusLabel,
   getShopPaymentStatusClasses,
   getShopPaymentStatusLabel,
-  SHOP_ORDER_PROGRESS,
+  SHOP_FULFILMENT_PROGRESS,
+  shopFulfilmentStatuses,
   type ShopAdminOrder,
   type ShopOrderStatus,
+  type ShopFulfilmentStatus,
   type ShopPaymentStatus,
 } from '@/lib/shop/orders'
 
-const orderStatuses: ShopOrderStatus[] = [
-  'placed',
-  'confirmed',
-  'packed',
-  'shipped',
-  'delivered',
-  'cancelled',
-  'return_requested',
-  'returned',
-]
+const lifecycleStatuses: ShopOrderStatus[] = ['placed', 'confirmed', 'cancelled', 'return_requested', 'returned']
+
+const fulfilmentStatuses: ShopFulfilmentStatus[] = [...shopFulfilmentStatuses]
 
 const paymentStatuses: ShopPaymentStatus[] = ['pending', 'paid', 'failed', 'refunded']
 
@@ -94,8 +91,8 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
 
   const progressIndex = useMemo(() => {
     if (!order) return -1
-    const index = SHOP_ORDER_PROGRESS.indexOf(order.order_status)
-    return index === -1 ? SHOP_ORDER_PROGRESS.length - 1 : index
+    const index = SHOP_FULFILMENT_PROGRESS.indexOf(order.fulfilment_status)
+    return index === -1 ? SHOP_FULFILMENT_PROGRESS.length - 1 : index
   }, [order])
 
   async function patchOrder(payload: Record<string, string | null>) {
@@ -119,14 +116,21 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
     }
   }
 
-  async function changeStatus(nextStatus: ShopOrderStatus) {
-    if (!order || nextStatus === order.order_status) return
+  async function changeStatus(nextStatus: string) {
+    if (!order) return
+    const isFulfilment = shopFulfilmentStatuses.includes(nextStatus as ShopFulfilmentStatus)
+    if (isFulfilment && nextStatus === order.fulfilment_status) return
+    if (!isFulfilment && nextStatus === order.order_status) return
     let cancellationReason: string | null = null
     if (nextStatus === 'cancelled') {
       cancellationReason = window.prompt('Cancellation reason')?.trim() || null
       if (!cancellationReason) return
     }
-    await patchOrder({ order_status: nextStatus, cancellation_reason: cancellationReason })
+    if (isFulfilment) {
+      await patchOrder({ fulfilment_status: nextStatus })
+    } else {
+      await patchOrder({ order_status: nextStatus, cancellation_reason: cancellationReason })
+    }
   }
 
   async function saveTracking() {
@@ -217,8 +221,14 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
                 <h2 className="!text-base font-bold text-[#0F1B3D]">Order Details</h2>
                 <p className="mt-1 text-sm text-[#6F7192]">{order.customer?.name ?? order.shipping_address.name} · {order.customer?.email ?? 'No email'}</p>
               </div>
-              <span className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${getShopOrderStatusClasses(order.order_status)}`}>
-                {getShopOrderStatusLabel(order.order_status)}
+              <span className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${
+                order.order_status === 'cancelled' || order.order_status === 'returned'
+                  ? getShopOrderStatusClasses(order.order_status)
+                  : getShopFulfilmentStatusClasses(order.fulfilment_status)
+              }`}>
+                {order.order_status === 'cancelled' || order.order_status === 'returned'
+                  ? getShopOrderStatusLabel(order.order_status)
+                  : getShopFulfilmentStatusLabel(order.fulfilment_status)}
               </span>
             </div>
 
@@ -227,8 +237,8 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
                 Cancelled{order.cancellation_reason ? ` · ${order.cancellation_reason}` : ''}
               </div>
             ) : (
-              <div className="mt-6 grid gap-3 md:grid-cols-5">
-                {SHOP_ORDER_PROGRESS.map((status, index) => (
+              <div className="mt-6 grid gap-3 md:grid-cols-7">
+                {SHOP_FULFILMENT_PROGRESS.map((status, index) => (
                   <div key={status} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                     <div className={`grid h-8 w-8 place-items-center rounded-full text-xs font-bold ${
                       index < progressIndex
@@ -239,7 +249,7 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
                     }`}>
                       {index + 1}
                     </div>
-                    <div className="mt-2 text-xs font-semibold text-[#0F1B3D]">{getShopOrderStatusLabel(status)}</div>
+                    <div className="mt-2 text-xs font-semibold text-[#0F1B3D]">{getShopFulfilmentStatusLabel(status)}</div>
                   </div>
                 ))}
               </div>
@@ -310,19 +320,30 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5">
             <h2 className="!text-base font-bold text-[#0F1B3D]">Status Updater</h2>
+            <label className="mt-4 block text-xs font-semibold text-[#6F7192]">Lifecycle</label>
             <select
               value={order.order_status}
-              onChange={(event) => void changeStatus(event.target.value as ShopOrderStatus)}
+              onChange={(event) => void changeStatus(event.target.value)}
               disabled={saving}
-              className="mt-4 w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
+              className="mt-1 w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
             >
-              {orderStatuses.map((status) => <option key={status} value={status}>{getShopOrderStatusLabel(status)}</option>)}
+              {lifecycleStatuses.map((status) => <option key={status} value={status}>{getShopOrderStatusLabel(status)}</option>)}
             </select>
+            <label className="mt-3 block text-xs font-semibold text-[#6F7192]">Fulfilment</label>
+            <select
+              value={order.fulfilment_status}
+              onChange={(event) => void changeStatus(event.target.value)}
+              disabled={saving}
+              className="mt-1 w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
+            >
+              {fulfilmentStatuses.map((status) => <option key={status} value={status}>{getShopFulfilmentStatusLabel(status)}</option>)}
+            </select>
+            <label className="mt-3 block text-xs font-semibold text-[#6F7192]">Payment</label>
             <select
               value={order.payment_status}
               onChange={(event) => void patchOrder({ payment_status: event.target.value })}
               disabled={saving}
-              className="mt-3 w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
+              className="mt-1 w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
             >
               {paymentStatuses.map((status) => <option key={status} value={status}>{getShopPaymentStatusLabel(status)}</option>)}
             </select>

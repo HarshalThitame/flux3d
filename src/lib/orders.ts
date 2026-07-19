@@ -1,4 +1,5 @@
 import type { PriceBreakdown } from '@/lib/quote/types'
+import type { ModelMetadata } from '@/lib/quote/server-pricing'
 import { FALLBACK_SETTINGS } from '@/lib/settings-fallback'
 import { calculateDeliveryChargeFromSettings } from '@/lib/quote/pricing-waterfall'
 
@@ -67,25 +68,8 @@ export type CreateOrderInput = {
   layerHeight: number
   quantity: number
   postProcessingLevel: 'none' | 'sanded' | 'sanded-painted'
-  postProcessingCharges: number
   supports: boolean
-  materialCost?: number
-  machineCost?: number
-  subtotal?: number
-  overheadPercentage?: number
-  overheadAmount?: number
-  marginPercentage?: number
-  marginAmount?: number
-  totalPrice?: number
-  cartDiscountAmount?: number
-  cartDiscountPercent?: number
-  finalPrice?: number
-  deliveryCharge?: number
-  grandTotal?: number
-  price: number
-  estimatedTime: number
-  weight?: number
-  difficultyFactor?: number
+  notes?: string
   fullName: string
   phone: string
   addressLine1: string
@@ -94,24 +78,7 @@ export type CreateOrderInput = {
   state: string
   pincode: string
   landmark?: string
-  notes?: string
-  priceBreakdown?: Pick<
-    PriceBreakdown,
-    | 'materialCost'
-    | 'machineCost'
-    | 'postProcessingCharges'
-    | 'subtotal'
-    | 'overheadPercentage'
-    | 'overheadAmount'
-    | 'marginPercentage'
-    | 'marginAmount'
-    | 'totalPrice'
-    | 'cartDiscountAmount'
-    | 'cartDiscountPercent'
-    | 'finalPrice'
-    | 'deliveryCharge'
-    | 'grandTotal'
-  >
+  modelMetadata: ModelMetadata
 }
 
 export type AddressFields = {
@@ -179,6 +146,7 @@ export type OrderDraft = {
     | 'grandTotal'
   >
   notes: string
+  modelMetadata: ModelMetadata
 }
 
 export const ORDER_DRAFT_STORAGE_KEY = 'flux3d-order-draft'

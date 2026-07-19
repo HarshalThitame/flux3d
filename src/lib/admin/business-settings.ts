@@ -144,6 +144,39 @@ export type BusinessSettings = {
   updatedAt: string
 }
 
+const SENSITIVE_SETTING_FIELDS: (keyof BusinessSettings)[] = [
+  'smtpPassword',
+  'razorpayKeyId',
+  'accountNumber',
+  'ifscCode',
+  'upiId',
+]
+
+export const BUSINESS_SETTING_SECRET_MASK = '••••••••'
+
+export function maskBusinessSettingsSecrets(settings: BusinessSettings): BusinessSettings {
+  const masked = { ...settings }
+  for (const field of SENSITIVE_SETTING_FIELDS) {
+    const value = masked[field]
+    if (typeof value === 'string' && value.length > 0) {
+      ;(masked as Record<keyof BusinessSettings, unknown>)[field] = BUSINESS_SETTING_SECRET_MASK
+    }
+  }
+  return masked
+}
+
+export function stripMaskedSecretUpdates<T extends Record<string, unknown>>(
+  updates: T
+): T {
+  const copy = { ...updates }
+  for (const field of SENSITIVE_SETTING_FIELDS) {
+    if (copy[field] === BUSINESS_SETTING_SECRET_MASK) {
+      delete copy[field]
+    }
+  }
+  return copy
+}
+
 export type BusinessSettingsRow = {
   id: string
   business_name: string | null

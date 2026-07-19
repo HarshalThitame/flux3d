@@ -26,10 +26,15 @@ import type { AppUserProfile } from '@/lib/auth/server'
 import { getMaterialById, layerHeightOptions } from '@/lib/quote/materials'
 import { calculateInstantQuote, formatDurationMinutes, getPostProcessingCharge, postProcessingOptions } from '@/lib/quote/pricing-engine'
 import type { PricingSettingsInput } from '@/lib/quote/pricing-waterfall'
-import { saveQuoteToSupabase, uploadFileToSupabaseStorage, validateModelFile } from '@/lib/quote/supabase-storage'
+import {
+  getSignedModelUrl,
+  saveQuoteToSupabase,
+  uploadFileToSupabaseStorage,
+  validateModelFile,
+} from '@/lib/quote/supabase-storage'
 import { hasSupabaseConfig } from '@/lib/supabase/config'
-import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
+import type { ModelMetadata } from '@/lib/quote/server-pricing'
 import type { ParsedModel, QuoteConfig, QuoteMaterial, UploadState } from '@/lib/quote/types'
 import { useCart } from '@/lib/cart/context'
 import type { CartItem } from '@/lib/cart/types'
@@ -294,6 +299,15 @@ function CartEnabledWorkspace({
         grandTotal: priceBreakdown.grandTotal,
       },
       notes: '',
+      modelMetadata: {
+        fileName: selectedModel.fileName,
+        fileSize: selectedModel.fileSize,
+        extension: selectedModel.extension,
+        volumeMm3: selectedModel.volumeMm3,
+        dimensionsMm: selectedModel.dimensionsMm,
+        triangleCount: selectedModel.triangleCount,
+        suggestedMaterialId: selectedModel.suggestedMaterialId,
+      } satisfies ModelMetadata,
     }
   }, [
     config.infill,
@@ -404,16 +418,14 @@ function CartEnabledWorkspace({
           throw new Error('Could not load the selected model file.')
         }
 
-        const supabase = getSupabaseBrowserClient()
-        const { data, error } = await supabase
-          .storage
-          .from(process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? 'quote-models')
-          .download(storagePath)
-
-        if (error) throw new Error(error.message)
-
-        const file = new File([data], initialModelFile.fileName, {
-          type: data.type || 'application/octet-stream',
+        const signedUrl = await getSignedModelUrl(storagePath)
+        const response = await fetch(signedUrl)
+        if (!response.ok) {
+          throw new Error('Could not fetch the selected model file.')
+        }
+        const blob = await response.blob()
+        const file = new File([blob], initialModelFile.fileName, {
+          type: blob.type || 'application/octet-stream',
         })
 
         await handleFileSelect(file)

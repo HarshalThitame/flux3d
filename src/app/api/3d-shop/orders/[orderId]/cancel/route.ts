@@ -26,7 +26,7 @@ export async function POST(request: Request, context: { params: Promise<{ orderI
     const supabase = createAdminSupabaseClient()
     const { data: order, error: loadError } = await supabase
       .from('shelf_orders')
-      .select('id, user_id, items, order_status')
+      .select('id, user_id, order_status')
       .eq('id', orderId)
       .eq('user_id', authData.user.id)
       .maybeSingle()
@@ -37,19 +37,12 @@ export async function POST(request: Request, context: { params: Promise<{ orderI
       return NextResponse.json({ error: 'Order cannot be cancelled at this stage.' }, { status: 400 })
     }
 
-    const { error: updateError } = await supabase
-      .from('shelf_orders')
-      .update({ order_status: 'cancelled', cancellation_reason: reason })
-      .eq('id', orderId)
-      .eq('user_id', authData.user.id)
-
-    if (updateError) throw new Error(updateError.message)
-
-    const { error: restoreError } = await supabase.rpc('restore_shelf_order_stock', {
-      p_items: order.items ?? [],
+    const { error: cancelError } = await supabase.rpc('cancel_shelf_order', {
+      p_order_id: orderId,
+      p_reason: reason,
     })
 
-    if (restoreError) throw new Error(restoreError.message)
+    if (cancelError) throw new Error(cancelError.message)
 
     return NextResponse.json({ success: true })
   } catch (error) {

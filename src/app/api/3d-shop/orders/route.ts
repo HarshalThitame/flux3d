@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { mapShopOrderRow, shopOrderStatuses, type ShopOrderStatus } from '@/lib/shop/orders'
+import { mapShopOrderRow, shopFulfilmentStatuses, shopOrderStatuses, type ShopFulfilmentStatus, type ShopOrderStatus } from '@/lib/shop/orders'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,8 +35,12 @@ export async function GET(request: Request) {
       .order('placed_at', { ascending: false })
       .range(from, to)
 
-    if (status && shopOrderStatuses.includes(status as ShopOrderStatus)) {
-      query = query.eq('order_status', status)
+    if (status) {
+      if (shopOrderStatuses.includes(status as ShopOrderStatus)) {
+        query = query.eq('order_status', status)
+      } else if (shopFulfilmentStatuses.includes(status as ShopFulfilmentStatus)) {
+        query = query.eq('fulfilment_status', status)
+      }
     }
 
     const { data, error, count } = await query

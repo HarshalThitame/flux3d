@@ -205,6 +205,14 @@ export default function DeliveryStepClient({
       return
     }
 
+    if (!draft.modelMetadata) {
+      setToast({
+        type: 'error',
+        message: 'Your quote is missing model metadata. Re-upload the model and try again.',
+      })
+      return
+    }
+
     try {
       normalizeOwnedStoragePath(draft.fileUrl, user.id)
     } catch (error) {
@@ -235,26 +243,7 @@ export default function DeliveryStepClient({
         layerHeight: draft.layerHeight,
         quantity: draft.quantity,
         postProcessingLevel: draft.postProcessingLevel,
-        postProcessingCharges: draft.postProcessingCharges,
         supports: draft.supports,
-        materialCost: draft.materialCost,
-        machineCost: draft.machineCost,
-        subtotal: draft.subtotal,
-        totalPrice: draft.totalPrice,
-        cartDiscountAmount: draft.priceBreakdown?.cartDiscountAmount ?? draft.cartDiscountAmount,
-        cartDiscountPercent: draft.priceBreakdown?.cartDiscountPercent ?? draft.cartDiscountPercent,
-        finalPrice: draft.finalPrice,
-        deliveryCharge: draft.deliveryCharge,
-        grandTotal: draft.grandTotal,
-        price: draft.price,
-        estimatedTime: draft.estimatedTime,
-        weight: draft.weight,
-        difficultyFactor: draft.difficultyFactor,
-        overheadPercentage: draft.priceBreakdown?.overheadPercentage ?? draft.overheadPercentage,
-        overheadAmount: draft.priceBreakdown?.overheadAmount ?? draft.overheadAmount,
-        marginPercentage: draft.priceBreakdown?.marginPercentage ?? draft.marginPercentage,
-        marginAmount: draft.priceBreakdown?.marginAmount ?? draft.marginAmount,
-        priceBreakdown: draft.priceBreakdown,
         fullName: address.fullName,
         phone: address.phone,
         addressLine1: address.addressLine1,
@@ -264,6 +253,7 @@ export default function DeliveryStepClient({
         pincode: address.pincode,
         landmark: address.landmark,
         notes: draft.notes,
+        modelMetadata: draft.modelMetadata,
       })
 
       window.sessionStorage.removeItem(ORDER_DRAFT_STORAGE_KEY)

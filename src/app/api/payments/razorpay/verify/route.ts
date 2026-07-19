@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { verifyCheckoutPayment } from '@/lib/payments/service'
+import { rateLimitResponse } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -23,6 +24,16 @@ export async function POST(request: Request) {
 
   if (authError || !authData.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const rateLimit = await rateLimitResponse(request, {
+    prefix: 'razorpay_verify',
+    windowSeconds: 60,
+    maxRequests: 20,
+    userId: authData.user.id,
+  })
+  if (!rateLimit.success) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 
   try {
