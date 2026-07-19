@@ -46,8 +46,8 @@ USING (
   (split_part(name, '/', 1)) = auth.uid()::text
 );
 
--- 3. Ensure RLS is enabled on storage.objects
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- 3. Ensure RLS is enabled on storage.objects (skipped — schema owned by supabase_storage_admin)
+-- ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 -- 4. Verify policies were created
 SELECT schemaname, tablename, policyname 
