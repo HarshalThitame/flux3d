@@ -16,8 +16,8 @@ export default function MarqueeSection() {
 
   return (
     <section className="premium-marquee relative w-full overflow-hidden border-y py-5">
-      <div className="absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-[#050506] to-transparent" />
-      <div className="absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-[#050506] to-transparent" />
+      <div className="absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-[#f9f7f4] to-transparent" />
+      <div className="absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-[#f9f7f4] to-transparent" />
       <div className="overflow-hidden whitespace-nowrap">
         <div className="inline-flex min-w-max animate-marquee items-center">
           {items.map((item, index) => (
