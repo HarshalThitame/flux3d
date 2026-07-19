@@ -21,8 +21,9 @@ import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { getCurrentUserProfile } from '@/lib/auth/server'
 import {
   formatShopOrderDateTime,
+  getShopFulfilmentStatusLabel,
   getShopPaymentStatusLabel,
-  getShopOrderStatusLabel,
+  SHOP_FULFILMENT_PROGRESS,
   mapShopOrderRow,
   normalizeShopOrderMoney,
   type ShopOrder,
@@ -100,12 +101,12 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
   const itemCount = getOrderItemCount(order)
   const primaryImage = getPrimaryImage(order)
   const previewItems = order.items.slice(0, 4)
-  const timeline = [
-    { label: 'Placed', detail: 'Order locked', active: true },
-    { label: 'Confirmed', detail: 'Team review', active: false },
-    { label: 'Packed', detail: 'Dispatch prep', active: false },
-    { label: 'Shipped', detail: 'Tracking shared', active: false },
-  ]
+  const currentFulfilmentIndex = SHOP_FULFILMENT_PROGRESS.indexOf(order.fulfilment_status)
+  const timeline = SHOP_FULFILMENT_PROGRESS.map((status, index) => ({
+    label: getShopFulfilmentStatusLabel(status),
+    detail: index === 0 ? 'Order locked' : index === 3 ? 'Dispatch prep' : index === 4 ? 'Tracking shared' : '',
+    active: index <= currentFulfilmentIndex,
+  }))
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
@@ -231,7 +232,7 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
                     <div className="grid grid-cols-3 divide-x divide-[var(--border-light)] border-t border-[var(--border-light)] text-center">
                       <div className="px-3 py-4">
                         <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Status</div>
-                        <div className="mt-1 text-sm font-black text-emerald-700">{getShopOrderStatusLabel(order.order_status)}</div>
+                        <div className="mt-1 text-sm font-black text-emerald-700">{getShopFulfilmentStatusLabel(order.fulfilment_status)}</div>
                       </div>
                       <div className="px-3 py-4">
                         <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Payment</div>
@@ -289,7 +290,7 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
               </Link>
             </div>
 
-            <div className="mt-6 grid gap-3 md:grid-cols-4">
+            <div className="mt-6 grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
               {timeline.map((step, index) => (
                 <div
                   key={step.label}

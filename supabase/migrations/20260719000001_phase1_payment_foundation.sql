@@ -323,7 +323,7 @@ AS $$
 $$;
 
 -- ============================================================
--- 12. NEW: decrement_offer_used_count
+-- 11. NEW: decrement_offer_used_count
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.decrement_offer_used_count(p_offer_id UUID)
 RETURNS void
@@ -338,7 +338,7 @@ AS $$
 $$;
 
 -- ============================================================
--- 13. NEW: release_expired_reservations — cron-friendly cleanup
+-- 12. NEW: release_expired_reservations — cron-friendly cleanup
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.release_expired_reservations()
 RETURNS TABLE(
@@ -385,7 +385,7 @@ END;
 $$;
 
 -- ============================================================
--- 13. NEW: convert_inventory_reservations — call on payment success
+-- 13. NEW: convert_inventory_reservations
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.convert_inventory_reservations(p_order_id UUID)
 RETURNS void

@@ -56,6 +56,10 @@ export type ShopOrder = {
   coupon_code: string | null
   shipping_charge: number
   total_amount: number
+  subtotal_paise: number
+  discount_amount_paise: number
+  shipping_charge_paise: number
+  total_amount_paise: number
   shipping_address: ShopShippingAddress
   payment_provider: string | null
   payment_purpose: string | null
@@ -94,8 +98,6 @@ export type ShopOrderCustomer = {
 export type ShopAdminOrder = ShopOrder & {
   customer: ShopOrderCustomer | null
 }
-
-export const SHOP_ORDER_PROGRESS: ShopOrderStatus[] = ['placed', 'confirmed']
 
 export const SHOP_FULFILMENT_PROGRESS: ShopFulfilmentStatus[] = [
   'pending', 'processing', 'packing', 'packed', 'shipped', 'delivering', 'delivered',
@@ -271,6 +273,10 @@ export function mapShopOrderRow(row: Record<string, unknown>): ShopOrder {
     coupon_code: row.coupon_code ? String(row.coupon_code) : null,
     shipping_charge: normalizeShopOrderMoney(row.shipping_charge),
     total_amount: normalizeShopOrderMoney(row.total_amount),
+    subtotal_paise: normalizeShopOrderMoney(row.subtotal_paise),
+    discount_amount_paise: normalizeShopOrderMoney(row.discount_amount_paise),
+    shipping_charge_paise: normalizeShopOrderMoney(row.shipping_charge_paise),
+    total_amount_paise: normalizeShopOrderMoney(row.total_amount_paise),
     shipping_address: {
       name: String(address.name ?? ''),
       phone: String(address.phone ?? ''),
