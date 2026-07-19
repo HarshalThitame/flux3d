@@ -24,6 +24,7 @@ import {
   ScanSearch,
   Webhook,
   Factory,
+  Database,
 } from 'lucide-react'
 
 export type NavItem = {
@@ -59,6 +60,7 @@ export const adminNavItems: NavItem[] = [
   { label: '3D Shop Notify Me', href: '/admin/3d-shop/notify-me', icon: Bell, section: 'shop' },
   { label: 'Support Tickets', href: '/admin/tickets', icon: Ticket, section: 'secondary' },
   { label: 'Team & Roles', href: '/admin/team', icon: ShieldCheck, section: 'secondary' },
+  { label: 'Data Retention', href: '/admin/settings/retention', icon: Database, section: 'secondary' },
   { label: 'Settings', href: '/admin/settings', icon: Settings, section: 'secondary' },
   { label: 'Business Settings', href: '/admin/settings/business', icon: Building2, section: 'secondary' },
   { label: 'Documentation', href: '/admin/documentation', icon: FileText, section: 'secondary' },

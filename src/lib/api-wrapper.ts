@@ -21,7 +21,7 @@ export function withApiHandler(handler: Handler): Handler {
         metadata: { path, correlationId },
       })
       const message = error instanceof Error ? error.message : 'Internal server error'
-      return NextResponse.json({ error: message }, { status: 500 })
+      return NextResponse.json({ error: message, correlationId }, { status: 500 })
     }
   }
 }

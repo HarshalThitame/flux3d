@@ -1,0 +1,20 @@
+name: Health Check
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check production health
+        run: |
+          RESPONSE=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 10 \
+            "https://${{ vars.VERCEL_URL || 'flux3d.vercel.app' }}/api/health" 2>&1 || echo "000")
+          if [ "$RESPONSE" != "200" ]; then
+            echo "Health check failed with status: $RESPONSE"
+            exit 1
+          fi
+          echo "Health check passed: $RESPONSE"
