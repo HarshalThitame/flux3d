@@ -1,7 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-
-const LOCAL_URL = 'http://127.0.0.1:54321'
-const LOCAL_SERVICE_KEY = '$SUPABASE_SERVICE_ROLE_KEY'
+import { LOCAL_SUPABASE_URL as LOCAL_URL, LOCAL_SERVICE_KEY } from './env'
 
 let supabase: SupabaseClient | null = null
 
@@ -31,7 +29,12 @@ export async function seedTestData() {
   const db = getDb()
 
   const { data: existing } = await db.from('shelf_skus').select('sku_code').eq('sku_code', 'TP-RED').limit(1)
-  if (existing?.length) return
+  if (existing?.length) {
+    // Ensure TEST_USER_ID is set even when data already exists
+    const { data: existingUser } = await db.from('auth.users').select('id').limit(1)
+    if (existingUser?.length) TEST_USER_ID = existingUser[0].id
+    return
+  }
 
   await cleanDb()
 

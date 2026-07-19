@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import { getDb, seedTestData, cleanDb, TEST_USER_ID } from './helpers'
-
-const LOCAL_URL = 'http://127.0.0.1:54321'
-const SERVICE_KEY = '$SUPABASE_SERVICE_ROLE_KEY'
+import { LOCAL_SUPABASE_URL as LOCAL_URL, LOCAL_SERVICE_KEY as SERVICE_KEY } from './env'
 
 let serviceClient = createClient(LOCAL_URL, SERVICE_KEY)
 
