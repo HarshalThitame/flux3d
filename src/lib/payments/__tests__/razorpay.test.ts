@@ -64,6 +64,9 @@ describe('verifyRazorpayCheckoutSignature', () => {
   })
 
   it('throws when credentials are not configured', async () => {
+    vi.stubEnv('RAZORPAY_KEY_ID', '')
+    vi.stubEnv('RAZORPAY_KEY_SECRET', '')
+    vi.stubEnv('RAZORPAY_WEBHOOK_SECRET', '')
     const { verifyRazorpayCheckoutSignature } = await import('../razorpay')
     expect(() => verifyRazorpayCheckoutSignature({ orderId: 'o1', paymentId: 'p1', signature: 'sig' })).toThrow('Razorpay credentials')
   })
@@ -91,8 +94,9 @@ describe('verifyRazorpayWebhookSignature', () => {
   })
 
   it('throws when webhook secret is not configured', async () => {
-    vi.stubEnv('RAZORPAY_KEY_ID', 'rzp_test_123')
-    vi.stubEnv('RAZORPAY_KEY_SECRET', 'test_secret_123')
+    vi.stubEnv('RAZORPAY_KEY_ID', '')
+    vi.stubEnv('RAZORPAY_KEY_SECRET', '')
+    vi.stubEnv('RAZORPAY_WEBHOOK_SECRET', '')
     const { verifyRazorpayWebhookSignature } = await import('../razorpay')
     expect(() => verifyRazorpayWebhookSignature('body', 'sig')).toThrow('Razorpay credentials')
   })
