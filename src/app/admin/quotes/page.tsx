@@ -14,6 +14,7 @@ export default function AdminQuotesPage() {
   const [quotes, setQuotes] = useState<AdminQuote[] | null>(null)
   const [toast, setToast] = useState<AdminToastState>(null)
   const [error, setError] = useState<string | null>(null)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -70,8 +71,6 @@ export default function AdminQuotesPage() {
       />
     )
   }
-
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   async function updateQuoteStatus(quote: AdminQuote, newStatus: string, _message: string) {
     const quoteId = quote.quote_id ?? String(quote.id)

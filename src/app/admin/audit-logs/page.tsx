@@ -53,7 +53,9 @@ export default function AdminAuditLogsPage() {
     }
   }, [filterType, search, page])
 
-  useEffect(() => { void loadLogs() }, [loadLogs])
+  useEffect(() => {
+    window.setTimeout(() => void loadLogs(), 0)
+  }, [loadLogs])
 
   const totalPages = Math.max(1, Math.ceil(total / 50))
   const targetTypes = ['order', 'user', 'material', 'coupon', 'setting', 'payment', 'refund', 'printer', 'quote', 'manufacturing', 'admin_user']

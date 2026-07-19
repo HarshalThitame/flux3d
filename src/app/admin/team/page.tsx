@@ -52,7 +52,9 @@ export default function AdminTeamPage() {
     }
   }, [])
 
-  useEffect(() => { void loadUsers() }, [loadUsers])
+  useEffect(() => {
+    window.setTimeout(() => void loadUsers(), 0)
+  }, [loadUsers])
 
   async function toggleRole(userId: string, role: string, currentValue: boolean) {
     setSavingUserId(userId)
@@ -122,13 +124,13 @@ export default function AdminTeamPage() {
                       <button
                         type="button"
                         disabled={savingUserId === user.id}
-                        onClick={() => toggleRole(user.id, role, Boolean((user as any)[role]))}
+                        onClick={() => toggleRole(user.id, role, Boolean((user as Record<string, unknown>)[role]))}
                         className={`inline-flex h-6 w-10 items-center rounded-full p-0.5 transition ${
-                          (user as any)[role] ? 'bg-[#6d28d9]' : 'bg-gray-200'
+                          (user as Record<string, unknown>)[role] ? 'bg-[#6d28d9]' : 'bg-gray-200'
                         } ${savingUserId === user.id ? 'opacity-50' : ''}`}
                       >
                         <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
-                          (user as any)[role] ? 'translate-x-4' : 'translate-x-0'
+                          (user as Record<string, unknown>)[role] ? 'translate-x-4' : 'translate-x-0'
                         }`} />
                       </button>
                     </td>
