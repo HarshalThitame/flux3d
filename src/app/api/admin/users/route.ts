@@ -1,96 +1,84 @@
 import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
-import { getAdminUsersData } from '@/lib/admin/queries'
-import { requireAdminRequest } from '@/lib/admin/request'
+import { requireAdminPermission } from '@/lib/admin/permissions'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import type { AdminCustomerStatus } from '@/lib/admin/types'
 import { logAdminAction } from '@/lib/admin/auditLog'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
-  const auth = await requireAdminRequest()
+  const auth = await requireAdminPermission('admin.users')
   if ('response' in auth) return auth.response
 
   try {
-    const data = await getAdminUsersData()
-    return NextResponse.json({ users: data })
+    const supabase = createAdminSupabaseClient()
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, email, full_name, is_admin, is_finance, is_order_manager, is_printer_manager, is_qc_manager, created_at')
+      .order('created_at', { ascending: false })
+
+    if (error) throw new Error(error.message)
+
+    return NextResponse.json({ users: data ?? [] })
   } catch (error) {
     return getAdminApiErrorResponse(error)
   }
 }
 
 export async function PATCH(request: Request) {
-  const auth = await requireAdminRequest()
+  const auth = await requireAdminPermission('admin.users')
   if ('response' in auth) return auth.response
 
   try {
     const body = (await request.json()) as {
-      userId?: string
-      status?: AdminCustomerStatus
-      notes?: string
-      manualCoupon?: string
-      manualCredit?: number
+      user_id?: string
+      is_admin?: boolean
+      is_finance?: boolean
+      is_order_manager?: boolean
+      is_printer_manager?: boolean
+      is_qc_manager?: boolean
     }
 
-    if (!body.userId) {
-      return NextResponse.json({ error: 'User id is required.' }, { status: 400 })
+    if (!body.user_id) {
+      return NextResponse.json({ error: 'User ID is required.' }, { status: 400 })
     }
 
     const supabase = createAdminSupabaseClient()
-    const currentUser = await supabase.auth.admin.getUserById(body.userId)
-    if (currentUser.error) throw new Error(currentUser.error.message)
-    if (!currentUser.data.user) {
-      return NextResponse.json({ error: 'Customer not found.' }, { status: 404 })
-    }
+    const updates: Record<string, boolean> = {}
 
-    const updates: Parameters<typeof supabase.auth.admin.updateUserById>[1] = {}
-    const oldValue = {
-      banned_until: currentUser.data.user.banned_until,
-      app_metadata: currentUser.data.user.app_metadata,
-    }
-
-    if (body.status === 'Suspended') {
-      updates.ban_duration = '876000h'
-    } else if (body.status === 'Active') {
-      updates.ban_duration = 'none'
-    }
-
-    if ('notes' in body || 'manualCoupon' in body || 'manualCredit' in body) {
-      updates.app_metadata = {
-        ...currentUser.data.user.app_metadata,
-        admin_notes: body.notes ?? currentUser.data.user.app_metadata.admin_notes ?? '',
-        manual_coupon: body.manualCoupon ?? currentUser.data.user.app_metadata.manual_coupon ?? '',
-        manual_credit: Number(body.manualCredit ?? currentUser.data.user.app_metadata.manual_credit ?? 0),
-      }
-    }
+    if (typeof body.is_admin === 'boolean') updates.is_admin = body.is_admin
+    if (typeof body.is_finance === 'boolean') updates.is_finance = body.is_finance
+    if (typeof body.is_order_manager === 'boolean') updates.is_order_manager = body.is_order_manager
+    if (typeof body.is_printer_manager === 'boolean') updates.is_printer_manager = body.is_printer_manager
+    if (typeof body.is_qc_manager === 'boolean') updates.is_qc_manager = body.is_qc_manager
 
     if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ error: 'No supported update provided.' }, { status: 400 })
+      return NextResponse.json({ error: 'No valid role fields provided.' }, { status: 400 })
     }
 
-    const { error } = await supabase.auth.admin.updateUserById(body.userId, updates)
+    const { data: oldProfile } = await supabase
+      .from('profiles')
+      .select('is_admin, is_finance, is_order_manager, is_printer_manager, is_qc_manager')
+      .eq('id', body.user_id)
+      .single()
+
+    const { error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', body.user_id)
+
     if (error) throw new Error(error.message)
-
-    if (typeof body.notes === 'string' && body.notes.trim()) {
-      const { error: noteError } = await supabase.from('admin_customer_notes').insert({
-        user_id: body.userId,
-        admin_id: auth.user.id,
-        note: body.notes.trim(),
-      })
-      if (noteError) throw new Error(noteError.message)
-    }
 
     await logAdminAction({
       admin_id: auth.user.id,
-      action: body.status === 'Suspended' ? 'suspend_user' : body.status === 'Active' ? 'reactivate_user' : 'update_user_metadata',
-      target_type: 'user',
-      target_id: body.userId,
-      old_value: oldValue,
-      new_value: updates as Record<string, unknown>,
+      action: 'update_user_roles',
+      target_type: 'admin_user',
+      target_id: body.user_id,
+      old_value: oldProfile,
+      new_value: updates,
     })
 
-    const users = await getAdminUsersData()
-    const user = users.find((item) => item.id === body.userId)
-    return NextResponse.json({ user })
+    return NextResponse.json({ success: true })
   } catch (error) {
     return getAdminApiErrorResponse(error)
   }

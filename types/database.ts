@@ -10,7 +10,18 @@ export type ProfileStatus = 'active' | 'suspended' | 'unverified'
 export type DeviceType = 'mobile' | 'desktop' | 'tablet'
 export type EmailType = 'order_confirmation' | 'cancellation' | 'promotion' | 'otp' | 'password_reset' | 'welcome'
 export type EmailEventStatus = 'sent' | 'delivered' | 'opened' | 'bounced'
-export type AdminAuditTargetType = 'order' | 'user' | 'material' | 'coupon' | 'setting'
+export type AdminAuditTargetType =
+  | 'order'
+  | 'user'
+  | 'material'
+  | 'coupon'
+  | 'setting'
+  | 'payment'
+  | 'refund'
+  | 'printer'
+  | 'quote'
+  | 'manufacturing'
+  | 'admin_user'
 
 export type ProfileRow = {
   id: string

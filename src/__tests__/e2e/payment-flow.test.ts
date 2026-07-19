@@ -38,6 +38,7 @@ describe('E2E payment flow', () => {
   it('1. creates a shop order', async () => {
     const db = getDb()
     const { data: sku } = await db.from('shelf_skus').select('id, product_id').eq('sku_code', 'TP-RED').single()
+    if (!sku) throw new Error('Test SKU TP-RED not found')
 
     const address = { name: 'Test', phone: '9876543210', line1: 'Test St', city: 'Mumbai', state: 'Maharashtra', pincode: '400001' }
     const items = [{ productId: sku.product_id, skuId: sku.id, quantity: 1, customizationText: null }]
@@ -100,8 +101,7 @@ describe('E2E payment flow', () => {
       provider_payment_id: 'pay_mock_refund',
       captured_at: new Date().toISOString(),
     }).select('id').single()
-
-    expect(attempt).not.toBeNull()
+    if (!attempt) throw new Error('Payment attempt not created')
 
     const { initiateRefund } = await import('@/lib/payments/service')
     const result = await initiateRefund({

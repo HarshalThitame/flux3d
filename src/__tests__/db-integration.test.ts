@@ -67,7 +67,7 @@ describe('coupon validation', () => {
       min_order_value: 100, max_uses: 100, is_active: true,
       valid_from: '2026-01-01', valid_until: '2027-12-31',
     }, { onConflict: 'code' }).select('code, discount_type, discount_value').single()
-    expect(coupon).not.toBeNull()
+    if (!coupon) throw new Error('Coupon not created')
     expect(coupon.code).toBe('TESTDIRECT')
     expect(coupon.discount_type).toBe('percent')
     expect(Number(coupon.discount_value)).toBe(10)
@@ -79,6 +79,7 @@ describe('coupon validation', () => {
       code: 'EXPIRED', discount_type: 'percent', discount_value: 20,
       max_uses: 10, is_active: true, valid_from: '2020-01-01', valid_until: '2020-12-31',
     }, { onConflict: 'code' }).select('valid_until').single()
+    if (!coupon) throw new Error('Expired coupon not created')
     const now = new Date().toISOString().slice(0, 10)
     expect(coupon.valid_until < now).toBe(true)
   })
@@ -88,7 +89,7 @@ describe('order creation flow', () => {
   it('creates an order via create_shelf_order_atomic RPC', async () => {
     const db = getDb()
     const { data: sku } = await db.from('shelf_skus').select('id, product_id').eq('sku_code', 'TP-RED').single()
-    expect(sku).not.toBeNull()
+    if (!sku) throw new Error('Test SKU not found')
 
     const items = [{ productId: sku.product_id, skuId: sku.id, quantity: 2, customizationText: null }]
     const address = { name: 'Test', phone: '9876543210', line1: 'Test St', city: 'Mumbai', state: 'Maharashtra', pincode: '400001' }
@@ -130,6 +131,7 @@ describe('order creation flow', () => {
     expect(data).toHaveProperty('success', true)
 
     const { data: updated } = await db.from('shelf_orders').select('order_status').eq('id', orders[0].id).single()
+    if (!updated) throw new Error('Order not found after cancellation')
     expect(updated.order_status).toBe('cancelled')
   })
 })

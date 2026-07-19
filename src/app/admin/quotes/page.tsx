@@ -71,9 +71,38 @@ export default function AdminQuotesPage() {
     )
   }
 
-  const updateQuoteStatus = (quote: AdminQuote, status: AdminQuote['status'], message: string) => {
-    setQuotes((current) => (current ?? []).map((item) => (item.id === quote.id ? { ...item, status } : item)))
-    setToast({ type: 'success', message })
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+  async function updateQuoteStatus(quote: AdminQuote, newStatus: string, _message: string) {
+    const quoteId = quote.quote_id ?? String(quote.id)
+    setActionLoading(quoteId)
+
+    try {
+      if (newStatus === 'approved') {
+        const res = await fetch(`/api/admin/quotes/${quoteId}/approve`, { method: 'POST' })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to approve')
+        setQuotes((current) => (current ?? []).map((item) => (item.id === quote.id ? { ...item, status: 'approved' as AdminQuote['status'] } : item)))
+        setToast({ type: 'success', message: `Quote ${quoteId} approved.` })
+      } else if (newStatus === 'rejected') {
+        const reason = window.prompt('Rejection reason (optional):')
+        const res = await fetch(`/api/admin/quotes/${quoteId}/reject`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to reject')
+        setQuotes((current) => (current ?? []).map((item) => (item.id === quote.id ? { ...item, status: 'rejected' as AdminQuote['status'] } : item)))
+        setToast({ type: 'success', message: `Quote ${quoteId} rejected.` })
+      } else if (newStatus === 'converted') {
+        setToast({ type: 'info', message: 'Convert to order is not yet implemented.' })
+      }
+    } catch (e) {
+      setToast({ type: 'error', message: e instanceof Error ? e.message : 'Action failed.' })
+    } finally {
+      setActionLoading(null)
+    }
   }
 
   return (
