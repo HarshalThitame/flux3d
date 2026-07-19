@@ -142,6 +142,28 @@ export default function Sidebar({
           </nav>
         )}
 
+        {collapsed && secondaryItems.length > 0 && (
+          <nav className="mt-6 space-y-2 border-t border-gray-200 pt-4">
+            {secondaryItems.map((item) => {
+              const Icon = item.icon
+              const active = isActive(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`group relative flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition ${
+                    active
+                      ? 'bg-[linear-gradient(90deg,rgba(109, 40, 217,0.15),rgba(168, 85, 247,0.12))] text-[#0F1B3D] shadow-[inset_0_0_0_1px_rgba(109, 40, 217,0.4)]'
+                      : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#0F1B3D]'
+                  }`}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                </Link>
+              )
+            })}
+          </nav>
+        )}
+
         {!collapsed && secondaryItems.length > 0 && (
           <div className="mt-6 border-t border-gray-200 pt-4">
             <div className="mb-2 px-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#6F7192]">Support</div>
