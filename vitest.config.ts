@@ -1,5 +1,25 @@
 import { defineConfig } from 'vitest/config'
 import { fileURLToPath } from 'node:url'
+import { readFileSync } from 'node:fs'
+
+// Load env vars from .env.test (gitignored) for test workers
+function loadTestEnv() {
+  try {
+    const path = fileURLToPath(new URL('.env.test', import.meta.url))
+    const text = readFileSync(path, 'utf8')
+    const vars: Record<string, string> = {}
+    for (const line of text.split('\n')) {
+      const t = line.trim()
+      if (!t || t.startsWith('#')) continue
+      const i = t.indexOf('=')
+      if (i === -1) continue
+      vars[t.slice(0, i).trim()] = t.slice(i + 1).trim()
+    }
+    return vars
+  } catch { return {} }
+}
+
+const testEnv = loadTestEnv()
 
 export default defineConfig({
   resolve: {
@@ -14,13 +34,9 @@ export default defineConfig({
     testTimeout: 60000,
     fileParallelism: false,
     env: {
-      NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',
-      SUPABASE_SERVICE_ROLE_KEY: '$SUPABASE_SERVICE_ROLE_KEY',
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH',
-      NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET: 'quote-models',
-      RAZORPAY_KEY_ID: 'rzp_test_placeholder',
-      RAZORPAY_KEY_SECRET: 'test_secret_placeholder',
-      RAZORPAY_WEBHOOK_SECRET: 'whsec_placeholder',
+      NEXT_PUBLIC_SUPABASE_URL: testEnv.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321',
+      SUPABASE_SERVICE_ROLE_KEY: testEnv.SUPABASE_SERVICE_ROLE_KEY ?? '',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: testEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
     },
   },
 })
