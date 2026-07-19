@@ -27,10 +27,9 @@ export default function AdminSettingsPage() {
     deliveryChargeThreshold: '499',
     defaultDeliveryCharge: '50',
   })
-  const [pricingLoading, setPricingLoading] = useState(false)
   const [pricingSaving, setPricingSaving] = useState(false)
   const [pricingError, setPricingError] = useState<string | null>(null)
-  const [pricingLoaded, setPricingLoaded] = useState(false)
+  const [pricingHydrated, setPricingHydrated] = useState(false)
 
   useEffect(() => {
     if (!toast) return
@@ -69,12 +68,11 @@ export default function AdminSettingsPage() {
   }, [activeTab, printers, printersError])
 
   useEffect(() => {
-    if (activeTab !== 'pricing' || pricingLoaded || pricingLoading) return
+    if (activeTab !== 'pricing' || pricingHydrated) return
 
     const controller = new AbortController()
 
     async function loadPricingSettings() {
-      setPricingLoading(true)
       setPricingError(null)
       try {
         const response = await fetch('/api/admin/settings/business', { signal: controller.signal })
@@ -94,21 +92,20 @@ export default function AdminSettingsPage() {
           deliveryChargeThreshold: String(json.settings?.deliveryChargeThreshold ?? 499),
           defaultDeliveryCharge: String(json.settings?.defaultDeliveryCharge ?? 50),
         })
-        setPricingLoaded(true)
+        setPricingHydrated(true)
       } catch (loadError) {
         if ((loadError as Error).name === 'AbortError') {
           return
         }
         setPricingError(loadError instanceof Error ? loadError.message : 'Failed to load pricing settings.')
-      } finally {
-        setPricingLoading(false)
+        setPricingHydrated(true)
       }
     }
 
     void loadPricingSettings()
 
     return () => controller.abort()
-  }, [activeTab, pricingLoaded, pricingLoading])
+  }, [activeTab, pricingHydrated])
 
   const handleSave = () => {
     setToast({ type: 'success', message: 'Settings saved successfully.' })
@@ -144,7 +141,7 @@ export default function AdminSettingsPage() {
       }
 
       setToast({ type: 'success', message: 'Delivery charges saved.' })
-      setPricingLoaded(true)
+      setPricingHydrated(true)
     } catch (saveError) {
       setToast({
         type: 'error',
@@ -317,34 +314,32 @@ export default function AdminSettingsPage() {
                         {pricingError}
                       </div>
                     )}
-                    {pricingLoading ? (
-                      <div className="space-y-3">
-                        <SkeletonBlock className="h-14 w-full" />
-                        <SkeletonBlock className="h-14 w-full" />
-                      </div>
-                    ) : (
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <InputField
-                          label="Delivery Charge Threshold (₹)"
-                          type="number"
-                          value={pricingSettings.deliveryChargeThreshold}
-                          onChange={(value) => setPricingSettings((current) => ({ ...current, deliveryChargeThreshold: value }))}
-                          placeholder="499"
-                        />
-                        <InputField
-                          label="Default Delivery Charge (₹)"
-                          type="number"
-                          value={pricingSettings.defaultDeliveryCharge}
-                          onChange={(value) => setPricingSettings((current) => ({ ...current, defaultDeliveryCharge: value }))}
-                          placeholder="50"
-                        />
+                    {!pricingHydrated && (
+                      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-2 text-xs text-[#6F7192]">
+                        Loading saved delivery settings...
                       </div>
                     )}
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <InputField
+                        label="Delivery Charge Threshold (₹)"
+                        type="number"
+                        value={pricingSettings.deliveryChargeThreshold}
+                        onChange={(value) => setPricingSettings((current) => ({ ...current, deliveryChargeThreshold: value }))}
+                        placeholder="499"
+                      />
+                      <InputField
+                        label="Default Delivery Charge (₹)"
+                        type="number"
+                        value={pricingSettings.defaultDeliveryCharge}
+                        onChange={(value) => setPricingSettings((current) => ({ ...current, defaultDeliveryCharge: value }))}
+                        placeholder="50"
+                      />
+                    </div>
                     <div className="flex flex-wrap gap-3">
                       <button
                         type="button"
                         onClick={() => void handlePricingSave()}
-                        disabled={pricingSaving || pricingLoading}
+                        disabled={pricingSaving}
                         className="inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <Save className="h-4 w-4" />
