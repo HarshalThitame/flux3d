@@ -59,6 +59,13 @@ export default function HeroSection() {
       <div className="premium-hero-grid" aria-hidden="true" />
       <div className="premium-hero-beams" aria-hidden="true" />
       <div className="premium-corner-frame" aria-hidden="true" />
+      <div aria-hidden="true">
+        <div className="premium-particle" />
+        <div className="premium-particle" />
+        <div className="premium-particle" />
+        <div className="premium-particle" />
+        <div className="premium-particle" />
+      </div>
 
       <div className="relative z-10 mx-auto flex min-h-[calc(88svh-7rem)] w-full max-w-7xl flex-col justify-center gap-10 py-6">
         <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,1fr)_420px] xl:grid-cols-[minmax(0,1fr)_470px]">
