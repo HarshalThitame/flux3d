@@ -1,6 +1,9 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
 import type { CSSProperties } from 'react'
+import { motion } from 'framer-motion'
 import { ArrowRight, ArrowDown, MapPin, Shield, Clock, Printer, Sparkles, Layers } from 'lucide-react'
 
 const stats = [
@@ -59,84 +62,135 @@ export default function HeroSection() {
 
       <div className="relative z-10 mx-auto flex min-h-[calc(88svh-7rem)] w-full max-w-7xl flex-col justify-center gap-10 py-6">
         <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,1fr)_420px] xl:grid-cols-[minmax(0,1fr)_470px]">
-          <div className="max-w-5xl text-center lg:text-left">
-            <div className="mb-5 flex flex-col items-center gap-3 lg:items-start">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-5xl text-center lg:text-left"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="mb-5 flex flex-col items-center gap-3 lg:items-start"
+            >
               <div className="premium-hero-badge">
                 <span className="premium-live-dot" />
                 Flux3D custom manufacturing · India
               </div>
-              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#6F7192]">
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#6F7192]"
+              >
                 <MapPin className="h-3.5 w-3.5" />
                 Custom 3D printing and ready-made product delivery across India
-              </p>
-            </div>
+              </motion.p>
+            </motion.div>
 
-            <h1 className="premium-hero-title text-5xl font-black leading-[0.86] text-[#0F1B3D] sm:text-6xl md:text-7xl lg:text-8xl">
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="premium-hero-title text-5xl font-black leading-[0.86] text-[#0F1B3D] sm:text-6xl md:text-7xl lg:text-8xl"
+            >
               <span className="premium-title-line premium-title-brand">Flux3D</span>
               <span className="premium-title-line premium-title-service">Custom 3D Printing &amp; Manufacturing</span>
-            </h1>
+            </motion.h1>
 
-            <p className="mx-auto mt-7 max-w-2xl text-base leading-8 text-[#6F7192] sm:text-lg lg:mx-0">
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.35 }}
+              className="mx-auto mt-7 max-w-2xl text-base leading-8 text-[#374151] sm:text-lg lg:mx-0"
+            >
               Flux 3D makes custom 3D-printed parts, prototypes, models and ready-made products for businesses and individuals who need a printed item with clear pricing, clear policies and a real support channel.
-            </p>
+            </motion.p>
 
-            <div className="mt-6 flex flex-wrap justify-center gap-2 lg:justify-start">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.45 }}
+              className="mt-6 flex flex-wrap justify-center gap-2 lg:justify-start"
+            >
               {heroBadges.map((badge) => (
                 <span key={badge} className="premium-chip">{badge}</span>
               ))}
-            </div>
+            </motion.div>
 
-            <p className="mx-auto mt-5 max-w-[620px] text-xs font-semibold uppercase tracking-[0.16em] text-[#9ca3af] lg:mx-0">
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="mx-auto mt-5 max-w-[620px] text-xs font-semibold uppercase tracking-[0.16em] text-[#9ca3af] lg:mx-0"
+            >
               Quote-based custom orders · Ready-made product pricing · India delivery
-            </p>
+            </motion.p>
 
-            <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row lg:justify-start">
-              <div>
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.55 }}
+              className="mt-8 flex flex-col justify-center gap-4 sm:flex-row lg:justify-start"
+            >
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link href="/instant-quote" prefetch={false}
-                  className="premium-primary-cta group relative flex min-h-[56px] items-center justify-center gap-2 overflow-hidden rounded-full px-7 py-4 text-center text-sm font-bold text-white transition-all duration-300">
+                  className="premium-primary-cta group relative flex min-h-[56px] items-center justify-center gap-2 overflow-hidden rounded-full px-7 py-4 text-center text-sm font-bold text-white">
                   <span className="relative z-10">Request a Quote</span>
                   <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
-              </div>
-              <div>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <a href="#services"
-                  className="premium-secondary-cta flex min-h-[56px] min-w-[170px] items-center justify-center gap-2 whitespace-nowrap rounded-full px-7 py-4 text-sm font-bold text-[#0F1B3D] transition-all duration-200">
+                  className="premium-secondary-cta flex min-h-[56px] min-w-[170px] items-center justify-center gap-2 whitespace-nowrap rounded-full px-7 py-4 text-sm font-bold text-[#0F1B3D]">
                   Explore Services
                   <ArrowDown className="h-4 w-4" />
                 </a>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
-            <p className="mt-4 text-center text-xs font-medium text-[#9ca3af] lg:text-left">
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="mt-4 text-center text-xs font-medium text-[#9ca3af] lg:text-left"
+            >
               Custom orders reviewed before production · Support via email and phone · Tracked delivery where available
-            </p>
+            </motion.p>
 
-            <div className="premium-atelier-strip">
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.65 }}
+              className="premium-atelier-strip"
+            >
               {atelierMetrics.map((metric) => (
                 <div key={metric.label} className="premium-atelier-metric">
                   <span>{metric.label}</span>
                   <strong>{metric.value}</strong>
                 </div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
-          <div className="relative hidden lg:block">
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="relative hidden lg:block"
+          >
             <div className="premium-machine-panel">
               <div className="relative">
                 <div className="premium-console-header">
                   <span>Production Command</span>
                   <strong>LIVE</strong>
                 </div>
-
                 <div className="premium-gantry-stage" aria-hidden="true">
                   <div className="premium-gantry-rail" />
                   <div className="premium-gantry-head"><span /></div>
-                  <div className="premium-gantry-bed">
-                    <span /><span /><span />
-                  </div>
+                  <div className="premium-gantry-bed"><span /><span /><span /></div>
                 </div>
-
                 <div className="premium-machine-window">
                   <div className="premium-machine-scan" aria-hidden="true" />
                   <div className="premium-print-preview" aria-hidden="true">
@@ -150,9 +204,7 @@ export default function HeroSection() {
                     <p className="mt-2 text-sm leading-6 text-[#6F7192]">Layer 1,286 of 1,920 · quality camera active</p>
                   </div>
                 </div>
-
                 <div className="premium-build-progress" aria-hidden="true"><span /></div>
-
                 <div className="premium-material-rack">
                   {[
                     { label: 'PLA+', color: '#6d28d9' },
@@ -166,7 +218,6 @@ export default function HeroSection() {
                     </div>
                   ))}
                 </div>
-
                 <div className="mt-4 space-y-3">
                   {productionSignals.map((signal, index) => (
                     <div key={signal.label} className="premium-signal-row" style={{ '--signal-index': index } as CSSProperties}>
@@ -178,20 +229,30 @@ export default function HeroSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        <div className="stats-row premium-stats-row">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.7 }}
+          className="stats-row premium-stats-row"
+        >
           {stats.map((stat, i) => (
             <CountStat key={stat.label} stat={stat} index={i} />
           ))}
-        </div>
+        </motion.div>
 
-        <div className="mx-auto mt-5 flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#9ca3af]">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+          className="mx-auto mt-5 flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#9ca3af]"
+        >
           <Clock className="h-3.5 w-3.5" />
           Production timelines shared before confirmation
           <Sparkles className="h-3.5 w-3.5 text-[#6d28d9]" />
-        </div>
+        </motion.div>
       </div>
     </section>
   )
