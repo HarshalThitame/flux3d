@@ -3183,7 +3183,7 @@ body:has(.premium-auth-shell) {
 }
 
 .landing-premium p:not([class*="text-white"]):not([class*="text-cyan"]):not([class*="text-amber"]) {
-  color: rgba(226, 232, 240, 0.68);
+  color: rgba(226, 232, 240, 0.78);
 }
 
 .landing-premium .text-\[\#0F1B3D\],
@@ -3202,14 +3202,14 @@ body:has(.premium-auth-shell) {
 .landing-premium .text-\[var\(--text-muted\)\],
 .landing-premium .text-gray-400,
 .landing-premium .text-\[\#9ca3af\] {
-  color: rgba(226, 232, 240, 0.66);
+  color: rgba(226, 232, 240, 0.78);
 }
 
 .landing-premium .text-\[\#6d28d9\],
 .landing-premium .text-\[var\(--brand-primary\)\],
 .landing-premium .hover\:text-\[\#6d28d9\]:hover,
 .landing-premium .group:hover .group-hover\:text-\[\#6d28d9\] {
-  color: #67e8f9;
+  color: #7dd3fc;
 }
 
 .landing-premium .text-white {
@@ -3225,16 +3225,16 @@ body:has(.premium-auth-shell) {
 .landing-premium .bg-\[var\(--brand-faint\)\],
 .landing-premium [class*="bg-[var(--gradient-soft)]"],
 .landing-premium .bg-white {
-  background-color: rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(18px) saturate(1.12);
-  -webkit-backdrop-filter: blur(18px) saturate(1.12);
+  background-color: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
 }
 
 .landing-premium .border,
 .landing-premium .border-b,
 .landing-premium .border-t,
 .landing-premium .border-y {
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .landing-premium :is(.rounded-2xl, .rounded-xl) {
@@ -3267,9 +3267,9 @@ body:has(.premium-auth-shell) {
 }
 
 .landing-premium .btn-secondary {
-  border-color: rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.08);
-  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 .landing-premium table {
