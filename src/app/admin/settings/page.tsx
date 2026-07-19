@@ -1,8 +1,9 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, Save, Shield, Printer, Tag, Bell, Users, Link, CreditCard } from 'lucide-react'
+import { Settings, Save, Shield, Printer, Tag, Bell, Users, Link as LinkIcon, CreditCard } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import { InputField, ToggleField } from '@/components/admin/FormField'
 import SkeletonBlock from '@/components/admin/SkeletonBlock'
@@ -64,7 +65,7 @@ export default function AdminSettingsPage() {
     { id: 'pricing' as Tab, label: 'Pricing', icon: Tag },
     { id: 'notifications' as Tab, label: 'Notifications', icon: Bell },
     { id: 'team' as Tab, label: 'Team', icon: Users },
-    { id: 'integrations' as Tab, label: 'Integrations', icon: Link },
+    { id: 'integrations' as Tab, label: 'Integrations', icon: LinkIcon },
     { id: 'billing' as Tab, label: 'Billing', icon: CreditCard },
   ]
 
@@ -210,6 +211,20 @@ export default function AdminSettingsPage() {
 
             {activeTab === 'pricing' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                <SectionCard title="Delivery Settings">
+                  <div className="space-y-3">
+                    <p className="text-sm text-[#6F7192]">
+                      Delivery charge thresholds are managed in Business Settings.
+                    </p>
+                    <Link
+                      href="/admin/settings/business"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:opacity-90"
+                    >
+                      Open Business Settings
+                    </Link>
+                  </div>
+                </SectionCard>
+
                 <SectionCard title="Base Pricing Rules">
                   <div className="space-y-3">
                     <InputField label="FDM Print (per gram)" value="0" />
