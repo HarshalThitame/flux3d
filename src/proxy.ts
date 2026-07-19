@@ -34,7 +34,7 @@ function createCspHeader({
   ].join('; ')
 }
 
-function applySecurityHeaders(response: NextResponse, cspHeader: string) {
+function applySecurityHeaders(response: NextResponse, cspHeader: string, correlationId?: string) {
   response.headers.set('Content-Security-Policy', cspHeader)
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('X-Content-Type-Options', 'nosniff')
@@ -43,6 +43,7 @@ function applySecurityHeaders(response: NextResponse, cspHeader: string) {
     'Permissions-Policy',
     'camera=(self "https://checkout.razorpay.com" "https://api.razorpay.com"), microphone=(), geolocation=()'
   )
+  if (correlationId) response.headers.set('x-flux3d-request-id', correlationId)
 }
 
 function normalizeNextPath(value: string | null | undefined, fallback = '/instant-quote') {
@@ -60,6 +61,7 @@ function normalizeNextPath(value: string | null | undefined, fallback = '/instan
 }
 
 export async function proxy(request: NextRequest) {
+  const correlationId = crypto.randomUUID()
   const isDev = process.env.NODE_ENV === 'development'
   const trackerToken = request.cookies.get('flux3d_track_token')?.value ?? crypto.randomUUID().replaceAll('-', '')
   const pathname = request.nextUrl.pathname
@@ -75,6 +77,7 @@ export async function proxy(request: NextRequest) {
   requestHeaders.set('x-track-token', trackerToken)
   requestHeaders.set('x-current-url', request.nextUrl.href)
   requestHeaders.set('x-current-path', `${request.nextUrl.pathname}${request.nextUrl.search}`)
+  requestHeaders.set('x-flux3d-request-id', correlationId)
 
   if (isAuthRoute) {
     const { response, supabase } = await updateSession(request, requestHeaders)
@@ -93,14 +96,14 @@ export async function proxy(request: NextRequest) {
       loginUrl.pathname = '/login'
       loginUrl.searchParams.set('next', fullPath)
       const redirectResponse = NextResponse.redirect(loginUrl)
-      applySecurityHeaders(redirectResponse, cspHeader)
+      applySecurityHeaders(redirectResponse, cspHeader, correlationId)
       return redirectResponse
     }
 
     if (guestOnlyPrefixes.some((prefix) => pathname.startsWith(prefix)) && user) {
       const nextPath = normalizeNextPath(request.nextUrl.searchParams.get('next'))
       const redirectResponse = NextResponse.redirect(new URL(nextPath, request.url))
-      applySecurityHeaders(redirectResponse, cspHeader)
+      applySecurityHeaders(redirectResponse, cspHeader, correlationId)
       redirectResponse.cookies.set('flux3d_track_token', trackerToken, {
         sameSite: 'lax',
         secure: !isDev,
@@ -120,12 +123,12 @@ export async function proxy(request: NextRequest) {
       const userEmail = (profile?.email ?? user.email)?.trim().toLowerCase()
       if (!userEmail) {
         const redirectResponse = NextResponse.redirect(new URL('/', request.url))
-        applySecurityHeaders(redirectResponse, cspHeader)
+        applySecurityHeaders(redirectResponse, cspHeader, correlationId)
         return redirectResponse
       }
     }
 
-    applySecurityHeaders(response, cspHeader)
+    applySecurityHeaders(response, cspHeader, correlationId)
     response.cookies.set('flux3d_track_token', trackerToken, {
       sameSite: 'lax',
       secure: !isDev,
@@ -140,7 +143,7 @@ export async function proxy(request: NextRequest) {
     request: { headers: requestHeaders }
   })
 
-  applySecurityHeaders(response, cspHeader)
+  applySecurityHeaders(response, cspHeader, correlationId)
   response.cookies.set('flux3d_track_token', trackerToken, {
     sameSite: 'lax',
     secure: !isDev,
