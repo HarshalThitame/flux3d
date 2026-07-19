@@ -114,7 +114,7 @@ function ServiceCard({ service }: { service: typeof services[0] }) {
               {service.pills.map((pill, j) => (
                 <span
                   key={j}
-                  className="text-[11px] sm:text-xs bg-[rgba(109,40,217,0.08)] text-[#6F7192] px-3 py-1 rounded-full border border-[rgba(109,40,217,0.12)]"
+                  className="text-[11px] sm:text-xs bg-[rgba(109,40,217,0.08)] text-[#374151] px-3 py-1 rounded-full border border-[rgba(109,40,217,0.12)]"
                 >
                   {pill}
                 </span>
@@ -124,7 +124,7 @@ function ServiceCard({ service }: { service: typeof services[0] }) {
               <span className="text-sm text-[#6d28d9] font-semibold">{service.price}</span>
               <a
                 href="/instant-quote"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#6F7192] hover:text-[#6d28d9] transition-colors group/link min-h-[44px]"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#374151] hover:text-[#6d28d9] transition-colors group/link min-h-[44px]"
               >
                 {service.cta}
                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover/link:translate-x-1" />
