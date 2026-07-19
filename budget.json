@@ -1,0 +1,20 @@
+{
+  "resources": {
+    "script": "300 KB",
+    "font": "50 KB",
+    "document": "50 KB",
+    "stylesheet": "100 KB"
+  },
+  "timings": {
+    "first-contentful-paint": "1.5 s",
+    "largest-contentful-paint": "2.5 s",
+    "total-blocking-time": "200 ms",
+    "cumulative-layout-shift": "0.1"
+  },
+  "scores": {
+    "performance": "85",
+    "accessibility": "90",
+    "best-practices": "90",
+    "seo": "95"
+  }
+}
