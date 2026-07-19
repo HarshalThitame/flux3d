@@ -87,6 +87,35 @@ async function sendWhatsAppMessage(to: string, message: string) {
   }
 }
 
+async function logWhatsAppMessage(
+  supabase: ReturnType<typeof getServiceClient>,
+  entry: {
+    userId: string | null;
+    direction: "incoming" | "outgoing";
+    messageText: string;
+    automated: boolean;
+    triggerEvent: string | null;
+    responded: boolean;
+    responseTimeMinutes: number | null;
+  }
+) {
+  if (!supabase) return;
+
+  const { error } = await supabase.from("whatsapp_messages").insert({
+    user_id: entry.userId,
+    direction: entry.direction,
+    message_text: entry.messageText,
+    automated: entry.automated,
+    trigger_event: entry.triggerEvent,
+    responded: entry.responded,
+    response_time_minutes: entry.responseTimeMinutes,
+  });
+
+  if (error) {
+    console.error("[whatsapp] Failed to log message:", error);
+  }
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -113,7 +142,7 @@ export default async function handler(
   if (req.method === "POST") {
     const rawBody = await readRawBody(req);
     const signature = first(req.headers["x-hub-signature-256"]);
-    const secret = process.env.META_APP_SECRET;
+    const secret = process.env.WHATSAPP_WEBHOOK_SECRET || process.env.META_APP_SECRET;
 
     if (!verifyMetaSignature(rawBody, signature, secret)) {
       return res.status(403).send("Invalid signature");
@@ -182,14 +211,26 @@ export default async function handler(
 
       // Sender allow-list: only reply if sender phone exists in profiles
       let senderRecognized = false;
+      let userId: string | null = null;
       if (supabase) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("id")
+          .select("id, whatsapp_messages_sent")
           .eq("phone_number", from)
           .maybeSingle();
         senderRecognized = !!profile;
+        userId = profile?.id ?? null;
       }
+
+      await logWhatsAppMessage(supabase, {
+        userId,
+        direction: "incoming",
+        messageText: text,
+        automated: false,
+        triggerEvent: "incoming_whatsapp_message",
+        responded: senderRecognized,
+        responseTimeMinutes: null,
+      });
 
       if (senderRecognized) {
         const completion = await openai.chat.completions.create({
@@ -212,6 +253,29 @@ export default async function handler(
           "Sorry, I could not process that.";
 
         await sendWhatsAppMessage(from, aiReply);
+        await logWhatsAppMessage(supabase, {
+          userId,
+          direction: "outgoing",
+          messageText: aiReply,
+          automated: true,
+          triggerEvent: "ai_reply",
+          responded: true,
+          responseTimeMinutes: null,
+        });
+
+        if (supabase && userId) {
+          const { data: profileRow } = await supabase
+            .from("profiles")
+            .select("whatsapp_messages_sent")
+            .eq("id", userId)
+            .maybeSingle();
+          const nextCount = Number(profileRow?.whatsapp_messages_sent ?? 0) + 1;
+          const { error: countUpdateError } = await supabase
+            .from("profiles")
+            .update({ whatsapp_messages_sent: nextCount })
+            .eq("id", userId);
+          if (countUpdateError) console.error("[whatsapp] Failed to update message count:", countUpdateError);
+        }
       }
 
       // Mark as processed
