@@ -593,10 +593,14 @@ samp {
 .footer {
   position: relative;
   overflow: hidden;
-  background: var(--gradient-dark);
-  border-top: 1px solid rgba(255,255,255,0.08);
+  background: #f9f7f4;
+  border-top: 1px solid rgba(109, 40, 217, 0.06);
   padding: 64px 0 32px;
-  color: #cbd5e1;
+  color: #6F7192;
+}
+
+.footer-light .footer-watermark {
+  color: rgba(109, 40, 217, 0.04);
 }
 
 .footer-watermark {
@@ -607,7 +611,7 @@ samp {
   font-family: var(--font-syne);
   font-size: clamp(80px, 15vw, 200px);
   font-weight: 800;
-  color: rgba(255,255,255,0.04);
+  color: rgba(109, 40, 217, 0.04);
   pointer-events: none;
   white-space: nowrap;
   letter-spacing: 0;
@@ -618,7 +622,7 @@ samp {
   font-family: var(--font-syne);
   font-size: 22px;
   font-weight: 700;
-  color: white;
+  color: #0F1B3D;
   margin-bottom: 8px;
 }
 
@@ -627,7 +631,7 @@ samp {
   font-family: var(--font-dm);
   font-size: 13px;
   font-weight: 600;
-  color: white;
+  color: #0F1B3D;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 16px;
@@ -636,24 +640,24 @@ samp {
 .footer p,
 .footer li,
 .footer span {
-  color: #cbd5e1;
+  color: #6F7192;
 }
 
 .footer a {
-  color: #cbd5e1;
+  color: #6F7192;
   font-size: 14px;
   line-height: 2;
   transition: color 0.2s;
 }
 
 .footer a:hover {
-  color: white;
+  color: #6d28d9;
 }
 
 .footer-bottom {
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(109, 40, 217, 0.06);
   padding-top: 24px;
-  color: #cbd5e1;
+  color: #6F7192;
   font-size: 13px;
   display: flex;
   justify-content: space-between;
