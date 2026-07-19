@@ -768,6 +768,66 @@ async function processRefundEvent(eventName: string, payload: Record<string, unk
     failed_at: nextStatus === 'failed' ? new Date().toISOString() : localRefund.failed_at,
   })
 
+  // Update parent payment attempt and order status
+  const attempt = await fetchPaymentAttemptById(localRefund.payment_attempt_id)
+  if (!attempt) return { handled: true, processingStatus: 'processed' as const }
+
+  if (nextStatus === 'processed') {
+    const attemptRefunds = await listPaymentRefunds(200)
+    const totalRefunded = attemptRefunds
+      .filter((r) => r.payment_attempt_id === attempt.id && ['pending', 'processed'].includes(r.status))
+      .reduce((sum, r) => sum + Number(r.amount_paise), 0)
+    const isFullyRefunded = totalRefunded >= attempt.amount_paise
+
+    const attemptNextStatus: PaymentStatus = isFullyRefunded ? 'refunded' : 'partially_refunded'
+
+    try {
+      await updatePaymentAttemptStatus(
+        attempt.id, attempt.status, attemptNextStatus, {},
+        systemReason(attempt.customer_id, `Webhook ${eventName}`)
+      )
+      await updateOrderPaymentStatus({
+        type: attempt.internal_order_type,
+        id: attempt.internal_order_id,
+        currentStatus: attempt.status,
+        nextStatus: attemptNextStatus,
+        patch: {
+          payment_refund_status: isFullyRefunded ? 'completed' : 'partial',
+          payment_refund_amount_paise: totalRefunded,
+        },
+        reason: systemReason(attempt.customer_id, `Webhook ${eventName}`),
+      })
+    } catch {
+      // Status transition might fail if already in a terminal state — that's OK
+    }
+
+    await insertPaymentAuditLog({
+      actor_role: 'system',
+      action: 'refund_processed',
+      entity_type: 'payment_refund',
+      entity_id: localRefund.id,
+      new_state: { status: nextStatus, total_refunded_paise: totalRefunded, fully_refunded: isFullyRefunded },
+    })
+  }
+
+  if (nextStatus === 'failed') {
+    await updateOrderPaymentStatus({
+      type: attempt.internal_order_type,
+      id: attempt.internal_order_id,
+      currentStatus: attempt.status,
+      nextStatus: attempt.status,
+      patch: { payment_refund_status: 'failed' },
+      reason: systemReason(attempt.customer_id, `Webhook ${eventName}`),
+    })
+    await insertPaymentAuditLog({
+      actor_role: 'system',
+      action: 'refund_failed',
+      entity_type: 'payment_refund',
+      entity_id: localRefund.id,
+      new_state: { status: 'failed', provider_refund_id: providerRefundId },
+    })
+  }
+
   return { handled: true, processingStatus: 'processed' as const }
 }
 
