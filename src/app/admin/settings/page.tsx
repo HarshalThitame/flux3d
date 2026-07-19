@@ -3,13 +3,18 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, Save, Shield, Printer, Tag, Bell, Users, Link as LinkIcon, CreditCard } from 'lucide-react'
+import { Settings, Save, Printer, Tag, Bell, Users, Link as LinkIcon, CreditCard } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import { InputField, ToggleField } from '@/components/admin/FormField'
 import SkeletonBlock from '@/components/admin/SkeletonBlock'
 import type { PrinterStatus } from '@/lib/admin/types'
 
 type Tab = 'general' | 'printers' | 'pricing' | 'notifications' | 'team' | 'integrations' | 'billing'
+
+type PricingSettingsForm = {
+  deliveryChargeThreshold: string
+  defaultDeliveryCharge: string
+}
 
 export default function AdminSettingsPage() {
   const [toast, setToast] = useState<AdminToastState>(null)
@@ -18,6 +23,14 @@ export default function AdminSettingsPage() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [printers, setPrinters] = useState<PrinterStatus[] | null>(null)
   const [printersError, setPrintersError] = useState<string | null>(null)
+  const [pricingSettings, setPricingSettings] = useState<PricingSettingsForm>({
+    deliveryChargeThreshold: '499',
+    defaultDeliveryCharge: '50',
+  })
+  const [pricingLoading, setPricingLoading] = useState(false)
+  const [pricingSaving, setPricingSaving] = useState(false)
+  const [pricingError, setPricingError] = useState<string | null>(null)
+  const [pricingLoaded, setPricingLoaded] = useState(false)
 
   useEffect(() => {
     if (!toast) return
@@ -55,8 +68,91 @@ export default function AdminSettingsPage() {
     return () => controller.abort()
   }, [activeTab, printers, printersError])
 
+  useEffect(() => {
+    if (activeTab !== 'pricing' || pricingLoaded || pricingLoading) return
+
+    const controller = new AbortController()
+
+    async function loadPricingSettings() {
+      setPricingLoading(true)
+      setPricingError(null)
+      try {
+        const response = await fetch('/api/admin/settings/business', { signal: controller.signal })
+        if (!response.ok) {
+          const body = (await response.json().catch(() => ({}))) as { error?: string }
+          throw new Error(body.error ?? 'Failed to load pricing settings.')
+        }
+
+        const json = (await response.json()) as {
+          settings: {
+            deliveryChargeThreshold?: number | null
+            defaultDeliveryCharge?: number | null
+          } | null
+        }
+
+        setPricingSettings({
+          deliveryChargeThreshold: String(json.settings?.deliveryChargeThreshold ?? 499),
+          defaultDeliveryCharge: String(json.settings?.defaultDeliveryCharge ?? 50),
+        })
+        setPricingLoaded(true)
+      } catch (loadError) {
+        if ((loadError as Error).name === 'AbortError') {
+          return
+        }
+        setPricingError(loadError instanceof Error ? loadError.message : 'Failed to load pricing settings.')
+      } finally {
+        setPricingLoading(false)
+      }
+    }
+
+    void loadPricingSettings()
+
+    return () => controller.abort()
+  }, [activeTab, pricingLoaded, pricingLoading])
+
   const handleSave = () => {
     setToast({ type: 'success', message: 'Settings saved successfully.' })
+  }
+
+  const handlePricingSave = async () => {
+    setPricingSaving(true)
+    setPricingError(null)
+    try {
+      const deliveryChargeThreshold = Number(pricingSettings.deliveryChargeThreshold)
+      const defaultDeliveryCharge = Number(pricingSettings.defaultDeliveryCharge)
+
+      if (!Number.isFinite(deliveryChargeThreshold) || deliveryChargeThreshold < 0) {
+        throw new Error('Enter a valid delivery threshold.')
+      }
+
+      if (!Number.isFinite(defaultDeliveryCharge) || defaultDeliveryCharge < 0) {
+        throw new Error('Enter a valid delivery charge.')
+      }
+
+      const response = await fetch('/api/admin/settings/business', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deliveryChargeThreshold,
+          defaultDeliveryCharge,
+        }),
+      })
+
+      if (!response.ok) {
+        const body = (await response.json().catch(() => ({}))) as { error?: string }
+        throw new Error(body.error ?? 'Failed to save pricing settings.')
+      }
+
+      setToast({ type: 'success', message: 'Delivery charges saved.' })
+      setPricingLoaded(true)
+    } catch (saveError) {
+      setToast({
+        type: 'error',
+        message: saveError instanceof Error ? saveError.message : 'Failed to save pricing settings.',
+      })
+    } finally {
+      setPricingSaving(false)
+    }
   }
 
   const tabs = [
@@ -211,17 +307,56 @@ export default function AdminSettingsPage() {
 
             {activeTab === 'pricing' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                <SectionCard title="Delivery Settings">
-                  <div className="space-y-3">
+                <SectionCard title="Delivery Charges">
+                  <div className="space-y-4">
                     <p className="text-sm text-[#6F7192]">
-                      Delivery charge thresholds are managed in Business Settings.
+                      Set the free-shipping threshold and the fallback shipping fee used by 3D Shop checkout.
                     </p>
-                    <Link
-                      href="/admin/settings/business"
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:opacity-90"
-                    >
-                      Open Business Settings
-                    </Link>
+                    {pricingError && (
+                      <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                        {pricingError}
+                      </div>
+                    )}
+                    {pricingLoading ? (
+                      <div className="space-y-3">
+                        <SkeletonBlock className="h-14 w-full" />
+                        <SkeletonBlock className="h-14 w-full" />
+                      </div>
+                    ) : (
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <InputField
+                          label="Delivery Charge Threshold (₹)"
+                          type="number"
+                          value={pricingSettings.deliveryChargeThreshold}
+                          onChange={(value) => setPricingSettings((current) => ({ ...current, deliveryChargeThreshold: value }))}
+                          placeholder="499"
+                        />
+                        <InputField
+                          label="Default Delivery Charge (₹)"
+                          type="number"
+                          value={pricingSettings.defaultDeliveryCharge}
+                          onChange={(value) => setPricingSettings((current) => ({ ...current, defaultDeliveryCharge: value }))}
+                          placeholder="50"
+                        />
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={() => void handlePricingSave()}
+                        disabled={pricingSaving || pricingLoading}
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <Save className="h-4 w-4" />
+                        {pricingSaving ? 'Saving...' : 'Save Delivery Charges'}
+                      </button>
+                      <Link
+                        href="/admin/settings/business"
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-[#6F7192] transition hover:bg-gray-100"
+                      >
+                        Open Business Settings
+                      </Link>
+                    </div>
                   </div>
                 </SectionCard>
 
