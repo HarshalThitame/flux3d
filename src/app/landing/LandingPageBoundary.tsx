@@ -6,7 +6,7 @@ import RouteChunkLoader from '@/components/RouteChunkLoader'
 
 const LandingPageClient = dynamic(() => import('./LandingPageClient'), {
   ssr: false,
-  loading: () => <RouteChunkLoader className="bg-[#05060a] text-white" minHeight="520px" label="Loading page sections" />,
+  loading: () => <RouteChunkLoader className="bg-[#f9f7f4] text-[#111827]" minHeight="520px" label="Loading page sections" />,
 })
 
 export default function LandingPageBoundary() {
@@ -43,7 +43,7 @@ export default function LandingPageBoundary() {
   }, [shouldLoad])
 
   return (
-    <div ref={sentinelRef} className="landing-deferred-shell bg-[#05060a]">
+    <div ref={sentinelRef} className="landing-deferred-shell bg-[#f9f7f4]">
       {shouldLoad ? <LandingPageClient /> : <div aria-hidden="true" className="min-h-[520px]" />}
     </div>
   )
