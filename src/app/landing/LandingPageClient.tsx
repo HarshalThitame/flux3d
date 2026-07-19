@@ -153,9 +153,20 @@ function LazySection({
   )
 }
 
+function FloatingOrbs() {
+  return (
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
+      <div className="premium-orb premium-orb-1" />
+      <div className="premium-orb premium-orb-2" />
+      <div className="premium-orb premium-orb-3" />
+    </div>
+  )
+}
+
 export default function LandingPageClient() {
   return (
     <div className="landing-premium relative">
+      <FloatingOrbs />
       <PremiumLandingFX />
       <FloatingWhatsAppButton />
       <LazySection minHeight={520} className="premium-band premium-band-ink">
