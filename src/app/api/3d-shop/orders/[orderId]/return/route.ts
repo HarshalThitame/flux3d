@@ -26,17 +26,17 @@ export async function POST(request: Request, context: { params: Promise<{ orderI
     const supabase = createAdminSupabaseClient()
     const { data: order, error: loadError } = await supabase
       .from('shelf_orders')
-      .select('id, user_id, order_status, placed_at')
+      .select('id, user_id, fulfilment_status, placed_at')
       .eq('id', orderId)
       .eq('user_id', authData.user.id)
       .maybeSingle()
 
     if (loadError) throw new Error(loadError.message)
     if (!order) return NextResponse.json({ error: 'Order not found.' }, { status: 404 })
-    if (order.order_status !== 'delivered') {
+    if (order.fulfilment_status !== 'delivered') {
       return NextResponse.json({ error: 'Only delivered orders can be returned.' }, { status: 400 })
     }
-    if (!isShopOrderReturnable(order.order_status, order.placed_at)) {
+    if (!isShopOrderReturnable(order.fulfilment_status, order.placed_at)) {
       return NextResponse.json({ error: 'Return window has expired.' }, { status: 400 })
     }
 

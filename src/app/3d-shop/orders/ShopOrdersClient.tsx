@@ -23,10 +23,13 @@ import {
 import { formatShopPrice } from '@/lib/shop/selection'
 import {
   formatShopOrderDate,
+  getShopFulfilmentStatusClasses,
+  getShopFulfilmentStatusLabel,
   getShopOrderStatusClasses,
   getShopOrderStatusLabel,
-  SHOP_ORDER_PROGRESS,
+  SHOP_FULFILMENT_PROGRESS,
   type ShopOrder,
+  type ShopFulfilmentStatus,
 } from '@/lib/shop/orders'
 
 type FilterKey = 'all' | 'active' | 'delivered' | 'cancelled' | 'returns'
@@ -46,12 +49,12 @@ const filters: Array<{ key: FilterKey; label: string }> = [
   { key: 'returns', label: 'Returns' },
 ]
 
-const activeOrderStatuses = ['placed', 'confirmed', 'packed', 'shipped']
+const activeFulfilmentStatuses: ShopFulfilmentStatus[] = ['pending', 'processing', 'packing', 'packed', 'shipped', 'delivering']
 
 function matchesFilter(order: ShopOrder, filter: FilterKey) {
   if (filter === 'all') return true
-  if (filter === 'active') return activeOrderStatuses.includes(order.order_status)
-  if (filter === 'delivered') return order.order_status === 'delivered'
+  if (filter === 'active') return activeFulfilmentStatuses.includes(order.fulfilment_status)
+  if (filter === 'delivered') return order.fulfilment_status === 'delivered'
   if (filter === 'cancelled') return order.order_status === 'cancelled'
   return order.order_status === 'return_requested' || order.order_status === 'returned'
 }
@@ -61,7 +64,7 @@ function getOrderItemCount(order: ShopOrder) {
 }
 
 function getCurrentProgressIndex(order: ShopOrder) {
-  const index = SHOP_ORDER_PROGRESS.indexOf(order.order_status)
+  const index = SHOP_FULFILMENT_PROGRESS.indexOf(order.fulfilment_status)
   return index === -1 ? 0 : index
 }
 
@@ -336,7 +339,7 @@ export default function ShopOrdersClient() {
                 const itemCount = getOrderItemCount(order)
                 const currentProgressIndex = getCurrentProgressIndex(order)
                 const reviewItems = eligibleByOrder[order.id] ?? []
-                const hasReviewPrompt = order.order_status === 'delivered' && reviewItems.length > 0
+                const hasReviewPrompt = order.fulfilment_status === 'delivered' && reviewItems.length > 0
                 const hasException = order.order_status === 'cancelled' || order.order_status === 'return_requested' || order.order_status === 'returned'
 
                 return (
@@ -366,8 +369,14 @@ export default function ShopOrdersClient() {
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className={`rounded-full border px-3 py-1 text-xs font-black ${getShopOrderStatusClasses(order.order_status)}`}>
-                          {getShopOrderStatusLabel(order.order_status)}
+                        <span className={`rounded-full border px-3 py-1 text-xs font-black ${
+                          order.order_status === 'cancelled' || order.order_status === 'returned'
+                            ? getShopOrderStatusClasses(order.order_status)
+                            : getShopFulfilmentStatusClasses(order.fulfilment_status)
+                        }`}>
+                          {order.order_status === 'cancelled' || order.order_status === 'returned'
+                            ? getShopOrderStatusLabel(order.order_status)
+                            : getShopFulfilmentStatusLabel(order.fulfilment_status)}
                         </span>
                         <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">
                           COD
@@ -377,7 +386,7 @@ export default function ShopOrdersClient() {
 
                     {!hasException && (
                       <div className="mt-5 grid gap-2 md:grid-cols-5">
-                        {SHOP_ORDER_PROGRESS.map((status, statusIndex) => {
+                        {SHOP_FULFILMENT_PROGRESS.map((status, statusIndex) => {
                           const complete = statusIndex < currentProgressIndex
                           const current = statusIndex === currentProgressIndex
                           return (
@@ -393,7 +402,7 @@ export default function ShopOrdersClient() {
                                   {complete ? <Check className="h-4 w-4" /> : statusIndex + 1}
                                 </span>
                                 <span className={`text-xs font-black ${complete || current ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
-                                  {getShopOrderStatusLabel(status)}
+                                  {getShopFulfilmentStatusLabel(status)}
                                 </span>
                               </div>
                             </div>

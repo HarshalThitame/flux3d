@@ -8,21 +8,26 @@ import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import { formatShopPrice } from '@/lib/shop/selection'
 import {
   formatShopOrderDate,
+  getShopFulfilmentStatusClasses,
+  getShopFulfilmentStatusLabel,
   getShopOrderStatusClasses,
   getShopOrderStatusLabel,
   getShopPaymentStatusClasses,
   getShopPaymentStatusLabel,
   type ShopAdminOrder,
-  type ShopOrderStatus,
   type ShopPaymentStatus,
 } from '@/lib/shop/orders'
 
-const statuses: Array<{ value: '' | ShopOrderStatus; label: string }> = [
+const statusOptions: Array<{ value: string; label: string }> = [
   { value: '', label: 'All statuses' },
   { value: 'placed', label: 'Placed' },
   { value: 'confirmed', label: 'Confirmed' },
+  { value: 'pending', label: 'Fulfilment: Pending' },
+  { value: 'processing', label: 'Processing' },
+  { value: 'packing', label: 'Packing' },
   { value: 'packed', label: 'Packed' },
   { value: 'shipped', label: 'Shipped' },
+  { value: 'delivering', label: 'Out for Delivery' },
   { value: 'delivered', label: 'Delivered' },
   { value: 'cancelled', label: 'Cancelled' },
   { value: 'return_requested', label: 'Return Requested' },
@@ -86,14 +91,15 @@ export default function AdminShopOrdersClient() {
     return () => window.clearTimeout(timer)
   }, [toast])
 
-  async function bulkUpdate(nextStatus: 'confirmed' | 'packed') {
+  async function bulkUpdate(nextStatus: string) {
     if (selectedIds.length === 0) return
+    const isFulfilment = nextStatus === 'packed'
     try {
       await Promise.all(selectedIds.map(async (id) => {
         const response = await fetch(`/api/3d-shop/admin/orders/${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order_status: nextStatus }),
+          body: JSON.stringify(isFulfilment ? { fulfilment_status: nextStatus } : { order_status: nextStatus }),
         })
         const data = await response.json().catch(() => ({})) as { error?: string }
         if (!response.ok) throw new Error(data.error || 'Bulk update failed.')
@@ -140,7 +146,7 @@ export default function AdminShopOrdersClient() {
       <div className="rounded-2xl border border-gray-200 bg-white p-4">
         <div className="grid gap-3 lg:grid-cols-[180px_180px_150px_150px_1fr]">
           <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none">
-            {statuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            {statusOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
           </select>
           <select value={paymentStatus} onChange={(event) => setPaymentStatus(event.target.value)} className="rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none">
             {paymentStatuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
@@ -209,8 +215,14 @@ export default function AdminShopOrdersClient() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getShopOrderStatusClasses(order.order_status)}`}>
-                        {getShopOrderStatusLabel(order.order_status)}
+                      <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                        order.order_status === 'cancelled' || order.order_status === 'returned'
+                          ? getShopOrderStatusClasses(order.order_status)
+                          : getShopFulfilmentStatusClasses(order.fulfilment_status)
+                      }`}>
+                        {order.order_status === 'cancelled' || order.order_status === 'returned'
+                          ? getShopOrderStatusLabel(order.order_status)
+                          : getShopFulfilmentStatusLabel(order.fulfilment_status)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-[#6F7192]">{formatShopOrderDate(order.placed_at)}</td>

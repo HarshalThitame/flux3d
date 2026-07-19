@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
-import { requireAdminRequest } from '@/lib/admin/request'
+import { requireAdminPermission } from '@/lib/admin/permissions'
 import { getPaymentAttemptDetail } from '@/lib/payments/service'
 import { mapPaymentAuditLogData, mapPaymentData, mapPaymentEventData, mapPaymentRefundData } from '@/lib/payments/admin'
 
@@ -22,7 +22,7 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ paymentId: string }> }
 ) {
-  const auth = await requireAdminRequest()
+  const auth = await requireAdminPermission('payments.view')
   if ('response' in auth) return auth.response
 
   try {

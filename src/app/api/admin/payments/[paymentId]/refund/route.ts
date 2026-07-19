@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
-import { requireAdminRequest } from '@/lib/admin/request'
+import { requireAdminPermission } from '@/lib/admin/permissions'
 import { initiateRefund } from '@/lib/payments/service'
 
 type Body = {
@@ -9,11 +9,13 @@ type Body = {
   speed?: unknown
 }
 
+const LARGE_REFUND_THRESHOLD_PAISE = 5_000_000 // ₹50,000
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ paymentId: string }> }
 ) {
-  const auth = await requireAdminRequest()
+  const auth = await requireAdminPermission('refunds.create')
   if ('response' in auth) return auth.response
 
   try {
@@ -25,6 +27,13 @@ export async function POST(
 
     if (!amountPaise || !reason) {
       return NextResponse.json({ error: 'Amount and reason are required.' }, { status: 400 })
+    }
+
+    if (amountPaise >= LARGE_REFUND_THRESHOLD_PAISE && !auth.isAdmin) {
+      return NextResponse.json(
+        { error: 'Refunds above ₹50,000 require super-admin approval.' },
+        { status: 403 }
+      )
     }
 
     const result = await initiateRefund({

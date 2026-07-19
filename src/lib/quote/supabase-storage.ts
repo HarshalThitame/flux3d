@@ -15,19 +15,6 @@ function getExtension(fileName: string) {
   return fileName.split('.').pop()?.toLowerCase() ?? ''
 }
 
-function getMimeType(extension: string) {
-  switch (extension) {
-    case 'stl':
-      return 'model/stl'
-    case 'obj':
-      return 'text/plain'
-    case '3mf':
-      return 'model/3mf'
-    default:
-      return 'application/octet-stream'
-  }
-}
-
 export function validateModelFile(file: File) {
   const extension = getExtension(file.name)
 
@@ -48,62 +35,49 @@ export async function uploadFileToSupabaseStorage(
   quoteId: string,
   onProgress: (progress: number) => void
 ): Promise<UploadState> {
-  const supabase = getSupabaseBrowserClient()
-  const bucket = process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? 'quote-models'
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError) {
-    if (authError.code === 'refresh_token_not_found') {
-      throw new Error('Session expired. Please log in again.')
-    }
-    throw new Error(authError.message)
-  }
-
-  if (!user) {
-    throw new Error('You must be logged in to upload model files.')
-  }
-
-  const extension = getExtension(file.name)
-  const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '-')
-  const objectPath = `${user.id}/${quoteId}/${Date.now()}-${sanitizedFileName}`
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('quoteId', quoteId)
 
   onProgress(15)
 
-  const { error } = await supabase.storage.from(bucket).upload(objectPath, file, {
-    cacheControl: '3600',
-    upsert: true,
-    contentType: file.type || getMimeType(extension),
+  const response = await fetch('/api/quote/upload', {
+    method: 'POST',
+    body: formData,
   })
 
-   if (error) {
-    // Log full error details for debugging 42704
-    console.error('Storage upload error (raw):', error)
-    console.error('Error message:', error.message)
-    console.error('Error stringified:', JSON.stringify(error, Object.getOwnPropertyNames(error)))
-    console.error('Error keys:', Object.keys(error))
-    
-    throw new Error(`Storage upload failed: ${error.message}`)
+  onProgress(90)
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ error: 'Upload failed.' }))
+    throw new Error(body.error || 'Upload failed.')
   }
 
+  const data = (await response.json()) as { path: string; extension: string; size: number }
   onProgress(100)
 
-  void trackFeatureUsage(user.id, 'stl_uploaded', {
+  void trackFeatureUsage(userId, 'stl_uploaded', {
     quoteId,
-    fileName: sanitizedFileName,
-    extension,
-    sizeBytes: file.size,
-    path: objectPath,
+    fileName: file.name,
+    extension: data.extension,
+    sizeBytes: data.size,
+    path: data.path,
   }).catch(() => {})
 
   return {
     status: 'success',
     progress: 100,
-    path: objectPath,
+    path: data.path,
   }
+}
+
+export async function getSignedModelUrl(path: string): Promise<string> {
+  const response = await fetch(`/api/quote/upload?path=${encodeURIComponent(path)}`)
+  if (!response.ok) {
+    throw new Error('Could not retrieve model preview URL.')
+  }
+  const data = (await response.json()) as { signedUrl: string }
+  return data.signedUrl
 }
 
 export async function saveQuoteToSupabase(payload: {

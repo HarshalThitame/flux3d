@@ -1,0 +1,14 @@
+name: Release Expired Inventory Reservations
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call release endpoint
+        run: |
+          curl -sS --retry 3 "https://${{ vars.VERCEL_URL || 'flux3d.vercel.app' }}/api/cron/release-reservations"

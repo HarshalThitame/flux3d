@@ -30,6 +30,8 @@ import { formatShopPrice } from '@/lib/shop/selection'
 import {
   formatShopOrderDate,
   formatShopOrderDateTime,
+  getShopFulfilmentStatusClasses,
+  getShopFulfilmentStatusLabel,
   getShopOrderLineTotal,
   getShopOrderStatusClasses,
   getShopOrderStatusLabel,
@@ -37,7 +39,7 @@ import {
   getShopPaymentStatusLabel,
   isShopOrderCancellable,
   isShopOrderReturnable,
-  SHOP_ORDER_PROGRESS,
+  SHOP_FULFILMENT_PROGRESS,
   type ShopOrder,
   type ShopOrderItem,
 } from '@/lib/shop/orders'
@@ -149,7 +151,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
       if (!response.ok || !data.order) throw new Error(data.error || 'Order not found.')
       setOrder(data.order)
 
-      if (data.order.order_status === 'delivered') {
+      if (data.order.fulfilment_status === 'delivered') {
         const eligibleResponse = await fetch('/api/3d-shop/reviews/eligible')
         const eligibleData = await eligibleResponse.json().catch(() => []) as EligibleReviewProduct[]
         setEligibleReviews(eligibleResponse.ok && Array.isArray(eligibleData)
@@ -197,8 +199,8 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
 
   const currentProgressIndex = useMemo(() => {
     if (!order) return -1
-    const index = SHOP_ORDER_PROGRESS.indexOf(order.order_status)
-    return index === -1 ? SHOP_ORDER_PROGRESS.length - 1 : index
+    const index = SHOP_FULFILMENT_PROGRESS.indexOf(order.fulfilment_status)
+    return index === -1 ? SHOP_FULFILMENT_PROGRESS.length - 1 : index
   }, [order])
 
   async function submitAction() {
@@ -387,8 +389,14 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
               </p>
 
               <div className="mt-5 flex flex-wrap items-center gap-2">
-                <span className={`rounded-full border px-3 py-1 text-xs font-black ${getShopOrderStatusClasses(order.order_status)}`}>
-                  {getShopOrderStatusLabel(order.order_status)}
+                <span className={`rounded-full border px-3 py-1 text-xs font-black ${
+                  order.order_status === 'cancelled' || order.order_status === 'returned'
+                    ? getShopOrderStatusClasses(order.order_status)
+                    : getShopFulfilmentStatusClasses(order.fulfilment_status)
+                }`}>
+                  {order.order_status === 'cancelled' || order.order_status === 'returned'
+                    ? getShopOrderStatusLabel(order.order_status)
+                    : getShopFulfilmentStatusLabel(order.fulfilment_status)}
                 </span>
                 <span className={`rounded-full border px-3 py-1 text-xs font-black ${getShopPaymentStatusClasses(order.payment_status)}`}>
                   {getShopPaymentStatusLabel(order.payment_status)}
@@ -468,8 +476,14 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                   </div>
                   <h2 className="mt-2 !text-xl font-black text-[var(--text-primary)]">Current order status</h2>
                 </div>
-                <span className={`w-fit rounded-full border px-3 py-1 text-sm font-black ${getShopOrderStatusClasses(order.order_status)}`}>
-                  {getShopOrderStatusLabel(order.order_status)}
+                <span className={`w-fit rounded-full border px-3 py-1 text-sm font-black ${
+                  order.order_status === 'cancelled' || order.order_status === 'returned'
+                    ? getShopOrderStatusClasses(order.order_status)
+                    : getShopFulfilmentStatusClasses(order.fulfilment_status)
+                }`}>
+                  {order.order_status === 'cancelled' || order.order_status === 'returned'
+                    ? getShopOrderStatusLabel(order.order_status)
+                    : getShopFulfilmentStatusLabel(order.fulfilment_status)}
                 </span>
               </div>
 
@@ -484,8 +498,8 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                   </div>
                 </div>
               ) : (
-                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                  {SHOP_ORDER_PROGRESS.map((status, index) => {
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
+                  {SHOP_FULFILMENT_PROGRESS.map((status, index) => {
                     const complete = index < currentProgressIndex
                     const current = index === currentProgressIndex
                     return (
@@ -513,7 +527,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                             {complete ? <Check className="h-4 w-4" /> : index + 1}
                           </div>
                           <div className={`text-sm font-black leading-tight ${complete || current ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
-                            {getShopOrderStatusLabel(status)}
+                            {getShopFulfilmentStatusLabel(status)}
                           </div>
                         </div>
                       </motion.div>
@@ -773,7 +787,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                   Cancel Order
                 </button>
               )}
-              {isShopOrderReturnable(order.order_status, order.placed_at) && (
+              {isShopOrderReturnable(order.fulfilment_status, order.placed_at) && (
                 <button
                   type="button"
                   onClick={() => setDialogType('return')}

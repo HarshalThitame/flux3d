@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
-import { requireAdminRequest } from '@/lib/admin/request'
+import { logAdminAction } from '@/lib/admin/auditLog'
+import { requireAdminPermission } from '@/lib/admin/permissions'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import {
+  assertFulfilmentStatusTransition,
   assertShopStatusTransition,
   mapShopAdminOrder,
+  shopFulfilmentStatuses,
   shopOrderStatuses,
-  shopPaymentStatuses,
+  type ShopFulfilmentStatus,
   type ShopOrderCustomer,
   type ShopOrderStatus,
-  type ShopPaymentStatus,
 } from '@/lib/shop/orders'
 
 export const dynamic = 'force-dynamic'
@@ -21,7 +23,6 @@ type PatchBody = {
   tracking_url?: unknown
   estimated_delivery?: unknown
   admin_notes?: unknown
-  payment_status?: unknown
   cancellation_reason?: unknown
 }
 
@@ -65,7 +66,7 @@ async function getCustomer(
 }
 
 export async function GET(_request: Request, context: { params: Promise<{ orderId: string }> }) {
-  const auth = await requireAdminRequest()
+  const auth = await requireAdminPermission('orders.view')
   if ('response' in auth) return auth.response
 
   try {
@@ -87,7 +88,7 @@ export async function GET(_request: Request, context: { params: Promise<{ orderI
 }
 
 export async function PATCH(request: Request, context: { params: Promise<{ orderId: string }> }) {
-  const auth = await requireAdminRequest()
+  const auth = await requireAdminPermission('orders.update')
   if ('response' in auth) return auth.response
 
   try {
@@ -105,6 +106,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ order
 
     const updates: Record<string, string | null> = {}
     let shouldRestoreStock = false
+    let isCancellation = false
+    let cancellationReason: string | null = null
 
     if ('order_status' in body) {
       const nextStatus = String(body.order_status) as ShopOrderStatus
@@ -125,23 +128,16 @@ export async function PATCH(request: Request, context: { params: Promise<{ order
       if (nextStatus === 'cancelled' && currentStatus !== 'cancelled') {
         const reason = textOrNull(body.cancellation_reason)
         if (!reason) return NextResponse.json({ error: 'Cancellation reason is required.' }, { status: 400 })
-        updates.cancellation_reason = reason
+        cancellationReason = reason
+        isCancellation = true
+        // Don't add order_status to updates — cancel_shelf_order RPC handles it
         shouldRestoreStock = true
+      } else {
+        updates.order_status = nextStatus
+        if (nextStatus === 'returned' && currentStatus !== 'returned') {
+          shouldRestoreStock = true
+        }
       }
-
-      if (nextStatus === 'returned' && currentStatus !== 'returned') {
-        shouldRestoreStock = true
-      }
-
-      updates.order_status = nextStatus
-    }
-
-    if ('payment_status' in body) {
-      const paymentStatus = String(body.payment_status) as ShopPaymentStatus
-      if (!shopPaymentStatuses.includes(paymentStatus)) {
-        return NextResponse.json({ error: 'Invalid payment status.' }, { status: 400 })
-      }
-      updates.payment_status = paymentStatus
     }
 
     if ('tracking_number' in body) updates.tracking_number = textOrNull(body.tracking_number)
@@ -150,27 +146,73 @@ export async function PATCH(request: Request, context: { params: Promise<{ order
     if ('estimated_delivery' in body) updates.estimated_delivery = dateOrNull(body.estimated_delivery)
     if ('admin_notes' in body) updates.admin_notes = textOrNull(body.admin_notes)
 
-    if (Object.keys(updates).length === 0) {
+    if ('fulfilment_status' in body) {
+      const nextFulfilment = String(body.fulfilment_status) as ShopFulfilmentStatus
+      if (!shopFulfilmentStatuses.includes(nextFulfilment)) {
+        return NextResponse.json({ error: 'Invalid fulfilment status.' }, { status: 400 })
+      }
+      const currentFulfilment = current.fulfilment_status as ShopFulfilmentStatus
+      try {
+        assertFulfilmentStatusTransition(currentFulfilment, nextFulfilment)
+      } catch (transitionError) {
+        return NextResponse.json(
+          { error: transitionError instanceof Error ? transitionError.message : 'Invalid fulfilment transition.' },
+          { status: 400 }
+        )
+      }
+      updates.fulfilment_status = nextFulfilment
+    }
+
+    // For cancellations, skip the regular order update (RPC handles it)
+    if (!isCancellation && Object.keys(updates).length === 0) {
       return NextResponse.json({ error: 'No valid fields to update.' }, { status: 400 })
     }
 
-    const { data: updated, error: updateError } = await supabase
-      .from('shelf_orders')
-      .update(updates)
-      .eq('id', orderId)
-      .select('*')
-      .single()
+    if (isCancellation) {
+      // Transactional cancellation — stock restore + coupon decrement + status update
+      const { error: cancelError } = await supabase.rpc('cancel_shelf_order', {
+        p_order_id: orderId,
+        p_reason: cancellationReason,
+      })
+      if (cancelError) throw new Error(cancelError.message)
+    } else {
+      // Regular update for non-cancellation status changes
+      if (Object.keys(updates).length > 0) {
+        const { error: updateError } = await supabase
+          .from('shelf_orders')
+          .update(updates)
+          .eq('id', orderId)
+          .select('*')
+          .single()
+        if (updateError) throw new Error(updateError.message)
+      }
 
-    if (updateError) throw new Error(updateError.message)
+      await logAdminAction({
+        admin_id: auth.user.id,
+        action: 'update_shop_order',
+        target_type: 'order',
+        target_id: orderId,
+        old_value: { order_status: current.order_status, ...current },
+        new_value: updates,
+      }).catch(() => {})
+    }
 
-    if (shouldRestoreStock) {
+    if (shouldRestoreStock && !isCancellation) {
+      // returned — restore stock only (no coupon decrement for returns)
       const { error: restoreError } = await supabase.rpc('restore_shelf_order_stock', {
         p_items: current.items ?? [],
+        p_order_id: orderId,
       })
       if (restoreError) throw new Error(restoreError.message)
     }
 
-    return NextResponse.json({ order: mapShopAdminOrder(updated, await getCustomer(supabase, updated)) })
+    const { data: refreshed } = await supabase
+      .from('shelf_orders')
+      .select('*')
+      .eq('id', orderId)
+      .maybeSingle()
+
+    return NextResponse.json({ order: mapShopAdminOrder(refreshed ?? current, await getCustomer(supabase, refreshed ?? current)) })
   } catch (error) {
     return getAdminApiErrorResponse(error)
   }

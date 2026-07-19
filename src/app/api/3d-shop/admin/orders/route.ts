@@ -5,10 +5,12 @@ import { createAdminSupabaseClient } from '@/lib/admin/server'
 import {
   mapShopAdminOrder,
   shopOrderStatuses,
+  shopFulfilmentStatuses,
   shopPaymentStatuses,
   type ShopAdminOrder,
   type ShopOrderCustomer,
   type ShopOrderStatus,
+  type ShopFulfilmentStatus,
   type ShopPaymentStatus,
 } from '@/lib/shop/orders'
 
@@ -101,8 +103,12 @@ export async function GET(request: Request) {
       .order('placed_at', { ascending: false })
       .limit(500)
 
-    if (status && shopOrderStatuses.includes(status as ShopOrderStatus)) {
-      query = query.eq('order_status', status)
+    if (status) {
+      if (shopOrderStatuses.includes(status as ShopOrderStatus)) {
+        query = query.eq('order_status', status)
+      } else if (shopFulfilmentStatuses.includes(status as ShopFulfilmentStatus)) {
+        query = query.eq('fulfilment_status', status)
+      }
     }
     if (paymentStatus && shopPaymentStatuses.includes(paymentStatus as ShopPaymentStatus)) {
       query = query.eq('payment_status', paymentStatus)

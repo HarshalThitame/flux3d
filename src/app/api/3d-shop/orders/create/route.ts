@@ -1,24 +1,30 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { calculateDeliveryChargeFromSettings } from '@/lib/quote/pricing-waterfall'
-import { getSettings } from '@/lib/settings'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getSettings } from '@/lib/settings'
+import { rateLimitResponse } from '@/lib/rate-limit'
+import {
+  buildShopPricingSnapshot,
+  calculateCouponDiscount,
+  calculateShopSubtotal,
+  calculateShopTax,
+  calculateShopTotal,
+  roundMoney,
+  type ShopCouponResult,
+} from '@/lib/shop/pricing'
+import { calculateShippingFromRules } from '@/lib/shop/shipping'
 import type { ShopOrderItem, ShopShippingAddress } from '@/lib/shop/orders'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
-const MONEY_TOLERANCE = 1
 const MAX_ORDER_NUMBER_RETRIES = 5
 
 type CreateShopOrderBody = {
   items?: unknown
-  subtotal?: unknown
-  discountAmount?: unknown
   couponCode?: unknown
   appliedCouponId?: unknown
   appliedOfferId?: unknown
-  shippingCharge?: unknown
-  totalAmount?: unknown
   shippingAddress?: unknown
 }
 
@@ -28,26 +34,20 @@ type SkuSnapshot = {
   price: number | string
   stock_quantity: number | string
   is_available: boolean | null
+  weight_grams: number | string | null
+  variant_combination?: Record<string, string | boolean> | null
+  variant_label?: string | null
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value))
 }
 
-function normalizeMoney(value: unknown) {
-  const next = Number(value)
-  return Number.isFinite(next) ? Number(next.toFixed(2)) : NaN
-}
-
 function normalizeText(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
-function itemFailureLabel(item: Pick<ShopOrderItem, 'productName' | 'variantLabel' | 'skuCode'>) {
-  return `${item.productName} (${item.variantLabel || item.skuCode})`
-}
-
-function normalizeOrderItems(value: unknown): ShopOrderItem[] {
+function normalizeOrderItems(value: unknown): { productId: string; skuId: string; quantity: number; customizationText: string | null }[] {
   if (!Array.isArray(value) || value.length === 0) {
     throw new Error('Your cart is empty.')
   }
@@ -56,32 +56,16 @@ function normalizeOrderItems(value: unknown): ShopOrderItem[] {
     if (!isRecord(entry)) throw new Error('Invalid cart item.')
 
     const productId = normalizeText(entry.productId)
-    const productName = normalizeText(entry.productName)
-    const productThumbnail = normalizeText(entry.productThumbnail)
-    const productSlug = normalizeText(entry.productSlug)
     const skuId = normalizeText(entry.skuId)
-    const skuCode = normalizeText(entry.skuCode)
-    const variantLabel = normalizeText(entry.variantLabel)
     const quantity = Number(entry.quantity)
-    const unitPrice = normalizeMoney(entry.unitPrice)
 
-    if (!productId || !productName || !skuId || !skuCode) throw new Error('Invalid cart item.')
+    if (!productId || !skuId) throw new Error('Invalid cart item.')
     if (!Number.isInteger(quantity) || quantity <= 0) throw new Error('Invalid item quantity.')
-    if (!Number.isFinite(unitPrice) || unitPrice < 0) throw new Error('Invalid item price.')
 
     return {
       productId,
-      productName,
-      productThumbnail,
-      productSlug: productSlug || null,
       skuId,
-      skuCode,
-      variantCombination: isRecord(entry.variantCombination)
-        ? entry.variantCombination as Record<string, string | boolean>
-        : {},
-      variantLabel,
       quantity,
-      unitPrice,
       customizationText: typeof entry.customizationText === 'string'
         ? entry.customizationText.trim() || null
         : null,
@@ -92,7 +76,7 @@ function normalizeOrderItems(value: unknown): ShopOrderItem[] {
 function normalizeShippingAddress(value: unknown): ShopShippingAddress {
   if (!isRecord(value)) throw new Error('Delivery address is required.')
 
-  const address = {
+  const address: ShopShippingAddress = {
     name: normalizeText(value.name),
     phone: normalizeText(value.phone).replace(/\D/g, ''),
     line1: normalizeText(value.line1),
@@ -126,9 +110,9 @@ function isLimitReached(limit: unknown, used: unknown) {
 async function validateCouponCode(
   supabase: ReturnType<typeof createAdminSupabaseClient>,
   couponCode: string,
-  orderAmount: number,
+  subtotal: number,
   userId: string
-) {
+): Promise<ShopCouponResult | null> {
   const code = couponCode.trim().toUpperCase()
   if (!code) return null
 
@@ -148,12 +132,27 @@ async function validateCouponCode(
     if (isLimitReached(shopCoupon.max_uses, shopCoupon.used_count)) {
       throw new Error('This coupon has reached its usage limit.')
     }
-    if (orderAmount < Number(shopCoupon.min_order_value ?? 0)) {
+    if (subtotal < Number(shopCoupon.min_order_value ?? 0)) {
       throw new Error(`Minimum order value of ₹${Number(shopCoupon.min_order_value ?? 0).toFixed(0)} required.`)
     }
+
+    const discountType = String(shopCoupon.discount_type).toLowerCase() as 'percentage' | 'fixed_amount' | 'free_shipping'
+    const discountValue = Number(shopCoupon.discount_value ?? 0)
+    const freeShipping = discountType === 'free_shipping'
+    const calculatedDiscount = freeShipping ? 0 : calculateCouponDiscount(subtotal, {
+      discount_type: discountType,
+      discount_value: discountValue,
+      max_discount: shopCoupon.max_discount ?? null,
+    })
+
     return {
       code,
-      freeShipping: shopCoupon.discount_type === 'free_shipping',
+      discountType: freeShipping ? 'free_shipping' : discountType,
+      discountValue,
+      maxDiscount: shopCoupon.max_discount ?? null,
+      calculatedDiscount,
+      freeShipping,
+      couponId: shopCoupon.id,
     }
   }
 
@@ -173,7 +172,7 @@ async function validateCouponCode(
   if (isLimitReached(coupon.usage_limit, coupon.used_count)) {
     throw new Error('This coupon has reached its usage limit.')
   }
-  if (orderAmount < Number(coupon.min_order_value ?? 0)) {
+  if (subtotal < Number(coupon.min_order_value ?? 0)) {
     throw new Error(`Minimum order value of ₹${Number(coupon.min_order_value ?? 0).toFixed(0)} required.`)
   }
 
@@ -198,9 +197,23 @@ async function validateCouponCode(
     if (count && count > 0) throw new Error('This coupon is for first-time orders only.')
   }
 
+  const discountType = String(coupon.discount_type).toLowerCase() as 'percentage' | 'fixed_amount' | 'free_shipping'
+  const discountValue = Number(coupon.discount_value ?? 0)
+  const freeShipping = discountType === 'free_shipping'
+  const calculatedDiscount = freeShipping ? 0 : calculateCouponDiscount(subtotal, {
+    discount_type: discountType,
+    discount_value: discountValue,
+    max_discount: coupon.max_discount ?? null,
+  })
+
   return {
     code,
-    freeShipping: coupon.discount_type === 'free_shipping',
+    discountType: freeShipping ? 'free_shipping' : discountType,
+    discountValue,
+    maxDiscount: coupon.max_discount ?? null,
+    calculatedDiscount,
+    freeShipping,
+    couponId: coupon.id,
   }
 }
 
@@ -209,14 +222,14 @@ async function validateOfferId(
   offerId: string,
   orderAmount: number,
   userId: string
-) {
+): Promise<ShopCouponResult | null> {
   const id = offerId.trim()
   if (!id) return null
 
   const now = new Date().toISOString()
   const { data: offer, error } = await supabase
     .from('offers')
-    .select('id, offer_type, min_order_value, starts_at, ends_at, is_active, usage_limit, usage_per_user, used_count')
+    .select('id, offer_type, discount_value, max_discount, min_order_value, starts_at, ends_at, is_active, usage_limit, usage_per_user, used_count')
     .eq('id', id)
     .maybeSingle()
 
@@ -245,9 +258,25 @@ async function validateOfferId(
     }
   }
 
+  const discountType = String(offer.offer_type).toLowerCase() as 'percentage' | 'fixed_amount' | 'free_shipping' | 'buy_x_get_y'
+  const discountValue = Number(offer.discount_value ?? 0)
+  const freeShipping = discountType === 'free_shipping'
+  const calculatedDiscount = freeShipping || discountType === 'buy_x_get_y'
+    ? 0
+    : calculateCouponDiscount(orderAmount, {
+        discount_type: discountType,
+        discount_value: discountValue,
+        max_discount: offer.max_discount ?? null,
+      })
+
   return {
-    id: offer.id,
-    freeShipping: offer.offer_type === 'free_shipping',
+    code: id,
+    discountType: freeShipping ? 'free_shipping' : discountType,
+    discountValue,
+    maxDiscount: offer.max_discount ?? null,
+    calculatedDiscount,
+    freeShipping,
+    offerId: offer.id,
   }
 }
 
@@ -282,13 +311,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const userId = authData.user.id
+
+  const rateLimit = await rateLimitResponse(request, {
+    prefix: 'shop_checkout',
+    windowSeconds: 60,
+    maxRequests: 10,
+    userId,
+  })
+
+  if (!rateLimit.success) {
+    return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
+  }
+
   try {
     const body = (await request.json()) as CreateShopOrderBody
-    const items = normalizeOrderItems(body.items)
+    const rawItems = normalizeOrderItems(body.items)
     const shippingAddress = normalizeShippingAddress(body.shippingAddress)
-    const subtotal = normalizeMoney(body.subtotal)
-    const discountAmount = normalizeMoney(body.discountAmount ?? 0)
-    const totalAmount = normalizeMoney(body.totalAmount)
     const couponCode = typeof body.couponCode === 'string' && body.couponCode.trim()
       ? body.couponCode.trim().toUpperCase()
       : null
@@ -298,75 +337,128 @@ export async function POST(request: Request) {
     const appliedOfferId = typeof body.appliedOfferId === 'string' && body.appliedOfferId.trim()
       ? body.appliedOfferId.trim()
       : null
+
     const supabase = createAdminSupabaseClient()
-
-    if (![subtotal, discountAmount, totalAmount].every(Number.isFinite)) {
-      return NextResponse.json({ error: 'Order totals are invalid.' }, { status: 400 })
-    }
-
-    if (discountAmount < 0 || discountAmount > subtotal) {
-      return NextResponse.json({ error: 'Order totals are invalid.' }, { status: 400 })
-    }
-
-    const lineSubtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
-    if (Math.abs(lineSubtotal - subtotal) > MONEY_TOLERANCE) {
-      return NextResponse.json({ error: 'Order totals could not be verified. Please refresh your cart.' }, { status: 400 })
-    }
-
     const settings = await getSettings()
-    const orderBaseAmount = Math.max(0, subtotal - discountAmount)
-    const validatedCoupon = couponCode
-      ? await validateCouponCode(supabase, couponCode, subtotal, authData.user.id)
-      : null
-    const validatedOffer = appliedOfferId
-      ? await validateOfferId(supabase, appliedOfferId, orderBaseAmount, authData.user.id)
-      : null
-    const shippingCharge = validatedCoupon?.freeShipping || validatedOffer?.freeShipping
-      ? 0
-      : calculateDeliveryChargeFromSettings(orderBaseAmount, settings)
-    const expectedTotal = orderBaseAmount + shippingCharge
-    if (Math.abs(expectedTotal - totalAmount) > MONEY_TOLERANCE) {
-      return NextResponse.json({ error: 'Order totals could not be verified. Please refresh your cart.' }, { status: 400 })
-    }
 
-    const skuIds = Array.from(new Set(items.map((item) => item.skuId)))
+    const skuIds = Array.from(new Set(rawItems.map((item) => item.skuId)))
     const { data: skuRows, error: skuError } = await supabase
       .from('shelf_skus')
-      .select('id, product_id, price, stock_quantity, is_available')
+      .select('id, product_id, sku_code, variant_combination, price, stock_quantity, is_available, weight_grams')
       .in('id', skuIds)
 
     if (skuError) throw new Error(skuError.message)
 
     const skusById = new Map((skuRows ?? []).map((sku) => [sku.id, sku as SkuSnapshot]))
 
-    for (const item of items) {
-      const sku = skusById.get(item.skuId)
-      if (!sku || sku.is_available === false || Number(sku.stock_quantity ?? 0) < item.quantity) {
+    const items: ShopOrderItem[] = []
+    let totalWeightGrams = 0
+
+    for (const rawItem of rawItems) {
+      const sku = skusById.get(rawItem.skuId)
+      if (!sku || sku.is_available === false || Number(sku.stock_quantity ?? 0) < rawItem.quantity) {
         return NextResponse.json(
-          { error: `Sorry, ${itemFailureLabel(item)} is no longer available in the requested quantity.` },
+          { error: `Sorry, ${rawItem.skuId} is no longer available in the requested quantity.` },
           { status: 400 }
         )
       }
 
-      if (Math.abs(Number(sku.price) - item.unitPrice) > MONEY_TOLERANCE) {
-        return NextResponse.json(
-          { error: `Price has changed for ${item.productName}. Please refresh your cart.` },
-          { status: 400 }
-        )
-      }
+      const unitPrice = roundMoney(Number(sku.price))
+      const weight = Number(sku.weight_grams ?? 0)
+      totalWeightGrams += weight * rawItem.quantity
+
+      items.push({
+        productId: rawItem.productId,
+        productName: '',
+        productThumbnail: '',
+        productSlug: null,
+        skuId: rawItem.skuId,
+        skuCode: '',
+        variantCombination: {},
+        variantLabel: '',
+        quantity: rawItem.quantity,
+        unitPrice,
+        customizationText: rawItem.customizationText,
+      })
     }
+
+    // Enrich items with product details
+    const productIds = Array.from(new Set(items.map((item) => item.productId)))
+    const { data: productRows } = await supabase
+      .from('shelf_products')
+      .select('id, name, slug, thumbnail_url')
+      .in('id', productIds)
+
+    const productsById = new Map((productRows ?? []).map((p) => [p.id, p as Record<string, unknown>]))
+
+    for (const item of items) {
+      const product = productsById.get(item.productId)
+      item.productName = typeof product?.name === 'string' ? product.name : 'Product'
+      item.productSlug = typeof product?.slug === 'string' ? product.slug : null
+      item.productThumbnail = typeof product?.thumbnail_url === 'string' ? product.thumbnail_url : ''
+
+      const sku = skusById.get(item.skuId)
+      item.skuCode = typeof sku && typeof (sku as SkuSnapshot).id === 'string' ? String(item.skuId).slice(0, 8) : ''
+      const variant = sku && typeof (sku as SkuSnapshot).variant_combination === 'object' && (sku as SkuSnapshot).variant_combination !== null
+        ? (sku as SkuSnapshot).variant_combination
+        : {}
+      item.variantCombination = variant as Record<string, string | boolean>
+      item.variantLabel = Object.entries(item.variantCombination)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(', ')
+    }
+
+    const subtotal = calculateShopSubtotal(items)
+
+    const validatedCoupon = couponCode
+      ? await validateCouponCode(supabase, couponCode, subtotal, userId)
+      : null
+    const validatedOffer = appliedOfferId
+      ? await validateOfferId(supabase, appliedOfferId, subtotal, userId)
+      : null
+
+    const discountSource = validatedCoupon ?? validatedOffer
+    const discountAmount = discountSource?.calculatedDiscount ?? 0
+
+    const shippingResult = await calculateShippingFromRules({
+      pincode: shippingAddress.pincode,
+      state: shippingAddress.state,
+      subtotal,
+      weightGrams: totalWeightGrams,
+    })
+
+    if (!shippingResult.available) {
+      return NextResponse.json({ error: shippingResult.reason || 'Delivery not available.' }, { status: 400 })
+    }
+
+    const shippingChargePaise = discountSource?.freeShipping ? 0 : shippingResult.chargePaise
+    const shippingCharge = shippingChargePaise / 100
+    const taxableAmount = Math.max(0, subtotal - discountAmount)
+    const tax = calculateShopTax(taxableAmount, settings)
+    const totalAmount = calculateShopTotal(subtotal, discountAmount, shippingCharge, tax)
+
+    const pricingSnapshot = buildShopPricingSnapshot(
+      items,
+      discountSource,
+      subtotal,
+      shippingCharge,
+      tax,
+      totalAmount
+    )
+
+    const toPaise = (value: number) => Math.round(value * 100)
 
     for (let attempt = 0; attempt < MAX_ORDER_NUMBER_RETRIES; attempt += 1) {
       const orderNumber = await generateOrderNumber(supabase, attempt)
       const { data, error } = await supabase.rpc('create_shelf_order_atomic', {
-        p_user_id: authData.user.id,
+        p_user_id: userId,
         p_order_number: orderNumber,
         p_items: items,
-        p_subtotal: subtotal,
-        p_discount_amount: discountAmount,
-        p_coupon_code: validatedCoupon?.code ?? couponCode,
-        p_shipping_charge: shippingCharge,
-        p_total_amount: totalAmount,
+        p_subtotal_paise: toPaise(subtotal),
+        p_discount_amount_paise: toPaise(discountAmount),
+        p_coupon_code: discountSource?.code ?? couponCode,
+        p_shipping_charge_paise: shippingChargePaise,
+        p_total_amount_paise: toPaise(totalAmount),
         p_shipping_address: shippingAddress,
       })
 
@@ -381,19 +473,20 @@ export async function POST(request: Request) {
               payment_provider: 'razorpay',
               payment_status: 'pending',
               payment_purpose: 'shop_order',
-              payment_amount_paise: Math.round(totalAmount * 100),
+              payment_amount_paise: toPaise(totalAmount),
               payment_currency: 'INR',
-                payment_snapshot: {
-                  subtotal,
-                  discountAmount,
-                  shippingCharge,
-                  totalAmount,
-                  items,
-                  shippingAddress,
-                  appliedCouponId,
-                  appliedOfferId,
-                },
-              })
+              payment_snapshot: {
+                subtotal,
+                discountAmount,
+                shippingCharge,
+                totalAmount,
+                items,
+                shippingAddress,
+                appliedCouponId,
+                appliedOfferId,
+              },
+              order_price_snapshot: pricingSnapshot,
+            })
             .eq('id', orderId)
 
           if (sourceError) {
