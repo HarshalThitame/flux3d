@@ -90,10 +90,39 @@ export default function ContactContent() {
                   <div className="flex items-start gap-3">
                     <Clock3 className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
                     <div>
-                      <p className="text-sm font-semibold text-[#0F1B3D]">Response window</p>
-                      <p className="text-sm leading-7 text-[#6F7192]">We review messages during business hours when available and respond as soon as possible through the contact details you provide.</p>
+                      <p className="text-sm font-semibold text-[#0F1B3D]">Business Hours</p>
+                      <p className="text-sm leading-7 text-[#6F7192]">
+                        {[settings.workingDays, settings.businessHours || settings.workingHours].filter(Boolean).join(' · ') || 'We review messages during business hours when available and respond as soon as possible through the contact details you provide.'}
+                      </p>
                     </div>
                   </div>
+                  {settings.orderProcessingTime && (
+                    <div className="flex items-start gap-3">
+                      <Clock3 className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
+                      <div>
+                        <p className="text-sm font-semibold text-[#0F1B3D]">Processing Time</p>
+                        <p className="text-sm text-[#6F7192]">{settings.orderProcessingTime}</p>
+                      </div>
+                    </div>
+                  )}
+                  {settings.holidayMessage && (
+                    <div className="flex items-start gap-3">
+                      <Clock3 className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
+                      <div>
+                        <p className="text-sm font-semibold text-[#0F1B3D]">Notice</p>
+                        <p className="text-sm text-[#6F7192]">{settings.holidayMessage}</p>
+                      </div>
+                    </div>
+                  )}
+                  {settings.emergencyContact && (
+                    <div className="flex items-start gap-3">
+                      <Phone className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
+                      <div>
+                        <p className="text-sm font-semibold text-[#0F1B3D]">Emergency</p>
+                        <a href={`tel:${settings.emergencyContact.replace(/[^0-9+]/g, '')}`} className="text-sm text-[#6F7192] hover:text-[#6d28d9]">{settings.emergencyContact}</a>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
