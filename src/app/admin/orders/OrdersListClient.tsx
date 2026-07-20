@@ -4,6 +4,9 @@ import { useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, ty
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
   Boxes,
   ChevronLeft,
   ChevronRight,
@@ -60,6 +63,8 @@ export default function OrdersListClient({ initialOrders }: Props) {
   const [dateTo, setDateTo] = useState('')
   const [page, setPage] = useState(1)
   const [updatingGroupId, setUpdatingGroupId] = useState<string | null>(null)
+  const [sortColumn, setSortColumn] = useState<string>('createdAt')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [toast, setToast] = useState<AdminToastState>(null)
   const toastTimer = useRef<number | null>(null)
 
@@ -90,12 +95,49 @@ export default function OrdersListClient({ initialOrders }: Props) {
       .sort((left, right) => postProcessingLabel(left).localeCompare(postProcessingLabel(right)))
   }, [orders])
 
+  function toggleSort(column: string) {
+    if (sortColumn === column) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortColumn(column)
+      setSortDirection('asc')
+    }
+  }
+
+  function sortOrders(list: AdminOrder[]) {
+    const sorted = [...list]
+    sorted.sort((a, b) => {
+      let comparison = 0
+      switch (sortColumn) {
+        case 'orderNumber':
+          comparison = a.orderNumber.localeCompare(b.orderNumber)
+          break
+        case 'fullName':
+          comparison = a.fullName.localeCompare(b.fullName)
+          break
+        case 'grandTotal':
+          comparison = a.grandTotal - b.grandTotal
+          break
+        case 'status':
+          comparison = a.status.localeCompare(b.status)
+          break
+        case 'createdAt':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          break
+        default:
+          comparison = 0
+      }
+      return sortDirection === 'asc' ? comparison : -comparison
+    })
+    return sorted
+  }
+
   const filteredOrders = useMemo(() => {
     const query = search.trim().toLowerCase()
     const fromTime = dateFrom ? new Date(`${dateFrom}T00:00:00`).getTime() : null
     const toTime = dateTo ? new Date(`${dateTo}T23:59:59`).getTime() : null
 
-    return orders.filter((order) => {
+    return sortOrders(orders.filter((order) => {
       const createdAt = new Date(order.createdAt).getTime()
       const searchPool = [
         order.orderNumber,
@@ -115,8 +157,8 @@ export default function OrdersListClient({ initialOrders }: Props) {
       const matchesTo = toTime === null || createdAt <= toTime
 
       return matchesSearch && matchesStatus && matchesMaterial && matchesPostProcessing && matchesFrom && matchesTo
-    })
-  }, [dateFrom, dateTo, materialFilter, orders, postProcessingFilter, search, statusFilter])
+    }))
+  }, [dateFrom, dateTo, materialFilter, orders, postProcessingFilter, search, sortColumn, sortDirection, statusFilter])
 
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
@@ -364,15 +406,15 @@ export default function OrdersListClient({ initialOrders }: Props) {
                   <table className="w-full min-w-[1120px] border-separate border-spacing-0 text-left text-sm">
                     <thead className="sticky top-0 z-20 bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
                       <tr>
-                        <Th>Order#</Th>
-                        <Th>Customer</Th>
+                        <Th sortable sortColumn={sortColumn} sortDirection={sortDirection} column="orderNumber" onSort={toggleSort}>Order#</Th>
+                        <Th sortable sortColumn={sortColumn} sortDirection={sortDirection} column="fullName" onSort={toggleSort}>Customer</Th>
                         <Th>Items</Th>
                         <Th className="hidden lg:table-cell">Config</Th>
-                        <Th>Amount</Th>
+                        <Th sortable sortColumn={sortColumn} sortDirection={sortDirection} column="grandTotal" onSort={toggleSort}>Amount</Th>
                         <Th className="hidden xl:table-cell">Post-process</Th>
-                        <Th>Status</Th>
+                        <Th sortable sortColumn={sortColumn} sortDirection={sortDirection} column="status" onSort={toggleSort}>Status</Th>
                         <Th className="hidden xl:table-cell">Print Time</Th>
-                        <Th>Date</Th>
+                        <Th sortable sortColumn={sortColumn} sortDirection={sortDirection} column="createdAt" onSort={toggleSort}>Date</Th>
                         <Th>Actions</Th>
                       </tr>
                     </thead>
@@ -455,8 +497,31 @@ function DateInput({ label, value, onChange }: { label: string; value: string; o
   )
 }
 
-function Th({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <th className={`border-b border-gray-200 px-4 py-3 font-semibold ${className}`}>{children}</th>
+function Th({ children, className = '', sortable, sortColumn, sortDirection, column, onSort }: {
+  children: ReactNode
+  className?: string
+  sortable?: boolean
+  sortColumn?: string
+  sortDirection?: 'asc' | 'desc'
+  column?: string
+  onSort?: (column: string) => void
+}) {
+  const isActive = sortable && column === sortColumn
+  return (
+    <th
+      className={`border-b border-gray-200 px-4 py-3 font-semibold ${sortable ? 'cursor-pointer select-none hover:text-gray-700' : ''} ${className}`}
+      onClick={sortable && onSort && column ? () => onSort(column) : undefined}
+    >
+      <span className="inline-flex items-center gap-1.5">
+        {children}
+        {sortable && column && (
+          isActive
+            ? (sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)
+            : <ArrowUpDown className="h-3 w-3 opacity-40" />
+        )}
+      </span>
+    </th>
+  )
 }
 
 function OrderRow({
