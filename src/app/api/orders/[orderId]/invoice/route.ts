@@ -223,10 +223,12 @@ async function generatePdf(
       .fill(colors.accentDark)
 
     const logoY = 18
+    const logoUrl = invoiceLogo.startsWith('http') ? invoiceLogo : `${settings.websiteUrl || 'https://flux3d.in'}${invoiceLogo}`
     if (invoiceLogo) {
       try {
-        const logoBuffer = await fetch(invoiceLogo).then((r) => r.arrayBuffer()).then(Buffer.from)
-        doc.image(logoBuffer, contentX, 14, { width: 120 })
+        const res = await fetch(logoUrl)
+        const arrayBuf = await res.arrayBuffer()
+        doc.image(Buffer.from(arrayBuf), contentX, 14, { width: 120 })
       } catch {
         doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(26)
         doc.text(companyName, contentX, logoY)
