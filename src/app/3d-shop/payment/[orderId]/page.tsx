@@ -47,10 +47,9 @@ function getPrimaryImage(order: ShopOrder) {
 }
 
 export default async function RazorpayShopPaymentPage({ params }: PaymentPageProps) {
-  const auth = await getCurrentUserProfile()
-  if (!auth) redirect('/login')
-
   const { orderId } = await params
+  const auth = await getCurrentUserProfile()
+  if (!auth) redirect(`/login?next=/3d-shop/payment/${encodeURIComponent(orderId)}`)
   const order = await getOrder(orderId, auth.profile.id)
   if (!order) notFound()
 
