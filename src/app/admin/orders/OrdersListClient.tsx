@@ -59,6 +59,7 @@ export default function OrdersListClient({ initialOrders }: Props) {
   const [orders, setOrders] = useState(initialOrders)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | OrderStatus>('all')
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all')
   const [materialFilter, setMaterialFilter] = useState('all')
   const [postProcessingFilter, setPostProcessingFilter] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
@@ -153,6 +154,7 @@ export default function OrdersListClient({ initialOrders }: Props) {
       ]
       const matchesSearch = query.length === 0 || searchPool.some((value) => value?.toLowerCase().includes(query))
       const matchesStatus = statusFilter === 'all' || order.status === statusFilter
+      const matchesPayment = paymentStatusFilter === 'all' || (order.paymentStatus ?? 'pending') === paymentStatusFilter
       const matchesMaterial = materialFilter === 'all' || order.items.some((item) => item.material === materialFilter)
       const matchesPostProcessing =
         postProcessingFilter === 'all' ||
@@ -160,9 +162,9 @@ export default function OrdersListClient({ initialOrders }: Props) {
       const matchesFrom = fromTime === null || createdAt >= fromTime
       const matchesTo = toTime === null || createdAt <= toTime
 
-      return matchesSearch && matchesStatus && matchesMaterial && matchesPostProcessing && matchesFrom && matchesTo
+      return matchesSearch && matchesStatus && matchesPayment && matchesMaterial && matchesPostProcessing && matchesFrom && matchesTo
     }))
-  }, [dateFrom, dateTo, materialFilter, orders, postProcessingFilter, search, sortColumn, sortDirection, statusFilter])
+  }, [dateFrom, dateTo, materialFilter, orders, paymentStatusFilter, postProcessingFilter, search, sortColumn, sortDirection, statusFilter])
 
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
@@ -241,6 +243,7 @@ export default function OrdersListClient({ initialOrders }: Props) {
   function clearFilters() {
     setSearch('')
     setStatusFilter('all')
+    setPaymentStatusFilter('all')
     setMaterialFilter('all')
     setPostProcessingFilter('all')
     setDateFrom('')
@@ -378,6 +381,21 @@ export default function OrdersListClient({ initialOrders }: Props) {
                     {STATUS_LABELS[status]}
                   </option>
                 ))}
+              </FilterSelect>
+              <FilterSelect
+                label="Payment"
+                value={paymentStatusFilter}
+                onChange={(value) => {
+                  setPaymentStatusFilter(value)
+                  setPage(1)
+                }}
+              >
+                <option value="all">Payment</option>
+                <option value="paid">Paid</option>
+                <option value="pending">Pending</option>
+                <option value="refunded">Refunded</option>
+                <option value="failed">Failed</option>
+                <option value="cancelled">Cancelled</option>
               </FilterSelect>
               <FilterSelect
                 label="Material"
