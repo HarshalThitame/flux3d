@@ -19,7 +19,9 @@ import {
   Save,
   Tag,
   Ticket,
+  TriangleAlert,
   User,
+  X,
 } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import type { AdminOrder, AdminOrderItem } from '@/lib/admin/types'
@@ -71,6 +73,8 @@ export default function OrderDetailClient({ initialOrder }: Props) {
   const [updatingStatus, setUpdatingStatus] = useState(false)
   const [savingNote, setSavingNote] = useState(false)
   const [toast, setToast] = useState<AdminToastState>(null)
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
   const toastTimer = useRef<number | null>(null)
 
   const itemCount = order.items.length
@@ -106,7 +110,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
     }
   }
 
-  async function updateStatus(status: OrderStatus) {
+  async function updateStatus(status: OrderStatus, reason?: string) {
     if (status === order.status) return
     if (!isSequentialOrderStatusTransition(order.status, status)) {
       showToast({ type: 'error', message: getOrderStatusTransitionError(order.status, status) })
@@ -125,7 +129,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
       const response = await fetch('/api/admin/orders', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ groupId: order.groupId, status }),
+        body: JSON.stringify({ groupId: order.groupId, status, cancellationReason: reason }),
       })
       if (!response.ok) {
         const body = (await response.json().catch(() => ({}))) as { error?: string }
@@ -206,6 +210,11 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                       Cancellation requested
                     </span>
                   )}
+                  {order.status === 'cancelled' && order.notes?.trim() && (
+                    <span className="rounded-full border border-red-100 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
+                      {extractCancelReason(order.notes) || 'Cancelled'}
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm text-gray-600">Submitted {formatDateTime(order.createdAt)}</p>
               </div>
@@ -222,7 +231,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                 </a>
                 <button
                   type="button"
-                  onClick={() => updateStatus('cancelled')}
+                  onClick={() => setShowCancelDialog(true)}
                   disabled={updatingStatus || !canCancelOrderStatus(order.status)}
                   className="inline-flex h-10 items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 text-sm font-medium text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -458,7 +467,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
               )}
 
               <Card title="Admin Notes">
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm leading-6 text-gray-700">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm leading-6 text-gray-700 whitespace-pre-wrap">
                   {order.notes?.trim() ? order.notes : '—'}
                 </div>
                 <textarea
@@ -484,6 +493,65 @@ export default function OrderDetailClient({ initialOrder }: Props) {
       </div>
 
       <AdminToast toast={toast} />
+
+      {showCancelDialog && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+              <div className="flex items-center gap-3">
+                <div className="grid h-9 w-9 place-items-center rounded-full bg-red-100 text-red-600">
+                  <TriangleAlert className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">Cancel Order</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setShowCancelDialog(false); setCancelReason('') }}
+                className="grid h-8 w-8 place-items-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-sm text-gray-600">
+                Are you sure you want to cancel <span className="font-semibold text-gray-900">{order.orderNumber}</span>?
+              </p>
+              <label className="mt-4 block">
+                <span className="text-sm font-medium text-gray-700">Cancellation reason <span className="text-red-500">*</span></span>
+                <textarea
+                  value={cancelReason}
+                  onChange={(event) => setCancelReason(event.target.value)}
+                  placeholder="Why is this order being cancelled?"
+                  rows={3}
+                  className="mt-1.5 w-full resize-none rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                  autoFocus
+                />
+              </label>
+            </div>
+            <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-5 py-4">
+              <button
+                type="button"
+                onClick={() => { setShowCancelDialog(false); setCancelReason('') }}
+                className="inline-flex h-10 items-center rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                Keep Order
+              </button>
+              <button
+                type="button"
+                disabled={!cancelReason.trim() || updatingStatus}
+                onClick={() => {
+                  setShowCancelDialog(false)
+                  updateStatus('cancelled', cancelReason.trim())
+                }}
+                className="inline-flex h-10 items-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {updatingStatus ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+                Cancel Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
@@ -688,6 +756,11 @@ function PricingDivider({ heavy }: { heavy?: boolean }) {
       </td>
     </tr>
   )
+}
+
+function extractCancelReason(notes: string) {
+  const match = notes.match(/^\[Cancellation:\s*(.+?)\]/)
+  return match ? match[1] : null
 }
 
 function extractQuoteId(order: AdminOrder) {

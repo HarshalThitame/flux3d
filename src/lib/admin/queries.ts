@@ -739,7 +739,7 @@ export async function getAdminOrdersData() {
   return groupAdminOrders((data ?? []) as OrderRow[])
 }
 
-export async function updateAdminOrderStatus(groupId: string, status: AdminOrder['status']) {
+export async function updateAdminOrderStatus(groupId: string, status: AdminOrder['status'], cancellationReason?: string) {
   const supabase = createAdminSupabaseClient()
   const { data: currentRows, error: currentError } = await supabase
     .from('orders')
@@ -768,13 +768,22 @@ export async function updateAdminOrderStatus(groupId: string, status: AdminOrder
   const updatedAt = new Date().toISOString()
   const statusTimestamps = buildNextStatusTimestamps(rows, status, updatedAt)
 
+  const updatePayload: Record<string, unknown> = {
+    status,
+    status_timestamps: statusTimestamps,
+    updated_at: updatedAt,
+  }
+
+  // Store cancellation reason in notes if cancelling
+  if (status === 'cancelled' && cancellationReason) {
+    const existingNotes = rows[0]?.notes?.trim() || ''
+    const cancelNote = `[Cancellation: ${cancellationReason}]`
+    updatePayload.notes = existingNotes ? `${cancelNote}\n${existingNotes}` : cancelNote
+  }
+
   const { error: updateError } = await supabase
     .from('orders')
-    .update({
-      status,
-      status_timestamps: statusTimestamps,
-      updated_at: updatedAt,
-    })
+    .update(updatePayload)
     .or(`group_id.eq.${groupId},id.eq.${groupId}`)
 
   if (updateError) throw new Error(updateError.message)
