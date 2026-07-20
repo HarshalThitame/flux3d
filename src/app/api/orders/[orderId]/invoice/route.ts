@@ -157,6 +157,7 @@ async function generatePdf(
     ? 0
     : items.reduce((sum, item) => sum + Number(item.discount ?? 0), 0)
   const amountWords = numberToWords(invoiceTotal)
+  const currencySym = settings.currencySymbol || '₹'
   const [regularFont, boldFont] = await Promise.all([
     readFile(INVOICE_FONT_REGULAR_PATH),
     readFile(INVOICE_FONT_BOLD_PATH),
@@ -228,6 +229,11 @@ async function generatePdf(
     doc.fillColor(colors.contact).font(INVOICE_FONT_REGULAR).fontSize(8)
     doc.text(`${websiteValue} | ${contactEmail || settings.businessName?.toLowerCase() || ''}`.trim(), contentX, 76)
     doc.text(`${settings.primaryPhone || ''} | ${settings.city || ''}`.trim(), contentX, 88)
+    const ids = [settings.gstNumber ? `GST: ${settings.gstNumber}` : '', settings.panNumber ? `PAN: ${settings.panNumber}` : '', settings.msmeNumber ? `MSME: ${settings.msmeNumber}` : ''].filter(Boolean).join(' | ')
+    if (ids) {
+      doc.fillColor(colors.contact).font(INVOICE_FONT_REGULAR).fontSize(7)
+      doc.text(ids, contentX, 100)
+    }
 
     const invoiceRight = pageW - contentRight
     doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(36)
@@ -350,12 +356,12 @@ async function generatePdf(
     doc.rect(contentX, rowY, contentW, rowH).fill(fill)
     doc.restore()
     const fileName = item.file_url ? (item.file_url.split('/').pop() ?? 'File') : 'File'
-    const displayAmount = `₹${Number(item.total_price).toLocaleString('en-IN')}`
+    const displayAmount = `${currencySym}${Number(item.total_price).toLocaleString('en-IN')}`
     const values = [
       String(index + 1),
       fileName,
       String(item.quantity ?? 1),
-      `₹${Number(item.price_per_unit ?? item.total_price / Math.max(1, item.quantity ?? 1)).toLocaleString('en-IN')}`,
+      `${currencySym}${Number(item.price_per_unit ?? item.total_price / Math.max(1, item.quantity ?? 1)).toLocaleString('en-IN')}`,
       displayAmount,
     ]
 
@@ -411,20 +417,24 @@ async function generatePdf(
     doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(10)
     doc.text('TOTAL', blockX + 12, bandY + 11)
     doc.fillColor(colors.accent).font(INVOICE_FONT_BOLD).fontSize(13)
-    doc.text(`₹${invoiceTotal.toLocaleString('en-IN')}`, blockX + 12, bandY + 8, { width: blockW - 24, align: 'right' })
+    doc.text(`${currencySym}${invoiceTotal.toLocaleString('en-IN')}`, blockX + 12, bandY + 8, { width: blockW - 24, align: 'right' })
     doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(7.5)
-    doc.text(`₹${invoiceTotal.toLocaleString('en-IN')} (${amountWords})`, blockX, bandY + 42, { width: blockW, align: 'right' })
+    doc.text(`${currencySym}${invoiceTotal.toLocaleString('en-IN')} (${amountWords})`, blockX, bandY + 42, { width: blockW, align: 'right' })
     return bandY + 58
   }
 
   function drawNotesAndTerms(blockY: number) {
     const boxX = contentX
     const boxW = contentW
+    const bankInfo = settings.bankAccountName && settings.bankName
+      ? `Bank: ${settings.bankName} | A/C: ${settings.accountNumber || '—'} | IFSC: ${settings.ifscCode || '—'}${settings.upiId ? ` | UPI: ${settings.upiId}` : ''}`
+      : ''
     const bullets = [
       'This is a computer-generated invoice and does not require a physical signature.',
       'Please review the order details carefully before approval or dispatch.',
       'Minor variations in finish or color may occur due to the 3D printing process.',
-      'Once produced or dispatched, orders are subject to the applicable service terms.',
+      ...(settings.paymentTerms ? [settings.paymentTerms] : []),
+      ...(bankInfo ? [bankInfo] : []),
     ]
     const leftHeight = Math.max(90, bullets.length * 16 + 26)
     drawCard(boxX, blockY, boxW, leftHeight, '#FFFFFF', colors.border)
@@ -575,6 +585,8 @@ export async function GET(
 
     const row = order as InvoiceRow
 
+    const settings = await getSettings()
+
     const allowedPaymentStatuses = new Set(['captured', 'paid', 'succeeded'])
     const isPaid = allowedPaymentStatuses.has(row.payment_status ?? '')
 
@@ -608,8 +620,9 @@ export async function GET(
         .select('id', { count: 'exact', head: true })
         .gte('created_at', `${year}-01-01T00:00:00.000Z`)
         .lt('created_at', `${year + 1}-01-01T00:00:00.000Z`)
-      const serial = (count ?? 0) + 1
-      invoiceNumber = `INV-${year}-${String(serial).padStart(5, '0')}`
+      const serial = (settings.invoiceStartNumber || 1001) + (count ?? 0)
+      const prefix = settings.invoicePrefix || 'INV-'
+      invoiceNumber = `${prefix}${year}-${String(serial).padStart(5, '0')}`
       await orderSupabase
         .from('orders')
         .update({
@@ -635,7 +648,6 @@ export async function GET(
       }
     }
 
-    const settings = await getSettings()
     let pdf
     try {
       pdf = await generatePdf(
