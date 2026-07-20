@@ -365,7 +365,7 @@ export default function NavbarClient({
             <>
               <div>
                 <Link
-                  href="/login"
+                  href={`/login?next=${encodeURIComponent(pathname ?? '/')}`}
                   prefetch={false}
                   className="navbar-action-button flex min-h-[42px] items-center whitespace-nowrap rounded-full border border-white/80 bg-white/75 px-4 text-sm font-semibold text-[var(--text-secondary)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white hover:text-[var(--text-primary)]"
                 >
@@ -374,7 +374,7 @@ export default function NavbarClient({
               </div>
               <div>
                 <Link
-                  href="/signup"
+                  href={`/signup?next=${encodeURIComponent(pathname ?? '/')}`}
                   prefetch={false}
                   className="navbar-signup-button btn-primary flex min-h-[42px] items-center whitespace-nowrap rounded-full px-[18px]"
                 >
@@ -515,7 +515,7 @@ export default function NavbarClient({
                   ) : (
                     <>
                       <Link
-                        href="/login"
+                        href={`/login?next=${encodeURIComponent(pathname ?? '/')}`}
                         prefetch={false}
                         onClick={() => setIsOpen(false)}
                         className="navbar-mobile-action-light block w-full rounded-xl border border-[var(--border-light)] bg-white py-3.5 text-center text-base font-medium text-[var(--text-secondary)]"
@@ -523,7 +523,7 @@ export default function NavbarClient({
                         Log In
                       </Link>
                       <Link
-                        href="/signup"
+                        href={`/signup?next=${encodeURIComponent(pathname ?? '/')}`}
                         prefetch={false}
                         onClick={() => setIsOpen(false)}
                         className="btn-primary block w-full py-3.5 text-center text-base"

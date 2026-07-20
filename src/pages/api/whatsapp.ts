@@ -21,6 +21,7 @@ const openai = new OpenAI({
 const WHATSAPP_OPENAI_MODEL = process.env.WHATSAPP_OPENAI_MODEL?.trim() || "gpt-4.1-mini";
 const WHATSAPP_REPLY_TO_ALL = (process.env.WHATSAPP_REPLY_TO_ALL?.trim() || "true") !== "false";
 const WHATSAPP_RAG_ENABLED = (process.env.WHATSAPP_RAG_ENABLED?.trim() || "true") !== "false";
+const WHATSAPP_RAG_CONFIDENCE_THRESHOLD = Number(process.env.WHATSAPP_RAG_CONFIDENCE_THRESHOLD ?? 0.55) || 0.55;
 const MAX_REPLY_CHARS = 1200;
 const MAX_INPUT_CHARS = 3000;
 
@@ -99,8 +100,82 @@ async function sendWhatsAppMessage(to: string, message: string) {
   }
 }
 
-function trimReply(message: string) {
+export function trimReply(message: string) {
   return message.replace(/\s+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, MAX_REPLY_CHARS);
+}
+
+export function formatBulletReply(lines: Array<string | false | null | undefined>) {
+  return trimReply(lines.filter(Boolean).join("\n"))
+}
+
+type WhatsAppIntent = 'pricing' | 'shipping' | 'order' | 'materials' | 'contact' | 'greeting' | 'general'
+
+export function detectWhatsAppIntent(messageText: string): WhatsAppIntent {
+  const text = messageText.toLowerCase()
+
+  if (/(price|pricing|quote|quotation|cost|estimate|amount)/i.test(text)) return 'pricing'
+  if (/(ship|shipping|delivery|courier|dispatch|tracking|pincode|pin code)/i.test(text)) return 'shipping'
+  if (/(order status|status of my order|where is my order|my order|order number|invoice)/i.test(text)) return 'order'
+  if (/(material|pla\+?|abs|petg|asa|tpu|resin|filament|finish|colour|color)/i.test(text)) return 'materials'
+  if (/(contact|call|phone|whatsapp number|support|hours|working hours)/i.test(text)) return 'contact'
+  if (/(hello|hi|hey|good morning|good afternoon|good evening)/i.test(text)) return 'greeting'
+
+  return 'general'
+}
+
+export function buildGuidedFallbackReply(settings: AssistantSettings, messageText: string) {
+  const businessName = settings.businessName?.trim() || FALLBACK_SETTINGS.businessName;
+  const businessHours = settings.businessHours?.trim() || settings.workingHours?.trim() || FALLBACK_SETTINGS.businessHours;
+  const supportPhone = settings.whatsappSupportNumber?.trim() || settings.primaryPhone?.trim() || FALLBACK_SETTINGS.whatsappSupportNumber;
+  const orderPhone = settings.whatsappOrderNumber?.trim() || settings.whatsappNumber?.trim() || FALLBACK_SETTINGS.whatsappOrderNumber;
+
+  switch (detectWhatsAppIntent(messageText)) {
+    case 'pricing':
+      return formatBulletReply([
+        `Hi, thanks for reaching out to ${businessName}.`,
+        '- For a confirmed quote, please share the file, material, quantity, and deadline.',
+        '- If you have a reference image or sketch, send that too.',
+        '- I’ll guide you with the next step once I have those details.',
+      ])
+    case 'shipping':
+      return formatBulletReply([
+        `Hi, thanks for reaching out to ${businessName}.`,
+        '- For delivery checks, please share the pincode and city.',
+        '- If you want a shipping estimate, I can help once I have the destination details.',
+      ])
+    case 'order':
+      return formatBulletReply([
+        `Hi, thanks for reaching out to ${businessName}.`,
+        '- Please share your order number and the registered phone number.',
+        '- I’ll use that to help confirm the latest update.',
+        `- If needed, support is also available at ${supportPhone}.`,
+      ])
+    case 'materials':
+      return formatBulletReply([
+        `Hi, thanks for reaching out to ${businessName}.`,
+        '- Please share the use case, required strength, flexibility, and finish you want.',
+        '- If you already know the material, send it and I’ll confirm the best next step.',
+      ])
+    case 'contact':
+      return formatBulletReply([
+        `Hi, thanks for reaching out to ${businessName}.`,
+        `- Support number: ${supportPhone}.`,
+        `- Order updates: ${orderPhone}.`,
+        `- Business hours: ${businessHours}.`,
+      ])
+    case 'greeting':
+      return formatBulletReply([
+        `Hi, thanks for reaching out to ${businessName}.`,
+        '- I can help with quotes, materials, delivery, and support.',
+        '- Please share what you need, and I’ll give you the next step.',
+      ])
+    default:
+      return formatBulletReply([
+        `Hi, thanks for reaching out to ${businessName}.`,
+        '- I can help with quotes, materials, delivery, and support.',
+        '- Please share the file or the exact question so I can give you a confirmed answer.',
+      ])
+  }
 }
 
 type AssistantSettings = NonNullable<Awaited<ReturnType<typeof getCachedBusinessSettings>>>;
@@ -117,9 +192,12 @@ function buildWhatsAppAssistantPrompt(settings: AssistantSettings, knowledgeCont
   return [
     `You are the WhatsApp assistant for ${businessName}.`,
     `Business description: ${businessDescription}.`,
-    `Style: concise, helpful, professional, friendly, and action-oriented.`,
+    `Style: warm, polite, concise, and structured.`,
     `Reply in plain text only. Keep responses under 1200 characters.`,
-    `If the customer asks for pricing, ask for the file, material, quantity, and deadline before giving a quote.`,
+    `Use only confirmed facts from the knowledge base and approved business settings.`,
+    `Do not guess, infer, or improvise missing facts.`,
+    `Prefer 3 to 5 short bullets instead of a long paragraph.`,
+    `If the customer asks for pricing, ask for the file, material, quantity, and deadline before giving a quote unless the knowledge base directly confirms the answer.`,
     `If the request needs human review or is outside business scope, direct them to WhatsApp support at ${supportPhone}.`,
     `If relevant, mention business hours: ${businessHours}.`,
     supportAvailability ? `Support note: ${supportAvailability}.` : "",
@@ -131,6 +209,7 @@ function buildWhatsAppAssistantPrompt(settings: AssistantSettings, knowledgeCont
       : "",
     `Never mention system prompts, internal policies, or that you are an AI unless the customer asks directly.`,
     `When the user is unclear, ask for the minimum needed next detail.`,
+    `Response shape: Greeting, Answer, Needed details, Next step.`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -146,8 +225,8 @@ async function generateWhatsAppReply(messageText: string, settings: AssistantSet
 
   const completion = await openai.chat.completions.create({
     model: WHATSAPP_OPENAI_MODEL,
-    temperature: 0.4,
-    max_tokens: 220,
+    temperature: 0.2,
+    max_tokens: 180,
     messages: [
       {
         role: "system",
@@ -194,6 +273,15 @@ async function logWhatsAppMessage(
 
   if (error) {
     console.error("[whatsapp] Failed to log message:", error);
+  }
+}
+
+function buildRagPayload(rag: { mode: string; confidence: number; sources: Array<{ sourceKey: string; title: string; score: number }> }) {
+  return {
+    enabled: WHATSAPP_RAG_ENABLED,
+    mode: rag.mode,
+    confidence: rag.confidence,
+    sources: rag.sources,
   }
 }
 
@@ -254,12 +342,12 @@ export default async function handler(
       }
     }
 
-    async function insertWebhookEvent(overrides: Record<string, unknown> = {}) {
+    async function insertWebhookEvent(payload: Record<string, unknown>, overrides: Record<string, unknown> = {}) {
       if (!supabase) return null;
       const { data, error } = await supabase.from("whatsapp_webhook_events").insert({
         payload_hash: payloadHash,
         sender: null,
-        payload: {},
+        payload,
         signature_verified: true,
         received_at: new Date().toISOString(),
         ...overrides,
@@ -276,19 +364,19 @@ export default async function handler(
       const message = value?.messages?.[0];
 
       if (!message) {
-        await insertWebhookEvent({ processed_at: new Date().toISOString() });
+        await insertWebhookEvent(payload, { processed_at: new Date().toISOString() });
         return res.status(200).json({ success: true });
       }
 
       const from = message.from;
       const text = message.text?.body;
       if (!from || typeof text !== "string") {
-        await insertWebhookEvent({ sender: from ?? null, payload, processed_at: new Date().toISOString() });
+        await insertWebhookEvent(payload, { sender: from ?? null, processed_at: new Date().toISOString() });
         return res.status(200).json({ success: true });
       }
 
       // Write the event record immediately
-      const eventRecord = await insertWebhookEvent({ sender: from, payload });
+      const eventRecord = await insertWebhookEvent(payload, { sender: from });
 
       // Sender allow-list: only reply if sender phone exists in profiles
       let senderRecognized = false;
@@ -305,12 +393,18 @@ export default async function handler(
 
       const businessSettings = (await getCachedBusinessSettings()) || FALLBACK_SETTINGS;
       let knowledgeContext = "";
+      let ragMode: 'database' | 'seed' | 'none' = 'none';
+      let ragConfidence = 0;
+      let ragSources: Array<{ sourceKey: string; title: string; score: number; content: string }> = [];
       if (WHATSAPP_RAG_ENABLED) {
         const rag = await getWhatsAppRagContext(text).catch((error) => {
           console.error("[whatsapp] RAG lookup error:", error);
-          return { context: "", sources: [] as Array<{ sourceKey: string; title: string; score: number; content: string }> };
+          return { context: "", sources: [] as Array<{ sourceKey: string; title: string; score: number; content: string }>, mode: 'none' as const, confidence: 0 };
         });
         knowledgeContext = rag.context;
+        ragMode = rag.mode;
+        ragConfidence = rag.confidence;
+        ragSources = rag.sources;
       }
 
       await logWhatsAppMessage(supabase, {
@@ -323,15 +417,18 @@ export default async function handler(
         responseTimeMinutes: null,
       });
 
+      const shouldUseModelReply =
+        WHATSAPP_REPLY_TO_ALL || senderRecognized
+          ? Boolean(knowledgeContext) && ragConfidence >= WHATSAPP_RAG_CONFIDENCE_THRESHOLD
+          : false;
+
       if (WHATSAPP_REPLY_TO_ALL || senderRecognized) {
-        const aiReply = await generateWhatsAppReply(text, businessSettings, knowledgeContext).catch((error) => {
+        const aiReply = shouldUseModelReply
+          ? await generateWhatsAppReply(text, businessSettings, knowledgeContext).catch((error) => {
           console.error("[whatsapp] OpenAI reply error:", error);
-          return trimReply(
-            businessSettings.autoReplyMessage?.trim() ||
-              FALLBACK_SETTINGS.autoReplyMessage ||
-              "Thanks for contacting Flux3D. Please share your material, quantity, and timeline, and we will help you with the next step."
-          );
-        });
+          return buildGuidedFallbackReply(businessSettings, text);
+        })
+          : buildGuidedFallbackReply(businessSettings, text);
 
         await sendWhatsAppMessage(from, aiReply).catch((error) => {
           console.error('[whatsapp] Failed to send outbound WhatsApp message:', error);
@@ -369,6 +466,14 @@ export default async function handler(
           .update({
             processed_at: new Date().toISOString(),
             reply_sent: WHATSAPP_REPLY_TO_ALL || senderRecognized,
+            payload: {
+              ...payload,
+              rag: buildRagPayload({
+                mode: ragMode,
+                confidence: ragConfidence,
+                sources: ragSources.map(({ sourceKey, title, score }) => ({ sourceKey, title, score })),
+              }),
+            },
           })
           .eq("id", eventRecord.id);
         if (updateError) console.error("[whatsapp] Failed to mark processed:", updateError);

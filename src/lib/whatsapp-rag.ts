@@ -10,6 +10,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+let seedCorpusPromise: Promise<WhatsAppKnowledgeChunk[]> | null = null
+
 export type WhatsAppKnowledgeChunk = {
   id: string
   sourceKey: string
@@ -44,6 +46,19 @@ type KnowledgeRow = {
   embedding: string | number[] | null
 }
 
+type KnowledgeMatchRow = {
+  id: string
+  source_key: string
+  title: string
+  content: string
+  tags: string[] | null
+  priority: number | null
+  active: boolean | null
+  created_at: string | null
+  updated_at: string | null
+  similarity: number | string | null
+}
+
 export type WhatsAppKnowledgeChunkRecord = {
   id: string
   sourceKey: string
@@ -65,6 +80,8 @@ type RagContextResult = {
     score: number
     content: string
   }>
+  mode: 'database' | 'seed' | 'none'
+  confidence: number
 }
 
 function getServiceClient() {
@@ -125,6 +142,21 @@ function toKnowledgeChunk(row: KnowledgeRow): WhatsAppKnowledgeChunk {
   }
 }
 
+function toMatchSource(row: KnowledgeMatchRow) {
+  return {
+    id: row.id,
+    sourceKey: row.source_key,
+    title: row.title,
+    content: row.content,
+    tags: row.tags ?? [],
+    priority: Number(row.priority ?? 0),
+    active: Boolean(row.active ?? true),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    score: Number(row.similarity ?? 0),
+  }
+}
+
 async function generateEmbeddings(texts: string[]) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('Missing OpenAI API key.')
@@ -141,6 +173,41 @@ async function generateEmbeddings(texts: string[]) {
 export async function generateWhatsAppEmbedding(text: string) {
   const [embedding] = await generateEmbeddings([text])
   return embedding ?? []
+}
+
+function scoreCorpus(
+  corpus: WhatsAppKnowledgeChunk[],
+  queryEmbedding: number[]
+): Array<{
+  chunk: WhatsAppKnowledgeChunk
+  score: number
+}> {
+  return corpus
+    .filter((chunk) => Array.isArray(chunk.embedding) && chunk.embedding.length > 0)
+    .map((chunk) => ({
+      chunk,
+      score: cosineSimilarity(queryEmbedding, chunk.embedding!) + chunk.priority * 0.01,
+    }))
+    .filter(({ score }) => score >= RAG_MIN_SCORE)
+    .sort((left, right) => right.score - left.score)
+    .slice(0, RAG_TOP_K)
+}
+
+async function searchDatabaseKnowledge(queryEmbedding: number[]) {
+  const supabase = getServiceClient()
+  if (!supabase) return [] as Array<ReturnType<typeof toMatchSource>>
+
+  const { data, error } = await supabase.rpc('match_whatsapp_knowledge_chunks', {
+    query_embedding: JSON.stringify(queryEmbedding),
+    match_threshold: RAG_MIN_SCORE,
+    match_count: RAG_TOP_K,
+  })
+
+  if (error || !Array.isArray(data)) {
+    return [] as Array<ReturnType<typeof toMatchSource>>
+  }
+
+  return data.map((row) => toMatchSource(row as KnowledgeMatchRow))
 }
 
 export async function listWhatsAppKnowledgeChunks(): Promise<WhatsAppKnowledgeChunkRecord[]> {
@@ -162,78 +229,94 @@ export async function listWhatsAppKnowledgeChunks(): Promise<WhatsAppKnowledgeCh
   return data.map((row) => toKnowledgeChunk(row as KnowledgeRow))
 }
 
-async function loadKnowledgeCorpus(): Promise<WhatsAppKnowledgeChunk[]> {
-  const supabaseChunks = await listWhatsAppKnowledgeChunks()
-  const activeChunks = supabaseChunks.filter((chunk) => chunk.active)
-
-  if (activeChunks.length > 0) {
-    return activeChunks.map((chunk) => ({
-        id: chunk.id,
-        sourceKey: chunk.sourceKey,
-        title: chunk.title,
-        content: chunk.content,
-        tags: chunk.tags,
-        priority: chunk.priority,
-        active: chunk.active,
-        createdAt: chunk.createdAt,
-        updatedAt: chunk.updatedAt,
-        embedding: chunk.embedding ?? [],
-      }))
+async function loadSeedCorpus(): Promise<WhatsAppKnowledgeChunk[]> {
+  if (seedCorpusPromise) {
+    return seedCorpusPromise
   }
 
-  const localDocs = knowledgeSeed as WhatsAppKnowledgeSeed[]
-  const embeddings = await generateEmbeddings(localDocs.map((doc) => doc.content))
-  return localDocs.map((doc, index) => ({
-    id: doc.sourceKey,
-    ...doc,
-    active: true,
-    createdAt: null,
-    updatedAt: null,
-    embedding: embeddings[index] ?? [],
-  }))
+  seedCorpusPromise = (async () => {
+    const localDocs = knowledgeSeed as WhatsAppKnowledgeSeed[]
+    const embeddings = await generateEmbeddings(localDocs.map((doc) => doc.content))
+
+    return localDocs.map((doc, index) => ({
+      id: doc.sourceKey,
+      ...doc,
+      active: true,
+      createdAt: null,
+      updatedAt: null,
+      embedding: embeddings[index] ?? [],
+    }))
+  })()
+
+  return seedCorpusPromise
 }
 
-export async function getWhatsAppRagContext(query: string): Promise<RagContextResult> {
-  if (!query.trim() || !process.env.OPENAI_API_KEY) {
-    return { context: '', sources: [] }
-  }
-
-  const corpus = await loadKnowledgeCorpus()
-  if (corpus.length === 0) {
-    return { context: '', sources: [] }
-  }
-
-  const [queryEmbedding] = await generateEmbeddings([query])
-  if (!queryEmbedding) {
-    return { context: '', sources: [] }
-  }
-
-  const scored = corpus
-    .filter((chunk) => Array.isArray(chunk.embedding) && chunk.embedding.length > 0)
-    .map((chunk) => ({
-      chunk,
-      score: cosineSimilarity(queryEmbedding, chunk.embedding!) + chunk.priority * 0.01,
-    }))
-    .filter(({ score }) => score >= RAG_MIN_SCORE)
-    .sort((left, right) => right.score - left.score)
-    .slice(0, RAG_TOP_K)
-
-  const sources = scored.map(({ chunk, score }) => ({
-    sourceKey: chunk.sourceKey,
-    title: chunk.title,
-    score: Number(score.toFixed(3)),
-    content: chunk.content,
-  }))
-
+function buildRagContextResult(
+  sources: Array<{
+    sourceKey: string
+    title: string
+    score: number
+    content: string
+  }>,
+  mode: 'database' | 'seed'
+): RagContextResult {
   if (sources.length === 0) {
-    return { context: '', sources: [] }
+    return { context: '', sources: [], mode: 'none', confidence: 0 }
   }
 
   const context = sources
     .map((source, index) => `${index + 1}. ${source.title}: ${source.content}`)
     .join('\n')
 
-  return { context, sources }
+  return {
+    context,
+    sources,
+    mode,
+    confidence: Number(sources[0]?.score.toFixed(3) ?? 0),
+  }
+}
+
+export async function getWhatsAppRagContext(query: string): Promise<RagContextResult> {
+  if (!query.trim() || !process.env.OPENAI_API_KEY) {
+    return { context: '', sources: [], mode: 'none', confidence: 0 }
+  }
+
+  const [queryEmbedding] = await generateEmbeddings([query])
+  if (!queryEmbedding) {
+    return { context: '', sources: [], mode: 'none', confidence: 0 }
+  }
+
+  const databaseChunks = await listWhatsAppKnowledgeChunks()
+  const activeDatabaseChunks = databaseChunks.filter((chunk) => chunk.active)
+
+  if (activeDatabaseChunks.length > 0) {
+    const rpcMatches = await searchDatabaseKnowledge(queryEmbedding)
+    const matchedSources = rpcMatches.length > 0
+      ? rpcMatches.map((match) => ({
+          sourceKey: match.sourceKey,
+          title: match.title,
+          score: Number(match.score.toFixed(3)),
+          content: match.content,
+        }))
+      : scoreCorpus(activeDatabaseChunks, queryEmbedding).map(({ chunk, score }) => ({
+          sourceKey: chunk.sourceKey,
+          title: chunk.title,
+          score: Number(score.toFixed(3)),
+          content: chunk.content,
+        }))
+
+    return buildRagContextResult(matchedSources, 'database')
+  }
+
+  const seedCorpus = await loadSeedCorpus()
+  const scored = scoreCorpus(seedCorpus, queryEmbedding).map(({ chunk, score }) => ({
+    sourceKey: chunk.sourceKey,
+    title: chunk.title,
+    score: Number(score.toFixed(3)),
+    content: chunk.content,
+  }))
+
+  return buildRagContextResult(scored, 'seed')
 }
 
 export async function syncWhatsAppKnowledgeChunks() {

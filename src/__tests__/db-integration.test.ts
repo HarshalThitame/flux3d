@@ -136,6 +136,51 @@ describe('order creation flow', () => {
   })
 })
 
+describe('whatsapp rag schema', () => {
+  it('refreshes updated_at when a knowledge chunk is edited', async () => {
+    const db = getDb()
+    const sourceKey = `integration-${Date.now()}`
+
+    const { data: inserted, error: insertError } = await db
+      .from('whatsapp_knowledge_chunks')
+      .insert({
+        source_key: sourceKey,
+        title: 'Integration test chunk',
+        content: 'Initial content for update timestamp verification.',
+        tags: ['integration'],
+        priority: 0,
+        active: true,
+      })
+      .select('id, updated_at')
+      .single()
+
+    expect(insertError).toBeNull()
+    if (!inserted) throw new Error('Inserted whatsapp knowledge chunk not found')
+
+    const firstUpdatedAt = new Date(inserted.updated_at ?? '').getTime()
+    expect(Number.isFinite(firstUpdatedAt)).toBe(true)
+
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    const { data: updated, error: updateError } = await db
+      .from('whatsapp_knowledge_chunks')
+      .update({
+        content: 'Updated content for timestamp verification.',
+      })
+      .eq('id', inserted.id)
+      .select('updated_at')
+      .single()
+
+    expect(updateError).toBeNull()
+    if (!updated) throw new Error('Updated whatsapp knowledge chunk not found')
+
+    const secondUpdatedAt = new Date(updated.updated_at ?? '').getTime()
+    expect(secondUpdatedAt).toBeGreaterThan(firstUpdatedAt)
+
+    await db.from('whatsapp_knowledge_chunks').delete().eq('id', inserted.id)
+  })
+})
+
 describe('fulfilment status', () => {
   it('defaults to pending for new orders', async () => {
     const db = getDb()
