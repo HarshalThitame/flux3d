@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ShoppingBag, Star } from 'lucide-react'
@@ -24,7 +25,10 @@ export default function ProductCard({
 }) {
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [added, setAdded] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const addItem = useShopCartStore((state) => state.addItem)
+
+  useEffect(() => { setMounted(true) }, [])
   const images = getShopProductImages(product)
   const badge = getShopProductBadge(product)
   const directSku = product.variant_options.length === 0 ? product.skus.find((sku) => sku.is_available !== false) ?? null : null
@@ -112,7 +116,10 @@ export default function ProductCard({
           </button>
         </div>
       </article>
-      <QuickAddModal product={product} open={quickAddOpen} onOpenChangeAction={setQuickAddOpen} />
+      {mounted && createPortal(
+        <QuickAddModal product={product} open={quickAddOpen} onOpenChangeAction={setQuickAddOpen} />,
+        document.body
+      )}
     </>
   )
 }
