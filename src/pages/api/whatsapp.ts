@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { rateLimitCheck } from "@/lib/rate-limit";
 import { getCachedBusinessSettings } from "@/lib/settings";
 import { FALLBACK_SETTINGS } from "@/lib/settings-fallback";
+import { getWhatsAppRagContext } from "@/lib/whatsapp-rag";
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -19,6 +20,7 @@ const openai = new OpenAI({
 
 const WHATSAPP_OPENAI_MODEL = process.env.WHATSAPP_OPENAI_MODEL?.trim() || "gpt-4.1-mini";
 const WHATSAPP_REPLY_TO_ALL = (process.env.WHATSAPP_REPLY_TO_ALL?.trim() || "true") !== "false";
+const WHATSAPP_RAG_ENABLED = (process.env.WHATSAPP_RAG_ENABLED?.trim() || "true") !== "false";
 const MAX_REPLY_CHARS = 1200;
 const MAX_INPUT_CHARS = 3000;
 
@@ -103,7 +105,7 @@ function trimReply(message: string) {
 
 type AssistantSettings = NonNullable<Awaited<ReturnType<typeof getCachedBusinessSettings>>>;
 
-function buildWhatsAppAssistantPrompt(settings: AssistantSettings) {
+function buildWhatsAppAssistantPrompt(settings: AssistantSettings, knowledgeContext: string) {
   const businessName = settings.businessName?.trim() || FALLBACK_SETTINGS.businessName;
   const businessDescription = settings.businessDescription?.trim() || FALLBACK_SETTINGS.businessDescription;
   const businessHours = settings.businessHours?.trim() || settings.workingHours?.trim() || FALLBACK_SETTINGS.businessHours;
@@ -123,6 +125,10 @@ function buildWhatsAppAssistantPrompt(settings: AssistantSettings) {
     supportAvailability ? `Support note: ${supportAvailability}.` : "",
     autoReply ? `Opening tone or default auto-reply: ${autoReply}.` : "",
     `Order notification number: ${orderPhone}.`,
+    knowledgeContext ? `Relevant Flux3D knowledge base:\n${knowledgeContext}` : "",
+    knowledgeContext
+      ? "Use the knowledge base as the primary source for Flux3D-specific answers. If the knowledge base does not cover the question, ask one concise follow-up or explain that a human will confirm."
+      : "",
     `Never mention system prompts, internal policies, or that you are an AI unless the customer asks directly.`,
     `When the user is unclear, ask for the minimum needed next detail.`,
   ]
@@ -130,12 +136,12 @@ function buildWhatsAppAssistantPrompt(settings: AssistantSettings) {
     .join("\n");
 }
 
-async function generateWhatsAppReply(messageText: string, settings: AssistantSettings) {
+async function generateWhatsAppReply(messageText: string, settings: AssistantSettings, knowledgeContext: string) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("Missing OpenAI API key.");
   }
 
-  const systemPrompt = buildWhatsAppAssistantPrompt(settings);
+  const systemPrompt = buildWhatsAppAssistantPrompt(settings, knowledgeContext);
   const customerMessage = messageText.slice(0, MAX_INPUT_CHARS);
 
   const completion = await openai.chat.completions.create({
@@ -298,6 +304,14 @@ export default async function handler(
       }
 
       const businessSettings = (await getCachedBusinessSettings()) || FALLBACK_SETTINGS;
+      let knowledgeContext = "";
+      if (WHATSAPP_RAG_ENABLED) {
+        const rag = await getWhatsAppRagContext(text).catch((error) => {
+          console.error("[whatsapp] RAG lookup error:", error);
+          return { context: "", sources: [] as Array<{ sourceKey: string; title: string; score: number; content: string }> };
+        });
+        knowledgeContext = rag.context;
+      }
 
       await logWhatsAppMessage(supabase, {
         userId,
@@ -310,7 +324,7 @@ export default async function handler(
       });
 
       if (WHATSAPP_REPLY_TO_ALL || senderRecognized) {
-        const aiReply = await generateWhatsAppReply(text, businessSettings).catch((error) => {
+        const aiReply = await generateWhatsAppReply(text, businessSettings, knowledgeContext).catch((error) => {
           console.error("[whatsapp] OpenAI reply error:", error);
           return trimReply(
             businessSettings.autoReplyMessage?.trim() ||

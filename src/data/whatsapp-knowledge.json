@@ -1,0 +1,128 @@
+[
+  {
+    "sourceKey": "overview",
+    "title": "Flux3D overview",
+    "content": "Flux3D is a Pan India 3D printing and rapid prototyping service. It helps brands, engineers, creators, and startups turn ideas into high-quality functional parts and finished products. The business provides custom 3D printing, material guidance, production support, and end-to-end assistance for prototypes, small batches, and manufacturing needs.",
+    "tags": ["overview", "services", "pan india"],
+    "priority": 10
+  },
+  {
+    "sourceKey": "quote-process",
+    "title": "How to request a quote",
+    "content": "To request a quote, customers should share the design file or product requirement through the website or contact page. Flux3D reviews the material, colour, quantity, finish, and delivery needs before confirming the price. If the customer needs design review before quoting, they can message Flux3D first and share reference images or sketches.",
+    "tags": ["quote", "pricing", "process"],
+    "priority": 10
+  },
+  {
+    "sourceKey": "files",
+    "title": "Supported file types",
+    "content": "Preferred file formats include STL, 3MF, STEP, IGES, and OBJ. Flux3D can also review sketches, photos, and reference images when the customer needs help turning an idea into a printable model.",
+    "tags": ["files", "formats", "upload"],
+    "priority": 8
+  },
+  {
+    "sourceKey": "pricing",
+    "title": "How pricing works",
+    "content": "Pricing depends on material, weight, print time, finishing, complexity, and delivery requirements. Bulk and repeat orders can be quoted separately. Customers should share the file, material, quantity, and deadline so the assistant can guide them toward the right next step.",
+    "tags": ["pricing", "bulk", "quotation"],
+    "priority": 9
+  },
+  {
+    "sourceKey": "materials-pla-plus",
+    "title": "PLA+ material guide",
+    "content": "PLA+ is a refined PLA blend with better toughness and a clean surface finish for fast prototypes and polished presentation pieces. It is easy to print, budget-friendly, and good for concept models, display pieces, and fit-check prototypes. It is less suitable for hot environments or outdoor use.",
+    "tags": ["material", "pla", "prototype"],
+    "priority": 9
+  },
+  {
+    "sourceKey": "materials-abs",
+    "title": "ABS material guide",
+    "content": "ABS is a durable engineering plastic for parts that need impact resistance, stronger service temperatures, and functional use. It is a good option for automotive brackets, enclosures, and workshop fixtures, but it is warp-prone and usually needs an enclosure.",
+    "tags": ["material", "abs", "engineering"],
+    "priority": 8
+  },
+  {
+    "sourceKey": "materials-petg",
+    "title": "PETG material guide",
+    "content": "PETG balances strength, layer adhesion, and moderate flexibility for practical end-use parts. It is useful for functional parts, jigs, holders, and utility components. It has strong layer bonding, moisture resistance, and good chemical resistance.",
+    "tags": ["material", "petg", "functional parts"],
+    "priority": 8
+  },
+  {
+    "sourceKey": "materials-asa",
+    "title": "ASA material guide",
+    "content": "ASA is an outdoor-ready material with ABS-like performance and stronger UV and weather resistance. It is suitable for outdoor housings, vehicle exterior parts, and weatherproof covers. It is a strong choice when parts will stay outside.",
+    "tags": ["material", "asa", "outdoor"],
+    "priority": 7
+  },
+  {
+    "sourceKey": "materials-tpu",
+    "title": "TPU material guide",
+    "content": "TPU is a flexible elastomer used for parts that need grip, impact absorption, or reliable bending without cracking. Common use cases include gaskets, protective bumpers, wearables, and grips.",
+    "tags": ["material", "tpu", "flexible"],
+    "priority": 7
+  },
+  {
+    "sourceKey": "materials-resin",
+    "title": "Resin 4K guide",
+    "content": "Resin 4K is a high-resolution photopolymer for extremely fine detail, smooth surfaces, and precision-heavy visual parts. It is useful for miniatures, jewelry masters, and dental or fine-detail models, but it is more brittle and requires post-processing.",
+    "tags": ["material", "resin", "detail"],
+    "priority": 7
+  },
+  {
+    "sourceKey": "materials-decorative",
+    "title": "Silk Gold and decorative prints",
+    "content": "Silk Gold is a glossy PLA-style filament designed for premium visual appeal, branding pieces, and decorative presentations. It is best for display items, gifts, and showpieces where visual impact matters more than structural performance.",
+    "tags": ["material", "decorative", "branding"],
+    "priority": 6
+  },
+  {
+    "sourceKey": "materials-multicolor",
+    "title": "Multi-color workflow",
+    "content": "Multi-color work uses an AMS-style workflow for color-separated parts, logos, labeling, and presentation models that need visual impact. It is useful for logos, marketing materials, color-coded parts, and display models, but it can increase print time and waste.",
+    "tags": ["material", "multicolor", "ams"],
+    "priority": 6
+  },
+  {
+    "sourceKey": "bulk-business",
+    "title": "Bulk and business orders",
+    "content": "Flux3D supports small-batch production, corporate gifting, event giveaways, educational projects, and repeatable business orders with consistent material and finish settings. Customers can message with quantity and specifications for a separate quote.",
+    "tags": ["bulk", "business", "production"],
+    "priority": 8
+  },
+  {
+    "sourceKey": "quality-check",
+    "title": "Quality checks",
+    "content": "If a print fails the internal quality check, Flux3D reprints it before dispatch. Parts are reviewed for visible defects, support marks, fit-critical areas, and finish expectations.",
+    "tags": ["quality", "reprint", "support"],
+    "priority": 8
+  },
+  {
+    "sourceKey": "shipping",
+    "title": "Delivery and shipping",
+    "content": "Delivery is available across serviceable locations in India. International shipping is not offered unless confirmed separately in writing. Delivery depends on the serviceable location and courier coverage.",
+    "tags": ["shipping", "delivery", "india"],
+    "priority": 8
+  },
+  {
+    "sourceKey": "payment",
+    "title": "Payment and order confirmation",
+    "content": "Payments are shown in INR before checkout and processed through the configured payment gateway. Order confirmation only happens after server-side payment verification. The assistant should not promise production or dispatch before payment verification or order approval.",
+    "tags": ["payment", "verification", "order"],
+    "priority": 9
+  },
+  {
+    "sourceKey": "confidentiality",
+    "title": "File confidentiality",
+    "content": "Design files are used only for quoting, review, and order production. Sensitive files are handled under the published privacy policy and only shared with the people needed to fulfill the order.",
+    "tags": ["privacy", "files", "confidentiality"],
+    "priority": 9
+  },
+  {
+    "sourceKey": "contact",
+    "title": "Contact and support",
+    "content": "Customers can contact Flux3D through the website contact page, WhatsApp, or the public support email. For privacy questions or requests, the support email and contact page should be used. The assistant can ask for the minimum details needed and then direct the customer to the right channel.",
+    "tags": ["contact", "support", "email"],
+    "priority": 8
+  }
+]

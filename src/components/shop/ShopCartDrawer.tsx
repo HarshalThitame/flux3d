@@ -1,10 +1,10 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { ShoppingBag, Trash2, X } from 'lucide-react'
 import QuantityStepper from '@/components/shop/QuantityStepper'
 import {
@@ -44,15 +44,21 @@ export function ShopCartNavButton({ mobile = false, onOpenAction }: { mobile?: b
   )
 }
 
-export default function ShopCartDrawer() {
+export default function ShopCartDrawer({
+  open,
+  onCloseAction,
+}: {
+  open?: boolean
+  onCloseAction?: () => void
+}) {
   const router = useRouter()
   const items = useShopCartStore((state) => state.items)
   const couponCode = useShopCartStore((state) => state.couponCode)
   const discountAmount = useShopCartStore((state) => state.discountAmount)
   const appliedCoupon = useShopCartStore((state) => state.appliedCoupon)
   const autoApplyOffer = useShopCartStore((state) => state.autoApplyOffer)
-  const isCartOpen = useShopCartStore((state) => state.isCartOpen)
-  const closeCart = useShopCartStore((state) => state.closeCart)
+  const isCartOpen = open ?? useShopCartStore((state) => state.isCartOpen)
+  const storeCloseCart = useShopCartStore((state) => state.closeCart)
   const removeItem = useShopCartStore((state) => state.removeItem)
   const updateQuantity = useShopCartStore((state) => state.updateQuantity)
   const clearCart = useShopCartStore((state) => state.clearCart)
@@ -70,6 +76,22 @@ export default function ShopCartDrawer() {
 
   useShopCartPromotionSync(totals.subtotal)
 
+  const closeCart = onCloseAction ?? storeCloseCart
+
+  useEffect(() => {
+    if (isCartOpen) {
+      document.body.style.overflow = 'hidden'
+      return () => { document.body.style.overflow = '' }
+    }
+  }, [isCartOpen])
+
+  useEffect(() => {
+    if (!isCartOpen) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeCart() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [isCartOpen, closeCart])
+
   function goToCheckout() {
     closeCart()
     router.push('/3d-shop/checkout')
@@ -81,27 +103,28 @@ export default function ShopCartDrawer() {
   }
 
   return (
-    <motion.div
-      aria-hidden={!isCartOpen}
-      inert={!isCartOpen}
-      className={`fixed inset-0 z-[130] ${isCartOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
-      initial={false}
-      animate={{ opacity: isCartOpen ? 1 : 0 }}
-      transition={{ duration: 0.18 }}
-    >
-      <button
-        type="button"
-        aria-label="Close 3D Shop cart"
-        tabIndex={isCartOpen ? 0 : -1}
-        className="absolute inset-0 bg-slate-900/35 backdrop-blur-sm"
-        onClick={closeCart}
-      />
-      <motion.aside
-        initial={false}
-        animate={{ y: isCartOpen ? 0 : '100%', x: 0 }}
-        transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute bottom-0 left-0 right-0 flex h-[92vh] min-h-0 flex-col overflow-hidden rounded-t-3xl border border-[var(--border-light)] bg-[var(--bg-base)] shadow-[var(--shadow-lg)] md:bottom-0 md:left-auto md:top-0 md:h-full md:w-[440px] md:rounded-none md:rounded-l-3xl"
-      >
+    <AnimatePresence>
+      {isCartOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
+          className="fixed inset-0 z-[130]"
+        >
+          <button
+            type="button"
+            aria-label="Close 3D Shop cart"
+            className="absolute inset-0 bg-slate-900/55 backdrop-blur-sm"
+            onClick={closeCart}
+          />
+          <motion.aside
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute bottom-0 left-0 right-0 flex h-[92vh] min-h-0 flex-col overflow-hidden rounded-t-3xl border border-[var(--border-light)] bg-[var(--bg-base)] shadow-[var(--shadow-lg)] md:bottom-0 md:left-auto md:top-0 md:h-full md:w-[440px] md:rounded-none md:rounded-l-3xl"
+          >
             <div className="flex items-center justify-between border-b border-[var(--border-light)] px-5 py-4">
               <div>
                 <h2 className="text-xl font-bold text-[var(--text-primary)]">Your Cart ({totals.itemCount} items)</h2>
@@ -221,5 +244,7 @@ export default function ShopCartDrawer() {
             )}
       </motion.aside>
     </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

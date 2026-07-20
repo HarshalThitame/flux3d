@@ -314,7 +314,7 @@ export default function GalleryClient() {
   ]
 
   return (
-    <main className="gallery-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-white">
+    <main className="gallery-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-[#0F1B3D]">
       <GalleryPremiumFX />
 
       <section className="gallery-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-white sm:px-6 md:px-10 lg:px-12">
@@ -476,7 +476,7 @@ export default function GalleryClient() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-cyan-100"
+                className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-[#6d28d9]"
               >
                 <Layers className="h-4 w-4" />
                 Selected Work
@@ -486,7 +486,7 @@ export default function GalleryClient() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-3 max-w-2xl text-3xl font-black leading-tight text-white sm:text-5xl"
+                className="mt-3 max-w-2xl text-3xl font-black leading-tight text-[#0F1B3D] sm:text-5xl"
               >
                 A board built for visual proof, finish detail, and fast project selection.
               </motion.h2>
@@ -499,7 +499,7 @@ export default function GalleryClient() {
               transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
               className="gallery-filter-bar"
             >
-              <Filter className="ml-3 h-4 w-4 shrink-0 text-cyan-100" />
+              <Filter className="ml-3 h-4 w-4 shrink-0 text-[#6d28d9]" />
               {categories.map((category) => {
                 const active = activeCategory === category
                 return (
@@ -537,17 +537,17 @@ export default function GalleryClient() {
                   <div className="p-5">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <span className="gallery-card-category">{project.category}</span>
-                      <span className="text-xs font-bold text-white/[0.58]">{project.eyebrow}</span>
+                      <span className="text-xs font-bold text-[#6b7280]">{project.eyebrow}</span>
                     </div>
-                    <h3 className="mt-4 text-xl font-black tracking-[0] text-white">{project.title}</h3>
-                    <p className="mt-3 min-h-[72px] text-sm font-semibold leading-6 text-white/[0.64]">
+                    <h3 className="mt-4 text-xl font-black tracking-[0] text-[#0F1B3D]">{project.title}</h3>
+                    <p className="mt-3 min-h-[72px] text-sm font-semibold leading-6 text-[#374151]">
                       {project.summary}
                     </p>
                     <div className="mt-5 grid grid-cols-2 gap-3">
                       {project.metrics.map((metric) => (
                         <div key={metric.label} className="gallery-card-metric">
-                          <div className="text-sm font-black text-white">{metric.value}</div>
-                          <div className="mt-1 text-xs font-bold text-white/[0.52]">{metric.label}</div>
+                          <div className="text-sm font-black text-[#0F1B3D]">{metric.value}</div>
+                          <div className="mt-1 text-xs font-bold text-[#6b7280]">{metric.label}</div>
                         </div>
                       ))}
                     </div>

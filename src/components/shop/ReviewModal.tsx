@@ -1,11 +1,53 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ImagePlus, Loader2, Star, X } from 'lucide-react'
 import type { ShopPublicProduct } from '@/lib/shop/public-types'
 import { getShopProductImages } from '@/lib/shop/selection'
+
+function useScrollLock(locked: boolean) {
+  useEffect(() => {
+    if (!locked) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [locked])
+}
+
+function useEscape(handler: () => void, active: boolean) {
+  useEffect(() => {
+    if (!active) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handler() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [handler, active])
+}
+
+function useFocusTrap(ref: React.RefObject<HTMLElement | null>, active: boolean) {
+  useEffect(() => {
+    if (!active || !ref.current) return
+    const el = ref.current
+    const focusable = el.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+    )
+    if (focusable.length === 0) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    first.focus()
+    function trap(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus() }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    document.addEventListener('keydown', trap)
+    return () => document.removeEventListener('keydown', trap)
+  }, [active, ref])
+}
 
 export type ReviewEligibility = {
   productId: string
@@ -38,6 +80,10 @@ export default function ReviewModal({
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  useScrollLock(open)
+  useEscape(() => onOpenChangeAction(false), open)
+  useFocusTrap(panelRef, open)
 
   const activeRating = hoverRating || rating
   const canSubmit = useMemo(() => Boolean(eligibility && rating >= 1 && rating <= 5 && !submitting), [eligibility, rating, submitting])
@@ -112,10 +158,11 @@ export default function ReviewModal({
           <button
             type="button"
             aria-label="Close review modal"
-            className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm"
             onClick={() => onOpenChangeAction(false)}
           />
           <motion.div
+            ref={panelRef}
             initial={{ y: 24, opacity: 0, scale: 0.98 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 24, opacity: 0, scale: 0.98 }}

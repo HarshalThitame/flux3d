@@ -160,22 +160,22 @@ export default function PricingClient({
   const displayMaterials = materials.filter((material) => material.name).slice(0, 8)
   if (displayMaterials.length === 0) {
     return (
-      <main className="pricing-premium-content text-white">
+      <main className="pricing-premium-content text-[#0F1B3D]">
         <PricingPremiumFX />
         <section className="relative mx-auto flex min-h-[82svh] w-full max-w-[1220px] items-center px-6 py-20">
           <div className="max-w-2xl">
-            <p className="text-sm font-bold uppercase text-cyan-200">Pricing unavailable</p>
-            <h1 className="mt-3 text-4xl font-black leading-tight text-white md:text-6xl">
+            <p className="text-sm font-bold uppercase text-[#6d28d9]">Pricing unavailable</p>
+            <h1 className="mt-3 text-4xl font-black leading-tight text-[#0F1B3D] md:text-6xl">
               Public material pricing is not configured yet.
             </h1>
-            <p className="mt-4 text-sm leading-7 text-white/[0.72]">
+            <p className="mt-4 text-sm leading-7 text-[#6b7280]">
               Flux 3D can still review your file and provide a custom quotation. Please use the contact page to request a quote and share your requirements.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/contact" className="pricing-primary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#05060a] transition hover:bg-[#f1eeff]">
+              <Link href="/contact" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#6d28d9] px-6 text-sm font-bold text-white transition hover:bg-[#5b21b6]">
                 Contact sales
               </Link>
-              <Link href="/features" className="pricing-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/[0.18] bg-white/10 px-6 text-sm font-bold text-white backdrop-blur transition hover:border-cyan-300/40 hover:bg-cyan-300/[0.12]">
+              <Link href="/features" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#6d28d9]/30 px-6 text-sm font-bold text-[#6d28d9] transition hover:border-[#6d28d9]/50 hover:bg-purple-50">
                 View services
               </Link>
             </div>
@@ -195,7 +195,7 @@ export default function PricingClient({
   ]
 
   return (
-    <main className="pricing-premium-content text-white">
+    <main className="pricing-premium-content text-[#0F1B3D]">
       <PricingPremiumFX />
 
       <section className="pricing-hero-premium relative isolate overflow-hidden px-4 pb-12 pt-6 text-white sm:px-6 md:px-10 lg:px-12">
@@ -350,10 +350,10 @@ export default function PricingClient({
             className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
           >
             <div>
-              <p className="text-sm font-bold uppercase text-cyan-200">Quote drivers</p>
-              <h2 className="mt-2 text-3xl font-extrabold text-white md:text-5xl">What shapes the final quote</h2>
+              <p className="text-sm font-bold uppercase text-[#6d28d9]">Quote drivers</p>
+              <h2 className="mt-2 text-3xl font-extrabold text-[#0F1B3D] md:text-5xl">What shapes the final quote</h2>
             </div>
-            <p className="max-w-md text-sm leading-7 text-white/[0.68]">
+            <p className="max-w-md text-sm leading-7 text-[#6b7280]">
               The listed material rate is only the starting point. The production review locks the final amount.
             </p>
           </motion.div>
@@ -366,13 +366,13 @@ export default function PricingClient({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: 0.06 * index }}
-                className="pricing-driver-card rounded-lg border border-white/10 bg-white/[0.07] p-5 shadow-sm"
+                className="pricing-driver-card rounded-lg border border-purple-200 bg-white p-5 shadow-sm"
               >
-                <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-cyan-200">
+                <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-lg bg-[#6d28d9] text-white">
                   <driver.icon className="h-5 w-5" />
                 </div>
-                <h3 className="text-xl font-extrabold text-white">{driver.title}</h3>
-                <p className="mt-3 text-sm leading-6 text-white/[0.64]">{driver.description}</p>
+                <h3 className="text-xl font-extrabold text-[#0F1B3D]">{driver.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-[#6b7280]">{driver.description}</p>
               </motion.div>
             ))}
           </div>
@@ -387,9 +387,9 @@ export default function PricingClient({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <p className="text-sm font-bold uppercase text-cyan-200">Material rates</p>
-            <h2 className="mt-2 text-3xl font-extrabold text-white md:text-5xl">Clear per-gram starting points</h2>
-            <p className="mt-4 text-sm leading-7 text-white/[0.68]">
+            <p className="text-sm font-bold uppercase text-[#6d28d9]">Material rates</p>
+            <h2 className="mt-2 text-3xl font-extrabold text-[#0F1B3D] md:text-5xl">Clear per-gram starting points</h2>
+            <p className="mt-4 text-sm leading-7 text-[#6b7280]">
               Use these rates to compare material direction before upload. The final quote includes print setup, supports, finish, quantity, and delivery needs.
             </p>
           </motion.div>
@@ -398,9 +398,9 @@ export default function PricingClient({
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="pricing-rates-panel overflow-hidden rounded-lg border border-white/10 bg-white/[0.07]"
+            className="pricing-rates-panel overflow-hidden rounded-lg border border-purple-200 bg-white"
           >
-            <div className="grid grid-cols-[1.2fr_0.8fr_0.8fr] border-b border-white/10 bg-white/[0.07] px-4 py-3 text-xs font-bold uppercase text-white/[0.58]">
+            <div className="grid grid-cols-[1.2fr_0.8fr_0.8fr] border-b border-purple-200 bg-purple-50 px-4 py-3 text-xs font-bold uppercase text-[#6b7280]">
               <span>Material</span>
               <span>Rate</span>
               <span>Density</span>
@@ -408,14 +408,14 @@ export default function PricingClient({
             {displayMaterials.map((material) => (
               <div
                 key={material.name}
-                className="grid grid-cols-[1.2fr_0.8fr_0.8fr] items-center gap-3 border-b border-white/10 px-4 py-4 last:border-b-0"
+                className="grid grid-cols-[1.2fr_0.8fr_0.8fr] items-center gap-3 border-b border-purple-100 px-4 py-4 last:border-b-0"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-extrabold text-white">{material.name}</p>
-                  <p className="mt-1 text-xs text-white/[0.52]">Production material</p>
+                  <p className="truncate text-sm font-extrabold text-[#0F1B3D]">{material.name}</p>
+                  <p className="mt-1 text-xs text-[#6b7280]">Production material</p>
                 </div>
-                <p className="text-sm font-extrabold text-cyan-200">₹{formatCurrency(Number(material.price_per_gram || 0))}/g</p>
-                <p className="text-sm text-white/[0.68]">{Number(material.density || 0).toFixed(2)} g/cm3</p>
+                <p className="text-sm font-extrabold text-[#6d28d9]">₹{formatCurrency(Number(material.price_per_gram || 0))}/g</p>
+                <p className="text-sm text-[#6b7280]">{Number(material.density || 0).toFixed(2)} g/cm3</p>
               </div>
             ))}
           </motion.div>
@@ -428,23 +428,23 @@ export default function PricingClient({
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="pricing-workflow-panel relative z-10 mx-auto max-w-[1220px] rounded-lg border border-white/10 bg-white/[0.07] p-6 md:p-8"
+          className="pricing-workflow-panel relative z-10 mx-auto max-w-[1220px] rounded-lg border border-purple-200 bg-white p-6 md:p-8"
         >
           <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
             <div>
-              <p className="text-sm font-bold uppercase text-cyan-200">Quote workflow</p>
-              <h2 className="mt-2 text-3xl font-extrabold text-white md:text-5xl">From upload to dispatch</h2>
-              <p className="mt-4 text-sm leading-7 text-white/[0.66]">
+              <p className="text-sm font-bold uppercase text-[#6d28d9]">Quote workflow</p>
+              <h2 className="mt-2 text-3xl font-extrabold text-[#0F1B3D] md:text-5xl">From upload to dispatch</h2>
+              <p className="mt-4 text-sm leading-7 text-[#6b7280]">
                 A clear review path keeps pricing accurate before production starts.
               </p>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               {workflow.map((step, index) => (
-                <div key={step} className="pricing-step-card rounded-lg border border-white/10 bg-white/[0.07] p-4">
-                  <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-black text-[#05060a]">
+                <div key={step} className="pricing-step-card rounded-lg border border-purple-200 bg-white p-4">
+                  <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9] text-sm font-black text-white">
                     {index + 1}
                   </div>
-                  <p className="text-sm leading-6 text-white/[0.72]">{step}</p>
+                  <p className="text-sm leading-6 text-[#374151]">{step}</p>
                 </div>
               ))}
             </div>
@@ -458,20 +458,20 @@ export default function PricingClient({
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="pricing-cta-panel relative z-10 mx-auto grid max-w-[1220px] gap-5 rounded-lg border border-white/10 bg-white/[0.07] p-6 text-white md:grid-cols-[1fr_auto] md:items-center md:p-8"
+          className="pricing-cta-panel relative z-10 mx-auto grid max-w-[1220px] gap-5 rounded-lg border border-purple-200 bg-white p-6 md:grid-cols-[1fr_auto] md:items-center md:p-8"
         >
           <div>
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-white/10">
-              <PackageCheck className="h-5 w-5 text-cyan-200" />
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-[#6d28d9] text-white">
+              <PackageCheck className="h-5 w-5 text-white" />
             </div>
-            <h2 className="text-3xl font-extrabold text-white md:text-5xl">Ready for a real quote?</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/[0.66]">
+            <h2 className="text-3xl font-extrabold text-[#0F1B3D] md:text-5xl">Ready for a real quote?</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-[#6b7280]">
               Upload your file and Flux3D will price the part around actual geometry, material, finish, and production timeline.
             </p>
           </div>
           <Link
             href="/instant-quote"
-            className="pricing-primary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#05060a] transition hover:bg-[#f1eeff]"
+            className="pricing-primary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#6d28d9] px-6 text-sm font-bold text-white transition hover:bg-[#5b21b6]"
           >
             Upload model
             <ArrowRight className="h-4 w-4" />

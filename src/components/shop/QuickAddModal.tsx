@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2, ShoppingBag, X } from 'lucide-react'
@@ -17,6 +17,48 @@ import ShopVariantControls from '@/components/shop/ShopVariantControls'
 import QuantityStepper from '@/components/shop/QuantityStepper'
 import { useShopCartStore } from '@/stores/shopCartStore'
 
+function useScrollLock(locked: boolean) {
+  useEffect(() => {
+    if (!locked) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [locked])
+}
+
+function useEscape(handler: () => void, active: boolean) {
+  useEffect(() => {
+    if (!active) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handler() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [handler, active])
+}
+
+function useFocusTrap(ref: React.RefObject<HTMLElement | null>, active: boolean) {
+  useEffect(() => {
+    if (!active || !ref.current) return
+    const el = ref.current
+    const focusable = el.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+    )
+    if (focusable.length === 0) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    first.focus()
+    function trap(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus() }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    document.addEventListener('keydown', trap)
+    return () => document.removeEventListener('keydown', trap)
+  }, [active, ref])
+}
+
 export default function QuickAddModal({
   product,
   open,
@@ -28,6 +70,10 @@ export default function QuickAddModal({
 }) {
   const addItem = useShopCartStore((state) => state.addItem)
   const [selected, setSelected] = useState<ShopSelectedOptions>({})
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  useScrollLock(open)
+  useEscape(() => onOpenChangeAction(false), open)
+  useFocusTrap(panelRef, open)
   const [quantity, setQuantity] = useState(1)
   const [customizationText, setCustomizationText] = useState('')
   const [added, setAdded] = useState(false)
@@ -71,10 +117,11 @@ export default function QuickAddModal({
           <button
             type="button"
             aria-label="Close quick add"
-            className="absolute inset-0 bg-slate-900/35 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/55 backdrop-blur-sm"
             onClick={() => onOpenChangeAction(false)}
           />
           <motion.div
+            ref={panelRef}
             initial={{ y: 24, opacity: 0, scale: 0.98 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 24, opacity: 0, scale: 0.98 }}

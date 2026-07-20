@@ -11,7 +11,7 @@ type MaterialPricing = {
 
 const PricingClient = dynamic(() => import('./PricingClient'), {
   ssr: false,
-  loading: () => <RouteChunkLoader className="text-white" minHeight="86svh" label="Loading pricing" />,
+  loading: () => <RouteChunkLoader className="text-[#0F1B3D]" minHeight="86svh" label="Loading pricing" />,
 })
 
 export default function PricingClientBoundary({ materials }: { materials: MaterialPricing[] }) {

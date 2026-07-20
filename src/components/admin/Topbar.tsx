@@ -79,6 +79,19 @@ export default function Topbar({
                   Switch to operator view
                 </button>
               </div>
+              <div className="border-t border-gray-200 p-3">
+                <a
+                  href="/admin/logout"
+                  className="flex w-full items-center gap-3 rounded-[16px] px-4 py-3 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  Log out
+                </a>
+              </div>
             </div>
           ) : null}
         </div>

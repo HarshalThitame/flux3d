@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
@@ -952,6 +953,22 @@ function CommunicationTab({ form, updateField, f, fb, copyToClipboard }: {
             </div>
           </div>
           <TextAreaField label="Auto-reply Message" value={f('autoReplyMessage')} onChange={(v) => updateField('autoReplyMessage', v)} rows={3} placeholder="Thank you for reaching out! We'll get back to you shortly." />
+        </div>
+        <div className="mt-4 rounded-xl border border-dashed border-[#6d28d9]/15 bg-[#6d28d9]/5 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-sm font-semibold text-[#0F1B3D]">WhatsApp RAG knowledge</div>
+              <p className="mt-1 text-xs text-[#6F7192]">
+                Manage the knowledge chunks that the WhatsApp AI assistant uses for grounded replies.
+              </p>
+            </div>
+            <Link
+              href="/admin/settings/whatsapp-knowledge"
+              className="inline-flex items-center justify-center rounded-xl border border-[#6d28d9]/10 bg-white px-4 py-2 text-sm font-medium text-[#0F1B3D] transition hover:bg-gray-50"
+            >
+              Open knowledge base
+            </Link>
+          </div>
         </div>
         <Divider />
         <div className="grid gap-4 md:grid-cols-2">

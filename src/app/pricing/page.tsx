@@ -46,7 +46,7 @@ export default async function PricingPage() {
   }
 
   return (
-    <div className="pricing-premium-shell min-h-screen overflow-hidden bg-[#05060A] text-white">
+    <div className="pricing-premium-shell min-h-screen overflow-hidden">
       <Navbar transparent />
       <PricingClientBoundary materials={materials} />
     </div>

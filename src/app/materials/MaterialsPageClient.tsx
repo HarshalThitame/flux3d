@@ -7,35 +7,35 @@ import RouteChunkLoader from '@/components/RouteChunkLoader'
 const NavbarClient = dynamic(() => import('@/components/NavbarClient'), { ssr: false })
 const MaterialsHero = dynamic(() => import('./MaterialsHero'), {
   ssr: false,
-  loading: () => <RouteChunkLoader className="text-white" minHeight="82svh" label="Loading materials hero" />,
+  loading: () => <RouteChunkLoader className="text-[#6d28d9]" minHeight="82svh" label="Loading materials hero" />,
 })
 const ComparisonTable = dynamic(() => import('./ComparisonTable'), {
   ssr: false,
-  loading: () => <RouteChunkLoader className="text-white" minHeight="420px" label="Loading comparison table" />,
+  loading: () => <RouteChunkLoader className="text-[#6d28d9]" minHeight="420px" label="Loading comparison table" />,
 })
 const MaterialCards = dynamic(() => import('./MaterialCards'), {
   ssr: false,
-  loading: () => <RouteChunkLoader className="text-white" minHeight="640px" label="Loading material cards" />,
+  loading: () => <RouteChunkLoader className="text-[#6d28d9]" minHeight="640px" label="Loading material cards" />,
 })
 const MaterialSelectorTool = dynamic(() => import('./MaterialSelectorTool'), {
   ssr: false,
-  loading: () => <RouteChunkLoader className="text-white" minHeight="520px" label="Loading material selector" />,
+  loading: () => <RouteChunkLoader className="text-[#6d28d9]" minHeight="520px" label="Loading material selector" />,
 })
 const FDMvsResin = dynamic(() => import('./FDMvsResin'), {
   ssr: false,
-  loading: () => <RouteChunkLoader className="text-white" minHeight="420px" label="Loading material comparison" />,
+  loading: () => <RouteChunkLoader className="text-[#6d28d9]" minHeight="420px" label="Loading material comparison" />,
 })
 const PostProcessing = dynamic(() => import('./PostProcessing'), {
   ssr: false,
-  loading: () => <RouteChunkLoader className="text-white" minHeight="420px" label="Loading post-processing" />,
+  loading: () => <RouteChunkLoader className="text-[#6d28d9]" minHeight="420px" label="Loading post-processing" />,
 })
 const MaterialFAQ = dynamic(() => import('./MaterialFAQ'), {
   ssr: false,
-  loading: () => <RouteChunkLoader className="text-white" minHeight="360px" label="Loading material FAQs" />,
+  loading: () => <RouteChunkLoader className="text-[#6d28d9]" minHeight="360px" label="Loading material FAQs" />,
 })
 const MaterialsCTA = dynamic(() => import('./MaterialsCTA'), {
   ssr: false,
-  loading: () => <RouteChunkLoader className="text-white" minHeight="320px" label="Loading material call to action" />,
+  loading: () => <RouteChunkLoader className="text-[#6d28d9]" minHeight="320px" label="Loading material call to action" />,
 })
 
 type MaterialProperties = {
@@ -143,16 +143,16 @@ export default function MaterialsPageClient() {
 
   if (loading) {
     return (
-      <div className="materials-premium-shell min-h-screen overflow-hidden bg-[#05060A] text-white">
+      <div className="materials-premium-shell min-h-screen overflow-hidden">
         <NavbarClient transparent user={null} />
         <main className="px-4 py-32 md:px-8 lg:px-16">
           <div className="mx-auto max-w-[1200px]">
-            <div className="mb-5 h-4 w-40 animate-pulse rounded-full bg-white/10" />
-            <div className="mb-4 h-12 w-full max-w-xl animate-pulse rounded-lg bg-white/10" />
-            <div className="mb-12 h-5 w-full max-w-2xl animate-pulse rounded-full bg-white/10" />
+            <div className="mb-5 h-4 w-40 animate-pulse rounded-full bg-purple-200" />
+            <div className="mb-4 h-12 w-full max-w-xl animate-pulse rounded-lg bg-purple-100" />
+            <div className="mb-12 h-5 w-full max-w-2xl animate-pulse rounded-full bg-purple-100" />
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {[1,2,3,4,5,6].map(i => (
-                <div key={i} className="h-72 animate-pulse rounded-lg border border-white/10 bg-white/[0.06] shadow-sm" />
+                <div key={i} className="h-72 animate-pulse rounded-lg border border-purple-200 bg-purple-50 shadow-sm" />
               ))}
             </div>
           </div>
@@ -162,7 +162,7 @@ export default function MaterialsPageClient() {
   }
 
   return (
-    <div className="materials-premium-shell min-h-screen overflow-hidden bg-[#05060A] text-white">
+    <div className="materials-premium-shell min-h-screen overflow-hidden">
       <NavbarClient transparent user={null} />
       <main>
         <MaterialsHero />

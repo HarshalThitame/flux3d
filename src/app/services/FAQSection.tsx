@@ -45,7 +45,7 @@ export default function FAQSection() {
           className="mb-9 text-center"
         >
           <span className="text-xs font-bold uppercase text-[#6d28d9]">FAQ</span>
-          <h2 className="mx-auto mt-3 max-w-2xl !text-4xl font-extrabold leading-tight !text-white md:!text-5xl">
+          <h2 className="mx-auto mt-3 max-w-2xl !text-4xl font-extrabold leading-tight !text-[#0F1B3D] md:!text-5xl">
             Questions before you print.
           </h2>
         </motion.div>
@@ -67,7 +67,7 @@ export default function FAQSection() {
                   className="group flex w-full items-center justify-between gap-4 px-5 py-5 text-left transition hover:bg-slate-50"
                   aria-expanded={open}
                 >
-                  <span className="text-sm font-extrabold leading-6 text-white group-hover:text-[#67e8f9]">{faq.question}</span>
+                  <span className="text-sm font-extrabold leading-6 text-[#0F1B3D] group-hover:text-[#6d28d9]">{faq.question}</span>
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white">
                     <ChevronDown className={`h-4 w-4 text-[#6d28d9] transition-transform ${open ? 'rotate-180' : ''}`} />
                   </span>

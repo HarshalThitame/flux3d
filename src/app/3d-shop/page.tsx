@@ -72,11 +72,11 @@ export default async function ShopHomePage() {
   ]
 
   return (
-    <div className="shop-premium-shell min-h-screen overflow-hidden bg-[#05060a] text-white">
+    <div className="shop-premium-shell min-h-screen overflow-hidden">
       <ShopPremiumFX />
       <Navbar transparent />
 
-      <main className="shop-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-white">
+      <main className="shop-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-[#0F1B3D]">
         <section className="shop-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-white sm:px-6 md:px-10 lg:px-12">
           <Image
             src="/printer2-poster.webp"
@@ -219,15 +219,15 @@ export default async function ShopHomePage() {
           <div className="relative z-10 mx-auto w-full max-w-[1220px]">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="min-w-0">
-                <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-cyan-100">
+                <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-[#6d28d9]">
                   <Layers3 className="h-4 w-4" />
                   Shop by category
                 </div>
-                <h2 className="mt-3 max-w-2xl text-3xl font-black leading-tight text-white sm:text-5xl">
+                <h2 className="mt-3 max-w-2xl text-3xl font-black leading-tight text-[#0F1B3D] sm:text-5xl">
                   Browse by purpose, finish, and setup.
                 </h2>
               </div>
-              <Link href="/3d-shop/search" className="shop-secondary-action inline-flex min-h-11 w-fit items-center justify-center gap-2 rounded-lg border border-white/[0.18] bg-white/10 px-5 text-sm font-black text-white backdrop-blur transition hover:border-cyan-300/40 hover:bg-cyan-300/[0.12]">
+              <Link href="/3d-shop/search" className="inline-flex min-h-11 w-fit items-center justify-center gap-2 rounded-lg border border-[#6d28d9]/30 px-5 text-sm font-black text-[#6d28d9] transition hover:border-[#6d28d9]/50 hover:bg-purple-50">
                 View all products
                 <ArrowRight className="h-4 w-4" />
               </Link>
@@ -272,13 +272,13 @@ export default async function ShopHomePage() {
             <div className="relative z-10 mx-auto w-full max-w-[1220px]">
               <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-cyan-100">
+                  <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-[#6d28d9]">
                     <BadgeCheck className="h-4 w-4" />
                     Featured
                   </div>
-                  <h2 className="mt-3 text-3xl font-black text-white sm:text-4xl">Premium picks</h2>
+                  <h2 className="mt-3 text-3xl font-black text-[#0F1B3D] sm:text-4xl">Premium picks</h2>
                 </div>
-                <Link href="/3d-shop/search?featured=true" className="inline-flex items-center gap-2 text-sm font-black text-cyan-200">
+                <Link href="/3d-shop/search?featured=true" className="inline-flex items-center gap-2 text-sm font-black text-[#6d28d9]">
                   View all
                   <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -297,11 +297,11 @@ export default async function ShopHomePage() {
             <div className="relative z-10 mx-auto w-full max-w-[1220px]">
               <div className="mb-6 flex items-center justify-between gap-4">
                 <div>
-                  <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-cyan-100">
+                  <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-[#6d28d9]">
                     <Zap className="h-4 w-4" />
                     Collection
                   </div>
-                  <h2 className="mt-3 text-3xl font-black text-white sm:text-4xl">{collection.tag}</h2>
+                  <h2 className="mt-3 text-3xl font-black text-[#0F1B3D] sm:text-4xl">{collection.tag}</h2>
                 </div>
               </div>
               <div className="shop-product-rail grid auto-cols-[74%] grid-flow-col gap-4 overflow-x-auto pb-2 sm:auto-cols-[42%] lg:auto-cols-[24%]">
@@ -321,23 +321,23 @@ export default async function ShopHomePage() {
           <div className="relative z-10 mx-auto w-full max-w-[1220px]">
             <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-cyan-100">
+                <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-[#6d28d9]">
                   <Clock3 className="h-4 w-4" />
                   New arrivals
                 </div>
-                <h2 className="mt-3 text-3xl font-black text-white sm:text-4xl">Fresh from the print queue</h2>
+                <h2 className="mt-3 text-3xl font-black text-[#0F1B3D] sm:text-4xl">Fresh from the print queue</h2>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-xs font-black uppercase text-white/[0.58]">
-                <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2">
-                  <ShieldCheck className="h-3.5 w-3.5 text-cyan-200" />
+              <div className="grid grid-cols-3 gap-2 text-xs font-black uppercase text-[#6b7280]">
+                <span className="inline-flex items-center gap-1 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
+                  <ShieldCheck className="h-3.5 w-3.5 text-[#6d28d9]" />
                   QA
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2">
-                  <Truck className="h-3.5 w-3.5 text-cyan-200" />
+                <span className="inline-flex items-center gap-1 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
+                  <Truck className="h-3.5 w-3.5 text-[#6d28d9]" />
                   Ship
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2">
-                  <ShoppingBag className="h-3.5 w-3.5 text-cyan-200" />
+                <span className="inline-flex items-center gap-1 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
+                  <ShoppingBag className="h-3.5 w-3.5 text-[#6d28d9]" />
                   Cart
                 </span>
               </div>
