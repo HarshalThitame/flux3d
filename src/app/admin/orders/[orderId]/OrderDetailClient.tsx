@@ -345,13 +345,100 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                       </button>
                     }
                   />
-                  <MetaRow label="Payment" value={safeText(order.paymentStatus ?? 'Pending')} />
+                  <MetaRow label="Payment Status" value={safeText(order.paymentStatus ?? 'Pending')} />
                   <MetaRow label="Items" value={`${itemCount} item${itemCount === 1 ? '' : 's'} · ${totalQuantity.toLocaleString('en-IN')} pcs`} />
                   <MetaRow label="Print Time" value={`${formatNumber(totalPrintTime, 1)} hrs`} />
                   <MetaRow label="Created" value={formatDateTime(order.createdAt)} />
                   <MetaRow label="Last Updated" value={formatDateTime(order.updatedAt)} />
                 </div>
               </Card>
+
+              {order.paymentProvider && (
+                <Card title="Payment Details">
+                  <div className="space-y-3">
+                    <MetaRow label="Provider" value={order.paymentProvider} />
+                    {order.paymentStatus && <MetaRow label="Status" value={safeText(order.paymentStatus)} />}
+                    {order.providerOrderId && (
+                      <MetaRow
+                        label="Razorpay Order ID"
+                        value={order.providerOrderId}
+                        action={
+                          <button type="button" onClick={() => copyToClipboard('Razorpay Order ID', order.providerOrderId ?? '')} className="text-violet-600 hover:text-violet-700">
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+                        }
+                      />
+                    )}
+                    {order.providerPaymentId && (
+                      <MetaRow
+                        label="Razorpay Payment ID"
+                        value={order.providerPaymentId}
+                        action={
+                          <button type="button" onClick={() => copyToClipboard('Razorpay Payment ID', order.providerPaymentId ?? '')} className="text-violet-600 hover:text-violet-700">
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+                        }
+                      />
+                    )}
+                    {order.paymentMethod && <MetaRow label="Payment Method" value={order.paymentMethod} />}
+                    {order.paymentVerifiedAt && <MetaRow label="Verified At" value={formatDateTime(order.paymentVerifiedAt)} />}
+                    {order.paymentFailedAt && <MetaRow label="Failed At" value={formatDateTime(order.paymentFailedAt)} />}
+                    {order.paymentRefundStatus && (
+                      <>
+                        <MetaRow label="Refund Status" value={safeText(order.paymentRefundStatus)} />
+                        {order.paymentRefundAmountPaise != null && order.paymentRefundAmountPaise > 0 && (
+                          <MetaRow label="Refund Amount" value={`₹${(order.paymentRefundAmountPaise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`} />
+                        )}
+                      </>
+                    )}
+                    {order.paymentAttemptId && (
+                      <div className="pt-2">
+                        <a
+                          href={`/admin/payments/${order.paymentAttemptId}`}
+                          className="inline-flex h-9 items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 text-xs font-semibold text-violet-700 transition hover:bg-violet-100"
+                        >
+                          View Full Payment Details →
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              )}
+
+              {order.paymentStatus === 'paid' && order.status === 'cancelled' && (
+                <Card title="Refund">
+                  <div className="space-y-3">
+                    {order.paymentRefundStatus ? (
+                      <div>
+                        <MetaRow label="Refund Status" value={safeText(order.paymentRefundStatus)} />
+                        {order.paymentRefundAmountPaise != null && order.paymentRefundAmountPaise > 0 && (
+                          <MetaRow label="Refunded Amount" value={`₹${(order.paymentRefundAmountPaise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`} />
+                        )}
+                        {order.paymentAttemptId && (
+                          <div className="pt-2">
+                            <a href={`/admin/payments/${order.paymentAttemptId}`} className="text-sm font-semibold text-violet-600 hover:text-violet-700">
+                              Manage Refund →
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+                        <div className="font-semibold">Prepaid order cancelled</div>
+                        <p className="mt-1 leading-6">This order was paid but has no refund initiated yet. Process the refund from the payment details page.</p>
+                        {order.paymentAttemptId && (
+                          <a
+                            href={`/admin/payments/${order.paymentAttemptId}`}
+                            className="mt-3 inline-flex h-9 items-center gap-2 rounded-lg bg-amber-600 px-3 text-xs font-semibold text-white transition hover:bg-amber-700"
+                          >
+                            Initiate Refund →
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              )}
 
               <Card title="Admin Notes">
                 <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm leading-6 text-gray-700">

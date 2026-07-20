@@ -27,7 +27,7 @@ import {
 
 const QUOTE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? 'quote-models'
 const ADMIN_ORDER_SELECT =
-  'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, price, price_per_unit, material_cost, machine_cost, subtotal, post_processing_charges, weight, difficulty_factor, total_price, final_price, grand_total, overhead_percent, overhead_amount, margin_percent, margin_amount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, coupon_code, coupon_id, discount_type, estimated_time, supports, post_processing_level, status, status_timestamps, cancel_requested, created_at, updated_at, notes, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge'
+  'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, price, price_per_unit, material_cost, machine_cost, subtotal, post_processing_charges, weight, difficulty_factor, total_price, final_price, grand_total, overhead_percent, overhead_amount, margin_percent, margin_amount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, coupon_code, coupon_id, discount_type, estimated_time, supports, post_processing_level, status, status_timestamps, cancel_requested, created_at, updated_at, notes, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, payment_provider, payment_status, provider_order_id, provider_payment_id, payment_method, payment_verified_at, payment_failed_at, payment_refund_status, payment_refund_amount_paise, payment_attempt_id'
 
 export class AdminOrderStatusTransitionError extends Error {
   constructor(message: string) {
@@ -111,6 +111,16 @@ type OrderRow = {
   landmark?: string | null
   delivery_charge?: number | string | null
   cancel_requested?: boolean | null
+  payment_provider?: string | null
+  payment_status?: string | null
+  provider_order_id?: string | null
+  provider_payment_id?: string | null
+  payment_method?: string | null
+  payment_verified_at?: string | null
+  payment_failed_at?: string | null
+  payment_refund_status?: string | null
+  payment_refund_amount_paise?: number | null
+  payment_attempt_id?: string | null
 }
 
 type QuoteRow = {
@@ -343,6 +353,16 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
         material: row.material ?? 'Unknown material',
         color: row.color ?? '',
         status: row.status,
+        paymentProvider: row.payment_provider ?? undefined,
+        paymentStatus: row.payment_status ?? undefined,
+        providerOrderId: row.provider_order_id ?? undefined,
+        providerPaymentId: row.provider_payment_id ?? undefined,
+        paymentMethod: row.payment_method ?? undefined,
+        paymentVerifiedAt: row.payment_verified_at ?? undefined,
+        paymentFailedAt: row.payment_failed_at ?? undefined,
+        paymentRefundStatus: row.payment_refund_status ?? undefined,
+        paymentRefundAmountPaise: row.payment_refund_amount_paise ?? undefined,
+        paymentAttemptId: row.payment_attempt_id ?? undefined,
         statusTimestamps: normalizeOrderStatusTimestamps(row),
         cancelRequested: Boolean(row.cancel_requested),
         createdAt: row.created_at ?? '',
