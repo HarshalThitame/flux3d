@@ -17,6 +17,12 @@ export type PublicBusinessProfile = {
   jurisdictionState: string
   jurisdictionCountry: string
   businessHours: string
+  gstNumber: string
+  panNumber: string
+  cinNumber: string
+  msmeNumber: string
+  sacHsnCode: string
+  paymentTerms: string
 }
 
 function joinAddress(parts: Array<string | null | undefined>) {
@@ -52,6 +58,12 @@ export function buildPublicBusinessProfile(settings: BusinessSettings): PublicBu
     jurisdictionState: settings.state || FALLBACK_SETTINGS.state,
     jurisdictionCountry: settings.country || FALLBACK_SETTINGS.country,
     businessHours: settings.businessHours || FALLBACK_SETTINGS.businessHours,
+    gstNumber: settings.gstNumber || '',
+    panNumber: settings.panNumber || '',
+    cinNumber: settings.cinNumber || '',
+    msmeNumber: settings.msmeNumber || '',
+    sacHsnCode: settings.sacHsnCode || '',
+    paymentTerms: settings.paymentTerms || '',
   }
 }
 
