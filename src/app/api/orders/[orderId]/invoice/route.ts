@@ -135,6 +135,7 @@ async function generatePdf(
     landmark: order.landmark ?? '',
   })
   const companyName = settings.businessName || settings.brandName || 'Flux3D'
+  const invoiceLogo = settings.invoiceLogoUrl || settings.logoUrl || ''
   const tagline = settings.tagline || 'Premium manufacturing solutions'
   const websiteValue = settings.websiteUrl || settings.canonicalUrl || ''
   const contactEmail = (settings.primaryEmail || '').replace(/hello@fux3d\.com/gi, 'hello@flux3d.com')
@@ -208,7 +209,7 @@ async function generatePdf(
     doc.restore()
   }
 
-  function drawHeader() {
+  async function drawHeader() {
     doc.save()
     doc.rect(sidebarW, 0, pageW - sidebarW, headerH).fill(colors.navy)
 
@@ -221,10 +222,21 @@ async function generatePdf(
       .closePath()
       .fill(colors.accentDark)
 
-    doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(26)
-    doc.text(companyName, contentX, 22)
+    const logoY = 18
+    if (invoiceLogo) {
+      try {
+        const logoBuffer = await fetch(invoiceLogo).then((r) => r.arrayBuffer()).then(Buffer.from)
+        doc.image(logoBuffer, contentX, 14, { width: 120 })
+      } catch {
+        doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(26)
+        doc.text(companyName, contentX, logoY)
+      }
+    } else {
+      doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(26)
+      doc.text(companyName, contentX, logoY)
+    }
     doc.fillColor(colors.accent).font(INVOICE_FONT_REGULAR).fontSize(9)
-    doc.text(tagline, contentX, 54)
+    doc.text(tagline, contentX, logoY + 36)
     doc.moveTo(contentX, 68).lineTo(contentX + 170, 68).strokeColor(colors.accent).lineWidth(0.8).stroke()
     doc.fillColor(colors.contact).font(INVOICE_FONT_REGULAR).fontSize(8)
     doc.text(`${websiteValue} | ${contactEmail || settings.businessName?.toLowerCase() || ''}`.trim(), contentX, 76)
@@ -476,7 +488,7 @@ async function generatePdf(
   }
 
   drawBase()
-  drawHeader()
+  await drawHeader()
 
   const partyGap = 12
   const cardW = (contentW - partyGap * 2) / 3
