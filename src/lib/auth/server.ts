@@ -19,11 +19,15 @@ export async function getCurrentUserProfile() {
 
   const supabase = await createServerSupabaseClient()
   let user = null
-  try {
-    const { data } = await supabase.auth.getUser()
-    user = data.user
-  } catch {
-    return null
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const { data } = await supabase.auth.getUser()
+      user = data.user
+      break
+    } catch {
+      if (attempt === 2) return null
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
   }
 
   if (!user) {

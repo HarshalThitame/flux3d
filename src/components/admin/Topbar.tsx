@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Bell, ChevronDown, Menu, MoonStar, Search, SunMedium } from 'lucide-react'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
 export default function Topbar({
   theme,
@@ -13,6 +14,24 @@ export default function Topbar({
   onOpenMobileNav: () => void
 }) {
   const [profileOpen, setProfileOpen] = useState(false)
+  const [adminName, setAdminName] = useState('Admin')
+  const [adminInitials, setAdminInitials] = useState('AD')
+  const [adminRole, setAdminRole] = useState('Administrator')
+
+  useEffect(() => {
+    async function loadProfile() {
+      const supabase = getSupabaseBrowserClient()
+      const { data } = await supabase.auth.getUser()
+      if (data?.user) {
+        const name = data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Admin'
+        setAdminName(name)
+        const initials = name.split(' ').map((s: string) => s[0]).join('').toUpperCase().slice(0, 2) || 'AD'
+        setAdminInitials(initials)
+        setAdminRole(data.user.email?.includes('admin') ? 'Super Admin' : 'Administrator')
+      }
+    }
+    loadProfile()
+  }, [])
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white px-4 py-4 md:px-6">
@@ -56,11 +75,11 @@ export default function Topbar({
             className="flex items-center gap-3 rounded-[18px] border border-gray-200 bg-gray-100 px-3 py-2 text-left transition hover:bg-gray-200"
           >
             <div className="grid h-10 w-10 place-items-center rounded-2xl bg-[linear-gradient(135deg,#a855f7,#7C3AED)] text-sm font-bold text-white">
-              PG
+              {adminInitials}
             </div>
             <div className="hidden sm:block">
-              <div className="text-sm font-medium text-[#0F1B3D]">Punam Gunjal</div>
-              <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Super Admin</div>
+              <div className="text-sm font-medium text-[#0F1B3D]">{adminName}</div>
+              <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">{adminRole}</div>
             </div>
             <ChevronDown className="h-4 w-4 text-[#6F7192]" />
           </button>
