@@ -42,7 +42,7 @@ export default function AdminShell({
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 z-50 h-screen w-[280px] border-r border-[#6d28d9]/10 bg-[#FFFFFF] p-5 md:hidden"
+              className="fixed left-0 top-0 z-50 h-screen w-[280px] overflow-y-auto border-r border-[#6d28d9]/10 bg-[#FFFFFF] p-5 md:hidden"
             >
               <div className="mb-6 flex items-center gap-3 px-2">
                 <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-[#6d28d9] to-cyan-400 text-white shadow-lg shadow-[#6d28d9]/20">
@@ -56,7 +56,7 @@ export default function AdminShell({
                 </div>
               </div>
 
-                <nav className="space-y-1.5">
+                <nav className="space-y-1.5 pb-8">
                   {mainItems.map((item) => {
                     const Icon = item.icon
                     return (

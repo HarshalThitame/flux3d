@@ -22,6 +22,7 @@ export type AdminAuditTargetType =
   | 'quote'
   | 'manufacturing'
   | 'admin_user'
+  | 'whatsapp_knowledge'
 
 export type ProfileRow = {
   id: string

@@ -406,7 +406,7 @@ export default function NavbarClient({
               onClick={() => setIsOpen(false)}
             />
 
-            <div className="navbar-mobile-panel absolute left-4 right-4 top-24 overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl">
+            <div className="navbar-mobile-panel absolute left-4 right-4 top-24 max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl border border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl">
               <div className="p-6">
                 {currentUser && (
                   <div className="mb-6 flex items-center gap-3 rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3">

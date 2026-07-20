@@ -198,13 +198,13 @@ function ArticleImage({ post, priority = false }: { post: BlogPost; priority?: b
 
 function MetaRow({ post, compact = false }: { post: BlogPost; compact?: boolean }) {
   return (
-    <div className={`flex flex-wrap items-center gap-3 font-bold text-white/[0.58] ${compact ? 'text-xs' : 'text-sm'}`}>
+    <div className={`flex flex-wrap items-center gap-3 font-bold text-[#6b7280] ${compact ? 'text-xs' : 'text-sm'}`}>
       <span className="inline-flex items-center gap-1.5">
-        <CalendarDays className="h-3.5 w-3.5 text-cyan-200" />
+        <CalendarDays className="h-3.5 w-3.5 text-[#6d28d9]" />
         {postDate(post)}
       </span>
       <span className="inline-flex items-center gap-1.5">
-        <Clock3 className="h-3.5 w-3.5 text-amber-200" />
+        <Clock3 className="h-3.5 w-3.5 text-[#6d28d9]" />
         {readingTime(post)} min read
       </span>
     </div>
@@ -253,7 +253,7 @@ export default function BlogClient({
   ]
 
   return (
-    <main className="blog-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-white">
+    <main className="blog-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-[#0F1B3D]">
       <BlogPremiumFX />
 
       <section className="blog-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-white sm:px-6 md:px-10 lg:px-12">
@@ -437,73 +437,73 @@ export default function BlogClient({
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-80px' }}
                   transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-                  whileHover={reduceMotion ? undefined : { y: -6 }}
-                  className="blog-featured-article group min-w-0 overflow-hidden rounded-lg border border-white/10 bg-white/[0.07]"
-                >
-                  <Link href={`/blog/${featuredPost.slug}`} className="grid h-full min-w-0 lg:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)]">
-                    <div className="relative min-h-[300px] lg:min-h-[470px]">
-                      <ArticleImage post={featuredPost} priority />
-                    </div>
+              whileHover={reduceMotion ? undefined : { y: -6 }}
+              className="blog-featured-article group min-w-0 overflow-hidden rounded-lg border border-purple-200 bg-white"
+            >
+              <Link href={`/blog/${featuredPost.slug}`} className="grid h-full min-w-0 lg:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)]">
+                <div className="relative min-h-[300px] lg:min-h-[470px]">
+                  <ArticleImage post={featuredPost} priority />
+                </div>
 
-                    <div className="flex min-h-full min-w-0 flex-col justify-between p-6 md:p-8 lg:p-10">
+                <div className="flex min-h-full min-w-0 flex-col justify-between p-6 md:p-8 lg:p-10">
+                  <div>
+                    <div className="mb-5 inline-flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-black uppercase text-[#6d28d9]">
+                      <BookMarked className="h-3.5 w-3.5" />
+                      Featured article
+                    </div>
+                    <MetaRow post={featuredPost} />
+                    <h2 className="mt-5 break-words text-2xl font-black leading-tight text-[#0F1B3D] sm:text-3xl md:text-4xl">
+                      {postTitle(featuredPost)}
+                    </h2>
+                    <p className="mt-4 max-w-2xl text-base font-semibold leading-8 text-[#6b7280]">
+                      {featuredPost.excerpt || 'A practical Flux3D guide for cleaner, more predictable 3D printing outcomes.'}
+                    </p>
+                  </div>
+
+                  <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-purple-200 pt-5">
+                    <div className="flex items-center gap-3">
+                      {featuredPost.author_avatar ? (
+                        <div className="relative h-11 w-11 overflow-hidden rounded-lg border border-purple-200 bg-purple-50">
+                          <Image src={featuredPost.author_avatar} alt={featuredPost.author_name || 'Flux3D author'} fill sizes="44px" className="object-cover" />
+                        </div>
+                      ) : (
+                        <div className="grid h-11 w-11 place-items-center rounded-lg bg-purple-100 text-sm font-black text-[#6d28d9]">
+                          {authorInitial(featuredPost)}
+                        </div>
+                      )}
                       <div>
-                        <div className="mb-5 inline-flex items-center gap-2 rounded-lg border border-cyan-200/20 bg-cyan-200/[0.10] px-3 py-1 text-xs font-black uppercase text-cyan-200">
-                          <BookMarked className="h-3.5 w-3.5" />
-                          Featured article
-                        </div>
-                        <MetaRow post={featuredPost} />
-                        <h2 className="mt-5 break-words text-2xl font-black leading-tight text-white sm:text-3xl md:text-4xl">
-                          {postTitle(featuredPost)}
-                        </h2>
-                        <p className="mt-4 max-w-2xl text-base font-semibold leading-8 text-white/[0.66]">
-                          {featuredPost.excerpt || 'A practical Flux3D guide for cleaner, more predictable 3D printing outcomes.'}
-                        </p>
-                      </div>
-
-                      <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5">
-                        <div className="flex items-center gap-3">
-                          {featuredPost.author_avatar ? (
-                            <div className="relative h-11 w-11 overflow-hidden rounded-lg border border-white/10 bg-white/10">
-                              <Image src={featuredPost.author_avatar} alt={featuredPost.author_name || 'Flux3D author'} fill sizes="44px" className="object-cover" />
-                            </div>
-                          ) : (
-                            <div className="grid h-11 w-11 place-items-center rounded-lg bg-white text-sm font-black text-[#05060a]">
-                              {authorInitial(featuredPost)}
-                            </div>
-                          )}
-                          <div>
-                            <p className="text-sm font-black text-white">{featuredPost.author_name || 'Flux3D Team'}</p>
-                            <p className="text-xs font-bold text-white/[0.52]">Flux3D editorial</p>
-                          </div>
-                        </div>
-                        <span className="inline-flex items-center gap-2 text-sm font-black text-cyan-200">
-                          Read article
-                          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                        </span>
+                        <p className="text-sm font-black text-[#0F1B3D]">{featuredPost.author_name || 'Flux3D Team'}</p>
+                        <p className="text-xs font-bold text-[#6b7280]">Flux3D editorial</p>
                       </div>
                     </div>
-                  </Link>
-                </motion.article>
-              ) : (
-                <div className="blog-empty-panel rounded-lg border border-white/10 bg-white/[0.07] p-10 text-center">
-                  <p className="text-2xl font-black text-white">No blog posts yet.</p>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-white/[0.62]">Check back soon for Flux3D guides and production notes.</p>
+                    <span className="inline-flex items-center gap-2 text-sm font-black text-[#6d28d9]">
+                      Read article
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            </motion.article>
+          ) : (
+            <div className="blog-empty-panel rounded-lg border border-purple-200 bg-white p-10 text-center">
+              <p className="text-2xl font-black text-[#0F1B3D]">No blog posts yet.</p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-[#6b7280]">Check back soon for Flux3D guides and production notes.</p>
                 </div>
               )}
             </div>
 
-            <aside className="blog-filter-panel rounded-lg border border-white/10 bg-white/[0.07] p-5 backdrop-blur lg:sticky lg:top-28">
-              <div className="flex items-center gap-2 text-sm font-black uppercase text-cyan-200">
+            <aside className="blog-filter-panel rounded-lg border border-purple-200 bg-white p-5 shadow-sm lg:sticky lg:top-28">
+              <div className="flex items-center gap-2 text-sm font-black uppercase text-[#6d28d9]">
                 <Search className="h-4 w-4" />
                 Find articles
               </div>
-              <label className="blog-search-field mt-4 flex min-h-[46px] items-center gap-2 rounded-lg border border-white/10 bg-white/[0.07] px-4 text-sm font-bold text-white/[0.68] focus-within:border-cyan-200/40 focus-within:bg-cyan-200/[0.08]">
-                <Search className="h-4 w-4 shrink-0" />
+              <label className="blog-search-field mt-4 flex min-h-[46px] items-center gap-2 rounded-lg border border-purple-200 bg-white px-4 text-sm font-bold text-[#6b7280] shadow-sm focus-within:border-[#6d28d9]/40 focus-within:ring-1 focus-within:ring-[#6d28d9]/20">
+                <Search className="h-4 w-4 shrink-0 text-[#6b7280]" />
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search topics"
-                  className="min-w-0 flex-1 bg-transparent text-white outline-none placeholder:text-white/[0.42]"
+                  className="min-w-0 flex-1 bg-transparent text-[#0F1B3D] outline-none placeholder:text-[#9ca3af]"
                 />
               </label>
 
@@ -518,8 +518,8 @@ export default function BlogClient({
                       onClick={() => setActiveTopic(topic)}
                       className={`blog-topic-chip min-h-[36px] rounded-lg px-3 text-xs font-black transition ${
                         active
-                          ? 'is-active bg-white text-[#05060a] shadow-[0_12px_28px_rgba(255,255,255,0.10)]'
-                          : 'border border-white/10 bg-white/[0.07] text-white/[0.68] hover:border-cyan-200/40 hover:text-white'
+                          ? 'is-active bg-[#6d28d9] text-white shadow-[0_8px_20px_rgba(109,40,217,0.20)]'
+                          : 'border border-purple-200 bg-white text-[#6b7280] hover:border-[#6d28d9]/40 hover:text-[#6d28d9]'
                       }`}
                     >
                       {topic}
@@ -532,13 +532,13 @@ export default function BlogClient({
                 {topicHighlights.map((highlight) => {
                   const Icon = highlight.icon
                   return (
-                    <div key={highlight.label} className="blog-highlight-row flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.055] p-3">
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-cyan-200/[0.10] text-cyan-200">
+                    <div key={highlight.label} className="blog-highlight-row flex items-center gap-3 rounded-lg border border-purple-200 bg-purple-50 p-3">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#6d28d9] text-white">
                         <Icon className="h-4 w-4" />
                       </span>
                       <div className="min-w-0">
-                        <p className="text-sm font-black text-white">{highlight.label}</p>
-                        <p className="text-xs font-bold leading-5 text-white/[0.56]">{highlight.value}</p>
+                        <p className="text-sm font-black text-[#0F1B3D]">{highlight.label}</p>
+                        <p className="text-xs font-bold leading-5 text-[#6b7280]">{highlight.value}</p>
                       </div>
                     </div>
                   )
@@ -554,15 +554,15 @@ export default function BlogClient({
         <div className="relative z-10 mx-auto w-full max-w-[1220px]">
           <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <div className="flex items-center gap-2 text-sm font-black uppercase text-cyan-200">
+              <div className="flex items-center gap-2 text-sm font-black uppercase text-[#6d28d9]">
                 <Wand2 className="h-4 w-4" />
                 Latest notes
               </div>
-              <h2 className="mt-2 break-words text-3xl font-black tracking-[0] text-white md:text-5xl">
+              <h2 className="mt-2 break-words text-3xl font-black tracking-[0] text-[#0F1B3D] md:text-5xl">
                 Manufacturing reads
               </h2>
             </div>
-            <p className="text-sm font-bold text-white/[0.58]">
+            <p className="text-sm font-bold text-[#6b7280]">
               Page {page} of {totalPages}
             </p>
           </div>
@@ -580,7 +580,7 @@ export default function BlogClient({
                   exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.18 } }}
                   transition={{ duration: 0.35, delay: index * 0.03 }}
                   whileHover={reduceMotion ? undefined : { y: -6 }}
-                  className="blog-article-card group min-w-0 overflow-hidden rounded-lg border border-white/10 bg-white/[0.07] transition"
+                  className="blog-article-card group min-w-0 overflow-hidden rounded-lg border border-purple-200 bg-white shadow-sm transition"
                 >
                   <Link href={`/blog/${post.slug}`} className="flex h-full min-w-0 flex-col">
                     <div className="relative aspect-[16/10]">
@@ -588,18 +588,18 @@ export default function BlogClient({
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col p-5">
                       <MetaRow post={post} compact />
-                      <h3 className="mt-4 break-words text-xl font-black leading-snug tracking-[0] text-white transition-colors group-hover:text-cyan-100">
+                      <h3 className="mt-4 break-words text-xl font-black leading-snug tracking-[0] text-[#0F1B3D] transition-colors group-hover:text-[#6d28d9]">
                         {postTitle(post)}
                       </h3>
-                      <p className="mt-3 line-clamp-3 text-sm font-semibold leading-6 text-white/[0.62]">
+                      <p className="mt-3 line-clamp-3 text-sm font-semibold leading-6 text-[#6b7280]">
                         {post.excerpt || 'A practical Flux3D guide for cleaner, more predictable 3D printing outcomes.'}
                       </p>
                       <div className="mt-auto flex items-center justify-between gap-3 pt-6">
-                        <span className="inline-flex min-w-0 items-center gap-2 text-xs font-bold text-white/[0.58]">
-                          <UserRound className="h-3.5 w-3.5 shrink-0 text-cyan-200" />
+                        <span className="inline-flex min-w-0 items-center gap-2 text-xs font-bold text-[#6b7280]">
+                          <UserRound className="h-3.5 w-3.5 shrink-0 text-[#6d28d9]" />
                           <span className="truncate">{post.author_name || 'Flux3D Team'}</span>
                         </span>
-                        <span className="inline-flex shrink-0 items-center gap-1 text-sm font-black text-cyan-200">
+                        <span className="inline-flex shrink-0 items-center gap-1 text-sm font-black text-[#6d28d9]">
                           Read
                           <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                         </span>
@@ -615,10 +615,10 @@ export default function BlogClient({
             <motion.div
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              className="blog-empty-panel rounded-lg border border-white/10 bg-white/[0.07] p-10 text-center"
+              className="blog-empty-panel rounded-lg border border-purple-200 bg-white p-10 text-center"
             >
-              <p className="text-2xl font-black text-white">No matching articles.</p>
-              <p className="mt-2 text-sm font-semibold leading-6 text-white/[0.62]">Try a different topic or clear the search field.</p>
+              <p className="text-2xl font-black text-[#0F1B3D]">No matching articles.</p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-[#6b7280]">Try a different topic or clear the search field.</p>
               <button
                 type="button"
                 onClick={() => {
@@ -637,7 +637,7 @@ export default function BlogClient({
               {page > 1 && (
                 <Link
                   href={page - 1 === 1 ? '/blog' : `/blog?page=${page - 1}`}
-                  className="blog-page-link rounded-lg border border-white/10 bg-white/[0.07] px-4 py-2 text-sm font-black text-white transition hover:border-cyan-200/40 hover:text-cyan-100"
+                  className="blog-page-link rounded-lg border border-purple-200 bg-white px-4 py-2 text-sm font-black text-[#6d28d9] shadow-sm transition hover:border-[#6d28d9]/50 hover:bg-purple-50"
                 >
                   Previous
                 </Link>
@@ -648,10 +648,10 @@ export default function BlogClient({
                   <Link
                     key={pageNumber}
                     href={pageNumber === 1 ? '/blog' : `/blog?page=${pageNumber}`}
-                    className={`blog-page-link rounded-lg border px-4 py-2 text-sm font-black transition ${
+                    className={`blog-page-link rounded-lg border px-4 py-2 text-sm font-black shadow-sm transition ${
                       pageNumber === page
-                        ? 'border-white bg-white text-[#05060a]'
-                        : 'border-white/10 bg-white/[0.07] text-white hover:border-cyan-200/40 hover:text-cyan-100'
+                        ? 'border-[#6d28d9] bg-[#6d28d9] text-white'
+                        : 'border-purple-200 bg-white text-[#6d28d9] hover:border-[#6d28d9]/50 hover:bg-purple-50'
                     }`}
                   >
                     {pageNumber}
@@ -661,7 +661,7 @@ export default function BlogClient({
               {page < totalPages && (
                 <Link
                   href={`/blog?page=${page + 1}`}
-                  className="blog-page-link rounded-lg border border-white/10 bg-white/[0.07] px-4 py-2 text-sm font-black text-white transition hover:border-cyan-200/40 hover:text-cyan-100"
+                  className="blog-page-link rounded-lg border border-purple-200 bg-white px-4 py-2 text-sm font-black text-[#6d28d9] shadow-sm transition hover:border-[#6d28d9]/50 hover:bg-purple-50"
                 >
                   Next
                 </Link>

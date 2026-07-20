@@ -81,7 +81,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   }
 
   return (
-    <div className="blog-premium-shell min-h-screen overflow-hidden bg-[#05060a] text-white">
+    <div className="blog-premium-shell min-h-screen overflow-hidden">
       <Navbar transparent />
       <BlogClientBoundary posts={posts} page={page} totalPages={Math.max(1, Math.ceil(total / limit))} />
     </div>

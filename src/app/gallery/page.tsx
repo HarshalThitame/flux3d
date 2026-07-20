@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function GalleryPage() {
   return (
-    <div className="gallery-premium-shell min-h-screen overflow-hidden bg-[#05060a] text-white">
+    <div className="gallery-premium-shell min-h-screen overflow-hidden">
       <Navbar transparent />
       <GalleryClientBoundary />
     </div>

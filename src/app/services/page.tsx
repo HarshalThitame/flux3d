@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function ServicesPage() {
   return (
-    <div className="services-premium-shell min-h-screen overflow-hidden bg-[#05060A] text-white">
+    <div className="services-premium-shell min-h-screen overflow-hidden">
       <Navbar transparent />
       <ServicesClientBoundary />
     </div>

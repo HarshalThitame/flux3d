@@ -5,7 +5,7 @@ import RouteChunkLoader from '@/components/RouteChunkLoader'
 
 const GalleryClient = dynamic(() => import('./GalleryClient'), {
   ssr: false,
-  loading: () => <RouteChunkLoader className="bg-[#05060a] text-white" minHeight="86svh" label="Loading gallery" />,
+  loading: () => <RouteChunkLoader className="text-[#0F1B3D]" minHeight="86svh" label="Loading gallery" />,
 })
 
 export default function GalleryClientBoundary() {

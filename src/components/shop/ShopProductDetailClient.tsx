@@ -1,15 +1,34 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, ChevronUp, ShoppingBag, Star } from 'lucide-react'
 import ShopVariantControls from '@/components/shop/ShopVariantControls'
 import QuantityStepper from '@/components/shop/QuantityStepper'
 import NotifyMeForm from '@/components/shop/NotifyMeForm'
 import ProductRecommendations from '@/components/shop/ProductRecommendations'
 import ReviewModal, { type ReviewEligibility } from '@/components/shop/ReviewModal'
+
+function useScrollLock(locked: boolean) {
+  useEffect(() => {
+    if (!locked) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [locked])
+}
+
+function useEscape(handler: () => void, active: boolean) {
+  useEffect(() => {
+    if (!active) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handler() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [handler, active])
+}
 import WishlistButton from '@/components/shop/WishlistButton'
 import type { AppUserProfile } from '@/lib/auth/server'
 import type { ShopPublicProduct, ShopPublicReview } from '@/lib/shop/public-types'
@@ -88,6 +107,8 @@ export default function ShopProductDetailClient({
   )
   const [toast, setToast] = useState('')
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+  useScrollLock(Boolean(lightboxImage))
+  useEscape(() => setLightboxImage(null), Boolean(lightboxImage))
 
   const resolvedSku = useMemo(() => resolveShopSku(product.skus, product.variant_options, selected), [product, selected])
   const visibleImage = resolvedSku?.variant_image_url || selectedImage || images[0] || ''
@@ -268,14 +289,28 @@ export default function ShopProductDetailClient({
           {toast}
         </div>
       )}
-      {lightboxImage && (
-        <div className="fixed inset-0 z-[140] grid place-items-center bg-slate-950/80 p-4 backdrop-blur-sm">
-          <button type="button" aria-label="Close image preview" className="absolute inset-0" onClick={() => setLightboxImage(null)} />
-          <div className="relative z-10 aspect-square w-full max-w-3xl overflow-hidden rounded-3xl bg-white">
-            <Image src={lightboxImage} alt="Review image" fill sizes="90vw" className="object-contain" />
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[140] grid place-items-center bg-slate-950/85 p-4 backdrop-blur-md"
+          >
+            <button type="button" aria-label="Close image preview" className="absolute inset-0" onClick={() => setLightboxImage(null)} />
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="relative z-10 aspect-square w-full max-w-3xl overflow-hidden rounded-3xl bg-white"
+            >
+              <Image src={lightboxImage} alt="Review image" fill sizes="90vw" className="object-contain" />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="mx-auto max-w-7xl">
         <nav className="mb-6 flex flex-wrap gap-2 text-sm text-[var(--text-muted)]">
           <Link href="/" className="hover:text-[var(--brand-primary)]">Home</Link>

@@ -50,7 +50,7 @@ export default function ShopNavControls({
   return (
     <>
       <ShopCartNavButton mobile={mobile} onOpenAction={onOpenAction} />
-      {isShopCartOpen ? <ShopCartDrawer /> : null}
+      <ShopCartDrawer open={isShopCartOpen} />
     </>
   )
 }

@@ -62,7 +62,7 @@ export default function HowToOrder() {
         >
           <div>
             <span className="text-xs font-bold uppercase text-[#6d28d9]">Simple process</span>
-            <h2 className="mt-3 max-w-3xl !text-4xl font-extrabold leading-tight !text-white md:!text-5xl">
+            <h2 className="mt-3 max-w-3xl !text-4xl font-extrabold leading-tight !text-[#0F1B3D] md:!text-5xl">
               A precise path from file to finished part.
             </h2>
           </div>
@@ -93,13 +93,13 @@ export default function HowToOrder() {
                 className="services-step-card relative rounded-lg border border-slate-200 bg-[#F8FAFC] p-5 shadow-[0_16px_44px_rgba(15,23,42,0.06)]"
               >
                 <div className="mb-5 flex items-start justify-between gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#101828] text-white shadow-[0_16px_34px_rgba(16,24,40,0.18)]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#6d28d9] text-white shadow-[0_16px_34px_rgba(109,40,217,0.18)]">
                     <step.icon className="h-5 w-5" />
                   </div>
                   <span className="text-sm font-extrabold text-[#6d28d9]">{step.step}</span>
                 </div>
-                <p className="mb-3 text-xs font-bold uppercase text-[#98A2B3]">{step.detail}</p>
-                <h3 className="!text-lg font-extrabold !text-white">{step.title}</h3>
+                <p className="mb-3 text-xs font-bold uppercase text-[#6b7280]">{step.detail}</p>
+                <h3 className="!text-lg font-extrabold !text-[#0F1B3D]">{step.title}</h3>
                 <p className="mt-3 text-sm leading-7 text-[#667085]">{step.description}</p>
               </motion.article>
             ))}
@@ -110,15 +110,15 @@ export default function HowToOrder() {
           initial={{ opacity: 0, y: 18 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.36, duration: 0.5 }}
-          className="services-help-panel mt-8 rounded-lg border border-slate-200 bg-[#101828] p-5 text-white shadow-[0_22px_60px_rgba(16,24,40,0.18)] md:flex md:items-center md:justify-between"
+          className="services-help-panel mt-8 rounded-lg border border-purple-200 bg-[#6d28d9] p-5 text-white shadow-[0_22px_60px_rgba(109,40,217,0.18)] md:flex md:items-center md:justify-between"
         >
           <div>
             <div className="text-sm font-extrabold text-white">Need help before uploading?</div>
-            <p className="mt-1 text-sm leading-6 text-white/[0.64]">Send references, measurements, or photos. We can guide the next step.</p>
+            <p className="mt-1 text-sm leading-6 text-white/70">Send references, measurements, or photos. We can guide the next step.</p>
           </div>
           <Link
             href="/instant-quote"
-            className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-5 text-sm font-bold text-[#101828] transition hover:bg-[#ede9fe] md:mt-0"
+            className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-5 text-sm font-bold text-[#6d28d9] transition hover:bg-purple-50 md:mt-0"
           >
             Start Project
             <ArrowRight className="h-4 w-4" />
