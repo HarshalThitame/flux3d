@@ -1,10 +1,12 @@
 'use client'
 
-import { useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft,
+  ArrowUpDown,
   Ban,
+  Check,
   CheckCircle2,
   Circle,
   Clock,
@@ -83,6 +85,8 @@ export default function OrderDetailClient({ initialOrder }: Props) {
   const [toast, setToast] = useState<AdminToastState>(null)
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
+  const [showStatusDialog, setShowStatusDialog] = useState(false)
+  const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null)
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[] | null>(null)
   const [auditLogsLoading, setAuditLogsLoading] = useState(false)
   const toastTimer = useRef<number | null>(null)
@@ -213,6 +217,8 @@ export default function OrderDetailClient({ initialOrder }: Props) {
     }
   }
 
+  useEffect(() => { loadAuditLogs() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <>
       <div className="w-full bg-gray-50 text-gray-900">
@@ -267,7 +273,16 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                 <select
                   value={order.status}
                   disabled={updatingStatus}
-                  onChange={(event) => updateStatus(event.target.value as OrderStatus)}
+                  onChange={(event) => {
+                    const nextStatus = event.target.value as OrderStatus
+                    if (nextStatus === 'cancelled') {
+                      setShowCancelDialog(true)
+                    } else {
+                      setPendingStatus(nextStatus)
+                      setShowStatusDialog(true)
+                    }
+                    event.target.value = order.status
+                  }}
                   className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-100 disabled:opacity-50"
                   aria-label="Update order status"
                 >
@@ -311,22 +326,13 @@ export default function OrderDetailClient({ initialOrder }: Props) {
               </Card>
 
               <Card title="Activity Log">
-                {auditLogs === null && !auditLogsLoading && (
-                  <button
-                    type="button"
-                    onClick={loadAuditLogs}
-                    className="inline-flex h-9 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-                  >
-                    Load activity log
-                  </button>
-                )}
                 {auditLogsLoading && (
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <LoaderCircle className="h-4 w-4 animate-spin" />
-                    Loading...
+                    Loading activity...
                   </div>
                 )}
-                {auditLogs !== null && auditLogs.length === 0 && (
+                {auditLogs !== null && !auditLogsLoading && auditLogs.length === 0 && (
                   <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-600">No activity recorded for this order.</div>
                 )}
                 {auditLogs !== null && auditLogs.length > 0 && (
@@ -565,6 +571,48 @@ export default function OrderDetailClient({ initialOrder }: Props) {
       </div>
 
       <AdminToast toast={toast} />
+
+      {showStatusDialog && pendingStatus && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
+            <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4">
+              <div className="grid h-9 w-9 place-items-center rounded-full bg-violet-100 text-violet-600">
+                <ArrowUpDown className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Update Status</h3>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-sm text-gray-600">
+                Move <span className="font-semibold text-gray-900">{order.orderNumber}</span> from{' '}
+                <span className="font-medium text-gray-700">{STATUS_LABELS[order.status]}</span> to{' '}
+                <span className="font-medium text-violet-700">{STATUS_LABELS[pendingStatus]}</span>?
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-5 py-4">
+              <button
+                type="button"
+                onClick={() => { setShowStatusDialog(false); setPendingStatus(null) }}
+                className="inline-flex h-10 items-center rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={updatingStatus}
+                onClick={() => {
+                  setShowStatusDialog(false)
+                  if (pendingStatus) updateStatus(pendingStatus)
+                  setPendingStatus(null)
+                }}
+                className="inline-flex h-10 items-center gap-2 rounded-lg bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50"
+              >
+                {updatingStatus ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCancelDialog && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/50 p-4 backdrop-blur-sm">
