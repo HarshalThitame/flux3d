@@ -388,19 +388,19 @@ async function generatePdf(
     const blockX = contentX + contentW - blockW
     const rowH = 20
     const rows = [
-      { label: 'Subtotal', value: `₹${subtotal.toLocaleString('en-IN')}` },
-      { label: 'Post-processing', value: `₹${postProcessingCharges.toLocaleString('en-IN')}` },
-      { label: 'Overhead', value: `₹${overheadAmount.toLocaleString('en-IN')}` },
-      { label: 'Margin', value: `₹${marginAmount.toLocaleString('en-IN')}` },
-      { label: 'Total price', value: `₹${totalPrice.toLocaleString('en-IN')}` },
-      ...(cartDiscountAmount > 0 ? [{ label: `Cart discount ${Number(order.cart_discount_percent ?? 0).toLocaleString('en-IN')}%`, value: `-₹${cartDiscountAmount.toLocaleString('en-IN')}` }] : []),
-      ...(couponDiscountAmount > 0 ? [{ label: `Coupon${order.coupon_code ? ` (${order.coupon_code})` : ''}`, value: `-₹${couponDiscountAmount.toLocaleString('en-IN')}` }] : []),
-      ...(offerDiscountAmount > 0 ? [{ label: `Offer${order.offer_name ? ` (${order.offer_name})` : ''}`, value: `-₹${offerDiscountAmount.toLocaleString('en-IN')}` }] : []),
-      ...(fallbackDiscountAmount > 0 ? [{ label: 'Discount', value: `-₹${fallbackDiscountAmount.toLocaleString('en-IN')}` }] : []),
-      { label: 'Final price', value: `₹${finalPrice.toLocaleString('en-IN')}` },
-      ...(cgstAmount > 0 ? [{ label: `CGST (${cgstPercent}%)`, value: `₹${cgstAmount.toLocaleString('en-IN')}` }] : []),
-      ...(sgstAmount > 0 ? [{ label: `SGST (${sgstPercent}%)`, value: `₹${sgstAmount.toLocaleString('en-IN')}` }] : []),
-      { label: 'Delivery', value: deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge.toLocaleString('en-IN')}` },
+      { label: 'Subtotal', value: `${currencySym}${subtotal.toLocaleString('en-IN')}` },
+      { label: 'Post-processing', value: `${currencySym}${postProcessingCharges.toLocaleString('en-IN')}` },
+      { label: 'Overhead', value: `${currencySym}${overheadAmount.toLocaleString('en-IN')}` },
+      { label: 'Margin', value: `${currencySym}${marginAmount.toLocaleString('en-IN')}` },
+      { label: 'Total price', value: `${currencySym}${totalPrice.toLocaleString('en-IN')}` },
+      ...(cartDiscountAmount > 0 ? [{ label: `Cart discount ${Number(order.cart_discount_percent ?? 0).toLocaleString('en-IN')}%`, value: `-${currencySym}${cartDiscountAmount.toLocaleString('en-IN')}` }] : []),
+      ...(couponDiscountAmount > 0 ? [{ label: `Coupon${order.coupon_code ? ` (${order.coupon_code})` : ''}`, value: `-${currencySym}${couponDiscountAmount.toLocaleString('en-IN')}` }] : []),
+      ...(offerDiscountAmount > 0 ? [{ label: `Offer${order.offer_name ? ` (${order.offer_name})` : ''}`, value: `-${currencySym}${offerDiscountAmount.toLocaleString('en-IN')}` }] : []),
+      ...(fallbackDiscountAmount > 0 ? [{ label: 'Discount', value: `-${currencySym}${fallbackDiscountAmount.toLocaleString('en-IN')}` }] : []),
+      { label: 'Final price', value: `${currencySym}${finalPrice.toLocaleString('en-IN')}` },
+      ...(cgstAmount > 0 ? [{ label: `CGST (${cgstPercent}%)`, value: `${currencySym}${cgstAmount.toLocaleString('en-IN')}` }] : []),
+      ...(sgstAmount > 0 ? [{ label: `SGST (${sgstPercent}%)`, value: `${currencySym}${sgstAmount.toLocaleString('en-IN')}` }] : []),
+      { label: 'Delivery', value: deliveryCharge === 0 ? 'FREE' : `${currencySym}${deliveryCharge.toLocaleString('en-IN')}` },
     ]
 
     rows.forEach((row, index) => {
@@ -466,7 +466,7 @@ async function generatePdf(
     doc.restore()
     doc.fillColor('#7EA8CC').font(INVOICE_FONT_REGULAR).fontSize(7)
     doc.text(
-      `${settings.gstNumber || 'GSTIN: —'} | ${settings.cinNumber || 'CIN: —'} | ${websiteValue.replace(/^https?:\/\//, '')}`,
+      `${settings.gstNumber || 'GSTIN: —'} | ${settings.panNumber || 'PAN: —'} | ${settings.sacHsnCode ? `SAC: ${settings.sacHsnCode}` : ''} | ${settings.cinNumber || 'CIN: —'} | ${websiteValue.replace(/^https?:\/\//, '')}`,
       sidebarW,
       footerY + 8,
       { width: pageW - sidebarW, align: 'center' }
@@ -483,8 +483,10 @@ async function generatePdf(
   const cardY = y
   const addressBlock = [
     ...addressLines,
-    settings.gstNumber ? `GSTIN: ${settings.gstNumber}` : 'GSTIN: —',
-  ]
+    settings.gstNumber ? `GST: ${settings.gstNumber}` : null,
+    settings.panNumber ? `PAN: ${settings.panNumber}` : null,
+    settings.msmeNumber ? `MSME: ${settings.msmeNumber}` : null,
+  ].filter(Boolean) as string[]
   const billH = drawPartyCard(contentX, cardY, cardW, 'BILL TO', [order.full_name, ...addressBlock])
   drawPartyCard(contentX + cardW + partyGap, cardY, cardW, 'SHIP TO', [order.full_name, ...addressBlock])
   drawMetaCard(contentX + (cardW + partyGap) * 2, cardY, cardW)
