@@ -6,6 +6,7 @@ export async function calculateShippingFromRules(params: {
   state: string
   subtotal: number
   weightGrams?: number
+  settings?: Pick<BusinessSettings, 'deliveryChargeThreshold' | 'defaultDeliveryCharge'>
 }): Promise<{ chargePaise: number; available: boolean; reason?: string }> {
   const supabase = createAdminSupabaseClient()
   const { data: rules, error } = await supabase
@@ -41,7 +42,9 @@ export async function calculateShippingFromRules(params: {
   }
 
   // Fallback to business settings — return paise
-  const chargePaise = params.subtotal >= 499 ? 0 : 5000
+  const threshold = Number(params.settings?.deliveryChargeThreshold ?? 499)
+  const charge = Number(params.settings?.defaultDeliveryCharge ?? 50)
+  const chargePaise = params.subtotal >= threshold ? 0 : Math.round(charge * 100)
   return { chargePaise, available: true }
 }
 

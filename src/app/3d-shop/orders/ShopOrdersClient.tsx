@@ -186,7 +186,7 @@ export default function ShopOrdersClient() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-7 overflow-hidden rounded-[30px] border border-white bg-white/78 p-5 shadow-[0_28px_90px_rgba(26,26,26,0.11)] backdrop-blur-2xl md:p-7"
+          className="mb-7 overflow-hidden rounded-[30px] border border-[var(--border-light)] bg-white p-5 shadow-[0_28px_90px_rgba(26,26,26,0.11)] backdrop-blur-2xl md:p-7"
         >
           <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
@@ -267,7 +267,7 @@ export default function ShopOrdersClient() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12 }}
-          className="sticky top-24 z-20 mb-6 overflow-x-auto rounded-2xl border border-white bg-white/80 p-1.5 shadow-[var(--shadow-sm)] backdrop-blur-xl"
+          className="sticky top-24 z-20 mb-6 overflow-x-auto rounded-2xl border border-[var(--border-light)] bg-white p-1.5 shadow-[var(--shadow-sm)] backdrop-blur-xl"
         >
           <div className="flex min-w-max gap-1">
             {filters.map((item) => {

@@ -23,6 +23,7 @@ export default function ProductCard({
   actionLabel?: string
 }) {
   const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const [added, setAdded] = useState(false)
   const addItem = useShopCartStore((state) => state.addItem)
   const images = getShopProductImages(product)
   const badge = getShopProductBadge(product)
@@ -53,6 +54,8 @@ export default function ProductCard({
       quantity: 1,
       maxStock: directSku.pre_order_eta ? 10 : directSku.stock_quantity,
     })
+    setAdded(true)
+    window.setTimeout(() => setAdded(false), 1500)
   }
 
   return (
@@ -105,7 +108,7 @@ export default function ProductCard({
             className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-[var(--border-brand)] bg-[var(--brand-faint)] px-3 text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             <ShoppingBag className="h-4 w-4" />
-            {actionLabel}
+            {added ? 'Added ✓' : actionLabel}
           </button>
         </div>
       </article>

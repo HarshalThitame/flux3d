@@ -97,8 +97,8 @@ export default async function ShopHomePage() {
           <div className="shop-hero-frame" aria-hidden="true" />
 
           <div className="relative z-10 mx-auto flex min-h-[86svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-8 pt-8 md:pt-10 lg:pt-12">
-            <div className="shop-fade-up mb-5 flex items-center gap-2 text-sm font-medium text-white/[0.64]">
-              <Link href="/" className="transition hover:text-white">Home</Link>
+            <div className="shop-fade-up mb-5 flex items-center gap-2 text-sm font-medium text-white">
+              <Link href="/" className="transition hover:text-white/70">Home</Link>
               <ChevronRight className="h-3.5 w-3.5" />
               <span className="text-white">3D Shop</span>
             </div>
@@ -114,7 +114,7 @@ export default async function ShopHomePage() {
                   Premium 3D printed pieces, ready to own.
                 </h1>
 
-                <p className="shop-fade-up mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-white/[0.72] sm:text-lg lg:max-w-2xl">
+                <p className="shop-fade-up mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-white sm:text-lg lg:max-w-2xl">
                   Shop curated Flux3D objects with clean finishes, useful forms, and ready-to-ship presentation for desks, creators, gifting, and everyday setups.
                 </p>
 
@@ -144,7 +144,7 @@ export default async function ShopHomePage() {
                           <Icon className="h-4 w-4 text-cyan-200" />
                           {stat.value}
                         </div>
-                        <div className="mt-2 text-xs font-bold uppercase text-white/[0.52]">{stat.label}</div>
+                        <div className="mt-2 text-xs font-bold uppercase text-white">{stat.label}</div>
                       </div>
                     )
                   })}
@@ -190,7 +190,7 @@ export default async function ShopHomePage() {
                     <h2 className="mt-2 line-clamp-2 text-xl font-black leading-tight text-white">
                       {heroProduct?.name || 'Browse Flux3D picks'}
                     </h2>
-                    <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-white/[0.62]">
+                    <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-white">
                       {heroProduct?.description || 'A premium shelf of ready-to-ship 3D printed products and useful desk objects.'}
                     </p>
                     <span className="mt-4 inline-flex items-center gap-2 text-sm font-black text-cyan-200">
@@ -258,7 +258,7 @@ export default async function ShopHomePage() {
                     </div>
                     <h3 className="mt-3 text-xl font-black text-white">{category.name}</h3>
                     {category.description ? (
-                      <p className="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-white/[0.64]">{category.description}</p>
+                      <p className="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-white">{category.description}</p>
                     ) : null}
                   </div>
                 </Link>

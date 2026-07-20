@@ -1,0 +1,110 @@
+[
+  {
+    "id": "pricing_quote",
+    "question": "How do I request a quote?",
+    "expectedSourceKeys": ["quote-process", "pricing"],
+    "requiredFacts": ["share the file or product requirement", "material", "quantity", "deadline"],
+    "forbiddenClaims": ["exact price", "instant quote"],
+    "responseKind": "clarify",
+    "maxAnswerChars": 600
+  },
+  {
+    "id": "supported_files",
+    "question": "What file formats do you support?",
+    "expectedSourceKeys": ["files"],
+    "requiredFacts": ["STL", "3MF", "STEP", "IGES", "OBJ"],
+    "forbiddenClaims": ["only STL"],
+    "responseKind": "answer",
+    "maxAnswerChars": 600
+  },
+  {
+    "id": "pla_plus_prototype",
+    "question": "What material should I use for a polished prototype?",
+    "expectedSourceKeys": ["materials-pla-plus"],
+    "requiredFacts": ["better toughness", "clean surface finish", "concept models", "budget-friendly"],
+    "forbiddenClaims": ["best for hot environments", "outdoor use"],
+    "responseKind": "answer",
+    "maxAnswerChars": 700
+  },
+  {
+    "id": "abs_engineering",
+    "question": "Which material is better for an enclosure?",
+    "expectedSourceKeys": ["materials-abs"],
+    "requiredFacts": ["durable engineering plastic", "impact resistance", "stronger service temperatures", "enclosure"],
+    "forbiddenClaims": ["easy to print", "outdoor ready"],
+    "responseKind": "answer",
+    "maxAnswerChars": 700
+  },
+  {
+    "id": "asa_outdoor",
+    "question": "I need a part that will stay outdoors. What should I choose?",
+    "expectedSourceKeys": ["materials-asa"],
+    "requiredFacts": ["outdoor-ready", "UV and weather resistance", "vehicle exterior parts", "weatherproof covers"],
+    "forbiddenClaims": ["less suitable for outdoor use"],
+    "responseKind": "answer",
+    "maxAnswerChars": 700
+  },
+  {
+    "id": "shipping_scope",
+    "question": "Do you ship internationally?",
+    "expectedSourceKeys": ["shipping"],
+    "requiredFacts": ["delivery is available across serviceable locations in India", "international shipping is not offered unless confirmed separately in writing"],
+    "forbiddenClaims": ["ships everywhere"],
+    "responseKind": "answer",
+    "maxAnswerChars": 700
+  },
+  {
+    "id": "payment_verification",
+    "question": "Can you confirm my order before payment is verified?",
+    "expectedSourceKeys": ["payment"],
+    "requiredFacts": ["order confirmation only happens after server-side payment verification", "should not promise production or dispatch before payment verification"],
+    "forbiddenClaims": ["confirmed before payment"],
+    "responseKind": "answer",
+    "maxAnswerChars": 700
+  },
+  {
+    "id": "bulk_orders",
+    "question": "Can you handle a bulk business order?",
+    "expectedSourceKeys": ["bulk-business"],
+    "requiredFacts": ["small-batch production", "corporate gifting", "repeatable business orders", "separate quote"],
+    "forbiddenClaims": ["same price as single orders"],
+    "responseKind": "answer",
+    "maxAnswerChars": 700
+  },
+  {
+    "id": "quality_reprint",
+    "question": "What happens if the print fails quality check?",
+    "expectedSourceKeys": ["quality-check"],
+    "requiredFacts": ["reprints it before dispatch", "visible defects", "support marks", "fit-critical areas"],
+    "forbiddenClaims": ["ships as-is"],
+    "responseKind": "answer",
+    "maxAnswerChars": 700
+  },
+  {
+    "id": "file_confidentiality",
+    "question": "Are my design files kept private?",
+    "expectedSourceKeys": ["confidentiality"],
+    "requiredFacts": ["used only for quoting, review, and order production", "handled under the published privacy policy", "shared with the people needed to fulfill the order"],
+    "forbiddenClaims": ["publicly shared"],
+    "responseKind": "answer",
+    "maxAnswerChars": 700
+  },
+  {
+    "id": "contact_support",
+    "question": "How do I contact support?",
+    "expectedSourceKeys": ["contact"],
+    "requiredFacts": ["website contact page", "WhatsApp", "public support email"],
+    "forbiddenClaims": ["only by phone"],
+    "responseKind": "answer",
+    "maxAnswerChars": 700
+  },
+  {
+    "id": "greeting_fallback",
+    "question": "Hi",
+    "expectedSourceKeys": [],
+    "requiredFacts": ["thanks for reaching out to Flux3D"],
+    "forbiddenClaims": ["I am an AI"],
+    "responseKind": "clarify",
+    "maxAnswerChars": 300
+  }
+]

@@ -164,6 +164,31 @@ The admin actions are logged in the existing audit trail using:
 - `delete_whatsapp_knowledge`
 - `sync_whatsapp_knowledge`
 
+### 11. WhatsApp RAG answer audit trail
+
+The webhook also writes a dedicated answer-audit row for each handled WhatsApp reply. This stores:
+
+- sender and linked user id
+- retrieval mode and confidence
+- matched source chunks and scores
+- model name and token usage
+- fallback reason, latency, and final response metadata
+
+This is used for quality review, debugging, and future model comparison.
+
+### 12. Offline eval and benchmark tooling
+
+Two repo scripts support RAG quality control:
+
+- `npm run whatsapp:rag:eval`
+  - runs an offline fixture-based eval suite
+  - checks retrieval grounding and response shape against expected facts
+- `npm run whatsapp:rag:benchmark`
+  - compares the current model with a stronger candidate
+  - records groundedness, latency, and estimated cost
+
+The benchmark uses `WHATSAPP_OPENAI_BENCHMARK_MODEL` for the candidate and `WHATSAPP_OPENAI_TOKEN_PRICES_JSON` for cost estimation when available.
+
 ## Environment Variables
 
 The WhatsApp AI feature uses these env vars:
@@ -182,6 +207,9 @@ WHATSAPP_RAG_ENABLED=true
 WHATSAPP_EMBEDDING_MODEL=text-embedding-3-small
 WHATSAPP_RAG_TOP_K=4
 WHATSAPP_RAG_MIN_SCORE=0.3
+WHATSAPP_OPENAI_BENCHMARK_MODEL=gpt-4.1
+# Optional JSON map for benchmark cost estimates
+WHATSAPP_OPENAI_TOKEN_PRICES_JSON={"gpt-4.1-mini":{"inputPer1k":0.0,"outputPer1k":0.0},"gpt-4.1":{"inputPer1k":0.0,"outputPer1k":0.0}}
 ```
 
 ## How The Flow Works

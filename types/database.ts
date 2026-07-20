@@ -140,6 +140,27 @@ export type AdminAuditLogRow = {
   performed_at: string | null
 }
 
+export type WhatsAppRagAnswerAuditRow = {
+  id: string
+  webhook_event_id: string | null
+  sender: string | null
+  user_id: string | null
+  question_text: string
+  retrieval_mode: 'database' | 'seed' | 'none'
+  retrieval_confidence: number | null
+  retrieval_sources: Json | null
+  response_kind: 'model' | 'fallback' | 'error'
+  response_text: string | null
+  response_metadata: Json | null
+  fallback_reason: string | null
+  model_name: string | null
+  prompt_version: string | null
+  latency_ms: number | null
+  retrieval_latency_ms: number | null
+  generation_latency_ms: number | null
+  created_at: string | null
+}
+
 export type ReferralRow = {
   id: string
   referrer_user_id: string
@@ -201,6 +222,11 @@ export type Database = {
         Row: AdminAuditLogRow
         Insert: Omit<Partial<AdminAuditLogRow>, 'id'> & Pick<AdminAuditLogRow, 'admin_id' | 'action' | 'target_type' | 'target_id'>
         Update: Partial<AdminAuditLogRow>
+      }
+      whatsapp_rag_answer_audits: {
+        Row: WhatsAppRagAnswerAuditRow
+        Insert: Omit<Partial<WhatsAppRagAnswerAuditRow>, 'id'> & Pick<WhatsAppRagAnswerAuditRow, 'question_text' | 'retrieval_mode' | 'response_kind'>
+        Update: Partial<WhatsAppRagAnswerAuditRow>
       }
       referrals: {
         Row: ReferralRow

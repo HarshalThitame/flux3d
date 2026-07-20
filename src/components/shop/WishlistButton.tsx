@@ -73,7 +73,7 @@ export default function WishlistButton({
           event.stopPropagation()
           void toggleWishlist()
         }}
-        className={`inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-2 rounded-full border border-white/80 bg-white/95 px-3 text-sm font-bold shadow-[var(--shadow-sm)] transition hover:scale-105 disabled:opacity-60 ${wishlisted ? 'text-rose-600' : 'text-[var(--text-secondary)]'} ${className}`}
+        className={`inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-2 rounded-full border border-[var(--border-light)] bg-white px-3 text-sm font-bold shadow-[var(--shadow-sm)] transition hover:scale-105 disabled:opacity-60 ${wishlisted ? 'text-rose-600' : 'text-[var(--text-secondary)]'} ${className}`}
         disabled={pending}
       >
         <Heart className={`h-4 w-4 ${wishlisted ? 'fill-rose-600 text-rose-600' : ''}`} />

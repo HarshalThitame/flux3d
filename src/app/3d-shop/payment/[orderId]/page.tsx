@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect, notFound } from 'next/navigation'
 import Navbar from '@/components/Navbar'
-import RazorpayCheckoutClient from '@/components/payments/RazorpayCheckoutClient'
+import PaymentPageClient from './PaymentPageClient'
 import { getCurrentUserProfile } from '@/lib/auth/server'
 import { absoluteUrl } from '@/lib/site'
 import { getSettings } from '@/lib/settings'
@@ -64,72 +64,72 @@ export default async function RazorpayShopPaymentPage({ params }: PaymentPagePro
   const primaryImage = getPrimaryImage(order)
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.16),_transparent_34%),linear-gradient(180deg,#020617_0%,#0f172a_46%,#111827_100%)] text-white">
-      <Navbar transparent />
+    <div className="min-h-screen bg-[#f9f7f4] text-[#0F1B3D]">
+      <Navbar />
       <main className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[minmax(0,1.08fr)_420px]">
-        <section className="overflow-hidden rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-[0_24px_100px_rgba(0,0,0,0.26)] backdrop-blur-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-200">
+        <section className="overflow-hidden rounded-[32px] border border-purple-100 bg-white p-6 shadow-[0_4px_24px_rgba(15,23,42,0.06)]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6d28d9]">
             Secure payment
           </div>
-          <h1 className="mt-5 text-[clamp(2.4rem,5vw,4.9rem)] font-black leading-[0.94] tracking-[-0.03em] text-white">
+          <h1 className="mt-5 text-[clamp(2.4rem,5vw,4.9rem)] font-black leading-[0.94] tracking-[-0.03em] text-[#0F1B3D]">
             Complete payment with Razorpay.
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
+          <p className="mt-4 max-w-2xl text-base leading-8 text-[#6b7280]">
             The final amount is calculated on the server from the live order record and cannot be changed from the browser.
           </p>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Order</div>
-              <div className="mt-2 break-all text-lg font-black text-white">{order.order_number}</div>
+            <div className="rounded-3xl border border-purple-100 bg-purple-50/50 p-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#6b7280]">Order</div>
+              <div className="mt-2 break-all text-lg font-black text-[#0F1B3D]">{order.order_number}</div>
             </div>
-            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Items</div>
-              <div className="mt-2 text-lg font-black text-white">{itemCount} item{itemCount === 1 ? '' : 's'}</div>
+            <div className="rounded-3xl border border-purple-100 bg-purple-50/50 p-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#6b7280]">Items</div>
+              <div className="mt-2 text-lg font-black text-[#0F1B3D]">{itemCount} item{itemCount === 1 ? '' : 's'}</div>
             </div>
-            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Amount</div>
-              <div className="mt-2 text-lg font-black text-white">{formatShopPrice(order.total_amount)}</div>
+            <div className="rounded-3xl border border-purple-100 bg-purple-50/50 p-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#6b7280]">Amount</div>
+              <div className="mt-2 text-lg font-black text-[#0F1B3D]">{formatShopPrice(order.total_amount)}</div>
             </div>
-            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Delivery</div>
-              <div className="mt-2 text-lg font-black text-white">{order.shipping_address.city}</div>
+            <div className="rounded-3xl border border-purple-100 bg-purple-50/50 p-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#6b7280]">Delivery</div>
+              <div className="mt-2 text-lg font-black text-[#0F1B3D]">{order.shipping_address.city}</div>
             </div>
           </div>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="overflow-hidden rounded-[28px] border border-white/10 bg-black/25">
+            <div className="overflow-hidden rounded-[28px] border border-purple-100 bg-white">
               {primaryImage ? (
-                <div className="relative aspect-[16/10] bg-slate-900">
+                <div className="relative aspect-[16/10] bg-purple-50">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={primaryImage}
                     alt={order.items[0]?.productName || '3D Shop order item'}
                     className="h-full w-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_40%,rgba(2,6,23,0.9))]" />
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_40%,rgba(109,40,217,0.85))]" />
                   <div className="absolute bottom-4 left-4 right-4">
                     <div className="text-lg font-black text-white">{order.items[0]?.productName}</div>
-                    <div className="mt-1 text-sm font-semibold text-slate-300">{order.items[0]?.variantLabel}</div>
+                    <div className="mt-1 text-sm font-semibold text-purple-100">{order.items[0]?.variantLabel}</div>
                   </div>
                 </div>
               ) : (
-                <div className="grid aspect-[16/10] place-items-center bg-[linear-gradient(135deg,rgba(14,165,233,0.18),rgba(34,197,94,0.16))]">
-                  <div className="text-sm font-bold text-slate-100">Flux3D production slot</div>
+                <div className="grid aspect-[16/10] place-items-center bg-gradient-to-br from-purple-100 to-purple-50">
+                  <div className="text-sm font-bold text-[#6d28d9]">Flux3D production slot</div>
                 </div>
               )}
             </div>
 
-            <div className="space-y-3 rounded-[28px] border border-white/10 bg-black/25 p-5">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Checkout details</div>
-              <div className="grid gap-4 text-sm text-slate-300">
+            <div className="space-y-3 rounded-[28px] border border-purple-100 bg-white p-5 shadow-sm">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#6b7280]">Checkout details</div>
+              <div className="grid gap-4 text-sm text-[#6b7280]">
                 <div className="flex items-start justify-between gap-4">
                   <span>Customer</span>
-                  <span className="text-right font-semibold text-white">{order.shipping_address.name}</span>
+                  <span className="text-right font-semibold text-[#0F1B3D]">{order.shipping_address.name}</span>
                 </div>
                 <div className="flex items-start justify-between gap-4">
                   <span>Address</span>
-                  <span className="max-w-[240px] text-right font-semibold text-white">
+                  <span className="max-w-[240px] text-right font-semibold text-[#0F1B3D]">
                     {order.shipping_address.line1}
                     {order.shipping_address.line2 ? `, ${order.shipping_address.line2}` : ''}
                     {`, ${order.shipping_address.city}, ${order.shipping_address.state} ${order.shipping_address.pincode}`}
@@ -137,17 +137,17 @@ export default async function RazorpayShopPaymentPage({ params }: PaymentPagePro
                 </div>
                 <div className="flex items-start justify-between gap-4">
                   <span>Support</span>
-                  <span className="text-right font-semibold text-white">
-                    <a href={`mailto:${profile.supportEmail}`} className="underline-offset-4 hover:underline">{profile.supportEmail}</a>
+                  <span className="text-right font-semibold text-[#0F1B3D]">
+                    <a href={`mailto:${profile.supportEmail}`} className="text-[#6d28d9] underline-offset-4 hover:underline">{profile.supportEmail}</a>
                   </span>
                 </div>
                 <div className="flex items-start justify-between gap-4">
                   <span>Phone</span>
-                  <span className="text-right font-semibold text-white">{profile.supportPhone}</span>
+                  <span className="text-right font-semibold text-[#0F1B3D]">{profile.supportPhone}</span>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-emerald-400/15 bg-emerald-400/10 p-4 text-sm leading-7 text-emerald-50">
+              <div className="rounded-2xl border border-purple-200 bg-purple-50 p-4 text-sm leading-7 text-[#6d28d9]">
                 Razorpay Standard Checkout will open in a secure modal. Flux3D only receives the order reference and verification data.
               </div>
             </div>
@@ -155,9 +155,8 @@ export default async function RazorpayShopPaymentPage({ params }: PaymentPagePro
         </section>
 
         <aside>
-          <RazorpayCheckoutClient
-            internalOrderType="shop_order"
-            internalOrderId={order.id}
+          <PaymentPageClient
+            orderId={order.id}
             createOrderEndpoint="/api/payments/razorpay/create-order"
             verifyEndpoint="/api/payments/razorpay/verify"
             statusEndpoint={`/api/payments/status/shop_order/${order.id}`}
@@ -175,28 +174,28 @@ export default async function RazorpayShopPaymentPage({ params }: PaymentPagePro
               contact: order.shipping_address.phone,
             }}
             orderSummary={(
-              <div className="grid gap-3 text-sm text-slate-200">
+              <div className="grid gap-3 text-sm text-[#6b7280]">
                 <div className="flex items-center justify-between">
                   <span>Subtotal</span>
-                  <span className="font-semibold text-white">{formatShopPrice(order.subtotal)}</span>
+                  <span className="font-semibold text-[#0F1B3D]">{formatShopPrice(order.subtotal)}</span>
                 </div>
                 {order.discount_amount > 0 && (
-                  <div className="flex items-center justify-between text-emerald-200">
+                  <div className="flex items-center justify-between text-emerald-700">
                     <span>Discount{order.coupon_code ? ` (${order.coupon_code})` : ''}</span>
                     <span className="font-semibold">-{formatShopPrice(order.discount_amount)}</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between">
                   <span>Shipping</span>
-                  <span className="font-semibold text-white">{order.shipping_charge === 0 ? 'Free' : formatShopPrice(order.shipping_charge)}</span>
+                  <span className="font-semibold text-[#0F1B3D]">{order.shipping_charge === 0 ? 'Free' : formatShopPrice(order.shipping_charge)}</span>
                 </div>
-                <div className="border-t border-white/10 pt-3 flex items-center justify-between text-base">
-                  <span className="font-black text-white">Total</span>
-                  <span className="text-lg font-black text-white">{formatShopPrice(order.total_amount)}</span>
+                <div className="flex items-center justify-between border-t border-purple-100 pt-3 text-base">
+                  <span className="font-black text-[#0F1B3D]">Total</span>
+                  <span className="text-lg font-black text-[#0F1B3D]">{formatShopPrice(order.total_amount)}</span>
                 </div>
               </div>
             )}
-            themeColor={settings.primaryColor || settings.secondaryColor || '#0f172a'}
+            themeColor={settings.primaryColor || settings.secondaryColor || '#6d28d9'}
           />
         </aside>
       </main>
