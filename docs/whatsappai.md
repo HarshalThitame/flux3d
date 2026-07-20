@@ -11,6 +11,7 @@ I added a WhatsApp AI automation layer for Flux3D that does three things:
 3. Lets admins manage the knowledge base from the dashboard.
 
 The bot now supports RAG-style responses, so replies can be grounded in Flux3D-specific knowledge instead of only using a generic prompt.
+The current behavior is stricter than the original draft: use approved database/content sources first, avoid guesses, and fall back to a short guided clarification when evidence is weak.
 
 ## What Was Added
 
@@ -43,7 +44,7 @@ This helper adds:
 
 - Embedding generation with OpenAI
 - Knowledge chunk loading from Supabase
-- Local seed fallback from JSON
+- Database-first similarity search with a seed fallback only when the table is empty
 - Cosine similarity ranking
 - Context assembly for the GPT prompt
 
@@ -214,6 +215,6 @@ npm run typecheck
 ## Notes
 
 - The bot uses RAG if knowledge chunks exist and are active.
-- If no database chunks are available, it falls back to the local seed JSON.
+- If database chunks are available, retrieval uses them first and only falls back to the local seed JSON when the table is empty.
+- Replies are intentionally short, structured, and polite. If the assistant cannot confirm an answer from source data, it asks for the minimum needed detail instead of guessing.
 - The admin UI recalculates embeddings on save, so knowledge edits take effect without manual script edits.
-
