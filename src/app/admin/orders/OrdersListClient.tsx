@@ -8,11 +8,13 @@ import {
   ArrowUp,
   ArrowDown,
   Boxes,
+  Check,
   ChevronLeft,
   ChevronRight,
   Download,
   Eye,
   IndianRupee,
+  LoaderCircle,
   PackageOpen,
   Plus,
   Printer,
@@ -65,6 +67,8 @@ export default function OrdersListClient({ initialOrders }: Props) {
   const [updatingGroupId, setUpdatingGroupId] = useState<string | null>(null)
   const [sortColumn, setSortColumn] = useState<string>('createdAt')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkUpdating, setBulkUpdating] = useState(false)
   const [toast, setToast] = useState<AdminToastState>(null)
   const toastTimer = useRef<number | null>(null)
 
@@ -181,6 +185,58 @@ export default function OrdersListClient({ initialOrders }: Props) {
 
     return () => window.clearTimeout(timeout)
   }, [dateFrom, dateTo, filteredOrders.length, hasFilters, materialFilter, postProcessingFilter, search, statusFilter])
+
+  const someSelected = selectedIds.size > 0
+  const allVisibleSelected = paginatedOrders.length > 0 && paginatedOrders.every((order) => selectedIds.has(order.groupId))
+  const visibleIds = paginatedOrders.map((order) => order.groupId)
+
+  function toggleSelect(groupId: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current)
+      if (next.has(groupId)) { next.delete(groupId) } else { next.add(groupId) }
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (allVisibleSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(visibleIds))
+    }
+  }
+
+  async function applyBulkStatus(status: OrderStatus) {
+    if (selectedIds.size === 0) return
+    setBulkUpdating(true)
+    let success = 0
+    let failed = 0
+    for (const groupId of selectedIds) {
+      try {
+        const response = await fetch('/api/admin/orders', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ groupId, status }),
+        })
+        if (response.ok) {
+          const json = await response.json() as { order: AdminOrder }
+          setOrders((current) => current.map((order) => order.groupId === groupId ? json.order : order))
+          success++
+        } else {
+          failed++
+        }
+      } catch {
+        failed++
+      }
+    }
+    setSelectedIds(new Set())
+    setBulkUpdating(false)
+    if (failed === 0) {
+      showToast({ type: 'success', message: `${success} order${success === 1 ? '' : 's'} marked ${STATUS_LABELS[status].toLowerCase()}.` })
+    } else {
+      showToast({ type: 'error', message: `${success} updated, ${failed} failed.` })
+    }
+  }
 
   function clearFilters() {
     setSearch('')
@@ -389,11 +445,42 @@ export default function OrdersListClient({ initialOrders }: Props) {
             </div>
           ) : (
             <>
+              {someSelected && (
+                <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-violet-200 bg-violet-50 p-3">
+                  <span className="text-sm font-medium text-violet-700">{selectedIds.size} selected</span>
+                  <div className="flex flex-wrap gap-2">
+                    {['confirmed', 'printing', 'shipped', 'delivered'].map((status) => {
+                      const s = status as OrderStatus
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          disabled={bulkUpdating}
+                          onClick={() => applyBulkStatus(s)}
+                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-violet-200 bg-white px-3 text-xs font-semibold text-violet-700 transition hover:bg-violet-100 disabled:opacity-50"
+                        >
+                          {bulkUpdating ? <LoaderCircle className="h-3 w-3 animate-spin" /> : null}
+                          Mark {STATUS_LABELS[s]}
+                        </button>
+                      )
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIds(new Set())}
+                      className="inline-flex h-8 items-center rounded-lg px-3 text-xs font-medium text-gray-500 transition hover:text-gray-700"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="mt-5 space-y-3 md:hidden">
                 {paginatedOrders.map((order) => (
                   <MobileOrderCard
                     key={order.groupId}
                     order={order}
+                    selected={selectedIds.has(order.groupId)}
+                    onToggleSelect={() => toggleSelect(order.groupId)}
                     updating={updatingGroupId === order.groupId}
                     onOpen={() => router.push(`/admin/orders/${order.groupId}`)}
                     onStatusChange={(status) => updateOrderStatus(order, status)}
@@ -406,6 +493,15 @@ export default function OrdersListClient({ initialOrders }: Props) {
                   <table className="w-full min-w-[1120px] border-separate border-spacing-0 text-left text-sm">
                     <thead className="sticky top-0 z-20 bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
                       <tr>
+                        <th className="w-10 border-b border-gray-200 px-3 py-3">
+                          <button
+                            type="button"
+                            onClick={toggleSelectAll}
+                            className="grid h-5 w-5 place-items-center rounded border border-gray-300 bg-white transition hover:border-violet-400"
+                          >
+                            {allVisibleSelected && <Check className="h-3 w-3 text-violet-600" />}
+                          </button>
+                        </th>
                         <Th sortable sortColumn={sortColumn} sortDirection={sortDirection} column="orderNumber" onSort={toggleSort}>Order#</Th>
                         <Th sortable sortColumn={sortColumn} sortDirection={sortDirection} column="fullName" onSort={toggleSort}>Customer</Th>
                         <Th>Items</Th>
@@ -424,6 +520,8 @@ export default function OrdersListClient({ initialOrders }: Props) {
                           key={order.groupId}
                           order={order}
                           rowIndex={index}
+                          selected={selectedIds.has(order.groupId)}
+                          onToggleSelect={() => toggleSelect(order.groupId)}
                           updating={updatingGroupId === order.groupId}
                           onOpen={() => router.push(`/admin/orders/${order.groupId}`)}
                           onStatusChange={(status) => updateOrderStatus(order, status)}
@@ -527,12 +625,16 @@ function Th({ children, className = '', sortable, sortColumn, sortDirection, col
 function OrderRow({
   order,
   rowIndex,
+  selected,
+  onToggleSelect,
   updating,
   onOpen,
   onStatusChange,
 }: {
   order: AdminOrder
   rowIndex: number
+  selected?: boolean
+  onToggleSelect?: () => void
   updating: boolean
   onOpen: () => void
   onStatusChange: (status: OrderStatus) => void
@@ -552,6 +654,15 @@ function OrderRow({
         order.status === 'pending' ? 'border-l-yellow-400' : 'border-l-transparent'
       } ${rowTone}`}
     >
+      <td className="w-10 border-b border-gray-100 px-3 py-4 align-top" onClick={(event) => event.stopPropagation()}>
+        <button
+          type="button"
+          onClick={onToggleSelect}
+          className="grid h-5 w-5 place-items-center rounded border border-gray-300 bg-white transition hover:border-violet-400"
+        >
+          {selected && <Check className="h-3 w-3 text-violet-600" />}
+        </button>
+      </td>
       <td className="border-b border-gray-100 px-4 py-4 align-top">
         <div className="font-semibold text-violet-600">{order.orderNumber}</div>
         {order.itemCount > 1 && <div className="mt-1 text-xs text-gray-500">{order.itemCount} items</div>}
@@ -632,11 +743,15 @@ function OrderRow({
 
 function MobileOrderCard({
   order,
+  selected,
+  onToggleSelect,
   updating,
   onOpen,
   onStatusChange,
 }: {
   order: AdminOrder
+  selected?: boolean
+  onToggleSelect?: () => void
   updating: boolean
   onOpen: () => void
   onStatusChange: (status: OrderStatus) => void
@@ -650,16 +765,24 @@ function MobileOrderCard({
 
   return (
     <article
-      onClick={onOpen}
       className={`w-full overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:bg-gray-50 ${
         order.status === 'pending' ? 'border-l-4 border-l-yellow-400' : ''
       }`}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="truncate font-semibold text-violet-600">{order.orderNumber}</div>
-          <div className="mt-1 text-sm font-medium text-gray-900">{safeText(order.fullName)}</div>
-          <div className="mt-0.5 text-xs text-gray-500">{safeText(order.phone)}</div>
+        <div className="flex min-w-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={(event) => { event.stopPropagation(); onToggleSelect?.() }}
+            className="grid h-5 w-5 shrink-0 place-items-center rounded border border-gray-300 bg-white transition hover:border-violet-400"
+          >
+            {selected && <Check className="h-3 w-3 text-violet-600" />}
+          </button>
+          <div className="min-w-0 cursor-pointer" onClick={onOpen}>
+            <div className="truncate font-semibold text-violet-600">{order.orderNumber}</div>
+            <div className="mt-1 text-sm font-medium text-gray-900">{safeText(order.fullName)}</div>
+            <div className="mt-0.5 text-xs text-gray-500">{safeText(order.phone)}</div>
+          </div>
         </div>
         <span className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusPillClass(order.status)}`}>
           {STATUS_LABELS[order.status]}
