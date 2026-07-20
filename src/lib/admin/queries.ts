@@ -857,10 +857,11 @@ export async function getAdminOrderById(orderId: string) {
   // Fall back to payment_attempts for custom quote payments.
   if (!order.paymentProvider) {
     try {
+      const paymentIdFilter = order.groupId !== order.id ? order.groupId : order.id
       const { data: paymentAttempt } = await supabase
         .from('payment_attempts')
         .select('id, provider, provider_order_id, provider_payment_id, status, payment_method, captured_at, failed_at')
-        .eq('internal_order_id', order.id)
+        .or(`internal_order_id.eq.${order.id},internal_order_id.eq.${paymentIdFilter}`)
         .eq('internal_order_type', 'custom_quote')
         .order('created_at', { ascending: false })
         .limit(1)
