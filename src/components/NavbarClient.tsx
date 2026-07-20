@@ -183,6 +183,13 @@ export default function NavbarClient({
   }, [])
 
   useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+      return () => { document.body.style.overflow = '' }
+    }
+  }, [isOpen])
+
+  useEffect(() => {
     if (!isProfileOpen) return
 
     const handlePointerDown = (event: PointerEvent) => {
@@ -402,7 +409,7 @@ export default function NavbarClient({
             <button
               type="button"
               aria-label="Close menu"
-              className="absolute inset-0 bg-slate-900/20 backdrop-blur-xl"
+              className="absolute inset-0 bg-slate-900/50 backdrop-blur-md"
               onClick={() => setIsOpen(false)}
             />
 
