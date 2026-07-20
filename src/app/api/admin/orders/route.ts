@@ -11,13 +11,16 @@ import { requireAdminRequest } from '@/lib/admin/request'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { logAdminAction } from '@/lib/admin/auditLog'
 
-export async function GET() {
+export async function GET(request: Request) {
   const auth = await requireAdminRequest()
   if ('response' in auth) return auth.response
 
   try {
-    const data = await getAdminOrdersData()
-    return NextResponse.json({ orders: data })
+    const { searchParams } = new URL(request.url)
+    const page = Math.max(1, Number(searchParams.get('page')) || 1)
+    const limit = Math.min(500, Math.max(1, Number(searchParams.get('limit')) || 100))
+    const result = await getAdminOrdersData(page, limit)
+    return NextResponse.json({ orders: result.orders, total: result.total, page, limit })
   } catch (error) {
     return getAdminApiErrorResponse(error)
   }

@@ -4,6 +4,6 @@ import OrdersListClient from './OrdersListClient'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminOrdersPage() {
-  const orders = await getAdminOrdersData()
-  return <OrdersListClient initialOrders={orders} />
+  const result = await getAdminOrdersData(1, 100)
+  return <OrdersListClient initialOrders={result.orders} initialTotal={result.total} />
 }

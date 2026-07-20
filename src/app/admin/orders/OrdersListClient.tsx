@@ -48,15 +48,16 @@ const PAGE_SIZE = 25
 
 type Props = {
   initialOrders: AdminOrder[]
+  initialTotal: number
 }
 
 function csvCell(value: string | number | null | undefined) {
   return `"${String(value ?? '').replace(/"/g, '""')}"`
 }
 
-export default function OrdersListClient({ initialOrders }: Props) {
+export default function OrdersListClient({ initialOrders, initialTotal }: Props) {
   const router = useRouter()
-  const [orders, setOrders] = useState(initialOrders)
+  const [allOrders, setAllOrders] = useState(initialOrders)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | OrderStatus>('all')
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('all')
@@ -65,12 +66,15 @@ export default function OrdersListClient({ initialOrders }: Props) {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [page, setPage] = useState(1)
+  const [totalCount, setTotalCount] = useState(initialTotal)
+  const [fetchingPage, setFetchingPage] = useState(false)
   const [updatingGroupId, setUpdatingGroupId] = useState<string | null>(null)
   const [sortColumn, setSortColumn] = useState<string>('createdAt')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkUpdating, setBulkUpdating] = useState(false)
   const [toast, setToast] = useState<AdminToastState>(null)
+  const loadedRef = useRef(false)
   const toastTimer = useRef<number | null>(null)
 
   function showToast(nextToast: NonNullable<AdminToastState>) {
@@ -83,22 +87,22 @@ export default function OrdersListClient({ initialOrders }: Props) {
 
   const stats = useMemo(() => {
     return {
-      totalOrders: orders.length,
-      revenue: orders.reduce((sum, order) => sum + order.grandTotal, 0),
-      pending: orders.filter((order) => order.status === 'pending').length,
-      printing: orders.filter((order) => order.status === 'printing').length,
+      totalOrders: totalCount,
+      revenue: allOrders.reduce((sum, order) => sum + order.grandTotal, 0),
+      pending: allOrders.filter((order) => order.status === 'pending').length,
+      printing: allOrders.filter((order) => order.status === 'printing').length,
     }
-  }, [orders])
+  }, [allOrders])
 
   const materialOptions = useMemo(() => {
-    return Array.from(new Set(orders.flatMap((order) => order.items.map((item) => item.material)).filter(Boolean)))
+    return Array.from(new Set(allOrders.flatMap((order) => order.items.map((item) => item.material)).filter(Boolean)))
       .sort((left, right) => left.localeCompare(right))
-  }, [orders])
+  }, [allOrders])
 
   const postProcessingOptions = useMemo(() => {
-    return Array.from(new Set(orders.flatMap((order) => order.items.map((item) => item.postProcessingLevel ?? 'none'))))
+    return Array.from(new Set(allOrders.flatMap((order) => order.items.map((item) => item.postProcessingLevel ?? 'none'))))
       .sort((left, right) => postProcessingLabel(left).localeCompare(postProcessingLabel(right)))
-  }, [orders])
+  }, [allOrders])
 
   function toggleSort(column: string) {
     if (sortColumn === column) {
@@ -142,7 +146,7 @@ export default function OrdersListClient({ initialOrders }: Props) {
     const fromTime = dateFrom ? new Date(`${dateFrom}T00:00:00`).getTime() : null
     const toTime = dateTo ? new Date(`${dateTo}T23:59:59`).getTime() : null
 
-    return sortOrders(orders.filter((order) => {
+    return sortOrders(allOrders.filter((order) => {
       const createdAt = new Date(order.createdAt).getTime()
       const searchPool = [
         order.orderNumber,
@@ -164,12 +168,33 @@ export default function OrdersListClient({ initialOrders }: Props) {
 
       return matchesSearch && matchesStatus && matchesPayment && matchesMaterial && matchesPostProcessing && matchesFrom && matchesTo
     }))
-  }, [dateFrom, dateTo, materialFilter, orders, paymentStatusFilter, postProcessingFilter, search, sortColumn, sortDirection, statusFilter])
+  }, [dateFrom, dateTo, materialFilter, allOrders, paymentStatusFilter, postProcessingFilter, search, sortColumn, sortDirection, statusFilter])
 
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
   const paginatedOrders = filteredOrders.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
   const hasFilters = Boolean(search || dateFrom || dateTo || statusFilter !== 'all' || materialFilter !== 'all' || postProcessingFilter !== 'all')
+
+  useEffect(() => {
+    if (loadedRef.current || page === 1) {
+      loadedRef.current = true
+      return
+    }
+    setFetchingPage(true)
+    fetch(`/api/admin/orders?page=${page}&limit=100`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.orders) {
+          setAllOrders((current) => {
+            const existingIds = new Set(current.map((o) => o.groupId))
+            const newOrders = (data.orders as AdminOrder[]).filter((o) => !existingIds.has(o.groupId))
+            return [...current, ...newOrders]
+          })
+        }
+        setFetchingPage(false)
+      })
+      .catch(() => setFetchingPage(false))
+  }, [page])
 
   useEffect(() => {
     if (!hasFilters) return
@@ -222,7 +247,7 @@ export default function OrdersListClient({ initialOrders }: Props) {
         })
         if (response.ok) {
           const json = await response.json() as { order: AdminOrder }
-          setOrders((current) => current.map((order) => order.groupId === groupId ? json.order : order))
+          setAllOrders((current) => current.map((order) => order.groupId === groupId ? json.order : order))
           success++
         } else {
           failed++
@@ -281,9 +306,9 @@ export default function OrdersListClient({ initialOrders }: Props) {
       return
     }
 
-    const previousOrders = orders
+    const previousOrders = allOrders
     setUpdatingGroupId(order.groupId)
-    setOrders((current) =>
+    setAllOrders((current) =>
       current.map((item) =>
         item.groupId === order.groupId
           ? {
@@ -306,10 +331,10 @@ export default function OrdersListClient({ initialOrders }: Props) {
         throw new Error(body.error ?? 'Failed to update status.')
       }
       const json = (await response.json()) as { order: AdminOrder }
-      setOrders((current) => current.map((item) => (item.groupId === order.groupId ? json.order : item)))
+      setAllOrders((current) => current.map((item) => (item.groupId === order.groupId ? json.order : item)))
       showToast({ type: 'success', message: `${json.order.orderNumber} marked ${STATUS_LABELS[status].toLowerCase()}.` })
     } catch (error) {
-      setOrders(previousOrders)
+      setAllOrders(previousOrders)
       showToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to update status.' })
     } finally {
       setUpdatingGroupId(null)
@@ -556,6 +581,8 @@ export default function OrdersListClient({ initialOrders }: Props) {
             filteredCount={filteredOrders.length}
             currentPage={currentPage}
             totalPages={totalPages}
+            serverTotal={totalCount}
+            fetching={fetchingPage}
             setPage={setPage}
           />
         </div>
@@ -864,38 +891,45 @@ function Pagination({
   filteredCount,
   currentPage,
   totalPages,
+  serverTotal,
+  fetching,
   setPage,
 }: {
   filteredCount: number
   currentPage: number
   totalPages: number
+  serverTotal?: number
+  fetching?: boolean
   setPage: Dispatch<SetStateAction<number>>
 }) {
   return (
-    <div className="mt-5 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-      <div>
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3">
+      <div className="text-sm text-gray-600">
         Showing {filteredCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
-        {' - '}
-        {Math.min(currentPage * PAGE_SIZE, filteredCount)} of {filteredCount.toLocaleString('en-IN')} orders
+        {' '}–{' '}
+        {Math.min(currentPage * PAGE_SIZE, filteredCount)} of {filteredCount.toLocaleString('en-IN')}
+        {serverTotal != null && serverTotal > filteredCount && (
+          <span className="text-gray-400"> (filtered from {serverTotal.toLocaleString('en-IN')} total)</span>
+        )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={() => setPage((current) => Math.max(1, current - 1))}
-          disabled={currentPage === 1}
-          className="inline-flex h-9 items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={currentPage === 1 || fetching}
+          className="inline-flex h-9 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <ChevronLeft className="h-4 w-4" />
           Prev
         </button>
-        <span className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">
-          Page {currentPage} / {totalPages}
+        <span className="text-sm font-medium text-gray-900">
+          {fetching ? <LoaderCircle className="inline h-4 w-4 animate-spin" /> : `Page ${currentPage} / ${totalPages}`}
         </span>
         <button
           type="button"
           onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-          disabled={currentPage === totalPages}
-          className="inline-flex h-9 items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={currentPage === totalPages || fetching}
+          className="inline-flex h-9 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Next
           <ChevronRight className="h-4 w-4" />
