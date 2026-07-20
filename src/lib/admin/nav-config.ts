@@ -10,7 +10,6 @@ import {
   Building2,
   FileText,
   ShieldCheck,
-  HelpCircle,
   LogOut,
   Beaker,
   Eye,
@@ -64,7 +63,5 @@ export const adminNavItems: NavItem[] = [
   { label: 'Settings', href: '/admin/settings', icon: Settings, section: 'secondary' },
   { label: 'Business Settings', href: '/admin/settings/business', icon: Building2, section: 'secondary' },
   { label: 'WhatsApp Knowledge', href: '/admin/settings/whatsapp-knowledge', icon: Database, section: 'secondary' },
-  { label: 'Documentation', href: '/admin/documentation', icon: FileText, section: 'secondary' },
-  { label: 'Help Center', href: '/admin/help', icon: HelpCircle, section: 'secondary' },
   { label: 'Logout', href: '/admin/logout', icon: LogOut, section: 'secondary' },
 ]

@@ -22,7 +22,9 @@ export async function createServerSupabaseClient() {
               cookieStore.set(name, value, options)
             })
           } catch {
-            // Server Components cannot always write cookies during render.
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('[supabase/server] Failed to set auth cookies — token refresh may not persist')
+            }
           }
         },
       },
