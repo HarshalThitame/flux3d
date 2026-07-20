@@ -44,6 +44,10 @@ export function makeLocalBusinessJsonLd(settings: BusinessSettings) {
     settings.linkedinUrl,
     settings.twitterUrl,
     settings.youtubeUrl,
+    settings.threadsUrl,
+    settings.pinterestUrl,
+    settings.githubUrl,
+    settings.websiteUrl,
   ].filter(Boolean)
 
   return {

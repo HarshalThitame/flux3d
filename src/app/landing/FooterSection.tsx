@@ -103,10 +103,10 @@ export default function FooterSection() {
             <h3 className={footerHeadingClass}>Legal</h3>
             <ul className="space-y-2">
               {[
-                { label: 'Privacy Policy', href: '/privacy-policy' },
-                { label: 'Refund & Cancellation Policy', href: '/refund-policy' },
-                { label: 'Terms & Conditions', href: '/terms-and-conditions' },
-                { label: 'Service Delivery Policy', href: '/service-delivery-policy' },
+                { label: 'Privacy Policy', href: settings.privacyPolicyUrl || '/privacy-policy' },
+                { label: 'Refund & Cancellation Policy', href: settings.refundPolicyUrl || '/refund-policy' },
+                { label: 'Terms & Conditions', href: settings.termsUrl || '/terms-and-conditions' },
+                { label: 'Service Delivery Policy', href: settings.shippingPolicyUrl || '/service-delivery-policy' },
               ].map((item) => (
                 <li key={item.label}>
                   <Link href={item.href} className={footerLinkClass}>{item.label}</Link>
@@ -170,10 +170,10 @@ export default function FooterSection() {
         <div className="footer-bottom flex-col items-center gap-4 text-xs md:flex-row">
           <p className="text-[#6F7192]">&copy; {businessYear} {settings.brandName || settings.businessName} · {settings.legalBusinessName || settings.businessName}.</p>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link href="/privacy-policy" className="text-[#6F7192] transition-colors hover:text-[#6d28d9]">Privacy Policy</Link>
-            <Link href="/terms-and-conditions" className="text-[#6F7192] transition-colors hover:text-[#6d28d9]">Terms &amp; Conditions</Link>
-            <Link href="/refund-policy" className="text-[#6F7192] transition-colors hover:text-[#6d28d9]">Refund &amp; Cancellation Policy</Link>
-            <Link href="/service-delivery-policy" className="text-[#6F7192] transition-colors hover:text-[#6d28d9]">Service Delivery Policy</Link>
+            <Link href={settings.privacyPolicyUrl || '/privacy-policy'} className="text-[#6F7192] transition-colors hover:text-[#6d28d9]">Privacy Policy</Link>
+            <Link href={settings.termsUrl || '/terms-and-conditions'} className="text-[#6F7192] transition-colors hover:text-[#6d28d9]">Terms &amp; Conditions</Link>
+            <Link href={settings.refundPolicyUrl || '/refund-policy'} className="text-[#6F7192] transition-colors hover:text-[#6d28d9]">Refund &amp; Cancellation Policy</Link>
+            <Link href={settings.shippingPolicyUrl || '/service-delivery-policy'} className="text-[#6F7192] transition-colors hover:text-[#6d28d9]">Service Delivery Policy</Link>
             <Link href="/security" className="text-[#6F7192] transition-colors hover:text-[#6d28d9]">Security</Link>
           </div>
         </div>

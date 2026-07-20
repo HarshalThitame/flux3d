@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
 import { getSettings } from '@/lib/settings'
+import { FALLBACK_SETTINGS } from '@/lib/settings-fallback'
 import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import DeferredTracking from '@/components/DeferredTracking'
@@ -21,64 +22,65 @@ const DNS_PREFETCH_ORIGINS = [
   '//wa.me',
 ]
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://flux3d.in'),
-  title: {
-    default: 'Flux3D — Custom 3D Printing and Manufacturing Services in India',
-    template: '%s | Flux3D',
-  },
-  description:
-    'Flux3D provides custom 3D printing, prototyping, model printing, ready-made products, and related manufacturing services in India.',
-  keywords: [
-    '3D printing India',
-    'custom 3D printing service',
-    'custom manufacturing India',
-    'rapid prototyping India',
-    'model printing India',
-    'ready-made 3D products',
-    'online 3D printing India',
-  ],
-  authors: [{ name: 'Flux3D', url: 'https://flux3d.in' }],
-  creator: 'Flux3D',
-  publisher: 'Flux3D',
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings().catch(() => null)
+  const name = settings?.brandName || settings?.businessName || 'Flux3D'
+  const description = settings?.businessDescription || 'Flux3D provides custom 3D printing, prototyping, model printing, ready-made products, and related manufacturing services in India.'
+  const url = settings?.websiteUrl || 'https://flux3d.in'
+  const ogImage = settings?.ogImageUrl || '/opengraph-image.png'
+  const twitterImage = settings?.twitterImageUrl || '/twitter-image.png'
+  const keywords = settings?.metaKeywords ? settings.metaKeywords.split(',').map(k => k.trim()) : FALLBACK_SETTINGS.metaKeywords.split(',').map(k => k.trim())
+  const canonicalUrl = settings?.canonicalUrl || url
+  const robotsIndex = settings?.robotsIndex ?? true
+
+  return {
+    metadataBase: new URL('https://flux3d.in'),
+    title: {
+      default: settings?.metaTitle || `${name} — Custom 3D Printing and Manufacturing Services in India`,
+      template: `%s | ${name}`,
+    },
+  description,
+  keywords,
+  authors: [{ name, url }],
+  creator: name,
+  publisher: name,
   robots: {
-    index: true,
-    follow: true,
+    index: robotsIndex,
+    follow: robotsIndex,
     googleBot: {
-      index: true,
-      follow: true,
+      index: robotsIndex,
+      follow: robotsIndex,
       'max-image-preview': 'large',
     },
   },
   openGraph: {
     type: 'website',
     locale: 'en_IN',
-    url: 'https://flux3d.in',
-    siteName: 'Flux3D',
-    title: 'Flux3D — Custom 3D Printing and Manufacturing Services in India',
-    description:
-      'Flux3D provides custom 3D printing, prototyping, model printing, ready-made products, and related manufacturing services in India.',
+    url,
+    siteName: name,
+    title: settings?.metaTitle || `${name} — Custom 3D Printing and Manufacturing Services in India`,
+    description,
     images: [
       {
-        url: '/opengraph-image.png',
+        url: ogImage,
         width: 1200,
         height: 630,
-        alt: 'Flux3D — Premium 3D Printing India',
+        alt: `${name} — Premium 3D Printing India`,
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Flux3D — Custom 3D Printing and Manufacturing Services in India',
-    description: 'Flux3D provides custom 3D printing, prototyping, model printing, ready-made products, and related manufacturing services in India.',
-    images: ['/twitter-image.png'],
+    title: settings?.metaTitle || `${name} — Custom 3D Printing and Manufacturing Services in India`,
+    description,
+    images: [twitterImage],
   },
   alternates: {
-    canonical: 'https://flux3d.in',
+    canonical: canonicalUrl,
   },
   manifest: '/manifest.json',
   icons: {
-    icon: '/favicon.ico',
+    icon: settings?.faviconUrl || '/favicon.ico',
     apple: '/apple-touch-icon.png',
   },
   other: {
@@ -86,14 +88,18 @@ export const metadata: Metadata = {
     'color-scheme': 'light dark',
   },
   category: 'technology',
+  }
 }
 
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
-  themeColor: '#6d28d9',
+export async function generateViewport(): Promise<Viewport> {
+  const settings = await getSettings().catch(() => null)
+  return {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+    themeColor: settings?.primaryColor || '#6d28d9',
+  }
 }
 
 function toJsonLd(value: unknown) {
@@ -121,6 +127,12 @@ export default async function RootLayout({
         {DNS_PREFETCH_ORIGINS.map((href) => (
           <link key={`dns-prefetch-${href}`} rel="dns-prefetch" href={href} />
         ))}
+        <style>{`
+          :root {
+            --brand-primary: ${settings.primaryColor || '#6d28d9'};
+            --brand-secondary: ${settings.secondaryColor || '#a855f7'};
+          }
+        `}</style>
       </head>
       <body suppressHydrationWarning>
         <script
