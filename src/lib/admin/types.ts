@@ -110,6 +110,14 @@ export type AdminOrder = {
   paymentMethod?: string
   transactionId?: string
   paymentStatus?: string
+  paymentProvider?: string
+  providerOrderId?: string
+  providerPaymentId?: string
+  paymentVerifiedAt?: string
+  paymentFailedAt?: string
+  paymentRefundStatus?: string
+  paymentRefundAmountPaise?: number
+  paymentAttemptId?: string
   trackingId?: string
   deliveryPartner?: string
 }
