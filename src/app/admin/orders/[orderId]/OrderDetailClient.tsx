@@ -47,6 +47,14 @@ type Props = {
   initialOrder: AdminOrder
 }
 
+type AuditLogEntry = {
+  id: string
+  action: string
+  old_value: Record<string, unknown> | null
+  new_value: Record<string, unknown> | null
+  performed_at: string | null
+}
+
 type TimelineStepConfig = { label: string; status: OrderStatus }
 type TimelineStepState = 'done' | 'current' | 'future' | 'cancelled'
 
@@ -75,6 +83,8 @@ export default function OrderDetailClient({ initialOrder }: Props) {
   const [toast, setToast] = useState<AdminToastState>(null)
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[] | null>(null)
+  const [auditLogsLoading, setAuditLogsLoading] = useState(false)
   const toastTimer = useRef<number | null>(null)
 
   const itemCount = order.items.length
@@ -91,6 +101,22 @@ export default function OrderDetailClient({ initialOrder }: Props) {
   ].filter(Boolean) as string[]
   const mapQuery = addressLines.join(', ')
   const statusOptions = getAllowedOrderStatusTransitions(order.status)
+
+  async function loadAuditLogs() {
+    if (auditLogs !== null) return // already loaded
+    setAuditLogsLoading(true)
+    try {
+      const response = await fetch(`/api/admin/orders/${order.groupId}/audit-logs`)
+      if (response.ok) {
+        const data = await response.json() as { logs: AuditLogEntry[] }
+        setAuditLogs(data.logs)
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setAuditLogsLoading(false)
+    }
+  }
 
   function showToast(nextToast: NonNullable<AdminToastState>) {
     setToast(nextToast)
@@ -282,6 +308,44 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                     <TimelineStep key={step.label} label={step.label} meta={timelineMeta(order, step, index)} state={timelineState(order.status, step, index)} />
                   ))}
                 </div>
+              </Card>
+
+              <Card title="Activity Log">
+                {auditLogs === null && !auditLogsLoading && (
+                  <button
+                    type="button"
+                    onClick={loadAuditLogs}
+                    className="inline-flex h-9 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                  >
+                    Load activity log
+                  </button>
+                )}
+                {auditLogsLoading && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                    Loading...
+                  </div>
+                )}
+                {auditLogs !== null && auditLogs.length === 0 && (
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-600">No activity recorded for this order.</div>
+                )}
+                {auditLogs !== null && auditLogs.length > 0 && (
+                  <div className="space-y-2">
+                    {auditLogs.map((log) => (
+                      <div key={log.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-medium text-gray-900">{log.action.replace(/_/g, ' ')}</span>
+                          <span className="shrink-0 text-xs text-gray-400">{log.performed_at ? formatDateTime(log.performed_at) : ''}</span>
+                        </div>
+                        {log.new_value && (
+                          <div className="mt-1 text-xs text-gray-500">
+                            {formatAuditValue(log.action, log.new_value)}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </Card>
             </div>
 
@@ -764,6 +828,19 @@ function PricingDivider({ heavy }: { heavy?: boolean }) {
       </td>
     </tr>
   )
+}
+
+function formatAuditValue(action: string, value: Record<string, unknown> | null) {
+  if (!value) return ''
+  if (action === 'update_order_status') {
+    const status = String(value.status ?? '')
+    return status ? `Status → ${STATUS_LABELS[status as OrderStatus] ?? status}` : ''
+  }
+  if (action === 'update_order_notes') {
+    const notes = String(value.notes ?? '')
+    return notes ? `Notes updated` : 'Notes cleared'
+  }
+  return JSON.stringify(value)
 }
 
 function extractCancelReason(notes: string) {
