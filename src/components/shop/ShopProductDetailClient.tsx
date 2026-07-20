@@ -199,8 +199,6 @@ export default function ShopProductDetailClient({
     setToast(`${product.name} added to cart ✓`)
     if (goToCheckout) {
       router.push('/3d-shop/checkout')
-    } else {
-      openCart()
     }
   }
 

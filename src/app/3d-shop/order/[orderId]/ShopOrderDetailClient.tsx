@@ -283,7 +283,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
               initial={{ opacity: 0, y: 18, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.98 }}
-              className="w-full max-w-md rounded-[28px] border border-white bg-white p-6 shadow-2xl"
+              className="w-full max-w-md rounded-[28px] border border-[var(--border-light)] bg-white p-6 shadow-2xl"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
@@ -365,7 +365,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="overflow-hidden rounded-[34px] border border-white bg-white/82 p-5 shadow-[0_28px_90px_rgba(26,26,26,0.11)] backdrop-blur-2xl md:p-6"
+          className="overflow-hidden rounded-[34px] border border-[var(--border-light)] bg-white/82 p-5 shadow-[0_28px_90px_rgba(26,26,26,0.11)] backdrop-blur-2xl md:p-6"
         >
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,390px)] lg:items-start">
             <div className="min-w-0 self-start">
@@ -735,7 +735,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.16 }}
-            className="h-fit rounded-[30px] border border-white bg-white/90 p-5 shadow-[0_26px_90px_rgba(26,26,26,0.12)] backdrop-blur-xl lg:sticky lg:top-28 lg:self-start"
+            className="h-fit rounded-[30px] border border-[var(--border-light)] bg-white/90 p-5 shadow-[0_26px_90px_rgba(26,26,26,0.12)] backdrop-blur-xl lg:sticky lg:top-28 lg:self-start"
           >
             <div className="flex items-center gap-3">
               <span className="grid h-11 w-11 place-items-center rounded-2xl border border-[var(--border-brand)] bg-[var(--brand-faint)] text-[var(--brand-primary)]">

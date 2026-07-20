@@ -30,7 +30,7 @@ export function ShopCartNavButton({ mobile = false, onOpenAction }: { mobile?: b
       className={
         mobile
           ? 'navbar-mobile-action-light relative flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-[var(--border-light)] bg-white py-3.5 text-base font-medium text-[var(--text-secondary)]'
-          : 'shop-cart-nav-button group relative inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full border border-white/80 bg-white/75 text-[var(--text-secondary)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white hover:text-[var(--text-primary)]'
+          : 'shop-cart-nav-button group relative inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full border border-[var(--border-light)] bg-white text-[var(--text-secondary)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white hover:text-[var(--text-primary)]'
       }
     >
       <ShoppingBag className="h-4 w-4" />

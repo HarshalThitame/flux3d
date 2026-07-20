@@ -425,6 +425,7 @@ export async function POST(request: Request) {
       state: shippingAddress.state,
       subtotal,
       weightGrams: totalWeightGrams,
+      settings,
     })
 
     if (!shippingResult.available) {

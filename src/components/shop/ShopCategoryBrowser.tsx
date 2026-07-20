@@ -200,7 +200,7 @@ export default function ShopCategoryBrowser({
         <div className="relative z-10 mx-auto max-w-7xl">
           <div className="text-5xl">{category.icon_emoji || '🧩'}</div>
           <h1 className="mt-4 text-4xl font-extrabold text-white md:text-6xl">{category.name}</h1>
-          {category.description && <p className="mt-4 max-w-2xl text-lg leading-8 text-white/82">{category.description}</p>}
+          {category.description && <p className="mt-4 max-w-2xl text-lg leading-8 text-white">{category.description}</p>}
         </div>
       </section>
 

@@ -281,7 +281,6 @@ export const useShopCartStore = create<ShopCartState>()(
                     }
                   : cartItem
               ),
-              isCartOpen: true,
             }
           }
 
@@ -295,7 +294,6 @@ export const useShopCartStore = create<ShopCartState>()(
                 cartItemId: nanoid(),
               },
             ],
-            isCartOpen: true,
           }
         }),
       removeItem: (cartItemId) =>

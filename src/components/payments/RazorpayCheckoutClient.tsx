@@ -77,6 +77,7 @@ type Props = {
   customer: CheckoutCustomer
   orderSummary: ReactNode
   themeColor?: string
+  onSuccessAction?: () => void
 }
 
 export default function RazorpayCheckoutClient({
@@ -97,6 +98,7 @@ export default function RazorpayCheckoutClient({
   customer,
   orderSummary,
   themeColor = '#0f172a',
+  onSuccessAction,
 }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -147,6 +149,7 @@ export default function RazorpayCheckoutClient({
 
           if (data.paymentStatus === 'paid' || data.paymentStatus === 'captured') {
             setStatus('paid')
+            onSuccessAction?.()
             router.replace(successHref)
             return
           }
@@ -265,6 +268,7 @@ export default function RazorpayCheckoutClient({
 
             if (verifyBody.status === 'paid') {
               setStatus('paid')
+              onSuccessAction?.()
               router.replace(successHref)
               return
             }
@@ -298,44 +302,56 @@ export default function RazorpayCheckoutClient({
   }
 
   return (
-    <div className="flex h-full flex-col rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(6,8,15,0.94),rgba(16,20,30,0.94))] p-5 text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+    <div className="flex h-full flex-col rounded-[30px] border border-purple-100 bg-white p-5 shadow-[0_4px_24px_rgba(15,23,42,0.06)]">
+      <div className="rounded-3xl border border-purple-100 bg-white p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-200">
+            <div className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6d28d9]">
               <ShieldCheck className="h-3.5 w-3.5" />
               Secure payment
             </div>
-            <h2 className="mt-4 text-2xl font-black tracking-tight text-white">{title}</h2>
-            <p className="mt-2 text-sm leading-7 text-slate-300">{subtitle}</p>
+            <h2 className="mt-4 text-2xl font-black tracking-tight text-[#0F1B3D]">{title}</h2>
+            <p className="mt-2 text-sm leading-7 text-[#6b7280]">{subtitle}</p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-right">
-            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Amount</div>
-            <div className="mt-1 text-xl font-black text-white">{amountDisplay}</div>
+          <div className="rounded-2xl border border-purple-100 bg-purple-50 px-3 py-2 text-right">
+            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#6b7280]">Amount</div>
+            <div className="mt-1 text-xl font-black text-[#0F1B3D]">{amountDisplay}</div>
           </div>
         </div>
 
-        <div className="mt-5 rounded-3xl border border-white/10 bg-black/20 p-4">
+        <div className="mt-5 rounded-3xl border border-purple-100 bg-purple-50/50 p-4">
           {orderSummary}
         </div>
 
-        <div className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-4 text-sm leading-7 text-slate-300">
-          <div className="font-bold text-white">What happens next</div>
+        <div className="mt-5 rounded-3xl border border-purple-100 bg-purple-50 p-4 text-sm leading-7 text-[#374151]">
+          <div className="font-bold text-[#0F1B3D]">What happens next</div>
           <ul className="mt-2 space-y-2">
-            <li>1. Flux3D creates the Razorpay order on the server.</li>
-            <li>2. Razorpay opens a secure checkout in your browser.</li>
-            <li>3. Flux3D verifies the signature and waits for capture confirmation.</li>
-            <li>4. Production or dispatch starts only after payment is confirmed.</li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#6d28d9] text-[10px] font-bold text-white">1</span>
+              Flux3D creates the Razorpay order on the server.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#6d28d9] text-[10px] font-bold text-white">2</span>
+              Razorpay opens a secure checkout in your browser.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#6d28d9] text-[10px] font-bold text-white">3</span>
+              Flux3D verifies the signature and waits for capture confirmation.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#6d28d9] text-[10px] font-bold text-white">4</span>
+              Production or dispatch starts only after payment is confirmed.
+            </li>
           </ul>
         </div>
 
         {message && (
           <div className={`mt-4 rounded-2xl border p-4 text-sm ${
             status === 'failed'
-              ? 'border-rose-400/20 bg-rose-500/10 text-rose-100'
+              ? 'border-red-200 bg-red-50 text-red-700'
               : status === 'pending' || status === 'verifying'
-                ? 'border-amber-400/20 bg-amber-500/10 text-amber-100'
-                : 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100'
+                ? 'border-amber-200 bg-amber-50 text-amber-700'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-700'
           }`}>
             <div className="flex items-center gap-2 font-bold">
               {status === 'failed' ? <TriangleAlert className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
@@ -349,20 +365,20 @@ export default function RazorpayCheckoutClient({
           type="button"
           onClick={startCheckout}
           disabled={loading || status === 'verifying' || status === 'paid'}
-          className="mt-5 inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#22c55e,#0ea5e9)] px-5 text-sm font-black text-white shadow-[0_18px_50px_rgba(34,197,94,0.22)] transition disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-5 inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#6d28d9] px-5 text-sm font-black text-white shadow-[0_8px_24px_rgba(109,40,217,0.3)] transition hover:bg-[#5b21b6] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           {loading ? 'Opening secure checkout...' : primaryCtaLabel}
         </button>
 
-        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-xs leading-6 text-slate-300">
-          <div className="font-bold text-white">Support</div>
+        <div className="mt-4 rounded-2xl border border-purple-100 bg-purple-50 p-4 text-xs leading-6 text-[#6b7280]">
+          <div className="font-bold text-[#0F1B3D]">Support</div>
           <div className="mt-1">
-            <a href={`mailto:${supportEmail}`} className="underline-offset-4 hover:underline">{supportEmail}</a>
+            <a href={`mailto:${supportEmail}`} className="text-[#6d28d9] underline-offset-4 hover:underline">{supportEmail}</a>
             {' · '}
-            <a href={`tel:${supportPhone.replace(/[^0-9+]/g, '')}`} className="underline-offset-4 hover:underline">{supportPhone}</a>
+            <a href={`tel:${supportPhone.replace(/[^0-9+]/g, '')}`} className="text-[#6d28d9] underline-offset-4 hover:underline">{supportPhone}</a>
           </div>
-          <div className="mt-2 text-slate-400">
+          <div className="mt-2 text-[#6b7280]">
             Order reference {orderNumber}. Secure verification is handled on Flux3D servers.
           </div>
         </div>

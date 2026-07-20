@@ -145,10 +145,9 @@ export default function ShopCheckoutClient({
   useEffect(() => {
     if (!completedOrderId) return
 
-    clearCart()
     router.push(`/3d-shop/payment/${encodeURIComponent(completedOrderId)}`)
     window.setTimeout(() => setCompletedOrderId(null), 0)
-  }, [clearCart, completedOrderId, router])
+  }, [completedOrderId, router])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

@@ -15,6 +15,7 @@ export async function cleanDb() {
   const tables = [
     'inventory_reservations', 'payment_attempts', 'payment_events', 'payment_refunds',
     'payment_audit_logs', 'payment_status_history', 'whatsapp_webhook_events', 'whatsapp_knowledge_chunks',
+    'whatsapp_rag_answer_audits',
     'shelf_orders', 'shelf_skus', 'shelf_products', 'shelf_coupons', 'shelf_categories',
     'shipping_rules', 'business_settings', 'orders', 'redemptions', 'addresses', 'quotes',
   ]
