@@ -728,15 +728,19 @@ export async function getAdminDashboardData() {
   }
 }
 
-export async function getAdminOrdersData() {
+export async function getAdminOrdersData(page = 1, limit = 100) {
   const supabase = createAdminSupabaseClient()
-  const { data, error } = await supabase
+  const from = (page - 1) * limit
+  const to = from + limit - 1
+
+  const { data, error, count } = await supabase
     .from('orders')
-    .select(ADMIN_ORDER_SELECT)
+    .select(ADMIN_ORDER_SELECT, { count: 'exact', head: false })
     .order('created_at', { ascending: false })
+    .range(from, to)
 
   if (error) throw new Error(error.message)
-  return groupAdminOrders((data ?? []) as OrderRow[])
+  return { orders: groupAdminOrders((data ?? []) as OrderRow[]), total: count ?? 0 }
 }
 
 export async function updateAdminOrderStatus(groupId: string, status: AdminOrder['status'], cancellationReason?: string) {
