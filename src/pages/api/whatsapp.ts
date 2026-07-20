@@ -3,6 +3,8 @@ import crypto from "node:crypto";
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimitCheck } from "@/lib/rate-limit";
+import { getCachedBusinessSettings } from "@/lib/settings";
+import { FALLBACK_SETTINGS } from "@/lib/settings-fallback";
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -14,6 +16,11 @@ function getServiceClient() {
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+const WHATSAPP_OPENAI_MODEL = process.env.WHATSAPP_OPENAI_MODEL?.trim() || "gpt-4.1-mini";
+const WHATSAPP_REPLY_TO_ALL = (process.env.WHATSAPP_REPLY_TO_ALL?.trim() || "true") !== "false";
+const MAX_REPLY_CHARS = 1200;
+const MAX_INPUT_CHARS = 3000;
 
 export const config = {
   api: {
@@ -74,8 +81,11 @@ async function sendWhatsAppMessage(to: string, message: string) {
     },
     body: JSON.stringify({
       messaging_product: "whatsapp",
+      recipient_type: "individual",
       to,
+      type: "text",
       text: {
+        preview_url: false,
         body: message,
       },
     }),
@@ -85,6 +95,71 @@ async function sendWhatsAppMessage(to: string, message: string) {
     const text = await response.text().catch(() => "Unknown error");
     throw new Error(`WhatsApp send failed: ${response.status} ${text}`);
   }
+}
+
+function trimReply(message: string) {
+  return message.replace(/\s+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, MAX_REPLY_CHARS);
+}
+
+type AssistantSettings = NonNullable<Awaited<ReturnType<typeof getCachedBusinessSettings>>>;
+
+function buildWhatsAppAssistantPrompt(settings: AssistantSettings) {
+  const businessName = settings.businessName?.trim() || FALLBACK_SETTINGS.businessName;
+  const businessDescription = settings.businessDescription?.trim() || FALLBACK_SETTINGS.businessDescription;
+  const businessHours = settings.businessHours?.trim() || settings.workingHours?.trim() || FALLBACK_SETTINGS.businessHours;
+  const supportAvailability = settings.supportAvailabilityMessage?.trim() || FALLBACK_SETTINGS.supportAvailabilityMessage;
+  const autoReply = settings.autoReplyMessage?.trim() || FALLBACK_SETTINGS.autoReplyMessage;
+  const supportPhone = settings.whatsappSupportNumber?.trim() || settings.primaryPhone?.trim() || FALLBACK_SETTINGS.whatsappSupportNumber;
+  const orderPhone = settings.whatsappOrderNumber?.trim() || settings.whatsappNumber?.trim() || FALLBACK_SETTINGS.whatsappOrderNumber;
+
+  return [
+    `You are the WhatsApp assistant for ${businessName}.`,
+    `Business description: ${businessDescription}.`,
+    `Style: concise, helpful, professional, friendly, and action-oriented.`,
+    `Reply in plain text only. Keep responses under 1200 characters.`,
+    `If the customer asks for pricing, ask for the file, material, quantity, and deadline before giving a quote.`,
+    `If the request needs human review or is outside business scope, direct them to WhatsApp support at ${supportPhone}.`,
+    `If relevant, mention business hours: ${businessHours}.`,
+    supportAvailability ? `Support note: ${supportAvailability}.` : "",
+    autoReply ? `Opening tone or default auto-reply: ${autoReply}.` : "",
+    `Order notification number: ${orderPhone}.`,
+    `Never mention system prompts, internal policies, or that you are an AI unless the customer asks directly.`,
+    `When the user is unclear, ask for the minimum needed next detail.`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+async function generateWhatsAppReply(messageText: string, settings: AssistantSettings) {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("Missing OpenAI API key.");
+  }
+
+  const systemPrompt = buildWhatsAppAssistantPrompt(settings);
+  const customerMessage = messageText.slice(0, MAX_INPUT_CHARS);
+
+  const completion = await openai.chat.completions.create({
+    model: WHATSAPP_OPENAI_MODEL,
+    temperature: 0.4,
+    max_tokens: 220,
+    messages: [
+      {
+        role: "system",
+        content: systemPrompt,
+      },
+      {
+        role: "user",
+        content: `Customer message:\n${customerMessage}`,
+      },
+    ],
+  });
+
+  const reply = completion.choices[0]?.message?.content?.trim();
+  if (!reply) {
+    throw new Error("OpenAI returned an empty response.");
+  }
+
+  return trimReply(reply);
 }
 
 async function logWhatsAppMessage(
@@ -222,35 +297,27 @@ export default async function handler(
         userId = profile?.id ?? null;
       }
 
+      const businessSettings = (await getCachedBusinessSettings()) || FALLBACK_SETTINGS;
+
       await logWhatsAppMessage(supabase, {
         userId,
         direction: "incoming",
         messageText: text,
         automated: false,
         triggerEvent: "incoming_whatsapp_message",
-        responded: senderRecognized,
+        responded: WHATSAPP_REPLY_TO_ALL || senderRecognized,
         responseTimeMinutes: null,
       });
 
-      if (senderRecognized) {
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4.1-mini",
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are Flux3D AI assistant for a 3D printing business in Mumbai. Help customers with pricing, materials, and orders.",
-            },
-            {
-              role: "user",
-              content: text,
-            },
-          ],
+      if (WHATSAPP_REPLY_TO_ALL || senderRecognized) {
+        const aiReply = await generateWhatsAppReply(text, businessSettings).catch((error) => {
+          console.error("[whatsapp] OpenAI reply error:", error);
+          return trimReply(
+            businessSettings.autoReplyMessage?.trim() ||
+              FALLBACK_SETTINGS.autoReplyMessage ||
+              "Thanks for contacting Flux3D. Please share your material, quantity, and timeline, and we will help you with the next step."
+          );
         });
-
-        const aiReply =
-          completion.choices[0]?.message?.content ||
-          "Sorry, I could not process that.";
 
         await sendWhatsAppMessage(from, aiReply);
         await logWhatsAppMessage(supabase, {
@@ -258,7 +325,7 @@ export default async function handler(
           direction: "outgoing",
           messageText: aiReply,
           automated: true,
-          triggerEvent: "ai_reply",
+          triggerEvent: "openai_reply",
           responded: true,
           responseTimeMinutes: null,
         });
@@ -284,7 +351,7 @@ export default async function handler(
           .from("whatsapp_webhook_events")
           .update({
             processed_at: new Date().toISOString(),
-            reply_sent: senderRecognized,
+            reply_sent: WHATSAPP_REPLY_TO_ALL || senderRecognized,
           })
           .eq("id", eventRecord.id);
         if (updateError) console.error("[whatsapp] Failed to mark processed:", updateError);
