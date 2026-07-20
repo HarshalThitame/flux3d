@@ -319,7 +319,10 @@ export default async function handler(
           );
         });
 
-        await sendWhatsAppMessage(from, aiReply);
+        await sendWhatsAppMessage(from, aiReply).catch((error) => {
+          console.error('[whatsapp] Failed to send outbound WhatsApp message:', error);
+          throw error;
+        });
         await logWhatsAppMessage(supabase, {
           userId,
           direction: "outgoing",
