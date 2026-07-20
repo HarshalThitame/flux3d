@@ -196,6 +196,7 @@ export default function ShopProductDetailClient({
       quantity,
       maxStock,
     })
+    setToast(`${product.name} added to cart ✓`)
     if (goToCheckout) {
       router.push('/3d-shop/checkout')
     } else {
