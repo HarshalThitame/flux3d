@@ -132,7 +132,20 @@ export default function OrderDetailClient({ initialOrder }: Props) {
         throw new Error(body.error ?? 'Failed to update status.')
       }
       const json = (await response.json()) as { order: AdminOrder }
-      setOrder(json.order)
+      setOrder((current) => ({
+        ...current,
+        ...json.order,
+        paymentProvider: json.order.paymentProvider ?? current.paymentProvider,
+        paymentStatus: json.order.paymentStatus ?? current.paymentStatus,
+        providerOrderId: json.order.providerOrderId ?? current.providerOrderId,
+        providerPaymentId: json.order.providerPaymentId ?? current.providerPaymentId,
+        paymentMethod: json.order.paymentMethod ?? current.paymentMethod,
+        paymentVerifiedAt: json.order.paymentVerifiedAt ?? current.paymentVerifiedAt,
+        paymentFailedAt: json.order.paymentFailedAt ?? current.paymentFailedAt,
+        paymentRefundStatus: json.order.paymentRefundStatus ?? current.paymentRefundStatus,
+        paymentRefundAmountPaise: json.order.paymentRefundAmountPaise ?? current.paymentRefundAmountPaise,
+        paymentAttemptId: json.order.paymentAttemptId ?? current.paymentAttemptId,
+      }))
       setNotesDraft(json.order.notes ?? '')
       showToast({ type: 'success', message: `${json.order.orderNumber} marked ${STATUS_LABELS[status].toLowerCase()}.` })
     } catch (error) {
@@ -156,7 +169,11 @@ export default function OrderDetailClient({ initialOrder }: Props) {
         throw new Error(body.error ?? 'Failed to save note.')
       }
       const json = (await response.json()) as { order: AdminOrder }
-      setOrder(json.order)
+      setOrder((current) => ({
+        ...current,
+        ...json.order,
+        paymentProvider: json.order.paymentProvider ?? current.paymentProvider,
+      }))
       setNotesDraft(json.order.notes ?? '')
       showToast({ type: 'success', message: 'Admin note saved.' })
     } catch (error) {

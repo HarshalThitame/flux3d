@@ -850,7 +850,59 @@ export async function getAdminOrderById(orderId: string) {
     }
   }
 
-  return groupAdminOrders(rows as OrderRow[])[0] ?? null
+  const order = groupAdminOrders(rows as OrderRow[])[0] ?? null
+  if (!order) return null
+
+  // Payment data may not be stored directly on the orders table.
+  // Fall back to payment_attempts for custom quote payments.
+  if (!order.paymentProvider) {
+    try {
+      const { data: paymentAttempt } = await supabase
+        .from('payment_attempts')
+        .select('id, provider, provider_order_id, provider_payment_id, status, payment_method, captured_at, failed_at')
+        .eq('internal_order_id', order.id)
+        .eq('internal_order_type', 'custom_quote')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (paymentAttempt) {
+        order.paymentProvider = paymentAttempt.provider
+        order.paymentStatus = paymentAttempt.status
+        order.providerOrderId = paymentAttempt.provider_order_id ?? undefined
+        order.providerPaymentId = paymentAttempt.provider_payment_id ?? undefined
+        order.paymentMethod = paymentAttempt.payment_method ?? undefined
+        order.paymentVerifiedAt = paymentAttempt.captured_at ?? undefined
+        order.paymentFailedAt = paymentAttempt.failed_at ?? undefined
+        order.paymentAttemptId = paymentAttempt.id
+
+        // Check for refunds on this payment attempt
+        const { data: refunds } = await supabase
+          .from('payment_refunds')
+          .select('status, amount_paise')
+          .eq('payment_attempt_id', paymentAttempt.id)
+          .order('created_at', { ascending: false })
+
+        if (refunds && refunds.length > 0) {
+          const processedRefund = refunds.find((r) => r.status === 'processed')
+          if (processedRefund) {
+            order.paymentRefundStatus = 'completed'
+            order.paymentRefundAmountPaise = Number(processedRefund.amount_paise)
+          } else {
+            const pendingRefund = refunds.find((r) => ['pending_approval', 'pending', 'created'].includes(r.status))
+            if (pendingRefund) {
+              order.paymentRefundStatus = 'pending'
+              order.paymentRefundAmountPaise = Number(pendingRefund.amount_paise)
+            }
+          }
+        }
+      }
+    } catch {
+      // Non-critical: payment lookup failed, order still returns without payment data
+    }
+  }
+
+  return order
 }
 
 export async function getAdminQuotesData() {
