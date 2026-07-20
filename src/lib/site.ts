@@ -6,20 +6,40 @@ const fallback = FALLBACK_SETTINGS
 const DEV_PLACEHOLDER_SITE_URL = 'https://flux3d.local.invalid'
 const PRODUCTION_PLACEHOLDER_SITE_URL = 'https://flux3d.in'
 
-function getConfiguredSiteUrl() {
+function isLocalhostUrl(value: string) {
+  const normalized = value.trim().toLowerCase()
   return (
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.VERCEL_PROJECT_PRODUCTION_URL ||
-    process.env.VERCEL_URL
+    normalized.includes('localhost') ||
+    normalized.startsWith('127.0.0.1') ||
+    normalized.startsWith('0.0.0.0')
   )
 }
 
-function normalizeSiteUrl(value?: string) {
+export function getConfiguredSiteUrl() {
+  const candidates = [
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    process.env.VERCEL_URL,
+  ].filter((value): value is string => Boolean(value))
+
+  if (process.env.NODE_ENV === 'production') {
+    const productionCandidate = candidates.find((value) => !isLocalhostUrl(value))
+    return productionCandidate
+  }
+
+  return candidates[0]
+}
+
+export function normalizeSiteUrl(value?: string) {
   if (!value) {
     if (process.env.NODE_ENV !== 'production') {
       return DEV_PLACEHOLDER_SITE_URL
     }
 
+    return PRODUCTION_PLACEHOLDER_SITE_URL
+  }
+
+  if (process.env.NODE_ENV === 'production' && isLocalhostUrl(value)) {
     return PRODUCTION_PLACEHOLDER_SITE_URL
   }
 
