@@ -32,6 +32,7 @@ export async function PATCH(request: Request) {
       groupId?: string
       status?: OrderStatus
       notes?: string | null
+      cancellationReason?: string
     }
 
     if (!body.groupId) {
@@ -48,7 +49,7 @@ export async function PATCH(request: Request) {
         .from('orders')
         .select('id, group_id, status, status_timestamps')
         .or(`group_id.eq.${body.groupId},id.eq.${body.groupId}`)
-      const order = await updateAdminOrderStatus(body.groupId, body.status)
+      const order = await updateAdminOrderStatus(body.groupId, body.status, body.cancellationReason)
       await logAdminAction({
         admin_id: auth.user.id,
         action: 'update_order_status',
