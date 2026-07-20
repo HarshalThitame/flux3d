@@ -62,7 +62,7 @@ export function makeSiteConfig(settings: BusinessSettings) {
     keywords: settings.metaKeywords ? settings.metaKeywords.split(',').map(k => k.trim()) : fallback.metaKeywords.split(',').map(k => k.trim()),
     company: {
       name: settings.legalBusinessName || settings.businessName || fallback.businessName,
-      slogan: settings.businessDescription || fallback.businessDescription,
+      slogan: settings.tagline || settings.businessDescription || fallback.businessDescription,
       email: settings.primaryEmail || fallback.primaryEmail,
       areaServed: settings.country || 'India',
       telephone: settings.primaryPhone || fallback.primaryPhone,
