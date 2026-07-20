@@ -289,8 +289,16 @@ export default function OrderDetailClient({ initialOrder }: Props) {
               <Card title="Customer">
                 <div className="space-y-3">
                   <InfoLine icon={<User className="h-4 w-4" />} value={safeText(order.fullName)} strong />
-                  <InfoLine icon={<Phone className="h-4 w-4" />} value={safeText(order.phone)} />
-                  <InfoLine icon={<Mail className="h-4 w-4" />} value={safeText(order.email)} />
+                  <InfoLine icon={<Phone className="h-4 w-4" />}>
+                    {order.phone ? (
+                      <a href={`tel:${order.phone.replace(/[^0-9+]/g, '')}`} className="text-violet-600 underline-offset-2 hover:underline">{safeText(order.phone)}</a>
+                    ) : <span>—</span>}
+                  </InfoLine>
+                  <InfoLine icon={<Mail className="h-4 w-4" />}>
+                    {order.email ? (
+                      <a href={`mailto:${order.email}`} className="text-violet-600 underline-offset-2 hover:underline">{safeText(order.email)}</a>
+                    ) : <span>—</span>}
+                  </InfoLine>
                 </div>
                 <Divider />
                 <div>
@@ -844,11 +852,15 @@ function TimelineStep({ label, meta, state }: { label: string; meta: string; sta
   )
 }
 
-function InfoLine({ icon, value, strong }: { icon: ReactNode; value: string; strong?: boolean }) {
+function InfoLine({ icon, value, strong, children }: { icon: ReactNode; value?: string; strong?: boolean; children?: ReactNode }) {
   return (
     <div className="flex min-w-0 items-center gap-3 text-sm text-gray-600">
       <span className="shrink-0 text-gray-400">{icon}</span>
-      <span className={`min-w-0 truncate ${strong ? 'font-semibold text-gray-900' : undefined}`}>{value}</span>
+      {children ? (
+        <span className={`min-w-0 truncate ${strong ? 'font-semibold text-gray-900' : undefined}`}>{children}</span>
+      ) : (
+        <span className={`min-w-0 truncate ${strong ? 'font-semibold text-gray-900' : undefined}`}>{value}</span>
+      )}
     </div>
   )
 }

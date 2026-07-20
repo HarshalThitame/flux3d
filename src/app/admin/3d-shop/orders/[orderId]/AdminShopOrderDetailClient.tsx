@@ -219,7 +219,12 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
                 <h2 className="!text-base font-bold text-[#0F1B3D]">Order Details</h2>
-                <p className="mt-1 text-sm text-[#6F7192]">{order.customer?.name ?? order.shipping_address.name} · {order.customer?.email ?? 'No email'}</p>
+                <p className="mt-1 text-sm text-[#6F7192]">
+                  {order.customer?.name ?? order.shipping_address.name}
+                  {order.customer?.email ? (
+                    <> · <a href={`mailto:${order.customer.email}`} className="text-violet-600 underline-offset-2 hover:underline">{order.customer.email}</a></>
+                  ) : ' · No email'}
+                </p>
               </div>
               <span className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${
                 order.order_status === 'cancelled' || order.order_status === 'returned'
@@ -285,7 +290,11 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
               <h2 className="!text-base font-bold text-[#0F1B3D]">Delivery Address</h2>
               <div className="mt-4 text-sm leading-7 text-[#6F7192]">
                 <div className="font-semibold text-[#0F1B3D]">{order.shipping_address.name}</div>
-                <div>{order.shipping_address.phone}</div>
+                <div>
+                  {order.shipping_address.phone ? (
+                    <a href={`tel:${order.shipping_address.phone.replace(/[^0-9+]/g, '')}`} className="text-violet-600 underline-offset-2 hover:underline">{order.shipping_address.phone}</a>
+                  ) : '—'}
+                </div>
                 <div>{order.shipping_address.line1}</div>
                 {order.shipping_address.line2 && <div>{order.shipping_address.line2}</div>}
                 <div>{order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.pincode}</div>
@@ -422,7 +431,11 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
             <div>
               <div className="text-xs font-bold uppercase tracking-[0.15em] text-[#6F7192]">Customer</div>
               <div className="mt-2 font-bold">{order.shipping_address.name}</div>
-              <div className="text-sm text-[#6F7192]">{order.shipping_address.phone}</div>
+              <div className="text-sm text-[#6F7192]">
+                {order.shipping_address.phone ? (
+                  <a href={`tel:${order.shipping_address.phone.replace(/[^0-9+]/g, '')}`} className="underline-offset-2 hover:underline">{order.shipping_address.phone}</a>
+                ) : '—'}
+              </div>
               <div className="mt-2 text-sm leading-6 text-[#6F7192]">
                 {order.shipping_address.line1}
                 {order.shipping_address.line2 ? `, ${order.shipping_address.line2}` : ''}
