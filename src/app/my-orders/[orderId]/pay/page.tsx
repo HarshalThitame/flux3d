@@ -93,70 +93,70 @@ export default async function QuotePaymentPage({ params }: PaymentPageProps) {
   const amountPaise = Math.round(Number(order.grand_total ?? order.total_price) * 100)
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.12),_transparent_26%),linear-gradient(180deg,#020617_0%,#0f172a_46%,#111827_100%)] text-white">
-      <Navbar transparent />
+    <div className="min-h-screen bg-[#f9f7f4] text-[#111827]">
+      <Navbar />
       <main className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[minmax(0,1.08fr)_420px]">
-        <section className="overflow-hidden rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-[0_24px_100px_rgba(0,0,0,0.26)] backdrop-blur-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-amber-200">
+        <section className="overflow-hidden rounded-[32px] border border-gray-200 bg-white p-6 shadow-lg">
+          <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-amber-700">
             Custom quote payment
           </div>
-          <h1 className="mt-5 text-[clamp(2.4rem,5vw,4.9rem)] font-black leading-[0.94] tracking-[-0.03em] text-white">
+          <h1 className="mt-5 text-[clamp(2.4rem,5vw,4.9rem)] font-black leading-[0.94] tracking-[-0.03em] text-[#111827]">
             Secure your production slot.
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
+          <p className="mt-4 max-w-2xl text-base leading-8 text-gray-600">
             Flux3D recalculates the payable amount on the server and opens a Razorpay checkout for the exact order reference.
           </p>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Order</div>
-              <div className="mt-2 break-all text-lg font-black text-white">{order.order_number ?? order.id}</div>
+            <div className="rounded-3xl border border-gray-200 bg-[#faf9f7] p-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">Order</div>
+              <div className="mt-2 break-all text-lg font-black text-[#111827]">{order.order_number ?? order.id}</div>
             </div>
-            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Material</div>
-              <div className="mt-2 text-lg font-black text-white">{order.material}</div>
+            <div className="rounded-3xl border border-gray-200 bg-[#faf9f7] p-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">Material</div>
+              <div className="mt-2 text-lg font-black text-[#111827]">{order.material}</div>
             </div>
-            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Amount</div>
-              <div className="mt-2 text-lg font-black text-white">₹{Math.round(amountPaise / 100).toLocaleString('en-IN')}</div>
+            <div className="rounded-3xl border border-gray-200 bg-[#faf9f7] p-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">Amount</div>
+              <div className="mt-2 text-lg font-black text-[#111827]">₹{Math.round(amountPaise / 100).toLocaleString('en-IN')}</div>
             </div>
-            <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Status</div>
-              <div className="mt-2 text-lg font-black text-white">{order.status}</div>
+            <div className="rounded-3xl border border-gray-200 bg-[#faf9f7] p-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">Status</div>
+              <div className="mt-2 text-lg font-black text-[#111827]">{order.status}</div>
             </div>
           </div>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-            <div className="rounded-[28px] border border-white/10 bg-black/25 p-5">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Print summary</div>
-              <div className="mt-4 grid gap-3 text-sm text-slate-300">
+            <div className="rounded-[28px] border border-gray-200 bg-[#faf9f7] p-5">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-gray-500">Print summary</div>
+              <div className="mt-4 grid gap-3 text-sm text-gray-600">
                 <div className="flex items-center justify-between">
                   <span>Color</span>
-                  <span className="font-semibold text-white">{order.color}</span>
+                  <span className="font-semibold text-[#111827]">{order.color}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Quantity</span>
-                  <span className="font-semibold text-white">{order.quantity}</span>
+                  <span className="font-semibold text-[#111827]">{order.quantity}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Delivery</span>
-                  <span className="font-semibold text-white">{order.delivery_charge === 0 ? 'Free' : `₹${Math.round(order.delivery_charge).toLocaleString('en-IN')}`}</span>
+                  <span className="font-semibold text-[#111827]">{order.delivery_charge === 0 ? 'Free' : `₹${Math.round(order.delivery_charge).toLocaleString('en-IN')}`}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>ETA</span>
-                  <span className="font-semibold text-white">{order.estimated_time} hrs</span>
+                  <span className="font-semibold text-[#111827]">{order.estimated_time} hrs</span>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-white/10 bg-black/25 p-5">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Delivery address</div>
-              <div className="mt-4 text-sm leading-7 text-slate-300">
+            <div className="rounded-[28px] border border-gray-200 bg-[#faf9f7] p-5">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-gray-500">Delivery address</div>
+              <div className="mt-4 text-sm leading-7 text-gray-600">
                 {addressSummary.map((line) => (
-                  <div key={line} className="text-white">{line}</div>
+                  <div key={line} className="text-[#111827]">{line}</div>
                 ))}
               </div>
-              <div className="mt-5 rounded-2xl border border-emerald-400/15 bg-emerald-400/10 p-4 text-sm leading-7 text-emerald-50">
+              <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-7 text-emerald-700">
                 Production starts only after the gateway confirms capture.
               </div>
             </div>
@@ -184,22 +184,22 @@ export default async function QuotePaymentPage({ params }: PaymentPageProps) {
               contact: order.phone,
             }}
             orderSummary={(
-              <div className="grid gap-3 text-sm text-slate-200">
+              <div className="grid gap-3 text-sm text-gray-600">
                 <div className="flex items-center justify-between">
                   <span>Subtotal</span>
-                  <span className="font-semibold text-white">₹{Math.round(order.subtotal).toLocaleString('en-IN')}</span>
+                  <span className="font-semibold text-[#111827]">₹{Math.round(order.subtotal).toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Delivery</span>
-                  <span className="font-semibold text-white">{order.delivery_charge === 0 ? 'Free' : `₹${Math.round(order.delivery_charge).toLocaleString('en-IN')}`}</span>
+                  <span className="font-semibold text-[#111827]">{order.delivery_charge === 0 ? 'Free' : `₹${Math.round(order.delivery_charge).toLocaleString('en-IN')}`}</span>
                 </div>
-                <div className="border-t border-white/10 pt-3 flex items-center justify-between text-base">
-                  <span className="font-black text-white">Total</span>
-                  <span className="text-lg font-black text-white">₹{Math.round(Number(order.grand_total ?? order.total_price)).toLocaleString('en-IN')}</span>
+                <div className="border-t border-gray-200 pt-3 flex items-center justify-between text-base">
+                  <span className="font-black text-[#111827]">Total</span>
+                  <span className="text-lg font-black text-[#111827]">₹{Math.round(Number(order.grand_total ?? order.total_price)).toLocaleString('en-IN')}</span>
                 </div>
               </div>
             )}
-            themeColor={settings.primaryColor || settings.secondaryColor || '#0f172a'}
+            themeColor={settings.primaryColor || settings.secondaryColor || '#6d28d9'}
           />
         </aside>
       </main>

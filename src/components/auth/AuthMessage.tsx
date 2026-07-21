@@ -11,8 +11,8 @@ export default function AuthMessage({ state }: AuthMessageProps) {
 
   const tone =
     state.status === 'success'
-      ? 'border-emerald-300/24 bg-emerald-400/12 text-emerald-100'
-      : 'border-rose-300/24 bg-rose-400/12 text-rose-100'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      : 'border-red-200 bg-red-50 text-red-700'
 
   return <div className={`rounded-2xl border px-4 py-3 text-sm font-medium ${tone}`}>{state.message}</div>
 }

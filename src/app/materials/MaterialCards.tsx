@@ -83,7 +83,7 @@ function MaterialCard({ data, index }: { data: MaterialCardData; index: number }
       <div className="p-5 md:p-6">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#111827] text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.18)]">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#6d28d9] text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(109,40,217,0.18)]">
               {getMaterialInitials(data.name)}
             </span>
             <div>
@@ -219,7 +219,7 @@ function MaterialCard({ data, index }: { data: MaterialCardData; index: number }
 
               <Link
                 href={`/instant-quote?material=${data.id}`}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#111827] px-5 text-sm font-bold text-white transition hover:bg-[#2f3341]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#6d28d9] px-5 text-sm font-bold text-white transition hover:bg-[#4c1d95]"
               >
                 Get Quote for {data.name}
                 <ArrowRight className="h-4 w-4" />

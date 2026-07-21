@@ -32,7 +32,7 @@ export default function Error({
           <button
             type="button"
             onClick={() => reset()}
-            className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
+            className="rounded-xl bg-[#6d28d9] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#4c1d95]"
           >
             Try again
           </button>

@@ -12,7 +12,7 @@ import { validateEmail } from '@/lib/auth/validation'
 const initialState: AuthFormState = {}
 
 const fieldClass =
-  'h-11 w-full rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-3 text-sm font-medium text-white outline-none transition-[border-color] duration-150 placeholder:text-[#777] focus:border-[#67e8f9]'
+  'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-[#111827] outline-none transition-[border-color] duration-150 placeholder:text-[#9CA3AF] focus:border-[#6d28d9]'
 
 type ForgotPasswordFormProps = {
   nextPath: string
@@ -60,7 +60,7 @@ function ResendButton({ countdown }: { countdown: number }) {
     <button
       type="submit"
       disabled={disabled}
-      className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#2a2a2a] bg-transparent px-4 text-sm font-semibold text-white transition-opacity duration-150 hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-[#111827] transition-opacity duration-150 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? (
         <>
@@ -80,7 +80,7 @@ function FormMessage({ state }: { state: AuthFormState }) {
   if (!state.message || state.status === 'success') return null
 
   return (
-    <div className="rounded-lg border border-red-400/25 bg-red-400/10 px-3 py-2.5 text-sm text-red-100">
+    <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
       {state.message}
     </div>
   )
@@ -176,14 +176,14 @@ export default function ForgotPasswordForm({ nextPath }: ForgotPasswordFormProps
                 sizes="120px"
                 className="h-7 w-auto object-contain"
               />
-              <span className="text-sm font-medium !text-[#888]">Account recovery</span>
+              <span className="text-sm font-medium !text-[#6F7192]">Account recovery</span>
             </div>
 
             <div className="mb-7">
-              <h2 className="text-[28px] font-medium leading-tight !text-white">
+              <h2 className="text-[28px] font-medium leading-tight !text-[#111827]">
                 Reset your password.
               </h2>
-              <p className="mt-2 text-[15px] leading-6 !text-[#888]">
+              <p className="mt-2 text-[15px] leading-6 !text-[#6F7192]">
                 Enter the email address linked to your account and we&apos;ll send you a reset link.
               </p>
             </div>
@@ -192,12 +192,12 @@ export default function ForgotPasswordForm({ nextPath }: ForgotPasswordFormProps
               <input type="hidden" name="next" value={nextPath} />
 
               <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-white/80">
+                <label htmlFor="email" className="text-sm font-medium text-[#475569]">
                   Email address
                 </label>
                 <div className="relative">
                   <Mail
-                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#777]"
+                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]"
                     aria-hidden="true"
                   />
                   <input
@@ -230,7 +230,7 @@ export default function ForgotPasswordForm({ nextPath }: ForgotPasswordFormProps
             <Link
               href={`/login?next=${encodeURIComponent(nextPath)}`}
               prefetch={false}
-              className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-[#67e8f9] transition-opacity duration-150 hover:opacity-80"
+              className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-[#6d28d9] transition-opacity duration-150 hover:opacity-80"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Back to Sign In
@@ -239,18 +239,18 @@ export default function ForgotPasswordForm({ nextPath }: ForgotPasswordFormProps
         ) : (
           <>
             <div className="mb-7 flex justify-center">
-              <Mail className="h-12 w-12 text-[#67e8f9]" aria-hidden="true" />
+              <Mail className="h-12 w-12 text-[#6d28d9]" aria-hidden="true" />
             </div>
 
             <div className="mb-6 text-center">
-              <h2 className="text-[28px] font-medium leading-tight !text-white">
+              <h2 className="text-[28px] font-medium leading-tight !text-[#111827]">
                 Check your inbox.
               </h2>
-              <p className="mt-3 text-[15px] leading-7 !text-[#888]">
+              <p className="mt-3 text-[15px] leading-7 !text-[#6F7192]">
                 We sent a reset link to{' '}
-                <span className="font-medium text-[#67e8f9]">{confirmedEmail}</span>
+                <span className="font-medium text-[#6d28d9]">{confirmedEmail}</span>
               </p>
-              <p className="mt-3 text-sm leading-6 !text-[#888]">
+              <p className="mt-3 text-sm leading-6 !text-[#6F7192]">
                 Didn&apos;t receive it? Check your spam folder or wait 60 seconds before resending.
               </p>
             </div>
@@ -265,7 +265,7 @@ export default function ForgotPasswordForm({ nextPath }: ForgotPasswordFormProps
             <Link
               href={`/login?next=${encodeURIComponent(nextPath)}`}
               prefetch={false}
-              className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-[#67e8f9] transition-opacity duration-150 hover:opacity-80"
+              className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-[#6d28d9] transition-opacity duration-150 hover:opacity-80"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Back to Sign In

@@ -537,7 +537,6 @@ export default async function handler(
             sendStatus: 'failed',
           }
           console.error('[whatsapp] Failed to send outbound WhatsApp message:', error);
-          throw error;
         } finally {
           auditRecord.latency_ms = Date.now() - requestStartedAt;
           await logWhatsAppRagAudit(auditRecord).catch((error) => {
