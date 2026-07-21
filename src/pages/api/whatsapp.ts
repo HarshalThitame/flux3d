@@ -439,10 +439,12 @@ export default async function handler(
         responseTimeMinutes: null,
       });
 
-      const shouldUseModelReply =
-        WHATSAPP_REPLY_TO_ALL || senderRecognized
-          ? Boolean(knowledgeContext) && ragConfidence >= WHATSAPP_RAG_CONFIDENCE_THRESHOLD
-          : false;
+      // Always reply to any incoming WhatsApp message.
+      // WHATSAPP_REPLY_TO_ALL only controls whether to use the AI model,
+      // not whether to reply at all.
+      const shouldUseModel = WHATSAPP_REPLY_TO_ALL || senderRecognized
+        ? Boolean(knowledgeContext) && ragConfidence >= WHATSAPP_RAG_CONFIDENCE_THRESHOLD
+        : false;
 
       let finalReply = "";
       let finalReplyKind: 'model' | 'fallback' | 'error' = 'fallback';
@@ -451,98 +453,96 @@ export default async function handler(
       let generationLatencyMs: number | null = null;
       let auditRecord: WhatsAppRagAuditRecord | null = null;
 
-      if (WHATSAPP_REPLY_TO_ALL || senderRecognized) {
-        if (shouldUseModelReply) {
-          const generationStartedAt = Date.now();
-          generatedReply = await generateWhatsAppReply(text, businessSettings, knowledgeContext).catch((error) => {
-            console.error("[whatsapp] OpenAI reply error:", error);
-            fallbackReason = 'openai_error';
-            return null;
-          });
-          generationLatencyMs = Date.now() - generationStartedAt;
+      if (shouldUseModel) {
+        const generationStartedAt = Date.now();
+        generatedReply = await generateWhatsAppReply(text, businessSettings, knowledgeContext).catch((error) => {
+          console.error("[whatsapp] OpenAI reply error:", error);
+          fallbackReason = 'openai_error';
+          return null;
+        });
+        generationLatencyMs = Date.now() - generationStartedAt;
+      }
+
+      if (generatedReply) {
+        finalReply = generatedReply.reply;
+        finalReplyKind = 'model';
+      } else {
+        finalReply = buildGuidedFallbackReply(businessSettings, text);
+        finalReplyKind = 'fallback';
+        fallbackReason = fallbackReason ?? (WHATSAPP_RAG_ENABLED ? (shouldUseModel ? 'model_generation_failed' : 'low_confidence') : 'rag_disabled');
+      }
+
+      auditRecord = {
+        webhook_event_id: eventRecord?.id ?? null,
+        sender: from,
+        user_id: userId,
+        question_text: text,
+        retrieval_mode: ragMode,
+        retrieval_confidence: ragConfidence,
+        retrieval_sources: ragSources,
+        response_kind: finalReplyKind,
+        response_text: finalReply,
+        response_metadata: {
+          model: generatedReply?.model ?? WHATSAPP_OPENAI_MODEL,
+          promptTokens: generatedReply?.promptTokens ?? null,
+          completionTokens: generatedReply?.completionTokens ?? null,
+          totalTokens: generatedReply?.totalTokens ?? null,
+          finishReason: generatedReply?.finishReason ?? null,
+          replyToAll: WHATSAPP_REPLY_TO_ALL,
+          senderRecognized,
+          sendStatus: 'pending',
+        },
+        fallback_reason: fallbackReason,
+        model_name: generatedReply?.model ?? (shouldUseModel ? WHATSAPP_OPENAI_MODEL : null),
+        prompt_version: WHATSAPP_PROMPT_VERSION,
+        latency_ms: null,
+        retrieval_latency_ms: retrievalLatencyMs,
+        generation_latency_ms: generationLatencyMs,
+      };
+
+      try {
+        await sendWhatsAppMessage(from, finalReply);
+        auditRecord.response_metadata = {
+          ...auditRecord.response_metadata,
+          sendStatus: 'sent',
         }
 
-        if (generatedReply) {
-          finalReply = generatedReply.reply;
-          finalReplyKind = 'model';
-        } else {
-          finalReply = buildGuidedFallbackReply(businessSettings, text);
-          finalReplyKind = 'fallback';
-          fallbackReason = fallbackReason ?? (WHATSAPP_RAG_ENABLED ? (shouldUseModelReply ? 'model_generation_failed' : 'low_confidence') : 'rag_disabled');
+        await logWhatsAppMessage(supabase, {
+          userId,
+          direction: "outgoing",
+          messageText: finalReply,
+          automated: true,
+          triggerEvent: "openai_reply",
+          responded: true,
+          responseTimeMinutes: null,
+        });
+
+        if (supabase && userId) {
+          const { data: profileRow } = await supabase
+            .from("profiles")
+            .select("whatsapp_messages_sent")
+            .eq("id", userId)
+            .maybeSingle();
+          const nextCount = Number(profileRow?.whatsapp_messages_sent ?? 0) + 1;
+          const { error: countUpdateError } = await supabase
+            .from("profiles")
+            .update({ whatsapp_messages_sent: nextCount })
+            .eq("id", userId);
+          if (countUpdateError) console.error("[whatsapp] Failed to update message count:", countUpdateError);
         }
-
-        auditRecord = {
-          webhook_event_id: eventRecord?.id ?? null,
-          sender: from,
-          user_id: userId,
-          question_text: text,
-          retrieval_mode: ragMode,
-          retrieval_confidence: ragConfidence,
-          retrieval_sources: ragSources,
-          response_kind: finalReplyKind,
-          response_text: finalReply,
-          response_metadata: {
-            model: generatedReply?.model ?? WHATSAPP_OPENAI_MODEL,
-            promptTokens: generatedReply?.promptTokens ?? null,
-            completionTokens: generatedReply?.completionTokens ?? null,
-            totalTokens: generatedReply?.totalTokens ?? null,
-            finishReason: generatedReply?.finishReason ?? null,
-            replyToAll: WHATSAPP_REPLY_TO_ALL,
-            senderRecognized,
-            sendStatus: 'pending',
-          },
-          fallback_reason: fallbackReason,
-          model_name: generatedReply?.model ?? (shouldUseModelReply ? WHATSAPP_OPENAI_MODEL : null),
-          prompt_version: WHATSAPP_PROMPT_VERSION,
-          latency_ms: null,
-          retrieval_latency_ms: retrievalLatencyMs,
-          generation_latency_ms: generationLatencyMs,
-        };
-
-        try {
-          await sendWhatsAppMessage(from, finalReply);
-          auditRecord.response_metadata = {
-            ...auditRecord.response_metadata,
-            sendStatus: 'sent',
-          }
-
-          await logWhatsAppMessage(supabase, {
-            userId,
-            direction: "outgoing",
-            messageText: finalReply,
-            automated: true,
-            triggerEvent: "openai_reply",
-            responded: true,
-            responseTimeMinutes: null,
-          });
-
-          if (supabase && userId) {
-            const { data: profileRow } = await supabase
-              .from("profiles")
-              .select("whatsapp_messages_sent")
-              .eq("id", userId)
-              .maybeSingle();
-            const nextCount = Number(profileRow?.whatsapp_messages_sent ?? 0) + 1;
-            const { error: countUpdateError } = await supabase
-              .from("profiles")
-              .update({ whatsapp_messages_sent: nextCount })
-              .eq("id", userId);
-            if (countUpdateError) console.error("[whatsapp] Failed to update message count:", countUpdateError);
-          }
-        } catch (error) {
-          auditRecord.response_kind = 'error';
-          auditRecord.fallback_reason = auditRecord.fallback_reason ?? 'send_failed';
-          auditRecord.response_metadata = {
-            ...auditRecord.response_metadata,
-            sendStatus: 'failed',
-          }
-          console.error('[whatsapp] Failed to send outbound WhatsApp message:', error);
-        } finally {
-          auditRecord.latency_ms = Date.now() - requestStartedAt;
-          await logWhatsAppRagAudit(auditRecord).catch((error) => {
-            console.error("[whatsapp] Failed to log RAG audit:", error);
-          });
+      } catch (error) {
+        auditRecord.response_kind = 'error';
+        auditRecord.fallback_reason = auditRecord.fallback_reason ?? 'send_failed';
+        auditRecord.response_metadata = {
+          ...auditRecord.response_metadata,
+          sendStatus: 'failed',
         }
+        console.error('[whatsapp] Failed to send outbound WhatsApp message:', error);
+      } finally {
+        auditRecord.latency_ms = Date.now() - requestStartedAt;
+        await logWhatsAppRagAudit(auditRecord).catch((error) => {
+          console.error("[whatsapp] Failed to log RAG audit:", error);
+        });
       }
 
       // Mark as processed
