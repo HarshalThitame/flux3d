@@ -15,9 +15,14 @@ function getServiceClient() {
   return createClient(url, key);
 }
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy init — avoids crashing at module level if OPENAI_API_KEY is missing
+let openaiClient: OpenAI | null = null
+function getOpenAI() {
+  if (!openaiClient && process.env.OPENAI_API_KEY) {
+    openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  }
+  return openaiClient
+}
 
 const WHATSAPP_OPENAI_MODEL = process.env.WHATSAPP_OPENAI_MODEL?.trim() || "gpt-4.1-mini";
 const WHATSAPP_REPLY_TO_ALL = (process.env.WHATSAPP_REPLY_TO_ALL?.trim() || "true") !== "false";
@@ -227,14 +232,15 @@ type GeneratedWhatsAppReply = {
 }
 
 async function generateWhatsAppReply(messageText: string, settings: AssistantSettings, knowledgeContext: string): Promise<GeneratedWhatsAppReply> {
-  if (!process.env.OPENAI_API_KEY) {
+  const client = getOpenAI()
+  if (!client) {
     throw new Error("Missing OpenAI API key.");
   }
 
   const systemPrompt = buildWhatsAppAssistantPrompt(settings, knowledgeContext);
   const customerMessage = messageText.slice(0, MAX_INPUT_CHARS);
 
-  const completion = await openai.chat.completions.create({
+  const completion = await client.chat.completions.create({
     model: WHATSAPP_OPENAI_MODEL,
     temperature: 0.2,
     max_tokens: 180,
@@ -394,6 +400,12 @@ export default async function handler(
         return res.status(200).json({ success: true });
       }
 
+      // Phone-based rate limit (accurate — uses sender phone, not shared Meta IP)
+      const phoneLimit = await rateLimitCheck(`whatsapp_phone:${from}`, 60, 10)
+      if (!phoneLimit.success) {
+        return res.status(429).json({ success: false, error: "Too many messages. Please wait before sending another." })
+      }
+
       // Write the event record immediately
       const eventRecord = await insertWebhookEvent(payload, { sender: from });
 
@@ -429,6 +441,8 @@ export default async function handler(
         ragSources = rag.sources;
       }
 
+      let didSendReply = false
+
       await logWhatsAppMessage(supabase, {
         userId,
         direction: "incoming",
@@ -439,12 +453,10 @@ export default async function handler(
         responseTimeMinutes: null,
       });
 
-      // Always reply to any incoming WhatsApp message.
-      // WHATSAPP_REPLY_TO_ALL only controls whether to use the AI model,
-      // not whether to reply at all.
-      const shouldUseModel = WHATSAPP_REPLY_TO_ALL || senderRecognized
-        ? Boolean(knowledgeContext) && ragConfidence >= WHATSAPP_RAG_CONFIDENCE_THRESHOLD
-        : false;
+      // Only use AI model when RAG has relevant context above confidence threshold
+      const shouldUseModel = (WHATSAPP_REPLY_TO_ALL || senderRecognized)
+        && Boolean(knowledgeContext)
+        && ragConfidence >= WHATSAPP_RAG_CONFIDENCE_THRESHOLD;
 
       let finalReply = "";
       let finalReplyKind: 'model' | 'fallback' | 'error' = 'fallback';
@@ -502,6 +514,7 @@ export default async function handler(
 
       try {
         await sendWhatsAppMessage(from, finalReply);
+        didSendReply = true
         auditRecord.response_metadata = {
           ...auditRecord.response_metadata,
           sendStatus: 'sent',
@@ -514,7 +527,7 @@ export default async function handler(
           automated: true,
           triggerEvent: "openai_reply",
           responded: true,
-          responseTimeMinutes: null,
+          responseTimeMinutes: (Date.now() - requestStartedAt) / 60000,
         });
 
         if (supabase && userId) {
@@ -551,7 +564,7 @@ export default async function handler(
           .from("whatsapp_webhook_events")
           .update({
             processed_at: new Date().toISOString(),
-            reply_sent: WHATSAPP_REPLY_TO_ALL || senderRecognized,
+            reply_sent: didSendReply,
             payload: {
               ...payload,
               rag: buildRagPayload({

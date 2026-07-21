@@ -1,12 +1,16 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useIsFinePointer } from '@/hooks/useMediaQuery'
 import { createRafThrottledCallback } from '@/lib/raf-throttle'
 
 export default function ShopPremiumFX() {
   const meterRef = useRef<HTMLSpanElement | null>(null)
+  const isFinePointer = useIsFinePointer()
 
   useEffect(() => {
+    if (!isFinePointer) return
+
     let pointerFrame = 0
     let pointerX = 0
 

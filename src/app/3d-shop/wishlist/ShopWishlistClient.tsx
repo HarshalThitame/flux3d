@@ -56,7 +56,7 @@ export default function ShopWishlistClient() {
         <div className="mb-8 flex flex-col gap-4 rounded-3xl border border-[var(--border-light)] bg-white p-6 shadow-[var(--shadow-sm)] md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-semibold text-[var(--brand-primary)]">3D Shop</p>
-            <h1 className="mt-2 text-4xl font-extrabold text-[var(--text-primary)]">
+            <h1 className="mt-2 text-[clamp(2rem,6vw,3rem)] font-extrabold text-[var(--text-primary)] md:text-4xl">
               My Wishlist ({visibleProducts.length} item{visibleProducts.length === 1 ? '' : 's'})
             </h1>
           </div>
