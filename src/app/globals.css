@@ -1823,6 +1823,19 @@ samp {
   min-width: 44px;
 }
 
+/* Floating WhatsApp button — respects safe-area insets */
+.floating-whatsapp-button {
+  bottom: calc(5rem + var(--safe-area-bottom, 0px));
+  right: calc(1rem + var(--safe-area-right, 0px));
+}
+
+@media (min-width: 768px) {
+  .floating-whatsapp-button {
+    bottom: calc(2rem + var(--safe-area-bottom, 0px));
+    right: calc(1.5rem + var(--safe-area-right, 0px));
+  }
+}
+
 /* Mobile-optimized text sizes */
 @media (max-width: 640px) {
   .mobile-text-sm {
@@ -2287,6 +2300,7 @@ samp {
   color: #0F1B3D;
   letter-spacing: -0.02em;
   text-wrap: balance;
+  overflow-wrap: break-word;
 }
 
 .premium-title-line {
@@ -3361,10 +3375,24 @@ body:has(.premium-auth-shell) {
 }
 
 @media (max-width: 768px) {
-  .premium-hero-media,
+  .premium-hero-media {
+    opacity: 0.04;
+  }
+
+  .premium-hero-poster,
+  .premium-hero-video {
+    opacity: 0.04;
+  }
+
+  .premium-hero-grid {
+    opacity: 0.08;
+    animation: none;
+  }
+
   .premium-corner-frame,
   .premium-page-chrome,
-  .premium-hero-grid,
+  .premium-scroll-meter,
+  .premium-pointer-light,
   .premium-hero-beams,
   .premium-hero::before {
     display: none;
@@ -3378,7 +3406,17 @@ body:has(.premium-auth-shell) {
   }
 
   .premium-atelier-strip {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    max-width: 100%;
+  }
+
+  .premium-atelier-metric {
+    padding: 8px 10px;
+  }
+
+  .premium-atelier-metric strong {
+    font-size: 13px;
   }
 
   .premium-stats-row {
@@ -8002,8 +8040,31 @@ body:has(.premium-auth-shell) {
   }
 
   .navbar-mobile-panel {
-    top: 5.75rem;
+    top: calc(5.75rem + env(safe-area-inset-top, 0px));
     border-radius: 20px !important;
+  }
+}
+
+/* Mobile panel open state: overscroll containment + fade-slide-in */
+.navbar-mobile-panel {
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+details[open] > .navbar-mobile-panel {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  overscroll-behavior: contain;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navbar-mobile-panel {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }
 

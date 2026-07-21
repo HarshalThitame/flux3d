@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
   testDir: './e2e',
@@ -15,6 +15,29 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { browserName: 'chromium' },
+    },
+    {
+      name: 'Mobile Chrome',
+      use: {
+        browserName: 'chromium',
+        ...devices['Pixel 5'],
+      },
+    },
+    {
+      name: 'Mobile Safari',
+      use: {
+        browserName: 'webkit',
+        ...devices['iPhone 13'],
+      },
+    },
+    {
+      name: 'Narrow Android',
+      use: {
+        browserName: 'chromium',
+        viewport: { width: 320, height: 640 },
+        userAgent:
+          'Mozilla/5.0 (Linux; Android 11; SM-G955U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.200 Mobile Safari/537.36',
+      },
     },
   ],
 })

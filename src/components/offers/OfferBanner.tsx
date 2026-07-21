@@ -47,7 +47,7 @@ export function AnnouncementBar() {
         className="relative bg-gradient-to-r from-[#4A32B0] via-[#5B3FD6] to-[#4c1d95] overflow-hidden"
       >
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_100%_at_50%_0%,rgba(255,255,255,0.08),transparent_60%)]" />
-        <div className="relative max-w-[1400px] mx-auto px-4 py-2.5 flex items-center justify-center gap-3 text-white text-sm">
+        <div className="relative max-w-[1400px] mx-auto px-3 py-2.5 flex items-center justify-center gap-2 flex-wrap text-white text-sm sm:px-4 sm:gap-3 sm:flex-nowrap">
           <Gift className="w-4 h-4 flex-shrink-0 hidden sm:block" />
           <span className="font-medium min-w-0">
             {offer.badge_text && (
