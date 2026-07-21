@@ -33,7 +33,7 @@ export default function MaterialsCTA() {
         <div className="mb-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
             href="/instant-quote"
-            className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#111827] px-8 text-sm font-bold text-white transition hover:bg-[#2f3341]"
+            className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#6d28d9] px-8 text-sm font-bold text-white transition hover:bg-[#4c1d95]"
           >
             Upload Your File & Get a Quote
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

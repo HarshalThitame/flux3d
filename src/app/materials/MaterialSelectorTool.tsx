@@ -141,7 +141,7 @@ export default function MaterialSelectorTool() {
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[#111827] to-[#6d28d9] transition-all duration-300"
+                className="h-full rounded-full bg-gradient-to-r from-[#6d28d9] to-[#a855f7] transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -226,7 +226,7 @@ export default function MaterialSelectorTool() {
                   <div className="mt-5">
                     <Link
                       href={`/instant-quote?material=${encodeURIComponent(recommendation.primary.material.materialId)}`}
-                      className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#111827] px-5 text-sm font-bold text-white transition hover:bg-[#2f3341] sm:w-auto"
+                      className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#6d28d9] px-5 text-sm font-bold text-white transition hover:bg-[#4c1d95] sm:w-auto"
                     >
                       Use This Material
                       <ArrowRight className="h-4 w-4" />

@@ -114,7 +114,7 @@ function ServiceCard({ service, index }: { service: typeof services[number]; ind
       <div className="absolute inset-x-5 top-0 h-px bg-white/80" />
 
       <div className="mb-6 flex items-start justify-between gap-4">
-        <div className="services-card-icon flex h-12 w-12 items-center justify-center rounded-lg bg-[#101828] text-white shadow-[0_18px_38px_rgba(16,24,40,0.16)]">
+        <div className="services-card-icon flex h-12 w-12 items-center justify-center rounded-lg bg-[#6d28d9] text-white shadow-[0_18px_38px_rgba(109,40,217,0.16)]">
           <service.icon className="h-5 w-5" />
         </div>
         <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold uppercase text-slate-600">
@@ -145,7 +145,7 @@ function ServiceCard({ service, index }: { service: typeof services[number]; ind
           <span className="text-xs font-semibold uppercase text-slate-500">Quote, material review, print planning included</span>
           <Link
             href="/instant-quote"
-            className="services-card-action group/link inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#101828] px-4 text-sm font-bold text-white transition hover:bg-[#6d28d9]"
+            className="services-card-action group/link inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#6d28d9] px-4 text-sm font-bold text-white transition hover:bg-[#4c1d95]"
           >
             Start
             <ArrowRight className="h-4 w-4 transition-transform group-hover/link:translate-x-1" />

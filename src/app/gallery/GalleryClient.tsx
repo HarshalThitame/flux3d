@@ -317,7 +317,7 @@ export default function GalleryClient() {
     <main className="gallery-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-[#0F1B3D]">
       <GalleryPremiumFX />
 
-      <section className="gallery-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-white sm:px-6 md:px-10 lg:px-12">
+      <section className="gallery-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-[#111827] sm:px-6 md:px-10 lg:px-12">
         <Image
           src="/printer2-poster.webp"
           alt=""
@@ -342,32 +342,32 @@ export default function GalleryClient() {
           animate="visible"
           className="relative z-10 mx-auto flex min-h-[86svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-8 pt-8 md:pt-10 lg:pt-12"
         >
-          <motion.div variants={itemVariants} className="mb-5 flex items-center gap-2 text-sm font-medium text-white/[0.64]">
-            <Link href="/" className="transition hover:text-white">Home</Link>
+          <motion.div variants={itemVariants} className="mb-5 flex items-center gap-2 text-sm font-medium text-[#6F7192]">
+            <Link href="/" className="transition hover:text-[#111827]">Home</Link>
             <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-white">Gallery</span>
+            <span className="text-[#111827]">Gallery</span>
           </motion.div>
 
           <div className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-start">
             <div className="min-w-0">
               <motion.div
                 variants={itemVariants}
-                className="gallery-hero-kicker inline-flex w-fit items-center gap-2 rounded-lg border border-white/[0.14] bg-white/10 px-4 py-2 text-xs font-black uppercase text-white shadow-[0_16px_48px_rgba(0,0,0,0.24)] backdrop-blur"
+                className="gallery-hero-kicker inline-flex w-fit items-center gap-2 rounded-lg border border-[#6d28d9]/20 bg-[#f5f3ff] px-4 py-2 text-xs font-black uppercase text-[#6d28d9] shadow-sm"
               >
-                <Sparkles className="h-4 w-4 text-amber-200" />
+                <Sparkles className="h-4 w-4 text-[#6d28d9]" />
                 Flux3D Gallery
               </motion.div>
 
               <motion.h1
                 variants={itemVariants}
-                className="gallery-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.04] text-white sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
+                className="gallery-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.04] text-[#111827] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
               >
                 A cinematic archive of real 3D print outcomes.
               </motion.h1>
 
               <motion.p
                 variants={itemVariants}
-                className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-white/[0.72] sm:text-lg lg:max-w-2xl"
+                className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-[#475569] sm:text-lg lg:max-w-2xl"
               >
                 Explore prototypes, functional parts, display pieces, and fine-detail builds through a premium production board designed for fast visual inspection.
               </motion.p>
@@ -375,14 +375,14 @@ export default function GalleryClient() {
               <motion.div variants={itemVariants} className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Link
                   href="/quote"
-                  className="gallery-primary-action group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-black text-[#05060a] shadow-[0_18px_54px_rgba(255,255,255,0.16)] transition hover:bg-[#ecfeff]"
+                  className="gallery-primary-action group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#6d28d9] px-6 text-sm font-black text-white shadow-lg transition hover:bg-[#4c1d95]"
                 >
                   Start a project
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
                 <Link
                   href="/3d-shop"
-                  className="gallery-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/[0.18] bg-white/10 px-6 text-sm font-black text-white backdrop-blur transition hover:border-cyan-300/40 hover:bg-cyan-300/[0.12]"
+                  className="gallery-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 text-sm font-black text-[#111827] shadow-sm transition hover:border-[#6d28d9]/30 hover:bg-[#f5f3ff]"
                 >
                   Shop 3D prints
                   <Box className="h-4 w-4" />
@@ -393,12 +393,12 @@ export default function GalleryClient() {
                 {stats.map((stat) => {
                   const Icon = stat.icon
                   return (
-                    <div key={stat.label} className="min-w-0 rounded-lg border border-white/10 bg-white/[0.075] p-4 backdrop-blur">
-                      <div className="flex items-center gap-2 text-sm font-black text-white">
-                        <Icon className="h-4 w-4 text-cyan-200" />
+                    <div key={stat.label} className="min-w-0 rounded-lg border border-gray-200 bg-white/80 p-4 shadow-sm backdrop-blur">
+                      <div className="flex items-center gap-2 text-sm font-black text-[#111827]">
+                        <Icon className="h-4 w-4 text-[#6d28d9]" />
                         {stat.value}
                       </div>
-                      <div className="mt-2 text-xs font-bold uppercase text-white/[0.52]">{stat.label}</div>
+                      <div className="mt-2 text-xs font-bold uppercase text-[#6F7192]">{stat.label}</div>
                     </div>
                   )
                 })}
@@ -436,12 +436,12 @@ export default function GalleryClient() {
                   <ProjectVisual project={featuredProject} priority />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs font-black uppercase tracking-[0.16em] text-cyan-100">{featuredProject.category}</div>
-                  <h2 className="mt-2 line-clamp-2 text-xl font-black leading-tight text-white">{featuredProject.title}</h2>
-                  <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-white/[0.62]">
+                  <div className="text-xs font-black uppercase tracking-[0.16em] text-[#6d28d9]">{featuredProject.category}</div>
+                  <h2 className="mt-2 line-clamp-2 text-xl font-black leading-tight text-[#111827]">{featuredProject.title}</h2>
+                  <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-[#6F7192]">
                     {featuredProject.summary}
                   </p>
-                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-black text-cyan-200">
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-black text-[#6d28d9]">
                     Open preview
                     <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </span>

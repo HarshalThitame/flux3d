@@ -77,14 +77,14 @@ export default async function SecurityPage() {
         </section>
 
         <section className="mt-14 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <article className="rounded-3xl bg-[#0F1B3D] p-8 text-white shadow-lg">
-            <h2 className="text-2xl font-bold">What is verified today</h2>
-            <ul className="mt-5 space-y-3 text-sm leading-7 text-white/75">
-              <li>Public pages are served without login.</li>
-              <li>Support details shown on the site use the verified Flux3D contact information.</li>
-              <li>Razorpay payment requests are built on the server, not in the browser.</li>
-              <li>Gateway responses are verified before an order is marked paid.</li>
-              <li>Customer support, refund, delivery, and legal pages are public and linked in the footer.</li>
+          <article className="rounded-3xl border border-[#6d28d9]/20 bg-[#f5f3ff] p-8 shadow-lg">
+            <h2 className="text-2xl font-bold text-[#111827]">What is verified today</h2>
+            <ul className="mt-5 space-y-3 text-sm leading-7 text-[#475569]">
+              <li className="flex items-start gap-2 before:mt-2 before:h-1.5 before:w-1.5 before:shrink-0 before:rounded-full before:bg-[#6d28d9]">Public pages are served without login.</li>
+              <li className="flex items-start gap-2 before:mt-2 before:h-1.5 before:w-1.5 before:shrink-0 before:rounded-full before:bg-[#6d28d9]">Support details shown on the site use the verified Flux3D contact information.</li>
+              <li className="flex items-start gap-2 before:mt-2 before:h-1.5 before:w-1.5 before:shrink-0 before:rounded-full before:bg-[#6d28d9]">Razorpay payment requests are built on the server, not in the browser.</li>
+              <li className="flex items-start gap-2 before:mt-2 before:h-1.5 before:w-1.5 before:shrink-0 before:rounded-full before:bg-[#6d28d9]">Gateway responses are verified before an order is marked paid.</li>
+              <li className="flex items-start gap-2 before:mt-2 before:h-1.5 before:w-1.5 before:shrink-0 before:rounded-full before:bg-[#6d28d9]">Customer support, refund, delivery, and legal pages are public and linked in the footer.</li>
             </ul>
           </article>
 

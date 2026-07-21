@@ -159,7 +159,8 @@ function toMatchSource(row: KnowledgeMatchRow) {
 
 async function generateEmbeddings(texts: string[]) {
   if (!process.env.OPENAI_API_KEY) {
-    throw new Error('Missing OpenAI API key.')
+    console.warn('[rag] Missing OpenAI API key — embeddings unavailable')
+    return texts.map(() => [])
   }
 
   const response = await openai.embeddings.create({
