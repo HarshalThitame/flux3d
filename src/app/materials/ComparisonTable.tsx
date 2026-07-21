@@ -90,7 +90,7 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
             <span className="inline-block text-xs font-bold uppercase text-[#6d28d9]">
               At a glance
             </span>
-            <h2 className="mt-2 text-3xl font-extrabold text-[#111827] md:text-4xl">
+            <h2 className="mt-2 text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#111827] md:text-4xl">
               Compare materials without guessing.
             </h2>
           </div>

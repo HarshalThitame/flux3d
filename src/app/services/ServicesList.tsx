@@ -130,7 +130,7 @@ function ServiceCard({ service, index }: { service: typeof services[number]; ind
         <h3 className="mt-3 !text-xl font-extrabold leading-tight !text-[#0F1B3D] transition-colors group-hover:!text-[#6d28d9]">
           {service.title}
         </h3>
-        <p className="mt-3 text-sm leading-7 text-[#667085]">{service.description}</p>
+        <p className="mt-3 text-sm leading-6 text-[#667085]">{service.description}</p>
 
         <div className="mt-6 grid gap-2 sm:grid-cols-2">
           {service.details.map((detail) => (
@@ -145,7 +145,7 @@ function ServiceCard({ service, index }: { service: typeof services[number]; ind
           <span className="text-xs font-semibold uppercase text-slate-500">Quote, material review, print planning included</span>
           <Link
             href="/instant-quote"
-            className="services-card-action group/link inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#6d28d9] px-4 text-sm font-bold text-white transition hover:bg-[#4c1d95]"
+            className="services-card-action group/link inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#6d28d9] px-4 text-sm font-bold text-white transition hover:bg-[#4c1d95]"
           >
             Start
             <ArrowRight className="h-4 w-4 transition-transform group-hover/link:translate-x-1" />
@@ -172,11 +172,11 @@ export default function ServicesList() {
         >
           <div>
             <span className="text-xs font-bold uppercase text-[#6d28d9]">Service portfolio</span>
-            <h2 className="mt-3 max-w-3xl !text-4xl font-extrabold leading-tight !text-[#0F1B3D] md:!text-5xl">
+            <h2 className="mt-3 max-w-3xl !text-[clamp(2rem,6vw,3rem)] font-extrabold leading-tight !text-[#0F1B3D] md:!text-5xl">
               Every print category, handled with the same production discipline.
             </h2>
           </div>
-          <p className="text-sm leading-7 text-[#667085]">
+          <p className="text-sm leading-6 text-[#667085] lg:leading-7">
             Choose a specialization or upload your file directly. The workflow stays the same: material fit, print strategy, finishing plan, QC, and dispatch.
           </p>
         </motion.div>

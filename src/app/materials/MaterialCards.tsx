@@ -258,7 +258,7 @@ export default function MaterialCards({ materials }: MaterialCardsProps) {
             <span className="inline-block text-xs font-bold uppercase text-[#6d28d9]">
               Material details
             </span>
-            <h2 className="mt-2 text-3xl font-extrabold text-[#111827] md:text-4xl">
+            <h2 className="mt-2 text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#111827] md:text-4xl">
               Premium material cards for real decisions.
             </h2>
           </div>

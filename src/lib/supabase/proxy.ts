@@ -2,9 +2,9 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/config'
 
-export async function updateSession(request: NextRequest, requestHeaders = request.headers) {
+export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
-    request: { headers: requestHeaders },
+    request: { headers: request.headers },
   })
 
   const supabase = createServerClient(
@@ -20,15 +20,8 @@ export async function updateSession(request: NextRequest, requestHeaders = reque
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => {
-          request.cookies.set(name, value)
-        })
-
-        response = NextResponse.next({
-          request: { headers: requestHeaders },
-        })
-
           cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value)
             response.cookies.set(name, value, options)
           })
         },
@@ -42,5 +35,5 @@ export async function updateSession(request: NextRequest, requestHeaders = reque
     // Invalid refresh token — session will be cleared automatically
   }
 
-  return { response, supabase }
+  return response
 }
