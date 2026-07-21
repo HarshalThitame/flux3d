@@ -12,7 +12,7 @@ import type { AuthFormState } from '@/lib/auth/validation'
 const initialState: AuthFormState = {}
 
 const fieldClass =
-  'h-11 w-full rounded-xl border border-white/12 bg-white/[0.075] px-4 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] outline-none transition placeholder:text-white/35 focus:border-cyan-200/70 focus:bg-white/[0.11] focus:ring-4 focus:ring-cyan-300/10'
+  'h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-purple-400 focus:ring-4 focus:ring-purple-100'
 
 export type LoginFormProps = {
   nextPath: string
@@ -25,7 +25,7 @@ function FieldError({ id, errors }: { id: string; errors?: string[] }) {
   return (
     <div id={id} className="space-y-1">
       {errors.map((error) => (
-        <p key={error} className="text-sm font-semibold !text-rose-200">
+        <p key={error} className="text-sm font-semibold !text-red-500">
           {error}
         </p>
       ))}
@@ -38,8 +38,8 @@ function LoginMessage({ state }: { state: AuthFormState }) {
 
   const tone =
     state.status === 'success'
-      ? 'border-emerald-300/25 bg-emerald-300/10 text-emerald-50'
-      : 'border-rose-300/25 bg-rose-300/10 text-rose-50'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      : 'border-red-200 bg-red-50 text-red-700'
 
   return <div className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${tone}`}>{state.message}</div>
 }
@@ -126,14 +126,14 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
   }
 
   return (
-    <div className="auth-login-panel w-full min-w-0 text-white">
+    <div className="auth-login-panel w-full min-w-0">
       <div className="premium-console-header mb-4">
         <span>Secure Login</span>
         <strong>READY</strong>
       </div>
 
       <div className="auth-login-brand mb-4 flex flex-wrap items-center gap-3">
-        <span className="inline-flex min-h-11 items-center rounded-xl border border-white/12 bg-white/90 px-3 shadow-[0_18px_46px_rgba(0,0,0,0.18)]">
+        <span className="inline-flex min-h-11 items-center rounded-xl border border-gray-200 bg-white px-3 shadow-sm">
           <Image
             src="/logo.webp"
             alt="Flux3D"
@@ -145,15 +145,15 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
           />
         </span>
         <div className="min-w-0">
-          <h2 className="!text-[30px] font-black leading-[1.02] !text-white">Welcome back.</h2>
-          <p className="mt-1 text-sm leading-6 text-white/58">
+          <h2 className="!text-[30px] font-black leading-[1.02] !text-gray-900">Welcome back.</h2>
+          <p className="mt-1 text-sm leading-6 text-gray-500">
             Continue to your production workspace.
           </p>
         </div>
       </div>
 
-      <div className="mb-3 rounded-xl border border-white/10 bg-white/[0.055] px-3 py-2">
-        <p className="text-xs font-semibold leading-5 text-white/68">
+      <div className="mb-3 rounded-xl border border-purple-100 bg-purple-50 px-3 py-2">
+        <p className="text-xs font-semibold leading-5 text-purple-800">
           Saved quotes, private files, checkout details, and order tracking are ready after sign in.
         </p>
       </div>
@@ -162,12 +162,12 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
         <input type="hidden" name="next" value={nextPath} />
 
         <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-bold text-white/78">
+          <label htmlFor="email" className="text-sm font-bold text-gray-700">
             Email address
           </label>
           <div className="relative">
             <Mail
-              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-100/54"
+              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
               aria-hidden="true"
             />
             <input
@@ -188,20 +188,20 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
 
         <div className="space-y-2">
           <div className="auth-login-password-row flex flex-wrap items-center justify-between gap-3">
-            <label htmlFor="password" className="text-sm font-bold text-white/78">
+            <label htmlFor="password" className="text-sm font-bold text-gray-700">
               Password
             </label>
             <Link
               href={`/forgot-password?next=${encodeURIComponent(nextPath)}`}
               prefetch={false}
-              className="text-sm font-bold text-cyan-200 transition-opacity duration-150 hover:opacity-80"
+              className="text-sm font-bold text-purple-600 transition-opacity duration-150 hover:opacity-80"
             >
               Forgot password?
             </Link>
           </div>
           <div className="relative">
             <LockKeyhole
-              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-100/54"
+              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
               aria-hidden="true"
             />
             <input
@@ -220,7 +220,7 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
               type="button"
               onClick={() => setShowPassword((value) => !value)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-white/54 transition-opacity duration-150 hover:opacity-80"
+              className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-gray-400 transition-opacity duration-150 hover:opacity-80"
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" aria-hidden="true" />
@@ -236,28 +236,28 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
         <SubmitButton />
       </form>
 
-      <div className="my-3 flex items-center gap-3 text-xs font-black uppercase tracking-[0.16em] text-white/36">
-        <div className="h-px flex-1 bg-white/12" />
+      <div className="my-3 flex items-center gap-3 text-xs font-black uppercase tracking-[0.16em] text-gray-400">
+        <div className="h-px flex-1 bg-gray-200" />
         or continue with
-        <div className="h-px flex-1 bg-white/12" />
+        <div className="h-px flex-1 bg-gray-200" />
       </div>
 
       <button
         type="button"
         onClick={handleGoogleLogin}
         disabled={googleLoading}
-        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.065] px-4 text-sm font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:border-white/22 hover:bg-white/[0.09] disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <GoogleIcon />
         {googleLoading ? 'Redirecting to Google...' : 'Google'}
       </button>
 
-      <p className="mt-3 text-center text-sm !text-white/54">
+      <p className="mt-3 text-center text-sm !text-gray-500">
         Don&apos;t have an account?{' '}
         <Link
           href={`/signup?next=${encodeURIComponent(nextPath)}`}
           prefetch={false}
-          className="font-bold text-cyan-200 transition-opacity duration-150 hover:opacity-80"
+          className="font-bold text-purple-600 transition-opacity duration-150 hover:opacity-80"
         >
           Create account
         </Link>

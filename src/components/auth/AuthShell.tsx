@@ -40,7 +40,7 @@ export default function AuthShell({
   children,
 }: AuthShellProps) {
   return (
-    <section className="premium-auth-shell relative isolate flex min-h-screen items-center overflow-hidden px-4 py-5 text-white sm:px-6 lg:px-10">
+    <section className="premium-auth-shell relative isolate flex min-h-screen items-center overflow-hidden px-4 py-5 sm:px-6 lg:px-10">
       <div className="premium-auth-media" aria-hidden="true" style={{ position: 'absolute' }}>
         <Image
           src="/bg1.webp"
@@ -64,16 +64,16 @@ export default function AuthShell({
               <span className="premium-live-dot" />
               {eyebrow}
             </div>
-            <p className="flex max-w-full flex-wrap items-center justify-center gap-2 text-center text-[10px] font-semibold uppercase leading-5 tracking-[0.14em] text-white/58 sm:text-xs sm:tracking-[0.18em] md:justify-start md:text-left">
-              <Gauge className="h-3.5 w-3.5 text-cyan-200" aria-hidden="true" />
+            <p className="flex max-w-full flex-wrap items-center justify-center gap-2 text-center text-[10px] font-semibold uppercase leading-5 tracking-[0.14em] text-gray-500 sm:text-xs sm:tracking-[0.18em] md:justify-start md:text-left">
+              <Gauge className="h-3.5 w-3.5 text-purple-400" aria-hidden="true" />
               <span className="min-w-0">Flux3D secure production portal</span>
             </p>
           </div>
 
-          <h1 className="premium-auth-title mx-auto w-full max-w-[19rem] text-3xl font-black leading-tight text-white sm:max-w-3xl sm:text-5xl sm:leading-[0.98] md:mx-0 md:text-6xl">
+          <h1 className="premium-auth-title mx-auto w-full max-w-[19rem] text-3xl font-black leading-tight sm:max-w-3xl sm:text-5xl sm:leading-[0.98] md:mx-0 md:text-6xl">
             {title}
           </h1>
-          <p className="mx-auto mt-5 w-full max-w-[20rem] text-base leading-8 text-white/70 sm:max-w-xl md:mx-0">
+          <p className="mx-auto mt-5 w-full max-w-[20rem] text-base leading-8 text-gray-600 sm:max-w-xl md:mx-0">
             {description}
           </p>
 
@@ -106,13 +106,13 @@ export default function AuthShell({
                 <span />
               </div>
               <div className="min-w-0 text-left">
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-white/42">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">
                   Production pass
                 </p>
-                <p className="mt-1 text-xl font-black leading-tight text-white">
+                <p className="mt-1 text-xl font-black leading-tight text-gray-900">
                   Secure access for quotes, files, and orders
                 </p>
-                <p className="mt-2 text-sm leading-6 text-white/58">
+                <p className="mt-2 text-sm leading-6 text-gray-600">
                   One workspace for upload history, checkout details, and repeat builds.
                 </p>
               </div>
@@ -126,15 +126,15 @@ export default function AuthShell({
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
-                  <div className="text-sm font-black text-white">{label}</div>
-                  <p className="mt-1 text-xs leading-5 text-white/56">{value}</p>
+                  <div className="text-sm font-black text-gray-900">{label}</div>
+                  <p className="mt-1 text-xs leading-5 text-gray-500">{value}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <p className="mt-5 hidden items-center justify-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/44 lg:flex lg:justify-start">
-            <Layers3 className="h-3.5 w-3.5 text-amber-200" aria-hidden="true" />
+          <p className="mt-5 hidden items-center justify-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-gray-400 lg:flex lg:justify-start">
+            <Layers3 className="h-3.5 w-3.5 text-purple-400" aria-hidden="true" />
             Built for repeat production, prototyping, and secure file handling
           </p>
         </div>

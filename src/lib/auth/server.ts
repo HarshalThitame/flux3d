@@ -18,15 +18,27 @@ export async function getCurrentUserProfile() {
   }
 
   const supabase = await createServerSupabaseClient()
+
+  // Use getSession() first — it reads cookies locally without HTTP request.
+  // This avoids the token refresh race condition and setAll cookie write failure
+  // that occurs in Server Components when getUser() triggers a refresh.
   let user = null
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const { data } = await supabase.auth.getUser()
-      user = data.user
-      break
-    } catch {
-      if (attempt === 2) return null
-      await new Promise((resolve) => setTimeout(resolve, 500))
+  const { data: sessionData } = await supabase.auth.getSession()
+  if (sessionData?.session?.user) {
+    user = sessionData.session.user
+  }
+
+  // Fall back to getUser() only if session is missing (not just expired)
+  if (!user) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const { data } = await supabase.auth.getUser()
+        user = data.user
+        break
+      } catch {
+        if (attempt === 2) return null
+        await new Promise((resolve) => setTimeout(resolve, 500))
+      }
     }
   }
 

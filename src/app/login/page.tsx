@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { getSettings } from '@/lib/settings'
 import { redirect } from 'next/navigation'
-import HomeNavbar from '@/app/landing/HomeNavbar'
+import Navbar from '@/components/Navbar'
 import AuthShell from '@/components/auth/AuthShell'
 import LoginFormBoundary from '@/components/auth/LoginFormBoundary'
 import { getCurrentUserProfile } from '@/lib/auth/server'
@@ -40,7 +40,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <div className="auth-page-with-navbar">
-      <HomeNavbar />
+      <Navbar />
       <AuthShell
         eyebrow="Secure Login"
         title="Welcome back to your Flux3D workspace."
