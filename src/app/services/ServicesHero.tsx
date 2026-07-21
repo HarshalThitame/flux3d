@@ -139,20 +139,8 @@ export default function ServicesHero() {
   const businessName = settings.businessName || 'Flux3D'
 
   return (
-    <section className="services-hero-premium relative isolate overflow-hidden px-4 pb-10 pt-8 text-white md:px-8 lg:px-16">
+    <section className="services-hero-premium relative isolate overflow-hidden px-4 pb-10 pt-8 text-[#0F1B3D] md:px-8 lg:px-16">
       <ServicesPremiumFX />
-      <Image
-        src="/printer2-poster.webp"
-        alt=""
-        fill
-        preload
-        sizes="100vw"
-        className="services-hero-video absolute inset-0 h-full w-full object-cover"
-      />
-      <DeferredHeroVideo
-        src="/printer2-optimized.mp4"
-        className="services-hero-video absolute inset-0 h-full w-full object-cover"
-      />
       <div className="services-hero-depth" aria-hidden="true" />
       <div className="services-hero-grid" aria-hidden="true" />
       <div className="services-hero-beam" aria-hidden="true" />
@@ -163,17 +151,17 @@ export default function ServicesHero() {
         animate="visible"
         className="relative z-10 mx-auto flex min-h-[76svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-10 pt-10 md:pt-12 lg:pt-14"
       >
-        <motion.div variants={item} className="mb-4 flex items-center gap-2 text-sm font-medium text-white/[0.64]">
-          <Link href="/" className="transition hover:text-white">Home</Link>
+        <motion.div variants={item} className="mb-4 flex items-center gap-2 text-sm font-medium text-[#6b7280]">
+          <Link href="/" className="transition hover:text-[#0F1B3D]">Home</Link>
           <ChevronRight className="h-3.5 w-3.5" />
-          <span className="text-white">Services</span>
+          <span className="text-[#0F1B3D]">Services</span>
         </motion.div>
 
         <motion.div
           variants={item}
-          className="services-hero-kicker mb-4 inline-flex w-fit items-center gap-2 rounded-lg border border-white/[0.14] bg-white/10 px-4 py-2 text-xs font-bold uppercase text-white shadow-[0_16px_48px_rgba(0,0,0,0.24)] backdrop-blur"
+          className="services-hero-kicker mb-4 inline-flex w-fit items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 text-xs font-bold uppercase text-[#6d28d9] shadow-sm"
         >
-          <Sparkles className="h-4 w-4 text-amber-300" />
+          <Sparkles className="h-4 w-4 text-[#6d28d9]" />
           Premium service atelier
         </motion.div>
 
@@ -181,14 +169,14 @@ export default function ServicesHero() {
           <div className="min-w-0">
             <motion.h1
               variants={item}
-              className="services-hero-title max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.06] text-white sm:text-6xl sm:leading-[0.98] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
+              className="services-hero-title max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.06] text-[#0F1B3D] sm:text-6xl sm:leading-[0.98] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
             >
               Services engineered for premium output.
             </motion.h1>
 
             <motion.p
               variants={item}
-              className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-white/[0.74] sm:text-lg lg:max-w-2xl"
+              className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-[#6b7280] sm:text-lg lg:max-w-2xl"
             >
               Flux3D turns prototypes, presentation models, functional parts, props, gifts, and small-batch products into finished objects with material guidance, print planning, finishing, and Pan-India delivery.
             </motion.p>
@@ -196,7 +184,7 @@ export default function ServicesHero() {
             <motion.div variants={item} className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
                 href="/instant-quote"
-                className="services-primary-action group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#080A12] shadow-[0_18px_54px_rgba(255,255,255,0.18)] transition hover:bg-[#ede9fe]"
+                className="services-primary-action group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#6d28d9] px-6 text-sm font-bold text-white shadow-[0_8px_24px_rgba(109,40,217,0.3)] transition hover:bg-[#5b21b6]"
               >
                 Get Instant Quote
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -205,7 +193,7 @@ export default function ServicesHero() {
                 href={`https://wa.me/${whatsappNumber}?text=Hi%20${encodeURIComponent(businessName)}!%20I%20want%20to%20discuss%20a%203D%20printing%20project.`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="services-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/[0.18] bg-white/10 px-6 text-sm font-bold text-white backdrop-blur transition hover:border-[#25D366]/[0.45] hover:bg-[#25D366]/[0.14]"
+                className="services-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#6d28d9]/30 px-6 text-sm font-bold text-[#6d28d9] transition hover:border-[#6d28d9]/50 hover:bg-purple-50"
               >
                 <MessageCircle className="h-4 w-4 text-[#25D366]" />
                 Discuss Project
@@ -256,15 +244,15 @@ export default function ServicesHero() {
                 key={signal.title}
                 animate={reduceMotion ? {} : { y: [0, index % 2 === 0 ? -5 : 5, 0] }}
                 transition={reduceMotion ? undefined : { duration: 5 + index, repeat: Infinity, ease: 'easeInOut' }}
-                className="services-signal-card min-w-0 overflow-hidden rounded-lg border border-white/[0.12] bg-white/[0.08] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.24)] backdrop-blur"
+                className="services-signal-card min-w-0 overflow-hidden rounded-lg border border-purple-200 bg-white p-4 shadow-sm"
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-[#111827]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#6d28d9] text-white">
                     <signal.icon className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-extrabold text-white">{signal.title}</div>
-                    <p className="mt-1 break-words text-xs leading-5 text-white/[0.64]">{signal.body}</p>
+                    <div className="text-sm font-extrabold text-[#0F1B3D]">{signal.title}</div>
+                    <p className="mt-1 break-words text-xs leading-5 text-[#6b7280]">{signal.body}</p>
                   </div>
                 </div>
               </motion.div>
@@ -272,17 +260,17 @@ export default function ServicesHero() {
           </motion.div>
         </div>
 
-        <motion.div variants={item} className="services-hero-stats mt-10 grid w-full overflow-hidden rounded-lg border border-white/[0.12] bg-white/[0.08] backdrop-blur sm:grid-cols-2 lg:grid-cols-4">
+        <motion.div variants={item} className="services-hero-stats mt-10 grid w-full overflow-hidden rounded-lg border border-purple-200 bg-white shadow-sm sm:grid-cols-2 lg:grid-cols-4">
           {heroStats.map((stat) => (
-            <div key={stat.label} className="border-b border-white/10 p-5 last:border-b-0 sm:border-r sm:last:border-r-0 lg:border-b-0">
-              <div className="text-3xl font-extrabold text-white">{stat.value}</div>
-              <div className="mt-1 text-xs font-bold uppercase text-white/[0.54]">{stat.label}</div>
+            <div key={stat.label} className="border-b border-purple-100 p-5 last:border-b-0 sm:border-r sm:last:border-r-0 lg:border-b-0">
+              <div className="text-3xl font-extrabold text-[#0F1B3D]">{stat.value}</div>
+              <div className="mt-1 text-xs font-bold uppercase text-[#6b7280]">{stat.label}</div>
             </div>
           ))}
         </motion.div>
       </motion.div>
 
-      <div className="services-marquee relative z-10 mx-auto w-full max-w-[1200px] overflow-hidden border-y border-white/10 py-3">
+      <div className="services-marquee relative z-10 mx-auto w-full max-w-[1200px] overflow-hidden border-y border-purple-200 py-3">
         <motion.div
           aria-hidden="true"
           className="flex w-max gap-3"
@@ -290,8 +278,8 @@ export default function ServicesHero() {
           transition={reduceMotion ? undefined : { duration: 28, repeat: Infinity, ease: 'linear' }}
         >
           {[...marqueeItems, ...marqueeItems].map((label, index) => (
-            <span key={`${label}-${index}`} className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.07] px-4 py-2 text-xs font-bold uppercase text-white/70">
-              {index % 3 === 0 ? <BadgeCheck className="h-3.5 w-3.5 text-emerald-300" /> : index % 3 === 1 ? <Zap className="h-3.5 w-3.5 text-amber-300" /> : <Truck className="h-3.5 w-3.5 text-sky-300" />}
+            <span key={`${label}-${index}`} className="inline-flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 text-xs font-bold uppercase text-[#6b7280]">
+              {index % 3 === 0 ? <BadgeCheck className="h-3.5 w-3.5 text-emerald-500" /> : index % 3 === 1 ? <Zap className="h-3.5 w-3.5 text-amber-500" /> : <Truck className="h-3.5 w-3.5 text-sky-500" />}
               {label}
             </span>
           ))}
