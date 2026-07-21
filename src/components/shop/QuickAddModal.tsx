@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2, ShoppingBag, X } from 'lucide-react'
+import { addToast } from '@/lib/toast/store'
 import type { ShopPublicProduct } from '@/lib/shop/public-types'
 import {
   formatShopPrice,
@@ -104,6 +105,11 @@ export default function QuickAddModal({
       maxStock,
     })
     setAdded(true)
+    addToast({
+      type: 'success',
+      title: 'Added to cart',
+      description: `${product.name}${resolvedSku ? ` — ${formatShopPrice(resolvedSku.price)}` : ''}`,
+    })
     window.setTimeout(() => {
       setAdded(false)
       onOpenChangeAction(false)

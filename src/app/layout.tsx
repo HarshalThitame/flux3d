@@ -6,6 +6,7 @@ import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data
 import ErrorBoundary from '@/components/ErrorBoundary'
 import DeferredTracking from '@/components/DeferredTracking'
 import DeferredGoogleAnalytics from '@/components/DeferredGoogleAnalytics'
+import ToastContainer from '@/components/Toast'
 import './globals.css'
 
 const GOOGLE_ANALYTICS_ID = 'G-KCK2459TBQ'
@@ -151,6 +152,7 @@ export default async function RootLayout({
           <DeferredTracking />
           {children}
         </ErrorBoundary>
+        <ToastContainer />
         <DeferredGoogleAnalytics measurementId={GOOGLE_ANALYTICS_ID} />
       </body>
     </html>
