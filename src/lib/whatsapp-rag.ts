@@ -6,9 +6,13 @@ const EMBEDDING_MODEL = process.env.WHATSAPP_EMBEDDING_MODEL?.trim() || 'text-em
 const RAG_TOP_K = Math.max(1, Number(process.env.WHATSAPP_RAG_TOP_K ?? 4) || 4)
 const RAG_MIN_SCORE = Number(process.env.WHATSAPP_RAG_MIN_SCORE ?? 0.3) || 0.3
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+let openaiClient: OpenAI | null = null
+function getRagOpenAI() {
+  if (!openaiClient && process.env.OPENAI_API_KEY) {
+    openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  }
+  return openaiClient
+}
 
 let seedCorpusPromise: Promise<WhatsAppKnowledgeChunk[]> | null = null
 
@@ -158,12 +162,13 @@ function toMatchSource(row: KnowledgeMatchRow) {
 }
 
 async function generateEmbeddings(texts: string[]) {
-  if (!process.env.OPENAI_API_KEY) {
+  const client = getRagOpenAI()
+  if (!client) {
     console.warn('[rag] Missing OpenAI API key — embeddings unavailable')
     return texts.map(() => [])
   }
 
-  const response = await openai.embeddings.create({
+  const response = await client.embeddings.create({
     model: EMBEDDING_MODEL,
     input: texts,
   })
@@ -247,7 +252,11 @@ async function loadSeedCorpus(): Promise<WhatsAppKnowledgeChunk[]> {
       updatedAt: null,
       embedding: embeddings[index] ?? [],
     }))
-  })()
+  })().catch((error) => {
+    console.error('[rag] Failed to load seed corpus:', error)
+    seedCorpusPromise = null // Allow retry on next call
+    return []
+  })
 
   return seedCorpusPromise
 }
