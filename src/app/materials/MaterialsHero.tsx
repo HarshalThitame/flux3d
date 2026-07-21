@@ -115,20 +115,8 @@ export default function MaterialsHero() {
   const whatsappNumber = (settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')
 
   return (
-    <section ref={ref} className="materials-hero-premium relative isolate overflow-hidden px-4 pb-12 pt-8 text-white md:px-8 lg:px-16">
+    <section ref={ref} className="materials-hero-premium relative isolate overflow-hidden px-4 pb-12 pt-8 text-[#0F1B3D] md:px-8 lg:px-16">
       <MaterialsPremiumFX />
-      <Image
-        src="/printer2-poster.webp"
-        alt=""
-        fill
-        preload
-        sizes="100vw"
-        className="materials-hero-video absolute inset-0 h-full w-full object-cover"
-      />
-      <DeferredHeroVideo
-        src="/printer2-optimized.mp4"
-        className="materials-hero-video absolute inset-0 h-full w-full object-cover"
-      />
       <div className="materials-hero-depth" aria-hidden="true" />
       <div className="materials-hero-grid" aria-hidden="true" />
       <div className="materials-hero-beam" aria-hidden="true" />
@@ -140,17 +128,17 @@ export default function MaterialsHero() {
         animate={isInView ? 'visible' : 'hidden'}
         className="relative z-10 mx-auto flex min-h-[82svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-10 pt-10 md:pt-14 lg:pt-16"
       >
-        <motion.div variants={item} className="mb-4 flex items-center gap-2 text-sm font-medium text-white/[0.64]">
-          <Link href="/" className="transition hover:text-white">Home</Link>
+        <motion.div variants={item} className="mb-4 flex items-center gap-2 text-sm font-medium text-[#6b7280]">
+          <Link href="/" className="transition hover:text-[#0F1B3D]">Home</Link>
           <ChevronRight className="h-3.5 w-3.5" />
-          <span className="text-white">Materials</span>
+          <span className="text-[#0F1B3D]">Materials</span>
         </motion.div>
 
         <motion.div
           variants={item}
-          className="materials-hero-kicker mb-4 inline-flex w-fit items-center gap-2 rounded-lg border border-white/[0.14] bg-white/10 px-4 py-2 text-xs font-bold uppercase text-white shadow-[0_16px_48px_rgba(0,0,0,0.24)] backdrop-blur"
+          className="materials-hero-kicker mb-4 inline-flex w-fit items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 text-xs font-bold uppercase text-[#6d28d9] shadow-sm"
         >
-          <FlaskConical className="h-4 w-4 text-cyan-200" />
+          <FlaskConical className="h-4 w-4 text-[#6d28d9]" />
           Material intelligence lab
         </motion.div>
 
@@ -158,14 +146,14 @@ export default function MaterialsHero() {
           <div className="min-w-0">
             <motion.h1
               variants={item}
-              className="materials-hero-title max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.04] text-white sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
+              className="materials-hero-title max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.04] text-[#0F1B3D] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
             >
               Materials chosen with engineering precision.
             </motion.h1>
 
             <motion.p
               variants={item}
-              className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-white/[0.74] sm:text-lg lg:max-w-2xl"
+              className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-[#6b7280] sm:text-lg lg:max-w-2xl"
             >
               Compare finish, strength, heat resistance, flexibility, and cost before you upload. Flux3D pairs each job with a material that fits the part, not just the printer.
             </motion.p>
@@ -176,7 +164,7 @@ export default function MaterialsHero() {
             >
               <Link
                 href="/instant-quote"
-                className="materials-primary-action group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#080A12] shadow-[0_18px_54px_rgba(255,255,255,0.18)] transition hover:bg-[#ede9fe]"
+                className="materials-primary-action group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#6d28d9] px-6 text-sm font-bold text-white shadow-[0_8px_24px_rgba(109,40,217,0.3)] transition hover:bg-[#5b21b6]"
               >
                 Upload File
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -185,7 +173,7 @@ export default function MaterialsHero() {
                 href={`https://wa.me/${whatsappNumber}?text=Hi%20${encodeURIComponent(settings.businessName || 'Flux3D')}!%20I%20need%20help%20choosing%20a%20material%20for%20my%20project.`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="materials-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#25D366]/25 bg-white/10 px-6 text-sm font-bold text-white backdrop-blur transition hover:border-[#25D366]/50 hover:bg-[#25D366]/[0.16]"
+                className="materials-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#6d28d9]/30 px-6 text-sm font-bold text-[#6d28d9] transition hover:border-[#6d28d9]/50 hover:bg-purple-50"
               >
                 <MessageCircle className="h-4 w-4 text-[#25D366]" />
                 Ask Material Expert
@@ -197,10 +185,10 @@ export default function MaterialsHero() {
             className="materials-hero-stats mt-8 grid gap-3 sm:grid-cols-3"
           >
             {heroStats.map((stat) => (
-              <div key={stat.label} className="min-w-0 rounded-lg border border-white/10 bg-white/[0.075] p-4 backdrop-blur">
-                <stat.icon className="mb-4 h-4 w-4 text-cyan-200" />
-                <div className="text-xs font-bold uppercase text-white/[0.52]">{stat.label}</div>
-                <div className="mt-1 text-sm font-extrabold text-white">{stat.value}</div>
+              <div key={stat.label} className="min-w-0 rounded-lg border border-purple-200 bg-white p-4 shadow-sm">
+                <stat.icon className="mb-4 h-4 w-4 text-[#6d28d9]" />
+                <div className="text-xs font-bold uppercase text-[#6b7280]">{stat.label}</div>
+                <div className="mt-1 text-sm font-extrabold text-[#0F1B3D]">{stat.value}</div>
               </div>
             ))}
           </motion.div>
@@ -245,8 +233,8 @@ export default function MaterialsHero() {
                   transition={reduceMotion ? undefined : { duration: 4.8, repeat: Infinity, ease: 'easeInOut' }}
                 >
                   <div className="min-w-0">
-                    <div className="text-sm font-extrabold text-[#111827]">{material.label}</div>
-                    <div className="mt-0.5 text-xs font-medium text-[#6F7192]">{material.value}</div>
+                    <div className="text-sm font-extrabold text-[#0F1B3D]">{material.label}</div>
+                    <div className="mt-0.5 text-xs font-medium text-[#6b7280]">{material.value}</div>
                   </div>
                   <span>
                     {material.meta}
@@ -256,8 +244,8 @@ export default function MaterialsHero() {
             </div>
 
             <div className="materials-selection-rule">
-              <p className="text-xs font-semibold uppercase text-white/60">Selection rule</p>
-              <p className="mt-2 text-sm leading-6 text-white/90">
+              <p className="text-xs font-semibold uppercase text-[#6b7280]">Selection rule</p>
+              <p className="mt-2 text-sm leading-6 text-[#374151]">
                 Strong parts start with PETG, ABS, ASA, or Nylon. Display pieces start with PLA+, Silk PLA, or Resin.
               </p>
             </div>

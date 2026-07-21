@@ -198,19 +198,7 @@ export default function PricingClient({
     <main className="pricing-premium-content text-[#0F1B3D]">
       <PricingPremiumFX />
 
-      <section className="pricing-hero-premium relative isolate overflow-hidden px-4 pb-12 pt-6 text-white sm:px-6 md:px-10 lg:px-12">
-        <Image
-          src="/printer2-poster.webp"
-          alt=""
-          fill
-          preload
-          sizes="100vw"
-          className="pricing-hero-video absolute inset-0 h-full w-full object-cover"
-        />
-        <DeferredHeroVideo
-          src="/printer2-optimized.mp4"
-          className="pricing-hero-video absolute inset-0 h-full w-full object-cover"
-        />
+      <section className="pricing-hero-premium relative isolate overflow-hidden px-4 pb-12 pt-6 text-[#0F1B3D] sm:px-6 md:px-10 lg:px-12">
         <div className="pricing-hero-depth" aria-hidden="true" />
         <div className="pricing-hero-grid" aria-hidden="true" />
         <div className="pricing-hero-beam" aria-hidden="true" />
@@ -222,17 +210,17 @@ export default function PricingClient({
           animate="visible"
           className="relative z-10 mx-auto flex min-h-[82svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-10 pt-8 md:pt-10 lg:pt-12"
         >
-          <motion.div variants={item} className="mb-4 flex items-center gap-2 text-sm font-medium text-white/[0.64]">
-            <Link href="/" className="transition hover:text-white">Home</Link>
+          <motion.div variants={item} className="mb-4 flex items-center gap-2 text-sm font-medium text-[#6b7280]">
+            <Link href="/" className="transition hover:text-[#0F1B3D]">Home</Link>
             <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-white">Pricing</span>
+            <span className="text-[#0F1B3D]">Pricing</span>
           </motion.div>
 
           <motion.div
             variants={item}
-            className="pricing-hero-kicker mb-4 inline-flex w-fit items-center gap-2 rounded-lg border border-white/[0.14] bg-white/10 px-4 py-2 text-xs font-bold uppercase text-white shadow-[0_16px_48px_rgba(0,0,0,0.24)] backdrop-blur"
+            className="pricing-hero-kicker mb-4 inline-flex w-fit items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 text-xs font-bold uppercase text-[#6d28d9] shadow-sm"
           >
-            <IndianRupee className="h-4 w-4 text-amber-200" />
+            <IndianRupee className="h-4 w-4 text-[#6d28d9]" />
             Transparent quote command
           </motion.div>
 
@@ -240,14 +228,14 @@ export default function PricingClient({
             <div className="min-w-0">
               <motion.h1
                 variants={item}
-                className="pricing-hero-title max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.04] text-white sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
+                className="pricing-hero-title max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.04] text-[#0F1B3D] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
               >
                 Pricing engineered before production starts.
               </motion.h1>
 
               <motion.p
                 variants={item}
-                className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-white/[0.74] sm:text-lg lg:max-w-2xl"
+                className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-[#6b7280] sm:text-lg lg:max-w-2xl"
               >
                 See starting material rates, understand the drivers behind the final quote, and upload a file when you want a production-ready price with no hidden finishing surprises.
               </motion.p>
@@ -255,14 +243,14 @@ export default function PricingClient({
               <motion.div variants={item} className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Link
                   href="/instant-quote"
-                  className="pricing-primary-action group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-bold text-[#080A12] shadow-[0_18px_54px_rgba(255,255,255,0.18)] transition hover:bg-[#ede9fe]"
+                  className="pricing-primary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#6d28d9] px-6 text-sm font-bold text-white shadow-[0_8px_24px_rgba(109,40,217,0.3)] transition hover:bg-[#5b21b6]"
                 >
                   Upload for quote
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
                 <Link
                   href="/materials"
-                  className="pricing-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/[0.18] bg-white/10 px-6 text-sm font-bold text-white backdrop-blur transition hover:border-cyan-300/40 hover:bg-cyan-300/[0.12]"
+                  className="pricing-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#6d28d9]/30 px-6 text-sm font-bold text-[#6d28d9] transition hover:border-[#6d28d9]/50 hover:bg-purple-50"
                 >
                   Compare materials
                 </Link>
@@ -270,9 +258,9 @@ export default function PricingClient({
 
               <motion.div variants={item} className="pricing-hero-stats mt-8 grid gap-3 sm:grid-cols-3">
                 {heroStats.map((stat) => (
-                  <div key={stat.label} className="min-w-0 rounded-lg border border-white/10 bg-white/[0.075] p-4 backdrop-blur">
-                    <div className="text-xs font-bold uppercase text-white/[0.52]">{stat.label}</div>
-                    <div className="mt-2 text-sm font-extrabold text-white">{stat.value}</div>
+                  <div key={stat.label} className="min-w-0 rounded-lg border border-purple-200 bg-white p-4 shadow-sm">
+                    <div className="text-xs font-bold uppercase text-[#6b7280]">{stat.label}</div>
+                    <div className="mt-2 text-sm font-extrabold text-[#0F1B3D]">{stat.value}</div>
                   </div>
                 ))}
               </motion.div>
@@ -327,14 +315,6 @@ export default function PricingClient({
                   </div>
                 ))}
               </div>
-
-              <Link
-                href="/instant-quote"
-                className="pricing-panel-action inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-bold text-[#05060a] transition hover:bg-[#f1eeff]"
-              >
-                Start quote request
-                <UploadCloud className="h-4 w-4" />
-              </Link>
             </motion.aside>
           </div>
         </motion.div>
