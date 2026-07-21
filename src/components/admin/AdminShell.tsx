@@ -13,15 +13,14 @@ export default function AdminShell({
   children: React.ReactNode
 }) {
   const [collapsed, setCollapsed] = useState(false)
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const mainItems = adminNavItems.filter((item) => item.section === 'main')
   const shopItems = adminNavItems.filter((item) => item.section === 'shop')
   const secondaryItems = adminNavItems.filter((item) => item.section === 'secondary')
 
   useEffect(() => {
-    document.documentElement.dataset.adminTheme = theme
-  }, [theme])
+    document.documentElement.dataset.adminTheme = 'light'
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#F4F6FA] text-[#0F1B3D]">
@@ -112,8 +111,6 @@ export default function AdminShell({
 
       <div className={`min-h-screen transition-all duration-300 ${collapsed ? 'md:pl-[88px]' : 'md:pl-[260px]'}`}>
         <Topbar
-          theme={theme}
-          onToggleTheme={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
           onOpenMobileNav={() => setMobileNavOpen(true)}
         />
         <main className="px-4 py-6 md:px-8">

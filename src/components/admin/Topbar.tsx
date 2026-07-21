@@ -1,16 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Bell, ChevronDown, Menu, MoonStar, Search, SunMedium } from 'lucide-react'
+import { Bell, ChevronDown, Menu, Search } from 'lucide-react'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
 export default function Topbar({
-  theme,
-  onToggleTheme,
   onOpenMobileNav,
 }: {
-  theme: 'dark' | 'light'
-  onToggleTheme: () => void
   onOpenMobileNav: () => void
 }) {
   const [profileOpen, setProfileOpen] = useState(false)
@@ -53,14 +49,6 @@ export default function Topbar({
             className="w-full rounded-[18px] border border-gray-200 bg-gray-100 py-3 pl-11 pr-4 text-sm text-[#0F1B3D] outline-none transition focus:border-[#6d28d9]/40"
           />
         </label>
-
-        <button
-          type="button"
-          onClick={onToggleTheme}
-          className="rounded-xl border border-gray-200 bg-gray-100 p-3 text-[#6F7192] transition hover:bg-gray-200"
-        >
-          {theme === 'dark' ? <SunMedium className="h-4 w-4" /> : <MoonStar className="h-4 w-4" />}
-        </button>
 
         <button
           type="button"
