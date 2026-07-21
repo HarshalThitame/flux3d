@@ -86,7 +86,6 @@ export async function generateMetadata(): Promise<Metadata> {
   },
   other: {
     'facebook-domain-verification': '2so08kooblq8716z4823mqn6etbbg6',
-    'color-scheme': 'light dark',
   },
   category: 'technology',
   }
