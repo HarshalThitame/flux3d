@@ -1,8 +1,9 @@
+import { cache } from 'react'
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/config'
 
-export async function createServerSupabaseClient() {
+export const createServerSupabaseClient = cache(async () => {
   const cookieStore = await cookies()
 
   return createSupabaseServerClient(
@@ -22,14 +23,16 @@ export async function createServerSupabaseClient() {
               cookieStore.set(name, value, options)
             })
           } catch {
-            if (process.env.NODE_ENV === 'development') {
-              console.warn('[supabase/server] Failed to set auth cookies — token refresh may not persist')
-            }
+            // Server Components cannot always write cookies during render.
+            // Auth is handled by the middleware/proxy — the setAll callback
+            // is only triggered during getUser() token refresh. Since we
+            // now use getSession() first in getCurrentUserProfile(), this
+            // path is rarely hit in Server Components.
           }
         },
       },
     }
   )
-}
+})
 
 export const createServerClient = createServerSupabaseClient

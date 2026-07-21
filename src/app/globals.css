@@ -2457,7 +2457,7 @@ body:has(.premium-auth-shell) {
   min-height: 100svh;
   overflow-x: clip;
   background: #f9f7f4;
-  color: #ffffff;
+  color: #111827;
 }
 
 .auth-page-with-navbar .navbar {
@@ -2493,8 +2493,8 @@ body:has(.premium-auth-shell) {
   width: 100%;
   object-fit: cover;
   object-position: center center;
-  opacity: 0.88;
-  filter: brightness(0.58) saturate(1.12) contrast(1.08) blur(5px);
+  opacity: 0.22;
+  filter: brightness(1.1) saturate(1.0) contrast(1.02) blur(0);
   transform: scale(1.05);
 }
 
@@ -2506,8 +2506,8 @@ body:has(.premium-auth-shell) {
   height: 36%;
   pointer-events: none;
   background:
-    linear-gradient(180deg, transparent 0%, rgba(109, 40, 217, 0.035) 100%),
-    repeating-linear-gradient(90deg, rgba(109, 40, 217, 0.075) 0 1px, transparent 1px 96px);
+    linear-gradient(180deg, transparent 0%, rgba(109, 40, 217, 0.025) 100%),
+    repeating-linear-gradient(90deg, rgba(109, 40, 217, 0.04) 0 1px, transparent 1px 96px);
   mask-image: linear-gradient(to top, black, transparent);
 }
 
@@ -2517,11 +2517,9 @@ body:has(.premium-auth-shell) {
   z-index: 1;
   pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(3, 4, 8, 0.9) 0%, rgba(3, 4, 8, 0.74) 38%, rgba(3, 4, 8, 0.5) 68%, rgba(3, 4, 8, 0.82) 100%),
-    linear-gradient(180deg, rgba(3, 4, 8, 0.42) 0%, rgba(3, 4, 8, 0.12) 45%, rgba(3, 4, 8, 0.82) 100%),
-    radial-gradient(circle at 16% 18%, rgba(103, 232, 249, 0.22), transparent 30%),
-    linear-gradient(115deg, rgba(34, 211, 238, 0.1) 0%, transparent 28%, rgba(245, 158, 11, 0.08) 54%, transparent 72%),
-    linear-gradient(245deg, transparent 0%, rgba(109, 40, 217, 0.04) 44%, transparent 68%);
+    linear-gradient(180deg, rgba(249, 247, 244, 0.95) 0%, rgba(249, 247, 244, 0.82) 100%),
+    radial-gradient(circle at 16% 18%, rgba(109, 40, 217, 0.06), transparent 30%),
+    linear-gradient(115deg, rgba(109, 40, 217, 0.04) 0%, transparent 38%);
 }
 
 .auth-layout-grid {
@@ -2541,16 +2539,14 @@ body:has(.premium-auth-shell) {
 .auth-form-panel {
   position: relative;
   overflow: hidden;
-  border-color: rgba(109, 40, 217, 0.2);
-  background:
-    linear-gradient(150deg, rgba(109, 40, 217, 0.14), rgba(109, 40, 217, 0.045)),
-    rgba(3, 5, 12, 0.88);
+  border-color: rgba(109, 40, 217, 0.18);
+  background: #ffffff;
   box-shadow:
-    0 38px 120px rgba(0, 0, 0, 0.58),
-    0 0 0 1px rgba(109, 40, 217, 0.04),
-    inset 0 1px 0 rgba(109, 40, 217, 0.14);
-  backdrop-filter: blur(30px) saturate(1.22);
-  -webkit-backdrop-filter: blur(30px) saturate(1.22);
+    0 4px 20px rgba(0, 0, 0, 0.06),
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(109, 40, 217, 0.08);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .auth-form-panel::after {
@@ -2559,8 +2555,7 @@ body:has(.premium-auth-shell) {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(120deg, transparent 0%, rgba(109, 40, 217, 0.06) 42%, transparent 58%),
-    radial-gradient(circle at top right, rgba(103, 232, 249, 0.16), transparent 34%);
+    linear-gradient(120deg, transparent 0%, rgba(109, 40, 217, 0.04) 42%, transparent 58%);
 }
 
 .auth-form-panel > * {
@@ -2589,10 +2584,10 @@ body:has(.premium-auth-shell) {
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  opacity: 0.2;
+  opacity: 0.08;
   background-image:
-    linear-gradient(rgba(109, 40, 217, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(109, 40, 217, 0.08) 1px, transparent 1px);
+    linear-gradient(rgba(109, 40, 217, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(109, 40, 217, 0.1) 1px, transparent 1px);
   background-size: 84px 84px;
   mask-image: linear-gradient(to bottom, transparent, black 14%, black 78%, transparent);
 }
@@ -2603,8 +2598,8 @@ body:has(.premium-auth-shell) {
   z-index: 3;
   pointer-events: none;
   background:
-    linear-gradient(118deg, transparent 0 34%, rgba(103, 232, 249, 0.12) 35%, transparent 36% 68%, rgba(245, 158, 11, 0.1) 69%, transparent 70%),
-    linear-gradient(25deg, transparent 0 54%, rgba(109, 40, 217, 0.05) 55%, transparent 56%);
+    linear-gradient(118deg, transparent 0 34%, rgba(109, 40, 217, 0.05) 35%, transparent 36% 68%, rgba(168, 85, 247, 0.04) 69%, transparent 70%),
+    linear-gradient(25deg, transparent 0 54%, rgba(109, 40, 217, 0.03) 55%, transparent 56%);
   mask-image: linear-gradient(to bottom, transparent, black 12%, black 82%, transparent);
 }
 
@@ -2615,15 +2610,11 @@ body:has(.premium-auth-shell) {
 
 .premium-auth-command {
   overflow: hidden;
-  border: 1px solid rgba(109, 40, 217, 0.08);
+  border: 1px solid rgba(109, 40, 217, 0.1);
   border-radius: 22px;
-  background:
-    linear-gradient(135deg, rgba(109, 40, 217, 0.09), rgba(109, 40, 217, 0.035)),
-    rgba(5, 5, 6, 0.56);
+  background: #ffffff;
   padding: 14px;
-  box-shadow: inset 0 1px 0 rgba(109, 40, 217, 0.06), 0 24px 60px rgba(0, 0, 0, 0.24);
-  backdrop-filter: blur(24px) saturate(1.2);
-  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(109, 40, 217, 0.06);
 }
 
 .premium-auth-command .premium-console-header {
@@ -2644,7 +2635,7 @@ body:has(.premium-auth-shell) {
   border-radius: 16px;
   border: 1px solid rgba(109, 40, 217, 0.11);
   background:
-    linear-gradient(180deg, rgba(109, 40, 217, 0.06), rgba(109, 40, 217, 0.025)),
+    linear-gradient(180deg, rgba(109, 40, 217, 0.04), rgba(255, 255, 255, 0.02)),
     repeating-linear-gradient(90deg, rgba(109, 40, 217, 0.04) 0 1px, transparent 1px 18px);
 }
 
@@ -2656,8 +2647,8 @@ body:has(.premium-auth-shell) {
   top: 23px;
   height: 2px;
   border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgba(103, 232, 249, 0.7), transparent);
-  box-shadow: 0 0 18px rgba(103, 232, 249, 0.3);
+  background: linear-gradient(90deg, transparent, rgba(109, 40, 217, 0.4), transparent);
+  box-shadow: 0 0 18px rgba(109, 40, 217, 0.15);
 }
 
 .premium-auth-command-visual::after {
@@ -2670,8 +2661,8 @@ body:has(.premium-auth-shell) {
   border-radius: 11px;
   border: 1px solid rgba(109, 40, 217, 0.08);
   background:
-    linear-gradient(180deg, rgba(109, 40, 217, 0.06), rgba(255, 255, 255, 0.02)),
-    repeating-linear-gradient(90deg, rgba(109, 40, 217, 0.05) 0 1px, transparent 1px 20px);
+    linear-gradient(180deg, rgba(109, 40, 217, 0.04), rgba(255, 255, 255, 0.02)),
+    repeating-linear-gradient(90deg, rgba(109, 40, 217, 0.04) 0 1px, transparent 1px 20px);
 }
 
 .premium-auth-command-visual span {
@@ -2680,8 +2671,8 @@ body:has(.premium-auth-shell) {
   width: var(--layer-width, 72px);
   height: 7px;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(103, 232, 249, 0.28), rgba(255, 255, 255, 0.9), rgba(251, 191, 36, 0.45));
-  box-shadow: 0 0 18px rgba(103, 232, 249, 0.3);
+  background: linear-gradient(90deg, rgba(109, 40, 217, 0.2), rgba(109, 40, 217, 0.6), rgba(168, 85, 247, 0.4));
+  box-shadow: 0 0 18px rgba(109, 40, 217, 0.15);
   transform: translate(-50%, var(--layer-y));
   animation: authLayerBuild 2.8s ease-in-out infinite;
 }
@@ -2709,11 +2700,10 @@ body:has(.premium-auth-shell) {
   gap: 12px;
   border: 1px solid rgba(109, 40, 217, 0.08);
   border-radius: 18px;
-  background:
-    linear-gradient(135deg, rgba(109, 40, 217, 0.06), rgba(255, 255, 255, 0.04));
+  background: #ffffff;
   padding: 13px 14px;
   text-align: left;
-  box-shadow: inset 0 1px 0 rgba(109, 40, 217, 0.06), 0 18px 44px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(109, 40, 217, 0.04);
 }
 
 .premium-auth-feature-icon {
@@ -2724,32 +2714,30 @@ body:has(.premium-auth-shell) {
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  border: 1px solid rgba(103, 232, 249, 0.2);
-  background: rgba(103, 232, 249, 0.09);
-  color: #a5f3fc;
+  border: 1px solid rgba(109, 40, 217, 0.15);
+  background: rgba(109, 40, 217, 0.06);
+  color: #6d28d9;
 }
 
 .premium-auth-title {
-  color: #ffffff;
+  color: #111827;
   letter-spacing: 0;
   text-wrap: balance;
-  text-shadow: 0 24px 90px rgba(0, 0, 0, 0.5);
+  text-shadow: none;
 }
 
 .premium-auth-shell .premium-machine-panel {
   border-color: rgba(109, 40, 217, 0.16);
   border-radius: 28px;
-  background:
-    linear-gradient(150deg, rgba(109, 40, 217, 0.08), rgba(255, 255, 255, 0.045)),
-    rgba(8, 8, 9, 0.92);
+  background: #ffffff;
   box-shadow:
-    0 34px 110px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.04),
-    inset 0 1px 0 rgba(109, 40, 217, 0.08);
+    0 4px 24px rgba(0, 0, 0, 0.06),
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(109, 40, 217, 0.08);
 }
 
 .premium-auth-shell .premium-machine-panel::before {
-  background: linear-gradient(135deg, rgba(103, 232, 249, 0.5), rgba(109, 40, 217, 0.06), rgba(251, 191, 36, 0.34));
+  background: linear-gradient(135deg, rgba(109, 40, 217, 0.04), rgba(255, 255, 255, 0.02));
 }
 
 .auth-atelier-strip {

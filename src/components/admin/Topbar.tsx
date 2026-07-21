@@ -21,13 +21,15 @@ export default function Topbar({
   useEffect(() => {
     async function loadProfile() {
       const supabase = getSupabaseBrowserClient()
-      const { data } = await supabase.auth.getUser()
-      if (data?.user) {
-        const name = data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Admin'
+      // Use getSession() — reads locally without HTTP request to Supabase Auth
+      const { data } = await supabase.auth.getSession()
+      const user = data?.session?.user
+      if (user) {
+        const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Admin'
         setAdminName(name)
         const initials = name.split(' ').map((s: string) => s[0]).join('').toUpperCase().slice(0, 2) || 'AD'
         setAdminInitials(initials)
-        setAdminRole(data.user.email?.includes('admin') ? 'Super Admin' : 'Administrator')
+        setAdminRole(user.email?.includes('admin') ? 'Super Admin' : 'Administrator')
       }
     }
     loadProfile()

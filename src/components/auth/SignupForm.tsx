@@ -23,7 +23,7 @@ import { validateEmail, validateName, validatePassword } from '@/lib/auth/valida
 const initialState: AuthFormState = {}
 
 const fieldClass =
-  'h-11 w-full rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-3 text-sm font-medium text-white outline-none transition-[border-color] duration-150 placeholder:text-[#777] focus:border-[#67e8f9]'
+  'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 outline-none transition-[border-color] duration-150 placeholder:text-gray-400 focus:border-purple-400'
 
 const passwordRules = [
   (value: string) => value.length >= 8,
@@ -70,7 +70,7 @@ function FieldError({ id, errors }: { id: string; errors?: string[] }) {
   return (
     <div id={id} className="space-y-1">
       {errors.map((error) => (
-        <p key={error} className="text-sm font-medium !text-[#ef4444]">
+        <p key={error} className="text-sm font-medium !text-red-500">
           {error}
         </p>
       ))}
@@ -84,8 +84,8 @@ function SignupMessage({ state, oauthError }: { state: AuthFormState; oauthError
 
   const tone =
     state.status === 'success' && !oauthError
-      ? 'border-emerald-400/25 bg-emerald-400/10 text-emerald-100'
-      : 'border-red-400/25 bg-red-400/10 text-red-100'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      : 'border-red-200 bg-red-50 text-red-700'
 
   return <div className={`rounded-lg border px-3 py-2.5 text-sm ${tone}`}>{message}</div>
 }
@@ -97,7 +97,7 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
     <button
       type="submit"
       disabled={pending || disabled}
-      className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#00c896] px-4 text-sm font-semibold text-white transition-opacity duration-150 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? (
         <>
@@ -138,9 +138,9 @@ function GoogleIcon() {
 }
 
 function getStrengthColor(score: number) {
-  if (score <= 1) return 'bg-[#ef4444]'
+  if (score <= 1) return 'bg-red-500'
   if (score < 4) return 'bg-amber-400'
-  return 'bg-[#00c896]'
+  return 'bg-purple-600'
 }
 
 export default function SignupForm({ nextPath }: SignupFormProps) {
@@ -244,12 +244,12 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
           sizes="120px"
           className="h-7 w-auto object-contain"
         />
-        <span className="text-sm font-medium !text-[#888]">Create your account</span>
+        <span className="text-sm font-medium text-gray-500">Create your account</span>
       </div>
 
       <div className="mb-6">
-        <h2 className="text-[28px] font-medium leading-tight !text-white">Join Flux3D.</h2>
-        <p className="mt-2 text-[15px] leading-6 !text-[#888]">
+        <h2 className="text-[28px] font-medium leading-tight text-gray-900">Join Flux3D.</h2>
+        <p className="mt-2 text-[15px] leading-6 text-gray-500">
           Your production workspace, ready in seconds.
         </p>
       </div>
@@ -258,12 +258,12 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
         <input type="hidden" name="next" value={nextPath} />
 
         <div className="space-y-2">
-          <label htmlFor="name" className="text-sm font-medium text-white/80">
+          <label htmlFor="name" className="text-sm font-medium text-gray-700">
             Full name
           </label>
           <div className="relative">
             <UserRound
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#777]"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
               aria-hidden="true"
             />
             <input
@@ -286,12 +286,12 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium text-white/80">
+          <label htmlFor="email" className="text-sm font-medium text-gray-700">
             Email address
           </label>
           <div className="relative">
             <Mail
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#777]"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
               aria-hidden="true"
             />
             <input
@@ -314,12 +314,12 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="phone" className="flex items-center gap-2 text-sm font-medium text-white/80">
-            Phone number <span className="text-xs font-medium !text-[#888]">(optional)</span>
+          <label htmlFor="phone" className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            Phone number <span className="text-xs font-medium text-gray-400">(optional)</span>
           </label>
           <div className="relative">
             <Phone
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#777]"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
               aria-hidden="true"
             />
             <input
@@ -337,12 +337,12 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium text-white/80">
+          <label htmlFor="password" className="text-sm font-medium text-gray-700">
             Password
           </label>
           <div className="relative">
             <LockKeyhole
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#777]"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
               aria-hidden="true"
             />
             <input
@@ -365,7 +365,7 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
               type="button"
               onClick={() => setShowPassword((value) => !value)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-[#888] transition-opacity duration-150 hover:opacity-80"
+              className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition-opacity duration-150 hover:opacity-80"
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" aria-hidden="true" />
@@ -377,7 +377,7 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
 
           <div className="grid grid-cols-4 gap-1" aria-hidden="true">
             {[0, 1, 2, 3].map((segment) => (
-              <span key={segment} className="h-1 overflow-hidden rounded-full bg-[#2a2a2a]">
+              <span key={segment} className="h-1 overflow-hidden rounded-full bg-gray-200">
                 <span
                   className={`block h-full rounded-full transition-[width,background-color] duration-200 ${strengthColor}`}
                   style={{ width: passwordStrength > segment ? '100%' : '0%' }}
@@ -390,12 +390,12 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="confirmPassword" className="text-sm font-medium text-white/80">
+          <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
             Confirm password
           </label>
           <div className="relative">
             <LockKeyhole
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#777]"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
               aria-hidden="true"
             />
             <input
@@ -417,7 +417,7 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
             />
             {passwordsMatch ? (
               <Check
-                className="pointer-events-none absolute right-10 top-1/2 h-4 w-4 -translate-y-1/2 text-[#00c896]"
+                className="pointer-events-none absolute right-10 top-1/2 h-4 w-4 -translate-y-1/2 text-purple-500"
                 aria-hidden="true"
               />
             ) : null}
@@ -425,7 +425,7 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
               type="button"
               onClick={() => setShowConfirmPassword((value) => !value)}
               aria-label={showConfirmPassword ? 'Hide password confirmation' : 'Show password confirmation'}
-              className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-[#888] transition-opacity duration-150 hover:opacity-80"
+              className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition-opacity duration-150 hover:opacity-80"
             >
               {showConfirmPassword ? (
                 <EyeOff className="h-4 w-4" aria-hidden="true" />
@@ -438,7 +438,7 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
         </div>
 
         <div className="space-y-2">
-          <label className="flex items-start gap-3 text-[13px] leading-6 !text-[#888]" htmlFor="terms">
+          <label className="flex items-start gap-3 text-[13px] leading-6 text-gray-500" htmlFor="terms">
             <input
               id="terms"
               name="terms"
@@ -451,14 +451,14 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
               }}
               aria-invalid={Boolean(getFieldErrors('terms'))}
               aria-describedby={getFieldErrors('terms') ? 'signup-terms-error' : undefined}
-              className="mt-1 h-4 w-4 rounded border border-[#2a2a2a] bg-[#1a1a1a] accent-[#00c896]"
+              className="mt-1 h-4 w-4 rounded border-gray-300 bg-white accent-purple-600"
             />
             <span>
               I agree to the{' '}
               <Link
                 href="/terms-and-conditions"
                 prefetch={false}
-                className="font-medium text-[#67e8f9] transition-opacity duration-150 hover:opacity-80"
+                className="font-medium text-purple-600 transition-opacity duration-150 hover:opacity-80"
               >
                 Terms &amp; Conditions
               </Link>{' '}
@@ -466,7 +466,7 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
               <Link
                 href="/privacy-policy"
                 prefetch={false}
-                className="font-medium text-[#67e8f9] transition-opacity duration-150 hover:opacity-80"
+                className="font-medium text-purple-600 transition-opacity duration-150 hover:opacity-80"
               >
                 Privacy Policy
               </Link>
@@ -479,28 +479,28 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
         <SubmitButton disabled={!isFormValid} />
       </form>
 
-      <div className="my-6 flex items-center gap-3 text-xs font-medium uppercase tracking-[0.16em] text-[#777]">
-        <div className="h-px flex-1 bg-[#2a2a2a]" />
+      <div className="my-6 flex items-center gap-3 text-xs font-medium uppercase tracking-[0.16em] text-gray-400">
+        <div className="h-px flex-1 bg-gray-200" />
         or sign up with
-        <div className="h-px flex-1 bg-[#2a2a2a]" />
+        <div className="h-px flex-1 bg-gray-200" />
       </div>
 
       <button
         type="button"
         onClick={handleGoogleLogin}
         disabled={googleLoading}
-        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#2a2a2a] bg-transparent px-4 text-sm font-semibold text-white transition-opacity duration-150 hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <GoogleIcon />
         {googleLoading ? 'Redirecting to Google...' : 'Google'}
       </button>
 
-      <p className="mt-8 text-center text-sm !text-[#888]">
+      <p className="mt-8 text-center text-sm text-gray-500">
         Already have an account?{' '}
         <Link
           href={`/login?next=${encodeURIComponent(nextPath)}`}
           prefetch={false}
-          className="font-medium text-[#67e8f9] transition-opacity duration-150 hover:opacity-80"
+          className="font-medium text-purple-600 transition-opacity duration-150 hover:opacity-80"
         >
           Sign in
         </Link>
