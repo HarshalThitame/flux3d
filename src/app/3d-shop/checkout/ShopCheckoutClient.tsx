@@ -346,7 +346,7 @@ export default function ShopCheckoutClient({
       <div className="mx-auto max-w-7xl">
         <div className="mb-8">
           <p className="text-sm font-semibold text-[var(--brand-primary)]">3D Shop</p>
-          <h1 className="mt-2 text-4xl font-extrabold text-[var(--text-primary)]">Checkout</h1>
+          <h1 className="mt-2 text-[clamp(2rem,6vw,3rem)] font-extrabold text-[var(--text-primary)] md:text-4xl">Checkout</h1>
           <p className="mt-2 text-[var(--text-secondary)]">Secure online payment through Razorpay for the confirmed order amount.</p>
         </div>
 

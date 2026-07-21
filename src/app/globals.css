@@ -7597,6 +7597,7 @@ body:has(.premium-auth-shell) {
 
 @media (max-width: 768px) {
   .shop-pointer-light,
+  .shop-scroll-meter,
   .shop-hero-frame {
     display: none;
   }
@@ -7610,6 +7611,11 @@ body:has(.premium-auth-shell) {
   .shop-commerce-panel,
   .shop-commerce-panel * {
     min-width: 0;
+  }
+
+  .shop-section-grid {
+    animation: none;
+    opacity: 0.06;
   }
 }
 

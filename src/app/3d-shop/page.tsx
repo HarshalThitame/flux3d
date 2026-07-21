@@ -110,11 +110,11 @@ export default async function ShopHomePage() {
                   Flux3D Store
                 </div>
 
-                <h1 className="shop-fade-up shop-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.04] text-white sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]">
+                <h1 className="shop-fade-up shop-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-white sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]">
                   Premium 3D printed pieces, ready to own.
                 </h1>
 
-                <p className="shop-fade-up mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-white sm:text-lg lg:max-w-2xl">
+                <p className="shop-fade-up mt-6 max-w-[calc(100vw-2rem)] text-base leading-7 text-white sm:text-lg lg:max-w-2xl lg:leading-8">
                   Shop curated Flux3D objects with clean finishes, useful forms, and ready-to-ship presentation for desks, creators, gifting, and everyday setups.
                 </p>
 
