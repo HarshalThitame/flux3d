@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  MessageCircle,
   ShoppingCart,
   Users,
   Package,
@@ -63,5 +64,6 @@ export const adminNavItems: NavItem[] = [
   { label: 'Settings', href: '/admin/settings', icon: Settings, section: 'secondary' },
   { label: 'Business Settings', href: '/admin/settings/business', icon: Building2, section: 'secondary' },
   { label: 'WhatsApp Knowledge', href: '/admin/settings/whatsapp-knowledge', icon: Database, section: 'secondary' },
+  { label: 'WhatsApp Inbox', href: '/admin/whatsapp/inbox', icon: MessageCircle, section: 'secondary' },
   { label: 'Logout', href: '/admin/logout', icon: LogOut, section: 'secondary' },
 ]

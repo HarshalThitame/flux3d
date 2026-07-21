@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import type { BlogPost } from '@/lib/blog/types'
 import DeferredHeroVideo from '@/components/DeferredHeroVideo'
+import { useIsFinePointer } from '@/hooks/useMediaQuery'
 import { createRafThrottledCallback } from '@/lib/raf-throttle'
 
 const FALLBACK_IMAGE = '/pot.webp'
@@ -125,8 +126,11 @@ function matchesQuery(post: BlogPost, query: string) {
 
 function BlogPremiumFX() {
   const meterRef = useRef<HTMLSpanElement | null>(null)
+  const isFinePointer = useIsFinePointer()
 
   useEffect(() => {
+    if (!isFinePointer) return
+
     let pointerFrame = 0
     let pointerX = 0
 
@@ -298,14 +302,14 @@ export default function BlogClient({
 
               <motion.h1
                 variants={itemVariants}
-                className="blog-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.04] text-[#111827] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
+                className="blog-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#111827] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
               >
                 Practical 3D printing intelligence for better parts.
               </motion.h1>
 
               <motion.p
                 variants={itemVariants}
-                className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-[#475569] sm:text-lg lg:max-w-2xl"
+                className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-7 text-[#475569] sm:text-lg lg:max-w-2xl lg:leading-8"
               >
                 Material notes, print strategy, design decisions, and manufacturing guidance from the Flux3D team.
               </motion.p>

@@ -275,6 +275,7 @@ async function logWhatsAppMessage(
   supabase: ReturnType<typeof getServiceClient>,
   entry: {
     userId: string | null;
+    sender: string | null;
     direction: "incoming" | "outgoing";
     messageText: string;
     automated: boolean;
@@ -287,6 +288,7 @@ async function logWhatsAppMessage(
 
   const { error } = await supabase.from("whatsapp_messages").insert({
     user_id: entry.userId,
+    sender: entry.sender,
     direction: entry.direction,
     message_text: entry.messageText,
     automated: entry.automated,
@@ -445,6 +447,7 @@ export default async function handler(
 
       await logWhatsAppMessage(supabase, {
         userId,
+        sender: from,
         direction: "incoming",
         messageText: text,
         automated: false,
@@ -522,6 +525,7 @@ export default async function handler(
 
         await logWhatsAppMessage(supabase, {
           userId,
+          sender: from,
           direction: "outgoing",
           messageText: finalReply,
           automated: true,
