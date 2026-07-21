@@ -130,7 +130,7 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
                 Your 3D Shop order is confirmed.
               </h1>
 
-              <p className="mt-6 max-w-2xl text-base leading-8 text-[var(--text-secondary)] sm:text-lg">
+              <p className="mt-6 max-w-2xl text-base leading-7 text-[var(--text-secondary)] sm:text-lg lg:leading-8">
                 We have reserved your items, captured the delivery details, and queued the order for fulfillment.
               </p>
 

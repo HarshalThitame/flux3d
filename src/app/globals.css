@@ -7130,11 +7130,9 @@ body:has(.premium-auth-shell) {
   z-index: 1;
   pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(5, 6, 10, 0.98) 0%, rgba(5, 6, 10, 0.9) 42%, rgba(5, 6, 10, 0.5) 72%, rgba(5, 6, 10, 0.92) 100%),
-    linear-gradient(135deg, rgba(103, 232, 249, 0.18) 0%, transparent 30%, rgba(251, 191, 36, 0.15) 56%, transparent 78%),
-    linear-gradient(225deg, transparent 0%, rgba(167, 139, 250, 0.13) 45%, transparent 72%);
-  background-size: 100% 100%, 180% 180%, 160% 160%;
-  animation: shopSurfaceShift 18s ease-in-out infinite;
+    linear-gradient(90deg, rgba(249, 247, 244, 0.98) 0%, rgba(249, 247, 244, 0.88) 42%, rgba(249, 247, 244, 0.48) 72%, rgba(249, 247, 244, 0.9) 100%),
+    linear-gradient(135deg, rgba(109, 40, 217, 0.06) 0%, transparent 30%, rgba(109, 40, 217, 0.04) 56%, transparent 78%);
+  background-size: 100% 100%, 180% 180%;
 }
 
 .shop-hero-grid,
@@ -7179,14 +7177,13 @@ body:has(.premium-auth-shell) {
 
 .shop-hero-title {
   max-width: 980px;
-  color: #ffffff;
+  color: #0F1B3D;
   text-wrap: balance;
   letter-spacing: 0;
-  text-shadow: 0 28px 90px rgba(0, 0, 0, 0.55);
 }
 
 .shop-hero-title::first-line {
-  background: linear-gradient(100deg, #ffffff 0%, #cffafe 26%, #fef3c7 48%, #ffffff 70%, #c4b5fd 100%);
+  background: linear-gradient(100deg, #0F1B3D 0%, #6d28d9 38%, #6d28d9 57%, #0F1B3D 78%, #7c3aed 100%);
   background-size: 240% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -7199,7 +7196,7 @@ body:has(.premium-auth-shell) {
 .shop-secondary-action,
 .shop-commerce-panel,
 .shop-hero-stats > div {
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(109, 40, 217, 0.06);
+  box-shadow: 0 8px 28px rgba(109, 40, 217, 0.06), inset 0 1px 0 rgba(109, 40, 217, 0.06);
 }
 
 .shop-primary-action {
@@ -7240,24 +7237,18 @@ body:has(.premium-auth-shell) {
 
 .shop-commerce-panel {
   padding: 14px;
-  border-color: rgba(103, 232, 249, 0.22) !important;
+  border-color: rgba(109, 40, 217, 0.12) !important;
   background:
-    radial-gradient(circle at 22% 10%, rgba(103, 232, 249, 0.18), transparent 36%),
-    linear-gradient(150deg, rgba(11, 18, 32, 0.88), rgba(14, 15, 24, 0.72)),
-    rgba(109, 40, 217, 0.06) !important;
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.88)),
+    rgba(255, 255, 255, 0.96) !important;
   box-shadow:
-    0 34px 110px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.04),
-    inset 0 1px 0 rgba(109, 40, 217, 0.08) !important;
-  backdrop-filter: blur(28px) saturate(1.2);
-  -webkit-backdrop-filter: blur(28px) saturate(1.2);
-  animation: shopPanelFloat 7.4s ease-in-out infinite;
+    0 18px 50px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(109, 40, 217, 0.04),
+    inset 0 1px 0 rgba(109, 40, 217, 0.04) !important;
 }
 
 .shop-commerce-panel.shop-fade-up {
-  animation:
-    shopFadeUp 0.72s cubic-bezier(0.16, 1, 0.3, 1) forwards,
-    shopPanelFloat 7.4s ease-in-out 0.72s infinite;
+  animation: shopFadeUp 0.72s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes shopPanelFloat {
@@ -7273,7 +7264,7 @@ body:has(.premium-auth-shell) {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(103, 232, 249, 0.48), rgba(109, 40, 217, 0.06), rgba(251, 191, 36, 0.42));
+  background: linear-gradient(135deg, rgba(109, 40, 217, 0.2), rgba(109, 40, 217, 0.06), rgba(109, 40, 217, 0.15));
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   pointer-events: none;
@@ -7285,7 +7276,7 @@ body:has(.premium-auth-shell) {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  border: 1px solid rgba(109, 40, 217, 0.08);
   border-radius: 8px;
   background: rgba(109, 40, 217, 0.04);
   padding: 9px 11px;
@@ -7303,12 +7294,12 @@ body:has(.premium-auth-shell) {
 .shop-console-topline strong {
   border-radius: 999px;
   background: rgba(52, 211, 153, 0.13);
-  color: #86efac;
+  color: #059669;
   font-size: 10px;
   line-height: 1;
   padding: 6px 8px;
   text-transform: uppercase;
-  box-shadow: 0 0 22px rgba(52, 211, 153, 0.22);
+  box-shadow: 0 0 22px rgba(52, 211, 153, 0.12);
 }
 
 .shop-console-feature {
@@ -7325,8 +7316,8 @@ body:has(.premium-auth-shell) {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(5, 6, 10, 0.05), rgba(5, 6, 10, 0.76)),
-    radial-gradient(circle at 50% 18%, transparent 0 38%, rgba(5, 6, 10, 0.24) 74%);
+    linear-gradient(180deg, rgba(249, 247, 244, 0.05), rgba(249, 247, 244, 0.5)),
+    radial-gradient(circle at 50% 18%, transparent 0 38%, rgba(249, 247, 244, 0.24) 74%);
 }
 
 .shop-product-scan {
@@ -7378,13 +7369,13 @@ body:has(.premium-auth-shell) {
   overflow: hidden;
   border: 1px solid rgba(109, 40, 217, 0.08);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.065);
+  background: rgba(255, 255, 255, 0.8);
   padding: 8px 9px;
 }
 
 .shop-console-stack span {
   display: block;
-  color: rgba(226, 232, 240, 0.7);
+  color: #6b7280;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -7394,7 +7385,7 @@ body:has(.premium-auth-shell) {
 .shop-console-stack strong {
   display: block;
   margin-top: 4px;
-  color: #ffffff;
+  color: #0F1B3D;
   font-size: 11px;
   font-weight: 900;
   line-height: 1.2;
@@ -7414,22 +7405,13 @@ body:has(.premium-auth-shell) {
 .shop-intel-ticker {
   max-width: 100%;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  border: 1px solid rgba(109, 40, 217, 0.08);
   border-radius: 8px;
   background:
-    linear-gradient(90deg, rgba(109, 40, 217, 0.06), rgba(255, 255, 255, 0.035)),
-    rgba(255, 255, 255, 0.045);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(109, 40, 217, 0.06);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+    linear-gradient(90deg, rgba(109, 40, 217, 0.06), rgba(255, 255, 255, 0.8)),
+    rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 16px rgba(109, 40, 217, 0.04), inset 0 1px 0 rgba(109, 40, 217, 0.04);
   mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
-}
-
-.shop-intel-ticker > div {
-  display: flex;
-  width: max-content;
-  min-width: 200%;
-  animation: shopTickerTravel 24s linear infinite;
 }
 
 .shop-intel-ticker span {
@@ -7438,7 +7420,7 @@ body:has(.premium-auth-shell) {
   align-items: center;
   gap: 8px;
   padding: 0 22px;
-  color: rgba(226, 232, 240, 0.72);
+  color: #6b7280;
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -7447,8 +7429,15 @@ body:has(.premium-auth-shell) {
 }
 
 .shop-intel-ticker svg {
-  color: #a5f3fc;
-  filter: drop-shadow(0 0 14px rgba(103, 232, 249, 0.32));
+  color: #6d28d9;
+  filter: drop-shadow(0 0 8px rgba(109, 40, 217, 0.12));
+}
+
+.shop-intel-ticker > div {
+  display: flex;
+  width: max-content;
+  min-width: 200%;
+  animation: shopTickerTravel 24s linear infinite;
 }
 
 .shop-premium-section {
@@ -7517,8 +7506,8 @@ body:has(.premium-auth-shell) {
   z-index: 2;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(5, 6, 10, 0.06) 0%, rgba(5, 6, 10, 0.82) 100%),
-    linear-gradient(135deg, rgba(103, 232, 249, 0.12), transparent 48%, rgba(251, 191, 36, 0.12));
+    linear-gradient(180deg, rgba(249, 247, 244, 0.04) 0%, rgba(15, 27, 61, 0.65) 100%),
+    linear-gradient(135deg, rgba(109, 40, 217, 0.08), transparent 48%, rgba(109, 40, 217, 0.06));
 }
 
 .shop-category-mark {
@@ -7526,14 +7515,14 @@ body:has(.premium-auth-shell) {
   width: 42px;
   height: 42px;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  background: rgba(109, 40, 217, 0.08);
+  background: rgba(255, 255, 255, 0.15);
   color: #ffffff;
   font-size: 20px;
-  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .shop-product-rail {

@@ -77,7 +77,7 @@ export default async function ShopHomePage() {
       <Navbar transparent />
 
       <main className="shop-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-[#0F1B3D]">
-        <section className="shop-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-white sm:px-6 md:px-10 lg:px-12">
+        <section className="shop-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-[#0F1B3D] sm:px-6 md:px-10 lg:px-12">
           <Image
             src="/printer2-poster.webp"
             alt=""
@@ -97,24 +97,24 @@ export default async function ShopHomePage() {
           <div className="shop-hero-frame" aria-hidden="true" />
 
           <div className="relative z-10 mx-auto flex min-h-[86svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-8 pt-8 md:pt-10 lg:pt-12">
-            <div className="shop-fade-up mb-5 flex items-center gap-2 text-sm font-medium text-white">
-              <Link href="/" className="transition hover:text-white/70">Home</Link>
+            <div className="shop-fade-up mb-5 flex items-center gap-2 text-sm font-medium text-[#6b7280]">
+              <Link href="/" className="transition hover:text-[#0F1B3D]">Home</Link>
               <ChevronRight className="h-3.5 w-3.5" />
-              <span className="text-white">3D Shop</span>
+              <span className="text-[#0F1B3D]">3D Shop</span>
             </div>
 
             <div className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-start">
               <div className="min-w-0">
-                <div className="shop-fade-up shop-hero-kicker inline-flex w-fit items-center gap-2 rounded-lg border border-white/[0.14] bg-white/10 px-4 py-2 text-xs font-black uppercase text-white shadow-[0_16px_48px_rgba(0,0,0,0.24)] backdrop-blur">
-                  <Sparkles className="h-4 w-4 text-amber-200" />
+                <div className="shop-fade-up shop-hero-kicker inline-flex w-fit items-center gap-2 rounded-lg border border-[rgba(109,40,217,0.15)] bg-[#ede9fe] px-4 py-2 text-xs font-black uppercase text-[#6d28d9] shadow-sm">
+                  <Sparkles className="h-4 w-4 text-[#6d28d9]" />
                   Flux3D Store
                 </div>
 
-                <h1 className="shop-fade-up shop-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-white sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]">
+                <h1 className="shop-fade-up shop-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#0F1B3D] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]">
                   Premium 3D printed pieces, ready to own.
                 </h1>
 
-                <p className="shop-fade-up mt-6 max-w-[calc(100vw-2rem)] text-base leading-7 text-white sm:text-lg lg:max-w-2xl lg:leading-8">
+                <p className="shop-fade-up mt-6 max-w-[calc(100vw-2rem)] text-base leading-7 text-[#374151] sm:text-lg lg:max-w-2xl lg:leading-8">
                   Shop curated Flux3D objects with clean finishes, useful forms, and ready-to-ship presentation for desks, creators, gifting, and everyday setups.
                 </p>
 
@@ -128,7 +128,7 @@ export default async function ShopHomePage() {
                   </a>
                   <Link
                     href="/3d-shop/search"
-                    className="shop-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/[0.18] bg-white/10 px-6 text-sm font-black text-white backdrop-blur transition hover:border-cyan-300/40 hover:bg-cyan-300/[0.12]"
+                    className="shop-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#6d28d9]/30 bg-white px-6 text-sm font-black text-[#6d28d9] backdrop-blur transition hover:border-[#6d28d9]/50 hover:bg-purple-50"
                   >
                     Search products
                     <Search className="h-4 w-4" />
@@ -139,12 +139,12 @@ export default async function ShopHomePage() {
                   {heroStats.map((stat) => {
                     const Icon = stat.icon
                     return (
-                      <div key={stat.label} className="min-w-0 rounded-lg border border-white/10 bg-white/[0.075] p-4 backdrop-blur">
-                        <div className="flex items-center gap-2 text-sm font-black text-white">
-                          <Icon className="h-4 w-4 text-cyan-200" />
+                      <div key={stat.label} className="min-w-0 rounded-lg border border-[rgba(109,40,217,0.08)] bg-white p-4 shadow-sm">
+                        <div className="flex items-center gap-2 text-sm font-black text-[#0F1B3D]">
+                          <Icon className="h-4 w-4 text-[#6d28d9]" />
                           {stat.value}
                         </div>
-                        <div className="mt-2 text-xs font-bold uppercase text-white">{stat.label}</div>
+                        <div className="mt-2 text-xs font-bold uppercase text-[#6b7280]">{stat.label}</div>
                       </div>
                     )
                   })}
@@ -172,7 +172,7 @@ export default async function ShopHomePage() {
                   href={heroProduct ? `/3d-shop/product/${heroProduct.slug}` : '#shop-categories'}
                   className="shop-console-feature group grid min-w-0 gap-3"
                 >
-                  <div className="shop-console-feature-media relative overflow-hidden rounded-lg border border-white/10">
+                  <div className="shop-console-feature-media relative overflow-hidden rounded-lg border border-[rgba(109,40,217,0.08)]">
                     <Image
                       src={heroImage}
                       alt={heroProduct?.name || 'Flux3D 3D Shop product showcase'}
@@ -184,16 +184,16 @@ export default async function ShopHomePage() {
                     <div className="shop-product-scan" aria-hidden="true" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-black uppercase tracking-[0.16em] text-cyan-100">
+                    <div className="text-xs font-black uppercase tracking-[0.16em] text-[#6d28d9]">
                       {heroProduct?.category_name || 'Curated shop'}
                     </div>
-                    <h2 className="mt-2 line-clamp-2 text-xl font-black leading-tight text-white">
+                    <h2 className="mt-2 line-clamp-2 text-xl font-black leading-tight text-[#0F1B3D]">
                       {heroProduct?.name || 'Browse Flux3D picks'}
                     </h2>
-                    <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-white">
+                    <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-[#374151]">
                       {heroProduct?.description || 'A premium shelf of ready-to-ship 3D printed products and useful desk objects.'}
                     </p>
-                    <span className="mt-4 inline-flex items-center gap-2 text-sm font-black text-cyan-200">
+                    <span className="mt-4 inline-flex items-center gap-2 text-sm font-black text-[#6d28d9]">
                       {heroPrice}
                       <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                     </span>
@@ -223,7 +223,7 @@ export default async function ShopHomePage() {
                   <Layers3 className="h-4 w-4" />
                   Shop by category
                 </div>
-                <h2 className="mt-3 max-w-2xl text-3xl font-black leading-tight text-[#0F1B3D] sm:text-5xl">
+                <h2 className="mt-3 max-w-2xl text-[clamp(2rem,6vw,3rem)] font-black leading-tight text-[#0F1B3D] sm:text-5xl">
                   Browse by purpose, finish, and setup.
                 </h2>
               </div>
@@ -276,7 +276,7 @@ export default async function ShopHomePage() {
                     <BadgeCheck className="h-4 w-4" />
                     Featured
                   </div>
-                  <h2 className="mt-3 text-3xl font-black text-[#0F1B3D] sm:text-4xl">Premium picks</h2>
+                  <h2 className="mt-3 text-[clamp(2rem,6vw,3rem)] font-black text-[#0F1B3D] sm:text-4xl">Premium picks</h2>
                 </div>
                 <Link href="/3d-shop/search?featured=true" className="inline-flex items-center gap-2 text-sm font-black text-[#6d28d9]">
                   View all
@@ -325,7 +325,7 @@ export default async function ShopHomePage() {
                   <Clock3 className="h-4 w-4" />
                   New arrivals
                 </div>
-                <h2 className="mt-3 text-3xl font-black text-[#0F1B3D] sm:text-4xl">Fresh from the print queue</h2>
+                <h2 className="mt-3 text-[clamp(2rem,6vw,3rem)] font-black text-[#0F1B3D] sm:text-4xl">Fresh from the print queue</h2>
               </div>
               <div className="grid grid-cols-3 gap-2 text-xs font-black uppercase text-[#6b7280]">
                 <span className="inline-flex items-center gap-1 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
