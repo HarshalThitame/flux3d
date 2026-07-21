@@ -114,6 +114,42 @@ export default function ContactContent() {
                       </div>
                     </div>
                   )}
+                  {settings.salesEmail && settings.salesEmail !== settings.supportEmail && (
+                    <div className="flex items-start gap-3">
+                      <Mail className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
+                      <div>
+                        <p className="text-sm font-semibold text-[#0F1B3D]">Sales</p>
+                        <a href={`mailto:${settings.salesEmail}`} className="text-sm text-[#6F7192] hover:text-[#6d28d9]">{settings.salesEmail}</a>
+                      </div>
+                    </div>
+                  )}
+                  {settings.billingEmail && settings.billingEmail !== settings.supportEmail && (
+                    <div className="flex items-start gap-3">
+                      <Mail className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
+                      <div>
+                        <p className="text-sm font-semibold text-[#0F1B3D]">Billing</p>
+                        <a href={`mailto:${settings.billingEmail}`} className="text-sm text-[#6F7192] hover:text-[#6d28d9]">{settings.billingEmail}</a>
+                      </div>
+                    </div>
+                  )}
+                  {settings.alternatePhone && settings.alternatePhone !== settings.primaryPhone && (
+                    <div className="flex items-start gap-3">
+                      <Phone className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
+                      <div>
+                        <p className="text-sm font-semibold text-[#0F1B3D]">Alternate</p>
+                        <a href={`tel:${settings.alternatePhone.replace(/[^0-9+]/g, '')}`} className="text-sm text-[#6F7192] hover:text-[#6d28d9]">{settings.alternatePhone}</a>
+                      </div>
+                    </div>
+                  )}
+                  {settings.tollFreeNumber && (
+                    <div className="flex items-start gap-3">
+                      <Phone className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
+                      <div>
+                        <p className="text-sm font-semibold text-[#0F1B3D]">Toll-Free</p>
+                        <a href={`tel:${settings.tollFreeNumber.replace(/[^0-9+]/g, '')}`} className="text-sm text-[#6F7192] hover:text-[#6d28d9]">{settings.tollFreeNumber}</a>
+                      </div>
+                    </div>
+                  )}
                   {settings.emergencyContact && (
                     <div className="flex items-start gap-3">
                       <Phone className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
