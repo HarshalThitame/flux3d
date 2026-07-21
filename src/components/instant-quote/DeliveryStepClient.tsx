@@ -295,7 +295,7 @@ export default function DeliveryStepClient({
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-[#6d28d9]/10 bg-white/[0.03] px-5 py-4 backdrop-blur-xl">
+            <div className="rounded-[24px] border border-[#6d28d9]/10 bg-white px-5 py-4">
               <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Signed in</div>
               <div className="mt-2 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">{user.name}</div>
               <div className="mt-1 text-sm text-[#6F7192]">{user.email}</div>
@@ -337,7 +337,7 @@ export default function DeliveryStepClient({
                           className={`rounded-[22px] border p-4 text-left transition ${
                             selectedAddressId === savedAddress.id
                               ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)]'
-                              : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10 hover:bg-white/[0.04]'
+                              : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10 hover:bg-gray-50'
                           }`}
                         >
                           <div className={`text-sm font-semibold ${selectedAddressId === savedAddress.id ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{savedAddress.fullName}</div>
@@ -396,7 +396,7 @@ export default function DeliveryStepClient({
               </div>
 
               <div className="space-y-3">
-                <div className="rounded-[20px] border border-[#6d28d9]/10 bg-white/[0.03] p-4">
+                <div className="rounded-[20px] border border-[#6d28d9]/10 bg-white p-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Quote</div>
                   <div className="mt-2 text-lg font-semibold text-[#0F1B3D]">{draft.quoteId}</div>
                   <div className="mt-2 text-sm text-[#6F7192]">
@@ -447,7 +447,7 @@ export default function DeliveryStepClient({
                 </button>
                 <Link
                   href="/instant-quote"
-                  className="inline-flex w-full items-center justify-center rounded-[18px] border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
+                  className="inline-flex w-full items-center justify-center rounded-[18px] border border-[#6d28d9]/10 bg-white px-4 py-3 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-purple-50"
                 >
                   Back to quote
                 </Link>

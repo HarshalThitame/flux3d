@@ -25,7 +25,7 @@ function ViewerModel({
 
 function ViewerFallback() {
   return (
-    <div className="absolute inset-0 animate-pulse rounded-[22px] bg-white/[0.03]" />
+    <div className="absolute inset-0 animate-pulse rounded-[22px] bg-white" />
   )
 }
 
@@ -110,11 +110,11 @@ export default function ViewerSection({
       </motion.div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-3">
+        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Controls</div>
           <div className="mt-2 text-sm text-[#0F1B3D]">Rotate · Zoom · Pan</div>
         </motion.div>
-        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-3">
+        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Bounding Box</div>
           <div className="mt-2 text-sm text-[#0F1B3D]">
             {model
@@ -122,7 +122,7 @@ export default function ViewerSection({
               : 'Waiting for geometry'}
           </div>
         </motion.div>
-        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-3">
+        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Mesh Density</div>
           <div className="mt-2 text-sm text-[#0F1B3D]">
             {model ? `${model.triangleCount.toLocaleString()} tris` : '0 tris'}

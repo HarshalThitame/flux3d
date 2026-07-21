@@ -49,7 +49,7 @@ const initialUploadState: UploadState = {
 
 const ModelPreviewCanvas = dynamic(() => import('@/components/instant-quote/ModelPreviewCanvas'), {
   ssr: false,
-  loading: () => <div className="absolute inset-0 animate-pulse rounded-2xl bg-white/[0.03]" />,
+  loading: () => <div className="absolute inset-0 animate-pulse rounded-2xl bg-white" />,
 })
 
 export type InstantQuoteWorkspaceProps = {
@@ -595,7 +595,7 @@ function CartEnabledWorkspace({
 
   return (
     <>
-      <div className="instant-quote-workspace relative min-h-screen overflow-hidden bg-[#05060a] text-white">
+      <div className="instant-quote-workspace relative min-h-screen overflow-hidden">
         <div className="quote-premium-grid" aria-hidden="true" />
         <div className="quote-premium-beam" aria-hidden="true" />
         <div className="quote-premium-frame" aria-hidden="true" />
@@ -629,7 +629,7 @@ function CartEnabledWorkspace({
               </div>
 
                 {/* Step Navigator */}
-                <div className="quote-step-nav flex items-center gap-1 overflow-x-auto rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] p-1.5 backdrop-blur-xl scrollbar-hide">
+                <div className="quote-step-nav flex items-center gap-1 overflow-x-auto rounded-2xl border border-[#6d28d9]/10 bg-white p-1.5 shadow-sm scrollbar-hide">
                   {stepConfigs.map((step, i) => {
                     const done = getStepDone(step.id)
                     const ref = stepRefs[step.id as keyof typeof stepRefs]
@@ -637,12 +637,12 @@ function CartEnabledWorkspace({
                     <button
                       key={step.id}
                       onClick={() => handleStepClick(ref)}
-                      className={`quote-step-button ${done ? 'quote-step-button-done' : ''} flex min-h-[44px] flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 py-2.5 text-xs font-medium transition-colors hover:bg-white/5`}
+                      className={`quote-step-button ${done ? 'quote-step-button-done' : ''} flex min-h-[44px] flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 py-2.5 text-xs font-medium transition-colors hover:bg-gray-100`}
                     >
                     <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
                       done
                         ? 'bg-emerald-700/20 text-emerald-700'
-                        : 'bg-white/10 text-[#6F7192]'
+                        : 'bg-white text-[#6F7192]'
                     }`}>
                       {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
                     </span>
@@ -702,7 +702,7 @@ function CartEnabledWorkspace({
                     </div>
 
                     <div
-                      className="quote-upload-dropzone relative flex min-h-[200px] items-center justify-center rounded-2xl border-2 border-dashed border-[#6d28d9]/10 bg-white/[0.02] p-6 text-center transition-colors hover:border-[#6d28d9]/30"
+                      className="quote-upload-dropzone relative flex min-h-[200px] items-center justify-center rounded-2xl border-2 border-dashed border-[#6d28d9]/10 bg-white p-6 text-center transition-colors hover:border-[#6d28d9]/30"
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
                         e.preventDefault()
@@ -735,7 +735,7 @@ function CartEnabledWorkspace({
 </div>
                         )}
                         {selectedFile && (
-                          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#6d28d9]/10 bg-white/[0.03] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
+                          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#6d28d9]/10 bg-white px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
                             <FileArchive className="h-3 w-3" />
                             {selectedFile.name}
                           </div>
@@ -753,7 +753,7 @@ function CartEnabledWorkspace({
                           </span>
                           <span>{uploadState.progress}%</span>
                         </div>
-                        <div className="quote-progress-track h-1.5 overflow-hidden rounded-full bg-white/8">
+                        <div className="quote-progress-track h-1.5 overflow-hidden rounded-full bg-gray-100">
                           <div
                             className="quote-progress-fill h-full rounded-full bg-[#6d28d9] transition-all duration-300"
                             style={{ width: `${uploadState.progress}%` }}
@@ -826,17 +826,17 @@ function CartEnabledWorkspace({
 
                     {selectedModel && (
                       <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="quote-metric-card rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2.5">
+                        <div className="quote-metric-card rounded-xl border border-[#6d28d9]/10 bg-white px-3 py-2.5">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Dimensions</div>
                           <div className="mt-1 text-xs text-[#0F1B3D]">
                             {selectedModel.dimensionsMm.x.toFixed(0)} × {selectedModel.dimensionsMm.y.toFixed(0)} × {selectedModel.dimensionsMm.z.toFixed(0)} mm
                           </div>
                         </div>
-                        <div className="quote-metric-card rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2.5">
+                        <div className="quote-metric-card rounded-xl border border-[#6d28d9]/10 bg-white px-3 py-2.5">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Triangles</div>
                           <div className="mt-1 text-xs text-[#0F1B3D]">{selectedModel.triangleCount.toLocaleString()}</div>
                         </div>
-                        <div className="quote-metric-card rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2.5">
+                        <div className="quote-metric-card rounded-xl border border-[#6d28d9]/10 bg-white px-3 py-2.5">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Controls</div>
                           <div className="mt-1 text-xs text-[#0F1B3D]">Rotate · Zoom · Pan</div>
                         </div>
@@ -877,7 +877,7 @@ function CartEnabledWorkspace({
                               className={`quote-option-card ${isActive ? 'quote-option-card-active' : ''} flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
                                 isActive
                                   ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)] shadow-[0_4px_16px_rgba(109, 40, 217,0.1)]'
-                                  : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10'
+                                  : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10'
                               }`}
                             >
                               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-base">
@@ -912,7 +912,7 @@ function CartEnabledWorkspace({
                               className={`quote-option-card ${isActive ? 'quote-option-card-active' : ''} flex items-center gap-2 rounded-xl border px-4 py-2.5 text-left transition-all ${
                                 isActive
                                   ? 'border-[#6d28d9]/40 bg-[var(--brand-faint)]'
-                                  : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10'
+                                  : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10'
                               }`}
                             >
                               <span className={`text-xs font-medium ${isActive ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{color.name}</span>
@@ -978,7 +978,7 @@ function CartEnabledWorkspace({
                           step={1}
                           value={config.quantity}
                           onChange={(e) => setConfig((c) => ({ ...c, quantity: Math.max(1, Math.floor(Number(e.target.value) || 1)) }))}
-                          className="w-full rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
+                          className="w-full rounded-xl border border-[#6d28d9]/10 bg-white px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
                         />
                       </div>
 
@@ -994,7 +994,7 @@ function CartEnabledWorkspace({
                               className={`quote-option-card ${option.value === config.postProcessingLevel ? 'quote-option-card-active' : ''} rounded-xl border px-3 py-2.5 text-left transition-all ${
                                 option.value === config.postProcessingLevel
                                   ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)]'
-                                  : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10'
+                                  : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10'
                               }`}
                             >
                               <div className="flex items-center justify-between gap-3">
@@ -1028,7 +1028,7 @@ function CartEnabledWorkspace({
                               className={`quote-option-card ${option.value === config.layerHeight ? 'quote-option-card-active' : ''} rounded-xl border px-3 py-2.5 text-left transition-all ${
                                 option.value === config.layerHeight
                                   ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)]'
-                                  : 'border-[#6d28d9]/10 bg-white/[0.02] hover:border-[#6d28d9]/10'
+                                  : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10'
                               }`}
                             >
                               <div className={`text-xs font-medium ${option.value === config.layerHeight ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{option.label}</div>
@@ -1041,7 +1041,7 @@ function CartEnabledWorkspace({
 
                     {/* Save Quote */}
                     {user && (
-                      <div className="quote-save-strip mt-6 flex flex-col items-center justify-between gap-3 rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-4 sm:flex-row">
+                      <div className="quote-save-strip mt-6 flex flex-col items-center justify-between gap-3 rounded-xl border border-[#6d28d9]/10 bg-white p-4 sm:flex-row">
                         <div className="flex items-center gap-3">
                           <ShieldCheck className="h-5 w-5 text-emerald-700" />
                           <div>
@@ -1053,7 +1053,7 @@ function CartEnabledWorkspace({
                           type="button"
                           onClick={handleSaveQuote}
                           disabled={!selectedModel || savingQuote || uploadState.status === 'uploading'}
-                          className="quote-secondary-action inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white/5 px-4 py-2 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                          className="quote-secondary-action inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gray-50 px-4 py-2 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                         >
                           <BookmarkPlus className="h-3.5 w-3.5" />
                           {savingQuote ? 'Saving...' : 'Save Quote'}
@@ -1084,14 +1084,14 @@ function CartEnabledWorkspace({
 
                   {!priceBreakdown ? (
                     <div className="space-y-3">
-                      <div className="h-12 animate-pulse rounded-xl bg-white/[0.04]" />
-                      <div className="h-12 animate-pulse rounded-xl bg-white/[0.04]" />
-                      <div className="h-20 animate-pulse rounded-xl bg-white/[0.04]" />
+                      <div className="h-12 animate-pulse rounded-xl bg-gray-50" />
+                      <div className="h-12 animate-pulse rounded-xl bg-gray-50" />
+                      <div className="h-20 animate-pulse rounded-xl bg-gray-50" />
                     </div>
                   ) : (
                     <>
                       {/* Config Summary */}
-                      <div className="quote-config-pill mb-4 rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3">
+                      <div className="quote-config-pill mb-4 rounded-xl border border-[#6d28d9]/10 bg-white p-3">
                         <div className="flex items-center gap-2 text-xs">
                           <span className="text-[#0F1B3D]">{selectedMaterial?.name ?? 'Material'}</span>
                           <span className="text-[#6F7192]">·</span>
@@ -1169,15 +1169,15 @@ function CartEnabledWorkspace({
 
                       {/* Quick Stats */}
                       <div className="mt-4 grid grid-cols-2 gap-3">
-                        <div className="quote-mini-stat rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3">
+                        <div className="quote-mini-stat rounded-xl border border-[#6d28d9]/10 bg-white p-3">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Weight</div>
                           <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{priceBreakdown.materialUsageGramsPerUnit.toFixed(2)} g / unit</div>
                         </div>
-                        <div className="quote-mini-stat rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3">
+                        <div className="quote-mini-stat rounded-xl border border-[#6d28d9]/10 bg-white p-3">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Print time</div>
                           <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{formatDurationMinutes(priceBreakdown.estimatedMinutes)}</div>
                         </div>
-                        <div className="quote-mini-stat col-span-2 rounded-xl border border-[#6d28d9]/10 bg-white/[0.02] p-3">
+                        <div className="quote-mini-stat col-span-2 rounded-xl border border-[#6d28d9]/10 bg-white p-3">
                           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
                             <Cuboid className="h-3 w-3" />
                             Dimensions
@@ -1236,7 +1236,7 @@ function CartEnabledWorkspace({
                       {!user && (
                         <Link
                           href="/login?next=%2Finstant-quote"
-                          className="quote-secondary-action mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-2.5 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-white/[0.07]"
+                          className="quote-secondary-action mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/10 bg-white px-4 py-2.5 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-purple-50"
                         >
                           Sign in to save quotes
                           <ArrowRight className="h-3 w-3" />

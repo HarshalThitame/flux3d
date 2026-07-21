@@ -10,7 +10,7 @@ const InstantQuoteWorkspace = dynamic(
     ssr: false,
     loading: () => (
       <RouteChunkLoader
-        className="instant-quote-premium-shell bg-[#05060a] text-white"
+        className="text-[#6d28d9]"
         minHeight="100vh"
         label="Loading quote workspace"
       />
