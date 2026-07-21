@@ -67,11 +67,11 @@ export default function WhyChooseUs() {
         >
           <div>
             <span className="text-xs font-bold uppercase text-[#6d28d9]">Why clients come back</span>
-            <h2 className="mt-3 max-w-3xl !text-4xl font-extrabold leading-tight !text-[#0F1B3D] md:!text-5xl">
+            <h2 className="mt-3 max-w-3xl !text-[clamp(2rem,6vw,3rem)] font-extrabold leading-tight !text-[#0F1B3D] md:!text-5xl">
               Premium is not decoration. It is controlled output.
             </h2>
           </div>
-          <p className="text-sm leading-7 text-[#6b7280]">
+          <p className="text-sm leading-6 text-[#6b7280] lg:leading-7">
             The difference is in planning, material handling, communication, and finishing discipline before the printer even starts.
           </p>
         </motion.div>

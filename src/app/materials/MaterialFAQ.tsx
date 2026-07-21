@@ -55,7 +55,7 @@ function FAQItem({ faq }: { faq: { q: string; a: string } }) {
         <ChevronDown className={`h-4 w-4 flex-shrink-0 text-[#6F7192] transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <p className="pb-5 text-sm leading-7 text-[#6F7192]">{faq.a}</p>
+        <p className="pb-5 text-sm leading-6 text-[#6F7192]">{faq.a}</p>
       )}
     </div>
   )
@@ -77,7 +77,7 @@ export default function MaterialFAQ() {
           <span className="mb-2 inline-block text-xs font-bold uppercase text-[#6d28d9]">
             Buying guidance
           </span>
-          <h2 className="text-3xl font-extrabold text-[#111827] md:text-4xl">
+          <h2 className="text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#111827] md:text-4xl">
             Material questions, answered plainly.
           </h2>
         </motion.div>

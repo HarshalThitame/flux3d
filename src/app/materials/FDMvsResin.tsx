@@ -21,7 +21,7 @@ export default function FDMvsResin() {
           <span className="mb-2 inline-block text-xs font-bold uppercase text-[#6d28d9]">
             Technology Guide
           </span>
-          <h2 className="mx-auto max-w-2xl text-3xl font-extrabold text-[#111827] md:text-4xl">
+          <h2 className="mx-auto max-w-2xl text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#111827] md:text-4xl">
             FDM or resin? Decide by outcome.
           </h2>
           <p className="mx-auto mt-3 max-w-[640px] text-sm leading-6 text-[#6F7192]">

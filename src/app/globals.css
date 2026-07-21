@@ -4122,13 +4122,14 @@ body:has(.premium-auth-shell) {
 
   .services-hero-depth {
     background:
-      linear-gradient(180deg, rgba(5, 6, 10, 0.97), rgba(5, 6, 10, 0.78) 48%, rgba(5, 6, 10, 0.97)),
-      linear-gradient(135deg, rgba(6, 182, 212, 0.16), transparent 52%, rgba(124, 58, 237, 0.16));
+      linear-gradient(180deg, rgba(249, 247, 244, 0.96), rgba(249, 247, 244, 0.78) 48%, rgba(249, 247, 244, 0.96)),
+      linear-gradient(135deg, rgba(109, 40, 217, 0.06), transparent 48%, rgba(109, 40, 217, 0.04));
   }
 }
 
 @media (max-width: 768px) {
   .services-pointer-light,
+  .services-scroll-meter,
   .services-hero-frame {
     display: none;
   }
@@ -4153,6 +4154,11 @@ body:has(.premium-auth-shell) {
   .services-workflow-stack strong {
     grid-column: 2;
     overflow-wrap: anywhere;
+  }
+
+  .services-section-grid {
+    animation: none;
+    opacity: 0.06;
   }
 }
 
@@ -4205,6 +4211,7 @@ body:has(.premium-auth-shell) {
   .services-hero-depth,
   .services-hero-grid,
   .services-hero-beam,
+  .services-section-grid,
   .services-print-head,
   .services-print-head span,
   .services-print-bed span,
@@ -4906,13 +4913,14 @@ body:has(.premium-auth-shell) {
 
   .materials-hero-depth {
     background:
-      linear-gradient(180deg, rgba(5, 6, 10, 0.97), rgba(5, 6, 10, 0.78) 48%, rgba(5, 6, 10, 0.97)),
-      linear-gradient(135deg, rgba(52, 211, 153, 0.15), transparent 52%, rgba(103, 232, 249, 0.16));
+      linear-gradient(180deg, rgba(249, 247, 244, 0.96), rgba(249, 247, 244, 0.78) 48%, rgba(249, 247, 244, 0.96)),
+      linear-gradient(135deg, rgba(109, 40, 217, 0.06), transparent 48%, rgba(109, 40, 217, 0.04));
   }
 }
 
 @media (max-width: 768px) {
   .materials-pointer-light,
+  .materials-scroll-meter,
   .materials-hero-frame {
     display: none;
   }
@@ -4935,6 +4943,11 @@ body:has(.premium-auth-shell) {
   .materials-shortlist > div > span {
     max-width: none;
     text-align: left;
+  }
+
+  .materials-section-grid {
+    animation: none;
+    opacity: 0.06;
   }
 }
 
@@ -4998,6 +5011,7 @@ body:has(.premium-auth-shell) {
   .materials-hero-depth,
   .materials-hero-grid,
   .materials-hero-beam,
+  .materials-section-grid,
   .materials-spool,
   .materials-filament-line,
   .materials-vial span,
@@ -8060,11 +8074,19 @@ details[open] > .navbar-mobile-panel {
   overscroll-behavior: contain;
 }
 
+/* NavbarClient (services & materials pages) uses .navbar-mobile-overlay instead of <details> */
+.navbar-mobile-overlay .navbar-mobile-panel {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .navbar-mobile-panel {
     opacity: 1;
     transform: none;
     transition: none;
+    pointer-events: auto;
   }
 }
 

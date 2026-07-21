@@ -2,7 +2,6 @@
 
 import { motion, useInView, useReducedMotion, type Variants } from 'framer-motion'
 import { useEffect, useRef } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -16,7 +15,7 @@ import {
   Thermometer,
 } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
-import DeferredHeroVideo from '@/components/DeferredHeroVideo'
+import { useIsFinePointer } from '@/hooks/useMediaQuery'
 import { createRafThrottledCallback } from '@/lib/raf-throttle'
 
 const materialHighlights = [
@@ -58,8 +57,11 @@ const item: Variants = {
 
 function MaterialsPremiumFX() {
   const meterRef = useRef<HTMLSpanElement | null>(null)
+  const isFinePointer = useIsFinePointer()
 
   useEffect(() => {
+    if (!isFinePointer) return
+
     let pointerFrame = 0
     let pointerX = 0
 
@@ -146,14 +148,14 @@ export default function MaterialsHero() {
           <div className="min-w-0">
             <motion.h1
               variants={item}
-              className="materials-hero-title max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.04] text-[#0F1B3D] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
+              className="materials-hero-title max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#0F1B3D] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
             >
               Materials chosen with engineering precision.
             </motion.h1>
 
             <motion.p
               variants={item}
-              className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-[#6b7280] sm:text-lg lg:max-w-2xl"
+              className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-7 text-[#6b7280] sm:text-lg lg:max-w-2xl lg:leading-8"
             >
               Compare finish, strength, heat resistance, flexibility, and cost before you upload. Flux3D pairs each job with a material that fits the part, not just the printer.
             </motion.p>
@@ -215,7 +217,7 @@ export default function MaterialsHero() {
               <div className="materials-scanline" />
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {labMetrics.map((metric) => (
                 <div key={metric.label} className="materials-lab-metric">
                   <metric.icon className="h-4 w-4" />

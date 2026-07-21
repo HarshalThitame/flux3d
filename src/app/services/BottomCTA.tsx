@@ -43,10 +43,10 @@ export default function BottomCTA() {
         <span className="mb-4 inline-flex items-center rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 text-xs font-bold uppercase text-[#6d28d9]">
           Ready when you are
         </span>
-        <h2 className="mx-auto max-w-3xl !text-4xl font-extrabold leading-tight !text-[#0F1B3D] md:!text-5xl">
+        <h2 className="mx-auto max-w-3xl !text-[clamp(2rem,6vw,3rem)] font-extrabold leading-tight !text-[#0F1B3D] md:!text-5xl">
           Send the file. Get the quote. Start the print.
         </h2>
-        <p className="mx-auto mb-8 mt-4 max-w-[660px] text-sm leading-7 text-[#6b7280]">
+        <p className="mx-auto mb-8 mt-4 max-w-[660px] text-sm leading-6 text-[#6b7280]">
           Whether it is one prototype or a repeatable batch, we will help you choose the right material, finish, and delivery path.
         </p>
 

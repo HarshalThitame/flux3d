@@ -23,10 +23,10 @@ export default function MaterialsCTA() {
         <span className="mb-3 inline-flex items-center rounded-full bg-[#ede9fe] px-4 py-2 text-xs font-bold uppercase text-[#6d28d9]">
           From material to quote
         </span>
-        <h2 className="mx-auto max-w-2xl text-3xl font-extrabold text-[#111827] md:text-4xl">
+        <h2 className="mx-auto max-w-2xl text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#111827] md:text-4xl">
           Upload once. Get a material recommendation and a production-ready quote.
         </h2>
-        <p className="mx-auto mb-8 mt-4 max-w-[560px] text-sm leading-7 text-[#6F7192]">
+        <p className="mx-auto mb-8 mt-4 max-w-[560px] text-sm leading-6 text-[#6F7192]">
           Upload your file and we&apos;ll recommend the perfect material and give you an instant quote. No account, no commitment — just a fast answer.
         </p>
 

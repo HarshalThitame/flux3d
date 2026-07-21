@@ -45,7 +45,7 @@ export default function FAQSection() {
           className="mb-9 text-center"
         >
           <span className="text-xs font-bold uppercase text-[#6d28d9]">FAQ</span>
-          <h2 className="mx-auto mt-3 max-w-2xl !text-4xl font-extrabold leading-tight !text-[#0F1B3D] md:!text-5xl">
+          <h2 className="mx-auto mt-3 max-w-2xl !text-[clamp(2rem,6vw,3rem)] font-extrabold leading-tight !text-[#0F1B3D] md:!text-5xl">
             Questions before you print.
           </h2>
         </motion.div>
@@ -81,7 +81,7 @@ export default function FAQSection() {
                       transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
                       className="overflow-hidden"
                     >
-                      <p className="px-5 pb-5 text-sm leading-7 text-[#667085]">{faq.answer}</p>
+                      <p className="px-5 pb-5 text-sm leading-6 text-[#667085]">{faq.answer}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
