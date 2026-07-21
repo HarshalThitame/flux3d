@@ -52,11 +52,11 @@ export default function ProblemSection() {
         >
           <span className="premium-eyebrow">Why Flux3D</span>
 
-          <h2 className="mt-5 text-4xl font-black leading-[0.98] tracking-normal text-[#0F1B3D] md:text-5xl lg:text-6xl">
+          <h2 className="mt-5 text-[clamp(2rem,6vw,4rem)] font-black leading-[0.98] tracking-normal text-[#0F1B3D] md:text-5xl lg:text-6xl">
             The faster way to make real parts.
           </h2>
 
-          <p className="mt-6 max-w-xl text-base leading-8 text-[#6F7192] md:text-lg">
+          <p className="mt-6 max-w-xl text-base leading-7 text-[#6F7192] md:text-lg lg:leading-8">
             Flux3D gives you a compact production workflow: upload the file, choose the right material, approve the quote, and receive a finished part without factory friction.
           </p>
 

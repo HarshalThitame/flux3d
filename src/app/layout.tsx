@@ -131,6 +131,10 @@ export default async function RootLayout({
           :root {
             --brand-primary: ${settings.primaryColor || '#6d28d9'};
             --brand-secondary: ${settings.secondaryColor || '#a855f7'};
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-area-left: env(safe-area-inset-left, 0px);
+            --safe-area-right: env(safe-area-inset-right, 0px);
           }
         `}</style>
       </head>

@@ -100,7 +100,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="premium-hero-title text-5xl font-black leading-[0.86] text-[#0F1B3D] sm:text-6xl md:text-7xl lg:text-8xl"
+              className="premium-hero-title text-[clamp(2.4rem,9vw,5rem)] font-black leading-[0.86] text-[#0F1B3D] sm:text-6xl md:text-7xl lg:text-8xl"
             >
               <span className="premium-title-line premium-title-brand">Flux3D</span>
               <span className="premium-title-line premium-title-service">Custom 3D Printing &amp; Manufacturing</span>
@@ -110,7 +110,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.35 }}
-              className="mx-auto mt-7 max-w-2xl text-base leading-8 text-[#374151] sm:text-lg lg:mx-0"
+              className="mx-auto mt-7 max-w-2xl text-base leading-7 text-[#374151] sm:text-lg lg:mx-0 lg:leading-8"
             >
               Flux 3D makes custom 3D-printed parts, prototypes, models and ready-made products for businesses and individuals who need a printed item with clear pricing, clear policies and a real support channel.
             </motion.p>

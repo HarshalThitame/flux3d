@@ -5,6 +5,7 @@ import { startTransition, useEffect, useRef, useState } from 'react'
 import { MessageCircle } from 'lucide-react'
 import FadeIn from '@/components/FadeIn'
 import { useBusinessSettings } from '@/lib/settings-context'
+import { useIsFinePointer } from '@/hooks/useMediaQuery'
 import { createRafThrottledCallback } from '@/lib/raf-throttle'
 
 const ProblemSection = dynamic(() => import('./ProblemSection'), { ssr: false })
@@ -41,7 +42,7 @@ function FloatingWhatsAppButton() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with Flux 3D on WhatsApp"
-      className="fixed bottom-20 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-[#25D366] text-white shadow-[0_18px_44px_rgba(37,211,102,0.34)] transition-all duration-200 hover:scale-105 hover:shadow-[0_20px_54px_rgba(37,211,102,0.42)] md:bottom-8 md:right-6 md:h-14 md:w-14"
+      className="floating-whatsapp-button fixed z-50 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-[#25D366] text-white shadow-[0_18px_44px_rgba(37,211,102,0.34)] transition-all duration-200 hover:scale-105 hover:shadow-[0_20px_54px_rgba(37,211,102,0.42)] md:h-14 md:w-14"
     >
       <MessageCircle className="h-5 w-5 md:h-6 md:w-6" />
     </a>
@@ -50,8 +51,11 @@ function FloatingWhatsAppButton() {
 
 function PremiumLandingFX() {
   const meterRef = useRef<HTMLSpanElement | null>(null)
+  const isFinePointer = useIsFinePointer()
 
   useEffect(() => {
+    if (!isFinePointer) return
+
     let pointerFrame = 0
     let pointerX = 0
     let pointerY = 0
@@ -154,6 +158,10 @@ function LazySection({
 }
 
 function FloatingOrbs() {
+  const canAnimate = useIsFinePointer()
+
+  if (!canAnimate) return null
+
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
       <div className="premium-orb premium-orb-1" />

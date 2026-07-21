@@ -1,7 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { ArrowUpRight, Menu, MessageCircle, ShoppingCart } from 'lucide-react'
+import { ArrowUpRight, Menu, MessageCircle, ShoppingCart, X } from 'lucide-react'
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -13,8 +14,134 @@ const navLinks = [
   { href: '/pricing', label: 'Pricing' },
 ]
 
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"]), input, textarea, select'
+
 export default function HomeNavbar() {
   const whatsappHref = 'https://wa.me/919623023480'
+  const detailsRef = useRef<HTMLDetailsElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const summaryRef = useRef<HTMLElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+  const [isOpen, setIsOpen] = useState(false)
+
+  /* ── Sync React state with native <details> open/close ── */
+  useEffect(() => {
+    const details = detailsRef.current
+    if (!details) return
+    const onToggle = () => setIsOpen(details.open)
+    details.addEventListener('toggle', onToggle)
+    return () => details.removeEventListener('toggle', onToggle)
+  }, [])
+
+  /* ── Imperative close helper ── */
+  const closeMenu = useCallback(() => {
+    if (detailsRef.current?.open) {
+      detailsRef.current.open = false
+    }
+  }, [])
+
+  /* ── Close on scroll ── */
+  useEffect(() => {
+    if (!isOpen) return
+    let frame = 0
+    const onScroll = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        closeMenu()
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (frame) window.cancelAnimationFrame(frame)
+    }
+  }, [isOpen, closeMenu])
+
+  /* ── Close on route change (popstate for back/forward) ── */
+  useEffect(() => {
+    if (!isOpen) return
+    const onPopState = () => closeMenu()
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [isOpen, closeMenu])
+
+  /* ── Focus trap + Escape key ── */
+  useEffect(() => {
+    if (!isOpen) return
+
+    /* Save the currently focused element so we can restore it later */
+    previousFocusRef.current = document.activeElement as HTMLElement | null
+
+    const panel = panelRef.current
+    if (panel) {
+      const first = panel.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
+      /* Delay focus so it doesn't get stolen by the toggle event */
+      requestAnimationFrame(() => first?.focus())
+    }
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        closeMenu()
+        summaryRef.current?.focus()
+        return
+      }
+
+      if (e.key !== 'Tab' || !panel) return
+
+      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+      if (focusable.length === 0) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      /* Restore focus to the trigger when menu closes */
+      if (!detailsRef.current?.open) {
+        previousFocusRef.current?.focus()
+      }
+    }
+  }, [isOpen, closeMenu])
+
+  /* ── Close on outside click/touch ── */
+  useEffect(() => {
+    if (!isOpen) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (detailsRef.current && !detailsRef.current.contains(e.target as Node)) {
+        closeMenu()
+      }
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [isOpen, closeMenu])
+
+  /* ── Body scroll lock ── */
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('mobile-nav-open')
+    } else {
+      document.body.classList.remove('mobile-nav-open')
+    }
+    return () => document.body.classList.remove('mobile-nav-open')
+  }, [isOpen])
+
+  /* ── Handle link clicks inside the menu ── */
+  const onNavLinkClick = useCallback(() => {
+    closeMenu()
+  }, [closeMenu])
 
   return (
     <nav
@@ -105,19 +232,34 @@ export default function HomeNavbar() {
         </div>
       </div>
 
-      <details className="relative lg:hidden">
-        <summary className="navbar-menu-button relative flex min-h-[44px] min-w-[44px] list-none items-center justify-center rounded-full border border-white/80 bg-white/70 text-[var(--text-primary)] shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur [&::-webkit-details-marker]:hidden">
-          <span className="sr-only">Open menu</span>
-          <Menu className="h-5 w-5" />
+      <details ref={detailsRef} className="relative lg:hidden">
+        <summary
+          ref={summaryRef}
+          className="navbar-menu-button relative flex min-h-[44px] min-w-[44px] list-none items-center justify-center rounded-full border border-white/80 bg-white/70 text-[var(--text-primary)] shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur [&::-webkit-details-marker]:hidden"
+          aria-expanded={isOpen}
+          aria-controls="navbar-mobile-menu"
+          aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
+        >
+          <span className="sr-only">{isOpen ? 'Close menu' : 'Open menu'}</span>
+          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </summary>
 
-        <div className="navbar-mobile-panel absolute right-0 top-[calc(100%+0.75rem)] w-[min(320px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/95 p-4 shadow-[var(--shadow-lg)] backdrop-blur-xl">
+        <div
+          id="navbar-mobile-menu"
+          ref={panelRef}
+          role="dialog"
+          aria-modal={isOpen ? 'true' : undefined}
+          aria-label="Navigation menu"
+          className="navbar-mobile-panel absolute right-0 top-[calc(100%+0.75rem+env(safe-area-inset-top,0px))] w-[min(320px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/95 p-4 shadow-[var(--shadow-lg)] backdrop-blur-xl"
+          style={{ overscrollBehavior: 'contain' } as CSSProperties}
+        >
           <ul className="space-y-1">
             {navLinks.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
                   prefetch={false}
+                  onClick={onNavLinkClick}
                   className={`navbar-mobile-link flex min-h-[44px] items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-colors ${
                     link.href === '/'
                       ? 'navbar-mobile-link-active bg-[var(--brand-faint)] text-[var(--brand-primary)]'
@@ -135,6 +277,7 @@ export default function HomeNavbar() {
             <Link
               href="/instant-quote"
               prefetch={false}
+              onClick={onNavLinkClick}
               className="btn-primary flex w-full items-center justify-center gap-2 py-3.5 text-base"
             >
               Get Instant Quote
@@ -144,6 +287,7 @@ export default function HomeNavbar() {
               href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={onNavLinkClick}
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 py-3.5 text-base font-medium text-[#25D366]"
             >
               <MessageCircle className="h-4 w-4" />
