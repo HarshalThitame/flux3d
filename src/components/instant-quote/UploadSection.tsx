@@ -89,14 +89,14 @@ export default function UploadSection({
           <p className="mt-3 text-sm leading-7 text-[#6F7192]">
             Click to browse or drop your printable file here. From the first upload, the experience is designed to feel fast, premium, and effortless.
           </p>
-<div className="mt-4 inline-flex rounded-full border border-[#6d28d9]/10 bg-white/[0.03] px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
+<div className="mt-4 inline-flex rounded-full border border-[#6d28d9]/10 bg-white px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
   STL · OBJ · 3MF · STEP · DXF · DWG
 </div>
         </div>
       </motion.div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-3">
+        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">File Input</div>
           <div className="mt-2 flex items-center gap-3">
             <div className="rounded-xl bg-[#6d28d9]/10 p-2 text-[#6d28d9]">
@@ -113,7 +113,7 @@ export default function UploadSection({
           </div>
         </motion.div>
 
-        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] px-4 py-3">
+        <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Upload Progress</div>
           {uploadState.status === 'uploading' ? (
             <div className="mt-3">
