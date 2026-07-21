@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ShoppingBag, Star } from 'lucide-react'
+import { addToast } from '@/lib/toast/store'
 import type { ShopPublicProduct } from '@/lib/shop/public-types'
 import {
   formatShopPrice,
@@ -59,6 +60,11 @@ export default function ProductCard({
       maxStock: directSku.pre_order_eta ? 10 : directSku.stock_quantity,
     })
     setAdded(true)
+    addToast({
+      type: 'success',
+      title: 'Added to cart',
+      description: `${product.name} — ${formatShopPrice(directSku.price)}`,
+    })
     window.setTimeout(() => setAdded(false), 1500)
   }
 

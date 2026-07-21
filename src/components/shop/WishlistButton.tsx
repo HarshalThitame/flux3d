@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { useState } from 'react'
 import { Heart } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useShopWishlistStore } from '@/stores/shopWishlistStore'
+import { addToast } from '@/lib/toast/store'
 
 export default function WishlistButton({
   productId,
@@ -19,14 +21,7 @@ export default function WishlistButton({
   const wishlisted = useShopWishlistStore((state) => state.wishlistedIds.has(productId))
   const addToWishlist = useShopWishlistStore((state) => state.addToWishlist)
   const removeFromWishlist = useShopWishlistStore((state) => state.removeFromWishlist)
-  const [toast, setToast] = useState('')
   const [pending, setPending] = useState(false)
-
-  useEffect(() => {
-    if (!toast) return
-    const timer = window.setTimeout(() => setToast(''), 2400)
-    return () => window.clearTimeout(timer)
-  }, [toast])
 
   async function toggleWishlist() {
     if (pending) return
@@ -34,7 +29,7 @@ export default function WishlistButton({
     const nextWishlisted = !wishlisted
     if (nextWishlisted) addToWishlist(productId)
     else removeFromWishlist(productId)
-    setToast(nextWishlisted ? 'Added to wishlist ♥' : 'Removed from wishlist')
+    addToast({ type: 'success', title: nextWishlisted ? 'Added to wishlist' : 'Removed from wishlist', description: nextWishlisted ? '♥ Saved to your wishlist' : undefined })
     setPending(true)
 
     try {
@@ -56,34 +51,30 @@ export default function WishlistButton({
     } catch (error) {
       if (nextWishlisted) removeFromWishlist(productId)
       else addToWishlist(productId)
-      setToast(error instanceof Error ? error.message : 'Wishlist update failed.')
+      addToast({ type: 'error', title: 'Wishlist error', description: error instanceof Error ? error.message : 'Wishlist update failed.' })
     } finally {
       setPending(false)
     }
   }
 
   return (
-    <>
-      <button
-        type="button"
-        aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-        aria-pressed={wishlisted}
-        onClick={(event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          void toggleWishlist()
-        }}
-        className={`inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-2 rounded-full border border-[var(--border-light)] bg-white px-3 text-sm font-bold shadow-[var(--shadow-sm)] transition hover:scale-105 disabled:opacity-60 ${wishlisted ? 'text-rose-600' : 'text-[var(--text-secondary)]'} ${className}`}
-        disabled={pending}
-      >
-        <Heart className={`h-4 w-4 ${wishlisted ? 'fill-rose-600 text-rose-600' : ''}`} />
-        {label ? <span>{wishlisted ? 'Saved' : 'Wishlist'}</span> : null}
-      </button>
-      {toast && (
-        <div className="fixed bottom-5 right-5 z-[130] rounded-2xl border border-[var(--border-light)] bg-white px-4 py-3 text-sm font-semibold text-[var(--text-primary)] shadow-xl">
-          {toast}
-        </div>
-      )}
-    </>
+    <motion.button
+      type="button"
+      aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+      aria-pressed={wishlisted}
+      onClick={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        void toggleWishlist()
+      }}
+      whileTap={{ scale: 0.85 }}
+      animate={wishlisted ? { scale: [1, 1.2, 1] } : {}}
+      transition={{ duration: 0.3 }}
+      className={`inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-2 rounded-full border border-[var(--border-light)] bg-white px-3 text-sm font-bold shadow-[var(--shadow-sm)] transition hover:scale-105 disabled:opacity-60 ${wishlisted ? 'text-rose-600' : 'text-[var(--text-secondary)]'} ${className}`}
+      disabled={pending}
+    >
+      <Heart className={`h-4 w-4 ${wishlisted ? 'fill-rose-600 text-rose-600' : ''}`} />
+      {label ? <span>{wishlisted ? 'Saved' : 'Wishlist'}</span> : null}
+    </motion.button>
   )
 }

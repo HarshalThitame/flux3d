@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, ChevronUp, ShoppingBag, Star } from 'lucide-react'
+import { addToast } from '@/lib/toast/store'
 import ShopVariantControls from '@/components/shop/ShopVariantControls'
 import QuantityStepper from '@/components/shop/QuantityStepper'
 import NotifyMeForm from '@/components/shop/NotifyMeForm'
@@ -196,7 +197,7 @@ export default function ShopProductDetailClient({
       quantity,
       maxStock,
     })
-    setToast(`${product.name} added to cart ✓`)
+    addToast({ type: 'success', title: 'Added to cart', description: `${product.name}` })
     if (goToCheckout) {
       router.push('/3d-shop/checkout')
     }
