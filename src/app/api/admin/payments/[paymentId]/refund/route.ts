@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminPermission } from '@/lib/admin/permissions'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { getSettings } from '@/lib/settings'
 import { initiateRefund } from '@/lib/payments/service'
 import { insertPaymentRefund } from '@/lib/payments/repository'
 
@@ -42,7 +43,10 @@ export async function POST(
     }
 
     // Approval workflow: amounts at or above threshold require second-person approval
-    const needsApproval = amountPaise >= APPROVAL_THRESHOLD_PAISE && !skipApproval && !auth.isAdmin
+    const refundSettings = await getSettings().catch(() => null)
+    const permissionMode = refundSettings?.razorpayRefundPermissionMode || 'admin'
+    const approvalRequired = permissionMode === 'admin' || (permissionMode === 'super_admin' && !auth.isAdmin)
+    const needsApproval = approvalRequired && amountPaise >= APPROVAL_THRESHOLD_PAISE && !skipApproval && !auth.isAdmin
 
     if (needsApproval) {
       const { fetchPaymentAttemptById } = await import('@/lib/payments/repository')

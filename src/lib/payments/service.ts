@@ -247,8 +247,8 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
         orderId: existing.provider_order_id,
         amount: existing.amount_paise,
         currency: existing.currency,
-        name: buildPublicBusinessProfile(settings).brandName,
-        description: `Flux3D ${params.type === 'shop_order' ? 'shop order' : 'custom quote'} ${orderSnapshot.orderNumber}`,
+        name: settings.razorpayCheckoutName || buildPublicBusinessProfile(settings).brandName,
+        description: settings.razorpayCheckoutDescription || `${buildPublicBusinessProfile(settings).brandName} ${params.type === 'shop_order' ? 'shop order' : 'custom quote'} ${orderSnapshot.orderNumber}`,
         reference: orderSnapshot.orderNumber,
         customer: {
           name: orderSnapshot.customerName,
@@ -262,7 +262,7 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
           payment_purpose: paymentPurpose,
         },
         theme: {
-          color: settings.primaryColor || settings.secondaryColor || '#0f172a',
+          color: settings.razorpayBrandColor || settings.primaryColor || settings.secondaryColor || '#0f172a',
         },
       }),
       paymentAttempt: existing,
