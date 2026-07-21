@@ -7965,11 +7965,11 @@ body:has(.premium-auth-shell) {
 
 [class*="premium-shell"] .navbar-premium {
   background:
-    radial-gradient(circle at var(--nav-pointer-x) var(--nav-pointer-y), rgba(103, 232, 249, 0.2), transparent 34%),
-    linear-gradient(135deg, rgba(12, 18, 31, 0.78), rgba(7, 9, 15, 0.7)),
-    linear-gradient(120deg, rgba(103, 232, 249, 0.1), rgba(251, 191, 36, 0.08), rgba(167, 139, 250, 0.12)) !important;
-  border-color: rgba(109, 40, 217, 0.16) !important;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(109, 40, 217, 0.06) !important;
+    radial-gradient(circle at var(--nav-pointer-x) var(--nav-pointer-y), rgba(109, 40, 217, 0.12), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.82)),
+    linear-gradient(120deg, rgba(109, 40, 217, 0.06), rgba(109, 40, 217, 0.04), rgba(109, 40, 217, 0.08)) !important;
+  border-color: rgba(109, 40, 217, 0.12) !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.88) !important;
 }
 
 [class*="premium-shell"] .navbar-logo-link,
@@ -7978,61 +7978,59 @@ body:has(.premium-auth-shell) {
 [class*="premium-shell"] .navbar-profile-button,
 [class*="premium-shell"] .navbar-menu-button,
 [class*="premium-shell"] .navbar-premium a[href="/3d-shop/cart"] {
-  border-color: rgba(109, 40, 217, 0.14) !important;
+  border-color: rgba(109, 40, 217, 0.12) !important;
   background:
-    linear-gradient(145deg, rgba(109, 40, 217, 0.08), rgba(255, 255, 255, 0.045)),
-    rgba(109, 40, 217, 0.04) !important;
-  color: rgba(226, 232, 240, 0.82) !important;
-  box-shadow: inset 0 1px 0 rgba(109, 40, 217, 0.06), 0 14px 34px rgba(0, 0, 0, 0.18) !important;
+    linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.44)) !important;
+  color: #374151 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86), 0 4px 14px rgba(15, 23, 42, 0.06) !important;
 }
 
 [class*="premium-shell"] .navbar-premium-link {
-  color: rgba(226, 232, 240, 0.78) !important;
+  color: #374151 !important;
 }
 
 [class*="premium-shell"] .navbar-premium-link:hover,
 [class*="premium-shell"] .navbar-premium-link.nav-link-active {
-  color: #ffffff !important;
+  color: #6d28d9 !important;
 }
 
 [class*="premium-shell"] .navbar-premium-link::before {
   background:
-    radial-gradient(circle at 50% 0%, rgba(103, 232, 249, 0.24), transparent 58%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.045));
+    radial-gradient(circle at 50% 0%, rgba(109, 40, 217, 0.12), transparent 58%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.38));
 }
 
 [class*="premium-shell"] .navbar-profile-menu,
 [class*="premium-shell"] .navbar-mobile-panel {
-  border-color: rgba(109, 40, 217, 0.14) !important;
+  border-color: rgba(109, 40, 217, 0.12) !important;
   background:
-    radial-gradient(circle at 12% 0%, rgba(103, 232, 249, 0.18), transparent 34%),
-    linear-gradient(145deg, rgba(12, 18, 31, 0.94), rgba(7, 9, 15, 0.92)) !important;
+    radial-gradient(circle at 12% 0%, rgba(109, 40, 217, 0.08), transparent 34%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.9)) !important;
   color: #0F1B3D;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.86) !important;
 }
 
 [class*="premium-shell"] .navbar-mobile-panel :is(p, a, button) {
-  color: rgba(226, 232, 240, 0.84);
+  color: #374151;
 }
 
 [class*="premium-shell"] .navbar-mobile-panel .navbar-mobile-link-active {
-  border-color: rgba(109, 40, 217, 0.5) !important;
-  background:
-    linear-gradient(135deg, #ffffff, #ede9fe 52%, #cffafe) !important;
-  color: #111827 !important;
-  box-shadow: 0 14px 34px rgba(103, 232, 249, 0.14);
+  border-color: rgba(109, 40, 217, 0.3) !important;
+  background: rgba(109, 40, 217, 0.06) !important;
+  color: #6d28d9 !important;
+  box-shadow: none;
 }
 
 [class*="premium-shell"] .navbar-mobile-panel .navbar-mobile-action-light {
-  border-color: rgba(109, 40, 217, 0.34) !important;
-  background:
-    linear-gradient(135deg, #ffffff, #f8fafc 54%, #e0f2fe) !important;
-  color: #111827 !important;
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.84);
+  border-color: rgba(109, 40, 217, 0.2) !important;
+  background: #ffffff !important;
+  color: #374151 !important;
+  box-shadow: none;
 }
 
 [class*="premium-shell"] .navbar-mobile-panel .navbar-mobile-action-light svg,
 [class*="premium-shell"] .navbar-mobile-panel .navbar-mobile-link-active svg {
-  color: #0891b2 !important;
+  color: #6d28d9 !important;
 }
 
 [class*="premium-shell"] .navbar-mobile-panel .btn-primary,
