@@ -20,6 +20,7 @@ import {
   Wand2,
 } from 'lucide-react'
 import DeferredHeroVideo from '@/components/DeferredHeroVideo'
+import { useIsFinePointer } from '@/hooks/useMediaQuery'
 import { createRafThrottledCallback } from '@/lib/raf-throttle'
 
 type MaterialPricing = {
@@ -102,8 +103,11 @@ function formatCurrency(value: number) {
 
 function PricingPremiumFX() {
   const meterRef = useRef<HTMLSpanElement | null>(null)
+  const isFinePointer = useIsFinePointer()
 
   useEffect(() => {
+    if (!isFinePointer) return
+
     let pointerFrame = 0
     let pointerX = 0
 
@@ -228,14 +232,14 @@ export default function PricingClient({
             <div className="min-w-0">
               <motion.h1
                 variants={item}
-                className="pricing-hero-title max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.04] text-[#0F1B3D] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
+                className="pricing-hero-title max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#0F1B3D] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
               >
                 Pricing engineered before production starts.
               </motion.h1>
 
               <motion.p
                 variants={item}
-                className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-[#6b7280] sm:text-lg lg:max-w-2xl"
+                className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-7 text-[#6b7280] sm:text-lg lg:max-w-2xl lg:leading-8"
               >
                 See starting material rates, understand the drivers behind the final quote, and upload a file when you want a production-ready price with no hidden finishing surprises.
               </motion.p>

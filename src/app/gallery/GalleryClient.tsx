@@ -20,6 +20,7 @@ import {
   Zap,
 } from 'lucide-react'
 import DeferredHeroVideo from '@/components/DeferredHeroVideo'
+import { useIsFinePointer } from '@/hooks/useMediaQuery'
 import { createRafThrottledCallback } from '@/lib/raf-throttle'
 
 type GalleryCategory = 'All' | 'Prototypes' | 'Functional' | 'Showcase' | 'Precision' | 'Architecture'
@@ -192,8 +193,11 @@ function visualStyle(project: GalleryProject) {
 
 function GalleryPremiumFX() {
   const meterRef = useRef<HTMLSpanElement | null>(null)
+  const isFinePointer = useIsFinePointer()
 
   useEffect(() => {
+    if (!isFinePointer) return
+
     let pointerFrame = 0
     let pointerX = 0
 
@@ -360,14 +364,14 @@ export default function GalleryClient() {
 
               <motion.h1
                 variants={itemVariants}
-                className="gallery-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-4xl font-black leading-[1.04] text-[#111827] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
+                className="gallery-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#111827] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
               >
                 A cinematic archive of real 3D print outcomes.
               </motion.h1>
 
               <motion.p
                 variants={itemVariants}
-                className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-8 text-[#475569] sm:text-lg lg:max-w-2xl"
+                className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-7 text-[#475569] sm:text-lg lg:max-w-2xl lg:leading-8"
               >
                 Explore prototypes, functional parts, display pieces, and fine-detail builds through a premium production board designed for fast visual inspection.
               </motion.p>
@@ -486,7 +490,7 @@ export default function GalleryClient() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-3 max-w-2xl text-3xl font-black leading-tight text-[#0F1B3D] sm:text-5xl"
+                className="mt-3 max-w-2xl text-[clamp(2rem,6vw,3rem)] font-black leading-tight text-[#0F1B3D] sm:text-5xl"
               >
                 A board built for visual proof, finish detail, and fast project selection.
               </motion.h2>
