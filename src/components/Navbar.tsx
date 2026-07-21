@@ -21,6 +21,7 @@ export default async function Navbar({ transparent = false }: NavbarProps) {
       showAdminLink={showAdminLink}
       businessName={settings.businessName}
       logoUrl={settings.logoUrl}
+      darkLogoUrl={settings.darkLogoUrl || settings.logoUrl}
       whatsappNumber={settings.whatsappNumber || settings.whatsappOrderNumber || settings.primaryPhone}
     />
   )

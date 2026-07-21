@@ -18,6 +18,7 @@ interface NavbarClientProps {
   showAdminLink?: boolean
   businessName?: string
   logoUrl?: string
+  darkLogoUrl?: string
   whatsappNumber?: string
 }
 
@@ -51,6 +52,7 @@ export default function NavbarClient({
   showAdminLink = false,
   businessName = 'Flux3D',
   logoUrl = '/logo.webp',
+  darkLogoUrl,
   whatsappNumber = '+919623023480',
 }: NavbarClientProps) {
   const { profile: liveProfile, loading } = useProfile(user, { enabled: Boolean(user) })
@@ -69,8 +71,8 @@ export default function NavbarClient({
   const isAuthPending = loading && !currentUser
   const whatsappHrefNumber = (whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')
   const navIsElevated = scrolled || !transparent
-  const logoIsRemote = /^https?:\/\//.test(logoUrl)
-  const logoSrc = logoIsRemote ? '/logo.webp' : logoUrl || '/logo.webp'
+  const activeLogo = navIsElevated ? logoUrl : (darkLogoUrl || logoUrl)
+  const logoSrc = activeLogo || '/logo.webp'
 
   const handleLogout = async () => {
     try {
