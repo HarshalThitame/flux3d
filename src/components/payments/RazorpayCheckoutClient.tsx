@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Loader2, ShieldCheck, Sparkles, TriangleAlert } from 'lucide-react'
+import { CheckCircle2, Loader2, ShieldCheck, Sparkles, TriangleAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { AnimatePresence, motion } from 'framer-motion'
+import Confetti from '@/components/Confetti'
 
 type RazorpayWindow = Window & {
   Razorpay?: new (options: Record<string, unknown>) => {
@@ -301,7 +303,110 @@ export default function RazorpayCheckoutClient({
     }
   }
 
+  const showOverlay = status === 'paid' || status === 'failed'
+
   return (
+    <>
+      {status === 'paid' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-[9999] grid place-items-center bg-white/95 backdrop-blur-md"
+        >
+          <div className="text-center">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', damping: 12, stiffness: 200 }}
+              className="mx-auto mb-6 grid h-24 w-24 place-items-center rounded-full bg-emerald-100"
+            >
+              <CheckCircle2 className="h-12 w-12 text-emerald-600" />
+            </motion.div>
+            <motion.h2
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-3xl font-black text-[#0F1B3D]"
+            >
+              Payment Successful
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-2 text-lg text-[#6b7280]"
+            >
+              {amountDisplay} · {orderNumber}
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="mt-6 text-sm text-[#6b7280]"
+            >
+              Redirecting to your order...
+            </motion.p>
+          </div>
+        </motion.div>
+      )}
+
+      {status === 'failed' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-[9999] grid place-items-center bg-white/95 backdrop-blur-md"
+        >
+          <div className="text-center max-w-sm">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', damping: 12, stiffness: 200 }}
+              className="mx-auto mb-6 grid h-24 w-24 place-items-center rounded-full bg-red-100"
+            >
+              <TriangleAlert className="h-12 w-12 text-red-600" />
+            </motion.div>
+            <motion.h2
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-3xl font-black text-[#0F1B3D]"
+            >
+              Payment Failed
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-2 text-sm leading-6 text-[#6b7280]"
+            >
+              {message || 'Your payment could not be processed. Please try again.'}
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="mt-6 flex flex-col gap-3"
+            >
+              <button
+                type="button"
+                onClick={() => setStatus('idle')}
+                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#6d28d9] px-6 text-sm font-bold text-white shadow-[0_8px_24px_rgba(109,40,217,0.3)] transition hover:bg-[#5b21b6]"
+              >
+                Try Again
+              </button>
+              <a
+                href={`mailto:${supportEmail}`}
+                className="text-sm font-medium text-[#6b7280] transition hover:text-[#0F1B3D]"
+              >
+                Contact Support
+              </a>
+            </motion.div>
+          </div>
+        </motion.div>
+      )}
+
+      {status === 'paid' && <Confetti active duration={2000} />}
+
     <div className="flex h-full flex-col rounded-[30px] border border-purple-100 bg-white p-5 shadow-[0_4px_24px_rgba(15,23,42,0.06)]">
       <div className="rounded-3xl border border-purple-100 bg-white p-5">
         <div className="flex items-start justify-between gap-4">
@@ -384,5 +489,6 @@ export default function RazorpayCheckoutClient({
         </div>
       </div>
     </div>
+    </>
   )
 }
