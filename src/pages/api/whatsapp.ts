@@ -931,7 +931,7 @@ export default async function handler(
       res.status(200).json({ success: true })
 
       const workKey = `webhook-${payloadHash.slice(0, 12)}`;
-      const workPromise = processIncomingMessage({ supabase, payloadHash, payload, from, text, eventRecord, requestStartedAt }).catch((error) => {
+      const workPromise = processIncomingMessage({ supabase, payloadHash, payload, from, text: text!, eventRecord, requestStartedAt }).catch((error) => {
         console.error("[whatsapp] Async processing failed:", error)
         Sentry.captureException(error, {
           tags: { handler: 'webhook_async' },
@@ -944,6 +944,7 @@ export default async function handler(
     } finally {
       webhookSpan?.end();
     }
+    return;
   }
 
   return res.status(405).send("Method not allowed");
