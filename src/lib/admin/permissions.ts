@@ -31,8 +31,49 @@ export async function getAdminPermissionCheck(): Promise<
   AdminPermissionCheck | { response: NextResponse }
 > {
   const supabase = await createServerSupabaseClient()
-  const { data, error } = await supabase.auth.getUser()
 
+  // getSession() reads cookies locally — no network call, no token refresh.
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+  const sessionUser = sessionData?.session?.user
+
+  if (sessionError) {
+    return { response: NextResponse.json({ error: sessionError.message }, { status: 401 }) }
+  }
+
+  if (sessionUser) {
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('is_admin, is_finance, is_order_manager, is_printer_manager, is_qc_manager')
+      .eq('id', sessionUser.id)
+      .maybeSingle()
+
+    if (profileError) {
+      return { response: NextResponse.json({ error: profileError.message }, { status: 500 }) }
+    }
+
+    const isAdmin = Boolean(profile?.is_admin)
+    const isFinance = Boolean(profile?.is_finance)
+    const isOrderManager = Boolean(profile?.is_order_manager)
+    const isPrinterManager = Boolean(profile?.is_printer_manager)
+    const isQcManager = Boolean(profile?.is_qc_manager)
+
+    if (!isAdmin && !isFinance && !isOrderManager && !isPrinterManager && !isQcManager) {
+      return { response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
+    }
+
+    return {
+      user: { id: sessionUser.id, email: sessionUser.email ?? '' },
+      supabase,
+      isAdmin,
+      isFinance,
+      isOrderManager,
+      isPrinterManager,
+      isQcManager,
+    }
+  }
+
+  // Fall back to getUser() when no local session exists
+  const { data, error } = await supabase.auth.getUser()
   if (error) {
     if (error.code === 'refresh_token_not_found') {
       return { response: NextResponse.json({ error: 'Session expired' }, { status: 401 }) }
