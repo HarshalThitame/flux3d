@@ -93,29 +93,42 @@ async function sendWhatsAppMessage(to: string, message: string) {
 
   const url = `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${phoneNumberId}/messages`;
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to,
-      type: "text",
-      text: {
-        preview_url: false,
-        body: message,
-      },
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-  if (!response.ok) {
-    const text = await response.text().catch(() => "Unknown error");
-    const errorMsg = `WhatsApp send failed: ${response.status} ${text.slice(0, 300)}`;
-    console.error("[whatsapp]", errorMsg);
-    throw new Error(errorMsg);
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to,
+        type: "text",
+        text: {
+          preview_url: false,
+          body: message,
+        },
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "Unknown error");
+      const errorMsg = `WhatsApp send failed: ${response.status} ${text.slice(0, 300)}`;
+      console.error("[whatsapp]", errorMsg);
+      throw new Error(errorMsg);
+    }
+  } catch (fetchError: any) {
+    clearTimeout(timeoutId);
+    if (fetchError?.name === 'AbortError') {
+      throw new Error('WhatsApp API timeout (15s)');
+    }
+    throw fetchError;
   }
 }
 
@@ -904,11 +917,14 @@ export default async function handler(
           const accessToken = process.env.WHATSAPP_ACCESS_TOKEN
           if (phoneNumberId && accessToken) {
             const apiVersion = process.env.WHATSAPP_API_VERSION || 'v22.0'
+            const mediaController = new AbortController()
+            const mediaTimeout = setTimeout(() => mediaController.abort(), 10000)
             await fetch(`https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`, {
               method: 'POST',
               headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
               body: JSON.stringify({ messaging_product: 'whatsapp', to: from, type: 'text', text: { body: mediaReply } }),
-            })
+              signal: mediaController.signal,
+            }).finally(() => clearTimeout(mediaTimeout))
           }
         } catch { /* best-effort */ }
         return res.status(200).json({ success: true })
