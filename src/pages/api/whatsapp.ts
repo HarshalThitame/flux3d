@@ -466,11 +466,15 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     if (supabase) {
       try {
         _log("profile_lookup");
-        const { data: profile } = await supabase
+        const profilePromise = supabase
           .from("profiles")
           .select("id, whatsapp_messages_sent")
           .eq("phone_number", from)
           .maybeSingle();
+        const profileTimeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Profile lookup timeout')), 10000)
+        );
+        const { data: profile } = await Promise.race([profilePromise, profileTimeout]) as any;
         senderRecognized = !!profile;
         userId = profile?.id ?? null;
       } catch (error) {
@@ -483,11 +487,15 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     let sessionHistory: Array<ChatCompletionMessageParam> = [];
     if (supabase) {
       try {
-        const { data: session } = await supabase
+        const sessionPromise = supabase
           .from("whatsapp_sessions")
           .select("messages")
           .eq("phone_number", from)
           .maybeSingle();
+        const sessionTimeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Session load timeout')), 10000)
+        );
+        const { data: session } = await Promise.race([sessionPromise, sessionTimeout]) as any;
         if (session?.messages && Array.isArray(session.messages)) {
           sessionHistory = (session.messages as Array<Record<string, unknown>>)
             .filter((m) =>
