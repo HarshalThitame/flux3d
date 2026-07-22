@@ -197,25 +197,33 @@ const CACHE_TTL_MS = 60_000
 
 export async function getCachedBusinessSettings(): Promise<BusinessSettings | null> {
   const now = Date.now()
+
+  // Return cached data immediately if available (don't wait for refresh)
   if (cachedSettings && now < cachedSettings.expiry) {
     return cachedSettings.data
   }
 
   try {
-    const supabase = createAdminSupabaseClient()
-    const { data, error } = await supabase
+    const supabase = createAdminSupabaseClient() as any
+    // Race the query against a 4-second timeout
+    const queryPromise = supabase
       .from('business_settings')
       .select('*')
       .is('deleted_at', null)
       .limit(1)
       .maybeSingle()
+    const timeoutPromise = new Promise((resolve) =>
+      setTimeout(() => resolve({ data: null, error: { code: 'TIMEOUT' } }), 4000)
+    )
+    const raceResult: any = await Promise.race([queryPromise, timeoutPromise])
+    const { data, error } = raceResult
 
     if (error) {
       if (error.code === '42P01') {
         cachedSettings = { data: null, expiry: now + CACHE_TTL_MS }
         return null
       }
-      throw new Error(error.message)
+      return cachedSettings?.data ?? null
     }
 
     if (!data) {
@@ -227,7 +235,7 @@ export async function getCachedBusinessSettings(): Promise<BusinessSettings | nu
     cachedSettings = { data: result, expiry: now + CACHE_TTL_MS }
     return result
   } catch {
-    return null
+    return cachedSettings?.data ?? null
   }
 }
 
