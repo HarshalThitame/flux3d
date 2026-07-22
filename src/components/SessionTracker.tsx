@@ -35,9 +35,10 @@ export default function SessionTracker() {
 
       try {
         const supabase = getSupabaseBrowserClient()
-        const { data: userData } = await supabase.auth.getUser()
-        if (userData.user?.id) {
-          updateTrackedSessionUser(sessionId, userData.user.id)
+        const { data: sessionData } = await supabase.auth.getSession()
+        const sessionUser = sessionData?.session?.user
+        if (sessionUser?.id) {
+          updateTrackedSessionUser(sessionId, sessionUser.id)
         }
         const { data: authData } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
           updateTrackedSessionUser(sessionId, session?.user.id ?? null)
