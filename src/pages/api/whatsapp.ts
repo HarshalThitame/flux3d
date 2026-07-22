@@ -452,9 +452,9 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
 
   const _log = (step: string) => {
     console.log("[whatsapp] PROC", from?.slice(-4), step);
-    // Write progress to DB so we can see where it hangs
+    // Write progress to DB so we can see where it hangs (fire-and-forget)
     if (eventRecord?.id && supabase) {
-      supabase.from('whatsapp_webhook_events').update({ error: step.slice(0, 100) }).eq('id', eventRecord.id).catch(() => {});
+      void supabase.from('whatsapp_webhook_events').update({ error: step.slice(0, 100) }).eq('id', eventRecord.id);
     }
   };
   _log("START text=" + text?.slice(0, 30));
