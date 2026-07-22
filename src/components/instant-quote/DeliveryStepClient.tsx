@@ -236,6 +236,7 @@ export default function DeliveryStepClient({
     try {
       setSubmitting(true)
       const result = await createOrderAction({
+        quoteId: draft.quoteId,
         fileUrl: draft.fileUrl,
         material: draft.material,
         color: draft.color,

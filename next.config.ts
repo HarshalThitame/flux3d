@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   // Vercel handles them automatically; self-hosted Node/Docker deployments
   // should terminate HTTP/2 and emit Early Hints from the reverse proxy.
   experimental: {
-    optimizePackageImports: ['framer-motion', 'lucide-react'],
+    optimizePackageImports: ['framer-motion', 'lucide-react', 'three-stdlib', '@react-three/drei'],
     webVitalsAttribution: ['CLS', 'INP', 'LCP'],
   },
   images: {
