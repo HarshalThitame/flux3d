@@ -51,6 +51,30 @@ export async function GET() {
     checks['supabase_connection'] = `❌ ${err instanceof Error ? err.message : String(err)}`
   }
 
+  // Test WhatsApp API connectivity
+  try {
+    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
+    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN
+    if (phoneNumberId && accessToken) {
+      const apiVersion = process.env.WHATSAPP_API_VERSION || 'v22.0'
+      const response = await fetch(
+        `https://graph.facebook.com/${apiVersion}/${phoneNumberId}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      )
+      if (response.ok) {
+        const data = await response.json()
+        checks['whatsapp_api_test'] = `✅ Connected (${data.display_phone_number || data.id || 'OK'})`
+      } else {
+        const text = await response.text().catch(() => 'Unknown error')
+        checks['whatsapp_api_test'] = `❌ HTTP ${response.status}: ${text.slice(0, 100)}`
+      }
+    } else {
+      checks['whatsapp_api_test'] = '⚠️ Skipped (missing env vars)'
+    }
+  } catch (err) {
+    checks['whatsapp_api_test'] = `❌ ${err instanceof Error ? err.message : String(err)}`
+  }
+
   const allOk = Object.values(checks).every((v) => v === true)
   return NextResponse.json({ status: allOk ? '✅ All checks passed' : '⚠️ Some checks failed', checks })
 }
