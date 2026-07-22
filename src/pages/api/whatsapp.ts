@@ -24,7 +24,7 @@ function getServiceClient() {
     global: {
       fetch: (url: RequestInfo | URL, options?: RequestInit) => {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
+        const timeout = setTimeout(() => controller.abort(), 8000);
         return fetch(url, { ...options, signal: controller.signal })
           .finally(() => clearTimeout(timeout));
       },
@@ -461,9 +461,12 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
 
   const _log = (step: string) => {
     console.log("[whatsapp] PROC", from?.slice(-4), step);
-    // Write progress to DB so we can see where it hangs
+    // Write progress to DB (non-blocking, won't hang the pipeline)
     if (eventRecord?.id && supabase) {
-      supabase.from('whatsapp_webhook_events').update({ error: step.slice(0, 200) }).eq('id', eventRecord.id).then();
+      Promise.race([
+        supabase.from('whatsapp_webhook_events').update({ error: step.slice(0, 200) }).eq('id', eventRecord.id),
+        new Promise(resolve => setTimeout(resolve, 3000)),
+      ]).catch(() => {}).then(() => {});
     }
   };
   _log("START text=" + text?.slice(0, 30));
@@ -481,7 +484,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
           .eq("phone_number", from)
           .maybeSingle();
         const profileTimeout = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Profile lookup timeout')), 10000)
+          setTimeout(() => reject(new Error('Profile lookup timeout')), 5000)
         );
         const { data: profile } = await Promise.race([profilePromise, profileTimeout]) as any;
         senderRecognized = !!profile;
@@ -502,7 +505,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
           .eq("phone_number", from)
           .maybeSingle();
         const sessionTimeout = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Session load timeout')), 10000)
+          setTimeout(() => reject(new Error('Session load timeout')), 5000)
         );
         const { data: session } = await Promise.race([sessionPromise, sessionTimeout]) as any;
         if (session?.messages && Array.isArray(session.messages)) {
@@ -644,7 +647,8 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       });
     }
 
-    await logWhatsAppMessage(supabase, {
+    // Log incoming message (fire-and-forget — don't block the pipeline)
+    logWhatsAppMessage(supabase, {
       userId,
       sender: from,
       direction: "incoming",
@@ -653,7 +657,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       triggerEvent: "incoming_whatsapp_message",
       responded: WHATSAPP_REPLY_TO_ALL || senderRecognized,
       responseTimeMinutes: null,
-    });
+    }).catch(() => {});
 
     _log("evaluate_model");
     // Use AI model when there's grounded data to work with:
@@ -755,7 +759,8 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         sendStatus: 'sent',
       }
 
-      await logWhatsAppMessage(supabase, {
+      // Non-blocking post-send operations (don't delay the reply)
+      logWhatsAppMessage(supabase, {
         userId,
         sender: from,
         direction: "outgoing",
@@ -764,24 +769,26 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         triggerEvent: "openai_reply",
         responded: true,
         responseTimeMinutes: (Date.now() - requestStartedAt) / 60000,
-      });
+      }).catch(() => {});
 
-      // Save conversation history for context on next message
-      // (uses pgRPC with SELECT FOR UPDATE to avoid race conditions)
-      await saveSession(supabase, from, text, finalReply);
+      saveSession(supabase, from, text, finalReply).catch(() => {});
 
       if (supabase && userId) {
-        const { data: profileRow } = await supabase
+        supabase
           .from("profiles")
           .select("whatsapp_messages_sent")
           .eq("id", userId)
-          .maybeSingle();
-        const nextCount = Number(profileRow?.whatsapp_messages_sent ?? 0) + 1;
-        const { error: countUpdateError } = await supabase
-          .from("profiles")
-          .update({ whatsapp_messages_sent: nextCount })
-          .eq("id", userId);
-        if (countUpdateError) console.error("[whatsapp] Failed to update message count:", countUpdateError);
+          .maybeSingle()
+          .then(({ data: profileRow }: any) => {
+            const nextCount = Number(profileRow?.whatsapp_messages_sent ?? 0) + 1;
+            supabase
+              .from("profiles")
+              .update({ whatsapp_messages_sent: nextCount })
+              .eq("id", userId)
+              .then()
+              .catch(() => {});
+          })
+          .catch(() => {});
       }
     } catch (error) {
       auditRecord.response_kind = 'error';
@@ -791,20 +798,20 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         sendStatus: 'failed',
       }
       // Save session even on send failure so context isn't lost
-      await saveSession(supabase, from, text, finalReply);
+      saveSession(supabase, from, text, finalReply).catch(() => {});
       console.error('[whatsapp] Failed to send outbound WhatsApp message:', error);
     } finally {
       auditRecord.latency_ms = Date.now() - requestStartedAt;
-      await logWhatsAppRagAudit(auditRecord).catch((error) => {
+      logWhatsAppRagAudit(auditRecord).catch((error) => {
         console.error("[whatsapp] Failed to log RAG audit:", error);
       });
     }
 
     _log("END replied=" + didSendReply + " kind=" + finalReplyKind);
 
-    // Mark as processed
+    // Mark as processed (fire-and-forget to avoid blocking)
     if (supabase && eventRecord?.id) {
-      const { error: updateError } = await supabase
+      supabase
         .from("whatsapp_webhook_events")
         .update({
           processed_at: new Date().toISOString(),
@@ -818,8 +825,9 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
             }),
           },
         })
-        .eq("id", eventRecord.id);
-      if (updateError) console.error("[whatsapp] Failed to mark processed:", updateError);
+        .eq("id", eventRecord.id)
+        .then()
+        .catch((e: any) => console.error("[whatsapp] Failed to mark processed:", e));
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

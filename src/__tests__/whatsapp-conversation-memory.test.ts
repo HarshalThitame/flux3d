@@ -49,6 +49,12 @@ function makeBuilder(table: string) {
       }
       return Promise.resolve({ data: null, error: null })
     }),
+    then: undefined,
+    update: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        then: vi.fn(() => Promise.resolve()),
+      })),
+    })),
   }
   return builder
 }

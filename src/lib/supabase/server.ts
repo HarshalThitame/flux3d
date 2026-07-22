@@ -10,8 +10,11 @@ export const createServerSupabaseClient = cache(async () => {
     getSupabaseUrl(),
     getSupabasePublishableKey(),
     {
-      auth: {
-        autoRefreshToken: true,
+      cookieOptions: {
+        path: '/',
+        maxAge: 400 * 24 * 60 * 60,
+        sameSite: 'lax',
+        httpOnly: false,
       },
       cookies: {
         getAll() {
