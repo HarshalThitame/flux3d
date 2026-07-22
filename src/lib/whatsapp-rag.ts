@@ -374,13 +374,13 @@ export async function syncProductKnowledgeChunks() {
   // Fetch all active materials
   const { data: materials, error: materialError } = await supabase
     .from('materials')
-    .select('id, name, summary, best_for, key_properties, price_per_unit, price_per_gram, sample_photo')
+    .select('id, name, summary, best_for, key_properties, price_per_gram, sample_photo')
 
   if (materialError) {
     console.error('[rag] Failed to fetch materials for sync:', materialError)
   } else if (materials?.length) {
     for (const m of materials) {
-      const price = m.price_per_unit || m.price_per_gram
+      const price = m.price_per_gram
       const priceStr = price ? `starting at ₹${Number(price).toFixed(2)}` : 'contact for pricing'
       chunks.push({
         sourceKey: `material_${m.id}`,
@@ -505,7 +505,7 @@ export async function fetchStructuredData(
   // Always query materials table when search terms are present
   const { data: materialData, error: materialError } = await supabase
     .from('materials')
-    .select('name, price_per_unit, price_per_gram, summary, best_for, key_properties')
+    .select('name, price_per_gram, summary, best_for, key_properties')
     .or(ilikeConditions.join(','))
     .limit(5)
 
@@ -513,19 +513,19 @@ export async function fetchStructuredData(
     console.error('[rag] Materials query failed:', materialError)
   } else if (materialData?.length) {
     const valid = materialData.filter((m: any) => {
-      const price = m.price_per_unit || m.price_per_gram
+      const price = m.price_per_gram
       return price && Number(price) > 0
     })
     materialsData = valid
       .map((m: any) => {
-        const price = m.price_per_unit || m.price_per_gram
+        const price = m.price_per_gram
         const formattedPrice = Number(price).toFixed(2)
         return `Material: ${m.name} | From ₹${formattedPrice} | ${m.summary ?? ''}`
       })
       .join('\n')
     materialPrices = valid.map((m: any) => ({
       name: m.name,
-      price: Number(m.price_per_unit || m.price_per_gram),
+      price: Number(m.price_per_gram),
     }))
     if (materialsData) totalMatches += materialData.length
   }
