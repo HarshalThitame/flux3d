@@ -2,7 +2,7 @@
 
 import { type CSSProperties, type PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { ChevronDown, Menu, ShoppingCart, X, MessageCircle, ArrowUpRight } from 'lucide-react'
+import { ChevronDown, Menu, MoreVertical, ShoppingCart, X, MessageCircle, ArrowUpRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -60,6 +60,7 @@ export default function NavbarClient({
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isMoreOpen, setIsMoreOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const navRef = useRef<HTMLElement | null>(null)
@@ -67,6 +68,7 @@ export default function NavbarClient({
   const navPointerFrameRef = useRef(0)
   const navPointerRef = useRef({ x: '50%', y: '50%' })
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
+  const moreMenuRef = useRef<HTMLDivElement | null>(null)
   const currentUser = liveProfile ?? user
   const isAuthPending = loading && !currentUser
   const whatsappHrefNumber = (whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')
@@ -98,6 +100,7 @@ export default function NavbarClient({
       useShopWishlistStore.getState().setWishlist([])
       setIsOpen(false)
       setIsProfileOpen(false)
+      setIsMoreOpen(false)
       router.push('/login')
     } catch (error) {
       console.error('[Auth] Unexpected logout error', error)
@@ -109,13 +112,14 @@ export default function NavbarClient({
   const navLinks = useMemo(() => [
     { href: '/', label: 'Home' },
     { href: '/services', label: 'Services' },
-    { href: '/materials', label: 'Materials' },
     { href: '/3d-shop', label: '3D Shop' },
+    { href: '/pricing', label: 'Pricing' },
+  ], [])
+  const moreLinks = useMemo(() => [
+    { href: '/materials', label: 'Materials' },
     { href: '/gallery', label: 'Gallery' },
     { href: '/blog', label: 'Blog' },
-    { href: '/pricing', label: 'Pricing' },
-    ...(showAdminLink ? [{ href: '/admin', label: 'Admin' }] : []),
-  ], [showAdminLink])
+  ], [])
   const accountLinks = useMemo(() => [
     { href: '/cart', label: 'Cart' },
     { href: '/saved-quotes', label: 'Saved Quotes' },
@@ -187,7 +191,14 @@ export default function NavbarClient({
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
-      return () => { document.body.style.overflow = '' }
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') setIsOpen(false)
+      }
+      document.addEventListener('keydown', handleKeyDown)
+      return () => {
+        document.body.style.overflow = ''
+        document.removeEventListener('keydown', handleKeyDown)
+      }
     }
   }, [isOpen])
 
@@ -213,9 +224,31 @@ export default function NavbarClient({
   }, [isProfileOpen])
 
   useEffect(() => {
+    if (!isMoreOpen) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!moreMenuRef.current?.contains(event.target as Node)) {
+        setIsMoreOpen(false)
+      }
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMoreOpen(false)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isMoreOpen])
+
+  useEffect(() => {
     const timeoutId = setTimeout(() => {
       setIsOpen(false)
       setIsProfileOpen(false)
+      setIsMoreOpen(false)
     }, 0)
     return () => clearTimeout(timeoutId)
   }, [pathname])
@@ -265,6 +298,7 @@ export default function NavbarClient({
                   onNavigate={() => {
                     setIsOpen(false)
                     setIsProfileOpen(false)
+                    setIsMoreOpen(false)
                   }}
                   className={`nav-link navbar-premium-link whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold ${isActive(link.href) ? 'nav-link-active' : ''}`}
                 >
@@ -291,87 +325,134 @@ export default function NavbarClient({
             </a>
           </div>
 
+          <div>
+            <Link
+              href="/instant-quote"
+              prefetch={false}
+              className="navbar-quote-button relative flex min-h-[44px] items-center gap-2 overflow-hidden whitespace-nowrap rounded-full bg-gradient-to-r from-[#4c1d95] via-[#6d28d9] to-[#7c3aed] px-5 font-semibold text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition-all duration-300 before:absolute before:inset-y-0 before:left-0 before:w-1/2 before:-translate-x-full before:bg-white/20 before:blur-xl before:content-[''] hover:from-[#3b0764] hover:to-[#6d28d9] hover:before:translate-x-[220%]"
+            >
+              <span className="relative z-10">Get Quote</span>
+              <ArrowUpRight className="relative z-10 h-4 w-4" />
+            </Link>
+          </div>
+
           {isAuthPending ? (
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-[74px] rounded-lg border border-[var(--border-light)] bg-[var(--bg-soft)]" />
-              <div className="h-9 w-[94px] rounded-lg bg-[var(--accent)]/40" />
-            </div>
+            <div className="h-9 w-[74px] rounded-lg border border-[var(--border-light)] bg-[var(--bg-soft)]" />
           ) : currentUser ? (
-            <>
-              <div>
-                <Link
-                  href="/instant-quote"
-                  prefetch={false}
-                  className="navbar-quote-button relative flex min-h-[44px] items-center gap-2 overflow-hidden whitespace-nowrap rounded-full bg-gradient-to-r from-[#4c1d95] via-[#6d28d9] to-[#7c3aed] px-5 font-semibold text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition-all duration-300 before:absolute before:inset-y-0 before:left-0 before:w-1/2 before:-translate-x-full before:bg-white/20 before:blur-xl before:content-[''] hover:from-[#3b0764] hover:to-[#6d28d9] hover:before:translate-x-[220%]"
-                >
-                  <span className="relative z-10">Get Quote</span>
-                  <ArrowUpRight className="relative z-10 h-4 w-4" />
-                </Link>
-              </div>
+            <div ref={profileMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen((current) => !current)}
+                className="navbar-profile-button flex min-h-[42px] items-center gap-2 rounded-full border border-white/80 bg-white/75 px-2 py-1 pr-3 shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white"
+              >
+                {currentUser.avatarUrl ? (
+                  <span className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-[var(--accent)]/20">
+                    <Image
+                      src={currentUser.avatarUrl}
+                      alt={currentUser.name}
+                      fill
+                      sizes="28px"
+                      className="object-cover"
+                    />
+                  </span>
+                ) : (
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--gradient-brand)] text-[10px] font-bold text-white shadow-[var(--shadow-brand)]">
+                    {getInitials(currentUser.name)}
+                  </span>
+                )}
+                <ChevronDown
+                  className={`h-3.5 w-3.5 text-[var(--text-secondary)] transition-transform duration-200 ${
+                    isProfileOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
 
-              <div ref={profileMenuRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsProfileOpen((current) => !current)}
-                  className="navbar-profile-button flex min-h-[42px] items-center gap-2 rounded-full border border-white/80 bg-white/75 px-2 py-1 pr-3 shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white"
-                >
-                  {currentUser.avatarUrl ? (
-                    <span className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-[var(--accent)]/20">
-                      <Image
-                        src={currentUser.avatarUrl}
-                        alt={currentUser.name}
-                        fill
-                        sizes="28px"
-                        className="object-cover"
-                      />
-                    </span>
-                  ) : (
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--gradient-brand)] text-[10px] font-bold text-white shadow-[var(--shadow-brand)]">
-                      {getInitials(currentUser.name)}
-                    </span>
-                  )}
-                  <ChevronDown
-                    className={`h-3.5 w-3.5 text-[var(--text-secondary)] transition-transform duration-200 ${
-                      isProfileOpen ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
+              {isProfileOpen && (
+                <div className="navbar-profile-menu absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl">
+                  <div className="border-b border-[var(--border-light)] p-4">
+                    <p className="font-[var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Signed in as</p>
+                    <p className="mt-1.5 text-base font-semibold text-[var(--text-primary)]">{currentUser.name}</p>
+                    <p className="truncate text-sm text-[var(--text-secondary)]">{currentUser.email}</p>
+                  </div>
 
-                {isProfileOpen && (
-                  <div className="navbar-profile-menu absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl">
-                      <div className="border-b border-[var(--border-light)] p-4">
-                        <p className="font-[var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Signed in as</p>
-                        <p className="mt-1.5 text-base font-semibold text-[var(--text-primary)]">{currentUser.name}</p>
-                        <p className="truncate text-sm text-[var(--text-secondary)]">{currentUser.email}</p>
-                      </div>
-
-                      <div className="p-3">
-                        {accountLinks.map((item) => (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            prefetch={false}
-                            onClick={() => setIsProfileOpen(false)}
-                            className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
-                          >
-                            {item.label}
-                          </Link>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() => void handleLogout()}
-                          disabled={isLoggingOut}
-                          className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {isLoggingOut ? 'Logging out...' : 'Log out'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-              </div>
-            </>
+                  <div className="p-3">
+                    {moreLinks.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        prefetch={false}
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                    <div className="my-2 h-px bg-[var(--border-light)]" />
+                    {accountLinks.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        prefetch={false}
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                    {showAdminLink ? (
+                      <Link
+                        href="/admin"
+                        prefetch={false}
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
+                      >
+                        Admin
+                      </Link>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => void handleLogout()}
+                      disabled={isLoggingOut}
+                      className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isLoggingOut ? 'Logging out...' : 'Log out'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <>
+              <div ref={moreMenuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsMoreOpen((current) => !current)}
+                  className="navbar-action-button flex min-h-[42px] min-w-[42px] items-center justify-center rounded-full border border-white/80 bg-white/75 text-[var(--text-secondary)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white hover:text-[var(--text-primary)]"
+                  aria-label="More navigation"
+                  aria-expanded={isMoreOpen}
+                >
+                  <MoreVertical className="h-5 w-5" />
+                </button>
+
+                {isMoreOpen && (
+                  <div className="navbar-more-menu absolute right-0 top-[calc(100%+0.75rem)] w-[200px] overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl">
+                    <div className="p-2">
+                      {moreLinks.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          prefetch={false}
+                          onClick={() => setIsMoreOpen(false)}
+                          className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <Link
                   href={`/login?next=${encodeURIComponent(pathname ?? '/')}`}
@@ -379,15 +460,6 @@ export default function NavbarClient({
                   className="navbar-action-button flex min-h-[42px] items-center whitespace-nowrap rounded-full border border-white/80 bg-white/75 px-4 text-sm font-semibold text-[var(--text-secondary)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white hover:text-[var(--text-primary)]"
                 >
                   Log In
-                </Link>
-              </div>
-              <div>
-                <Link
-                  href={`/signup?next=${encodeURIComponent(pathname ?? '/')}`}
-                  prefetch={false}
-                  className="navbar-signup-button btn-primary flex min-h-[42px] items-center whitespace-nowrap rounded-full px-[18px]"
-                >
-                  Sign Up
                 </Link>
               </div>
             </>
@@ -407,7 +479,12 @@ export default function NavbarClient({
       </nav>
 
       {isOpen && (
-          <div className="navbar-mobile-overlay fixed inset-0 z-[90] lg:hidden">
+          <div
+            className="navbar-mobile-overlay fixed inset-0 z-[90] lg:hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+          >
             <button
               type="button"
               aria-label="Close menu"
@@ -415,10 +492,22 @@ export default function NavbarClient({
               onClick={() => setIsOpen(false)}
             />
 
-            <div className="navbar-mobile-panel absolute left-4 right-4 top-24 max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl border border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl">
-              <div className="p-6">
+            <div className="navbar-mobile-panel absolute right-0 top-0 flex h-[100dvh] w-full max-w-md flex-col overflow-hidden rounded-l-3xl border-l border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border-light)] bg-white/90 px-5 py-4 backdrop-blur-md">
+                <p className="font-[var(--font-mono)] text-[10px] uppercase tracking-[0.25em] text-[var(--text-muted)]">Menu</p>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  aria-label="Close menu"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-light)] bg-white text-[var(--text-secondary)] transition hover:border-[var(--border-brand)] hover:text-[var(--text-primary)]"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto overscroll-contain p-5">
                 {currentUser && (
-                  <div className="mb-6 flex items-center gap-3 rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3">
+                  <div className="mb-5 flex items-center gap-3 rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3">
                     {currentUser.avatarUrl ? (
                       <span className="relative h-10 w-10 overflow-hidden rounded-full">
                         <Image
@@ -450,6 +539,7 @@ export default function NavbarClient({
                         onClick={() => {
                           setIsOpen(false)
                           setIsProfileOpen(false)
+                          setIsMoreOpen(false)
                         }}
                         className={`navbar-mobile-link flex min-h-[44px] items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-colors ${
                           isActive(link.href)
@@ -465,6 +555,32 @@ export default function NavbarClient({
                     </li>
                   ))}
                 </ul>
+
+                <div className="mt-4 space-y-1">
+                  <p className="px-4 pb-1 font-[var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">More</p>
+                  {moreLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      prefetch={false}
+                      onClick={() => {
+                        setIsOpen(false)
+                        setIsProfileOpen(false)
+                        setIsMoreOpen(false)
+                      }}
+                      className={`navbar-mobile-link flex min-h-[44px] items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-colors ${
+                        isActive(link.href)
+                          ? 'navbar-mobile-link-active bg-[var(--brand-faint)] text-[var(--brand-primary)]'
+                          : 'text-[var(--text-secondary)] hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      {link.label}
+                      {isActive(link.href) && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+                      )}
+                    </Link>
+                  ))}
+                </div>
 
                 <div className="mt-6 space-y-3">
                   {isShopSection ? (
@@ -501,6 +617,7 @@ export default function NavbarClient({
                     </>
                   ) : currentUser ? (
                     <>
+                      <p className="px-1 pt-2 font-[var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Account</p>
                       {accountLinks.map((item) => (
                         <Link
                           key={item.href}
@@ -512,6 +629,16 @@ export default function NavbarClient({
                           {item.label}
                         </Link>
                       ))}
+                      {showAdminLink ? (
+                        <Link
+                          href="/admin"
+                          prefetch={false}
+                          onClick={() => setIsOpen(false)}
+                          className="navbar-mobile-action-light block w-full rounded-xl border border-[var(--border-light)] bg-white py-3.5 text-center text-base font-medium text-[var(--text-secondary)]"
+                        >
+                          Admin
+                        </Link>
+                      ) : null}
                       <button
                         type="button"
                         onClick={() => void handleLogout()}
@@ -522,24 +649,14 @@ export default function NavbarClient({
                       </button>
                     </>
                   ) : (
-                    <>
-                      <Link
-                        href={`/login?next=${encodeURIComponent(pathname ?? '/')}`}
-                        prefetch={false}
-                        onClick={() => setIsOpen(false)}
-                        className="navbar-mobile-action-light block w-full rounded-xl border border-[var(--border-light)] bg-white py-3.5 text-center text-base font-medium text-[var(--text-secondary)]"
-                      >
-                        Log In
-                      </Link>
-                      <Link
-                        href={`/signup?next=${encodeURIComponent(pathname ?? '/')}`}
-                        prefetch={false}
-                        onClick={() => setIsOpen(false)}
-                        className="btn-primary block w-full py-3.5 text-center text-base"
-                      >
-                        Create Account
-                      </Link>
-                    </>
+                    <Link
+                      href={`/login?next=${encodeURIComponent(pathname ?? '/')}`}
+                      prefetch={false}
+                      onClick={() => setIsOpen(false)}
+                      className="btn-primary block w-full py-3.5 text-center text-base"
+                    >
+                      Log In
+                    </Link>
                   )}
                 </div>
               </div>
