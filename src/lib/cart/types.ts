@@ -35,6 +35,7 @@ export type CartItem = {
   grandTotal?: number;
   estimatedTime?: number;
   weight?: number;
+  modelVolumeMm3?: number;
   difficultyFactor?: number;
   dimensions?: {
     x: number;

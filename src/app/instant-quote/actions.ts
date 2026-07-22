@@ -21,6 +21,7 @@ import { calculateServerQuotePricing } from '@/lib/quote/server-pricing'
 import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 import { redactSensitiveValues } from '@/lib/security/redact'
 import { rateLimitCheck } from '@/lib/rate-limit'
+import { verifyModelVolume } from '@/lib/storage/verify-metadata'
 
 function normalizeNumber(value: number, field: string) {
   if (!Number.isFinite(value) || value < 0) {
@@ -76,6 +77,11 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
   const normalizedQuantity = Math.max(1, Math.floor(normalizeNumber(input.quantity, 'quantity')))
   const safeFileUrl = normalizeOwnedStoragePath(input.fileUrl, auth.user.id)
   const normalizedPhone = normalizePhone(input.phone)
+
+  const volumeCheck = await verifyModelVolume(safeFileUrl, input.modelMetadata.volumeMm3)
+  if (!volumeCheck.valid) {
+    throw new Error(volumeCheck.error ?? 'Model volume verification failed.')
+  }
 
   const { breakdown, material } = await calculateServerQuotePricing(input.modelMetadata, {
     materialId: input.material,
