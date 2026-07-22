@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Banknote, ChevronDown, ChevronUp, Copy, ExternalLink, FileText, PackageCheck, Printer, Save, Truck } from 'lucide-react'
+import { ArrowLeft, Banknote, ChevronDown, ChevronUp, Copy, ExternalLink, FileText, PackageCheck, Printer, RotateCcw, Save, ShieldCheck, Truck } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import { formatShopPrice } from '@/lib/shop/selection'
 import {
@@ -108,11 +108,15 @@ function PaymentInfoSection({
   paymentAttempt,
   showSnapshot,
   onToggleSnapshot,
+  onRefresh,
+  onToast,
 }: {
   order: ShopAdminOrder
   paymentAttempt: ShopPaymentAttempt | null
   showSnapshot: boolean
   onToggleSnapshot: () => void
+  onRefresh: () => Promise<void>
+  onToast: (toast: AdminToastState) => void
 }) {
   const providerLabel = getShopPaymentProviderLabel(order.payment_provider)
   const methodLabel = getShopPaymentMethodLabel(order.payment_method ?? paymentAttempt?.payment_method ?? null)
@@ -129,6 +133,64 @@ function PaymentInfoSection({
   const hasRefund = order.payment_refund_status && order.payment_refund_status !== 'none'
   const snapshot = order.payment_snapshot
   const hasSnapshot = snapshot && Object.keys(snapshot).length > 0
+
+  const canRefund = ['paid', 'captured', 'partially_refunded'].includes(order.payment_status)
+  const totalPaiseNum = order.payment_amount_paise > 0 ? order.payment_amount_paise : order.total_amount_paise || Math.round(order.total_amount * 100)
+  const shippingPaise = order.shipping_charge_paise || Math.round(order.shipping_charge * 100)
+  const alreadyRefundedPaise = order.payment_refund_amount_paise || 0
+  const fullRefundPaise = Math.max(0, totalPaiseNum - shippingPaise - alreadyRefundedPaise)
+  const maxRefundPaise = Math.max(0, totalPaiseNum - alreadyRefundedPaise)
+
+  const [refundMode, setRefundMode] = useState<'idle' | 'expanded'>('idle')
+  const [refundPreset, setRefundPreset] = useState<'full' | 'custom'>('full')
+  const [customAmountRupee, setCustomAmountRupee] = useState('')
+  const [refundReason, setRefundReason] = useState('Admin initiated refund')
+  const [refundSpeed, setRefundSpeed] = useState<'normal' | 'optimum'>('normal')
+  const [refunding, setRefunding] = useState(false)
+
+  const customAmountPaise = Math.round(parseFloat(customAmountRupee) * 100)
+  const refundAmountPaise = refundPreset === 'full' ? fullRefundPaise : (isNaN(customAmountPaise) ? 0 : customAmountPaise)
+  const maxRefundRupee = maxRefundPaise / 100
+  const isRefundValid = refundAmountPaise > 0 && refundAmountPaise <= maxRefundPaise
+
+  async function initiateRefundAction() {
+    if (!paymentAttempt?.id || !isRefundValid) return
+    setRefunding(true)
+    try {
+      const response = await fetch(`/api/admin/payments/${paymentAttempt.id}/refund`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amountPaise: refundAmountPaise,
+          reason: refundReason,
+          speed: refundSpeed,
+        }),
+      })
+      const data = (await response.json().catch(() => ({}))) as {
+        refund?: Record<string, unknown>
+        approvalRequired?: boolean
+        error?: string
+      }
+
+      if (!response.ok) throw new Error(data.error || 'Failed to initiate refund.')
+
+      if (data.approvalRequired) {
+        onToast({ type: 'info', message: 'Refund requires second-person approval. An approval request has been created.' })
+      } else {
+        onToast({ type: 'success', message: `Refund of ${formatShopPriceFromPaise(refundAmountPaise, order.payment_currency)} initiated successfully.` })
+      }
+
+      setRefundMode('idle')
+      setRefundPreset('full')
+      setCustomAmountRupee('')
+      setRefundReason('Admin initiated refund')
+      await onRefresh()
+    } catch (error) {
+      onToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to initiate refund.' })
+    } finally {
+      setRefunding(false)
+    }
+  }
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5">
@@ -292,6 +354,144 @@ function PaymentInfoSection({
             <pre className="mt-3 max-h-72 overflow-auto rounded-xl border border-gray-100 bg-gray-900 p-4 text-[11px] leading-relaxed text-gray-100">
               {JSON.stringify(snapshot, null, 2)}
             </pre>
+          )}
+        </>
+      )}
+
+      {canRefund && paymentAttempt?.id && (
+        <>
+          <div className="my-4 border-t border-gray-100" />
+
+          {refundMode === 'idle' ? (
+            <button
+              type="button"
+              onClick={() => setRefundMode('expanded')}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Initiate Refund
+            </button>
+          ) : (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs font-bold uppercase tracking-[0.15em] text-rose-700">Initiate Refund</div>
+                <button
+                  type="button"
+                  onClick={() => { setRefundMode('idle'); setRefundPreset('full'); setCustomAmountRupee('') }}
+                  className="text-xs font-semibold text-rose-700 hover:underline"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRefundPreset('full')}
+                  className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                    refundPreset === 'full'
+                      ? 'border-rose-400 bg-white text-rose-800 shadow-sm'
+                      : 'border-transparent bg-white/60 text-rose-700 hover:bg-white'
+                  }`}
+                >
+                  Full (excl. shipping)
+                  <div className="mt-0.5 font-mono text-[10px] opacity-75">
+                    {formatShopPriceFromPaise(fullRefundPaise, order.payment_currency)}
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRefundPreset('custom')}
+                  className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                    refundPreset === 'custom'
+                      ? 'border-rose-400 bg-white text-rose-800 shadow-sm'
+                      : 'border-transparent bg-white/60 text-rose-700 hover:bg-white'
+                  }`}
+                >
+                  Custom
+                  <div className="mt-0.5 font-mono text-[10px] opacity-75">
+                    Max {formatShopPriceFromPaise(maxRefundPaise, order.payment_currency)}
+                  </div>
+                </button>
+              </div>
+
+              {refundPreset === 'custom' && (
+                <label className="mt-3 block">
+                  <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-rose-700">Amount (₹)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={maxRefundRupee}
+                    step={0.01}
+                    value={customAmountRupee}
+                    onChange={(event) => setCustomAmountRupee(event.target.value)}
+                    placeholder={`Max ₹${maxRefundRupee.toFixed(2)}`}
+                    className="mt-1 w-full rounded-lg border border-rose-300 bg-white px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-rose-500"
+                  />
+                </label>
+              )}
+
+              <label className="mt-3 block">
+                <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-rose-700">Reason</span>
+                <textarea
+                  value={refundReason}
+                  onChange={(event) => setRefundReason(event.target.value)}
+                  rows={2}
+                  className="mt-1 w-full rounded-lg border border-rose-300 bg-white px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-rose-500"
+                />
+              </label>
+
+              <label className="mt-3 block">
+                <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-rose-700">Speed</span>
+                <select
+                  value={refundSpeed}
+                  onChange={(event) => setRefundSpeed(event.target.value as 'normal' | 'optimum')}
+                  className="mt-1 w-full rounded-lg border border-rose-300 bg-white px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-rose-500"
+                >
+                  <option value="normal">Normal</option>
+                  <option value="optimum">Optimum (faster)</option>
+                </select>
+              </label>
+
+              <div className="mt-3 rounded-lg border border-rose-200 bg-white px-3 py-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#6F7192]">Amount to refund</span>
+                  <span className="font-bold text-rose-800">
+                    {refundAmountPaise > 0
+                      ? formatShopPriceFromPaise(refundAmountPaise, order.payment_currency)
+                      : '—'}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center justify-between text-[10px] text-[#6F7192]">
+                  <span>Already refunded</span>
+                  <span>{alreadyRefundedPaise > 0 ? formatShopPriceFromPaise(alreadyRefundedPaise, order.payment_currency) : '₹0.00'}</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void initiateRefundAction()}
+                disabled={refunding || !isRefundValid}
+                className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:opacity-60"
+              >
+                {refunding ? (
+                  <span className="inline-flex items-center gap-2">
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  <>
+                    <ShieldCheck className="h-4 w-4" />
+                    {refundPreset === 'custom' && !isRefundValid && refundAmountPaise <= 0
+                      ? 'Enter a valid amount'
+                      : `Initiate Refund${isRefundValid ? ` (${formatShopPriceFromPaise(refundAmountPaise, order.payment_currency)})` : ''}`}
+                  </>
+                )}
+              </button>
+            </div>
           )}
         </>
       )}
@@ -590,6 +790,8 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
             paymentAttempt={paymentAttempt}
             showSnapshot={showSnapshot}
             onToggleSnapshot={() => setShowSnapshot((current) => !current)}
+            onRefresh={loadOrder}
+            onToast={setToast}
           />
         </section>
 
