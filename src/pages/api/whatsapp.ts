@@ -437,6 +437,8 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     name: `msg from ${from?.slice(-4)}`,
   });
 
+  console.log("[whatsapp] processIncomingMessage START for", from?.slice(-4), "text:", text?.slice(0, 50));
+
   try {
     // Sender allow-list: only reply if sender phone exists in profiles
     let senderRecognized = false;
@@ -748,6 +750,8 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       });
     }
 
+    console.log("[whatsapp] processIncomingMessage END for", from?.slice(-4), "| replied:", didSendReply, "| kind:", finalReplyKind);
+
     // Mark as processed
     if (supabase && eventRecord?.id) {
       const { error: updateError } = await supabase
@@ -786,6 +790,10 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
           p_event_id: eventRecord.id,
           p_error: errorMessage.slice(0, 1000),
         });
+        // Also write to the visible 'error' column for easy debugging
+        await supabase.from('whatsapp_webhook_events').update({
+          error: errorMessage.slice(0, 2000),
+        }).eq('id', eventRecord.id);
       } catch (dbError) {
         console.error("[whatsapp] Failed to record retry info:", dbError);
       }
