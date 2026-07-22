@@ -1,0 +1,14 @@
+name: Retry Failed WhatsApp Events
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+jobs:
+  retry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call retry endpoint
+        run: |
+          curl -sS --retry 3 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://${{ vars.VERCEL_URL || 'flux3d.vercel.app' }}/api/cron/retry-whatsapp-events"

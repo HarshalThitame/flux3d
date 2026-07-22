@@ -6,12 +6,10 @@ const EMBEDDING_MODEL = process.env.WHATSAPP_EMBEDDING_MODEL?.trim() || 'text-em
 const RAG_TOP_K = Math.max(1, Number(process.env.WHATSAPP_RAG_TOP_K ?? 4) || 4)
 const RAG_MIN_SCORE = Number(process.env.WHATSAPP_RAG_MIN_SCORE ?? 0.3) || 0.3
 
-let openaiClient: OpenAI | null = null
 function getRagOpenAI() {
-  if (!openaiClient && process.env.OPENAI_API_KEY) {
-    openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  }
-  return openaiClient
+  const key = process.env.OPENAI_API_KEY
+  if (!key) return null
+  return new OpenAI({ apiKey: key })
 }
 
 let seedCorpusPromise: Promise<WhatsAppKnowledgeChunk[]> | null = null
@@ -88,11 +86,14 @@ type RagContextResult = {
   confidence: number
 }
 
+let cachedServiceClient: any = null
 function getServiceClient() {
+  if (cachedServiceClient) return cachedServiceClient
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) return null
-  return createClient(url, key)
+  cachedServiceClient = createClient(url, key)
+  return cachedServiceClient
 }
 
 function parseVector(value: string | number[] | null | undefined): number[] {
@@ -131,7 +132,7 @@ function cosineSimilarity(left: number[], right: number[]) {
   return dot / (Math.sqrt(leftNorm) * Math.sqrt(rightNorm))
 }
 
-function toKnowledgeChunk(row: KnowledgeRow): WhatsAppKnowledgeChunk {
+export function toKnowledgeChunk(row: KnowledgeRow): WhatsAppKnowledgeChunk {
   return {
     id: row.id,
     sourceKey: row.source_key,
@@ -296,28 +297,33 @@ export async function getWhatsAppRagContext(query: string): Promise<RagContextRe
     return { context: '', sources: [], mode: 'none', confidence: 0 }
   }
 
-  const databaseChunks = await listWhatsAppKnowledgeChunks()
-  const activeDatabaseChunks = databaseChunks.filter((chunk) => chunk.active)
-
-  if (activeDatabaseChunks.length > 0) {
-    const rpcMatches = await searchDatabaseKnowledge(queryEmbedding)
-    const matchedSources = rpcMatches.length > 0
-      ? rpcMatches.map((match) => ({
-          sourceKey: match.sourceKey,
-          title: match.title,
-          score: Number(match.score.toFixed(3)),
-          content: match.content,
-        }))
-      : scoreCorpus(activeDatabaseChunks, queryEmbedding).map(({ chunk, score }) => ({
-          sourceKey: chunk.sourceKey,
-          title: chunk.title,
-          score: Number(score.toFixed(3)),
-          content: chunk.content,
-        }))
-
+  // Try DB RPC first (efficient HNSW index search, no full-table-scan)
+  const rpcMatches = await searchDatabaseKnowledge(queryEmbedding)
+  if (rpcMatches.length > 0) {
+    const matchedSources = rpcMatches.map((match) => ({
+      sourceKey: match.sourceKey,
+      title: match.title,
+      score: Number(match.score.toFixed(3)),
+      content: match.content,
+    }))
     return buildRagContextResult(matchedSources, 'database')
   }
 
+  // RPC returned no matches — load chunks for in-memory fallback (only when DB has data)
+  const databaseChunks = await listWhatsAppKnowledgeChunks()
+  const activeDatabaseChunks = databaseChunks.filter((chunk) => chunk.active)
+  if (activeDatabaseChunks.length > 0) {
+    const scored = scoreCorpus(activeDatabaseChunks, queryEmbedding).map(({ chunk, score }) => ({
+      sourceKey: chunk.sourceKey,
+      title: chunk.title,
+      score: Number(score.toFixed(3)),
+      content: chunk.content,
+    }))
+    return buildRagContextResult(scored, 'database')
+  }
+
+  // DB table is empty — fall back to seed corpus
+  console.warn('[rag] whatsapp_knowledge_chunks table is empty — using seed corpus. Run sync-whatsapp-knowledge to populate it.')
   const seedCorpus = await loadSeedCorpus()
   const scored = scoreCorpus(seedCorpus, queryEmbedding).map(({ chunk, score }) => ({
     sourceKey: chunk.sourceKey,
@@ -357,6 +363,250 @@ export async function syncWhatsAppKnowledgeChunks() {
   }
 }
 
+export async function syncProductKnowledgeChunks() {
+  const supabase = getServiceClient()
+  if (!supabase) {
+    throw new Error('Missing Supabase service role configuration.')
+  }
+
+  const chunks: WhatsAppKnowledgeSeed[] = []
+
+  // Fetch all active materials
+  const { data: materials, error: materialError } = await supabase
+    .from('materials')
+    .select('id, name, summary, best_for, key_properties, price_per_unit, price_per_gram, sample_photo')
+
+  if (materialError) {
+    console.error('[rag] Failed to fetch materials for sync:', materialError)
+  } else if (materials?.length) {
+    for (const m of materials) {
+      const price = m.price_per_unit || m.price_per_gram
+      const priceStr = price ? `starting at ₹${Number(price).toFixed(2)}` : 'contact for pricing'
+      chunks.push({
+        sourceKey: `material_${m.id}`,
+        title: `${m.name} — 3D Printing Material`,
+        content: `${m.name} is a 3D printing material ${priceStr}. ${m.summary ?? ''}${m.best_for?.length ? ` Best for: ${Array.isArray(m.best_for) ? m.best_for.join(', ') : m.best_for}.` : ''}${m.key_properties?.length ? ` Properties: ${Array.isArray(m.key_properties) ? m.key_properties.join(', ') : m.key_properties}.` : ''}`,
+        tags: ['material', m.name?.toLowerCase() ?? ''],
+        priority: 7,
+      })
+    }
+  }
+
+  // Fetch all active products
+  const { data: products, error: productError } = await supabase
+    .from('shelf_products')
+    .select('id, name, description, base_price, tags, category_id')
+    .eq('is_active', true)
+    .eq('is_archived', false)
+
+  if (productError) {
+    console.error('[rag] Failed to fetch products for sync:', productError)
+  } else if (products?.length) {
+    for (const p of products) {
+      chunks.push({
+        sourceKey: `product_${p.id}`,
+        title: `${p.name} — 3D Printed Product`,
+        content: `${p.name} — ₹${Number(p.base_price).toFixed(2)}. ${p.description ?? ''}${p.tags?.length ? ` Tags: ${Array.isArray(p.tags) ? p.tags.join(', ') : p.tags}.` : ''}`,
+        tags: ['product', ...(Array.isArray(p.tags) ? p.tags : [])],
+        priority: 6,
+      })
+    }
+  }
+
+  if (!chunks.length) {
+    return { syncedCount: 0, source: 'product_sync' }
+  }
+
+  const embeddings = await generateEmbeddings(chunks.map((c) => c.content))
+
+  const rows = chunks.map((chunk, index) => ({
+    source_key: chunk.sourceKey,
+    title: chunk.title,
+    content: chunk.content,
+    tags: chunk.tags,
+    priority: chunk.priority,
+    embedding: embeddings[index],
+    active: true,
+  }))
+
+  const { error } = await supabase.from('whatsapp_knowledge_chunks').upsert(rows, {
+    onConflict: 'source_key',
+  })
+
+  if (error) {
+    throw error
+  }
+
+  return { syncedCount: rows.length, source: 'product_sync' }
+}
+
 export function getWhatsappKnowledgeSeed() {
   return knowledgeSeed as WhatsAppKnowledgeSeed[]
 }
+
+export type OrderResult = {
+  orderNumber: string
+  status: string
+  placedAt: string | null
+  total: number
+  items: number
+}
+
+export type StructuredDataResult = {
+  materials: string
+  products: string
+  orderStatus: string
+  orderResults: OrderResult[]
+  totalMatches: number
+  materialPrices: Array<{ name: string; price: number }>
+  productPrices: Array<{ name: string; price: number }>
+}
+
+const EMPTY_STRUCTURED_RESULT = (): StructuredDataResult => ({
+  materials: '', products: '', orderStatus: '', orderResults: [],
+  totalMatches: 0, materialPrices: [], productPrices: [],
+})
+
+const NON_PRODUCT_KEYWORDS = new Set(['pricing', 'shipping', 'stock', 'delivery', 'courier', 'dispatch', 'track', 'tracking', 'available', 'availability'])
+
+function normalizePhone(phone: string): string {
+  return phone.replace(/[^0-9]/g, '')
+}
+
+export async function fetchStructuredData(
+  keywords: string[],
+  intent: WhatsAppIntent,
+  phoneNumber?: string,
+): Promise<StructuredDataResult> {
+  if (!keywords.length) {
+    return EMPTY_STRUCTURED_RESULT()
+  }
+
+  const supabase = getServiceClient()
+  if (!supabase) {
+    return EMPTY_STRUCTURED_RESULT()
+  }
+
+  // Separate searchable keywords from intent descriptors
+  const searchTerms = keywords.filter((k) => !NON_PRODUCT_KEYWORDS.has(k))
+  if (!searchTerms.length) {
+    return EMPTY_STRUCTURED_RESULT()
+  }
+
+  const ilikeConditions = searchTerms.map((k) => `name.ilike.%${k}%`)
+  let materialsData = ''
+  let productsData = ''
+  let orderStatusData = ''
+  let orderResults: OrderResult[] = []
+  let materialPrices: Array<{ name: string; price: number }> = []
+  let productPrices: Array<{ name: string; price: number }> = []
+  let totalMatches = 0
+
+  // Always query materials table when search terms are present
+  const { data: materialData, error: materialError } = await supabase
+    .from('materials')
+    .select('name, price_per_unit, price_per_gram, summary, best_for, key_properties')
+    .or(ilikeConditions.join(','))
+    .limit(5)
+
+  if (materialError) {
+    console.error('[rag] Materials query failed:', materialError)
+  } else if (materialData?.length) {
+    const valid = materialData.filter((m: any) => {
+      const price = m.price_per_unit || m.price_per_gram
+      return price && Number(price) > 0
+    })
+    materialsData = valid
+      .map((m: any) => {
+        const price = m.price_per_unit || m.price_per_gram
+        const formattedPrice = Number(price).toFixed(2)
+        return `Material: ${m.name} | From ₹${formattedPrice} | ${m.summary ?? ''}`
+      })
+      .join('\n')
+    materialPrices = valid.map((m: any) => ({
+      name: m.name,
+      price: Number(m.price_per_unit || m.price_per_gram),
+    }))
+    if (materialsData) totalMatches += materialData.length
+  }
+
+  // Query orders table when intent is 'order' or keywords contain order identifiers (e.g. order numbers)
+  const isOrderQuery = intent === 'order' || searchTerms.some((k) => /^\d{4,}$/.test(k))
+  if (isOrderQuery && supabase) {
+    const orderNumber = searchTerms.find((k) => /^\d{4,}$/.test(k))
+
+    // Resolve user_id from phone number to filter orders by the calling user
+    let userId: string | null = null
+    if (phoneNumber) {
+      const normalizedPhone = normalizePhone(phoneNumber)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .or(`phone_number.eq.${normalizedPhone},phone_number.eq.+${normalizedPhone}`)
+        .maybeSingle()
+      userId = profile?.id ?? null
+    }
+
+    let orderQuery = supabase
+      .from('shelf_orders')
+      .select('order_number, order_status, total_amount, placed_at, items')
+
+    if (userId) {
+      orderQuery = orderQuery.eq('user_id', userId)
+    }
+
+    if (orderNumber) {
+      orderQuery = orderQuery.ilike('order_number', `%${orderNumber}%`)
+    }
+
+    const { data: orderData } = await orderQuery
+      .order('placed_at', { ascending: false })
+      .limit(3)
+
+    if (orderData?.length) {
+      orderResults = orderData.map((o: any) => ({
+        orderNumber: o.order_number,
+        status: o.order_status,
+        placedAt: o.placed_at,
+        total: Number(o.total_amount) || 0,
+        items: Array.isArray(o.items) ? o.items.length : 0,
+      }))
+      orderStatusData = orderResults
+        .map((o) => `Order #${o.orderNumber} — Status: ${o.status} — Placed: ${o.placedAt ?? 'N/A'} — Total: ₹${o.total.toFixed(2)}`)
+        .join('\n')
+      totalMatches += orderData.length
+    } else {
+      orderStatusData = 'No orders found for this number.'
+    }
+  }
+
+  // Always query shelf_products when search terms are present
+  const { data: productData, error: productError } = await supabase
+    .from('shelf_products')
+    .select('name, base_price, description, tags, is_active')
+    .or(ilikeConditions.join(','))
+    .eq('is_active', true)
+    .eq('is_archived', false)
+    .limit(5)
+
+  if (productError) {
+    console.error('[rag] Products query failed:', productError)
+  } else if (productData?.length) {
+    const valid = productData.filter((p: any) => p.base_price && Number(p.base_price) > 0)
+    productsData = valid
+      .map((p: any) => {
+        const formattedPrice = Number(p.base_price).toFixed(2)
+        return `Product: ${p.name} | ₹${formattedPrice} | ${(p.description ?? '').slice(0, 100)}`
+      })
+      .join('\n')
+    productPrices = valid.map((p: any) => ({
+      name: p.name,
+      price: Number(p.base_price),
+    }))
+    if (productsData) totalMatches += productData.length
+  }
+
+  return { materials: materialsData, products: productsData, orderStatus: orderStatusData, orderResults, totalMatches, materialPrices, productPrices }
+}
+
+export type WhatsAppIntent = 'pricing' | 'shipping' | 'order' | 'materials' | 'contact' | 'greeting' | 'general'
