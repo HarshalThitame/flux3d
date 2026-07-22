@@ -1,14 +1,11 @@
 import type { Metadata } from 'next'
 
-export const dynamic = 'force-static'
-export const revalidate = 86400
-
 import { getSettings } from '@/lib/settings'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
 import { faqPageJsonLd, makeLocalBusinessJsonLd } from '@/lib/structured-data'
 import HeroSection from './landing/HeroSection'
-import HomeNavbar from './landing/HomeNavbar'
 import LandingPageBoundary from './landing/LandingPageBoundary'
+import Navbar from '@/components/Navbar'
 
 export const metadata: Metadata = {
   title: {
@@ -64,7 +61,7 @@ export default async function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: toJsonLd(faqPageJsonLd) }}
       />
-      <HomeNavbar />
+      <Navbar transparent />
       <main>
         <HeroSection />
         <LandingPageBoundary />

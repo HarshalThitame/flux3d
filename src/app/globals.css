@@ -7730,7 +7730,8 @@ body:has(.premium-auth-shell) {
 .navbar-premium::before,
 .navbar-link-cluster::before,
 .navbar-mobile-panel::before,
-.navbar-profile-menu::before {
+.navbar-profile-menu::before,
+.navbar-more-menu::before {
   content: '';
   position: absolute;
   pointer-events: none;
@@ -7939,6 +7940,7 @@ body:has(.premium-auth-shell) {
 }
 
 .navbar-profile-menu,
+.navbar-more-menu,
 .navbar-mobile-panel {
   position: absolute;
   border-color: rgba(109, 40, 217, 0.72) !important;
@@ -7949,6 +7951,7 @@ body:has(.premium-auth-shell) {
 }
 
 .navbar-profile-menu::before,
+.navbar-more-menu::before,
 .navbar-mobile-panel::before {
   inset: -1px;
   border-radius: inherit;
@@ -8013,6 +8016,7 @@ body:has(.premium-auth-shell) {
 }
 
 [class*="premium-shell"] .navbar-profile-menu,
+[class*="premium-shell"] .navbar-more-menu,
 [class*="premium-shell"] .navbar-mobile-panel {
   border-color: rgba(109, 40, 217, 0.12) !important;
   background:
