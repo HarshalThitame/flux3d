@@ -5,7 +5,7 @@ const supabaseFromMock = vi.fn()
 const DEFAULT_RESOLVE = { data: [], error: null, count: 0 } as const
 
 function makeChainableBuilder() {
-  const builder: Record<string, vi.Mock> = {
+  const builder: Record<string, ReturnType<typeof vi.fn>> = {
     select: vi.fn(() => builder),
     eq: vi.fn(() => builder),
     or: vi.fn(() => builder),

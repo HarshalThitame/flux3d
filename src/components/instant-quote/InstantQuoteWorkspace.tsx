@@ -47,9 +47,9 @@ const initialUploadState: UploadState = {
   progress: 0,
 }
 
-const ModelPreviewCanvas = dynamic(() => import('@/components/instant-quote/ModelPreviewCanvas'), {
+const ViewerSection = dynamic(() => import('@/components/instant-quote/ViewerSection'), {
   ssr: false,
-  loading: () => <div className="absolute inset-0 animate-pulse rounded-2xl bg-white" />,
+  loading: () => <div className="h-[400px] animate-pulse rounded-2xl bg-[#070a12]" />,
 })
 
 export type InstantQuoteWorkspaceProps = {
@@ -804,60 +804,12 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.1 }}
                 >
-                  <div className="quote-premium-card quote-viewer-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
-                    <div className="mb-5 flex items-center gap-3">
-                      <div className="quote-section-icon rounded-xl border border-cyan-400/20 bg-cyan-50 p-2.5 text-cyan-700">
-                        <Cuboid className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold text-[#0F1B3D]">2. 3D Preview</h2>
-                        <p className="text-xs text-[#6F7192]">Inspect your model from any angle</p>
-                      </div>
-                    </div>
-
-                    <div className="quote-viewer-stage relative h-[280px] overflow-hidden rounded-2xl border border-[#6d28d9]/10 bg-[radial-gradient(circle_at_top,rgba(168,85,247,0.08),transparent_42%),linear-gradient(180deg,#FFFFFF,#FFFFFF)] sm:h-[400px]">
-                      {selectedModel ? (
-                        <ModelPreviewCanvas object={selectedModel.object} />
-                      ) : (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
-                          <div className="quote-empty-viewer-icon flex h-14 w-14 items-center justify-center rounded-xl border border-[#6d28d9]/10 bg-white text-cyan-700">
-                            <Move3D className="h-6 w-6" />
-                          </div>
-                          <div className="text-sm font-semibold text-[#0F1B3D]">No model loaded</div>
-                          <p className="max-w-xs text-xs leading-6 text-[#6F7192]">
-                            Upload a file above to see your model in the interactive 3D viewer.
-                          </p>
-                        </div>
-                      )}
-
-                      {viewerLoading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-[rgba(4,8,16,0.62)] backdrop-blur-sm">
-                          <div className="rounded-xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-3 text-xs text-[#0F1B3D]">
-                            Building 3D preview...
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {selectedModel && (
-                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="quote-metric-card rounded-xl border border-[#6d28d9]/10 bg-white px-3 py-2.5">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Dimensions</div>
-                          <div className="mt-1 text-xs text-[#0F1B3D]">
-                            {selectedModel.dimensionsMm.x.toFixed(0)} × {selectedModel.dimensionsMm.y.toFixed(0)} × {selectedModel.dimensionsMm.z.toFixed(0)} mm
-                          </div>
-                        </div>
-                        <div className="quote-metric-card rounded-xl border border-[#6d28d9]/10 bg-white px-3 py-2.5">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Triangles</div>
-                          <div className="mt-1 text-xs text-[#0F1B3D]">{selectedModel.triangleCount.toLocaleString()}</div>
-                        </div>
-                        <div className="quote-metric-card rounded-xl border border-[#6d28d9]/10 bg-white px-3 py-2.5">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Controls</div>
-                          <div className="mt-1 text-xs text-[#0F1B3D]">Rotate · Zoom · Pan</div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <ViewerSection
+                    model={selectedModel}
+                    isLoading={viewerLoading}
+                    materialId={config.materialId}
+                    colorName={config.color}
+                  />
                 </motion.div>
 
                 {/* Material & Color Section */}
