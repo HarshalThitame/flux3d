@@ -196,6 +196,93 @@ export function getShopPaymentProviderLabel(provider: string | null | undefined)
   return provider
 }
 
+export function getShopPaymentMethodLabel(method: string | null | undefined) {
+  const normalized = method?.trim().toLowerCase()
+  if (!normalized) return 'Not set'
+  switch (normalized) {
+    case 'upi': return 'UPI'
+    case 'card': return 'Credit / Debit Card'
+    case 'netbanking': return 'Net Banking'
+    case 'wallet': return 'Wallet'
+    case 'emi': return 'EMI'
+    case 'cod': return 'Cash on Delivery'
+    case 'bank_transfer': return 'Bank Transfer'
+    case 'paylater': return 'Pay Later'
+    case 'cardless_emi': return 'Cardless EMI'
+    default: return method
+  }
+}
+
+export function getShopPaymentRefundStatusLabel(status: string | null | undefined) {
+  const normalized = status?.trim().toLowerCase()
+  if (!normalized || normalized === 'none') return 'No refund'
+  switch (normalized) {
+    case 'pending':
+    case 'pending_approval':
+    case 'created':
+      return 'Pending'
+    case 'partial':
+    case 'partially_refunded':
+      return 'Partially Refunded'
+    case 'processed':
+    case 'completed':
+      return 'Refunded'
+    case 'failed':
+      return 'Failed'
+    case 'cancelled':
+      return 'Cancelled'
+    default:
+      return status
+  }
+}
+
+export function getShopPaymentRefundStatusClasses(status: string | null | undefined) {
+  const normalized = status?.trim().toLowerCase()
+  if (!normalized || normalized === 'none') return 'border-gray-200 bg-gray-50 text-[#6F7192]'
+  switch (normalized) {
+    case 'pending':
+    case 'pending_approval':
+    case 'created':
+      return 'border-amber-400/20 bg-amber-400/10 text-amber-700'
+    case 'partial':
+    case 'partially_refunded':
+      return 'border-orange-400/20 bg-orange-400/10 text-orange-700'
+    case 'processed':
+    case 'completed':
+      return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700'
+    case 'failed':
+      return 'border-rose-400/20 bg-rose-400/10 text-rose-700'
+    case 'cancelled':
+      return 'border-slate-400/20 bg-slate-400/10 text-slate-700'
+    default:
+      return 'border-gray-200 bg-gray-50 text-[#6F7192]'
+  }
+}
+
+export function formatShopPriceFromPaise(paise: number | null | undefined, currency: string | null | undefined) {
+  const amount = Number(paise ?? 0) / 100
+  const code = currency?.trim().toUpperCase() || 'INR'
+  if (code === 'INR') {
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(amount)
+  }
+  try {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: code, maximumFractionDigits: 2 }).format(amount)
+  } catch {
+    return `${code} ${amount.toFixed(2)}`
+  }
+}
+
+export type ShopPaymentAttempt = {
+  id: string
+  status: string | null
+  payment_method: string | null
+  failure_code: string | null
+  failure_description: string | null
+  attempt_number: number | null
+  metadata: Record<string, unknown>
+  created_at: string | null
+}
+
 export function formatShopOrderDate(value: string | null | undefined) {
   if (!value) return 'Not set'
   return new Intl.DateTimeFormat('en-IN', {
@@ -324,5 +411,19 @@ export function mapShopAdminOrder(row: Record<string, unknown>, customer: ShopOr
   return {
     ...mapShopOrderRow(row),
     customer,
+  }
+}
+
+export function mapShopPaymentAttempt(row: Record<string, unknown> | null): ShopPaymentAttempt | null {
+  if (!row) return null
+  return {
+    id: String(row.id),
+    status: row.status ? String(row.status) : null,
+    payment_method: row.payment_method ? String(row.payment_method) : null,
+    failure_code: row.failure_code ? String(row.failure_code) : null,
+    failure_description: row.failure_description ? String(row.failure_description) : null,
+    attempt_number: typeof row.attempt_number === 'number' ? row.attempt_number : null,
+    metadata: asRecord(row.metadata),
+    created_at: row.created_at ? String(row.created_at) : null,
   }
 }

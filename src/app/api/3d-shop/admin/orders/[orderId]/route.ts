@@ -7,6 +7,7 @@ import {
   assertFulfilmentStatusTransition,
   assertShopStatusTransition,
   mapShopAdminOrder,
+  mapShopPaymentAttempt,
   shopFulfilmentStatuses,
   shopOrderStatuses,
   type ShopFulfilmentStatus,
@@ -81,7 +82,21 @@ export async function GET(_request: Request, context: { params: Promise<{ orderI
     if (error) throw new Error(error.message)
     if (!data) return NextResponse.json({ error: 'Order not found.' }, { status: 404 })
 
-    return NextResponse.json({ order: mapShopAdminOrder(data, await getCustomer(supabase, data)) })
+    let paymentAttempt: ReturnType<typeof mapShopPaymentAttempt> | null = null
+    const attemptId = data.payment_attempt_id ? String(data.payment_attempt_id) : null
+    if (attemptId) {
+      const { data: attemptRow } = await supabase
+        .from('payment_attempts')
+        .select('id, status, payment_method, failure_code, failure_description, attempt_number, metadata, created_at')
+        .eq('id', attemptId)
+        .maybeSingle()
+      paymentAttempt = mapShopPaymentAttempt(attemptRow as Record<string, unknown> | null)
+    }
+
+    return NextResponse.json({
+      order: mapShopAdminOrder(data, await getCustomer(supabase, data)),
+      paymentAttempt,
+    })
   } catch (error) {
     return getAdminApiErrorResponse(error)
   }
@@ -212,7 +227,21 @@ export async function PATCH(request: Request, context: { params: Promise<{ order
       .eq('id', orderId)
       .maybeSingle()
 
-    return NextResponse.json({ order: mapShopAdminOrder(refreshed ?? current, await getCustomer(supabase, refreshed ?? current)) })
+    let paymentAttempt: ReturnType<typeof mapShopPaymentAttempt> | null = null
+    const attemptId = refreshed?.payment_attempt_id ? String(refreshed.payment_attempt_id) : null
+    if (attemptId) {
+      const { data: attemptRow } = await supabase
+        .from('payment_attempts')
+        .select('id, status, payment_method, failure_code, failure_description, attempt_number, metadata, created_at')
+        .eq('id', attemptId)
+        .maybeSingle()
+      paymentAttempt = mapShopPaymentAttempt(attemptRow as Record<string, unknown> | null)
+    }
+
+    return NextResponse.json({
+      order: mapShopAdminOrder(refreshed ?? current, await getCustomer(supabase, refreshed ?? current)),
+      paymentAttempt,
+    })
   } catch (error) {
     return getAdminApiErrorResponse(error)
   }
