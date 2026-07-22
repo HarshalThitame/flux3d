@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -148,6 +148,24 @@ function PaymentInfoSection({
   const [refundSpeed, setRefundSpeed] = useState<'normal' | 'optimum'>('normal')
   const [refunding, setRefunding] = useState(false)
 
+  // Stable ref for onRefresh to avoid stale closures in the polling interval
+  const onRefreshRef = useRef(onRefresh)
+  useEffect(() => {
+    onRefreshRef.current = onRefresh
+  })
+
+  // Poll for refund status updates when refund is in a pending/processing state
+  const pollActive = ['pending', 'pending_approval', 'partial'].includes(order.payment_refund_status ?? '')
+  useEffect(() => {
+    if (!pollActive) return
+
+    const interval = setInterval(() => {
+      void onRefreshRef.current()
+    }, 10000)
+
+    return () => clearInterval(interval)
+  }, [pollActive])
+
   const customAmountPaise = Math.round(parseFloat(customAmountRupee) * 100)
   const refundAmountPaise = refundPreset === 'full' ? fullRefundPaise : (isNaN(customAmountPaise) ? 0 : customAmountPaise)
   const maxRefundRupee = maxRefundPaise / 100
@@ -284,7 +302,13 @@ function PaymentInfoSection({
       {hasRefund && (
         <>
           <div className="my-4 border-t border-gray-100" />
-          <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
+          <div className={`rounded-xl border p-4 ${
+            order.payment_refund_status === 'completed' || order.payment_refund_status === 'processed'
+              ? 'border-emerald-200 bg-emerald-50'
+              : order.payment_refund_status === 'failed'
+                ? 'border-rose-200 bg-rose-50'
+                : 'border-amber-200 bg-amber-50'
+          }`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-orange-700">Refund</div>
@@ -296,6 +320,35 @@ function PaymentInfoSection({
                 {getShopPaymentRefundStatusLabel(order.payment_refund_status)}
               </span>
             </div>
+
+            {pollActive && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-100/50 px-3 py-2">
+                <svg className="h-3.5 w-3.5 animate-spin text-amber-600" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span className="text-xs font-medium text-amber-700">Awaiting confirmation from payment gateway — checking every 10s...</span>
+              </div>
+            )}
+
+            {(order.payment_refund_status === 'completed' || order.payment_refund_status === 'processed') && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-100/50 px-3 py-2">
+                <svg className="h-3.5 w-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-xs font-medium text-emerald-700">Refund confirmed by payment gateway</span>
+              </div>
+            )}
+
+            {order.payment_refund_status === 'failed' && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-rose-300 bg-rose-100/50 px-3 py-2">
+                <svg className="h-3.5 w-3.5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span className="text-xs font-medium text-rose-700">Refund failed — check payment gateway dashboard</span>
+              </div>
+            )}
+
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <div>
                 <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-orange-700">Refunded Amount</div>
