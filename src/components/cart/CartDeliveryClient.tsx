@@ -31,7 +31,7 @@ export default function CartDeliveryClient({
   savedAddresses,
 }: CartDeliveryClientProps) {
   const router = useRouter()
-  const { items, summary, clearItems } = useCart()
+  const { items, summary, clearItems, isLoading } = useCart()
   const [selectedAddressId, setSelectedAddressId] = useState<string | 'new'>(
     savedAddresses[0]?.id ?? 'new'
   )
@@ -78,10 +78,10 @@ export default function CartDeliveryClient({
   const cartDiscountPercent = Math.round(summary.cartDiscountPercent)
 
   useEffect(() => {
-    if (items.length === 0 && !confirmation) {
+    if (items.length === 0 && !confirmation && !isLoading) {
       router.replace('/cart')
     }
-  }, [items, confirmation, router])
+  }, [items, confirmation, isLoading, router])
 
   useEffect(() => {
     if (!toast) {
@@ -276,6 +276,14 @@ export default function CartDeliveryClient({
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#FFFFFF]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#6d28d9] border-t-transparent" />
+      </div>
+    )
   }
 
   if (items.length === 0 && !confirmation) {
