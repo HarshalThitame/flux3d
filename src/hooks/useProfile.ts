@@ -88,7 +88,8 @@ export function useProfile(
 
       if (authError) {
         if (authError.code === 'refresh_token_not_found') {
-          await supabase.auth.signOut({ scope: 'local' })
+          setProfile(null)
+          return
         }
         throw authError
       }

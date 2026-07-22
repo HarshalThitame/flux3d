@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   }
 
   const redirectUrl = new URL(nextPath, requestUrl.origin)
-  let response = NextResponse.redirect(redirectUrl)
+  const response = NextResponse.redirect(redirectUrl)
 
   try {
     const supabase = createServerClient(
@@ -32,12 +32,8 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll()
           },
           setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) => {
-              request.cookies.set(name, value)
-            })
-
-            response = NextResponse.redirect(redirectUrl)
             cookiesToSet.forEach(({ name, value, options }) => {
+              request.cookies.set(name, value)
               response.cookies.set(name, value, options)
             })
           },
