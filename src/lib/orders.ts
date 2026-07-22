@@ -61,6 +61,7 @@ export function getOrderStatusTransitionError(currentStatus: OrderStatus, nextSt
 }
 
 export type CreateOrderInput = {
+  quoteId: string
   fileUrl: string
   material: string
   color: string

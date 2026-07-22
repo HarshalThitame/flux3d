@@ -1,8 +1,8 @@
 'use client'
 
-import { Suspense, useMemo } from 'react'
-import { Bounds, OrbitControls } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AdaptiveDpr, Bounds, OrbitControls } from '@react-three/drei'
+import { Canvas, type RootState } from '@react-three/fiber'
 import type { Object3D } from 'three'
 import type { ParsedModel } from '@/lib/quote/types'
 
@@ -29,6 +29,66 @@ function ViewerFallback() {
   )
 }
 
+function ViewerCanvas({ object }: { object: Object3D }) {
+  const [contextLost, setContextLost] = useState(false)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  const handleCreated = useCallback((state: RootState) => {
+    const renderer = state.gl
+    renderer.domElement.addEventListener('webglcontextlost', (event) => {
+      event.preventDefault()
+      setContextLost(true)
+    })
+    renderer.domElement.addEventListener('webglcontextrestored', () => {
+      setContextLost(false)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (contextLost) {
+      const timer = setInterval(() => {
+        if (canvasRef.current) {
+          const gl = canvasRef.current.getContext('webgl2') || canvasRef.current.getContext('webgl')
+          if (gl) {
+            setContextLost(false)
+            clearInterval(timer)
+          }
+        }
+      }, 1000)
+      return () => clearInterval(timer)
+    }
+  }, [contextLost])
+
+  if (contextLost) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center">
+        <p className="text-sm text-[#6F7192]">3D preview unavailable. Reload the page to restore.</p>
+      </div>
+    )
+  }
+
+  return (
+    <Canvas
+      ref={canvasRef}
+      camera={{ position: [140, 120, 140], fov: 34 }}
+      dpr={[1, 1.5]}
+      onCreated={handleCreated}
+      gl={{ powerPreference: 'high-performance', failIfMajorPerformanceCaveat: false }}
+    >
+      <AdaptiveDpr pixelated />
+      <color attach="background" args={['#FFFFFF']} />
+      <ambientLight intensity={0.9} />
+      <directionalLight position={[120, 120, 80]} intensity={1.1} />
+      <directionalLight position={[-80, -50, -60]} intensity={0.35} />
+      <gridHelper args={[260, 26, '#1f2a44', '#101929']} position={[0, -55, 0]} />
+      <Bounds fit clip observe margin={1.3}>
+        <ViewerModel object={object} />
+      </Bounds>
+      <OrbitControls makeDefault enablePan enableZoom enableRotate />
+    </Canvas>
+  )
+}
+
 export default function ModelViewer({ model, isLoading }: ModelViewerProps) {
   return (
     <div className="relative overflow-hidden rounded-[30px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,#FFFFFF,#FFFFFF)]">
@@ -47,20 +107,7 @@ export default function ModelViewer({ model, isLoading }: ModelViewerProps) {
       <div className="relative aspect-[16/11] min-h-[360px]">
         {model ? (
           <Suspense fallback={<ViewerFallback />}>
-            <Canvas
-              camera={{ position: [140, 120, 140], fov: 34 }}
-              dpr={[1, 1.7]}
-            >
-              <color attach="background" args={['#FFFFFF']} />
-              <ambientLight intensity={0.9} />
-              <directionalLight position={[120, 120, 80]} intensity={1.1} />
-              <directionalLight position={[-80, -50, -60]} intensity={0.35} />
-              <gridHelper args={[260, 26, '#1f2a44', '#101929']} position={[0, -55, 0]} />
-              <Bounds fit clip observe margin={1.3}>
-                <ViewerModel object={model.object} />
-              </Bounds>
-              <OrbitControls makeDefault enablePan enableZoom enableRotate />
-            </Canvas>
+            <ViewerCanvas object={model.object} />
           </Suspense>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
