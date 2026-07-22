@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminPermission } from '@/lib/admin/permissions'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { updatePaymentRefund } from '@/lib/payments/repository'
-import { insertPaymentAuditLog } from '@/lib/payments/repository'
+import { fetchPaymentAttemptById, insertPaymentAuditLog, updatePaymentRefund } from '@/lib/payments/repository'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,6 +40,20 @@ export async function POST(
 
     if (!approval) return NextResponse.json({ error: 'Approval record not found.' }, { status: 404 })
 
+    // Fetch the payment attempt to determine which order to update
+    const attempt = await fetchPaymentAttemptById(refund.payment_attempt_id)
+    if (attempt) {
+      const table = attempt.internal_order_type === 'shop_order' ? 'shelf_orders' : 'orders'
+      const { error: orderError } = await supabase
+        .from(table)
+        .update({ payment_refund_status: 'none', updated_at: new Date().toISOString() })
+        .eq('id', attempt.internal_order_id)
+
+      if (orderError) {
+        throw new Error(`Failed to reset order refund status: ${orderError.message}`)
+      }
+    }
+
     // Cancel the refund — no Razorpay call
     await updatePaymentRefund(id, {
       status: 'cancelled',
@@ -63,7 +76,7 @@ export async function POST(
       action: 'refund_rejected',
       entity_type: 'payment_refund',
       entity_id: id,
-      new_state: { rejected: true, reason: rejectionReason },
+      new_state: { rejected: true, reason: rejectionReason, order_refund_reset: true },
     })
 
     return NextResponse.json({ success: true })
