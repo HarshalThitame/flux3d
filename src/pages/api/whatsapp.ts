@@ -450,7 +450,13 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     name: `msg from ${from?.slice(-4)}`,
   });
 
-  const _log = (step: string) => console.log("[whatsapp] PROC", from?.slice(-4), step);
+  const _log = (step: string) => {
+    console.log("[whatsapp] PROC", from?.slice(-4), step);
+    // Write progress to DB so we can see where it hangs
+    if (eventRecord?.id && supabase) {
+      supabase.from('whatsapp_webhook_events').update({ error: step.slice(0, 100) }).eq('id', eventRecord.id).catch(() => {});
+    }
+  };
   _log("START text=" + text?.slice(0, 30));
 
   try {
@@ -1008,11 +1014,18 @@ export default async function handler(
       try {
         await Promise.race([workPromise, timeoutPromise]);
       } catch (processingError) {
-        console.error("[whatsapp] Processing timed out or failed:", processingError);
+        const errMsg = processingError instanceof Error ? processingError.message : String(processingError);
+        console.error("[whatsapp] Processing timed out or failed:", errMsg);
         Sentry.captureException(processingError, {
           tags: { handler: 'processing_timeout' },
           extra: { sender: from },
         });
+        // Mark event as failed so it's visible in the database
+        if (supabase && eventRecord?.id) {
+          await supabase.from('whatsapp_webhook_events').update({
+            error: errMsg.slice(0, 500),
+          }).eq('id', eventRecord.id).catch(() => {});
+        }
       }
     } catch (pre200Error) {
       // Catch any error that occurs BEFORE res.status(200).json() is called.
