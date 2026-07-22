@@ -237,6 +237,7 @@ export default function CartDeliveryClient({
           price: item.price ?? 0,
 	          estimatedTime: item.estimatedTime ?? 0,
 	          weight: item.weight ?? 0,
+	          modelVolumeMm3: (item as { modelVolumeMm3?: number }).modelVolumeMm3 ?? 0,
 	          difficultyFactor: item.difficultyFactor ?? 1,
 	          dimensions: item.dimensions ?? { x: 0, y: 0, z: 0 },
         })),
