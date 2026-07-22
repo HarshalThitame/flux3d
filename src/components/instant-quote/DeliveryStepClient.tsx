@@ -264,7 +264,7 @@ export default function DeliveryStepClient({
         totalPrice: result.grandTotal ?? result.totalPrice ?? draft.grandTotal ?? draft.finalPrice,
       }
       sessionStorage.setItem('flux3d-order-success', JSON.stringify(orderData))
-      router.push('/order-success')
+      router.replace(`/my-orders/${result.id}/pay`)
     } catch (error) {
       setToast({
         type: 'error',
