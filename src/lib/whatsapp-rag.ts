@@ -92,7 +92,16 @@ function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) return null
-  cachedServiceClient = createClient(url, key)
+  cachedServiceClient = createClient(url, key, {
+    global: {
+      fetch: (url: RequestInfo | URL, options?: RequestInit) => {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 15000)
+        return fetch(url, { ...options, signal: controller.signal })
+          .finally(() => clearTimeout(timeout))
+      },
+    },
+  })
   return cachedServiceClient
 }
 
