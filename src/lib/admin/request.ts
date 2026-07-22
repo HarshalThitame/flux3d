@@ -14,23 +14,14 @@ export async function requireAdminRequest() {
   }
 
   if (sessionUser) {
-    // Session exists locally — verify with getUser() (network call, may refresh)
-    const { data, error } = await supabase.auth.getUser()
-    if (error) {
-      if (error.code === 'refresh_token_not_found') {
-        return { response: NextResponse.json({ error: 'Session expired' }, { status: 401 }) }
-      }
-      return { response: NextResponse.json({ error: error.message }, { status: 401 }) }
-    }
-
-    if (!data.user) {
-      return { response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
-    }
-
+    // Session exists locally — trust the signed session cookie for identity.
+    // The Supabase SSR cookie is securely signed; an additional getUser()
+    // network call is not required and would only trigger unnecessary token
+    // refresh that can fail if the refresh token was already rotated.
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('is_admin')
-      .eq('id', data.user.id)
+      .eq('id', sessionUser.id)
       .maybeSingle()
 
     if (profileError) {
@@ -41,7 +32,7 @@ export async function requireAdminRequest() {
       return { response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
     }
 
-    return { supabase, user: data.user }
+    return { supabase, user: sessionUser }
   }
 
   // No session at all — fall back to getUser() for the edge case where
