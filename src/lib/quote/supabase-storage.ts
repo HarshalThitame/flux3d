@@ -35,39 +35,67 @@ export async function uploadFileToSupabaseStorage(
   quoteId: string,
   onProgress: (progress: number) => void
 ): Promise<UploadState> {
-  const formData = new FormData()
-  formData.append('file', file)
-  formData.append('quoteId', quoteId)
+  onProgress(5)
+
+  const urlResponse = await fetch('/api/quote/upload-url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fileName: file.name, fileSize: file.size, quoteId }),
+  })
+
+  if (!urlResponse.ok) {
+    const body = await urlResponse.json().catch(() => ({ error: 'Failed to initialize upload.' }))
+    throw new Error(body.error || 'Failed to initialize upload.')
+  }
+
+  const { signedUrl, path } = (await urlResponse.json()) as {
+    signedUrl: string
+    path: string
+    extension: string
+  }
 
   onProgress(15)
 
-  const response = await fetch('/api/quote/upload', {
-    method: 'POST',
-    body: formData,
+  await new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('PUT', signedUrl)
+    xhr.setRequestHeader('Content-Type', 'application/octet-stream')
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const pct = Math.round(15 + (event.loaded / event.total) * 75)
+        onProgress(pct)
+      }
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onProgress(90)
+        resolve()
+      } else {
+        reject(new Error(`Upload failed (HTTP ${xhr.status}).`))
+      }
+    }
+
+    xhr.onerror = () => reject(new Error('Upload failed due to a network error.'))
+    xhr.onabort = () => reject(new Error('Upload was aborted.'))
+    xhr.send(file)
   })
 
-  onProgress(90)
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({ error: 'Upload failed.' }))
-    throw new Error(body.error || 'Upload failed.')
-  }
-
-  const data = (await response.json()) as { path: string; extension: string; size: number }
   onProgress(100)
 
   void trackFeatureUsage(userId, 'stl_uploaded', {
     quoteId,
     fileName: file.name,
-    extension: data.extension,
-    sizeBytes: data.size,
-    path: data.path,
+    extension: path.split('.').pop() ?? '',
+    sizeBytes: file.size,
+    path,
   }).catch(() => {})
 
   return {
     status: 'success',
     progress: 100,
-    path: data.path,
+    path,
   }
 }
 

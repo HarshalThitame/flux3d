@@ -223,6 +223,24 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
     throw new Error(updateError.message)
   }
 
+  // Track the file in model_files so it's not treated as orphaned
+  const fileName = safeFileUrl.split('/').pop() || `${input.quoteId ?? 'model'}.stl`
+  const { error: modelFileError } = await adminSupabase.from('model_files').upsert(
+    {
+      user_id: auth.user.id,
+      file_name: fileName,
+      file_url: safeFileUrl,
+      material: input.material.trim(),
+      status: 'ordered',
+      uploaded_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id,file_url', ignoreDuplicates: false }
+  )
+
+  if (modelFileError) {
+    console.error('[orders] Failed to track model file:', modelFileError)
+  }
+
   // Create a quote version snapshot for the approval workflow
   const { error: quoteVersionError } = await adminSupabase.from('quote_versions').insert({
     quote_id: `F3D-${orderNumber}`,
