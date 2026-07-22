@@ -4,17 +4,22 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Banknote, FileText, PackageCheck, Printer, Save, Truck } from 'lucide-react'
+import { ArrowLeft, Banknote, ChevronDown, ChevronUp, Copy, ExternalLink, FileText, PackageCheck, Printer, Save, Truck } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import { formatShopPrice } from '@/lib/shop/selection'
 import {
   formatShopOrderDate,
   formatShopOrderDateTime,
+  formatShopPriceFromPaise,
   getShopFulfilmentStatusClasses,
   getShopFulfilmentStatusLabel,
   getShopOrderLineTotal,
   getShopOrderStatusClasses,
   getShopOrderStatusLabel,
+  getShopPaymentMethodLabel,
+  getShopPaymentProviderLabel,
+  getShopPaymentRefundStatusClasses,
+  getShopPaymentRefundStatusLabel,
   getShopPaymentStatusClasses,
   getShopPaymentStatusLabel,
   SHOP_FULFILMENT_PROGRESS,
@@ -22,6 +27,7 @@ import {
   type ShopAdminOrder,
   type ShopOrderStatus,
   type ShopFulfilmentStatus,
+  type ShopPaymentAttempt,
   type ShopPaymentStatus,
 } from '@/lib/shop/orders'
 
@@ -42,8 +48,260 @@ function getDateInputValue(value: string | null) {
   return value ? value.slice(0, 10) : ''
 }
 
+function razorpayDashboardUrl(kind: 'order' | 'payment', id: string | null | undefined) {
+  if (!id) return null
+  if (kind === 'order') return `https://dashboard.razorpay.com/app/orders/${id}`
+  return `https://dashboard.razorpay.com/app/payments/${id}`
+}
+
+function CopyableId({ value, label, href }: { value: string | null | undefined; label: string; href?: string | null }) {
+  const [copied, setCopied] = useState(false)
+  if (!value) {
+    return (
+      <div className="flex flex-col">
+        <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">{label}</span>
+        <span className="mt-1 text-sm text-[#6F7192]">—</span>
+      </div>
+    )
+  }
+  const handleCopy = () => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      void navigator.clipboard.writeText(value).then(() => {
+        setCopied(true)
+        window.setTimeout(() => setCopied(false), 1500)
+      })
+    }
+  }
+  return (
+    <div className="flex flex-col">
+      <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">{label}</span>
+      <div className="mt-1 flex items-center gap-2">
+        <code className="break-all rounded-md bg-gray-50 px-2 py-1 font-mono text-xs text-[#0F1B3D]">{value}</code>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="grid h-7 w-7 place-items-center rounded-md border border-gray-200 bg-white text-[#6F7192] transition hover:border-[#6d28d9]/30 hover:text-[#6d28d9]"
+          aria-label={`Copy ${label}`}
+          title={copied ? 'Copied' : `Copy ${label}`}
+        >
+          <Copy className="h-3.5 w-3.5" />
+        </button>
+        {href && (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="grid h-7 w-7 place-items-center rounded-md border border-gray-200 bg-white text-[#6F7192] transition hover:border-[#6d28d9]/30 hover:text-[#6d28d9]"
+            aria-label={`Open ${label} on Razorpay`}
+            title="Open in Razorpay dashboard"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PaymentInfoSection({
+  order,
+  paymentAttempt,
+  showSnapshot,
+  onToggleSnapshot,
+}: {
+  order: ShopAdminOrder
+  paymentAttempt: ShopPaymentAttempt | null
+  showSnapshot: boolean
+  onToggleSnapshot: () => void
+}) {
+  const providerLabel = getShopPaymentProviderLabel(order.payment_provider)
+  const methodLabel = getShopPaymentMethodLabel(order.payment_method ?? paymentAttempt?.payment_method ?? null)
+  const purposeLabel = order.payment_purpose === 'shop_order' ? 'Shop Order' : (order.payment_purpose ?? '—')
+  const totalPaise = order.payment_amount_paise > 0 ? order.payment_amount_paise : order.total_amount_paise || Math.round(order.total_amount * 100)
+  const totalDisplay = totalPaise > 0
+    ? formatShopPriceFromPaise(totalPaise, order.payment_currency)
+    : formatShopPrice(order.total_amount)
+
+  const showFailure =
+    order.payment_status === 'failed' || order.payment_status === 'cancelled'
+  const failureCode = paymentAttempt?.failure_code ?? null
+  const failureDescription = paymentAttempt?.failure_description ?? null
+  const hasRefund = order.payment_refund_status && order.payment_refund_status !== 'none'
+  const snapshot = order.payment_snapshot
+  const hasSnapshot = snapshot && Object.keys(snapshot).length > 0
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="!text-base font-bold text-[#0F1B3D]">Payment Info</h2>
+          <p className="mt-1 text-xs text-[#6F7192]">Complete payment lifecycle and provider metadata.</p>
+        </div>
+        <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getShopPaymentStatusClasses(order.payment_status)}`}>
+          {getShopPaymentStatusLabel(order.payment_status)}
+        </span>
+      </div>
+
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3">
+          <div className="grid h-10 w-10 place-items-center rounded-lg bg-white text-[#6d28d9] shadow-sm">
+            <Banknote className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Provider</div>
+            <div className="mt-0.5 text-sm font-semibold text-[#0F1B3D]">{providerLabel}</div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+          <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Amount</div>
+          <div className="mt-1 text-lg font-bold text-[#0F1B3D]">{totalDisplay}</div>
+          <div className="text-[11px] text-[#6F7192]">{order.payment_currency || 'INR'}</div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div>
+          <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Payment Method</div>
+          <div className="mt-1 text-sm font-semibold text-[#0F1B3D]">{methodLabel}</div>
+        </div>
+        <div>
+          <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Purpose</div>
+          <div className="mt-1 text-sm font-semibold text-[#0F1B3D]">{purposeLabel}</div>
+        </div>
+        <div>
+          <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Attempts</div>
+          <div className="mt-1 text-sm font-semibold text-[#0F1B3D]">
+            {paymentAttempt?.attempt_number ?? 1}
+            {paymentAttempt?.status ? ` · ${paymentAttempt.status}` : ''}
+          </div>
+        </div>
+      </div>
+
+      <div className="my-4 border-t border-gray-100" />
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <CopyableId
+          label="Provider Order ID"
+          value={order.provider_order_id}
+          href={razorpayDashboardUrl('order', order.provider_order_id)}
+        />
+        <CopyableId
+          label="Provider Payment ID"
+          value={order.provider_payment_id}
+          href={razorpayDashboardUrl('payment', order.provider_payment_id)}
+        />
+        {order.payment_id && (
+          <CopyableId label="Local Payment ID" value={order.payment_id} />
+        )}
+        {paymentAttempt && (
+          <CopyableId label="Payment Attempt ID" value={paymentAttempt.id} />
+        )}
+      </div>
+
+      <div className="my-4 border-t border-gray-100" />
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div>
+          <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Order Placed</div>
+          <div className="mt-1 text-sm font-semibold text-[#0F1B3D]">{formatShopOrderDateTime(order.placed_at)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Verified At</div>
+          <div className="mt-1 text-sm font-semibold text-[#0F1B3D]">
+            {order.payment_verified_at ? formatShopOrderDateTime(order.payment_verified_at) : '—'}
+          </div>
+        </div>
+        <div>
+          <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Failed At</div>
+          <div className="mt-1 text-sm font-semibold text-[#0F1B3D]">
+            {order.payment_failed_at ? formatShopOrderDateTime(order.payment_failed_at) : '—'}
+          </div>
+        </div>
+      </div>
+
+      {hasRefund && (
+        <>
+          <div className="my-4 border-t border-gray-100" />
+          <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-orange-700">Refund</div>
+                <div className="mt-1 text-sm font-bold text-orange-900">
+                  {getShopPaymentRefundStatusLabel(order.payment_refund_status)}
+                </div>
+              </div>
+              <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getShopPaymentRefundStatusClasses(order.payment_refund_status)}`}>
+                {getShopPaymentRefundStatusLabel(order.payment_refund_status)}
+              </span>
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-orange-700">Refunded Amount</div>
+                <div className="mt-1 text-sm font-bold text-orange-900">
+                  {order.payment_refund_amount_paise > 0
+                    ? formatShopPriceFromPaise(order.payment_refund_amount_paise, order.payment_currency)
+                    : '—'}
+                </div>
+              </div>
+              {paymentAttempt?.metadata && typeof (paymentAttempt.metadata as Record<string, unknown>).refund === 'object' && (
+                <div>
+                  <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-orange-700">Refund ID</div>
+                  <div className="mt-1 font-mono text-xs text-orange-900">
+                    {String(((paymentAttempt.metadata as Record<string, unknown>).refund as Record<string, unknown>)?.id ?? '—')}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {showFailure && (failureCode || failureDescription) && (
+        <>
+          <div className="my-4 border-t border-gray-100" />
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+            <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-rose-700">Failure Details</div>
+            {failureCode && (
+              <div className="mt-2 grid gap-1">
+                <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-rose-700">Error Code</span>
+                <code className="rounded-md bg-white px-2 py-1 font-mono text-xs text-rose-900">{failureCode}</code>
+              </div>
+            )}
+            {failureDescription && (
+              <div className="mt-2">
+                <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-rose-700">Description</span>
+                <div className="mt-1 text-sm text-rose-900">{failureDescription}</div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {hasSnapshot && (
+        <>
+          <div className="my-4 border-t border-gray-100" />
+          <button
+            type="button"
+            onClick={onToggleSnapshot}
+            className="inline-flex items-center gap-2 text-xs font-semibold text-[#6d28d9] hover:underline"
+          >
+            {showSnapshot ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            {showSnapshot ? 'Hide raw payment data' : 'Show raw payment data'}
+          </button>
+          {showSnapshot && (
+            <pre className="mt-3 max-h-72 overflow-auto rounded-xl border border-gray-100 bg-gray-900 p-4 text-[11px] leading-relaxed text-gray-100">
+              {JSON.stringify(snapshot, null, 2)}
+            </pre>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 export default function AdminShopOrderDetailClient({ orderId }: { orderId: string }) {
   const [order, setOrder] = useState<ShopAdminOrder | null>(null)
+  const [paymentAttempt, setPaymentAttempt] = useState<ShopPaymentAttempt | null>(null)
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<AdminToastState>(null)
   const [trackingForm, setTrackingForm] = useState<TrackingForm>({
@@ -54,14 +312,16 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
   })
   const [adminNotes, setAdminNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const [showSnapshot, setShowSnapshot] = useState(false)
 
   const loadOrder = useCallback(async () => {
     setLoading(true)
     try {
       const response = await fetch(`/api/3d-shop/admin/orders/${orderId}`)
-      const data = await response.json().catch(() => ({})) as { order?: ShopAdminOrder; error?: string }
+      const data = (await response.json().catch(() => ({}))) as { order?: ShopAdminOrder; paymentAttempt?: ShopPaymentAttempt | null; error?: string }
       if (!response.ok || !data.order) throw new Error(data.error || 'Failed to load order.')
       setOrder(data.order)
+      setPaymentAttempt(data.paymentAttempt ?? null)
       setTrackingForm({
         courier_name: data.order.courier_name ?? '',
         tracking_number: data.order.tracking_number ?? '',
@@ -103,9 +363,10 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      const data = await response.json().catch(() => ({})) as { order?: ShopAdminOrder; error?: string }
+      const data = (await response.json().catch(() => ({}))) as { order?: ShopAdminOrder; paymentAttempt?: ShopPaymentAttempt | null; error?: string }
       if (!response.ok || !data.order) throw new Error(data.error || 'Failed to update order.')
       setOrder(data.order)
+      if (data.paymentAttempt !== undefined) setPaymentAttempt(data.paymentAttempt)
       setToast({ type: 'success', message: 'Order updated.' })
       return data.order
     } catch (error) {
@@ -302,18 +563,34 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
             </div>
 
             <div className="rounded-2xl border border-gray-200 bg-white p-5">
-              <h2 className="!text-base font-bold text-[#0F1B3D]">Payment Info</h2>
-              <div className="mt-4 flex items-center gap-3">
-                <Banknote className="h-5 w-5 text-[#6d28d9]" />
-                <div>
-                  <div className="font-semibold text-[#0F1B3D]">Cash on Delivery</div>
-                  <span className={`mt-2 inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getShopPaymentStatusClasses(order.payment_status)}`}>
-                    {getShopPaymentStatusLabel(order.payment_status)}
+              <h2 className="!text-base font-bold text-[#0F1B3D]">Order Source</h2>
+              <div className="mt-4 space-y-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#6F7192]">Channel</span>
+                  <span className="font-semibold text-[#0F1B3D]">{order.order_source ?? '—'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#6F7192]">Last updated</span>
+                  <span className="font-semibold text-[#0F1B3D]">
+                    {order.updated_at ? formatShopOrderDateTime(order.updated_at) : '—'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#6F7192]">Invoice #</span>
+                  <span className="font-semibold text-[#0F1B3D]">
+                    {(order as unknown as { invoice_number?: string | null }).invoice_number ?? order.order_number}
                   </span>
                 </div>
               </div>
             </div>
           </div>
+
+          <PaymentInfoSection
+            order={order}
+            paymentAttempt={paymentAttempt}
+            showSnapshot={showSnapshot}
+            onToggleSnapshot={() => setShowSnapshot((current) => !current)}
+          />
         </section>
 
         <aside className="space-y-6">
@@ -445,7 +722,16 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
             </div>
             <div>
               <div className="text-xs font-bold uppercase tracking-[0.15em] text-[#6F7192]">Payment</div>
-              <div className="mt-2 text-sm font-bold">Cash on Delivery</div>
+              <div className="mt-2 text-sm font-bold">
+                {getShopPaymentProviderLabel(order.payment_provider)} · {getShopPaymentMethodLabel(order.payment_method ?? paymentAttempt?.payment_method ?? null)}
+              </div>
+              <div className="mt-1 text-xs text-[#6F7192]">
+                {getShopPaymentStatusLabel(order.payment_status)}
+                {order.provider_payment_id ? ` · ${order.provider_payment_id}` : ''}
+              </div>
+              {order.payment_verified_at && (
+                <div className="mt-1 text-xs text-[#6F7192]">Verified {formatShopOrderDateTime(order.payment_verified_at)}</div>
+              )}
             </div>
           </div>
 
