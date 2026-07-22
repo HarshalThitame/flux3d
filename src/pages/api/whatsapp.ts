@@ -450,7 +450,8 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     name: `msg from ${from?.slice(-4)}`,
   });
 
-  console.log("[whatsapp] processIncomingMessage START for", from?.slice(-4), "text:", text?.slice(0, 50));
+  const _log = (step: string) => console.log("[whatsapp] PROC", from?.slice(-4), step);
+  _log("START text=" + text?.slice(0, 30));
 
   try {
     // Sender allow-list: only reply if sender phone exists in profiles
@@ -458,6 +459,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     let userId: string | null = null;
     if (supabase) {
       try {
+        _log("profile_lookup");
         const { data: profile } = await supabase
           .from("profiles")
           .select("id, whatsapp_messages_sent")
@@ -469,6 +471,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         console.error("[whatsapp] Failed to lookup profile:", error);
       }
     }
+    _log("profile_done recognized=" + senderRecognized);
 
     // Load conversation history for context-aware replies
     let sessionHistory: Array<ChatCompletionMessageParam> = [];
@@ -495,7 +498,9 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       }
     }
 
+    _log("session_done");
     const businessSettings = (await getCachedBusinessSettings()) || FALLBACK_SETTINGS;
+    _log("settings_done");
     let knowledgeContext = "";
     let ragMode: 'database' | 'seed' | 'none' = 'none';
     let ragConfidence = 0;
@@ -710,8 +715,11 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       }
     }
 
+    _log("before_send kind=" + finalReplyKind);
     try {
+      _log("calling_send");
       await sendWhatsAppMessage(from, finalReply);
+      _log("send_success");
       didSendReply = true
       auditRecord.response_metadata = {
         ...auditRecord.response_metadata,
@@ -763,7 +771,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       });
     }
 
-    console.log("[whatsapp] processIncomingMessage END for", from?.slice(-4), "| replied:", didSendReply, "| kind:", finalReplyKind);
+    _log("END replied=" + didSendReply + " kind=" + finalReplyKind);
 
     // Mark as processed
     if (supabase && eventRecord?.id) {
@@ -967,10 +975,22 @@ export default async function handler(
       });
       pendingWorkMap.set(workKey, workPromise);
 
-      // Await processing to prevent Vercel from terminating the function
-      // before async work completes. WhatsApp has a 20-second timeout for
-      // the 200 response — we already sent it above.
-      await workPromise;
+      // Await processing (with 30s hard timeout) to prevent Vercel from
+      // terminating the function before async work completes. WhatsApp has
+      // a 20-second timeout for the 200 response — we already sent it above.
+      const PROCESSING_TIMEOUT_MS = 30_000;
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Processing timeout (30s)')), PROCESSING_TIMEOUT_MS)
+      );
+      try {
+        await Promise.race([workPromise, timeoutPromise]);
+      } catch (processingError) {
+        console.error("[whatsapp] Processing timed out or failed:", processingError);
+        Sentry.captureException(processingError, {
+          tags: { handler: 'processing_timeout' },
+          extra: { sender: from },
+        });
+      }
     } catch (pre200Error) {
       // Catch any error that occurs BEFORE res.status(200).json() is called.
       // Log it, but ALWAYS return 200 to stop Meta from retrying.
