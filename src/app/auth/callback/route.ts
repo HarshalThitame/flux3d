@@ -22,6 +22,11 @@ export async function GET(request: NextRequest) {
       getSupabaseUrl(),
       getSupabasePublishableKey(),
       {
+        cookieOptions: {
+          path: '/',
+          maxAge: 400 * 24 * 60 * 60,
+          sameSite: 'lax',
+        },
         cookies: {
           getAll() {
             return request.cookies.getAll()

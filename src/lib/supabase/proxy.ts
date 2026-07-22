@@ -3,27 +3,38 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/config'
 
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({
-    request: { headers: request.headers },
-  })
+  let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
     getSupabaseUrl(),
     getSupabasePublishableKey(),
     {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: false,
+      cookieOptions: {
+        path: '/',
+        maxAge: 400 * 24 * 60 * 60,
+        sameSite: 'lax',
+        httpOnly: false,
       },
       cookies: {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
+        setAll(cookiesToSet, headers) {
+          cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value)
-            response.cookies.set(name, value, options)
           })
+
+          supabaseResponse = NextResponse.next({ request })
+
+          cookiesToSet.forEach(({ name, value, options }) => {
+            supabaseResponse.cookies.set(name, value, options)
+          })
+
+          if (headers) {
+            Object.entries(headers).forEach(([key, value]) => {
+              supabaseResponse.headers.set(key, value)
+            })
+          }
         },
       },
     }
@@ -35,5 +46,5 @@ export async function updateSession(request: NextRequest) {
     // Invalid refresh token — session will be cleared automatically
   }
 
-  return response
+  return supabaseResponse
 }
