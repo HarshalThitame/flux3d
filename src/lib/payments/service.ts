@@ -34,6 +34,7 @@ import {
 import {
   createRazorpayOrder,
   createRazorpayRefund,
+  getRazorpayConfig,
   listRazorpayPayments,
   makeCheckoutSession,
   makeReceipt,
@@ -48,6 +49,7 @@ import type {
   PaymentPurpose,
   PaymentStatus,
   RazorpayCheckoutSession,
+  RazorpayRefundResponse,
 } from './types'
 import {
   calculateRefundableBalance,
@@ -928,6 +930,12 @@ export async function initiateRefund(params: {
     throw new Error('Refund amount exceeds the refundable balance.')
   }
 
+  // Fail fast if Razorpay is not configured — no DB writes until gateway is reachable
+  const razorpayConfig = getRazorpayConfig()
+  if (!razorpayConfig) {
+    throw new Error('Razorpay is not configured.')
+  }
+
   const refundRow = await insertPaymentRefund({
     payment_attempt_id: attempt.id,
     provider_refund_id: null,
@@ -941,17 +949,37 @@ export async function initiateRefund(params: {
     failed_at: null,
   })
 
-  const response = await createRazorpayRefund({
-    paymentId: attempt.provider_payment_id || '',
-    amountPaise: params.amountPaise,
-    reason: params.reason,
-    speed: params.speed,
-    notes: {
-      payment_attempt_id: attempt.id,
-      internal_order_id: attempt.internal_order_id,
-      internal_order_type: attempt.internal_order_type,
-    },
-  })
+  let response: RazorpayRefundResponse
+  try {
+    response = await createRazorpayRefund({
+      paymentId: attempt.provider_payment_id || '',
+      amountPaise: params.amountPaise,
+      reason: params.reason,
+      speed: params.speed,
+      notes: {
+        payment_attempt_id: attempt.id,
+        internal_order_id: attempt.internal_order_id,
+        internal_order_type: attempt.internal_order_type,
+      },
+    })
+  } catch (razorpayError) {
+    const errorMessage = razorpayError instanceof Error ? razorpayError.message : 'Refund creation failed at payment gateway.'
+    await updatePaymentRefund(refundRow.id, {
+      status: 'failed',
+      provider_response: { error: errorMessage },
+      failed_at: new Date().toISOString(),
+    })
+    await insertPaymentAuditLog({
+      actor_id: params.initiatedByAdminId,
+      actor_role: 'admin',
+      action: 'refund_initiated',
+      entity_type: 'payment_refund',
+      entity_id: refundRow.id,
+      previous_state: { status: 'created' },
+      new_state: { status: 'failed', error: errorMessage },
+    })
+    throw new Error(`Refund failed at payment gateway: ${errorMessage}`)
+  }
 
   const updatedRefund = await updatePaymentRefund(refundRow.id, {
     provider_refund_id: response.id,
@@ -959,7 +987,7 @@ export async function initiateRefund(params: {
     provider_response: response,
   })
 
-  const nextStatus = params.amountPaise === attempt.amount_paise ? 'pending' : 'partially_refunded'
+  const nextStatus = params.amountPaise === attempt.amount_paise ? 'refunded' : 'partially_refunded'
   await updatePaymentAttemptStatus(
     attempt.id,
     attempt.status,
