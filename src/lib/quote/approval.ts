@@ -1,5 +1,18 @@
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 
+async function assertIsAdmin(userId: string) {
+  const supabase = createAdminSupabaseClient()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (!profile?.is_admin) {
+    throw new Error('Only admin users can approve quotes.')
+  }
+}
+
 export async function isQuoteApproved(orderId: string): Promise<boolean> {
   const supabase = createAdminSupabaseClient()
   const { data, error } = await supabase
@@ -22,6 +35,8 @@ export async function approveQuoteVersion(
   orderId: string,
   approvedByAdminId: string
 ) {
+  await assertIsAdmin(approvedByAdminId)
+
   const supabase = createAdminSupabaseClient()
   const { data: latest } = await supabase
     .from('quote_versions')
@@ -49,6 +64,6 @@ export async function approveQuoteVersion(
 
   await supabase
     .from('orders')
-    .update({ status: 'approved', updated_at: new Date().toISOString() })
+    .update({ status: 'confirmed', updated_at: new Date().toISOString() })
     .eq('id', orderId)
 }

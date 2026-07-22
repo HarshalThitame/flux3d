@@ -383,6 +383,20 @@ function CartEnabledWorkspace({
           (progress) => setUploadState({ status: 'uploading', progress })
         )
         setUploadState(uploadResult)
+
+        void fetch('/api/quote/model-metadata', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileUrl: uploadResult.path,
+            volumeMm3: parsedModel.volumeMm3,
+            dimensionsMm: parsedModel.dimensionsMm,
+            triangleCount: parsedModel.triangleCount,
+            fileName: file.name,
+            fileSize: file.size,
+            extension: parsedModel.extension,
+          }),
+        }).catch(() => {})
       } else {
         setUploadState({
           status: 'success',
@@ -543,6 +557,7 @@ function CartEnabledWorkspace({
       price: priceBreakdown?.finalPrice ?? 0,
       estimatedTime: priceBreakdown?.estimatedHours ?? 0,
       weight: priceBreakdown?.materialWeightGrams ?? 0,
+      modelVolumeMm3: selectedModel?.volumeMm3 ?? 0,
       difficultyFactor: priceBreakdown?.difficultyFactor ?? selectedMaterial.difficultyFactor,
       dimensions: priceBreakdown?.dimensionsMm ?? { x: 0, y: 0, z: 0 },
       config: {

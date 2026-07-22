@@ -21,7 +21,10 @@ import {
   roundMoney,
   type PromotionInput,
 } from '@/lib/quote/pricing-waterfall'
+import { fetchMaterialForQuote } from '@/lib/quote/server-pricing'
 import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
+import { redactSensitiveValues } from '@/lib/security/redact'
+import { verifyModelVolume } from '@/lib/storage/verify-metadata'
 
 type CartOrderItem = {
   quoteId: string
@@ -51,6 +54,7 @@ type CartOrderItem = {
   price: number
   estimatedTime: number
   weight: number
+  modelVolumeMm3?: number
   difficultyFactor?: number
   dimensions: {
     x: number
@@ -254,10 +258,39 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
 
   const groupId = crypto.randomUUID()
   const settings = await getSettings()
-  const preparedItems: PreparedCartOrderItem[] = input.items.map((item) => {
+  const preparedItems: PreparedCartOrderItem[] = []
+
+  for (const item of input.items) {
     const normalizedQuantity = Math.max(1, Math.floor(Number(item.quantity ?? 1)))
-    const itemMaterialCost = normalizeNumber(item.materialCost ?? 0, 'material cost')
-    const itemMachineCost = normalizeNumber(item.machineCost ?? 0, 'machine cost')
+
+    if (item.modelVolumeMm3 && item.modelVolumeMm3 > 0 && item.fileUrl) {
+      const safeFileUrl = normalizeOwnedStoragePath(item.fileUrl, auth.user.id)
+      const volumeCheck = await verifyModelVolume(safeFileUrl, item.modelVolumeMm3)
+      if (!volumeCheck.valid) {
+        throw new Error(volumeCheck.error ?? `Volume verification failed for "${item.fileName}".`)
+      }
+    }
+
+    const material = item.modelVolumeMm3
+      ? await fetchMaterialForQuote(item.material)
+      : null
+
+    let itemMaterialCost: number
+    let itemMachineCost: number
+    let estimatedMinutes: number
+
+    if (material && item.modelVolumeMm3 && item.modelVolumeMm3 > 0) {
+      const weightGrams = (item.modelVolumeMm3 * material.density) / 1000
+      const totalWeight = weightGrams * normalizedQuantity
+      itemMaterialCost = normalizeNumber(totalWeight * material.pricePerGram, 'material cost')
+      estimatedMinutes = (totalWeight / (settings.printSpeedGramsPerHour || 20)) * 60
+      itemMachineCost = normalizeNumber((estimatedMinutes / 60) * material.machineRate, 'machine cost')
+    } else {
+      itemMaterialCost = normalizeNumber(item.materialCost ?? 0, 'material cost')
+      itemMachineCost = normalizeNumber(item.machineCost ?? 0, 'machine cost')
+      estimatedMinutes = item.estimatedTime * 60
+    }
+
     const postProcessingCharges = normalizeNumber(item.postProcessingCharges ?? 0, 'post processing charges')
     const providedOverheadPercent = Number(item.overheadPercentage ?? 0)
     const overheadPercent = normalizeNumber(
@@ -281,7 +314,7 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
       defaultDeliveryCharge: settings.defaultDeliveryCharge,
     })
 
-    return {
+    preparedItems.push({
       ...item,
       normalizedQuantity,
       materialCost: itemMaterialCost,
@@ -293,8 +326,8 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
       marginPercent,
       marginAmount: itemWaterfall.marginAmount,
       totalPrice: itemWaterfall.priceBeforeDiscount,
-    }
-  })
+    })
+  }
   const basePrices = preparedItems.map((item) => item.totalPrice)
   const totalPriceTotal = roundMoney(basePrices.reduce((sum, price) => sum + price, 0))
   const cartTier = getHighestCartDiscountTier(
@@ -531,7 +564,10 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
     throw new Error('Order submission did not return a confirmation. Please try again.')
   }
 
-  for (const order of insertedOrders) {
+  for (let i = 0; i < insertedOrders.length; i++) {
+    const order = insertedOrders[i]
+    const cartItem = input.items[i]
+
     if (order.serial_number == null || !order.created_at) {
       throw new Error('Order submission returned incomplete confirmation details. Please try again.')
     }
@@ -547,6 +583,54 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
 
     if (updateError) {
       throw new Error(updateError.message)
+    }
+
+    const fileName = cartItem?.fileName ?? `item-${order.id.slice(0, 8)}.stl`
+
+    const { error: modelFileError } = await adminSupabase.from('model_files').upsert(
+      {
+        user_id: auth.user.id,
+        file_name: fileName,
+        file_url: cartItem?.fileUrl ?? '',
+        material: cartItem?.material?.trim() ?? '',
+        status: 'ordered',
+        uploaded_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,file_url', ignoreDuplicates: false }
+    )
+
+    if (modelFileError) {
+      console.error('[cart-orders] Failed to track model file:', modelFileError)
+    }
+
+    const { error: quoteVersionError } = await adminSupabase.from('quote_versions').insert({
+      quote_id: `F3D-${orderNumber}`,
+      order_id: order.id,
+      user_id: auth.user.id,
+      version_number: 1,
+      status: 'approved',
+      approved_at: new Date().toISOString(),
+      approved_by: auth.user.id,
+      pricing_snapshot: redactSensitiveValues({
+        totalPrice: cartItem?.totalPrice ?? 0,
+        finalPrice: cartItem?.finalPrice ?? 0,
+        grandTotal: cartItem?.grandTotal ?? 0,
+        materialCost: cartItem?.materialCost ?? 0,
+        machineCost: cartItem?.machineCost ?? 0,
+        postProcessingCharges: cartItem?.postProcessingCharges ?? 0,
+      }),
+      material_id: cartItem?.material?.trim() ?? '',
+      config: {},
+      model_metadata: redactSensitiveValues({
+        fileName: cartItem?.fileName ?? '',
+        fileSize: 0,
+        extension: cartItem?.fileName?.split('.').pop() ?? '',
+        dimensions: cartItem?.dimensions ?? { x: 0, y: 0, z: 0 },
+      }),
+    })
+
+    if (quoteVersionError) {
+      console.error('[cart-orders] Failed to create quote version:', quoteVersionError)
     }
   }
 
