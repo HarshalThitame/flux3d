@@ -247,7 +247,9 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
     order_id: insertedOrder.id,
     user_id: auth.user.id,
     version_number: 1,
-    status: 'pending_review',
+    status: 'approved',
+    approved_at: new Date().toISOString(),
+    approved_by: auth.user.id,
     pricing_snapshot: redactSensitiveValues(breakdown),
     material_id: input.material,
     config: {
