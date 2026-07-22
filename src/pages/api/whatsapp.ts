@@ -452,9 +452,9 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
 
   const _log = (step: string) => {
     console.log("[whatsapp] PROC", from?.slice(-4), step);
-    // Write progress to DB so we can see where it hangs (fire-and-forget)
+    // Write progress to DB so we can see where it hangs
     if (eventRecord?.id && supabase) {
-      void supabase.from('whatsapp_webhook_events').update({ error: step.slice(0, 100) }).eq('id', eventRecord.id);
+      supabase.from('whatsapp_webhook_events').update({ error: step.slice(0, 200) }).eq('id', eventRecord.id).then();
     }
   };
   _log("START text=" + text?.slice(0, 30));
@@ -512,6 +512,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     let ragConfidence = 0;
     let ragSources: Array<{ sourceKey: string; title: string; score: number; content: string }> = [];
     let retrievalLatencyMs: number | null = null;
+    _log("rag_start");
     if (WHATSAPP_RAG_ENABLED) {
       const retrievalStartedAt = Date.now();
       const rag = await getWhatsAppRagContext(text).catch((error) => {
@@ -524,6 +525,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       ragConfidence = rag.confidence;
       ragSources = rag.sources;
     }
+    _log("rag_done conf=" + ragConfidence);
 
     // Intent classification: use regex for unambiguous intents (saves GPT call)
     const regexIntent = detectWhatsAppIntent(text);
@@ -610,6 +612,8 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       return
     }
 
+    _log("intent=" + classified.intent);
+
     // Merge GPT keywords with regex-extracted keywords (deduped)
     const gptKeywords = classified.keywords
     const regexKeywords = extractSearchKeywords(text)
@@ -634,12 +638,14 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       responseTimeMinutes: null,
     });
 
+    _log("evaluate_model");
     // Use AI model when there's grounded data to work with:
     // RAG context above threshold, OR live structured data from DB
     const hasGroundedRag = Boolean(knowledgeContext) && ragConfidence >= WHATSAPP_RAG_CONFIDENCE_THRESHOLD;
     const hasLiveData = structuredData.totalMatches > 0;
     const shouldUseModel = (WHATSAPP_REPLY_TO_ALL || senderRecognized)
       && (hasGroundedRag || hasLiveData);
+    _log("use_model=" + shouldUseModel + " rag=" + hasGroundedRag + " live=" + hasLiveData);
 
     if (shouldUseModel) {
       const generationStartedAt = Date.now();
