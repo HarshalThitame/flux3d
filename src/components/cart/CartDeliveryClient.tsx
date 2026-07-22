@@ -11,6 +11,8 @@ import Toast, { type ToastState } from '@/components/quote/Toast'
 import { useCart } from '@/lib/cart/context'
 import type { AppUserProfile } from '@/lib/auth/server'
 import { normalizeOwnedStoragePath } from '@/lib/quote/storage-path'
+import { getCartFromStorage, getCartStorageKey } from '@/lib/cart/utils'
+import type { CartItem } from '@/lib/cart/types'
 import {
   addressesEqual,
   formatAddressSummary,
@@ -31,7 +33,11 @@ export default function CartDeliveryClient({
   savedAddresses,
 }: CartDeliveryClientProps) {
   const router = useRouter()
-  const { items, summary, clearItems, isLoading } = useCart()
+  const { items, summary, clearItems } = useCart()
+  const [localItems] = useState<CartItem[]>(() => {
+    const key = getCartStorageKey(user.id)
+    return getCartFromStorage(key)
+  })
   const [selectedAddressId, setSelectedAddressId] = useState<string | 'new'>(
     savedAddresses[0]?.id ?? 'new'
   )
@@ -78,10 +84,10 @@ export default function CartDeliveryClient({
   const cartDiscountPercent = Math.round(summary.cartDiscountPercent)
 
   useEffect(() => {
-    if (items.length === 0 && !confirmation && !isLoading) {
+    if (localItems.length === 0 && !confirmation) {
       router.replace('/cart')
     }
-  }, [items, confirmation, isLoading, router])
+  }, [localItems, confirmation, router])
 
   useEffect(() => {
     if (!toast) {
@@ -278,15 +284,7 @@ export default function CartDeliveryClient({
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FFFFFF]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#6d28d9] border-t-transparent" />
-      </div>
-    )
-  }
-
-  if (items.length === 0 && !confirmation) {
+  if (localItems.length === 0 && !confirmation) {
     return null
   }
 
