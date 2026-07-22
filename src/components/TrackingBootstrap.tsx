@@ -6,12 +6,14 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { getOrCreateSessionId } from '@/lib/tracking/sessionTracker'
 import { trackPageVisit } from '@/lib/tracking/pageVisit'
 
-type AuthUserResult = {
+type AuthSessionResult = {
   data?: {
-    user?: {
-      id?: string
+    session?: {
+      user?: {
+        id?: string
+      } | null
     } | null
-  }
+  } | null
 }
 
 function runWhenIdle(callback: () => void, timeout = 2500) {
@@ -50,9 +52,9 @@ export default function TrackingBootstrap() {
         const pageName = typeof document !== 'undefined' ? document.title : null
         const referrerUrl = typeof document !== 'undefined' ? document.referrer : null
 
-        void supabase.auth.getUser()
-          .then((result: AuthUserResult) => trackPageVisit({
-            user_id: result.data?.user?.id ?? null,
+        void supabase.auth.getSession()
+          .then((result: AuthSessionResult) => trackPageVisit({
+            user_id: result?.data?.session?.user?.id ?? null,
             session_id: sessionId,
             page_url: pageUrl,
             page_name: pageName,
