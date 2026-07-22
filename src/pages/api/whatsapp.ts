@@ -963,6 +963,29 @@ export default async function handler(
       const requestStartedAt = Date.now()
       res.status(200).json({ success: true })
 
+      // Send a quick acknowledgment to verify the WhatsApp API works
+      try {
+        const ackController = new AbortController();
+        const ackTimeout = setTimeout(() => ackController.abort(), 10000);
+        await fetch(`https://graph.facebook.com/${WHATSAPP_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            to: from,
+            type: 'text',
+            text: { body: `👍 Got your message! Processing...` },
+          }),
+          signal: ackController.signal,
+        }).finally(() => clearTimeout(ackTimeout));
+        console.log("[whatsapp] ACK sent to", from?.slice(-4));
+      } catch (ackError) {
+        console.error("[whatsapp] ACK failed:", ackError);
+      }
+
       const workKey = `webhook-${payloadHash.slice(0, 12)}`;
       const workPromise = processIncomingMessage({ supabase, payloadHash, payload, from, text: text!, eventRecord, requestStartedAt }).catch((error) => {
         console.error("[whatsapp] Async processing failed:", error)

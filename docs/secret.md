@@ -52,3 +52,9 @@
 | **Secret** | `aded32727cf9c09b879bf999caa05bffcb22686402b61ff00a662e330ffca35f` |
 
 > Both webhooks point to the same endpoint — the `SUPABASE_WEBHOOK_SECRET` is the shared secret sent in the `Authorization: Bearer` header.
+
+## Updated WhatsApp IDs
+| Variable | Value |
+|---|---|
+| `WHATSAPP_PHONE_NUMBER_ID` | `1099569106574377` |
+| `WABA_ID` | `1464389558768847` |
