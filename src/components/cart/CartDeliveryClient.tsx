@@ -73,7 +73,7 @@ export default function CartDeliveryClient({
         itemCount: confirmation.itemCount,
       }
       sessionStorage.setItem('flux3d-order-success', JSON.stringify(orderData))
-      router.push('/order-success')
+      router.replace(`/my-orders/${confirmation.orderId}/pay`)
     }
   }, [confirmation, router])
   const [lookupLoading, setLookupLoading] = useState(false)

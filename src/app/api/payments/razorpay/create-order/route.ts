@@ -10,6 +10,7 @@ type CreateOrderBody = {
   internalOrderType?: unknown
   internalOrderId?: unknown
   paymentPurpose?: unknown
+  expectedAmountPaise?: unknown
 }
 
 function normalizeText(value: unknown) {
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
     const internalOrderType = normalizeText(body.internalOrderType) as 'shop_order' | 'custom_quote'
     const internalOrderId = normalizeText(body.internalOrderId)
     const paymentPurpose = normalizeText(body.paymentPurpose) as 'shop_order' | 'custom_quote_full_payment' | 'custom_quote_deposit' | 'custom_quote_balance'
+    const expectedAmountPaise = Number(body.expectedAmountPaise)
 
     if (!internalOrderType || !internalOrderId) {
       return NextResponse.json({ error: 'Order details are required.' }, { status: 400 })
@@ -53,6 +55,7 @@ export async function POST(request: Request) {
       id: internalOrderId,
       customerId: authData.user.id,
       paymentPurpose: paymentPurpose || undefined,
+      ...(Number.isFinite(expectedAmountPaise) && expectedAmountPaise > 0 ? { expectedAmountPaise } : {}),
     })
 
     return NextResponse.json({
