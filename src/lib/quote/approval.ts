@@ -1,4 +1,5 @@
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { logQuoteEvent } from '@/lib/quote/audit'
 
 async function assertIsAdmin(userId: string) {
   const supabase = createAdminSupabaseClient()
@@ -61,6 +62,16 @@ export async function approveQuoteVersion(
     .eq('id', latest.id)
 
   if (error) throw new Error(error.message)
+
+  await logQuoteEvent({
+    quoteVersionId: latest.id,
+    orderId,
+    actorId: approvedByAdminId,
+    actorRole: 'admin',
+    eventType: 'approved',
+    previousStatus: 'pending_review',
+    newStatus: 'approved',
+  })
 
   await supabase
     .from('orders')

@@ -19,6 +19,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { roundMoney } from '@/lib/quote/pricing-waterfall'
 import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
+import { logQuoteEvent } from '@/lib/quote/audit'
 import { redactSensitiveValues } from '@/lib/security/redact'
 import { rateLimitCheck } from '@/lib/rate-limit'
 import { verifyModelVolume } from '@/lib/storage/verify-metadata'
@@ -259,30 +260,46 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
   }
 
   // Create a quote version snapshot for the approval workflow
-  const { error: quoteVersionError } = await adminSupabase.from('quote_versions').insert({
-    quote_id: `F3D-${orderNumber}`,
-    order_id: insertedOrder.id,
-    user_id: auth.user.id,
-    version_number: 1,
-    status: 'approved',
-    approved_at: new Date().toISOString(),
-    approved_by: auth.user.id,
-    pricing_snapshot: redactSensitiveValues(breakdown),
-    material_id: input.material,
-    config: {
-      materialId: input.material,
-      color: input.color,
-      infill: input.infill,
-      layerHeight: input.layerHeight,
-      quantity: normalizedQuantity,
-      postProcessingLevel: input.postProcessingLevel,
-      supports: input.supports,
-    },
-    model_metadata: redactSensitiveValues(input.modelMetadata),
-  })
+  const { data: insertedQuoteVersion, error: quoteVersionError } = await adminSupabase
+    .from('quote_versions')
+    .insert({
+      quote_id: `F3D-${orderNumber}`,
+      order_id: insertedOrder.id,
+      user_id: auth.user.id,
+      version_number: 1,
+      status: 'approved',
+      snapshot_schema_version: 1,
+      approved_at: new Date().toISOString(),
+      approved_by: auth.user.id,
+      pricing_snapshot: redactSensitiveValues(breakdown),
+      material_id: input.material,
+      config: {
+        materialId: input.material,
+        color: input.color,
+        infill: input.infill,
+        layerHeight: input.layerHeight,
+        quantity: normalizedQuantity,
+        postProcessingLevel: input.postProcessingLevel,
+        supports: input.supports,
+      },
+      model_metadata: redactSensitiveValues(input.modelMetadata),
+    })
+    .select('id')
+    .maybeSingle()
 
   if (quoteVersionError) {
     console.error('[orders] Failed to create quote version:', quoteVersionError)
+  } else if (insertedQuoteVersion?.id) {
+    await logQuoteEvent({
+      quoteVersionId: insertedQuoteVersion.id,
+      orderId: insertedOrder.id,
+      actorId: auth.user.id,
+      actorRole: 'customer',
+      eventType: 'created',
+      previousStatus: null,
+      newStatus: 'approved',
+      note: `Order ${orderNumber} placed via instant quote`,
+    })
   }
 
   void trackFeatureUsage(auth.user.id, 'order_placed', {

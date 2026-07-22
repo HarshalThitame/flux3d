@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminPermission } from '@/lib/admin/permissions'
 import { logAdminAction } from '@/lib/admin/auditLog'
+import { logQuoteEvent } from '@/lib/quote/audit'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +41,17 @@ export async function POST(
         updated_at: new Date().toISOString(),
       })
       .eq('id', latest.id)
+
+    await logQuoteEvent({
+      quoteVersionId: latest.id,
+      orderId: latest.order_id ?? null,
+      actorId: auth.user.id,
+      actorRole: 'admin',
+      eventType: 'rejected',
+      previousStatus: 'pending_review',
+      newStatus: 'rejected',
+      note: reason || undefined,
+    })
 
     if (latest.order_id) {
       await adminSupabase
