@@ -17,7 +17,7 @@ import {
 import { normalizeOwnedStoragePath } from '@/lib/quote/storage-path'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { calculateServerQuotePricing } from '@/lib/quote/server-pricing'
+import { roundMoney } from '@/lib/quote/pricing-waterfall'
 import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 import { redactSensitiveValues } from '@/lib/security/redact'
 import { rateLimitCheck } from '@/lib/rate-limit'
@@ -83,15 +83,26 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
     throw new Error(volumeCheck.error ?? 'Model volume verification failed.')
   }
 
-  const { breakdown, material } = await calculateServerQuotePricing(input.modelMetadata, {
-    materialId: input.material,
-    color: input.color,
-    infill: Math.round(normalizeNumber(input.infill, 'infill')),
-    layerHeight: normalizeNumber(input.layerHeight, 'layer height'),
-    quantity: normalizedQuantity,
-    postProcessingLevel: input.postProcessingLevel,
-    supports: input.supports,
-  })
+  // Price locked at quote time — do not recalculate from raw inputs
+  const breakdown = {
+    postProcessingCharges: input.postProcessingCharges,
+    materialCost: input.materialCost,
+    machineCost: input.machineCost,
+    subtotal: input.subtotal,
+    cartDiscountAmount: input.cartDiscountAmount,
+    cartDiscountPercent: input.cartDiscountPercent,
+    overheadPercentage: input.overheadPercentage,
+    overheadAmount: input.overheadAmount,
+    marginPercentage: input.marginPercentage,
+    marginAmount: input.marginAmount,
+    totalPrice: input.totalPrice,
+    finalPrice: input.finalPrice,
+    deliveryCharge: input.deliveryCharge,
+    grandTotal: input.grandTotal,
+    pricePerUnit: roundMoney(input.totalPrice / normalizedQuantity),
+    estimatedHours: input.estimatedTime,
+    discount: 0,
+  }
 
   const trimmedAddress = {
     full_name: input.fullName.trim(),
@@ -173,7 +184,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
       post_processing_level: input.postProcessingLevel,
       post_processing_charges: breakdown.postProcessingCharges,
       weight: input.modelMetadata.fileSize,
-      difficulty_factor: material.difficultyFactor,
+      difficulty_factor: input.difficultyFactor,
       supports: input.supports,
       material_cost: breakdown.materialCost,
       machine_cost: breakdown.machineCost,
@@ -199,7 +210,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
       price: breakdown.finalPrice,
       price_per_unit: breakdown.pricePerUnit,
       estimated_time: breakdown.estimatedHours,
-      status: 'pending_review',
+      status: 'pending',
       discount: breakdown.discount,
       notes: input.notes?.trim() ? input.notes.trim() : null,
     })

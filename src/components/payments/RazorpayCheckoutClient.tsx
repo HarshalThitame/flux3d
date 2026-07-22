@@ -196,6 +196,7 @@ export default function RazorpayCheckoutClient({
         body: JSON.stringify({
           internalOrderType,
           internalOrderId,
+          expectedAmountPaise: amountPaise,
         }),
       })
 

@@ -255,6 +255,25 @@ export default function DeliveryStepClient({
         landmark: address.landmark,
         notes: draft.notes,
         modelMetadata: draft.modelMetadata,
+        // Price locked at quote time — do not recalculate
+        materialCost: draft.materialCost,
+        machineCost: draft.machineCost,
+        subtotal: draft.subtotal,
+        postProcessingCharges: draft.postProcessingCharges,
+        overheadPercentage: draft.overheadPercentage,
+        overheadAmount: draft.overheadAmount,
+        marginPercentage: draft.marginPercentage,
+        marginAmount: draft.marginAmount,
+        totalPrice: draft.totalPrice,
+        cartDiscountAmount: draft.cartDiscountAmount,
+        cartDiscountPercent: draft.cartDiscountPercent,
+        finalPrice: draft.finalPrice,
+        deliveryCharge: draft.deliveryCharge,
+        grandTotal: draft.grandTotal,
+        price: draft.price,
+        estimatedTime: draft.estimatedTime,
+        weight: draft.weight,
+        difficultyFactor: draft.difficultyFactor,
       })
 
       window.sessionStorage.removeItem(ORDER_DRAFT_STORAGE_KEY)

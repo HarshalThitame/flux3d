@@ -61,9 +61,39 @@ export async function updateOrderPaymentStatus(
   const supabase = createAdminSupabaseClient()
   const table = params.type === 'shop_order' ? 'shelf_orders' : 'orders'
 
+  const updatePayload: Record<string, unknown> = {
+    ...params.patch,
+    payment_status: params.nextStatus,
+    updated_at: new Date().toISOString(),
+  }
+
+  // When payment is captured/paid, transition the main order status to 'confirmed'
+  if (params.nextStatus === 'paid' && params.type !== 'shop_order') {
+    updatePayload.status = 'confirmed'
+
+    // Merge confirmed timestamp into existing status_timestamps
+    const { data: existingRow } = await supabase
+      .from(table)
+      .select('status_timestamps')
+      .eq('id', params.id)
+      .maybeSingle()
+
+    if (existingRow) {
+      const existingTimestamps = (existingRow as Record<string, unknown>).status_timestamps as Record<string, unknown> | null ?? {}
+      updatePayload.status_timestamps = {
+        ...existingTimestamps,
+        confirmed: new Date().toISOString(),
+      }
+    } else {
+      updatePayload.status_timestamps = {
+        confirmed: new Date().toISOString(),
+      }
+    }
+  }
+
   const { data, error } = await supabase
     .from(table)
-    .update({ ...params.patch, payment_status: params.nextStatus, updated_at: new Date().toISOString() })
+    .update(updatePayload)
     .eq('id', params.id)
     .select('*')
     .maybeSingle()

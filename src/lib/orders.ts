@@ -80,6 +80,25 @@ export type CreateOrderInput = {
   pincode: string
   landmark?: string
   modelMetadata: ModelMetadata
+  // Price locked at quote time — do not recalculate from raw inputs
+  materialCost: number
+  machineCost: number
+  subtotal: number
+  postProcessingCharges: number
+  overheadPercentage: number
+  overheadAmount: number
+  marginPercentage: number
+  marginAmount: number
+  totalPrice: number
+  cartDiscountAmount: number
+  cartDiscountPercent: number
+  finalPrice: number
+  deliveryCharge: number
+  grandTotal: number
+  price: number
+  estimatedTime: number
+  weight: number
+  difficultyFactor: number
 }
 
 export type AddressFields = {

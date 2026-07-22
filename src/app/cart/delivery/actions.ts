@@ -21,7 +21,6 @@ import {
   roundMoney,
   type PromotionInput,
 } from '@/lib/quote/pricing-waterfall'
-import { fetchMaterialForQuote } from '@/lib/quote/server-pricing'
 import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 import { redactSensitiveValues } from '@/lib/security/redact'
 import { verifyModelVolume } from '@/lib/storage/verify-metadata'
@@ -271,25 +270,14 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
       }
     }
 
-    const material = item.modelVolumeMm3
-      ? await fetchMaterialForQuote(item.material)
-      : null
-
     let itemMaterialCost: number
     let itemMachineCost: number
     let estimatedMinutes: number
 
-    if (material && item.modelVolumeMm3 && item.modelVolumeMm3 > 0) {
-      const weightGrams = (item.modelVolumeMm3 * material.density) / 1000
-      const totalWeight = weightGrams * normalizedQuantity
-      itemMaterialCost = normalizeNumber(totalWeight * material.pricePerGram, 'material cost')
-      estimatedMinutes = (totalWeight / (settings.printSpeedGramsPerHour || 20)) * 60
-      itemMachineCost = normalizeNumber((estimatedMinutes / 60) * material.machineRate, 'machine cost')
-    } else {
-      itemMaterialCost = normalizeNumber(item.materialCost ?? 0, 'material cost')
-      itemMachineCost = normalizeNumber(item.machineCost ?? 0, 'machine cost')
-      estimatedMinutes = item.estimatedTime * 60
-    }
+    // Price locked at quote time — do not recalculate from raw inputs
+    itemMaterialCost = normalizeNumber(item.materialCost ?? 0, 'material cost')
+    itemMachineCost = normalizeNumber(item.machineCost ?? 0, 'machine cost')
+    estimatedMinutes = item.estimatedTime * 60
 
     const postProcessingCharges = normalizeNumber(item.postProcessingCharges ?? 0, 'post processing charges')
     const providedOverheadPercent = Number(item.overheadPercentage ?? 0)
