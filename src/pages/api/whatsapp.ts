@@ -41,9 +41,8 @@ const WHATSAPP_PROMPT_VERSION = "whatsapp-rag-v2";
 const MAX_REPLY_CHARS = 1200;
 const MAX_INPUT_CHARS = 3000;
 
-export const maxDuration = 60;
-
 export const config = {
+  maxDuration: 60,
   api: {
     bodyParser: false,
   },
@@ -114,7 +113,9 @@ async function sendWhatsAppMessage(to: string, message: string) {
 
   if (!response.ok) {
     const text = await response.text().catch(() => "Unknown error");
-    throw new Error(`WhatsApp send failed: ${response.status} ${text}`);
+    const errorMsg = `WhatsApp send failed: ${response.status} ${text.slice(0, 300)}`;
+    console.error("[whatsapp]", errorMsg);
+    throw new Error(errorMsg);
   }
 }
 
@@ -946,6 +947,19 @@ export default async function handler(
       // before async work completes. WhatsApp has a 20-second timeout for
       // the 200 response — we already sent it above.
       await workPromise;
+    } catch (pre200Error) {
+      // Catch any error that occurs BEFORE res.status(200).json() is called.
+      // Log it, but ALWAYS return 200 to stop Meta from retrying.
+      // The retry queue will handle reprocessing if needed.
+      console.error("[whatsapp] Pre-200 error (will still ack 200):", pre200Error);
+      Sentry.captureException(pre200Error, {
+        tags: { handler: 'webhook_pre200' },
+        extra: { method: req.method, path: '/api/whatsapp' },
+      });
+      // Ensure at least some response is sent to Meta
+      if (!res.headersSent) {
+        res.status(200).json({ success: true, error: true });
+      }
     } finally {
       webhookSpan?.end();
     }
