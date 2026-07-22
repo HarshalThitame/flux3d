@@ -158,7 +158,15 @@ export type WhatsAppRagAnswerAuditRow = {
   latency_ms: number | null
   retrieval_latency_ms: number | null
   generation_latency_ms: number | null
+  session_history_length: number | null
+  structured_data_matches: number | null
   created_at: string | null
+}
+
+export type WhatsAppSessionRow = {
+  phone_number: string
+  messages: Json
+  last_active: string | null
 }
 
 export type ReferralRow = {
@@ -227,6 +235,11 @@ export type Database = {
         Row: WhatsAppRagAnswerAuditRow
         Insert: Omit<Partial<WhatsAppRagAnswerAuditRow>, 'id'> & Pick<WhatsAppRagAnswerAuditRow, 'question_text' | 'retrieval_mode' | 'response_kind'>
         Update: Partial<WhatsAppRagAnswerAuditRow>
+      }
+      whatsapp_sessions: {
+        Row: WhatsAppSessionRow
+        Insert: Pick<WhatsAppSessionRow, 'phone_number'> & Partial<Omit<WhatsAppSessionRow, 'phone_number'>>
+        Update: Partial<WhatsAppSessionRow>
       }
       referrals: {
         Row: ReferralRow

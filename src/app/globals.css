@@ -8608,6 +8608,24 @@ details[open] > .navbar-mobile-panel {
   }
 }
 
+@media (max-width: 520px) {
+  .instant-quote-premium-shell {
+    padding-inline: 0;
+  }
+
+  .quote-hero {
+    padding-inline: 1rem;
+  }
+
+  .quote-step-nav {
+    border-radius: 16px;
+  }
+
+  .quote-step-button {
+    font-size: 11px;
+  }
+}
+
 @media (min-width: 1280px) {
   .quote-layout-grid {
     grid-template-columns: minmax(0, 1fr) 380px !important;

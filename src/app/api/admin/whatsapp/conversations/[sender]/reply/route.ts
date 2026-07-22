@@ -16,7 +16,9 @@ export async function POST(
   try {
     const { sender } = await params
     const body = (await request.json()) as { message?: string }
-    const message = body.message?.trim()
+    const rawMessage = body.message?.trim() ?? ''
+    // Sanitize: strip control chars, limit length
+    const message = rawMessage.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').slice(0, 4096)
     if (!message) {
       return NextResponse.json({ error: 'Message is required.' }, { status: 400 })
     }
@@ -28,7 +30,8 @@ export async function POST(
     }
 
     // Send via WhatsApp API
-    const url = `https://graph.facebook.com/v22.0/${phoneNumberId}/messages`
+    const apiVersion = process.env.WHATSAPP_API_VERSION || 'v22.0'
+    const url = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`
     const response = await fetch(url, {
       method: 'POST',
       headers: {

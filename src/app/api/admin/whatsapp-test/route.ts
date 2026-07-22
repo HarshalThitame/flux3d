@@ -14,11 +14,14 @@ export async function GET() {
   checks['OPENAI_API_KEY'] = Boolean(process.env.OPENAI_API_KEY) || '❌ Missing'
   checks['WHATSAPP_REPLY_TO_ALL'] = process.env.WHATSAPP_REPLY_TO_ALL ?? 'Not set (defaults to true)'
 
+  checks['WHATSAPP_SESSION_TURNS'] = process.env.WHATSAPP_SESSION_TURNS ?? 'Not set (defaults to 4)'
+  checks['WHATSAPP_STRUCTURED_DATA_ENABLED'] = process.env.WHATSAPP_STRUCTURED_DATA_ENABLED ?? 'Not set (defaults to true)'
+
   // Check Supabase tables
   try {
     const supabase = createAdminSupabaseClient()
 
-    const tables = ['whatsapp_messages', 'whatsapp_webhook_events', 'whatsapp_knowledge_chunks', 'whatsapp_rag_answer_audits']
+    const tables = ['whatsapp_messages', 'whatsapp_webhook_events', 'whatsapp_knowledge_chunks', 'whatsapp_rag_answer_audits', 'whatsapp_sessions']
     for (const table of tables) {
       const { error } = await supabase.from(table).select('id', { count: 'exact', head: true }).limit(0)
       checks[`table:${table}`] = error ? `❌ ${error.message}` : true
@@ -27,6 +30,22 @@ export async function GET() {
     // Check profiles table has phone_number column
     const { error: profileError } = await supabase.from('profiles').select('phone_number').limit(1)
     checks['table:profiles.phone_number'] = profileError ? `⚠️ ${profileError.message}` : true
+
+    // Check last knowledge sync time
+    const { data: lastSync } = await supabase
+      .from('whatsapp_rag_answer_audits')
+      .select('created_at, response_text, response_kind')
+      .eq('question_text', '[SYNC]')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (lastSync) {
+      checks['last_knowledge_sync'] = lastSync.created_at
+      checks['last_sync_result'] = lastSync.response_kind === 'model' ? '✅ Success' : `❌ Failed`
+    } else {
+      checks['last_knowledge_sync'] = '⚠️ Never synced'
+    }
 
   } catch (err) {
     checks['supabase_connection'] = `❌ ${err instanceof Error ? err.message : String(err)}`

@@ -909,7 +909,7 @@ function CartEnabledWorkspace({
                               key={`${color.name}-${idx}`}
                               type="button"
                               onClick={() => setConfig((c) => ({ ...c, color: color.name }))}
-                              className={`quote-option-card ${isActive ? 'quote-option-card-active' : ''} flex items-center gap-2 rounded-xl border px-4 py-2.5 text-left transition-all ${
+                              className={`quote-option-card ${isActive ? 'quote-option-card-active' : ''} flex min-h-11 items-center gap-2 rounded-xl border px-4 text-left transition-all ${
                                 isActive
                                   ? 'border-[#6d28d9]/40 bg-[var(--brand-faint)]'
                                   : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10'
@@ -978,7 +978,7 @@ function CartEnabledWorkspace({
                           step={1}
                           value={config.quantity}
                           onChange={(e) => setConfig((c) => ({ ...c, quantity: Math.max(1, Math.floor(Number(e.target.value) || 1)) }))}
-                          className="w-full rounded-xl border border-[#6d28d9]/10 bg-white px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
+                          className="w-full rounded-xl border border-[#6d28d9]/10 bg-white px-3 py-3 text-sm text-[#0F1B3D] outline-none"
                         />
                       </div>
 
@@ -991,7 +991,7 @@ function CartEnabledWorkspace({
                               key={option.value}
                               type="button"
                               onClick={() => setConfig((c) => ({ ...c, postProcessingLevel: option.value }))}
-                              className={`quote-option-card ${option.value === config.postProcessingLevel ? 'quote-option-card-active' : ''} rounded-xl border px-3 py-2.5 text-left transition-all ${
+                              className={`quote-option-card ${option.value === config.postProcessingLevel ? 'quote-option-card-active' : ''} min-h-11 rounded-xl border px-3 text-left transition-all ${
                                 option.value === config.postProcessingLevel
                                   ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)]'
                                   : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10'
@@ -1025,7 +1025,7 @@ function CartEnabledWorkspace({
                               key={option.value}
                               type="button"
                               onClick={() => setConfig((c) => ({ ...c, layerHeight: option.value }))}
-                              className={`quote-option-card ${option.value === config.layerHeight ? 'quote-option-card-active' : ''} rounded-xl border px-3 py-2.5 text-left transition-all ${
+                              className={`quote-option-card ${option.value === config.layerHeight ? 'quote-option-card-active' : ''} min-h-11 rounded-xl border px-3 text-left transition-all ${
                                 option.value === config.layerHeight
                                   ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)]'
                                   : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10'
@@ -1053,7 +1053,7 @@ function CartEnabledWorkspace({
                           type="button"
                           onClick={handleSaveQuote}
                           disabled={!selectedModel || savingQuote || uploadState.status === 'uploading'}
-                          className="quote-secondary-action inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gray-50 px-4 py-2 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                          className="quote-secondary-action inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-gray-50 px-4 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                         >
                           <BookmarkPlus className="h-3.5 w-3.5" />
                           {savingQuote ? 'Saving...' : 'Save Quote'}
@@ -1225,7 +1225,7 @@ function CartEnabledWorkspace({
                         {cartItemCheck && (
                           <Link
                             href="/cart"
-                            className="quote-secondary-action inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/30 bg-[#6d28d9]/10 px-4 py-2.5 text-xs font-medium text-[#6d28d9] transition-colors hover:bg-[#6d28d9]/20"
+                            className="quote-secondary-action inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/30 bg-[#6d28d9]/10 px-4 text-xs font-medium text-[#6d28d9] transition-colors hover:bg-[#6d28d9]/20"
                           >
                             View Cart
                             <ArrowRight className="h-3.5 w-3.5" />
@@ -1236,7 +1236,7 @@ function CartEnabledWorkspace({
                       {!user && (
                         <Link
                           href="/login?next=%2Finstant-quote"
-                          className="quote-secondary-action mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/10 bg-white px-4 py-2.5 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-purple-50"
+                          className="quote-secondary-action mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/10 bg-white px-4 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-purple-50"
                         >
                           Sign in to save quotes
                           <ArrowRight className="h-3 w-3" />

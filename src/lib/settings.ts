@@ -192,7 +192,15 @@ function mapRow(row: BusinessSettingsRow): BusinessSettings {
   }
 }
 
+let cachedSettings: { data: BusinessSettings | null; expiry: number } | null = null
+const CACHE_TTL_MS = 60_000
+
 export async function getCachedBusinessSettings(): Promise<BusinessSettings | null> {
+  const now = Date.now()
+  if (cachedSettings && now < cachedSettings.expiry) {
+    return cachedSettings.data
+  }
+
   try {
     const supabase = createAdminSupabaseClient()
     const { data, error } = await supabase
@@ -204,19 +212,27 @@ export async function getCachedBusinessSettings(): Promise<BusinessSettings | nu
 
     if (error) {
       if (error.code === '42P01') {
+        cachedSettings = { data: null, expiry: now + CACHE_TTL_MS }
         return null
       }
       throw new Error(error.message)
     }
 
     if (!data) {
+      cachedSettings = { data: null, expiry: now + CACHE_TTL_MS }
       return null
     }
 
-    return mapRow(data as BusinessSettingsRow)
+    const result = mapRow(data as BusinessSettingsRow)
+    cachedSettings = { data: result, expiry: now + CACHE_TTL_MS }
+    return result
   } catch {
     return null
   }
+}
+
+export function invalidateSettingsCache() {
+  cachedSettings = null
 }
 
 export async function getSettings(): Promise<BusinessSettings> {

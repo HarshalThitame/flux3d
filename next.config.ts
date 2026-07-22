@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { withSentryConfig } from '@sentry/nextjs'
 
 if (
   process.env.NEXT_ADAPTER_PATH &&
@@ -41,7 +42,9 @@ const nextConfig: NextConfig = {
     dangerouslyAllowLocalIP: process.env.NODE_ENV === 'development',
   },
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    removeConsole: process.env.NODE_ENV === 'production'
+      ? { exclude: ['error', 'warn'] }
+      : false,
   },
   async headers() {
     const immutableAssetHeaders = [
@@ -170,4 +173,11 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG || 'flux3d',
+  project: process.env.SENTRY_PROJECT || 'javascript-nextjs',
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.SENTRY_DSN,
+  widenClientFileUpload: true,
+  tunnelRoute: '/monitoring',
+})

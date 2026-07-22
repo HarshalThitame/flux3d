@@ -359,7 +359,7 @@ export default function DeliveryStepClient({
                       setLastLookupPincode('')
                       setAddress(initialAddressFields)
                     }}
-                    className="mt-4 text-sm font-medium text-[#6d28d9]"
+                    className="mt-4 inline-flex min-h-11 items-center text-sm font-medium text-[#6d28d9]"
                   >
                     Use a new address
                   </button>

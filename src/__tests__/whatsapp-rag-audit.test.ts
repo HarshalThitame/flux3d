@@ -32,6 +32,8 @@ describe('WhatsApp RAG audit logging', () => {
       latency_ms: 1234,
       retrieval_latency_ms: 120,
       generation_latency_ms: 420,
+      session_history_length: 4,
+      structured_data_matches: null,
     })
 
     expect(insertMock).toHaveBeenCalledTimes(1)
@@ -44,6 +46,8 @@ describe('WhatsApp RAG audit logging', () => {
         response_kind: 'model',
         model_name: 'gpt-4.1-mini',
         prompt_version: 'whatsapp-rag-v2',
+        session_history_length: 4,
+        structured_data_matches: null,
       })
     )
   })
