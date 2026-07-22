@@ -941,6 +941,11 @@ export default async function handler(
         pendingWorkMap.delete(workKey);
       });
       pendingWorkMap.set(workKey, workPromise);
+
+      // Await processing to prevent Vercel from terminating the function
+      // before async work completes. WhatsApp has a 20-second timeout for
+      // the 200 response — we already sent it above.
+      await workPromise;
     } finally {
       webhookSpan?.end();
     }
