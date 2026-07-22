@@ -1,0 +1,14 @@
+name: Cleanup Stale WhatsApp Sessions
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call cleanup endpoint
+        run: |
+          curl -sS --retry 3 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://${{ vars.VERCEL_URL || 'flux3d.vercel.app' }}/api/cron/cleanup-whatsapp-sessions"

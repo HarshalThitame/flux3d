@@ -7,7 +7,7 @@ import {
   normalizeWhatsAppKnowledgeSourceKey,
   parseWhatsAppKnowledgeTags,
 } from '@/lib/admin/whatsapp-knowledge'
-import { generateWhatsAppEmbedding, getWhatsappKnowledgeSeed } from '@/lib/whatsapp-rag'
+import { generateWhatsAppEmbedding, getWhatsappKnowledgeSeed, toKnowledgeChunk } from '@/lib/whatsapp-rag'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -32,32 +32,6 @@ type KnowledgePayload = {
   tags?: string[] | string
   priority?: number | string
   active?: boolean | string
-}
-
-type KnowledgeRecord = {
-  id: string
-  sourceKey: string
-  title: string
-  content: string
-  tags: string[]
-  priority: number
-  active: boolean
-  createdAt: string | null
-  updatedAt: string | null
-}
-
-function mapRow(row: KnowledgeRow): KnowledgeRecord {
-  return {
-    id: row.id,
-    sourceKey: row.source_key,
-    title: row.title,
-    content: row.content,
-    tags: row.tags ?? [],
-    priority: Number(row.priority ?? 0),
-    active: Boolean(row.active ?? true),
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  }
 }
 
 function normalizePayload(body: KnowledgePayload) {
@@ -103,7 +77,7 @@ async function loadKnowledgeChunks() {
     throw error
   }
 
-  return (data ?? []).map((row) => mapRow(row as KnowledgeRow))
+  return (data ?? []).map((row) => toKnowledgeChunk(row as any))
 }
 
 export async function GET() {
@@ -162,7 +136,7 @@ export async function POST(request: Request) {
       throw new Error('Failed to create knowledge chunk.')
     }
 
-    const chunk = mapRow(data as KnowledgeRow)
+    const chunk = toKnowledgeChunk(data as any)
     await logAdminAction({
       admin_id: auth.user.id,
       action: 'create_whatsapp_knowledge',
@@ -238,7 +212,7 @@ export async function PATCH(request: Request) {
       throw new Error('Failed to update knowledge chunk.')
     }
 
-    const chunk = mapRow(data as KnowledgeRow)
+    const chunk = toKnowledgeChunk(data as any)
     await logAdminAction({
       admin_id: auth.user.id,
       action: 'update_whatsapp_knowledge',

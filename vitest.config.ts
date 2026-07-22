@@ -33,6 +33,7 @@ export default defineConfig({
     globals: true,
     testTimeout: 60000,
     fileParallelism: false,
+    setupFiles: ['./src/__tests__/__mocks__/sentry-mock.ts'],
     env: {
       NEXT_PUBLIC_SUPABASE_URL: testEnv.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321',
       SUPABASE_SERVICE_ROLE_KEY: testEnv.SUPABASE_SERVICE_ROLE_KEY ?? '',

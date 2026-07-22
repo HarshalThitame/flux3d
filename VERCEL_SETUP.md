@@ -4,7 +4,7 @@
 
 Go to your Vercel project settings → Environment Variables and add:
 
-### Required Variables:
+### Required Variables — Supabase:
 
 1. **NEXT_PUBLIC_SUPABASE_URL**
    - Value: Your Supabase project URL (e.g., `https://xxxxx.supabase.co`)
@@ -19,7 +19,49 @@ Go to your Vercel project settings → Environment Variables and add:
 4. **NEXT_PUBLIC_SITE_URL**
    - Value: `https://your-domain.vercel.app` (or your custom domain)
 
-### How to Find These Values:
+### Required Variables — WhatsApp AI:
+
+5. **OPENAI_API_KEY**
+   - Value: Your OpenAI API key
+   - ⚠️ Keep this secret!
+
+6. **WHATSAPP_PHONE_NUMBER_ID**
+   - Value: Your WhatsApp Business API phone number ID
+
+7. **WHATSAPP_ACCESS_TOKEN**
+   - Value: Your WhatsApp permanent access token
+   - ⚠️ Keep this secret!
+
+8. **WHATSAPP_VERIFY_TOKEN**
+   - Value: A random string you choose for webhook verification
+
+9. **WHATSAPP_WEBHOOK_SECRET**
+   - Value: Your Meta app secret (from Meta Developer Portal)
+   - ⚠️ Keep this secret!
+
+### Optional WhatsApp Variables (defaults shown):
+
+| Variable | Default | Description |
+|---|---|---|
+| `WHATSAPP_REPLY_TO_ALL` | `true` | Reply to unrecognized senders |
+| `WHATSAPP_RAG_ENABLED` | `true` | Enable knowledge base search |
+| `WHATSAPP_RAG_CONFIDENCE_THRESHOLD` | `0.55` | Min confidence to use GPT |
+| `WHATSAPP_OPENAI_MODEL` | `gpt-4.1-mini` | GPT model for replies |
+| `WHATSAPP_CLASSIFIER_MODEL` | `gpt-4o-mini` | GPT model for intent classification |
+| `WHATSAPP_EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model |
+| `WHATSAPP_RAG_TOP_K` | `4` | Number of RAG chunks to retrieve |
+| `WHATSAPP_RAG_MIN_SCORE` | `0.3` | Minimum similarity score |
+| `WHATSAPP_SESSION_TURNS` | `4` | Conversation turns to remember |
+| `WHATSAPP_STRUCTURED_DATA_ENABLED` | `true` | Enable live DB price queries |
+
+### Optional — Rate Limiting (falls back to in-memory):
+
+| Variable | Description |
+|---|---|
+| `UPSTASH_REDIS_REST_URL` | Upstash Redis URL for distributed rate limiting |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis token |
+
+### How to Find Supabase Values:
 
 1. Go to your Supabase project dashboard
 2. Click on **Project Settings** (gear icon)
@@ -29,66 +71,37 @@ Go to your Vercel project settings → Environment Variables and add:
    - **anon public** key (starts with `eyJ...`)
    - **service_role** key (starts with `eyJ...`) - ⚠️ Keep secret!
 
+### How to Get WhatsApp Values:
+
+1. Go to the [Meta Developer Portal](https://developers.facebook.com/)
+2. Create/select your WhatsApp Business App
+3. Navigate to **WhatsApp** → **API Setup**
+4. Copy:
+   - **Phone Number ID** → `WHATSAPP_PHONE_NUMBER_ID`
+   - **Temporary Access Token** → `WHATSAPP_ACCESS_TOKEN` (generate a permanent token via the Meta Business Platform)
+5. Set up your webhook URL: `https://your-domain.vercel.app/api/whatsapp`
+6. Choose a **Verify Token** → `WHATSAPP_VERIFY_TOKEN`
+7. Copy your **App Secret** from the app dashboard → `WHATSAPP_WEBHOOK_SECRET`
+
 ## Supabase Table Setup
 
-Run this SQL in your Supabase SQL Editor:
+Run all migration files in `supabase/migrations/` in order using the Supabase SQL Editor. The key WhatsApp-related tables:
 
-```sql
--- Create materials table
-CREATE TABLE IF NOT EXISTS public.materials (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  icon TEXT DEFAULT '🧩',
-  summary TEXT,
-  density DECIMAL(5,2) DEFAULT 1.24,
-  price_per_gram DECIMAL(5,2) DEFAULT 2.80,
-  machine_rate DECIMAL(6,2) DEFAULT 180.00,
-  multiplier DECIMAL(4,2) DEFAULT 1.00,
-  recommended_for TEXT,
-  properties JSONB DEFAULT '{}'::jsonb,
-  colors JSONB DEFAULT '[]'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Enable Row Level Security
-ALTER TABLE public.materials ENABLE ROW LEVEL SECURITY;
-
--- Allow public read access
-CREATE POLICY "Materials are publicly readable" 
-  ON public.materials 
-  FOR SELECT 
-  USING (true);
-
--- Allow service_role to manage materials (for API routes)
-CREATE POLICY "Service role can manage materials" 
-  ON public.materials 
-  FOR ALL 
-  USING (auth.role() = 'service_role')
-  WITH CHECK (auth.role() = 'service_role');
-
--- Index for faster queries
-CREATE INDEX IF NOT EXISTS idx_materials_created_at 
-  ON public.materials(created_at DESC);
-
--- Optional: Insert default materials
-INSERT INTO public.materials (id, name, icon, summary, density, price_per_gram, machine_rate, multiplier, recommended_for, properties, colors)
-VALUES 
-  ('pla-plus', 'PLA+', '🧩', 'Fast, dependable, and ideal for prototypes or display pieces.', 1.24, 2.80, 180.00, 1.00, 'Concept models and presentation parts', 
-   '{"strength": "Medium", "flexibility": "Low", "tempResistance": "Low", "difficulty": "Easy"}',
-   '[{"name": "Arctic White", "hex": "#f3f4f6"}, {"name": "Graphite", "hex": "#1f2937"}, {"name": "Signal Orange", "hex": "#ff5c1a"}]'),
-  ('abs', 'ABS', '⚙️', 'A durable engineering plastic for stronger functional parts.', 1.04, 4.10, 210.00, 1.20, 'Enclosures, brackets, workshop fixtures',
-   '{"strength": "High", "flexibility": "Medium", "tempResistance": "High", "difficulty": "Advanced"}',
-   '[{"name": "Industrial Black", "hex": "#111827"}, {"name": "Slate Gray", "hex": "#4b5563"}, {"name": "Safety Yellow", "hex": "#facc15"}]')
-ON CONFLICT (id) DO NOTHING;
-```
+- `whatsapp_webhook_events` — webhook idempotency and dedup
+- `whatsapp_messages` — message history
+- `whatsapp_knowledge_chunks` — RAG knowledge base with vector embeddings
+- `whatsapp_rag_answer_audits` — AI reply audit trail
+- `whatsapp_sessions` — conversation memory
 
 ## Steps to Deploy:
 
 1. **Add environment variables** in Vercel (as listed above)
-2. **Run the SQL** in Supabase SQL Editor
-3. **Deploy** - Push to Git and Vercel will auto-deploy
-4. **Verify** - Visit `/admin/materials` to add more materials
+2. **Run all migrations** in `supabase/migrations/` in Supabase SQL Editor
+3. **Sync seed knowledge**: Run `npm run whatsapp:rag:sync` to populate the knowledge base
+4. **Configure WhatsApp webhook** in Meta Developer Portal pointing to `https://your-domain.vercel.app/api/whatsapp`
+5. **Deploy** — Push to Git and Vercel will auto-deploy
+6. **Verify** — Visit `/admin/whatsapp-test` for diagnostics
+7. **Test** — Send a WhatsApp message to the business number
 
 ## Troubleshooting:
 
@@ -97,8 +110,15 @@ ON CONFLICT (id) DO NOTHING;
 - Redeploy after adding variables (they don't apply to ongoing builds)
 - Check that the variable name is exactly: `SUPABASE_SERVICE_ROLE_KEY`
 
+### WhatsApp webhook returns 403
+- Verify `WHATSAPP_VERIFY_TOKEN` matches the token in Meta Developer Portal
+- Check `META_APP_SECRET` or `WHATSAPP_WEBHOOK_SECRET` is correctly set
+
+### GPT replies not working
+- Verify `OPENAI_API_KEY` is set and has credits
+- Check `/admin/whatsapp-test` for all green checks
+
 ### Still having issues?
-Check that your API routes (`/api/materials/route.ts`) can access the environment variable:
 ```bash
-echo $SUPABASE_SERVICE_ROLE_KEY
+curl https://your-domain.vercel.app/api/admin/whatsapp-test
 ```

@@ -11,4 +11,6 @@ jobs:
     steps:
       - name: Call release endpoint
         run: |
-          curl -sS --retry 3 "https://${{ vars.VERCEL_URL || 'flux3d.vercel.app' }}/api/cron/release-reservations"
+          curl -sS --retry 3 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://${{ vars.VERCEL_URL || 'flux3d.vercel.app' }}/api/cron/release-reservations"

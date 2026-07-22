@@ -25,6 +25,8 @@ export type WhatsAppRagAuditRecord = {
   latency_ms: number | null
   retrieval_latency_ms: number | null
   generation_latency_ms: number | null
+  session_history_length: number | null
+  structured_data_matches: number | null
 }
 
 function normalizeJson(value: unknown): Json | null {
@@ -60,5 +62,7 @@ export async function logWhatsAppRagAudit(record: WhatsAppRagAuditRecord) {
     latency_ms: record.latency_ms,
     retrieval_latency_ms: record.retrieval_latency_ms,
     generation_latency_ms: record.generation_latency_ms,
+    session_history_length: record.session_history_length,
+    structured_data_matches: record.structured_data_matches,
   })
 }
