@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminPermission } from '@/lib/admin/permissions'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { insertPaymentAuditLog, updatePaymentRefund } from '@/lib/payments/repository'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,7 +37,7 @@ export async function POST(
 
     if (!approval) return NextResponse.json({ error: 'Approval record not found.' }, { status: 404 })
 
-    // Call Razorpay to execute the refund
+    // Execute the refund via Razorpay
     const { initiateRefund } = await import('@/lib/payments/service')
     const result = await initiateRefund({
       paymentAttemptId: refund.payment_attempt_id,
@@ -44,6 +45,25 @@ export async function POST(
       reason: refund.reason,
       speed: refund.speed as 'normal' | 'optimum' | undefined,
       initiatedByAdminId: auth.user.id,
+    })
+
+    // Cancel the original pending_approval refund row to avoid phantom records
+    await updatePaymentRefund(id, {
+      status: 'cancelled',
+      provider_response: {
+        superseded_by: result.refund.id,
+        superseded_reason: 'Approved and executed as a new refund attempt.',
+      },
+    })
+
+    await insertPaymentAuditLog({
+      actor_id: auth.user.id,
+      actor_role: 'admin',
+      action: 'refund_approved',
+      entity_type: 'payment_refund',
+      entity_id: id,
+      previous_state: { status: 'pending_approval' },
+      new_state: { status: 'cancelled', superseded_by: result.refund.id },
     })
 
     // Mark approval as decided
