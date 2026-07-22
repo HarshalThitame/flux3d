@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { redactForAuditLog } from '@/lib/security/redact'
 import type { AdminAuditTargetType, Json } from '../../../types/database'
 
 type LogAdminActionParams = {
@@ -18,7 +19,7 @@ function normalizeJson(value: unknown): Json | null {
   }
 
   try {
-    return JSON.parse(JSON.stringify(value)) as Json
+    return JSON.parse(JSON.stringify(redactForAuditLog(value))) as Json
   } catch {
     return null
   }

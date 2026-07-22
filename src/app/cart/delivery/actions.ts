@@ -22,6 +22,7 @@ import {
   type PromotionInput,
 } from '@/lib/quote/pricing-waterfall'
 import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
+import { logQuoteEvent } from '@/lib/quote/audit'
 import { redactSensitiveValues } from '@/lib/security/redact'
 import { verifyModelVolume } from '@/lib/storage/verify-metadata'
 
@@ -591,34 +592,50 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
       console.error('[cart-orders] Failed to track model file:', modelFileError)
     }
 
-    const { error: quoteVersionError } = await adminSupabase.from('quote_versions').insert({
-      quote_id: `F3D-${orderNumber}`,
-      order_id: order.id,
-      user_id: auth.user.id,
-      version_number: 1,
-      status: 'approved',
-      approved_at: new Date().toISOString(),
-      approved_by: auth.user.id,
-      pricing_snapshot: redactSensitiveValues({
-        totalPrice: cartItem?.totalPrice ?? 0,
-        finalPrice: cartItem?.finalPrice ?? 0,
-        grandTotal: cartItem?.grandTotal ?? 0,
-        materialCost: cartItem?.materialCost ?? 0,
-        machineCost: cartItem?.machineCost ?? 0,
-        postProcessingCharges: cartItem?.postProcessingCharges ?? 0,
-      }),
-      material_id: cartItem?.material?.trim() ?? '',
-      config: {},
-      model_metadata: redactSensitiveValues({
-        fileName: cartItem?.fileName ?? '',
-        fileSize: 0,
-        extension: cartItem?.fileName?.split('.').pop() ?? '',
-        dimensions: cartItem?.dimensions ?? { x: 0, y: 0, z: 0 },
-      }),
-    })
+    const { data: quoteVersionRow, error: quoteVersionError } = await adminSupabase
+      .from('quote_versions')
+      .insert({
+        quote_id: `F3D-${orderNumber}`,
+        order_id: order.id,
+        user_id: auth.user.id,
+        version_number: 1,
+        status: 'approved',
+        snapshot_schema_version: 1,
+        approved_at: new Date().toISOString(),
+        approved_by: auth.user.id,
+        pricing_snapshot: redactSensitiveValues({
+          totalPrice: cartItem?.totalPrice ?? 0,
+          finalPrice: cartItem?.finalPrice ?? 0,
+          grandTotal: cartItem?.grandTotal ?? 0,
+          materialCost: cartItem?.materialCost ?? 0,
+          machineCost: cartItem?.machineCost ?? 0,
+          postProcessingCharges: cartItem?.postProcessingCharges ?? 0,
+        }),
+        material_id: cartItem?.material?.trim() ?? '',
+        config: {},
+        model_metadata: redactSensitiveValues({
+          fileName: cartItem?.fileName ?? '',
+          fileSize: 0,
+          extension: cartItem?.fileName?.split('.').pop() ?? '',
+          dimensions: cartItem?.dimensions ?? { x: 0, y: 0, z: 0 },
+        }),
+      })
+      .select('id')
+      .maybeSingle()
 
     if (quoteVersionError) {
       console.error('[cart-orders] Failed to create quote version:', quoteVersionError)
+    } else if (quoteVersionRow?.id) {
+      await logQuoteEvent({
+        quoteVersionId: quoteVersionRow.id,
+        orderId: order.id,
+        actorId: auth.user.id,
+        actorRole: 'customer',
+        eventType: 'created',
+        previousStatus: null,
+        newStatus: 'approved',
+        note: `Cart order — item ${i + 1} of ${input.items.length}`,
+      })
     }
   }
 
