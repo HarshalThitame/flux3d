@@ -439,8 +439,20 @@ export default function ShopCheckoutClient({
                         onBlur={() => {
                           if (field === 'pincode') void checkPincode(addressForm.pincode)
                         }}
-                        placeholder={field === 'line2' ? 'Area or landmark (optional)' : ''}
-                        className="mt-2 min-h-[48px] w-full rounded-xl border border-[var(--border-light)] bg-white px-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-primary)]"
+                        placeholder={
+                          field === 'name' ? 'Full name' :
+                          field === 'phone' ? '10-digit mobile number' :
+                          field === 'line1' ? 'House number, street, area' :
+                          field === 'line2' ? 'Area or landmark (optional)' :
+                          field === 'pincode' ? '6-digit pincode' :
+                          field === 'city' ? 'City' :
+                          field === 'state' ? 'State' : ''
+                        }
+                        className={`mt-2 min-h-[48px] w-full rounded-xl border bg-white px-3 text-sm text-[var(--text-primary)] outline-none transition ${
+                          addressErrors[field]
+                            ? 'border-red-400 ring-1 ring-red-400/30 focus:border-red-500'
+                            : 'border-[var(--border-light)] focus:border-[var(--brand-primary)]'
+                        }`}
                       />
                       {addressErrors[field] && <span className="mt-1 block text-xs text-rose-600">{addressErrors[field]}</span>}
                     </label>

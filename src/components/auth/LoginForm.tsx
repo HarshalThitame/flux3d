@@ -180,7 +180,7 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
               autoComplete="email"
               required
               maxLength={254}
-              placeholder="you@company.com"
+              placeholder="yourname@email.com"
               aria-invalid={Boolean(state.fieldErrors?.email)}
               aria-describedby={state.fieldErrors?.email ? 'login-email-error' : undefined}
               className={`${state.fieldErrors?.email ? errorFieldClass : fieldClass} pl-11`}
