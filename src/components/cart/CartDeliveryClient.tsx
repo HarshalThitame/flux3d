@@ -1,11 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
-import { MapPin, PackageCheck, Truck, ArrowLeft } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { CheckCircle2, Loader2, MapPin, PackageCheck, ShieldCheck, TriangleAlert, Truck, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { createCartOrderAction } from '@/app/cart/delivery/actions'
+import { prepareCartPaymentAction, verifyCartPaymentAndCreateOrder, type PrepareCartPaymentResult } from '@/app/cart/delivery/actions'
 import AddressForm from '@/components/instant-quote/AddressForm'
 import Toast, { type ToastState } from '@/components/quote/Toast'
 import { useCart } from '@/lib/cart/context'
@@ -58,24 +58,27 @@ export default function CartDeliveryClient({
   const [errors, setErrors] = useState<AddressFieldErrors>({})
   const [submitting, setSubmitting] = useState(false)
   const [toast, setToast] = useState<ToastState>(null)
-  const [confirmation, setConfirmation] = useState<{
-    orderId: string
-    orderNumber: string
-    itemCount: number
-    totalPrice: number
-  } | null>(null)
-
-  useEffect(() => {
-    if (confirmation) {
-      const orderData = {
-        orderId: confirmation.orderId,
-        orderNumber: confirmation.orderNumber,
-        itemCount: confirmation.itemCount,
-      }
-      sessionStorage.setItem('flux3d-order-success', JSON.stringify(orderData))
-      router.replace(`/my-orders/${confirmation.orderId}/pay`)
-    }
-  }, [confirmation, router])
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'creating' | 'opened' | 'verifying' | 'paid' | 'failed'>('idle')
+  const [paymentMessage, setPaymentMessage] = useState('')
+  const [paymentResult, setPaymentResult] = useState<{ orderId: string; orderNumber: string; amount: number } | null>(null)
+  const checkoutRef = useRef<{ open: () => void; on?: (event: string, handler: (response: Record<string, string>) => void) => void; close?: () => void } | null>(null)
+  type RazorpayWindow = Window & { Razorpay?: new (options: Record<string, unknown>) => { open: () => void; on?: (eventName: string, handler: (response: Record<string, string>) => void) => void; close?: () => void } }
+  let razorpayScriptPromise: Promise<boolean> | null = null
+  function loadRazorpayScript(): Promise<boolean> {
+    if (typeof window === 'undefined') return Promise.resolve(false)
+    if ((window as RazorpayWindow).Razorpay) return Promise.resolve(true)
+    if (razorpayScriptPromise) return razorpayScriptPromise
+    razorpayScriptPromise = new Promise<boolean>((resolve) => {
+      const existing = document.querySelector<HTMLScriptElement>('script[data-razorpay="checkout"]')
+      if (existing) { existing.addEventListener('load', () => resolve(true), { once: true }); existing.addEventListener('error', () => resolve(false), { once: true }); return }
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.async = true; script.defer = true; script.dataset.razorpay = 'checkout'
+      script.onload = () => resolve(true); script.onerror = () => resolve(false)
+      document.head.appendChild(script)
+    })
+    return razorpayScriptPromise
+  }
   const [lookupLoading, setLookupLoading] = useState(false)
   const [lastLookupPincode, setLastLookupPincode] = useState(savedAddresses[0]?.pincode ?? '')
 
@@ -84,10 +87,10 @@ export default function CartDeliveryClient({
   const cartDiscountPercent = Math.round(summary.cartDiscountPercent)
 
   useEffect(() => {
-    if (localItems.length === 0 && !confirmation) {
+    if (localItems.length === 0 && !paymentResult) {
       router.replace('/cart')
     }
-  }, [localItems, confirmation, router])
+  }, [localItems, paymentResult, router])
 
   useEffect(() => {
     if (!toast) {
@@ -191,10 +194,7 @@ export default function CartDeliveryClient({
     } catch (error) {
       setToast({
         type: 'error',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'One or more cart items has an invalid file upload. Re-open the quote and upload the model again.',
+        message: error instanceof Error ? error.message : 'One or more cart items has an invalid file upload.',
       })
       return
     }
@@ -208,7 +208,10 @@ export default function CartDeliveryClient({
 
     try {
       setSubmitting(true)
-      const result = await createCartOrderAction({
+      setPaymentStatus('creating')
+      setPaymentMessage('Preparing secure payment...')
+
+      const paymentResult = await prepareCartPaymentAction({
         items: items.map((item) => ({
           quoteId: item.quoteId ?? item.id ?? '',
           fileUrl: item.fileUrl ?? '',
@@ -235,11 +238,11 @@ export default function CartDeliveryClient({
           deliveryCharge: item.deliveryCharge ?? 0,
           grandTotal: item.grandTotal ?? (item.finalPrice ?? item.totalPrice ?? item.price ?? 0) + (item.deliveryCharge ?? 0),
           price: item.price ?? 0,
-	          estimatedTime: item.estimatedTime ?? 0,
-	          weight: item.weight ?? 0,
-	          modelVolumeMm3: (item as { modelVolumeMm3?: number }).modelVolumeMm3 ?? 0,
-	          difficultyFactor: item.difficultyFactor ?? 1,
-	          dimensions: item.dimensions ?? { x: 0, y: 0, z: 0 },
+          estimatedTime: item.estimatedTime ?? 0,
+          weight: item.weight ?? 0,
+          modelVolumeMm3: (item as { modelVolumeMm3?: number }).modelVolumeMm3 ?? 0,
+          difficultyFactor: item.difficultyFactor ?? 1,
+          dimensions: item.dimensions ?? { x: 0, y: 0, z: 0 },
         })),
         subtotal: summary.itemsTotal,
         itemsTotal: summary.itemsTotal,
@@ -268,24 +271,88 @@ export default function CartDeliveryClient({
         landmark: address.landmark,
       })
 
-      setConfirmation({
-        orderId: result.orderId,
-        orderNumber: result.orderNumber,
-        itemCount: result.itemCount,
-        totalPrice: payableTotal,
+      const loaded = await loadRazorpayScript()
+      if (!loaded) throw new Error('Secure payment script failed to load.')
+
+      const RazorpayCtor = (window as RazorpayWindow).Razorpay
+      if (!RazorpayCtor) throw new Error('Secure payment script is unavailable.')
+
+      const options = {
+        key: paymentResult.session.keyId,
+        amount: paymentResult.session.amount,
+        currency: paymentResult.session.currency,
+        order_id: paymentResult.session.orderId,
+        name: 'Flux3D',
+        description: `Cart Payment — ${items.length} item(s)`,
+        prefill: {
+          name: paymentResult.customer.name,
+          email: paymentResult.customer.email,
+          contact: paymentResult.customer.contact,
+        },
+        notes: { quote_capture_reference: paymentResult.reference },
+        theme: { color: '#6d28d9' },
+        modal: {
+          escape: false,
+          backdropclose: false,
+          ondismiss: () => {
+            if (paymentStatus !== 'paid') {
+              setPaymentStatus('failed')
+              setPaymentMessage('Payment dialog was closed before completion.')
+            }
+            setSubmitting(false)
+          },
+        },
+        retry: { enabled: true, max_count: 2 },
+        handler: async (response: Record<string, string>) => {
+          setPaymentStatus('verifying')
+          setPaymentMessage('Verifying payment...')
+          try {
+            const orderResult = await verifyCartPaymentAndCreateOrder({
+              reference: paymentResult.reference,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            })
+
+            setPaymentStatus('paid')
+            setPaymentResult({
+              orderId: orderResult.orderId,
+              orderNumber: orderResult.orderNumber,
+              amount: payableTotal,
+            })
+            clearItems()
+            const successData = {
+              orderId: orderResult.orderId,
+              orderNumber: orderResult.orderNumber,
+              itemCount: orderResult.itemCount,
+            }
+            sessionStorage.setItem('flux3d-order-success', JSON.stringify(successData))
+          } catch (error) {
+            setPaymentStatus('failed')
+            setPaymentMessage(error instanceof Error ? error.message : 'Payment verification failed.')
+          } finally {
+            setSubmitting(false)
+          }
+        },
+      }
+
+      checkoutRef.current = new RazorpayCtor(options)
+      checkoutRef.current.on?.('payment.failed', (response: Record<string, string>) => {
+        setPaymentStatus('failed')
+        setSubmitting(false)
+        setPaymentMessage(response.error_description || response.error_reason || 'Payment failed.')
       })
-      clearItems()
+
+      setPaymentStatus('opened')
+      checkoutRef.current.open()
     } catch (error) {
-      setToast({
-        type: 'error',
-        message: error instanceof Error ? error.message : 'Failed to submit your order.',
-      })
-    } finally {
+      setPaymentStatus('failed')
+      setPaymentMessage(error instanceof Error ? error.message : 'Could not start payment. Please try again.')
       setSubmitting(false)
     }
   }
 
-  if (localItems.length === 0 && !confirmation) {
+  if (localItems.length === 0 && !paymentResult) {
     return null
   }
 
@@ -475,36 +542,21 @@ export default function CartDeliveryClient({
                   </div>
                 </div>
 
-                {confirmation ? (
-                  <div className="rounded-[22px] border border-emerald-400/15 bg-emerald-400/10 p-4">
-                    <div className="text-sm font-semibold text-[#0F1B3D]">
-                      Your order has been submitted
-                    </div>
-                    <div className="mt-3 text-sm text-emerald-50">
-                      Order ID: {confirmation.orderNumber}
-                    </div>
-                    <div className="mt-1 text-xs text-emerald-100/80">
-                      {confirmation.itemCount} item{confirmation.itemCount !== 1 ? 's' : ''} included
-                    </div>
-                    <Link
-                      href="/my-orders"
-                      className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#0F1B3D] underline underline-offset-4"
-                    >
-                      View all orders
-                    </Link>
-                  </div>
-                ) : null}
+
               </div>
 
               <div className="mt-6 flex flex-col gap-3">
                 <button
                   type="button"
                   onClick={handleSubmitOrder}
-                  disabled={submitting || confirmation !== null}
+                  disabled={submitting || paymentStatus === 'verifying'}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-[20px] bg-[#6d28d9] px-5 py-4 text-sm font-semibold text-white transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55"
                 >
-                  {submitting ? 'Submitting Order...' : confirmation ? 'Order Submitted' : `Place Order (${items.length} items)`}
-                  <PackageCheck className="h-4 w-4" />
+                  {submitting || paymentStatus === 'verifying' || paymentStatus === 'opened' ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Processing Payment...</>
+                  ) : (
+                    <><ShieldCheck className="h-4 w-4" /> Pay & Place Order ({items.length} items)</>
+                  )}
                 </button>
                 <Link
                   href="/cart"
@@ -519,6 +571,73 @@ export default function CartDeliveryClient({
       </div>
 
       <Toast toast={toast} />
+
+      <AnimatePresence>
+        {paymentStatus === 'paid' && paymentResult && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] grid place-items-center bg-white/95 backdrop-blur-md"
+          >
+            <div className="text-center px-6">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', damping: 12, stiffness: 200 }}
+                className="mx-auto mb-6 grid h-24 w-24 place-items-center rounded-full bg-emerald-100"
+              >
+                <CheckCircle2 className="h-12 w-12 text-emerald-600" />
+              </motion.div>
+              <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-3xl font-black text-[#0F1B3D]">Payment Successful!</motion.h2>
+              <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-2 text-lg text-[#6b7280]">₹{paymentResult.amount.toFixed(0)} · {paymentResult.orderNumber}</motion.p>
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-2 text-sm text-emerald-600 font-semibold">Your order has been placed successfully!</motion.p>
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="mt-6 text-sm text-[#6b7280]">Redirecting to your order...</motion.p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {paymentStatus === 'failed' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] grid place-items-center bg-white/95 backdrop-blur-md"
+          >
+            <div className="text-center max-w-sm px-6">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', damping: 12, stiffness: 200 }}
+                className="mx-auto mb-6 grid h-24 w-24 place-items-center rounded-full bg-red-100"
+              >
+                <TriangleAlert className="h-12 w-12 text-red-600" />
+              </motion.div>
+              <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-3xl font-black text-[#0F1B3D]">Payment Failed</motion.h2>
+              <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-2 text-sm leading-6 text-[#6b7280]">{paymentMessage || 'Your payment could not be processed.'}</motion.p>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mt-6 flex flex-col gap-3">
+                <button type="button" onClick={() => setPaymentStatus('idle')} className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#6d28d9] px-6 text-sm font-bold text-white shadow-[0_8px_24px_rgba(109,40,217,0.3)] transition hover:bg-[#5b21b6]">Try Again</button>
+                <a href="mailto:support@flux3d.com" className="text-sm font-medium text-[#6b7280] transition hover:text-[#0F1B3D]">Contact Support</a>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {paymentStatus === 'paid' && paymentResult && (
+        <CartRedirect orderId={paymentResult.orderId} />
+      )}
     </>
   )
+}
+
+function CartRedirect({ orderId }: { orderId: string }) {
+  const router = useRouter()
+  useEffect(() => {
+    const timer = setTimeout(() => router.replace(`/my-orders/${orderId}?payment=success`), 2000)
+    return () => clearTimeout(timer)
+  }, [router, orderId])
+  return null
 }
