@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { hasSupabaseConfig } from '@/lib/supabase/config'
 import { normalizeNextPath } from '@/lib/auth/redirect'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
 
 export type AppUserProfile = {
   id: string
@@ -46,7 +47,11 @@ export async function getCurrentUserProfile() {
     return null
   }
 
-  const { data: profile } = await supabase
+  // Use admin client to bypass RLS — the profiles query must work even when the
+  // user session's JWT is expired. `getSession()` above already validated the user
+  // is authenticated, so it's safe to read their profile with elevated privileges.
+  const adminSupabase = createAdminSupabaseClient()
+  const { data: profile } = await adminSupabase
     .from('profiles')
     .select('id, name, full_name, email, avatar_url, created_at, is_admin')
     .eq('id', user.id)
