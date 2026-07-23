@@ -14,6 +14,9 @@ const initialState: AuthFormState = {}
 const fieldClass =
   'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-[#111827] outline-none transition-[border-color] duration-150 placeholder:text-[#9CA3AF] focus:border-[#6d28d9]'
 
+const errorFieldClass =
+  'h-11 w-full rounded-lg border bg-white px-3 text-sm font-medium text-[#111827] outline-none transition-[border-color] duration-150 placeholder:text-[#9CA3AF] border-red-400 ring-1 ring-red-400/30 focus:border-red-500'
+
 type ForgotPasswordFormProps = {
   nextPath: string
 }
@@ -217,7 +220,7 @@ export default function ForgotPasswordForm({ nextPath }: ForgotPasswordFormProps
                     }}
                     aria-invalid={Boolean(displayedEmailError)}
                     aria-describedby={displayedEmailError ? 'forgot-email-error' : undefined}
-                    className={`${fieldClass} pl-10`}
+                    className={`${displayedEmailError ? errorFieldClass : fieldClass} pl-10`}
                   />
                 </div>
                 <FieldError id="forgot-email-error" error={displayedEmailError} />

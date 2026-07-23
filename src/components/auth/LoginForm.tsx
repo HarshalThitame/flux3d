@@ -12,7 +12,10 @@ import type { AuthFormState } from '@/lib/auth/validation'
 const initialState: AuthFormState = {}
 
 const fieldClass =
-  'h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-purple-400 focus:ring-4 focus:ring-purple-100'
+  'h-11 w-full rounded-xl border bg-white px-4 text-sm font-semibold text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-purple-400 focus:ring-4 focus:ring-purple-100'
+
+const errorFieldClass =
+  'h-11 w-full rounded-xl border bg-white px-4 text-sm font-semibold text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 border-red-400 ring-1 ring-red-400/30 focus:border-red-500 focus:ring-red-200'
 
 export type LoginFormProps = {
   nextPath: string
@@ -180,7 +183,7 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
               placeholder="you@company.com"
               aria-invalid={Boolean(state.fieldErrors?.email)}
               aria-describedby={state.fieldErrors?.email ? 'login-email-error' : undefined}
-              className={`${fieldClass} pl-11`}
+              className={`${state.fieldErrors?.email ? errorFieldClass : fieldClass} pl-11`}
             />
           </div>
           <FieldError id="login-email-error" errors={state.fieldErrors?.email} />
@@ -214,7 +217,7 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
               placeholder="Enter your password"
               aria-invalid={Boolean(state.fieldErrors?.password)}
               aria-describedby={state.fieldErrors?.password ? 'login-password-error' : undefined}
-              className={`${fieldClass} pl-11 pr-12`}
+              className={`${state.fieldErrors?.password ? errorFieldClass : fieldClass} pl-11 pr-12`}
             />
             <button
               type="button"
