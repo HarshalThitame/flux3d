@@ -432,7 +432,7 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
   if (offerId) {
     const { data: offer, error: offerError } = await adminSupabase
       .from('offers')
-      .select('id, title, badge_text, sale_label, offer_type, discount_value, max_discount, starts_at, ends_at, is_active, usage_limit, used_count')
+      .select('id, title, badge_text, sale_label, offer_type, discount_value, max_discount, starts_at, ends_at, is_active, usage_limit, usage_per_user, used_count')
       .eq('id', offerId)
       .maybeSingle()
 
@@ -441,6 +441,19 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
     const now = new Date()
     const startsAt = offer ? new Date(String(offer.starts_at)) : null
     const endsAt = offer ? new Date(String(offer.ends_at)) : null
+
+    if (offer && offer.usage_per_user != null) {
+      const { count: offerUsage, error: offerUsageErr } = await supabase
+        .from('redemptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('offer_id', offer.id)
+        .eq('user_id', auth.user.id)
+      if (offerUsageErr) throw new Error(offerUsageErr.message)
+      if ((offerUsage ?? 0) >= Number(offer.usage_per_user)) {
+        throw new Error('You have already used this offer the maximum number of times.')
+      }
+    }
+
     const isOfferValid = Boolean(
       offer &&
       offer.is_active &&
@@ -1175,6 +1188,44 @@ export async function verifyCartPaymentAndCreateOrder(params: {
   const offerDiscountAmount = Number(pricingData.offerDiscountAmount ?? 0)
   const firstOrder = insertedOrders[0]
   const firstOrderNumber = formatOrderNumber(firstOrder.serial_number, firstOrder.created_at)
+
+  // Re-validate coupon usage_per_user before recording redemption
+  if (couponId) {
+    const { data: couponRecord } = await adminSupabase
+      .from('coupons')
+      .select('usage_per_user')
+      .eq('id', couponId)
+      .maybeSingle()
+    if (couponRecord?.usage_per_user != null) {
+      const { count: couponUsage } = await supabase
+        .from('redemptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('coupon_id', couponId)
+        .eq('user_id', auth.user.id)
+      if ((couponUsage ?? 0) >= Number(couponRecord.usage_per_user)) {
+        throw new Error('You have already used this coupon the maximum number of times.')
+      }
+    }
+  }
+
+  // Re-validate offer usage_per_user before recording redemption
+  if (offerId) {
+    const { data: offerRecord } = await adminSupabase
+      .from('offers')
+      .select('usage_per_user')
+      .eq('id', offerId)
+      .maybeSingle()
+    if (offerRecord?.usage_per_user != null) {
+      const { count: offerUsage } = await supabase
+        .from('redemptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('offer_id', offerId)
+        .eq('user_id', auth.user.id)
+      if ((offerUsage ?? 0) >= Number(offerRecord.usage_per_user)) {
+        throw new Error('You have already used this offer the maximum number of times.')
+      }
+    }
+  }
 
   if (couponId) {
     await adminSupabase.from('redemptions').insert({
