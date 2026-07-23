@@ -4,11 +4,13 @@ import { createServerClient } from '@supabase/ssr'
 import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/config'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 
-async function createAuthenticatedSupabaseClient() {
+export async function requireAdminRequest() {
   const cookieStore = await cookies()
 
-  let user = null
-
+  // The proxy (src/proxy.ts) runs before this route handler and calls
+  // getUser() which refreshes the token and sets fresh cookies.
+  // We only need getSession() here — it reads the already-refreshed
+  // session without triggering another token refresh.
   const supabase = createServerClient(
     getSupabaseUrl(),
     getSupabasePublishableKey(),
@@ -17,47 +19,16 @@ async function createAuthenticatedSupabaseClient() {
         getAll() {
           return cookieStore.getAll()
         },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
-            })
-          } catch {
-            // Server Components cannot always write cookies during render.
-            // This path is triggered during getUser() token refresh.
-          }
+        setAll() {
+          // No-op: the proxy has already handled token refresh and cookie
+          // writing. We only need to read the session here.
         },
       },
     }
   )
 
-  // Try getSession() first — it reads cookies locally without HTTP request.
-  // This avoids the token refresh race condition.
   const { data: sessionData } = await supabase.auth.getSession()
-  if (sessionData?.session?.user) {
-    user = sessionData.session.user
-  }
-
-  // Fall back to getUser() only if session is missing (not just expired)
-  // getUser() triggers token refresh which rotates the refresh token.
-  if (!user) {
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const { data } = await supabase.auth.getUser()
-        user = data.user
-        break
-      } catch {
-        if (attempt === 2) return { supabase, user: null }
-        await new Promise((resolve) => setTimeout(resolve, 500))
-      }
-    }
-  }
-
-  return { supabase, user }
-}
-
-export async function requireAdminRequest() {
-  const { supabase, user } = await createAuthenticatedSupabaseClient()
+  const user = sessionData?.session?.user
 
   if (!user) {
     return { response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
