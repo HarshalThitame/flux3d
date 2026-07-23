@@ -53,18 +53,18 @@ function getPrimaryImage(order: ShopOrder) {
 
 function getPaymentModeLabel(value: string | null) {
   const normalized = value?.trim().toLowerCase()
-  if (!normalized) {
-    return 'Not set'
-  }
-  if (normalized === 'razorpay') {
-    return 'Razorpay'
-  }
-  if (normalized === 'payu') {
-    return 'PayU'
-  }
-  if (normalized === 'cod' || normalized === 'cash_on_delivery' || normalized === 'cash on delivery') {
-    return 'Cash on Delivery'
-  }
+  if (!normalized) return 'Not set'
+  if (normalized === 'razorpay') return 'Razorpay'
+  if (normalized === 'payu') return 'PayU'
+  if (normalized === 'cod' || normalized === 'cash_on_delivery' || normalized === 'cash on delivery') return 'Cash on Delivery'
+  if (normalized === 'upi') return 'UPI'
+  if (normalized === 'card') return 'Credit / Debit Card'
+  if (normalized === 'netbanking') return 'Net Banking'
+  if (normalized === 'wallet') return 'Wallet'
+  if (normalized === 'emi') return 'EMI'
+  if (normalized === 'bank_transfer') return 'Bank Transfer'
+  if (normalized === 'paylater') return 'Pay Later'
+  if (normalized === 'cardless_emi') return 'Cardless EMI'
   return value
 }
 

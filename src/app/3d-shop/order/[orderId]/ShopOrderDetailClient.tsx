@@ -81,14 +81,18 @@ function getPrimaryItem(order: ShopOrder) {
 
 function getPaymentModeLabel(value: string | null) {
   const normalized = value?.trim().toLowerCase()
-  if (!normalized) {
-    return 'Not set'
-  }
+  if (!normalized) return 'Not set'
   if (normalized === 'razorpay') return 'Razorpay'
   if (normalized === 'payu') return 'PayU'
-  if (normalized === 'cod' || normalized === 'cash_on_delivery' || normalized === 'cash on delivery') {
-    return 'Cash on Delivery'
-  }
+  if (normalized === 'cod' || normalized === 'cash_on_delivery' || normalized === 'cash on delivery') return 'Cash on Delivery'
+  if (normalized === 'upi') return 'UPI'
+  if (normalized === 'card') return 'Credit / Debit Card'
+  if (normalized === 'netbanking') return 'Net Banking'
+  if (normalized === 'wallet') return 'Wallet'
+  if (normalized === 'emi') return 'EMI'
+  if (normalized === 'bank_transfer') return 'Bank Transfer'
+  if (normalized === 'paylater') return 'Pay Later'
+  if (normalized === 'cardless_emi') return 'Cardless EMI'
   return value
 }
 
@@ -401,8 +405,8 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                 <span className={`rounded-full border px-3 py-1 text-xs font-black ${getShopPaymentStatusClasses(order.payment_status)}`}>
                   {getShopPaymentStatusLabel(order.payment_status)}
                 </span>
-                <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">
-                  {getPaymentModeLabel(order.payment_method)}
+                <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-black text-violet-700">
+                  {getPaymentModeLabel(order.payment_provider ?? order.payment_method)}
                 </span>
               </div>
 
