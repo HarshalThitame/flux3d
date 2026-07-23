@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import {
   Box,
   Compass,
@@ -32,6 +32,7 @@ export default function ViewerSection({
   materialId = 'pla',
   colorName = 'Default',
 }: ViewerSectionProps) {
+  const shouldReduceMotion = useReducedMotion()
   const [displayMode, setDisplayMode] = useState<'solid' | 'wireframe' | 'xray'>('solid')
   const [showBuildVolume, setShowBuildVolume] = useState(false)
   const [clippingZPercent, setClippingZPercent] = useState(100)
@@ -48,8 +49,8 @@ export default function ViewerSection({
       >
         <motion.div
           aria-hidden
-          animate={{ x: [0, -20, 0], y: [0, 8, 0], opacity: [0.24, 0.38, 0.24] }}
-          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+          animate={shouldReduceMotion ? undefined : { x: [0, -20, 0], y: [0, 8, 0], opacity: [0.24, 0.38, 0.24] }}
+          transition={shouldReduceMotion ? undefined : { duration: 9, repeat: Infinity, ease: 'easeInOut' }}
           className="pointer-events-none absolute -left-10 -top-10 h-36 w-36 rounded-full bg-cyan-400/10 blur-3xl"
         />
 
@@ -69,8 +70,8 @@ export default function ViewerSection({
             </p>
           </div>
           <motion.div
-            animate={{ rotate: [0, 4, 0, -4, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+            animate={shouldReduceMotion ? undefined : { rotate: [0, 4, 0, -4, 0] }}
+            transition={shouldReduceMotion ? undefined : { duration: 5, repeat: Infinity, ease: 'easeInOut' }}
             className="rounded-2xl border border-cyan-400/20 bg-cyan-50 p-3 text-cyan-700"
           >
             <Cuboid className="h-5 w-5" />
@@ -250,8 +251,8 @@ export default function ViewerSection({
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center">
               <motion.div
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
+                animate={shouldReduceMotion ? undefined : { y: [0, -6, 0] }}
+                transition={shouldReduceMotion ? undefined : { duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
                 className="flex h-18 w-18 items-center justify-center rounded-[22px] border border-white/10 bg-white/5 text-cyan-400"
               >
                 <Move3D className="h-7 w-7" />

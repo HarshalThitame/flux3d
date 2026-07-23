@@ -134,9 +134,8 @@ export default function MaterialsGrid() {
   const [materials, setMaterials] = useState<MaterialSpec[]>([])
   const [loading, setLoading] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
-  const [anchorRect, setAnchorRect] = useState<AnchorRect | null>(null)
   const [isMobile, setIsMobile] = useState(false)
-  const [activeElement, setActiveElement] = useState<HTMLButtonElement | null>(null)
+  const activeElementRef = useRef<HTMLButtonElement | null>(null)
   const rootRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -167,42 +166,6 @@ export default function MaterialsGrid() {
   }, [])
 
   useEffect(() => {
-    if (!activeElement) {
-      return
-    }
-
-    let frame = 0
-
-    const updatePosition = () => {
-      frame = 0
-      const rect = activeElement.getBoundingClientRect()
-      setAnchorRect({
-        left: rect.left,
-        top: rect.top,
-        right: rect.right,
-        bottom: rect.bottom,
-        width: rect.width,
-        height: rect.height,
-      })
-    }
-
-    const schedulePositionUpdate = () => {
-      if (frame) return
-      frame = window.requestAnimationFrame(updatePosition)
-    }
-
-    updatePosition()
-    window.addEventListener('resize', schedulePositionUpdate)
-    window.addEventListener('scroll', schedulePositionUpdate, true)
-
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame)
-      window.removeEventListener('resize', schedulePositionUpdate)
-      window.removeEventListener('scroll', schedulePositionUpdate, true)
-    }
-  }, [activeElement])
-
-  useEffect(() => {
     if (!isMobile || !activeId) {
       return
     }
@@ -213,8 +176,7 @@ export default function MaterialsGrid() {
         return
       }
       setActiveId(null)
-      setAnchorRect(null)
-      setActiveElement(null)
+      activeElementRef.current = null
     }
 
     document.addEventListener('pointerdown', handlePointerDown)
@@ -227,17 +189,26 @@ export default function MaterialsGrid() {
   )
 
   const position = useMemo(() => {
-    if (!anchorRect) {
+    const el = activeElementRef.current
+    if (!el) {
       return null
     }
 
-    return getPopupPosition(anchorRect, isMobile)
-  }, [anchorRect, isMobile])
+    const rect = el.getBoundingClientRect()
+    const anchor: AnchorRect = {
+      left: rect.left,
+      top: rect.top,
+      right: rect.right,
+      bottom: rect.bottom,
+      width: rect.width,
+      height: rect.height,
+    }
+    return getPopupPosition(anchor, isMobile)
+  }, [activeId, isMobile])
 
   const closePopup = () => {
     setActiveId(null)
-    setAnchorRect(null)
-    setActiveElement(null)
+    activeElementRef.current = null
   }
 
   const openMaterial = (material: MaterialSpec, element: HTMLButtonElement) => {
@@ -246,17 +217,8 @@ export default function MaterialsGrid() {
       return
     }
 
-    const rect = element.getBoundingClientRect()
+    activeElementRef.current = element
     setActiveId(material.id)
-    setActiveElement(element)
-    setAnchorRect({
-      left: rect.left,
-      top: rect.top,
-      right: rect.right,
-      bottom: rect.bottom,
-      width: rect.width,
-      height: rect.height,
-    })
   }
 
   if (loading) {
