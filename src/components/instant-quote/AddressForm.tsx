@@ -11,6 +11,7 @@ type AddressFormProps = {
 
 function Field({
   label,
+  id,
   value,
   error,
   required = false,
@@ -18,27 +19,32 @@ function Field({
   onChange,
 }: {
   label: string
+  id: string
   value: string
   error?: string
   required?: boolean
   placeholder: string
   onChange: (value: string) => void
 }) {
+  const errorId = `${id}-error`
   return (
-    <label className="block">
+    <label className="block" htmlFor={id}>
       <div className="mb-2 text-sm font-medium text-[#0F1B3D]">
         {label}
         {required ? <span className="ml-1 text-[#6d28d9]">*</span> : null}
       </div>
       <input
+        id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errorId : undefined}
         className={`w-full rounded-[18px] border bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none transition ${
-          error ? 'border-rose-400/35' : 'border-[#6d28d9]/10 focus:border-[#6d28d9]/40'
+          error ? 'border-red-400 ring-1 ring-red-400/30' : 'border-[#6d28d9]/10 focus:border-[#6d28d9]/40'
         }`}
       />
-      {error ? <div className="mt-2 text-xs text-rose-300">{error}</div> : null}
+      {error ? <div id={errorId} className="mt-2 text-xs font-medium text-red-500" role="alert">{error}</div> : null}
     </label>
   )
 }
@@ -62,6 +68,7 @@ export default function AddressForm({ values, errors, onChange }: AddressFormPro
 
       <div className="grid gap-4 md:grid-cols-2">
         <Field
+          id="fullName"
           label="Full Name"
           value={values.fullName}
           error={errors.fullName}
@@ -70,6 +77,7 @@ export default function AddressForm({ values, errors, onChange }: AddressFormPro
           onChange={(value) => onChange('fullName', value)}
         />
         <Field
+          id="phone"
           label="Phone Number"
           value={values.phone}
           error={errors.phone}
@@ -79,6 +87,7 @@ export default function AddressForm({ values, errors, onChange }: AddressFormPro
         />
         <div className="md:col-span-2">
           <Field
+            id="addressLine1"
             label="Address Line 1"
             value={values.addressLine1}
             error={errors.addressLine1}
@@ -89,6 +98,7 @@ export default function AddressForm({ values, errors, onChange }: AddressFormPro
         </div>
         <div className="md:col-span-2">
           <Field
+            id="addressLine2"
             label="Address Line 2"
             value={values.addressLine2}
             error={errors.addressLine2}
@@ -97,6 +107,7 @@ export default function AddressForm({ values, errors, onChange }: AddressFormPro
           />
         </div>
         <Field
+          id="city"
           label="City"
           value={values.city}
           error={errors.city}
@@ -105,6 +116,7 @@ export default function AddressForm({ values, errors, onChange }: AddressFormPro
           onChange={(value) => onChange('city', value)}
         />
         <Field
+          id="state"
           label="State"
           value={values.state}
           error={errors.state}
@@ -113,6 +125,7 @@ export default function AddressForm({ values, errors, onChange }: AddressFormPro
           onChange={(value) => onChange('state', value)}
         />
         <Field
+          id="pincode"
           label="Pincode"
           value={values.pincode}
           error={errors.pincode}
@@ -121,6 +134,7 @@ export default function AddressForm({ values, errors, onChange }: AddressFormPro
           onChange={(value) => onChange('pincode', value)}
         />
         <Field
+          id="landmark"
           label="Landmark"
           value={values.landmark}
           error={errors.landmark}
