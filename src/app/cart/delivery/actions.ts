@@ -25,6 +25,25 @@ import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 import { logQuoteEvent } from '@/lib/quote/audit'
 import { redactSensitiveValues } from '@/lib/security/redact'
 import { verifyModelVolume } from '@/lib/storage/verify-metadata'
+import {
+  createQuoteCapture,
+  getQuoteCapture,
+  markQuoteCapturePaid,
+} from '@/lib/quote/capture'
+import {
+  createRazorpayOrder,
+  getRazorpayConfig,
+  makeReceipt,
+  verifyRazorpayCheckoutSignature,
+  fetchRazorpayPayment,
+  getPublicRazorpayKeyId,
+} from '@/lib/payments/razorpay'
+import {
+  upsertPaymentAttempt,
+  insertPaymentAuditLog,
+} from '@/lib/payments/repository'
+import { updatePaymentAttemptStatus } from '@/lib/payments/state'
+import { buildPublicBusinessProfile } from '@/lib/public-business'
 
 type CartOrderItem = {
   quoteId: string
@@ -705,5 +724,491 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
     orderId: insertedOrders[0].id,
     orderNumber: formatOrderNumber(insertedOrders[0].serial_number, insertedOrders[0].created_at),
     itemCount: input.items.reduce((sum, item) => sum + Math.max(1, Math.floor(item.quantity ?? 1)), 0),
+  }
+}
+
+export type PrepareCartPaymentResult = {
+  reference: string
+  session: {
+    keyId: string
+    orderId: string
+    amount: number
+    currency: string
+  }
+  customer: {
+    name: string
+    email: string
+    contact: string
+  }
+}
+
+export async function prepareCartPaymentAction(
+  input: CreateCartOrderInput
+): Promise<PrepareCartPaymentResult> {
+  const auth = await requireUser('/cart/delivery')
+
+  if (input.items.length === 0) {
+    throw new Error('Your cart is empty. Add items before ordering.')
+  }
+
+  const addressErrors = validateAddressFields({
+    fullName: input.fullName,
+    phone: input.phone,
+    addressLine1: input.addressLine1,
+    addressLine2: input.addressLine2,
+    city: input.city,
+    state: input.state,
+    pincode: input.pincode,
+    landmark: input.landmark,
+  })
+  if (Object.keys(addressErrors).length > 0) {
+    throw new Error('Complete the delivery address before placing the order.')
+  }
+
+  const grandTotal = input.grandTotal ?? input.finalPrice ?? 0
+  if (grandTotal <= 0) throw new Error('Order total must be greater than zero.')
+  const amountPaise = Math.round(grandTotal * 100)
+
+  const addressData = {
+    fullName: input.fullName.trim(),
+    phone: normalizePhone(input.phone),
+    addressLine1: input.addressLine1.trim(),
+    addressLine2: input.addressLine2?.trim() ?? '',
+    city: input.city.trim(),
+    state: input.state.trim(),
+    pincode: input.pincode.trim(),
+    landmark: input.landmark?.trim() ?? '',
+  }
+
+  const capture = await createQuoteCapture({
+    userId: auth.user.id,
+    amountPaise,
+    draftData: { type: 'cart', itemCount: input.items.length } as unknown as Record<string, unknown>,
+    addressData,
+    configData: { type: 'cart' } as unknown as Record<string, unknown>,
+    pricingData: {
+      subtotal: input.subtotal,
+      cartDiscountAmount: input.cartDiscountAmount ?? 0,
+      cartDiscountPercent: input.cartDiscountPercent ?? 0,
+      couponDiscountAmount: input.couponDiscountAmount ?? 0,
+      couponCode: input.couponCode ?? null,
+      couponId: input.couponId ?? null,
+      couponDiscountType: input.couponDiscountType ?? null,
+      offerId: input.offerId ?? null,
+      offerDiscountAmount: input.offerDiscountAmount ?? 0,
+      offerName: input.offerName ?? null,
+      offerCode: input.offerCode ?? null,
+      offerDiscountType: input.offerDiscountType ?? null,
+      finalPrice: input.finalPrice ?? 0,
+      deliveryCharge: input.deliveryCharge ?? 0,
+      grandTotal,
+      discount: input.discount ?? 0,
+      items: input.items.map((item) => ({
+        quoteId: item.quoteId,
+        fileUrl: item.fileUrl,
+        fileName: item.fileName,
+        material: item.material,
+        color: item.color,
+        quantity: item.quantity ?? 1,
+        infill: item.infill,
+        layerHeight: item.layerHeight,
+        postProcessingLevel: item.postProcessingLevel,
+        supports: item.supports,
+        materialCost: item.materialCost ?? 0,
+        machineCost: item.machineCost ?? 0,
+        subtotal: item.subtotal ?? 0,
+        postProcessingCharges: item.postProcessingCharges ?? 0,
+        overheadPercentage: item.overheadPercentage ?? 0,
+        overheadAmount: item.overheadAmount ?? 0,
+        marginPercentage: item.marginPercentage ?? 0,
+        marginAmount: item.marginAmount ?? 0,
+        totalPrice: item.totalPrice ?? 0,
+        cartDiscountAmount: item.cartDiscountAmount ?? 0,
+        cartDiscountPercent: item.cartDiscountPercent ?? 0,
+        finalPrice: item.finalPrice ?? 0,
+        deliveryCharge: item.deliveryCharge ?? 0,
+        grandTotal: item.grandTotal ?? 0,
+        price: item.price,
+        estimatedTime: item.estimatedTime,
+        weight: item.weight,
+        modelVolumeMm3: item.modelVolumeMm3 ?? 0,
+        difficultyFactor: item.difficultyFactor ?? 1,
+        dimensions: item.dimensions,
+      })),
+    } as unknown as Record<string, unknown>,
+    modelMetadata: {} as Record<string, unknown>,
+  })
+
+  const razorpayConfig = getRazorpayConfig()
+  if (!razorpayConfig) throw new Error('Payment gateway is not configured.')
+
+  const receipt = makeReceipt(capture.reference.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 10) || 'CC', 1)
+
+  const providerOrder = await createRazorpayOrder({
+    amountPaise,
+    currency: 'INR',
+    receipt,
+    notes: {
+      quote_capture_reference: capture.reference,
+      internal_order_type: 'custom_quote',
+      user_id: auth.user.id,
+    },
+  })
+
+  const paymentAttempt = await upsertPaymentAttempt({
+    internal_order_type: 'custom_quote',
+    internal_order_id: capture.reference,
+    customer_id: auth.user.id,
+    provider: 'razorpay',
+    payment_purpose: 'custom_quote_full_payment',
+    provider_order_id: providerOrder.id,
+    provider_payment_id: null,
+    amount_paise: amountPaise,
+    currency: 'INR',
+    status: 'created',
+    attempt_number: 1,
+    idempotency_key: `cc-${capture.reference}-${Date.now()}`,
+    receipt,
+    failure_code: null,
+    failure_description: null,
+    payment_method: null,
+    captured_at: null,
+    failed_at: null,
+    metadata: {
+      quote_capture_reference: capture.reference,
+      customer: {
+        name: input.fullName.trim(),
+        email: auth.user.email ?? '',
+        contact: normalizePhone(input.phone),
+      },
+    },
+  })
+
+  await updatePaymentAttemptStatus(
+    paymentAttempt.id,
+    paymentAttempt.status,
+    'pending',
+    {
+      provider_order_id: providerOrder.id,
+      metadata: { ...paymentAttempt.metadata, razorpay: providerOrder },
+    },
+    {
+      actorId: auth.user.id,
+      actorRole: 'customer',
+      reason: 'Cart payment attempt created',
+    }
+  )
+
+  await insertPaymentAuditLog({
+    actor_id: auth.user.id,
+    actor_role: 'customer',
+    action: 'payment_attempt_created',
+    entity_type: 'custom_quote',
+    entity_id: capture.reference,
+    previous_state: null,
+    new_state: {
+      quote_capture_reference: capture.reference,
+      payment_attempt_id: paymentAttempt.id,
+      provider_order_id: providerOrder.id,
+      amount_paise: amountPaise,
+    },
+  })
+
+  return {
+    reference: capture.reference,
+    session: {
+      keyId: getPublicRazorpayKeyId(),
+      orderId: providerOrder.id,
+      amount: amountPaise,
+      currency: 'INR',
+    },
+    customer: {
+      name: input.fullName.trim(),
+      email: auth.user.email ?? '',
+      contact: normalizePhone(input.phone),
+    },
+  }
+}
+
+export async function verifyCartPaymentAndCreateOrder(params: {
+  reference: string
+  razorpayOrderId: string
+  razorpayPaymentId: string
+  razorpaySignature: string
+}): Promise<{ orderId: string; orderNumber: string; itemCount: number }> {
+  const auth = await requireUser('/cart/delivery')
+
+  const capture = await getQuoteCapture(params.reference)
+  if (!capture) throw new Error('Quote capture not found.')
+  if (capture.status !== 'pending') throw new Error('Capture is not in pending state.')
+  if (capture.userId !== auth.user.id) throw new Error('Unauthorized.')
+
+  const signatureValid = verifyRazorpayCheckoutSignature({
+    orderId: params.razorpayOrderId,
+    paymentId: params.razorpayPaymentId,
+    signature: params.razorpaySignature,
+  })
+  if (!signatureValid) throw new Error('Payment signature verification failed.')
+
+  const razorpayPayment = await fetchRazorpayPayment(params.razorpayPaymentId)
+  const isCaptured = razorpayPayment.status === 'captured'
+  const isAuthorized = razorpayPayment.status === 'authorized'
+  if (!isCaptured && !isAuthorized) {
+    throw new Error(`Payment is not confirmed. Status: ${razorpayPayment.status}`)
+  }
+
+  if (razorpayPayment.amount !== capture.amountPaise) {
+    throw new Error('Payment amount does not match the order total.')
+  }
+
+  const supabase = await createServerSupabaseClient()
+  const adminSupabase = createAdminSupabaseClient()
+  const settings = await getSettings()
+
+  const pricingData = capture.pricingData as Record<string, unknown>
+  const addressData = capture.addressData as Record<string, unknown>
+  const itemsData = (pricingData.items ?? []) as Array<Record<string, unknown>>
+
+  const normalizedPhone = normalizePhone((addressData.phone as string) ?? '')
+  const trimmedAddress = {
+    full_name: (addressData.fullName as string)?.trim() ?? '',
+    phone: normalizedPhone,
+    address_line1: (addressData.addressLine1 as string)?.trim() ?? '',
+    address_line2: (addressData.addressLine2 as string)?.trim() || null,
+    city: (addressData.city as string)?.trim() ?? '',
+    state: (addressData.state as string)?.trim() ?? '',
+    pincode: (addressData.pincode as string)?.trim() ?? '',
+    landmark: (addressData.landmark as string)?.trim() || null,
+  }
+
+  // Save address
+  const savedAddress = {
+    full_name: trimmedAddress.full_name,
+    phone: trimmedAddress.phone,
+    address_line_1: trimmedAddress.address_line1,
+    address_line_2: trimmedAddress.address_line2,
+    city: trimmedAddress.city,
+    state: trimmedAddress.state,
+    pincode: trimmedAddress.pincode,
+    landmark: trimmedAddress.landmark,
+    country: 'India',
+    is_default: true,
+    updated_at: new Date().toISOString(),
+  }
+
+  const { data: existingAddr } = await supabase
+    .from('addresses')
+    .select('id')
+    .eq('user_id', auth.user.id)
+    .eq('full_name', savedAddress.full_name)
+    .eq('phone', savedAddress.phone)
+    .eq('address_line_1', savedAddress.address_line_1)
+    .eq('city', savedAddress.city)
+    .eq('state', savedAddress.state)
+    .eq('pincode', savedAddress.pincode)
+    .maybeSingle()
+
+  await supabase.from('addresses').update({ is_default: false }).eq('user_id', auth.user.id)
+  if (existingAddr) {
+    await supabase.from('addresses').update(savedAddress).eq('id', existingAddr.id).eq('user_id', auth.user.id)
+  } else {
+    await supabase.from('addresses').insert({ user_id: auth.user.id, ...savedAddress })
+  }
+
+  // Build order items from cart data
+  const groupId = crypto.randomUUID()
+  const orderItems: Array<Record<string, unknown>> = []
+  const afterCartTotal = Number(pricingData.subtotal ?? 0) - Number(pricingData.cartDiscountAmount ?? 0)
+  const afterCouponTotal = afterCartTotal - Number(pricingData.couponDiscountAmount ?? 0)
+
+  for (const item of itemsData) {
+    const normalizedQuantity = Math.max(1, Math.floor(Number(item.quantity ?? 1)))
+    const itemMaterialCost = normalizeNumber(Number(item.materialCost ?? 0), 'material cost')
+    const itemMachineCost = normalizeNumber(Number(item.machineCost ?? 0), 'machine cost')
+    const postProcessingCharges = normalizeNumber(Number(item.postProcessingCharges ?? 0), 'post processing charges')
+    const itemSubtotal = normalizeNumber(Number(item.subtotal ?? 0), 'subtotal')
+
+    const overheadPercent = Number(item.overheadPercentage ?? 0)
+    const overheadAmount = overheadPercent > 0
+      ? roundMoney(itemSubtotal * (overheadPercent / 100))
+      : normalizeNumber(Number(item.overheadAmount ?? 0), 'overhead amount')
+
+    const marginPercent = Number(item.marginPercentage ?? 0)
+    const marginAmount = marginPercent > 0
+      ? roundMoney((itemSubtotal + overheadAmount) * (marginPercent / 100))
+      : normalizeNumber(Number(item.marginAmount ?? 0), 'margin amount')
+
+    const totalPrice = normalizeNumber(Number(item.totalPrice ?? 0), 'total price')
+    const cartDiscountPercent = Number(pricingData.cartDiscountPercent ?? 0)
+    const itemCount = itemsData.length
+    const cartDiscountForItem = itemCount > 0
+      ? roundMoney(Number(pricingData.cartDiscountAmount ?? 0) / itemCount)
+      : 0
+    const couponDiscountForItem = itemCount > 0
+      ? roundMoney(Number(pricingData.couponDiscountAmount ?? 0) / itemCount)
+      : 0
+    const offerDiscountForItem = itemCount > 0
+      ? roundMoney(Number(pricingData.offerDiscountAmount ?? 0) / itemCount)
+      : 0
+    const itemDelivery = itemCount > 0
+      ? roundMoney(Number(pricingData.deliveryCharge ?? 0) / itemCount)
+      : 0
+    const finalPrice = totalPrice - cartDiscountForItem - couponDiscountForItem - offerDiscountForItem + itemDelivery
+    const grandTotal = finalPrice
+
+    orderItems.push({
+      user_id: auth.user.id,
+      group_id: groupId,
+      file_url: normalizeOwnedStoragePath(item.fileUrl as string, auth.user.id),
+      material: (item.material as string)?.trim() ?? '',
+      color: (item.color as string)?.trim() ?? '',
+      infill: Math.round(normalizeNumber(Number(item.infill ?? 20), 'infill')),
+      layer_height: normalizeNumber(Number(item.layerHeight ?? 0.2), 'layer height'),
+      post_processing_level: item.postProcessingLevel ?? 'none',
+      supports: Boolean(item.supports),
+      quantity: normalizedQuantity,
+      weight: roundMoney(Number(item.weight ?? 0)),
+      difficulty_factor: normalizeNumber(Number(item.difficultyFactor ?? 1), 'difficulty factor'),
+      material_cost: itemMaterialCost,
+      machine_cost: itemMachineCost,
+      subtotal: itemSubtotal,
+      post_processing_charges: postProcessingCharges,
+      overhead_percent: overheadPercent,
+      overhead_amount: overheadAmount,
+      margin_percent: marginPercent,
+      margin_amount: marginAmount,
+      ...trimmedAddress,
+      delivery_charge: itemDelivery,
+      total_price: totalPrice,
+      cart_discount_percent: cartDiscountPercent,
+      cart_discount: cartDiscountForItem,
+      coupon_discount: couponDiscountForItem,
+      offer_discount: offerDiscountForItem,
+      final_price: finalPrice,
+      grand_total: grandTotal,
+      price: finalPrice,
+      price_per_unit: roundMoney(totalPrice / normalizedQuantity),
+      estimated_time: normalizeNumber(Number(item.estimatedTime ?? 0), 'estimated time'),
+      status: 'confirmed',
+      discount: roundMoney(cartDiscountForItem + couponDiscountForItem + offerDiscountForItem),
+      coupon_code: pricingData.couponCode ?? null,
+      coupon_id: pricingData.couponId ?? null,
+      offer_id: pricingData.offerId ?? null,
+      offer_name: pricingData.offerName ?? null,
+      discount_type: pricingData.couponDiscountType ?? pricingData.offerDiscountType ?? null,
+      notes: `Cart order — ${itemsData.length} item(s). File: ${item.fileName}`,
+      payment_status: 'paid',
+      payment_provider: 'razorpay',
+      payment_purpose: 'custom_quote_full_payment',
+      provider_order_id: params.razorpayOrderId,
+      provider_payment_id: params.razorpayPaymentId,
+      payment_amount_paise: capture.amountPaise,
+      payment_currency: 'INR',
+      payment_method: razorpayPayment.method ?? null,
+      payment_verified_at: new Date().toISOString(),
+      status_timestamps: { confirmed: new Date().toISOString() },
+    })
+  }
+
+  const { data: insertedOrders, error: insertError } = await supabase
+    .from('orders')
+    .insert(orderItems)
+    .select('id, serial_number, order_number, group_id, status, created_at')
+
+  if (insertError) {
+    if (isMissingSupabaseTableError(insertError, 'orders')) throw new Error(ORDERS_TABLE_UNAVAILABLE_MESSAGE)
+    throw new Error(insertError.message)
+  }
+  if (!insertedOrders || insertedOrders.length === 0) throw new Error('Order submission failed.')
+
+  for (let i = 0; i < insertedOrders.length; i++) {
+    const order = insertedOrders[i]
+    const cartItem = itemsData[i]
+
+    if (order.serial_number == null || !order.created_at) throw new Error('Order confirmation incomplete.')
+
+    const orderNumber = formatOrderNumber(order.serial_number, order.created_at)
+    await adminSupabase.from('orders').update({ order_number: orderNumber, updated_at: new Date().toISOString() }).eq('id', order.id)
+
+    const fileName = (cartItem?.fileName as string) ?? `item-${order.id.slice(0, 8)}.stl`
+    await adminSupabase.from('model_files').upsert(
+      { user_id: auth.user.id, file_name: fileName, file_url: cartItem?.fileUrl as string, material: (cartItem?.material as string)?.trim() ?? '', status: 'ordered', uploaded_at: new Date().toISOString() },
+      { onConflict: 'user_id,file_url', ignoreDuplicates: false }
+    )
+
+    const { data: qvRow } = await adminSupabase.from('quote_versions').insert({
+      quote_id: `F3D-${orderNumber}`,
+      order_id: order.id,
+      user_id: auth.user.id,
+      version_number: 1,
+      status: 'approved',
+      snapshot_schema_version: 1,
+      approved_at: new Date().toISOString(),
+      approved_by: auth.user.id,
+      pricing_snapshot: redactSensitiveValues({ totalPrice: Number(cartItem?.totalPrice ?? 0), finalPrice: Number(cartItem?.finalPrice ?? 0), grandTotal: Number(cartItem?.grandTotal ?? 0), materialCost: Number(cartItem?.materialCost ?? 0), machineCost: Number(cartItem?.machineCost ?? 0), postProcessingCharges: Number(cartItem?.postProcessingCharges ?? 0) }),
+      material_id: (cartItem?.material as string)?.trim() ?? '',
+      config: {},
+      model_metadata: redactSensitiveValues({ fileName: cartItem?.fileName ?? '', fileSize: 0, extension: (cartItem?.fileName as string)?.split('.').pop() ?? '', dimensions: cartItem?.dimensions ?? { x: 0, y: 0, z: 0 } }),
+    }).select('id').maybeSingle()
+
+    if (qvRow?.id) {
+      await logQuoteEvent({
+        quoteVersionId: qvRow.id, orderId: order.id, actorId: auth.user.id, actorRole: 'customer',
+        eventType: 'created', previousStatus: null, newStatus: 'approved',
+        note: `Cart order — item ${i + 1} of ${insertedOrders.length}`,
+      })
+    }
+  }
+
+  // Track coupon/offer redemptions
+  const couponId = pricingData.couponId as string | null
+  const couponDiscountType = pricingData.couponDiscountType as string | null
+  const couponDiscountAmount = Number(pricingData.couponDiscountAmount ?? 0)
+  const offerId = pricingData.offerId as string | null
+  const offerDiscountType = pricingData.offerDiscountType as string | null
+  const offerDiscountAmount = Number(pricingData.offerDiscountAmount ?? 0)
+  const firstOrder = insertedOrders[0]
+  const firstOrderNumber = formatOrderNumber(firstOrder.serial_number, firstOrder.created_at)
+
+  if (couponId) {
+    await adminSupabase.from('redemptions').insert({
+      user_id: auth.user.id, order_id: firstOrderNumber, coupon_id: couponId,
+      discount_type: couponDiscountType ?? 'percentage', discount_value: couponDiscountAmount,
+      discount_applied: couponDiscountAmount, order_amount: afterCartTotal,
+    })
+    await adminSupabase.rpc('increment_coupon_used_count', { coupon_id: couponId })
+  }
+
+  if (offerId) {
+    await adminSupabase.from('redemptions').insert({
+      user_id: auth.user.id, order_id: firstOrderNumber, offer_id: offerId,
+      discount_type: offerDiscountType ?? 'percentage', discount_value: offerDiscountAmount,
+      discount_applied: offerDiscountAmount, order_amount: afterCouponTotal,
+    })
+    await adminSupabase.rpc('increment_offer_used_count', { offer_id: offerId })
+  }
+
+  await markQuoteCapturePaid({
+    reference: capture.reference,
+    razorpayOrderId: params.razorpayOrderId,
+    paymentAttemptId: capture.paymentAttemptId ?? '',
+    orderId: firstOrder.id,
+  })
+
+  void trackFeatureUsage(auth.user.id, 'order_placed', {
+    source: 'cart', groupId, orderId: firstOrder.id,
+    itemCount: insertedOrders.length,
+    unitCount: itemsData.reduce((sum, item) => sum + Math.max(1, Math.floor(Number(item.quantity ?? 1))), 0),
+    couponCode: pricingData.couponCode as string | null,
+    offerId, grandTotal: capture.amountPaise / 100,
+  }).catch(() => {})
+
+  revalidatePath('/my-orders')
+  revalidatePath('/cart')
+
+  return {
+    orderId: firstOrder.id,
+    orderNumber: firstOrderNumber,
+    itemCount: insertedOrders.length,
   }
 }
