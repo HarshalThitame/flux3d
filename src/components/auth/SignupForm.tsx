@@ -25,6 +25,9 @@ const initialState: AuthFormState = {}
 const fieldClass =
   'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 outline-none transition-[border-color] duration-150 placeholder:text-gray-400 focus:border-purple-400'
 
+const errorFieldClass =
+  'h-11 w-full rounded-lg border bg-white px-3 text-sm font-medium text-gray-900 outline-none transition-[border-color] duration-150 placeholder:text-gray-400 border-red-400 ring-1 ring-red-400/30 focus:border-red-500'
+
 const passwordRules = [
   (value: string) => value.length >= 8,
   (value: string) => /[A-Z]/.test(value) && /[a-z]/.test(value),
@@ -190,6 +193,8 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
     return state.fieldErrors?.[field] || (touched[field] ? validationErrors[field] : undefined)
   }
 
+  const hasFieldError = (field: RequiredField) => Boolean(getFieldErrors(field))
+
   const touchField = (field: RequiredField) => {
     setTouched((current) => ({ ...current, [field]: true }))
   }
@@ -277,9 +282,9 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
               value={values.name}
               onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))}
               onBlur={() => touchField('name')}
-              aria-invalid={Boolean(getFieldErrors('name'))}
+              aria-invalid={hasFieldError('name')}
               aria-describedby={getFieldErrors('name') ? 'signup-name-error' : undefined}
-              className={`${fieldClass} pl-10`}
+              className={`${hasFieldError('name') ? errorFieldClass : fieldClass} pl-10`}
             />
           </div>
           <FieldError id="signup-name-error" errors={getFieldErrors('name')} />
@@ -305,9 +310,9 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
               value={values.email}
               onChange={(event) => setValues((current) => ({ ...current, email: event.target.value }))}
               onBlur={() => touchField('email')}
-              aria-invalid={Boolean(getFieldErrors('email'))}
+              aria-invalid={hasFieldError('email')}
               aria-describedby={getFieldErrors('email') ? 'signup-email-error' : undefined}
-              className={`${fieldClass} pl-10`}
+              className={`${hasFieldError('email') ? errorFieldClass : fieldClass} pl-10`}
             />
           </div>
           <FieldError id="signup-email-error" errors={getFieldErrors('email')} />
@@ -357,9 +362,9 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
               value={values.password}
               onChange={(event) => setValues((current) => ({ ...current, password: event.target.value }))}
               onBlur={() => touchField('password')}
-              aria-invalid={Boolean(getFieldErrors('password'))}
+              aria-invalid={hasFieldError('password')}
               aria-describedby={getFieldErrors('password') ? 'signup-password-error' : undefined}
-              className={`${fieldClass} pl-10 pr-10`}
+              className={`${hasFieldError('password') ? errorFieldClass : fieldClass} pl-10 pr-10`}
             />
             <button
               type="button"
@@ -409,11 +414,11 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
               value={values.confirmPassword}
               onChange={(event) => setValues((current) => ({ ...current, confirmPassword: event.target.value }))}
               onBlur={() => touchField('confirmPassword')}
-              aria-invalid={Boolean(getFieldErrors('confirmPassword'))}
+              aria-invalid={hasFieldError('confirmPassword')}
               aria-describedby={
                 getFieldErrors('confirmPassword') ? 'signup-confirm-password-error' : undefined
               }
-              className={`${fieldClass} pl-10 pr-20`}
+              className={`${hasFieldError('confirmPassword') ? errorFieldClass : fieldClass} pl-10 pr-20`}
             />
             {passwordsMatch ? (
               <Check
