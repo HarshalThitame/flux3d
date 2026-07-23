@@ -68,6 +68,36 @@ function getCurrentProgressIndex(order: ShopOrder) {
   return index === -1 ? 0 : index
 }
 
+function getPaymentBadge(order: ShopOrder) {
+  if (order.payment_provider === 'razorpay') {
+    return (
+      <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-black text-violet-700">
+        Razorpay
+      </span>
+    )
+  }
+  if (order.payment_status === 'paid') {
+    return (
+      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
+        Paid
+      </span>
+    )
+  }
+  const method = order.payment_method?.trim().toLowerCase()
+  if (method === 'cod' || method === 'cash_on_delivery' || method === 'cash on delivery') {
+    return (
+      <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">
+        COD
+      </span>
+    )
+  }
+  return (
+    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">
+      Pending
+    </span>
+  )
+}
+
 function getHeroMetricLabel(filter: FilterKey) {
   switch (filter) {
     case 'active':
@@ -378,9 +408,7 @@ export default function ShopOrdersClient() {
                             ? getShopOrderStatusLabel(order.order_status)
                             : getShopFulfilmentStatusLabel(order.fulfilment_status)}
                         </span>
-                        <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">
-                          COD
-                        </span>
+                        {getPaymentBadge(order)}
                       </div>
                     </div>
 
