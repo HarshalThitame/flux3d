@@ -278,7 +278,7 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
               required
               minLength={2}
               maxLength={80}
-              placeholder="Harshal"
+              placeholder="e.g. Rahul Sharma"
               value={values.name}
               onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))}
               onBlur={() => touchField('name')}
