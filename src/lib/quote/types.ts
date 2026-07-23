@@ -140,3 +140,23 @@ export type UploadState = {
   path?: string
   error?: string
 }
+
+export type QuoteCapture = {
+  id: string
+  userId: string
+  reference: string
+  status: 'pending' | 'paid' | 'cancelled' | 'expired'
+  amountPaise: number
+  currency: string
+  draftData: Record<string, unknown>
+  addressData: Record<string, unknown>
+  configData: Record<string, unknown>
+  pricingData: Record<string, unknown>
+  modelMetadata: Record<string, unknown>
+  razorpayOrderId: string | null
+  paymentAttemptId: string | null
+  orderId: string | null
+  createdAt: string
+  expiresAt: string
+  paidAt: string | null
+}
