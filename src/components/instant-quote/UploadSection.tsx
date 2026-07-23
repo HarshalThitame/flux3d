@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { AlertTriangle, CheckCircle2, FileArchive, LoaderCircle, UploadCloud } from 'lucide-react'
 import Link from 'next/link'
 import type { UploadState } from '@/lib/quote/types'
@@ -20,6 +20,7 @@ export default function UploadSection({
   uploadState,
   onSelectFile,
 }: UploadSectionProps) {
+  const shouldReduceMotion = useReducedMotion()
   const handleFiles = (files: FileList | null) => {
     if (!files?.[0]) {
       return
@@ -36,8 +37,8 @@ export default function UploadSection({
     >
       <motion.div
         aria-hidden
-        animate={{ x: [0, 16, 0], y: [0, -12, 0], opacity: [0.28, 0.42, 0.28] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+        animate={shouldReduceMotion ? undefined : { x: [0, 16, 0], y: [0, -12, 0], opacity: [0.28, 0.42, 0.28] }}
+        transition={shouldReduceMotion ? undefined : { duration: 8, repeat: Infinity, ease: 'easeInOut' }}
         className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#6d28d9]/10 blur-3xl"
       />
       <div className="mb-5 flex items-start justify-between gap-4">
@@ -50,8 +51,8 @@ export default function UploadSection({
           </p>
         </div>
         <motion.div
-          animate={{ y: [0, -4, 0] }}
-          transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+          animate={shouldReduceMotion ? undefined : { y: [0, -4, 0] }}
+          transition={shouldReduceMotion ? undefined : { duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
           className="rounded-2xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-3 text-[#6d28d9]"
         >
           <UploadCloud className="h-5 w-5" />
@@ -77,8 +78,8 @@ export default function UploadSection({
         />
         <div className="max-w-md">
           <motion.div
-            animate={{ scale: [1, 1.04, 1], boxShadow: ['0 0 28px rgba(109, 40, 217,0.18)', '0 0 42px rgba(109, 40, 217,0.24)', '0 0 28px rgba(109, 40, 217,0.18)'] }}
-            transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
+            animate={shouldReduceMotion ? undefined : { scale: [1, 1.04, 1], boxShadow: ['0 0 28px rgba(109, 40, 217,0.18)', '0 0 42px rgba(109, 40, 217,0.24)', '0 0 28px rgba(109, 40, 217,0.18)'] }}
+            transition={shouldReduceMotion ? undefined : { duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
             className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[20px] border border-[#6d28d9]/25 bg-[#6d28d9]/12 text-[#6d28d9] shadow-[0_0_28px_rgba(109, 40, 217,0.18)]"
           >
             <UploadCloud className="h-7 w-7" />

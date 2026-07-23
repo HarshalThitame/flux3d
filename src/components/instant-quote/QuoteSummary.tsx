@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowRight, Clock3, Cuboid, IndianRupee, PackageCheck, ShoppingCart, Sparkles, Truck } from 'lucide-react'
 import { getMaterialById } from '@/lib/quote/materials'
@@ -45,6 +45,7 @@ export default function QuoteSummary({
   onAddToCart,
   isInCart,
 }: QuoteSummaryProps) {
+  const shouldReduceMotion = useReducedMotion()
   const material = getMaterialById(materialId, materials)
 
   return (
@@ -55,8 +56,8 @@ export default function QuoteSummary({
     >
       <motion.div
         aria-hidden
-        animate={{ x: [0, 18, 0], y: [0, -10, 0], opacity: [0.24, 0.4, 0.24] }}
-        transition={{ duration: 8.5, repeat: Infinity, ease: 'easeInOut' }}
+        animate={shouldReduceMotion ? undefined : { x: [0, 18, 0], y: [0, -10, 0], opacity: [0.24, 0.4, 0.24] }}
+        transition={shouldReduceMotion ? undefined : { duration: 8.5, repeat: Infinity, ease: 'easeInOut' }}
         className="pointer-events-none absolute -right-10 top-14 h-40 w-40 rounded-full bg-[#6d28d9]/10 blur-3xl"
       />
       <div className="lg:sticky lg:top-24">
@@ -75,8 +76,8 @@ export default function QuoteSummary({
         </div>
 
         <motion.div
-          animate={{ boxShadow: ['0 0 0 rgba(109, 40, 217,0)', '0 0 36px rgba(109, 40, 217,0.08)', '0 0 0 rgba(109, 40, 217,0)'] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+          animate={shouldReduceMotion ? undefined : { boxShadow: ['0 0 0 rgba(109, 40, 217,0)', '0 0 36px rgba(109, 40, 217,0.08)', '0 0 0 rgba(109, 40, 217,0)'] }}
+          transition={shouldReduceMotion ? undefined : { duration: 4, repeat: Infinity, ease: 'easeInOut' }}
           className="mb-4 rounded-[22px] border border-[#6d28d9]/15 bg-[radial-gradient(circle_at_top,rgba(109, 40, 217,0.18),transparent_48%),rgba(109, 40, 217,0.25)] p-4"
         >
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Quote Session</div>

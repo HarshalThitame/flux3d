@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import dynamic from 'next/dynamic'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import {
   UploadCloud,
   CheckCircle2,
@@ -76,6 +76,7 @@ export default function InstantQuoteWorkspace({
   pricingSettings,
   bulkOrderContact,
 }: InstantQuoteWorkspaceProps) {
+  const shouldReduceMotion = useReducedMotion()
   if (materials.length === 0) {
     return (
       <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-8 text-[#0F1B3D] md:px-8 md:pt-10 xl:px-10">
@@ -178,6 +179,7 @@ function CartEnabledWorkspace({
   pricingSettings,
   bulkOrderContact,
 }: InstantQuoteWorkspaceProps) {
+  const shouldReduceMotion = useReducedMotion()
   const { addItem, isInCart } = useCart()
   const supabaseEnabled = hasSupabaseConfig()
   const preferredMaterial = initialMaterialId ? getMaterialById(initialMaterialId, materials) : undefined
@@ -616,14 +618,14 @@ function CartEnabledWorkspace({
         <div className="quote-premium-frame" aria-hidden="true" />
         <motion.div
           aria-hidden
-          animate={{ x: [0, 50, 0], y: [0, -20, 0] }}
-          transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
+          animate={shouldReduceMotion ? undefined : { x: [0, 50, 0], y: [0, -20, 0] }}
+          transition={shouldReduceMotion ? undefined : { duration: 16, repeat: Infinity, ease: 'easeInOut' }}
           className="quote-orb quote-orb-left pointer-events-none absolute left-[-8rem] top-28 h-72 w-72 rounded-full bg-[#6d28d9]/8 blur-3xl"
         />
         <motion.div
           aria-hidden
-          animate={{ x: [0, -45, 0], y: [0, 25, 0] }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+          animate={shouldReduceMotion ? undefined : { x: [0, -45, 0], y: [0, 25, 0] }}
+          transition={shouldReduceMotion ? undefined : { duration: 18, repeat: Infinity, ease: 'easeInOut' }}
           className="quote-orb quote-orb-right pointer-events-none absolute right-[-7rem] top-36 h-80 w-80 rounded-full bg-cyan-400/8 blur-3xl"
         />
 
@@ -735,8 +737,8 @@ function CartEnabledWorkspace({
                       />
                       <div>
                         <motion.div
-                          animate={{ y: [0, -4, 0] }}
-                          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                          animate={shouldReduceMotion ? undefined : { y: [0, -4, 0] }}
+                          transition={shouldReduceMotion ? undefined : { duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                           className="quote-upload-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-[#6d28d9]/25 bg-[#6d28d9]/12 text-[#6d28d9]"
                         >
                           <UploadCloud className="h-6 w-6" />

@@ -72,6 +72,7 @@ function ViewerCanvas({ object }: { object: Object3D }) {
       ref={canvasRef}
       camera={{ position: [140, 120, 140], fov: 34 }}
       dpr={[1, 1.5]}
+      frameloop="demand"
       onCreated={handleCreated}
       gl={{ powerPreference: 'high-performance', failIfMajorPerformanceCaveat: false }}
     >

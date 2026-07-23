@@ -56,7 +56,7 @@ function FilterPanel({
           max={priceRange[1]}
           step={50}
           minStepsBetweenThumbs={1}
-          onValueChange={(value) => onPriceChangeAction([value[0] ?? priceRange[0], value[1] ?? priceRange[1]])}
+          onValueCommit={([min, max]) => onPriceChangeAction([min ?? priceRange[0], max ?? priceRange[1]])}
           className="relative flex h-8 touch-none select-none items-center"
         >
           <Slider.Track className="relative h-2 grow rounded-full bg-[var(--bg-muted)]">
