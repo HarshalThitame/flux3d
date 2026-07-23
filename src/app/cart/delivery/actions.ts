@@ -746,6 +746,7 @@ export async function prepareCartPaymentAction(
   input: CreateCartOrderInput
 ): Promise<PrepareCartPaymentResult> {
   const auth = await requireUser('/cart/delivery')
+  const adminSupabase = createAdminSupabaseClient()
 
   if (input.items.length === 0) {
     throw new Error('Your cart is empty. Add items before ordering.')
@@ -898,6 +899,11 @@ export async function prepareCartPaymentAction(
       reason: 'Cart payment attempt created',
     }
   )
+
+  await adminSupabase
+    .from('quote_captures')
+    .update({ payment_attempt_id: paymentAttempt.id })
+    .eq('reference', capture.reference)
 
   await insertPaymentAuditLog({
     actor_id: auth.user.id,
@@ -1188,10 +1194,17 @@ export async function verifyCartPaymentAndCreateOrder(params: {
     await adminSupabase.rpc('increment_offer_used_count', { offer_id: offerId })
   }
 
+  const { data: attemptRow } = await adminSupabase
+    .from('payment_attempts')
+    .select('id')
+    .eq('provider_order_id', params.razorpayOrderId)
+    .maybeSingle()
+  const paymentAttemptId = attemptRow?.id ?? capture.paymentAttemptId ?? ''
+
   await markQuoteCapturePaid({
     reference: capture.reference,
     razorpayOrderId: params.razorpayOrderId,
-    paymentAttemptId: capture.paymentAttemptId ?? '',
+    paymentAttemptId,
     orderId: firstOrder.id,
   })
 

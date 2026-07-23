@@ -397,6 +397,7 @@ export async function prepareQuotePaymentAction(
   input: CreateOrderInput
 ): Promise<PrepareQuotePaymentResult> {
   const auth = await requireUser('/instant-quote')
+  const adminSupabase = createAdminSupabaseClient()
   const headersList = await headers()
   const forwarded = headersList.get('x-forwarded-for') ?? ''
   const clientIp = forwarded.split(',')[0]?.trim() || 'unknown'
@@ -568,6 +569,11 @@ export async function prepareQuotePaymentAction(
       reason: 'Payment attempt created for quote capture',
     }
   )
+
+  await adminSupabase
+    .from('quote_captures')
+    .update({ payment_attempt_id: paymentAttempt.id })
+    .eq('reference', capture.reference)
 
   await insertPaymentAuditLog({
     actor_id: auth.user.id,
@@ -755,10 +761,17 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
   const orderNumber = formatOrderNumber(insertedOrder.serial_number, insertedOrder.created_at)
   await adminSupabase.from('orders').update({ order_number: orderNumber, updated_at: new Date().toISOString() }).eq('id', insertedOrder.id)
 
+  const { data: attemptRow } = await adminSupabase
+    .from('payment_attempts')
+    .select('id')
+    .eq('provider_order_id', params.razorpayOrderId)
+    .maybeSingle()
+  const paymentAttemptId = attemptRow?.id ?? capture.paymentAttemptId ?? ''
+
   await markQuoteCapturePaid({
     reference: capture.reference,
     razorpayOrderId: params.razorpayOrderId,
-    paymentAttemptId: capture.paymentAttemptId ?? '',
+    paymentAttemptId,
     orderId: insertedOrder.id,
   })
 
