@@ -132,7 +132,6 @@ export default function NavbarClient({
   ], [])
 
   const currentPath = pathname ?? '/'
-  const isShopSection = currentPath.startsWith('/3d-shop')
   const isActive = useCallback((href: string) => (href === '/' ? currentPath === '/' : currentPath.startsWith(href)), [currentPath])
   const navStyle = {
     '--navbar-shadow': navIsElevated
@@ -334,7 +333,7 @@ export default function NavbarClient({
 
         <div className="navbar-actions relative z-10 hidden items-center gap-2.5 lg:flex">
           <CartButton />
-          {isShopSection ? <ShopNavControls currentPath={currentPath} currentUser={currentUser} /> : null}
+          <ShopNavControls currentPath={currentPath} currentUser={currentUser} />
 
           <div>
             <a
@@ -630,14 +629,12 @@ export default function NavbarClient({
 
               {/* Controls & CTA buttons */}
               <div className="pt-2 space-y-3">
-                {isShopSection ? (
-                  <ShopNavControls
-                    mobile
-                    currentPath={currentPath}
-                    currentUser={currentUser}
-                    onOpenAction={() => setIsOpen(false)}
-                  />
-                ) : null}
+                <ShopNavControls
+                  mobile
+                  currentPath={currentPath}
+                  currentUser={currentUser}
+                  onOpenAction={() => setIsOpen(false)}
+                />
 
                 <Link
                   href="/instant-quote"
