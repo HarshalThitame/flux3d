@@ -140,6 +140,10 @@ export default function BusinessSettingsPage() {
     async function load() {
       try {
         const res = await fetch('/api/admin/settings/business', { signal: controller.signal })
+        if (res.status === 401) {
+          router.push('/login?next=/admin/settings/business')
+          return
+        }
         if (!res.ok) {
           const body = await res.json().catch(() => ({})) as { error?: string }
           throw new Error(body.error ?? 'Failed to load settings.')
@@ -158,7 +162,7 @@ export default function BusinessSettingsPage() {
     }
     load()
     return () => controller.abort()
-  }, [])
+  }, [router])
 
   const updateField = useCallback((key: string, value: unknown) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -173,6 +177,10 @@ export default function BusinessSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
+      if (res.status === 401) {
+        router.push('/login?next=/admin/settings/business')
+        return
+      }
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string }
         throw new Error(body.error ?? 'Failed to save settings.')
@@ -187,7 +195,7 @@ export default function BusinessSettingsPage() {
     } finally {
       setSaving(false)
     }
-  }, [form])
+  }, [form, router])
 
   const handleReset = useCallback(() => {
     if (settings) {
