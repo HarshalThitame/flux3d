@@ -1,7 +1,9 @@
 'use server'
 
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerClient } from '@supabase/ssr'
+import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/config'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 
 export type AdminPermission =
@@ -20,7 +22,7 @@ export type AdminPermission =
 
 export type AdminPermissionCheck = {
   user: { id: string; email: string }
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClientFromCookies>>
   isAdmin: boolean
   isFinance: boolean
   isOrderManager: boolean
@@ -28,21 +30,60 @@ export type AdminPermissionCheck = {
   isQcManager: boolean
 }
 
+async function createServerSupabaseClientFromCookies() {
+  const cookieStore = await cookies()
+
+  return createServerClient(
+    getSupabaseUrl(),
+    getSupabasePublishableKey(),
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          } catch {
+            // Server Components cannot always write cookies during render.
+          }
+        },
+      },
+    }
+  )
+}
+
+async function getAuthenticatedUser() {
+  const supabase = await createServerSupabaseClientFromCookies()
+
+  let user = null
+  const { data: sessionData } = await supabase.auth.getSession()
+  if (sessionData?.session?.user) {
+    user = sessionData.session.user
+  }
+
+  if (!user) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const { data } = await supabase.auth.getUser()
+        user = data.user
+        break
+      } catch {
+        if (attempt === 2) return null
+        await new Promise((resolve) => setTimeout(resolve, 500))
+      }
+    }
+  }
+
+  return user
+}
+
 export async function getAdminPermissionCheck(): Promise<
   AdminPermissionCheck | { response: NextResponse }
 > {
-  const supabase = await createServerSupabaseClient()
-
-  // getSession() reads cookies locally — no network call, no token refresh.
-  // Never call getUser() — it triggers token refresh which rotates the
-  // refresh token. If the browser doesn't receive the new Set-Cookie
-  // headers, the old refresh token will be rejected on the next request.
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-  const sessionUser = sessionData?.session?.user
-
-  if (sessionError) {
-    return { response: NextResponse.json({ error: sessionError.message }, { status: 401 }) }
-  }
+  const sessionUser = await getAuthenticatedUser()
 
   if (!sessionUser) {
     return { response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
@@ -70,6 +111,8 @@ export async function getAdminPermissionCheck(): Promise<
   if (!isAdmin && !isFinance && !isOrderManager && !isPrinterManager && !isQcManager) {
     return { response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
   }
+
+  const supabase = await createServerSupabaseClientFromCookies()
 
   return {
     user: { id: sessionUser.id, email: sessionUser.email ?? '' },

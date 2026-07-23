@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Settings, Save, Printer, Tag, Bell, Users, Link as LinkIcon, CreditCard } from 'lucide-react'
@@ -17,6 +18,7 @@ type PricingSettingsForm = {
 }
 
 export default function AdminSettingsPage() {
+  const router = useRouter()
   const [toast, setToast] = useState<AdminToastState>(null)
   const [activeTab, setActiveTab] = useState<Tab>('general')
   const [rushEnabled, setRushEnabled] = useState(true)
@@ -45,6 +47,10 @@ export default function AdminSettingsPage() {
     async function load() {
       try {
         const response = await fetch('/api/admin/printers', { signal: controller.signal })
+        if (response.status === 401) {
+          router.push('/login?next=/admin/settings')
+          return
+        }
         if (!response.ok) {
           const body = (await response.json().catch(() => ({}))) as { error?: string }
           throw new Error(body.error ?? 'Failed to load printers data.')
@@ -65,7 +71,7 @@ export default function AdminSettingsPage() {
     }
 
     return () => controller.abort()
-  }, [activeTab, printers, printersError])
+  }, [activeTab, printers, printersError, router])
 
   useEffect(() => {
     if (activeTab !== 'pricing' || pricingHydrated) return
@@ -76,6 +82,10 @@ export default function AdminSettingsPage() {
       setPricingError(null)
       try {
         const response = await fetch('/api/admin/settings/business', { signal: controller.signal })
+        if (response.status === 401) {
+          router.push('/login?next=/admin/settings')
+          return
+        }
         if (!response.ok) {
           const body = (await response.json().catch(() => ({}))) as { error?: string }
           throw new Error(body.error ?? 'Failed to load pricing settings.')
@@ -105,7 +115,7 @@ export default function AdminSettingsPage() {
     void loadPricingSettings()
 
     return () => controller.abort()
-  }, [activeTab, pricingHydrated])
+  }, [activeTab, pricingHydrated, router])
 
   const handleSave = () => {
     setToast({ type: 'success', message: 'Settings saved successfully.' })
@@ -134,6 +144,11 @@ export default function AdminSettingsPage() {
           defaultDeliveryCharge,
         }),
       })
+
+      if (response.status === 401) {
+        router.push('/login?next=/admin/settings')
+        return
+      }
 
       if (!response.ok) {
         const body = (await response.json().catch(() => ({}))) as { error?: string }
