@@ -259,7 +259,11 @@ export default function NavbarClient({
     <>
       <nav
         ref={navRef}
-        className={`navbar navbar-premium ${navIsElevated ? 'navbar-premium-elevated' : 'navbar-premium-float'}`}
+        className={`navbar relative transition-all duration-300 ${
+          navIsElevated
+            ? 'bg-white/95 border-slate-300/80 shadow-[0_20px_50px_rgba(124,58,237,0.12),0_10px_25px_rgba(15,23,42,0.08)]'
+            : 'bg-white/85 border-slate-200/80 shadow-[0_15px_35px_rgba(15,23,42,0.06)]'
+        }`}
         data-elevated={navIsElevated ? 'true' : 'false'}
         data-transparent={transparent ? 'true' : 'false'}
         onPointerMove={handleNavPointerMove}
@@ -274,19 +278,20 @@ export default function NavbarClient({
         }}
         style={navStyle}
       >
-        {/* Dynamic pointer spotlight effect */}
-        <div 
-          className="pointer-events-none absolute inset-0 rounded-full opacity-60 transition-opacity duration-500" 
+        {/* Dynamic pointer spotlight overlay */}
+        <div
+          className="pointer-events-none absolute inset-0 rounded-full opacity-70 transition-opacity duration-500"
           style={{
-            background: 'radial-gradient(350px circle at var(--nav-pointer-x, 50%) var(--nav-pointer-y, 50%), rgba(124, 58, 237, 0.08), transparent 80%)'
-          }} 
+            background:
+              'radial-gradient(400px circle at var(--nav-pointer-x, 50%) var(--nav-pointer-y, 50%), rgba(124, 58, 237, 0.14), rgba(99, 102, 241, 0.06) 40%, transparent 80%)',
+          }}
         />
 
         <div className="navbar-left relative z-10 flex min-w-0 items-center gap-4">
           <Link
             href="/"
             prefetch={false}
-            className="navbar-logo-link group flex min-h-[46px] items-center rounded-2xl border border-slate-200/70 bg-white/70 px-3 transition-all duration-300 hover:border-slate-300 hover:bg-white hover:shadow-sm"
+            className="navbar-logo-link group flex min-h-[46px] items-center rounded-2xl border border-slate-200/80 bg-white/90 px-3.5 shadow-[0_2px_10px_rgba(15,23,42,0.04)] transition-all duration-300 hover:scale-[1.03] hover:border-violet-300 hover:bg-white hover:shadow-md"
             aria-label={`${businessName} home`}
           >
             <Image
@@ -299,7 +304,7 @@ export default function NavbarClient({
             />
           </Link>
 
-          <ul className="navbar-link-cluster hidden list-none items-center gap-1 rounded-full border border-slate-200/80 bg-white/70 p-1.5 shadow-[0_4px_20px_rgba(15,23,42,0.03),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl lg:flex">
+          <ul className="navbar-link-cluster hidden list-none items-center gap-1.5 rounded-full border border-slate-200/80 bg-slate-100/70 p-1.5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-md lg:flex">
             {navLinks.map((link) => {
               const active = isActive(link.href)
               return (
@@ -312,12 +317,13 @@ export default function NavbarClient({
                       setIsProfileOpen(false)
                       setIsMoreOpen(false)
                     }}
-                    className={`nav-link navbar-premium-link relative flex whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                    className={`nav-link relative flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm transition-all duration-200 ${
                       active
-                        ? 'nav-link-active bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold shadow-[0_4px_14px_rgba(124,58,237,0.28)]'
-                        : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
+                        ? 'nav-link-active bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white font-semibold shadow-[0_4px_16px_rgba(124,58,237,0.35)] scale-[1.02]'
+                        : 'text-slate-600 hover:bg-white/90 hover:text-slate-900 font-medium'
                     }`}
                   >
+                    {active && <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />}
                     <span>{link.label}</span>
                   </Link>
                 </li>
@@ -335,7 +341,7 @@ export default function NavbarClient({
               href={`https://wa.me/${whatsappHrefNumber}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="navbar-action-button navbar-whatsapp-button flex min-h-[42px] items-center gap-2 whitespace-nowrap rounded-full border border-emerald-500/25 bg-emerald-50/70 px-3.5 text-xs sm:text-sm font-semibold text-emerald-700 shadow-sm backdrop-blur transition-all duration-200 hover:border-emerald-500/40 hover:bg-emerald-100/80 hover:shadow"
+              className="navbar-action-button navbar-whatsapp-button flex min-h-[42px] items-center gap-2 whitespace-nowrap rounded-full border border-emerald-500/30 bg-emerald-50/90 px-4 text-xs sm:text-sm font-semibold text-emerald-700 shadow-sm backdrop-blur transition-all duration-300 hover:border-emerald-500/50 hover:bg-emerald-100 hover:shadow-[0_4px_16px_rgba(16,185,129,0.22)]"
             >
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
@@ -350,7 +356,7 @@ export default function NavbarClient({
             <Link
               href="/instant-quote"
               prefetch={false}
-              className="navbar-quote-button relative flex min-h-[44px] items-center gap-2 overflow-hidden whitespace-nowrap rounded-full bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 px-5 text-sm font-semibold text-white shadow-[0_8px_25px_-4px_rgba(124,58,237,0.35)] transition-all duration-300 before:absolute before:inset-y-0 before:left-0 before:w-1/2 before:-translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:blur-sm before:content-[''] hover:scale-[1.02] hover:shadow-[0_12px_30px_-4px_rgba(124,58,237,0.45)] hover:before:translate-x-[300%] before:transition-transform before:duration-700 active:scale-[0.98]"
+              className="navbar-quote-button relative flex min-h-[44px] items-center gap-2 overflow-hidden whitespace-nowrap rounded-full bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 px-5 text-sm font-semibold text-white shadow-[0_10px_25px_-5px_rgba(124,58,237,0.4)] transition-all duration-300 before:absolute before:inset-y-0 before:left-0 before:w-1/2 before:-translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/35 before:to-transparent before:blur-sm before:content-[''] hover:scale-[1.03] hover:shadow-[0_14px_30px_-4px_rgba(124,58,237,0.5)] hover:before:translate-x-[300%] before:transition-transform before:duration-700 active:scale-[0.97]"
             >
               <span className="relative z-10">Get Instant Quote</span>
               <ArrowUpRight className="relative z-10 h-4 w-4" />
@@ -364,10 +370,10 @@ export default function NavbarClient({
               <button
                 type="button"
                 onClick={() => setIsProfileOpen((current) => !current)}
-                className="navbar-profile-button flex min-h-[42px] items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-2 py-1 pr-3 shadow-sm backdrop-blur transition-all duration-200 hover:border-violet-300 hover:bg-white hover:shadow"
+                className="navbar-profile-button flex min-h-[42px] items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-2 py-1 pr-3 shadow-sm backdrop-blur transition-all duration-200 hover:border-violet-300 hover:bg-white hover:shadow-md"
               >
                 {currentUser.avatarUrl ? (
-                  <span className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-violet-500/20">
+                  <span className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-violet-500/30">
                     <Image
                       src={currentUser.avatarUrl}
                       alt={currentUser.name}
@@ -389,7 +395,7 @@ export default function NavbarClient({
               </button>
 
               {isProfileOpen && (
-                <div className="navbar-profile-menu absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-2xl transition-all duration-200">
+                <div className="navbar-profile-menu absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_20px_50px_rgba(15,23,42,0.14)] backdrop-blur-2xl transition-all duration-200">
                   <div className="border-b border-slate-100 p-3.5">
                     <p className="font-mono text-[10px] uppercase tracking-wider text-slate-400">Signed in as</p>
                     <p className="mt-1 text-sm font-semibold text-slate-900">{currentUser.name}</p>
@@ -449,7 +455,7 @@ export default function NavbarClient({
                 <button
                   type="button"
                   onClick={() => setIsMoreOpen((current) => !current)}
-                  className="navbar-action-button flex min-h-[42px] min-w-[42px] items-center justify-center rounded-full border border-slate-200/80 bg-white/80 text-slate-600 shadow-sm backdrop-blur transition-all duration-200 hover:border-violet-300 hover:bg-white hover:text-slate-900"
+                  className="navbar-action-button flex min-h-[42px] min-w-[42px] items-center justify-center rounded-full border border-slate-200/80 bg-white/90 text-slate-600 shadow-sm backdrop-blur transition-all duration-200 hover:border-violet-300 hover:bg-white hover:text-slate-900"
                   aria-label="More navigation"
                   aria-expanded={isMoreOpen}
                 >
@@ -457,7 +463,7 @@ export default function NavbarClient({
                 </button>
 
                 {isMoreOpen && (
-                  <div className="navbar-more-menu absolute right-0 top-[calc(100%+0.75rem)] w-[210px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-2xl transition-all duration-200">
+                  <div className="navbar-more-menu absolute right-0 top-[calc(100%+0.75rem)] w-[210px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_20px_50px_rgba(15,23,42,0.14)] backdrop-blur-2xl transition-all duration-200">
                     <div className="p-1">
                       {moreLinks.map((item) => (
                         <Link
@@ -479,7 +485,7 @@ export default function NavbarClient({
                 <Link
                   href={`/login?next=${encodeURIComponent(pathname ?? '/')}`}
                   prefetch={false}
-                  className="navbar-action-button flex min-h-[42px] items-center whitespace-nowrap rounded-full border border-slate-200/80 bg-white/80 px-4.5 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:border-violet-300 hover:bg-white hover:text-slate-900"
+                  className="navbar-action-button flex min-h-[42px] items-center whitespace-nowrap rounded-full border border-slate-200/80 bg-white/90 px-4.5 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:border-violet-300 hover:bg-white hover:text-slate-900 hover:shadow-md"
                 >
                   Log In
                 </Link>
@@ -492,7 +498,7 @@ export default function NavbarClient({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="navbar-menu-button relative z-10 flex min-h-[42px] min-w-[42px] items-center justify-center rounded-full border border-slate-200/80 bg-white/80 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:bg-white lg:hidden"
+          className="navbar-menu-button relative z-10 flex min-h-[42px] min-w-[42px] items-center justify-center rounded-full border border-slate-200/80 bg-white/90 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:bg-white lg:hidden"
           aria-label={isOpen ? 'Close menu' : 'Open menu'}
         >
           <span className="flex h-6 w-6 items-center justify-center">
@@ -513,12 +519,12 @@ export default function NavbarClient({
           <button
             type="button"
             aria-label="Close menu"
-            className="absolute inset-0 bg-slate-950/40 backdrop-blur-md transition-opacity"
+            className="absolute inset-0 bg-slate-950/45 backdrop-blur-md transition-opacity"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Drawer Content */}
-          <div className="navbar-mobile-panel absolute right-0 top-0 flex h-[100dvh] w-full max-w-md flex-col overflow-hidden rounded-l-[32px] border-l border-white/60 bg-white/95 shadow-[0_0_60px_rgba(15,23,42,0.18)] backdrop-blur-2xl">
+          <div className="navbar-mobile-panel absolute right-0 top-0 flex h-[100dvh] w-full max-w-md flex-col overflow-hidden rounded-l-[32px] border-l border-white/60 bg-white/95 shadow-[0_0_60px_rgba(15,23,42,0.2)] backdrop-blur-2xl">
             {/* Header bar */}
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/90 px-6 py-4 backdrop-blur-md">
               <div className="flex items-center gap-2">
@@ -578,14 +584,12 @@ export default function NavbarClient({
                           }}
                           className={`navbar-mobile-link flex min-h-[48px] items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
                             active
-                              ? 'navbar-mobile-link-active bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold shadow-md'
+                              ? 'navbar-mobile-link-active bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white font-semibold shadow-md'
                               : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
                           }`}
                         >
                           <span>{link.label}</span>
-                          {active && (
-                            <span className="h-2 w-2 rounded-full bg-white shadow-sm" />
-                          )}
+                          {active && <span className="h-2 w-2 rounded-full bg-white shadow-sm animate-pulse" />}
                         </Link>
                       </li>
                     )
@@ -616,9 +620,7 @@ export default function NavbarClient({
                           }`}
                         >
                           <span>{link.label}</span>
-                          {active && (
-                            <span className="h-1.5 w-1.5 rounded-full bg-violet-600" />
-                          )}
+                          {active && <span className="h-1.5 w-1.5 rounded-full bg-violet-600" />}
                         </Link>
                       </li>
                     )
@@ -651,7 +653,7 @@ export default function NavbarClient({
                   href={`https://wa.me/${whatsappHrefNumber}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-50/80 py-3 text-base font-semibold text-emerald-700 transition-all hover:bg-emerald-100"
+                  className="flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-50/90 py-3 text-base font-semibold text-emerald-700 transition-all hover:bg-emerald-100"
                 >
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
