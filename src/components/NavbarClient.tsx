@@ -258,11 +258,7 @@ export default function NavbarClient({
     <>
       <nav
         ref={navRef}
-        className={`navbar relative transition-all duration-300 ${
-          navIsElevated
-            ? 'bg-white/95 border-slate-300/80 shadow-[0_20px_50px_rgba(124,58,237,0.12),0_10px_25px_rgba(15,23,42,0.08)]'
-            : 'bg-white/85 border-slate-200/80 shadow-[0_15px_35px_rgba(15,23,42,0.06)]'
-        }`}
+        className="navbar"
         data-elevated={navIsElevated ? 'true' : 'false'}
         data-transparent={transparent ? 'true' : 'false'}
         onPointerMove={handleNavPointerMove}
