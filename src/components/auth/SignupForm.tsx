@@ -278,7 +278,7 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
               required
               minLength={2}
               maxLength={80}
-              placeholder="Ada Lovelace"
+              placeholder="Harshal"
               value={values.name}
               onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))}
               onBlur={() => touchField('name')}
@@ -306,7 +306,7 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
               autoComplete="email"
               required
               maxLength={254}
-              placeholder="you@company.com"
+              placeholder="yourname@email.com"
               value={values.email}
               onChange={(event) => setValues((current) => ({ ...current, email: event.target.value }))}
               onBlur={() => touchField('email')}
@@ -358,7 +358,7 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
               required
               minLength={8}
               maxLength={128}
-              placeholder="Strong password"
+              placeholder="Create a strong password"
               value={values.password}
               onChange={(event) => setValues((current) => ({ ...current, password: event.target.value }))}
               onBlur={() => touchField('password')}
@@ -410,7 +410,7 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
               autoComplete="new-password"
               required
               maxLength={128}
-              placeholder="Repeat password"
+              placeholder="Re-enter password"
               value={values.confirmPassword}
               onChange={(event) => setValues((current) => ({ ...current, confirmPassword: event.target.value }))}
               onBlur={() => touchField('confirmPassword')}
