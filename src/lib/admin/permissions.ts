@@ -58,26 +58,22 @@ async function createServerSupabaseClientFromCookies() {
 async function getAuthenticatedUser() {
   const supabase = await createServerSupabaseClientFromCookies()
 
-  let user = null
+  // getSession() reads cookies locally without HTTP request.
+  // For API routes, the proxy has already refreshed the token.
+  // For Server Actions, we fall back to getUser() if needed.
   const { data: sessionData } = await supabase.auth.getSession()
   if (sessionData?.session?.user) {
-    user = sessionData.session.user
+    return sessionData.session.user
   }
 
-  if (!user) {
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const { data } = await supabase.auth.getUser()
-        user = data.user
-        break
-      } catch {
-        if (attempt === 2) return null
-        await new Promise((resolve) => setTimeout(resolve, 500))
-      }
-    }
+  // Fallback: getUser() validates/refreshes the token.
+  // This is needed for Server Actions that may not go through the proxy.
+  try {
+    const { data } = await supabase.auth.getUser()
+    return data.user
+  } catch {
+    return null
   }
-
-  return user
 }
 
 export async function getAdminPermissionCheck(): Promise<
