@@ -98,6 +98,8 @@ export default function NavbarClient({
       }
       const { useShopWishlistStore } = await import('@/stores/shopWishlistStore')
       useShopWishlistStore.getState().setWishlist([])
+      const { useShopCartStore } = await import('@/stores/shopCartStore')
+      useShopCartStore.getState().clearCart()
       setIsOpen(false)
       setIsProfileOpen(false)
       setIsMoreOpen(false)
@@ -272,11 +274,19 @@ export default function NavbarClient({
         }}
         style={navStyle}
       >
-        <div className="navbar-left flex min-w-0 items-center gap-5">
+        {/* Dynamic pointer spotlight effect */}
+        <div 
+          className="pointer-events-none absolute inset-0 rounded-full opacity-60 transition-opacity duration-500" 
+          style={{
+            background: 'radial-gradient(350px circle at var(--nav-pointer-x, 50%) var(--nav-pointer-y, 50%), rgba(124, 58, 237, 0.08), transparent 80%)'
+          }} 
+        />
+
+        <div className="navbar-left relative z-10 flex min-w-0 items-center gap-4">
           <Link
             href="/"
             prefetch={false}
-            className="navbar-logo-link group flex min-h-[48px] items-center rounded-2xl bg-white/55 px-2.5 ring-1 ring-white/70 transition hover:bg-white/80"
+            className="navbar-logo-link group flex min-h-[46px] items-center rounded-2xl border border-slate-200/70 bg-white/70 px-3 transition-all duration-300 hover:border-slate-300 hover:bg-white hover:shadow-sm"
             aria-label={`${businessName} home`}
           >
             <Image
@@ -285,31 +295,38 @@ export default function NavbarClient({
               width={170}
               height={40}
               sizes="(min-width: 640px) 168px, 146px"
-              className="h-9 w-auto max-w-[146px] object-contain transition-transform duration-200 group-hover:scale-[1.02] sm:max-w-[168px]"
+              className="h-9 w-auto max-w-[146px] object-contain transition-transform duration-300 group-hover:scale-[1.03] sm:max-w-[168px]"
             />
           </Link>
 
-          <ul className="navbar-link-cluster hidden list-none items-center gap-1 rounded-full border border-white/70 bg-white/55 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur lg:flex">
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  prefetch={false}
-                  onNavigate={() => {
-                    setIsOpen(false)
-                    setIsProfileOpen(false)
-                    setIsMoreOpen(false)
-                  }}
-                  className={`nav-link navbar-premium-link whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold ${isActive(link.href) ? 'nav-link-active' : ''}`}
-                >
-                  <span>{link.label}</span>
-                </Link>
-              </li>
-            ))}
+          <ul className="navbar-link-cluster hidden list-none items-center gap-1 rounded-full border border-slate-200/80 bg-white/70 p-1.5 shadow-[0_4px_20px_rgba(15,23,42,0.03),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl lg:flex">
+            {navLinks.map((link) => {
+              const active = isActive(link.href)
+              return (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    prefetch={false}
+                    onNavigate={() => {
+                      setIsOpen(false)
+                      setIsProfileOpen(false)
+                      setIsMoreOpen(false)
+                    }}
+                    className={`nav-link navbar-premium-link relative flex whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                      active
+                        ? 'nav-link-active bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold shadow-[0_4px_14px_rgba(124,58,237,0.28)]'
+                        : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>{link.label}</span>
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
         </div>
 
-        <div className="navbar-actions hidden items-center gap-2.5 lg:flex">
+        <div className="navbar-actions relative z-10 hidden items-center gap-2.5 lg:flex">
           <CartButton />
           {isShopSection ? <ShopNavControls currentPath={currentPath} currentUser={currentUser} /> : null}
 
@@ -318,8 +335,12 @@ export default function NavbarClient({
               href={`https://wa.me/${whatsappHrefNumber}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="navbar-action-button navbar-whatsapp-button flex min-h-[42px] items-center gap-2 whitespace-nowrap rounded-full border border-[#25D366]/25 bg-white/70 px-3.5 text-sm font-semibold text-[#138a42] shadow-[0_10px_28px_rgba(15,23,42,0.05)] backdrop-blur transition hover:border-[#25D366]/40 hover:bg-[#25D366]/10"
+              className="navbar-action-button navbar-whatsapp-button flex min-h-[42px] items-center gap-2 whitespace-nowrap rounded-full border border-emerald-500/25 bg-emerald-50/70 px-3.5 text-xs sm:text-sm font-semibold text-emerald-700 shadow-sm backdrop-blur transition-all duration-200 hover:border-emerald-500/40 hover:bg-emerald-100/80 hover:shadow"
             >
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+              </span>
               <MessageCircle className="h-4 w-4" />
               WhatsApp
             </a>
@@ -329,24 +350,24 @@ export default function NavbarClient({
             <Link
               href="/instant-quote"
               prefetch={false}
-              className="navbar-quote-button relative flex min-h-[44px] items-center gap-2 overflow-hidden whitespace-nowrap rounded-full bg-gradient-to-r from-[#4c1d95] via-[#6d28d9] to-[#7c3aed] px-5 font-semibold text-white shadow-[0_14px_34px_rgba(109,40,217,0.28)] transition-all duration-300 before:absolute before:inset-y-0 before:left-0 before:w-1/2 before:-translate-x-full before:bg-white/20 before:blur-xl before:content-[''] hover:from-[#3b0764] hover:to-[#6d28d9] hover:before:translate-x-[220%]"
+              className="navbar-quote-button relative flex min-h-[44px] items-center gap-2 overflow-hidden whitespace-nowrap rounded-full bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 px-5 text-sm font-semibold text-white shadow-[0_8px_25px_-4px_rgba(124,58,237,0.35)] transition-all duration-300 before:absolute before:inset-y-0 before:left-0 before:w-1/2 before:-translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:blur-sm before:content-[''] hover:scale-[1.02] hover:shadow-[0_12px_30px_-4px_rgba(124,58,237,0.45)] hover:before:translate-x-[300%] before:transition-transform before:duration-700 active:scale-[0.98]"
             >
-              <span className="relative z-10">Get Quote</span>
+              <span className="relative z-10">Get Instant Quote</span>
               <ArrowUpRight className="relative z-10 h-4 w-4" />
             </Link>
           </div>
 
           {isAuthPending ? (
-            <div className="h-9 w-[74px] rounded-lg border border-[var(--border-light)] bg-[var(--bg-soft)]" />
+            <div className="h-9 w-[74px] rounded-full border border-slate-200/80 bg-slate-100/60 animate-pulse" />
           ) : currentUser ? (
             <div ref={profileMenuRef} className="relative">
               <button
                 type="button"
                 onClick={() => setIsProfileOpen((current) => !current)}
-                className="navbar-profile-button flex min-h-[42px] items-center gap-2 rounded-full border border-white/80 bg-white/75 px-2 py-1 pr-3 shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white"
+                className="navbar-profile-button flex min-h-[42px] items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-2 py-1 pr-3 shadow-sm backdrop-blur transition-all duration-200 hover:border-violet-300 hover:bg-white hover:shadow"
               >
                 {currentUser.avatarUrl ? (
-                  <span className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-[var(--accent)]/20">
+                  <span className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-violet-500/20">
                     <Image
                       src={currentUser.avatarUrl}
                       alt={currentUser.name}
@@ -356,45 +377,45 @@ export default function NavbarClient({
                     />
                   </span>
                 ) : (
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--gradient-brand)] text-[10px] font-bold text-white shadow-[var(--shadow-brand)]">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-[10px] font-bold text-white shadow-sm">
                     {getInitials(currentUser.name)}
                   </span>
                 )}
                 <ChevronDown
-                  className={`h-3.5 w-3.5 text-[var(--text-secondary)] transition-transform duration-200 ${
+                  className={`h-3.5 w-3.5 text-slate-500 transition-transform duration-200 ${
                     isProfileOpen ? 'rotate-180' : ''
                   }`}
                 />
               </button>
 
               {isProfileOpen && (
-                <div className="navbar-profile-menu absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl">
-                  <div className="border-b border-[var(--border-light)] p-4">
-                    <p className="font-[var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Signed in as</p>
-                    <p className="mt-1.5 text-base font-semibold text-[var(--text-primary)]">{currentUser.name}</p>
-                    <p className="truncate text-sm text-[var(--text-secondary)]">{currentUser.email}</p>
+                <div className="navbar-profile-menu absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-2xl transition-all duration-200">
+                  <div className="border-b border-slate-100 p-3.5">
+                    <p className="font-mono text-[10px] uppercase tracking-wider text-slate-400">Signed in as</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{currentUser.name}</p>
+                    <p className="truncate text-xs text-slate-500">{currentUser.email}</p>
                   </div>
 
-                  <div className="p-3">
+                  <div className="p-1.5">
                     {moreLinks.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
                         prefetch={false}
                         onClick={() => setIsProfileOpen(false)}
-                        className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
+                        className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-slate-900"
                       >
                         {item.label}
                       </Link>
                     ))}
-                    <div className="my-2 h-px bg-[var(--border-light)]" />
+                    <div className="my-1.5 h-px bg-slate-100" />
                     {accountLinks.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
                         prefetch={false}
                         onClick={() => setIsProfileOpen(false)}
-                        className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
+                        className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-slate-900"
                       >
                         {item.label}
                       </Link>
@@ -404,16 +425,17 @@ export default function NavbarClient({
                         href="/admin"
                         prefetch={false}
                         onClick={() => setIsProfileOpen(false)}
-                        className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
+                        className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-semibold text-violet-600 transition-colors hover:bg-violet-50"
                       >
-                        Admin
+                        Admin Dashboard
                       </Link>
                     ) : null}
+                    <div className="my-1.5 h-px bg-slate-100" />
                     <button
                       type="button"
                       onClick={() => void handleLogout()}
                       disabled={isLoggingOut}
-                      className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isLoggingOut ? 'Logging out...' : 'Log out'}
                     </button>
@@ -427,7 +449,7 @@ export default function NavbarClient({
                 <button
                   type="button"
                   onClick={() => setIsMoreOpen((current) => !current)}
-                  className="navbar-action-button flex min-h-[42px] min-w-[42px] items-center justify-center rounded-full border border-white/80 bg-white/75 text-[var(--text-secondary)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white hover:text-[var(--text-primary)]"
+                  className="navbar-action-button flex min-h-[42px] min-w-[42px] items-center justify-center rounded-full border border-slate-200/80 bg-white/80 text-slate-600 shadow-sm backdrop-blur transition-all duration-200 hover:border-violet-300 hover:bg-white hover:text-slate-900"
                   aria-label="More navigation"
                   aria-expanded={isMoreOpen}
                 >
@@ -435,15 +457,15 @@ export default function NavbarClient({
                 </button>
 
                 {isMoreOpen && (
-                  <div className="navbar-more-menu absolute right-0 top-[calc(100%+0.75rem)] w-[200px] overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl">
-                    <div className="p-2">
+                  <div className="navbar-more-menu absolute right-0 top-[calc(100%+0.75rem)] w-[210px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-2xl transition-all duration-200">
+                    <div className="p-1">
                       {moreLinks.map((item) => (
                         <Link
                           key={item.href}
                           href={item.href}
                           prefetch={false}
                           onClick={() => setIsMoreOpen(false)}
-                          className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
+                          className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-slate-900"
                         >
                           {item.label}
                         </Link>
@@ -457,7 +479,7 @@ export default function NavbarClient({
                 <Link
                   href={`/login?next=${encodeURIComponent(pathname ?? '/')}`}
                   prefetch={false}
-                  className="navbar-action-button flex min-h-[42px] items-center whitespace-nowrap rounded-full border border-white/80 bg-white/75 px-4 text-sm font-semibold text-[var(--text-secondary)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white hover:text-[var(--text-primary)]"
+                  className="navbar-action-button flex min-h-[42px] items-center whitespace-nowrap rounded-full border border-slate-200/80 bg-white/80 px-4.5 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:border-violet-300 hover:bg-white hover:text-slate-900"
                 >
                   Log In
                 </Link>
@@ -466,10 +488,11 @@ export default function NavbarClient({
           )}
         </div>
 
+        {/* Mobile Menu Button */}
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="navbar-menu-button relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/80 bg-white/70 text-[var(--text-primary)] shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden"
+          className="navbar-menu-button relative z-10 flex min-h-[42px] min-w-[42px] items-center justify-center rounded-full border border-slate-200/80 bg-white/80 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:bg-white lg:hidden"
           aria-label={isOpen ? 'Close menu' : 'Open menu'}
         >
           <span className="flex h-6 w-6 items-center justify-center">
@@ -478,191 +501,218 @@ export default function NavbarClient({
         </button>
       </nav>
 
+      {/* Mobile Navigation Drawer Sheet */}
       {isOpen && (
-          <div
-            className="navbar-mobile-overlay fixed inset-0 z-[90] lg:hidden"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Navigation menu"
-          >
-            <button
-              type="button"
-              aria-label="Close menu"
-              className="absolute inset-0 bg-slate-900/50 backdrop-blur-md"
-              onClick={() => setIsOpen(false)}
-            />
+        <div
+          className="navbar-mobile-overlay fixed inset-0 z-[90] lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation menu"
+        >
+          {/* Backdrop Overlay */}
+          <button
+            type="button"
+            aria-label="Close menu"
+            className="absolute inset-0 bg-slate-950/40 backdrop-blur-md transition-opacity"
+            onClick={() => setIsOpen(false)}
+          />
 
-            <div className="navbar-mobile-panel absolute right-0 top-0 flex h-[100dvh] w-full max-w-md flex-col overflow-hidden rounded-l-3xl border-l border-[var(--border-light)] bg-white/95 shadow-[var(--shadow-lg)] backdrop-blur-xl">
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border-light)] bg-white/90 px-5 py-4 backdrop-blur-md">
-                <p className="font-[var(--font-mono)] text-[10px] uppercase tracking-[0.25em] text-[var(--text-muted)]">Menu</p>
-                <button
-                  type="button"
-                  onClick={() => setIsOpen(false)}
-                  aria-label="Close menu"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-light)] bg-white text-[var(--text-secondary)] transition hover:border-[var(--border-brand)] hover:text-[var(--text-primary)]"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+          {/* Drawer Content */}
+          <div className="navbar-mobile-panel absolute right-0 top-0 flex h-[100dvh] w-full max-w-md flex-col overflow-hidden rounded-l-[32px] border-l border-white/60 bg-white/95 shadow-[0_0_60px_rgba(15,23,42,0.18)] backdrop-blur-2xl">
+            {/* Header bar */}
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/90 px-6 py-4 backdrop-blur-md">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-violet-600" />
+                <p className="font-mono text-xs uppercase tracking-widest text-slate-400">Navigation</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                aria-label="Close menu"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 text-slate-500 transition-all duration-200 hover:bg-slate-100 hover:text-slate-900"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-6">
+              {currentUser && (
+                <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3.5">
+                  {currentUser.avatarUrl ? (
+                    <span className="relative h-11 w-11 overflow-hidden rounded-full ring-2 ring-violet-500/20">
+                      <Image
+                        src={currentUser.avatarUrl}
+                        alt={currentUser.name}
+                        fill
+                        sizes="44px"
+                        className="object-cover"
+                      />
+                    </span>
+                  ) : (
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-sm font-bold text-white shadow-sm">
+                      {getInitials(currentUser.name)}
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-900">{currentUser.name}</p>
+                    <p className="truncate text-xs text-slate-500">{currentUser.email}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Main Links */}
+              <div>
+                <p className="mb-2.5 px-1 font-mono text-[10px] uppercase tracking-wider text-slate-400">Main Menu</p>
+                <ul className="space-y-1.5">
+                  {navLinks.map((link) => {
+                    const active = isActive(link.href)
+                    return (
+                      <li key={link.href}>
+                        <Link
+                          href={link.href}
+                          prefetch={false}
+                          onClick={() => {
+                            setIsOpen(false)
+                            setIsProfileOpen(false)
+                            setIsMoreOpen(false)
+                          }}
+                          className={`navbar-mobile-link flex min-h-[48px] items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
+                            active
+                              ? 'navbar-mobile-link-active bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold shadow-md'
+                              : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                          }`}
+                        >
+                          <span>{link.label}</span>
+                          {active && (
+                            <span className="h-2 w-2 rounded-full bg-white shadow-sm" />
+                          )}
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
               </div>
 
-              <div className="flex-1 overflow-y-auto overscroll-contain p-5">
-                {currentUser && (
-                  <div className="mb-5 flex items-center gap-3 rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3">
-                    {currentUser.avatarUrl ? (
-                      <span className="relative h-10 w-10 overflow-hidden rounded-full">
-                        <Image
-                          src={currentUser.avatarUrl}
-                          alt={currentUser.name}
-                          fill
-                          sizes="40px"
-                          className="object-cover"
-                        />
-                      </span>
-                    ) : (
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--gradient-brand)] text-sm font-bold text-white">
-                        {getInitials(currentUser.name)}
-                      </span>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{currentUser.name}</p>
-                      <p className="truncate text-xs text-[var(--text-secondary)]">{currentUser.email}</p>
-                    </div>
-                  </div>
-                )}
-
-                <ul className="space-y-1">
-                  {navLinks.map((link) => (
-                    <li key={link.href}>
-                      <Link
-                        href={link.href}
-                        prefetch={false}
-                        onClick={() => {
-                          setIsOpen(false)
-                          setIsProfileOpen(false)
-                          setIsMoreOpen(false)
-                        }}
-                        className={`navbar-mobile-link flex min-h-[44px] items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-colors ${
-                          isActive(link.href)
-                            ? 'navbar-mobile-link-active bg-[var(--brand-faint)] text-[var(--brand-primary)]'
-                            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]'
-                        }`}
-                      >
-                        {link.label}
-                        {isActive(link.href) && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
-                        )}
-                      </Link>
-                    </li>
-                  ))}
+              {/* More Links */}
+              <div>
+                <p className="mb-2.5 px-1 font-mono text-[10px] uppercase tracking-wider text-slate-400">Explore</p>
+                <ul className="space-y-1.5">
+                  {moreLinks.map((link) => {
+                    const active = isActive(link.href)
+                    return (
+                      <li key={link.href}>
+                        <Link
+                          href={link.href}
+                          prefetch={false}
+                          onClick={() => {
+                            setIsOpen(false)
+                            setIsProfileOpen(false)
+                            setIsMoreOpen(false)
+                          }}
+                          className={`navbar-mobile-link flex min-h-[48px] items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
+                            active
+                              ? 'navbar-mobile-link-active bg-violet-50 text-violet-700 font-semibold'
+                              : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                          }`}
+                        >
+                          <span>{link.label}</span>
+                          {active && (
+                            <span className="h-1.5 w-1.5 rounded-full bg-violet-600" />
+                          )}
+                        </Link>
+                      </li>
+                    )
+                  })}
                 </ul>
+              </div>
 
-                <div className="mt-4 space-y-1">
-                  <p className="px-4 pb-1 font-[var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">More</p>
-                  {moreLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      prefetch={false}
-                      onClick={() => {
-                        setIsOpen(false)
-                        setIsProfileOpen(false)
-                        setIsMoreOpen(false)
-                      }}
-                      className={`navbar-mobile-link flex min-h-[44px] items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-colors ${
-                        isActive(link.href)
-                          ? 'navbar-mobile-link-active bg-[var(--brand-faint)] text-[var(--brand-primary)]'
-                          : 'text-[var(--text-secondary)] hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]'
-                      }`}
-                    >
-                      {link.label}
-                      {isActive(link.href) && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
-                      )}
-                    </Link>
-                  ))}
-                </div>
+              {/* Controls & CTA buttons */}
+              <div className="pt-2 space-y-3">
+                {isShopSection ? (
+                  <ShopNavControls
+                    mobile
+                    currentPath={currentPath}
+                    currentUser={currentUser}
+                    onOpenAction={() => setIsOpen(false)}
+                  />
+                ) : null}
 
-                <div className="mt-6 space-y-3">
-                  {isShopSection ? (
-                    <ShopNavControls
-                      mobile
-                      currentPath={currentPath}
-                      currentUser={currentUser}
-                      onOpenAction={() => setIsOpen(false)}
-                    />
-                  ) : null}
-                  <Link
-                    href="/instant-quote"
-                    prefetch={false}
-                    onClick={() => setIsOpen(false)}
-                    className="btn-primary flex w-full items-center justify-center gap-2 py-3.5 text-base"
-                  >
-                    Get Instant Quote
-                    <ArrowUpRight className="h-4 w-4" />
-                  </Link>
-                  <a
-                    href={`https://wa.me/${whatsappHrefNumber}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 py-3.5 text-base font-medium text-[#25D366]"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    WhatsApp Us
-                  </a>
+                <Link
+                  href="/instant-quote"
+                  prefetch={false}
+                  onClick={() => setIsOpen(false)}
+                  className="flex w-full min-h-[50px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-500/25 transition-all active:scale-[0.98]"
+                >
+                  Get Instant Quote
+                  <ArrowUpRight className="h-4 w-4" />
+                </Link>
 
-                  {isAuthPending ? (
-                    <>
-                      <div className="block w-full rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] py-3.5" />
-                      <div className="block w-full rounded-xl bg-[var(--accent)]/40 py-3.5" />
-                    </>
-                  ) : currentUser ? (
-                    <>
-                      <p className="px-1 pt-2 font-[var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Account</p>
+                <a
+                  href={`https://wa.me/${whatsappHrefNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-50/80 py-3 text-base font-semibold text-emerald-700 transition-all hover:bg-emerald-100"
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                  </span>
+                  <MessageCircle className="h-4.5 w-4.5" />
+                  WhatsApp Us
+                </a>
+
+                {isAuthPending ? (
+                  <div className="h-12 w-full rounded-2xl bg-slate-100 animate-pulse" />
+                ) : currentUser ? (
+                  <div className="pt-3 space-y-2">
+                    <p className="px-1 font-mono text-[10px] uppercase tracking-wider text-slate-400">Account Options</p>
+                    <div className="grid grid-cols-2 gap-2">
                       {accountLinks.map((item) => (
                         <Link
                           key={item.href}
                           href={item.href}
                           prefetch={false}
                           onClick={() => setIsOpen(false)}
-                          className="navbar-mobile-action-light block w-full rounded-xl border border-[var(--border-light)] bg-white py-3.5 text-center text-base font-medium text-[var(--text-secondary)]"
+                          className="flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200/80 bg-white px-3 py-2.5 text-center text-xs font-semibold text-slate-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50/50 hover:text-violet-700"
                         >
                           {item.label}
                         </Link>
                       ))}
-                      {showAdminLink ? (
-                        <Link
-                          href="/admin"
-                          prefetch={false}
-                          onClick={() => setIsOpen(false)}
-                          className="navbar-mobile-action-light block w-full rounded-xl border border-[var(--border-light)] bg-white py-3.5 text-center text-base font-medium text-[var(--text-secondary)]"
-                        >
-                          Admin
-                        </Link>
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={() => void handleLogout()}
-                        disabled={isLoggingOut}
-                        className="block w-full rounded-xl border border-[var(--border-light)] py-3.5 text-center text-base font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    </div>
+                    {showAdminLink ? (
+                      <Link
+                        href="/admin"
+                        prefetch={false}
+                        onClick={() => setIsOpen(false)}
+                        className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-violet-200 bg-violet-50 py-2.5 text-center text-sm font-semibold text-violet-700"
                       >
-                        {isLoggingOut ? 'Logging out...' : 'Log out'}
-                      </button>
-                    </>
-                  ) : (
-                    <Link
-                      href={`/login?next=${encodeURIComponent(pathname ?? '/')}`}
-                      prefetch={false}
-                      onClick={() => setIsOpen(false)}
-                      className="btn-primary block w-full py-3.5 text-center text-base"
+                        Admin Dashboard
+                      </Link>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => void handleLogout()}
+                      disabled={isLoggingOut}
+                      className="w-full rounded-xl border border-rose-200 bg-rose-50/80 py-3 text-center text-sm font-medium text-rose-600 transition hover:bg-rose-100 disabled:opacity-60"
                     >
-                      Log In
-                    </Link>
-                  )}
-                </div>
+                      {isLoggingOut ? 'Logging out...' : 'Log out'}
+                    </button>
+                  </div>
+                ) : (
+                  <Link
+                    href={`/login?next=${encodeURIComponent(pathname ?? '/')}`}
+                    prefetch={false}
+                    onClick={() => setIsOpen(false)}
+                    className="flex min-h-[48px] w-full items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 py-3 text-center text-base font-semibold text-slate-800 transition hover:bg-slate-100"
+                  >
+                    Log In to Account
+                  </Link>
+                )}
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
     </>
   )
 }
