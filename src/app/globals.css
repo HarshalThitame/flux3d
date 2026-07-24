@@ -1304,6 +1304,11 @@ samp {
     border-radius: 9999px;
   }
 
+  .navbar-left {
+    flex: 1 1 0;
+    justify-content: flex-start;
+  }
+
   .hero-badge {
     max-width: calc(100vw - 32px);
     flex-wrap: wrap;
@@ -7983,7 +7988,9 @@ body:has(.premium-auth-shell) {
   }
 
   .navbar-left {
+    flex: 1 1 0;
     justify-content: flex-start;
+    margin-right: auto;
   }
 
   .navbar-mobile-panel {
