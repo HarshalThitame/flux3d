@@ -73,6 +73,26 @@ function isDateInRange(dateStr: string, start: Date | null, end: Date): boolean 
   return date >= start && date <= end
 }
 
+function getFileName(fileUrl: string | null): string {
+  if (!fileUrl) return '3D Print Order'
+  const parts = fileUrl.split('/')
+  const fileName = parts[parts.length - 1]
+  return fileName.replace(/\.[^/.]+$/, '')
+}
+
+function getStatusDotColor(status: OrderStatus): string {
+  switch (status) {
+    case 'pending': return 'bg-amber-500'
+    case 'confirmed': return 'bg-emerald-500'
+    case 'printing': return 'bg-cyan-500'
+    case 'shipped': return 'bg-violet-500'
+    case 'delivered': return 'bg-sky-500'
+    case 'completed': return 'bg-green-500'
+    case 'cancelled': return 'bg-slate-500'
+    default: return 'bg-gray-400'
+  }
+}
+
 export default function OrdersListClient({ orders, ordersTableUnavailable }: OrdersListClientProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [dateFilter, setDateFilter] = useState<DateFilter>('all')
@@ -339,10 +359,11 @@ export default function OrdersListClient({ orders, ordersTableUnavailable }: Ord
         </div>
       ) : (
         <>
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             {visibleOrders.map((order, index) => {
               const statusClass = getOrderStatusClasses(order.status)
               const statusLabel = getOrderStatusLabel(order.status)
+              const statusDotColor = getStatusDotColor(order.status)
               const date = new Date(order.createdAt).toLocaleDateString('en-IN', {
                 day: 'numeric',
                 month: 'short',
@@ -353,59 +374,58 @@ export default function OrdersListClient({ orders, ordersTableUnavailable }: Ord
                 <Link
                   key={order.groupId}
                   href={`/my-orders/${order.items[0].id}`}
-                  className={`order-list-card status-${order.status} animate-slide-in-up`}
+                  className={`order-list-card status-${order.status} animate-slide-in-up block`}
                   style={{ animationDelay: `${index * 40}ms` }}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex gap-3 p-4">
+                    {/* Status indicator - dedicated left column */}
+                    <div className="flex flex-col items-center pt-1">
+                      <div className={`h-3 w-3 flex-shrink-0 rounded-full ${statusDotColor}`} />
+                    </div>
+
+                    {/* Content area */}
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="min-w-0 truncate text-sm font-semibold text-[#0F1B3D]">
-                          {order.orderNumber}
-                        </span>
-                        <span className={`flex-shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusClass}`}>
-                          <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-current" />
+                      {/* Row 1: Title + Status badge */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-semibold text-[#0F1B3D]">
+                            {getFileName(order.items[0].fileUrl)}
+                          </div>
+                          {order.itemCount > 1 && (
+                            <div className="mt-0.5 text-[11px] font-medium text-[#6d28d9]">
+                              +{order.itemCount - 1} more {order.itemCount - 1 === 1 ? 'item' : 'items'}
+                            </div>
+                          )}
+                        </div>
+                        <span className={`inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClass}`}>
                           {statusLabel}
                         </span>
                       </div>
 
-                      <div className="mt-1.5 flex items-center gap-2 text-xs text-gray-500">
-                        <time className="flex-shrink-0">{date}</time>
-                        <span className="flex-shrink-0 text-gray-300">·</span>
-                        <span className="truncate">{order.items[0].material} · {order.items[0].color}</span>
-                      </div>
-
-                      {order.itemCount > 1 && (
-                        <div className="mt-1.5 flex flex-wrap gap-1.5">
-                          {order.items.slice(0, 2).map((item) => (
-                            <span
-                              key={item.id}
-                              className="rounded-md bg-gray-50 px-2 py-0.5 text-[10px] text-gray-600"
-                            >
-                              {item.material}
-                            </span>
-                          ))}
-                          {order.items.length > 2 && (
-                            <span className="rounded-md bg-gray-50 px-2 py-0.5 text-[10px] text-gray-500">
-                              +{order.items.length - 2} more
-                            </span>
-                          )}
+                      {/* Row 2: Order ID + Amount */}
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <div className="min-w-0 truncate text-xs text-gray-500">
+                          {order.orderNumber}
                         </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col items-end justify-center gap-1.5 flex-shrink-0">
-                      <div className="text-right">
-                        <div className="text-base font-bold text-[#6d28d9]">
+                        <div className="flex-shrink-0 text-base font-bold text-[#6d28d9]">
                           ₹{order.grandTotal.toFixed(0)}
                         </div>
-                        {order.cartDiscountAmount > 0 && (
-                          <div className="text-[10px] text-emerald-600">
-                            Saved ₹{order.cartDiscountAmount.toFixed(0)}
-                          </div>
-                        )}
                       </div>
-                      <div className="rounded-full bg-[#6d28d9]/8 px-2 py-0.5 text-[10px] font-medium text-[#6d28d9]">
-                        {order.itemCount} {order.itemCount === 1 ? 'item' : 'items'}
+
+                      {/* Row 3: Date + Material + Color */}
+                      <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
+                        <time className="flex-shrink-0">{date}</time>
+                        <span className="text-gray-300">·</span>
+                        <span className="truncate">{order.items[0].material}</span>
+                        <span className="flex-shrink-0 text-gray-300">·</span>
+                        <span className="flex-shrink-0">{order.items[0].color}</span>
+                      </div>
+
+                      {/* Row 4: Item count badge */}
+                      <div className="mt-2 flex justify-end">
+                        <div className="rounded-full bg-[#6d28d9]/8 px-2 py-0.5 text-[10px] font-medium text-[#6d28d9]">
+                          {order.itemCount} {order.itemCount === 1 ? 'item' : 'items'}
+                        </div>
                       </div>
                     </div>
                   </div>
