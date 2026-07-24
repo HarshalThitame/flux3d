@@ -43,12 +43,12 @@ import {
   getShopOrderStatusLabel,
   getShopPaymentStatusClasses,
   getShopPaymentStatusLabel,
-  isShopOrderCancellable,
   isShopOrderReturnable,
   SHOP_FULFILMENT_PROGRESS,
   type ShopOrder,
   type ShopOrderItem,
 } from '@/lib/shop/orders'
+import { DownloadInvoiceButton } from './DownloadInvoiceButton'
 
 type DialogType = 'cancel' | 'return'
 type EligibleReviewProduct = {
@@ -102,6 +102,70 @@ function getProgressStepColor(status: string, complete: boolean, current: boolea
   if (complete) return { bg: 'bg-emerald-50', border: 'border-emerald-200', icon: 'bg-emerald-500 text-white', text: 'text-emerald-700' }
   if (current) return { bg: 'bg-violet-50', border: 'border-violet-200', icon: 'bg-violet-500 text-white', text: 'text-violet-700' }
   return { bg: 'bg-gray-50', border: 'border-gray-200', icon: 'bg-gray-200 text-gray-500', text: 'text-gray-500' }
+}
+
+function CinematicStatusRow({ currentProgressIndex }: { currentProgressIndex: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 }}
+      className="mt-4 overflow-hidden rounded-xl border border-[var(--border-light)] bg-gradient-to-r from-gray-50 via-white to-violet-50/40 p-2.5 shadow-sm"
+    >
+      <div className="flex items-stretch gap-0 overflow-x-auto pb-1">
+        {SHOP_FULFILMENT_PROGRESS.map((status, index) => {
+          const complete = index < currentProgressIndex
+          const current = index === currentProgressIndex
+          const StepIcon = getProgressStepIcon(status)
+          return (
+            <motion.div
+              key={status}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.06 + index * 0.07 }}
+              className="flex items-center flex-shrink-0"
+            >
+              <div className="flex items-center gap-1.5">
+                <div className="relative flex h-7 w-7 items-center justify-center rounded-full">
+                  {complete ? (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 300, delay: 0.1 + index * 0.05 }}
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/30"
+                    >
+                      <Check className="h-3.5 w-3.5 text-white" />
+                    </motion.div>
+                  ) : current ? (
+                    <>
+                      <motion.div
+                        animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0, 0.4] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                        className="absolute inset-0 rounded-full bg-violet-400"
+                      />
+                      <div className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full bg-violet-500 shadow-sm shadow-violet-500/30">
+                        <StepIcon className="h-3.5 w-3.5 text-white" />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-200">
+                      <StepIcon className="h-3.5 w-3.5 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+                <span className={`whitespace-nowrap text-[10px] font-bold ${complete ? 'text-emerald-700' : current ? 'text-violet-700' : 'text-gray-400'}`}>
+                  {getShopFulfilmentStatusLabel(status)}
+                </span>
+              </div>
+              {index < SHOP_FULFILMENT_PROGRESS.length - 1 && (
+                <div className={`mx-1 h-px w-3 flex-shrink-0 ${complete ? 'bg-emerald-400' : 'bg-gray-200'}`} />
+              )}
+            </motion.div>
+          )
+        })}
+      </div>
+    </motion.div>
+  )
 }
 
 function getPaymentModeLabel(value: string | null) {
@@ -508,7 +572,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)] lg:items-start">
           <section className="space-y-4">
-            {/* Fulfillment Timeline - Modern Stepper */}
+            {/* Fulfillment Timeline - Cinematic Row (Mobile) + Grid (Desktop) */}
             <motion.section
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
@@ -545,32 +609,39 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                   </div>
                 </div>
               ) : (
-                <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-7">
-                  {SHOP_FULFILMENT_PROGRESS.map((status, index) => {
-                    const complete = index < currentProgressIndex
-                    const current = index === currentProgressIndex
-                    const colors = getProgressStepColor(status, complete, current)
-                    const StepIcon = getProgressStepIcon(status)
-                    return (
-                      <motion.div
-                        key={status}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.14 + index * 0.05 }}
-                        className={`min-h-[64px] rounded-xl border p-2.5 ${colors.bg} ${colors.border}`}
-                      >
-                        <div className="flex h-full items-center gap-2 lg:flex-col lg:items-start lg:justify-between">
-                          <div className={`grid h-7 w-7 place-items-center rounded-full text-xs font-bold ${colors.icon}`}>
-                            {complete ? <Check className="h-3.5 w-3.5" /> : <StepIcon className="h-3.5 w-3.5" />}
+                <>
+                  {/* Mobile: Cinematic single row */}
+                  <div className="sm:hidden">
+                    <CinematicStatusRow currentProgressIndex={currentProgressIndex} />
+                  </div>
+                  {/* Desktop: Grid layout */}
+                  <div className="mt-4 hidden gap-2 sm:grid sm:grid-cols-2 lg:grid-cols-7">
+                    {SHOP_FULFILMENT_PROGRESS.map((status, index) => {
+                      const complete = index < currentProgressIndex
+                      const current = index === currentProgressIndex
+                      const colors = getProgressStepColor(status, complete, current)
+                      const StepIcon = getProgressStepIcon(status)
+                      return (
+                        <motion.div
+                          key={status}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.14 + index * 0.05 }}
+                          className={`min-h-[64px] rounded-xl border p-2.5 ${colors.bg} ${colors.border}`}
+                        >
+                          <div className="flex h-full items-center gap-2 lg:flex-col lg:items-start lg:justify-between">
+                            <div className={`grid h-7 w-7 place-items-center rounded-full text-xs font-bold ${colors.icon}`}>
+                              {complete ? <Check className="h-3.5 w-3.5" /> : <StepIcon className="h-3.5 w-3.5" />}
+                            </div>
+                            <div className={`text-[11px] font-bold leading-tight ${colors.text}`}>
+                              {getShopFulfilmentStatusLabel(status)}
+                            </div>
                           </div>
-                          <div className={`text-[11px] font-bold leading-tight ${colors.text}`}>
-                            {getShopFulfilmentStatusLabel(status)}
-                          </div>
-                        </div>
-                      </motion.div>
-                    )
-                  })}
-                </div>
+                        </motion.div>
+                      )
+                    })}
+                  </div>
+                </>
               )}
             </motion.section>
 
@@ -835,7 +906,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
             </div>
 
             <div className="mt-4 space-y-2">
-              {isShopOrderCancellable(order.order_status) && (
+              {order.order_status === 'placed' && (
                 <button
                   type="button"
                   onClick={() => setDialogType('cancel')}
@@ -855,6 +926,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                   Request Return
                 </button>
               )}
+              <DownloadInvoiceButton />
               <Link href="/3d-shop" className="btn-primary flex min-h-[40px] w-full items-center justify-center text-xs">
                 <span className="relative z-10">Continue Shopping</span>
               </Link>
