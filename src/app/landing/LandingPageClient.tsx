@@ -184,7 +184,7 @@ export default function LandingPageClient() {
         <ServicesSection />
       </LazySection>
       <LazySection minHeight={160} className="premium-band premium-band-panel">
-        <section className="premium-offer-shell mx-auto mb-16 max-w-[1200px] px-6">
+        <section className="premium-offer-shell mx-auto mb-8 max-w-[1200px] px-6 md:mb-12 lg:mb-16">
           <OfferBanner />
         </section>
       </LazySection>
