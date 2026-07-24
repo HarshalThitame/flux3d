@@ -12,6 +12,7 @@ import type { QuoteMaterial } from '@/lib/quote/types'
 import { formatDurationMinutes } from '@/lib/quote/pricing-engine'
 import CouponInput, { type CouponResult } from '@/components/offers/CouponInput'
 import { calculatePricingWaterfall } from '@/lib/quote/pricing-waterfall'
+import CartSwitcher from '@/components/cart/CartSwitcher'
 
 type CartClientProps = {
   user: AppUserProfile | null
@@ -108,6 +109,9 @@ export default function CartClient({ user }: CartClientProps) {
             ctaLabel="Add Items to Cart"
             ctaHref="/instant-quote"
           />
+          <div className="mt-6">
+            <CartSwitcher variant="quote" quoteCartCount={0} />
+          </div>
         </div>
       </div>
     )
@@ -131,6 +135,10 @@ export default function CartClient({ user }: CartClientProps) {
             You have {items.length} item{items.length !== 1 ? 's' : ''} in your cart. Modify settings and proceed to delivery.
           </p>
         </motion.div>
+
+        <div className="mb-6">
+          <CartSwitcher variant="quote" quoteCartCount={0} />
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
           <div className="space-y-4">

@@ -55,7 +55,7 @@ export default function NavbarClient({
   darkLogoUrl,
   whatsappNumber = '+919623023480',
 }: NavbarClientProps) {
-  const { profile: liveProfile, loading } = useProfile(user, { enabled: Boolean(user) })
+  const { profile: liveProfile, loading } = useProfile(user, { enabled: true })
   const router = useRouter()
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
