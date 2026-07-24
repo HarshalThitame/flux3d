@@ -144,7 +144,7 @@ export default function ServicesSection() {
   const isInView = useInView(ref, viewportHeader)
 
   return (
-    <section id="services" ref={ref} className="relative scroll-mt-20 overflow-hidden px-6 py-24">
+    <section id="services" ref={ref} className="relative scroll-mt-20 overflow-hidden px-6 py-12 md:py-16 lg:py-24">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_30%,rgba(109,40,217,0.04)_0%,transparent_70%)] pointer-events-none" />
 
       <div className="max-w-[1200px] mx-auto relative z-10">
@@ -154,7 +154,7 @@ export default function ServicesSection() {
             variants={fadeUp}
             initial="hidden"
             animate={isInView ? "show" : "hidden"}
-            className="text-center mb-16 relative z-10"
+            className="text-center mb-8 md:mb-12 lg:mb-16 relative z-10"
           >
           <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">What We Print</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
@@ -170,7 +170,7 @@ export default function ServicesSection() {
         </div>
 
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12"
           variants={staggerContainer}
           initial="hidden"
           whileInView="show"

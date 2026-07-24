@@ -42,8 +42,8 @@ export default function ProblemSection() {
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
   return (
-    <section ref={ref} className="premium-problem relative z-10 w-full overflow-hidden px-4 py-24 md:px-8 lg:px-16">
-      <div className="mx-auto grid max-w-7xl items-start gap-12 lg:grid-cols-[0.9fr_1.1fr]">
+    <section ref={ref} className="premium-problem relative z-10 w-full overflow-hidden px-4 py-12 md:px-8 md:py-16 lg:px-16 lg:py-24">
+      <div className="mx-auto grid max-w-7xl items-start gap-8 md:gap-12 lg:grid-cols-[0.9fr_1.1fr]">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -52,15 +52,15 @@ export default function ProblemSection() {
         >
           <span className="premium-eyebrow">Why Flux3D</span>
 
-          <h2 className="mt-5 text-[clamp(2rem,6vw,4rem)] font-black leading-[0.98] tracking-normal text-[#0F1B3D] md:text-5xl lg:text-6xl">
+          <h2 className="mt-4 text-[clamp(2rem,6vw,4rem)] font-black leading-[0.98] tracking-normal text-[#0F1B3D] md:mt-5 md:text-5xl lg:text-6xl">
             The faster way to make real parts.
           </h2>
 
-          <p className="mt-6 max-w-xl text-base leading-7 text-[#6F7192] md:text-lg lg:leading-8">
+          <p className="mt-4 max-w-xl text-base leading-7 text-[#6F7192] md:mt-6 md:text-lg lg:leading-8">
             Flux3D gives you a compact production workflow: upload the file, choose the right material, approve the quote, and receive a finished part without factory friction.
           </p>
 
-          <div className="mt-8 space-y-3">
+          <div className="mt-6 space-y-3 md:mt-8">
             {productionLoop.map((item, index) => (
               <motion.div
                 key={item.label}
@@ -79,7 +79,7 @@ export default function ProblemSection() {
           </div>
         </motion.div>
 
-        <div className="grid gap-5">
+        <div className="grid gap-4 md:gap-5">
           {painPoints.map((point, index) => {
             const Icon = point.icon
             return (

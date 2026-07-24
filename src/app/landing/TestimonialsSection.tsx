@@ -28,10 +28,10 @@ export default function TestimonialsSection() {
   const isInView = useInView(ref, viewportHeader)
 
   return (
-    <section ref={ref} className="relative py-24 px-6 overflow-hidden">
+    <section ref={ref} className="relative py-12 px-6 md:py-16 lg:py-24 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(109,40,217,0.03)] to-transparent pointer-events-none" />
       <div className="max-w-[1200px] mx-auto relative z-10">
-        <motion.div variants={fadeUp} initial="hidden" animate={isInView ? "show" : "hidden"} className="text-center mb-16">
+        <motion.div variants={fadeUp} initial="hidden" animate={isInView ? "show" : "hidden"} className="text-center mb-8 md:mb-12 lg:mb-16">
           <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">What Our Customers Say</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
             500+ Customers.{' '}
@@ -45,7 +45,7 @@ export default function TestimonialsSection() {
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12 lg:mb-16"
           variants={staggerContainer}
           initial="hidden"
           whileInView="show"
