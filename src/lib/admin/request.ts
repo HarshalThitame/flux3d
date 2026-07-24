@@ -7,10 +7,9 @@ import { createAdminSupabaseClient } from '@/lib/admin/server'
 export async function requireAdminRequest() {
   const cookieStore = await cookies()
 
-  // The proxy (src/proxy.ts) runs before this route handler and calls
-  // getUser() which refreshes the token and sets fresh cookies.
-  // We only need getSession() here — it reads the already-refreshed
-  // session without triggering another token refresh.
+  // The proxy may have refreshed the token, but its cookie updates may not
+  // propagate to the API route's request context. We MUST be able to refresh
+  // the token ourselves — setAll must actually write cookies.
   const supabase = createServerClient(
     getSupabaseUrl(),
     getSupabasePublishableKey(),
@@ -19,16 +18,35 @@ export async function requireAdminRequest() {
         getAll() {
           return cookieStore.getAll()
         },
-        setAll() {
-          // No-op: the proxy has already handled token refresh and cookie
-          // writing. We only need to read the session here.
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          } catch {
+            // Cookie write failed — continue anyway
+          }
         },
       },
     }
   )
 
+  // Try getSession() first — if the proxy already refreshed, this will work.
   const { data: sessionData } = await supabase.auth.getSession()
-  const user = sessionData?.session?.user
+  let user = sessionData?.session?.user
+
+  // If no session (expired or missing), refresh via getUser().
+  // This is critical — without it, expired access tokens cause 401.
+  if (!user) {
+    try {
+      const { data: userData } = await supabase.auth.getUser()
+      if (userData?.user) {
+        user = userData.user
+      }
+    } catch {
+      // getUser() failed — token is invalid or missing
+    }
+  }
 
   if (!user) {
     return { response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
