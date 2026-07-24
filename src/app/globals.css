@@ -234,54 +234,67 @@ samp {
   flex: 0 0 auto;
 }
 
+/* ===================================================
+   NAVBAR — CINEMATIC LIGHT THEME (Purple + Orange)
+   =================================================== */
 .navbar {
   --nav-pointer-x: 50%;
   --nav-pointer-y: 50%;
   position: sticky;
-  top: 14px;
+  top: 12px;
   left: 0;
   right: 0;
-  margin: 14px auto 0;
-  width: min(calc(100% - 32px), 1280px);
+  margin: 12px auto 0;
+  width: min(calc(100% - 28px), 1280px);
   max-width: 1280px;
-  min-height: 70px;
+  min-height: 56px;
   box-sizing: border-box;
   isolation: isolate;
   overflow: visible;
   border-radius: 9999px;
-  padding: 0 14px 0 16px;
+  padding: 0 12px 0 16px;
   z-index: 100;
   display: flex;
   align-items: center;
   justify-content: space-between;
   background:
-    radial-gradient(circle at var(--nav-pointer-x) var(--nav-pointer-y), rgba(124, 58, 237, 0.13) 0%, transparent 50%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(250, 250, 255, 0.86)),
-    linear-gradient(120deg, rgba(167, 139, 250, 0.1), rgba(103, 232, 249, 0.07), rgba(251, 191, 36, 0.06));
-  background-size: 100% 100%, 200% 200%, 200% 200%;
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(124, 58, 237, 0.25);
-  box-shadow: var(--navbar-shadow);
-  transform-origin: top center;
-  transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1);
+    radial-gradient(circle at var(--nav-pointer-x) var(--nav-pointer-y), rgba(249, 115, 22, 0.06) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(250, 248, 255, 0.90));
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 4px 6px rgba(109, 40, 217, 0.04),
+    0 20px 60px rgba(109, 40, 217, 0.10),
+    0 8px 32px rgba(249, 115, 22, 0.05);
+  transition: all 350ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Bottom glow line — hidden by default, shown on scroll */
 .navbar::before {
   content: '';
   position: absolute;
-  inset: -1px;
-  z-index: 1;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(90deg, rgba(167, 139, 250, 0.5), rgba(103, 232, 249, 0.35), rgba(251, 191, 36, 0.45), rgba(167, 139, 250, 0.5), rgba(103, 232, 249, 0.35), rgba(251, 191, 36, 0.45));
-  background-size: 300% 100%;
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
+  bottom: -1px;
+  left: 25%;
+  right: 25%;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, #f97316 20%, #a78bfa 50%, #6d28d9 80%, transparent);
+  border-radius: 9999px;
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.4), 0 0 32px rgba(109, 40, 217, 0.2);
+  opacity: 0;
   pointer-events: none;
-  animation: navbarBorderFlow 8s linear infinite;
+  z-index: 1;
+  transition: opacity 400ms ease, left 400ms ease, right 400ms ease;
 }
 
+.navbar[data-elevated='true']::before {
+  opacity: 1;
+  left: 20%;
+  right: 20%;
+}
+
+/* Radial warmth overlay */
 .navbar::after {
   content: '';
   position: absolute;
@@ -290,9 +303,9 @@ samp {
   border-radius: inherit;
   pointer-events: none;
   background:
-    radial-gradient(circle at var(--nav-pointer-x) var(--nav-pointer-y), rgba(255, 255, 255, 0.65), transparent 35%),
-    linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.08), transparent);
-  opacity: 0.85;
+    radial-gradient(circle at var(--nav-pointer-x) var(--nav-pointer-y), rgba(255, 255, 255, 0.6), transparent 38%),
+    linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.03), transparent);
+  opacity: 0.9;
 }
 
 .navbar > * {
@@ -300,12 +313,81 @@ samp {
   z-index: 2;
 }
 
+/* Elevated (scrolled) state — slightly more opaque */
 .navbar[data-elevated='true'] {
-  min-height: 68px;
+  min-height: 54px;
   background:
-    radial-gradient(circle at var(--nav-pointer-x) var(--nav-pointer-y), rgba(124, 58, 237, 0.16) 0%, transparent 45%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(248, 250, 255, 0.93)),
-    linear-gradient(120deg, rgba(167, 139, 250, 0.12), rgba(103, 232, 249, 0.09), rgba(251, 191, 36, 0.07));
+    radial-gradient(circle at var(--nav-pointer-x) var(--nav-pointer-y), rgba(249, 115, 22, 0.07) 0%, transparent 48%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(250, 248, 255, 0.94));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 6px 12px rgba(109, 40, 217, 0.07),
+    0 28px 72px rgba(109, 40, 217, 0.14),
+    0 10px 36px rgba(249, 115, 22, 0.07);
+}
+
+/* Nav link — flat text, neon orange→violet underline */
+.nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  overflow: visible;
+  color: rgba(100, 60, 180, 0.55);
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.01em;
+  border-radius: 9999px;
+  transform: translateZ(0);
+  transition: color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-link span {
+  position: relative;
+  z-index: 2;
+}
+
+/* No pill fill ::before */
+.nav-link::before {
+  display: none;
+}
+
+/* Neon underline — expands from center on active */
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  right: 50%;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #f97316, #a78bfa, #6d28d9);
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.6), 0 0 20px rgba(109, 40, 217, 0.35);
+  opacity: 0;
+  z-index: 2;
+  transition:
+    left 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    right 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 260ms ease;
+}
+
+.nav-link:hover {
+  color: #f97316;
+}
+
+/* Active state — deep purple text + underline expands */
+.nav-link-active {
+  color: #4c1d95 !important;
+  font-weight: 600;
+  background: none !important;
+  box-shadow: none !important;
+  animation: none;
+}
+
+.nav-link-active::after {
+  left: 14%;
+  right: 14%;
+  opacity: 1;
 }
 
 .logo {
@@ -1215,11 +1297,11 @@ samp {
 @media (max-width: 640px) {
   .navbar {
     top: 10px;
-    width: calc(100% - 24px);
-    min-height: 64px;
+    width: calc(100% - 20px);
+    min-height: 52px;
     margin-top: 10px;
     padding: 0 10px 0 14px;
-    border-radius: 22px;
+    border-radius: 9999px;
   }
 
   .hero-badge {
@@ -7640,7 +7722,7 @@ body:has(.premium-auth-shell) {
   }
 }
 
-/* === NAVBAR CRYSTAL GLASS KEYFRAMES === */
+/* === NAVBAR CINEMATIC LIGHT THEME — KEYFRAMES === */
 @keyframes navbarBorderFlow {
   0% { background-position: 0% 50%; }
   100% { background-position: 300% 50%; }
@@ -7653,8 +7735,8 @@ body:has(.premium-auth-shell) {
 }
 
 @keyframes navbarActiveBreath {
-  0%, 100% { box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.12), 0 0 20px rgba(124, 58, 237, 0); }
-  50% { box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.25), 0 4px 20px rgba(124, 58, 237, 0.12); }
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(109, 40, 217, 0.1), 0 0 20px rgba(109, 40, 217, 0); }
+  50% { box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.2), 0 4px 20px rgba(109, 40, 217, 0.1); }
 }
 
 @keyframes navbarMenuLine {
@@ -7662,189 +7744,247 @@ body:has(.premium-auth-shell) {
   50% { transform: translateX(18%); opacity: 0.9; }
 }
 
-@keyframes navbarGlowPulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 0.9; }
+/* Purple-orange quote button glow pulse */
+@keyframes navbarQuoteGlow {
+  0%, 100% {
+    box-shadow:
+      0 8px 32px rgba(109, 40, 217, 0.28),
+      0 4px 16px rgba(249, 115, 22, 0.18);
+    background-position: 0% 50%;
+  }
+  50% {
+    box-shadow:
+      0 12px 44px rgba(109, 40, 217, 0.38),
+      0 6px 24px rgba(249, 115, 22, 0.26);
+    background-position: 100% 50%;
+  }
 }
 
-.navbar-link-cluster::before,
-.navbar-mobile-panel::before,
-.navbar-profile-menu::before,
-.navbar-more-menu::before {
-  content: '';
-  position: absolute;
-  pointer-events: none;
-}
-
-/* Logo link — sleek glass capsule */
+/* ── Logo link — transparent, minimal ── */
 .navbar-logo-link {
   position: relative;
   overflow: hidden;
-  border-radius: 16px !important;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.55)),
-    radial-gradient(circle at 20% 20%, rgba(167, 139, 250, 0.15), transparent 40%) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 8px 28px rgba(15, 23, 42, 0.06);
-  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.navbar-logo-link::after,
-.navbar-action-button::before,
-.navbar-quote-button::after,
-.navbar-profile-button::before,
-.navbar-menu-button::before {
-  content: '';
-  position: absolute;
-  inset: -35% -70%;
-  pointer-events: none;
-  background: linear-gradient(110deg, transparent 0%, rgba(124, 58, 237, 0.05) 38%, rgba(255, 255, 255, 0.5) 50%, rgba(124, 58, 237, 0.05) 62%, transparent 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  border-radius: 12px !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .navbar-logo-link:hover {
   transform: translateY(-1px) scale(1.02);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 14px 38px rgba(15, 23, 42, 0.1), 0 0 20px rgba(167, 139, 250, 0.08);
 }
 
-.navbar-logo-link:hover::after,
-.navbar-action-button:hover::before,
-.navbar-quote-button:hover::after,
-.navbar-profile-button:hover::before,
-.navbar-menu-button:hover::before {
-  animation: navbarSheenTravel 0.9s ease;
-}
-
-/* Link cluster — inner glass pill */
+/* ── Link cluster — invisible pill container ── */
 .navbar-link-cluster {
   position: relative;
-  overflow: hidden;
-  border-color: rgba(124, 58, 237, 0.18) !important;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.35)),
-    radial-gradient(circle at 50% 0%, rgba(167, 139, 250, 0.08), transparent 50%) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -1px 0 rgba(15, 23, 42, 0.03),
-    0 10px 30px rgba(15, 23, 42, 0.05) !important;
+  overflow: visible;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
 
-.navbar-link-cluster::before {
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.1), rgba(103, 232, 249, 0.08), transparent);
-  opacity: 0.6;
-  transform: translateX(-50%);
-  animation: navbarMenuLine 6s ease-in-out infinite;
-}
+.navbar-link-cluster::before { display: none; }
 
-/* Action buttons — glass morph buttons */
+/* ── Action buttons — purple-tinted glass, no border ── */
 .navbar-action-button,
 .navbar-profile-button,
 .navbar-menu-button {
   position: relative;
   overflow: hidden;
-  border-color: rgba(124, 58, 237, 0.2) !important;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.45)),
-    radial-gradient(circle at 20% 0%, rgba(167, 139, 250, 0.12), transparent 44%) !important;
-  color: rgba(71, 85, 105, 0.8) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88), 0 8px 24px rgba(15, 23, 42, 0.06) !important;
-  transition: border-color 250ms cubic-bezier(0.16, 1, 0.3, 1), color 250ms cubic-bezier(0.16, 1, 0.3, 1), transform 250ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 250ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border: none !important;
+  background: rgba(109, 40, 217, 0.07) !important;
+  color: #5b21b6 !important;
+  box-shadow: none !important;
+  transition:
+    background 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .navbar-action-button:hover,
 .navbar-profile-button:hover,
 .navbar-menu-button:hover {
-  border-color: rgba(167, 139, 250, 0.4) !important;
-  color: #1e293b !important;
+  background: rgba(109, 40, 217, 0.13) !important;
+  color: #4c1d95 !important;
   transform: translateY(-1px) scale(1.02);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 14px 34px rgba(15, 23, 42, 0.1), 0 0 24px rgba(167, 139, 250, 0.1) !important;
+  box-shadow: 0 4px 20px rgba(109, 40, 217, 0.15) !important;
 }
 
-/* WhatsApp button — emerald glass */
+/* ── WhatsApp — soft emerald glass, no border ── */
 .navbar-whatsapp-button {
+  background: rgba(16, 185, 129, 0.10) !important;
   color: #047857 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-/* Quote button — vibrant gradient with animated glow */
+.navbar-whatsapp-button:hover {
+  background: rgba(16, 185, 129, 0.18) !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2) !important;
+  transform: translateY(-1px) scale(1.02);
+}
+
+/* ── Quote button — purple → orange premium gradient ── */
 .navbar-quote-button {
   position: relative;
   overflow: hidden;
-  border: none;
-  background: linear-gradient(135deg, #4c1d95 0%, #6d28d9 40%, #7c3aed 70%, #0891b2 100%) !important;
+  border: none !important;
+  background: linear-gradient(135deg, #6d28d9 0%, #9333ea 45%, #f97316 100%) !important;
   background-size: 200% 200% !important;
-  box-shadow: 0 12px 40px rgba(109, 40, 217, 0.3), 0 0 30px rgba(8, 145, 178, 0.12) !important;
-  animation: navbarGlowPulse 3s ease-in-out infinite !important;
+  color: #fff !important;
+  box-shadow:
+    0 8px 32px rgba(109, 40, 217, 0.28),
+    0 4px 16px rgba(249, 115, 22, 0.18) !important;
+  animation: navbarQuoteGlow 3s ease-in-out infinite !important;
 }
 
 .navbar-quote-button:hover {
   transform: translateY(-1px) scale(1.03);
-  box-shadow: 0 18px 50px rgba(109, 40, 217, 0.38), 0 0 40px rgba(103, 232, 249, 0.15) !important;
+  box-shadow:
+    0 14px 44px rgba(109, 40, 217, 0.36),
+    0 6px 24px rgba(249, 115, 22, 0.28) !important;
   animation: none !important;
 }
 
-/* Dropdown menus — floating glass cards */
+/* ── Dropdown menus — clean white glass, purple accents ── */
 .navbar-profile-menu,
-.navbar-more-menu,
-.navbar-mobile-panel {
+.navbar-more-menu {
   position: absolute;
-  border-color: rgba(124, 58, 237, 0.18) !important;
+  border: none !important;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(250, 250, 255, 0.92)),
-    radial-gradient(circle at 12% 0%, rgba(167, 139, 250, 0.1), transparent 34%) !important;
-  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(250, 248, 255, 0.96)) !important;
+  box-shadow:
+    0 0 0 1px rgba(109, 40, 217, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 24px 80px rgba(109, 40, 217, 0.14),
+    0 8px 32px rgba(249, 115, 22, 0.05) !important;
 }
 
 .navbar-profile-menu::before,
-.navbar-more-menu::before,
-.navbar-mobile-panel::before {
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(120deg, rgba(167, 139, 250, 0.4), rgba(255, 255, 255, 0.15), rgba(103, 232, 249, 0.35), rgba(167, 139, 250, 0.4));
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
+.navbar-more-menu::before { display: none; }
+
+/* Menu item hover — purple tint */
+.navbar-profile-menu a:hover,
+.navbar-more-menu a:hover {
+  background: rgba(109, 40, 217, 0.06) !important;
+  color: #4c1d95 !important;
 }
 
-/* Mobile overlay backdrop */
+/* Admin link — orange accent */
+.navbar-profile-menu a[href='/admin'] {
+  color: #f97316 !important;
+}
+.navbar-profile-menu a[href='/admin']:hover {
+  background: rgba(249, 115, 22, 0.08) !important;
+}
+
+/* ── Mobile overlay backdrop — purple tint ── */
 .navbar-mobile-overlay > button {
-  background: rgba(15, 23, 42, 0.35) !important;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(74, 32, 165, 0.25) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-/* Mobile drawer entries */
+/* ── Mobile panel — white → lavender cinematic ── */
+.navbar-mobile-panel {
+  background:
+    linear-gradient(160deg, #ffffff 0%, #faf5ff 60%, #f5f0ff 100%) !important;
+  border: none !important;
+  border-left: none !important;
+  box-shadow: -24px 0 80px rgba(109, 40, 217, 0.16) !important;
+}
+
+.navbar-mobile-panel::before { display: none; }
+
+/* Mobile drawer header border */
+.navbar-mobile-panel > div:first-child {
+  border-bottom-color: rgba(109, 40, 217, 0.08) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Mobile section label — purple mono */
+.navbar-mobile-panel .font-mono {
+  color: rgba(109, 40, 217, 0.5) !important;
+}
+
+/* ── Mobile nav links — purple theme ── */
 .navbar-mobile-link {
   position: relative;
   overflow: hidden;
-  border: 1px solid transparent;
-  transition: border-color 200ms ease, background 200ms ease, color 200ms ease;
+  border: none !important;
+  color: rgba(100, 60, 180, 0.65);
+  transition: background 200ms ease, color 200ms ease;
+}
+
+/* Orange→violet left accent bar */
+.navbar-mobile-link::before {
+  content: '';
+  position: absolute;
+  top: 22%;
+  bottom: 22%;
+  left: 0;
+  width: 2.5px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #f97316, #9333ea);
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
 }
 
 .navbar-mobile-link:hover {
-  border-color: rgba(167, 139, 250, 0.2);
-  background: rgba(167, 139, 250, 0.06) !important;
+  background: rgba(109, 40, 217, 0.05) !important;
+  color: #f97316 !important;
+  border-color: transparent !important;
+}
+
+/* Active mobile link */
+.navbar-mobile-link-active {
+  background: rgba(109, 40, 217, 0.07) !important;
+  color: #4c1d95 !important;
+  font-weight: 600 !important;
+}
+
+.navbar-mobile-link-active::before {
+  opacity: 1;
+}
+
+/* Mobile account cards — lavender glass */
+.navbar-mobile-panel .grid a,
+.navbar-mobile-panel .grid > a {
+  background: rgba(109, 40, 217, 0.06) !important;
+  border: none !important;
+  color: #5b21b6 !important;
+  box-shadow: none !important;
+}
+
+.navbar-mobile-panel .grid a:hover {
+  background: rgba(109, 40, 217, 0.12) !important;
+  color: #4c1d95 !important;
 }
 
 @media (max-width: 640px) {
   .navbar {
-    min-height: 64px;
-    border-radius: 22px;
+    min-height: 52px;
+    border-radius: 9999px;
   }
 
   .navbar-logo-link {
-    min-height: 44px;
-    border-radius: 14px !important;
+    min-height: 38px;
+    border-radius: 10px !important;
   }
 
   .navbar-menu-button {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 40px;
+    min-width: 40px;
   }
 
   .navbar-mobile-panel {
-    top: calc(5.75rem + env(safe-area-inset-top, 0px));
-    border-radius: 20px !important;
+    top: 0;
+    border-radius: 24px 0 0 24px !important;
   }
 }
 
