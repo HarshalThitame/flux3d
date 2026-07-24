@@ -59,6 +59,19 @@ function matchesFilter(order: ShopOrder, filter: FilterKey) {
   return order.order_status === 'return_requested' || order.order_status === 'returned'
 }
 
+function getShopStatusDotColor(status: ShopFulfilmentStatus): string {
+  switch (status) {
+    case 'pending': return 'bg-amber-500'
+    case 'processing': return 'bg-blue-500'
+    case 'packing': return 'bg-indigo-500'
+    case 'packed': return 'bg-violet-500'
+    case 'shipped': return 'bg-purple-500'
+    case 'delivering': return 'bg-sky-500'
+    case 'delivered': return 'bg-emerald-500'
+    default: return 'bg-gray-400'
+  }
+}
+
 function getOrderItemCount(order: ShopOrder) {
   return order.items.reduce((count, item) => count + Number(item.quantity || 0), 0)
 }
@@ -122,23 +135,34 @@ function LoadingState() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.08 }}
-          className="overflow-hidden rounded-[28px] border border-[var(--border-light)] bg-white/85 p-5 shadow-[var(--shadow-sm)]"
+          className="overflow-hidden rounded-[30px] border border-[var(--border-light)] bg-white/85 shadow-[var(--shadow-sm)]"
         >
-          <div className="flex items-center justify-between gap-4">
-            <div className="space-y-3">
-              <div className="h-4 w-32 animate-pulse rounded-full bg-[var(--bg-muted)]" />
-              <div className="h-6 w-56 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+          <div className="flex gap-3 p-4 md:p-5">
+            {/* Status dot placeholder */}
+            <div className="flex flex-col items-center pt-1">
+              <div className="h-3 w-3 flex-shrink-0 rounded-full bg-[var(--bg-muted)]" />
             </div>
-            <div className="h-9 w-28 animate-pulse rounded-full bg-[var(--bg-muted)]" />
-          </div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-[72px_1fr_120px]">
-            <div className="aspect-square animate-pulse rounded-2xl bg-[var(--bg-muted)]" />
-            <div className="space-y-3">
-              <div className="h-4 w-full max-w-sm animate-pulse rounded-full bg-[var(--bg-muted)]" />
-              <div className="h-4 w-48 animate-pulse rounded-full bg-[var(--bg-muted)]" />
-              <div className="h-4 w-36 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+
+            {/* Content area */}
+            <div className="min-w-0 flex-1">
+              {/* Row 1: Title + Status badge */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="h-4 w-3/4 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+                  <div className="h-3 w-20 animate-pulse rounded bg-[var(--bg-muted)]" />
+                </div>
+                <div className="h-5 w-16 flex-shrink-0 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+              </div>
+
+              {/* Row 2: Order number + Payment badge */}
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <div className="h-3 w-24 animate-pulse rounded bg-[var(--bg-muted)]" />
+                <div className="h-5 w-20 flex-shrink-0 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+              </div>
+
+              {/* Row 3: Date */}
+              <div className="mt-1.5 h-3 w-32 animate-pulse rounded bg-[var(--bg-muted)]" />
             </div>
-            <div className="h-11 animate-pulse rounded-xl bg-[var(--bg-muted)]" />
           </div>
         </motion.div>
       ))}
@@ -381,39 +405,59 @@ export default function ShopOrdersClient() {
                     exit={{ opacity: 0, y: -12, scale: 0.98 }}
                     transition={{ duration: 0.34, delay: Math.min(index * 0.05, 0.22), ease: [0.16, 1, 0.3, 1] }}
                     whileHover={{ y: -3 }}
-                    className="group overflow-hidden rounded-[30px] border border-[var(--border-light)] bg-white/88 p-4 shadow-[0_18px_60px_rgba(26,26,26,0.08)] backdrop-blur-xl transition-shadow hover:shadow-[0_28px_90px_rgba(109,40,217,0.14)] md:p-5"
+                    className="group overflow-hidden rounded-[30px] border border-[var(--border-light)] bg-white/88 shadow-[0_18px_60px_rgba(26,26,26,0.08)] backdrop-blur-xl transition-shadow hover:shadow-[0_28px_90px_rgba(109,40,217,0.14)]"
                   >
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-brand)] bg-[var(--brand-faint)] text-[var(--brand-primary)]">
-                            <ShoppingBag className="h-5 w-5" />
-                          </span>
-                          <div>
-                            <div className="text-xl font-black leading-tight text-[var(--text-primary)]">#{order.order_number}</div>
-                            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-bold text-[var(--text-muted)]">
-                              <CalendarClock className="h-3.5 w-3.5" />
-                              Placed {formatShopOrderDate(order.placed_at)}
+                    <div className="flex gap-3 p-4 md:p-5">
+                      {/* Status indicator - dedicated left column */}
+                      <div className="flex flex-col items-center pt-1">
+                        <div className={`h-3 w-3 flex-shrink-0 rounded-full ${hasException ? 'bg-orange-500' : getShopStatusDotColor(order.fulfilment_status)}`} />
+                      </div>
+
+                      {/* Content area */}
+                      <div className="min-w-0 flex-1">
+                        {/* Row 1: Product name + Status badge */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="line-clamp-1 text-sm font-black leading-tight text-[var(--text-primary)]">
+                              {firstItem?.productName ?? '3D Shop Order'}
                             </div>
+                            {moreCount > 0 && (
+                              <div className="mt-0.5 text-[11px] font-bold text-[var(--brand-primary)]">
+                                +{moreCount} more item{moreCount === 1 ? '' : 's'}
+                              </div>
+                            )}
+                          </div>
+                          <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-black ${
+                            order.order_status === 'cancelled' || order.order_status === 'returned'
+                              ? getShopOrderStatusClasses(order.order_status)
+                              : getShopFulfilmentStatusClasses(order.fulfilment_status)
+                          }`}>
+                            {order.order_status === 'cancelled' || order.order_status === 'returned'
+                              ? getShopOrderStatusLabel(order.order_status)
+                              : getShopFulfilmentStatusLabel(order.fulfilment_status)}
+                          </span>
+                        </div>
+
+                        {/* Row 2: Order number + Payment badge */}
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <div className="min-w-0 truncate text-xs font-bold text-[var(--text-muted)]">
+                            #{order.order_number}
+                          </div>
+                          <div className="flex-shrink-0">
+                            {getPaymentBadge(order)}
                           </div>
                         </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className={`rounded-full border px-3 py-1 text-xs font-black ${
-                          order.order_status === 'cancelled' || order.order_status === 'returned'
-                            ? getShopOrderStatusClasses(order.order_status)
-                            : getShopFulfilmentStatusClasses(order.fulfilment_status)
-                        }`}>
-                          {order.order_status === 'cancelled' || order.order_status === 'returned'
-                            ? getShopOrderStatusLabel(order.order_status)
-                            : getShopFulfilmentStatusLabel(order.fulfilment_status)}
-                        </span>
-                        {getPaymentBadge(order)}
+
+                        {/* Row 3: Date */}
+                        <div className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]">
+                          <CalendarClock className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="flex-shrink-0">Placed {formatShopOrderDate(order.placed_at)}</span>
+                        </div>
                       </div>
                     </div>
 
                     {!hasException && (
-                      <div className="mt-5 grid gap-2 md:grid-cols-5">
+                      <div className="mt-4 grid gap-2 px-4 md:mt-5 md:grid-cols-5 md:px-5">
                         {SHOP_FULFILMENT_PROGRESS.map((status, statusIndex) => {
                           const complete = statusIndex < currentProgressIndex
                           const current = statusIndex === currentProgressIndex
@@ -440,14 +484,14 @@ export default function ShopOrdersClient() {
                     )}
 
                     {hasException && (
-                      <div className="mt-5 flex items-center gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm font-bold text-orange-800">
+                      <div className="mx-4 mt-4 flex items-center gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm font-bold text-orange-800 md:mx-5 md:mt-5">
                         {order.order_status === 'cancelled' ? <XCircle className="h-5 w-5 shrink-0" /> : <RotateCcw className="h-5 w-5 shrink-0" />}
                         {getShopOrderStatusLabel(order.order_status)}
                       </div>
                     )}
 
                     {firstItem && (
-                      <div className="mt-5 rounded-[24px] border border-[var(--border-light)] bg-[var(--bg-soft)] p-3 md:p-4">
+                      <div className="mx-4 mt-4 rounded-[24px] border border-[var(--border-light)] bg-[var(--bg-soft)] p-3 md:mx-5 md:mt-5 md:p-4">
                         <div className="grid gap-4 sm:grid-cols-[72px_minmax(0,1fr)_auto] sm:items-center">
                           <div className="relative h-[72px] w-[72px] overflow-hidden rounded-2xl bg-[var(--bg-muted)]">
                             {firstItem.productThumbnail ? (
@@ -509,7 +553,7 @@ export default function ShopOrdersClient() {
                       </div>
                     )}
 
-                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="mx-4 mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:mx-5 md:mt-5">
                       <div className="flex items-center gap-2 text-sm font-bold text-[var(--text-secondary)]">
                         <Clock3 className="h-4 w-4 text-[var(--brand-primary)]" />
                         {order.estimated_delivery ? `Expected by ${formatShopOrderDate(order.estimated_delivery)}` : 'Tracking updates will appear here'}
@@ -524,7 +568,7 @@ export default function ShopOrdersClient() {
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3"
+                        className="mx-4 mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 md:mx-5 md:mt-4"
                       >
                         <div className="flex items-center gap-2 text-sm font-black text-yellow-800">
                           <Star className="h-4 w-4 fill-yellow-400 text-yellow-500" />
