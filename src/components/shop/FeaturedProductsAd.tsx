@@ -216,7 +216,7 @@ export default function FeaturedProductsAd({
   if (!loading && products.length === 0) return null
 
   return (
-    <section className="sm:hidden mt-6">
+    <section className="mt-6">
       {/* Cinematic Header */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
