@@ -32,7 +32,7 @@ export default function FinalCTASection() {
   const email = settings.supportEmail || settings.primaryEmail || 'flux3d.in@gmail.com'
 
   return (
-    <section ref={ref} className="relative overflow-hidden px-6 py-24">
+    <section ref={ref} className="relative overflow-hidden px-6 py-12 md:py-16 lg:py-24">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,rgba(109,40,217,0.08)_0%,transparent_70%)] pointer-events-none" />
 
       <motion.div
@@ -41,7 +41,7 @@ export default function FinalCTASection() {
         transition={{ duration: 0.6 }}
         className="relative z-10 mx-auto max-w-[1000px]"
       >
-        <div className="cta-banner p-10 md:p-16">
+        <div className="cta-banner p-6 md:p-10 lg:p-16">
           <div
             className="pointer-events-none absolute inset-0 opacity-10"
             style={{
@@ -58,7 +58,7 @@ export default function FinalCTASection() {
             initial="hidden"
             animate={isInView ? 'show' : 'hidden'}
           >
-            <motion.div variants={childVariant} className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/20 bg-[#f3f0ff] px-4 py-1.5 text-sm font-medium text-[#6d28d9]">
+            <motion.div variants={childVariant} className="mb-4 md:mb-6 inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/20 bg-[#f3f0ff] px-4 py-1.5 text-sm font-medium text-[#6d28d9]">
               <Sparkles className="w-4 h-4" />
               Start with a real quote
             </motion.div>
@@ -67,11 +67,11 @@ export default function FinalCTASection() {
               Tell us what you need and we&apos;ll review it before production.
             </motion.h2>
 
-            <motion.p variants={childVariant} className="mx-auto mb-8 max-w-[640px] text-lg leading-[1.6] text-[#4b4b4b]">
+            <motion.p variants={childVariant} className="mx-auto mb-6 md:mb-8 max-w-[640px] text-base leading-[1.6] text-[#4b4b4b]">
               Flux 3D handles custom 3D printing, prototyping, model printing and ready-made products through a review-and-confirm workflow. Share the file or requirement and we&apos;ll take it from there.
             </motion.p>
 
-            <motion.div variants={childVariant} className="mb-8 flex flex-col justify-center gap-4 sm:flex-row">
+            <motion.div variants={childVariant} className="mb-6 md:mb-8 flex flex-col justify-center gap-4 sm:flex-row">
               <Link href="/contact" className="btn-primary group px-8 py-4 text-base">
                 <span className="relative z-10 inline-flex items-center gap-2">
                   Contact Sales

@@ -31,14 +31,14 @@ export default function PricingSection() {
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
   return (
-    <section ref={ref} className="relative overflow-hidden px-6 py-24">
+    <section ref={ref} className="relative overflow-hidden px-6 py-12 md:py-16 lg:py-24">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_50%_30%,rgba(109,40,217,0.05)_0%,transparent_70%)] pointer-events-none" />
 
       <div className="relative z-10 mx-auto max-w-[1200px]">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="mb-16 text-center"
+          className="mb-8 md:mb-12 lg:mb-16 text-center"
         >
           <p className="mb-4 text-sm font-medium uppercase tracking-normal text-[#6d28d9]">Pricing</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold leading-[1.1] text-[#0F1B3D]">
@@ -80,7 +80,7 @@ export default function PricingSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.35 }}
-          className="mt-8 rounded-2xl border border-[#6d28d9]/10 bg-[#faf9f7] p-6"
+          className="mt-6 md:mt-8 rounded-2xl border border-[#6d28d9]/10 bg-[#faf9f7] p-6"
         >
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-3">
@@ -96,7 +96,7 @@ export default function PricingSection() {
           </div>
         </motion.div>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-xs uppercase tracking-[0.16em] text-[#6F7192]">
+        <div className="mt-6 md:mt-8 flex flex-wrap items-center justify-center gap-3 text-xs uppercase tracking-[0.16em] text-[#6F7192]">
           <span className="inline-flex items-center gap-2 rounded-full border border-[#e4dff5] bg-white px-3 py-2">
             <Clock3 className="h-3.5 w-3.5 text-[#6d28d9]" />
             Timeline shared before confirmation

@@ -54,7 +54,7 @@ export default function TechnologySection() {
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
   return (
-    <section ref={ref} className="relative py-24 px-6 overflow-hidden">
+    <section ref={ref} className="relative py-12 px-6 md:py-16 lg:py-24 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(109, 40, 217,0.06)_0%,transparent_70%)] pointer-events-none" />
 
@@ -63,7 +63,7 @@ export default function TechnologySection() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="text-center mb-16"
+          className="text-center mb-8 md:mb-12 lg:mb-16"
         >
           <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">Our Equipment</p>
           <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
@@ -113,7 +113,7 @@ export default function TechnologySection() {
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ delay: 0.7 }}
-          className="text-center text-sm text-[#6F7192] mt-12"
+          className="text-center text-sm text-[#6F7192] mt-8 md:mt-12"
         >
           All prints are photographed and quality checked before they leave our facility.
         </motion.p>
