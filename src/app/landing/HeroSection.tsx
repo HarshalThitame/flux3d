@@ -252,7 +252,7 @@ export default function HeroSection() {
           className="stats-row premium-stats-row-v2"
         >
           {stats.map((stat, i) => (
-            <StatItem key={stat.label} stat={stat} index={i} />
+            <StatItem key={stat.label} stat={stat} />
           ))}
         </motion.div>
 
