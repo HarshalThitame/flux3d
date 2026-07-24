@@ -8671,8 +8671,8 @@ body:has(.premium-auth-shell) {
   content: '';
   position: absolute;
   left: 0;
-  top: 0;
-  bottom: 0;
+  top: 12px;
+  bottom: 12px;
   width: 3px;
   border-radius: 0 3px 3px 0;
 }
@@ -8801,7 +8801,7 @@ body:has(.premium-auth-shell) {
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .order-list-card {
-    padding: 12px;
+    padding: 0;
   }
 
   .order-section {
@@ -8905,7 +8905,7 @@ body:has(.premium-auth-shell) {
 /* ===== Updated Order Card Mobile ===== */
 @media (max-width: 768px) {
   .order-list-card {
-    padding: 16px;
+    padding: 0;
   }
 
   .order-section {
