@@ -32,6 +32,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import ProductRecommendations from '@/components/shop/ProductRecommendations'
+import FeaturedProductsAd from '@/components/shop/FeaturedProductsAd'
 import { formatShopPrice } from '@/lib/shop/selection'
 import {
   formatShopOrderDate,
@@ -937,12 +938,20 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
           </motion.aside>
         </div>
 
-        <ProductRecommendations
-          title="Continue Shopping"
+        {/* Mobile: Cinematic Featured Products Ad */}
+        <FeaturedProductsAd
           productId={order.items[0]?.productId}
-          limit={4}
-          compact
         />
+
+        {/* Desktop: Traditional Product Recommendations */}
+        <div className="hidden sm:block">
+          <ProductRecommendations
+            title="Continue Shopping"
+            productId={order.items[0]?.productId}
+            limit={4}
+            compact
+          />
+        </div>
       </div>
     </main>
   )
