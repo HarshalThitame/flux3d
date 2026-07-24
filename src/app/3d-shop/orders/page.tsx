@@ -22,10 +22,16 @@ export default async function ShopOrdersPage() {
           <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(118deg,#f9f7f4_0%,#ffffff_46%,#f5f3ff_100%)]" />
           <div className="mx-auto max-w-7xl">
             <div className="mb-5">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-brand)] bg-[var(--brand-faint)] px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                3D Shop
+              <div className="flex items-center gap-2">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-brand)] bg-[var(--brand-faint)] px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  3D Shop
+                </div>
+                <div className="h-px flex-1 bg-gradient-to-r from-[var(--border-brand)] to-transparent" />
               </div>
-              <h1 className="mt-3 text-xl font-black text-[var(--text-primary)]">Your Orders</h1>
+              <h1 className="mt-3 text-xl font-black tracking-tight text-[var(--text-primary)]">
+                3D Shop <span className="bg-gradient-to-r from-[var(--brand-primary)] to-violet-500 bg-clip-text text-transparent">Orders</span>
+              </h1>
+              <p className="mt-0.5 text-xs font-semibold text-[var(--text-muted)]">Track, manage, and reorder your prints</p>
             </div>
             <ShopOrdersMobile />
           </div>
