@@ -37,7 +37,7 @@ function CartButton() {
       <Link
         href="/cart"
         prefetch={false}
-        className="navbar-action-button group relative flex min-h-[42px] items-center gap-2 rounded-full border border-white/80 bg-white/75 px-3.5 text-sm font-semibold text-[var(--text-secondary)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-[var(--border-brand)] hover:bg-white hover:text-[var(--text-primary)]"
+        className="navbar-action-button group relative flex min-h-[40px] items-center gap-2 rounded-full px-3.5 text-sm font-semibold transition"
       >
         <ShoppingCart className="h-4 w-4" />
         <span className="hidden sm:inline">Cart</span>
@@ -286,7 +286,7 @@ export default function NavbarClient({
           <Link
             href="/"
             prefetch={false}
-            className="navbar-logo-link group flex min-h-[46px] items-center rounded-2xl border border-slate-200/80 bg-white/90 px-3.5 shadow-[0_2px_10px_rgba(15,23,42,0.04)] transition-all duration-300 hover:scale-[1.03] hover:border-violet-300 hover:bg-white hover:shadow-md"
+            className="navbar-logo-link group flex min-h-[40px] items-center px-2"
             aria-label={`${businessName} home`}
           >
             <Image
@@ -295,11 +295,11 @@ export default function NavbarClient({
               width={170}
               height={40}
               sizes="(min-width: 640px) 168px, 146px"
-              className="h-9 w-auto max-w-[146px] object-contain transition-transform duration-300 group-hover:scale-[1.03] sm:max-w-[168px]"
+              className="h-8 w-auto max-w-[140px] object-contain transition-transform duration-300 group-hover:scale-[1.02] sm:max-w-[164px]"
             />
           </Link>
 
-          <ul className="navbar-link-cluster hidden list-none items-center gap-1.5 rounded-full border border-slate-200/80 bg-slate-100/70 p-1.5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-md lg:flex">
+          <ul className="navbar-link-cluster hidden list-none items-center gap-0 lg:flex">
             {navLinks.map((link) => {
               const active = isActive(link.href)
               return (
@@ -312,13 +312,10 @@ export default function NavbarClient({
                       setIsProfileOpen(false)
                       setIsMoreOpen(false)
                     }}
-                    className={`nav-link relative flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm transition-all duration-200 ${
-                      active
-                        ? 'nav-link-active bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white font-semibold shadow-[0_4px_16px_rgba(124,58,237,0.35)] scale-[1.02]'
-                        : 'text-slate-600 hover:bg-white/90 hover:text-slate-900 font-medium'
+                    className={`nav-link relative flex items-center whitespace-nowrap px-4 py-2 text-sm transition-all duration-200 ${
+                      active ? 'nav-link-active' : ''
                     }`}
                   >
-                    {active && <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />}
                     <span>{link.label}</span>
                   </Link>
                 </li>
@@ -336,7 +333,7 @@ export default function NavbarClient({
               href={`https://wa.me/${whatsappHrefNumber}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="navbar-action-button navbar-whatsapp-button flex min-h-[42px] items-center gap-2 whitespace-nowrap rounded-full border border-emerald-500/30 bg-emerald-50/90 px-4 text-xs sm:text-sm font-semibold text-emerald-700 shadow-sm backdrop-blur transition-all duration-300 hover:border-emerald-500/50 hover:bg-emerald-100 hover:shadow-[0_4px_16px_rgba(16,185,129,0.22)]"
+              className="navbar-action-button navbar-whatsapp-button flex min-h-[40px] items-center gap-2 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-all duration-300"
             >
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
@@ -351,7 +348,7 @@ export default function NavbarClient({
             <Link
               href="/instant-quote"
               prefetch={false}
-              className="navbar-quote-button relative flex min-h-[44px] items-center gap-2 overflow-hidden whitespace-nowrap rounded-full bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 px-5 text-sm font-semibold text-white shadow-[0_10px_25px_-5px_rgba(124,58,237,0.4)] transition-all duration-300 before:absolute before:inset-y-0 before:left-0 before:w-1/2 before:-translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/35 before:to-transparent before:blur-sm before:content-[''] hover:scale-[1.03] hover:shadow-[0_14px_30px_-4px_rgba(124,58,237,0.5)] hover:before:translate-x-[300%] before:transition-transform before:duration-700 active:scale-[0.97]"
+              className="navbar-quote-button relative flex min-h-[40px] items-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-5 text-sm font-semibold transition-all duration-300 active:scale-[0.97]"
             >
               <span className="relative z-10">Get Instant Quote</span>
               <ArrowUpRight className="relative z-10 h-4 w-4" />
@@ -359,16 +356,16 @@ export default function NavbarClient({
           </div>
 
           {isAuthPending ? (
-            <div className="h-9 w-[74px] rounded-full border border-slate-200/80 bg-slate-100/60 animate-pulse" />
+            <div className="h-9 w-[74px] rounded-full bg-purple-100/60 animate-pulse" />
           ) : currentUser ? (
             <div ref={profileMenuRef} className="relative">
               <button
                 type="button"
                 onClick={() => setIsProfileOpen((current) => !current)}
-                className="navbar-profile-button flex min-h-[42px] items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-2 py-1 pr-3 shadow-sm backdrop-blur transition-all duration-200 hover:border-violet-300 hover:bg-white hover:shadow-md"
+                className="navbar-profile-button flex min-h-[40px] items-center gap-2 rounded-full px-2 py-1 pr-3 transition-all duration-200"
               >
                 {currentUser.avatarUrl ? (
-                  <span className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-violet-500/30">
+                  <span className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-purple-400/30">
                     <Image
                       src={currentUser.avatarUrl}
                       alt={currentUser.name}
@@ -378,23 +375,23 @@ export default function NavbarClient({
                     />
                   </span>
                 ) : (
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-[10px] font-bold text-white shadow-sm">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-purple-600 to-orange-400 text-[10px] font-bold text-white shadow-sm">
                     {getInitials(currentUser.name)}
                   </span>
                 )}
                 <ChevronDown
-                  className={`h-3.5 w-3.5 text-slate-500 transition-transform duration-200 ${
+                  className={`h-3.5 w-3.5 text-purple-400 transition-transform duration-200 ${
                     isProfileOpen ? 'rotate-180' : ''
                   }`}
                 />
               </button>
 
               {isProfileOpen && (
-                <div className="navbar-profile-menu absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_20px_50px_rgba(15,23,42,0.14)] backdrop-blur-2xl transition-all duration-200">
-                  <div className="border-b border-slate-100 p-3.5">
-                    <p className="font-mono text-[10px] uppercase tracking-wider text-slate-400">Signed in as</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">{currentUser.name}</p>
-                    <p className="truncate text-xs text-slate-500">{currentUser.email}</p>
+                <div className="navbar-profile-menu absolute right-0 top-[calc(100%+0.75rem)] w-[300px] overflow-hidden rounded-2xl p-1.5 backdrop-blur-2xl transition-all duration-200">
+                  <div className="border-b border-purple-100/60 p-3.5">
+                    <p className="font-mono text-[10px] uppercase tracking-wider text-purple-400/70">Signed in as</p>
+                    <p className="mt-1 text-sm font-semibold text-purple-900">{currentUser.name}</p>
+                    <p className="truncate text-xs text-purple-500/70">{currentUser.email}</p>
                   </div>
 
                   <div className="p-1.5">
@@ -404,19 +401,19 @@ export default function NavbarClient({
                         href={item.href}
                         prefetch={false}
                         onClick={() => setIsProfileOpen(false)}
-                        className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-slate-900"
+                        className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-purple-700/70 transition-colors hover:bg-purple-50/80 hover:text-purple-900"
                       >
                         {item.label}
                       </Link>
                     ))}
-                    <div className="my-1.5 h-px bg-slate-100" />
+                    <div className="my-1.5 h-px bg-purple-100/60" />
                     {accountLinks.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
                         prefetch={false}
                         onClick={() => setIsProfileOpen(false)}
-                        className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-slate-900"
+                        className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-purple-700/70 transition-colors hover:bg-purple-50/80 hover:text-purple-900"
                       >
                         {item.label}
                       </Link>
@@ -426,12 +423,12 @@ export default function NavbarClient({
                         href="/admin"
                         prefetch={false}
                         onClick={() => setIsProfileOpen(false)}
-                        className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-semibold text-violet-600 transition-colors hover:bg-violet-50"
+                        className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-semibold text-orange-600 transition-colors hover:bg-orange-50"
                       >
                         Admin Dashboard
                       </Link>
                     ) : null}
-                    <div className="my-1.5 h-px bg-slate-100" />
+                    <div className="my-1.5 h-px bg-purple-100/60" />
                     <button
                       type="button"
                       onClick={() => void handleLogout()}
@@ -450,7 +447,7 @@ export default function NavbarClient({
                 <button
                   type="button"
                   onClick={() => setIsMoreOpen((current) => !current)}
-                  className="navbar-action-button flex min-h-[42px] min-w-[42px] items-center justify-center rounded-full border border-slate-200/80 bg-white/90 text-slate-600 shadow-sm backdrop-blur transition-all duration-200 hover:border-violet-300 hover:bg-white hover:text-slate-900"
+                  className="navbar-action-button flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all duration-200"
                   aria-label="More navigation"
                   aria-expanded={isMoreOpen}
                 >
@@ -458,7 +455,7 @@ export default function NavbarClient({
                 </button>
 
                 {isMoreOpen && (
-                  <div className="navbar-more-menu absolute right-0 top-[calc(100%+0.75rem)] w-[210px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_20px_50px_rgba(15,23,42,0.14)] backdrop-blur-2xl transition-all duration-200">
+                  <div className="navbar-more-menu absolute right-0 top-[calc(100%+0.75rem)] w-[210px] overflow-hidden rounded-2xl p-1.5 backdrop-blur-2xl transition-all duration-200">
                     <div className="p-1">
                       {moreLinks.map((item) => (
                         <Link
@@ -466,7 +463,7 @@ export default function NavbarClient({
                           href={item.href}
                           prefetch={false}
                           onClick={() => setIsMoreOpen(false)}
-                          className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-slate-900"
+                          className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium text-purple-700/70 transition-colors hover:bg-purple-50/80 hover:text-purple-900"
                         >
                           {item.label}
                         </Link>
@@ -480,7 +477,7 @@ export default function NavbarClient({
                 <Link
                   href={`/login?next=${encodeURIComponent(pathname ?? '/')}`}
                   prefetch={false}
-                  className="navbar-action-button flex min-h-[42px] items-center whitespace-nowrap rounded-full border border-slate-200/80 bg-white/90 px-4.5 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:border-violet-300 hover:bg-white hover:text-slate-900 hover:shadow-md"
+                  className="navbar-action-button flex min-h-[40px] items-center whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-all duration-200"
                 >
                   Log In
                 </Link>
@@ -493,7 +490,7 @@ export default function NavbarClient({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="navbar-menu-button relative z-10 flex min-h-[42px] min-w-[42px] items-center justify-center rounded-full border border-slate-200/80 bg-white/90 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:bg-white lg:hidden"
+          className="navbar-menu-button relative z-10 flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all duration-200 lg:hidden"
           aria-label={isOpen ? 'Close menu' : 'Open menu'}
         >
           <span className="flex h-6 w-6 items-center justify-center">
@@ -519,18 +516,18 @@ export default function NavbarClient({
           />
 
           {/* Drawer Content */}
-          <div className="navbar-mobile-panel absolute right-0 top-0 flex h-[100dvh] w-full max-w-md flex-col overflow-hidden rounded-l-[32px] border-l border-white/60 bg-white/95 shadow-[0_0_60px_rgba(15,23,42,0.2)] backdrop-blur-2xl">
+          <div className="navbar-mobile-panel absolute right-0 top-0 flex h-[100dvh] w-full max-w-md flex-col overflow-hidden rounded-l-3xl backdrop-blur-2xl">
             {/* Header bar */}
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/90 px-6 py-4 backdrop-blur-md">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b px-6 py-4">
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-violet-600" />
-                <p className="font-mono text-xs uppercase tracking-widest text-slate-400">Navigation</p>
+                <span className="h-2 w-2 rounded-full bg-gradient-to-r from-orange-400 to-purple-600" />
+                <p className="font-mono text-xs uppercase tracking-widest">Navigation</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
                 aria-label="Close menu"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 text-slate-500 transition-all duration-200 hover:bg-slate-100 hover:text-slate-900"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-50 text-purple-500 transition-all duration-200 hover:bg-purple-100 hover:text-purple-900"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -538,9 +535,9 @@ export default function NavbarClient({
 
             <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-6">
               {currentUser && (
-                <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3.5">
+                <div className="flex items-center gap-3 rounded-2xl bg-purple-50/60 p-3.5">
                   {currentUser.avatarUrl ? (
-                    <span className="relative h-11 w-11 overflow-hidden rounded-full ring-2 ring-violet-500/20">
+                    <span className="relative h-11 w-11 overflow-hidden rounded-full ring-2 ring-purple-400/20">
                       <Image
                         src={currentUser.avatarUrl}
                         alt={currentUser.name}
@@ -550,21 +547,21 @@ export default function NavbarClient({
                       />
                     </span>
                   ) : (
-                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-sm font-bold text-white shadow-sm">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-tr from-purple-600 to-orange-400 text-sm font-bold text-white shadow-sm">
                       {getInitials(currentUser.name)}
                     </span>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-slate-900">{currentUser.name}</p>
-                    <p className="truncate text-xs text-slate-500">{currentUser.email}</p>
+                    <p className="truncate text-sm font-semibold text-purple-900">{currentUser.name}</p>
+                    <p className="truncate text-xs text-purple-500/70">{currentUser.email}</p>
                   </div>
                 </div>
               )}
 
               {/* Main Links */}
               <div>
-                <p className="mb-2.5 px-1 font-mono text-[10px] uppercase tracking-wider text-slate-400">Main Menu</p>
-                <ul className="space-y-1.5">
+                <p className="mb-2.5 px-1 font-mono text-[10px] uppercase tracking-wider">Main Menu</p>
+                <ul className="space-y-1">
                   {navLinks.map((link) => {
                     const active = isActive(link.href)
                     return (
@@ -577,14 +574,12 @@ export default function NavbarClient({
                             setIsProfileOpen(false)
                             setIsMoreOpen(false)
                           }}
-                          className={`navbar-mobile-link flex min-h-[48px] items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
-                            active
-                              ? 'navbar-mobile-link-active bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white font-semibold shadow-md'
-                              : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                          className={`navbar-mobile-link flex min-h-[52px] items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
+                            active ? 'navbar-mobile-link-active' : ''
                           }`}
                         >
                           <span>{link.label}</span>
-                          {active && <span className="h-2 w-2 rounded-full bg-white shadow-sm animate-pulse" />}
+                          {active && <span className="h-1.5 w-1.5 rounded-full bg-orange-400 shadow-sm" />}
                         </Link>
                       </li>
                     )
@@ -594,8 +589,8 @@ export default function NavbarClient({
 
               {/* More Links */}
               <div>
-                <p className="mb-2.5 px-1 font-mono text-[10px] uppercase tracking-wider text-slate-400">Explore</p>
-                <ul className="space-y-1.5">
+                <p className="mb-2.5 px-1 font-mono text-[10px] uppercase tracking-wider">Explore</p>
+                <ul className="space-y-1">
                   {moreLinks.map((link) => {
                     const active = isActive(link.href)
                     return (
@@ -608,14 +603,12 @@ export default function NavbarClient({
                             setIsProfileOpen(false)
                             setIsMoreOpen(false)
                           }}
-                          className={`navbar-mobile-link flex min-h-[48px] items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
-                            active
-                              ? 'navbar-mobile-link-active bg-violet-50 text-violet-700 font-semibold'
-                              : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                          className={`navbar-mobile-link flex min-h-[52px] items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
+                            active ? 'navbar-mobile-link-active' : ''
                           }`}
                         >
                           <span>{link.label}</span>
-                          {active && <span className="h-1.5 w-1.5 rounded-full bg-violet-600" />}
+                          {active && <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />}
                         </Link>
                       </li>
                     )
@@ -636,7 +629,7 @@ export default function NavbarClient({
                   href="/instant-quote"
                   prefetch={false}
                   onClick={() => setIsOpen(false)}
-                  className="flex w-full min-h-[50px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-500/25 transition-all active:scale-[0.98]"
+                  className="navbar-quote-button flex w-full min-h-[50px] items-center justify-center gap-2 rounded-2xl py-3.5 text-base font-semibold text-white transition-all active:scale-[0.98]"
                 >
                   Get Instant Quote
                   <ArrowUpRight className="h-4 w-4" />
@@ -646,21 +639,21 @@ export default function NavbarClient({
                   href={`https://wa.me/${whatsappHrefNumber}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-50/90 py-3 text-base font-semibold text-emerald-700 transition-all hover:bg-emerald-100"
+                  className="navbar-action-button navbar-whatsapp-button flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl py-3 text-base font-semibold transition-all"
                 >
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
                   </span>
-                  <MessageCircle className="h-4.5 w-4.5" />
+                  <MessageCircle className="h-4 w-4" />
                   WhatsApp Us
                 </a>
 
                 {isAuthPending ? (
-                  <div className="h-12 w-full rounded-2xl bg-slate-100 animate-pulse" />
+                  <div className="h-12 w-full rounded-2xl bg-purple-100/50 animate-pulse" />
                 ) : currentUser ? (
                   <div className="pt-3 space-y-2">
-                    <p className="px-1 font-mono text-[10px] uppercase tracking-wider text-slate-400">Account Options</p>
+                    <p className="px-1 font-mono text-[10px] uppercase tracking-wider">Account Options</p>
                     <div className="grid grid-cols-2 gap-2">
                       {accountLinks.map((item) => (
                         <Link
@@ -668,7 +661,7 @@ export default function NavbarClient({
                           href={item.href}
                           prefetch={false}
                           onClick={() => setIsOpen(false)}
-                          className="flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200/80 bg-white px-3 py-2.5 text-center text-xs font-semibold text-slate-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50/50 hover:text-violet-700"
+                          className="flex min-h-[44px] items-center justify-center rounded-xl px-3 py-2.5 text-center text-xs font-semibold transition"
                         >
                           {item.label}
                         </Link>
@@ -679,7 +672,7 @@ export default function NavbarClient({
                         href="/admin"
                         prefetch={false}
                         onClick={() => setIsOpen(false)}
-                        className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-violet-200 bg-violet-50 py-2.5 text-center text-sm font-semibold text-violet-700"
+                        className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-orange-50 py-2.5 text-center text-sm font-semibold text-orange-600 transition hover:bg-orange-100"
                       >
                         Admin Dashboard
                       </Link>
@@ -688,7 +681,7 @@ export default function NavbarClient({
                       type="button"
                       onClick={() => void handleLogout()}
                       disabled={isLoggingOut}
-                      className="w-full rounded-xl border border-rose-200 bg-rose-50/80 py-3 text-center text-sm font-medium text-rose-600 transition hover:bg-rose-100 disabled:opacity-60"
+                      className="w-full rounded-xl border border-rose-200/60 bg-rose-50/80 py-3 text-center text-sm font-medium text-rose-600 transition hover:bg-rose-100 disabled:opacity-60"
                     >
                       {isLoggingOut ? 'Logging out...' : 'Log out'}
                     </button>
@@ -698,7 +691,7 @@ export default function NavbarClient({
                     href={`/login?next=${encodeURIComponent(pathname ?? '/')}`}
                     prefetch={false}
                     onClick={() => setIsOpen(false)}
-                    className="flex min-h-[48px] w-full items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 py-3 text-center text-base font-semibold text-slate-800 transition hover:bg-slate-100"
+                    className="navbar-action-button flex min-h-[48px] w-full items-center justify-center rounded-2xl py-3 text-center text-base font-semibold transition"
                   >
                     Log In to Account
                   </Link>
