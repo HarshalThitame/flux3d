@@ -8514,3 +8514,207 @@ body:has(.premium-auth-shell) {
   .premium-orb, .premium-particle { display: none; }
 }
 
+/* ===== My Orders Mobile UI ===== */
+
+/* Order list card */
+.order-list-card {
+  position: relative;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(109, 40, 217, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.order-list-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+}
+
+.order-list-card.status-pending::before { background: #f59e0b; }
+.order-list-card.status-confirmed::before { background: #10b981; }
+.order-list-card.status-printing::before { background: #06b6d4; }
+.order-list-card.status-shipped::before { background: #8b5cf6; }
+.order-list-card.status-delivered::before { background: #0ea5e9; }
+.order-list-card.status-completed::before { background: #22c55e; }
+.order-list-card.status-cancelled::before { background: #64748b; }
+
+.order-list-card:active {
+  transform: scale(0.99);
+  box-shadow: 0 2px 8px rgba(109, 40, 217, 0.08);
+}
+
+/* Order detail section card */
+.order-section {
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(109, 40, 217, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  padding: 16px;
+}
+
+/* Sticky bottom bar */
+.sticky-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(109, 40, 217, 0.1);
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Accordion item for multi-item orders */
+.order-item-accordion {
+  border: 1px solid rgba(109, 40, 217, 0.08);
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.order-item-accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.order-item-accordion-header:active {
+  background: rgba(109, 40, 217, 0.04);
+}
+
+.order-item-accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.order-item-accordion-content.expanded {
+  max-height: 500px;
+}
+
+/* Status timeline animations */
+@keyframes timelinePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(109, 40, 217, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(109, 40, 217, 0); }
+}
+
+.timeline-active-pulse {
+  animation: timelinePulse 2s ease-in-out infinite;
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Price breakdown row */
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #475569;
+}
+
+.price-row.discount {
+  color: #047857;
+}
+
+.price-row.total {
+  border-top: 2px solid rgba(109, 40, 217, 0.15);
+  padding-top: 12px;
+  margin-top: 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0F1B3D;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .order-list-card {
+    padding: 12px;
+  }
+
+  .order-section {
+    padding: 14px;
+  }
+}
+
+/* File link styling */
+.file-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #6d28d9;
+  font-size: 13px;
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(109, 40, 217, 0.06);
+  transition: all 0.15s ease;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.file-link:hover {
+  background: rgba(109, 40, 217, 0.12);
+}
+
+.file-link .file-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Copy address button */
+.copy-address-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #6d28d9;
+  background: rgba(109, 40, 217, 0.08);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.copy-address-btn:hover {
+  background: rgba(109, 40, 217, 0.15);
+}
+
+.copy-address-btn:active {
+  transform: scale(0.96);
+}
+
