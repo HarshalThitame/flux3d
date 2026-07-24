@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import { requireUser } from '@/lib/auth/server'
-import { getOrderStatusClasses, getOrderStatusLabel, type OrderStatus } from '@/lib/orders'
+import { type OrderStatus } from '@/lib/orders'
 import {
   isMissingSupabaseTableError,
   ORDERS_TABLE_UNAVAILABLE_MESSAGE,
 } from '@/lib/quote/supabase-errors'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import OrdersListClient from './OrdersListClient'
 
 type OrderRow = {
   id: string
@@ -191,104 +192,10 @@ export default async function MyOrdersPage() {
             </Link>
           </div>
 
-          {groupedOrders.length === 0 ? (
-            <div className="order-section text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#6d28d9]/10">
-                <svg className="h-6 w-6 text-[#6d28d9]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-                </svg>
-              </div>
-              <div className="mt-3 text-base font-semibold text-[#0F1B3D]">
-                {ordersTableUnavailable ? 'Orders unavailable' : 'No print requests yet'}
-              </div>
-              <p className="mt-1 text-sm text-gray-500">
-                {ordersTableUnavailable
-                  ? ORDERS_TABLE_UNAVAILABLE_MESSAGE
-                  : 'Create an instant quote and submit your first print request to start tracking it here.'}
-              </p>
-              <Link
-                href="/instant-quote"
-                className="mt-4 inline-flex rounded-xl bg-gradient-to-r from-[#4c1d95] via-[#6d28d9] to-[#7c3aed] px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#6d28d9]/20 transition hover:shadow-lg hover:shadow-[#6d28d9]/30"
-              >
-                Create a print request
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {groupedOrders.map((order, index) => {
-                const statusClass = getOrderStatusClasses(order.status)
-                const statusLabel = getOrderStatusLabel(order.status)
-                const date = new Date(order.createdAt).toLocaleDateString('en-IN', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                })
-
-                return (
-                  <Link
-                    key={order.groupId}
-                    href={`/my-orders/${order.items[0].id}`}
-                    className={`order-list-card status-${order.status} animate-slide-in-up`}
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-[#0F1B3D] truncate text-sm">
-                            {order.orderNumber}
-                          </span>
-                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${statusClass}`}>
-                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                            {statusLabel}
-                          </span>
-                        </div>
-
-                        <div className="mt-1.5 flex items-center gap-2 text-xs text-gray-500">
-                          <time>{date}</time>
-                          <span className="text-gray-300">·</span>
-                          <span>{order.items[0].material} · {order.items[0].color}</span>
-                        </div>
-
-                        {order.itemCount > 1 && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {order.items.slice(0, 3).map((item) => (
-                              <span
-                                key={item.id}
-                                className="rounded-md bg-gray-50 px-2 py-0.5 text-[10px] text-gray-600"
-                              >
-                                {item.material}
-                              </span>
-                            ))}
-                            {order.items.length > 3 && (
-                              <span className="rounded-md bg-gray-50 px-2 py-0.5 text-[10px] text-gray-500">
-                                +{order.items.length - 3} more
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col items-end gap-1">
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-[#6d28d9]">
-                            ₹{order.grandTotal.toFixed(0)}
-                          </div>
-                          {order.cartDiscountAmount > 0 && (
-                            <div className="text-[10px] text-emerald-600">
-                              Saved ₹{order.cartDiscountAmount.toFixed(0)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="rounded-full bg-[#6d28d9]/10 px-2 py-0.5 text-[10px] font-medium text-[#6d28d9]">
-                          {order.itemCount} {order.itemCount === 1 ? 'item' : 'items'}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
+          <OrdersListClient
+            orders={groupedOrders}
+            ordersTableUnavailable={ordersTableUnavailable}
+          />
         </div>
       </main>
     </div>
