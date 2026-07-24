@@ -7982,6 +7982,10 @@ body:has(.premium-auth-shell) {
     min-width: 40px;
   }
 
+  .navbar-left {
+    justify-content: flex-start;
+  }
+
   .navbar-mobile-panel {
     top: 0;
     border-radius: 24px 0 0 24px !important;
