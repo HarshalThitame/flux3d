@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ShoppingBag, Trash2 } from 'lucide-react'
@@ -12,6 +12,18 @@ import {
 } from '@/components/shop/ShopCartPromotions'
 import { formatShopPrice } from '@/lib/shop/selection'
 import { getShopCartTotals, useShopCartStore } from '@/stores/shopCartStore'
+import { getCartFromStorage, getCartStorageKey } from '@/lib/cart/utils'
+import CartSwitcher from '@/components/cart/CartSwitcher'
+
+function getQuoteCartCount(): number {
+  if (typeof window === 'undefined') return 0
+  try {
+    const quoteItems = getCartFromStorage(getCartStorageKey())
+    return quoteItems.length
+  } catch {
+    return 0
+  }
+}
 
 export default function ShopCartPageClient() {
   const items = useShopCartStore((state) => state.items)
@@ -22,6 +34,8 @@ export default function ShopCartPageClient() {
   const removeItem = useShopCartStore((state) => state.removeItem)
   const updateQuantity = useShopCartStore((state) => state.updateQuantity)
   const clearCart = useShopCartStore((state) => state.clearCart)
+  const [quoteCartCount] = useState(getQuoteCartCount)
+
   const totals = useMemo(
     () =>
       getShopCartTotals({
@@ -51,6 +65,9 @@ export default function ShopCartPageClient() {
             </Link>
           </div>
         </section>
+        <div className="mx-auto mt-6 max-w-3xl">
+          <CartSwitcher variant="shop" quoteCartCount={quoteCartCount} />
+        </div>
       </main>
     )
   }
@@ -67,6 +84,10 @@ export default function ShopCartPageClient() {
           <button type="button" onClick={clearCart} className="min-h-[44px] rounded-xl border border-red-200 bg-white px-4 text-sm font-bold text-red-600">
             Clear cart
           </button>
+        </div>
+
+        <div className="mb-6">
+          <CartSwitcher variant="shop" quoteCartCount={quoteCartCount} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
