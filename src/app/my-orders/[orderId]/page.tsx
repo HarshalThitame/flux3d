@@ -10,6 +10,8 @@ import {
 } from '@/lib/orders'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { OrderDetailClient } from './OrderDetailClient'
+import { CancelOrderButton } from './CancelOrderButton'
+import { DownloadInvoiceButton } from './DownloadInvoiceButton'
 
 type OrderDetailRow = {
   id: string
@@ -165,7 +167,7 @@ export default async function OrderDetailPage({
       <Navbar transparent />
       <main className="px-4 pb-24 pt-6 md:px-6 md:pt-8">
         <div className="mx-auto max-w-3xl space-y-4">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center justify-between gap-4">
             <Link
               href="/my-orders"
               className="inline-flex items-center gap-1.5 text-sm text-gray-500 transition hover:text-[#0F1B3D]"
@@ -173,25 +175,12 @@ export default async function OrderDetailPage({
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
-              Back
+              <span className="hidden sm:inline">Back to orders</span>
+              <span className="sm:hidden">Back</span>
             </Link>
             <div className="flex items-center gap-2">
-              {isCancelable && (
-                <Link
-                  href={`/my-orders/${orderId}`}
-                  className="inline-flex items-center rounded-lg border border-rose-400/30 bg-rose-400/10 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all hover:bg-rose-400/20"
-                >
-                  Cancel Order
-                </Link>
-              )}
-              {isDownloadable && (
-                <Link
-                  href={`/api/orders/${orderId}/invoice`}
-                  className="inline-flex items-center rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition-all hover:bg-emerald-400/20"
-                >
-                  Download Invoice
-                </Link>
-              )}
+              {isCancelable && <CancelOrderButton orderId={orderId} />}
+              {isDownloadable && <DownloadInvoiceButton orderId={orderId} />}
             </div>
           </div>
 
@@ -199,12 +188,12 @@ export default async function OrderDetailPage({
             <div className="text-[10px] font-medium uppercase tracking-widest text-gray-500">
               Order Details
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-bold text-[#0F1B3D] md:text-2xl">
+            <div className="mt-1 flex items-center gap-2">
+              <h1 className="min-w-0 flex-1 truncate text-xl font-bold text-[#0F1B3D] md:text-2xl">
                 {row.order_number ?? row.id}
               </h1>
-              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${getOrderStatusClasses(row.status)}`}>
-                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              <span className={`flex-shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${getOrderStatusClasses(row.status)}`}>
+                <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-current" />
                 {getOrderStatusLabel(row.status)}
               </span>
             </div>
