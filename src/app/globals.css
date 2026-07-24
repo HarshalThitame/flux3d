@@ -8858,3 +8858,58 @@ body:has(.premium-auth-shell) {
   transform: scale(0.96);
 }
 
+/* ===== Order Search & Filter ===== */
+.order-search-input {
+  transition: all 0.2s ease;
+}
+
+.order-search-input:focus {
+  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.08);
+}
+
+.order-filter-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.order-filter-select:focus {
+  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.08);
+}
+
+.order-filter-chip {
+  background: rgba(109, 40, 217, 0.06);
+  border: 1px solid rgba(109, 40, 217, 0.12);
+  border-radius: 999px;
+  padding: 4px 8px 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+/* ===== Order Skeleton Shimmer ===== */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.order-list-card.animate-pulse {
+  background: linear-gradient(90deg, #ffffff 25%, #f3f4f6 50%, #ffffff 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ===== Updated Order Card Mobile ===== */
+@media (max-width: 768px) {
+  .order-list-card {
+    padding: 16px;
+  }
+
+  .order-section {
+    padding: 16px;
+  }
+}
+

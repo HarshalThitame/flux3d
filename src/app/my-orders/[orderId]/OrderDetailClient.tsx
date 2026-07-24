@@ -101,16 +101,16 @@ function OrderItemAccordion({ item }: { item: OrderDetailRow }) {
         className="order-item-accordion-header"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-[#0F1B3D]">{item.material}</div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold text-[#0F1B3D]">{item.material}</div>
           <div className="text-xs text-gray-500">{item.color} · Qty: {item.quantity ?? 1}</div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-shrink-0 items-center gap-2">
           <span className="text-sm font-bold text-[#6d28d9]">
             ₹{Number(item.total_price).toFixed(0)}
           </span>
           <svg
-            className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+            className={`h-4 w-4 flex-shrink-0 text-gray-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
