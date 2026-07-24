@@ -2,7 +2,7 @@
 
 import { type CSSProperties, type PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { ChevronDown, Menu, MoreVertical, ShoppingCart, X, ArrowUpRight } from 'lucide-react'
+import { ChevronDown, Menu, MoreVertical, ShoppingCart, X, MessageCircle, ArrowUpRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -278,7 +278,7 @@ export default function NavbarClient({
           className="pointer-events-none absolute inset-0 rounded-full opacity-70 transition-opacity duration-500"
           style={{
             background:
-              'radial-gradient(400px circle at var(--nav-pointer-x, 50%) var(--nav-pointer-y, 50%), rgba(124, 58, 237, 0.10), rgba(168, 85, 247, 0.05) 40%, transparent 80%)',
+              'radial-gradient(400px circle at var(--nav-pointer-x, 50%) var(--nav-pointer-y, 50%), rgba(124, 58, 237, 0.14), rgba(99, 102, 241, 0.06) 40%, transparent 80%)',
           }}
         />
 
@@ -312,8 +312,8 @@ export default function NavbarClient({
                       setIsProfileOpen(false)
                       setIsMoreOpen(false)
                     }}
-                    className={`nav-link-v2 relative flex items-center whitespace-nowrap px-4 py-2 text-sm transition-all duration-200 ${
-                      active ? 'nav-link-v2-active' : ''
+                    className={`nav-link relative flex items-center whitespace-nowrap px-4 py-2 text-sm transition-all duration-200 ${
+                      active ? 'nav-link-active' : ''
                     }`}
                   >
                     <span>{link.label}</span>
@@ -333,12 +333,13 @@ export default function NavbarClient({
               href={`https://wa.me/${whatsappHrefNumber}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="navbar-whatsapp-button-v2 flex min-h-[40px] items-center gap-2 whitespace-nowrap text-sm font-semibold transition-all duration-300"
+              className="navbar-action-button navbar-whatsapp-button flex min-h-[40px] items-center gap-2 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-all duration-300"
             >
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
               </span>
+              <MessageCircle className="h-4 w-4" />
               WhatsApp
             </a>
           </div>
@@ -347,9 +348,9 @@ export default function NavbarClient({
             <Link
               href="/instant-quote"
               prefetch={false}
-              className="navbar-quote-button-v2 relative flex min-h-[40px] items-center gap-2 overflow-hidden whitespace-nowrap text-sm font-semibold transition-all duration-300 active:scale-[0.97]"
+              className="navbar-quote-button relative flex min-h-[40px] items-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-5 text-sm font-semibold transition-all duration-300 active:scale-[0.97]"
             >
-              <span className="relative z-10">Get Quote</span>
+              <span className="relative z-10">Get Instant Quote</span>
               <ArrowUpRight className="relative z-10 h-4 w-4" />
             </Link>
           </div>
@@ -361,7 +362,7 @@ export default function NavbarClient({
               <button
                 type="button"
                 onClick={() => setIsProfileOpen((current) => !current)}
-                className="navbar-action-button-v2 flex min-h-[40px] items-center gap-2 rounded-full px-2 py-1 pr-3 transition-all duration-200"
+                className="navbar-profile-button flex min-h-[40px] items-center gap-2 rounded-full px-2 py-1 pr-3 transition-all duration-200"
               >
                 {currentUser.avatarUrl ? (
                   <span className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-purple-400/30">
@@ -446,7 +447,7 @@ export default function NavbarClient({
                 <button
                   type="button"
                   onClick={() => setIsMoreOpen((current) => !current)}
-                  className="navbar-action-button-v2 flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all duration-200"
+                  className="navbar-action-button flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all duration-200"
                   aria-label="More navigation"
                   aria-expanded={isMoreOpen}
                 >
@@ -476,7 +477,7 @@ export default function NavbarClient({
                 <Link
                   href={`/login?next=${encodeURIComponent(pathname ?? '/')}`}
                   prefetch={false}
-                  className="navbar-action-button-v2 flex min-h-[40px] items-center whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-all duration-200"
+                  className="navbar-action-button flex min-h-[40px] items-center whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-all duration-200"
                 >
                   Log In
                 </Link>
@@ -501,7 +502,7 @@ export default function NavbarClient({
       {/* Mobile Navigation Drawer Sheet */}
       {isOpen && (
         <div
-          className="navbar-mobile-overlay-v2 fixed inset-0 z-[90] lg:hidden"
+          className="navbar-mobile-overlay fixed inset-0 z-[90] lg:hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Navigation menu"
@@ -510,17 +511,17 @@ export default function NavbarClient({
           <button
             type="button"
             aria-label="Close menu"
-            className="absolute inset-0 bg-slate-950/40 backdrop-blur-md transition-opacity"
+            className="absolute inset-0 bg-slate-950/45 backdrop-blur-md transition-opacity"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Drawer Content */}
-          <div className="navbar-mobile-panel-v2 absolute right-0 top-0 flex h-[100dvh] w-full max-w-md flex-col overflow-hidden rounded-l-3xl backdrop-blur-2xl">
+          <div className="navbar-mobile-panel absolute right-0 top-0 flex h-[100dvh] w-full max-w-md flex-col overflow-hidden rounded-l-3xl backdrop-blur-2xl">
             {/* Header bar */}
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-purple-100/40 px-6 py-4">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b px-6 py-4">
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-500 to-violet-600" />
-                <p className="font-mono text-xs uppercase tracking-widest text-purple-600">Navigation</p>
+                <span className="h-2 w-2 rounded-full bg-gradient-to-r from-orange-400 to-purple-600" />
+                <p className="font-mono text-xs uppercase tracking-widest">Navigation</p>
               </div>
               <button
                 type="button"
@@ -534,7 +535,7 @@ export default function NavbarClient({
 
             <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-6">
               {currentUser && (
-                <div className="flex items-center gap-3 rounded-2xl bg-purple-50/50 p-3.5">
+                <div className="flex items-center gap-3 rounded-2xl bg-purple-50/60 p-3.5">
                   {currentUser.avatarUrl ? (
                     <span className="relative h-11 w-11 overflow-hidden rounded-full ring-2 ring-purple-400/20">
                       <Image
@@ -559,7 +560,7 @@ export default function NavbarClient({
 
               {/* Main Links */}
               <div>
-                <p className="mb-2.5 px-1 font-mono text-[10px] uppercase tracking-wider text-purple-400">Main Menu</p>
+                <p className="mb-2.5 px-1 font-mono text-[10px] uppercase tracking-wider">Main Menu</p>
                 <ul className="space-y-1">
                   {navLinks.map((link) => {
                     const active = isActive(link.href)
@@ -573,12 +574,12 @@ export default function NavbarClient({
                             setIsProfileOpen(false)
                             setIsMoreOpen(false)
                           }}
-                          className={`navbar-mobile-link-v2 ${
-                            active ? 'navbar-mobile-link-v2-active' : ''
+                          className={`navbar-mobile-link flex min-h-[52px] items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
+                            active ? 'navbar-mobile-link-active' : ''
                           }`}
                         >
                           <span>{link.label}</span>
-                          {active && <span className="h-1.5 w-1.5 rounded-full bg-purple-500 shadow-sm" />}
+                          {active && <span className="h-1.5 w-1.5 rounded-full bg-orange-400 shadow-sm" />}
                         </Link>
                       </li>
                     )
@@ -588,7 +589,7 @@ export default function NavbarClient({
 
               {/* More Links */}
               <div>
-                <p className="mb-2.5 px-1 font-mono text-[10px] uppercase tracking-wider text-purple-400">Explore</p>
+                <p className="mb-2.5 px-1 font-mono text-[10px] uppercase tracking-wider">Explore</p>
                 <ul className="space-y-1">
                   {moreLinks.map((link) => {
                     const active = isActive(link.href)
@@ -602,12 +603,12 @@ export default function NavbarClient({
                             setIsProfileOpen(false)
                             setIsMoreOpen(false)
                           }}
-                          className={`navbar-mobile-link-v2 ${
-                            active ? 'navbar-mobile-link-v2-active' : ''
+                          className={`navbar-mobile-link flex min-h-[52px] items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
+                            active ? 'navbar-mobile-link-active' : ''
                           }`}
                         >
                           <span>{link.label}</span>
-                          {active && <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />}
+                          {active && <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />}
                         </Link>
                       </li>
                     )
@@ -628,9 +629,9 @@ export default function NavbarClient({
                   href="/instant-quote"
                   prefetch={false}
                   onClick={() => setIsOpen(false)}
-                  className="navbar-quote-button-v2 flex w-full min-h-[50px] items-center justify-center gap-2 rounded-2xl py-3.5 text-base font-semibold text-white transition-all active:scale-[0.98]"
+                  className="navbar-quote-button flex w-full min-h-[50px] items-center justify-center gap-2 rounded-2xl py-3.5 text-base font-semibold text-white transition-all active:scale-[0.98]"
                 >
-                  Get Quote
+                  Get Instant Quote
                   <ArrowUpRight className="h-4 w-4" />
                 </Link>
 
@@ -638,12 +639,13 @@ export default function NavbarClient({
                   href={`https://wa.me/${whatsappHrefNumber}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="navbar-whatsapp-button-v2 flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl py-3 text-base font-semibold transition-all"
+                  className="navbar-action-button navbar-whatsapp-button flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl py-3 text-base font-semibold transition-all"
                 >
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
                   </span>
+                  <MessageCircle className="h-4 w-4" />
                   WhatsApp Us
                 </a>
 
@@ -651,7 +653,7 @@ export default function NavbarClient({
                   <div className="h-12 w-full rounded-2xl bg-purple-100/50 animate-pulse" />
                 ) : currentUser ? (
                   <div className="pt-3 space-y-2">
-                    <p className="px-1 font-mono text-[10px] uppercase tracking-wider text-purple-400">Account Options</p>
+                    <p className="px-1 font-mono text-[10px] uppercase tracking-wider">Account Options</p>
                     <div className="grid grid-cols-2 gap-2">
                       {accountLinks.map((item) => (
                         <Link
@@ -659,7 +661,7 @@ export default function NavbarClient({
                           href={item.href}
                           prefetch={false}
                           onClick={() => setIsOpen(false)}
-                          className="flex min-h-[44px] items-center justify-center rounded-xl px-3 py-2.5 text-center text-xs font-semibold transition bg-purple-50/50 text-purple-700 hover:bg-purple-100"
+                          className="flex min-h-[44px] items-center justify-center rounded-xl px-3 py-2.5 text-center text-xs font-semibold transition"
                         >
                           {item.label}
                         </Link>
@@ -689,7 +691,7 @@ export default function NavbarClient({
                     href={`/login?next=${encodeURIComponent(pathname ?? '/')}`}
                     prefetch={false}
                     onClick={() => setIsOpen(false)}
-                    className="navbar-action-button-v2 flex min-h-[48px] w-full items-center justify-center rounded-2xl py-3 text-center text-base font-semibold transition"
+                    className="navbar-action-button flex min-h-[48px] w-full items-center justify-center rounded-2xl py-3 text-center text-base font-semibold transition"
                   >
                     Log In to Account
                   </Link>
