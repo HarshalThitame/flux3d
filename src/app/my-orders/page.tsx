@@ -166,147 +166,130 @@ export default async function MyOrdersPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
+    <div className="min-h-screen bg-[#f9f7f4] text-[#0F1B3D]">
       <Navbar transparent />
-      <main className="px-4 pb-16 pt-8 md:px-8 md:pt-10">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="rounded-[32px] border border-[#6d28d9]/10 bg-[rgba(255,255,255,0.96)] p-6 backdrop-blur-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/20 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#6d28d9]">
-            Order Requests
-          </div>
-          <h1 className="mt-5 font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D]">
-            My Orders
-          </h1>
-          <p className="mt-3 max-w-2xl text-base leading-8 text-[#6F7192]">
-            Track every print request, current status, and pricing snapshot from one authenticated workspace.
-          </p>
-        </div>
-
-        <Link
-          href="/3d-shop/orders"
-          className="flex items-center justify-between gap-4 rounded-[24px] border border-[#6d28d9]/10 bg-white p-4 text-sm font-semibold text-[#0F1B3D] shadow-sm transition hover:border-[#6d28d9]/30"
-        >
-          <span>🛍️ Have 3D Shop orders?</span>
-          <span className="text-[#6d28d9]">View Your 3D Shop Orders →</span>
-        </Link>
-
-        {groupedOrders.length === 0 ? (
-          <div className="rounded-[28px] border border-[#6d28d9]/10 bg-white/[0.03] p-8 text-center backdrop-blur-xl">
-            <div className="text-xl font-medium text-[#0F1B3D]">
-              {ordersTableUnavailable ? 'Orders unavailable' : 'No print requests yet.'}
+      <main className="px-4 pb-24 pt-6 md:px-6 md:pt-8">
+        <div className="mx-auto max-w-4xl space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[10px] font-medium uppercase tracking-widest text-[#6d28d9]">
+                My Orders
+              </div>
+              <h1 className="mt-1 text-2xl font-bold text-[#0F1B3D] md:text-3xl">
+                Order Requests
+              </h1>
             </div>
-            <p className="mt-3 text-sm leading-7 text-[#6F7192]">
-              {ordersTableUnavailable
-                ? ORDERS_TABLE_UNAVAILABLE_MESSAGE
-                : 'Create an instant quote and submit your first print request to start tracking it here.'}
-            </p>
             <Link
-              href="/instant-quote"
-              className="mt-6 inline-flex rounded-2xl bg-[#6d28d9] px-5 py-3 text-sm font-medium text-white"
+              href="/3d-shop/orders"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#6d28d9]/20 bg-white px-3 py-1.5 text-xs font-medium text-[#6d28d9] shadow-sm transition hover:bg-[#6d28d9]/5"
             >
-              Create a print request
+              <span>3D Shop</span>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
             </Link>
           </div>
-        ) : (
-          <div className="space-y-5">
-            {groupedOrders.map((order) => (
+
+          {groupedOrders.length === 0 ? (
+            <div className="order-section text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#6d28d9]/10">
+                <svg className="h-6 w-6 text-[#6d28d9]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                </svg>
+              </div>
+              <div className="mt-3 text-base font-semibold text-[#0F1B3D]">
+                {ordersTableUnavailable ? 'Orders unavailable' : 'No print requests yet'}
+              </div>
+              <p className="mt-1 text-sm text-gray-500">
+                {ordersTableUnavailable
+                  ? ORDERS_TABLE_UNAVAILABLE_MESSAGE
+                  : 'Create an instant quote and submit your first print request to start tracking it here.'}
+              </p>
               <Link
-                key={order.groupId}
-                href={`/my-orders/${order.items[0].id}`}
-                className="block rounded-[28px] border border-[#6d28d9]/10 bg-white/[0.03] p-6 backdrop-blur-xl transition-colors hover:border-[#6d28d9]/10"
+                href="/instant-quote"
+                className="mt-4 inline-flex rounded-xl bg-gradient-to-r from-[#4c1d95] via-[#6d28d9] to-[#7c3aed] px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#6d28d9]/20 transition hover:shadow-lg hover:shadow-[#6d28d9]/30"
               >
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex flex-1 items-start gap-5">
-                    <div className="rounded-2xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-3 text-[#6d28d9]">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <div className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">
-                          {order.orderNumber}
-                        </div>
-                        <div
-                          className={`rounded-full border px-3 py-1 text-xs ${getOrderStatusClasses(order.status)}`}
-                        >
-                          {getOrderStatusLabel(order.status)}
-                        </div>
-                      </div>
-                      <div className="mt-2 text-xs text-[#6F7192]">
-                        {new Date(order.createdAt).toLocaleDateString('en-IN', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </div>
-
-                      {order.itemCount > 1 && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {order.items.map((item) => (
-                            <span
-                              key={item.id}
-                              className="rounded-lg border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-1.5 text-xs text-[#6F7192]"
-                            >
-                              {item.material} · {item.color}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {order.itemCount === 1 && (
-                        <div className="mt-2 text-sm text-[#0F1B3D]">{order.items[0].material} · {order.items[0].color}</div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-8 border-t border-[#6d28d9]/10 pt-4 lg:border-t-0 lg:pt-0">
-                    <div className="text-center">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Total</div>
-                      <div className="mt-1 font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">
-                        ₹{order.grandTotal.toFixed(0)}
-                      </div>
-                      {order.cartDiscountAmount > 0 && (
-                        <div className="mt-1 text-[10px] text-emerald-700">
-                          Saved ₹{order.cartDiscountAmount.toFixed(0)}
-                          {order.discountLabel ? ` · ${order.discountLabel}` : ''}
-                        </div>
-                      )}
-                      {order.cartDiscountAmount === 0 && order.discountLabel && (
-                        <div className="mt-1 text-[10px] text-[#6F7192]">
-                          {order.discountLabel}
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-center">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Items</div>
-                      <div className="mt-1 font-[var(--font-syne)] text-xl font-bold text-[#6d28d9]">
-                        {order.itemCount}
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Delivery</div>
-                      <div className="mt-1 text-sm font-medium text-[#0F1B3D]">
-                        {order.deliveryCharge === 0 ? 'Free' : `₹${order.deliveryCharge.toFixed(0)}`}
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Saved</div>
-                      <div className="mt-1 text-sm font-medium text-emerald-700">
-                        {order.cartDiscountAmount > 0 ? `₹${order.cartDiscountAmount.toFixed(0)}` : '₹0'}
-                      </div>
-                    </div>
-                    <div className="hidden text-left sm:block">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Ship to</div>
-                      <div className="mt-1 text-sm text-[#0F1B3D]">{order.city}, {order.state}</div>
-                    </div>
-                  </div>
-                </div>
+                Create a print request
               </Link>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {groupedOrders.map((order, index) => {
+                const statusClass = getOrderStatusClasses(order.status)
+                const statusLabel = getOrderStatusLabel(order.status)
+                const date = new Date(order.createdAt).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })
+
+                return (
+                  <Link
+                    key={order.groupId}
+                    href={`/my-orders/${order.items[0].id}`}
+                    className={`order-list-card status-${order.status} animate-slide-in-up`}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-[#0F1B3D] truncate text-sm">
+                            {order.orderNumber}
+                          </span>
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${statusClass}`}>
+                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                            {statusLabel}
+                          </span>
+                        </div>
+
+                        <div className="mt-1.5 flex items-center gap-2 text-xs text-gray-500">
+                          <time>{date}</time>
+                          <span className="text-gray-300">·</span>
+                          <span>{order.items[0].material} · {order.items[0].color}</span>
+                        </div>
+
+                        {order.itemCount > 1 && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {order.items.slice(0, 3).map((item) => (
+                              <span
+                                key={item.id}
+                                className="rounded-md bg-gray-50 px-2 py-0.5 text-[10px] text-gray-600"
+                              >
+                                {item.material}
+                              </span>
+                            ))}
+                            {order.items.length > 3 && (
+                              <span className="rounded-md bg-gray-50 px-2 py-0.5 text-[10px] text-gray-500">
+                                +{order.items.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-[#6d28d9]">
+                            ₹{order.grandTotal.toFixed(0)}
+                          </div>
+                          {order.cartDiscountAmount > 0 && (
+                            <div className="text-[10px] text-emerald-600">
+                              Saved ₹{order.cartDiscountAmount.toFixed(0)}
+                            </div>
+                          )}
+                        </div>
+                        <div className="rounded-full bg-[#6d28d9]/10 px-2 py-0.5 text-[10px] font-medium text-[#6d28d9]">
+                          {order.itemCount} {order.itemCount === 1 ? 'item' : 'items'}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   )

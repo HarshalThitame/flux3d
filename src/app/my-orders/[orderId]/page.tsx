@@ -9,8 +9,7 @@ import {
   type OrderStatus,
 } from '@/lib/orders'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { DownloadInvoiceButton } from './DownloadInvoiceButton'
-import { CancelOrderButton } from './CancelOrderButton'
+import { OrderDetailClient } from './OrderDetailClient'
 
 type OrderDetailRow = {
   id: string
@@ -149,324 +148,108 @@ export default async function OrderDetailPage({
   const overheadPercent = Number(row.overhead_percent ?? 0)
   const marginPercent = Number(row.margin_percent ?? 0)
   const hasAnyDiscount = cartDiscountAmount > 0 || couponDiscountAmount > 0 || offerDiscountAmount > 0
+  const totalPrintTime = groupedItems.reduce((sum, item) => sum + Number(item.estimated_time), 0)
+
+  const isUnpaid = row.payment_status !== 'paid'
+  const isCancelable = ['pending', 'confirmed'].includes(row.status) && !row.cancel_requested
+  const isDownloadable = ['confirmed', 'printing', 'shipped', 'delivered', 'completed'].includes(row.status)
+
+  const date = new Date(row.created_at).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
+    <div className="min-h-screen bg-[#f9f7f4] text-[#0F1B3D]">
       <Navbar transparent />
-      <main className="px-4 pb-16 pt-8 md:px-8 md:pt-10">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="rounded-[32px] border border-[#6d28d9]/10 bg-[rgba(255,255,255,0.96)] p-6 backdrop-blur-2xl">
-          <Link
-            href="/my-orders"
-            className="inline-flex text-sm text-[#6F7192] transition-colors hover:text-[#0F1B3D]"
-          >
-            Back to orders
-          </Link>
-          <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div>
-              <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
-                Order request
-              </div>
-              <h1 className="mt-3 font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D]">
-                {row.order_number ?? row.id}
-              </h1>
-              {isMultiItem && (
-                <div className="mt-2 text-sm text-[#6d28d9]">
-                  {groupedItems.length} items in this order
-                </div>
-              )}
-              <p className="mt-3 max-w-2xl text-base leading-8 text-[#6F7192]">
-                Submitted on{' '}
-                {new Date(row.created_at).toLocaleDateString('en-IN', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-                {row.payment_status === 'paid'
-                  ? 'This order has a verified payment attached and is moving through production.'
-                  : 'This order can be paid securely through Razorpay once it is ready for checkout.'}
-              </p>
-            </div>
-            <div className="flex flex-col items-end gap-3">
-              <div
-                className={`inline-flex rounded-full border px-4 py-2 text-sm ${getOrderStatusClasses(row.status)}`}
-              >
-                {getOrderStatusLabel(row.status)}
-              </div>
-              <div className="flex gap-2">
-              {['pending', 'confirmed'].includes(row.status) && !row.cancel_requested && (
-                <CancelOrderButton orderId={orderId} />
-              )}
-              {['confirmed', 'printing', 'shipped', 'delivered', 'completed'].includes(row.status) && (
-                <DownloadInvoiceButton orderId={orderId} />
-              )}
-              </div>
-              {row.cancel_requested && (
-                <div className="text-xs font-medium text-rose-600">Cancellation requested</div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {isMultiItem && (
-          <div className="rounded-[28px] border border-[#6d28d9]/10 bg-white/[0.03] p-6 backdrop-blur-xl">
-            <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
-              Order Items ({groupedItems.length})
-            </h2>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              {groupedItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-[20px] border border-[#6d28d9]/10 bg-[#FFFFFF] p-5"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="text-sm font-semibold text-[#0F1B3D]">{item.material}</div>
-                      <div className="mt-1 text-sm text-[#6F7192]">{item.color}</div>
-                    </div>
-                    <div className="font-[var(--font-syne)] text-xl font-bold text-[#6d28d9]">
-                      ₹{Number(item.total_price).toFixed(0)}
-                    </div>
-                  </div>
-                  <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
-                    <div className="rounded-lg border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Infill</div>
-                      <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.infill}%</div>
-                    </div>
-                    <div className="rounded-lg border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Layer</div>
-                      <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{Number(item.layer_height)} mm</div>
-                    </div>
-                    <div className="rounded-lg border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Qty</div>
-                      <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.quantity ?? 1}</div>
-                    </div>
-                    <div className="rounded-lg border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Supports</div>
-                      <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.supports ? 'Yes' : 'No'}</div>
-                    </div>
-                    <div className="rounded-lg border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Post-process</div>
-                      <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{item.post_processing_level ?? 'None'}</div>
-                    </div>
-                    <div className="rounded-lg border border-[#6d28d9]/10 bg-white/[0.02] px-3 py-2">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">PP cost</div>
-                      <div className="mt-1 text-sm font-medium text-[#0F1B3D]">₹{Number(item.post_processing_charges).toFixed(0)}</div>
-                    </div>
-                  </div>
-                  <div className="mt-3 text-[10px] text-[#6F7192] break-all truncate">
-                    File: {item.file_url}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="grid gap-6 lg:grid-cols-[1.3fr_0.9fr]">
-          {!isMultiItem && (
-            <div className="rounded-[28px] border border-[#6d28d9]/10 bg-white/[0.03] p-6 backdrop-blur-xl">
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
-                Configuration
-              </h2>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Material</div>
-                  <div className="mt-2 text-sm text-[#0F1B3D]">{row.material}</div>
-                </div>
-                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Color</div>
-                  <div className="mt-2 text-sm text-[#0F1B3D]">{row.color}</div>
-                </div>
-                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Infill</div>
-                  <div className="mt-2 text-sm text-[#0F1B3D]">{row.infill}%</div>
-                </div>
-                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Layer height</div>
-                  <div className="mt-2 text-sm text-[#0F1B3D]">{Number(row.layer_height)} mm</div>
-                </div>
-                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Quantity</div>
-                  <div className="mt-2 text-sm text-[#0F1B3D]">{row.quantity ?? 1}</div>
-                </div>
-                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Supports</div>
-                  <div className="mt-2 text-sm text-[#0F1B3D]">{row.supports ? 'Included' : 'Not required'}</div>
-                </div>
-                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">Post-process</div>
-                  <div className="mt-2 text-sm text-[#0F1B3D]">{row.post_processing_level ?? 'None'}</div>
-                </div>
-                <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">File</div>
-                  <div className="mt-2 break-all text-sm text-[#0F1B3D]">{row.file_url}</div>
-                </div>
-              </div>
-
-              <div className="mt-5 rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
-                <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">
-                  Notes
-                </div>
-                <div className="mt-2 text-sm leading-7 text-[#0F1B3D]">
-                  {row.notes?.trim() ? row.notes : 'No extra instructions were provided.'}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="rounded-[28px] border border-[#6d28d9]/10 bg-white/[0.03] p-6 backdrop-blur-xl">
-            <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
-              {isMultiItem ? 'Order Total' : 'Estimate'}
-            </h2>
-            <div className="mt-5 rounded-[24px] border border-[#6d28d9]/20 bg-[linear-gradient(180deg,rgba(109, 40, 217,0.12),rgba(109, 40, 217,0.06))] p-5 shadow-[0_12px_48px_rgba(109, 40, 217,0.1)]">
-              <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
-                Final price
-              </div>
-              <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
-                ₹{orderGrandTotal.toFixed(0)}
-              </div>
-              <div className="mt-4 grid gap-2 text-sm text-[#6F7192]">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>₹{orderSubtotal.toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Overhead{overheadPercent > 0 ? ` (${overheadPercent}%)` : ''}</span>
-                  <span>₹{orderOverheadAmount.toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Margin{marginPercent > 0 ? ` (${marginPercent}%)` : ''}</span>
-                  <span>₹{orderMarginAmount.toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Total price</span>
-                  <span>₹{orderTotalPrice.toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Cart discount{cartDiscountPercent > 0 ? ` ${cartDiscountPercent}%` : ''}</span>
-                  <span className={cartDiscountAmount > 0 ? 'text-rose-600' : ''}>
-                    {cartDiscountAmount > 0 ? `-₹${cartDiscountAmount.toFixed(0)}` : '₹0'}
-                  </span>
-                </div>
-                <div className="flex justify-between border-t border-[#6d28d9]/10 pt-2 text-[#0F1B3D]">
-                  <span className="font-medium">Final price</span>
-                  <span className="font-medium">₹{orderFinalPrice.toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Delivery charge</span>
-                  <span>
-                    {orderDeliveryCharge === 0
-                      ? 'FREE'
-                      : `₹${orderDeliveryCharge.toFixed(0)}`}
-                  </span>
-                </div>
-                <div className="flex justify-between border-t border-[#6d28d9]/10 pt-2 text-[#0F1B3D]">
-                  <span className="font-medium">Grand total</span>
-                  <span className="font-medium">₹{orderGrandTotal.toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Price per unit</span>
-                  <span>₹{Number(row.price_per_unit).toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Post-processing</span>
-                  <span>₹{Number(row.post_processing_charges).toFixed(0)}</span>
-                </div>
-                {!isMultiItem && (
-                  <div className="flex justify-between">
-                    <span>Estimated print time</span>
-                    <span>{Number(row.estimated_time).toFixed(1)} hr</span>
-                  </div>
-                )}
-              </div>
-              {isMultiItem && (
-                <div className="mt-4 border-t border-[#6d28d9]/10 pt-3">
-                  <div className="text-xs text-[#6F7192]">
-                    Material cost: ₹{orderMaterialCost.toFixed(0)}
-                  </div>
-                  <div className="text-xs text-[#6F7192]">
-                    Machine cost: ₹{orderMachineCost.toFixed(0)}
-                  </div>
-                  <div className="text-xs text-[#6F7192]">
-                    Print subtotal: ₹{orderSubtotal.toFixed(0)}
-                  </div>
-                  <div className="text-xs text-[#6F7192]">
-                    Total print time: {groupedItems.reduce((sum, item) => sum + Number(item.estimated_time), 0).toFixed(1)} hr
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-4">
-              <div className="text-xs uppercase tracking-[0.18em] text-emerald-700">
-                Discount summary
-              </div>
-              <div className="mt-2 text-sm font-medium text-[#0F1B3D]">
-                {hasAnyDiscount ? 'Discounts applied to this order' : 'No discount applied'}
-              </div>
-              {cartDiscountLabel && (
-                <div className="mt-1 text-xs text-[#6F7192]">
-                  {cartDiscountLabel}
-                </div>
-              )}
-              {couponDiscountAmount > 0 && (
-                <div className="mt-1 text-xs text-[#6F7192]">
-                  Coupon{row.coupon_code ? ` (${row.coupon_code})` : ''}: -₹{couponDiscountAmount.toFixed(2)}
-                </div>
-              )}
-              {offerDiscountAmount > 0 && (
-                <div className="mt-1 text-xs text-[#6F7192]">
-                  Offer{offerName ? ` (${offerName})` : ''}: -₹{offerDiscountAmount.toFixed(2)}
-                </div>
-              )}
-              {!hasAnyDiscount && (
-                <div className="mt-1 text-xs text-[#6F7192]">
-                  No discount applied
-                </div>
-              )}
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-4">
-              <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">
-                Delivery address
-              </div>
-              <div className="mt-2 text-sm font-medium text-[#0F1B3D]">
-                {row.full_name} · {row.phone}
-              </div>
-              <div className="mt-2 space-y-1 text-sm leading-7 text-[#0F1B3D]">
-                {addressLines.map((line) => (
-                  <div key={line}>{line}</div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[28px] border border-[#6d28d9]/10 bg-white/[0.03] p-6 backdrop-blur-xl">
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
-                Payment
-              </h2>
-              <div className="mt-4 rounded-[20px] border border-[#6d28d9]/10 bg-white p-5">
-                <div className="text-xs font-semibold uppercase tracking-widest text-[#9ca3af]">Status</div>
-                <div className="mt-2 text-lg font-bold text-[#0F1B3D]">{row.payment_status}</div>
-                <div className="mt-3 text-sm text-[#6F7192]">
-                  Provider: {row.payment_provider ?? row.payment_method ?? 'Not set'}
-                </div>
-                <div className="mt-1 text-sm text-[#6F7192]">
-                  Amount: ₹{Math.round(Number(row.payment_amount_paise ?? 0) / 100).toLocaleString('en-IN')}
-                </div>
-              </div>
-              {row.payment_status !== 'paid' && (
+      <main className="px-4 pb-24 pt-6 md:px-6 md:pt-8">
+        <div className="mx-auto max-w-3xl space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <Link
+              href="/my-orders"
+              className="inline-flex items-center gap-1.5 text-sm text-gray-500 transition hover:text-[#0F1B3D]"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              Back
+            </Link>
+            <div className="flex items-center gap-2">
+              {isCancelable && (
                 <Link
-                  href={`/my-orders/${orderId}/pay`}
-                  className="mt-4 inline-flex min-h-[48px] items-center justify-center rounded-2xl bg-[#6d28d9] px-5 text-sm font-semibold text-white"
+                  href={`/my-orders/${orderId}`}
+                  className="inline-flex items-center rounded-lg border border-rose-400/30 bg-rose-400/10 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all hover:bg-rose-400/20"
                 >
-                  Pay securely with Razorpay
+                  Cancel Order
+                </Link>
+              )}
+              {isDownloadable && (
+                <Link
+                  href={`/api/orders/${orderId}/invoice`}
+                  className="inline-flex items-center rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition-all hover:bg-emerald-400/20"
+                >
+                  Download Invoice
                 </Link>
               )}
             </div>
           </div>
+
+          <div>
+            <div className="text-[10px] font-medium uppercase tracking-widest text-gray-500">
+              Order Details
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-bold text-[#0F1B3D] md:text-2xl">
+                {row.order_number ?? row.id}
+              </h1>
+              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${getOrderStatusClasses(row.status)}`}>
+                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                {getOrderStatusLabel(row.status)}
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-gray-500">
+              Placed on {date} · {isMultiItem ? `${groupedItems.length} items` : `${row.material} · ${row.color}`}
+            </p>
+            {row.cancel_requested && (
+              <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700">
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                Cancellation requested
+              </div>
+            )}
+          </div>
+
+          <OrderDetailClient
+            row={row}
+            groupedItems={groupedItems}
+            isMultiItem={isMultiItem}
+            orderSubtotal={orderSubtotal}
+            orderMaterialCost={orderMaterialCost}
+            orderMachineCost={orderMachineCost}
+            orderOverheadAmount={orderOverheadAmount}
+            orderMarginAmount={orderMarginAmount}
+            orderTotalPrice={orderTotalPrice}
+            orderFinalPrice={orderFinalPrice}
+            orderDeliveryCharge={orderDeliveryCharge}
+            orderGrandTotal={orderGrandTotal}
+            cartDiscountAmount={cartDiscountAmount}
+            couponDiscountAmount={couponDiscountAmount}
+            offerDiscountAmount={offerDiscountAmount}
+            cartDiscountPercent={cartDiscountPercent}
+            offerName={offerName}
+            cartDiscountLabel={cartDiscountLabel}
+            overheadPercent={overheadPercent}
+            marginPercent={marginPercent}
+            hasAnyDiscount={hasAnyDiscount}
+            totalPrintTime={totalPrintTime}
+            addressLines={addressLines}
+            isUnpaid={isUnpaid}
+            isCancelable={isCancelable}
+            orderId={orderId}
+          />
         </div>
-      </div>
       </main>
     </div>
   )
