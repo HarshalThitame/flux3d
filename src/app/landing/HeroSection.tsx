@@ -55,6 +55,10 @@ export default function HeroSection() {
         <Image src="/printer-poster.webp" alt="" fill quality={50} sizes="100vw" className="premium-hero-poster" />
       </div>
 
+      <div className="premium-hero-mobile-bg md:hidden" aria-hidden="true">
+        <Image src="/landing page 1.png" alt="" fill quality={75} sizes="100vw" className="object-cover" priority />
+      </div>
+
       <div className="premium-hero-surface" aria-hidden="true" />
       <div className="premium-hero-grid" aria-hidden="true" />
       <div className="premium-hero-beams" aria-hidden="true" />
