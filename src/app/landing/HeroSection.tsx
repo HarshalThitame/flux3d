@@ -93,7 +93,7 @@ export default function HeroSection() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#6F7192]"
+                className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#374151]"
               >
                 <MapPin className="h-3.5 w-3.5" />
                 Custom 3D printing and ready-made product delivery across India
@@ -114,7 +114,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.35 }}
-              className="mx-auto mt-7 max-w-2xl text-base leading-7 text-[#374151] sm:text-lg lg:mx-0 lg:leading-8"
+              className="mx-auto mt-7 max-w-2xl text-base leading-7 text-[#1a1a2e] sm:text-lg lg:mx-0 lg:leading-8"
             >
               Flux 3D makes custom 3D-printed parts, prototypes, models and ready-made products for businesses and individuals who need a printed item with clear pricing, clear policies and a real support channel.
             </motion.p>
@@ -134,7 +134,7 @@ export default function HeroSection() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.5 }}
-              className="mx-auto mt-5 max-w-[620px] text-xs font-semibold uppercase tracking-[0.16em] text-[#9ca3af] lg:mx-0"
+              className="mx-auto mt-5 max-w-[620px] text-xs font-semibold uppercase tracking-[0.16em] text-[#4b5563] lg:mx-0"
             >
               Quote-based custom orders · Ready-made product pricing · India delivery
             </motion.p>
@@ -165,7 +165,7 @@ export default function HeroSection() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              className="mt-4 text-center text-xs font-medium text-[#9ca3af] lg:text-left"
+              className="mt-4 text-center text-xs font-medium text-[#4b5563] lg:text-left"
             >
               Custom orders reviewed before production · Support via email and phone · Tracked delivery where available
             </motion.p>
@@ -258,7 +258,7 @@ export default function HeroSection() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          className="mx-auto mt-5 flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#9ca3af]"
+          className="mx-auto mt-5 flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#4b5563]"
         >
           <Clock className="h-3.5 w-3.5" />
           Production timelines shared before confirmation
