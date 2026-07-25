@@ -3587,7 +3587,8 @@ body:has(.premium-auth-shell) {
   .premium-scroll-meter,
   .premium-pointer-light,
   .premium-hero-beams,
-  .premium-hero::before {
+  .premium-hero::before,
+  .premium-hero-surface {
     display: none;
   }
 
