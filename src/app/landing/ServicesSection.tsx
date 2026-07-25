@@ -35,6 +35,7 @@ const services = [
     pills: ['Direct purchase', 'Gift items', 'Desk accessories', 'Home items'],
     price: 'As listed',
     cta: 'Browse Catalogue →',
+    link: '/3d-shop',
     color: 'from-[#6d28d9] to-[#6d28d9]',
   },
   {
@@ -123,7 +124,7 @@ function ServiceCard({ service }: { service: typeof services[0] }) {
             <div className="flex items-center justify-between pt-2 border-t border-[rgba(109,40,217,0.08)]">
               <span className="text-sm text-[#6d28d9] font-semibold">{service.price}</span>
               <a
-                href="/instant-quote"
+                href={service.link || '/instant-quote'}
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-[#374151] hover:text-[#6d28d9] transition-colors group/link min-h-[44px]"
               >
                 {service.cta}
