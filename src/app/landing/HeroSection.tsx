@@ -50,13 +50,13 @@ function CountStat({ stat }: { stat: typeof stats[0]; index: number }) {
 
 export default function HeroSection() {
   return (
-    <section className="premium-hero relative overflow-hidden px-4 pb-8 pt-28 sm:px-6 md:pt-32 lg:px-10">
+    <section className="premium-hero relative overflow-hidden px-4 pb-8 pt-16 sm:px-6 sm:pt-20 md:pt-24 lg:px-10">
       <div className="premium-hero-media" aria-hidden="true">
         <Image src="/printer-poster.webp" alt="" fill quality={50} sizes="100vw" className="premium-hero-poster" />
       </div>
 
       <div className="premium-hero-mobile-bg md:hidden" aria-hidden="true">
-        <Image src="/landing page 1.png" alt="" fill quality={75} sizes="100vw" className="object-cover" priority />
+        <Image src="/landing page 1.png" alt="" fill quality={75} sizes="100vw" className="object-cover object-[center_15%]" priority />
       </div>
 
       <div className="premium-hero-surface" aria-hidden="true" />
@@ -71,7 +71,7 @@ export default function HeroSection() {
         <div className="premium-particle" />
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-[calc(88svh-7rem)] w-full max-w-7xl flex-col justify-center gap-10 py-6">
+      <div className="relative z-10 mx-auto flex min-h-0 md:min-h-[calc(88svh-7rem)] w-full max-w-7xl flex-col justify-center gap-8 py-4 md:gap-10 md:py-6">
         <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,1fr)_420px] xl:grid-cols-[minmax(0,1fr)_470px]">
           <motion.div
             initial={{ opacity: 0, y: 40 }}

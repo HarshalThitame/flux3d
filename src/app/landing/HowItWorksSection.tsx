@@ -1,37 +1,37 @@
 'use client'
 
-import { motion, useInView, useScroll, useTransform } from 'framer-motion'
-import { useRef, useState, useEffect } from 'react'
+import { motion, useInView, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { Upload, MessageSquare, CreditCard, Printer, Package, ArrowRight, ChevronRight } from 'lucide-react'
 
 const steps = [
   {
     icon: Upload,
-    step: '1',
+    step: '01',
     title: 'Share Your Requirement',
     description: 'Upload a design file or describe the part, product or model you need. We review the request before confirming the order.'
   },
   {
     icon: MessageSquare,
-    step: '2',
+    step: '02',
     title: 'Receive a Quotation',
     description: 'We confirm the material, colour, quantity, finish, shipping and production details, then send the final price or quote.'
   },
   {
     icon: CreditCard,
-    step: '3',
+    step: '03',
     title: 'Pay Securely Online',
     description: 'Payments are handled through the checkout flow with server-side verification before an order is marked paid.'
   },
   {
     icon: Printer,
-    step: '4',
+    step: '04',
     title: 'Production and QC',
     description: 'The order is manufactured, checked, and prepared for dispatch after the final approved specifications are locked in.'
   },
   {
     icon: Package,
-    step: '5',
+    step: '05',
     title: 'Delivered to You',
     description: 'The completed order is shipped to a serviceable location in India. Tracking is shared when available.'
   }
@@ -45,14 +45,54 @@ const gradients = [
   'from-[#c084fc] to-[#6d28d9]'
 ]
 
+function TiltCard({ children, className, isActive }: { children: React.ReactNode; className?: string; isActive: boolean }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
+  const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [6, -6]), { stiffness: 300, damping: 30 })
+  const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-6, 6]), { stiffness: 300, damping: 30 })
+  const opacity = useSpring(isActive ? 1 : 0.55, { stiffness: 300, damping: 30 })
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    const px = (e.clientX - rect.left) / rect.width - 0.5
+    const py = (e.clientY - rect.top) / rect.height - 0.5
+    x.set(px)
+    y.set(py)
+  }, [x, y])
+
+  const handleMouseLeave = useCallback(() => {
+    x.set(0)
+    y.set(0)
+  }, [x, y])
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      style={{ rotateX, rotateY, opacity, transformPerspective: 800 }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
 export default function HowItWorksSection() {
   const ref = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const lineRef = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
   const [activeIndex, setActiveIndex] = useState(0)
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
   const { scrollXProgress } = useScroll({ container: scrollRef })
   const progressWidth = useTransform(scrollXProgress, [0, 1], ['0%', '100%'])
+
+  const { scrollYProgress } = useScroll({ target: lineRef, offset: ['start end', 'end start'] })
+  const lineProgress = useTransform(scrollYProgress, [0, 0.6], [0, 1])
 
   useEffect(() => {
     const container = scrollRef.current
@@ -69,6 +109,14 @@ export default function HowItWorksSection() {
     return () => container.removeEventListener('scroll', handleScroll)
   }, [])
 
+  useEffect(() => {
+    if (hoveredIndex !== null) return
+    const interval = setInterval(() => {
+      setActiveIndex(prev => (prev + 1) % steps.length)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [hoveredIndex])
+
   return (
     <section ref={ref} className="relative py-12 px-6 md:py-16 lg:py-24 overflow-hidden">
       {/* Background */}
@@ -79,15 +127,20 @@ export default function HowItWorksSection() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[60%] bg-gradient-to-r from-[#6d28d9]/10 via-[#a855f7]/15 to-[#6d28d9]/10 blur-3xl" />
       </div>
 
+      {/* Desktop: subtle grid pattern */}
+      <div className="hidden md:block absolute inset-0 pointer-events-none opacity-[0.03]"
+        style={{ backgroundImage: 'radial-gradient(circle, #6d28d9 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+
       <div className="max-w-[1200px] mx-auto relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="text-center mb-8 md:mb-12 lg:mb-16"
+          className="text-center mb-8 md:mb-12 lg:mb-16 relative"
         >
-          <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">The Process</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
+          <span className="premium-section-number">02</span>
+          <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4 relative z-10">The Process</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1] relative z-10">
             From Requirement to Dispatch{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#a855f7]">
               in 5 Steps.
@@ -97,12 +150,14 @@ export default function HowItWorksSection() {
 
         {/* Mobile: Horizontal Carousel */}
         <div className="md:hidden">
-          {/* Progress bar */}
-          <div className="mb-6 h-1 bg-[#e5e7eb] rounded-full overflow-hidden">
+          {/* Progress bar with glow */}
+          <div className="mb-6 h-1 bg-[#e5e7eb] rounded-full overflow-hidden relative">
             <motion.div
-              className="h-full bg-gradient-to-r from-[#6d28d9] to-[#a855f7] rounded-full"
+              className="h-full bg-gradient-to-r from-[#6d28d9] to-[#a855f7] rounded-full relative"
               style={{ width: progressWidth }}
-            />
+            >
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#a855f7] shadow-[0_0_12px_rgba(168,85,247,0.6)]" />
+            </motion.div>
           </div>
 
           {/* Scroll container */}
@@ -187,36 +242,125 @@ export default function HowItWorksSection() {
           </div>
         </div>
 
-        {/* Desktop: Grid Layout (unchanged) */}
-        <div className="hidden md:block relative">
-          {/* Connection line (desktop) */}
-          <div className="hidden lg:block absolute top-10 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-[#6d28d9] via-[rgba(109, 40, 217,0.3)] to-[#6d28d9]" />
+        {/* Desktop: Cinematic Alternating Timeline */}
+        <div className="hidden md:block relative" ref={lineRef}>
+          {/* Animated central timeline */}
+          <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[rgba(109,40,217,0.15)] to-transparent" />
+          <motion.div
+            className="absolute left-1/2 top-0 w-px -translate-x-1/2 bg-gradient-to-b from-[#6d28d9] via-[#a855f7] to-[#6d28d9]"
+            style={{ height: useTransform(lineProgress, [0, 1], ['0%', '100%']), originY: 0 }}
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6">
-            {steps.map((step, i) => (
+          {/* Flowing particles along timeline */}
+          <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 pointer-events-none overflow-hidden">
+            {[0, 1, 2].map(i => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 40 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: i * 0.12 }}
-                className="relative flex flex-col items-center text-center"
-              >
-                {/* Step circle */}
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  className="relative w-20 h-20 rounded-full bg-[#faf9f7] border-2 border-[rgba(109, 40, 217,0.3)] flex items-center justify-center mb-6 hover:border-[#6d28d9] hover:shadow-[0_0_30px_rgba(109, 40, 217,0.2)] transition-all z-10"
-                >
-                  <step.icon className="w-8 h-8 text-[#6d28d9]" />
-                  <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#6d28d9] text-white text-xs font-bold flex items-center justify-center shadow-lg">
-                    {step.step}
-                  </div>
-                </motion.div>
-
-                {/* Content */}
-                <h3 className="font-[var(--font-syne)] text-base font-bold text-[#0F1B3D] mb-2">{step.title}</h3>
-                <p className="text-xs text-[#6F7192] leading-[1.6] max-w-[200px]">{step.description}</p>
-              </motion.div>
+                className="absolute left-0 w-1.5 h-1.5 rounded-full bg-[#a855f7] shadow-[0_0_8px_rgba(168,85,247,0.5)]"
+                style={{
+                  top: useTransform(lineProgress, [0, 1], [`${i * 33}%`, `${(i + 1) * 33}%`]),
+                  opacity: lineProgress,
+                }}
+              />
             ))}
+          </div>
+
+          {/* Step cards */}
+          <div className="relative space-y-12 lg:space-y-16">
+            {steps.map((step, i) => {
+              const isLeft = i % 2 === 0
+              const isHovered = hoveredIndex === i
+              const isDimmed = hoveredIndex !== null && !isHovered
+
+              return (
+                <TiltCard
+                  key={i}
+                  isActive={!isDimmed}
+                  className={`relative flex items-center ${isLeft ? 'lg:flex-row' : 'lg:flex-row-reverse'} group`}
+                >
+                  {/* Card */}
+                  <div className={`w-full lg:w-[calc(50%-40px)] ${isLeft ? 'lg:pr-8' : 'lg:pl-8'}`}>
+                    <motion.div
+                      initial={{ opacity: 0, x: isLeft ? -40 : 40, y: 20 }}
+                      animate={isInView ? { opacity: 1, x: 0, y: 0 } : {}}
+                      transition={{ delay: 0.15 + i * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                      className={`relative overflow-hidden rounded-2xl border border-[rgba(109,40,217,0.1)] bg-white/80 backdrop-blur-xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(109,40,217,0.06)] transition-all duration-500 ${
+                        isHovered ? 'border-[rgba(109,40,217,0.25)] shadow-[0_8px_40px_rgba(109,40,217,0.12)]' : ''
+                      }`}
+                      onHoverStart={() => setHoveredIndex(i)}
+                      onHoverEnd={() => setHoveredIndex(null)}
+                    >
+                      {/* Gradient border glow on hover */}
+                      <div className={`absolute -inset-[1px] rounded-2xl bg-gradient-to-r ${gradients[i]} opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-[2px] -z-10`} />
+
+                      {/* Watermark step number */}
+                      <div className={`absolute -bottom-6 -right-4 text-[140px] font-black text-transparent bg-clip-text bg-gradient-to-t ${gradients[i]} opacity-[0.04] select-none pointer-events-none leading-none`}>
+                        {step.step}
+                      </div>
+
+                      {/* Icon + step label */}
+                      <div className="flex items-center gap-4 mb-5">
+                        <motion.div
+                          className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${gradients[i]} flex items-center justify-center shadow-lg shadow-[#6d28d9]/20`}
+                          whileHover={{ scale: 1.1, rotate: 5 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                        >
+                          <step.icon className="w-8 h-8 text-white relative z-10" />
+                          <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${gradients[i]} opacity-40 blur-lg`} />
+                        </motion.div>
+                        <div>
+                          <span className={`text-xs font-bold uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r ${gradients[i]}`}>
+                            Step {step.step}
+                          </span>
+                          <ChevronRight className="w-4 h-4 text-[#6d28d9]/30 mt-0.5" />
+                        </div>
+                      </div>
+
+                      {/* Title */}
+                      <h3 className="font-[var(--font-syne)] text-xl lg:text-2xl font-bold text-[#0F1B3D] mb-3">
+                        {step.title}
+                      </h3>
+
+                      {/* Description */}
+                      <p className="text-sm text-[#6F7192] leading-[1.7] max-w-md">
+                        {step.description}
+                      </p>
+
+                      {/* Bottom accent line */}
+                      <div className={`mt-5 h-0.5 w-16 rounded-full bg-gradient-to-r ${gradients[i]} transition-all duration-500 group-hover:w-24`} />
+                    </motion.div>
+                  </div>
+
+                  {/* Center node on timeline */}
+                  <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center z-20">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={isInView ? { scale: 1 } : {}}
+                      transition={{ delay: 0.2 + i * 0.12, type: 'spring', stiffness: 300, damping: 20 }}
+                      className={`relative w-12 h-12 rounded-full bg-white border-2 border-[rgba(109,40,217,0.2)] flex items-center justify-center shadow-lg transition-all duration-500 ${
+                        isHovered ? 'border-[#6d28d9] shadow-[0_0_24px_rgba(109,40,217,0.3)] scale-110' : ''
+                      }`}
+                    >
+                      <span className={`text-sm font-black text-transparent bg-clip-text bg-gradient-to-r ${gradients[i]}`}>
+                        {step.step}
+                      </span>
+                      {/* Pulse ring on hover */}
+                      {isHovered && (
+                        <motion.div
+                          className="absolute inset-0 rounded-full border-2 border-[#6d28d9]"
+                          initial={{ scale: 1, opacity: 0.6 }}
+                          animate={{ scale: 1.8, opacity: 0 }}
+                          transition={{ duration: 1, repeat: Infinity }}
+                        />
+                      )}
+                    </motion.div>
+                  </div>
+
+                  {/* Spacer for other side */}
+                  <div className="hidden lg:block w-[calc(50%-40px)]" />
+                </TiltCard>
+              )
+            })}
           </div>
         </div>
 
@@ -228,10 +372,24 @@ export default function HowItWorksSection() {
           className="text-center mt-8 md:mt-12 lg:mt-16"
         >
           <p className="text-lg text-[#0F1B3D] mb-4">Ready to start?</p>
-          <a href="/contact" className="inline-flex items-center gap-2 bg-[#6d28d9] text-white px-8 py-3 rounded-xl font-medium hover:shadow-[0_0_30px_rgba(109, 40, 217,0.3)] transition-shadow">
+          <a href="/contact" className="premium-wide-link group">
             Request a Quote
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </a>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-xs uppercase tracking-[0.16em] text-[#6F7192]">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#e4dff5] bg-white px-3 py-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#6d28d9]" />
+              Timeline shared before confirmation
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#e4dff5] bg-white px-3 py-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#a855f7]" />
+              Quality checked before dispatch
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#e4dff5] bg-white px-3 py-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#c084fc]" />
+              Support via email & phone
+            </span>
+          </div>
         </motion.div>
       </div>
     </section>
