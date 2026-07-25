@@ -241,10 +241,10 @@ samp {
   --nav-pointer-x: 50%;
   --nav-pointer-y: 50%;
   position: sticky;
-  top: 12px;
+  top: 6px;
   left: 0;
   right: 0;
-  margin: 12px auto 0;
+  margin: 6px auto 0;
   width: min(calc(100% - 28px), 1280px);
   max-width: 1280px;
   min-height: 56px;
