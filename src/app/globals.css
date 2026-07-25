@@ -2394,6 +2394,23 @@ samp {
   transform: scale(1.025);
 }
 
+.premium-hero-mobile-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.premium-hero-mobile-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(249, 247, 244, 0.88) 0%, rgba(249, 247, 244, 0.72) 30%, rgba(249, 247, 244, 0.55) 55%, rgba(249, 247, 244, 0.82) 80%, rgba(249, 247, 244, 0.96) 100%),
+    linear-gradient(135deg, rgba(109, 40, 217, 0.04) 0%, transparent 50%, rgba(168, 85, 247, 0.03) 100%);
+}
+
 .premium-hero-surface {
   position: absolute;
   inset: 0;
