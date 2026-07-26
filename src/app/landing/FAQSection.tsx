@@ -1,7 +1,7 @@
 'use client'
 
-import { motion, useInView } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { motion, useInView, useReducedMotion } from 'framer-motion'
+import { memo, useRef, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
 const faqs = [
@@ -46,13 +46,14 @@ const faqs = [
 function FAQItem({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index: number; isOpen: boolean; onToggle: () => void }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
+  const reduceMotion = useReducedMotion()
 
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 20 }}
+      initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ delay: index * 0.05 }}
+      transition={reduceMotion ? { duration: 0.2 } : { delay: index * 0.05 }}
       className="border-b border-[rgba(109, 40, 217,0.5)] last:border-b-0"
     >
       <button
@@ -71,23 +72,22 @@ function FAQItem({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index:
         </div>
       </button>
 
-      <motion.div
-        initial={false}
-        animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="overflow-hidden"
+      <div
+        className="overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out"
+        style={{ maxHeight: isOpen ? '500px' : '0px', opacity: isOpen ? 1 : 0 }}
       >
         <p className="text-sm text-[#6F7192] leading-[1.7] pb-5 px-2">
           {faq.a}
         </p>
-      </motion.div>
+      </div>
     </motion.div>
   )
 }
 
-export default function FAQSection() {
+function FAQSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
+  const reduceMotion = useReducedMotion()
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   return (
@@ -96,8 +96,9 @@ export default function FAQSection() {
 
       <div className="mx-auto relative z-10 max-w-[800px]">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={reduceMotion ? { duration: 0.3 } : undefined}
           className="mb-8 md:mb-12 text-center"
         >
           <p className="mb-4 text-sm font-medium uppercase tracking-normal text-[#6d28d9]">FAQ</p>
@@ -108,9 +109,9 @@ export default function FAQSection() {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.3 }}
+          transition={reduceMotion ? { duration: 0.2 } : { delay: 0.3 }}
           className="rounded-2xl border border-[rgba(109, 40, 217,0.5)] bg-[#faf9f7] px-6"
         >
           {faqs.map((faq, i) => (
@@ -127,3 +128,5 @@ export default function FAQSection() {
     </section>
   )
 }
+
+export default memo(FAQSection)

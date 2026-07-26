@@ -3,8 +3,20 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import type { CSSProperties } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowRight, ArrowDown, MapPin, Shield, Clock, Printer, Sparkles, Layers } from 'lucide-react'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+
+function HeroFadeIn({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return <div className={className}>{children}</div>
+  }
+  return (
+    <div className={`animate-fade-in ${className ?? ''}`} style={{ animationDelay: `${delay}s`, animationFillMode: 'both' }}>
+      {children}
+    </div>
+  )
+}
 
 const stats = [
   { value: 1, prefix: '', suffix: '', label: 'Custom quote flow' },
@@ -49,61 +61,70 @@ function CountStat({ stat }: { stat: typeof stats[0]; index: number }) {
 }
 
 export default function HeroSection() {
+  const reduceMotion = useReducedMotion()
+  const isFinePointer = useMediaQuery('(pointer: fine)')
+  const enableHover = isFinePointer && !reduceMotion
+  const heroTransition = reduceMotion ? { duration: 0.3 } : { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const }
+  const quickFade = reduceMotion ? { duration: 0.2 } : { duration: 0.6 }
+
   return (
     <section className="premium-hero relative overflow-hidden px-4 pb-8 pt-16 sm:px-6 sm:pt-20 md:pt-24 lg:px-10">
-      <div className="premium-hero-media" aria-hidden="true">
-        <Image src="/printer-poster.webp" alt="" fill quality={50} sizes="100vw" className="premium-hero-poster" />
-      </div>
+      {!reduceMotion && (
+        <>
+          <div className="premium-hero-media" aria-hidden="true">
+            <Image src="/printer-poster.webp" alt="" fill quality={50} sizes="100vw" className="premium-hero-poster" />
+          </div>
 
-      <div className="premium-hero-mobile-bg md:hidden" aria-hidden="true">
-        <Image src="/landing page 1.png" alt="" fill quality={75} sizes="100vw" className="object-cover object-[center_15%]" priority />
-      </div>
+          <div className="premium-hero-mobile-bg md:hidden" aria-hidden="true">
+            <Image src="/landing page 1.png" alt="" fill quality={75} sizes="100vw" className="object-cover object-[center_15%]" priority />
+          </div>
+        </>
+      )}
+      {reduceMotion && (
+        <div className="premium-hero-media" aria-hidden="true">
+          <Image src="/printer-poster.webp" alt="" fill quality={50} sizes="100vw" className="premium-hero-poster" />
+        </div>
+      )}
 
       <div className="premium-hero-surface" aria-hidden="true" />
-      <div className="premium-hero-grid" aria-hidden="true" />
-      <div className="premium-hero-beams" aria-hidden="true" />
-      <div className="premium-corner-frame" aria-hidden="true" />
-      <div aria-hidden="true">
-        <div className="premium-particle" />
-        <div className="premium-particle" />
-        <div className="premium-particle" />
-        <div className="premium-particle" />
-        <div className="premium-particle" />
-      </div>
+      {!reduceMotion && (
+        <>
+          <div className="premium-hero-grid" aria-hidden="true" />
+          <div className="premium-hero-beams" aria-hidden="true" />
+          <div className="premium-corner-frame" aria-hidden="true" />
+          <div aria-hidden="true">
+            <div className="premium-particle" />
+            <div className="premium-particle" />
+            <div className="premium-particle" />
+            <div className="premium-particle" />
+            <div className="premium-particle" />
+          </div>
+        </>
+      )}
 
       <div className="relative z-10 mx-auto flex min-h-0 md:min-h-[calc(88svh-7rem)] w-full max-w-7xl flex-col justify-center gap-8 py-4 md:gap-10 md:py-6">
         <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,1fr)_420px] xl:grid-cols-[minmax(0,1fr)_470px]">
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            transition={heroTransition}
             className="max-w-5xl text-center lg:text-left"
           >
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="mb-5 flex flex-col items-center gap-3 lg:items-start"
-            >
+            <HeroFadeIn delay={0.2} className="mb-5 flex flex-col items-center gap-3 lg:items-start">
               <div className="premium-hero-badge">
                 <span className="premium-live-dot" />
                 Flux3D custom manufacturing · India
               </div>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#374151]"
-              >
+              <HeroFadeIn delay={0.3} className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#374151]">
                 <MapPin className="h-3.5 w-3.5" />
                 Custom 3D printing and ready-made product delivery across India
-              </motion.p>
-            </motion.div>
+              </HeroFadeIn>
+            </HeroFadeIn>
 
             <motion.h1
-              initial={{ opacity: 0, y: 30 }}
+              initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              transition={reduceMotion ? { duration: 0.3 } : { duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] as const }}
               className="premium-hero-title text-[clamp(2.4rem,9vw,5rem)] font-black leading-[0.86] text-[#0F1B3D] sm:text-6xl md:text-7xl lg:text-8xl"
             >
               <span className="premium-title-line premium-title-brand">Flux3D</span>
@@ -111,48 +132,38 @@ export default function HeroSection() {
             </motion.h1>
 
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.35 }}
+              transition={quickFade}
               className="mx-auto mt-7 max-w-2xl text-base leading-7 text-[#1a1a2e] sm:text-lg lg:mx-0 lg:leading-8"
             >
               Flux 3D makes custom 3D-printed parts, prototypes, models and ready-made products for businesses and individuals who need a printed item with clear pricing, clear policies and a real support channel.
             </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.45 }}
-              className="mt-6 flex flex-wrap justify-center gap-2 lg:justify-start"
-            >
+            <HeroFadeIn delay={0.45} className="mt-6 flex flex-wrap justify-center gap-2 lg:justify-start">
               {heroBadges.map((badge) => (
                 <span key={badge} className="premium-chip">{badge}</span>
               ))}
-            </motion.div>
+            </HeroFadeIn>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              className="mx-auto mt-5 max-w-[620px] text-xs font-semibold uppercase tracking-[0.16em] text-[#4b5563] lg:mx-0"
-            >
+            <HeroFadeIn delay={0.5} className="mx-auto mt-5 max-w-[620px] text-xs font-semibold uppercase tracking-[0.16em] text-[#4b5563] lg:mx-0">
               Quote-based custom orders · Ready-made product pricing · India delivery
-            </motion.p>
+            </HeroFadeIn>
 
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
+              initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.55 }}
+              transition={quickFade}
               className="mt-8 flex flex-col justify-center gap-4 sm:flex-row lg:justify-start"
             >
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <motion.div whileHover={enableHover ? { scale: 1.02 } : undefined} whileTap={enableHover ? { scale: 0.98 } : undefined}>
                 <Link href="/instant-quote" prefetch={false}
                   className="premium-primary-cta group relative flex min-h-[56px] items-center justify-center gap-2 overflow-hidden rounded-full px-7 py-4 text-center text-sm font-bold text-white">
                   <span className="relative z-10">Request a Quote</span>
                   <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <motion.div whileHover={enableHover ? { scale: 1.02 } : undefined} whileTap={enableHover ? { scale: 0.98 } : undefined}>
                 <a href="#services"
                   className="premium-secondary-cta flex min-h-[56px] min-w-[170px] items-center justify-center gap-2 whitespace-nowrap rounded-full px-7 py-4 text-sm font-bold text-[#0F1B3D]">
                   Explore Services
@@ -161,34 +172,24 @@ export default function HeroSection() {
               </motion.div>
             </motion.div>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-              className="mt-4 text-center text-xs font-medium text-[#4b5563] lg:text-left"
-            >
+            <HeroFadeIn delay={0.6} className="mt-4 text-center text-xs font-medium text-[#4b5563] lg:text-left">
               Custom orders reviewed before production · Support via email and phone · Tracked delivery where available
-            </motion.p>
+            </HeroFadeIn>
 
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.65 }}
-              className="premium-atelier-strip"
-            >
+            <HeroFadeIn delay={0.65} className="premium-atelier-strip">
               {atelierMetrics.map((metric) => (
                 <div key={metric.label} className="premium-atelier-metric">
                   <span>{metric.label}</span>
                   <strong>{metric.value}</strong>
                 </div>
               ))}
-            </motion.div>
+            </HeroFadeIn>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
+            initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            transition={reduceMotion ? { duration: 0.3 } : { duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] as const }}
             className="relative hidden lg:block"
           >
             <div className="premium-machine-panel">
@@ -244,9 +245,9 @@ export default function HeroSection() {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
+          transition={quickFade}
           className="stats-row premium-stats-row"
         >
           {stats.map((stat, i) => (
@@ -254,16 +255,11 @@ export default function HeroSection() {
           ))}
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          className="mx-auto mt-5 flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#4b5563]"
-        >
+        <HeroFadeIn delay={0.8} className="mx-auto mt-5 flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#4b5563]">
           <Clock className="h-3.5 w-3.5" />
           Production timelines shared before confirmation
           <Sparkles className="h-3.5 w-3.5 text-[#6d28d9]" />
-        </motion.div>
+        </HeroFadeIn>
       </div>
     </section>
   )
