@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import Navbar from '@/components/Navbar'
+import ShopShell from '@/components/shop/ShopShell'
 import ShopProductDetailClient from '@/components/shop/ShopProductDetailClient'
 import { getCurrentUserProfile } from '@/lib/auth/server'
 import { getShopProductBySlug, getShopProductReviews } from '@/lib/shop/public-data'
@@ -32,17 +32,16 @@ export default async function ShopProductPage({ params }: { params: Promise<{ sl
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-[var(--bg-base)]">
-        <Navbar transparent />
+      <ShopShell transparentNav>
         <main className="grid min-h-screen place-items-center px-4 text-center">
           <div>
-            <h1 className="text-4xl font-extrabold text-[var(--text-primary)]">Product not found</h1>
-            <Link href="/3d-shop" className="btn-primary mt-6 inline-flex min-h-[48px] items-center px-6">
+            <h1 className="font-[var(--shop-font-heading)] text-4xl font-semibold text-[var(--shop-text-primary)]">Product not found</h1>
+            <Link href="/3d-shop" className="mt-6 inline-flex min-h-[48px] items-center rounded-xl bg-[var(--shop-text-primary)] px-6 text-sm font-semibold text-white transition hover:bg-[var(--shop-text-secondary)]">
               Back to 3D Shop
             </Link>
           </div>
         </main>
-      </div>
+      </ShopShell>
     )
   }
 
@@ -51,9 +50,8 @@ export default async function ShopProductPage({ params }: { params: Promise<{ sl
   if (!product.is_active || product.is_archived) notFound()
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
-      <Navbar transparent />
+    <ShopShell transparentNav>
       <ShopProductDetailClient product={product} initialReviews={reviews.reviews} currentUser={auth?.profile ?? null} />
-    </div>
+    </ShopShell>
   )
 }

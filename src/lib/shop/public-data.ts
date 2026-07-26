@@ -40,6 +40,7 @@ type RawProduct = {
   occasion_tags?: string[] | null
   thumbnail_url?: string | null
   image_urls?: string[] | null
+  model_url?: string | null
   base_price?: number | string | null
   is_customizable?: boolean | null
   customization_label?: string | null
@@ -67,6 +68,7 @@ const PRODUCT_SELECT = `
   occasion_tags,
   thumbnail_url,
   image_urls,
+  model_url,
   base_price,
   is_customizable,
   customization_label,
@@ -172,6 +174,7 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
     occasion_tags: row.occasion_tags ?? [],
     thumbnail_url: row.thumbnail_url ?? null,
     image_urls: row.image_urls ?? [],
+    model_url: row.model_url ?? null,
     base_price: normalizeShopNumber(row.base_price),
     display_price: minSku ? minSku.price : normalizeShopNumber(row.base_price),
     compare_at_price: saleSku?.compare_at_price ?? null,

@@ -60,7 +60,7 @@ type EligibleReviewProduct = {
 }
 
 function ProductName({ item }: { item: ShopOrderItem }) {
-  const className = 'font-black text-[var(--text-primary)] transition hover:text-[var(--brand-primary)]'
+  const className = 'font-black text-[var(--shop-text-primary)] transition hover:text-[var(--shop-gold)]'
 
   if (item.productSlug) {
     return (
@@ -110,7 +110,7 @@ function CinematicStatusRow({ currentProgressIndex }: { currentProgressIndex: nu
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
-      className="mt-4 overflow-hidden rounded-xl border border-[var(--border-light)] bg-gradient-to-r from-gray-50 via-white to-violet-50/40 p-2.5 shadow-sm"
+      className="mt-4 overflow-hidden rounded-xl border border-[var(--shop-border-light)] bg-gradient-to-r from-gray-50 via-white to-violet-50/40 p-2.5 shadow-sm"
     >
       <div className="flex items-stretch gap-0 overflow-x-auto pb-1">
         {SHOP_FULFILMENT_PROGRESS.map((status, index) => {
@@ -191,7 +191,7 @@ function LoadingState() {
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(118deg,#f9f7f4_0%,#ffffff_46%,#f5f3ff_100%)]" />
       <div className="mx-auto max-w-7xl space-y-4">
         {/* Hero skeleton */}
-        <div className="overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/85 p-4 shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/85 p-4 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 animate-pulse rounded-xl bg-[var(--bg-muted)]" />
             <div className="h-4 w-24 animate-pulse rounded-full bg-[var(--bg-muted)]" />
@@ -209,7 +209,7 @@ function LoadingState() {
         </div>
 
         {/* Progress skeleton */}
-        <div className="overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/85 p-4 shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/85 p-4 shadow-sm">
           <div className="h-4 w-32 animate-pulse rounded-full bg-[var(--bg-muted)]" />
           <div className="mt-3 grid grid-cols-4 gap-2">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -219,7 +219,7 @@ function LoadingState() {
         </div>
 
         {/* Items skeleton */}
-        <div className="overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/85 p-4 shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/85 p-4 shadow-sm">
           <div className="h-4 w-24 animate-pulse rounded-full bg-[var(--bg-muted)]" />
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="mt-3 flex gap-3">
@@ -341,14 +341,14 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mx-auto max-w-3xl rounded-2xl border border-[var(--border-light)] bg-white/88 p-6 text-center shadow-sm backdrop-blur-xl"
+          className="mx-auto max-w-3xl rounded-2xl border border-[var(--shop-border-light)] bg-white/88 p-6 text-center shadow-sm backdrop-blur-xl"
         >
           <XCircle className="mx-auto h-12 w-12 text-rose-600" />
-          <h1 className="mt-3 text-lg font-bold text-[var(--text-primary)]">Order not found</h1>
-          <p className="mx-auto mt-2 max-w-md text-sm text-[var(--text-secondary)]">
+          <h1 className="mt-3 text-lg font-bold text-[var(--shop-text-primary)]">Order not found</h1>
+          <p className="mx-auto mt-2 max-w-md text-sm text-[var(--shop-text-secondary)]">
             {error || 'This order could not be loaded.'}
           </p>
-          <Link href="/3d-shop/orders" className="btn-primary mt-5 inline-flex min-h-[44px] items-center px-4 text-sm">
+          <Link href="/3d-shop/orders" className="inline-flex items-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-text-primary)] text-sm font-semibold text-white transition hover:bg-[var(--shop-text-secondary)] mt-5 inline-flex min-h-[44px] items-center px-4 text-sm">
             <span className="relative z-10">View 3D Shop Orders</span>
           </Link>
         </motion.div>
@@ -371,7 +371,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
             initial={{ opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
-            className="fixed bottom-5 right-5 z-[120] max-w-sm rounded-xl border border-[var(--border-light)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] shadow-lg"
+            className="fixed bottom-5 right-5 z-[120] max-w-sm rounded-xl border border-[var(--shop-border-light)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--shop-text-primary)] shadow-lg"
           >
             {toast}
           </motion.div>
@@ -390,7 +390,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
               initial={{ opacity: 0, y: 18, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.98 }}
-              className="w-full max-w-md rounded-2xl border border-[var(--border-light)] bg-white p-5 shadow-2xl"
+              className="w-full max-w-md rounded-2xl border border-[var(--shop-border-light)] bg-white p-5 shadow-2xl"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-2.5">
@@ -398,10 +398,10 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                     <AlertTriangle className="h-4 w-4" />
                   </span>
                   <div>
-                    <h2 className="text-base font-bold text-[var(--text-primary)]">
+                    <h2 className="text-base font-bold text-[var(--shop-text-primary)]">
                       {dialogType === 'cancel' ? 'Cancel order?' : 'Request return?'}
                     </h2>
-                    <p className="mt-1.5 text-sm text-[var(--text-secondary)]">
+                    <p className="mt-1.5 text-sm text-[var(--shop-text-secondary)]">
                       {dialogType === 'cancel' ? 'Are you sure? This cannot be undone.' : 'Share the reason for the return request.'}
                     </p>
                   </div>
@@ -412,7 +412,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                     setDialogType(null)
                     setReason('')
                   }}
-                  className="grid h-8 w-8 place-items-center rounded-lg border border-[var(--border-light)] bg-white text-[var(--text-muted)]"
+                  className="grid h-8 w-8 place-items-center rounded-lg border border-[var(--shop-border-light)] bg-white text-[var(--shop-text-muted)]"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -421,7 +421,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
                 placeholder={dialogType === 'cancel' ? 'Cancellation reason' : 'Return reason'}
-                className="mt-4 min-h-[100px] w-full resize-y rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand-primary)]"
+                className="mt-4 min-h-[100px] w-full resize-y rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3 text-sm text-[var(--shop-text-primary)] outline-none focus:border-[var(--shop-gold)]"
               />
               <div className="mt-4 flex gap-2.5">
                 <button
@@ -430,7 +430,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                     setDialogType(null)
                     setReason('')
                   }}
-                  className="min-h-[40px] flex-1 rounded-lg border border-[var(--border-light)] bg-white text-sm font-semibold text-[var(--text-secondary)]"
+                  className="min-h-[40px] flex-1 rounded-lg border border-[var(--shop-border-light)] bg-white text-sm font-semibold text-[var(--shop-text-secondary)]"
                 >
                   Keep Order
                 </button>
@@ -438,7 +438,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                   type="button"
                   onClick={() => void submitAction()}
                   disabled={!reason.trim() || actionLoading}
-                  className="btn-primary min-h-[40px] flex-1 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-text-primary)] text-sm font-semibold text-white transition hover:bg-[var(--shop-text-secondary)] min-h-[40px] flex-1 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <span className="relative z-10">{actionLoading ? 'Saving...' : 'Confirm'}</span>
                 </button>
@@ -473,26 +473,26 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/82 p-4 shadow-sm backdrop-blur-xl md:p-5"
+          className="overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/82 p-4 shadow-sm backdrop-blur-xl md:p-5"
         >
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,390px)] lg:items-start">
             <div className="min-w-0 self-start">
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
-                <Link href="/3d-shop/orders" className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-[var(--border-light)] bg-white px-2.5 text-xs font-semibold text-[var(--text-secondary)] shadow-sm transition hover:border-[var(--border-brand)] hover:text-[var(--brand-primary)]">
+                <Link href="/3d-shop/orders" className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-[var(--shop-border-light)] bg-white px-2.5 text-xs font-semibold text-[var(--shop-text-secondary)] shadow-sm transition hover:border-[var(--border-brand)] hover:text-[var(--shop-gold)]">
                   <ArrowLeft className="h-3.5 w-3.5" />
                   Back
                 </Link>
 
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-brand)] bg-[var(--brand-faint)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-brand)] bg-[var(--brand-faint)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--shop-gold)]">
                   <Sparkles className="h-3.5 w-3.5" />
                   Order Detail
                 </div>
               </div>
 
-              <p className="mt-3 text-sm font-bold tracking-tight text-[var(--text-primary)]">
+              <p className="mt-3 text-sm font-bold tracking-tight text-[var(--shop-text-primary)]">
                 #{order.order_number}
               </p>
-              <p className="mt-1.5 text-xs text-[var(--text-secondary)]">
+              <p className="mt-1.5 text-xs text-[var(--shop-text-secondary)]">
                 Placed on {formatShopOrderDateTime(order.placed_at)}
               </p>
 
@@ -529,13 +529,13 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                       initial={{ opacity: 0, y: 14 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1 + index * 0.06 }}
-                      className="min-w-[100px] flex-shrink-0 rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3"
+                      className="min-w-[100px] flex-shrink-0 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3"
                     >
                       <div className={`inline-flex h-7 w-7 items-center justify-center rounded-lg ${metric.bg}`}>
                         <Icon className={`h-3.5 w-3.5 ${metric.tone}`} />
                       </div>
-                      <div className="mt-2 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">{metric.label}</div>
-                      <div className="mt-0.5 truncate text-sm font-bold text-[var(--text-primary)]">{metric.value}</div>
+                      <div className="mt-2 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">{metric.label}</div>
+                      <div className="mt-0.5 truncate text-sm font-bold text-[var(--shop-text-primary)]">{metric.value}</div>
                     </motion.div>
                   )
                 })}
@@ -543,7 +543,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
             </div>
 
             {/* Product Image */}
-            <div className="relative overflow-hidden rounded-xl border border-[var(--border-light)] bg-white shadow-sm lg:self-stretch">
+            <div className="relative overflow-hidden rounded-xl border border-[var(--shop-border-light)] bg-white shadow-sm lg:self-stretch">
               {primaryItem?.productThumbnail ? (
                 <div className="relative aspect-[4/3] min-h-[180px] bg-[var(--bg-muted)] lg:h-full lg:min-h-[280px]">
                   <Image
@@ -556,14 +556,14 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                   />
                   <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_38%,rgba(255,255,255,0.96))]" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <div className="line-clamp-1 text-base font-bold text-[var(--text-primary)]">{primaryItem.productName}</div>
-                    <div className="mt-0.5 line-clamp-1 text-xs text-[var(--text-secondary)]">{primaryItem.variantLabel}</div>
+                    <div className="line-clamp-1 text-base font-bold text-[var(--shop-text-primary)]">{primaryItem.productName}</div>
+                    <div className="mt-0.5 line-clamp-1 text-xs text-[var(--shop-text-secondary)]">{primaryItem.variantLabel}</div>
                   </div>
                 </div>
               ) : (
                 <div className="grid aspect-[4/3] min-h-[180px] place-items-center bg-[linear-gradient(135deg,#f5f3ff,#ecfdf5)] p-4 text-center lg:h-full lg:min-h-[280px]">
                   <PackageCheck className="mx-auto h-12 w-12 text-emerald-600" />
-                  <div className="mt-3 text-base font-bold text-[var(--text-primary)]">Order package ready</div>
+                  <div className="mt-3 text-base font-bold text-[var(--shop-text-primary)]">Order package ready</div>
                 </div>
               )}
             </div>
@@ -577,15 +577,15 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.08 }}
-              className="rounded-2xl border border-[var(--border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl"
+              className="rounded-2xl border border-[var(--shop-border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--shop-gold)]">
                     <CircleDot className="h-3.5 w-3.5" />
                     Fulfillment Timeline
                   </div>
-                  <h2 className="mt-1.5 text-base font-bold text-[var(--text-primary)]">Current order status</h2>
+                  <h2 className="mt-1.5 text-base font-bold text-[var(--shop-text-primary)]">Current order status</h2>
                 </div>
                 <span className={`w-fit rounded-full border px-2 py-0.5 text-xs font-bold ${
                   order.order_status === 'cancelled' || order.order_status === 'returned'
@@ -650,17 +650,17 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.12 }}
-              className="rounded-2xl border border-[var(--border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl"
+              className="rounded-2xl border border-[var(--shop-border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--shop-gold)]">
                     <PackageCheck className="h-3.5 w-3.5" />
                     Items
                   </div>
-                  <h2 className="mt-1.5 text-base font-bold text-[var(--text-primary)]">Items ordered</h2>
+                  <h2 className="mt-1.5 text-base font-bold text-[var(--shop-text-primary)]">Items ordered</h2>
                 </div>
-                <div className="rounded-full border border-[var(--border-light)] bg-[var(--bg-soft)] px-2.5 py-0.5 text-xs font-bold text-[var(--text-secondary)]">
+                <div className="rounded-full border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] px-2.5 py-0.5 text-xs font-bold text-[var(--shop-text-secondary)]">
                   {itemCount} item{itemCount === 1 ? '' : 's'}
                 </div>
               </div>
@@ -672,7 +672,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                     initial={{ opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.16 + index * 0.05 }}
-                    className="rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3 transition hover:border-[var(--border-brand)] hover:bg-white"
+                    className="rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3 transition hover:border-[var(--border-brand)] hover:bg-white"
                   >
                     <div className="flex gap-3">
                       <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--bg-muted)]">
@@ -680,7 +680,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                           <Image src={item.productThumbnail} alt={item.productName} fill sizes="56px" className="object-cover transition duration-500 hover:scale-105" />
                         ) : (
                           <div className="grid h-full place-items-center">
-                            <Package className="h-6 w-6 text-[var(--text-muted)]" />
+                            <Package className="h-6 w-6 text-[var(--shop-text-muted)]" />
                           </div>
                         )}
                       </div>
@@ -688,17 +688,17 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <ProductName item={item} />
-                            <p className="mt-0.5 text-xs text-[var(--text-muted)]">{item.variantLabel}</p>
+                            <p className="mt-0.5 text-xs text-[var(--shop-text-muted)]">{item.variantLabel}</p>
                             {item.customizationText && (
-                              <p className="mt-0.5 text-xs italic text-[var(--text-secondary)]">Engraved: {item.customizationText}</p>
+                              <p className="mt-0.5 text-xs italic text-[var(--shop-text-secondary)]">Engraved: {item.customizationText}</p>
                             )}
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Line total</div>
-                            <div className="text-sm font-bold text-[var(--text-primary)]">{formatShopPrice(getShopOrderLineTotal(item))}</div>
+                            <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">Line total</div>
+                            <div className="text-sm font-bold text-[var(--shop-text-primary)]">{formatShopPrice(getShopOrderLineTotal(item))}</div>
                           </div>
                         </div>
-                        <p className="mt-1.5 text-xs text-[var(--text-secondary)]">
+                        <p className="mt-1.5 text-xs text-[var(--shop-text-secondary)]">
                           Qty {item.quantity} x {formatShopPrice(item.unitPrice)}
                         </p>
                       </div>
@@ -736,13 +736,13 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                             )}
                           </div>
                           <div className="min-w-0">
-                            <div className="truncate text-sm font-bold text-[var(--text-primary)]">{eligible.productName}</div>
-                            {orderItem?.variantLabel && <div className="text-xs text-[var(--text-muted)]">{orderItem.variantLabel}</div>}
+                            <div className="truncate text-sm font-bold text-[var(--shop-text-primary)]">{eligible.productName}</div>
+                            {orderItem?.variantLabel && <div className="text-xs text-[var(--shop-text-muted)]">{orderItem.variantLabel}</div>}
                           </div>
                         </div>
                         <Link
                           href={orderItem?.productSlug ? `/3d-shop/product/${orderItem.productSlug}#reviews` : '/3d-shop'}
-                          className="btn-primary inline-flex min-h-[36px] items-center px-3 text-xs"
+                          className="inline-flex items-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-text-primary)] text-sm font-semibold text-white transition hover:bg-[var(--shop-text-secondary)] inline-flex min-h-[36px] items-center px-3 text-xs"
                         >
                           <span className="relative z-10">Write Review</span>
                         </Link>
@@ -759,19 +759,19 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.18 }}
-                className="h-full rounded-2xl border border-[var(--border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl"
+                className="h-full rounded-2xl border border-[var(--shop-border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl"
               >
                 <div className="flex items-center gap-2">
                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50">
                     <MapPin className="h-3.5 w-3.5 text-rose-600" />
                   </span>
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Delivery</div>
-                    <h2 className="text-sm font-bold text-[var(--text-primary)]">Delivery address</h2>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">Delivery</div>
+                    <h2 className="text-sm font-bold text-[var(--shop-text-primary)]">Delivery address</h2>
                   </div>
                 </div>
-                <div className="mt-3 break-words text-xs leading-6 text-[var(--text-secondary)]">
-                  <div className="font-bold text-[var(--text-primary)]">{order.shipping_address.name}</div>
+                <div className="mt-3 break-words text-xs leading-6 text-[var(--shop-text-secondary)]">
+                  <div className="font-bold text-[var(--shop-text-primary)]">{order.shipping_address.name}</div>
                   <div>{order.shipping_address.phone}</div>
                   <div>{order.shipping_address.line1}</div>
                   {order.shipping_address.line2 && <div>{order.shipping_address.line2}</div>}
@@ -783,21 +783,21 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.22 }}
-                className="h-full rounded-2xl border border-[var(--border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl"
+                className="h-full rounded-2xl border border-[var(--shop-border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl"
               >
                 <div className="flex items-center gap-2">
                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50">
                     <CreditCard className="h-3.5 w-3.5 text-violet-600" />
                   </span>
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Payment</div>
-                    <h2 className="text-sm font-bold text-[var(--text-primary)]">Payment info</h2>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">Payment</div>
+                    <h2 className="text-sm font-bold text-[var(--shop-text-primary)]">Payment info</h2>
                   </div>
                 </div>
-                <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3">
-                  <Banknote className="h-4 w-4 shrink-0 text-[var(--brand-primary)]" />
+                <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3">
+                  <Banknote className="h-4 w-4 shrink-0 text-[var(--shop-gold)]" />
                   <div className="min-w-0">
-                    <div className="text-sm font-bold text-[var(--text-primary)]">
+                    <div className="text-sm font-bold text-[var(--shop-text-primary)]">
                       {getPaymentModeLabel(order.payment_provider ?? order.payment_method)}
                     </div>
                     <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold ${getShopPaymentStatusClasses(order.payment_status)}`}>
@@ -813,7 +813,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                     </p>
                     <Link
                       href={`/3d-shop/payment/${order.id}`}
-                      className="mt-2 inline-flex min-h-[36px] items-center justify-center rounded-lg bg-[var(--brand-primary)] px-3 text-xs font-bold text-white"
+                      className="mt-2 inline-flex min-h-[36px] items-center justify-center rounded-lg bg-[var(--shop-gold)] px-3 text-xs font-bold text-white"
                     >
                       Complete payment
                     </Link>
@@ -827,23 +827,23 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
               <motion.section
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl border border-[var(--border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl"
+                className="rounded-2xl border border-[var(--shop-border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl"
               >
                 <div className="flex items-center gap-2">
                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-sky-50">
                     <Truck className="h-3.5 w-3.5 text-sky-600" />
                   </span>
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Tracking</div>
-                    <h2 className="text-sm font-bold text-[var(--text-primary)]">Tracking info</h2>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">Tracking</div>
+                    <h2 className="text-sm font-bold text-[var(--shop-text-primary)]">Tracking info</h2>
                   </div>
                 </div>
                 {order.tracking_number && (
-                  <div className="mt-3 rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3 text-xs text-[var(--text-secondary)]">
-                    {order.courier_name && <div>Courier: <span className="font-bold text-[var(--text-primary)]">{order.courier_name}</span></div>}
-                    <div className="mt-0.5">Tracking: <span className="break-all font-bold text-[var(--text-primary)]">{order.tracking_number}</span></div>
+                  <div className="mt-3 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3 text-xs text-[var(--shop-text-secondary)]">
+                    {order.courier_name && <div>Courier: <span className="font-bold text-[var(--shop-text-primary)]">{order.courier_name}</span></div>}
+                    <div className="mt-0.5">Tracking: <span className="break-all font-bold text-[var(--shop-text-primary)]">{order.tracking_number}</span></div>
                     {order.tracking_url && (
-                      <a href={order.tracking_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-[var(--brand-primary)]">
+                      <a href={order.tracking_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-[var(--shop-gold)]">
                         Track Package
                         <ArrowUpRight className="h-3 w-3" />
                       </a>
@@ -851,7 +851,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                   </div>
                 )}
                 {order.estimated_delivery && (
-                  <div className="mt-2 text-xs text-[var(--text-secondary)]">
+                  <div className="mt-2 text-xs text-[var(--shop-text-secondary)]">
                     Expected by {formatShopOrderDate(order.estimated_delivery)}
                   </div>
                 )}
@@ -864,22 +864,22 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.16 }}
-            className="h-fit rounded-2xl border border-[var(--border-light)] bg-white/90 p-4 shadow-sm backdrop-blur-xl lg:sticky lg:top-28 lg:self-start"
+            className="h-fit rounded-2xl border border-[var(--shop-border-light)] bg-white/90 p-4 shadow-sm backdrop-blur-xl lg:sticky lg:top-28 lg:self-start"
           >
             <div className="flex items-center gap-2.5">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-brand)] bg-[var(--brand-faint)] text-[var(--brand-primary)]">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-brand)] bg-[var(--brand-faint)] text-[var(--shop-gold)]">
                 <ReceiptText className="h-4 w-4" />
               </span>
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Receipt</div>
-                <h2 className="text-sm font-bold text-[var(--text-primary)]">Pricing summary</h2>
+                <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">Receipt</div>
+                <h2 className="text-sm font-bold text-[var(--shop-text-primary)]">Pricing summary</h2>
               </div>
             </div>
 
-            <div className="mt-3 space-y-2 rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3 text-xs">
-              <div className="flex items-start justify-between gap-3 text-[var(--text-secondary)]">
+            <div className="mt-3 space-y-2 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3 text-xs">
+              <div className="flex items-start justify-between gap-3 text-[var(--shop-text-secondary)]">
                 <span className="min-w-0 break-words">Subtotal</span>
-                <span className="shrink-0 font-bold text-[var(--text-primary)]">{formatShopPrice(order.subtotal)}</span>
+                <span className="shrink-0 font-bold text-[var(--shop-text-primary)]">{formatShopPrice(order.subtotal)}</span>
               </div>
               {order.discount_amount > 0 && (
                 <div className="flex items-start justify-between gap-3 text-emerald-700">
@@ -887,15 +887,15 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                   <span className="shrink-0 font-bold">-{formatShopPrice(order.discount_amount)}</span>
                 </div>
               )}
-              <div className="flex items-start justify-between gap-3 text-[var(--text-secondary)]">
+              <div className="flex items-start justify-between gap-3 text-[var(--shop-text-secondary)]">
                 <span className="min-w-0 break-words">Shipping</span>
-                <span className="shrink-0 font-bold text-[var(--text-primary)]">{order.shipping_charge === 0 ? 'Free' : formatShopPrice(order.shipping_charge)}</span>
+                <span className="shrink-0 font-bold text-[var(--shop-text-primary)]">{order.shipping_charge === 0 ? 'Free' : formatShopPrice(order.shipping_charge)}</span>
               </div>
             </div>
 
-            <div className="mt-3 flex items-center justify-between border-t border-[var(--border-light)] pt-3">
-              <span className="text-sm font-bold text-[var(--text-primary)]">Total</span>
-              <span className="text-right text-lg font-bold text-[var(--text-primary)]">{formatShopPrice(order.total_amount)}</span>
+            <div className="mt-3 flex items-center justify-between border-t border-[var(--shop-border-light)] pt-3">
+              <span className="text-sm font-bold text-[var(--shop-text-primary)]">Total</span>
+              <span className="text-right text-lg font-bold text-[var(--shop-text-primary)]">{formatShopPrice(order.total_amount)}</span>
             </div>
 
             <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-800">
@@ -927,10 +927,10 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                 </button>
               )}
               <DownloadInvoiceButton />
-              <Link href="/3d-shop" className="btn-primary flex min-h-[40px] w-full items-center justify-center text-xs">
+              <Link href="/3d-shop" className="inline-flex items-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-text-primary)] text-sm font-semibold text-white transition hover:bg-[var(--shop-text-secondary)] flex min-h-[40px] w-full items-center justify-center text-xs">
                 <span className="relative z-10">Continue Shopping</span>
               </Link>
-              <Link href="/3d-shop/orders" className="block rounded-lg border border-[var(--border-light)] bg-white px-3 py-2.5 text-center text-xs font-bold text-[var(--text-secondary)] transition hover:border-[var(--border-brand)] hover:text-[var(--brand-primary)]">
+              <Link href="/3d-shop/orders" className="block rounded-lg border border-[var(--shop-border-light)] bg-white px-3 py-2.5 text-center text-xs font-bold text-[var(--shop-text-secondary)] transition hover:border-[var(--border-brand)] hover:text-[var(--shop-gold)]">
                 Back to 3D Shop Orders
               </Link>
             </div>

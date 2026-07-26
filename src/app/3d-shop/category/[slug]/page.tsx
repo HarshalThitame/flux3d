@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import Navbar from '@/components/Navbar'
+import ShopShell from '@/components/shop/ShopShell'
 import ShopCategoryBrowser from '@/components/shop/ShopCategoryBrowser'
 import { getShopCategoryBySlug, getShopProducts } from '@/lib/shop/public-data'
 import { absoluteUrl } from '@/lib/site'
@@ -32,9 +32,8 @@ export default async function ShopCategoryPage({ params }: { params: Promise<{ s
   const result = await getShopProducts({ category_slug: slug, limit: 96, sort: 'featured' })
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
-      <Navbar transparent />
+    <ShopShell transparentNav>
       <ShopCategoryBrowser category={category} products={result.products} />
-    </div>
+    </ShopShell>
   )
 }

@@ -20,29 +20,34 @@ export default function RecentlyViewedRow() {
   if (products.length < 2) return null
 
   return (
-    <section className="px-4 py-10 md:px-8 lg:px-16">
-      <div className="mx-auto max-w-7xl">
+    <section className="px-4 py-12 sm:px-6 md:px-10 lg:px-12 lg:py-16">
+      <div className="mx-auto w-full max-w-[1280px]">
         <div className="mb-6 flex items-center gap-2">
-          <Clock className="h-5 w-5 text-[var(--brand-primary)]" />
-          <h2 className="text-3xl font-extrabold text-[var(--text-primary)]">Recently Viewed</h2>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] text-[var(--shop-gold)]">
+            <Clock className="h-4 w-4" />
+          </div>
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-gold)]">History</div>
+            <h2 className="font-[var(--shop-font-heading)] text-2xl font-semibold text-[var(--shop-text-primary)]">Recently Viewed</h2>
+          </div>
         </div>
         <div className="grid auto-cols-[68%] grid-flow-col gap-4 overflow-x-auto pb-2 sm:auto-cols-[38%] lg:auto-cols-[23%]">
           {products.map((product) => (
             <Link
               key={product.id}
               href={`/3d-shop/product/${product.slug}`}
-              className="group overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white shadow-[var(--shadow-sm)] transition hover:-translate-y-1 hover:border-[var(--border-brand)] hover:shadow-[var(--shadow-md)]"
+              className="group overflow-hidden rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] shadow-[var(--shop-shadow-sm)] transition hover:-translate-y-1 hover:border-[var(--shop-border-gold)] hover:shadow-[var(--shop-shadow-md)]"
             >
-              <div className="relative aspect-square bg-[var(--bg-muted)]">
+              <div className="relative aspect-square bg-[var(--shop-bg-muted)]">
                 {product.thumbnail_url ? (
-                  <Image src={product.thumbnail_url} alt={product.name} fill sizes="(min-width: 1024px) 25vw, 70vw" className="object-cover transition duration-500 group-hover:scale-105" />
+                  <Image src={product.thumbnail_url} alt={product.name} fill sizes="(min-width: 1024px) 25vw, 70vw" className="object-cover transition duration-700 ease-out group-hover:scale-105" />
                 ) : (
-                  <div className="grid h-full place-items-center text-4xl">🧩</div>
+                  <div className="grid h-full place-items-center text-4xl text-[var(--shop-text-subtle)]">🧩</div>
                 )}
               </div>
               <div className="p-4">
-                <h3 className="line-clamp-2 min-h-[44px] text-base font-bold leading-snug text-[var(--text-primary)]">{product.name}</h3>
-                <div className="mt-2 text-sm font-bold text-[var(--text-primary)]">From {formatShopPrice(product.base_price)}</div>
+                <h3 className="font-[var(--shop-font-heading)] line-clamp-2 min-h-[44px] text-base font-semibold leading-snug text-[var(--shop-text-primary)]">{product.name}</h3>
+                <div className="mt-2 text-sm font-semibold text-[var(--shop-text-primary)]">{formatShopPrice(product.base_price)}</div>
               </div>
             </Link>
           ))}

@@ -24,6 +24,7 @@ export type ShopProduct = {
   occasion_tags: string[] | null
   thumbnail_url: string | null
   image_urls: string[] | null
+  model_url: string | null
   base_price: number
   is_customizable: boolean | null
   customization_label: string | null

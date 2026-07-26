@@ -5,8 +5,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   BadgeCheck,
-  ChevronRight,
-  Clock3,
+  Box,
   Layers3,
   PackageCheck,
   Search,
@@ -17,14 +16,12 @@ import {
   Truck,
   Zap,
 } from 'lucide-react'
-import Navbar from '@/components/Navbar'
 import ProductCard from '@/components/shop/ProductCard'
 import RecentlyViewedDynamic from '@/components/shop/RecentlyViewedDynamic'
-import DeferredHeroVideo from '@/components/DeferredHeroVideo'
+import ShopShell from '@/components/shop/ShopShell'
 import { buildShopCategoryTree, getShopHomeData } from '@/lib/shop/public-data'
 import { formatShopPrice } from '@/lib/shop/selection'
 import { absoluteUrl } from '@/lib/site'
-import ShopPremiumFX from './ShopPremiumFX'
 
 export const revalidate = 300
 
@@ -40,15 +37,6 @@ export const metadata: Metadata = {
   },
 }
 
-const tickerItems = [
-  'Desk objects',
-  'Creator gifts',
-  'Premium finishes',
-  'Ready to ship',
-  'Custom colors',
-  'Quality checked',
-]
-
 export default async function ShopHomePage() {
   const data = await getShopHomeData()
   const categoryTree = buildShopCategoryTree(data.categories)
@@ -59,206 +47,193 @@ export default async function ShopHomePage() {
 
   const heroStats = [
     { label: 'Categories', value: `${categoryTree.length}`, icon: Layers3 },
-    { label: 'Featured edits', value: `${data.featured_products.length}`, icon: Star },
+    { label: 'Featured', value: `${data.featured_products.length}`, icon: Star },
     { label: 'New arrivals', value: `${data.new_arrivals.length}`, icon: PackageCheck },
-    { label: 'Dispatch flow', value: 'Ready', icon: Truck },
-  ]
-
-  const consoleRows = [
-    { label: 'Store signal', value: productCount ? `${productCount} picks` : 'curated', width: '76%' },
-    { label: 'Lead item', value: heroProduct?.category_name || 'Flux3D', width: '58%' },
-    { label: 'Checkout', value: 'Secure online pay', width: '64%' },
-    { label: 'Finish QA', value: 'visual', width: '48%' },
+    { label: 'Ready to ship', value: 'Fast', icon: Truck },
   ]
 
   return (
-    <div className="shop-premium-shell min-h-screen overflow-hidden">
-      <ShopPremiumFX />
-      <Navbar transparent />
+    <ShopShell transparentNav>
+      <main className="flex-1">
+        {/* Hero */}
+        <section className="relative overflow-hidden px-4 pb-20 pt-28 sm:px-6 md:px-10 lg:px-12 lg:pb-28 lg:pt-32">
+          <div className="pointer-events-none absolute inset-0 -z-10">
+            <div className="absolute -right-20 -top-20 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(201,169,98,0.10)_0%,transparent_70%)] blur-3xl" />
+            <div className="absolute -bottom-40 -left-20 h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,rgba(67,56,202,0.06)_0%,transparent_70%)] blur-3xl" />
+          </div>
 
-      <main className="shop-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-[#0F1B3D]">
-        <section className="shop-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-[#0F1B3D] sm:px-6 md:px-10 lg:px-12">
-          <Image
-            src="/printer2-poster.webp"
-            alt=""
-            fill
-            preload
-            sizes="100vw"
-            className="shop-hero-video absolute inset-0 h-full w-full object-cover"
-          />
-          <DeferredHeroVideo
-            src="/printer2-optimized.mp4"
-            className="shop-hero-video absolute inset-0 h-full w-full object-cover"
-            ariaLabel="Flux3D 3D printer motion behind shop hero"
-          />
-          <div className="shop-hero-depth" aria-hidden="true" />
-          <div className="shop-hero-grid" aria-hidden="true" />
-          <div className="shop-hero-beam" aria-hidden="true" />
-          <div className="shop-hero-frame" aria-hidden="true" />
+          <div className="relative z-10 mx-auto grid w-full max-w-[1280px] gap-12 lg:grid-cols-[1fr_420px] lg:items-start">
+            <div className="min-w-0">
+              <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-[var(--shop-text-muted)]">
+                <Link href="/" className="transition hover:text-[var(--shop-text-primary)]">Home</Link>
+                <span>/</span>
+                <span className="text-[var(--shop-text-primary)]">3D Shop</span>
+              </nav>
 
-          <div className="relative z-10 mx-auto flex min-h-[86svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-8 pt-8 md:pt-10 lg:pt-12">
-            <div className="shop-fade-up mb-5 flex items-center gap-2 text-sm font-medium text-[#6b7280]">
-              <Link href="/" className="transition hover:text-[#0F1B3D]">Home</Link>
-              <ChevronRight className="h-3.5 w-3.5" />
-              <span className="text-[#0F1B3D]">3D Shop</span>
-            </div>
-
-            <div className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-start">
-              <div className="min-w-0">
-                <div className="shop-fade-up shop-hero-kicker inline-flex w-fit items-center gap-2 rounded-lg border border-[rgba(109,40,217,0.15)] bg-[#ede9fe] px-4 py-2 text-xs font-black uppercase text-[#6d28d9] shadow-sm">
-                  <Sparkles className="h-4 w-4 text-[#6d28d9]" />
-                  Flux3D Store
-                </div>
-
-                <h1 className="shop-fade-up shop-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#0F1B3D] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]">
-                  Premium 3D printed pieces, ready to own.
-                </h1>
-
-                <p className="shop-fade-up mt-6 max-w-[calc(100vw-2rem)] text-base leading-7 text-[#374151] sm:text-lg lg:max-w-2xl lg:leading-8">
-                  Shop curated Flux3D objects with clean finishes, useful forms, and ready-to-ship presentation for desks, creators, gifting, and everyday setups.
-                </p>
-
-                <div className="shop-fade-up mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <a
-                    href="#shop-categories"
-                    className="shop-primary-action group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 text-sm font-black text-[#05060a] shadow-[0_18px_54px_rgba(255,255,255,0.16)] transition hover:bg-[#ecfeff]"
-                  >
-                    Shop now
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </a>
-                  <Link
-                    href="/3d-shop/search"
-                    className="shop-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#6d28d9]/30 bg-white px-6 text-sm font-black text-[#6d28d9] backdrop-blur transition hover:border-[#6d28d9]/50 hover:bg-purple-50"
-                  >
-                    Search products
-                    <Search className="h-4 w-4" />
-                  </Link>
-                </div>
-
-                <div className="shop-fade-up shop-hero-stats mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {heroStats.map((stat) => {
-                    const Icon = stat.icon
-                    return (
-                      <div key={stat.label} className="min-w-0 rounded-lg border border-[rgba(109,40,217,0.08)] bg-white p-4 shadow-sm">
-                        <div className="flex items-center gap-2 text-sm font-black text-[#0F1B3D]">
-                          <Icon className="h-4 w-4 text-[#6d28d9]" />
-                          {stat.value}
-                        </div>
-                        <div className="mt-2 text-xs font-bold uppercase text-[#6b7280]">{stat.label}</div>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                <div className="shop-fade-up shop-intel-ticker mt-6" aria-hidden="true">
-                  <div>
-                    {[...tickerItems, ...tickerItems].map((entry, index) => (
-                      <span key={`${entry}-${index}`}>
-                        <Sparkles className="h-3.5 w-3.5" />
-                        {entry}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-gold)]">
+                <Sparkles className="h-3.5 w-3.5" />
+                Flux3D Boutique
               </div>
 
-              <aside className="shop-commerce-panel shop-fade-up grid min-w-0 gap-3">
-                <div className="shop-console-topline">
-                  <span>Store console</span>
-                  <strong>live</strong>
-                </div>
+              <h1 className="font-[var(--shop-font-heading)] mt-6 max-w-[calc(100vw-2rem)] text-[clamp(2.6rem,8vw,5.5rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-[var(--shop-text-primary)] sm:max-w-3xl">
+                Premium 3D printed pieces, <span className="text-[var(--shop-gold)]">ready to own.</span>
+              </h1>
 
+              <p className="mt-6 max-w-[calc(100vw-2rem)] text-lg leading-8 text-[var(--shop-text-secondary)] sm:max-w-xl">
+                Shop curated Flux3D objects with clean finishes, useful forms, and ready-to-ship presentation for desks, creators, gifting, and everyday setups.
+              </p>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <a
+                  href="#shop-categories"
+                  className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--shop-text-primary)] px-7 text-sm font-semibold text-white shadow-[var(--shop-shadow-sm)] transition hover:bg-[var(--shop-text-secondary)] hover:shadow-[var(--shop-shadow-md)]"
+                >
+                  Shop now
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </a>
+                <Link
+                  href="/3d-shop/search"
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[var(--shop-border-medium)] bg-white px-7 text-sm font-semibold text-[var(--shop-text-primary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
+                >
+                  Search products
+                  <Search className="h-4 w-4" />
+                </Link>
+              </div>
+
+              <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {heroStats.map((stat) => {
+                  const Icon = stat.icon
+                  return (
+                    <div
+                      key={stat.label}
+                      className="rounded-[var(--shop-radius-md)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-4 shadow-[var(--shop-shadow-sm)]"
+                    >
+                      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--shop-text-primary)]">
+                        <Icon className="h-4 w-4 text-[var(--shop-gold)]" />
+                        {stat.value}
+                      </div>
+                      <div className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-[var(--shop-text-muted)]">
+                        {stat.label}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <aside className="relative min-w-0">
+              <div className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-5 shadow-[var(--shop-shadow-lg)]">
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-text-muted)]">Featured pick</span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--shop-gold-faint)] px-2 py-0.5 text-[10px] font-bold text-[var(--shop-gold)]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--shop-gold)]" />
+                    In stock
+                  </span>
+                </div>
                 <Link
                   href={heroProduct ? `/3d-shop/product/${heroProduct.slug}` : '#shop-categories'}
-                  className="shop-console-feature group grid min-w-0 gap-3"
+                  className="group grid gap-4"
                 >
-                  <div className="shop-console-feature-media relative overflow-hidden rounded-lg border border-[rgba(109,40,217,0.08)]">
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-[var(--shop-radius-lg)] bg-[var(--shop-bg-muted)]">
                     <Image
                       src={heroImage}
                       alt={heroProduct?.name || 'Flux3D 3D Shop product showcase'}
                       fill
                       priority
-                      sizes="(min-width: 1024px) 240px, 100vw"
+                      sizes="(min-width: 1024px) 420px, 100vw"
                       className="object-cover transition duration-700 group-hover:scale-105"
                     />
-                    <div className="shop-product-scan" aria-hidden="true" />
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-black uppercase tracking-[0.16em] text-[#6d28d9]">
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-gold)]">
                       {heroProduct?.category_name || 'Curated shop'}
                     </div>
-                    <h2 className="mt-2 line-clamp-2 text-xl font-black leading-tight text-[#0F1B3D]">
+                    <h2 className="font-[var(--shop-font-heading)] mt-2 line-clamp-2 text-xl font-semibold leading-tight text-[var(--shop-text-primary)]">
                       {heroProduct?.name || 'Browse Flux3D picks'}
                     </h2>
-                    <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-[#374151]">
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--shop-text-muted)]">
                       {heroProduct?.description || 'A premium shelf of ready-to-ship 3D printed products and useful desk objects.'}
                     </p>
-                    <span className="mt-4 inline-flex items-center gap-2 text-sm font-black text-[#6d28d9]">
+                    <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[var(--shop-gold)]">
                       {heroPrice}
                       <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                     </span>
                   </div>
                 </Link>
-
-                <div className="shop-console-stack">
-                  {consoleRows.map((entry) => (
-                    <div key={entry.label}>
-                      <span>{entry.label}</span>
-                      <strong>{entry.value}</strong>
-                      <i style={{ width: entry.width }} />
-                    </div>
-                  ))}
-                </div>
-              </aside>
-            </div>
+              </div>
+            </aside>
           </div>
         </section>
 
-        <section id="shop-categories" className="shop-premium-section relative overflow-hidden px-4 py-20 sm:px-6 md:px-10 lg:px-12">
-          <div className="shop-section-grid" aria-hidden="true" />
-          <div className="relative z-10 mx-auto w-full max-w-[1220px]">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        {/* Trust bar */}
+        <section className="border-y border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)]">
+          <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-center gap-6 px-4 py-4 sm:px-6 md:px-10 lg:px-12">
+            {[
+              { icon: ShieldCheck, label: 'QA checked' },
+              { icon: Truck, label: 'Ready to ship' },
+              { icon: Box, label: '3D preview' },
+              { icon: ShoppingBag, label: 'Secure cart' },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-2 text-sm font-medium text-[var(--shop-text-muted)]">
+                <item.icon className="h-4 w-4 text-[var(--shop-gold)]" />
+                {item.label}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Categories */}
+        <section id="shop-categories" className="px-4 py-20 sm:px-6 md:px-10 lg:px-12 lg:py-28">
+          <div className="mx-auto w-full max-w-[1280px]">
+            <div className="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="min-w-0">
-                <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-[#6d28d9]">
+                <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-gold)]">
                   <Layers3 className="h-4 w-4" />
                   Shop by category
                 </div>
-                <h2 className="mt-3 max-w-2xl text-[clamp(2rem,6vw,3rem)] font-black leading-tight text-[#0F1B3D] sm:text-5xl">
+                <h2 className="font-[var(--shop-font-heading)] mt-3 max-w-2xl text-[clamp(2rem,5vw,3.5rem)] font-semibold leading-tight text-[var(--shop-text-primary)]">
                   Browse by purpose, finish, and setup.
                 </h2>
               </div>
-              <Link href="/3d-shop/search" className="inline-flex min-h-11 w-fit items-center justify-center gap-2 rounded-lg border border-[#6d28d9]/30 px-5 text-sm font-black text-[#6d28d9] transition hover:border-[#6d28d9]/50 hover:bg-purple-50">
+              <Link
+                href="/3d-shop/search"
+                className="inline-flex min-h-11 w-fit items-center justify-center gap-2 rounded-xl border border-[var(--shop-border-light)] bg-white px-5 text-sm font-semibold text-[var(--shop-text-primary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
+              >
                 View all products
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 
-            <div className="shop-category-grid mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {categoryTree.map((category) => (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {categoryTree.map((category, index) => (
                 <Link
                   key={category.id}
                   href={`/3d-shop/category/${category.slug}`}
-                  className="shop-category-card group relative min-h-[224px] overflow-hidden rounded-lg border border-white/10 bg-white/[0.06]"
+                  className={`group relative overflow-hidden rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] shadow-[var(--shop-shadow-sm)] transition hover:-translate-y-1 hover:shadow-[var(--shop-shadow-md)] ${
+                    index === 0 ? 'sm:col-span-2 sm:row-span-2 lg:col-span-2 lg:row-span-2' : ''
+                  }`}
                 >
-                  {category.banner_image_url ? (
-                    <Image
-                      src={category.banner_image_url}
-                      alt={category.name}
-                      fill
-                      sizes="(min-width: 1024px) 25vw, 80vw"
-                      className="object-cover opacity-72 transition duration-700 group-hover:scale-105 group-hover:opacity-90"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(103,232,249,0.18),rgba(167,139,250,0.12),rgba(251,191,36,0.12))]" />
-                  )}
-                  <div className="shop-category-overlay" aria-hidden="true" />
-                  <div className="absolute inset-x-4 bottom-4 z-10">
-                    <div className="shop-category-mark">
-                      {category.icon_emoji ? <span>{category.icon_emoji}</span> : <Sparkles className="h-4 w-4" />}
+                  <div className="relative aspect-[4/3] overflow-hidden bg-[var(--shop-bg-muted)]">
+                    {category.banner_image_url ? (
+                      <Image
+                        src={category.banner_image_url}
+                        alt={category.name}
+                        fill
+                        sizes={index === 0 ? '(min-width: 1024px) 50vw, 80vw' : '(min-width: 1024px) 25vw, 80vw'}
+                        className="object-cover transition duration-700 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--shop-gold-faint),var(--shop-bg-soft))]" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--shop-text-primary)]/70 via-transparent to-transparent" />
+                  </div>
+                  <div className="absolute inset-x-5 bottom-5 z-10">
+                    <div className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-sm">
+                      {category.icon_emoji ? <span className="text-sm">{category.icon_emoji}</span> : <Sparkles className="h-4 w-4" />}
                     </div>
-                    <h3 className="mt-3 text-xl font-black text-white">{category.name}</h3>
+                    <h3 className="font-[var(--shop-font-heading)] mt-3 text-xl font-semibold text-white">{category.name}</h3>
                     {category.description ? (
-                      <p className="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-white">{category.description}</p>
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/80">{category.description}</p>
                     ) : null}
                   </div>
                 </Link>
@@ -267,89 +242,120 @@ export default async function ShopHomePage() {
           </div>
         </section>
 
+        {/* Featured */}
         {data.featured_products.length > 0 && (
-          <section className="shop-premium-section shop-products-section relative overflow-hidden px-4 py-12 sm:px-6 md:px-10 lg:px-12">
-            <div className="relative z-10 mx-auto w-full max-w-[1220px]">
-              <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <section className="px-4 py-16 sm:px-6 md:px-10 lg:px-12 lg:py-24">
+            <div className="mx-auto w-full max-w-[1280px]">
+              <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-[#6d28d9]">
+                  <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-gold)]">
                     <BadgeCheck className="h-4 w-4" />
                     Featured
                   </div>
-                  <h2 className="mt-3 text-[clamp(2rem,6vw,3rem)] font-black text-[#0F1B3D] sm:text-4xl">Premium picks</h2>
+                  <h2 className="font-[var(--shop-font-heading)] mt-3 text-[clamp(2rem,5vw,3rem)] font-semibold text-[var(--shop-text-primary)]">
+                    Premium picks
+                  </h2>
                 </div>
-                <Link href="/3d-shop/search?featured=true" className="inline-flex items-center gap-2 text-sm font-black text-[#6d28d9]">
+                <Link href="/3d-shop/search?featured=true" className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--shop-gold)] transition hover:text-[var(--shop-text-primary)]">
                   View all
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
-              <div className="shop-product-rail grid auto-cols-[74%] grid-flow-col gap-4 overflow-x-auto pb-2 sm:auto-cols-[42%] lg:auto-cols-[24%]">
-                {data.featured_products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+              <div className="grid auto-cols-[74%] grid-flow-col gap-4 overflow-x-auto pb-2 sm:auto-cols-[42%] lg:auto-cols-[24%]">
+                {data.featured_products.map((product, index) => (
+                  <ProductCard key={product.id} product={product} index={index} />
                 ))}
               </div>
             </div>
           </section>
         )}
 
+        {/* Occasion collections */}
         {data.occasion_collections.slice(0, 3).map((collection) => (
-          <section key={collection.tag} className="shop-premium-section shop-products-section relative overflow-hidden px-4 py-12 sm:px-6 md:px-10 lg:px-12">
-            <div className="relative z-10 mx-auto w-full max-w-[1220px]">
+          <section key={collection.tag} className="px-4 py-12 sm:px-6 md:px-10 lg:px-12 lg:py-16">
+            <div className="mx-auto w-full max-w-[1280px]">
               <div className="mb-6 flex items-center justify-between gap-4">
                 <div>
-                  <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-[#6d28d9]">
+                  <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-gold)]">
                     <Zap className="h-4 w-4" />
                     Collection
                   </div>
-                  <h2 className="mt-3 text-3xl font-black text-[#0F1B3D] sm:text-4xl">{collection.tag}</h2>
+                  <h2 className="font-[var(--shop-font-heading)] mt-3 text-2xl font-semibold text-[var(--shop-text-primary)] sm:text-3xl">
+                    {collection.tag}
+                  </h2>
                 </div>
               </div>
-              <div className="shop-product-rail grid auto-cols-[74%] grid-flow-col gap-4 overflow-x-auto pb-2 sm:auto-cols-[42%] lg:auto-cols-[24%]">
-                {collection.products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+              <div className="grid auto-cols-[74%] grid-flow-col gap-4 overflow-x-auto pb-2 sm:auto-cols-[42%] lg:auto-cols-[24%]">
+                {collection.products.map((product, index) => (
+                  <ProductCard key={product.id} product={product} index={index} />
                 ))}
               </div>
             </div>
           </section>
         ))}
 
-        <div className="shop-recently-viewed-premium">
-          <RecentlyViewedDynamic />
+        {/* Recently viewed */}
+        <div className="px-4 sm:px-6 md:px-10 lg:px-12">
+          <div className="mx-auto w-full max-w-[1280px]">
+            <RecentlyViewedDynamic />
+          </div>
         </div>
 
-        <section className="shop-premium-section shop-products-section relative overflow-hidden px-4 py-16 sm:px-6 md:px-10 lg:px-12">
-          <div className="relative z-10 mx-auto w-full max-w-[1220px]">
-            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        {/* New arrivals */}
+        <section className="px-4 py-20 sm:px-6 md:px-10 lg:px-12 lg:py-28">
+          <div className="mx-auto w-full max-w-[1280px]">
+            <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-[#6d28d9]">
-                  <Clock3 className="h-4 w-4" />
+                <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-gold)]">
+                  <BadgeCheck className="h-4 w-4" />
                   New arrivals
                 </div>
-                <h2 className="mt-3 text-[clamp(2rem,6vw,3rem)] font-black text-[#0F1B3D] sm:text-4xl">Fresh from the print queue</h2>
+                <h2 className="font-[var(--shop-font-heading)] mt-3 text-[clamp(2rem,5vw,3rem)] font-semibold text-[var(--shop-text-primary)]">
+                  Fresh from the print queue
+                </h2>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-xs font-black uppercase text-[#6b7280]">
-                <span className="inline-flex items-center gap-1 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
-                  <ShieldCheck className="h-3.5 w-3.5 text-[#6d28d9]" />
+              <div className="grid grid-cols-3 gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--shop-text-muted)]">
+                <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] px-3 py-2">
+                  <ShieldCheck className="h-3.5 w-3.5 text-[var(--shop-gold)]" />
                   QA
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
-                  <Truck className="h-3.5 w-3.5 text-[#6d28d9]" />
+                <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] px-3 py-2">
+                  <Truck className="h-3.5 w-3.5 text-[var(--shop-gold)]" />
                   Ship
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
-                  <ShoppingBag className="h-3.5 w-3.5 text-[#6d28d9]" />
+                <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] px-3 py-2">
+                  <ShoppingBag className="h-3.5 w-3.5 text-[var(--shop-gold)]" />
                   Cart
                 </span>
               </div>
             </div>
-            <div className="shop-product-rail shop-product-grid grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {data.new_arrivals.map((product) => (
-                <ProductCard key={product.id} product={product} />
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {data.new_arrivals.map((product, index) => (
+                <ProductCard key={product.id} product={product} index={index} />
               ))}
             </div>
           </div>
         </section>
+
+        {/* Newsletter / CTA band */}
+        <section className="mx-4 mb-16 overflow-hidden rounded-[var(--shop-radius-xl)] bg-[var(--shop-text-primary)] px-6 py-12 text-center sm:mx-6 sm:px-10 md:mx-10 md:py-16 lg:mx-12 lg:px-12">
+          <div className="mx-auto max-w-2xl">
+            <h2 className="font-[var(--shop-font-heading)] text-3xl font-semibold text-white sm:text-4xl">
+              Ready to elevate your space?
+            </h2>
+            <p className="mt-4 text-[var(--shop-sand)]">
+              Explore the full collection of premium 3D printed pieces crafted for creators, desks, and thoughtful gifting.
+            </p>
+            <Link
+              href="/3d-shop/search"
+              className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl bg-[var(--shop-gold)] px-8 text-sm font-semibold text-[var(--shop-text-primary)] transition hover:bg-[var(--shop-gold-light)]"
+            >
+              Browse all products
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </section>
       </main>
-    </div>
+    </ShopShell>
   )
 }

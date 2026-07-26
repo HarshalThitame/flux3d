@@ -158,7 +158,7 @@ export default function ReviewModal({
           <button
             type="button"
             aria-label="Close review modal"
-            className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm"
+            className="absolute inset-0 bg-[#1C1917]/55 backdrop-blur-sm"
             onClick={() => onOpenChangeAction(false)}
           />
           <motion.div
@@ -167,22 +167,22 @@ export default function ReviewModal({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 24, opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.2 }}
-            className="absolute bottom-0 left-0 right-0 max-h-[92vh] overflow-y-auto rounded-t-3xl border border-[var(--border-light)] bg-[var(--bg-base)] p-5 shadow-[var(--shadow-lg)] md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:w-[min(92vw,620px)] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl"
+            className="absolute bottom-0 left-0 right-0 max-h-[92vh] overflow-y-auto rounded-t-3xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-base)] p-5 shadow-[var(--shop-shadow-lg)] md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:w-[min(92vw,620px)] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex min-w-0 gap-3">
-                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-[var(--bg-muted)]">
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-[var(--shop-bg-muted)]">
                   {thumbnail ? <Image src={thumbnail} alt={product.name} fill sizes="64px" className="object-cover" /> : null}
                 </div>
                 <div className="min-w-0">
-                  <h2 className="line-clamp-2 text-lg font-extrabold text-[var(--text-primary)]">{product.name}</h2>
-                  {eligibility && <p className="mt-1 text-sm text-[var(--text-secondary)]">Order #{eligibility.orderNumber}</p>}
+                  <h2 className="line-clamp-2 text-lg font-semibold text-[var(--shop-text-primary)]">{product.name}</h2>
+                  {eligibility && <p className="mt-1 text-sm text-[var(--shop-text-secondary)]">Order #{eligibility.orderNumber}</p>}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => onOpenChangeAction(false)}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[var(--border-light)] bg-white text-[var(--text-secondary)]"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[var(--shop-border-light)] bg-white text-[var(--shop-text-secondary)]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -190,7 +190,7 @@ export default function ReviewModal({
 
             <div className="mt-6 space-y-5">
               <div>
-                <div className="mb-2 text-sm font-bold text-[var(--text-primary)]">Rating</div>
+                <div className="mb-2 text-sm font-bold text-[var(--shop-text-primary)]">Rating</div>
                 <div className="flex gap-1">
                   {Array.from({ length: 5 }).map((_, index) => {
                     const value = index + 1
@@ -201,10 +201,10 @@ export default function ReviewModal({
                         onMouseEnter={() => setHoverRating(value)}
                         onMouseLeave={() => setHoverRating(0)}
                         onClick={() => setRating(value)}
-                        className="rounded-lg p-1 text-yellow-400"
+                        className="rounded-lg p-1 text-[var(--shop-gold)]"
                         aria-label={`${value} star${value === 1 ? '' : 's'}`}
                       >
-                        <Star className={`h-8 w-8 ${value <= activeRating ? 'fill-yellow-400' : 'text-[var(--border-medium)]'}`} />
+                        <Star className={`h-8 w-8 ${value <= activeRating ? 'fill-[var(--shop-gold)] text-[var(--shop-gold)]' : 'text-[var(--shop-border-medium)]'}`} />
                       </button>
                     )
                   })}
@@ -212,38 +212,38 @@ export default function ReviewModal({
               </div>
 
               <label className="block">
-                <span className="mb-1.5 block text-sm font-bold text-[var(--text-primary)]">Title</span>
+                <span className="mb-1.5 block text-sm font-bold text-[var(--shop-text-primary)]">Title</span>
                 <input
                   value={title}
                   maxLength={100}
                   onChange={(event) => setTitle(event.target.value)}
-                  className="min-h-[44px] w-full rounded-xl border border-[var(--border-light)] bg-white px-3 text-sm outline-none focus:border-[var(--border-brand)]"
+                  className="min-h-[44px] w-full rounded-xl border border-[var(--shop-border-light)] bg-white px-3 text-sm outline-none focus:border-[var(--shop-border-gold)]"
                   placeholder="What stood out?"
                 />
               </label>
 
               <label className="block">
-                <span className="mb-1.5 block text-sm font-bold text-[var(--text-primary)]">Review</span>
+                <span className="mb-1.5 block text-sm font-bold text-[var(--shop-text-primary)]">Review</span>
                 <textarea
                   value={body}
                   maxLength={500}
                   onChange={(event) => setBody(event.target.value)}
-                  className="min-h-[140px] w-full resize-none rounded-xl border border-[var(--border-light)] bg-white p-3 text-sm leading-6 outline-none focus:border-[var(--border-brand)]"
+                  className="min-h-[140px] w-full resize-none rounded-xl border border-[var(--shop-border-light)] bg-white p-3 text-sm leading-6 outline-none focus:border-[var(--shop-border-gold)]"
                   placeholder="Share your experience"
                 />
-                <span className="mt-1 block text-right text-xs text-[var(--text-muted)]">{body.length}/500</span>
+                <span className="mt-1 block text-right text-xs text-[var(--shop-text-muted)]">{body.length}/500</span>
               </label>
 
               <div>
-                <div className="mb-2 text-sm font-bold text-[var(--text-primary)]">Images</div>
+                <div className="mb-2 text-sm font-bold text-[var(--shop-text-primary)]">Images</div>
                 <div className="flex flex-wrap gap-3">
                   {imageUrls.map((url) => (
-                    <div key={url} className="relative h-16 w-16 overflow-hidden rounded-xl border border-[var(--border-light)] bg-white">
+                    <div key={url} className="relative h-16 w-16 overflow-hidden rounded-xl border border-[var(--shop-border-light)] bg-white">
                       <Image src={url} alt="Review image" fill sizes="64px" className="object-cover" />
                     </div>
                   ))}
                   {imageUrls.length < 3 && (
-                    <label className="grid h-16 w-16 cursor-pointer place-items-center rounded-xl border border-dashed border-[var(--border-medium)] bg-white text-[var(--text-secondary)]">
+                    <label className="grid h-16 w-16 cursor-pointer place-items-center rounded-xl border border-dashed border-[var(--shop-border-medium)] bg-white text-[var(--shop-text-secondary)]">
                       {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
                       <input
                         type="file"
@@ -262,13 +262,13 @@ export default function ReviewModal({
                 </div>
               </div>
 
-              {error && <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">{error}</p>}
+              {error && <p className="rounded-xl border border-rose-200 bg-rose-50/70 px-3 py-2 text-sm font-semibold text-rose-700">{error}</p>}
 
               <button
                 type="button"
                 disabled={!canSubmit}
                 onClick={() => void submitReview()}
-                className="btn-primary flex min-h-[52px] w-full items-center justify-center gap-2 text-base disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[var(--shop-radius-lg)] bg-[var(--shop-gold)] px-6 text-base font-semibold text-[var(--luxury-charcoal)] shadow-[var(--shop-shadow-gold)] transition hover:bg-[var(--shop-gold-light)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 Submit Review

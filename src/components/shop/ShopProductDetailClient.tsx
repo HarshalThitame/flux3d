@@ -5,32 +5,27 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronDown, ChevronUp, ShoppingBag, Star } from 'lucide-react'
+import {
+  Box,
+  ChevronDown,
+  ChevronUp,
+  Heart,
+  MapPin,
+  PackageCheck,
+  RefreshCcw,
+  ShieldCheck,
+  ShoppingBag,
+  Star,
+  Truck,
+} from 'lucide-react'
 import { addToast } from '@/lib/toast/store'
 import ShopVariantControls from '@/components/shop/ShopVariantControls'
 import QuantityStepper from '@/components/shop/QuantityStepper'
 import NotifyMeForm from '@/components/shop/NotifyMeForm'
 import ProductRecommendations from '@/components/shop/ProductRecommendations'
 import ReviewModal, { type ReviewEligibility } from '@/components/shop/ReviewModal'
-
-function useScrollLock(locked: boolean) {
-  useEffect(() => {
-    if (!locked) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
-  }, [locked])
-}
-
-function useEscape(handler: () => void, active: boolean) {
-  useEffect(() => {
-    if (!active) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handler() }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [handler, active])
-}
 import WishlistButton from '@/components/shop/WishlistButton'
+import ProductModelModal from '@/components/shop/ProductModelModal'
 import type { AppUserProfile } from '@/lib/auth/server'
 import type { ShopPublicProduct, ShopPublicReview } from '@/lib/shop/public-types'
 import {
@@ -44,13 +39,31 @@ import {
 import { addRecentlyViewed } from '@/lib/shop/recentlyViewed'
 import { useShopCartStore } from '@/stores/shopCartStore'
 
+function useScrollLock(locked: boolean) {
+  useEffect(() => {
+    if (!locked) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [locked])
+}
+
+function useEscape(handler: () => void, active: boolean) {
+  useEffect(() => {
+    if (!active) return
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') handler() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [handler, active])
+}
+
 function Stars({ value }: { value: number }) {
   return (
     <div className="flex items-center gap-0.5">
       {Array.from({ length: 5 }).map((_, index) => (
         <Star
           key={index}
-          className={`h-4 w-4 ${index + 1 <= Math.round(value) ? 'fill-yellow-400 text-yellow-400' : 'text-[var(--border-medium)]'}`}
+          className={`h-4 w-4 ${index + 1 <= Math.round(value) ? 'fill-[var(--shop-gold)] text-[var(--shop-gold)]' : 'text-[var(--shop-border-medium)]'}`}
         />
       ))}
     </div>
@@ -68,12 +81,30 @@ function DetailDisclosure({
 }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <section className="border-b border-[var(--border-light)] py-4">
-      <button type="button" onClick={() => setOpen((current) => !current)} className="flex w-full items-center justify-between text-left">
-        <span className="font-bold text-[var(--text-primary)]">{title}</span>
-        {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+    <section className="border-b border-[var(--shop-border-light)]">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center justify-between py-4 text-left transition hover:text-[var(--shop-gold)]"
+      >
+        <span className="font-semibold text-[var(--shop-text-primary)]">{title}</span>
+        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown className="h-4 w-4 text-[var(--shop-text-muted)]" />
+        </motion.div>
       </button>
-      {open && <div className="mt-4 text-sm leading-7 text-[var(--text-secondary)]">{children}</div>}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="pb-5 text-sm leading-7 text-[var(--shop-text-secondary)]">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   )
 }
@@ -108,7 +139,8 @@ export default function ShopProductDetailClient({
   )
   const [toast, setToast] = useState('')
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
-  useScrollLock(Boolean(lightboxImage))
+  const [modelOpen, setModelOpen] = useState(false)
+  useScrollLock(Boolean(lightboxImage) || modelOpen)
   useEscape(() => setLightboxImage(null), Boolean(lightboxImage))
 
   const resolvedSku = useMemo(() => resolveShopSku(product.skus, product.variant_options, selected), [product, selected])
@@ -137,16 +169,12 @@ export default function ShopProductDetailClient({
   }, [product.base_price, product.id, product.name, product.slug, product.thumbnail_url])
 
   useEffect(() => {
-    if (!currentUser) {
-      return
-    }
-
+    if (!currentUser) return
     let active = true
-
     async function loadReviewEligibility() {
       try {
         const response = await fetch(`/api/3d-shop/reviews/eligible?productId=${product.id}`)
-        const data = await response.json().catch(() => ({})) as {
+        const data = (await response.json().catch(() => ({}))) as {
           eligible?: ReviewEligibility | null
           hasDeliveredPurchase?: boolean
           alreadyReviewed?: boolean
@@ -164,11 +192,8 @@ export default function ShopProductDetailClient({
         if (active) setReviewStatus('not_purchased')
       }
     }
-
     void loadReviewEligibility()
-    return () => {
-      active = false
-    }
+    return () => { active = false }
   }, [currentUser, product.id])
 
   useEffect(() => {
@@ -243,39 +268,36 @@ export default function ShopProductDetailClient({
         <button
           type="button"
           onClick={() => router.push(`/login?next=${encodeURIComponent(`/3d-shop/product/${product.slug}`)}`)}
-          className="min-h-[44px] rounded-xl border border-[var(--border-brand)] bg-[var(--brand-faint)] px-4 text-sm font-bold text-[var(--brand-primary)]"
+          className="min-h-[44px] rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] px-4 text-sm font-semibold text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
         >
           Login to Write a Review
         </button>
       )
     }
-
     if (reviewStatus === 'eligible') {
       return (
         <button
           type="button"
           onClick={() => setReviewModalOpen(true)}
-          className="btn-primary min-h-[44px] px-4 text-sm"
+          className="min-h-[44px] rounded-xl bg-[var(--shop-gold)] px-4 text-sm font-semibold text-[var(--luxury-charcoal)] shadow-[var(--shop-shadow-gold)] transition hover:bg-[var(--shop-gold-light)]"
         >
           Write a Review
         </button>
       )
     }
-
     if (reviewStatus === 'reviewed') {
       return (
-        <div className="min-h-[44px] rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
+        <div className="min-h-[44px] rounded-xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-4 py-3 text-sm font-semibold text-[var(--shop-gold)]">
           You&apos;ve reviewed this product ✓
         </div>
       )
     }
-
     return (
       <button
         type="button"
         disabled
         title={reviewStatus === 'loading' ? 'Checking eligibility' : 'Purchase this product to leave a review'}
-        className="min-h-[44px] rounded-xl border border-[var(--border-light)] px-4 text-sm font-bold text-[var(--text-muted)] opacity-60"
+        className="min-h-[44px] rounded-xl border border-[var(--shop-border-light)] px-4 text-sm font-semibold text-[var(--shop-text-muted)] opacity-60"
       >
         {reviewStatus === 'loading' ? 'Checking...' : 'Write a Review'}
       </button>
@@ -283,9 +305,9 @@ export default function ShopProductDetailClient({
   }
 
   return (
-    <main className="px-4 pb-20 pt-5 md:px-8 md:pt-6 lg:px-16">
+    <main className="px-4 pb-24 pt-6 md:px-8 lg:px-16 lg:pt-8">
       {toast && (
-        <div className="fixed bottom-5 right-5 z-[130] rounded-2xl border border-[var(--border-light)] bg-white px-4 py-3 text-sm font-semibold text-[var(--text-primary)] shadow-xl">
+        <div className="fixed bottom-5 right-5 z-[130] rounded-2xl border border-[var(--shop-border-light)] bg-white px-4 py-3 text-sm font-semibold text-[var(--shop-text-primary)] shadow-xl">
           {toast}
         </div>
       )}
@@ -296,7 +318,8 @@ export default function ShopProductDetailClient({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-[140] grid place-items-center bg-slate-950/85 p-4 backdrop-blur-md"
+            className="fixed inset-0 z-[140] grid place-items-center bg-[var(--shop-text-primary)]/85 p-4 backdrop-blur-md"
+            onClick={() => setLightboxImage(null)}
           >
             <button type="button" aria-label="Close image preview" className="absolute inset-0" onClick={() => setLightboxImage(null)} />
             <motion.div
@@ -304,35 +327,41 @@ export default function ShopProductDetailClient({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.92, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="relative z-10 aspect-square w-full max-w-3xl overflow-hidden rounded-3xl bg-white"
+              className="relative z-10 aspect-square w-full max-w-3xl overflow-hidden rounded-[var(--shop-radius-xl)] bg-white"
+              onClick={(event) => event.stopPropagation()}
             >
               <Image src={lightboxImage} alt="Review image" fill sizes="90vw" className="object-contain" />
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
       <div className="mx-auto max-w-7xl">
-        <nav className="mb-6 flex flex-wrap gap-2 text-sm text-[var(--text-muted)]">
-          <Link href="/" className="hover:text-[var(--brand-primary)]">Home</Link>
+        <nav className="mb-6 flex flex-wrap gap-2 text-sm text-[var(--shop-text-muted)]">
+          <Link href="/" className="transition hover:text-[var(--shop-gold)]">Home</Link>
           <span>/</span>
-          <Link href="/3d-shop" className="hover:text-[var(--brand-primary)]">3D Shop</Link>
+          <Link href="/3d-shop" className="transition hover:text-[var(--shop-gold)]">3D Shop</Link>
           {product.category_slug && (
             <>
               <span>/</span>
-              <Link href={`/3d-shop/category/${product.category_slug}`} className="hover:text-[var(--brand-primary)]">{product.category_name}</Link>
+              <Link href={`/3d-shop/category/${product.category_slug}`} className="transition hover:text-[var(--shop-gold)]">{product.category_name}</Link>
             </>
           )}
           <span>/</span>
-          <span className="text-[var(--text-primary)]">{product.name}</span>
+          <span className="text-[var(--shop-text-primary)]">{product.name}</span>
         </nav>
 
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_460px]">
           <section>
-            <button type="button" className="relative aspect-square w-full overflow-hidden rounded-3xl border border-[var(--border-light)] bg-white shadow-[var(--shadow-sm)]">
+            <button
+              type="button"
+              onClick={() => visibleImage && setLightboxImage(visibleImage)}
+              className="relative aspect-square w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)] transition hover:shadow-[var(--shop-shadow-md)]"
+            >
               {visibleImage ? (
                 <Image src={visibleImage} alt={product.name} fill priority sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover" />
               ) : (
-                <div className="grid h-full place-items-center text-6xl">🧩</div>
+                <div className="grid h-full place-items-center text-6xl text-[var(--shop-text-subtle)]">🧩</div>
               )}
             </button>
             {images.length > 1 && (
@@ -342,24 +371,36 @@ export default function ShopProductDetailClient({
                     key={image}
                     type="button"
                     onClick={() => setSelectedImage(image)}
-                    className={`relative aspect-square overflow-hidden rounded-2xl border bg-white ${visibleImage === image ? 'border-[var(--brand-primary)]' : 'border-[var(--border-light)]'}`}
+                    className={`relative aspect-square overflow-hidden rounded-2xl border bg-white transition hover:border-[var(--shop-border-gold)] ${visibleImage === image ? 'border-[var(--shop-gold)]' : 'border-[var(--shop-border-light)]'}`}
                   >
                     <Image src={image} alt={product.name} fill sizes="84px" className="object-cover" />
                   </button>
                 ))}
               </div>
             )}
+            {product.model_url && (
+              <button
+                type="button"
+                onClick={() => setModelOpen(true)}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-4 py-3 text-sm font-semibold text-[var(--shop-gold)] transition hover:border-[var(--shop-gold)] hover:bg-[var(--shop-gold-soft)]"
+              >
+                <Box className="h-4 w-4" />
+                View interactive 3D preview
+              </button>
+            )}
           </section>
 
           <aside className="lg:sticky lg:top-24 lg:self-start">
-            <div className="rounded-3xl border border-[var(--border-light)] bg-white p-5 shadow-[var(--shadow-sm)] md:p-6">
+            <div className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-5 shadow-[var(--shop-shadow-sm)] md:p-6">
               <div className="flex items-start justify-between gap-4">
-                <h1 className="!text-2xl font-extrabold tracking-normal text-[var(--text-primary)] md:!text-3xl">{product.name}</h1>
-                <WishlistButton productId={product.id} label className="shrink-0 rounded-xl border-[var(--border-light)]" />
+                <h1 className="font-[var(--shop-font-heading)] text-2xl font-semibold tracking-tight text-[var(--shop-text-primary)] md:text-3xl">
+                  {product.name}
+                </h1>
+                <WishlistButton productId={product.id} label className="shrink-0 rounded-xl border-[var(--shop-border-light)]" />
               </div>
 
               {product.review_count > 0 && (
-                <a href="#reviews" className="mt-3 flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                <a href="#reviews" className="mt-3 flex items-center gap-2 text-sm text-[var(--shop-text-muted)] transition hover:text-[var(--shop-gold)]">
                   <Stars value={product.avg_rating} />
                   <span>({product.review_count} reviews)</span>
                 </a>
@@ -368,12 +409,12 @@ export default function ShopProductDetailClient({
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 {compareAt && compareAt > price ? (
                   <>
-                    <span className="text-xl text-[var(--text-muted)] line-through">{formatShopPrice(compareAt)}</span>
-                    <span className="text-3xl font-extrabold text-[var(--text-primary)]">{formatShopPrice(price)}</span>
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Save {formatShopPrice(savings)}</span>
+                    <span className="text-xl text-[var(--shop-text-subtle)] line-through">{formatShopPrice(compareAt)}</span>
+                    <span className="font-[var(--shop-font-heading)] text-3xl font-semibold text-[var(--shop-text-primary)]">{formatShopPrice(price)}</span>
+                    <span className="rounded-full bg-[var(--shop-gold-faint)] px-3 py-1 text-xs font-semibold text-[var(--shop-gold)]">Save {formatShopPrice(savings)}</span>
                   </>
                 ) : (
-                  <span className="text-3xl font-extrabold text-[var(--text-primary)]">
+                  <span className="font-[var(--shop-font-heading)] text-3xl font-semibold text-[var(--shop-text-primary)]">
                     {resolvedSku ? formatShopPrice(price) : `From ${formatShopPrice(price)}`}
                   </span>
                 )}
@@ -393,28 +434,28 @@ export default function ShopProductDetailClient({
                 </p>
               )}
 
-              <p className={`mt-5 rounded-xl px-3 py-2 text-sm font-bold ${
-                stock.tone === 'green' ? 'bg-emerald-50 text-emerald-700' :
+              <p className={`mt-5 rounded-xl px-3 py-2 text-sm font-semibold ${
+                stock.tone === 'green' ? 'bg-[var(--shop-gold-faint)] text-[var(--shop-gold)]' :
                   stock.tone === 'amber' ? 'bg-amber-50 text-amber-700' :
                     stock.tone === 'red' ? 'bg-red-50 text-red-700' :
                       stock.tone === 'blue' ? 'bg-blue-50 text-blue-700' :
-                        'bg-[var(--bg-soft)] text-[var(--text-muted)]'
+                        'bg-[var(--shop-bg-soft)] text-[var(--shop-text-muted)]'
               }`}>
                 {stock.label}
               </p>
 
               {product.is_customizable && (
                 <label className="mt-5 block">
-                  <span className="mb-1.5 block text-sm font-bold text-[var(--text-primary)]">
+                  <span className="mb-1.5 block text-sm font-semibold text-[var(--shop-text-primary)]">
                     {product.customization_label || 'Customization'}
                   </span>
                   <input
                     value={customizationText}
                     maxLength={50}
                     onChange={(event) => setCustomizationText(event.target.value)}
-                    className="min-h-[44px] w-full rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] px-3 text-sm outline-none focus:border-[var(--border-brand)]"
+                    className="min-h-[44px] w-full rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] px-3 text-sm text-[var(--shop-text-primary)] outline-none transition focus:border-[var(--shop-gold)]"
                   />
-                  <span className="mt-1 block text-xs text-[var(--text-muted)]">This will be used for personalization · {customizationText.length}/50</span>
+                  <span className="mt-1 block text-xs text-[var(--shop-text-muted)]">This will be used for personalization · {customizationText.length}/50</span>
                 </label>
               )}
 
@@ -435,13 +476,17 @@ export default function ShopProductDetailClient({
                   value={pincode}
                   onChange={(event) => setPincode(event.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="Check delivery to your pincode"
-                  className="min-h-[44px] min-w-0 flex-1 rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] px-3 text-sm outline-none focus:border-[var(--border-brand)]"
+                  className="min-h-[44px] min-w-0 flex-1 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] px-3 text-sm text-[var(--shop-text-primary)] outline-none transition focus:border-[var(--shop-gold)]"
                 />
-                <button type="submit" disabled={checkingPincode} className="rounded-xl border border-[var(--border-light)] px-4 text-sm font-bold text-[var(--text-primary)]">
+                <button
+                  type="submit"
+                  disabled={checkingPincode}
+                  className="rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] px-4 text-sm font-semibold text-[var(--shop-text-primary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
+                >
                   Check
                 </button>
               </form>
-              {pincodeStatus && <p className="mt-2 text-sm font-semibold text-[var(--text-secondary)]">{pincodeStatus}</p>}
+              {pincodeStatus && <p className={`mt-2 text-sm font-semibold ${pincodeStatus.includes('Delivered') ? 'text-[var(--shop-gold)]' : 'text-[var(--shop-text-secondary)]'}`}>{pincodeStatus}</p>}
 
               {isTrulyOutOfStock && resolvedSku ? (
                 <NotifyMeForm
@@ -456,7 +501,7 @@ export default function ShopProductDetailClient({
                     type="button"
                     disabled={!canAdd}
                     onClick={() => addCurrentToCart(false)}
-                    className="btn-primary flex min-h-[52px] w-full items-center justify-center gap-2 text-base disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--shop-text-primary)] text-base font-semibold text-white transition hover:bg-[var(--shop-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <ShoppingBag className="h-4 w-4" />
                     Add to Cart
@@ -465,14 +510,27 @@ export default function ShopProductDetailClient({
                     type="button"
                     disabled={!canAdd}
                     onClick={() => addCurrentToCart(true)}
-                    className="min-h-[52px] rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] text-base font-bold text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="min-h-[52px] rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] text-base font-semibold text-[var(--shop-text-primary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Buy Now
                   </button>
                 </div>
               )}
 
-              <div className="mt-4">
+              <div className="mt-6 grid grid-cols-3 gap-2">
+                {[
+                  { icon: ShieldCheck, label: 'QA checked' },
+                  { icon: Truck, label: '4-7 day delivery' },
+                  { icon: RefreshCcw, label: '7-day returns' },
+                ].map((item) => (
+                  <div key={item.label} className="flex flex-col items-center gap-1.5 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3 text-center">
+                    <item.icon className="h-4 w-4 text-[var(--shop-gold)]" />
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6">
                 <DetailDisclosure title="Description" defaultOpen>
                   {product.long_description ? (
                     <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: product.long_description }} />
@@ -494,11 +552,11 @@ export default function ShopProductDetailClient({
           </aside>
         </div>
 
-        <section id="reviews" className="mt-16 rounded-3xl border border-[var(--border-light)] bg-white p-5 shadow-[var(--shadow-sm)] md:p-8">
+        <section id="reviews" className="mt-20 rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-5 shadow-[var(--shop-shadow-sm)] md:p-8">
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div>
-              <h2 className="!text-2xl font-extrabold text-[var(--text-primary)]">Customer Reviews</h2>
-              <p className="mt-2 text-sm font-semibold text-[var(--text-secondary)]">
+              <h2 className="font-[var(--shop-font-heading)] text-2xl font-semibold text-[var(--shop-text-primary)]">Customer Reviews</h2>
+              <p className="mt-2 text-sm font-medium text-[var(--shop-text-muted)]">
                 {totalReviews > 0 ? `Based on ${totalReviews} review${totalReviews === 1 ? '' : 's'}` : 'No reviews yet.'}
               </p>
             </div>
@@ -506,43 +564,43 @@ export default function ShopProductDetailClient({
           </div>
 
           {totalReviews > 0 ? (
-            <div className="mt-8 grid gap-8 lg:grid-cols-[320px_1fr]">
+            <div className="mt-8 grid gap-8 lg:grid-cols-[300px_1fr]">
               <div>
-                <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-5">
-                  <div className="text-5xl font-extrabold text-[var(--text-primary)]">{product.avg_rating.toFixed(1)}</div>
+                <div className="rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-5">
+                  <div className="font-[var(--shop-font-heading)] text-5xl font-semibold text-[var(--shop-text-primary)]">{product.avg_rating.toFixed(1)}</div>
                   <div className="mt-2 flex items-center gap-2">
                     <Stars value={product.avg_rating} />
-                    <span className="text-sm font-semibold text-[var(--text-secondary)]">Based on {totalReviews} reviews</span>
+                    <span className="text-sm font-medium text-[var(--shop-text-muted)]">Based on {totalReviews} reviews</span>
                   </div>
                 </div>
                 <div className="mt-5 space-y-3">
-                {distribution.map((item) => (
-                  <div key={item.rating} className="flex items-center gap-3 text-sm">
-                    <span className="w-8 font-semibold">{item.rating}★</span>
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--bg-muted)]">
-                      <div className="h-full rounded-full bg-yellow-400" style={{ width: `${totalReviews ? (item.count / totalReviews) * 100 : 0}%` }} />
+                  {distribution.map((item) => (
+                    <div key={item.rating} className="flex items-center gap-3 text-sm">
+                      <span className="w-8 font-medium text-[var(--shop-text-secondary)]">{item.rating}★</span>
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--shop-bg-muted)]">
+                        <div className="h-full rounded-full bg-[var(--shop-gold)]" style={{ width: `${totalReviews ? (item.count / totalReviews) * 100 : 0}%` }} />
+                      </div>
+                      <span className="w-10 text-right text-[var(--shop-text-muted)]">{totalReviews ? Math.round((item.count / totalReviews) * 100) : 0}%</span>
                     </div>
-                    <span className="w-10 text-right text-[var(--text-muted)]">{totalReviews ? Math.round((item.count / totalReviews) * 100) : 0}%</span>
-                  </div>
-                ))}
+                  ))}
                 </div>
               </div>
               <div className="space-y-4">
                 {reviews.map((review) => (
-                  <article key={review.id} className="rounded-2xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-4">
+                  <article key={review.id} className="rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
                           <Stars value={review.rating} />
-                          {review.is_verified_purchase && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">Verified Purchase</span>}
+                          {review.is_verified_purchase && <span className="rounded-full bg-[var(--shop-gold-faint)] px-2 py-0.5 text-[10px] font-bold text-[var(--shop-gold)]">Verified Purchase</span>}
                         </div>
-                        <h3 className="mt-2 font-bold text-[var(--text-primary)]">{review.title || 'Review'}</h3>
+                        <h3 className="mt-2 font-semibold text-[var(--shop-text-primary)]">{review.title || 'Review'}</h3>
                       </div>
-                      <div className="text-xs text-[var(--text-muted)]">
+                      <div className="text-xs text-[var(--shop-text-muted)]">
                         {review.created_at ? new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(review.created_at)) : ''}
                       </div>
                     </div>
-                    {review.body && <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">{review.body}</p>}
+                    {review.body && <p className="mt-3 text-sm leading-7 text-[var(--shop-text-secondary)]">{review.body}</p>}
                     {review.image_urls.length > 0 && (
                       <div className="mt-4 flex gap-2 overflow-x-auto">
                         {review.image_urls.map((url) => (
@@ -550,14 +608,14 @@ export default function ShopProductDetailClient({
                             key={url}
                             type="button"
                             onClick={() => setLightboxImage(url)}
-                            className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-[var(--border-light)] bg-white"
+                            className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-[var(--shop-border-light)] bg-white"
                           >
                             <Image src={url} alt="Review image" fill sizes="64px" className="object-cover" />
                           </button>
                         ))}
                       </div>
                     )}
-                    <p className="mt-3 text-xs font-semibold text-[var(--text-muted)]">{review.reviewer_name}</p>
+                    <p className="mt-3 text-xs font-semibold text-[var(--shop-text-muted)]">{review.reviewer_name}</p>
                   </article>
                 ))}
                 {reviews.length < totalReviews && (
@@ -565,7 +623,7 @@ export default function ShopProductDetailClient({
                     type="button"
                     onClick={loadMoreReviews}
                     disabled={loadingReviews}
-                    className="min-h-[44px] rounded-xl border border-[var(--border-light)] px-4 text-sm font-bold text-[var(--text-primary)]"
+                    className="min-h-[44px] rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] px-4 text-sm font-semibold text-[var(--shop-text-primary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
                   >
                     {loadingReviews ? 'Loading...' : 'Load more'}
                   </button>
@@ -573,9 +631,10 @@ export default function ShopProductDetailClient({
               </div>
             </div>
           ) : (
-            <p className="mt-6 text-[var(--text-secondary)]">No reviews yet.</p>
+            <p className="mt-6 text-[var(--shop-text-muted)]">No reviews yet.</p>
           )}
         </section>
+
         <ProductRecommendations
           title="You Might Also Like"
           productId={product.id}
@@ -583,6 +642,7 @@ export default function ShopProductDetailClient({
           limit={6}
         />
       </div>
+
       <ReviewModal
         open={reviewModalOpen}
         product={product}
@@ -594,6 +654,14 @@ export default function ShopProductDetailClient({
           setToast(message || "Review submitted! It'll appear after approval.")
         }}
       />
+      {product.model_url && (
+        <ProductModelModal
+          open={modelOpen}
+          modelUrl={product.model_url}
+          productName={product.name}
+          onClose={() => setModelOpen(false)}
+        />
+      )}
     </main>
   )
 }

@@ -345,23 +345,23 @@ export default function ShopCheckoutClient({
 
       <div className="mx-auto max-w-7xl">
         <div className="mb-8">
-          <p className="text-sm font-semibold text-[var(--brand-primary)]">3D Shop</p>
-          <h1 className="mt-2 text-[clamp(2rem,6vw,3rem)] font-extrabold text-[var(--text-primary)] md:text-4xl">Checkout</h1>
-          <p className="mt-2 text-[var(--text-secondary)]">Secure online payment through Razorpay for the confirmed order amount.</p>
+          <p className="text-sm font-semibold text-[var(--shop-gold)]">3D Shop</p>
+          <h1 className="font-[var(--shop-font-heading)] mt-2 text-[clamp(2rem,6vw,3rem)] font-semibold text-[var(--shop-text-primary)] md:text-4xl">Checkout</h1>
+          <p className="mt-2 text-[var(--shop-text-secondary)]">Secure online payment through Razorpay for the confirmed order amount.</p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
           <section className="space-y-6">
-            <div className="rounded-3xl border border-[var(--border-light)] bg-white p-5 shadow-[var(--shadow-sm)]">
+            <div className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white p-5 shadow-[var(--shop-shadow-sm)]">
               <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--brand-faint)] text-[var(--brand-primary)]">
+                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--shop-gold-faint)] text-[var(--shop-gold)]">
                   <MapPin className="h-5 w-5" />
                 </span>
-                <h2 className="text-2xl font-extrabold text-[var(--text-primary)]">Delivery Address</h2>
+                <h2 className="font-[var(--shop-font-heading)] text-2xl font-semibold text-[var(--shop-text-primary)]">Delivery Address</h2>
               </div>
 
               {addressesLoading ? (
-                <div className="mt-5 rounded-2xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-4 text-sm text-[var(--text-secondary)]">
+                <div className="mt-5 rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-4 text-sm text-[var(--shop-text-secondary)]">
                   Loading saved addresses...
                 </div>
               ) : addresses.length > 0 ? (
@@ -378,17 +378,17 @@ export default function ShopCheckoutClient({
                         }}
                         className={`rounded-2xl border p-4 text-left transition ${
                           selected
-                            ? 'border-[var(--brand-primary)] bg-[var(--brand-faint)]'
-                            : 'border-[var(--border-light)] bg-white hover:border-[var(--border-brand)]'
+                            ? 'border-[var(--shop-gold)] bg-[var(--shop-gold-faint)]'
+                            : 'border-[var(--shop-border-light)] bg-white hover:border-[var(--shop-border-gold)]'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <div className="font-bold text-[var(--text-primary)]">{address.full_name}</div>
-                            <div className="mt-1 text-sm text-[var(--text-secondary)]">{address.phone}</div>
-                            <div className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{formatAddressLine(address)}</div>
+                            <div className="font-bold text-[var(--shop-text-primary)]">{address.full_name}</div>
+                            <div className="mt-1 text-sm text-[var(--shop-text-secondary)]">{address.phone}</div>
+                            <div className="mt-2 text-sm leading-6 text-[var(--shop-text-secondary)]">{formatAddressLine(address)}</div>
                           </div>
-                          <label className="flex shrink-0 items-center gap-2 text-sm font-bold text-[var(--brand-primary)]">
+                          <label className="flex shrink-0 items-center gap-2 text-sm font-bold text-[var(--shop-gold)]">
                             <input type="radio" checked={selected} onChange={() => undefined} />
                             Deliver here
                           </label>
@@ -402,8 +402,8 @@ export default function ShopCheckoutClient({
                     onClick={() => setUseNewAddress(true)}
                     className={`flex min-h-[52px] items-center gap-3 rounded-2xl border px-4 text-sm font-bold ${
                       useNewAddress
-                        ? 'border-[var(--brand-primary)] bg-[var(--brand-faint)] text-[var(--brand-primary)]'
-                        : 'border-dashed border-[var(--border-light)] bg-white text-[var(--text-secondary)]'
+                        ? 'border-[var(--shop-gold)] bg-[var(--shop-gold-faint)] text-[var(--shop-gold)]'
+                        : 'border-dashed border-[var(--shop-border-light)] bg-white text-[var(--shop-text-secondary)]'
                     }`}
                   >
                     <Plus className="h-4 w-4" />
@@ -424,7 +424,7 @@ export default function ShopCheckoutClient({
                     ['state', 'State'],
                   ] as Array<[keyof AddressFormState, string]>).map(([field, label]) => (
                     <label key={field} className={field === 'line1' || field === 'line2' ? 'sm:col-span-2' : ''}>
-                      <span className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">{label}</span>
+                      <span className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--shop-text-muted)]">{label}</span>
                       <input
                         value={addressForm[field]}
                         onChange={(event) => {
@@ -448,21 +448,21 @@ export default function ShopCheckoutClient({
                           field === 'city' ? 'City' :
                           field === 'state' ? 'State' : ''
                         }
-                        className={`mt-2 min-h-[48px] w-full rounded-xl border bg-white px-3 text-sm text-[var(--text-primary)] outline-none transition ${
+                        className={`mt-2 min-h-[48px] w-full rounded-xl border bg-white px-3 text-sm text-[var(--shop-text-primary)] outline-none transition ${
                           addressErrors[field]
                             ? 'border-red-400 ring-1 ring-red-400/30 focus:border-red-500'
-                            : 'border-[var(--border-light)] focus:border-[var(--brand-primary)]'
+                            : 'border-[var(--shop-border-light)] focus:border-[var(--shop-gold)]'
                         }`}
                       />
                       {addressErrors[field] && <span className="mt-1 block text-xs text-rose-600">{addressErrors[field]}</span>}
                     </label>
                   ))}
                   {pincodeMessage && (
-                    <div className={`sm:col-span-2 text-sm ${pincodeState === 'serviceable' ? 'text-emerald-700' : pincodeState === 'checking' ? 'text-[var(--text-secondary)]' : 'text-rose-600'}`}>
+                    <div className={`sm:col-span-2 text-sm ${pincodeState === 'serviceable' ? 'text-emerald-700' : pincodeState === 'checking' ? 'text-[var(--shop-text-secondary)]' : 'text-rose-600'}`}>
                       {pincodeMessage}
                     </div>
                   )}
-                  <label className="sm:col-span-2 flex items-center gap-3 text-sm font-semibold text-[var(--text-secondary)]">
+                  <label className="sm:col-span-2 flex items-center gap-3 text-sm font-semibold text-[var(--shop-text-secondary)]">
                     <input
                       type="checkbox"
                       checked={saveAddress}
@@ -475,19 +475,19 @@ export default function ShopCheckoutClient({
               )}
             </div>
 
-            <div className="rounded-3xl border border-[var(--border-light)] bg-white p-5 shadow-[var(--shadow-sm)]">
+            <div className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white p-5 shadow-[var(--shop-shadow-sm)]">
               <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--brand-faint)] text-[var(--brand-primary)]">
+                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--shop-gold-faint)] text-[var(--shop-gold)]">
                   <Banknote className="h-5 w-5" />
                 </span>
-                <h2 className="text-2xl font-extrabold text-[var(--text-primary)]">Payment</h2>
+                <h2 className="font-[var(--shop-font-heading)] text-2xl font-semibold text-[var(--shop-text-primary)]">Payment</h2>
               </div>
-              <div className="mt-5 rounded-2xl border border-[var(--brand-primary)] bg-[var(--brand-faint)] p-4">
+              <div className="mt-5 rounded-2xl border border-[var(--shop-gold)] bg-[var(--shop-gold-faint)] p-4">
                 <div className="flex items-center gap-3">
-                  <Banknote className="h-6 w-6 text-[var(--brand-primary)]" />
+                  <Banknote className="h-6 w-6 text-[var(--shop-gold)]" />
                   <div>
-                    <div className="font-bold text-[var(--text-primary)]">Razorpay checkout</div>
-                    <div className="mt-1 text-sm text-[var(--text-secondary)]">Pay securely after the order is created</div>
+                    <div className="font-bold text-[var(--shop-text-primary)]">Razorpay checkout</div>
+                    <div className="mt-1 text-sm text-[var(--shop-text-secondary)]">Pay securely after the order is created</div>
                   </div>
                   <CheckCircle2 className="ml-auto h-5 w-5 text-emerald-600" />
                 </div>
@@ -495,12 +495,12 @@ export default function ShopCheckoutClient({
             </div>
           </section>
 
-          <aside className="h-fit rounded-3xl border border-[var(--border-light)] bg-white p-5 shadow-[var(--shadow-sm)] lg:sticky lg:top-28">
+          <aside className="h-fit rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white p-5 shadow-[var(--shop-shadow-sm)] lg:sticky lg:top-28">
             <div className="flex items-center gap-3">
-              <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--brand-faint)] text-[var(--brand-primary)]">
+              <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--shop-gold-faint)] text-[var(--shop-gold)]">
                 <PackageCheck className="h-5 w-5" />
               </span>
-              <h2 className="text-2xl font-extrabold text-[var(--text-primary)]">Order Summary</h2>
+                <h2 className="font-[var(--shop-font-heading)] text-2xl font-semibold text-[var(--shop-text-primary)]">Order Summary</h2>
             </div>
 
             {reviewBanner && (
@@ -519,11 +519,11 @@ export default function ShopCheckoutClient({
                   className={`rounded-2xl border p-3 ${
                     affectedItemIds.includes(item.cartItemId)
                       ? 'border-amber-300 bg-amber-50'
-                      : 'border-[var(--border-light)] bg-white'
+                      : 'border-[var(--shop-border-light)] bg-white'
                   }`}
                 >
                   <div className="grid grid-cols-[40px_1fr_auto] gap-3">
-                    <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-[var(--bg-muted)]">
+                    <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-[var(--shop-bg-muted)]">
                       {item.thumbnail ? (
                         <Image src={item.thumbnail} alt={item.productName} fill sizes="40px" className="object-cover" />
                       ) : (
@@ -531,16 +531,16 @@ export default function ShopCheckoutClient({
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className="line-clamp-1 text-sm font-bold text-[var(--text-primary)]">{item.productName}</div>
-                      <div className="mt-1 text-xs text-[var(--text-muted)]">{item.variantLabel}</div>
+                      <div className="line-clamp-1 text-sm font-bold text-[var(--shop-text-primary)]">{item.productName}</div>
+                      <div className="mt-1 text-xs text-[var(--shop-text-muted)]">{item.variantLabel}</div>
                       {item.customizationText && (
-                        <div className="mt-1 text-xs italic text-[var(--text-secondary)]">Engraved: {item.customizationText}</div>
+                        <div className="mt-1 text-xs italic text-[var(--shop-text-secondary)]">Engraved: {item.customizationText}</div>
                       )}
-                      <div className="mt-1 text-xs text-[var(--text-secondary)]">
+                      <div className="mt-1 text-xs text-[var(--shop-text-secondary)]">
                         Qty {item.quantity} x {formatShopPrice(item.price)}
                       </div>
                     </div>
-                    <div className="text-right text-sm font-extrabold text-[var(--text-primary)]">
+                    <div className="text-right text-sm font-extrabold text-[var(--shop-text-primary)]">
                       {formatShopPrice(item.price * item.quantity)}
                     </div>
                   </div>
@@ -548,10 +548,10 @@ export default function ShopCheckoutClient({
               ))}
             </div>
 
-            <div className="mt-5 space-y-3 border-t border-[var(--border-light)] pt-5 text-sm">
-              <div className="flex justify-between text-[var(--text-secondary)]">
+            <div className="mt-5 space-y-3 border-t border-[var(--shop-border-light)] pt-5 text-sm">
+              <div className="flex justify-between text-[var(--shop-text-secondary)]">
                 <span>Subtotal</span>
-                <span className="font-bold text-[var(--text-primary)]">{formatShopPrice(totals.subtotal)}</span>
+                <span className="font-bold text-[var(--shop-text-primary)]">{formatShopPrice(totals.subtotal)}</span>
               </div>
               {totals.discount > 0 && (
                 <div className="flex justify-between text-emerald-700">
@@ -562,42 +562,42 @@ export default function ShopCheckoutClient({
                   <span className="font-bold">-{formatShopPrice(totals.discount)}</span>
                 </div>
               )}
-              <div className="rounded-2xl bg-[var(--bg-soft)] px-3 py-2 text-xs font-semibold text-[var(--text-secondary)]">
+              <div className="rounded-2xl bg-[var(--shop-bg-soft)] px-3 py-2 text-xs font-semibold text-[var(--shop-text-secondary)]">
                 {qualifiesForFreeShipping
                   ? "You've got free shipping!"
                   : `Free shipping on orders above ${formatShopPrice(deliveryChargeThreshold)}`}
               </div>
-              <div className="flex justify-between text-[var(--text-secondary)]">
+              <div className="flex justify-between text-[var(--shop-text-secondary)]">
                 <span>Shipping</span>
-                <span className="font-bold text-[var(--text-primary)]">{shippingCharge === 0 ? 'Free' : formatShopPrice(shippingCharge)}</span>
+                <span className="font-bold text-[var(--shop-text-primary)]">{shippingCharge === 0 ? 'Free' : formatShopPrice(shippingCharge)}</span>
               </div>
-              <div className="flex justify-between text-xs text-[var(--text-muted)]">
+              <div className="flex justify-between text-xs text-[var(--shop-text-muted)]">
                 <span>Estimated package weight</span>
                 <span>{totalWeight > 0 ? `${Math.round(totalWeight)} g` : 'Calculated'}</span>
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-between border-t border-[var(--border-light)] pt-5">
-              <span className="text-lg font-bold text-[var(--text-primary)]">Total</span>
-              <span className="text-2xl font-extrabold text-[var(--text-primary)]">{formatShopPrice(payableTotal)}</span>
+            <div className="mt-5 flex items-center justify-between border-t border-[var(--shop-border-light)] pt-5">
+              <span className="text-lg font-bold text-[var(--shop-text-primary)]">Total</span>
+              <span className="text-2xl font-extrabold text-[var(--shop-text-primary)]">{formatShopPrice(payableTotal)}</span>
             </div>
 
             <button
               type="button"
               onClick={() => void handlePlaceOrder()}
               disabled={isPlacing}
-              className="btn-primary mt-5 flex min-h-[54px] w-full items-center justify-center disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-5 flex min-h-[54px] w-full items-center justify-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-text-primary)] text-base font-semibold text-white transition hover:bg-[var(--shop-text-secondary)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isPlacing ? 'Placing your order...' : `Place Order · ${formatShopPrice(payableTotal)}`}
             </button>
-            <p className="mt-3 text-center text-xs leading-5 text-[var(--text-muted)]">
+            <p className="mt-3 text-center text-xs leading-5 text-[var(--shop-text-muted)]">
               By placing this order you agree to our Terms & Conditions and Return Policy.
             </p>
             <div className="mt-4 flex items-center justify-center gap-2 text-xs font-semibold text-emerald-700">
               <ShieldCheck className="h-4 w-4" />
               Server verified price and stock before order placement.
             </div>
-            <Link href="/3d-shop/cart" className="mt-4 block text-center text-sm font-bold text-[var(--text-secondary)]">
+            <Link href="/3d-shop/cart" className="mt-4 block text-center text-sm font-bold text-[var(--shop-text-secondary)]">
               Back to cart
             </Link>
           </aside>

@@ -52,14 +52,14 @@ export default function ProductRecommendations({
   if (!loading && products.length === 0) return null
 
   return (
-    <section className={`${compact ? 'mt-8' : 'mt-16'} rounded-3xl border border-[var(--border-light)] bg-white p-5 shadow-[var(--shadow-sm)] md:p-8`}>
-      <h2 className={`${compact ? '!text-xl' : '!text-3xl'} font-extrabold text-[var(--text-primary)]`}>{title}</h2>
+    <section className={`${compact ? 'mt-8' : 'mt-16'} rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-5 shadow-[var(--shop-shadow-sm)] md:p-8`}>
+      <h2 className={`font-[var(--shop-font-heading)] ${compact ? 'text-xl' : 'text-3xl'} font-semibold text-[var(--shop-text-primary)]`}>{title}</h2>
       {loading && products.length === 0 ? (
-        <div className="mt-6 text-sm font-semibold text-[var(--text-secondary)]">Loading products...</div>
+        <div className="mt-6 text-sm font-medium text-[var(--shop-text-muted)]">Loading products...</div>
       ) : (
         <div className="mt-6 grid auto-cols-[72%] grid-flow-col gap-4 overflow-x-auto pb-2 sm:auto-cols-[42%] lg:grid-flow-row lg:grid-cols-4 lg:overflow-visible">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {products.map((product, index) => (
+            <ProductCard key={product.id} product={product} index={index} />
           ))}
         </div>
       )}

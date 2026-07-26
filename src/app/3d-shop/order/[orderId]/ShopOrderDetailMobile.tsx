@@ -83,7 +83,7 @@ function getOrderItemCount(order: ShopOrder) {
 function LoadingState() {
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/85 p-4 shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/85 p-4 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 animate-pulse rounded-xl bg-[var(--bg-muted)]" />
           <div className="h-4 w-24 animate-pulse rounded-full bg-[var(--bg-muted)]" />
@@ -94,7 +94,7 @@ function LoadingState() {
           <div className="h-5 w-16 animate-pulse rounded-full bg-[var(--bg-muted)]" />
         </div>
       </div>
-      <div className="overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/85 p-4 shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/85 p-4 shadow-sm">
         <div className="h-4 w-32 animate-pulse rounded-full bg-[var(--bg-muted)]" />
         <div className="mt-3 grid grid-cols-4 gap-2">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -102,7 +102,7 @@ function LoadingState() {
           ))}
         </div>
       </div>
-      <div className="overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/85 p-4 shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/85 p-4 shadow-sm">
         <div className="h-4 w-24 animate-pulse rounded-full bg-[var(--bg-muted)]" />
         <div className="mt-3 flex gap-3">
           <div className="h-14 w-14 flex-shrink-0 animate-pulse rounded-xl bg-[var(--bg-muted)]" />
@@ -183,11 +183,11 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
 
   if (error || !order) {
     return (
-      <div className="rounded-2xl border border-[var(--border-light)] bg-white/88 p-6 text-center shadow-sm backdrop-blur-xl">
+      <div className="rounded-2xl border border-[var(--shop-border-light)] bg-white/88 p-6 text-center shadow-sm backdrop-blur-xl">
         <XCircle className="mx-auto h-12 w-12 text-rose-600" />
-        <h1 className="mt-3 text-lg font-bold text-[var(--text-primary)]">Order not found</h1>
-        <p className="mt-2 text-sm text-[var(--text-secondary)]">{error || 'This order could not be loaded.'}</p>
-        <Link href="/3d-shop/orders" className="btn-primary mt-5 inline-flex min-h-[44px] items-center px-4 text-sm">
+        <h1 className="mt-3 text-lg font-bold text-[var(--shop-text-primary)]">Order not found</h1>
+        <p className="mt-2 text-sm text-[var(--shop-text-secondary)]">{error || 'This order could not be loaded.'}</p>
+        <Link href="/3d-shop/orders" className="inline-flex items-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-text-primary)] text-sm font-semibold text-white transition hover:bg-[var(--shop-text-secondary)] mt-5 inline-flex min-h-[44px] items-center px-4 text-sm">
           <span className="relative z-10">View 3D Shop Orders</span>
         </Link>
       </div>
@@ -198,7 +198,7 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
     <>
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-5 right-5 z-[120] max-w-sm rounded-xl border border-[var(--border-light)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] shadow-lg">
+        <div className="fixed bottom-5 right-5 z-[120] max-w-sm rounded-xl border border-[var(--shop-border-light)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--shop-text-primary)] shadow-lg">
           {toast}
         </div>
       )}
@@ -206,17 +206,17 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
       {/* Cancel/Return Dialog */}
       {dialogType && (
         <div className="fixed inset-0 z-[110] grid place-items-center bg-slate-950/40 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-[var(--border-light)] bg-white p-5 shadow-2xl">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--shop-border-light)] bg-white p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-2.5">
                 <span className="grid h-9 w-9 place-items-center rounded-xl border border-amber-200 bg-amber-50 text-amber-700">
                   <XCircle className="h-4 w-4" />
                 </span>
                 <div>
-                  <h2 className="text-base font-bold text-[var(--text-primary)]">
+                  <h2 className="text-base font-bold text-[var(--shop-text-primary)]">
                     {dialogType === 'cancel' ? 'Cancel order?' : 'Request return?'}
                   </h2>
-                  <p className="mt-1.5 text-sm text-[var(--text-secondary)]">
+                  <p className="mt-1.5 text-sm text-[var(--shop-text-secondary)]">
                     {dialogType === 'cancel' ? 'Are you sure? This cannot be undone.' : 'Share the reason for the return request.'}
                   </p>
                 </div>
@@ -224,7 +224,7 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
               <button
                 type="button"
                 onClick={() => { setDialogType(null); setReason('') }}
-                className="grid h-8 w-8 place-items-center rounded-lg border border-[var(--border-light)] bg-white text-[var(--text-muted)]"
+                className="grid h-8 w-8 place-items-center rounded-lg border border-[var(--shop-border-light)] bg-white text-[var(--shop-text-muted)]"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -233,13 +233,13 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder={dialogType === 'cancel' ? 'Cancellation reason' : 'Return reason'}
-              className="mt-4 min-h-[100px] w-full resize-y rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand-primary)]"
+              className="mt-4 min-h-[100px] w-full resize-y rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3 text-sm text-[var(--shop-text-primary)] outline-none focus:border-[var(--shop-gold)]"
             />
             <div className="mt-4 flex gap-2.5">
               <button
                 type="button"
                 onClick={() => { setDialogType(null); setReason('') }}
-                className="min-h-[40px] flex-1 rounded-lg border border-[var(--border-light)] bg-white text-sm font-semibold text-[var(--text-secondary)]"
+                className="min-h-[40px] flex-1 rounded-lg border border-[var(--shop-border-light)] bg-white text-sm font-semibold text-[var(--shop-text-secondary)]"
               >
                 Keep Order
               </button>
@@ -247,7 +247,7 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
                 type="button"
                 onClick={() => void submitAction()}
                 disabled={!reason.trim() || actionLoading}
-                className="btn-primary min-h-[40px] flex-1 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-text-primary)] text-sm font-semibold text-white transition hover:bg-[var(--shop-text-secondary)] min-h-[40px] flex-1 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <span className="relative z-10">{actionLoading ? 'Saving...' : 'Confirm'}</span>
               </button>
@@ -258,20 +258,20 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
 
       <div className="space-y-4">
         {/* Hero Section */}
-        <section className="overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/82 p-4 shadow-sm backdrop-blur-xl">
+        <section className="overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/82 p-4 shadow-sm backdrop-blur-xl">
           <div className="flex items-center gap-2">
-            <Link href="/3d-shop/orders" className="inline-flex min-h-[32px] items-center gap-1.5 rounded-lg border border-[var(--border-light)] bg-white px-2 text-xs font-semibold text-[var(--text-secondary)] shadow-sm transition hover:border-[var(--border-brand)] hover:text-[var(--brand-primary)]">
+            <Link href="/3d-shop/orders" className="inline-flex min-h-[32px] items-center gap-1.5 rounded-lg border border-[var(--shop-border-light)] bg-white px-2 text-xs font-semibold text-[var(--shop-text-secondary)] shadow-sm transition hover:border-[var(--border-brand)] hover:text-[var(--shop-gold)]">
               <ArrowLeft className="h-3.5 w-3.5" />
             </Link>
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-brand)] bg-[var(--brand-faint)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-brand)] bg-[var(--brand-faint)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--shop-gold)]">
               Order Detail
             </div>
           </div>
 
-          <p className="mt-3 text-sm font-bold tracking-tight text-[var(--text-primary)]">
+          <p className="mt-3 text-sm font-bold tracking-tight text-[var(--shop-text-primary)]">
             #{order.order_number}
           </p>
-          <p className="mt-1 text-xs text-[var(--text-secondary)]">
+          <p className="mt-1 text-xs text-[var(--shop-text-secondary)]">
             Placed on {formatShopOrderDate(order.placed_at)}
           </p>
 
@@ -305,13 +305,13 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
               return (
                 <div
                   key={metric.label}
-                  className="min-w-[100px] flex-shrink-0 rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3"
+                  className="min-w-[100px] flex-shrink-0 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3"
                 >
                   <div className={`inline-flex h-7 w-7 items-center justify-center rounded-lg ${metric.bg}`}>
                     <Icon className={`h-3.5 w-3.5 ${metric.tone}`} />
                   </div>
-                  <div className="mt-2 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">{metric.label}</div>
-                  <div className="mt-0.5 truncate text-sm font-bold text-[var(--text-primary)]">{metric.value}</div>
+                  <div className="mt-2 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">{metric.label}</div>
+                  <div className="mt-0.5 truncate text-sm font-bold text-[var(--shop-text-primary)]">{metric.value}</div>
                 </div>
               )
             })}
@@ -320,14 +320,14 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
 
         {/* Fulfillment Timeline */}
         {!exceptionStatus && (
-          <section className="rounded-2xl border border-[var(--border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl">
+          <section className="rounded-2xl border border-[var(--shop-border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl">
             <div className="flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--shop-gold)]">
                   <CircleDot className="h-3.5 w-3.5" />
                   Fulfillment
                 </div>
-                <h2 className="mt-1 text-sm font-bold text-[var(--text-primary)]">Order status</h2>
+                <h2 className="mt-1 text-sm font-bold text-[var(--shop-text-primary)]">Order status</h2>
               </div>
               <span className={`w-fit rounded-full border px-2 py-0.5 text-xs font-bold ${
                 order.order_status === 'cancelled' || order.order_status === 'returned'
@@ -380,16 +380,16 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
         )}
 
         {/* Items Ordered */}
-        <section className="rounded-2xl border border-[var(--border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl">
+        <section className="rounded-2xl border border-[var(--shop-border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl">
           <div className="flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--shop-gold)]">
                 <PackageCheck className="h-3.5 w-3.5" />
                 Items
               </div>
-              <h2 className="mt-1 text-sm font-bold text-[var(--text-primary)]">Items ordered</h2>
+              <h2 className="mt-1 text-sm font-bold text-[var(--shop-text-primary)]">Items ordered</h2>
             </div>
-            <div className="rounded-full border border-[var(--border-light)] bg-[var(--bg-soft)] px-2 py-0.5 text-xs font-bold text-[var(--text-secondary)]">
+            <div className="rounded-full border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] px-2 py-0.5 text-xs font-bold text-[var(--shop-text-secondary)]">
               {itemCount} item{itemCount === 1 ? '' : 's'}
             </div>
           </div>
@@ -398,7 +398,7 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
             {order.items.map((item) => (
               <div
                 key={`${item.skuId}-${item.customizationText ?? ''}`}
-                className="rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3"
+                className="rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3"
               >
                 <div className="flex gap-3">
                   <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--bg-muted)]">
@@ -406,31 +406,31 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
                       <Image src={item.productThumbnail} alt={item.productName} fill sizes="56px" className="object-cover" />
                     ) : (
                       <div className="grid h-full place-items-center">
-                        <Package className="h-6 w-6 text-[var(--text-muted)]" />
+                        <Package className="h-6 w-6 text-[var(--shop-text-muted)]" />
                       </div>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <div className="font-bold text-[var(--text-primary)] transition hover:text-[var(--brand-primary)]">
+                        <div className="font-bold text-[var(--shop-text-primary)] transition hover:text-[var(--shop-gold)]">
                           {item.productSlug ? (
                             <Link href={`/3d-shop/product/${item.productSlug}`}>{item.productName}</Link>
                           ) : (
                             item.productName
                           )}
                         </div>
-                        <p className="mt-0.5 text-xs text-[var(--text-muted)]">{item.variantLabel}</p>
+                        <p className="mt-0.5 text-xs text-[var(--shop-text-muted)]">{item.variantLabel}</p>
                         {item.customizationText && (
-                          <p className="mt-0.5 text-xs italic text-[var(--text-secondary)]">Engraved: {item.customizationText}</p>
+                          <p className="mt-0.5 text-xs italic text-[var(--shop-text-secondary)]">Engraved: {item.customizationText}</p>
                         )}
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Total</div>
-                        <div className="text-sm font-bold text-[var(--text-primary)]">{formatShopPrice(getShopOrderLineTotal(item))}</div>
+                        <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">Total</div>
+                        <div className="text-sm font-bold text-[var(--shop-text-primary)]">{formatShopPrice(getShopOrderLineTotal(item))}</div>
                       </div>
                     </div>
-                    <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                    <p className="mt-1 text-xs text-[var(--shop-text-secondary)]">
                       Qty {item.quantity} x {formatShopPrice(item.unitPrice)}
                     </p>
                   </div>
@@ -443,18 +443,18 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
         {/* Address & Payment */}
         <div className="grid items-stretch gap-3">
           {/* Address */}
-          <section className="rounded-2xl border border-[var(--border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl">
+          <section className="rounded-2xl border border-[var(--shop-border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl">
             <div className="flex items-center gap-2">
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50">
                 <MapPin className="h-3.5 w-3.5 text-rose-600" />
               </span>
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Delivery</div>
-                <h2 className="text-sm font-bold text-[var(--text-primary)]">Address</h2>
+                <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">Delivery</div>
+                <h2 className="text-sm font-bold text-[var(--shop-text-primary)]">Address</h2>
               </div>
             </div>
-            <div className="mt-3 break-words text-xs leading-6 text-[var(--text-secondary)]">
-              <div className="font-bold text-[var(--text-primary)]">{order.shipping_address.name}</div>
+            <div className="mt-3 break-words text-xs leading-6 text-[var(--shop-text-secondary)]">
+              <div className="font-bold text-[var(--shop-text-primary)]">{order.shipping_address.name}</div>
               <div>{order.shipping_address.phone}</div>
               <div>{order.shipping_address.line1}</div>
               {order.shipping_address.line2 && <div>{order.shipping_address.line2}</div>}
@@ -463,20 +463,20 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
           </section>
 
           {/* Payment */}
-          <section className="rounded-2xl border border-[var(--border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl">
+          <section className="rounded-2xl border border-[var(--shop-border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl">
             <div className="flex items-center gap-2">
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50">
                 <CreditCard className="h-3.5 w-3.5 text-violet-600" />
               </span>
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Payment</div>
-                <h2 className="text-sm font-bold text-[var(--text-primary)]">Info</h2>
+                <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">Payment</div>
+                <h2 className="text-sm font-bold text-[var(--shop-text-primary)]">Info</h2>
               </div>
             </div>
-            <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3">
-              <Banknote className="h-4 w-4 shrink-0 text-[var(--brand-primary)]" />
+            <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3">
+              <Banknote className="h-4 w-4 shrink-0 text-[var(--shop-gold)]" />
               <div className="min-w-0">
-                <div className="text-sm font-bold text-[var(--text-primary)]">
+                <div className="text-sm font-bold text-[var(--shop-text-primary)]">
                   {getPaymentModeLabel(order.payment_provider ?? order.payment_method)}
                 </div>
                 <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold ${getShopPaymentStatusClasses(order.payment_status)}`}>
@@ -489,7 +489,7 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
                 <p className="font-bold">Payment is still pending or failed.</p>
                 <Link
                   href={`/3d-shop/payment/${order.id}`}
-                  className="mt-2 inline-flex min-h-[36px] items-center justify-center rounded-lg bg-[var(--brand-primary)] px-3 text-xs font-bold text-white"
+                  className="mt-2 inline-flex min-h-[36px] items-center justify-center rounded-lg bg-[var(--shop-gold)] px-3 text-xs font-bold text-white"
                 >
                   Complete payment
                 </Link>
@@ -499,21 +499,21 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
         </div>
 
         {/* Pricing Summary */}
-        <section className="rounded-2xl border border-[var(--border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl">
+        <section className="rounded-2xl border border-[var(--shop-border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl">
           <div className="flex items-center gap-2.5">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-brand)] bg-[var(--brand-faint)] text-[var(--brand-primary)]">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-brand)] bg-[var(--brand-faint)] text-[var(--shop-gold)]">
               <ReceiptText className="h-4 w-4" />
             </span>
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Receipt</div>
-              <h2 className="text-sm font-bold text-[var(--text-primary)]">Pricing</h2>
+              <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">Receipt</div>
+              <h2 className="text-sm font-bold text-[var(--shop-text-primary)]">Pricing</h2>
             </div>
           </div>
 
-          <div className="mt-3 space-y-2 rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3 text-xs">
-            <div className="flex items-start justify-between gap-3 text-[var(--text-secondary)]">
+          <div className="mt-3 space-y-2 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3 text-xs">
+            <div className="flex items-start justify-between gap-3 text-[var(--shop-text-secondary)]">
               <span className="min-w-0 break-words">Subtotal</span>
-              <span className="shrink-0 font-bold text-[var(--text-primary)]">{formatShopPrice(order.subtotal)}</span>
+              <span className="shrink-0 font-bold text-[var(--shop-text-primary)]">{formatShopPrice(order.subtotal)}</span>
             </div>
             {order.discount_amount > 0 && (
               <div className="flex items-start justify-between gap-3 text-emerald-700">
@@ -521,15 +521,15 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
                 <span className="shrink-0 font-bold">-{formatShopPrice(order.discount_amount)}</span>
               </div>
             )}
-            <div className="flex items-start justify-between gap-3 text-[var(--text-secondary)]">
+            <div className="flex items-start justify-between gap-3 text-[var(--shop-text-secondary)]">
               <span className="min-w-0 break-words">Shipping</span>
-              <span className="shrink-0 font-bold text-[var(--text-primary)]">{order.shipping_charge === 0 ? 'Free' : formatShopPrice(order.shipping_charge)}</span>
+              <span className="shrink-0 font-bold text-[var(--shop-text-primary)]">{order.shipping_charge === 0 ? 'Free' : formatShopPrice(order.shipping_charge)}</span>
             </div>
           </div>
 
-          <div className="mt-3 flex items-center justify-between border-t border-[var(--border-light)] pt-3">
-            <span className="text-sm font-bold text-[var(--text-primary)]">Total</span>
-            <span className="text-right text-lg font-bold text-[var(--text-primary)]">{formatShopPrice(order.total_amount)}</span>
+          <div className="mt-3 flex items-center justify-between border-t border-[var(--shop-border-light)] pt-3">
+            <span className="text-sm font-bold text-[var(--shop-text-primary)]">Total</span>
+            <span className="text-right text-lg font-bold text-[var(--shop-text-primary)]">{formatShopPrice(order.total_amount)}</span>
           </div>
 
           <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-800">
@@ -542,24 +542,24 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
 
         {/* Tracking */}
         {(order.tracking_number || order.estimated_delivery) && (
-          <section className="rounded-2xl border border-[var(--border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl">
+          <section className="rounded-2xl border border-[var(--shop-border-light)] bg-white/88 p-4 shadow-sm backdrop-blur-xl">
             <div className="flex items-center gap-2">
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-sky-50">
                 <Truck className="h-3.5 w-3.5 text-sky-600" />
               </span>
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Tracking</div>
-                <h2 className="text-sm font-bold text-[var(--text-primary)]">Info</h2>
+                <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">Tracking</div>
+                <h2 className="text-sm font-bold text-[var(--shop-text-primary)]">Info</h2>
               </div>
             </div>
             {order.tracking_number && (
-              <div className="mt-3 rounded-xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3 text-xs text-[var(--text-secondary)]">
-                {order.courier_name && <div>Courier: <span className="font-bold text-[var(--text-primary)]">{order.courier_name}</span></div>}
-                <div className="mt-0.5">Tracking: <span className="break-all font-bold text-[var(--text-primary)]">{order.tracking_number}</span></div>
+              <div className="mt-3 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3 text-xs text-[var(--shop-text-secondary)]">
+                {order.courier_name && <div>Courier: <span className="font-bold text-[var(--shop-text-primary)]">{order.courier_name}</span></div>}
+                <div className="mt-0.5">Tracking: <span className="break-all font-bold text-[var(--shop-text-primary)]">{order.tracking_number}</span></div>
               </div>
             )}
             {order.estimated_delivery && (
-              <div className="mt-2 text-xs text-[var(--text-secondary)]">
+              <div className="mt-2 text-xs text-[var(--shop-text-secondary)]">
                 Expected by {formatShopOrderDate(order.estimated_delivery)}
               </div>
             )}
@@ -571,7 +571,7 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
       </div>
 
       {/* Sticky Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border-light)] bg-white/95 p-4 backdrop-blur-xl">
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--shop-border-light)] bg-white/95 p-4 backdrop-blur-xl">
         <div className="mx-auto max-w-lg space-y-2">
           {isShopOrderCancellable(order.order_status) && (
             <button
@@ -594,10 +594,10 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
             </button>
           )}
           <div className="flex gap-2">
-            <Link href="/3d-shop" className="btn-primary flex min-h-[40px] flex-1 items-center justify-center text-xs">
+            <Link href="/3d-shop" className="inline-flex items-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-text-primary)] text-sm font-semibold text-white transition hover:bg-[var(--shop-text-secondary)] flex min-h-[40px] flex-1 items-center justify-center text-xs">
               <span className="relative z-10">Continue Shopping</span>
             </Link>
-            <Link href="/3d-shop/orders" className="flex min-h-[40px] flex-1 items-center justify-center rounded-lg border border-[var(--border-light)] bg-white text-xs font-bold text-[var(--text-secondary)] transition hover:border-[var(--border-brand)] hover:text-[var(--brand-primary)]">
+            <Link href="/3d-shop/orders" className="flex min-h-[40px] flex-1 items-center justify-center rounded-lg border border-[var(--shop-border-light)] bg-white text-xs font-bold text-[var(--shop-text-secondary)] transition hover:border-[var(--border-brand)] hover:text-[var(--shop-gold)]">
               All Orders
             </Link>
           </div>
