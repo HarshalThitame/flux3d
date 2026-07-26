@@ -286,16 +286,17 @@ export default function NavbarClient({
           <Link
             href="/"
             prefetch={false}
-            className="navbar-logo-link group flex min-h-[40px] items-center px-2"
+            className="navbar-logo-link group flex min-h-[48px] items-center px-2"
             aria-label={`${businessName} home`}
           >
             <Image
               src={logoSrc}
-              alt={`${businessName} logo — Premium 3D printing India`}
-              width={170}
-              height={40}
-              sizes="(min-width: 640px) 168px, 146px"
-              className="h-8 w-auto max-w-[140px] object-contain transition-transform duration-300 group-hover:scale-[1.02] sm:max-w-[164px]"
+              alt={`${businessName} logo`}
+              width={1160}
+              height={478}
+              sizes="(min-width: 640px) 220px, 180px"
+              priority
+              className="h-11 w-auto max-w-[180px] object-contain transition-transform duration-300 group-hover:scale-[1.02] sm:h-12 sm:max-w-[220px]"
             />
           </Link>
 
