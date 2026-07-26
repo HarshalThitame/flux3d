@@ -73,6 +73,7 @@ export default function Sidebar({
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={false}
                 className={`group flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition ${
                   active
                     ? 'bg-[linear-gradient(90deg,rgba(109, 40, 217,0.15),rgba(168, 85, 247,0.12))] text-[#0F1B3D] shadow-[inset_0_0_0_1px_rgba(109, 40, 217,0.4)]'
@@ -98,6 +99,7 @@ export default function Sidebar({
                   <Link
                     key={item.href}
                     href={item.href}
+                    prefetch={false}
                     className={`flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition ${
                       active
                         ? 'bg-[linear-gradient(90deg,rgba(109, 40, 217,0.15),rgba(168, 85, 247,0.12))] text-[#0F1B3D] shadow-[inset_0_0_0_1px_rgba(109, 40, 217,0.4)]'
@@ -128,6 +130,7 @@ export default function Sidebar({
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={false}
                   className={`group relative flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition ${
                     active
                       ? 'bg-[linear-gradient(90deg,rgba(109, 40, 217,0.15),rgba(168, 85, 247,0.12))] text-[#0F1B3D] shadow-[inset_0_0_0_1px_rgba(109, 40, 217,0.4)]'
@@ -151,6 +154,7 @@ export default function Sidebar({
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={false}
                   className={`group relative flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition ${
                     active
                       ? 'bg-[linear-gradient(90deg,rgba(109, 40, 217,0.15),rgba(168, 85, 247,0.12))] text-[#0F1B3D] shadow-[inset_0_0_0_1px_rgba(109, 40, 217,0.4)]'
@@ -174,6 +178,7 @@ export default function Sidebar({
                   <Link
                     key={item.href}
                     href={item.href}
+                    prefetch={false}
                     className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium text-[#6F7192] transition hover:bg-gray-100 hover:text-[#0F1B3D]"
                   >
                     <Icon className="h-5 w-5 shrink-0" />

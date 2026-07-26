@@ -9,6 +9,12 @@ export async function updateSession(request: NextRequest) {
     getSupabaseUrl(),
     getSupabasePublishableKey(),
     {
+      cookieOptions: {
+        path: '/',
+        maxAge: 400 * 24 * 60 * 60,
+        sameSite: 'lax',
+        httpOnly: false,
+      },
       cookies: {
         getAll() {
           return request.cookies.getAll()
