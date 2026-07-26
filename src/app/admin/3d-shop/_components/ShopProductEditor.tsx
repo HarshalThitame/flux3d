@@ -40,6 +40,7 @@ type ProductForm = {
   occasion_tags: string[]
   thumbnail_url: string
   image_urls: string[]
+  model_url: string
   base_price: number
   is_customizable: boolean
   customization_label: string
@@ -70,6 +71,7 @@ const emptyProduct: ProductForm = {
   occasion_tags: [],
   thumbnail_url: '',
   image_urls: [],
+  model_url: '',
   base_price: 0,
   is_customizable: false,
   customization_label: '',
@@ -107,6 +109,7 @@ function toProductForm(product: ShopProduct): ProductForm {
     occasion_tags: product.occasion_tags ?? [],
     thumbnail_url: product.thumbnail_url ?? '',
     image_urls: product.image_urls ?? [],
+    model_url: product.model_url ?? '',
     base_price: Number(product.base_price ?? 0),
     is_customizable: product.is_customizable ?? false,
     customization_label: product.customization_label ?? '',
@@ -380,6 +383,7 @@ export default function ShopProductEditor({
       occasion_tags: product.occasion_tags,
       thumbnail_url: product.thumbnail_url || null,
       image_urls: product.image_urls,
+      model_url: product.model_url || null,
       base_price: product.base_price,
       is_customizable: product.is_customizable,
       customization_label: product.customization_label,
@@ -455,6 +459,29 @@ export default function ShopProductEditor({
       })
       setDirty(true)
     }
+  }
+
+  async function uploadModel(file: File) {
+    const id = await ensureProductId()
+    const tempKey = `model-${file.name}-${Date.now()}`
+    setUploadState((current) => ({ ...current, [tempKey]: 'uploading' }))
+    const body = new FormData()
+    body.append('file', file)
+    body.append('productId', id)
+
+    const response = await fetch('/api/3d-shop/admin/models/upload', { method: 'POST', body })
+    const data = (await response.json()) as { publicUrl?: string; error?: string }
+    if (!response.ok || !data.publicUrl) {
+      setUploadState((current) => ({ ...current, [tempKey]: 'error' }))
+      throw new Error(data.error || 'Model upload failed.')
+    }
+
+    setUploadState((current) => ({ ...current, [tempKey]: 'done' }))
+    updateProduct('model_url', data.publicUrl || '')
+  }
+
+  function removeModel() {
+    updateProduct('model_url', '')
   }
 
   function setThumbnail(url: string) {
@@ -832,6 +859,61 @@ export default function ShopProductEditor({
             </div>
           ))}
         </div>
+      </Section>
+
+      <Section title="3D Model" description="Upload an interactive 3D preview. GLB/GLTF is recommended; STL, OBJ, and 3MF are also supported.">
+        {product.model_url ? (
+          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-[#0F1B3D]">Model uploaded</div>
+                <a href={product.model_url} target="_blank" rel="noopener noreferrer" className="mt-1 block truncate text-xs text-[#6d28d9] underline underline-offset-2">
+                  {product.model_url}
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[#6d28d9]/20 px-3 py-2 text-xs font-semibold text-[#6d28d9] hover:bg-[#6d28d9]/5">
+                  <Upload className="h-3.5 w-3.5" />
+                  Replace
+                  <input
+                    type="file"
+                    accept=".glb,.gltf,.stl,.obj,.3mf"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0]
+                      if (file) void uploadModel(file).catch((error) => setToast({ type: 'error', message: error instanceof Error ? error.message : 'Upload failed.' }))
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={removeModel}
+                  className="rounded-xl border border-rose-200 p-2 text-rose-600 hover:bg-rose-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <label className="flex min-h-[120px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[#6d28d9]/25 bg-[#6d28d9]/5 p-6 text-center">
+            <Upload className="h-8 w-8 text-[#6d28d9]" />
+            <span className="mt-3 text-sm font-semibold text-[#0F1B3D]">Upload 3D model</span>
+            <span className="mt-1 text-xs text-[#6F7192]">GLB, GLTF, STL, OBJ, or 3MF · up to 50 MB</span>
+            <input
+              type="file"
+              accept=".glb,.gltf,.stl,.obj,.3mf"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                if (file) void uploadModel(file).catch((error) => setToast({ type: 'error', message: error instanceof Error ? error.message : 'Upload failed.' }))
+              }}
+            />
+          </label>
+        )}
+        {Object.entries(uploadState).some(([key, state]) => key.startsWith('model-') && state === 'uploading') && (
+          <div className="text-sm text-[#6F7192]">Uploading 3D model...</div>
+        )}
       </Section>
 
       <Section title="Variant Options" description="Define configurable choices that drive SKU generation.">

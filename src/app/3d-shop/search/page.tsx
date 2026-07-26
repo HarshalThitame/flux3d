@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import Navbar from '@/components/Navbar'
+import ShopShell from '@/components/shop/ShopShell'
 import ShopSearchResults from '@/components/shop/ShopSearchResults'
 import { getShopProducts } from '@/lib/shop/public-data'
 
@@ -25,9 +25,8 @@ export default async function ShopSearchPage({
   })
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
-      <Navbar transparent />
+    <ShopShell transparentNav>
       <ShopSearchResults query={query || 'all products'} products={result.products} />
-    </div>
+    </ShopShell>
   )
 }

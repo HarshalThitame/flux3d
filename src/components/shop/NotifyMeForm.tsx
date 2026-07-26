@@ -46,7 +46,7 @@ export default function NotifyMeForm({
 
   if (success) {
     return (
-      <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+      <div className="mt-6 rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] p-4 text-sm font-semibold text-[var(--shop-gold)]">
         <div className="flex items-start gap-2">
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
           <span>You&apos;re on the list! We&apos;ll notify you when {variantLabel} is back in stock.</span>
@@ -56,9 +56,9 @@ export default function NotifyMeForm({
   }
 
   return (
-    <form onSubmit={submit} className="mt-6 rounded-2xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-4">
-      <div className="mb-3 flex items-center gap-2 font-extrabold text-[var(--text-primary)]">
-        <Bell className="h-5 w-5 text-[var(--brand-primary)]" />
+    <form onSubmit={submit} className="mt-6 rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-4">
+      <div className="mb-3 flex items-center gap-2 font-semibold text-[var(--shop-text-primary)]">
+        <Bell className="h-5 w-5 text-[var(--shop-gold)]" />
         Notify Me When Available
       </div>
       <div className="flex flex-col gap-2 sm:flex-row">
@@ -68,18 +68,18 @@ export default function NotifyMeForm({
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="Email address"
-          className="min-h-[46px] min-w-0 flex-1 rounded-xl border border-[var(--border-light)] bg-white px-3 text-sm outline-none focus:border-[var(--border-brand)]"
+          className="min-h-[46px] min-w-0 flex-1 rounded-xl border border-[var(--shop-border-light)] bg-white px-3 text-sm outline-none transition focus:border-[var(--shop-gold)]"
         />
         <button
           type="submit"
           disabled={loading}
-          className="btn-primary inline-flex min-h-[46px] items-center justify-center gap-2 px-4 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-[var(--shop-gold)] px-4 text-sm font-semibold text-[var(--luxury-charcoal)] shadow-[var(--shop-shadow-gold)] transition hover:bg-[var(--shop-gold-light)] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
           Notify Me
         </button>
       </div>
-      <p className="mt-2 text-sm text-[var(--text-secondary)]">We&apos;ll email you the moment it&apos;s back.</p>
+      <p className="mt-2 text-sm text-[var(--shop-text-muted)]">We&apos;ll email you the moment it&apos;s back.</p>
       {error && <p className="mt-2 text-sm font-semibold text-rose-700">{error}</p>}
     </form>
   )

@@ -87,25 +87,25 @@ function LoadingState() {
       {Array.from({ length: 4 }).map((_, index) => (
         <div
           key={index}
-          className="overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/85 shadow-[var(--shadow-sm)]"
+          className="overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/85 shadow-[var(--shop-shadow-sm)]"
         >
           <div className="flex gap-3 p-4">
             <div className="flex flex-col items-center pt-1">
-              <div className="h-3 w-3 flex-shrink-0 rounded-full bg-[var(--bg-muted)]" />
+              <div className="h-3 w-3 flex-shrink-0 rounded-full bg-[var(--shop-bg-muted)]" />
             </div>
             <div className="min-w-0 flex-1 space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <div className="space-y-1.5">
-                  <div className="h-4 w-3/4 animate-pulse rounded-full bg-[var(--bg-muted)]" />
-                  <div className="h-3 w-20 animate-pulse rounded bg-[var(--bg-muted)]" />
+                  <div className="h-4 w-3/4 animate-pulse rounded-full bg-[var(--shop-bg-muted)]" />
+                  <div className="h-3 w-20 animate-pulse rounded bg-[var(--shop-bg-muted)]" />
                 </div>
-                <div className="h-5 w-14 flex-shrink-0 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+                <div className="h-5 w-14 flex-shrink-0 animate-pulse rounded-full bg-[var(--shop-bg-muted)]" />
               </div>
               <div className="flex items-center justify-between">
-                <div className="h-3 w-24 animate-pulse rounded bg-[var(--bg-muted)]" />
-                <div className="h-5 w-16 flex-shrink-0 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+                <div className="h-3 w-24 animate-pulse rounded bg-[var(--shop-bg-muted)]" />
+                <div className="h-5 w-16 flex-shrink-0 animate-pulse rounded-full bg-[var(--shop-bg-muted)]" />
               </div>
-              <div className="h-3 w-32 animate-pulse rounded bg-[var(--bg-muted)]" />
+              <div className="h-3 w-32 animate-pulse rounded bg-[var(--shop-bg-muted)]" />
             </div>
           </div>
         </div>
@@ -177,7 +177,7 @@ export default function ShopOrdersMobile() {
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value as FilterKey)}
-          className="w-full rounded-xl border border-[var(--border-light)] bg-white px-3 py-2.5 text-sm font-bold text-[var(--text-primary)] shadow-sm focus:border-[var(--brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/10"
+          className="w-full rounded-xl border border-[var(--shop-border-light)] bg-white px-3 py-2.5 text-sm font-bold text-[var(--shop-text-primary)] shadow-sm focus:border-[var(--shop-gold)] focus:outline-none focus:ring-2 focus:ring-[var(--shop-gold)]/10"
         >
           {filters.map((item) => (
             <option key={item.key} value={item.key}>
@@ -189,12 +189,12 @@ export default function ShopOrdersMobile() {
 
       {/* Orders List */}
       {visibleOrders.length === 0 ? (
-        <div className="rounded-2xl border border-[var(--border-light)] bg-white/86 p-6 text-center shadow-sm backdrop-blur-xl">
-          <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl border border-[var(--border-brand)] bg-[var(--brand-faint)] text-[var(--brand-primary)]">
+        <div className="rounded-2xl border border-[var(--shop-border-light)] bg-white/86 p-6 text-center shadow-sm backdrop-blur-xl">
+          <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] text-[var(--shop-gold)]">
             <ShoppingBag className="h-6 w-6" />
           </div>
-          <h2 className="mt-3 text-base font-bold text-[var(--text-primary)]">No orders here yet</h2>
-          <p className="mt-1 text-xs font-semibold text-[var(--text-secondary)]">
+          <h2 className="mt-3 text-base font-bold text-[var(--shop-text-primary)]">No orders here yet</h2>
+          <p className="mt-1 text-xs font-semibold text-[var(--shop-text-secondary)]">
             Orders matching this filter will appear here.
           </p>
           <Link
@@ -217,7 +217,7 @@ export default function ShopOrdersMobile() {
               <Link
                 key={order.id}
                 href={`/3d-shop/order/${order.id}`}
-                className="group block animate-slide-in-up overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white/88 shadow-[var(--shadow-sm)] backdrop-blur-xl transition hover:shadow-[var(--shadow-md)]"
+                className="group block animate-slide-in-up overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/88 shadow-[var(--shop-shadow-sm)] backdrop-blur-xl transition hover:shadow-[var(--shop-shadow-md)]"
               >
                 <div className="flex gap-3 p-4">
                   {/* Status indicator */}
@@ -230,11 +230,11 @@ export default function ShopOrdersMobile() {
                     {/* Row 1: Product name + Status badge */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <div className="line-clamp-1 text-sm font-bold leading-tight text-[var(--text-primary)]">
+                        <div className="line-clamp-1 text-sm font-bold leading-tight text-[var(--shop-text-primary)]">
                           {firstItem?.productName ?? '3D Shop Order'}
                         </div>
                         {moreCount > 0 && (
-                          <div className="mt-0.5 text-[10px] font-bold text-[var(--brand-primary)]">
+                          <div className="mt-0.5 text-[10px] font-bold text-[var(--shop-gold)]">
                             +{moreCount} more item{moreCount === 1 ? '' : 's'}
                           </div>
                         )}
@@ -252,7 +252,7 @@ export default function ShopOrdersMobile() {
 
                     {/* Row 2: Order number + Payment badge */}
                     <div className="mt-2 flex items-center justify-between gap-2">
-                      <div className="min-w-0 truncate text-xs font-bold text-[var(--text-muted)]">
+                      <div className="min-w-0 truncate text-xs font-bold text-[var(--shop-text-muted)]">
                         #{order.order_number}
                       </div>
                       <div className="flex-shrink-0">
@@ -262,12 +262,12 @@ export default function ShopOrdersMobile() {
 
                     {/* Row 3: Date + Items + Total */}
                     <div className="mt-1.5 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--shop-text-muted)]">
                         <span className="flex-shrink-0">Placed {formatShopOrderDate(order.placed_at)}</span>
-                        <span className="text-[var(--border-medium)]">·</span>
+                        <span className="text-[var(--shop-border-medium)]">·</span>
                         <span className="flex-shrink-0">{itemCount} item{itemCount === 1 ? '' : 's'}</span>
                       </div>
-                      <div className="flex-shrink-0 text-sm font-black text-[var(--brand-primary)]">
+                      <div className="flex-shrink-0 text-sm font-black text-[var(--shop-gold)]">
                         {formatShopPrice(order.total_amount)}
                       </div>
                     </div>

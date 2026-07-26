@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import Navbar from '@/components/Navbar'
+import ShopShell from '@/components/shop/ShopShell'
 import { getCurrentUserProfile } from '@/lib/auth/server'
 import { getSettings } from '@/lib/settings'
 import ShopCheckoutClient from './ShopCheckoutClient'
@@ -16,12 +16,11 @@ export default async function ShopCheckoutPage() {
   const settings = await getSettings()
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
-      <Navbar transparent />
+    <ShopShell transparentNav>
       <ShopCheckoutClient
         deliveryChargeThreshold={settings.deliveryChargeThreshold}
         defaultDeliveryCharge={settings.defaultDeliveryCharge}
       />
-    </div>
+    </ShopShell>
   )
 }

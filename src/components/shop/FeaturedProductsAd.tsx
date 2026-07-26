@@ -12,15 +12,15 @@ import type { ShopPublicProduct } from '@/lib/shop/public-types'
 
 function ProductSkeleton() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white shadow-sm">
-      <div className="relative aspect-[4/3] bg-[var(--bg-muted)]">
+    <div className="overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)]">
+      <div className="relative aspect-[4/3] bg-[var(--shop-bg-muted)]">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer" />
       </div>
       <div className="p-3 space-y-2">
-        <div className="h-4 w-full rounded-full bg-[var(--bg-muted)] animate-pulse" />
-        <div className="h-3 w-2/3 rounded-full bg-[var(--bg-muted)] animate-pulse" />
-        <div className="h-5 w-1/2 rounded-full bg-[var(--bg-muted)] animate-pulse" />
-        <div className="h-9 w-full rounded-xl bg-[var(--bg-muted)] animate-pulse mt-3" />
+        <div className="h-4 w-full rounded-full bg-[var(--shop-bg-muted)] animate-pulse" />
+        <div className="h-3 w-2/3 rounded-full bg-[var(--shop-bg-muted)] animate-pulse" />
+        <div className="h-5 w-1/2 rounded-full bg-[var(--shop-bg-muted)] animate-pulse" />
+        <div className="h-9 w-full rounded-xl bg-[var(--shop-bg-muted)] animate-pulse mt-3" />
       </div>
     </div>
   )
@@ -68,10 +68,10 @@ function FeaturedProductCard({ product, index }: { product: ShopPublicProduct; i
       initial={{ opacity: 0, y: 24, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay: 0.15 + index * 0.1, type: 'spring', stiffness: 120, damping: 16 }}
-      className="group relative overflow-hidden rounded-2xl border border-[var(--border-light)] bg-white shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-violet-500/10"
+      className="group relative overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)] transition-all duration-300 hover:shadow-lg hover:shadow-[var(--shop-gold)]/10"
     >
       <Link href={`/3d-shop/product/${product.slug}`} className="block">
-        <div className="relative aspect-[4/3] overflow-hidden bg-[var(--bg-muted)]">
+        <div className="relative aspect-[4/3] overflow-hidden bg-[var(--shop-bg-muted)]">
           {images[0] ? (
             <Image
               src={images[0]}
@@ -93,12 +93,10 @@ function FeaturedProductCard({ product, index }: { product: ShopPublicProduct; i
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.3 + index * 0.1, type: 'spring', stiffness: 300 }}
-              className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] shadow-sm ${
+              className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] shadow-[var(--shop-shadow-sm)] ${
                 badge.toLowerCase().includes('sale') || badge.toLowerCase().includes('off')
                   ? 'bg-rose-500 text-white'
-                  : badge.toLowerCase().includes('new')
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-violet-500 text-white'
+                  : 'bg-[var(--shop-gold)] text-[var(--luxury-charcoal)]'
               }`}
             >
               {badge}
@@ -106,25 +104,25 @@ function FeaturedProductCard({ product, index }: { product: ShopPublicProduct; i
           )}
         </div>
         
-        <div className="p-3 space-y-2">
-          <h3 className="line-clamp-2 text-sm font-bold leading-snug text-[var(--text-primary)] min-h-[40px]">
+      <div className="p-3 space-y-2 bg-white">
+          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-[var(--shop-text-primary)] min-h-[40px]">
             {product.name}
           </h3>
           
           {/* Rating */}
           {product.review_count > 0 && (
             <div className="flex items-center gap-1.5">
-              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-              <span className="text-xs font-semibold text-[var(--text-primary)]">{product.avg_rating.toFixed(1)}</span>
-              <span className="text-[10px] text-[var(--text-muted)]">({product.review_count})</span>
+              <Star className="h-3 w-3 fill-[var(--shop-gold)] text-[var(--shop-gold)]" />
+              <span className="text-xs font-semibold text-[var(--shop-text-primary)]">{product.avg_rating.toFixed(1)}</span>
+              <span className="text-[10px] text-[var(--shop-text-muted)]">({product.review_count})</span>
             </div>
           )}
           
           {/* Price */}
           <div className="flex items-baseline gap-1.5">
-            <span className="text-base font-bold text-[var(--text-primary)]">{formatShopPrice(product.display_price)}</span>
+            <span className="text-base font-semibold text-[var(--shop-text-primary)]">{formatShopPrice(product.display_price)}</span>
             {product.has_sale && product.compare_at_price && (
-              <span className="text-xs text-[var(--text-muted)] line-through">{formatShopPrice(product.compare_at_price)}</span>
+              <span className="text-xs text-[var(--shop-text-muted)] line-through">{formatShopPrice(product.compare_at_price)}</span>
             )}
           </div>
         </div>
@@ -137,10 +135,10 @@ function FeaturedProductCard({ product, index }: { product: ShopPublicProduct; i
           disabled={!canDirectAdd}
           onClick={handleAdd}
           whileTap={{ scale: 0.95 }}
-          className={`flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50 ${
+          className={`flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50 ${
             added
-              ? 'bg-emerald-500 text-white'
-              : 'bg-gradient-to-r from-[#6d28d9] to-[#7c3aed] text-white hover:shadow-md hover:shadow-violet-500/20'
+              ? 'bg-[var(--shop-gold)] text-[var(--luxury-charcoal)]'
+              : 'bg-[var(--shop-gold)] text-[var(--luxury-charcoal)] hover:bg-[var(--shop-gold-light)] hover:shadow-md hover:shadow-[var(--shop-gold)]/20'
           }`}
         >
           <AnimatePresence mode="wait">
@@ -222,7 +220,7 @@ export default function FeaturedProductsAd({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-50 via-white to-emerald-50 p-4 mb-4 border border-[var(--border-light)]"
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[var(--shop-bg-soft)] via-white to-[var(--shop-gold-faint)] p-4 mb-4 border border-[var(--shop-border-light)]"
       >
         {/* Animated shimmer background */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer opacity-50" />
@@ -231,13 +229,13 @@ export default function FeaturedProductsAd({
           <motion.div
             animate={{ rotate: [0, 15, -15, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md shadow-violet-500/30"
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--shop-gold)] to-[var(--shop-gold-light)] text-[var(--luxury-charcoal)] shadow-md shadow-[var(--shop-gold)]/30"
           >
             <Sparkles className="h-4 w-4" />
           </motion.div>
           <div>
-            <h2 className="text-base font-bold text-[var(--text-primary)]">You Might Also Love</h2>
-            <p className="text-[10px] font-medium text-[var(--text-muted)]">Curated picks based on your order</p>
+            <h2 className="text-base font-semibold text-[var(--shop-text-primary)]">You Might Also Love</h2>
+            <p className="text-[10px] font-medium text-[var(--shop-text-muted)]">Curated picks based on your order</p>
           </div>
         </div>
       </motion.div>

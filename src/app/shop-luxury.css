@@ -1,0 +1,81 @@
+/* Luxury boutique design system for the 3D Shop module */
+
+:root {
+  /* Luxury color palette */
+  --luxury-ivory: #FDFCF8;
+  --luxury-cream: #FAF9F5;
+  --luxury-warm-gray: #F2F0EA;
+  --luxury-taupe: #E7E5E0;
+  --luxury-sand: #D7D3CB;
+  --luxury-charcoal: #1C1917;
+  --luxury-stone: #44403C;
+  --luxury-muted: #78716C;
+  --luxury-subtle: #A8A29E;
+  --luxury-indigo: #4338CA;
+  --luxury-indigo-dark: #3730A3;
+  --luxury-indigo-light: #6366F1;
+  --luxury-gold: #C9A962;
+  --luxury-gold-light: #D4B978;
+  --luxury-gold-soft: #F5ECD3;
+  --luxury-gold-faint: #FAF6EB;
+
+  /* Shop module tokens (override/supplement globals.css) */
+  --shop-bg-base: var(--luxury-ivory);
+  --shop-bg-soft: var(--luxury-cream);
+  --shop-bg-muted: var(--luxury-warm-gray);
+  --shop-bg-elevated: #FFFFFF;
+  --shop-text-primary: var(--luxury-charcoal);
+  --shop-text-secondary: var(--luxury-stone);
+  --shop-text-muted: var(--luxury-muted);
+  --shop-text-subtle: var(--luxury-subtle);
+  --shop-border-light: var(--luxury-taupe);
+  --shop-border-medium: var(--luxury-sand);
+  --shop-border-gold: rgba(201, 169, 98, 0.35);
+  --shop-border-indigo: rgba(67, 56, 202, 0.2);
+  --shop-brand-primary: var(--luxury-indigo);
+  --shop-brand-primary-hover: var(--luxury-indigo-dark);
+  --shop-brand-secondary: var(--luxury-indigo-light);
+  --shop-brand-faint: #EEF2FF;
+  --shop-gold: var(--luxury-gold);
+  --shop-gold-light: var(--luxury-gold-light);
+  --shop-gold-soft: var(--luxury-gold-soft);
+  --shop-gold-faint: var(--luxury-gold-faint);
+  --shop-shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.04), 0 1px 3px rgba(28, 25, 23, 0.02);
+  --shop-shadow-md: 0 8px 24px rgba(28, 25, 23, 0.06), 0 2px 8px rgba(28, 25, 23, 0.03);
+  --shop-shadow-lg: 0 18px 48px rgba(28, 25, 23, 0.08), 0 6px 16px rgba(28, 25, 23, 0.04);
+  --shop-shadow-gold: 0 12px 32px rgba(201, 169, 98, 0.18);
+  --shop-radius-sm: 12px;
+  --shop-radius-md: 18px;
+  --shop-radius-lg: 24px;
+  --shop-radius-xl: 32px;
+  --shop-font-heading: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  --shop-font-body: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Gradients */
+  --shop-gradient-gold: linear-gradient(135deg, var(--luxury-gold) 0%, var(--luxury-gold-light) 100%);
+  --shop-gradient-hero: linear-gradient(180deg, var(--luxury-ivory) 0%, var(--luxury-cream) 100%);
+  --shop-gradient-soft: linear-gradient(135deg, var(--luxury-cream) 0%, #FFFFFF 100%);
+}
+
+/* Apply luxury typography to shop headings */
+.shop-luxury h1,
+.shop-luxury h2,
+.shop-luxury h3,
+.shop-luxury .shop-heading {
+  font-family: var(--shop-font-heading);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--shop-text-primary);
+}
+
+.shop-luxury {
+  background-color: var(--shop-bg-base);
+  color: var(--shop-text-secondary);
+  font-family: var(--shop-font-body);
+}
+
+/* Elegant selection */
+.shop-luxury ::selection {
+  background: rgba(201, 169, 98, 0.22);
+  color: var(--shop-text-primary);
+}

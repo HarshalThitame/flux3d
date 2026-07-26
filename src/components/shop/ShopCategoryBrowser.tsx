@@ -49,7 +49,7 @@ function FilterPanel({
   return (
     <div className="space-y-6">
       <div>
-        <div className="mb-3 text-sm font-bold text-[var(--text-primary)]">Price</div>
+        <div className="mb-3 text-sm font-semibold text-[var(--shop-text-primary)]">Price</div>
         <Slider.Root
           value={selectedPrice}
           min={priceRange[0]}
@@ -59,13 +59,13 @@ function FilterPanel({
           onValueCommit={([min, max]) => onPriceChangeAction([min ?? priceRange[0], max ?? priceRange[1]])}
           className="relative flex h-8 touch-none select-none items-center"
         >
-          <Slider.Track className="relative h-2 grow rounded-full bg-[var(--bg-muted)]">
-            <Slider.Range className="absolute h-full rounded-full bg-[var(--brand-primary)]" />
+          <Slider.Track className="relative h-2 grow rounded-full bg-[var(--shop-bg-muted)]">
+            <Slider.Range className="absolute h-full rounded-full bg-[var(--shop-gold)]" />
           </Slider.Track>
-          <Slider.Thumb className="block h-5 w-5 rounded-full border-2 border-white bg-[var(--brand-primary)] shadow-[var(--shadow-sm)]" />
-          <Slider.Thumb className="block h-5 w-5 rounded-full border-2 border-white bg-[var(--brand-primary)] shadow-[var(--shadow-sm)]" />
+          <Slider.Thumb className="block h-5 w-5 rounded-full border-2 border-white bg-[var(--shop-gold)] shadow-[var(--shop-shadow-sm)]" />
+          <Slider.Thumb className="block h-5 w-5 rounded-full border-2 border-white bg-[var(--shop-gold)] shadow-[var(--shop-shadow-sm)]" />
         </Slider.Root>
-        <div className="mt-2 flex justify-between text-xs font-semibold text-[var(--text-secondary)]">
+        <div className="mt-2 flex justify-between text-xs font-semibold text-[var(--shop-text-secondary)]">
           <span>₹{Math.round(selectedPrice[0]).toLocaleString('en-IN')}</span>
           <span>₹{Math.round(selectedPrice[1]).toLocaleString('en-IN')}</span>
         </div>
@@ -73,15 +73,15 @@ function FilterPanel({
 
       {Object.entries(variantFilters).map(([name, values]) => (
         <div key={name}>
-          <div className="mb-3 text-sm font-bold text-[var(--text-primary)]">{name}</div>
+          <div className="mb-3 text-sm font-semibold text-[var(--shop-text-primary)]">{name}</div>
           <div className="space-y-2">
             {values.map((value) => (
-              <label key={value} className="flex min-h-[44px] items-center gap-3 rounded-xl border border-[var(--border-light)] bg-white px-3 text-sm text-[var(--text-secondary)]">
+              <label key={value} className="flex min-h-[44px] items-center gap-3 rounded-xl border border-[var(--shop-border-light)] bg-white px-3 text-sm text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-border-gold)]">
                 <input
                   type="checkbox"
                   checked={(selectedVariants[name] ?? []).includes(value)}
                   onChange={() => onVariantToggleAction(name, value)}
-                  className="h-4 w-4 accent-[var(--brand-primary)]"
+                  className="h-4 w-4 accent-[var(--shop-gold)]"
                 />
                 {value}
               </label>
@@ -90,17 +90,17 @@ function FilterPanel({
         </div>
       ))}
 
-      <label className="flex min-h-[44px] items-center gap-3 rounded-xl border border-[var(--border-light)] bg-white px-3 text-sm font-semibold text-[var(--text-secondary)]">
-        <input type="checkbox" checked={inStockOnly} onChange={(event) => onInStockChangeAction(event.target.checked)} className="h-4 w-4 accent-[var(--brand-primary)]" />
+      <label className="flex min-h-[44px] items-center gap-3 rounded-xl border border-[var(--shop-border-light)] bg-white px-3 text-sm font-semibold text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-border-gold)]">
+        <input type="checkbox" checked={inStockOnly} onChange={(event) => onInStockChangeAction(event.target.checked)} className="h-4 w-4 accent-[var(--shop-gold)]" />
         In Stock Only
       </label>
 
-      <label className="flex min-h-[44px] items-center gap-3 rounded-xl border border-[var(--border-light)] bg-white px-3 text-sm font-semibold text-[var(--text-secondary)]">
-        <input type="checkbox" checked={ratingOnly} onChange={(event) => onRatingChangeAction(event.target.checked)} className="h-4 w-4 accent-[var(--brand-primary)]" />
+      <label className="flex min-h-[44px] items-center gap-3 rounded-xl border border-[var(--shop-border-light)] bg-white px-3 text-sm font-semibold text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-border-gold)]">
+        <input type="checkbox" checked={ratingOnly} onChange={(event) => onRatingChangeAction(event.target.checked)} className="h-4 w-4 accent-[var(--shop-gold)]" />
         4★ & above
       </label>
 
-      <button type="button" onClick={clearAction} className="min-h-[44px] w-full rounded-xl border border-[var(--border-light)] bg-white text-sm font-bold text-[var(--text-primary)]">
+      <button type="button" onClick={clearAction} className="min-h-[44px] w-full rounded-xl border border-[var(--shop-border-light)] bg-white text-sm font-semibold text-[var(--shop-text-primary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]">
         Clear All Filters
       </button>
     </div>
@@ -192,15 +192,19 @@ export default function ShopCategoryBrowser({
 
   return (
     <>
-      <section className="relative min-h-[360px] overflow-hidden px-4 pb-12 pt-5 md:px-8 lg:px-16">
+      <section className="relative min-h-[320px] overflow-hidden px-4 pb-12 pt-24 md:px-8 lg:px-16 lg:pt-32">
         {category.banner_image_url ? (
           <Image src={category.banner_image_url} alt={category.name} fill priority sizes="100vw" className="object-cover" />
-        ) : null}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1a1a1a]/78 via-[#1a1a1a]/50 to-transparent" />
+        ) : (
+          <div className="absolute inset-0 bg-[var(--shop-bg-muted)]" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--shop-text-primary)]/80 via-[var(--shop-text-primary)]/50 to-transparent" />
         <div className="relative z-10 mx-auto max-w-7xl">
-          <div className="text-5xl">{category.icon_emoji || '🧩'}</div>
-          <h1 className="mt-4 text-4xl font-extrabold text-white md:text-6xl">{category.name}</h1>
-          {category.description && <p className="mt-4 max-w-2xl text-lg leading-8 text-white">{category.description}</p>}
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-2xl text-white backdrop-blur-sm">
+            {category.icon_emoji || '🧩'}
+          </div>
+          <h1 className="font-[var(--shop-font-heading)] mt-4 text-4xl font-semibold text-white md:text-6xl">{category.name}</h1>
+          {category.description && <p className="mt-4 max-w-2xl text-lg leading-8 text-white/80">{category.description}</p>}
         </div>
       </section>
 
@@ -208,7 +212,7 @@ export default function ShopCategoryBrowser({
         <div className="px-4 pt-6 md:px-8 lg:px-16">
           <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto">
             {category.children.map((child) => (
-              <Link key={child.id} href={`/3d-shop/category/${child.slug}`} className="whitespace-nowrap rounded-full border border-[var(--border-light)] bg-white px-4 py-2 text-sm font-semibold text-[var(--text-secondary)]">
+              <Link key={child.id} href={`/3d-shop/category/${child.slug}`} className="whitespace-nowrap rounded-full border border-[var(--shop-border-light)] bg-white px-4 py-2 text-sm font-semibold text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-border-gold)] hover:text-[var(--shop-gold)]">
                 {child.icon_emoji || '🧩'} {child.name}
               </Link>
             ))}
@@ -218,7 +222,7 @@ export default function ShopCategoryBrowser({
 
       <section className="px-4 py-10 md:px-8 lg:px-16">
         <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[280px_1fr]">
-          <aside className="hidden rounded-2xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-5 lg:block">
+          <aside className="hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-5 shadow-[var(--shop-shadow-sm)] lg:block">
             {panel}
           </aside>
 
@@ -228,17 +232,17 @@ export default function ShopCategoryBrowser({
                 <button
                   type="button"
                   onClick={() => setFilterOpen(true)}
-                  className="flex min-h-[44px] items-center gap-2 rounded-xl border border-[var(--border-light)] bg-white px-4 text-sm font-bold text-[var(--text-primary)] lg:hidden"
+                  className="flex min-h-[44px] items-center gap-2 rounded-xl border border-[var(--shop-border-light)] bg-white px-4 text-sm font-semibold text-[var(--shop-text-primary)] transition hover:border-[var(--shop-border-gold)] lg:hidden"
                 >
                   <Filter className="h-4 w-4" />
                   Filters
                 </button>
-                <span className="text-sm font-semibold text-[var(--text-secondary)]">{filteredProducts.length} products</span>
+                <span className="text-sm font-medium text-[var(--shop-text-muted)]">{filteredProducts.length} products</span>
               </div>
               <select
                 value={sort}
                 onChange={(event) => setSort(event.target.value)}
-                className="min-h-[44px] rounded-xl border border-[var(--border-light)] bg-white px-3 text-sm font-semibold text-[var(--text-primary)]"
+                className="min-h-[44px] rounded-xl border border-[var(--shop-border-light)] bg-white px-3 text-sm font-semibold text-[var(--shop-text-primary)] outline-none transition focus:border-[var(--shop-gold)]"
               >
                 <option value="featured">Featured</option>
                 <option value="newest">Newest</option>
@@ -251,19 +255,19 @@ export default function ShopCategoryBrowser({
             {chips.length > 0 && (
               <div className="mb-5 flex flex-wrap gap-2">
                 {chips.map((chip) => (
-                  <span key={chip} className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-faint)] px-3 py-1 text-xs font-semibold text-[var(--brand-primary)]">
+                  <span key={chip} className="inline-flex items-center gap-1 rounded-full border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-3 py-1 text-xs font-semibold text-[var(--shop-gold)]">
                     {chip}
                   </span>
                 ))}
-                <button type="button" onClick={clearFilters} className="text-xs font-bold text-[var(--text-secondary)]">
+                <button type="button" onClick={clearFilters} className="text-xs font-semibold text-[var(--shop-text-muted)] transition hover:text-[var(--shop-gold)]">
                   Clear
                 </button>
               </div>
             )}
 
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+              {filteredProducts.map((product, index) => (
+                <ProductCard key={product.id} product={product} index={index} />
               ))}
             </div>
           </div>
@@ -271,11 +275,11 @@ export default function ShopCategoryBrowser({
       </section>
 
       {filterOpen && (
-        <div className="fixed inset-0 z-[120] bg-[var(--bg-base)] p-5 lg:hidden">
+        <div className="fixed inset-0 z-[120] bg-[var(--shop-bg-base)] p-5 lg:hidden">
           <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-[var(--text-primary)]">Filters</h2>
-            <button type="button" onClick={() => setFilterOpen(false)} className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--border-light)] bg-white">
-              <X className="h-4 w-4" />
+            <h2 className="font-[var(--shop-font-heading)] text-2xl font-semibold text-[var(--shop-text-primary)]">Filters</h2>
+            <button type="button" onClick={() => setFilterOpen(false)} className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--shop-border-light)] bg-white">
+              <X className="h-4 w-4 text-[var(--shop-text-secondary)]" />
             </button>
           </div>
           <div className="h-[calc(100vh-96px)] overflow-y-auto pb-8">{panel}</div>

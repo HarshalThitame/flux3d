@@ -123,7 +123,7 @@ export default function QuickAddModal({
           <button
             type="button"
             aria-label="Close quick add"
-            className="absolute inset-0 bg-slate-900/55 backdrop-blur-sm"
+            className="absolute inset-0 bg-[#1C1917]/55 backdrop-blur-sm"
             onClick={() => onOpenChangeAction(false)}
           />
           <motion.div
@@ -132,22 +132,22 @@ export default function QuickAddModal({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 24, opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.2 }}
-            className="absolute bottom-0 left-0 right-0 max-h-[92vh] overflow-y-auto rounded-t-3xl border border-[var(--border-light)] bg-[var(--bg-base)] p-5 shadow-[var(--shadow-lg)] md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:w-[min(92vw,560px)] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl"
+            className="absolute bottom-0 left-0 right-0 max-h-[92vh] overflow-y-auto rounded-t-3xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-base)] p-5 shadow-[var(--shop-shadow-lg)] md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:w-[min(92vw,560px)] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex min-w-0 gap-3">
-                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-[var(--bg-muted)]">
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-[var(--shop-bg-muted)]">
                   {images[0] ? <Image src={images[0]} alt={product.name} fill sizes="64px" className="object-cover" /> : null}
                 </div>
                 <div className="min-w-0">
-                  <h2 className="line-clamp-2 text-lg font-bold text-[var(--text-primary)]">{product.name}</h2>
-                  <p className="mt-1 text-sm text-[var(--text-secondary)]">{formatShopPrice(resolvedSku?.price ?? product.display_price)}</p>
+                  <h2 className="line-clamp-2 text-lg font-semibold text-[var(--shop-text-primary)]">{product.name}</h2>
+                  <p className="mt-1 text-sm text-[var(--shop-text-secondary)]">{formatShopPrice(resolvedSku?.price ?? product.display_price)}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => onOpenChangeAction(false)}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[var(--border-light)] bg-white text-[var(--text-secondary)]"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[var(--shop-border-light)] bg-white text-[var(--shop-text-secondary)]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -162,25 +162,25 @@ export default function QuickAddModal({
 
               {product.is_customizable && (
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-semibold text-[var(--text-primary)]">
+                  <span className="mb-1.5 block text-sm font-semibold text-[var(--shop-text-primary)]">
                     {product.customization_label || 'Customization'}
                   </span>
                   <input
                     value={customizationText}
                     maxLength={50}
                     onChange={(event) => setCustomizationText(event.target.value)}
-                    className="min-h-[44px] w-full rounded-xl border border-[var(--border-light)] bg-white px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--border-brand)]"
+                    className="min-h-[44px] w-full rounded-xl border border-[var(--shop-border-light)] bg-white px-3 text-sm text-[var(--shop-text-primary)] outline-none focus:border-[var(--shop-border-gold)]"
                   />
-                  <span className="mt-1 block text-xs text-[var(--text-muted)]">{customizationText.length}/50</span>
+                  <span className="mt-1 block text-xs text-[var(--shop-text-muted)]">{customizationText.length}/50</span>
                 </label>
               )}
 
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--border-light)] bg-white p-4">
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--shop-border-light)] bg-white p-4">
                 <div>
-                  <div className="font-semibold text-[var(--text-primary)]">
+                  <div className="font-semibold text-[var(--shop-text-primary)]">
                     {resolvedSku ? formatShopPrice(resolvedSku.price) : `From ${formatShopPrice(product.display_price)}`}
                   </div>
-                  <div className="text-sm text-[var(--text-muted)]">{stock.label}</div>
+                  <div className="text-sm text-[var(--shop-text-muted)]">{stock.label}</div>
                 </div>
                 <QuantityStepper value={quantity} max={maxStock} onChangeAction={setQuantity} />
               </div>
@@ -189,7 +189,7 @@ export default function QuickAddModal({
                 type="button"
                 disabled={!canAdd}
                 onClick={addToCart}
-                className="btn-primary flex min-h-[52px] w-full items-center justify-center gap-2 text-base disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[var(--shop-radius-lg)] bg-[var(--shop-gold)] px-6 text-base font-semibold text-[var(--luxury-charcoal)] shadow-[var(--shop-shadow-gold)] transition hover:bg-[var(--shop-gold-light)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {added ? (
                   'Added to cart ✓'

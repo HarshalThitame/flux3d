@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
+import { Playfair_Display } from 'next/font/google'
 import { getSettings } from '@/lib/settings'
 import { FALLBACK_SETTINGS } from '@/lib/settings-fallback'
 import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data'
@@ -8,6 +9,14 @@ import DeferredTracking from '@/components/DeferredTracking'
 import DeferredGoogleAnalytics from '@/components/DeferredGoogleAnalytics'
 import ToastContainer from '@/components/Toast'
 import './globals.css'
+import './shop-luxury.css'
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair',
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+})
 
 const GOOGLE_ANALYTICS_ID = 'G-KCK2459TBQ'
 
@@ -119,10 +128,11 @@ export default async function RootLayout({
   const webJsonLd = makeWebsiteJsonLd(settings)
 
   return (
-    <html
-      lang="en"
-      data-scroll-behavior="smooth"
-    >
+      <html
+        lang="en"
+        data-scroll-behavior="smooth"
+        className={playfair.variable}
+      >
       <head>
         {DNS_PREFETCH_ORIGINS.map((href) => (
           <link key={`dns-prefetch-${href}`} rel="dns-prefetch" href={href} />
