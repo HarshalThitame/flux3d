@@ -1,7 +1,7 @@
 'use client'
 
-import { motion, useInView } from 'framer-motion'
-import { useRef } from 'react'
+import { motion, useInView, useReducedMotion } from 'framer-motion'
+import { memo, useRef } from 'react'
 import { Settings as Gear, Building2, GraduationCap, ShoppingBag, Heart, Clapperboard, Gift, ArrowRight } from 'lucide-react'
 import { staggerContainer, cardItem, fadeUp, viewportOnce, viewportHeader } from '@/lib/animation-variants'
 
@@ -140,9 +140,10 @@ function ServiceCard({ service }: { service: typeof services[0] }) {
   )
 }
 
-export default function ServicesSection() {
+function ServicesSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, viewportHeader)
+  const reduceMotion = useReducedMotion()
 
   return (
     <section id="services" ref={ref} className="relative scroll-mt-20 overflow-hidden px-6 py-12 md:py-16 lg:py-24">
@@ -172,10 +173,10 @@ export default function ServicesSection() {
 
         <motion.div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12"
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="show"
-          viewport={viewportOnce}
+          variants={reduceMotion ? undefined : staggerContainer}
+          initial={reduceMotion ? { opacity: 1 } : "hidden"}
+          whileInView={reduceMotion ? { opacity: 1 } : "show"}
+          viewport={reduceMotion ? undefined : viewportOnce}
         >
           {services.map((service, i) => (
             <ServiceCard key={i} service={service} />
@@ -183,10 +184,10 @@ export default function ServicesSection() {
         </motion.div>
 
         <motion.div
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="show"
-          viewport={viewportOnce}
+          variants={reduceMotion ? undefined : fadeUp}
+          initial={reduceMotion ? { opacity: 1 } : "hidden"}
+          whileInView={reduceMotion ? { opacity: 1 } : "show"}
+          viewport={reduceMotion ? undefined : viewportOnce}
           className="text-center bg-[#faf9f7] border border-[rgba(109,40,217,0.5)] rounded-2xl p-8 hover:border-[rgba(109,40,217,0.3)] transition-colors duration-300"
         >
           <p className="text-lg text-[#0F1B3D] mb-2">Don&apos;t see your requirement above?</p>
@@ -203,3 +204,5 @@ export default function ServicesSection() {
     </section>
   )
 }
+
+export default memo(ServicesSection)

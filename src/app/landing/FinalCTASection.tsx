@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { motion, useInView, type Variants } from 'framer-motion'
-import { useRef } from 'react'
+import { motion, useInView, useReducedMotion, type Variants } from 'framer-motion'
+import { memo, useRef } from 'react'
 import { ArrowRight, Sparkles, MessageCircle, Mail, Check } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
 
@@ -25,20 +25,30 @@ const childVariant: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: 'easeOut' } },
 }
 
-export default function FinalCTASection() {
+function FinalCTASection() {
   const { settings } = useBusinessSettings()
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
+  const reduceMotion = useReducedMotion()
   const email = settings.supportEmail || settings.primaryEmail || 'flux3d.in@gmail.com'
+
+  const simpleContainer: Variants = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.05, delayChildren: 0.05 } },
+  }
+  const simpleChild: Variants = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+  }
 
   return (
     <section ref={ref} className="relative overflow-hidden px-6 py-12 md:py-16 lg:py-24">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,rgba(109,40,217,0.08)_0%,transparent_70%)] pointer-events-none" />
 
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.6 }}
+        transition={reduceMotion ? { duration: 0.3 } : { duration: 0.6 }}
         className="relative z-10 mx-auto max-w-[1000px]"
       >
         <div className="cta-banner p-6 md:p-10 lg:p-16">
@@ -54,24 +64,24 @@ export default function FinalCTASection() {
 
           <motion.div
             className="relative z-10"
-            variants={containerVariants}
-            initial="hidden"
-            animate={isInView ? 'show' : 'hidden'}
+            variants={reduceMotion ? simpleContainer : containerVariants}
+            initial={reduceMotion ? "hidden" : "hidden"}
+            animate={isInView ? 'show' : "hidden"}
           >
-            <motion.div variants={childVariant} className="mb-4 md:mb-6 inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/20 bg-[#f3f0ff] px-4 py-1.5 text-sm font-medium text-[#6d28d9]">
+            <motion.div variants={reduceMotion ? simpleChild : childVariant} className="mb-4 md:mb-6 inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/20 bg-[#f3f0ff] px-4 py-1.5 text-sm font-medium text-[#6d28d9]">
               <Sparkles className="w-4 h-4" />
               Start with a real quote
             </motion.div>
 
-            <motion.h2 variants={childVariant} className="mb-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold leading-[1.1] text-[#1a1a1a]">
+            <motion.h2 variants={reduceMotion ? simpleChild : childVariant} className="mb-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold leading-[1.1] text-[#1a1a1a]">
               Tell us what you need and we&apos;ll review it before production.
             </motion.h2>
 
-            <motion.p variants={childVariant} className="mx-auto mb-6 md:mb-8 max-w-[640px] text-base leading-[1.6] text-[#4b4b4b]">
+            <motion.p variants={reduceMotion ? simpleChild : childVariant} className="mx-auto mb-6 md:mb-8 max-w-[640px] text-base leading-[1.6] text-[#4b4b4b]">
               Flux 3D handles custom 3D printing, prototyping, model printing and ready-made products through a review-and-confirm workflow. Share the file or requirement and we&apos;ll take it from there.
             </motion.p>
 
-            <motion.div variants={childVariant} className="mb-6 md:mb-8 flex flex-col justify-center gap-4 sm:flex-row">
+            <motion.div variants={reduceMotion ? simpleChild : childVariant} className="mb-6 md:mb-8 flex flex-col justify-center gap-4 sm:flex-row">
               <Link href="/contact" className="btn-primary group px-8 py-4 text-base">
                 <span className="relative z-10 inline-flex items-center gap-2">
                   Contact Sales
@@ -92,14 +102,14 @@ export default function FinalCTASection() {
               </a>
             </motion.div>
 
-            <motion.div variants={childVariant} className="mb-6 flex items-center justify-center gap-4">
+            <motion.div variants={reduceMotion ? simpleChild : childVariant} className="mb-6 flex items-center justify-center gap-4">
               <div className="h-px w-12 bg-[rgba(109,40,217,0.25)]" />
               <span className="text-sm text-[#9ca3af]">or email us</span>
               <div className="h-px w-12 bg-[rgba(109,40,217,0.25)]" />
             </motion.div>
 
             <motion.a
-              variants={childVariant}
+              variants={reduceMotion ? simpleChild : childVariant}
               href={`mailto:${email}`}
               className="inline-flex items-center gap-2 text-[#4b4b4b] transition-colors hover:text-[#6d28d9]"
             >
@@ -107,7 +117,7 @@ export default function FinalCTASection() {
               {email}
             </motion.a>
 
-            <motion.div variants={childVariant} className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <motion.div variants={reduceMotion ? simpleChild : childVariant} className="mt-8 flex flex-wrap items-center justify-center gap-3">
               {reassurancePills.map((pill) => (
                 <span
                   key={pill}
@@ -119,7 +129,7 @@ export default function FinalCTASection() {
               ))}
             </motion.div>
 
-            <motion.p variants={childVariant} className="mt-8 text-xs text-[#9ca3af]">
+            <motion.p variants={reduceMotion ? simpleChild : childVariant} className="mt-8 text-xs text-[#9ca3af]">
               Service delivery and payment terms are published on this site.
             </motion.p>
           </motion.div>
@@ -128,3 +138,5 @@ export default function FinalCTASection() {
     </section>
   )
 }
+
+export default memo(FinalCTASection)

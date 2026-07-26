@@ -1,8 +1,9 @@
 'use client'
 
-import { motion, useInView } from 'framer-motion'
-import { useRef } from 'react'
+import { motion, useInView, useReducedMotion } from 'framer-motion'
+import { memo, useRef } from 'react'
 import { Hourglass, Banknote, Wrench, ArrowRight, CheckCircle2, ScanLine, Gauge } from 'lucide-react'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 const painPoints = [
   {
@@ -37,17 +38,19 @@ const productionLoop = [
   { icon: CheckCircle2, label: 'Dispatch proof', value: 'Photo update and tracked delivery before it leaves.' },
 ]
 
-export default function ProblemSection() {
+function ProblemSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
+  const reduceMotion = useReducedMotion()
+  const isFinePointer = useMediaQuery('(pointer: fine)')
 
   return (
     <section ref={ref} className="premium-problem relative z-10 w-full overflow-hidden px-4 py-12 md:px-8 md:py-16 lg:px-16 lg:py-24">
       <div className="mx-auto grid max-w-7xl items-start gap-8 md:gap-12 lg:grid-cols-[0.9fr_1.1fr]">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          transition={reduceMotion ? { duration: 0.3 } : { duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
           className="lg:sticky lg:top-28"
         >
           <span className="premium-eyebrow">Why Flux3D</span>
@@ -64,9 +67,9 @@ export default function ProblemSection() {
             {productionLoop.map((item, index) => (
               <motion.div
                 key={item.label}
-                initial={{ opacity: 0, x: -18 }}
+                initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -18 }}
                 animate={isInView ? { opacity: 1, x: 0 } : {}}
-                transition={{ delay: 0.2 + index * 0.08 }}
+                transition={reduceMotion ? { duration: 0.2 } : { delay: 0.2 + index * 0.08 }}
                 className="premium-loop-row"
               >
                 <item.icon className="h-5 w-5 text-[#6d28d9]" />
@@ -85,10 +88,10 @@ export default function ProblemSection() {
             return (
               <motion.div
                 key={point.id}
-                initial={{ opacity: 0, y: 32 }}
+                initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 32 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: 0.12 + index * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                transition={reduceMotion ? { duration: 0.3 } : { delay: 0.12 + index * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={isFinePointer ? { y: -5, transition: { duration: 0.2 } } : undefined}
                 className="premium-problem-card group relative overflow-hidden rounded-2xl border border-[rgba(109,40,217,0.08)] bg-white p-6 md:p-7"
               >
                 <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${point.accent}`} />
@@ -116,9 +119,9 @@ export default function ProblemSection() {
 
           <motion.a
             href="/instant-quote"
-            initial={{ opacity: 0, y: 20 }}
+            initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.48 }}
+            transition={reduceMotion ? { duration: 0.2 } : { delay: 0.48 }}
             className="premium-wide-link group"
           >
             Start with one file
@@ -129,3 +132,5 @@ export default function ProblemSection() {
     </section>
   )
 }
+
+export default memo(ProblemSection)

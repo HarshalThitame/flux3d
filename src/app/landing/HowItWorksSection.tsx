@@ -1,8 +1,10 @@
 'use client'
 
-import { motion, useInView, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { motion, useInView, useScroll, useTransform, useMotionValue, useSpring, useReducedMotion } from 'framer-motion'
+import { memo, useRef, useState, useEffect, useCallback } from 'react'
 import { Upload, MessageSquare, CreditCard, Printer, Package, ArrowRight, ChevronRight } from 'lucide-react'
+import { createRafThrottledCallback } from '@/lib/raf-throttle'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 const steps = [
   {
@@ -45,7 +47,7 @@ const gradients = [
   'from-[#c084fc] to-[#6d28d9]'
 ]
 
-function TiltCard({ children, className, isActive }: { children: React.ReactNode; className?: string; isActive: boolean }) {
+function TiltCard({ children, className, isActive, disabled }: { children: React.ReactNode; className?: string; isActive: boolean; disabled?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   const x = useMotionValue(0)
   const y = useMotionValue(0)
@@ -54,37 +56,40 @@ function TiltCard({ children, className, isActive }: { children: React.ReactNode
   const opacity = useSpring(isActive ? 1 : 0.55, { stiffness: 300, damping: 30 })
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!ref.current) return
+    if (!ref.current || disabled) return
     const rect = ref.current.getBoundingClientRect()
     const px = (e.clientX - rect.left) / rect.width - 0.5
     const py = (e.clientY - rect.top) / rect.height - 0.5
     x.set(px)
     y.set(py)
-  }, [x, y])
+  }, [x, y, disabled])
 
   const handleMouseLeave = useCallback(() => {
+    if (disabled) return
     x.set(0)
     y.set(0)
-  }, [x, y])
+  }, [x, y, disabled])
 
   return (
     <motion.div
       ref={ref}
       className={className}
-      style={{ rotateX, rotateY, opacity, transformPerspective: 800 }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      style={disabled ? undefined : { rotateX, rotateY, opacity, transformPerspective: 800 }}
+      onMouseMove={disabled ? undefined : handleMouseMove}
+      onMouseLeave={disabled ? undefined : handleMouseLeave}
     >
       {children}
     </motion.div>
   )
 }
 
-export default function HowItWorksSection() {
+function HowItWorksSection() {
   const ref = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const lineRef = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
+  const reduceMotion = useReducedMotion()
+  const isFinePointer = useMediaQuery('(pointer: fine)')
   const [activeIndex, setActiveIndex] = useState(0)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
@@ -93,6 +98,10 @@ export default function HowItWorksSection() {
 
   const { scrollYProgress } = useScroll({ target: lineRef, offset: ['start end', 'end start'] })
   const lineProgress = useTransform(scrollYProgress, [0, 0.6], [0, 1])
+  const timelineHeight = useTransform(lineProgress, [0, 1], ['0%', '100%'])
+  const particleTop0 = useTransform(lineProgress, [0, 1], ['0%', '33%'])
+  const particleTop1 = useTransform(lineProgress, [0, 1], ['33%', '66%'])
+  const particleTop2 = useTransform(lineProgress, [0, 1], ['66%', '100%'])
 
   useEffect(() => {
     const container = scrollRef.current
@@ -105,8 +114,12 @@ export default function HowItWorksSection() {
       setActiveIndex(Math.min(index, steps.length - 1))
     }
 
-    container.addEventListener('scroll', handleScroll, { passive: true })
-    return () => container.removeEventListener('scroll', handleScroll)
+    const scheduleScroll = createRafThrottledCallback(handleScroll)
+    container.addEventListener('scroll', scheduleScroll, { passive: true })
+    return () => {
+      container.removeEventListener('scroll', scheduleScroll)
+      scheduleScroll.cancel()
+    }
   }, [])
 
   useEffect(() => {
@@ -134,8 +147,9 @@ export default function HowItWorksSection() {
       <div className="max-w-[1200px] mx-auto relative z-10">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={reduceMotion ? { duration: 0.3 } : undefined}
           className="text-center mb-8 md:mb-12 lg:mb-16 relative"
         >
           <span className="premium-section-number">02</span>
@@ -151,14 +165,16 @@ export default function HowItWorksSection() {
         {/* Mobile: Horizontal Carousel */}
         <div className="md:hidden">
           {/* Progress bar with glow */}
-          <div className="mb-6 h-1 bg-[#e5e7eb] rounded-full overflow-hidden relative">
-            <motion.div
-              className="h-full bg-gradient-to-r from-[#6d28d9] to-[#a855f7] rounded-full relative"
-              style={{ width: progressWidth }}
-            >
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#a855f7] shadow-[0_0_12px_rgba(168,85,247,0.6)]" />
-            </motion.div>
-          </div>
+          {!reduceMotion && (
+            <div className="mb-6 h-1 bg-[#e5e7eb] rounded-full overflow-hidden relative">
+              <motion.div
+                className="h-full bg-gradient-to-r from-[#6d28d9] to-[#a855f7] rounded-full relative"
+                style={{ width: progressWidth }}
+              >
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#a855f7] shadow-[0_0_12px_rgba(168,85,247,0.6)]" />
+              </motion.div>
+            </div>
+          )}
 
           {/* Scroll container */}
           <div
@@ -169,9 +185,9 @@ export default function HowItWorksSection() {
             {steps.map((step, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={reduceMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
                 animate={isInView ? { opacity: 1, scale: 1 } : {}}
-                transition={{ delay: i * 0.08, duration: 0.4 }}
+                transition={reduceMotion ? { duration: 0.2 } : { delay: i * 0.08, duration: 0.4 }}
                 className="snap-center shrink-0 w-[85vw]"
               >
                 {/* Cinematic Card */}
@@ -246,24 +262,31 @@ export default function HowItWorksSection() {
         <div className="hidden md:block relative" ref={lineRef}>
           {/* Animated central timeline */}
           <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[rgba(109,40,217,0.15)] to-transparent" />
-          <motion.div
-            className="absolute left-1/2 top-0 w-px -translate-x-1/2 bg-gradient-to-b from-[#6d28d9] via-[#a855f7] to-[#6d28d9]"
-            style={{ height: useTransform(lineProgress, [0, 1], ['0%', '100%']), originY: 0 }}
-          />
+          {!reduceMotion && (
+            <motion.div
+              className="absolute left-1/2 top-0 w-px -translate-x-1/2 bg-gradient-to-b from-[#6d28d9] via-[#a855f7] to-[#6d28d9]"
+              style={{ height: timelineHeight, originY: 0 }}
+            />
+          )}
+          {reduceMotion && (
+            <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-gradient-to-b from-[#6d28d9] via-[#a855f7] to-[#6d28d9]" />
+          )}
 
           {/* Flowing particles along timeline */}
-          <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 pointer-events-none overflow-hidden">
-            {[0, 1, 2].map(i => (
-              <motion.div
-                key={i}
-                className="absolute left-0 w-1.5 h-1.5 rounded-full bg-[#a855f7] shadow-[0_0_8px_rgba(168,85,247,0.5)]"
-                style={{
-                  top: useTransform(lineProgress, [0, 1], [`${i * 33}%`, `${(i + 1) * 33}%`]),
-                  opacity: lineProgress,
-                }}
-              />
-            ))}
-          </div>
+          {!reduceMotion && (
+            <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 pointer-events-none overflow-hidden">
+              {[particleTop0, particleTop1, particleTop2].map((particleTop, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute left-0 w-1.5 h-1.5 rounded-full bg-[#a855f7] shadow-[0_0_8px_rgba(168,85,247,0.5)]"
+                  style={{
+                    top: particleTop,
+                    opacity: lineProgress,
+                  }}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Step cards */}
           <div className="relative space-y-12 lg:space-y-16">
@@ -276,14 +299,15 @@ export default function HowItWorksSection() {
                 <TiltCard
                   key={i}
                   isActive={!isDimmed}
+                  disabled={reduceMotion || !isFinePointer}
                   className={`relative flex items-center ${isLeft ? 'lg:flex-row' : 'lg:flex-row-reverse'} group`}
                 >
                   {/* Card */}
                   <div className={`w-full lg:w-[calc(50%-40px)] ${isLeft ? 'lg:pr-8' : 'lg:pl-8'}`}>
                     <motion.div
-                      initial={{ opacity: 0, x: isLeft ? -40 : 40, y: 20 }}
+                      initial={reduceMotion ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, x: isLeft ? -40 : 40, y: 20 }}
                       animate={isInView ? { opacity: 1, x: 0, y: 0 } : {}}
-                      transition={{ delay: 0.15 + i * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                      transition={reduceMotion ? { duration: 0.3 } : { delay: 0.15 + i * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                       className={`relative overflow-hidden rounded-2xl border border-[rgba(109,40,217,0.1)] bg-white/80 backdrop-blur-xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(109,40,217,0.06)] transition-all duration-500 ${
                         isHovered ? 'border-[rgba(109,40,217,0.25)] shadow-[0_8px_40px_rgba(109,40,217,0.12)]' : ''
                       }`}
@@ -302,8 +326,8 @@ export default function HowItWorksSection() {
                       <div className="flex items-center gap-4 mb-5">
                         <motion.div
                           className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${gradients[i]} flex items-center justify-center shadow-lg shadow-[#6d28d9]/20`}
-                          whileHover={{ scale: 1.1, rotate: 5 }}
-                          transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                          whileHover={isFinePointer && !reduceMotion ? { scale: 1.1, rotate: 5 } : undefined}
+                          transition={isFinePointer && !reduceMotion ? { type: 'spring', stiffness: 400, damping: 10 } : undefined}
                         >
                           <step.icon className="w-8 h-8 text-white relative z-10" />
                           <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${gradients[i]} opacity-40 blur-lg`} />
@@ -334,9 +358,9 @@ export default function HowItWorksSection() {
                   {/* Center node on timeline */}
                   <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center z-20">
                     <motion.div
-                      initial={{ scale: 0 }}
+                      initial={reduceMotion ? { scale: 1 } : { scale: 0 }}
                       animate={isInView ? { scale: 1 } : {}}
-                      transition={{ delay: 0.2 + i * 0.12, type: 'spring', stiffness: 300, damping: 20 }}
+                      transition={reduceMotion ? { duration: 0.2 } : { delay: 0.2 + i * 0.12, type: 'spring', stiffness: 300, damping: 20 }}
                       className={`relative w-12 h-12 rounded-full bg-white border-2 border-[rgba(109,40,217,0.2)] flex items-center justify-center shadow-lg transition-all duration-500 ${
                         isHovered ? 'border-[#6d28d9] shadow-[0_0_24px_rgba(109,40,217,0.3)] scale-110' : ''
                       }`}
@@ -345,7 +369,7 @@ export default function HowItWorksSection() {
                         {step.step}
                       </span>
                       {/* Pulse ring on hover */}
-                      {isHovered && (
+                      {isHovered && isFinePointer && !reduceMotion && (
                         <motion.div
                           className="absolute inset-0 rounded-full border-2 border-[#6d28d9]"
                           initial={{ scale: 1, opacity: 0.6 }}
@@ -366,9 +390,9 @@ export default function HowItWorksSection() {
 
         {/* CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.7 }}
+          transition={reduceMotion ? { duration: 0.2 } : { delay: 0.7 }}
           className="text-center mt-8 md:mt-12 lg:mt-16"
         >
           <p className="text-lg text-[#0F1B3D] mb-4">Ready to start?</p>
@@ -395,3 +419,5 @@ export default function HowItWorksSection() {
     </section>
   )
 }
+
+export default memo(HowItWorksSection)
