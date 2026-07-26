@@ -30,6 +30,7 @@ export type ShopPublicProduct = {
   occasion_tags: string[]
   thumbnail_url: string | null
   image_urls: string[]
+  model_url: string | null
   base_price: number
   display_price: number
   compare_at_price: number | null

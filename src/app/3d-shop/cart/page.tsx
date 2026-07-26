@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import Navbar from '@/components/Navbar'
+import ShopShell from '@/components/shop/ShopShell'
 import ShopCartPageClient from '@/components/shop/ShopCartPageClient'
 
 export const metadata: Metadata = {
@@ -9,9 +9,8 @@ export const metadata: Metadata = {
 
 export default function ShopCartPage() {
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
-      <Navbar transparent />
+    <ShopShell transparentNav>
       <ShopCartPageClient />
-    </div>
-  )
+    </ShopShell>
+  );
 }

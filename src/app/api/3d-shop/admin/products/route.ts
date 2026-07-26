@@ -13,7 +13,8 @@ type ProductPayload = {
   tags?: string[]
   occasion_tags?: string[]
   thumbnail_url?: string | null
-  image_urls?: string[]
+  image_urls?: string[] | null
+  model_url?: string | null
   base_price?: number
   is_customizable?: boolean
   customization_label?: string | null
@@ -52,6 +53,7 @@ function normalizeProductPayload(body: ProductPayload, partial = false) {
     occasion_tags: normalizeStringArray(body.occasion_tags),
     thumbnail_url: typeof body.thumbnail_url === 'string' ? body.thumbnail_url.trim() || null : body.thumbnail_url ?? null,
     image_urls: normalizeStringArray(body.image_urls),
+    model_url: typeof body.model_url === 'string' ? body.model_url.trim() || null : body.model_url ?? null,
     base_price: Number.isFinite(Number(body.base_price)) ? Number(body.base_price) : 0,
     is_customizable: body.is_customizable ?? false,
     customization_label:

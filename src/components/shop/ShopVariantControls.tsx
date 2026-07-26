@@ -27,9 +27,9 @@ export default function ShopVariantControls({
 
         return (
           <div key={option.id} className="space-y-2.5">
-            <div className="text-sm font-semibold text-[var(--text-primary)]">
+            <div className="text-sm font-semibold text-[var(--shop-text-primary)]">
               Choose {option.option_name}
-              {selectedValue ? <span className="font-medium text-[var(--text-muted)]">: {String(selectedValue)}</span> : null}
+              {selectedValue ? <span className="font-medium text-[var(--shop-text-muted)]">: {String(selectedValue)}</span> : null}
             </div>
 
             {option.option_type === 'swatch_color' ? (
@@ -41,7 +41,7 @@ export default function ShopVariantControls({
                     aria-label={value}
                     onClick={() => onChangeAction(option.option_name, value)}
                     className={`grid h-11 w-11 place-items-center rounded-full border bg-white transition ${
-                      selectedValue === value ? 'border-[var(--brand-primary)] ring-4 ring-[var(--brand-primary)]/15' : 'border-[var(--border-light)]'
+                      selectedValue === value ? 'border-[var(--shop-gold)] ring-4 ring-[var(--shop-gold)]/20' : 'border-[var(--shop-border-light)]'
                     }`}
                   >
                     <span
@@ -55,7 +55,7 @@ export default function ShopVariantControls({
               <select
                 value={typeof selectedValue === 'string' ? selectedValue : ''}
                 onChange={(event) => onChangeAction(option.option_name, event.target.value)}
-                className="min-h-[44px] w-full rounded-xl border border-[var(--border-light)] bg-white px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--border-brand)]"
+                className="min-h-[44px] w-full rounded-xl border border-[var(--shop-border-light)] bg-white px-3 text-sm text-[var(--shop-text-primary)] outline-none transition focus:border-[var(--shop-gold)]"
               >
                 <option value="">Select {option.option_name}</option>
                 {values.map((value) => (
@@ -67,7 +67,7 @@ export default function ShopVariantControls({
                 type="button"
                 aria-pressed={Boolean(selectedValue)}
                 onClick={() => onChangeAction(option.option_name, !selectedValue)}
-                className={`relative h-7 w-12 rounded-full transition ${selectedValue ? 'bg-[var(--brand-primary)]' : 'bg-[var(--border-medium)]'}`}
+                className={`relative h-7 w-12 rounded-full transition ${selectedValue ? 'bg-[var(--shop-gold)]' : 'bg-[var(--shop-border-medium)]'}`}
               >
                 <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition ${selectedValue ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
@@ -75,7 +75,7 @@ export default function ShopVariantControls({
               <input
                 value={typeof selectedValue === 'string' ? selectedValue : ''}
                 onChange={(event) => onChangeAction(option.option_name, event.target.value.slice(0, 50))}
-                className="min-h-[44px] w-full rounded-xl border border-[var(--border-light)] bg-white px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--border-brand)]"
+                className="min-h-[44px] w-full rounded-xl border border-[var(--shop-border-light)] bg-white px-3 text-sm text-[var(--shop-text-primary)] outline-none transition focus:border-[var(--shop-gold)]"
               />
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -86,8 +86,8 @@ export default function ShopVariantControls({
                     onClick={() => onChangeAction(option.option_name, value)}
                     className={`min-h-[44px] rounded-xl border px-4 text-sm font-semibold transition ${
                       selectedValue === value
-                        ? 'border-[var(--brand-primary)] bg-[var(--brand-faint)] text-[var(--brand-primary)]'
-                        : 'border-[var(--border-light)] bg-white text-[var(--text-secondary)] hover:border-[var(--border-brand)] hover:text-[var(--text-primary)]'
+                        ? 'border-[var(--shop-gold)] bg-[var(--shop-gold-faint)] text-[var(--shop-gold)]'
+                        : 'border-[var(--shop-border-light)] bg-white text-[var(--shop-text-secondary)] hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]'
                     }`}
                   >
                     {value}

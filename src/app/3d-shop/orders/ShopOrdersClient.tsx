@@ -135,12 +135,12 @@ function LoadingState() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.08 }}
-          className="overflow-hidden rounded-[30px] border border-[var(--border-light)] bg-white/85 shadow-[var(--shadow-sm)]"
+          className="overflow-hidden rounded-[30px] border border-[var(--shop-border-light)] bg-white/85 shadow-[var(--shop-shadow-sm)]"
         >
           <div className="flex gap-3 p-4 md:p-5">
             {/* Status dot placeholder */}
             <div className="flex flex-col items-center pt-1">
-              <div className="h-3 w-3 flex-shrink-0 rounded-full bg-[var(--bg-muted)]" />
+              <div className="h-3 w-3 flex-shrink-0 rounded-full bg-[var(--shop-bg-muted)]" />
             </div>
 
             {/* Content area */}
@@ -148,20 +148,20 @@ function LoadingState() {
               {/* Row 1: Title + Status badge */}
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1 space-y-1.5">
-                  <div className="h-4 w-3/4 animate-pulse rounded-full bg-[var(--bg-muted)]" />
-                  <div className="h-3 w-20 animate-pulse rounded bg-[var(--bg-muted)]" />
+                  <div className="h-4 w-3/4 animate-pulse rounded-full bg-[var(--shop-bg-muted)]" />
+                  <div className="h-3 w-20 animate-pulse rounded bg-[var(--shop-bg-muted)]" />
                 </div>
-                <div className="h-5 w-16 flex-shrink-0 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+                <div className="h-5 w-16 flex-shrink-0 animate-pulse rounded-full bg-[var(--shop-bg-muted)]" />
               </div>
 
               {/* Row 2: Order number + Payment badge */}
               <div className="mt-2 flex items-center justify-between gap-2">
-                <div className="h-3 w-24 animate-pulse rounded bg-[var(--bg-muted)]" />
-                <div className="h-5 w-20 flex-shrink-0 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+                <div className="h-3 w-24 animate-pulse rounded bg-[var(--shop-bg-muted)]" />
+                <div className="h-5 w-20 flex-shrink-0 animate-pulse rounded-full bg-[var(--shop-bg-muted)]" />
               </div>
 
               {/* Row 3: Date */}
-              <div className="mt-1.5 h-3 w-32 animate-pulse rounded bg-[var(--bg-muted)]" />
+              <div className="mt-1.5 h-3 w-32 animate-pulse rounded bg-[var(--shop-bg-muted)]" />
             </div>
           </div>
         </motion.div>
@@ -240,28 +240,28 @@ export default function ShopOrdersClient() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-7 overflow-hidden rounded-[30px] border border-[var(--border-light)] bg-white p-5 shadow-[0_28px_90px_rgba(26,26,26,0.11)] backdrop-blur-2xl md:p-7"
+          className="mb-7 overflow-hidden rounded-[30px] border border-[var(--shop-border-light)] bg-white p-5 shadow-[0_28px_90px_rgba(26,26,26,0.11)] backdrop-blur-2xl md:p-7"
         >
           <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-brand)] bg-[var(--brand-faint)] px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-[var(--shop-gold)]">
                 <Sparkles className="h-4 w-4" />
                 3D Shop
               </div>
-              <h1 className="mt-5 max-w-3xl text-[clamp(2.4rem,5vw,5.6rem)] font-black leading-[0.92] tracking-[0] text-[var(--text-primary)]">
+              <h1 className="font-[var(--shop-font-heading)] mt-5 max-w-3xl text-[clamp(2.4rem,5vw,5.6rem)] font-semibold leading-[0.95] tracking-[-0.02em] text-[var(--shop-text-primary)]">
                 Your orders, beautifully tracked.
               </h1>
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <Link
                   href="/my-orders"
-                  className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[var(--border-light)] bg-white px-4 text-sm font-bold text-[var(--text-secondary)] shadow-[var(--shadow-sm)] transition hover:border-[var(--border-brand)] hover:text-[var(--brand-primary)]"
+                  className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[var(--shop-border-light)] bg-white px-4 text-sm font-bold text-[var(--shop-text-secondary)] shadow-[var(--shop-shadow-sm)] transition hover:border-[var(--shop-border-gold)] hover:text-[var(--shop-gold)]"
                 >
                   3D Print Orders
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   href="/3d-shop"
-                  className="relative inline-flex min-h-[44px] items-center justify-center gap-2 overflow-hidden rounded-xl bg-[linear-gradient(135deg,#4c1d95_0%,#6d28d9_50%,#7c3aed_100%)] px-4 text-sm font-bold text-white shadow-[var(--shadow-brand)] transition hover:bg-[linear-gradient(135deg,#3b0764_0%,#4c1d95_50%,#6d28d9_100%)]"
+                  className="relative inline-flex min-h-[44px] items-center justify-center gap-2 overflow-hidden rounded-xl bg-[var(--shop-gold)] px-4 text-sm font-bold text-[var(--luxury-charcoal)] shadow-[var(--shop-shadow-gold)] transition hover:bg-[var(--shop-gold-light)]"
                 >
                   <span className="relative z-10">Continue Shopping</span>
                   <ShoppingBag className="relative z-10 h-4 w-4" />
@@ -270,19 +270,19 @@ export default function ShopOrdersClient() {
             </div>
 
             <div className="grid min-w-[min(100%,420px)] gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-4">
-                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[var(--text-muted)]">
-                  <PackageCheck className="h-4 w-4 text-[var(--brand-primary)]" />
+              <div className="rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-4">
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[var(--shop-text-muted)]">
+                  <PackageCheck className="h-4 w-4 text-[var(--shop-gold)]" />
                   {getHeroMetricLabel(filter)}
                 </div>
-                <div className="mt-2 text-3xl font-black text-[var(--text-primary)]">{filterCounts[filter] ?? 0}</div>
+                <div className="mt-2 text-3xl font-black text-[var(--shop-text-primary)]">{filterCounts[filter] ?? 0}</div>
               </div>
-              <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-4">
-                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[var(--text-muted)]">
+              <div className="rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-4">
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[var(--shop-text-muted)]">
                   <BadgeCheck className="h-4 w-4 text-emerald-600" />
                   Lifetime value
                 </div>
-                <div className="mt-2 text-3xl font-black text-[var(--text-primary)]">{formatShopPrice(totalSpend)}</div>
+                <div className="mt-2 text-3xl font-black text-[var(--shop-text-primary)]">{formatShopPrice(totalSpend)}</div>
               </div>
             </div>
           </div>
@@ -300,14 +300,14 @@ export default function ShopOrdersClient() {
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.12 + index * 0.06 }}
-                  className="rounded-2xl border border-[var(--border-light)] bg-white/78 p-4 shadow-[var(--shadow-sm)]"
+                  className="rounded-2xl border border-[var(--shop-border-light)] bg-white/78 p-4 shadow-[var(--shop-shadow-sm)]"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <div className="text-xs font-black uppercase tracking-[0.16em] text-[var(--text-muted)]">{metric.label}</div>
-                      <div className="mt-1 text-2xl font-black text-[var(--text-primary)]">{metric.value}</div>
+                      <div className="text-xs font-black uppercase tracking-[0.16em] text-[var(--shop-text-muted)]">{metric.label}</div>
+                      <div className="mt-1 text-2xl font-black text-[var(--shop-text-primary)]">{metric.value}</div>
                     </div>
-                    <div className={`grid h-11 w-11 place-items-center rounded-2xl border border-[var(--border-light)] bg-[var(--bg-soft)] ${metric.tone}`}>
+                    <div className={`grid h-11 w-11 place-items-center rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] ${metric.tone}`}>
                       <Icon className="h-5 w-5" />
                     </div>
                   </div>
@@ -321,7 +321,7 @@ export default function ShopOrdersClient() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12 }}
-          className="sticky top-24 z-20 mb-6 overflow-x-auto rounded-2xl border border-[var(--border-light)] bg-white p-1.5 shadow-[var(--shadow-sm)] backdrop-blur-xl"
+          className="sticky top-24 z-20 mb-6 overflow-x-auto rounded-2xl border border-[var(--shop-border-light)] bg-white p-1.5 shadow-[var(--shop-shadow-sm)] backdrop-blur-xl"
         >
           <div className="flex min-w-max gap-1">
             {filters.map((item) => {
@@ -332,19 +332,19 @@ export default function ShopOrdersClient() {
                   type="button"
                   onClick={() => setFilter(item.key)}
                   className={`relative min-h-[44px] shrink-0 rounded-xl px-4 text-sm font-black transition ${
-                    active ? 'text-[var(--brand-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    active ? 'text-[var(--shop-gold)]' : 'text-[var(--shop-text-secondary)] hover:text-[var(--shop-text-primary)]'
                   }`}
                 >
                   {active && (
                     <motion.span
                       layoutId="shop-orders-filter"
-                      className="absolute inset-0 rounded-xl border border-[var(--border-brand)] bg-[var(--brand-faint)] shadow-[var(--shadow-sm)]"
+                      className="absolute inset-0 rounded-xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] shadow-[var(--shop-shadow-sm)]"
                       transition={{ type: 'spring', stiffness: 420, damping: 34 }}
                     />
                   )}
                   <span className="relative z-10 inline-flex items-center gap-2">
                     {item.label}
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${active ? 'bg-white text-[var(--brand-primary)]' : 'bg-[var(--bg-muted)] text-[var(--text-muted)]'}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${active ? 'bg-white text-[var(--shop-gold)]' : 'bg-[var(--shop-bg-muted)] text-[var(--shop-text-muted)]'}`}>
                       {filterCounts[item.key] ?? 0}
                     </span>
                   </span>
@@ -360,7 +360,7 @@ export default function ShopOrdersClient() {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[28px] border border-rose-200 bg-rose-50 p-8 text-center text-rose-700 shadow-[var(--shadow-sm)]"
+            className="rounded-[28px] border border-rose-200 bg-rose-50 p-8 text-center text-rose-700 shadow-[var(--shop-shadow-sm)]"
           >
             <AlertCircle className="mx-auto h-12 w-12" />
             <h2 className="mt-4 text-2xl font-black text-rose-900">Orders could not be loaded</h2>
@@ -370,16 +370,16 @@ export default function ShopOrdersClient() {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="overflow-hidden rounded-[30px] border border-[var(--border-light)] bg-white/86 p-8 text-center shadow-[var(--shadow-md)] backdrop-blur-xl"
+            className="overflow-hidden rounded-[30px] border border-[var(--shop-border-light)] bg-white/86 p-8 text-center shadow-[var(--shop-shadow-md)] backdrop-blur-xl"
           >
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-[var(--border-brand)] bg-[var(--brand-faint)] text-[var(--brand-primary)]">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] text-[var(--shop-gold)]">
               <ShoppingBag className="h-8 w-8" />
             </div>
-            <h2 className="mt-5 text-3xl font-black text-[var(--text-primary)]">No orders here yet.</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm font-semibold leading-6 text-[var(--text-secondary)]">
+            <h2 className="font-[var(--shop-font-heading)] mt-5 text-3xl font-semibold text-[var(--shop-text-primary)]">No orders here yet.</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm font-semibold leading-6 text-[var(--shop-text-secondary)]">
               Orders matching this filter will appear here as soon as they are placed.
             </p>
-            <Link href="/3d-shop" className="btn-primary mt-6 inline-flex min-h-[48px] items-center px-5">
+            <Link href="/3d-shop" className="inline-flex items-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-text-primary)] px-5 text-sm font-semibold text-white transition hover:bg-[var(--shop-text-secondary)] mt-6 inline-flex min-h-[48px] items-center px-5">
               <span className="relative z-10">Start Shopping</span>
             </Link>
           </motion.div>
@@ -405,7 +405,7 @@ export default function ShopOrdersClient() {
                     exit={{ opacity: 0, y: -12, scale: 0.98 }}
                     transition={{ duration: 0.34, delay: Math.min(index * 0.05, 0.22), ease: [0.16, 1, 0.3, 1] }}
                     whileHover={{ y: -3 }}
-                    className="group overflow-hidden rounded-[30px] border border-[var(--border-light)] bg-white/88 shadow-[0_18px_60px_rgba(26,26,26,0.08)] backdrop-blur-xl transition-shadow hover:shadow-[0_28px_90px_rgba(109,40,217,0.14)]"
+                    className="group overflow-hidden rounded-[30px] border border-[var(--shop-border-light)] bg-white/88 shadow-[0_18px_60px_rgba(26,26,26,0.08)] backdrop-blur-xl transition-shadow hover:shadow-[0_28px_90px_rgba(109,40,217,0.14)]"
                   >
                     <div className="flex gap-3 p-4 md:p-5">
                       {/* Status indicator - dedicated left column */}
@@ -418,11 +418,11 @@ export default function ShopOrdersClient() {
                         {/* Row 1: Product name + Status badge */}
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
-                            <div className="line-clamp-1 text-sm font-black leading-tight text-[var(--text-primary)]">
+                            <div className="line-clamp-1 text-sm font-black leading-tight text-[var(--shop-text-primary)]">
                               {firstItem?.productName ?? '3D Shop Order'}
                             </div>
                             {moreCount > 0 && (
-                              <div className="mt-0.5 text-[11px] font-bold text-[var(--brand-primary)]">
+                              <div className="mt-0.5 text-[11px] font-bold text-[var(--shop-gold)]">
                                 +{moreCount} more item{moreCount === 1 ? '' : 's'}
                               </div>
                             )}
@@ -440,7 +440,7 @@ export default function ShopOrdersClient() {
 
                         {/* Row 2: Order number + Payment badge */}
                         <div className="mt-2 flex items-center justify-between gap-2">
-                          <div className="min-w-0 truncate text-xs font-bold text-[var(--text-muted)]">
+                          <div className="min-w-0 truncate text-xs font-bold text-[var(--shop-text-muted)]">
                             #{order.order_number}
                           </div>
                           <div className="flex-shrink-0">
@@ -449,7 +449,7 @@ export default function ShopOrdersClient() {
                         </div>
 
                         {/* Row 3: Date */}
-                        <div className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]">
+                        <div className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-[var(--shop-text-muted)]">
                           <CalendarClock className="h-3.5 w-3.5 flex-shrink-0" />
                           <span className="flex-shrink-0">Placed {formatShopOrderDate(order.placed_at)}</span>
                         </div>
@@ -462,18 +462,18 @@ export default function ShopOrdersClient() {
                           const complete = statusIndex < currentProgressIndex
                           const current = statusIndex === currentProgressIndex
                           return (
-                            <div key={status} className="relative rounded-2xl border border-[var(--border-light)] bg-[var(--bg-soft)] p-3">
+                            <div key={status} className="relative rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3">
                               <div className="flex items-center gap-2">
                                 <span className={`grid h-8 w-8 place-items-center rounded-full border text-xs font-black ${
                                   complete
-                                    ? 'border-emerald-500 bg-emerald-500 text-white'
+                                    ? 'border-[var(--shop-gold)] bg-[var(--shop-gold)] text-[var(--luxury-charcoal)]'
                                     : current
-                                      ? 'border-[var(--brand-primary)] bg-[var(--brand-faint)] text-[var(--brand-primary)]'
-                                      : 'border-[var(--border-light)] bg-white text-[var(--text-muted)]'
+                                      ? 'border-[var(--shop-gold)] bg-[var(--shop-gold-faint)] text-[var(--shop-gold)]'
+                                      : 'border-[var(--shop-border-light)] bg-white text-[var(--shop-text-muted)]'
                                 }`}>
                                   {complete ? <Check className="h-4 w-4" /> : statusIndex + 1}
                                 </span>
-                                <span className={`text-xs font-black ${complete || current ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
+                                <span className={`text-xs font-black ${complete || current ? 'text-[var(--shop-text-primary)]' : 'text-[var(--shop-text-muted)]'}`}>
                                   {getShopFulfilmentStatusLabel(status)}
                                 </span>
                               </div>
@@ -491,31 +491,31 @@ export default function ShopOrdersClient() {
                     )}
 
                     {firstItem && (
-                      <div className="mx-4 mt-4 rounded-[24px] border border-[var(--border-light)] bg-[var(--bg-soft)] p-3 md:mx-5 md:mt-5 md:p-4">
+                      <div className="mx-4 mt-4 rounded-[24px] border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3 md:mx-5 md:mt-5 md:p-4">
                         <div className="grid gap-4 sm:grid-cols-[72px_minmax(0,1fr)_auto] sm:items-center">
-                          <div className="relative h-[72px] w-[72px] overflow-hidden rounded-2xl bg-[var(--bg-muted)]">
+                          <div className="relative h-[72px] w-[72px] overflow-hidden rounded-2xl bg-[var(--shop-bg-muted)]">
                             {firstItem.productThumbnail ? (
                               <Image src={firstItem.productThumbnail} alt={firstItem.productName} fill sizes="72px" className="object-cover transition duration-500 group-hover:scale-105" />
                             ) : (
-                              <div className="grid h-full place-items-center text-[var(--text-muted)]">
+                              <div className="grid h-full place-items-center text-[var(--shop-text-muted)]">
                                 <PackageCheck className="h-7 w-7" />
                               </div>
                             )}
                           </div>
                           <div className="min-w-0">
-                            <div className="line-clamp-1 text-lg font-black text-[var(--text-primary)]">{firstItem.productName}</div>
-                            <div className="mt-1 line-clamp-1 text-sm font-bold text-[var(--text-muted)]">{firstItem.variantLabel}</div>
-                            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-[var(--text-secondary)]">
+                            <div className="line-clamp-1 text-lg font-black text-[var(--shop-text-primary)]">{firstItem.productName}</div>
+                            <div className="mt-1 line-clamp-1 text-sm font-bold text-[var(--shop-text-muted)]">{firstItem.variantLabel}</div>
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-[var(--shop-text-secondary)]">
                               <span>{itemCount} item{itemCount === 1 ? '' : 's'}</span>
-                              <span className="h-1 w-1 rounded-full bg-[var(--border-medium)]" />
+                              <span className="h-1 w-1 rounded-full bg-[var(--shop-border-medium)]" />
                               <span>{formatShopPrice(firstItem.unitPrice)} first item</span>
-                              <span className="h-1 w-1 rounded-full bg-[var(--border-medium)]" />
+                              <span className="h-1 w-1 rounded-full bg-[var(--shop-border-medium)]" />
                               <span>{order.shipping_charge === 0 ? 'Free shipping' : `${formatShopPrice(order.shipping_charge)} shipping`}</span>
                             </div>
                           </div>
                           <div className="text-left sm:text-right">
-                            <div className="text-xs font-black uppercase tracking-[0.16em] text-[var(--text-muted)]">Total</div>
-                            <div className="mt-1 text-2xl font-black text-[var(--text-primary)]">{formatShopPrice(order.total_amount)}</div>
+                            <div className="text-xs font-black uppercase tracking-[0.16em] text-[var(--shop-text-muted)]">Total</div>
+                            <div className="mt-1 text-2xl font-black text-[var(--shop-text-primary)]">{formatShopPrice(order.total_amount)}</div>
                           </div>
                         </div>
 
@@ -523,7 +523,7 @@ export default function ShopOrdersClient() {
                           <button
                             type="button"
                             onClick={() => setExpanded((current) => ({ ...current, [order.id]: !isExpanded }))}
-                            className="mt-4 inline-flex min-h-[38px] items-center gap-2 rounded-xl border border-[var(--border-light)] bg-white px-3 text-sm font-black text-[var(--brand-primary)] transition hover:border-[var(--border-brand)]"
+                            className="mt-4 inline-flex min-h-[38px] items-center gap-2 rounded-xl border border-[var(--shop-border-light)] bg-white px-3 text-sm font-black text-[var(--shop-gold)] transition hover:border-[var(--shop-border-gold)]"
                           >
                             {isExpanded ? 'Hide items' : `${moreCount} more item${moreCount === 1 ? '' : 's'}`}
                             <ChevronDown className={`h-4 w-4 transition ${isExpanded ? 'rotate-180' : ''}`} />
@@ -541,8 +541,8 @@ export default function ShopOrdersClient() {
                             >
                               <div className="mt-3 grid gap-2">
                                 {order.items.slice(1).map((item) => (
-                                  <div key={`${item.skuId}-${item.customizationText ?? ''}`} className="rounded-2xl border border-[var(--border-light)] bg-white px-3 py-2 text-sm text-[var(--text-secondary)]">
-                                    <span className="font-black text-[var(--text-primary)]">{item.productName}</span>
+                                  <div key={`${item.skuId}-${item.customizationText ?? ''}`} className="rounded-2xl border border-[var(--shop-border-light)] bg-white px-3 py-2 text-sm text-[var(--shop-text-secondary)]">
+                                    <span className="font-black text-[var(--shop-text-primary)]">{item.productName}</span>
                                     <span> · {item.variantLabel} · Qty {item.quantity}</span>
                                   </div>
                                 ))}
@@ -554,11 +554,11 @@ export default function ShopOrdersClient() {
                     )}
 
                     <div className="mx-4 mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:mx-5 md:mt-5">
-                      <div className="flex items-center gap-2 text-sm font-bold text-[var(--text-secondary)]">
-                        <Clock3 className="h-4 w-4 text-[var(--brand-primary)]" />
+                      <div className="flex items-center gap-2 text-sm font-bold text-[var(--shop-text-secondary)]">
+                        <Clock3 className="h-4 w-4 text-[var(--shop-gold)]" />
                         {order.estimated_delivery ? `Expected by ${formatShopOrderDate(order.estimated_delivery)}` : 'Tracking updates will appear here'}
                       </div>
-                      <Link href={`/3d-shop/order/${order.id}`} className="btn-primary inline-flex min-h-[46px] items-center justify-center px-5">
+                      <Link href={`/3d-shop/order/${order.id}`} className="inline-flex items-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-gold)] px-5 text-sm font-semibold text-[var(--luxury-charcoal)] shadow-[var(--shop-shadow-gold)] transition hover:bg-[var(--shop-gold-light)] inline-flex min-h-[46px] items-center justify-center px-5">
                         <span className="relative z-10">View Order</span>
                         <ArrowRight className="relative z-10 h-4 w-4" />
                       </Link>
@@ -568,13 +568,13 @@ export default function ShopOrdersClient() {
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mx-4 mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 md:mx-5 md:mt-4"
+                        className="mx-4 mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-4 py-3 md:mx-5 md:mt-4"
                       >
-                        <div className="flex items-center gap-2 text-sm font-black text-yellow-800">
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-500" />
+                          <div className="flex items-center gap-2 text-sm font-black text-[var(--shop-gold)]">
+                          <Star className="h-4 w-4 fill-[var(--shop-gold)] text-[var(--shop-gold)]" />
                           {reviewItems.length} review{reviewItems.length === 1 ? '' : 's'} waiting
                         </div>
-                        <Link href={`/3d-shop/order/${order.id}?reviews=1`} className="inline-flex items-center gap-2 text-sm font-black text-[var(--brand-primary)]">
+                        <Link href={`/3d-shop/order/${order.id}?reviews=1`} className="inline-flex items-center gap-2 text-sm font-black text-[var(--shop-gold)]">
                           Write Review
                           <ArrowRight className="h-4 w-4" />
                         </Link>

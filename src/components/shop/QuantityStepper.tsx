@@ -19,23 +19,23 @@ export default function QuantityStepper({
   const size = compact ? 'h-8 w-8' : 'h-11 w-11'
 
   return (
-    <div className="inline-flex items-center overflow-hidden rounded-xl border border-[var(--border-light)] bg-white">
+    <div className="inline-flex items-center overflow-hidden rounded-xl border border-[var(--shop-border-light)] bg-white">
       <button
         type="button"
         disabled={value <= min}
         onClick={() => onChangeAction(Math.max(min, value - 1))}
-        className={`${size} grid place-items-center text-[var(--text-secondary)] transition hover:bg-[var(--bg-soft)] disabled:opacity-40`}
+        className={`${size} grid place-items-center text-[var(--shop-text-secondary)] transition hover:bg-[var(--shop-bg-soft)] disabled:opacity-40`}
       >
         <Minus className="h-4 w-4" />
       </button>
-      <span className={`${compact ? 'w-8 text-sm' : 'w-12'} text-center font-semibold text-[var(--text-primary)]`}>
+      <span className={`${compact ? 'w-8 text-sm' : 'w-12'} text-center font-semibold text-[var(--shop-text-primary)]`}>
         {value}
       </span>
       <button
         type="button"
         disabled={value >= clampedMax}
         onClick={() => onChangeAction(Math.min(clampedMax, value + 1))}
-        className={`${size} grid place-items-center text-[var(--text-secondary)] transition hover:bg-[var(--bg-soft)] disabled:opacity-40`}
+        className={`${size} grid place-items-center text-[var(--shop-text-secondary)] transition hover:bg-[var(--shop-bg-soft)] disabled:opacity-40`}
       >
         <Plus className="h-4 w-4" />
       </button>
