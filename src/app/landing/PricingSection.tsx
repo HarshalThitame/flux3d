@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { motion, useInView } from 'framer-motion'
-import { useRef } from 'react'
+import { motion, useInView, useReducedMotion } from 'framer-motion'
+import { memo, useRef } from 'react'
 import { ArrowRight, Check, Clock3, IndianRupee, PackageCheck, ShieldCheck } from 'lucide-react'
 
 const pricingCards = [
@@ -26,9 +26,10 @@ const pricingCards = [
   },
 ]
 
-export default function PricingSection() {
+function PricingSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
+  const reduceMotion = useReducedMotion()
 
   return (
     <section ref={ref} className="relative overflow-hidden px-6 py-12 md:py-16 lg:py-24">
@@ -36,8 +37,9 @@ export default function PricingSection() {
 
       <div className="relative z-10 mx-auto max-w-[1200px]">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={reduceMotion ? { duration: 0.3 } : undefined}
           className="mb-8 md:mb-12 lg:mb-16 text-center"
         >
           <p className="mb-4 text-sm font-medium uppercase tracking-normal text-[#6d28d9]">Pricing</p>
@@ -53,9 +55,9 @@ export default function PricingSection() {
           {pricingCards.map((card, index) => (
             <motion.div
               key={card.title}
-              initial={{ opacity: 0, y: 30 }}
+              initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: index * 0.12 }}
+              transition={reduceMotion ? { duration: 0.2 } : { delay: index * 0.12 }}
               className="rounded-2xl border border-[#6d28d9]/10 bg-white p-6 shadow-sm"
             >
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#6d28d9]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#6d28d9]">
@@ -77,9 +79,9 @@ export default function PricingSection() {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.35 }}
+          transition={reduceMotion ? { duration: 0.2 } : { delay: 0.35 }}
           className="mt-6 md:mt-8 rounded-2xl border border-[#6d28d9]/10 bg-[#faf9f7] p-6"
         >
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -110,3 +112,5 @@ export default function PricingSection() {
     </section>
   )
 }
+
+export default memo(PricingSection)
