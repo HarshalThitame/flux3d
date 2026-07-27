@@ -199,7 +199,7 @@ export default function ShopOrdersMobile() {
           </p>
           <Link
             href="/3d-shop"
-            className="btn-primary mt-4 inline-flex min-h-[44px] items-center px-4 text-sm"
+            className="mt-4 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[var(--shop-radius-lg)] bg-[var(--shop-gold)] px-6 text-sm font-semibold text-[var(--luxury-charcoal)] shadow-[var(--shop-shadow-gold)] transition hover:bg-[var(--shop-gold-light)]"
           >
             <span className="relative z-10">Start Shopping</span>
           </Link>

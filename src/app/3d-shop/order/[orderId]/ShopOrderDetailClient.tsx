@@ -99,8 +99,8 @@ function getProgressStepIcon(status: string) {
 }
 
 function getProgressStepColor(status: string, complete: boolean, current: boolean) {
-  if (complete) return { bg: 'bg-emerald-50', border: 'border-emerald-200', icon: 'bg-emerald-500 text-white', text: 'text-emerald-700' }
-  if (current) return { bg: 'bg-violet-50', border: 'border-violet-200', icon: 'bg-violet-500 text-white', text: 'text-violet-700' }
+  if (complete) return { bg: 'bg-[var(--shop-gold-faint)]', border: 'border-[var(--shop-border-gold)]', icon: 'bg-[var(--shop-gold)] text-[var(--luxury-charcoal)]', text: 'text-[var(--shop-gold)]' }
+  if (current) return { bg: 'bg-[var(--shop-brand-faint)]', border: 'border-[var(--shop-border-indigo)]', icon: 'bg-[var(--shop-brand-primary)] text-white', text: 'text-[var(--shop-brand-primary)]' }
   return { bg: 'bg-gray-50', border: 'border-gray-200', icon: 'bg-gray-200 text-gray-500', text: 'text-gray-500' }
 }
 
@@ -110,7 +110,7 @@ function CinematicStatusRow({ currentProgressIndex }: { currentProgressIndex: nu
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
-      className="mt-4 overflow-hidden rounded-xl border border-[var(--shop-border-light)] bg-gradient-to-r from-gray-50 via-white to-violet-50/40 p-2.5 shadow-sm"
+      className="mt-4 overflow-hidden rounded-xl border border-[var(--shop-border-light)] bg-gradient-to-r from-[var(--shop-bg-soft)] via-white to-[var(--shop-gold-faint)] p-2.5 shadow-sm"
     >
       <div className="flex items-stretch gap-0 overflow-x-auto pb-1">
         {SHOP_FULFILMENT_PROGRESS.map((status, index) => {
@@ -132,7 +132,7 @@ function CinematicStatusRow({ currentProgressIndex }: { currentProgressIndex: nu
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: 'spring', stiffness: 300, delay: 0.1 + index * 0.05 }}
-                      className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/30"
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--shop-gold)] shadow-[var(--shop-shadow-gold)]"
                     >
                       <Check className="h-3.5 w-3.5 text-white" />
                     </motion.div>
@@ -141,9 +141,9 @@ function CinematicStatusRow({ currentProgressIndex }: { currentProgressIndex: nu
                       <motion.div
                         animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0, 0.4] }}
                         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                        className="absolute inset-0 rounded-full bg-violet-400"
+                        className="absolute inset-0 rounded-full bg-[var(--shop-brand-secondary)]/40"
                       />
-                      <div className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full bg-violet-500 shadow-sm shadow-violet-500/30">
+                      <div className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--shop-brand-primary)] shadow-[var(--shop-shadow-md)]">
                         <StepIcon className="h-3.5 w-3.5 text-white" />
                       </div>
                     </>
@@ -193,40 +193,40 @@ function LoadingState() {
         {/* Hero skeleton */}
         <div className="overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/85 p-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 animate-pulse rounded-xl bg-[var(--bg-muted)]" />
-            <div className="h-4 w-24 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+            <div className="h-8 w-8 animate-pulse rounded-xl bg-[var(--shop-bg-muted)]" />
+            <div className="h-4 w-24 animate-pulse rounded-full bg-[var(--shop-bg-muted)]" />
           </div>
-          <div className="mt-3 h-6 w-40 animate-pulse rounded-lg bg-[var(--bg-muted)]" />
+          <div className="mt-3 h-6 w-40 animate-pulse rounded-lg bg-[var(--shop-bg-muted)]" />
           <div className="mt-2 flex gap-2">
-            <div className="h-5 w-20 animate-pulse rounded-full bg-[var(--bg-muted)]" />
-            <div className="h-5 w-16 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+            <div className="h-5 w-20 animate-pulse rounded-full bg-[var(--shop-bg-muted)]" />
+            <div className="h-5 w-16 animate-pulse rounded-full bg-[var(--shop-bg-muted)]" />
           </div>
           <div className="mt-4 flex gap-3 overflow-x-auto">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-16 w-24 flex-shrink-0 animate-pulse rounded-xl bg-[var(--bg-muted)]" />
+              <div key={i} className="h-16 w-24 flex-shrink-0 animate-pulse rounded-xl bg-[var(--shop-bg-muted)]" />
             ))}
           </div>
         </div>
 
         {/* Progress skeleton */}
         <div className="overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/85 p-4 shadow-sm">
-          <div className="h-4 w-32 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+          <div className="h-4 w-32 animate-pulse rounded-full bg-[var(--shop-bg-muted)]" />
           <div className="mt-3 grid grid-cols-4 gap-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-14 animate-pulse rounded-xl bg-[var(--bg-muted)]" />
+              <div key={i} className="h-14 animate-pulse rounded-xl bg-[var(--shop-bg-muted)]" />
             ))}
           </div>
         </div>
 
         {/* Items skeleton */}
         <div className="overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/85 p-4 shadow-sm">
-          <div className="h-4 w-24 animate-pulse rounded-full bg-[var(--bg-muted)]" />
+          <div className="h-4 w-24 animate-pulse rounded-full bg-[var(--shop-bg-muted)]" />
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="mt-3 flex gap-3">
-              <div className="h-14 w-14 flex-shrink-0 animate-pulse rounded-xl bg-[var(--bg-muted)]" />
+              <div className="h-14 w-14 flex-shrink-0 animate-pulse rounded-xl bg-[var(--shop-bg-muted)]" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-3/4 animate-pulse rounded bg-[var(--bg-muted)]" />
-                <div className="h-3 w-1/2 animate-pulse rounded bg-[var(--bg-muted)]" />
+                <div className="h-4 w-3/4 animate-pulse rounded bg-[var(--shop-bg-muted)]" />
+                <div className="h-3 w-1/2 animate-pulse rounded bg-[var(--shop-bg-muted)]" />
               </div>
             </div>
           ))}
@@ -453,7 +453,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-center shadow-sm"
+            className="rounded-2xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] p-4 text-center shadow-sm"
           >
             <motion.div
               initial={{ scale: 0 }}
@@ -478,12 +478,12 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,390px)] lg:items-start">
             <div className="min-w-0 self-start">
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
-                <Link href="/3d-shop/orders" className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-[var(--shop-border-light)] bg-white px-2.5 text-xs font-semibold text-[var(--shop-text-secondary)] shadow-sm transition hover:border-[var(--border-brand)] hover:text-[var(--shop-gold)]">
+                <Link href="/3d-shop/orders" className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-[var(--shop-border-light)] bg-white px-2.5 text-xs font-semibold text-[var(--shop-text-secondary)] shadow-sm transition hover:border-[var(--shop-border-gold)] hover:text-[var(--shop-gold)]">
                   <ArrowLeft className="h-3.5 w-3.5" />
                   Back
                 </Link>
 
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-brand)] bg-[var(--brand-faint)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--shop-gold)]">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--shop-gold)]">
                   <Sparkles className="h-3.5 w-3.5" />
                   Order Detail
                 </div>
@@ -545,7 +545,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
             {/* Product Image */}
             <div className="relative overflow-hidden rounded-xl border border-[var(--shop-border-light)] bg-white shadow-sm lg:self-stretch">
               {primaryItem?.productThumbnail ? (
-                <div className="relative aspect-[4/3] min-h-[180px] bg-[var(--bg-muted)] lg:h-full lg:min-h-[280px]">
+                <div className="relative aspect-[4/3] min-h-[180px] bg-[var(--shop-bg-muted)] lg:h-full lg:min-h-[280px]">
                   <Image
                     src={primaryItem.productThumbnail}
                     alt={primaryItem.productName}
@@ -672,10 +672,10 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                     initial={{ opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.16 + index * 0.05 }}
-                    className="rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3 transition hover:border-[var(--border-brand)] hover:bg-white"
+                    className="rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3 transition hover:border-[var(--shop-border-gold)] hover:bg-white"
                   >
                     <div className="flex gap-3">
-                      <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--bg-muted)]">
+                      <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--shop-bg-muted)]">
                         {item.productThumbnail ? (
                           <Image src={item.productThumbnail} alt={item.productName} fill sizes="56px" className="object-cover transition duration-500 hover:scale-105" />
                         ) : (
@@ -714,10 +714,10 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                 id="reviews"
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm"
+                className="rounded-2xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] p-4 shadow-sm"
               >
                 <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-500" />
+                  <Star className="h-4 w-4 fill-[var(--shop-gold)] text-[var(--shop-gold)]" />
                   <h2 className="text-base font-bold text-yellow-900">Review your items</h2>
                 </div>
                 <div className="mt-3 space-y-2.5">
@@ -726,12 +726,12 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                     return (
                       <div key={`${eligible.orderId}-${eligible.productId}`} className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-yellow-200 bg-white p-2.5">
                         <div className="flex min-w-0 items-center gap-2.5">
-                          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[var(--bg-muted)]">
+                          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[var(--shop-bg-muted)]">
                             {(eligible.productThumbnail || orderItem?.productThumbnail) ? (
                               <Image src={eligible.productThumbnail || orderItem?.productThumbnail || ''} alt={eligible.productName} fill sizes="40px" className="object-cover" />
                             ) : (
                               <div className="grid h-full place-items-center">
-                                <Star className="h-4 w-4 text-yellow-500" />
+                                <Star className="h-4 w-4 text-[var(--shop-gold)]" />
                               </div>
                             )}
                           </div>
@@ -867,7 +867,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
             className="h-fit rounded-2xl border border-[var(--shop-border-light)] bg-white/90 p-4 shadow-sm backdrop-blur-xl lg:sticky lg:top-28 lg:self-start"
           >
             <div className="flex items-center gap-2.5">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-brand)] bg-[var(--brand-faint)] text-[var(--shop-gold)]">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] text-[var(--shop-gold)]">
                 <ReceiptText className="h-4 w-4" />
               </span>
               <div>
@@ -930,7 +930,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
               <Link href="/3d-shop" className="inline-flex items-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-text-primary)] text-sm font-semibold text-white transition hover:bg-[var(--shop-text-secondary)] flex min-h-[40px] w-full items-center justify-center text-xs">
                 <span className="relative z-10">Continue Shopping</span>
               </Link>
-              <Link href="/3d-shop/orders" className="block rounded-lg border border-[var(--shop-border-light)] bg-white px-3 py-2.5 text-center text-xs font-bold text-[var(--shop-text-secondary)] transition hover:border-[var(--border-brand)] hover:text-[var(--shop-gold)]">
+              <Link href="/3d-shop/orders" className="block rounded-lg border border-[var(--shop-border-light)] bg-white px-3 py-2.5 text-center text-xs font-bold text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-border-gold)] hover:text-[var(--shop-gold)]">
                 Back to 3D Shop Orders
               </Link>
             </div>
