@@ -4,6 +4,19 @@ import type { ReactNode } from 'react'
 import { useShopCartStore } from '@/stores/shopCartStore'
 import RazorpayCheckoutClient from '@/components/payments/RazorpayCheckoutClient'
 
+type PaymentTheme = {
+  accent: string
+  accentFaint: string
+  accentBorder: string
+  accentText: string
+  buttonBg: string
+  buttonHoverBg: string
+  buttonShadow: string
+  containerBorder: string
+  containerBg: string
+  containerRadius: string
+}
+
 export default function PaymentPageClient({
   orderId,
   createOrderEndpoint,
@@ -20,6 +33,7 @@ export default function PaymentPageClient({
   customer,
   orderSummary,
   themeColor,
+  theme,
 }: {
   orderId: string
   createOrderEndpoint: string
@@ -36,6 +50,7 @@ export default function PaymentPageClient({
   customer: { name: string; email: string; contact: string }
   orderSummary: ReactNode
   themeColor?: string
+  theme?: Partial<PaymentTheme>
 }) {
   const clearCart = useShopCartStore((state) => state.clearCart)
 
@@ -58,6 +73,7 @@ export default function PaymentPageClient({
       orderSummary={orderSummary}
       onSuccessAction={clearCart}
       themeColor={themeColor}
+      theme={theme}
     />
   )
 }
