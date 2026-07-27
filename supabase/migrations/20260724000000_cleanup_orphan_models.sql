@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS public.admin_audit_logs (
 ALTER TABLE public.admin_audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- Only service_role can access audit logs
+DROP POLICY IF EXISTS "service_role_access" ON public.admin_audit_logs;
 CREATE POLICY "service_role_access" ON public.admin_audit_logs
   FOR ALL TO service_role
   USING (true)

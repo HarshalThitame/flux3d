@@ -71,12 +71,21 @@ Modernize the entire 3D Shop module with a **premium, luxury boutique aesthetic*
    - `ShopOrdersClient` / `ShopOrdersMobile`
    - `ShopOrderDetailClient` / `ShopOrderDetailMobile`
    - `ShopOrderSuccessPage`
-7. Finish remaining small components:
-   - `ReviewModal`
-   - `QuickAddModal`
-   - `WishlistButton`
-   - `ShopCartPromotions` (`ShopCouponInput`, `ShopAppliedOffer`)
-   - `ShopCartDrawer`
+7. Finished remaining small components:
+   - `ReviewModal` — gold star rating, gold submit button, luxury tokens
+   - `QuickAddModal` — gold "Add to Cart", luxury tokens
+   - `WishlistButton` — updated tokens and shadow
+   - `ShopCartPromotions` (`ShopCouponInput`, `ShopAppliedOffer`) — gold coupon success, gold apply button
+   - `ShopCartDrawer` — gold "Start Shopping"/"Proceed to Checkout", luxury tokens
+   - `ShopCartNavButton` — updated tokens, gold badge
+8. Updated all semantic colors across shop pages:
+   - Emerald (success/in-stock) → gold
+   - Violet (current/active) → indigo
+   - Yellow (review prompt) → gold
+   - Red (errors/destructive) → rose (kept for semantic clarity)
+   - Status timeline dots (packed/shipped/delivered) kept as semantic indicators
+9. Updated order detail pages (`ShopOrderDetailClient`, `ShopOrderDetailMobile`) — gold progress steps, luxury gradient header, hover border → gold
+10. Updated `FeaturedProductsAd` — gold gradient header, gold button, gold badges, luxury card styling
 
 ## Phase 4 — Build & Quality Assurance
 1. Run `npx tsc --noEmit` after every batch of changes.
@@ -102,6 +111,8 @@ Modernize the entire 3D Shop module with a **premium, luxury boutique aesthetic*
 - `src/app/admin/3d-shop/_components/ShopProductEditor.tsx` — admin editor
 
 ## Current Status
-- Foundation, 3D viewer, and major redesign are complete.
-- `npx tsc --noEmit` and `npx next build` pass.
-- Remaining: finish a few small components that still reference old global tokens.
+- Foundation, 3D viewer, major redesign, and all remaining small components are complete.
+- All old CSS tokens (`--text-primary`, `--bg-base`, `--border-brand`, `--brand-primary`, etc.) have been replaced with `--shop-*` luxury tokens across every shop component and page.
+- Semantic colors (emerald, violet, yellow) mapped to gold/indigo for luxury consistency.
+- `npx tsc --noEmit` and `npx next build` pass with zero errors.
+- Remaining: populate `model_url` for existing products and visually verify end-to-end flows.
