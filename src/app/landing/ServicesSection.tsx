@@ -100,32 +100,32 @@ function ServiceCard({ service }: { service: typeof services[0] }) {
         <div className="flex flex-col sm:flex-row gap-4 flex-1">
           <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br ${service.color} p-0.5 flex-shrink-0`}>
             <div className="w-full h-full rounded-xl bg-[#faf9f7] flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <service.icon className="w-7 h-7 text-[#0F1B3D]" />
+              <service.icon className="w-7 h-7 text-[#4c1d95]" />
             </div>
           </div>
 
           <div className="flex-1 flex flex-col">
-            <h3 className="font-[var(--font-syne)] text-lg sm:text-xl font-bold text-[#0F1B3D] mb-2 group-hover:text-[#6d28d9] transition-colors duration-300">
+            <h3 className="font-[var(--font-syne)] text-lg sm:text-xl font-bold text-[#4c1d95] mb-2 group-hover:text-[#5b21b6] transition-colors duration-300">
               {service.title}
             </h3>
-            <p className="text-sm text-[#6F7192] leading-[1.6] mb-3 sm:mb-4 flex-1">
+            <p className="text-sm text-[#5b21b6] leading-[1.6] mb-3 sm:mb-4 flex-1">
               {service.description}
             </p>
             <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
               {service.pills.map((pill, j) => (
                 <span
                   key={j}
-                  className="text-[11px] sm:text-xs bg-[rgba(109,40,217,0.08)] text-[#374151] px-3 py-1 rounded-full border border-[rgba(109,40,217,0.12)]"
+                  className="text-[11px] sm:text-xs bg-[rgba(91,33,182,0.08)] text-[#4c1d95] px-3 py-1 rounded-full border border-[rgba(91,33,182,0.14)]"
                 >
                   {pill}
                 </span>
               ))}
             </div>
-            <div className="flex items-center justify-between pt-2 border-t border-[rgba(109,40,217,0.08)]">
-              <span className="text-sm text-[#6d28d9] font-semibold">{service.price}</span>
+            <div className="flex items-center justify-between pt-2 border-t border-[rgba(91,33,182,0.10)]">
+              <span className="text-sm text-[#5b21b6] font-semibold">{service.price}</span>
               <a
                 href={service.link || '/instant-quote'}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#374151] hover:text-[#6d28d9] transition-colors group/link min-h-[44px]"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#4c1d95] hover:text-[#5b21b6] transition-colors group/link min-h-[44px]"
               >
                 {service.cta}
                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover/link:translate-x-1" />
@@ -147,7 +147,7 @@ function ServicesSection() {
 
   return (
     <section id="services" ref={ref} className="relative scroll-mt-20 overflow-hidden px-6 py-12 md:py-16 lg:py-24">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_30%,rgba(109,40,217,0.04)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_30%,rgba(91,33,182,0.05)_0%,transparent_70%)] pointer-events-none" />
 
       <div className="max-w-[1200px] mx-auto relative z-10">
         <div className="relative">
@@ -158,10 +158,10 @@ function ServicesSection() {
             animate={isInView ? "show" : "hidden"}
             className="text-center mb-8 md:mb-12 lg:mb-16 relative z-10"
           >
-          <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">What We Print</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
+          <p className="text-sm font-medium text-[#5b21b6] uppercase tracking-normal mb-4">What We Print</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#4c1d95] tracking-normal leading-[1.1]">
             One Service.{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#a855f7]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5b21b6] to-[#a855f7]">
               Every Industry.
             </span>
           </h2>
@@ -188,13 +188,13 @@ function ServicesSection() {
           initial={reduceMotion ? { opacity: 1 } : "hidden"}
           whileInView={reduceMotion ? { opacity: 1 } : "show"}
           viewport={reduceMotion ? undefined : viewportOnce}
-          className="text-center bg-[#faf9f7] border border-[rgba(109,40,217,0.5)] rounded-2xl p-8 hover:border-[rgba(109,40,217,0.3)] transition-colors duration-300"
+          className="text-center bg-[#faf9f7] border border-[rgba(91,33,182,0.12)] rounded-2xl p-8 hover:border-[rgba(91,33,182,0.20)] transition-colors duration-300"
         >
-          <p className="text-lg text-[#0F1B3D] mb-2">Don&apos;t see your requirement above?</p>
-          <p className="text-sm text-[#6F7192] mb-6">Share your file or product requirement and we&apos;ll review it before confirming the order.</p>
+          <p className="text-lg text-[#4c1d95] mb-2">Don&apos;t see your requirement above?</p>
+          <p className="text-sm text-[#5b21b6] mb-6">Share your file or product requirement and we&apos;ll review it before confirming the order.</p>
           <a
             href="/contact"
-            className="inline-flex items-center gap-2 bg-[#6d28d9] text-white px-6 py-3 rounded-xl text-sm font-medium hover:shadow-[0_0_30px_rgba(109,40,217,0.3)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+            className="inline-flex items-center gap-2 bg-[#5b21b6] text-white px-6 py-3 rounded-xl text-sm font-medium hover:shadow-[0_0_30px_rgba(91,33,182,0.3)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
           >
             Contact Sales
             <ArrowRight className="w-4 h-4" />

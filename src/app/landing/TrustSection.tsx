@@ -21,13 +21,13 @@ export default function TrustSection() {
 
   return (
     <section ref={ref} className="relative py-24 px-6 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_30%_50%,rgba(16,185,129,0.04)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_30%_50%,rgba(91,33,182,0.05)_0%,transparent_70%)] pointer-events-none" />
       <div className="max-w-[1200px] mx-auto relative z-10">
         <motion.div variants={fadeUp} initial="hidden" animate={isInView ? "show" : "hidden"} className="text-center mb-16">
-          <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">Why Trust Us</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
+          <p className="text-sm font-medium text-[#5b21b6] uppercase tracking-normal mb-4">Why Trust Us</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#4c1d95] tracking-normal leading-[1.1]">
             Quality You Can{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#6d28d9]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5b21b6] to-[#a855f7]">
               See and Touch.
             </span>
           </h2>
@@ -44,15 +44,15 @@ export default function TrustSection() {
             <motion.div
               key={i}
               variants={cardItem}
-              className="group bg-[#faf9f7] border border-[rgba(109,40,217,0.5)] rounded-2xl p-6 hover:border-[rgba(109,40,217,0.2)] hover:-translate-y-1 transition-all duration-200"
+              className="group bg-[#faf9f7] border border-[rgba(91,33,182,0.10)] rounded-2xl p-6 hover:border-[rgba(91,33,182,0.18)] hover:-translate-y-1 transition-all duration-200"
             >
-              <div className="w-12 h-12 rounded-xl bg-[rgba(109,40,217,0.08)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <point.icon className="w-6 h-6 text-[#6d28d9]" />
+              <div className="w-12 h-12 rounded-xl bg-[rgba(91,33,182,0.08)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <point.icon className="w-6 h-6 text-[#5b21b6]" />
               </div>
-              <h3 className="font-[var(--font-syne)] text-base font-bold text-[#0F1B3D] mb-2 group-hover:text-[#6d28d9] transition-colors">
+              <h3 className="font-[var(--font-syne)] text-base font-bold text-[#4c1d95] mb-2 group-hover:text-[#5b21b6] transition-colors">
                 {point.title}
               </h3>
-              <p className="text-sm text-[#6F7192] leading-[1.6]">{point.body}</p>
+              <p className="text-sm text-[#5b21b6] leading-[1.6]">{point.body}</p>
             </motion.div>
           ))}
         </motion.div>
