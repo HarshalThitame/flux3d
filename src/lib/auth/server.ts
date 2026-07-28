@@ -20,26 +20,18 @@ export async function getCurrentUserProfile() {
 
   const supabase = await createServerSupabaseClient()
 
-  // Use getSession() first — it reads cookies locally without HTTP request.
-  // This avoids the token refresh race condition and setAll cookie write failure
-  // that occurs in Server Components when getUser() triggers a refresh.
+  // Use getUser() to authenticate the session by contacting the Supabase Auth server.
+  // This is the secure, recommended approach over getSession() which only reads
+  // from local storage/cookies without JWT validation.
   let user = null
-  const { data: sessionData } = await supabase.auth.getSession()
-  if (sessionData?.session?.user) {
-    user = sessionData.session.user
-  }
-
-  // Fall back to getUser() only if session is missing (not just expired)
-  if (!user) {
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const { data } = await supabase.auth.getUser()
-        user = data.user
-        break
-      } catch {
-        if (attempt === 2) return null
-        await new Promise((resolve) => setTimeout(resolve, 500))
-      }
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const { data } = await supabase.auth.getUser()
+      user = data.user
+      break
+    } catch {
+      if (attempt === 2) return null
+      await new Promise((resolve) => setTimeout(resolve, 500))
     }
   }
 
@@ -48,7 +40,7 @@ export async function getCurrentUserProfile() {
   }
 
   // Use admin client to bypass RLS — the profiles query must work even when the
-  // user session's JWT is expired. `getSession()` above already validated the user
+  // user session's JWT is expired. `getUser()` above already validated the user
   // is authenticated, so it's safe to read their profile with elevated privileges.
   const adminSupabase = createAdminSupabaseClient()
   const { data: profile } = await adminSupabase
