@@ -568,6 +568,10 @@ export async function verifyCheckoutPayment(params: {
       new_state: { payment_status: 'paid', provider_payment_id: params.razorpayPaymentId },
     })
 
+    // Send payment confirmation email immediately (webhook handler will also try,
+    // but deduplication in the email trigger prevents duplicates).
+    notifyPaymentCaptured(attempt).catch(() => {})
+
     return {
       status: 'paid',
       paymentAttempt: updatedAttempt,
@@ -673,7 +677,7 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
       reason: systemReason(attempt.customer_id, `Webhook ${eventName}`),
     })
 
-    notifyPaymentFailed(attempt as Parameters<typeof notifyPaymentFailed>[0]).catch(() => {})
+    notifyPaymentFailed(attempt).catch(() => {})
 
     return { handled: true, processingStatus: 'processed' as const }
   }
@@ -740,7 +744,7 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
     }
 
     if (captured) {
-      notifyPaymentCaptured(attempt as Parameters<typeof notifyPaymentCaptured>[0]).catch(() => {})
+      notifyPaymentCaptured(attempt).catch(() => {})
     }
 
     return { handled: true, processingStatus: 'processed' as const }
@@ -818,7 +822,7 @@ async function processRefundEvent(eventName: string, payload: Record<string, unk
       new_state: { status: nextStatus, total_refunded_paise: totalRefunded, fully_refunded: isFullyRefunded },
     })
 
-    notifyRefundProcessed(attempt as Parameters<typeof notifyRefundProcessed>[0], localRefund.amount_paise).catch(() => {})
+    notifyRefundProcessed(attempt, localRefund.amount_paise).catch(() => {})
   }
 
   if (nextStatus === 'failed') {

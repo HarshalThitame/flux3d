@@ -192,8 +192,14 @@ export async function sendPaymentReceipt(
   email: string,
   orderNumber: string,
   customerName: string,
-  amount: string,
-  paymentMethod: string,
+  orderDate: string,
+  orderUrl: string,
+  items: PaymentReceiptPayload['items'],
+  pricing: PaymentReceiptPayload['pricing'],
+  payment: PaymentReceiptPayload['payment'],
+  shippingAddress: PaymentReceiptPayload['shippingAddress'],
+  orderId?: string,
+  orderType?: 'custom' | 'shop',
   receiptUrl?: string
 ) {
   return enqueueEmail({
@@ -202,8 +208,14 @@ export async function sendPaymentReceipt(
     recipient: email,
     orderNumber,
     customerName,
-    amount,
-    paymentMethod,
+    orderDate,
+    orderUrl,
+    items,
+    pricing,
+    payment,
+    shippingAddress,
+    orderId: orderId ?? null,
+    orderType: orderType ?? null,
     receiptUrl,
   } as PaymentReceiptPayload)
 }

@@ -13,6 +13,7 @@ import {
   Column,
   Preview,
 } from '@react-email/components'
+import EmailHeader from './components/EmailHeader'
 import type { OrderShippedPayload } from '../types'
 
 const PRIMARY_COLOR = '#FF5C1A'
@@ -52,11 +53,7 @@ export default function OrderShippedEmail({
       <Preview>{previewText}</Preview>
       <Body className="email-bg" style={bodyStyle}>
         <Container style={containerStyle}>
-          {/* Header / Brand */}
-          <Section style={headerStyle}>
-            <Text style={brandStyle}>FLUX3D</Text>
-          </Section>
-
+          <EmailHeader />
           <Hr style={hrStyle} className="email-hr" />
 
           {/* Main greeting */}
@@ -171,19 +168,6 @@ const containerStyle: React.CSSProperties = {
   borderRadius: 12,
   overflow: 'hidden',
   boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-}
-
-const headerStyle: React.CSSProperties = {
-  padding: '24px 32px',
-  textAlign: 'center',
-}
-
-const brandStyle: React.CSSProperties = {
-  fontSize: 20,
-  fontWeight: 800,
-  letterSpacing: 2,
-  color: PRIMARY_COLOR,
-  margin: 0,
 }
 
 const hrStyle: React.CSSProperties = {
