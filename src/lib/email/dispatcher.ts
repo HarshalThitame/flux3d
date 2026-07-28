@@ -1,6 +1,17 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getResendClient, getSenderAddress } from './resend-client'
-import { renderTemplate } from './template-registry'
+import { getTemplateByType, renderDbTemplate } from './db-templates'
+import { getEmailSettings, isMaintenanceModeBlocking } from './settings-cache'
+import {
+  renderOrderItemsHtml,
+  renderShippedItemsHtml,
+  renderPricingHtml,
+  renderPaymentHtml,
+  renderShippingAddressHtml,
+  renderIssuesHtml,
+} from './payload-renderer'
+import { extractAttachments, stripAttachmentPlaceholders } from './template-engine'
+import { fetchAttachmentBase64 } from './attachments'
 import type { EmailJobPayload, DispatchResult } from './types'
 import type { EmailLogRow } from '../../../types/database'
 
@@ -9,10 +20,12 @@ import type { EmailLogRow } from '../../../types/database'
  *
  * Flow:
  *   1. Load email log from DB (inserted by producer as 'queued')
- *   2. Render React Email template → HTML
- *   3. Send via Resend API
- *   4. Update log: status='sent', provider_message_id, sent_at
- *   5. On any error: update log: status='failed', error_message
+ *   2. Load DB template (email_templates where is_enabled=true)
+ *      → render with template-engine + branded wrapper
+ *   3. Resolve {{attachment:filename}} placeholders from storage
+ *   4. Send via Resend API
+ *   5. Update log: status='sent', provider_message_id, sent_at, template_id, variables_used
+ *   6. On any error: update log: status='failed', error_message
  *
  * Edge cases:
  *   - If the log row is missing (DB inconsistency), we still attempt to send
@@ -38,7 +51,6 @@ export async function dispatchEmail(
 
   if (!log) {
     // Safety net: create a log row even if producer failed to insert one.
-    // This ensures every dispatch attempt is auditable.
     const insertResult = await supabase
       .from('email_logs')
       .insert({
@@ -62,9 +74,58 @@ export async function dispatchEmail(
   // Step 2: Build the subject line if not provided
   const subject = payload.subject ?? buildSubject(payload)
 
+  // Step 2a: Respect maintenance mode (blocks non-critical emails)
+  const settings = await getEmailSettings().catch(() => null)
+  const maintenanceCheck = isMaintenanceModeBlocking(settings, payload.emailType)
+  if (maintenanceCheck.blocked) {
+    console.warn(`[email] Blocked dispatch for ${payload.emailType}: ${maintenanceCheck.reason}`)
+    await markFailed(supabase, log?.id ?? null, maintenanceCheck.reason ?? 'Blocked by maintenance mode')
+    return { ok: false, error: maintenanceCheck.reason ?? 'Blocked by maintenance mode' }
+  }
+
   try {
-    // Step 3: Render the template
-    const html = await renderTemplate(payload.emailType, payload)
+    // Step 3: Load DB template and render
+    let html: string
+    let templateId: string | null = null
+    let variablesUsed: Record<string, unknown> | null = null
+
+    const dbTemplate = await getTemplateByType(payload.emailType)
+    if (dbTemplate) {
+      const vars = payloadToVariables(payload)
+      const result = await renderDbTemplate(dbTemplate, vars)
+      html = result.html
+      templateId = dbTemplate.id
+      variablesUsed = vars
+
+      if (result.missingVariables.length > 0) {
+        console.warn(
+          `[email] DB template ${payload.emailType} missing variables:`,
+          result.missingVariables.join(', ')
+        )
+      }
+    } else {
+      const errMsg = `No enabled DB template found for type: ${payload.emailType}`
+      await markFailed(supabase, log?.id ?? null, errMsg)
+      return { ok: false, error: errMsg }
+    }
+
+    // Step 3b: Resolve attachments from {{attachment:filename}} placeholders
+    const attachmentFilenames = extractAttachments(html)
+    const attachments: { filename: string; content: string }[] = []
+    if (attachmentFilenames.length > 0) {
+      for (const filename of attachmentFilenames) {
+        const attachment = await fetchAttachmentBase64(filename)
+        if (attachment) {
+          attachments.push({
+            filename: attachment.filename,
+            content: attachment.content,
+          })
+        } else {
+          console.warn(`[email] Attachment not found in storage: ${filename}`)
+        }
+      }
+      html = stripAttachmentPlaceholders(html)
+    }
 
     // Step 4: Send via Resend
     const resend = await getResendClient()
@@ -76,9 +137,11 @@ export async function dispatchEmail(
       to: payload.recipient,
       subject,
       html,
+      ...(attachments.length > 0 ? { attachments } : {}),
       tags: [
         { name: 'email_type', value: payload.emailType },
         ...(payload.userId ? [{ name: 'user_id', value: payload.userId }] : []),
+        ...(templateId ? [{ name: 'template_id', value: templateId }] : []),
       ],
     })
 
@@ -95,6 +158,8 @@ export async function dispatchEmail(
       resend_id: data.id,
       sent_at: new Date().toISOString(),
       subject,
+      template_id: templateId,
+      variables_used: variablesUsed as import('../../../types/database').Json | undefined,
     }
 
     if (log?.id) {
@@ -108,6 +173,124 @@ export async function dispatchEmail(
     await markFailed(supabase, log?.id ?? null, errMsg)
     return { ok: false, error: errMsg }
   }
+}
+
+/**
+ * Convert typed EmailJobPayload to flat variables for the template engine.
+ * Arrays and objects are stringified (triggers should pre-render them to HTML
+ * and pass as `_html` fields for best results).
+ */
+function payloadToVariables(
+  payload: EmailJobPayload
+): Record<string, string> {
+  const vars: Record<string, string> = {}
+
+  // Common fields
+  vars.email_type = payload.emailType
+  if (payload.userId) vars.user_id = payload.userId
+  vars.recipient = payload.recipient
+  if (payload.subject) vars.subject = payload.subject
+
+  switch (payload.emailType) {
+    case 'welcome':
+      vars.customer_name = payload.customerName
+      break
+    case 'email_verification':
+      vars.customer_name = payload.customerName
+      vars.verification_url = payload.verificationUrl
+      break
+    case 'password_reset':
+      vars.customer_name = payload.customerName
+      vars.reset_url = payload.resetUrl
+      break
+    case 'order_placed_customer':
+      vars.order_number = payload.orderNumber
+      vars.customer_name = payload.customerName
+      vars.order_total = payload.total
+      vars.order_url = payload.orderUrl
+      // items should be pre-rendered as items_html by the trigger
+      if (payload.itemsHtml) vars.items_html = payload.itemsHtml
+      else if (payload.items?.length) vars.items_html = renderOrderItemsHtml(payload.items)
+      break
+    case 'order_placed_admin':
+      vars.order_number = payload.orderNumber
+      vars.customer_name = payload.customerName
+      vars.customer_email = payload.customerEmail
+      vars.order_total = payload.total
+      vars.admin_order_url = payload.adminOrderUrl
+      break
+    case 'model_validation_pass':
+      vars.order_number = payload.orderNumber
+      vars.customer_name = payload.customerName
+      if (payload.adminQuoteUrl) vars.admin_quote_url = payload.adminQuoteUrl
+      break
+    case 'model_validation_fail':
+      vars.order_number = payload.orderNumber
+      vars.customer_name = payload.customerName
+      if (payload.issuesHtml) vars.issues_html = payload.issuesHtml
+      else if (payload.issues?.length) vars.issues_html = renderIssuesHtml(payload.issues)
+      if (payload.adminQuoteUrl) vars.admin_quote_url = payload.adminQuoteUrl
+      break
+    case 'production_started':
+      vars.order_number = payload.orderNumber
+      vars.customer_name = payload.customerName
+      if (payload.printBedName) vars.print_bed_name = payload.printBedName
+      if (payload.estimatedCompletionDate)
+        vars.estimated_completion_date = payload.estimatedCompletionDate
+      break
+    case 'order_shipped':
+      vars.order_number = payload.orderNumber
+      vars.customer_name = payload.customerName
+      vars.tracking_number = payload.trackingNumber
+      vars.courier_name = payload.courierName
+      vars.tracking_url = payload.trackingUrl
+      if (payload.estimatedDelivery) vars.estimated_delivery = payload.estimatedDelivery
+      if (payload.itemsHtml) vars.items_html = payload.itemsHtml
+      else if (payload.items?.length) vars.items_html = renderShippedItemsHtml(payload.items)
+      break
+    case 'delivery_confirmation':
+      vars.order_number = payload.orderNumber
+      vars.customer_name = payload.customerName
+      if (payload.reviewUrl) vars.review_url = payload.reviewUrl
+      break
+    case 'payment_receipt':
+      vars.order_number = payload.orderNumber
+      vars.customer_name = payload.customerName
+      vars.order_date = payload.orderDate
+      vars.order_url = payload.orderUrl
+      if (payload.itemsHtml) vars.items_html = payload.itemsHtml
+      else if (payload.items?.length) vars.items_html = renderOrderItemsHtml(payload.items)
+      if (payload.pricingHtml) vars.pricing_html = payload.pricingHtml
+      else vars.pricing_html = renderPricingHtml(payload.pricing)
+      if (payload.paymentHtml) vars.payment_html = payload.paymentHtml
+      else vars.payment_html = renderPaymentHtml(payload.payment)
+      if (payload.shippingAddressHtml)
+        vars.shipping_address_html = payload.shippingAddressHtml
+      else vars.shipping_address_html = renderShippingAddressHtml(payload.shippingAddress)
+      if (payload.receiptUrl) vars.receipt_url = payload.receiptUrl
+      break
+    case 'payment_failed':
+      vars.order_number = payload.orderNumber
+      vars.customer_name = payload.customerName
+      vars.amount = payload.amount
+      vars.retry_url = payload.retryUrl
+      break
+    case 'refund_issued':
+      vars.order_number = payload.orderNumber
+      vars.customer_name = payload.customerName
+      vars.refund_amount = payload.refundAmount
+      vars.refund_method = payload.refundMethod
+      if (payload.expectedDate) vars.expected_date = payload.expectedDate
+      break
+    case 'contact_notification':
+      vars.sender_name = payload.senderName
+      vars.sender_email = payload.senderEmail
+      vars.sender_phone = payload.senderPhone
+      vars.message = payload.message
+      break
+  }
+
+  return vars
 }
 
 async function markFailed(

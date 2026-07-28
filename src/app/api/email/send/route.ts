@@ -7,7 +7,8 @@ import type { EmailJobPayload } from '@/lib/email/types'
  * QStash Email Worker — POST /api/email/send
  *
  * This endpoint receives jobs from Upstash QStash, verifies the signature,
- * renders the React Email template, sends via Resend, and updates email_logs.
+ * renders the DB template via template-engine + branded wrapper, sends via Resend,
+ * and updates email_logs.
  *
  * Security:
  *   - Verifies `upstash-signature` header using QStash signing keys.

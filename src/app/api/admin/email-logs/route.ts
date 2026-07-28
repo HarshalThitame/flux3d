@@ -14,6 +14,8 @@ import type { EmailLogRow } from 'types/database'
  *   limit        — items per page (default 25, max 100)
  *   user_id      — filter by user_id
  *   order_id     — filter by order_id
+ *   from         — ISO date, filter sent_at >= from
+ *   to           — ISO date, filter sent_at < to
  *
  * Returns:
  *   { data: EmailLogRow[], total: number, page: number, limit: number }
@@ -34,6 +36,8 @@ export async function GET(req: Request) {
     const recipient = searchParams.get('recipient')
     const userId = searchParams.get('user_id')
     const orderId = searchParams.get('order_id')
+    const dateFrom = searchParams.get('from')
+    const dateTo = searchParams.get('to')
     const page = Math.max(1, Number(searchParams.get('page') ?? '1'))
     const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') ?? '25')))
 
@@ -57,14 +61,20 @@ export async function GET(req: Request) {
     if (orderId) {
       query = query.eq('order_id', orderId)
     }
+    if (dateFrom) {
+      query = query.gte('sent_at', dateFrom)
+    }
+    if (dateTo) {
+      query = query.lt('sent_at', dateTo)
+    }
 
     // Ordering: newest first
     query = query.order('created_at', { ascending: false })
 
     // Pagination
-    const from = (page - 1) * limit
-    const to = from + limit - 1
-    query = query.range(from, to)
+    const offset = (page - 1) * limit
+    const endOffset = offset + limit - 1
+    query = query.range(offset, endOffset)
 
     const { data, error, count } = await query
 

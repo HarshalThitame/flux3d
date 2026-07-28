@@ -38,6 +38,8 @@ export type OrderPlacedCustomerPayload = BaseEmailPayload & {
   total: string
   items: { name: string; material?: string; color?: string; quantity: number; price: string }[]
   orderUrl: string
+  /** Pre-rendered HTML list of order items (optional — backend can inject) */
+  itemsHtml?: string
 }
 
 export type OrderPlacedAdminPayload = BaseEmailPayload & {
@@ -55,6 +57,8 @@ export type ModelValidationPayload = BaseEmailPayload & {
   customerName: string
   issues?: string[]
   adminQuoteUrl?: string
+  /** Pre-rendered HTML list of validation issues (for fail emails) */
+  issuesHtml?: string
 }
 
 export type ProductionStartedPayload = BaseEmailPayload & {
@@ -74,6 +78,8 @@ export type OrderShippedPayload = BaseEmailPayload & {
   courierName: string
   trackingUrl: string
   estimatedDelivery?: string
+  /** Pre-rendered HTML list of shipped items (optional — backend can inject) */
+  itemsHtml?: string
 }
 
 export type DeliveryConfirmationPayload = BaseEmailPayload & {
@@ -122,6 +128,11 @@ export type PaymentReceiptPayload = BaseEmailPayload & {
     pincode: string
   }
   receiptUrl?: string
+  /** Pre-rendered HTML snippets (optional — backend can inject instead of raw arrays) */
+  itemsHtml?: string
+  pricingHtml?: string
+  paymentHtml?: string
+  shippingAddressHtml?: string
 }
 
 export type PaymentFailedPayload = BaseEmailPayload & {
