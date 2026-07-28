@@ -1,23 +1,23 @@
 import { requireAdminUser } from '@/lib/admin/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import EmailSettingsForm from '@/components/admin/emails/EmailSettingsForm'
+import type { EmailSettingsRow } from 'types/database'
 
 export const dynamic = 'force-dynamic'
 
 export default async function EmailSettingsPage() {
   await requireAdminUser()
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  const supabase = createAdminClient()
 
-  const res = await fetch(`${baseUrl}/api/admin/email-settings`, {
-    cache: 'no-store',
-  })
+  const { data, error } = await supabase
+    .from('email_settings')
+    .select('*')
+    .eq('id', 'default')
+    .maybeSingle()
 
-  let data = null
-  if (res.ok) {
-    const json = await res.json()
-    data = json.data ?? null
-  } else {
-    console.error('[admin/emails/settings] Failed to fetch settings:', await res.text())
+  if (error) {
+    console.error('[admin/emails/settings] DB error:', error.message)
   }
 
   return (
@@ -29,7 +29,7 @@ export default async function EmailSettingsPage() {
         </p>
       </div>
 
-      <EmailSettingsForm initialData={data} />
+      <EmailSettingsForm initialData={data as EmailSettingsRow | null} />
     </div>
   )
 }

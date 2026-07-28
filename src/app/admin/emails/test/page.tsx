@@ -1,23 +1,24 @@
 import { requireAdminUser } from '@/lib/admin/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import TestEmailSender from '@/components/admin/emails/TestEmailSender'
+import type { EmailTemplateRow } from 'types/database'
 
 export const dynamic = 'force-dynamic'
 
 export default async function EmailTestPage() {
   await requireAdminUser()
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  const supabase = createAdminClient()
 
-  const res = await fetch(`${baseUrl}/api/admin/email-templates?limit=200&is_enabled=true`, {
-    cache: 'no-store',
-  })
+  const { data, error } = await supabase
+    .from('email_templates')
+    .select('*')
+    .eq('is_enabled', true)
+    .order('name', { ascending: true })
+    .limit(200)
 
-  let templates = []
-  if (res.ok) {
-    const json = await res.json()
-    templates = json.data ?? []
-  } else {
-    console.error('[admin/emails/test] Failed to fetch templates:', await res.text())
+  if (error) {
+    console.error('[admin/emails/test] DB error:', error.message)
   }
 
   return (
@@ -29,7 +30,7 @@ export default async function EmailTestPage() {
         </p>
       </div>
 
-      <TestEmailSender templates={templates} />
+      <TestEmailSender templates={(data ?? []) as EmailTemplateRow[]} />
     </div>
   )
 }
