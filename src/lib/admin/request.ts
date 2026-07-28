@@ -1,51 +1,23 @@
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/config'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 
 export async function requireAdminRequest() {
-  const cookieStore = await cookies()
+  // Reuse the shared server client so cookieOptions (path, maxAge, sameSite,
+  // httpOnly) stay in sync with the proxy. Mismatched options cause mobile
+  // browsers to drop refreshed tokens, leading to 401 / forced logout.
+  const supabase = await createServerSupabaseClient()
 
-  // The proxy may have refreshed the token, but its cookie updates may not
-  // propagate to the API route's request context. We MUST be able to refresh
-  // the token ourselves — setAll must actually write cookies.
-  const supabase = createServerClient(
-    getSupabaseUrl(),
-    getSupabasePublishableKey(),
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
-            })
-          } catch {
-            // Cookie write failed — continue anyway
-          }
-        },
-      },
+  // Use getUser() to authenticate by contacting the Supabase Auth server.
+  // This validates the JWT and refreshes the token if needed.
+  let user = null
+  try {
+    const { data: userData } = await supabase.auth.getUser()
+    if (userData?.user) {
+      user = userData.user
     }
-  )
-
-  // Try getSession() first — if the proxy already refreshed, this will work.
-  const { data: sessionData } = await supabase.auth.getSession()
-  let user = sessionData?.session?.user
-
-  // If no session (expired or missing), refresh via getUser().
-  // This is critical — without it, expired access tokens cause 401.
-  if (!user) {
-    try {
-      const { data: userData } = await supabase.auth.getUser()
-      if (userData?.user) {
-        user = userData.user
-      }
-    } catch {
-      // getUser() failed — token is invalid or missing
-    }
+  } catch {
+    // getUser() failed — token is invalid or missing
   }
 
   if (!user) {

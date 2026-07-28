@@ -240,8 +240,8 @@ export function CartProvider({
       try {
         const { getSupabaseBrowserClient } = await import('@/lib/supabase/client')
         const supabase = getSupabaseBrowserClient()
-        const { data } = await supabase.auth.getSession()
-        await syncCartForUser(data.session?.user.id ?? null)
+        const { data } = await supabase.auth.getUser()
+        await syncCartForUser(data.user?.id ?? null)
 
         const { data: nextAuthListener } = supabase.auth.onAuthStateChange(
           (event: AuthChangeEvent, session: Session | null) => {

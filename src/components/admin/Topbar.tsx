@@ -17,9 +17,9 @@ export default function Topbar({
   useEffect(() => {
     async function loadProfile() {
       const supabase = getSupabaseBrowserClient()
-      // Use getSession() — reads locally without HTTP request to Supabase Auth
-      const { data } = await supabase.auth.getSession()
-      const user = data?.session?.user
+      // Use getUser() — authenticates by contacting Supabase Auth server
+      const { data } = await supabase.auth.getUser()
+      const user = data?.user
       if (user) {
         const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Admin'
         setAdminName(name)
