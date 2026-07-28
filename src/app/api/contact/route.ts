@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { getSettings } from '@/lib/settings'
-import { sendContactNotification } from '@/lib/email/service'
+import { sendContactNotification } from '@/lib/email/triggers'
+import { getBusinessSettings } from '@/lib/admin/business-settings'
 
 export const dynamic = 'force-dynamic'
 
@@ -96,11 +97,12 @@ export async function POST(request: Request) {
 
     recentSubmissions.set(clientKey, Date.now())
 
-    // Send email notification if SMTP is configured
-    const settings = await getSettings().catch(() => null)
-    if (settings) {
-      sendContactNotification(settings, { name, email, phone, message }).catch(() => {})
-    }
+    // Send email notification via Resend
+    const settings = await getBusinessSettings().catch(() => null)
+    const supportEmail = settings?.supportEmail || settings?.primaryEmail || 'support@flux3d.in'
+    sendContactNotification(supportEmail, name, email, phone, message).catch((err) => {
+      console.error('[contact] Failed to send notification email:', err)
+    })
 
     return NextResponse.json({
       success: true,

@@ -103,6 +103,12 @@ export type BusinessSettings = {
   smtpSenderName: string
   smtpSenderEmail: string
 
+  resendApiKey: string
+  resendSenderDomain: string
+  resendSenderName: string
+  resendSenderEmail: string
+  resendWebhookSecret: string
+
   privacyPolicyUrl: string
   termsUrl: string
   refundPolicyUrl: string
@@ -150,6 +156,8 @@ const SENSITIVE_SETTING_FIELDS: (keyof BusinessSettings)[] = [
   'accountNumber',
   'ifscCode',
   'upiId',
+  'resendApiKey',
+  'resendWebhookSecret',
 ]
 
 export const BUSINESS_SETTING_SECRET_MASK = '••••••••'
@@ -272,6 +280,12 @@ export type BusinessSettingsRow = {
   smtp_password: string | null
   smtp_sender_name: string | null
   smtp_sender_email: string | null
+
+  resend_api_key: string | null
+  resend_sender_domain: string | null
+  resend_sender_name: string | null
+  resend_sender_email: string | null
+  resend_webhook_secret: string | null
 
   privacy_policy_url: string | null
   terms_url: string | null
@@ -466,6 +480,12 @@ export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettin
     smtpSenderName: n(row.smtp_sender_name),
     smtpSenderEmail: n(row.smtp_sender_email),
 
+    resendApiKey: n(row.resend_api_key),
+    resendSenderDomain: n(row.resend_sender_domain),
+    resendSenderName: n(row.resend_sender_name),
+    resendSenderEmail: n(row.resend_sender_email),
+    resendWebhookSecret: n(row.resend_webhook_secret),
+
     privacyPolicyUrl: n(row.privacy_policy_url),
     termsUrl: n(row.terms_url),
     refundPolicyUrl: n(row.refund_policy_url),
@@ -596,6 +616,11 @@ export function toSnakeCase(data: Partial<BusinessSettings>): Record<string, unk
     smtpPassword: 'smtp_password',
     smtpSenderName: 'smtp_sender_name',
     smtpSenderEmail: 'smtp_sender_email',
+    resendApiKey: 'resend_api_key',
+    resendSenderDomain: 'resend_sender_domain',
+    resendSenderName: 'resend_sender_name',
+    resendSenderEmail: 'resend_sender_email',
+    resendWebhookSecret: 'resend_webhook_secret',
     privacyPolicyUrl: 'privacy_policy_url',
     termsUrl: 'terms_url',
     refundPolicyUrl: 'refund_policy_url',

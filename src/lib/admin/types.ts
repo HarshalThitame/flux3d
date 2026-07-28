@@ -120,6 +120,9 @@ export type AdminOrder = {
   paymentAttemptId?: string
   trackingId?: string
   deliveryPartner?: string
+  tracking_number?: string | null
+  courier_name?: string | null
+  tracking_url?: string | null
 }
 
 export type AdminQuote = {

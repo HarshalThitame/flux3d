@@ -91,6 +91,13 @@ export default function OrderDetailClient({ initialOrder }: Props) {
   const [auditLogsLoading, setAuditLogsLoading] = useState(false)
   const toastTimer = useRef<number | null>(null)
 
+  const [trackingForm, setTrackingForm] = useState({
+    courier_name: initialOrder.courier_name ?? '',
+    tracking_number: initialOrder.tracking_number ?? '',
+    tracking_url: initialOrder.tracking_url ?? '',
+  })
+  const [savingTracking, setSavingTracking] = useState(false)
+
   const itemCount = order.items.length
   const quoteId = extractQuoteId(order)
   const postProcessingCharges = order.items.reduce((sum, item) => sum + item.postProcessingCharges, 0)
@@ -214,6 +221,42 @@ export default function OrderDetailClient({ initialOrder }: Props) {
       showToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to save note.' })
     } finally {
       setSavingNote(false)
+    }
+  }
+
+  async function saveTracking() {
+    setSavingTracking(true)
+    try {
+      const response = await fetch('/api/admin/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          groupId: order.groupId,
+          courier_name: trackingForm.courier_name || null,
+          tracking_number: trackingForm.tracking_number || null,
+          tracking_url: trackingForm.tracking_url || null,
+        }),
+      })
+      if (!response.ok) {
+        const body = (await response.json().catch(() => ({}))) as { error?: string }
+        throw new Error(body.error ?? 'Failed to save tracking info.')
+      }
+      const json = (await response.json()) as { order: AdminOrder }
+      setOrder((current) => ({
+        ...current,
+        ...json.order,
+        paymentProvider: json.order.paymentProvider ?? current.paymentProvider,
+      }))
+      setTrackingForm({
+        courier_name: json.order.courier_name ?? '',
+        tracking_number: json.order.tracking_number ?? '',
+        tracking_url: json.order.tracking_url ?? '',
+      })
+      showToast({ type: 'success', message: 'Tracking info saved.' })
+    } catch (error) {
+      showToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to save tracking info.' })
+    } finally {
+      setSavingTracking(false)
     }
   }
 
@@ -543,6 +586,56 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                   </div>
                 </Card>
               )}
+
+              <Card title="Shipping &amp; Tracking">
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Courier Name</label>
+                    <input
+                      type="text"
+                      value={trackingForm.courier_name}
+                      onChange={(e) => setTrackingForm((f) => ({ ...f, courier_name: e.target.value }))}
+                      placeholder="e.g., Delhivery"
+                      className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-600 focus:ring-2 focus:ring-violet-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Tracking Number</label>
+                    <input
+                      type="text"
+                      value={trackingForm.tracking_number}
+                      onChange={(e) => setTrackingForm((f) => ({ ...f, tracking_number: e.target.value }))}
+                      placeholder="e.g., 1234567890"
+                      className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-600 focus:ring-2 focus:ring-violet-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Tracking URL</label>
+                    <input
+                      type="text"
+                      value={trackingForm.tracking_url}
+                      onChange={(e) => setTrackingForm((f) => ({ ...f, tracking_url: e.target.value }))}
+                      placeholder="https://..."
+                      className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-600 focus:ring-2 focus:ring-violet-100"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={saveTracking}
+                  disabled={savingTracking}
+                  className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {savingTracking ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Save Tracking
+                </button>
+                {order.status === 'shipped' && (!order.tracking_number || !order.courier_name) && (
+                  <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
+                    <TriangleAlert className="inline h-3.5 w-3.5 mr-1" />
+                    Order is marked as shipped but tracking info is missing. The customer will not receive a tracking email.
+                  </div>
+                )}
+              </Card>
 
               <Card title="Admin Notes">
                 <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm leading-6 text-gray-700 whitespace-pre-wrap">
