@@ -45,6 +45,7 @@ import {
   updatePaymentAttempt,
 } from '@/lib/payments/repository'
 import { updatePaymentAttemptStatus } from '@/lib/payments/state'
+import { notifyPaymentCaptured } from '@/lib/payments/email-triggers'
 import { getSettings } from '@/lib/settings'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
 
@@ -774,6 +775,17 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
     paymentAttemptId,
     orderId: insertedOrder.id,
   })
+
+  // Send payment confirmation email immediately
+  notifyPaymentCaptured({
+    id: paymentAttemptId,
+    customer_id: auth.user.id,
+    internal_order_type: 'custom_quote',
+    internal_order_id: capture.reference,
+    amount_paise: capture.amountPaise,
+    payment_method: razorpayPayment.method ?? null,
+    provider_payment_id: params.razorpayPaymentId,
+  }).catch(() => {})
 
   const fileName = (draftData.fileUrl as string)?.split('/').pop() || 'model.stl'
   await adminSupabase.from('model_files').upsert(
