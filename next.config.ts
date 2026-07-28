@@ -169,6 +169,11 @@ const nextConfig: NextConfig = {
         destination: '/3d-shop/:path*',
         permanent: true,
       },
+      {
+        source: '/admin/email-logs',
+        destination: '/admin/emails/logs',
+        permanent: true,
+      },
     ]
   },
 }

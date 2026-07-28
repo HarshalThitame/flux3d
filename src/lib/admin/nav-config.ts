@@ -47,7 +47,7 @@ export const adminNavItems: NavItem[] = [
   { label: 'Reconciliation', href: '/admin/reconciliation', icon: ScanSearch, section: 'main' },
   { label: 'Webhook Health', href: '/admin/webhook-health', icon: Webhook, section: 'main' },
   { label: 'Audit Logs', href: '/admin/audit-logs', icon: FileText, section: 'main' },
-  { label: 'Email Logs', href: '/admin/email-logs', icon: Mail, section: 'main' },
+  { label: 'Email Center', href: '/admin/emails', icon: Mail, section: 'main' },
   { label: 'Printers', href: '/admin/printers', icon: Printer, section: 'main' },
   { label: 'Manufacturing', href: '/admin/manufacturing', icon: Factory, section: 'main' },
   { label: 'Materials', href: '/admin/materials', icon: Beaker, section: 'main' },
