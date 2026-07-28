@@ -26,7 +26,7 @@ export async function enqueueEmail(
     user_id: payload.userId ?? null,
     recipient: payload.recipient,
     email_type: payload.emailType,
-    subject: payload.subject ?? undefined,
+    subject: payload.subject ?? buildSubject(payload),
     template_name: payload.emailType,
     status: 'queued',
     queued_at: new Date().toISOString(),
@@ -56,5 +56,40 @@ export async function enqueueEmail(
     const { dispatchEmail } = await import('./dispatcher')
     await dispatchEmail(payload, logId)
     return { logId }
+  }
+}
+
+function buildSubject(payload: EmailJobPayload): string {
+  switch (payload.emailType) {
+    case 'welcome':
+      return 'Welcome to Flux3D!'
+    case 'email_verification':
+      return 'Verify your email address'
+    case 'password_reset':
+      return 'Reset your Flux3D password'
+    case 'order_placed_customer':
+      return `Order ${payload.orderNumber} confirmed — Flux3D`
+    case 'order_placed_admin':
+      return `[Admin] New order ${payload.orderNumber}`
+    case 'model_validation_pass':
+      return `Your 3D model for order ${payload.orderNumber} passed validation`
+    case 'model_validation_fail':
+      return `Action needed: 3D model issue for order ${payload.orderNumber}`
+    case 'production_started':
+      return `Production started for order ${payload.orderNumber}`
+    case 'order_shipped':
+      return `Your order ${payload.orderNumber} has shipped 🚚`
+    case 'delivery_confirmation':
+      return `Order ${payload.orderNumber} delivered — how did we do?`
+    case 'payment_receipt':
+      return `Payment receipt for order ${payload.orderNumber}`
+    case 'payment_failed':
+      return `Payment failed for order ${payload.orderNumber}`
+    case 'refund_issued':
+      return `Refund issued for order ${payload.orderNumber}`
+    case 'contact_notification':
+      return `New contact form submission from ${payload.senderName}`
+    default:
+      return 'Flux3D Notification'
   }
 }
