@@ -13,7 +13,7 @@ export default async function EditTemplatePage({
   const { id } = await params
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/api/admin/email-templates/${id}`,
+    `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/api/admin/email-templates/${id}`,
     { cache: 'no-store' }
   )
 
