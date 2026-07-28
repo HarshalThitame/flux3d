@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export default async function EmailSettingsPage() {
   await requireAdminUser()
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? ''
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
   const res = await fetch(`${baseUrl}/api/admin/email-settings`, {
     cache: 'no-store',

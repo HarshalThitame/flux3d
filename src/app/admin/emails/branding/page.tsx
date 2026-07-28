@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export default async function AdminEmailBrandingPage() {
   await requireAdminUser()
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/api/admin/email-branding`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/api/admin/email-branding`, {
     cache: 'no-store',
   })
 
