@@ -1,4 +1,5 @@
 import { requireAdminUser } from '@/lib/admin/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import EmailBrandingForm from '@/components/admin/emails/EmailBrandingForm'
 import type { EmailBrandingRow } from 'types/database'
 
@@ -7,16 +8,16 @@ export const dynamic = 'force-dynamic'
 export default async function AdminEmailBrandingPage() {
   await requireAdminUser()
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/api/admin/email-branding`, {
-    cache: 'no-store',
-  })
+  const supabase = createAdminClient()
 
-  let data: EmailBrandingRow | null = null
-  if (res.ok) {
-    const json = await res.json()
-    data = json.data as EmailBrandingRow | null
-  } else {
-    console.error('[admin/emails/branding] Failed to fetch branding:', await res.text())
+  const { data, error } = await supabase
+    .from('email_branding')
+    .select('*')
+    .eq('id', 'default')
+    .maybeSingle()
+
+  if (error) {
+    console.error('[admin/emails/branding] DB error:', error.message)
   }
 
   return (
@@ -28,7 +29,7 @@ export default async function AdminEmailBrandingPage() {
         </p>
       </div>
 
-      <EmailBrandingForm initialData={data} />
+      <EmailBrandingForm initialData={data as EmailBrandingRow | null} />
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { requireAdminUser } from '@/lib/admin/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import EmailTemplatesClient from '@/components/admin/emails/EmailTemplatesClient'
 import type { EmailTemplateRow } from 'types/database'
 
@@ -7,20 +8,20 @@ export const dynamic = 'force-dynamic'
 export default async function AdminEmailTemplatesPage() {
   await requireAdminUser()
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/api/admin/email-templates?page=1&limit=50`, {
-    cache: 'no-store',
-  })
+  const supabase = createAdminClient()
 
-  let templates: EmailTemplateRow[] = []
-  let total = 0
+  const { data, error, count } = await supabase
+    .from('email_templates')
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(0, 49)
 
-  if (res.ok) {
-    const json = await res.json()
-    templates = (json.data as EmailTemplateRow[]) ?? []
-    total = json.total ?? 0
-  } else {
-    console.error('[admin/emails/templates] Failed to fetch templates:', await res.text())
+  if (error) {
+    console.error('[admin/emails/templates] DB error:', error.message)
   }
+
+  const templates = (data ?? []) as EmailTemplateRow[]
+  const total = count ?? 0
 
   return (
     <div className="space-y-6">
