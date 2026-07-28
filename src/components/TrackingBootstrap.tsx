@@ -52,9 +52,9 @@ export default function TrackingBootstrap() {
         const pageName = typeof document !== 'undefined' ? document.title : null
         const referrerUrl = typeof document !== 'undefined' ? document.referrer : null
 
-        void supabase.auth.getSession()
-          .then((result: AuthSessionResult) => trackPageVisit({
-            user_id: result?.data?.session?.user?.id ?? null,
+        void supabase.auth.getUser()
+          .then((result: { data: { user: { id: string } | null } }) => trackPageVisit({
+            user_id: result?.data?.user?.id ?? null,
             session_id: sessionId,
             page_url: pageUrl,
             page_name: pageName,

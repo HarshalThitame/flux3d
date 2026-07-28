@@ -58,16 +58,8 @@ async function createServerSupabaseClientFromCookies() {
 async function getAuthenticatedUser() {
   const supabase = await createServerSupabaseClientFromCookies()
 
-  // getSession() reads cookies locally without HTTP request.
-  // For API routes, the proxy has already refreshed the token.
-  // For Server Actions, we fall back to getUser() if needed.
-  const { data: sessionData } = await supabase.auth.getSession()
-  if (sessionData?.session?.user) {
-    return sessionData.session.user
-  }
-
-  // Fallback: getUser() validates/refreshes the token.
-  // This is needed for Server Actions that may not go through the proxy.
+  // Use getUser() to authenticate by contacting the Supabase Auth server.
+  // This validates the JWT and refreshes the token if needed.
   try {
     const { data } = await supabase.auth.getUser()
     return data.user
