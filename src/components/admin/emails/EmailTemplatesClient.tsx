@@ -563,6 +563,7 @@ export default function EmailTemplatesClient({
                   srcDoc={previewHtml}
                   className="h-full w-full rounded-xl border border-gray-200 bg-white"
                   title="Email Preview"
+                  suppressHydrationWarning
                 />
               )}
             </div>

@@ -515,6 +515,7 @@ export default function TemplateEditor({
                     style={{ height: '400px' }}
                     sandbox="allow-same-origin"
                     title="Email Preview"
+                    suppressHydrationWarning
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center rounded-xl bg-gray-50 py-16">
