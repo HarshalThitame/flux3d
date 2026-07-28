@@ -29,8 +29,8 @@ export function verifyResendWebhookSignature(
     const version = parts[0]
     if (version !== 'v1') continue
 
-    const signature = parts[1] ?? parts[parts.length - 1]
     const timestamp = parts.length >= 3 ? parts[1] : ''
+    const signature = parts.length >= 3 ? parts[2] : parts[1]
     const payloadToSign = timestamp ? `${timestamp}.${rawBody}` : `${rawBody}`
 
     const expected = crypto.createHmac('sha256', secret).update(payloadToSign).digest('base64')
