@@ -133,16 +133,16 @@ function HowItWorksSection() {
   return (
     <section ref={ref} className="relative py-12 px-6 md:py-16 lg:py-24 overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(109, 40, 217,0.03)] to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(91, 33, 182,0.04)] to-transparent pointer-events-none" />
 
       {/* Mobile cinematic background glow */}
       <div className="absolute inset-0 md:hidden pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[60%] bg-gradient-to-r from-[#6d28d9]/10 via-[#a855f7]/15 to-[#6d28d9]/10 blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[60%] bg-gradient-to-r from-[#5b21b6]/12 via-[#a855f7]/18 to-[#5b21b6]/12 blur-3xl" />
       </div>
 
       {/* Desktop: subtle grid pattern */}
-      <div className="hidden md:block absolute inset-0 pointer-events-none opacity-[0.03]"
-        style={{ backgroundImage: 'radial-gradient(circle, #6d28d9 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+      <div className="hidden md:block absolute inset-0 pointer-events-none opacity-[0.04]"
+        style={{ backgroundImage: 'radial-gradient(circle, #5b21b6 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
       <div className="max-w-[1200px] mx-auto relative z-10">
         {/* Header */}
@@ -153,10 +153,10 @@ function HowItWorksSection() {
           className="text-center mb-8 md:mb-12 lg:mb-16 relative"
         >
           <span className="premium-section-number">02</span>
-          <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4 relative z-10">The Process</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1] relative z-10">
+          <p className="text-sm font-medium text-[#5b21b6] uppercase tracking-normal mb-4 relative z-10">The Process</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#4c1d95] tracking-normal leading-[1.1] relative z-10">
             From Requirement to Dispatch{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6d28d9] to-[#a855f7]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5b21b6] to-[#a855f7]">
               in 5 Steps.
             </span>
           </h2>
@@ -168,7 +168,7 @@ function HowItWorksSection() {
           {!reduceMotion && (
             <div className="mb-6 h-1 bg-[#e5e7eb] rounded-full overflow-hidden relative">
               <motion.div
-                className="h-full bg-gradient-to-r from-[#6d28d9] to-[#a855f7] rounded-full relative"
+                className="h-full bg-gradient-to-r from-[#5b21b6] to-[#a855f7] rounded-full relative"
                 style={{ width: progressWidth }}
               >
                 <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#a855f7] shadow-[0_0_12px_rgba(168,85,247,0.6)]" />
@@ -190,13 +190,13 @@ function HowItWorksSection() {
                 transition={reduceMotion ? { duration: 0.2 } : { delay: i * 0.08, duration: 0.4 }}
                 className="snap-center shrink-0 w-[85vw]"
               >
-                {/* Cinematic Card */}
+                  {/* Cinematic Card */}
                 <div className="relative group">
                   {/* Animated gradient border */}
                   <div className={`absolute -inset-[2px] rounded-2xl bg-gradient-to-r ${gradients[i]} opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm`} />
                   
                   {/* Card content */}
-                  <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl p-6 border border-[rgba(109, 40, 217,0.1)] shadow-[0_8px_32px_rgba(109, 40, 217,0.08)]">
+                  <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl p-6 border border-[rgba(91, 33, 182,0.12)] shadow-[0_8px_32px_rgba(91, 33, 182,0.10)]">
                     {/* Large watermark number */}
                     <div className={`absolute -top-4 -right-2 text-[120px] font-black text-transparent bg-clip-text bg-gradient-to-b ${gradients[i]} opacity-[0.06] select-none pointer-events-none leading-none`}>
                       {step.step}
@@ -204,7 +204,7 @@ function HowItWorksSection() {
 
                     {/* Step header */}
                     <div className="flex items-center gap-3 mb-4">
-                      <div className={`relative w-14 h-14 rounded-xl bg-gradient-to-br ${gradients[i]} flex items-center justify-center shadow-lg shadow-[#6d28d9]/20`}>
+                      <div className={`relative w-14 h-14 rounded-xl bg-gradient-to-br ${gradients[i]} flex items-center justify-center shadow-lg shadow-[#5b21b6]/20`}>
                         <step.icon className="w-7 h-7 text-white" />
                         {/* Glow effect */}
                         <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${gradients[i]} opacity-50 blur-md`} />
@@ -213,17 +213,17 @@ function HowItWorksSection() {
                         <span className={`text-xs font-bold uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r ${gradients[i]}`}>
                           Step {step.step}
                         </span>
-                        <ChevronRight className="w-4 h-4 text-[#6d28d9]/40" />
+                        <ChevronRight className="w-4 h-4 text-[#5b21b6]/40" />
                       </div>
                     </div>
 
                     {/* Title */}
-                    <h3 className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D] mb-3">
+                    <h3 className="font-[var(--font-syne)] text-xl font-bold text-[#4c1d95] mb-3">
                       {step.title}
                     </h3>
 
                     {/* Description */}
-                    <p className="text-sm text-[#6F7192] leading-[1.7]">
+                    <p className="text-sm text-[#5b21b6] leading-[1.7]">
                       {step.description}
                     </p>
 
@@ -261,15 +261,15 @@ function HowItWorksSection() {
         {/* Desktop: Cinematic Alternating Timeline */}
         <div className="hidden md:block relative" ref={lineRef}>
           {/* Animated central timeline */}
-          <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[rgba(109,40,217,0.15)] to-transparent" />
+          <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[rgba(91,33,182,0.15)] to-transparent" />
           {!reduceMotion && (
             <motion.div
-              className="absolute left-1/2 top-0 w-px -translate-x-1/2 bg-gradient-to-b from-[#6d28d9] via-[#a855f7] to-[#6d28d9]"
+              className="absolute left-1/2 top-0 w-px -translate-x-1/2 bg-gradient-to-b from-[#5b21b6] via-[#a855f7] to-[#5b21b6]"
               style={{ height: timelineHeight, originY: 0 }}
             />
           )}
           {reduceMotion && (
-            <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-gradient-to-b from-[#6d28d9] via-[#a855f7] to-[#6d28d9]" />
+            <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-gradient-to-b from-[#5b21b6] via-[#a855f7] to-[#5b21b6]" />
           )}
 
           {/* Flowing particles along timeline */}
@@ -304,12 +304,12 @@ function HowItWorksSection() {
                 >
                   {/* Card */}
                   <div className={`w-full lg:w-[calc(50%-40px)] ${isLeft ? 'lg:pr-8' : 'lg:pl-8'}`}>
-                    <motion.div
+                      <motion.div
                       initial={reduceMotion ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, x: isLeft ? -40 : 40, y: 20 }}
                       animate={isInView ? { opacity: 1, x: 0, y: 0 } : {}}
                       transition={reduceMotion ? { duration: 0.3 } : { delay: 0.15 + i * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                      className={`relative overflow-hidden rounded-2xl border border-[rgba(109,40,217,0.1)] bg-white/80 backdrop-blur-xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(109,40,217,0.06)] transition-all duration-500 ${
-                        isHovered ? 'border-[rgba(109,40,217,0.25)] shadow-[0_8px_40px_rgba(109,40,217,0.12)]' : ''
+                      className={`relative overflow-hidden rounded-2xl border border-[rgba(91,33,182,0.10)] bg-white/80 backdrop-blur-xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(91,33,182,0.06)] transition-all duration-500 ${
+                        isHovered ? 'border-[rgba(91,33,182,0.22)] shadow-[0_8px_40px_rgba(91,33,182,0.12)]' : ''
                       }`}
                       onHoverStart={() => setHoveredIndex(i)}
                       onHoverEnd={() => setHoveredIndex(null)}
@@ -325,7 +325,7 @@ function HowItWorksSection() {
                       {/* Icon + step label */}
                       <div className="flex items-center gap-4 mb-5">
                         <motion.div
-                          className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${gradients[i]} flex items-center justify-center shadow-lg shadow-[#6d28d9]/20`}
+                          className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${gradients[i]} flex items-center justify-center shadow-lg shadow-[#5b21b6]/20`}
                           whileHover={isFinePointer && !reduceMotion ? { scale: 1.1, rotate: 5 } : undefined}
                           transition={isFinePointer && !reduceMotion ? { type: 'spring', stiffness: 400, damping: 10 } : undefined}
                         >
@@ -336,17 +336,17 @@ function HowItWorksSection() {
                           <span className={`text-xs font-bold uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r ${gradients[i]}`}>
                             Step {step.step}
                           </span>
-                          <ChevronRight className="w-4 h-4 text-[#6d28d9]/30 mt-0.5" />
+                          <ChevronRight className="w-4 h-4 text-[#5b21b6]/30 mt-0.5" />
                         </div>
                       </div>
 
                       {/* Title */}
-                      <h3 className="font-[var(--font-syne)] text-xl lg:text-2xl font-bold text-[#0F1B3D] mb-3">
+                      <h3 className="font-[var(--font-syne)] text-xl lg:text-2xl font-bold text-[#4c1d95] mb-3">
                         {step.title}
                       </h3>
 
                       {/* Description */}
-                      <p className="text-sm text-[#6F7192] leading-[1.7] max-w-md">
+                      <p className="text-sm text-[#5b21b6] leading-[1.7] max-w-md">
                         {step.description}
                       </p>
 
@@ -357,12 +357,12 @@ function HowItWorksSection() {
 
                   {/* Center node on timeline */}
                   <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center z-20">
-                    <motion.div
+                      <motion.div
                       initial={reduceMotion ? { scale: 1 } : { scale: 0 }}
                       animate={isInView ? { scale: 1 } : {}}
                       transition={reduceMotion ? { duration: 0.2 } : { delay: 0.2 + i * 0.12, type: 'spring', stiffness: 300, damping: 20 }}
-                      className={`relative w-12 h-12 rounded-full bg-white border-2 border-[rgba(109,40,217,0.2)] flex items-center justify-center shadow-lg transition-all duration-500 ${
-                        isHovered ? 'border-[#6d28d9] shadow-[0_0_24px_rgba(109,40,217,0.3)] scale-110' : ''
+                      className={`relative w-12 h-12 rounded-full bg-white border-2 border-[rgba(91,33,182,0.20)] flex items-center justify-center shadow-lg transition-all duration-500 ${
+                        isHovered ? 'border-[#5b21b6] shadow-[0_0_24px_rgba(91,33,182,0.3)] scale-110' : ''
                       }`}
                     >
                       <span className={`text-sm font-black text-transparent bg-clip-text bg-gradient-to-r ${gradients[i]}`}>
@@ -371,7 +371,7 @@ function HowItWorksSection() {
                       {/* Pulse ring on hover */}
                       {isHovered && isFinePointer && !reduceMotion && (
                         <motion.div
-                          className="absolute inset-0 rounded-full border-2 border-[#6d28d9]"
+                          className="absolute inset-0 rounded-full border-2 border-[#5b21b6]"
                           initial={{ scale: 1, opacity: 0.6 }}
                           animate={{ scale: 1.8, opacity: 0 }}
                           transition={{ duration: 1, repeat: Infinity }}
@@ -395,14 +395,14 @@ function HowItWorksSection() {
           transition={reduceMotion ? { duration: 0.2 } : { delay: 0.7 }}
           className="text-center mt-8 md:mt-12 lg:mt-16"
         >
-          <p className="text-lg text-[#0F1B3D] mb-4">Ready to start?</p>
+          <p className="text-lg text-[#4c1d95] mb-4">Ready to start?</p>
           <a href="/contact" className="premium-wide-link group">
             Request a Quote
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </a>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-xs uppercase tracking-[0.16em] text-[#6F7192]">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-xs uppercase tracking-[0.16em] text-[#5b21b6]">
             <span className="inline-flex items-center gap-2 rounded-full border border-[#e4dff5] bg-white px-3 py-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#6d28d9]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#5b21b6]" />
               Timeline shared before confirmation
             </span>
             <span className="inline-flex items-center gap-2 rounded-full border border-[#e4dff5] bg-white px-3 py-2">

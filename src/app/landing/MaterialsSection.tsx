@@ -26,15 +26,15 @@ export default function MaterialsSection() {
 
   return (
     <section ref={ref} className="relative py-12 px-6 md:py-16 lg:py-24 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(109,40,217,0.03)] to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(91,33,182,0.04)] to-transparent pointer-events-none" />
       <div className="max-w-[1200px] mx-auto relative z-10">
         <motion.div variants={fadeUp} initial="hidden" animate={isInView ? "show" : "hidden"} className="text-center mb-8 md:mb-12 lg:mb-16">
-          <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-normal mb-4">Our Materials</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-normal leading-[1.1]">
+          <p className="text-sm font-medium text-[#5b21b6] uppercase tracking-normal mb-4">Our Materials</p>
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#4c1d95] tracking-normal leading-[1.1]">
             10+ Premium Materials.{' '}
-            <span className="text-[#6F7192]">One Trusted Printer.</span>
+            <span className="text-[#5b21b6]">One Trusted Printer.</span>
           </h2>
-          <p className="text-[#6F7192] mt-4 max-w-[600px] mx-auto">
+          <p className="text-[#5b21b6] mt-4 max-w-[600px] mx-auto">
             Every filament and resin we stock is sourced from trusted brands — Bambu Lab, eSUN, Elegoo, and Sunlu. Quality you can see and feel in every layer.
           </p>
         </motion.div>
@@ -50,34 +50,34 @@ export default function MaterialsSection() {
             <motion.div
               key={i}
               variants={cardItemLight}
-              className="group bg-[#faf9f7] border border-[rgba(109,40,217,0.5)] rounded-xl p-6 hover:border-[rgba(109,40,217,0.2)] hover:-translate-y-1 transition-all duration-200"
+              className="group bg-[#faf9f7] border border-[rgba(91,33,182,0.10)] rounded-xl p-6 hover:border-[rgba(91,33,182,0.18)] hover:-translate-y-1 transition-all duration-200"
             >
               <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${material.color} p-0.5 mb-4`}>
                 <div className="w-full h-full rounded-lg bg-[#faf9f7] flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <material.icon className="w-5 h-5 text-[#0F1B3D]" />
+                  <material.icon className="w-5 h-5 text-[#4c1d95]" />
                 </div>
               </div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-[var(--font-syne)] text-base font-bold text-[#0F1B3D] group-hover:text-[#6d28d9] transition-colors">{material.name}</h3>
-                <span className="text-sm text-[#6d28d9] font-semibold">{material.price}</span>
+                <h3 className="font-[var(--font-syne)] text-base font-bold text-[#4c1d95] group-hover:text-[#5b21b6] transition-colors">{material.name}</h3>
+                <span className="text-sm text-[#5b21b6] font-semibold">{material.price}</span>
               </div>
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {material.traits.map((trait, j) => (
-                  <span key={j} className="text-[10px] bg-[rgba(109,40,217,0.4)] text-[#6F7192] px-2 py-0.5 rounded-full">{trait}</span>
+                  <span key={j} className="text-[10px] bg-[rgba(91,33,182,0.08)] text-[#5b21b6] px-2 py-0.5 rounded-full">{trait}</span>
                 ))}
               </div>
-              <p className="text-xs text-[#4a5070]">Best for: {material.bestFor}</p>
+              <p className="text-xs text-[#5b21b6]">Best for: {material.bestFor}</p>
             </motion.div>
           ))}
         </motion.div>
 
-        <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={viewportOnce} className="text-center bg-[#faf9f7] border border-[rgba(109,40,217,0.5)] rounded-2xl p-8">
-          <p className="text-lg text-[#0F1B3D] mb-2">Not sure which material is right for you?</p>
+        <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={viewportOnce} className="text-center bg-[#faf9f7] border border-[rgba(91,33,182,0.12)] rounded-2xl p-8">
+          <p className="text-lg text-[#4c1d95] mb-2">Not sure which material is right for you?</p>
           <a
             href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-[#25D366] text-[#0F1B3D] px-6 py-3 rounded-xl text-sm font-medium hover:shadow-[0_0_30px_rgba(37,211,102,0.3)] transition-shadow"
+            className="inline-flex items-center gap-2 bg-[#25D366] text-[#4c1d95] px-6 py-3 rounded-xl text-sm font-medium hover:shadow-[0_0_30px_rgba(37,211,102,0.3)] transition-shadow"
           >
             <MessageCircle className="w-4 h-4" />
             Talk to Our Expert on WhatsApp

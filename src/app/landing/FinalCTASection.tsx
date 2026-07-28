@@ -43,7 +43,7 @@ function FinalCTASection() {
 
   return (
     <section ref={ref} className="relative overflow-hidden px-6 py-12 md:py-16 lg:py-24">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,rgba(109,40,217,0.08)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,rgba(91,33,182,0.10)_0%,transparent_70%)] pointer-events-none" />
 
       <motion.div
         initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
@@ -55,12 +55,12 @@ function FinalCTASection() {
           <div
             className="pointer-events-none absolute inset-0 opacity-10"
             style={{
-              backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(109,40,217,0.2) 1px, transparent 0)',
+              backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(91,33,182,0.25) 1px, transparent 0)',
               backgroundSize: '28px 28px',
             }}
           />
 
-          <div className="pointer-events-none absolute inset-0 rounded-3xl border border-[rgba(109,40,217,0.3)]" />
+          <div className="pointer-events-none absolute inset-0 rounded-3xl border border-[rgba(91,33,182,0.30)]" />
 
           <motion.div
             className="relative z-10"
@@ -68,16 +68,16 @@ function FinalCTASection() {
             initial={reduceMotion ? "hidden" : "hidden"}
             animate={isInView ? 'show' : "hidden"}
           >
-            <motion.div variants={reduceMotion ? simpleChild : childVariant} className="mb-4 md:mb-6 inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/20 bg-[#f3f0ff] px-4 py-1.5 text-sm font-medium text-[#6d28d9]">
+            <motion.div variants={reduceMotion ? simpleChild : childVariant} className="mb-4 md:mb-6 inline-flex items-center gap-2 rounded-full border border-[#5b21b6]/20 bg-[#f3f0ff] px-4 py-1.5 text-sm font-medium text-[#5b21b6]">
               <Sparkles className="w-4 h-4" />
               Start with a real quote
             </motion.div>
 
-            <motion.h2 variants={reduceMotion ? simpleChild : childVariant} className="mb-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold leading-[1.1] text-[#1a1a1a]">
+            <motion.h2 variants={reduceMotion ? simpleChild : childVariant} className="mb-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold leading-[1.1] text-[#4c1d95]">
               Tell us what you need and we&apos;ll review it before production.
             </motion.h2>
 
-            <motion.p variants={reduceMotion ? simpleChild : childVariant} className="mx-auto mb-6 md:mb-8 max-w-[640px] text-base leading-[1.6] text-[#4b4b4b]">
+            <motion.p variants={reduceMotion ? simpleChild : childVariant} className="mx-auto mb-6 md:mb-8 max-w-[640px] text-base leading-[1.6] text-[#5b21b6]">
               Flux 3D handles custom 3D printing, prototyping, model printing and ready-made products through a review-and-confirm workflow. Share the file or requirement and we&apos;ll take it from there.
             </motion.p>
 
@@ -103,15 +103,15 @@ function FinalCTASection() {
             </motion.div>
 
             <motion.div variants={reduceMotion ? simpleChild : childVariant} className="mb-6 flex items-center justify-center gap-4">
-              <div className="h-px w-12 bg-[rgba(109,40,217,0.25)]" />
-              <span className="text-sm text-[#9ca3af]">or email us</span>
-              <div className="h-px w-12 bg-[rgba(109,40,217,0.25)]" />
+              <div className="h-px w-12 bg-[rgba(91,33,182,0.25)]" />
+              <span className="text-sm text-[#a78bfa]">or email us</span>
+              <div className="h-px w-12 bg-[rgba(91,33,182,0.25)]" />
             </motion.div>
 
             <motion.a
               variants={reduceMotion ? simpleChild : childVariant}
               href={`mailto:${email}`}
-              className="inline-flex items-center gap-2 text-[#4b4b4b] transition-colors hover:text-[#6d28d9]"
+              className="inline-flex items-center gap-2 text-[#5b21b6] transition-colors hover:text-[#4c1d95]"
             >
               <Mail className="w-4 h-4" />
               {email}
@@ -121,7 +121,7 @@ function FinalCTASection() {
               {reassurancePills.map((pill) => (
                 <span
                   key={pill}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#e8e4df] bg-[#f3f0ff] px-3 py-1.5 text-xs text-[#4b4b4b]"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#e8e4df] bg-[#f3f0ff] px-3 py-1.5 text-xs text-[#4c1d95]"
                 >
                   <Check className="w-3 h-3" />
                   {pill}
@@ -129,7 +129,7 @@ function FinalCTASection() {
               ))}
             </motion.div>
 
-            <motion.p variants={reduceMotion ? simpleChild : childVariant} className="mt-8 text-xs text-[#9ca3af]">
+            <motion.p variants={reduceMotion ? simpleChild : childVariant} className="mt-8 text-xs text-[#a78bfa]">
               Service delivery and payment terms are published on this site.
             </motion.p>
           </motion.div>
