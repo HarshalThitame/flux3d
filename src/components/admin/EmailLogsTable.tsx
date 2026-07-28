@@ -1,8 +1,26 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Mail, RefreshCw, Search, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle2, Clock, Eye, Ban, XCircle, LoaderCircle } from 'lucide-react'
-import type { EmailLogRow, EmailEventRow, EmailLogStatus, EmailType } from '../../../types/database'
+import { useRouter } from 'next/navigation'
+import {
+  Mail,
+  RefreshCw,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Eye,
+  XCircle,
+  LoaderCircle,
+  Filter,
+  LayoutTemplate,
+  Code2,
+} from 'lucide-react'
+import type { EmailLogRow, EmailLogStatus, EmailType } from '../../../types/database'
 
 const STATUS_OPTIONS: EmailLogStatus[] = [
   'queued',
@@ -86,24 +104,35 @@ function formatDate(iso: string | null): string {
   })
 }
 
+function formatJson(obj: unknown): string {
+  try {
+    return JSON.stringify(obj, null, 2)
+  } catch {
+    return String(obj)
+  }
+}
+
 type Props = {
   initialData: EmailLogRow[]
   initialTotal: number
 }
 
 export default function EmailLogsTable({ initialData, initialTotal }: Props) {
+  const router = useRouter()
   const [logs, setLogs] = useState<EmailLogRow[]>(initialData)
   const [total, setTotal] = useState(initialTotal)
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(25)
-  const [statusFilter, setStatusFilter] = useState<EmailLogStatus | ''>('')
+  const [statusFilters, setStatusFilters] = useState<EmailLogStatus[]>([])
   const [typeFilter, setTypeFilter] = useState<EmailType | ''>('')
   const [recipientFilter, setRecipientFilter] = useState('')
+  const [templateFilter, setTemplateFilter] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [loading, setLoading] = useState(false)
   const [resendingId, setResendingId] = useState<string | null>(null)
-  const [selectedLog, setSelectedLog] = useState<EmailLogRow | null>(null)
-  const [events, setEvents] = useState<EmailEventRow[]>([])
-  const [eventsLoading, setEventsLoading] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [showFilters, setShowFilters] = useState(false)
 
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -112,15 +141,28 @@ export default function EmailLogsTable({ initialData, initialTotal }: Props) {
     const params = new URLSearchParams()
     params.set('page', String(p))
     params.set('limit', String(l))
-    if (statusFilter) params.set('status', statusFilter)
+    if (statusFilters.length === 1) {
+      params.set('status', statusFilters[0])
+    }
     if (typeFilter) params.set('email_type', typeFilter)
     if (recipientFilter) params.set('recipient', recipientFilter)
+    if (dateFrom) params.set('from', new Date(dateFrom).toISOString())
+    if (dateTo) params.set('to', new Date(new Date(dateTo).getTime() + 24 * 60 * 60 * 1000).toISOString())
 
     try {
       const res = await fetch(`/api/admin/email-logs?${params.toString()}`)
       const json = await res.json()
       if (res.ok) {
-        setLogs((json.data as EmailLogRow[]) ?? [])
+        let rows = (json.data as EmailLogRow[]) ?? []
+        // Client-side filter for template name and multi-status
+        if (templateFilter.trim()) {
+          const q = templateFilter.toLowerCase()
+          rows = rows.filter((r) => r.template_name?.toLowerCase().includes(q))
+        }
+        if (statusFilters.length > 1) {
+          rows = rows.filter((r) => statusFilters.includes(r.status))
+        }
+        setLogs(rows)
         setTotal(json.total ?? 0)
       } else {
         console.error('[EmailLogsTable] API error:', json.error)
@@ -142,12 +184,12 @@ export default function EmailLogsTable({ initialData, initialTotal }: Props) {
     return () => {
       if (searchTimer.current) clearTimeout(searchTimer.current)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, typeFilter, recipientFilter, limit])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilters, typeFilter, recipientFilter, templateFilter, dateFrom, dateTo, limit])
 
   useEffect(() => {
     fetchLogs(page, limit)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page])
 
   const totalPages = Math.max(1, Math.ceil(total / limit))
@@ -163,161 +205,324 @@ export default function EmailLogsTable({ initialData, initialTotal }: Props) {
       } else {
         alert(json.error ?? 'Failed to resend email')
       }
-    } catch (err) {
+    } catch {
       alert('Network error while resending')
     } finally {
       setResendingId(null)
     }
   }
 
-  const openDetail = async (log: EmailLogRow) => {
-    setSelectedLog(log)
-    setEventsLoading(true)
-    try {
-      // Fetch events from a simple client-side query (no dedicated API needed;
-      // we can use the Supabase client if available, but for simplicity we
-      // query via a lightweight route or just show limited info.)
-      const res = await fetch(`/api/admin/email-logs?order_id=${log.order_id ?? ''}&limit=1`)
-      // Actually, let's just show log metadata for now and skip full event
-      // timeline to avoid creating another API route. We'll show what we have.
-      setEvents([])
-    } finally {
-      setEventsLoading(false)
-    }
+  const toggleStatus = (status: EmailLogStatus) => {
+    setStatusFilters((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
+    )
   }
+
+  const activeFilterCount =
+    statusFilters.length +
+    (typeFilter ? 1 : 0) +
+    (recipientFilter ? 1 : 0) +
+    (templateFilter ? 1 : 0) +
+    (dateFrom || dateTo ? 1 : 0)
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-gray-200 bg-white p-4">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">Status</label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as EmailLogStatus | '')}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-violet-500 focus:outline-none"
-          >
-            <option value="">All</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Filters Toolbar */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-[#6F7192]">Recipient</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6F7192]" />
+              <input
+                type="text"
+                placeholder="Search email..."
+                value={recipientFilter}
+                onChange={(e) => setRecipientFilter(e.target.value)}
+                className="w-56 rounded-xl border border-[#6d28d9]/10 bg-gray-50 py-2.5 pl-10 pr-3 text-sm text-[#0F1B3D] outline-none transition focus:border-[#6d28d9]/30"
+              />
+            </div>
+          </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">Type</label>
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as EmailType | '')}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-violet-500 focus:outline-none"
-          >
-            <option value="">All</option>
-            {TYPE_OPTIONS.map((t) => (
-              <option key={t} value={t}>
-                {t.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-[#6F7192]">Template</label>
+            <div className="relative">
+              <LayoutTemplate className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6F7192]" />
+              <input
+                type="text"
+                placeholder="Template name..."
+                value={templateFilter}
+                onChange={(e) => setTemplateFilter(e.target.value)}
+                className="w-48 rounded-xl border border-[#6d28d9]/10 bg-gray-50 py-2.5 pl-10 pr-3 text-sm text-[#0F1B3D] outline-none transition focus:border-[#6d28d9]/30"
+              />
+            </div>
+          </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">Recipient</label>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search email..."
-              value={recipientFilter}
-              onChange={(e) => setRecipientFilter(e.target.value)}
-              className="w-64 rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2 text-sm text-gray-700 focus:border-violet-500 focus:outline-none"
-            />
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-[#6F7192]">Type</label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as EmailType | '')}
+              className="rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none min-h-[44px]"
+            >
+              <option value="">All</option>
+              {TYPE_OPTIONS.map((t) => (
+                <option key={t} value={t}>
+                  {t.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowFilters((v) => !v)}
+            className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm transition min-h-[44px] ${
+              showFilters || activeFilterCount > 0
+                ? 'border-[#6d28d9]/30 bg-[#6d28d9]/10 text-[#6d28d9]'
+                : 'border-gray-200 bg-white text-[#6F7192] hover:bg-gray-50'
+            }`}
+          >
+            <Filter className="h-4 w-4" />
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#6d28d9] text-[9px] font-bold text-white">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => fetchLogs(page, limit)}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-[#0F1B3D] transition hover:bg-gray-50 disabled:opacity-50 min-h-[44px]"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
           </div>
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
-          <button
-            onClick={() => fetchLogs(page, limit)}
-            disabled={loading}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-        </div>
+        {/* Expanded filter panel */}
+        {showFilters && (
+          <div className="mt-4 border-t border-gray-100 pt-4">
+            <div className="space-y-4">
+              {/* Multi-status checkboxes */}
+              <div>
+                <label className="mb-2 block text-xs font-medium text-[#6F7192]">Status</label>
+                <div className="flex flex-wrap gap-2">
+                  {STATUS_OPTIONS.map((s) => (
+                    <label
+                      key={s}
+                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition ${
+                        statusFilters.includes(s)
+                          ? 'border-[#6d28d9]/30 bg-[#6d28d9]/10 text-[#6d28d9]'
+                          : 'border-gray-200 bg-gray-50 text-[#6F7192] hover:bg-gray-100'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={statusFilters.includes(s)}
+                        onChange={() => toggleStatus(s)}
+                        className="hidden"
+                      />
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Date range */}
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-[#6F7192]">From</label>
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-[#6F7192]">To</label>
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusFilters([])
+                    setTypeFilter('')
+                    setRecipientFilter('')
+                    setTemplateFilter('')
+                    setDateFrom('')
+                    setDateTo('')
+                  }}
+                  className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-[#6F7192] transition hover:bg-gray-50"
+                >
+                  Clear all
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 font-semibold text-gray-600">Status</th>
-              <th className="px-4 py-3 font-semibold text-gray-600">Recipient</th>
-              <th className="px-4 py-3 font-semibold text-gray-600">Type</th>
-              <th className="px-4 py-3 font-semibold text-gray-600">Subject</th>
-              <th className="px-4 py-3 font-semibold text-gray-600">Sent At</th>
-              <th className="px-4 py-3 font-semibold text-gray-600 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {logs.map((log) => (
-              <tr
-                key={log.id}
-                className="hover:bg-gray-50 cursor-pointer transition-colors"
-                onClick={() => openDetail(log)}
-              >
-                <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(log.status)}`}
-                  >
-                    {statusIcon(log.status)}
-                    {log.status.charAt(0).toUpperCase() + log.status.slice(1)}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-gray-700">{log.recipient}</td>
-                <td className="px-4 py-3 text-gray-600">
-                  {log.email_type.replace(/_/g, ' ')}
-                </td>
-                <td className="px-4 py-3 text-gray-700 max-w-xs truncate">{log.subject}</td>
-                <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
-                  {formatDate(log.sent_at ?? log.created_at)}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleResend(log)
-                    }}
-                    disabled={resendingId === log.id || (log.status === 'bounced' && log.bounce_type === 'hard')}
-                    className="inline-flex items-center gap-1 rounded-md bg-violet-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
-                    title={log.status === 'bounced' && log.bounce_type === 'hard' ? 'Hard bounce — cannot resend' : 'Resend this email'}
-                  >
-                    {resendingId === log.id ? (
-                      <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <RefreshCw className="h-3.5 w-3.5" />
-                    )}
-                    Resend
-                  </button>
-                </td>
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-gray-100">
+                <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Status</th>
+                <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Recipient</th>
+                <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Type</th>
+                <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Template</th>
+                <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Subject</th>
+                <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Sent At</th>
+                <th className="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Actions</th>
               </tr>
-            ))}
-            {logs.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
-                  No email logs found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {logs.map((log) => (
+                <>
+                  <tr
+                    key={log.id}
+                    className="border-b border-gray-100 transition-colors hover:bg-gray-50"
+                  >
+                    <td className="px-5 py-3.5">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(log.status)}`}
+                      >
+                        {statusIcon(log.status)}
+                        {log.status.charAt(0).toUpperCase() + log.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-[#0F1B3D]">{log.recipient}</td>
+                    <td className="px-5 py-3.5 text-[#6F7192]">
+                      {log.email_type.replace(/_/g, ' ')}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {log.template_id ? (
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/admin/emails/templates/${log.template_id}/edit`)}
+                          className="inline-flex items-center gap-1 text-xs text-[#6d28d9] transition hover:underline"
+                        >
+                          <LayoutTemplate className="h-3 w-3" />
+                          {log.template_name ?? 'Edit'}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-[#6F7192]">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 max-w-xs truncate text-[#6F7192]">{log.subject}</td>
+                    <td className="px-5 py-3.5 text-xs text-[#6F7192] whitespace-nowrap">
+                      {formatDate(log.sent_at ?? log.created_at)}
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedId((prev) => (prev === log.id ? null : log.id))
+                          }
+                          className="rounded-lg p-1.5 text-[#6F7192] transition hover:bg-gray-100"
+                          title="View details"
+                        >
+                          {expandedId === log.id ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleResend(log)}
+                          disabled={resendingId === log.id || (log.status === 'bounced' && log.bounce_type === 'hard')}
+                          className="inline-flex items-center gap-1 rounded-md bg-violet-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+                          title={
+                            log.status === 'bounced' && log.bounce_type === 'hard'
+                              ? 'Hard bounce — cannot resend'
+                              : 'Resend'
+                          }
+                        >
+                          {resendingId === log.id ? (
+                            <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          )}
+                          Resend
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  {/* Expandable detail row */}
+                  {expandedId === log.id && (
+                    <tr className="bg-gray-50/70">
+                      <td colSpan={7} className="px-5 py-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-[#6F7192]">ID</span>
+                              <span className="font-mono text-[#0F1B3D]">{log.id}</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-[#6F7192]">Provider Message ID</span>
+                              <span className="font-mono text-[#0F1B3D]">
+                                {log.provider_message_id ?? '—'}
+                              </span>
+                            </div>
+                            {log.order_id && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-[#6F7192]">Order ID</span>
+                                <span className="font-mono text-[#0F1B3D]">{log.order_id}</span>
+                              </div>
+                            )}
+                            {log.error_message && (
+                              <div className="rounded-lg bg-red-50 p-2 text-xs text-red-700">
+                                <span className="font-semibold">Error:</span> {log.error_message}
+                              </div>
+                            )}
+                          </div>
+                          {log.variables_used && (
+                            <div>
+                              <div className="mb-1 flex items-center gap-1 text-xs font-medium text-[#6F7192]">
+                                <Code2 className="h-3 w-3" />
+                                Variables Used
+                              </div>
+                              <pre className="max-h-32 overflow-auto rounded-lg border border-gray-200 bg-white p-2 text-[10px] text-[#0F1B3D]">
+                                {formatJson(log.variables_used)}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              ))}
+              {logs.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-5 py-12 text-center text-sm text-[#6F7192]">
+                    No email logs found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3">
-        <div className="text-sm text-gray-600">
+      <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 py-3">
+        <div className="text-xs text-[#6F7192]">
           Showing <strong>{logs.length}</strong> of <strong>{total}</strong> results
         </div>
         <div className="flex items-center gap-2">
@@ -327,109 +532,33 @@ export default function EmailLogsTable({ initialData, initialTotal }: Props) {
               setLimit(Number(e.target.value))
               setPage(1)
             }}
-            className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-700"
+            className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs text-[#6F7192]"
           >
             <option value={25}>25 / page</option>
             <option value={50}>50 / page</option>
             <option value={100}>100 / page</option>
           </select>
           <button
+            type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-            className="rounded-lg border border-gray-300 bg-white p-1.5 text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+            disabled={page <= 1 || loading}
+            className="rounded-lg border border-gray-300 bg-white p-1.5 text-[#6F7192] hover:bg-gray-50 disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="text-sm text-gray-700">
+          <span className="text-xs text-[#6F7192]">
             Page {page} of {totalPages}
           </span>
           <button
+            type="button"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
-            className="rounded-lg border border-gray-300 bg-white p-1.5 text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+            disabled={page >= totalPages || loading}
+            className="rounded-lg border border-gray-300 bg-white p-1.5 text-[#6F7192] hover:bg-gray-50 disabled:opacity-40"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </div>
-
-      {/* Detail modal (simple) */}
-      {selectedLog && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={() => setSelectedLog(null)}
-        >
-          <div
-            className="w-full max-w-lg rounded-xl border border-gray-200 bg-white p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">Email Details</h3>
-              <button
-                onClick={() => setSelectedLog(null)}
-                className="rounded-md p-1 text-gray-500 hover:bg-gray-100"
-              >
-                <XCircle className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">ID</span>
-                <span className="font-mono text-gray-700">{selectedLog.id}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Recipient</span>
-                <span className="text-gray-700">{selectedLog.recipient}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Type</span>
-                <span className="text-gray-700">{selectedLog.email_type}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Status</span>
-                <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(selectedLog.status)}`}>
-                  {statusIcon(selectedLog.status)}
-                  {selectedLog.status}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Subject</span>
-                <span className="text-gray-700 text-right max-w-xs">{selectedLog.subject}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Provider Message ID</span>
-                <span className="font-mono text-gray-700">{selectedLog.provider_message_id ?? '—'}</span>
-              </div>
-              {selectedLog.error_message && (
-                <div className="rounded-lg bg-red-50 p-3 text-red-700">
-                  <span className="font-semibold">Error:</span> {selectedLog.error_message}
-                </div>
-              )}
-              {eventsLoading && (
-                <div className="py-4 text-center text-gray-500">
-                  <LoaderCircle className="mx-auto h-5 w-5 animate-spin" />
-                </div>
-              )}
-            </div>
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                onClick={() => setSelectedLog(null)}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => handleResend(selectedLog)}
-                disabled={resendingId === selectedLog.id || (selectedLog.status === 'bounced' && selectedLog.bounce_type === 'hard')}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:bg-gray-300"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Resend
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

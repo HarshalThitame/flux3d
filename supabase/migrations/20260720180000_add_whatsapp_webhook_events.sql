@@ -16,6 +16,13 @@ CREATE TABLE IF NOT EXISTS public.whatsapp_webhook_events (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Ensure columns exist if table was created by an earlier migration
+ALTER TABLE public.whatsapp_webhook_events
+  ADD COLUMN IF NOT EXISTS retry_count INT NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS last_error TEXT,
+  ADD COLUMN IF NOT EXISTS last_retried_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
 CREATE INDEX IF NOT EXISTS idx_whatsapp_webhook_events_payload_hash
   ON public.whatsapp_webhook_events(payload_hash);
 

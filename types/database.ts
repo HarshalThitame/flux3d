@@ -53,6 +53,10 @@ export type BounceType = 'hard' | 'soft'
 // Legacy alias for backward compatibility in any remaining references
 export type EmailEventStatus = EmailLogStatus
 
+export type EmailTemplateCategory = 'transactional' | 'marketing' | 'support' | 'admin' | 'system'
+export type EmailQueueStatus = 'queued' | 'sending' | 'sent' | 'delivered' | 'failed' | 'cancelled'
+export type AutomationTargetAudience = 'customer' | 'admin' | 'both'
+
 export type AdminAuditTargetType =
   | 'order'
   | 'user'
@@ -185,6 +189,9 @@ export type EmailLogRow = {
   bounce_type: BounceType | null
   retry_count: number | null
   original_log_id: string | null
+  template_id: string | null
+  variables_used: Json | null
+  queue_id: string | null
   created_at: string | null
   updated_at: string | null
 }
@@ -205,6 +212,101 @@ export type EmailEventRow = {
   geo_location: Json | null
   provider_timestamp: string | null
   created_at: string | null
+}
+
+export type EmailTemplateRow = {
+  id: string
+  name: string
+  email_type: string
+  category: EmailTemplateCategory
+  subject: string
+  html_body: string
+  plain_text: string | null
+  variables: Json
+  is_enabled: boolean
+  is_system: boolean
+  description: string | null
+  created_by: string | null
+  updated_by: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+export type EmailTemplateVersionRow = {
+  id: string
+  template_id: string
+  version_number: number
+  subject: string | null
+  html_body: string | null
+  plain_text: string | null
+  variables: Json | null
+  editor_id: string | null
+  created_at: string | null
+}
+
+export type EmailAutomationRuleRow = {
+  id: string
+  event_name: string
+  template_id: string
+  target_audience: AutomationTargetAudience
+  delay_minutes: number
+  is_enabled: boolean
+  conditions: Json | null
+  priority: number
+  created_at: string | null
+  updated_at: string | null
+}
+
+export type EmailQueueRow = {
+  id: string
+  log_id: string | null
+  template_id: string
+  recipient: string
+  variables: Json
+  status: EmailQueueStatus
+  priority: number
+  scheduled_at: string | null
+  retry_count: number
+  max_retries: number
+  error_message: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+export type EmailBrandingRow = {
+  id: string
+  logo_url: string | null
+  company_name: string | null
+  address: string | null
+  gst_number: string | null
+  support_email: string | null
+  support_phone: string | null
+  primary_color: string | null
+  secondary_color: string | null
+  accent_color: string | null
+  footer_text: string | null
+  social_icons: Json | null
+  dark_mode_css: string | null
+  header_html: string | null
+  footer_html: string | null
+  updated_at: string | null
+}
+
+export type EmailSettingsRow = {
+  id: string
+  emails_enabled: boolean
+  maintenance_mode: boolean
+  pause_all_emails: boolean
+  retry_failed: boolean
+  max_retries: number
+  sender_name: string | null
+  sender_email: string | null
+  reply_to: string | null
+  bcc: string | null
+  cc: string | null
+  footer: string | null
+  timezone: string | null
+  updated_at: string | null
 }
 
 export type ErrorLogRow = {
@@ -316,6 +418,36 @@ export type Database = {
         Row: EmailEventRow
         Insert: Omit<Partial<EmailEventRow>, 'id'> & Pick<EmailEventRow, 'email_log_id' | 'event_type' | 'raw_payload'>
         Update: Partial<EmailEventRow>
+      }
+      email_templates: {
+        Row: EmailTemplateRow
+        Insert: Omit<Partial<EmailTemplateRow>, 'id'> & Pick<EmailTemplateRow, 'name' | 'email_type' | 'category' | 'subject' | 'html_body'>
+        Update: Partial<EmailTemplateRow>
+      }
+      email_template_versions: {
+        Row: EmailTemplateVersionRow
+        Insert: Omit<Partial<EmailTemplateVersionRow>, 'id'> & Pick<EmailTemplateVersionRow, 'template_id' | 'version_number'>
+        Update: Partial<EmailTemplateVersionRow>
+      }
+      email_automation_rules: {
+        Row: EmailAutomationRuleRow
+        Insert: Omit<Partial<EmailAutomationRuleRow>, 'id'> & Pick<EmailAutomationRuleRow, 'event_name' | 'template_id' | 'target_audience'>
+        Update: Partial<EmailAutomationRuleRow>
+      }
+      email_queue: {
+        Row: EmailQueueRow
+        Insert: Omit<Partial<EmailQueueRow>, 'id'> & Pick<EmailQueueRow, 'template_id' | 'recipient' | 'status'>
+        Update: Partial<EmailQueueRow>
+      }
+      email_branding: {
+        Row: EmailBrandingRow
+        Insert: Omit<Partial<EmailBrandingRow>, 'id'> & Pick<EmailBrandingRow, never>
+        Update: Partial<EmailBrandingRow>
+      }
+      email_settings: {
+        Row: EmailSettingsRow
+        Insert: Omit<Partial<EmailSettingsRow>, 'id'> & Pick<EmailSettingsRow, never>
+        Update: Partial<EmailSettingsRow>
       }
       error_logs: {
         Row: ErrorLogRow

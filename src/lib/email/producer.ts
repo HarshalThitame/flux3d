@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { enqueueEmail as qstashEnqueue } from './qstash'
+import { getEmailSettings, isEmailSendingAllowed } from './settings-cache'
 import type { EmailJobPayload } from './types'
 import type { EmailLogRow } from '../../../types/database'
 
@@ -7,9 +8,10 @@ import type { EmailLogRow } from '../../../types/database'
  * Email producer.
  *
  * Responsibilities:
- *   1. Insert email_logs row with status='queued'
- *   2. Publish the job to QStash
- *   3. Update log with QStash message ID if available
+ *   1. Check email_settings guards (emails_enabled, pause_all_emails)
+ *   2. Insert email_logs row with status='queued'
+ *   3. Publish the job to QStash
+ *   4. Update log with QStash message ID if available
  *
  * If QStash is not configured (e.g., local dev without QSTASH_TOKEN),
  * we fall back to synchronous dispatch so developers still receive emails.
@@ -18,8 +20,35 @@ import type { EmailLogRow } from '../../../types/database'
  */
 export async function enqueueEmail(
   payload: EmailJobPayload
-): Promise<{ logId: string; messageId?: string }> {
+): Promise<{ logId: string; messageId?: string; blocked?: boolean; reason?: string }> {
   const supabase = createAdminClient()
+
+  // Step 0: Respect global email settings
+  const settings = await getEmailSettings().catch(() => null)
+  const sendingCheck = isEmailSendingAllowed(settings)
+  if (!sendingCheck.allowed) {
+    console.warn(`[email] Blocked enqueue for ${payload.emailType}: ${sendingCheck.reason}`)
+    // Still create a log so admins can see what was blocked
+    const { data: blockedLog } = await supabase
+      .from('email_logs')
+      .insert({
+        user_id: payload.userId ?? null,
+        recipient: payload.recipient,
+        email_type: payload.emailType,
+        subject: payload.subject ?? buildSubject(payload),
+        template_name: payload.emailType,
+        status: 'dropped',
+        queued_at: new Date().toISOString(),
+        order_id: payload.orderId ?? null,
+        order_type: payload.orderType ?? null,
+        error_message: sendingCheck.reason ?? 'Blocked by email_settings',
+      })
+      .select()
+      .single()
+
+    const blockedLogId = blockedLog ? (blockedLog as EmailLogRow).id : ''
+    return { logId: blockedLogId, blocked: true, reason: sendingCheck.reason }
+  }
 
   // Step 1: Insert audit log
   const logInsert: Partial<EmailLogRow> = {

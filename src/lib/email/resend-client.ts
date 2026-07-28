@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { getBusinessSettings } from '@/lib/admin/business-settings'
+import { getEmailSettings } from './settings-cache'
 
 /**
  * Resend ESP client singleton with dynamic configuration.
@@ -55,20 +56,37 @@ export async function getResendClient(): Promise<Resend> {
 }
 
 /**
- * Build the sender address from business settings or defaults.
+ * Build the sender address.
+ *
+ * Priority:
+ *   1. email_settings.sender_name / sender_email (EMS overrides)
+ *   2. business_settings.resendSenderName / resendSenderEmail
+ *   3. business_settings.businessName / smtpSenderEmail
+ *   4. Defaults
  */
 export async function getSenderAddress(): Promise<{ name: string; email: string }> {
-  const settings = await getBusinessSettings().catch(() => null)
+  const emailSettings = await getEmailSettings().catch(() => null)
+
+  if (emailSettings?.sender_name && emailSettings?.sender_email) {
+    return {
+      name: emailSettings.sender_name,
+      email: emailSettings.sender_email,
+    }
+  }
+
+  const businessSettings = await getBusinessSettings().catch(() => null)
 
   const name =
-    settings?.resendSenderName ||
-    settings?.businessName ||
-    settings?.smtpSenderName ||
+    emailSettings?.sender_name ||
+    businessSettings?.resendSenderName ||
+    businessSettings?.businessName ||
+    businessSettings?.smtpSenderName ||
     'Flux3D'
 
   const email =
-    settings?.resendSenderEmail ||
-    settings?.smtpSenderEmail ||
+    emailSettings?.sender_email ||
+    businessSettings?.resendSenderEmail ||
+    businessSettings?.smtpSenderEmail ||
     'noreply@updates.flux3d.in'
 
   return { name, email }
