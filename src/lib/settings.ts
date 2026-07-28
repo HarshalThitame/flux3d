@@ -152,6 +152,11 @@ function mapRow(row: BusinessSettingsRow): BusinessSettings {
     smtpPassword: n(row.smtp_password),
     smtpSenderName: n(row.smtp_sender_name),
     smtpSenderEmail: n(row.smtp_sender_email),
+    resendApiKey: n(row.resend_api_key),
+    resendSenderDomain: n(row.resend_sender_domain) || FALLBACK.resendSenderDomain,
+    resendSenderName: n(row.resend_sender_name) || FALLBACK.resendSenderName,
+    resendSenderEmail: n(row.resend_sender_email) || FALLBACK.resendSenderEmail,
+    resendWebhookSecret: n(row.resend_webhook_secret),
     privacyPolicyUrl: n(row.privacy_policy_url),
     termsUrl: n(row.terms_url),
     refundPolicyUrl: n(row.refund_policy_url),
@@ -252,7 +257,7 @@ export type PublicBusinessSettings = Omit<BusinessSettings,
   'smtpHost' | 'smtpPort' | 'smtpUsername' | 'smtpPassword' |
   'smtpSenderName' | 'smtpSenderEmail' | 'accountNumber' |
   'ifscCode' | 'bankAccountName' | 'bankName' | 'upiId' |
-  'upiQrCodeUrl'>
+  'upiQrCodeUrl' | 'resendApiKey' | 'resendWebhookSecret'>
 
 export async function getPublicSettings(): Promise<PublicBusinessSettings> {
   const settings = await getSettings()
@@ -269,5 +274,7 @@ export async function getPublicSettings(): Promise<PublicBusinessSettings> {
   delete (publicSettings as Record<string, unknown>).bankName
   delete (publicSettings as Record<string, unknown>).upiId
   delete (publicSettings as Record<string, unknown>).upiQrCodeUrl
+  delete (publicSettings as Record<string, unknown>).resendApiKey
+  delete (publicSettings as Record<string, unknown>).resendWebhookSecret
   return publicSettings as PublicBusinessSettings
 }

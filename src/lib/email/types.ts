@@ -1,0 +1,143 @@
+import type { EmailType } from '../../../types/database'
+
+// ============================================================================
+// Email Job Payloads — union discriminated by emailType
+// ============================================================================
+
+export type BaseEmailPayload = {
+  emailType: EmailType
+  userId?: string | null
+  recipient: string
+  subject?: string
+  logId?: string
+}
+
+export type WelcomeEmailPayload = BaseEmailPayload & {
+  emailType: 'welcome'
+  customerName: string
+}
+
+export type EmailVerificationPayload = BaseEmailPayload & {
+  emailType: 'email_verification'
+  customerName: string
+  verificationUrl: string
+}
+
+export type PasswordResetPayload = BaseEmailPayload & {
+  emailType: 'password_reset'
+  customerName: string
+  resetUrl: string
+}
+
+export type OrderPlacedCustomerPayload = BaseEmailPayload & {
+  emailType: 'order_placed_customer'
+  orderNumber: string
+  customerName: string
+  total: string
+  items: { name: string; material?: string; color?: string; quantity: number; price: string }[]
+  orderUrl: string
+}
+
+export type OrderPlacedAdminPayload = BaseEmailPayload & {
+  emailType: 'order_placed_admin'
+  orderNumber: string
+  customerEmail: string
+  customerName: string
+  total: string
+  adminOrderUrl: string
+}
+
+export type ModelValidationPayload = BaseEmailPayload & {
+  emailType: 'model_validation_pass' | 'model_validation_fail'
+  orderNumber: string
+  customerName: string
+  issues?: string[]
+  adminQuoteUrl?: string
+}
+
+export type ProductionStartedPayload = BaseEmailPayload & {
+  emailType: 'production_started'
+  orderNumber: string
+  customerName: string
+  printBedName?: string
+  estimatedCompletionDate?: string
+}
+
+export type OrderShippedPayload = BaseEmailPayload & {
+  emailType: 'order_shipped'
+  orderNumber: string
+  customerName: string
+  items: { name: string; material?: string; color?: string; quantity: number; imageUrl?: string }[]
+  trackingNumber: string
+  courierName: string
+  trackingUrl: string
+  estimatedDelivery?: string
+}
+
+export type DeliveryConfirmationPayload = BaseEmailPayload & {
+  emailType: 'delivery_confirmation'
+  orderNumber: string
+  customerName: string
+  reviewUrl?: string
+}
+
+export type PaymentReceiptPayload = BaseEmailPayload & {
+  emailType: 'payment_receipt'
+  orderNumber: string
+  customerName: string
+  amount: string
+  paymentMethod: string
+  receiptUrl?: string
+}
+
+export type PaymentFailedPayload = BaseEmailPayload & {
+  emailType: 'payment_failed'
+  orderNumber: string
+  customerName: string
+  amount: string
+  retryUrl: string
+}
+
+export type RefundIssuedPayload = BaseEmailPayload & {
+  emailType: 'refund_issued'
+  orderNumber: string
+  customerName: string
+  refundAmount: string
+  refundMethod: string
+  expectedDate?: string
+}
+
+export type ContactNotificationPayload = BaseEmailPayload & {
+  emailType: 'contact_notification'
+  senderName: string
+  senderEmail: string
+  senderPhone: string
+  message: string
+}
+
+export type EmailJobPayload =
+  | WelcomeEmailPayload
+  | EmailVerificationPayload
+  | PasswordResetPayload
+  | OrderPlacedCustomerPayload
+  | OrderPlacedAdminPayload
+  | ModelValidationPayload
+  | ProductionStartedPayload
+  | OrderShippedPayload
+  | DeliveryConfirmationPayload
+  | PaymentReceiptPayload
+  | PaymentFailedPayload
+  | RefundIssuedPayload
+  | ContactNotificationPayload
+
+// ============================================================================
+// Dispatcher result shape
+// ============================================================================
+export type DispatchResult =
+  | { ok: true; messageId: string; resendId?: string }
+  | { ok: false; error: string }
+
+// ============================================================================
+// QStash configuration
+// ============================================================================
+export const QSTASH_ENDPOINT = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/api/email/send`

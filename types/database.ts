@@ -8,8 +8,51 @@ export type Json =
 
 export type ProfileStatus = 'active' | 'suspended' | 'unverified'
 export type DeviceType = 'mobile' | 'desktop' | 'tablet'
-export type EmailType = 'order_confirmation' | 'cancellation' | 'promotion' | 'otp' | 'password_reset' | 'welcome'
-export type EmailEventStatus = 'sent' | 'delivered' | 'opened' | 'bounced'
+
+// ============================================================================
+// Email Types (expanded for enterprise transactional lifecycle)
+// ============================================================================
+export type EmailType =
+  | 'welcome'
+  | 'email_verification'
+  | 'password_reset'
+  | 'order_placed_customer'
+  | 'order_placed_admin'
+  | 'model_validation_pass'
+  | 'model_validation_fail'
+  | 'production_started'
+  | 'order_shipped'
+  | 'delivery_confirmation'
+  | 'payment_receipt'
+  | 'payment_failed'
+  | 'refund_issued'
+  | 'contact_notification'
+
+export type EmailLogStatus =
+  | 'queued'
+  | 'sent'
+  | 'delivered'
+  | 'opened'
+  | 'bounced'
+  | 'failed'
+  | 'complained'
+  | 'dropped'
+
+export type EmailEventType =
+  | 'sent'
+  | 'delivered'
+  | 'opened'
+  | 'bounced'
+  | 'failed'
+  | 'complained'
+  | 'clicked'
+  | 'delivery_delayed'
+
+export type BounceType = 'hard' | 'soft'
+
+// Legacy alias for backward compatibility in any remaining references
+export type EmailEventStatus = EmailLogStatus
+
 export type AdminAuditTargetType =
   | 'order'
   | 'user'
@@ -24,6 +67,9 @@ export type AdminAuditTargetType =
   | 'admin_user'
   | 'whatsapp_knowledge'
 
+// ============================================================================
+// Profile (added email bounce flags)
+// ============================================================================
 export type ProfileRow = {
   id: string
   email: string
@@ -32,6 +78,8 @@ export type ProfileRow = {
   avatar_url: string | null
   status: ProfileStatus
   email_verified: boolean | null
+  email_bounced: boolean | null
+  email_bounced_at: string | null
   last_sign_in_at: string | null
   is_admin: boolean | null
   admin_notes: string | null
@@ -111,12 +159,52 @@ export type FeatureUsageRow = {
   used_at: string | null
 }
 
-export type EmailEventRow = {
+// ============================================================================
+// Email Logs (master record per dispatched email)
+// ============================================================================
+export type EmailLogRow = {
   id: string
   user_id: string | null
+  recipient: string
+  order_id: string | null
+  order_type: 'custom' | 'shop' | null
   email_type: EmailType
-  status: EmailEventStatus
+  subject: string
+  template_name: string
+  provider: 'resend'
+  provider_message_id: string | null
+  resend_id: string | null
+  status: EmailLogStatus
+  queued_at: string | null
   sent_at: string | null
+  delivered_at: string | null
+  opened_at: string | null
+  failed_at: string | null
+  bounced_at: string | null
+  error_message: string | null
+  bounce_type: BounceType | null
+  retry_count: number | null
+  original_log_id: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+// ============================================================================
+// Email Events (immutable webhook audit trail)
+// ============================================================================
+export type EmailEventRow = {
+  id: string
+  email_log_id: string
+  event_type: EmailEventType
+  provider: 'resend'
+  provider_event_id: string | null
+  raw_payload: Json
+  recipient: string | null
+  ip_address: string | null
+  user_agent: string | null
+  geo_location: Json | null
+  provider_timestamp: string | null
+  created_at: string | null
 }
 
 export type ErrorLogRow = {
@@ -178,6 +266,9 @@ export type ReferralRow = {
   created_at: string | null
 }
 
+// ============================================================================
+// Database registry (Supabase shape)
+// ============================================================================
 export type Database = {
   public: {
     Tables: {
@@ -216,9 +307,14 @@ export type Database = {
         Insert: Omit<Partial<FeatureUsageRow>, 'id'> & Pick<FeatureUsageRow, 'feature_name'>
         Update: Partial<FeatureUsageRow>
       }
+      email_logs: {
+        Row: EmailLogRow
+        Insert: Omit<Partial<EmailLogRow>, 'id'> & Pick<EmailLogRow, 'recipient' | 'email_type' | 'subject' | 'template_name'>
+        Update: Partial<EmailLogRow>
+      }
       email_events: {
         Row: EmailEventRow
-        Insert: Omit<Partial<EmailEventRow>, 'id'> & Pick<EmailEventRow, 'email_type'>
+        Insert: Omit<Partial<EmailEventRow>, 'id'> & Pick<EmailEventRow, 'email_log_id' | 'event_type' | 'raw_payload'>
         Update: Partial<EmailEventRow>
       }
       error_logs: {
