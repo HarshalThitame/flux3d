@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useCallback } from 'react'
 
 export default function HtmlEditor({
   value,
@@ -15,11 +15,7 @@ export default function HtmlEditor({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const lineNumbersRef = useRef<HTMLDivElement>(null)
-  const [lineCount, setLineCount] = useState(1)
-
-  useEffect(() => {
-    setLineCount(value.split('\n').length || 1)
-  }, [value])
+  const lineCount = value.split('\n').length || 1
 
   const handleScroll = useCallback(() => {
     if (textareaRef.current && lineNumbersRef.current) {

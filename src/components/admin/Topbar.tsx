@@ -10,14 +10,15 @@ export default function Topbar({
   onOpenMobileNav: () => void
 }) {
   const [profileOpen, setProfileOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [adminName, setAdminName] = useState('Admin')
   const [adminInitials, setAdminInitials] = useState('AD')
   const [adminRole, setAdminRole] = useState('Administrator')
 
   useEffect(() => {
+    setMounted(true)
     async function loadProfile() {
       const supabase = getSupabaseBrowserClient()
-      // Use getUser() — authenticates by contacting Supabase Auth server
       const { data } = await supabase.auth.getUser()
       const user = data?.user
       if (user) {
@@ -67,7 +68,7 @@ export default function Topbar({
             <div className="grid h-10 w-10 place-items-center rounded-2xl bg-[linear-gradient(135deg,#a855f7,#7C3AED)] text-sm font-bold text-white">
               {adminInitials}
             </div>
-            <div className="hidden sm:block">
+            <div className="hidden sm:block" suppressHydrationWarning>
               <div className="text-sm font-medium text-[#0F1B3D]">{adminName}</div>
               <div className="text-xs uppercase tracking-[0.18em] text-[#6F7192]">{adminRole}</div>
             </div>

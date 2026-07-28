@@ -72,6 +72,7 @@ export default function VersionCompareModal({
         height: '100%',
       }}
       title="Compare Preview"
+      suppressHydrationWarning
     />
   )
 
