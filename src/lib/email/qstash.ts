@@ -21,7 +21,10 @@ export function getQStashClient(): Client {
     throw new Error('[QStash] QSTASH_TOKEN is not configured')
   }
 
-  client = new Client({ token })
+  client = new Client({
+    token,
+    baseUrl: process.env.QSTASH_URL,
+  })
   return client
 }
 
@@ -46,8 +49,9 @@ export async function enqueueEmail(payload: EmailJobPayload): Promise<{ messageI
     url: QSTASH_ENDPOINT,
     body: payload,
     retries: 3,
-    // Delay delivery by jitter to smooth spikes
-    delay: jitterMs,
+    // Delay delivery by 1-2 seconds to smooth spikes
+    // QStash delay is in seconds, not milliseconds
+    delay: 1,
     // Headers to help with request tracing
     headers: {
       'X-Email-Type': payload.emailType,

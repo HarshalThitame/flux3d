@@ -50,20 +50,11 @@ export async function enqueueEmail(
     const result = await qstashEnqueue({ ...payload, logId })
     return { logId, messageId: result.messageId }
   } catch (err) {
-    // QStash not configured — fall back to direct dispatch in development
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[email] QStash unavailable; falling back to direct dispatch in development')
-      const { dispatchEmail } = await import('./dispatcher')
-      await dispatchEmail(payload, logId)
-      return { logId }
-    }
-
-    // In production, mark as failed and surface the error
-    await supabase
-      .from('email_logs')
-      .update({ status: 'failed', error_message: `QStash enqueue failed: ${err instanceof Error ? err.message : 'unknown'}` })
-      .eq('id', logId)
-
-    throw err
+    // QStash failed — fall back to direct dispatch immediately.
+    // This ensures emails are never lost, even if the queue is unavailable.
+    console.warn('[email] QStash enqueue failed; falling back to direct dispatch:', err instanceof Error ? err.message : err)
+    const { dispatchEmail } = await import('./dispatcher')
+    await dispatchEmail(payload, logId)
+    return { logId }
   }
 }
