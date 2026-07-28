@@ -43,6 +43,7 @@ import {
   insertPaymentAuditLog,
 } from '@/lib/payments/repository'
 import { updatePaymentAttemptStatus } from '@/lib/payments/state'
+import { notifyPaymentCaptured } from '@/lib/payments/email-triggers'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
 
 type CartOrderItem = {
@@ -1258,6 +1259,17 @@ export async function verifyCartPaymentAndCreateOrder(params: {
     paymentAttemptId,
     orderId: firstOrder.id,
   })
+
+  // Send payment confirmation email immediately
+  notifyPaymentCaptured({
+    id: paymentAttemptId,
+    customer_id: auth.user.id,
+    internal_order_type: 'custom_quote',
+    internal_order_id: capture.reference,
+    amount_paise: capture.amountPaise,
+    payment_method: razorpayPayment.method ?? null,
+    provider_payment_id: params.razorpayPaymentId,
+  }).catch(() => {})
 
   void trackFeatureUsage(auth.user.id, 'order_placed', {
     source: 'cart', groupId, orderId: firstOrder.id,

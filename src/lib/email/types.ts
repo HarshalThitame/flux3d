@@ -10,6 +10,8 @@ export type BaseEmailPayload = {
   recipient: string
   subject?: string
   logId?: string
+  orderId?: string | null
+  orderType?: 'custom' | 'shop' | null
 }
 
 export type WelcomeEmailPayload = BaseEmailPayload & {
@@ -85,8 +87,40 @@ export type PaymentReceiptPayload = BaseEmailPayload & {
   emailType: 'payment_receipt'
   orderNumber: string
   customerName: string
-  amount: string
-  paymentMethod: string
+  orderDate: string
+  orderUrl: string
+  items: {
+    name: string
+    material?: string
+    color?: string
+    quantity: number
+    unitPrice: string
+    totalPrice: string
+    variant?: string
+  }[]
+  pricing: {
+    subtotal: string
+    discount: string
+    shipping: string
+    tax: string
+    grandTotal: string
+  }
+  payment: {
+    method: string
+    paymentId: string
+    amount: string
+    date: string
+    status: string
+  }
+  shippingAddress: {
+    name: string
+    phone: string
+    line1: string
+    line2?: string | null
+    city: string
+    state: string
+    pincode: string
+  }
   receiptUrl?: string
 }
 

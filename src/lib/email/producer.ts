@@ -30,6 +30,8 @@ export async function enqueueEmail(
     template_name: payload.emailType,
     status: 'queued',
     queued_at: new Date().toISOString(),
+    order_id: payload.orderId ?? null,
+    order_type: payload.orderType ?? null,
   }
 
   const { data: log, error: insertError } = await supabase

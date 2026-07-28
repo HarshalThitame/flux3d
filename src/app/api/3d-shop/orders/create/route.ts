@@ -14,8 +14,7 @@ import {
 } from '@/lib/shop/pricing'
 import { calculateShippingFromRules } from '@/lib/shop/shipping'
 import type { ShopOrderItem, ShopShippingAddress } from '@/lib/shop/orders'
-import { sendOrderPlacedCustomer, sendOrderPlacedAdmin } from '@/lib/email/triggers'
-import { getBusinessSettings } from '@/lib/admin/business-settings'
+
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -496,46 +495,9 @@ export async function POST(request: Request) {
             console.error('[3d-shop] Failed to update order source', sourceError)
           }
 
-          // Enqueue transactional emails — awaited so Vercel doesn't freeze before they settle
-          const userEmail = authData.user.email ?? ''
-          const customerName = shippingAddress.name || 'Customer'
-          const finalOrderNumber = String(result.orderNumber ?? orderNumber)
-          const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'}/3d-shop/order/${orderId}`
-
-          try {
-            await sendOrderPlacedCustomer(
-              userId,
-              userEmail,
-              finalOrderNumber,
-              customerName,
-              `₹${totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
-              items.map((it) => ({
-                name: it.productName || 'Product',
-                material: '',
-                color: '',
-                quantity: it.quantity,
-                price: `₹${(it.unitPrice ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
-              })),
-              orderUrl,
-            )
-          } catch (err) {
-            console.error('[3d-shop] Failed to send customer email:', err)
-          }
-
-          try {
-            const settings = await getBusinessSettings()
-            const adminEmail = settings?.supportEmail || settings?.primaryEmail || 'admin@flux3d.in'
-            await sendOrderPlacedAdmin(
-              adminEmail,
-              finalOrderNumber,
-              userEmail,
-              customerName,
-              `₹${totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
-              `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'}/admin/3d-shop/orders/${orderId}`,
-            )
-          } catch (err) {
-            console.error('[3d-shop] Failed to send admin email:', err)
-          }
+          // NOTE: Emails are now sent only after successful payment capture,
+          // triggered from the payment verification flow and webhook handler.
+          // We do NOT send order-placed emails at creation time anymore.
         }
 
         return NextResponse.json({
