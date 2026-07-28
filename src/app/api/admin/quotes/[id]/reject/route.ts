@@ -3,6 +3,7 @@ import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminPermission } from '@/lib/admin/permissions'
 import { logAdminAction } from '@/lib/admin/auditLog'
 import { logQuoteEvent } from '@/lib/quote/audit'
+import { sendModelValidationResult } from '@/lib/email/triggers'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,6 +68,28 @@ export async function POST(
       target_id: id,
       new_value: { reason },
     })
+
+    // Send model validation fail email
+    try {
+      const { data: order } = await adminSupabase
+        .from('orders')
+        .select('order_number, full_name, email, user_id')
+        .eq('id', latest.order_id ?? '')
+        .maybeSingle()
+      if (order) {
+        const row = order as Record<string, unknown>
+        sendModelValidationResult(
+          String(row.user_id ?? ''),
+          String(row.email ?? ''),
+          String(row.order_number ?? latest.order_id ?? ''),
+          String(row.full_name ?? 'Customer'),
+          false,
+          reason ? [reason] : ['Model did not meet print requirements.'],
+        ).catch((err) => console.error('[quotes/reject] Failed to enqueue validation email:', err))
+      }
+    } catch {
+      // Non-blocking
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

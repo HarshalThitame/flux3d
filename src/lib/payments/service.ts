@@ -1,6 +1,7 @@
 import { getSettings } from '@/lib/settings'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
+import { notifyPaymentCaptured, notifyPaymentFailed, notifyRefundProcessed } from './email-triggers'
 import {
   fetchInternalOrder,
   fetchPaymentAttemptById,
@@ -672,6 +673,8 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
       reason: systemReason(attempt.customer_id, `Webhook ${eventName}`),
     })
 
+    notifyPaymentFailed(attempt as Parameters<typeof notifyPaymentFailed>[0]).catch(() => {})
+
     return { handled: true, processingStatus: 'processed' as const }
   }
 
@@ -734,6 +737,10 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
       } catch {
         console.error('[webhook] Failed to convert reservations')
       }
+    }
+
+    if (captured) {
+      notifyPaymentCaptured(attempt as Parameters<typeof notifyPaymentCaptured>[0]).catch(() => {})
     }
 
     return { handled: true, processingStatus: 'processed' as const }
@@ -810,6 +817,8 @@ async function processRefundEvent(eventName: string, payload: Record<string, unk
       entity_id: localRefund.id,
       new_state: { status: nextStatus, total_refunded_paise: totalRefunded, fully_refunded: isFullyRefunded },
     })
+
+    notifyRefundProcessed(attempt as Parameters<typeof notifyRefundProcessed>[0], localRefund.amount_paise).catch(() => {})
   }
 
   if (nextStatus === 'failed') {

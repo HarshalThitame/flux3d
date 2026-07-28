@@ -11,6 +11,7 @@ import {
   validateName,
   validatePassword,
 } from '@/lib/auth/validation'
+import { sendWelcomeEmail } from '@/lib/email/triggers'
 
 function readString(formData: FormData, key: string, options: { trim?: boolean } = {}) {
   const value = formData.get(key)
@@ -174,6 +175,10 @@ export async function signupAction(
   if (data.session) {
     try {
       await upsertProfileForUser(supabase, data.user, name, phone)
+      // Enqueue welcome email for new accounts (fire-and-forget)
+      sendWelcomeEmail(data.user.id, data.user.email ?? email, name).catch((err) => {
+        console.error('[Auth] Failed to enqueue welcome email:', err)
+      })
     } catch (profileError) {
       console.error('[Auth] Failed to create profile during signup', profileError)
     }

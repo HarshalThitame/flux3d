@@ -27,7 +27,7 @@ import {
 
 const QUOTE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? 'quote-models'
 const ADMIN_ORDER_SELECT =
-  'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, price, price_per_unit, material_cost, machine_cost, subtotal, post_processing_charges, weight, difficulty_factor, total_price, final_price, grand_total, overhead_percent, overhead_amount, margin_percent, margin_amount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, coupon_code, coupon_id, discount_type, estimated_time, supports, post_processing_level, status, status_timestamps, cancel_requested, created_at, updated_at, notes, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, payment_provider, payment_status, provider_order_id, provider_payment_id, payment_method, payment_verified_at, payment_failed_at, payment_refund_status, payment_refund_amount_paise, payment_attempt_id'
+  'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, price, price_per_unit, material_cost, machine_cost, subtotal, post_processing_charges, weight, difficulty_factor, total_price, final_price, grand_total, overhead_percent, overhead_amount, margin_percent, margin_amount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, coupon_code, coupon_id, discount_type, estimated_time, supports, post_processing_level, status, status_timestamps, cancel_requested, created_at, updated_at, notes, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, payment_provider, payment_status, provider_order_id, provider_payment_id, payment_method, payment_verified_at, payment_failed_at, payment_refund_status, payment_refund_amount_paise, payment_attempt_id, tracking_number, courier_name, tracking_url'
 
 export class AdminOrderStatusTransitionError extends Error {
   constructor(message: string) {
@@ -812,6 +812,41 @@ export async function updateAdminOrderNotes(groupId: string, notes: string | nul
       notes,
       updated_at: new Date().toISOString(),
     })
+    .or(`group_id.eq.${groupId},id.eq.${groupId}`)
+
+  if (updateError) throw new Error(updateError.message)
+
+  const { data, error } = await supabase
+    .from('orders')
+    .select(ADMIN_ORDER_SELECT)
+    .or(`group_id.eq.${groupId},id.eq.${groupId}`)
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  const grouped = groupAdminOrders((data ?? []) as OrderRow[])
+  return grouped[0]
+}
+
+export async function updateAdminOrderTracking(
+  groupId: string,
+  tracking: {
+    tracking_number?: string | null
+    courier_name?: string | null
+    tracking_url?: string | null
+  }
+) {
+  const supabase = createAdminSupabaseClient()
+
+  const updatePayload: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  }
+  if ('tracking_number' in tracking) updatePayload.tracking_number = tracking.tracking_number || null
+  if ('courier_name' in tracking) updatePayload.courier_name = tracking.courier_name || null
+  if ('tracking_url' in tracking) updatePayload.tracking_url = tracking.tracking_url || null
+
+  const { error: updateError } = await supabase
+    .from('orders')
+    .update(updatePayload)
     .or(`group_id.eq.${groupId},id.eq.${groupId}`)
 
   if (updateError) throw new Error(updateError.message)
