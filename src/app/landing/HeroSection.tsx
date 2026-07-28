@@ -115,7 +115,7 @@ export default function HeroSection() {
                 <span className="premium-live-dot" />
                 Flux3D custom manufacturing · India
               </div>
-              <HeroFadeIn delay={0.3} className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#374151]">
+              <HeroFadeIn delay={0.3} className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#4c1d95]">
                 <MapPin className="h-3.5 w-3.5" />
                 Custom 3D printing and ready-made product delivery across India
               </HeroFadeIn>
@@ -135,7 +135,7 @@ export default function HeroSection() {
               initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={quickFade}
-              className="mx-auto mt-7 max-w-2xl text-base leading-7 text-[#1a1a2e] sm:text-lg lg:mx-0 lg:leading-8"
+              className="mx-auto mt-7 max-w-2xl text-base leading-7 text-[#2e1065] sm:text-lg lg:mx-0 lg:leading-8"
             >
               Flux 3D makes custom 3D-printed parts, prototypes, models and ready-made products for businesses and individuals who need a printed item with clear pricing, clear policies and a real support channel.
             </motion.p>
@@ -146,7 +146,7 @@ export default function HeroSection() {
               ))}
             </HeroFadeIn>
 
-            <HeroFadeIn delay={0.5} className="mx-auto mt-5 max-w-[620px] text-xs font-semibold uppercase tracking-[0.16em] text-[#4b5563] lg:mx-0">
+            <HeroFadeIn delay={0.5} className="mx-auto mt-5 max-w-[620px] text-xs font-semibold uppercase tracking-[0.16em] text-[#5b21b6] lg:mx-0">
               Quote-based custom orders · Ready-made product pricing · India delivery
             </HeroFadeIn>
 
@@ -172,7 +172,7 @@ export default function HeroSection() {
               </motion.div>
             </motion.div>
 
-            <HeroFadeIn delay={0.6} className="mt-4 text-center text-xs font-medium text-[#4b5563] lg:text-left">
+            <HeroFadeIn delay={0.6} className="mt-4 text-center text-xs font-medium text-[#5b21b6] lg:text-left">
               Custom orders reviewed before production · Support via email and phone · Tracked delivery where available
             </HeroFadeIn>
 
@@ -203,7 +203,7 @@ export default function HeroSection() {
                   <div className="premium-gantry-head"><span /></div>
                   <div className="premium-gantry-bed"><span /><span /><span /></div>
                 </div>
-                <div className="premium-machine-window">
+                  <div className="premium-machine-window">
                   <div className="premium-machine-scan" aria-hidden="true" />
                   <div className="premium-print-preview" aria-hidden="true">
                     {Array.from({ length: 9 }).map((_, index) => (
@@ -211,9 +211,9 @@ export default function HeroSection() {
                     ))}
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#9ca3af]">Current build</p>
-                    <p className="mt-1 text-2xl font-black text-[#0F1B3D]">Functional PETG bracket</p>
-                    <p className="mt-2 text-sm leading-6 text-[#6F7192]">Layer 1,286 of 1,920 · quality camera active</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a855f7]">Current build</p>
+                    <p className="mt-1 text-2xl font-black text-[#4c1d95]">Functional PETG bracket</p>
+                    <p className="mt-2 text-sm leading-6 text-[#5b21b6]">Layer 1,286 of 1,920 · quality camera active</p>
                   </div>
                 </div>
                 <div className="premium-build-progress" aria-hidden="true"><span /></div>
@@ -233,7 +233,7 @@ export default function HeroSection() {
                 <div className="mt-4 space-y-3">
                   {productionSignals.map((signal, index) => (
                     <div key={signal.label} className="premium-signal-row" style={{ '--signal-index': index } as CSSProperties}>
-                      <signal.icon className="h-4 w-4 text-[#6d28d9]" />
+                      <signal.icon className="h-4 w-4 text-[#5b21b6]" />
                       <span>{signal.label}</span>
                       <strong>{signal.value}</strong>
                     </div>
@@ -255,10 +255,10 @@ export default function HeroSection() {
           ))}
         </motion.div>
 
-        <HeroFadeIn delay={0.8} className="mx-auto mt-5 flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#4b5563]">
+        <HeroFadeIn delay={0.8} className="mx-auto mt-5 flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#5b21b6]">
           <Clock className="h-3.5 w-3.5" />
           Production timelines shared before confirmation
-          <Sparkles className="h-3.5 w-3.5 text-[#6d28d9]" />
+          <Sparkles className="h-3.5 w-3.5 text-[#5b21b6]" />
         </HeroFadeIn>
       </div>
     </section>

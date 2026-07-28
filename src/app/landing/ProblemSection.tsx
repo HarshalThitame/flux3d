@@ -55,11 +55,11 @@ function ProblemSection() {
         >
           <span className="premium-eyebrow">Why Flux3D</span>
 
-          <h2 className="mt-4 text-[clamp(2rem,6vw,4rem)] font-black leading-[0.98] tracking-normal text-[#0F1B3D] md:mt-5 md:text-5xl lg:text-6xl">
+          <h2 className="mt-4 text-[clamp(2rem,6vw,4rem)] font-black leading-[0.98] tracking-normal text-[#4c1d95] md:mt-5 md:text-5xl lg:text-6xl">
             The faster way to make real parts.
           </h2>
 
-          <p className="mt-4 max-w-xl text-base leading-7 text-[#6F7192] md:mt-6 md:text-lg lg:leading-8">
+          <p className="mt-4 max-w-xl text-base leading-7 text-[#5b21b6] md:mt-6 md:text-lg lg:leading-8">
             Flux3D gives you a compact production workflow: upload the file, choose the right material, approve the quote, and receive a finished part without factory friction.
           </p>
 
@@ -72,10 +72,10 @@ function ProblemSection() {
                 transition={reduceMotion ? { duration: 0.2 } : { delay: 0.2 + index * 0.08 }}
                 className="premium-loop-row"
               >
-                <item.icon className="h-5 w-5 text-[#6d28d9]" />
+                <item.icon className="h-5 w-5 text-[#5b21b6]" />
                 <div>
-                  <p className="text-sm font-bold text-[#0F1B3D]">{item.label}</p>
-                  <p className="text-xs leading-5 text-[#6F7192]">{item.value}</p>
+                  <p className="text-sm font-bold text-[#4c1d95]">{item.label}</p>
+                  <p className="text-xs leading-5 text-[#5b21b6]">{item.value}</p>
                 </div>
               </motion.div>
             ))}
@@ -92,22 +92,22 @@ function ProblemSection() {
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
                 transition={reduceMotion ? { duration: 0.3 } : { delay: 0.12 + index * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 whileHover={isFinePointer ? { y: -5, transition: { duration: 0.2 } } : undefined}
-                className="premium-problem-card group relative overflow-hidden rounded-2xl border border-[rgba(109,40,217,0.08)] bg-white p-6 md:p-7"
+                className="premium-problem-card group relative overflow-hidden rounded-2xl border border-[rgba(91,33,182,0.08)] bg-white p-6 md:p-7"
               >
                 <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${point.accent}`} />
                 <div className="grid gap-5 md:grid-cols-[120px_1fr] md:items-center">
                   <div className="premium-metric-tile">
-                    <Icon className="h-6 w-6 text-[#6F7192]" />
+                    <Icon className="h-6 w-6 text-[#5b21b6]" />
                     <span>{point.metric}</span>
                   </div>
 
                   <div>
-                    <h3 className="text-2xl font-black text-[#0F1B3D]">
+                    <h3 className="text-2xl font-black text-[#4c1d95]">
                       {point.problem}
                     </h3>
-                    <div className="mt-4 flex items-start gap-3 rounded-xl border border-[rgba(109,40,217,0.08)] bg-[rgba(109,40,217,0.03)] p-4">
-                      <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-[#6d28d9]" />
-                      <p className="text-sm leading-6 text-[#6F7192]">
+                    <div className="mt-4 flex items-start gap-3 rounded-xl border border-[rgba(91,33,182,0.08)] bg-[rgba(91,33,182,0.03)] p-4">
+                      <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-[#5b21b6]" />
+                      <p className="text-sm leading-6 text-[#5b21b6]">
                         {point.solution}
                       </p>
                     </div>
