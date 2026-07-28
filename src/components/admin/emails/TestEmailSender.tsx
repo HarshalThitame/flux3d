@@ -234,6 +234,7 @@ export default function TestEmailSender({
                   style={{ height: '600px' }}
                   sandbox="allow-same-origin"
                   title="Email Preview"
+                  suppressHydrationWarning
                 />
               </div>
             ) : (

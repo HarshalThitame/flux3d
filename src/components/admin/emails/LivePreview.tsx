@@ -132,6 +132,7 @@ export default function LivePreview({
               height: '100%',
             }}
             title="Live Preview"
+            suppressHydrationWarning
           />
         )}
       </div>
