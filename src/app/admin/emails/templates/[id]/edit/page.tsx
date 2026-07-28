@@ -1,6 +1,7 @@
 import { requireAdminUser } from '@/lib/admin/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import TemplateEditor from '@/components/admin/emails/TemplateEditor'
-import type { EmailTemplateRow } from 'types/database'
+import type { EmailTemplateRow, EmailTemplateVersionRow } from 'types/database'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,21 +13,29 @@ export default async function EditTemplatePage({
   await requireAdminUser()
   const { id } = await params
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/api/admin/email-templates/${id}`,
-    { cache: 'no-store' }
-  )
+  const supabase = createAdminClient()
 
-  let template: EmailTemplateRow | null = null
-  let versions: unknown[] = []
+  const { data: template, error: templateError } = await supabase
+    .from('email_templates')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
 
-  if (res.ok) {
-    const json = await res.json()
-    template = json.data as EmailTemplateRow | null
-    versions = json.versions ?? []
-  } else {
-    console.error('[admin/templates/edit] Failed to fetch template:', await res.text())
+  if (templateError) {
+    console.error('[admin/templates/edit] DB error:', templateError.message)
   }
 
-  return <TemplateEditor template={template} versions={versions} />
+  const { data: versions } = await supabase
+    .from('email_template_versions')
+    .select('*')
+    .eq('template_id', id)
+    .order('version_number', { ascending: false })
+    .limit(20)
+
+  return (
+    <TemplateEditor
+      template={template as EmailTemplateRow | null}
+      versions={(versions ?? []) as EmailTemplateVersionRow[]}
+    />
+  )
 }
