@@ -49,7 +49,7 @@ async function isReceiptAlreadySent(
     .eq('email_type', 'payment_receipt')
     .eq('order_id', orderId)
     .eq('order_type', orderType)
-    .in('status', ['queued', 'sent', 'delivered'])
+    .in('status', ['sent', 'delivered'])
     .limit(1)
 
   if (error) {

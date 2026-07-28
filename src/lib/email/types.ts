@@ -185,4 +185,9 @@ export type DispatchResult =
 // ============================================================================
 // QStash configuration
 // ============================================================================
-export const QSTASH_ENDPOINT = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/api/email/send`
+const baseUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
+  ''
+
+export const QSTASH_ENDPOINT = baseUrl ? `${baseUrl}/api/email/send` : '/api/email/send'
