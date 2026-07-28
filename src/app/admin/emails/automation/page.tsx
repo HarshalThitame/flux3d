@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export default async function EmailAutomationPage() {
   await requireAdminUser()
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? ''
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
   // Fetch rules
   const rulesRes = await fetch(`${baseUrl}/api/admin/email-automation-rules?limit=100`, {

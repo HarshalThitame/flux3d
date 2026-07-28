@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export default async function AdminEmailTemplatesPage() {
   await requireAdminUser()
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/api/admin/email-templates?page=1&limit=50`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/api/admin/email-templates?page=1&limit=50`, {
     cache: 'no-store',
   })
 
