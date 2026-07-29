@@ -24,6 +24,7 @@ import { logQuoteEvent } from '@/lib/quote/audit'
 import { redactSensitiveValues } from '@/lib/security/redact'
 import { rateLimitCheck } from '@/lib/rate-limit'
 import { verifyModelVolume } from '@/lib/storage/verify-metadata'
+import { sendOrderPlacedCustomer, sendOrderPlacedAdmin } from '@/lib/email/triggers'
 import {
   createQuoteCapture,
   getQuoteCapture,
@@ -335,6 +336,18 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
     quantity: insertedOrder.quantity,
     grandTotal: Number(insertedOrder.grand_total ?? breakdown.grandTotal),
   }).catch(() => {})
+
+  const itemsEmail = [{
+    name: input.fileUrl.split('/').pop() ?? 'Model',
+    material: input.material,
+    color: input.color,
+    quantity: Math.max(1, Math.floor(normalizeNumber(input.quantity, 'quantity'))),
+    price: String(Number(insertedOrder.grand_total ?? breakdown.grandTotal)),
+  }]
+  const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/my-orders/${insertedOrder.id}`
+  const adminOrderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders/${insertedOrder.id}`
+  sendOrderPlacedCustomer(auth.user.id, auth.profile.email, orderNumber, auth.profile.name, String(Number(insertedOrder.grand_total ?? breakdown.grandTotal)), itemsEmail, orderUrl).catch(() => {})
+  sendOrderPlacedAdmin(process.env.ADMIN_EMAIL ?? '', orderNumber, auth.profile.email, auth.profile.name, String(Number(insertedOrder.grand_total ?? breakdown.grandTotal)), adminOrderUrl).catch(() => {})
 
   revalidatePath('/my-orders')
   revalidatePath(`/my-orders/${insertedOrder.id}`)
@@ -786,6 +799,18 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
     payment_method: razorpayPayment.method ?? null,
     provider_payment_id: params.razorpayPaymentId,
   }).catch(() => {})
+
+  const itemsEmail = [{
+    name: (draftData.fileUrl as string)?.split('/').pop() ?? 'Model',
+    material: (configData.material as string) ?? '',
+    color: (configData.color as string) ?? '',
+    quantity: Math.max(1, Math.floor(Number(configData.quantity || 1))),
+    price: String(Number(pricingData.grandTotal ?? 0)),
+  }]
+  const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/my-orders/${insertedOrder.id}`
+  const adminOrderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders/${insertedOrder.id}`
+  sendOrderPlacedCustomer(auth.user.id, auth.profile.email, orderNumber, auth.profile.name, String(Number(pricingData.grandTotal ?? 0)), itemsEmail, orderUrl).catch(() => {})
+  sendOrderPlacedAdmin(process.env.ADMIN_EMAIL ?? '', orderNumber, auth.profile.email, auth.profile.name, String(Number(pricingData.grandTotal ?? 0)), adminOrderUrl).catch(() => {})
 
   const fileName = (draftData.fileUrl as string)?.split('/').pop() || 'model.stl'
   await adminSupabase.from('model_files').upsert(
