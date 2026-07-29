@@ -204,30 +204,7 @@ const SKELETONS: Record<string, string> = {
 </table>
 <hr class="email-hr" style="border:none;border-top:1px solid #e5e7eb;margin:0 32px;">
 <p style="font-size:16px;font-weight:600;color:#1a1a1a;margin:24px 32px 16px;" class="email-text">Payment Details</p>
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 32px 24px;padding:20px;background-color:#f9fafb;border-radius:10px;border:1px solid #e5e7eb;" class="email-card"><tr>
-  <td style="width:50%;vertical-align:top;">
-    <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5;color:#6b7280;margin:0 0 4px;" class="email-muted">Payment Method</p>
-    <p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">{{payment_method}}</p>
-  </td>
-  <td style="width:50%;vertical-align:top;">
-    <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5;color:#6b7280;margin:0 0 4px;" class="email-muted">Transaction ID</p>
-    <p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">{{payment_id}}</p>
-  </td>
-</tr><tr style="margin-top:12px;">
-  <td style="width:50%;vertical-align:top;">
-    <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5;color:#6b7280;margin:0 0 4px;" class="email-muted">Amount Paid</p>
-    <p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">{{payment_amount}}</p>
-  </td>
-  <td style="width:50%;vertical-align:top;">
-    <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5;color:#6b7280;margin:0 0 4px;" class="email-muted">Status</p>
-    <p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">{{payment_status}}</p>
-  </td>
-</tr><tr style="margin-top:12px;">
-  <td style="width:50%;vertical-align:top;">
-    <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5;color:#6b7280;margin:0 0 4px;" class="email-muted">Payment Date</p>
-    <p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">{{payment_date}}</p>
-  </td>
-</tr></table>
+{{payment_html}}
 <p style="font-size:16px;font-weight:600;color:#1a1a1a;margin:24px 32px 16px;" class="email-text">Shipping Address</p>
 {{shipping_address_html}}
 <hr class="email-hr" style="border:none;border-top:1px solid #e5e7eb;margin:0 32px;">
@@ -345,11 +322,7 @@ export const SAMPLE_DATA: Record<string, Record<string, string>> = {
     order_url: `${SITE_URL}/orders/abc123`,
     items_html: `<tr style="margin-bottom:12px;border-bottom:1px solid #e5e7eb;padding-bottom:12px;"><td style="width:75%;vertical-align:middle;"><p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0 0 4px;" class="email-text">ABS Black Enclosure</p><p style="font-size:13px;color:#6b7280;margin:0;" class="email-muted">&middot; Qty: 2</p></td><td style="width:25%;text-align:right;vertical-align:middle;"><p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">₹2,000.00</p></td></tr>`,
     pricing_html: `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="padding:16px;background-color:#f9fafb;border-radius:10px;border:1px solid #e5e7eb;" class="email-card"><tr style="margin-bottom:8px;"><td><p style="font-size:14px;color:#6b7280;margin:0;" class="email-muted">Subtotal</p></td><td style="text-align:right;"><p style="font-size:14px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">₹2,000.00</p></td></tr><tr style="margin-bottom:8px;"><td><p style="font-size:14px;color:#6b7280;margin:0;" class="email-muted">Discount</p></td><td style="text-align:right;"><p style="font-size:14px;font-weight:600;color:#16a34a;margin:0;">-₹0.00</p></td></tr><tr style="margin-bottom:8px;"><td><p style="font-size:14px;color:#6b7280;margin:0;" class="email-muted">Shipping</p></td><td style="text-align:right;"><p style="font-size:14px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">Free</p></td></tr><tr style="margin-bottom:8px;"><td><p style="font-size:14px;color:#6b7280;margin:0;" class="email-muted">Tax (GST)</p></td><td style="text-align:right;"><p style="font-size:14px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">₹0.00</p></td></tr><tr><td colspan="2"><hr style="border:none;border-top:1px solid #e5e7eb;margin:12px 0;"></td></tr><tr><td><p style="font-size:14px;font-weight:700;color:#1a1a1a;margin:0;" class="email-text">Grand Total</p></td><td style="text-align:right;"><p style="font-size:14px;font-weight:700;color:#FF5C1A;margin:0;">₹2,000.00</p></td></tr></table>`,
-    payment_method: 'UPI',
-    payment_id: 'pay_ABC123',
-    payment_amount: '₹2,000.00',
-    payment_status: 'Paid',
-    payment_date: '10 Aug 2026',
+    payment_html: `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 32px 24px;padding:20px;background-color:#f9fafb;border-radius:10px;border:1px solid #e5e7eb;" class="email-card"><tr><td style="width:50%;vertical-align:top;"><p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5;color:#6b7280;margin:0 0 4px;" class="email-muted">Payment Method</p><p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">UPI</p></td><td style="width:50%;vertical-align:top;"><p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5;color:#6b7280;margin:0 0 4px;" class="email-muted">Transaction ID</p><p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">pay_ABC123</p></td></tr><tr style="margin-top:12px;"><td style="width:50%;vertical-align:top;"><p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5;color:#6b7280;margin:0 0 4px;" class="email-muted">Amount Paid</p><p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">₹2,000.00</p></td><td style="width:50%;vertical-align:top;"><p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5;color:#6b7280;margin:0 0 4px;" class="email-muted">Status</p><p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">Paid</p></td></tr><tr style="margin-top:12px;"><td style="width:50%;vertical-align:top;"><p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5;color:#6b7280;margin:0 0 4px;" class="email-muted">Payment Date</p><p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">10 Aug 2026</p></td></tr></table>`,
     shipping_address_html: `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 32px 24px;padding:20px;background-color:#f9fafb;border-radius:10px;border:1px solid #e5e7eb;" class="email-card"><tr><td><p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0 0 4px;" class="email-text">Rutik Thitame</p><p style="font-size:14px;color:#6b7280;margin:0 0 2px;" class="email-muted">+91 98765 43210</p><p style="font-size:14px;color:#6b7280;margin:0 0 2px;" class="email-muted">123 Main Street</p><p style="font-size:14px;color:#6b7280;margin:0;" class="email-muted">Mumbai, Maharashtra — 400001</p></td></tr></table>`,
   },
   payment_failed: {
@@ -382,6 +355,7 @@ export async function seedSystemTemplates() {
 
   const types = Object.keys(SKELETONS)
   let inserted = 0
+  let updated = 0
   let skipped = 0
 
   for (const emailType of types) {
@@ -394,8 +368,25 @@ export async function seedSystemTemplates() {
       .maybeSingle()
 
     if (existing) {
-      console.log(`[seed] Skipping ${emailType} — already seeded`)
-      skipped++
+      // Update existing system template with latest skeleton
+      const meta = EMAIL_TYPE_META[emailType]
+      const variables = getVariableNames(emailType)
+      const { error: updateError } = await supabase
+        .from('email_templates')
+        .update({
+          html_body: SKELETONS[emailType],
+          subject: meta.subject,
+          variables,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id)
+
+      if (updateError) {
+        console.error(`[seed] Failed to update ${emailType}:`, updateError.message)
+      } else {
+        console.log(`[seed] Updated ${emailType}`)
+        updated++
+      }
       continue
     }
 
@@ -489,7 +480,7 @@ export async function seedSystemTemplates() {
     }
   }
 
-  console.log(`\n[seed] Done: ${inserted} templates inserted, ${skipped} skipped`)
+  console.log(`\n[seed] Done: ${inserted} templates inserted, ${updated} updated, ${skipped} skipped`)
 }
 
 // CLI entrypoint
