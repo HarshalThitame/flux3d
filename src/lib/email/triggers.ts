@@ -1,4 +1,5 @@
 import { enqueueEmail } from './producer'
+import { getAdminEmail } from './admin-email'
 import type {
   WelcomeEmailPayload,
   EmailVerificationPayload,
@@ -91,9 +92,14 @@ export async function sendOrderPlacedAdmin(
   total: string,
   adminOrderUrl: string
 ) {
+  const recipient = adminEmail || await getAdminEmail()
+  if (!recipient) {
+    console.warn('[email] Cannot send order_placed_admin — no admin email configured')
+    return
+  }
   return enqueueEmail({
     emailType: 'order_placed_admin',
-    recipient: adminEmail,
+    recipient,
     orderNumber,
     customerEmail,
     customerName,
