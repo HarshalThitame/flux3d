@@ -1,3 +1,4 @@
+import { normalizeSiteUrl, getConfiguredSiteUrl } from '@/lib/site'
 import type { EmailType } from '../../../types/database'
 
 // ============================================================================
@@ -185,9 +186,6 @@ export type DispatchResult =
 // ============================================================================
 // QStash configuration
 // ============================================================================
-const baseUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
-  ''
+const baseUrl = normalizeSiteUrl(getConfiguredSiteUrl())
 
 export const QSTASH_ENDPOINT = baseUrl ? `${baseUrl}/api/email/send` : '/api/email/send'
