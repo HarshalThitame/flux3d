@@ -347,7 +347,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
   const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/my-orders/${insertedOrder.id}`
   const adminOrderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders/${insertedOrder.id}`
   sendOrderPlacedCustomer(auth.user.id, auth.profile.email, orderNumber, auth.profile.name, String(Number(insertedOrder.grand_total ?? breakdown.grandTotal)), itemsEmail, orderUrl).catch(() => {})
-  sendOrderPlacedAdmin(process.env.ADMIN_EMAIL ?? '', orderNumber, auth.profile.email, auth.profile.name, String(Number(insertedOrder.grand_total ?? breakdown.grandTotal)), adminOrderUrl).catch(() => {})
+  sendOrderPlacedAdmin('', orderNumber, auth.profile.email, auth.profile.name, String(Number(insertedOrder.grand_total ?? breakdown.grandTotal)), adminOrderUrl).catch(() => {})
 
   revalidatePath('/my-orders')
   revalidatePath(`/my-orders/${insertedOrder.id}`)
@@ -810,7 +810,7 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
   const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/my-orders/${insertedOrder.id}`
   const adminOrderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders/${insertedOrder.id}`
   sendOrderPlacedCustomer(auth.user.id, auth.profile.email, orderNumber, auth.profile.name, String(Number(pricingData.grandTotal ?? 0)), itemsEmail, orderUrl).catch(() => {})
-  sendOrderPlacedAdmin(process.env.ADMIN_EMAIL ?? '', orderNumber, auth.profile.email, auth.profile.name, String(Number(pricingData.grandTotal ?? 0)), adminOrderUrl).catch(() => {})
+  sendOrderPlacedAdmin('', orderNumber, auth.profile.email, auth.profile.name, String(Number(pricingData.grandTotal ?? 0)), adminOrderUrl).catch(() => {})
 
   const fileName = (draftData.fileUrl as string)?.split('/').pop() || 'model.stl'
   await adminSupabase.from('model_files').upsert(
