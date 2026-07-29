@@ -28,6 +28,7 @@ export async function POST(req: Request) {
   try {
     const rawBody = await req.text()
     const signatureHeader = req.headers.get('svix-signature')
+    const timestampHeader = req.headers.get('svix-timestamp')
 
     // Load webhook secret from business_settings or env
     const settings = await getBusinessSettings().catch(() => null)
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 503 })
     }
 
-    if (!verifyResendWebhookSignature(rawBody, signatureHeader, secret)) {
+    if (!verifyResendWebhookSignature(rawBody, signatureHeader, timestampHeader, secret)) {
       console.warn('[webhooks/resend] Invalid signature')
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }

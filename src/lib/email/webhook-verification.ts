@@ -3,23 +3,29 @@ import crypto from 'crypto'
 /**
  * Verify Resend webhook signature.
  *
- * Resend signs webhook payloads with HMAC-SHA256 using the webhook secret.
- * The signature is sent in the `svix-signature` header (Resend uses Svix).
+ * Resend uses the Svix webhook standard:
+ *   - `svix-timestamp` header: Unix timestamp (seconds since epoch)
+ *   - `svix-signature` header: `v1,<base64_hmac> v1,<base64_hmac>` (space-separated for key rotation)
  *
- * Header format: `v1,<timestamp>,<signature>`
- * We construct the signed payload as: `<timestamp>.<rawBody>`
+ * The signed payload is: `<timestamp>.<rawBody>`
+ * HMAC-SHA256 is computed using the webhook secret.
  *
- * @param rawBody      — the raw request body as a Buffer or string
- * @param signatureHeader — value of the `svix-signature` header
- * @param secret       — the Resend webhook secret (from business_settings or env)
- * @returns boolean    — true if signature is valid
+ * @param rawBody          — the raw request body as a string or Buffer
+ * @param signatureHeader  — value of the `svix-signature` header
+ * @param timestampHeader  — value of the `svix-timestamp` header (Unix timestamp)
+ * @param secret           — the Resend webhook secret
+ * @returns boolean        — true if any signature matches
  */
 export function verifyResendWebhookSignature(
   rawBody: string | Buffer,
   signatureHeader: string | null,
+  timestampHeader: string | null,
   secret: string
 ): boolean {
   if (!signatureHeader || !secret) return false
+
+  const timestamp = String(timestampHeader ?? '')
+  const payloadToSign = timestamp ? `${timestamp}.${rawBody}` : `${rawBody}`
 
   const signatures = signatureHeader.split(' ')
   for (const sig of signatures) {
@@ -29,10 +35,7 @@ export function verifyResendWebhookSignature(
     const version = parts[0]
     if (version !== 'v1') continue
 
-    const timestamp = parts.length >= 3 ? parts[1] : ''
-    const signature = parts.length >= 3 ? parts[2] : parts[1]
-    const payloadToSign = timestamp ? `${timestamp}.${rawBody}` : `${rawBody}`
-
+    const signature = parts[1]
     const expected = crypto.createHmac('sha256', secret).update(payloadToSign).digest('base64')
     if (timingSafeCompare(signature, expected)) {
       return true
