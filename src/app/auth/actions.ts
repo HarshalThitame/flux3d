@@ -11,7 +11,12 @@ import {
   validateName,
   validatePassword,
 } from '@/lib/auth/validation'
-import { sendWelcomeEmail } from '@/lib/email/triggers'
+import {
+  sendWelcomeEmail,
+  sendEmailVerification,
+  sendPasswordReset,
+} from '@/lib/email/triggers'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 function readString(formData: FormData, key: string, options: { trim?: boolean } = {}) {
   const value = formData.get(key)
@@ -185,6 +190,28 @@ export async function signupAction(
     redirect(nextPath)
   }
 
+  // No session — email confirmation is required.
+  // Generate a verification link via the admin API and send it through our EMS
+  // alongside Supabase's built-in confirmation email.
+  // To avoid duplicates, disable Supabase's email templates in the Auth dashboard.
+  try {
+    const adminClient = createAdminClient()
+    const { data: linkData } = await adminClient.auth.admin.generateLink({
+      type: 'signup',
+      email,
+      password,
+      options: { redirectTo: callbackUrl },
+    })
+    const verificationUrl = linkData?.properties?.action_link
+    if (verificationUrl) {
+      sendEmailVerification(data.user.id, data.user.email ?? email, name, verificationUrl).catch((err) => {
+        console.error('[Auth] Failed to enqueue verification email:', err)
+      })
+    }
+  } catch (err) {
+    console.error('[Auth] Failed to generate verification link:', err)
+  }
+
   return {
     status: 'success',
     message:
@@ -267,6 +294,35 @@ export async function forgotPasswordAction(
 
   if (error) {
     return formatForgotPasswordError(error.message)
+  }
+
+  // Also generate a recovery link via the admin API and send through our EMS
+  // alongside Supabase's built-in reset email.
+  // To avoid duplicates, disable Supabase's email templates in the Auth dashboard.
+  try {
+    const adminClient = createAdminClient()
+    const { data: linkData } = await adminClient.auth.admin.generateLink({
+      type: 'recovery',
+      email,
+      options: { redirectTo: callbackUrl },
+    })
+    const resetUrl = linkData?.properties?.action_link
+    if (resetUrl) {
+      const { data: profileData } = await adminClient
+        .from('profiles')
+        .select('id, full_name')
+        .eq('email', email)
+        .maybeSingle()
+      const userId = profileData?.id ?? ''
+      const userName = profileData?.full_name ?? 'User'
+      if (userId) {
+        sendPasswordReset(userId, email, userName, resetUrl).catch((err) => {
+          console.error('[Auth] Failed to enqueue password reset email:', err)
+        })
+      }
+    }
+  } catch (err) {
+    console.error('[Auth] Failed to generate recovery link:', err)
   }
 
   return {
