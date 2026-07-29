@@ -25,6 +25,7 @@ import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 import { logQuoteEvent } from '@/lib/quote/audit'
 import { redactSensitiveValues } from '@/lib/security/redact'
 import { verifyModelVolume } from '@/lib/storage/verify-metadata'
+import { sendOrderPlacedCustomer, sendOrderPlacedAdmin } from '@/lib/email/triggers'
 import {
   createQuoteCapture,
   getQuoteCapture,
@@ -731,6 +732,18 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
     grandTotal: groupWaterfall.grandTotal,
   }).catch(() => {})
 
+  const orderItemsEmail = input.items.map(item => ({
+    name: item.fileName,
+    material: item.material,
+    color: item.color,
+    quantity: Math.max(1, Math.floor(item.quantity ?? 1)),
+    price: String(item.grandTotal ?? item.finalPrice ?? item.price ?? 0),
+  }))
+  const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/my-orders/${insertedOrders[0].id}`
+  const adminOrderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders/${insertedOrders[0].id}`
+  sendOrderPlacedCustomer(auth.user.id, auth.profile.email, formatOrderNumber(insertedOrders[0].serial_number, insertedOrders[0].created_at), auth.profile.name, String(groupWaterfall.grandTotal ?? 0), orderItemsEmail, orderUrl).catch(() => {})
+  sendOrderPlacedAdmin(process.env.ADMIN_EMAIL ?? '', formatOrderNumber(insertedOrders[0].serial_number, insertedOrders[0].created_at), auth.profile.email, auth.profile.name, String(groupWaterfall.grandTotal ?? 0), adminOrderUrl).catch(() => {})
+
   revalidatePath('/my-orders')
   revalidatePath('/cart')
 
@@ -1270,6 +1283,18 @@ export async function verifyCartPaymentAndCreateOrder(params: {
     payment_method: razorpayPayment.method ?? null,
     provider_payment_id: params.razorpayPaymentId,
   }).catch(() => {})
+
+  const orderItemsEmail = itemsData.map((item: Record<string, unknown>) => ({
+    name: String(item.fileName ?? ''),
+    material: String(item.material ?? ''),
+    color: String(item.color ?? ''),
+    quantity: Math.max(1, Math.floor(Number(item.quantity ?? 1))),
+    price: String(Number(item.grandTotal ?? item.finalPrice ?? item.price ?? 0)),
+  }))
+  const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/my-orders/${firstOrder.id}`
+  const adminOrderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders/${firstOrder.id}`
+  sendOrderPlacedCustomer(auth.user.id, auth.profile.email, firstOrderNumber, auth.profile.name, String(capture.amountPaise / 100), orderItemsEmail, orderUrl).catch(() => {})
+  sendOrderPlacedAdmin(process.env.ADMIN_EMAIL ?? '', firstOrderNumber, auth.profile.email, auth.profile.name, String(capture.amountPaise / 100), adminOrderUrl).catch(() => {})
 
   void trackFeatureUsage(auth.user.id, 'order_placed', {
     source: 'cart', groupId, orderId: firstOrder.id,
