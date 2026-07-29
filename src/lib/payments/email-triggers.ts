@@ -59,6 +59,36 @@ async function isReceiptAlreadySent(
   return (data?.length ?? 0) > 0
 }
 
+/**
+ * Fetch customer email + name from profiles table.
+ * The order tables (shelf_orders, orders) do NOT have email/full_name columns.
+ */
+async function fetchCustomerProfile(
+  supabase: ReturnType<typeof createAdminSupabaseClient>,
+  userId: string
+): Promise<{ email: string; name: string } | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('email, full_name')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (error) {
+    console.warn('[payments/email] Failed to fetch profile for', userId, error.message)
+    return null
+  }
+
+  const email = String(data?.email ?? '').trim()
+  const name = String(data?.full_name ?? 'Customer').trim()
+
+  if (!email) {
+    console.warn('[payments/email] Profile has no email for user', userId)
+    return null
+  }
+
+  return { email, name }
+}
+
 // ============================================================================
 // Shop Order Receipt
 // ============================================================================
@@ -77,21 +107,27 @@ async function sendShopOrderReceipt(
   const { data: order } = await supabase
     .from('shelf_orders')
     .select(
-      'id, order_number, full_name, email, user_id, items, shipping_address, payment_snapshot, provider_payment_id, payment_method, payment_verified_at, placed_at'
+      'id, order_number, user_id, items, shipping_address, payment_snapshot, provider_payment_id, payment_method, payment_verified_at, placed_at'
     )
     .eq('id', attempt.internal_order_id)
     .maybeSingle()
 
-  if (!order) return
+  if (!order) {
+    console.warn('[payments/email] Shop order not found:', attempt.internal_order_id)
+    return
+  }
 
   const row = order as Record<string, unknown>
-  const email = String(row.email ?? '')
-  const name = String(row.full_name ?? 'Customer')
   const userId = String(row.user_id ?? attempt.customer_id)
   const orderNumber = String(row.order_number ?? attempt.internal_order_id)
   const orderId = String(row.id ?? attempt.internal_order_id)
 
-  if (!email) return
+  // Fetch email + name from profiles (order tables don't have these columns)
+  const profile = await fetchCustomerProfile(supabase, userId)
+  if (!profile) {
+    console.warn('[payments/email] No profile email for shop order', orderNumber, 'user', userId)
+    return
+  }
 
   // Deduplication: skip if already sent
   if (await isReceiptAlreadySent(supabase, orderId, 'shop')) {
@@ -132,9 +168,9 @@ async function sendShopOrderReceipt(
 
   await sendPaymentReceipt(
     userId,
-    email,
+    profile.email,
     orderNumber,
-    name,
+    String(shippingAddress.name ?? profile.name),
     formatDate(String(row.placed_at)),
     `${siteUrl}/3d-shop/order/${orderId}`,
     items,
@@ -156,7 +192,7 @@ async function sendShopOrderReceipt(
       status: 'Paid',
     },
     {
-      name: String(shippingAddress.name ?? name),
+      name: String(shippingAddress.name ?? profile.name),
       phone: String(shippingAddress.phone ?? ''),
       line1: String(shippingAddress.line1 ?? ''),
       line2: String(shippingAddress.line2 ?? '') || null,
@@ -202,21 +238,27 @@ async function sendCustomQuoteReceipt(
   const { data: firstOrder } = await supabase
     .from('orders')
     .select(
-      'id, order_number, full_name, email, user_id, group_id, material, color, quantity, file_url, total_price, final_price, delivery_charge, grand_total, subtotal, cart_discount, coupon_discount, offer_discount, provider_payment_id, payment_method, payment_verified_at, created_at, phone, address_line1, address_line2, city, state, pincode, landmark'
+      'id, order_number, full_name, user_id, group_id, material, color, quantity, file_url, total_price, final_price, delivery_charge, grand_total, subtotal, cart_discount, coupon_discount, offer_discount, provider_payment_id, payment_method, payment_verified_at, created_at, phone, address_line1, address_line2, city, state, pincode, landmark'
     )
     .eq('id', firstOrderId)
     .maybeSingle()
 
-  if (!firstOrder) return
+  if (!firstOrder) {
+    console.warn('[payments/email] Custom order not found:', firstOrderId)
+    return
+  }
 
   const first = firstOrder as Record<string, unknown>
   const groupId = first.group_id as string | undefined
-  const email = String(first.email ?? '')
-  const name = String(first.full_name ?? 'Customer')
   const userId = String(first.user_id ?? attempt.customer_id)
   const orderNumber = String(first.order_number ?? firstOrderId)
 
-  if (!email) return
+  // Fetch email + name from profiles (orders table has full_name but NOT email)
+  const profile = await fetchCustomerProfile(supabase, userId)
+  if (!profile) {
+    console.warn('[payments/email] No profile email for custom order', orderNumber, 'user', userId)
+    return
+  }
 
   // Deduplication
   if (await isReceiptAlreadySent(supabase, firstOrderId, 'custom')) {
@@ -272,9 +314,9 @@ async function sendCustomQuoteReceipt(
 
   await sendPaymentReceipt(
     userId,
-    email,
+    profile.email,
     orderNumber,
-    name,
+    String(first.full_name ?? profile.name),
     formatDate(String(first.created_at)),
     `${siteUrl}/my-orders`,
     items,
@@ -296,7 +338,7 @@ async function sendCustomQuoteReceipt(
       status: 'Paid',
     },
     {
-      name: String(first.full_name ?? name),
+      name: String(first.full_name ?? profile.name),
       phone: String(first.phone ?? ''),
       line1: String(first.address_line1 ?? ''),
       line2: String(first.address_line2 ?? '') || null,
@@ -351,21 +393,29 @@ export async function notifyPaymentFailed(
     const table = attempt.internal_order_type === 'shop_order' ? 'shelf_orders' : 'orders'
     const { data: order } = await supabase
       .from(table)
-      .select('order_number, full_name, email, user_id')
+      .select('order_number, user_id')
       .eq('id', attempt.internal_order_id)
       .maybeSingle()
 
-    if (!order) return
+    if (!order) {
+      console.warn('[payments/email] Order not found for failed payment:', attempt.internal_order_id)
+      return
+    }
+
     const row = order as Record<string, unknown>
-    const email = String(row.email ?? '')
-    const name = String(row.full_name ?? 'Customer')
     const userId = String(row.user_id ?? attempt.customer_id)
     const orderNumber = String(row.order_number ?? attempt.internal_order_id)
+
+    const profile = await fetchCustomerProfile(supabase, userId)
+    if (!profile) {
+      console.warn('[payments/email] No profile email for failed payment order', orderNumber)
+      return
+    }
+
     const amount = formatMoney(attempt.amount_paise)
     const retryUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'}/orders/${attempt.internal_order_id}/retry`
 
-    if (!email) return
-    await sendPaymentFailed(userId, email, orderNumber, name, amount, retryUrl)
+    await sendPaymentFailed(userId, profile.email, orderNumber, profile.name, amount, retryUrl)
   } catch (err) {
     console.error('[payments/email] notifyPaymentFailed failed:', err)
   }
@@ -385,24 +435,31 @@ export async function notifyRefundProcessed(
     const table = attempt.internal_order_type === 'shop_order' ? 'shelf_orders' : 'orders'
     const { data: order } = await supabase
       .from(table)
-      .select('order_number, full_name, email, user_id')
+      .select('order_number, user_id')
       .eq('id', attempt.internal_order_id)
       .maybeSingle()
 
-    if (!order) return
+    if (!order) {
+      console.warn('[payments/email] Order not found for refund:', attempt.internal_order_id)
+      return
+    }
+
     const row = order as Record<string, unknown>
-    const email = String(row.email ?? '')
-    const name = String(row.full_name ?? 'Customer')
     const userId = String(row.user_id ?? attempt.customer_id)
     const orderNumber = String(row.order_number ?? attempt.internal_order_id)
     const refundAmount = formatMoney(refundAmountPaise)
 
-    if (!email) return
+    const profile = await fetchCustomerProfile(supabase, userId)
+    if (!profile) {
+      console.warn('[payments/email] No profile email for refund order', orderNumber)
+      return
+    }
+
     await sendRefundIssued(
       userId,
-      email,
+      profile.email,
       orderNumber,
-      name,
+      profile.name,
       refundAmount,
       'Razorpay (original payment method)',
       '5-7 business days',
