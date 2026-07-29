@@ -166,7 +166,14 @@ export default function OrderDetailClient({ initialOrder }: Props) {
       const response = await fetch('/api/admin/orders', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ groupId: order.groupId, status, cancellationReason: reason }),
+        body: JSON.stringify({
+          groupId: order.groupId,
+          status,
+          cancellationReason: reason,
+          ...(status === 'shipped' && trackingForm.courier_name ? { courier_name: trackingForm.courier_name } : {}),
+          ...(status === 'shipped' && trackingForm.tracking_number ? { tracking_number: trackingForm.tracking_number } : {}),
+          ...(status === 'shipped' && trackingForm.tracking_url ? { tracking_url: trackingForm.tracking_url } : {}),
+        }),
       })
       if (!response.ok) {
         const body = (await response.json().catch(() => ({}))) as { error?: string }
@@ -188,6 +195,13 @@ export default function OrderDetailClient({ initialOrder }: Props) {
         paymentAttemptId: json.order.paymentAttemptId ?? current.paymentAttemptId,
       }))
       setNotesDraft(json.order.notes ?? '')
+      if (status === 'shipped') {
+        setTrackingForm({
+          courier_name: json.order.courier_name ?? '',
+          tracking_number: json.order.tracking_number ?? '',
+          tracking_url: json.order.tracking_url ?? '',
+        })
+      }
       showToast({ type: 'success', message: `${json.order.orderNumber} marked ${STATUS_LABELS[status].toLowerCase()}.` })
     } catch (error) {
       setOrder(previous)

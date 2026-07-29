@@ -13,6 +13,12 @@ import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { logAdminAction } from '@/lib/admin/auditLog'
 import { sendOrderShipped } from '@/lib/email/triggers'
 
+async function getCustomerEmail(supabase: ReturnType<typeof createAdminSupabaseClient>, userId: string): Promise<string> {
+  if (!userId) return ''
+  const { data } = await supabase.from('profiles').select('email').eq('id', userId).maybeSingle()
+  return data?.email ?? ''
+}
+
 export async function GET(request: Request) {
   const auth = await requireAdminRequest()
   if ('response' in auth) return auth.response
@@ -74,15 +80,32 @@ export async function PATCH(request: Request) {
       // Trigger OrderShipped email when transitioning to 'shipped'
       if (body.status === 'shipped') {
         const firstRow = oldRows?.[0] as Record<string, unknown> | undefined
-        const trackingNumber = String(order.tracking_number ?? firstRow?.tracking_number ?? '')
-        const courierName = String(order.courier_name ?? firstRow?.courier_name ?? '')
-        const trackingUrl = String(order.tracking_url ?? firstRow?.tracking_url ?? '')
-        const customerEmail = String(order.email ?? firstRow?.email ?? '')
-        const userId = String(order.groupId ?? firstRow?.user_id ?? '')
+        const userId = String(firstRow?.user_id ?? '')
+
+        // Save tracking fields if sent with the status update
+        if ('tracking_number' in body || 'courier_name' in body || 'tracking_url' in body) {
+          await supabase
+            .from('orders')
+            .update({
+              tracking_number: body.tracking_number ?? null,
+              courier_name: body.courier_name ?? null,
+              tracking_url: body.tracking_url ?? null,
+              updated_at: new Date().toISOString(),
+            })
+            .or(`group_id.eq.${body.groupId},id.eq.${body.groupId}`)
+
+          order.tracking_number = body.tracking_number ?? null
+          order.courier_name = body.courier_name ?? null
+          order.tracking_url = body.tracking_url ?? null
+        }
+
+        const customerEmail = await getCustomerEmail(supabase, userId)
+        const trackingNumber = String(order.tracking_number ?? firstRow?.tracking_number ?? body.tracking_number ?? '')
+        const courierName = String(order.courier_name ?? firstRow?.courier_name ?? body.courier_name ?? '')
+        const trackingUrl = String(order.tracking_url ?? firstRow?.tracking_url ?? body.tracking_url ?? '')
         const customerName = String(order.fullName ?? firstRow?.full_name ?? 'Customer')
 
         if (trackingNumber && courierName && customerEmail) {
-          // Fire-and-forget: we don't block the HTTP response on email dispatch
           sendOrderShipped(
             userId,
             customerEmail,
@@ -105,8 +128,8 @@ export async function PATCH(request: Request) {
 
       if (body.status === 'printing') {
         const firstRow = oldRows?.[0] as Record<string, unknown> | undefined
-        const customerEmail = String(order.email ?? firstRow?.email ?? '')
-        const userId = String(order.groupId ?? firstRow?.user_id ?? '')
+        const userId = String(firstRow?.user_id ?? '')
+        const customerEmail = await getCustomerEmail(supabase, userId)
         const customerName = String(order.fullName ?? firstRow?.full_name ?? 'Customer')
         if (customerEmail) {
           const { sendProductionStarted } = await import('@/lib/email/triggers')
@@ -123,8 +146,8 @@ export async function PATCH(request: Request) {
 
       if (body.status === 'delivered') {
         const firstRow = oldRows?.[0] as Record<string, unknown> | undefined
-        const customerEmail = String(order.email ?? firstRow?.email ?? '')
-        const userId = String(order.groupId ?? firstRow?.user_id ?? '')
+        const userId = String(firstRow?.user_id ?? '')
+        const customerEmail = await getCustomerEmail(supabase, userId)
         const customerName = String(order.fullName ?? firstRow?.full_name ?? 'Customer')
         if (customerEmail) {
           const { sendDeliveryConfirmation } = await import('@/lib/email/triggers')
@@ -194,11 +217,11 @@ export async function PATCH(request: Request) {
       const firstRow = oldRows?.[0] as Record<string, unknown> | undefined
       const currentStatus = String(order.status ?? firstRow?.status ?? '')
       if (currentStatus === 'shipped') {
+        const userId = String(firstRow?.user_id ?? '')
+        const customerEmail = await getCustomerEmail(supabase, userId)
         const trackingNumber = String(order.tracking_number ?? '')
         const courierName = String(order.courier_name ?? '')
         const trackingUrl = String(order.tracking_url ?? '')
-        const customerEmail = String(order.email ?? firstRow?.email ?? '')
-        const userId = String(order.groupId ?? firstRow?.user_id ?? '')
         const customerName = String(order.fullName ?? firstRow?.full_name ?? 'Customer')
 
         if (trackingNumber && courierName && customerEmail) {
