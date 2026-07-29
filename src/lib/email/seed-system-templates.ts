@@ -483,8 +483,12 @@ export async function seedSystemTemplates() {
   console.log(`\n[seed] Done: ${inserted} templates inserted, ${updated} updated, ${skipped} skipped`)
 }
 
-// CLI entrypoint
-if (require.main === module) {
+// CLI entrypoint (ESM-safe check)
+const runningDirectly = process.argv[1] && (
+  process.argv[1].endsWith('/seed-system-templates.ts') ||
+  process.argv[1].endsWith('/seed-system-templates.js')
+)
+if (runningDirectly) {
   seedSystemTemplates()
     .then(() => process.exit(0))
     .catch((err) => {

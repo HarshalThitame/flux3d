@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { enqueueEmail as qstashEnqueue } from './qstash'
 import { getEmailSettings, isEmailSendingAllowed } from './settings-cache'
+import { evaluateAutomationRule } from './rules-evaluator'
+import { getTemplateByType } from './db-templates'
 import type { EmailJobPayload } from './types'
 import type { EmailLogRow } from '../../../types/database'
 
@@ -48,6 +50,34 @@ export async function enqueueEmail(
 
     const blockedLogId = blockedLog ? (blockedLog as EmailLogRow).id : ''
     return { logId: blockedLogId, blocked: true, reason: sendingCheck.reason }
+  }
+
+  // Step 0b: Evaluate automation rules
+  const template = await getTemplateByType(payload.emailType).catch(() => null)
+  if (template) {
+    const ruleCheck = await evaluateAutomationRule(payload.emailType, template.id).catch(() => ({ allowed: true } as any))
+    if (!ruleCheck.allowed) {
+      console.warn(`[email] Blocked by automation rule for ${payload.emailType}: ${ruleCheck.reason}`)
+      const { data: blockedLog } = await supabase
+        .from('email_logs')
+        .insert({
+          user_id: payload.userId ?? null,
+          recipient: payload.recipient,
+          email_type: payload.emailType,
+          subject: payload.subject ?? buildSubject(payload),
+          template_name: payload.emailType,
+          status: 'dropped',
+          queued_at: new Date().toISOString(),
+          order_id: payload.orderId ?? null,
+          order_type: payload.orderType ?? null,
+          error_message: ruleCheck.reason ?? 'Blocked by automation rule',
+        })
+        .select()
+        .single()
+
+      const blockedLogId = blockedLog ? (blockedLog as EmailLogRow).id : ''
+      return { logId: blockedLogId, blocked: true, reason: ruleCheck.reason }
+    }
   }
 
   // Step 1: Insert audit log

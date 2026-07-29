@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getResendClient, getSenderAddress } from './resend-client'
 import { getTemplateByType, renderDbTemplate } from './db-templates'
 import { getEmailSettings, isMaintenanceModeBlocking } from './settings-cache'
+import { logEmailEvent } from './logEmailEvent'
 import {
   renderOrderItemsHtml,
   renderShippedItemsHtml,
@@ -164,6 +165,8 @@ export async function dispatchEmail(
 
     if (log?.id) {
       await supabase.from('email_logs').update(update).eq('id', log.id)
+      // Log sent event for the audit trail
+      await logEmailEvent(log.id, 'sent', data.id, { email_type: payload.emailType }).catch(() => {})
     }
 
     return { ok: true, messageId: data.id, resendId: data.id }
@@ -307,6 +310,8 @@ async function markFailed(
       error_message: errorMessage,
     })
     .eq('id', logId)
+
+  await logEmailEvent(logId, 'failed', null, { error: errorMessage }).catch(() => {})
 }
 
 function buildSubject(payload: EmailJobPayload): string {
