@@ -742,7 +742,7 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
   const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/my-orders/${insertedOrders[0].id}`
   const adminOrderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders/${insertedOrders[0].id}`
   sendOrderPlacedCustomer(auth.user.id, auth.profile.email, formatOrderNumber(insertedOrders[0].serial_number, insertedOrders[0].created_at), auth.profile.name, String(groupWaterfall.grandTotal ?? 0), orderItemsEmail, orderUrl).catch(() => {})
-  sendOrderPlacedAdmin(process.env.ADMIN_EMAIL ?? '', formatOrderNumber(insertedOrders[0].serial_number, insertedOrders[0].created_at), auth.profile.email, auth.profile.name, String(groupWaterfall.grandTotal ?? 0), adminOrderUrl).catch(() => {})
+  sendOrderPlacedAdmin('', formatOrderNumber(insertedOrders[0].serial_number, insertedOrders[0].created_at), auth.profile.email, auth.profile.name, String(groupWaterfall.grandTotal ?? 0), adminOrderUrl).catch(() => {})
 
   revalidatePath('/my-orders')
   revalidatePath('/cart')
@@ -1294,7 +1294,7 @@ export async function verifyCartPaymentAndCreateOrder(params: {
   const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/my-orders/${firstOrder.id}`
   const adminOrderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders/${firstOrder.id}`
   sendOrderPlacedCustomer(auth.user.id, auth.profile.email, firstOrderNumber, auth.profile.name, String(capture.amountPaise / 100), orderItemsEmail, orderUrl).catch(() => {})
-  sendOrderPlacedAdmin(process.env.ADMIN_EMAIL ?? '', firstOrderNumber, auth.profile.email, auth.profile.name, String(capture.amountPaise / 100), adminOrderUrl).catch(() => {})
+  sendOrderPlacedAdmin('', firstOrderNumber, auth.profile.email, auth.profile.name, String(capture.amountPaise / 100), adminOrderUrl).catch(() => {})
 
   void trackFeatureUsage(auth.user.id, 'order_placed', {
     source: 'cart', groupId, orderId: firstOrder.id,
