@@ -77,6 +77,14 @@ export async function POST(request: Request) {
           message: result.success ? `Deleted ${slug} from Meta catalog` : `Failed to delete ${slug} from Meta catalog`,
           metadata: { action: 'delete', slug, result },
         })
+
+        if (result.success) {
+          await supabase.from('shelf_products').update({
+            meta_item_id: null,
+            meta_synced_at: new Date().toISOString(),
+            meta_sync_error: null,
+          }).eq('slug', slug)
+        }
         return
       }
 
@@ -120,6 +128,15 @@ export async function POST(request: Request) {
           message: `Synced product ${product.name} to Meta catalog: ${result.filter((a) => a.success).length} ok, ${failed.length} failed`,
           metadata: { action: eventType === 'INSERT' ? 'create' : 'update', productId, slug: product.slug, results: result },
         })
+
+        const allSucceeded = failed.length === 0
+        const primaryHandle = allSucceeded ? result[0]?.metaHandle : null
+
+        await supabase.from('shelf_products').update({
+          meta_item_id: primaryHandle,
+          meta_synced_at: new Date().toISOString(),
+          meta_sync_error: allSucceeded ? null : `Partial sync failure: ${failed.length} SKU(s) failed`,
+        }).eq('id', productId)
       }
     } catch (error) {
       console.error('[meta/catalog-sync] Error:', error)
