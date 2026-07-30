@@ -16,6 +16,7 @@ import {
 } from '@/lib/shop/selection'
 import { useShopCartStore } from '@/stores/shopCartStore'
 import QuickAddModal from '@/components/shop/QuickAddModal'
+import { trackMetaEvent } from '@/lib/meta/event-utils'
 import WishlistButton from '@/components/shop/WishlistButton'
 import ProductModelModal from '@/components/shop/ProductModelModal'
 
@@ -66,6 +67,13 @@ export default function ProductCard({
       maxStock: directSku.pre_order_eta ? 10 : directSku.stock_quantity,
     })
     setAdded(true)
+    trackMetaEvent('AddToCart', {
+      content_ids: [directSku.sku_code],
+      content_type: 'product',
+      contents: [{ id: directSku.sku_code, quantity: 1, item_price: directSku.price }],
+      value: directSku.price,
+      currency: 'INR',
+    })
     addToast({
       type: 'success',
       title: 'Added to cart',

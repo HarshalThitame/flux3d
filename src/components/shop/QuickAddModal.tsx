@@ -17,6 +17,7 @@ import {
 import ShopVariantControls from '@/components/shop/ShopVariantControls'
 import QuantityStepper from '@/components/shop/QuantityStepper'
 import { useShopCartStore } from '@/stores/shopCartStore'
+import { trackMetaEvent } from '@/lib/meta/event-utils'
 
 function useScrollLock(locked: boolean) {
   useEffect(() => {
@@ -105,6 +106,13 @@ export default function QuickAddModal({
       maxStock,
     })
     setAdded(true)
+    trackMetaEvent('AddToCart', {
+      content_ids: [resolvedSku.sku_code],
+      content_type: 'product',
+      contents: [{ id: resolvedSku.sku_code, quantity, item_price: resolvedSku.price }],
+      value: resolvedSku.price * quantity,
+      currency: 'INR',
+    })
     addToast({
       type: 'success',
       title: 'Added to cart',
