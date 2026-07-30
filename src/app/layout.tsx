@@ -33,6 +33,7 @@ const DNS_PREFETCH_ORIGINS = [
   '//wa.me',
   '//connect.facebook.net',
   '//graph.facebook.com',
+  'https://connect.facebook.net',
 ]
 
 export async function generateMetadata(): Promise<Metadata> {

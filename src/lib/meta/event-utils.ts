@@ -33,6 +33,8 @@ export async function trackMetaEvent(
   trackPixelEvent({ eventName, eventId, customData })
 
   try {
+    const fbp = getFbp()
+    const fbc = getFbc()
     await fetch('/api/meta/capi', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -47,6 +49,8 @@ export async function trackMetaEvent(
             user_data: {
               client_ip_address: undefined,
               client_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+              ...(fbp ? { fbp } : {}),
+              ...(fbc ? { fbc } : {}),
               ...userData,
             },
             custom_data: customData as Record<string, unknown>,

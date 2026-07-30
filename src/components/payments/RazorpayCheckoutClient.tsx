@@ -5,6 +5,7 @@ import { CheckCircle2, Loader2, ShieldCheck, Sparkles, TriangleAlert } from 'luc
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import Confetti from '@/components/Confetti'
+import { trackPixelEvent, generateEventId } from '@/lib/meta/event-utils'
 
 type RazorpayWindow = Window & {
   Razorpay?: new (options: Record<string, unknown>) => {
@@ -180,6 +181,11 @@ export default function RazorpayCheckoutClient({
 
           if (data.paymentStatus === 'paid' || data.paymentStatus === 'captured') {
             setStatus('paid')
+            trackPixelEvent({
+              eventName: 'Purchase',
+              eventId: generateEventId(),
+              customData: { value: amountPaise / 100, currency, content_ids: [internalOrderId], content_type: 'product' },
+            })
             onSuccessAction?.()
             router.replace(successHref)
             return
@@ -300,6 +306,11 @@ export default function RazorpayCheckoutClient({
 
             if (verifyBody.status === 'paid') {
               setStatus('paid')
+              trackPixelEvent({
+                eventName: 'Purchase',
+                eventId: generateEventId(),
+                customData: { value: amountPaise / 100, currency, content_ids: [internalOrderId], content_type: 'product' },
+              })
               onSuccessAction?.()
               router.replace(successHref)
               return
