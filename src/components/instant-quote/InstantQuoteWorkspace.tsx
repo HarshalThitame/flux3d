@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import EmptyState from '@/components/admin/EmptyState'
 import type { AppUserProfile } from '@/lib/auth/server'
+import { trackMetaEvent } from '@/lib/meta/event-utils'
 import { getMaterialById, layerHeightOptions } from '@/lib/quote/materials'
 import { calculateInstantQuote, formatDurationMinutes, getPostProcessingCharge, postProcessingOptions } from '@/lib/quote/pricing-engine'
 import type { PricingSettingsInput } from '@/lib/quote/pricing-waterfall'
@@ -575,6 +576,13 @@ function CartEnabledWorkspace({
     }
 
     addItem(cartItem)
+    trackMetaEvent('AddToCart', {
+      content_ids: [initialQuoteId],
+      content_type: 'product',
+      contents: [{ id: initialQuoteId, quantity: config.quantity, item_price: priceBreakdown.finalPrice }],
+      value: priceBreakdown.finalPrice,
+      currency: 'INR',
+    })
     setToast({ type: 'success', message: `${selectedModel.fileName} added to cart.` })
   }
 
