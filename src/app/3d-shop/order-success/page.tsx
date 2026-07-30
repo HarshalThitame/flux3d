@@ -29,6 +29,29 @@ import {
   type ShopOrder,
 } from '@/lib/shop/orders'
 import { formatShopPrice } from '@/lib/shop/selection'
+import { useEffect } from 'react'
+import { trackMetaEvent, trackPixelEvent, generateEventId } from '@/lib/meta/event-utils'
+
+function ShopOrderTracking({ orderNumber, itemIds, contents, value }: { orderNumber: string; itemIds: string[]; contents: Array<{ id: string; quantity: number; item_price?: number }>; value: number }) {
+  useEffect(() => {
+    const eventId = generateEventId()
+    trackPixelEvent({
+      eventName: 'Purchase',
+      eventId,
+      customData: { value, currency: 'INR', content_ids: itemIds, content_type: 'product', order_id: orderNumber },
+    })
+    trackMetaEvent('Purchase', {
+      content_ids: itemIds,
+      content_type: 'product',
+      contents,
+      value,
+      currency: 'INR',
+      order_id: orderNumber,
+      num_items: contents.reduce((s, c) => s + c.quantity, 0),
+    }).catch(() => {})
+  }, [])
+  return null
+}
 
 export const metadata: Metadata = {
   title: 'Order Placed — 3D Shop',
@@ -325,6 +348,12 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
           </section>
         </div>
       </main>
+      <ShopOrderTracking
+        orderNumber={order.order_number}
+        itemIds={order.items.map((i) => i.skuCode)}
+        contents={order.items.map((i) => ({ id: i.skuCode, quantity: i.quantity, item_price: i.unitPrice }))}
+        value={order.total_amount}
+      />
     </ShopShell>
   )
 }
