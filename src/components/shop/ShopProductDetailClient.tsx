@@ -38,6 +38,7 @@ import {
 } from '@/lib/shop/selection'
 import { addRecentlyViewed } from '@/lib/shop/recentlyViewed'
 import { useShopCartStore } from '@/stores/shopCartStore'
+import { trackMetaEvent } from '@/lib/meta/event-utils'
 
 function useScrollLock(locked: boolean) {
   useEffect(() => {
@@ -169,6 +170,16 @@ export default function ShopProductDetailClient({
   }, [product.base_price, product.id, product.name, product.slug, product.thumbnail_url])
 
   useEffect(() => {
+    trackMetaEvent('ViewContent', {
+      content_ids: product.skus.map((s) => s.sku_code),
+      content_type: 'product_group',
+      contents: product.skus.map((s) => ({ id: s.sku_code, quantity: 1, item_price: s.price })),
+      value: product.display_price,
+      currency: 'INR',
+    })
+  }, [product.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     if (!currentUser) return
     let active = true
     async function loadReviewEligibility() {
@@ -221,6 +232,13 @@ export default function ShopProductDetailClient({
       compareAtPrice: resolvedSku.compare_at_price,
       quantity,
       maxStock,
+    })
+    trackMetaEvent('AddToCart', {
+      content_ids: [resolvedSku.sku_code],
+      content_type: 'product',
+      contents: [{ id: resolvedSku.sku_code, quantity, item_price: resolvedSku.price }],
+      value: resolvedSku.price * quantity,
+      currency: 'INR',
     })
     addToast({ type: 'success', title: 'Added to cart', description: `${product.name}` })
     if (goToCheckout) {

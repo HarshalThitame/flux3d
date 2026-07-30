@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
-type OAuthProvider = 'google'
+type OAuthProvider = 'google' | 'facebook'
 
 type OAuthButtonProps = {
   nextPath: string
@@ -11,13 +11,22 @@ type OAuthButtonProps = {
   className?: string
 }
 
-const providerConfig = {
+const providerConfig: Record<OAuthProvider, { label: string; loadingLabel: string; icon: React.ReactNode }> = {
   google: {
     label: 'Continue with Google',
     loadingLabel: 'Redirecting to Google...',
     icon: (
       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#4285F4] shadow-sm">
         G
+      </span>
+    ),
+  },
+  facebook: {
+    label: 'Continue with Facebook',
+    loadingLabel: 'Redirecting to Facebook...',
+    icon: (
+      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1877F2] text-[11px] font-bold text-white shadow-sm">
+        f
       </span>
     ),
   },
