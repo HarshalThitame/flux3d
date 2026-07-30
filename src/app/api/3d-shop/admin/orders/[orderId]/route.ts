@@ -3,6 +3,7 @@ import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { logAdminAction } from '@/lib/admin/auditLog'
 import { requireAdminPermission } from '@/lib/admin/permissions'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { sendOrderShipped } from '@/lib/email/triggers'
 import {
   assertFulfilmentStatusTransition,
   assertShopStatusTransition,
@@ -210,6 +211,43 @@ export async function PATCH(request: Request, context: { params: Promise<{ order
         old_value: { order_status: current.order_status, ...current },
         new_value: updates,
       }).catch(() => {})
+
+      // ── Trigger OrderShipped email ──
+      const currentFulfilment = String(current.fulfilment_status ?? '')
+      const newFulfilment = String(updates.fulfilment_status ?? currentFulfilment)
+      const wasShipped = currentFulfilment === 'shipped' || newFulfilment === 'shipped'
+      const hasTracking = updates.tracking_number || updates.courier_name || updates.tracking_url
+
+      if (wasShipped && hasTracking) {
+        const customer = await getCustomer(supabase, current)
+        const customerEmail = customer.email
+        const orderNumber = String(current.order_number ?? '')
+        const customerName = customer.name ?? 'Customer'
+        const items = (Array.isArray(current.items) ? current.items : []).map((it: Record<string, unknown>) => ({
+          name: String(it.productName ?? it.product_name ?? it.name ?? 'Product'),
+          material: String(it.material ?? ''),
+          color: String(it.variantLabel ?? it.color ?? ''),
+          quantity: Number(it.quantity ?? 1),
+        }))
+        const trackingNumber = String(updates.tracking_number ?? current.tracking_number ?? '')
+        const courierName = String(updates.courier_name ?? current.courier_name ?? '')
+        const trackingUrl = String(updates.tracking_url ?? current.tracking_url ?? '')
+
+        if (trackingNumber && courierName && customerEmail) {
+          sendOrderShipped(
+            String(current.user_id),
+            customerEmail,
+            orderNumber,
+            customerName,
+            items,
+            trackingNumber,
+            courierName,
+            trackingUrl || '#',
+          ).catch((err) => {
+            console.error('[3d-shop/admin/orders] Failed to enqueue OrderShipped email:', err)
+          })
+        }
+      }
     }
 
     if (shouldRestoreStock && !isCancellation) {
