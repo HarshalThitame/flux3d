@@ -10,6 +10,7 @@ import { calculateDeliveryChargeFromSettings } from '@/lib/quote/pricing-waterfa
 import { formatShopPrice } from '@/lib/shop/selection'
 import { getShopCartTotals, type ShopCartItem, useShopCartStore } from '@/stores/shopCartStore'
 import type { AddressRow } from '../../../../types/database'
+import { trackMetaEvent } from '@/lib/meta/event-utils'
 
 type AddressFormState = {
   name: string
@@ -141,6 +142,18 @@ export default function ShopCheckoutClient({
   useEffect(() => {
     if (items.length === 0 && !orderCompletionRef.current) router.replace('/3d-shop/cart')
   }, [items.length, router])
+
+  useEffect(() => {
+    if (items.length === 0) return
+    trackMetaEvent('InitiateCheckout', {
+      content_ids: items.map((i) => i.skuCode),
+      content_type: 'product',
+      contents: items.map((i) => ({ id: i.skuCode, quantity: i.quantity, item_price: i.price })),
+      num_items: items.length,
+      value: totals.subtotal,
+      currency: 'INR',
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!completedOrderId) return
