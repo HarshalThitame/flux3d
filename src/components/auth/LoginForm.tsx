@@ -128,6 +128,27 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
     }
   }
 
+  const [facebookLoading, setFacebookLoading] = useState(false)
+
+  const handleFacebookLogin = async () => {
+    setFacebookLoading(true)
+
+    const supabase = getSupabaseBrowserClient()
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(
+      nextPath
+    )}`
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'facebook',
+      options: { redirectTo },
+    })
+
+    if (error) {
+      setFacebookLoading(false)
+      window.alert(error.message)
+    }
+  }
+
   return (
     <div className="auth-login-panel w-full min-w-0">
       <div className="premium-console-header mb-4">
@@ -253,6 +274,16 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
       >
         <GoogleIcon />
         {googleLoading ? 'Redirecting to Google...' : 'Google'}
+      </button>
+
+      <button
+        type="button"
+        onClick={handleFacebookLogin}
+        disabled={facebookLoading}
+        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#1877F2] bg-[#1877F2] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#166fe5] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[13px] font-bold text-[#1877F2]">f</span>
+        {facebookLoading ? 'Redirecting to Facebook...' : 'Facebook'}
       </button>
 
       <p className="mt-3 text-center text-sm !text-gray-500">
