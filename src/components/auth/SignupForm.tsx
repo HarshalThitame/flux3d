@@ -251,7 +251,7 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',
-      options: { redirectTo },
+      options: { redirectTo, scopes: 'public_profile' },
     })
 
     if (error) {

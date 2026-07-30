@@ -140,7 +140,7 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',
-      options: { redirectTo },
+      options: { redirectTo, scopes: 'public_profile' },
     })
 
     if (error) {
