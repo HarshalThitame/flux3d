@@ -6,6 +6,7 @@ import { CheckCircle2, Loader2, MapPin, PackageCheck, ShieldCheck, TriangleAlert
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { prepareCartPaymentAction, verifyCartPaymentAndCreateOrder, type PrepareCartPaymentResult } from '@/app/cart/delivery/actions'
+import { trackPixelEvent, generateEventId } from '@/lib/meta/event-utils'
 import AddressForm from '@/components/instant-quote/AddressForm'
 import Toast, { type ToastState } from '@/components/quote/Toast'
 import { useCart } from '@/lib/cart/context'
@@ -312,6 +313,12 @@ export default function CartDeliveryClient({
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
+            })
+
+            trackPixelEvent({
+              eventName: 'Purchase',
+              eventId: generateEventId(),
+              customData: { value: payableTotal, currency: 'INR', content_ids: [orderResult.orderId], content_type: 'product' },
             })
 
             setPaymentStatus('paid')

@@ -6,6 +6,7 @@ import { Heart } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useShopWishlistStore } from '@/stores/shopWishlistStore'
 import { addToast } from '@/lib/toast/store'
+import { trackMetaEvent } from '@/lib/meta/event-utils'
 
 export default function WishlistButton({
   productId,
@@ -27,8 +28,15 @@ export default function WishlistButton({
     if (pending) return
 
     const nextWishlisted = !wishlisted
-    if (nextWishlisted) addToWishlist(productId)
-    else removeFromWishlist(productId)
+    if (nextWishlisted) {
+      addToWishlist(productId)
+      trackMetaEvent('AddToWishlist', {
+        content_ids: [productId],
+        content_type: 'product',
+      })
+    } else {
+      removeFromWishlist(productId)
+    }
     addToast({ type: 'success', title: nextWishlisted ? 'Added to wishlist' : 'Removed from wishlist', description: nextWishlisted ? '♥ Saved to your wishlist' : undefined })
     setPending(true)
 

@@ -518,7 +518,7 @@ function CartEnabledWorkspace({
   const cartItemCheck = isInCart(initialQuoteId)
 
   const handleAddToCart = () => {
-    if (!priceBreakdown || !selectedModel || !selectedMaterial) {
+    if (!priceBreakdown || !selectedModel || !selectedMaterial || !initialQuoteId) {
       setToast({ type: 'error', message: 'Upload a model and generate a quote before adding to cart.' })
       return
     }

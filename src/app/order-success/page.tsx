@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, PackageCheck, FileText, ArrowRight, Sparkles, PartyPopper } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
+import { trackPixelEvent, generateEventId } from '@/lib/meta/event-utils'
 
 type OrderSuccessData = {
   orderId: string
@@ -34,7 +35,13 @@ export default function OrderSuccessPage() {
   useEffect(() => {
     if (!orderData) {
       router.replace('/')
+      return
     }
+    trackPixelEvent({
+      eventName: 'Purchase',
+      eventId: generateEventId(),
+      customData: { value: orderData.totalPrice ?? 0, currency: 'INR', content_ids: [orderData.orderId], content_type: 'product' },
+    })
   }, [orderData, router])
 
   if (!orderData) {
