@@ -17,6 +17,7 @@ export default function MetaPixel() {
   useEffect(() => {
     if (loaded.current) return
     loaded.current = true
+    if (!PIXEL_ID) return
 
     const n = window as unknown as Record<string, unknown>
     if (n.fbq) return
