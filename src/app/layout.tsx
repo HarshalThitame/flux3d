@@ -7,6 +7,7 @@ import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data
 import ErrorBoundary from '@/components/ErrorBoundary'
 import DeferredTracking from '@/components/DeferredTracking'
 import DeferredGoogleAnalytics from '@/components/DeferredGoogleAnalytics'
+import MetaPixel from '@/components/MetaPixel'
 import ToastContainer from '@/components/Toast'
 import './globals.css'
 import './shop-luxury.css'
@@ -30,6 +31,8 @@ const DNS_PREFETCH_ORIGINS = [
   '//lh3.googleusercontent.com',
   '//avatars.githubusercontent.com',
   '//wa.me',
+  '//connect.facebook.net',
+  '//graph.facebook.com',
 ]
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -162,7 +165,8 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: toJsonLd(webJsonLd) }}
         />
         <ErrorBoundary>
-          <DeferredTracking />
+          <MetaPixel />
+        <DeferredTracking />
           {children}
         </ErrorBoundary>
         <ToastContainer />
