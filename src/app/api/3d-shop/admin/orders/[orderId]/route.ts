@@ -3,7 +3,7 @@ import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { logAdminAction } from '@/lib/admin/auditLog'
 import { requireAdminPermission } from '@/lib/admin/permissions'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { sendOrderShipped } from '@/lib/email/triggers'
+import { sendOrderShipped, sendDeliveryConfirmation } from '@/lib/email/triggers'
 import {
   assertFulfilmentStatusTransition,
   assertShopStatusTransition,
@@ -245,6 +245,25 @@ export async function PATCH(request: Request, context: { params: Promise<{ order
             trackingUrl || '#',
           ).catch((err) => {
             console.error('[3d-shop/admin/orders] Failed to enqueue OrderShipped email:', err)
+          })
+        }
+      }
+
+      // ── Trigger DeliveryConfirmation email when fulfilment reaches 'delivered' ──
+      if (updates.fulfilment_status === 'delivered') {
+        const customer = await getCustomer(supabase, current)
+        const customerEmail = customer.email
+        const orderNumber = String(current.order_number ?? '')
+        const customerName = customer.name ?? 'Customer'
+
+        if (customerEmail) {
+          sendDeliveryConfirmation(
+            String(current.user_id),
+            customerEmail,
+            orderNumber,
+            customerName,
+          ).catch((err) => {
+            console.error('[3d-shop/admin/orders] Failed to enqueue DeliveryConfirmation email:', err)
           })
         }
       }
