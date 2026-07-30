@@ -2,6 +2,8 @@ import { getSettings } from '@/lib/settings'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
 import { notifyPaymentCaptured, notifyPaymentFailed, notifyRefundProcessed } from './email-triggers'
+import { sendCapiEvents, buildPurchaseEvent } from '@/lib/meta/conversions-api'
+import { generateEventId } from '@/lib/meta/event-utils'
 import {
   fetchInternalOrder,
   fetchPaymentAttemptById,
@@ -57,6 +59,62 @@ import {
   summarizeReconciliation,
   summarizeWebhookHealth,
 } from './logic'
+
+async function sendPurchaseCapiEvent(attempt: PaymentAttemptRecord) {
+  try {
+    const adminSupabase = createAdminSupabaseClient()
+
+    let contentIds: string[] = []
+    let contents: Array<{ id: string; quantity: number; item_price?: number }> = []
+    let orderId: string | undefined
+    let eventSourceUrl: string | undefined
+
+    if (attempt.internal_order_type === 'shop_order') {
+      const { data: order } = await adminSupabase
+        .from('shelf_orders')
+        .select('order_number, items, total_amount')
+        .eq('id', attempt.internal_order_id)
+        .maybeSingle()
+
+      if (order) {
+        const items = (order.items as Array<{ skuCode?: string; productName?: string; quantity?: number; unitPrice?: number }>) ?? []
+        contentIds = items.map((i) => i.skuCode || '').filter(Boolean)
+        contents = items.map((i) => ({ id: i.skuCode || i.productName || '', quantity: i.quantity ?? 1, item_price: i.unitPrice }))
+        orderId = String(order.order_number ?? attempt.internal_order_id)
+        eventSourceUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://flux3d.in'}/3d-shop/order/${attempt.internal_order_id}`
+      }
+    }
+
+    if (contentIds.length === 0) {
+      contentIds = [attempt.id]
+      contents = [{ id: attempt.id, quantity: 1, item_price: attempt.amount_paise / 100 }]
+    }
+
+    const { data: profile } = await adminSupabase
+      .from('profiles')
+      .select('email, phone_number')
+      .eq('id', attempt.customer_id)
+      .maybeSingle()
+
+    const event = buildPurchaseEvent({
+      eventId: generateEventId(),
+      eventSourceUrl,
+      customerEmail: profile?.email,
+      customerPhone: profile?.phone_number,
+      customerId: attempt.customer_id,
+      contentIds,
+      contents,
+      value: attempt.amount_paise / 100,
+      currency: attempt.currency || 'INR',
+      orderId,
+      numItems: contents.reduce((s, c) => s + c.quantity, 0),
+    })
+
+    await sendCapiEvents([event])
+  } catch (error) {
+    console.error('[payment] Failed to send Purchase CAPI event:', error)
+  }
+}
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
@@ -572,6 +630,9 @@ export async function verifyCheckoutPayment(params: {
     // but deduplication in the email trigger prevents duplicates).
     notifyPaymentCaptured(attempt).catch(() => {})
 
+    // Send Purchase event to Meta Conversions API
+    sendPurchaseCapiEvent(attempt)
+
     return {
       status: 'paid',
       paymentAttempt: updatedAttempt,
@@ -745,6 +806,7 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
 
     if (captured) {
       notifyPaymentCaptured(attempt).catch(() => {})
+      sendPurchaseCapiEvent(attempt)
     }
 
     return { handled: true, processingStatus: 'processed' as const }
