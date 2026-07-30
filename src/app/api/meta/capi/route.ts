@@ -30,9 +30,9 @@ export async function POST(request: Request) {
     ...event,
     event_time: event.event_time ?? Math.floor(Date.now() / 1000),
     user_data: {
+      ...event.user_data,
       client_ip_address: event.user_data.client_ip_address || clientIp,
       client_user_agent: event.user_data.client_user_agent || request.headers.get('user-agent') || undefined,
-      ...event.user_data,
     },
     action_source: event.action_source || 'website',
   }))
