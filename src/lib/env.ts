@@ -27,6 +27,13 @@ const envSchema = z.object({
   WHATSAPP_SESSION_TURNS: z.coerce.number().int().positive().default(4),
   WHATSAPP_STRUCTURED_DATA_ENABLED: z.enum(['true', 'false']).default('true'),
 
+  // Meta Commerce
+  NEXT_PUBLIC_META_PIXEL_ID: z.string().min(1).optional(),
+  META_SYSTEM_USER_TOKEN: z.string().min(1).optional(),
+  META_CATALOG_ID: z.string().min(1).optional(),
+  META_BUSINESS_ID: z.string().optional(),
+  META_CAPI_USER_AGENT: z.string().optional(),
+
   // Cron
   CRON_SECRET: z.string().optional(),
 

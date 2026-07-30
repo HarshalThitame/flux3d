@@ -6,6 +6,7 @@ import { CheckCircle2, Loader2, MapPin, PackageCheck, ShieldCheck, Truck, Triang
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { prepareQuotePaymentAction, verifyQuotePaymentAndCreateOrder, type PrepareQuotePaymentResult } from '@/app/instant-quote/actions'
+import { trackPixelEvent, generateEventId } from '@/lib/meta/event-utils'
 import AddressForm from '@/components/instant-quote/AddressForm'
 import Toast, { type ToastState } from '@/components/quote/Toast'
 import type { AppUserProfile } from '@/lib/auth/server'
@@ -335,6 +336,12 @@ export default function DeliveryStepClient({
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
+            })
+
+            trackPixelEvent({
+              eventName: 'Purchase',
+              eventId: generateEventId(),
+              customData: { value: orderResult.grandTotal ?? draft.grandTotal ?? 0, currency: 'INR', content_ids: [orderResult.id], content_type: 'product' },
             })
 
             setPaymentStatus('paid')

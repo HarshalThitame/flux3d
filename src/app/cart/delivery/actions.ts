@@ -46,6 +46,8 @@ import {
 import { updatePaymentAttemptStatus } from '@/lib/payments/state'
 import { notifyPaymentCaptured } from '@/lib/payments/email-triggers'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
+import { sendCapiEvents, buildPurchaseEvent } from '@/lib/meta/conversions-api'
+import { generateEventId } from '@/lib/meta/event-utils'
 
 type CartOrderItem = {
   quoteId: string
@@ -1303,6 +1305,28 @@ export async function verifyCartPaymentAndCreateOrder(params: {
     couponCode: pricingData.couponCode as string | null,
     offerId, grandTotal: capture.amountPaise / 100,
   }).catch(() => {})
+
+  const { data: profilePhone } = await adminSupabase
+    .from('profiles')
+    .select('phone_number')
+    .eq('id', auth.user.id)
+    .maybeSingle()
+  const contentIds = insertedOrders.map((o) => o.id)
+  const contents = insertedOrders.map((o) => ({ id: o.id, quantity: 1, item_price: capture.amountPaise / 100 }))
+  const purchaseEvent = buildPurchaseEvent({
+    eventId: generateEventId(),
+    eventSourceUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://flux3d.in'}/my-orders/${firstOrder.id}`,
+    customerEmail: auth.profile.email,
+    customerPhone: profilePhone?.phone_number,
+    customerId: auth.user.id,
+    contentIds,
+    contents,
+    value: capture.amountPaise / 100,
+    currency: 'INR',
+    orderId: firstOrderNumber,
+    numItems: insertedOrders.length,
+  })
+  await sendCapiEvents([purchaseEvent], undefined).catch((err) => console.error('[Meta CAPI] Purchase event failed:', err))
 
   revalidatePath('/my-orders')
   revalidatePath('/cart')

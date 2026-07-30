@@ -9,6 +9,7 @@ import { addToast } from '@/lib/toast/store'
 import { formatShopPrice, formatVariantLabel, getShopProductBadge, getShopProductImages } from '@/lib/shop/selection'
 import { useShopCartStore } from '@/stores/shopCartStore'
 import type { ShopPublicProduct } from '@/lib/shop/public-types'
+import { trackMetaEvent } from '@/lib/meta/event-utils'
 
 function ProductSkeleton() {
   return (
@@ -55,6 +56,13 @@ function FeaturedProductCard({ product, index }: { product: ShopPublicProduct; i
       maxStock: directSku.pre_order_eta ? 10 : directSku.stock_quantity,
     })
     setAdded(true)
+    trackMetaEvent('AddToCart', {
+      content_ids: [directSku.sku_code],
+      content_type: 'product',
+      contents: [{ id: directSku.sku_code, quantity: 1, item_price: directSku.price }],
+      value: directSku.price,
+      currency: 'INR',
+    })
     addToast({
       type: 'success',
       title: 'Added to cart',

@@ -25,6 +25,8 @@ import { redactSensitiveValues } from '@/lib/security/redact'
 import { rateLimitCheck } from '@/lib/rate-limit'
 import { verifyModelVolume } from '@/lib/storage/verify-metadata'
 import { sendOrderPlacedCustomer, sendOrderPlacedAdmin } from '@/lib/email/triggers'
+import { sendCapiEvents, buildPurchaseEvent } from '@/lib/meta/conversions-api'
+import { generateEventId } from '@/lib/meta/event-utils'
 import {
   createQuoteCapture,
   getQuoteCapture,
@@ -865,6 +867,26 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
     quantity: insertedOrder.quantity,
     grandTotal: Number(insertedOrder.grand_total ?? 0),
   }).catch(() => {})
+
+  const { data: profilePhone } = await adminSupabase
+    .from('profiles')
+    .select('phone_number')
+    .eq('id', auth.user.id)
+    .maybeSingle()
+  const purchaseEvent = buildPurchaseEvent({
+    eventId: generateEventId(),
+    eventSourceUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://flux3d.in'}/my-orders/${insertedOrder.id}`,
+    customerEmail: auth.profile.email,
+    customerPhone: profilePhone?.phone_number,
+    customerId: auth.user.id,
+    contentIds: [insertedOrder.id],
+    contents: [{ id: insertedOrder.id, quantity: insertedOrder.quantity, item_price: Number(insertedOrder.grand_total ?? 0) }],
+    value: Number(insertedOrder.grand_total ?? 0),
+    currency: 'INR',
+    orderId: orderNumber,
+    numItems: 1,
+  })
+  await sendCapiEvents([purchaseEvent], undefined).catch((err) => console.error('[Meta CAPI] Purchase event failed:', err))
 
   revalidatePath('/my-orders')
   revalidatePath(`/my-orders/${insertedOrder.id}`)
