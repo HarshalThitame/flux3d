@@ -11,12 +11,21 @@ function formatPhone(phone: string): string {
   return cleaned.startsWith('91') ? `+${cleaned}` : `+91${cleaned}`
 }
 
-export async function sendCapiEvents(events: MetaCapiEvent[]) {
+export async function sendCapiEvents(events: MetaCapiEvent[], sourceIp?: string) {
   const pixelId = getMetaPixelId()
   const headers = getMetaApiHeaders()
 
+  const enrichedEvents = events.map((event) => ({
+    ...event,
+    user_data: {
+      ...event.user_data,
+      client_ip_address: event.user_data.client_ip_address || sourceIp || undefined,
+      client_user_agent: event.user_data.client_user_agent || process.env.META_CAPI_USER_AGENT || undefined,
+    },
+  }))
+
   const body = {
-    data: events,
+    data: enrichedEvents,
     partner_agent: 'flux3d',
   }
 

@@ -9,8 +9,8 @@ export const maxDuration = 30
 
 export async function POST(request: Request) {
   const forwarded = request.headers.get('x-forwarded-for')
-  const clientIp = forwarded?.split(',')[0]?.trim() ?? 'capi-endpoint'
-  const rateLimit = await rateLimitCheck(`meta_capi:${clientIp}`, 60, 120)
+  const clientIp = forwarded?.split(',')[0]?.trim() || undefined
+  const rateLimit = await rateLimitCheck(`meta_capi:${clientIp || 'unknown'}`, 60, 120)
   if (!rateLimit.success) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     ...event,
     event_time: event.event_time ?? Math.floor(Date.now() / 1000),
     user_data: {
-      client_ip_address: event.user_data.client_ip_address || clientIp || request.headers.get('x-forwarded-for') || undefined,
+      client_ip_address: event.user_data.client_ip_address || clientIp,
       client_user_agent: event.user_data.client_user_agent || request.headers.get('user-agent') || undefined,
       ...event.user_data,
     },
@@ -55,13 +55,15 @@ export async function POST(request: Request) {
     const result = await response.json() as MetaCapiResponse & { error?: { message: string } }
 
     if (!response.ok) {
-      console.error('[Meta CAPI] API error:', result)
+      const logPayload = { status: response.status, ...result }
+      console.error('[Meta CAPI] API error:', JSON.stringify(logPayload, null, 2))
       return NextResponse.json(
         { error: result.error?.message || 'Meta API error', fbtrace_id: result.fbtrace_id },
         { status: response.status },
       )
     }
 
+    console.log('[Meta CAPI] Events sent:', result.events_received, 'trace:', result.fbtrace_id)
     return NextResponse.json({
       success: true,
       events_received: result.events_received,
