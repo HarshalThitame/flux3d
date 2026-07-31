@@ -66,17 +66,23 @@ export async function POST(request: Request) {
 
     const supabase = createClient(supabaseUrl, serviceKey)
 
+    const logSync = async (severity: string, message: string, metadata: Record<string, unknown>) => {
+      try {
+        await supabase.from('error_logs').insert({
+          source: 'meta_catalog_sync',
+          severity,
+          message,
+          metadata,
+        })
+      } catch (e) {
+        console.error('[meta/catalog-sync] Log write failed:', e)
+      }
+    }
+
     try {
       if (eventType === 'DELETE' && oldRecord) {
         const slug = oldRecord.slug as string
         const result = await deleteMetaCatalogItem(slug)
-
-        await supabase.from('error_logs').insert({
-          source: 'meta_catalog_sync',
-          severity: result.success ? 'info' : 'error',
-          message: result.success ? `Deleted ${slug} from Meta catalog` : `Failed to delete ${slug} from Meta catalog`,
-          metadata: { action: 'delete', slug, result },
-        })
 
         if (result.success) {
           await supabase.from('shelf_products').update({
@@ -85,6 +91,12 @@ export async function POST(request: Request) {
             meta_sync_error: null,
           }).eq('slug', slug)
         }
+
+        await logSync(
+          result.success ? 'info' : 'error',
+          result.success ? `Deleted ${slug} from Meta catalog` : `Failed to delete ${slug} from Meta catalog`,
+          { action: 'delete', slug, result },
+        )
         return
       }
 
@@ -120,15 +132,6 @@ export async function POST(request: Request) {
         })
 
         const failed = result.filter((a) => !a.success)
-        const severity = failed.length > 0 ? 'warning' : 'info'
-
-        await supabase.from('error_logs').insert({
-          source: 'meta_catalog_sync',
-          severity,
-          message: `Synced product ${product.name} to Meta catalog: ${result.filter((a) => a.success).length} ok, ${failed.length} failed`,
-          metadata: { action: eventType === 'INSERT' ? 'create' : 'update', productId, slug: product.slug, results: result },
-        })
-
         const allSucceeded = failed.length === 0
         const primaryHandle = allSucceeded ? result[0]?.metaHandle : null
 
@@ -137,15 +140,16 @@ export async function POST(request: Request) {
           meta_synced_at: new Date().toISOString(),
           meta_sync_error: allSucceeded ? null : `Partial sync failure: ${failed.length} SKU(s) failed`,
         }).eq('id', productId)
+
+        await logSync(
+          allSucceeded ? 'info' : 'warning',
+          `Synced product ${product.name} to Meta catalog: ${result.filter((a) => a.success).length} ok, ${failed.length} failed`,
+          { action: eventType === 'INSERT' ? 'create' : 'update', productId, slug: product.slug, results: result },
+        )
       }
     } catch (error) {
       console.error('[meta/catalog-sync] Error:', error)
-      await supabase.from('error_logs').insert({
-        source: 'meta_catalog_sync',
-        severity: 'error',
-        message: error instanceof Error ? error.message : String(error),
-        metadata: { eventType, payload },
-      })
+      await logSync('error', error instanceof Error ? error.message : String(error), { eventType, payload })
     }
   })()
 
