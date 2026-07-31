@@ -60,21 +60,29 @@ export async function POST(request: Request) {
   const oldRecord = payload.old_record as Record<string, unknown> | undefined
 
   // Prevent webhook feedback loop: our own meta tracking write-back (meta_item_id,
-  // meta_synced_at, meta_sync_error) must not re-trigger a sync.
+  // meta_synced_at, meta_sync_error) must not re-trigger a sync. Two independent
+  // safeguards:
+  //   1. Column diff: skip when the ONLY changed columns are the meta tracking ones.
+  //   2. Recency: skip when meta_synced_at was just written (covers payloads whose
+  //      old_record is absent). A legitimate product edit still syncs when it changes
+  //      a non-meta column AND old_record is present.
   const META_TRACKING_COLUMNS = ['meta_item_id', 'meta_synced_at', 'meta_sync_error']
-  if (eventType === 'UPDATE' && record && oldRecord) {
-    const changedColumns = Object.keys(record).filter(
-      (key) => JSON.stringify(record[key]) !== JSON.stringify(oldRecord[key]),
-    )
-    console.log('[meta/catalog-sync] DEBUG changedColumns:', JSON.stringify(changedColumns), 'recordKeys:', Object.keys(record).length, 'oldRecordKeys:', Object.keys(oldRecord).length)
-    if (
-      changedColumns.length > 0 &&
-      changedColumns.every((column) => META_TRACKING_COLUMNS.includes(column))
-    ) {
+  if (eventType === 'UPDATE' && record) {
+    let isWriteBack = false
+    if (oldRecord) {
+      const changedColumns = Object.keys(record).filter(
+        (key) => JSON.stringify(record[key]) !== JSON.stringify(oldRecord[key]),
+      )
+      isWriteBack =
+        changedColumns.length > 0 &&
+        changedColumns.every((column) => META_TRACKING_COLUMNS.includes(column))
+    } else {
+      const syncedAt = typeof record.meta_synced_at === 'string' ? Date.parse(record.meta_synced_at) : NaN
+      isWriteBack = Number.isFinite(syncedAt) && Date.now() - syncedAt < 60_000
+    }
+    if (isWriteBack) {
       return NextResponse.json({ success: true, skipped: true, reason: 'meta tracking write-back' })
     }
-  } else {
-    console.log('[meta/catalog-sync] DEBUG no-guard eventType:', eventType, 'hasRecord:', !!record, 'hasOldRecord:', !!oldRecord)
   }
 
   const processing = (async () => {
