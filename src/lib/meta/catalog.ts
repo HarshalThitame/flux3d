@@ -28,7 +28,7 @@ type ProductInput = {
 function buildCatalogItem(product: ProductInput, sku: ProductSkuInput): MetaCatalogItemData {
   const variantParts = Object.entries(sku.variant_combination ?? {}).map(([k, v]) => `${k}:${v}`)
   const variantLabel = variantParts.join(', ')
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://flux3d.in'
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://flux3d.in').replace(/\/+$/, '')
   const productUrl = `${baseUrl}/3d-shop/product/${product.slug}${sku.sku_code ? `?sku=${sku.sku_code}` : ''}`
   const image = sku.variant_image_url || product.thumbnail_url || product.image_urls?.[0] || undefined
 
@@ -118,6 +118,18 @@ export async function upsertMetaCatalogItem(product: ProductInput): Promise<Prod
         body: JSON.stringify({ allow_upsert: true, requests: [entry] }),
       })
 
+      if (!response.ok) {
+        const errBody = await response.text().catch(() => '')
+        actions.push({
+          productId: product.id,
+          skuCode: product.slug,
+          action: 'upsert',
+          success: false,
+          error: `Meta API error ${response.status}: ${errBody}`,
+        })
+        return actions
+      }
+
       const result = await response.json() as { handles?: string[]; validation_status?: { handles: Array<{ handle: string; errors?: Array<{ message: string }> }> } }
       const handle = result.handles?.[0]
       const error = result.validation_status?.handles?.[0]?.errors?.[0]?.message
@@ -155,6 +167,20 @@ export async function upsertMetaCatalogItem(product: ProductInput): Promise<Prod
       headers,
       body: JSON.stringify({ allow_upsert: true, requests: entries }),
     })
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '')
+      product.skus.forEach((sku) => {
+        actions.push({
+          productId: product.id,
+          skuCode: sku.sku_code,
+          action: 'upsert',
+          success: false,
+          error: `Meta API error ${response.status}: ${errBody}`,
+        })
+      })
+      return actions
+    }
 
     const result = await response.json() as { handles?: string[]; validation_status?: { handles: Array<{ handle: string; errors?: Array<{ message: string }> }> } }
     const validationHandles = result.validation_status?.handles ?? []
@@ -201,6 +227,17 @@ export async function deleteMetaCatalogItem(retailerId: string): Promise<Product
       headers,
       body: JSON.stringify({ requests: [entry] }),
     })
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '')
+      return {
+        productId: retailerId,
+        skuCode: retailerId,
+        action: 'delete',
+        success: false,
+        error: `Meta API error ${response.status}: ${errBody}`,
+      }
+    }
 
     const result = await response.json() as { handles?: string[]; validation_status?: { handles: Array<{ handle: string; errors?: Array<{ message: string }> }> } }
     const error = result.validation_status?.handles?.[0]?.errors?.[0]?.message
