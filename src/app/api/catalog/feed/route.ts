@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://flux3d.in'
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://flux3d.in').replace(/\/+$/, '')
   const feed = (products ?? []).flatMap((product) => {
     const skus = product.skus ?? []
     if (skus.length === 0) {
