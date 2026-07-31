@@ -49,6 +49,7 @@ export async function GET(request: Request) {
       source: 'meta_catalog_cron',
       severity: result.failed > 0 ? 'warning' : 'info',
       message: `Full catalog sync: ${result.succeeded} ok, ${result.failed} failed (${result.total} total)`,
+      error_message: `Full catalog sync: ${result.succeeded} ok, ${result.failed} failed (${result.total} total)`,
       metadata: { total: result.total, succeeded: result.succeeded, failed: result.failed, durationMs: result.durationMs },
     })
   } catch (e) {
