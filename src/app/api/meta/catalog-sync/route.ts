@@ -60,13 +60,15 @@ export async function POST(request: Request) {
   const oldRecord = payload.old_record as Record<string, unknown> | undefined
 
   // Prevent webhook feedback loop: our own meta tracking write-back (meta_item_id,
-  // meta_synced_at, meta_sync_error) must not re-trigger a sync. Two independent
-  // safeguards:
-  //   1. Column diff: skip when the ONLY changed columns are the meta tracking ones.
+  // meta_synced_at, meta_sync_error) must not re-trigger a sync. The BEFORE UPDATE
+  // trigger set_shelf_products_updated_at bumps updated_at on every write-back, so
+  // updated_at is also treated as a write-back-only column. A legitimate product
+  // edit still syncs because it changes a non-tracking column (name, price, ...).
+  // Two independent safeguards:
+  //   1. Column diff: skip when the ONLY changed columns are the tracking ones.
   //   2. Recency: skip when meta_synced_at was just written (covers payloads whose
-  //      old_record is absent). A legitimate product edit still syncs when it changes
-  //      a non-meta column AND old_record is present.
-  const META_TRACKING_COLUMNS = ['meta_item_id', 'meta_synced_at', 'meta_sync_error']
+  //      old_record is absent).
+  const META_TRACKING_COLUMNS = ['meta_item_id', 'meta_synced_at', 'meta_sync_error', 'updated_at']
   if (eventType === 'UPDATE' && record) {
     let isWriteBack = false
     if (oldRecord) {
@@ -98,6 +100,7 @@ export async function POST(request: Request) {
           source: 'meta_catalog_sync',
           severity,
           message,
+          error_message: message,
           metadata,
         })
       } catch (e) {
