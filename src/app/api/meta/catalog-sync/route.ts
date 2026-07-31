@@ -59,6 +59,21 @@ export async function POST(request: Request) {
   const record = payload.record as Record<string, unknown> | undefined
   const oldRecord = payload.old_record as Record<string, unknown> | undefined
 
+  // Prevent webhook feedback loop: our own meta tracking write-back (meta_item_id,
+  // meta_synced_at, meta_sync_error) must not re-trigger a sync.
+  const META_TRACKING_COLUMNS = ['meta_item_id', 'meta_synced_at', 'meta_sync_error']
+  if (eventType === 'UPDATE' && record && oldRecord) {
+    const changedColumns = Object.keys(record).filter(
+      (key) => JSON.stringify(record[key]) !== JSON.stringify(oldRecord[key]),
+    )
+    if (
+      changedColumns.length > 0 &&
+      changedColumns.every((column) => META_TRACKING_COLUMNS.includes(column))
+    ) {
+      return NextResponse.json({ success: true, skipped: true, reason: 'meta tracking write-back' })
+    }
+  }
+
   const processing = (async () => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
