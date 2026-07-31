@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'node:crypto'
-import { upsertMetaCatalogItem, deleteMetaCatalogItem } from '@/lib/meta/catalog'
 import { syncProductKnowledgeChunks } from '@/lib/whatsapp-rag'
 import { rateLimitCheck } from '@/lib/rate-limit'
 
@@ -56,9 +55,6 @@ export async function POST(request: Request) {
   let payload: Record<string, unknown> = {}
   try { payload = JSON.parse(rawBody) } catch { /* ignore parse errors */ }
 
-  const eventType = payload.type as string | undefined
-  const table = payload.table as string | undefined
-
   // Return 200 immediately, process async
   const syncPromise = (async () => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -68,48 +64,6 @@ export async function POST(request: Request) {
     const supabase = createClient(supabaseUrl, serviceKey)
 
     try {
-      // Handle Meta catalog sync for shelf_products changes
-      if (table === 'shelf_products') {
-        const record = payload.record as Record<string, unknown> | undefined
-        const oldRecord = payload.old_record as Record<string, unknown> | undefined
-
-        if (eventType === 'DELETE' && oldRecord) {
-          const slug = oldRecord.slug as string
-          await deleteMetaCatalogItem(slug)
-        }
-
-        if ((eventType === 'INSERT' || eventType === 'UPDATE') && record) {
-          const productId = record.id as string
-          const { data: product } = await supabase
-            .from('shelf_products')
-            .select(`
-              id, name, slug, description, thumbnail_url, image_urls,
-              is_active, is_archived, base_price,
-              category:category_id(name),
-              skus:shelf_skus(id, sku_code, price, stock_quantity, is_available, variant_combination, variant_image_url)
-            `)
-            .eq('id', productId)
-            .single()
-
-          if (product) {
-            await upsertMetaCatalogItem({
-              id: product.id,
-              name: product.name,
-              slug: product.slug,
-              description: product.description,
-              thumbnail_url: product.thumbnail_url,
-              image_urls: product.image_urls,
-              is_active: product.is_active,
-              is_archived: product.is_archived,
-              base_price: product.base_price,
-              category_name: Array.isArray(product.category) ? product.category[0]?.name ?? null : (product.category as Record<string, string> | null)?.name ?? null,
-              skus: product.skus,
-            })
-          }
-        }
-      }
-
-      // Also run WhatsApp RAG knowledge sync
       const result = await syncProductKnowledgeChunks()
 
       // Log to audit table
