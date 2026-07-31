@@ -1,22 +1,28 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Receiver } from '@upstash/qstash'
+import crypto from 'node:crypto'
 import { syncFullCatalogToMeta } from '@/lib/meta/catalog'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
 
-const receiver = new Receiver({
-  currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY ?? '',
-  nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY ?? '',
-})
+async function verifyCronAuth(request: Request): Promise<boolean> {
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) return false
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return false
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(authHeader.slice(7)),
+      Buffer.from(cronSecret),
+    )
+  } catch {
+    return false
+  }
+}
 
 export async function GET(request: Request) {
-  const signature = request.headers.get('upstash-signature') ?? ''
-  const body = await request.text()
-
-  const isValid = await receiver.verify({ body, signature, url: request.url })
-  if (!isValid) {
+  if (!(await verifyCronAuth(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
