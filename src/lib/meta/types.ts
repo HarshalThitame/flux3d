@@ -71,15 +71,17 @@ export type MetaCapiResponse = {
 export type MetaBatchRequestEntry = {
   method: 'UPDATE' | 'DELETE' | 'CREATE'
   retailer_id: string
-  data?: MetaCatalogItemData
+  data?: Partial<MetaCatalogItemData>
 }
 
 export type MetaBatchRequest = {
   allow_upsert?: boolean
+  item_type?: 'PRODUCT_ITEM' | 'PRODUCT_GROUP'
   requests: MetaBatchRequestEntry[]
 }
 
 export type MetaCatalogItemData = {
+  id?: string
   title: string
   description?: string
   availability?: 'in stock' | 'out of stock' | 'preorder' | 'available for order' | 'discontinued'
@@ -93,7 +95,6 @@ export type MetaCatalogItemData = {
   google_product_category?: string
   fb_product_category?: string
   item_group_id?: string
-  currency: 'INR'
   inventory?: number
   visibility?: 'published' | 'staging'
   additional_image_link?: string[]
