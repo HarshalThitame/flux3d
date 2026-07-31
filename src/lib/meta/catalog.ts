@@ -42,12 +42,12 @@ function buildCatalogItem(product: ProductInput, sku: ProductSkuInput): MetaCata
           : 'out of stock'
 
   const item: MetaCatalogItemData = {
+    id: sku.sku_code,
     title: variantLabel ? `${product.name} — ${variantLabel}` : product.name,
     description: product.description?.slice(0, 9999) || undefined,
     availability,
     condition: 'new',
-    price: `${(sku.price || product.base_price).toFixed(2)}`,
-    currency: 'INR',
+    price: `${(sku.price || product.base_price).toFixed(2)} INR`,
     link: productUrl,
     image_link: image,
     item_group_id: product.slug,
@@ -115,7 +115,7 @@ export async function upsertMetaCatalogItem(product: ProductInput): Promise<Prod
       const response = await fetch(`${getMetaGraphBase()}/${catalogId}/items_batch`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ allow_upsert: true, requests: [entry] }),
+        body: JSON.stringify({ allow_upsert: true, item_type: 'PRODUCT_ITEM', requests: [entry] }),
       })
 
       if (!response.ok) {
@@ -165,7 +165,7 @@ export async function upsertMetaCatalogItem(product: ProductInput): Promise<Prod
     const response = await fetch(`${getMetaGraphBase()}/${catalogId}/items_batch`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ allow_upsert: true, requests: entries }),
+      body: JSON.stringify({ allow_upsert: true, item_type: 'PRODUCT_ITEM', requests: entries }),
     })
 
     if (!response.ok) {
@@ -219,13 +219,14 @@ export async function deleteMetaCatalogItem(retailerId: string): Promise<Product
   const entry: MetaBatchRequestEntry = {
     method: 'DELETE',
     retailer_id: retailerId,
+    data: { id: retailerId },
   }
 
   try {
     const response = await fetch(`${getMetaGraphBase()}/${catalogId}/items_batch`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ requests: [entry] }),
+      body: JSON.stringify({ item_type: 'PRODUCT_ITEM', requests: [entry] }),
     })
 
     if (!response.ok) {

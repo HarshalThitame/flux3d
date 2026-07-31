@@ -44,12 +44,16 @@ export async function GET(request: Request) {
 
   const result = await syncFullCatalogToMeta(products ?? [])
 
-  await supabase.from('error_logs').insert({
-    source: 'meta_catalog_cron',
-    severity: result.failed > 0 ? 'warning' : 'info',
-    message: `Full catalog sync: ${result.succeeded} ok, ${result.failed} failed (${result.total} total)`,
-    metadata: { total: result.total, succeeded: result.succeeded, failed: result.failed, durationMs: result.durationMs },
-  })
+  try {
+    await supabase.from('error_logs').insert({
+      source: 'meta_catalog_cron',
+      severity: result.failed > 0 ? 'warning' : 'info',
+      message: `Full catalog sync: ${result.succeeded} ok, ${result.failed} failed (${result.total} total)`,
+      metadata: { total: result.total, succeeded: result.succeeded, failed: result.failed, durationMs: result.durationMs },
+    })
+  } catch (e) {
+    console.error('[sync-meta-catalog] Log write failed:', e)
+  }
 
   return NextResponse.json({
     success: result.failed === 0,
