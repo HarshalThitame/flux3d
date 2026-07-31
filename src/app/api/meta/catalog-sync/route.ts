@@ -153,9 +153,9 @@ export async function POST(request: Request) {
     }
   })()
 
-  processing.catch((err) => {
+  await processing.catch((err) => {
     console.error('[meta/catalog-sync] Async processing failed:', err)
   })
 
-  return NextResponse.json({ success: true, message: 'Catalog sync triggered' })
+  return NextResponse.json({ success: true, message: 'Catalog sync processed' })
 }
