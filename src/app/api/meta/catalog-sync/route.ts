@@ -66,12 +66,15 @@ export async function POST(request: Request) {
     const changedColumns = Object.keys(record).filter(
       (key) => JSON.stringify(record[key]) !== JSON.stringify(oldRecord[key]),
     )
+    console.log('[meta/catalog-sync] DEBUG changedColumns:', JSON.stringify(changedColumns), 'recordKeys:', Object.keys(record).length, 'oldRecordKeys:', Object.keys(oldRecord).length)
     if (
       changedColumns.length > 0 &&
       changedColumns.every((column) => META_TRACKING_COLUMNS.includes(column))
     ) {
       return NextResponse.json({ success: true, skipped: true, reason: 'meta tracking write-back' })
     }
+  } else {
+    console.log('[meta/catalog-sync] DEBUG no-guard eventType:', eventType, 'hasRecord:', !!record, 'hasOldRecord:', !!oldRecord)
   }
 
   const processing = (async () => {
