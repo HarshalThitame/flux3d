@@ -23,6 +23,25 @@ import {
 } from '@/lib/whatsapp/messages'
 import { createWhatsappPaymentLink } from '@/lib/whatsapp/payment'
 
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelayMs: number = 1000,
+): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      lastError = err
+      if (attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, baseDelayMs * Math.pow(2, attempt)))
+      }
+    }
+  }
+  throw lastError
+}
+
 export const ORDERING_ENABLED = (process.env.WHATSAPP_ORDERING_ENABLED?.trim() || 'true') !== 'false'
 
 export type OrderInteraction =
@@ -274,12 +293,13 @@ export async function handleOrderFlow(params: {
   const incomingText = (text ?? '').trim()
 
   const sendAndLog = async (kind: 'text' | 'list' | 'buttons', body: string, extra?: Record<string, unknown>) => {
-    const result =
+    const result = await withRetry(() =>
       kind === 'list'
-        ? await sendWhatsAppList(phone, extra as never)
+        ? sendWhatsAppList(phone, extra as never)
         : kind === 'buttons'
-          ? await sendWhatsAppButtons(phone, extra as never)
-          : await sendWhatsAppText(phone, body, { previewUrl: Boolean(extra?.previewUrl) })
+          ? sendWhatsAppButtons(phone, extra as never)
+          : sendWhatsAppText(phone, body, { previewUrl: Boolean(extra?.previewUrl) }),
+    )
     await logWhatsAppMessageToDb({
       userId,
       sender: phone,
@@ -942,10 +962,12 @@ async function placeOrderAndSendPaymentLink(
     })
 
     if (paymentLink) {
-      const sent = await sendWhatsAppPaymentLink(
-        phone,
-        paymentLink.shortUrl,
-        `🔗 *Payment link for order ${result.orderNumber}*`
+      const sent = await withRetry(() =>
+        sendWhatsAppPaymentLink(
+          phone,
+          paymentLink.shortUrl,
+          `🔗 *Payment link for order ${result.orderNumber}*`
+        ),
       )
       if (!sent.ok) {
         await sendAndLog('text', `Pay here for order ${result.orderNumber}: ${paymentLink.shortUrl}`)
