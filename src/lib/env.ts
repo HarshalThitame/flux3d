@@ -14,6 +14,10 @@ const envSchema = z.object({
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),
   WHATSAPP_WEBHOOK_SECRET: z.string().optional(),
 
+  // WhatsApp ordering
+  WHATSAPP_ORDERING_ENABLED: z.enum(['true', 'false']).default('true'),
+  WHATSAPP_ORDER_EXPIRY_MINUTES: z.coerce.number().int().positive().default(60),
+
   // WhatsApp AI tuning
   WHATSAPP_OPENAI_MODEL: z.string().default('gpt-4.1-mini'),
   WHATSAPP_API_VERSION: z.string().default('v22.0'),
@@ -30,7 +34,8 @@ const envSchema = z.object({
   // Meta Commerce
   NEXT_PUBLIC_META_PIXEL_ID: z.string().min(1).optional(),
   META_SYSTEM_USER_TOKEN: z.string().min(1).optional(),
-  META_CATALOG_ID: z.string().min(1).optional(),
+  META_CATALOG_ID: z.string().min(1),
+  META_APP_ID: z.string().min(1).optional(),
   META_BUSINESS_ID: z.string().optional(),
   META_CAPI_USER_AGENT: z.string().optional(),
 

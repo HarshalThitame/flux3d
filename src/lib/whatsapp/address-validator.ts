@@ -8,6 +8,46 @@ const INDIAN_STATES = new Set([
   'andaman and nicobar', 'dadra and nagar haveli', 'daman and diu', 'lakshadweep',
 ]);
 
+const STATE_ABBREVIATIONS: Record<string, string> = {
+  ap: 'andhra pradesh',
+  ar: 'arunachal pradesh',
+  as: 'assam',
+  br: 'bihar',
+  cg: 'chhattisgarh',
+  ga: 'goa',
+  gj: 'gujarat',
+  hr: 'haryana',
+  hp: 'himachal pradesh',
+  jh: 'jharkhand',
+  ka: 'karnataka',
+  kl: 'kerala',
+  mp: 'madhya pradesh',
+  mh: 'maharashtra',
+  mn: 'manipur',
+  ml: 'meghalaya',
+  mz: 'mizoram',
+  nl: 'nagaland',
+  od: 'odisha',
+  pb: 'punjab',
+  rj: 'rajasthan',
+  sk: 'sikkim',
+  tn: 'tamil nadu',
+  ts: 'telangana',
+  tr: 'tripura',
+  up: 'uttar pradesh',
+  uk: 'uttarakhand',
+  wb: 'west bengal',
+  dl: 'delhi',
+  jk: 'jammu and kashmir',
+  la: 'ladakh',
+  ch: 'chandigarh',
+  py: 'puducherry',
+  an: 'andaman and nicobar',
+  dh: 'dadra and nagar haveli',
+  dd: 'daman and diu',
+  ld: 'lakshadweep',
+};
+
 export type FieldValidation = { valid: boolean; error?: string };
 
 export function validateName(name: string): FieldValidation {
@@ -44,14 +84,19 @@ export function validateCity(city: string): FieldValidation {
 }
 
 export function validateState(state: string): FieldValidation {
-  const normalized = state.trim().toLowerCase();
-  if (!INDIAN_STATES.has(normalized)) {
-    return {
-      valid: false,
-      error: `"${state.trim()}" doesn't look like a valid Indian state. Please enter the state name (e.g. Maharashtra, Karnataka, Delhi):`,
-    };
+  const trimmed = state.trim();
+  const normalized = trimmed.toLowerCase();
+  if (INDIAN_STATES.has(normalized)) {
+    return { valid: true };
   }
-  return { valid: true };
+  const resolved = STATE_ABBREVIATIONS[normalized];
+  if (resolved) {
+    return { valid: true };
+  }
+  return {
+    valid: false,
+    error: `"${trimmed}" doesn't look like a valid Indian state. Please enter the state name (e.g. Maharashtra, Karnataka, Delhi) or abbreviation (e.g. MH, KA, DL):`,
+  };
 }
 
 export function validatePincode(pincode: string): FieldValidation {
