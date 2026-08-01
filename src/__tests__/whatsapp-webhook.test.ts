@@ -145,6 +145,7 @@ describe('WhatsApp webhook handler', () => {
     process.env.WHATSAPP_RAG_CONFIDENCE_THRESHOLD = '0.5'
     process.env.WHATSAPP_REPLY_TO_ALL = 'true'
     process.env.WHATSAPP_SESSION_TURNS = '4'
+    process.env.META_CATALOG_ID = 'test-catalog-id'
     chatCompletionsCreate.mockResolvedValue({
       choices: [{ message: { content: 'Hello! How can I help?' } }],
       model: 'gpt-4.1-mini',
