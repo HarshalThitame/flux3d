@@ -409,15 +409,35 @@ export async function handleOrderFlow(params: {
 
     case 'address_name': {
       if (!incomingText) return { handled: true }
-      state.address = { ...(state.address ?? {}), name: incomingText.slice(0, 80) }
+      const name = incomingText.slice(0, 80).trim()
+      if (name.length < 2) {
+        await sendAndLog('text', 'Please share your full name (at least 2 characters):')
+        return { handled: true }
+      }
+      state.address = { ...(state.address ?? {}), name }
       await saveOrderSession(phone, 'address_line1', state)
-      await sendAndLog('text', `Thanks, ${incomingText.slice(0, 40)}.\n\nNow your **full delivery address (house no., street, area)**:`)
+      await sendAndLog('text', `Thanks, ${name.slice(0, 40)}.\n\nNow your **full delivery address (house no., street, area)**:`)
       return { handled: true }
     }
 
     case 'address_line1': {
       if (!incomingText) return { handled: true }
-      state.address = { ...(state.address ?? {}), line1: incomingText.slice(0, 160) }
+      const line1 = incomingText.slice(0, 160).trim()
+      if (line1.length < 2) {
+        await sendAndLog('text', 'Please share your full address (at least 2 characters):')
+        return { handled: true }
+      }
+      state.address = { ...(state.address ?? {}), line1 }
+      await saveOrderSession(phone, 'address_line2', state)
+      await sendAndLog('text', 'Any **apartment, floor, or landmark**? (or reply "skip" to continue):')
+      return { handled: true }
+    }
+
+    case 'address_line2': {
+      if (!incomingText) return { handled: true }
+      if (!/^(skip|none|n\/a|no)$/i.test(incomingText.trim())) {
+        state.address = { ...(state.address ?? {}), line2: incomingText.slice(0, 160) }
+      }
       await saveOrderSession(phone, 'address_city', state)
       await sendAndLog('text', 'Got it. Now your **city**:')
       return { handled: true }
@@ -425,7 +445,12 @@ export async function handleOrderFlow(params: {
 
     case 'address_city': {
       if (!incomingText) return { handled: true }
-      state.address = { ...(state.address ?? {}), city: incomingText.slice(0, 60) }
+      const city = incomingText.slice(0, 60).trim()
+      if (city.length < 2) {
+        await sendAndLog('text', 'Please enter a valid city name (at least 2 characters):')
+        return { handled: true }
+      }
+      state.address = { ...(state.address ?? {}), city }
       await saveOrderSession(phone, 'address_state', state)
       await sendAndLog('text', 'And your **state**:')
       return { handled: true }
@@ -433,7 +458,12 @@ export async function handleOrderFlow(params: {
 
     case 'address_state': {
       if (!incomingText) return { handled: true }
-      state.address = { ...(state.address ?? {}), state: incomingText.slice(0, 60) }
+      const stateName = incomingText.slice(0, 60).trim()
+      if (stateName.length < 2) {
+        await sendAndLog('text', 'Please enter a valid state name (at least 2 characters):')
+        return { handled: true }
+      }
+      state.address = { ...(state.address ?? {}), state: stateName }
       await saveOrderSession(phone, 'address_pincode', state)
       await sendAndLog('text', 'Finally, your **6-digit pincode**:')
       return { handled: true }
