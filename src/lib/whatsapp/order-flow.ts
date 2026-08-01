@@ -552,6 +552,16 @@ export async function handleOrderFlow(params: {
       return { handled: true }
     }
 
+    case 'payment_pending': {
+      if (interaction?.kind === 'order') {
+        await clearOrderSession(phone)
+        await handleCartOrder(phone, userId, interaction.items, sendAndLog)
+        return { handled: true }
+      }
+      await sendAndLog('text', 'You have an order pending payment. Reply **status** to check, or **Cancel** to start a new order.')
+      return { handled: true }
+    }
+
     default: {
       await clearOrderSession(phone)
       return { handled: false }
@@ -955,7 +965,7 @@ async function placeOrderAndSendPaymentLink(
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to place order.'
     console.error('[whatsapp] Order placement failed:', message)
-    await saveOrderSession(phone, 'confirm', state)
+    await clearOrderSession(phone)
     await sendAndLog('text', `Sorry, we could not place the order: ${message}. Tap **Change** to adjust or **Cancel**.`)
   }
 }
