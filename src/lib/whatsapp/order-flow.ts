@@ -78,6 +78,9 @@ type OrderState = {
     state: string
     pincode: string
   }>
+  orderId?: string
+  orderNumber?: string
+  totalAmount?: number
 }
 
 const BUY_INTENT_RE = /(buy|purchase|checkout|place an? order|place order|i want to order|want to buy|order now|add to cart|get (one|this)|start order|order a|order the)/i
@@ -200,6 +203,16 @@ function variantLabelOf(sku: SkuRow): string {
 
 function money(value: number): string {
   return `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+async function checkPaymentStatus(orderId: string): Promise<boolean> {
+  const supabase = createAdminSupabaseClient()
+  const { data: order } = await supabase
+    .from('shelf_orders')
+    .select('payment_status')
+    .eq('id', orderId)
+    .maybeSingle()
+  return order?.payment_status === 'paid'
 }
 
 async function buildOrderPreview(state: OrderState) {
@@ -429,6 +442,42 @@ export async function handleOrderFlow(params: {
         }
       }
       await sendAndLog('text', 'Please tap **Confirm** to place the order, **Change** to start over, or **Cancel**.')
+      return { handled: true }
+    }
+
+    case 'payment_pending': {
+      const orderNumber = state.orderNumber ?? 'your order'
+      const orderId = state.orderId ?? orderNumber
+
+      if (incomingText && incomingText.toLowerCase() === 'status') {
+        const paid = await checkPaymentStatus(orderId)
+        if (paid) {
+          await clearOrderSession(phone)
+          await sendAndLog('text', [
+            `✅ *Payment received!*`,
+            `Order #${orderNumber}`,
+            '',
+            'Your order is being prepared. We will notify you here as it ships.',
+          ].join('\n'))
+          return { handled: true }
+        }
+        await sendAndLog('text', [
+          `Payment for Order #${orderNumber} is still pending.`,
+          '',
+          'Check the payment link you received earlier, or visit:',
+          `/3d-shop/order/${orderId}`,
+        ].join('\n'))
+        return { handled: true }
+      }
+
+      await sendAndLog('text', [
+        `Payment for Order #${orderNumber} is being processed.`,
+        '',
+        'You can check the payment status on our website:',
+        `/3d-shop/order/${orderId}`,
+        '',
+        'Or reply **status** to check again.',
+      ].join('\n'))
       return { handled: true }
     }
 
@@ -788,7 +837,14 @@ async function placeOrderAndSendPaymentLink(
       await sendAndLog('text', 'Our payment link service is temporarily unavailable. We will send your payment link shortly.')
     }
 
-    await sendAndLog('text', 'Your order is confirmed on our website too. We will notify you here as it ships.')
+    await saveOrderSession(phone, 'payment_pending', {
+      ...state,
+      orderId: result.orderId,
+      orderNumber: result.orderNumber,
+      totalAmount: result.totalAmount,
+    })
+
+    await sendAndLog('text', 'Your order is confirmed on our website too. We will notify you here once payment is received and as it ships.')
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to place order.'
     console.error('[whatsapp] Order placement failed:', message)

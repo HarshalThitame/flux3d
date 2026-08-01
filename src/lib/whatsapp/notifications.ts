@@ -157,5 +157,6 @@ export async function notifyWhatsAppPaymentCaptured(params: {
   if (!result.ok) {
     console.error('[whatsapp] payment_captured message failed:', result.status, result.error)
   }
+
   return result.ok
 }
