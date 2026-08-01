@@ -13,6 +13,7 @@ import { getWhatsAppRagContext, fetchStructuredData, type StructuredDataResult, 
 import { extractSearchKeywords } from "@/lib/whatsapp-keywords";
 import { validatePricesInResponse, type ValidationResult } from "@/lib/whatsapp-price-validation";
 import { classifyIntent, type ClassifiedIntent } from "@/lib/whatsapp-intent-classifier";
+import { handleOrderFlow, type OrderInteraction, ORDERING_ENABLED } from "@/lib/whatsapp/order-flow";
 
 let cachedServiceClient: any = null;
 function getServiceClient() {
@@ -447,12 +448,13 @@ type IncomingMessageParams = {
   payload: Record<string, unknown>
   from: string
   text: string
+  interaction?: OrderInteraction | null
   eventRecord: { id: string } | null
   requestStartedAt: number
 }
 
 export async function processIncomingMessage(params: IncomingMessageParams) {
-  const { supabase, payloadHash, payload, from, text, eventRecord, requestStartedAt } = params
+  const { supabase, payloadHash, payload, from, text, interaction = null, eventRecord, requestStartedAt } = params
 
   const processingSpan = Sentry.startInactiveSpan({
     op: 'whatsapp.process',
@@ -494,6 +496,35 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       }
     }
     _log("profile_done recognized=" + senderRecognized);
+
+    // ── WhatsApp ordering flow (runs before the AI assistant) ──
+    if (ORDERING_ENABLED) {
+      try {
+        const orderResult = await handleOrderFlow({
+          phone: from,
+          userId,
+          interaction,
+          text,
+          profileName: null,
+        }).catch((error) => {
+          console.error("[whatsapp] Order flow error:", error);
+          return { handled: false };
+        });
+
+        if (orderResult.handled) {
+          _log("order_flow_handled");
+          if (supabase && eventRecord?.id) {
+            await supabase.from("whatsapp_webhook_events").update({
+              processed_at: new Date().toISOString(),
+              reply_sent: true,
+            }).eq("id", eventRecord.id).catch(() => {});
+          }
+          return;
+        }
+      } catch (error) {
+        console.error("[whatsapp] Order flow failed, falling back to assistant:", error);
+      }
+    }
 
     // Load conversation history for context-aware replies
     let sessionHistory: Array<ChatCompletionMessageParam> = [];
@@ -936,6 +967,7 @@ export default async function handler(
       // Extract text from supported message types
       let text: string | undefined
       let mediaInfo: string | null = null
+      let interaction: OrderInteraction | null = null
       if (msgType === 'text') {
         text = message?.text?.body
       } else if (msgType === 'image') {
@@ -946,6 +978,30 @@ export default async function handler(
         mediaInfo = `[Document: ${message?.document?.filename || 'unknown'}]`
       } else if (msgType === 'audio' || msgType === 'video' || msgType === 'sticker') {
         mediaInfo = `[${msgType}]`
+      } else if (msgType === 'interactive') {
+        const interactive = message?.interactive
+        const interactiveType = interactive?.type
+        if (interactiveType === 'list_reply') {
+          interaction = {
+            kind: 'list',
+            id: interactive?.list_reply?.id ?? '',
+            title: interactive?.list_reply?.title ?? '',
+          }
+          text = interaction.title || text
+        } else if (interactiveType === 'button_reply') {
+          interaction = {
+            kind: 'button',
+            id: interactive?.button_reply?.id ?? '',
+            title: interactive?.button_reply?.title ?? '',
+          }
+          text = interaction.title || text
+        }
+      } else if (msgType === 'product') {
+        const productId = message?.product?.id
+        if (productId) {
+          interaction = { kind: 'product', id: productId, title: 'Product' }
+          text = text || `[product:${productId}]`
+        }
       }
 
       if (!message || !from) {
@@ -981,8 +1037,8 @@ export default async function handler(
         text = mediaInfo
       }
 
-      // Fallback if no text could be extracted at all (shouldn't reach here)
-      if (!text || typeof text !== "string") {
+      // Fallback if no text or interaction could be extracted (shouldn't reach here)
+      if ((!text || typeof text !== "string") && !interaction) {
         await insertWebhookEvent(supabase, payloadHash, payload, { sender: from, processed_at: new Date().toISOString() }).catch(() => {})
         return res.status(200).json({ success: true })
       }
@@ -1001,30 +1057,33 @@ export default async function handler(
       res.status(200).json({ success: true })
 
       // Send a quick acknowledgment to verify the WhatsApp API works
-      try {
-        const ackController = new AbortController();
-        const ackTimeout = setTimeout(() => ackController.abort(), 10000);
-        await fetch(`https://graph.facebook.com/${WHATSAPP_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            messaging_product: 'whatsapp',
-            to: from,
-            type: 'text',
-            text: { body: `👍 Got your message! Processing...` },
-          }),
-          signal: ackController.signal,
-        }).finally(() => clearTimeout(ackTimeout));
-        console.log("[whatsapp] ACK sent to", from?.slice(-4));
-      } catch (ackError) {
-        console.error("[whatsapp] ACK failed:", ackError);
+      // (skip for interactive/product messages — the ordering flow replies immediately)
+      if (!interaction) {
+        try {
+          const ackController = new AbortController();
+          const ackTimeout = setTimeout(() => ackController.abort(), 10000);
+          await fetch(`https://graph.facebook.com/${WHATSAPP_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              to: from,
+              type: 'text',
+              text: { body: `👍 Got your message! Processing...` },
+            }),
+            signal: ackController.signal,
+          }).finally(() => clearTimeout(ackTimeout));
+          console.log("[whatsapp] ACK sent to", from?.slice(-4));
+        } catch (ackError) {
+          console.error("[whatsapp] ACK failed:", ackError);
+        }
       }
 
       const workKey = `webhook-${payloadHash.slice(0, 12)}`;
-      const workPromise = processIncomingMessage({ supabase, payloadHash, payload, from, text: text!, eventRecord, requestStartedAt }).catch((error) => {
+      const workPromise = processIncomingMessage({ supabase, payloadHash, payload, from, text: text!, interaction, eventRecord, requestStartedAt }).catch((error) => {
         console.error("[whatsapp] Async processing failed:", error)
         Sentry.captureException(error, {
           tags: { handler: 'webhook_async' },

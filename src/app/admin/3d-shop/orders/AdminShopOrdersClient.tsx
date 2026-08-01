@@ -42,11 +42,18 @@ const paymentStatuses: Array<{ value: '' | ShopPaymentStatus; label: string }> =
   { value: 'refunded', label: 'Refunded' },
 ]
 
+const sourceOptions: Array<{ value: string; label: string }> = [
+  { value: '', label: 'All sources' },
+  { value: 'website', label: 'Website' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+]
+
 export default function AdminShopOrdersClient() {
   const [orders, setOrders] = useState<ShopAdminOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState('')
   const [paymentStatus, setPaymentStatus] = useState('')
+  const [source, setSource] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [search, setSearch] = useState('')
@@ -61,6 +68,7 @@ export default function AdminShopOrdersClient() {
       const params = new URLSearchParams()
       if (status) params.set('status', status)
       if (paymentStatus) params.set('payment_status', paymentStatus)
+      if (source) params.set('source', source)
       if (dateFrom) params.set('date_from', dateFrom)
       if (dateTo) params.set('date_to', dateTo)
       if (search.trim()) params.set('search', search.trim())
@@ -76,7 +84,7 @@ export default function AdminShopOrdersClient() {
     } finally {
       setLoading(false)
     }
-  }, [dateFrom, dateTo, paymentStatus, search, status])
+  }, [dateFrom, dateTo, paymentStatus, search, source, status])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -144,12 +152,15 @@ export default function AdminShopOrdersClient() {
       </motion.div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-4">
-        <div className="grid gap-3 lg:grid-cols-[180px_180px_150px_150px_1fr]">
+        <div className="grid gap-3 lg:grid-cols-[180px_180px_150px_150px_150px_1fr]">
           <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none">
             {statusOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
           </select>
           <select value={paymentStatus} onChange={(event) => setPaymentStatus(event.target.value)} className="rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none">
             {paymentStatuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+          </select>
+          <select value={source} onChange={(event) => setSource(event.target.value)} className="rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none">
+            {sourceOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
           </select>
           <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none" />
           <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none" />
@@ -204,7 +215,12 @@ export default function AdminShopOrdersClient() {
                     </td>
                     <td className="px-4 py-3 text-sm font-semibold text-[#0F1B3D]">{order.order_number}</td>
                     <td className="px-4 py-3 text-sm text-[#0F1B3D]">
-                      <div className="font-semibold">{order.customer?.name ?? order.shipping_address.name}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="font-semibold">{order.customer?.name ?? order.shipping_address.name}</div>
+                        {order.order_source === 'whatsapp' && (
+                          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">WhatsApp</span>
+                        )}
+                      </div>
                       <div className="text-xs text-[#6F7192]">{order.customer?.phone ?? order.shipping_address.phone}</div>
                     </td>
                     <td className="px-4 py-3 text-sm text-[#6F7192]">{order.items.length}</td>
