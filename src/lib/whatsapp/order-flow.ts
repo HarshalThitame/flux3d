@@ -31,7 +31,18 @@ async function withRetry<T>(
   let lastError: unknown
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await fn()
+      const result = await fn()
+      if (result && typeof result === 'object' && 'ok' in result && result.ok === false) {
+        const errorMsg = String((result as Record<string, unknown>).error ?? 'Unknown failure')
+        const err = new Error(errorMsg)
+        lastError = err
+        if (attempt < maxRetries) {
+          await new Promise((r) => setTimeout(r, baseDelayMs * Math.pow(2, attempt)))
+          continue
+        }
+        throw err
+      }
+      return result
     } catch (err) {
       lastError = err
       if (attempt < maxRetries) {
@@ -293,13 +304,27 @@ export async function handleOrderFlow(params: {
   const incomingText = (text ?? '').trim()
 
   const sendAndLog = async (kind: 'text' | 'list' | 'buttons', body: string, extra?: Record<string, unknown>) => {
-    const result = await withRetry(() =>
-      kind === 'list'
-        ? sendWhatsAppList(phone, extra as never)
-        : kind === 'buttons'
-          ? sendWhatsAppButtons(phone, extra as never)
-          : sendWhatsAppText(phone, body, { previewUrl: Boolean(extra?.previewUrl) }),
-    )
+    let result: { ok: boolean; status?: number; error?: string }
+    try {
+      result = await withRetry(() =>
+        kind === 'list'
+          ? sendWhatsAppList(phone, extra as never)
+          : kind === 'buttons'
+            ? sendWhatsAppButtons(phone, extra as never)
+            : sendWhatsAppText(phone, body, { previewUrl: Boolean(extra?.previewUrl) }),
+      )
+    } catch (err) {
+      console.error(`[whatsapp] Failed to send ${kind} message after retries:`, err instanceof Error ? err.message : String(err))
+      await logWhatsAppMessageToDb({
+        userId,
+        sender: phone,
+        direction: 'outgoing',
+        messageText: body,
+        automated: true,
+        triggerEvent: 'order_flow',
+      })
+      return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    }
     await logWhatsAppMessageToDb({
       userId,
       sender: phone,
@@ -526,6 +551,12 @@ export async function handleOrderFlow(params: {
       const orderNumber = state.orderNumber ?? 'your order'
       const orderId = state.orderId ?? orderNumber
 
+      if (interaction?.kind === 'order') {
+        await clearOrderSession(phone)
+        await handleCartOrder(phone, userId, interaction.items, sendAndLog)
+        return { handled: true }
+      }
+
       if (incomingText && incomingText.toLowerCase() === 'status') {
         const paid = await checkPaymentStatus(orderId)
         if (paid) {
@@ -569,16 +600,6 @@ export async function handleOrderFlow(params: {
         '',
         'Or reply **status** to check again.',
       ].join('\n'))
-      return { handled: true }
-    }
-
-    case 'payment_pending': {
-      if (interaction?.kind === 'order') {
-        await clearOrderSession(phone)
-        await handleCartOrder(phone, userId, interaction.items, sendAndLog)
-        return { handled: true }
-      }
-      await sendAndLog('text', 'You have an order pending payment. Reply **status** to check, or **Cancel** to start a new order.')
       return { handled: true }
     }
 
