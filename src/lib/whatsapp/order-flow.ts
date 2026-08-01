@@ -215,6 +215,25 @@ async function checkPaymentStatus(orderId: string): Promise<boolean> {
   return order?.payment_status === 'paid'
 }
 
+async function checkShipmentStatus(
+  orderId: string,
+): Promise<{ fulfilmentStatus: string; trackingNumber?: string; courierName?: string } | null> {
+  const supabase = createAdminSupabaseClient()
+  const { data: order } = await supabase
+    .from('shelf_orders')
+    .select('fulfilment_status, tracking_number, courier_name')
+    .eq('id', orderId)
+    .maybeSingle()
+  if (!order) return null
+  const status = order.fulfilment_status
+  if (status === 'pending' || status === 'confirmed' || status === 'processing' || status === 'packed') return null
+  return {
+    fulfilmentStatus: status,
+    trackingNumber: order.tracking_number ?? undefined,
+    courierName: order.courier_name ?? undefined,
+  }
+}
+
 async function buildOrderPreview(state: OrderState) {
   const settings = await getSettings()
   const items = state.items ?? []
@@ -280,6 +299,14 @@ export async function handleOrderFlow(params: {
   }
 
   const session = await getOrderSession(phone)
+
+  // Track order command: /track <orderId> or /track <orderNumber>
+  const trackMatch = incomingText.match(/^\/track\s+(.+)$/i)
+  if (trackMatch) {
+    const query = trackMatch[1].trim()
+    await handleTrackOrder(phone, userId, query, sendAndLog)
+    return { handled: true }
+  }
 
   // ── No session: decide whether to start ordering ──
   if (!session) {
@@ -454,7 +481,7 @@ export async function handleOrderFlow(params: {
         if (paid) {
           await clearOrderSession(phone)
           await sendAndLog('text', [
-            `✅ *Payment received!*`,
+            '✅ *Payment received!*',
             `Order #${orderNumber}`,
             '',
             'Your order is being prepared. We will notify you here as it ships.',
@@ -467,6 +494,20 @@ export async function handleOrderFlow(params: {
           'Check the payment link you received earlier, or visit:',
           `/3d-shop/order/${orderId}`,
         ].join('\n'))
+        return { handled: true }
+      }
+
+      const shipmentInfo = await checkShipmentStatus(orderId)
+      if (shipmentInfo) {
+        await sendAndLog('text', [
+          `📦 *Order #${orderNumber}*`,
+          `Fulfillment: ${shipmentInfo.fulfilmentStatus}`,
+          shipmentInfo.trackingNumber ? `Tracking: ${shipmentInfo.trackingNumber}` : '',
+          shipmentInfo.courierName ? `Courier: ${shipmentInfo.courierName}` : '',
+          '',
+          'Your order is on its way!',
+        ].filter(Boolean).join('\n'))
+        await clearOrderSession(phone)
         return { handled: true }
       }
 
@@ -486,6 +527,42 @@ export async function handleOrderFlow(params: {
       return { handled: false }
     }
   }
+}
+
+async function handleTrackOrder(
+  phone: string,
+  userId: string | null,
+  query: string,
+  sendAndLog: (kind: 'text' | 'list' | 'buttons', body: string, extra?: Record<string, unknown>) => Promise<unknown>,
+): Promise<void> {
+  const supabase = createAdminSupabaseClient()
+  const { data: order } = await supabase
+    .from('shelf_orders')
+    .select('id, order_number, order_status, fulfilment_status, payment_status, tracking_number, courier_name, tracking_url')
+    .or(`order_number.eq.${query},id.eq.${query}`)
+    .maybeSingle()
+
+  if (!order) {
+    await sendAndLog('text', `No order found for "${query}". Check the order number or try again.`)
+    return
+  }
+
+  const status = order.fulfilment_status ?? order.order_status ?? 'unknown'
+  const lines = [
+    `📦 *Order #${order.order_number}*`,
+    `Status: ${status}`,
+    `Payment: ${order.payment_status ?? 'unknown'}`,
+  ]
+
+  if (order.tracking_number) {
+    lines.push(`Tracking: ${order.tracking_number}`)
+    lines.push(`Courier: ${order.courier_name ?? 'N/A'}`)
+    if (order.tracking_url) lines.push(`Track live: ${order.tracking_url}`)
+  }
+
+  lines.push('', `View full details: /3d-shop/order/${order.id}`)
+
+  await sendAndLog('text', lines.join('\n'))
 }
 
 async function handleCartOrder(
