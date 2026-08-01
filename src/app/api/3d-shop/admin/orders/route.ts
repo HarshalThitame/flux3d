@@ -90,6 +90,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
     const paymentStatus = searchParams.get('payment_status') ?? searchParams.get('payment')
+    const source = searchParams.get('source')
     const dateFrom = searchParams.get('date_from')
     const dateTo = searchParams.get('date_to')
     const search = searchParams.get('search')?.trim() ?? ''
@@ -113,6 +114,7 @@ export async function GET(request: Request) {
     if (paymentStatus && shopPaymentStatuses.includes(paymentStatus as ShopPaymentStatus)) {
       query = query.eq('payment_status', paymentStatus)
     }
+    if (source) query = query.eq('order_source', source)
     if (dateFrom) query = query.gte('placed_at', `${dateFrom}T00:00:00.000Z`)
     if (dateTo) query = query.lte('placed_at', `${dateTo}T23:59:59.999Z`)
 

@@ -42,6 +42,14 @@ export async function GET(request: Request) {
 
   const deletedCount = Array.isArray(data) && data.length > 0 ? Number(data[0]?.deleted_count ?? 0) : 0
 
+  let orderSessionsDeleted = 0
+  const { data: orderData, error: orderError } = await supabase.rpc('cleanup_whatsapp_order_sessions')
+  if (orderError) {
+    console.error('[cron] cleanup_whatsapp_order_sessions failed:', orderError)
+  } else {
+    orderSessionsDeleted = Number(orderData ?? 0)
+  }
+
   // Log to admin audit trail
   try {
     await supabase.from('admin_audit_logs').insert({
@@ -49,7 +57,11 @@ export async function GET(request: Request) {
       action: 'cron_cleanup_whatsapp_sessions',
       target_type: 'whatsapp_sessions',
       target_id: null,
-      new_value: { deleted_count: deletedCount, timestamp: new Date().toISOString() },
+      new_value: {
+        deleted_count: deletedCount,
+        order_sessions_deleted: orderSessionsDeleted,
+        timestamp: new Date().toISOString(),
+      },
     })
   } catch (logError) {
     console.error('[cron] Failed to log cleanup audit:', logError)
@@ -58,5 +70,6 @@ export async function GET(request: Request) {
   return NextResponse.json({
     success: true,
     deletedCount,
+    orderSessionsDeleted,
   })
 }

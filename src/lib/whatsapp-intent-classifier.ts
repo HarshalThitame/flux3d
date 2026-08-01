@@ -11,11 +11,11 @@ function getClassifierOpenAI() {
 }
 
 export type ClassifiedIntent = {
-  intent: 'pricing' | 'shipping' | 'order' | 'materials' | 'contact' | 'greeting' | 'general' | 'out_of_scope'
+  intent: 'pricing' | 'shipping' | 'order' | 'materials' | 'contact' | 'greeting' | 'general' | 'out_of_scope' | 'buy'
   keywords: string[]
 }
 
-const VALID_INTENTS = ['pricing', 'shipping', 'order', 'materials', 'contact', 'greeting', 'general', 'out_of_scope']
+const VALID_INTENTS = ['pricing', 'shipping', 'order', 'materials', 'contact', 'greeting', 'general', 'out_of_scope', 'buy']
 
 const SYSTEM_PROMPT = `You are an intent classifier for a 3D printing business.
 Classify the user message into exactly one of these intents:
@@ -25,6 +25,7 @@ Classify the user message into exactly one of these intents:
 - materials: asking about print materials (PLA, ABS, PETG, resin, etc.), colors, finishes
 - contact: asking for phone, address, support, business hours
 - greeting: hello, hi, hey, good morning
+- buy: wanting to purchase or place a new order (e.g. "i want to order", "buy", "checkout", "place order", "add to cart")
 - out_of_scope: not related to 3D printing or the business
 - general: anything else related to 3D printing services
 

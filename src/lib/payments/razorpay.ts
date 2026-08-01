@@ -79,6 +79,36 @@ export function createRazorpayOrder(params: {
   }) as Promise<RazorpayOrderResponse>
 }
 
+export type RazorpayPaymentLinkResponse = {
+  id: string
+  short_url: string
+  order_id: string
+  amount: number
+  currency: string
+  status: string
+}
+
+export function createRazorpayPaymentLink(params: {
+  amountPaise: number
+  currency: string
+  customer: { name: string; contact: string }
+  notes?: Record<string, string>
+  referenceId?: string
+  description?: string
+}) {
+  return createRazorpayClient().paymentLink.create({
+    amount: params.amountPaise,
+    currency: params.currency,
+    customer: params.customer,
+    accept_partial: false,
+    reminder_enable: false,
+    notify: { email: false, sms: false, whatsapp: false },
+    ...(params.notes ? { notes: params.notes } : {}),
+    ...(params.referenceId ? { reference_id: params.referenceId } : {}),
+    ...(params.description ? { description: params.description } : {}),
+  } as never) as unknown as Promise<RazorpayPaymentLinkResponse>
+}
+
 export function fetchRazorpayOrder(orderId: string) {
   return createRazorpayClient().orders.fetch(orderId) as Promise<RazorpayOrderResponse>
 }
