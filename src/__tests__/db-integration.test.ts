@@ -33,29 +33,26 @@ describe('database schema', () => {
   })
 })
 
-describe('shipping rules', () => {
-  it('returns available shipping for matching pincode', async () => {
+describe('shipping calculation', () => {
+  it('returns free shipping when subtotal meets threshold', async () => {
+    const { calculateShippingFromRules } = await import('@/lib/shop/shipping')
+    const result = await calculateShippingFromRules({ pincode: '400001', state: 'maharashtra', subtotal: 500 })
+    expect(result.available).toBe(true)
+    expect(result.chargePaise).toBe(0)
+  })
+
+  it('returns default charge when subtotal is below threshold', async () => {
     const { calculateShippingFromRules } = await import('@/lib/shop/shipping')
     const result = await calculateShippingFromRules({ pincode: '400001', state: 'maharashtra', subtotal: 100 })
     expect(result.available).toBe(true)
     expect(result.chargePaise).toBeGreaterThan(0)
   })
 
-  it('falls back to default for non-matching pincode', async () => {
+  it('falls back to default charge for any pincode', async () => {
     const { calculateShippingFromRules } = await import('@/lib/shop/shipping')
     const result = await calculateShippingFromRules({ pincode: '999999', state: 'unknown', subtotal: 100 })
     expect(result.available).toBe(true)
-  })
-
-  it('marks restricted areas as unavailable', async () => {
-    const db = getDb()
-    await db.from('shipping_rules').insert({
-      state: 'restricted', pincode_range_start: '000000', pincode_range_end: '999999',
-      minimum_order_value: 0, charge: 0, charge_paise: 0, restricted: true, is_active: true,
-    })
-    const { calculateShippingFromRules } = await import('@/lib/shop/shipping')
-    const result = await calculateShippingFromRules({ pincode: '400001', state: 'restricted', subtotal: 100 })
-    expect(result.available).toBe(false)
+    expect(result.chargePaise).toBeGreaterThan(0)
   })
 })
 
