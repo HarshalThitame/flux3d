@@ -13,7 +13,7 @@ import { getWhatsAppRagContext, fetchStructuredData, type StructuredDataResult, 
 import { extractSearchKeywords } from "@/lib/whatsapp-keywords";
 import { validatePricesInResponse, type ValidationResult } from "@/lib/whatsapp-price-validation";
 import { classifyIntent, type ClassifiedIntent } from "@/lib/whatsapp-intent-classifier";
-import { handleOrderFlow, type OrderInteraction, ORDERING_ENABLED } from "@/lib/whatsapp/order-flow";
+import { handleOrderFlow, parseOrderCartItems, type OrderInteraction, ORDERING_ENABLED } from "@/lib/whatsapp/order-flow";
 
 let cachedServiceClient: any = null;
 function getServiceClient() {
@@ -1005,6 +1005,12 @@ export default async function handler(
         if (productId) {
           interaction = { kind: 'product', id: productId, title: 'Product' }
           text = text || `[product:${productId}]`
+        }
+      } else if (msgType === 'order') {
+        const items = parseOrderCartItems(message?.order?.product_items)
+        if (items.length > 0) {
+          interaction = { kind: 'order', items }
+          text = text || `[order cart: ${items.length} item(s)]`
         }
       }
 
