@@ -514,10 +514,14 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         if (orderResult.handled) {
           _log("order_flow_handled");
           if (supabase && eventRecord?.id) {
-            await supabase.from("whatsapp_webhook_events").update({
-              processed_at: new Date().toISOString(),
-              reply_sent: true,
-            }).eq("id", eventRecord.id).catch(() => {});
+            try {
+              await supabase.from("whatsapp_webhook_events").update({
+                processed_at: new Date().toISOString(),
+                reply_sent: true,
+              }).eq("id", eventRecord.id)
+            } catch {
+              // best-effort marking
+            }
           }
           return;
         }
@@ -1112,9 +1116,13 @@ export default async function handler(
         });
         // Mark event as failed so it's visible in the database
         if (supabase && eventRecord?.id) {
-          await supabase.from('whatsapp_webhook_events').update({
-            error: errMsg.slice(0, 500),
-          }).eq('id', eventRecord.id).catch(() => {});
+          try {
+            await supabase.from('whatsapp_webhook_events').update({
+              error: errMsg.slice(0, 500),
+            }).eq('id', eventRecord.id)
+          } catch {
+            // best-effort marking
+          }
         }
       }
     } catch (pre200Error) {
