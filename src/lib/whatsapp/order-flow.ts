@@ -22,6 +22,13 @@ import {
   mapCatalogItemToSku,
 } from '@/lib/whatsapp/messages'
 import { createWhatsappPaymentLink } from '@/lib/whatsapp/payment'
+import {
+  validateName,
+  validateLine1,
+  validateCity,
+  validateState,
+  validatePincode,
+} from '@/lib/whatsapp/address-validator'
 
 async function withRetry<T>(
   fn: () => Promise<T>,
@@ -362,16 +369,18 @@ export async function handleOrderFlow(params: {
     }
 
     if (interaction?.kind === 'product') {
-      // Catalog card tapped: product.id is the Meta catalog item id → resolve to sku.
-      const skuCode = await mapCatalogItemToSku(interaction.id)
-      if (!skuCode) {
-        await sendAndLog('text', "I couldn't find that item in the catalog. Let me show you what's available:")
-        await showBrowse(phone, userId, sendAndLog)
-        return { handled: true }
-      }
-      const found = await loadSkuByCode(skuCode)
+      // Try to load SKU directly using interaction.id (in case it is already the sku_code)
+      let found = await loadSkuByCode(interaction.id)
       if (!found) {
-        await sendAndLog('text', 'That item is currently out of stock. Let me show you what is available:')
+        // Fallback: resolve Meta catalog item id to retailer_id (sku_code)
+        const skuCode = await mapCatalogItemToSku(interaction.id)
+        if (skuCode) {
+          found = await loadSkuByCode(skuCode)
+        }
+      }
+
+      if (!found) {
+        await sendAndLog('text', "I couldn't find that item in the catalog or it is out of stock. Let me show you what's available:")
         await showBrowse(phone, userId, sendAndLog)
         return { handled: true }
       }
@@ -454,11 +463,12 @@ export async function handleOrderFlow(params: {
 
     case 'address_name': {
       if (!incomingText) return { handled: true }
-      const name = incomingText.slice(0, 80).trim()
-      if (name.length < 2) {
-        await sendAndLog('text', 'Please share your full name (at least 2 characters):')
+      const validation = validateName(incomingText)
+      if (!validation.valid) {
+        await sendAndLog('text', validation.error!)
         return { handled: true }
       }
+      const name = incomingText.slice(0, 80).trim()
       state.address = { ...(state.address ?? {}), name }
       await saveOrderSession(phone, 'address_line1', state)
       await sendAndLog('text', `Thanks, ${name.slice(0, 40)}.\n\nNow your **full delivery address (house no., street, area)**:`)
@@ -467,11 +477,12 @@ export async function handleOrderFlow(params: {
 
     case 'address_line1': {
       if (!incomingText) return { handled: true }
-      const line1 = incomingText.slice(0, 160).trim()
-      if (line1.length < 2) {
-        await sendAndLog('text', 'Please share your full address (at least 2 characters):')
+      const validation = validateLine1(incomingText)
+      if (!validation.valid) {
+        await sendAndLog('text', validation.error!)
         return { handled: true }
       }
+      const line1 = incomingText.slice(0, 160).trim()
       state.address = { ...(state.address ?? {}), line1 }
       await saveOrderSession(phone, 'address_line2', state)
       await sendAndLog('text', 'Any **apartment, floor, or landmark**? (or reply "skip" to continue):')
@@ -490,11 +501,12 @@ export async function handleOrderFlow(params: {
 
     case 'address_city': {
       if (!incomingText) return { handled: true }
-      const city = incomingText.slice(0, 60).trim()
-      if (city.length < 2) {
-        await sendAndLog('text', 'Please enter a valid city name (at least 2 characters):')
+      const validation = validateCity(incomingText)
+      if (!validation.valid) {
+        await sendAndLog('text', validation.error!)
         return { handled: true }
       }
+      const city = incomingText.slice(0, 60).trim()
       state.address = { ...(state.address ?? {}), city }
       await saveOrderSession(phone, 'address_state', state)
       await sendAndLog('text', 'And your **state**:')
@@ -503,11 +515,12 @@ export async function handleOrderFlow(params: {
 
     case 'address_state': {
       if (!incomingText) return { handled: true }
-      const stateName = incomingText.slice(0, 60).trim()
-      if (stateName.length < 2) {
-        await sendAndLog('text', 'Please enter a valid state name (at least 2 characters):')
+      const validation = validateState(incomingText)
+      if (!validation.valid) {
+        await sendAndLog('text', validation.error!)
         return { handled: true }
       }
+      const stateName = incomingText.slice(0, 60).trim()
       state.address = { ...(state.address ?? {}), state: stateName }
       await saveOrderSession(phone, 'address_pincode', state)
       await sendAndLog('text', 'Finally, your **6-digit pincode**:')
@@ -515,11 +528,13 @@ export async function handleOrderFlow(params: {
     }
 
     case 'address_pincode': {
-      const pincode = incomingText.replace(/\D/g, '').slice(0, 6)
-      if (!/^\d{6}$/.test(pincode)) {
-        await sendAndLog('text', 'Please enter a valid 6-digit pincode (e.g. 400001):')
+      if (!incomingText) return { handled: true }
+      const validation = validatePincode(incomingText)
+      if (!validation.valid) {
+        await sendAndLog('text', validation.error!)
         return { handled: true }
       }
+      const pincode = incomingText.replace(/\D/g, '').slice(0, 6)
       state.address = { ...(state.address ?? {}), pincode }
       await saveOrderSession(phone, 'confirm', state)
       await showConfirm(phone, userId, state, sendAndLog)
