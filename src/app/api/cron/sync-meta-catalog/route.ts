@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'node:crypto'
 import { syncFullCatalogToMeta } from '@/lib/meta/catalog'
+import { getStoredCatalogHashes, saveStoredCatalogHashes } from '@/lib/meta/sync-state'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -48,15 +49,30 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const result = await syncFullCatalogToMeta(products ?? [])
+  // Load previously stored payload hashes so unchanged items are skipped.
+  // Without this the 6-hourly sync re-pushed every item, re-triggering WhatsApp
+  // review each time and flipping APPROVED items to OUTDATED/NO_REVIEW.
+  const storedHashes = await getStoredCatalogHashes().catch((e) => {
+    console.error('[sync-meta-catalog] Failed to load stored hashes:', e)
+    return {}
+  })
+
+  const result = await syncFullCatalogToMeta(products ?? [], storedHashes)
+
+  // Persist the current hashes so the next cron run skips unchanged items.
+  if (result.hashes) {
+    await saveStoredCatalogHashes(result.hashes).catch((e) => {
+      console.error('[sync-meta-catalog] Failed to persist payload hashes:', e)
+    })
+  }
 
   try {
     await supabase.from('error_logs').insert({
       source: 'meta_catalog_cron',
       severity: result.failed > 0 ? 'warning' : 'info',
-      message: `Full catalog sync: ${result.succeeded} ok, ${result.failed} failed (${result.total} total)`,
-      error_message: `Full catalog sync: ${result.succeeded} ok, ${result.failed} failed (${result.total} total)`,
-      metadata: { total: result.total, succeeded: result.succeeded, failed: result.failed, durationMs: result.durationMs },
+      message: `Catalog sync: ${result.succeeded} ok, ${result.failed} failed, ${result.skipped} skipped (${result.total} total changed)`,
+      error_message: `Catalog sync: ${result.succeeded} ok, ${result.failed} failed, ${result.skipped} skipped (${result.total} total changed)`,
+      metadata: { total: result.total, succeeded: result.succeeded, failed: result.failed, skipped: result.skipped, durationMs: result.durationMs },
     })
   } catch (e) {
     console.error('[sync-meta-catalog] Log write failed:', e)
@@ -67,6 +83,7 @@ export async function GET(request: Request) {
     total: result.total,
     succeeded: result.succeeded,
     failed: result.failed,
+    skipped: result.skipped,
     durationMs: result.durationMs,
   })
 }
