@@ -1,5 +1,11 @@
-import { sendWhatsAppTemplate } from '@/lib/whatsapp/messages'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { sendWhatsAppTemplate, sendWhatsAppText } from '@/lib/whatsapp/messages'
 import { ORDERING_ENABLED } from '@/lib/whatsapp/order-flow'
+
+function money(amount: number | string): string {
+  const value = typeof amount === 'number' ? amount : Number(amount)
+  return isFinite(value) ? `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : `₹${amount}`
+}
 
 function templateName(key: string): string | null {
   const name = process.env[`WHATSAPP_TEMPLATE_${key}`]?.trim()
@@ -111,6 +117,45 @@ export async function notifyWhatsAppPaymentLink(params: {
   })
   if (!result.ok) {
     console.error('[whatsapp] payment_link template failed:', result.status, result.error)
+  }
+  return result.ok
+}
+
+// Payment captured — sends within the 24h customer-service window as a plain
+// session text (no HSM approval needed), so it works even before business
+// verification approves the shipped/delivered HSM templates.
+export async function notifyWhatsAppPaymentCaptured(params: {
+  orderId: string
+  orderNumber: string
+  amountPaise: number
+}): Promise<boolean> {
+  if (!ORDERING_ENABLED) return false
+
+  const supabase = createAdminSupabaseClient()
+  const { data: order } = await supabase
+    .from('shelf_orders')
+    .select('shipping_address')
+    .eq('id', params.orderId)
+    .maybeSingle()
+
+  const address = (order?.shipping_address ?? {}) as Record<string, unknown>
+  const phoneRaw = String(address.phone ?? '').replace(/\D/g, '')
+  if (!phoneRaw) {
+    console.warn('[whatsapp] Payment captured — no phone on order, skipped WhatsApp notify:', params.orderId)
+    return false
+  }
+
+  const message = [
+    '✅ *Payment received!*',
+    `Order #${params.orderNumber}`,
+    `Amount: ${money(params.amountPaise / 100)}`,
+    '',
+    'Your order is being prepared. We will notify you here as soon as it ships.',
+  ].join('\n')
+
+  const result = await sendWhatsAppText(phoneRaw, message)
+  if (!result.ok) {
+    console.error('[whatsapp] payment_captured message failed:', result.status, result.error)
   }
   return result.ok
 }

@@ -2,6 +2,7 @@ import { getSettings } from '@/lib/settings'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
 import { notifyPaymentCaptured, notifyPaymentFailed, notifyRefundProcessed } from './email-triggers'
+import { notifyWhatsAppPaymentCaptured } from '@/lib/whatsapp/notifications'
 import { sendCapiEvents, buildPurchaseEvent } from '@/lib/meta/conversions-api'
 import { generateEventId } from '@/lib/meta/event-utils'
 import {
@@ -630,6 +631,17 @@ export async function verifyCheckoutPayment(params: {
     // but deduplication in the email trigger prevents duplicates).
     notifyPaymentCaptured(attempt).catch(() => {})
 
+    // Send WhatsApp payment confirmation (session text within 24h window).
+    if (attempt.internal_order_type === 'shop_order' && attempt.internal_order_id) {
+      notifyWhatsAppPaymentCaptured({
+        orderId: attempt.internal_order_id,
+        orderNumber: orderSnapshot.orderNumber,
+        amountPaise: attempt.amount_paise,
+      }).catch((err) => {
+        console.error('[payments] WhatsApp payment captured notify failed:', err)
+      })
+    }
+
     // Send Purchase event to Meta Conversions API
     sendPurchaseCapiEvent(attempt)
 
@@ -806,6 +818,21 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
 
     if (captured) {
       notifyPaymentCaptured(attempt).catch(() => {})
+
+      // Send WhatsApp payment confirmation (session text within 24h window).
+      if (attempt.internal_order_type === 'shop_order' && attempt.internal_order_id) {
+        const orderNumberFromMeta =
+          (attempt.metadata as Record<string, unknown> | null)?.order_number ??
+          (attempt.metadata as Record<string, unknown> | null)?.orderNumber
+        notifyWhatsAppPaymentCaptured({
+          orderId: attempt.internal_order_id,
+          orderNumber: normalizeText(orderNumberFromMeta) || attempt.internal_order_id,
+          amountPaise: attempt.amount_paise,
+        }).catch((err) => {
+          console.error('[payments] WhatsApp payment captured notify failed:', err)
+        })
+      }
+
       sendPurchaseCapiEvent(attempt)
     }
 
