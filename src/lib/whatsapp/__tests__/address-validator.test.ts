@@ -37,6 +37,18 @@ describe('WhatsApp Address Validator', () => {
       expect(validateState('delhi').valid).toBe(true)
       expect(validateState('abcd').valid).toBe(false) // invalid state
     })
+
+    it('should validate state abbreviations (case-insensitive)', () => {
+      expect(validateState('MH').valid).toBe(true)
+      expect(validateState('mh').valid).toBe(true)
+      expect(validateState('DL').valid).toBe(true)
+      expect(validateState('dl').valid).toBe(true)
+      expect(validateState('KA').valid).toBe(true)
+      expect(validateState('TN').valid).toBe(true)
+      expect(validateState('UP').valid).toBe(true)
+      expect(validateState('UK').valid).toBe(true)
+      expect(validateState('XYZ').valid).toBe(false) // unknown abbreviation
+    })
   })
 
   describe('validatePincode', () => {
