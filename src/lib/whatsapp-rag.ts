@@ -618,4 +618,4 @@ export async function fetchStructuredData(
   return { materials: materialsData, products: productsData, orderStatus: orderStatusData, orderResults, totalMatches, materialPrices, productPrices }
 }
 
-export type WhatsAppIntent = 'pricing' | 'shipping' | 'order' | 'materials' | 'contact' | 'greeting' | 'general'
+export type WhatsAppIntent = 'pricing' | 'shipping' | 'order' | 'materials' | 'contact' | 'greeting' | 'general' | 'buy'

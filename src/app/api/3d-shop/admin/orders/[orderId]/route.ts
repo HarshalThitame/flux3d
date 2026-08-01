@@ -4,6 +4,7 @@ import { logAdminAction } from '@/lib/admin/auditLog'
 import { requireAdminPermission } from '@/lib/admin/permissions'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { sendOrderShipped, sendDeliveryConfirmation } from '@/lib/email/triggers'
+import { notifyWhatsAppOrderShipped, notifyWhatsAppOrderDelivered } from '@/lib/whatsapp/notifications'
 import {
   assertFulfilmentStatusTransition,
   assertShopStatusTransition,
@@ -247,6 +248,20 @@ export async function PATCH(request: Request, context: { params: Promise<{ order
             console.error('[3d-shop/admin/orders] Failed to enqueue OrderShipped email:', err)
           })
         }
+
+        // ── WhatsApp OrderShipped template (when customer has a phone) ──
+        const customerPhone = customer.phone?.replace(/\D/g, '')
+        if (trackingNumber && courierName && customerPhone) {
+          notifyWhatsAppOrderShipped({
+            phone: customerPhone,
+            orderNumber,
+            courierName,
+            trackingNumber,
+            trackingUrl,
+          }).catch((err) => {
+            console.error('[3d-shop/admin/orders] Failed to send OrderShipped WhatsApp template:', err)
+          })
+        }
       }
 
       // ── Trigger DeliveryConfirmation email when fulfilment reaches 'delivered' ──
@@ -264,6 +279,17 @@ export async function PATCH(request: Request, context: { params: Promise<{ order
             customerName,
           ).catch((err) => {
             console.error('[3d-shop/admin/orders] Failed to enqueue DeliveryConfirmation email:', err)
+          })
+        }
+
+        // ── WhatsApp OrderDelivered template ──
+        const customerPhone = customer.phone?.replace(/\D/g, '')
+        if (customerPhone) {
+          notifyWhatsAppOrderDelivered({
+            phone: customerPhone,
+            orderNumber,
+          }).catch((err) => {
+            console.error('[3d-shop/admin/orders] Failed to send OrderDelivered WhatsApp template:', err)
           })
         }
       }
