@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'node:crypto'
-import { upsertMetaCatalogItem, deleteMetaCatalogItem } from '@/lib/meta/catalog'
+import { upsertMetaCatalogItem, deleteMetaCatalogItem, buildCatalogEntries } from '@/lib/meta/catalog'
+import { getStoredCatalogHashes, saveStoredCatalogHashes } from '@/lib/meta/sync-state'
 import { rateLimitCheck } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -147,6 +148,31 @@ export async function POST(request: Request) {
         meta_synced_at: new Date().toISOString(),
         meta_sync_error: allSucceeded ? null : `Partial sync failure: ${failed.length} SKU(s) failed`,
       }).eq('id', productId)
+
+      // Persist the current payload hashes so the change-aware cron skips these
+      // items on its next run instead of re-triggering WhatsApp review.
+      const entries = buildCatalogEntries({
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        description: product.description,
+        thumbnail_url: product.thumbnail_url,
+        image_urls: product.image_urls,
+        is_active: product.is_active,
+        is_archived: product.is_archived,
+        base_price: product.base_price,
+        category_name: Array.isArray(product.category) ? product.category[0]?.name ?? null : (product.category as Record<string, string> | null)?.name ?? null,
+        skus: product.skus,
+      })
+      try {
+        const hashes = await getStoredCatalogHashes()
+        for (const entry of entries) {
+          hashes[entry.retailerId] = entry.hash
+        }
+        await saveStoredCatalogHashes(hashes)
+      } catch (e) {
+        console.error('[meta/catalog-sync] Failed to persist payload hashes:', e)
+      }
 
       await logSync(
         allSucceeded ? 'info' : 'warning',
