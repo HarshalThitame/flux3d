@@ -6,7 +6,7 @@ import {
   roundMoney,
 } from '@/lib/shop/pricing'
 import { calculateShippingFromRules } from '@/lib/shop/shipping'
-import { normalizeShippingAddress, placeShopOrder } from '@/lib/shop/place-order'
+import { normalizeShippingAddress, placeShopOrder, type PlaceOrderItemInput } from '@/lib/shop/place-order'
 import { getOrCreateWhatsappCustomer } from '@/lib/whatsapp/customer'
 import {
   getOrderSession,
@@ -25,11 +25,16 @@ import { createWhatsappPaymentLink } from '@/lib/whatsapp/payment'
 
 export const ORDERING_ENABLED = (process.env.WHATSAPP_ORDERING_ENABLED?.trim() || 'true') !== 'false'
 
-export type OrderInteraction = {
-  kind: 'list' | 'button' | 'product'
-  id: string
-  title: string
-}
+export type OrderInteraction =
+  | {
+      kind: 'list' | 'button' | 'product'
+      id: string
+      title: string
+    }
+  | {
+      kind: 'order'
+      items: Array<{ productRetailerId: string; quantity: number }>
+    }
 
 type ProductRow = Record<string, unknown>
 type SkuRow = {
@@ -44,6 +49,17 @@ type SkuRow = {
   variant_label?: string | null
 }
 
+type CartItem = {
+  productId: string
+  productName: string
+  skuId: string
+  skuCode: string
+  variantLabel: string
+  unitPrice: number
+  weightGrams: number
+  quantity: number
+}
+
 type OrderState = {
   productId?: string
   productName?: string
@@ -52,6 +68,7 @@ type OrderState = {
   variantLabel?: string
   unitPrice?: number
   quantity?: number
+  items?: CartItem[]
   address?: Partial<{
     name: string
     phone: string
@@ -65,12 +82,28 @@ type OrderState = {
 
 const BUY_INTENT_RE = /(buy|purchase|checkout|place an? order|place order|i want to order|want to buy|order now|add to cart|get (one|this)|start order|order a|order the)/i
 
+export type OrderCartItemInput = { productRetailerId: string; quantity: number }
+
+export function parseOrderCartItems(raw: unknown): OrderCartItemInput[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null
+      const record = item as Record<string, unknown>
+      const productRetailerId = String(record?.product_retailer_id ?? '')
+      const quantity = Number(record?.quantity ?? 0)
+      if (!productRetailerId || !Number.isInteger(quantity) || quantity <= 0) return null
+      return { productRetailerId, quantity }
+    })
+    .filter((item): item is OrderCartItemInput => item !== null)
+}
+
 export function isBuyIntent(text: string): boolean {
   return BUY_INTENT_RE.test(text.trim())
 }
 
 export function isCancelIntent(text: string, interaction: OrderInteraction | null): boolean {
-  if (interaction?.id === 'cancel') return true
+  if (interaction && interaction.kind !== 'order' && interaction.id === 'cancel') return true
   return /^(cancel|cancel order|never mind|forget it|stop)$/i.test(text.trim())
 }
 
@@ -171,13 +204,19 @@ function money(value: number): string {
 
 async function buildOrderPreview(state: OrderState) {
   const settings = await getSettings()
-  const subtotal = roundMoney((state.unitPrice ?? 0) * (state.quantity ?? 1))
+  const items = state.items ?? []
+  const subtotal = roundMoney(
+    items.length > 0
+      ? items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
+      : (state.unitPrice ?? 0) * (state.quantity ?? 1)
+  )
+  const totalWeightGrams = items.reduce((sum, item) => sum + (item.weightGrams ?? 0) * item.quantity, 0)
   const address = state.address ?? {}
   const shippingResult = await calculateShippingFromRules({
     pincode: address.pincode ?? '',
     state: address.state ?? '',
     subtotal,
-    weightGrams: 0,
+    weightGrams: totalWeightGrams,
     settings,
   })
   const shippingCharge = shippingResult.available ? shippingResult.chargePaise / 100 : 0
@@ -231,6 +270,12 @@ export async function handleOrderFlow(params: {
 
   // ── No session: decide whether to start ordering ──
   if (!session) {
+    if (interaction?.kind === 'order') {
+      // Customer sent a WhatsApp catalog cart (multi-item). productRetailerId === sku_code.
+      await handleCartOrder(phone, userId, interaction.items, sendAndLog)
+      return { handled: true }
+    }
+
     if (interaction?.kind === 'product') {
       // Catalog card tapped: product.id is the Meta catalog item id → resolve to sku.
       const skuCode = await mapCatalogItemToSku(interaction.id)
@@ -308,7 +353,7 @@ export async function handleOrderFlow(params: {
     }
 
     case 'quantity': {
-      const qty = interaction?.id?.startsWith('qty:')
+      const qty = interaction && interaction.kind !== 'order' && interaction.id.startsWith('qty:')
         ? parseQuantity(interaction.id.slice('qty:'.length))
         : parseQuantity(incomingText)
       if (qty == null) {
@@ -392,6 +437,62 @@ export async function handleOrderFlow(params: {
       return { handled: false }
     }
   }
+}
+
+async function handleCartOrder(
+  phone: string,
+  userId: string | null,
+  items: Array<{ productRetailerId: string; quantity: number }>,
+  sendAndLog: (kind: 'text' | 'list' | 'buttons', body: string, extra?: Record<string, unknown>) => Promise<unknown>,
+) {
+  const resolved: CartItem[] = []
+  const unavailable: string[] = []
+
+  for (const item of items) {
+    const found = await loadSkuByCode(item.productRetailerId)
+    if (!found) {
+      unavailable.push(item.productRetailerId)
+      continue
+    }
+    resolved.push({
+      productId: String(found.product.id),
+      productName: String(found.product.name ?? 'Product'),
+      skuId: found.sku.id,
+      skuCode: found.sku.sku_code,
+      variantLabel: variantLabelOf(found.sku),
+      unitPrice: found.sku.price,
+      weightGrams: Number(found.sku.weight_grams ?? 0),
+      quantity: item.quantity,
+    })
+  }
+
+  if (resolved.length === 0) {
+    await sendAndLog('text', 'Sorry, none of the items in your cart are available right now. Here is what we have:')
+    await showBrowse(phone, userId, sendAndLog)
+    return
+  }
+
+  if (unavailable.length > 0) {
+    await sendAndLog('text', `Note: ${unavailable.length} item(s) from your cart are currently unavailable and were skipped.`)
+  }
+
+  const subtotal = roundMoney(resolved.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0))
+  const lines = [
+    '🛒 *Cart received!*',
+    '',
+    ...resolved.map((item) => `• ${item.productName} (${item.variantLabel}) × ${item.quantity} = ${money(roundMoney(item.unitPrice * item.quantity))}`),
+    '',
+    `Subtotal: ${money(subtotal)}`,
+    '',
+    'Please share the **delivery name** (full name of the person receiving the order):',
+  ]
+
+  const state: OrderState = {
+    items: resolved,
+    address: { phone: phoneToTenDigit(phone) },
+  }
+  await saveOrderSession(phone, 'address_name', state)
+  await sendAndLog('text', lines.join('\n'))
 }
 
 async function showBrowse(
@@ -557,11 +658,14 @@ async function showConfirm(
   const preview = await buildOrderPreview(state)
   const address = state.address ?? {}
 
+  const itemLines = (state.items?.length ?? 0) > 0
+    ? state.items!.map((item) => `• ${item.productName} (${item.variantLabel}) × ${item.quantity} = ${money(roundMoney(item.unitPrice * item.quantity))}`)
+    : [`Product: ${state.productName ?? ''} (${state.variantLabel ?? 'Standard'})`, `Quantity: ${state.quantity}`]
+
   const lines = [
     '🧾 *ORDER SUMMARY*',
     '',
-    `Product: ${state.productName ?? ''} (${state.variantLabel ?? 'Standard'})`,
-    `Quantity: ${state.quantity}`,
+    ...itemLines,
     `Subtotal: ${money(preview.subtotal)}`,
   ]
   if (preview.available && preview.shippingCharge > 0) lines.push(`Shipping: ${money(preview.shippingCharge)}`)
@@ -609,11 +713,21 @@ async function placeOrderAndSendPaymentLink(
 ) {
   const address = state.address ?? {}
 
-  if (!state.skuId || !state.quantity) {
+  const rawOrderItems = (state.items?.length ?? 0) > 0
+    ? state.items!.map((item) => ({ productId: item.productId, skuId: item.skuId, quantity: item.quantity }))
+    : [{ productId: state.productId!, skuId: state.skuId, quantity: state.quantity }]
+
+  if (rawOrderItems.length === 0 || rawOrderItems.some((item) => !item.productId || !item.skuId || !item.quantity)) {
     await sendAndLog('text', 'Something went wrong with your order. Please start again.')
     await clearOrderSession(phone)
     return
   }
+
+  const orderItems: PlaceOrderItemInput[] = rawOrderItems.map((item) => ({
+    productId: item.productId!,
+    skuId: item.skuId!,
+    quantity: item.quantity!,
+  }))
 
   // Ensure a customer account exists for the order.
   const customer = await getOrCreateWhatsappCustomer(phone, { name: address.name || profileName || undefined })
@@ -636,7 +750,7 @@ async function placeOrderAndSendPaymentLink(
   try {
     const result = await placeShopOrder({
       userId: effectiveUserId,
-      items: [{ productId: state.productId!, skuId: state.skuId, quantity: state.quantity }],
+      items: orderItems,
       shippingAddress,
       source: 'whatsapp',
       paymentProvider: 'razorpay',

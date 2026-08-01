@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { isBuyIntent, isCancelIntent, parseQuantity, phoneToTenDigit, type OrderInteraction } from '@/lib/whatsapp/order-flow'
+import {
+  isBuyIntent,
+  isCancelIntent,
+  parseOrderCartItems,
+  parseQuantity,
+  phoneToTenDigit,
+  type OrderInteraction,
+} from '@/lib/whatsapp/order-flow'
 
 describe('whatsapp order flow — intent detection', () => {
   it.each([
@@ -50,6 +57,57 @@ describe('whatsapp order flow — quantity parsing', () => {
 
   it.each(['0', '-1', '100', 'abc', '2.5', 'two', '', '1e3'])('rejects invalid quantity "%s"', (value) => {
     expect(parseQuantity(value)).toBeNull()
+  })
+})
+
+describe('whatsapp order flow — catalog cart parsing (order messages)', () => {
+  it('parses a valid cart with multiple items', () => {
+    const items = parseOrderCartItems([
+      { product_retailer_id: 'SKU-1', quantity: 2 },
+      { product_retailer_id: 'SKU-2', quantity: 1 },
+    ])
+    expect(items).toEqual([
+      { productRetailerId: 'SKU-1', quantity: 2 },
+      { productRetailerId: 'SKU-2', quantity: 1 },
+    ])
+  })
+
+  it('drops items with missing/empty retailer id', () => {
+    const items = parseOrderCartItems([
+      { product_retailer_id: '', quantity: 1 },
+      { product_retailer_id: null, quantity: 1 },
+      { quantity: 1 },
+    ])
+    expect(items).toEqual([])
+  })
+
+  it('drops items with non-positive or non-integer quantities', () => {
+    const items = parseOrderCartItems([
+      { product_retailer_id: 'SKU-1', quantity: 0 },
+      { product_retailer_id: 'SKU-2', quantity: -3 },
+      { product_retailer_id: 'SKU-3', quantity: 1.5 },
+      { product_retailer_id: 'SKU-4', quantity: 'not-a-number' },
+    ])
+    expect(items).toEqual([])
+  })
+
+  it('drops malformed entries and keeps valid ones', () => {
+    const items = parseOrderCartItems([
+      null,
+      'SKU-1',
+      { product_retailer_id: 'SKU-1', quantity: 1 },
+      { product_retailer_id: 'SKU-2', quantity: '3' },
+    ])
+    expect(items).toEqual([
+      { productRetailerId: 'SKU-1', quantity: 1 },
+      { productRetailerId: 'SKU-2', quantity: 3 },
+    ])
+  })
+
+  it('returns empty array for non-array input', () => {
+    expect(parseOrderCartItems(undefined)).toEqual([])
+    expect(parseOrderCartItems({})).toEqual([])
+    expect(parseOrderCartItems('cart')).toEqual([])
   })
 })
 
