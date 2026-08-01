@@ -999,12 +999,12 @@ export default async function handler(
             title: interactive?.button_reply?.title ?? '',
           }
           text = interaction.title || text
-        }
-      } else if (msgType === 'product') {
-        const productId = message?.product?.id
-        if (productId) {
-          interaction = { kind: 'product', id: productId, title: 'Product' }
-          text = text || `[product:${productId}]`
+        } else if (interactiveType === 'product') {
+          const retailerId = interactive?.product?.product_retailer_id
+          if (retailerId) {
+            interaction = { kind: 'product', id: retailerId, title: 'Product' }
+            text = text || `[product:${retailerId}]`
+          }
         }
       } else if (msgType === 'order') {
         const items = parseOrderCartItems(message?.order?.product_items)
