@@ -67,5 +67,6 @@ export const adminNavItems: NavItem[] = [
   { label: 'Business Settings', href: '/admin/settings/business', icon: Building2, section: 'secondary' },
   { label: 'WhatsApp Knowledge', href: '/admin/settings/whatsapp-knowledge', icon: Database, section: 'secondary' },
   { label: 'WhatsApp Inbox', href: '/admin/whatsapp/inbox', icon: MessageCircle, section: 'secondary' },
+  { label: 'WhatsApp Orders', href: '/admin/whatsapp/orders', icon: ShoppingCart, section: 'secondary' },
   { label: 'Logout', href: '/admin/logout', icon: LogOut, section: 'secondary' },
 ]

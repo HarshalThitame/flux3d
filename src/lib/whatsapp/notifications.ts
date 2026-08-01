@@ -12,6 +12,11 @@ function templateName(key: string): string | null {
   return name || null
 }
 
+function formatPhone(phone: string): string {
+  const cleaned = phone.replace(/\D/g, '')
+  return cleaned.length === 10 ? `91${cleaned}` : cleaned
+}
+
 const TEMPLATE_LANGUAGE = process.env.WHATSAPP_TEMPLATE_LANGUAGE?.trim() || 'en_IN'
 
 // Order shipped — parameters: {{1}} order number, {{2}} courier name, {{3}} tracking number
@@ -24,7 +29,7 @@ export async function notifyWhatsAppOrderShipped(params: {
 }): Promise<boolean> {
   const name = templateName('ORDER_SHIPPED')
   if (!ORDERING_ENABLED || !name) return false
-  const result = await sendWhatsAppTemplate(params.phone, {
+  const result = await sendWhatsAppTemplate(formatPhone(params.phone), {
     name,
     language: TEMPLATE_LANGUAGE,
     components: [
@@ -51,7 +56,7 @@ export async function notifyWhatsAppOrderDelivered(params: {
 }): Promise<boolean> {
   const name = templateName('ORDER_DELIVERED')
   if (!ORDERING_ENABLED || !name) return false
-  const result = await sendWhatsAppTemplate(params.phone, {
+  const result = await sendWhatsAppTemplate(formatPhone(params.phone), {
     name,
     language: TEMPLATE_LANGUAGE,
     components: [
@@ -75,7 +80,7 @@ export async function notifyWhatsAppOrderConfirmation(params: {
 }): Promise<boolean> {
   const name = templateName('ORDER_CONFIRMATION')
   if (!ORDERING_ENABLED || !name) return false
-  const result = await sendWhatsAppTemplate(params.phone, {
+  const result = await sendWhatsAppTemplate(formatPhone(params.phone), {
     name,
     language: TEMPLATE_LANGUAGE,
     components: [
@@ -102,7 +107,7 @@ export async function notifyWhatsAppPaymentLink(params: {
 }): Promise<boolean> {
   const name = templateName('PAYMENT_LINK')
   if (!ORDERING_ENABLED || !name) return false
-  const result = await sendWhatsAppTemplate(params.phone, {
+  const result = await sendWhatsAppTemplate(formatPhone(params.phone), {
     name,
     language: TEMPLATE_LANGUAGE,
     components: [
@@ -153,7 +158,7 @@ export async function notifyWhatsAppPaymentCaptured(params: {
     'Your order is being prepared. We will notify you here as soon as it ships.',
   ].join('\n')
 
-  const result = await sendWhatsAppText(phoneRaw, message)
+  const result = await sendWhatsAppText(formatPhone(phoneRaw), message)
   if (!result.ok) {
     console.error('[whatsapp] payment_captured message failed:', result.status, result.error)
   }
