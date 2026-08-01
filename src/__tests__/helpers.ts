@@ -48,11 +48,6 @@ export async function seedTestData() {
 
   await db.from('profiles').upsert({ id: TEST_USER_ID, email: 'testseed@test.com', full_name: 'Test User' })
 
-  await db.from('shipping_rules').insert({
-    state: 'maharashtra', pincode_range_start: '400001', pincode_range_end: '400099',
-    minimum_order_value: 0, charge: 50, charge_paise: 5000, is_active: true,
-  })
-
   await db.from('business_settings').insert({
     overhead_percent: 15, margin_percentage: 30, material_markup_percent: 15,
     print_speed_grams_per_hour: 14.5, delivery_charge_threshold: 499, default_delivery_charge: 50,

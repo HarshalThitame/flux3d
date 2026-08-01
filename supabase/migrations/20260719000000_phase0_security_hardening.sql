@@ -61,11 +61,6 @@ CREATE TABLE IF NOT EXISTS public.shipping_rules (
 
 CREATE INDEX IF NOT EXISTS idx_shipping_rules_lookup ON public.shipping_rules(state, pincode_range_start, pincode_range_end, is_active);
 
--- Seed default shipping rule
-INSERT INTO public.shipping_rules (minimum_order_value, charge, is_active)
-VALUES (499, 50, true)
-ON CONFLICT (id) DO NOTHING;
-
 -- ============================================================
 -- 4. Payment status history
 -- ============================================================
