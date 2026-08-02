@@ -34,7 +34,7 @@ const envSchema = z.object({
   // Meta Commerce
   NEXT_PUBLIC_META_PIXEL_ID: z.string().min(1).optional(),
   META_SYSTEM_USER_TOKEN: z.string().min(1).optional(),
-  META_CATALOG_ID: z.string().min(1),
+  META_CATALOG_ID: z.string().min(1).optional(),
   META_APP_ID: z.string().min(1).optional(),
   META_BUSINESS_ID: z.string().optional(),
   META_CAPI_USER_AGENT: z.string().optional(),
