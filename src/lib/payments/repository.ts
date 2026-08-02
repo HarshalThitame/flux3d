@@ -250,6 +250,27 @@ export async function fetchPaymentEvent(provider: PaymentProvider, providerEvent
   return data ? mapPaymentEventRow(asRecord(data)) : null
 }
 
+export async function fetchCaptureEventForPayment(
+  providerPaymentId: string,
+  excludeEventId: string,
+  captureEventTypes: string[]
+) {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('payment_events')
+    .select('id, event_type, processing_status, received_at')
+    .eq('provider_payment_id', providerPaymentId)
+    .in('event_type', captureEventTypes)
+    .in('processing_status', ['processing', 'processed'])
+    .neq('id', excludeEventId)
+    .order('received_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return data ? mapPaymentEventRow(asRecord(data)) : null
+}
+
 export async function updatePaymentEvent(id: string, patch: Record<string, unknown>) {
   const supabase = createAdminSupabaseClient()
   const { data, error } = await supabase

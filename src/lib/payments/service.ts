@@ -12,6 +12,7 @@ import {
   fetchPaymentAttemptByProviderPaymentId,
   fetchPaymentAttemptByPaymentLinkId,
   fetchPaymentEvent,
+  fetchCaptureEventForPayment,
   fetchActivePaymentAttempt,
   insertPaymentAuditLog,
   insertPaymentEvent,
@@ -25,6 +26,7 @@ import {
   lookupPaymentAttemptByInternalOrder,
   snapshotAmount,
   updatePaymentEvent,
+  updatePaymentAttempt,
   updatePaymentRefund,
   upsertPaymentAttempt,
   type InternalOrderLookup,
@@ -741,6 +743,15 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
     return { handled: false, processingStatus: 'ignored' as const }
   }
 
+  // Already captured by an earlier event for the same payment — record missing
+  // provider ids but never regress status or re-notify.
+  if (attempt.status === 'paid') {
+    if (providerPaymentId && !attempt.provider_payment_id) {
+      await updatePaymentAttempt(attempt.id, { provider_payment_id: providerPaymentId })
+    }
+    return { handled: true, processingStatus: 'processed' as const }
+  }
+
   if (eventName === 'payment.failed') {
     await updatePaymentAttemptStatus(
       attempt.id,
@@ -992,6 +1003,31 @@ export async function processRazorpayWebhook(params: {
 
   if (!existingEvent) {
     return { acknowledged: true, duplicate: true }
+  }
+
+  // Razorpay fires payment.authorized, payment.captured, order.paid and
+  // payment_link.paid for the same payment. Only the first capture-type event
+  // should transition the attempt and notify — the rest are duplicates.
+  const captureEventTypes = ['payment.captured', 'order.paid', 'payment_link.paid']
+  const providerPaymentId = normalizeText(existingEvent.provider_payment_id)
+  if (captureEventTypes.includes(eventName) && providerPaymentId) {
+    const sibling = await fetchCaptureEventForPayment(providerPaymentId, existingEvent.id, captureEventTypes)
+    if (sibling) {
+      await updatePaymentEvent(existingEvent.id, {
+        processing_status: 'processed',
+        processed_at: new Date().toISOString(),
+        processing_error: null,
+        retry_count: Number(existingEvent.retry_count ?? 0),
+      })
+      await insertPaymentAuditLog({
+        actor_role: 'system',
+        action: 'payment_webhook_processed',
+        entity_type: 'payment_event',
+        entity_id: existingEvent.id,
+        new_state: { event: eventName, duplicate_of: sibling.id, provider_event_id: params.eventId },
+      })
+      return { acknowledged: true, duplicate: true }
+    }
   }
 
   await updatePaymentEvent(existingEvent.id, { processing_status: 'processing' })
