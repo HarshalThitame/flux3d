@@ -55,6 +55,19 @@ export function parseWhatsAppMessage(message: MetaMessage | undefined | null): P
         interaction = { kind: 'product', id: retailerId, title: 'Product' }
         text = text || `[product:${retailerId}]`
       }
+    } else if (interactiveType === 'nfm_reply') {
+      const nfmReply = interactive?.nfm_reply as Record<string, unknown> | undefined
+      if (nfmReply?.name === 'flow') {
+        const raw = typeof nfmReply.response_json === 'string' ? nfmReply.response_json : ''
+        let data: Record<string, unknown> = {}
+        try {
+          data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {}
+        } catch {
+          data = { parse_error: raw.slice(0, 500) }
+        }
+        interaction = { kind: 'flow_response', data }
+        text = text || '[flow response]'
+      }
     }
   } else if (msgType === 'order') {
     const items = parseOrderCartItems(getNested(message, 'order.product_items'))

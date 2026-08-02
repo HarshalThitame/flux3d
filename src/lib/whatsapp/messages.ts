@@ -154,6 +154,34 @@ export async function sendWhatsAppTemplate(
   })
 }
 
+export async function sendWhatsAppFlow(
+  to: string,
+  params: {
+    flowId: string
+    flowToken: string
+    cta: string
+    body?: string
+  }
+): Promise<WhatsAppSendResult> {
+  return sendRaw(to, {
+    type: 'interactive',
+    interactive: {
+      type: 'flow',
+      body: { text: params.body ?? 'Tap below to continue.' },
+      action: {
+        name: 'flow',
+        parameters: {
+          flow_message_version: '3',
+          flow_id: params.flowId,
+          flow_cta: params.cta,
+          flow_token: params.flowToken,
+          mode: 'published',
+        },
+      },
+    },
+  })
+}
+
 export async function sendWhatsAppPaymentLink(
   to: string,
   shortUrl: string,

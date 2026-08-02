@@ -204,3 +204,62 @@ describe('whatsapp messages — Graph API payload shapes', () => {
     expect(String((body.text as { body: string }).body)).toContain('https://rzp.io/l/x')
   })
 })
+
+describe('sendAddressFlow — flow form fallback', () => {
+  let payloads: Array<Record<string, unknown>>
+
+  beforeEach(() => {
+    payloads = []
+    const mockFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      payloads.push(JSON.parse(String(init?.body)))
+      return { ok: true, status: 200, json: async () => ({}), text: async () => '' } as Response
+    })
+    vi.stubGlobal('fetch', mockFetch)
+  })
+
+  it('sends the text delivery-name prompt when no flow id is configured', async () => {
+    vi.stubEnv('WHATSAPP_ADDRESS_FLOW_ID', '')
+    const logged: Array<{ kind: string; body: string }> = []
+    const sendAndLog = (kind: string, body: string) => {
+      logged.push({ kind, body })
+      return Promise.resolve({ ok: true })
+    }
+    const { sendAddressFlow } = await import('@/lib/whatsapp/order-flow')
+    await sendAddressFlow('9199623023480', sendAndLog)
+    expect(payloads).toHaveLength(0)
+    expect(logged.some((l) => l.kind === 'text' && l.body.includes('delivery name'))).toBe(true)
+  })
+
+  it('sends the flow interactive message when a flow id is configured', async () => {
+    vi.stubEnv('WHATSAPP_ADDRESS_FLOW_ID', 'flow_abc')
+    vi.stubGlobal('process', {
+      ...process,
+      env: { ...process.env, WHATSAPP_PHONE_NUMBER_ID: '1099569106574377', WHATSAPP_ACCESS_TOKEN: 'tok' },
+    })
+    const sendAndLog = vi.fn(() => Promise.resolve({ ok: true }))
+    const { sendAddressFlow } = await import('@/lib/whatsapp/order-flow')
+    await sendAddressFlow('9199623023480', sendAndLog)
+    expect(payloads).toHaveLength(1)
+    expect(payloads[0].type).toBe('interactive')
+    const params = (payloads[0].interactive as { action: { parameters: Record<string, unknown> } }).action.parameters
+    expect(params.flow_message_version).toBe('3')
+    expect(params.flow_id).toBe('flow_abc')
+  })
+
+  it('falls back to text when the flow send request fails', async () => {
+    vi.stubEnv('WHATSAPP_ADDRESS_FLOW_ID', 'flow_abc')
+    vi.stubGlobal('process', {
+      ...process,
+      env: { ...process.env, WHATSAPP_PHONE_NUMBER_ID: '1099569106574377', WHATSAPP_ACCESS_TOKEN: 'tok' },
+    })
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 400, text: async () => 'error' })))
+    const logged: Array<{ kind: string; body: string }> = []
+    const sendAndLog = (kind: string, body: string) => {
+      logged.push({ kind, body })
+      return Promise.resolve({ ok: true })
+    }
+    const { sendAddressFlow } = await import('@/lib/whatsapp/order-flow')
+    await sendAddressFlow('9199623023480', sendAndLog)
+    expect(logged.some((l) => l.kind === 'text' && l.body.includes('delivery name'))).toBe(true)
+  })
+})

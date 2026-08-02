@@ -16,6 +16,24 @@ export async function updatePaymentAttemptStatus(
   patch: Record<string, unknown>,
   reason: PaymentStatusUpdateReason
 ) {
+  const data = await tryUpdatePaymentAttemptStatus(attemptId, currentStatus, nextStatus, patch, reason)
+  if (!data) throw new Error('Payment attempt not found.')
+  return data
+}
+
+/**
+ * Atomic guarded transition. Only updates the row if it is still in
+ * `currentStatus` — if a concurrent webhook already changed it, this returns
+ * null instead of erroring. This is what makes concurrent duplicate capture
+ * events safe (only the first transition + notification happens).
+ */
+export async function tryUpdatePaymentAttemptStatus(
+  attemptId: string,
+  currentStatus: PaymentStatus,
+  nextStatus: PaymentStatus,
+  patch: Record<string, unknown>,
+  reason: PaymentStatusUpdateReason
+) {
   if (currentStatus !== nextStatus) {
     assertPaymentStatusTransition(currentStatus, nextStatus)
   }
@@ -25,11 +43,12 @@ export async function updatePaymentAttemptStatus(
     .from('payment_attempts')
     .update({ ...patch, status: nextStatus, updated_at: new Date().toISOString() })
     .eq('id', attemptId)
+    .eq('status', currentStatus)
     .select('*')
     .maybeSingle()
 
   if (error) throw new Error(error.message)
-  if (!data) throw new Error('Payment attempt not found.')
+  if (!data) return null
 
   await recordPaymentStatusHistory({
     paymentAttemptId: attemptId,
