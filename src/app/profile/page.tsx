@@ -23,6 +23,9 @@ type ProfileRow = {
   phone: string | null
   phone_number: string | null
   gst_number: string | null
+  phone_verified: boolean | null
+  whatsapp_opt_in: boolean | null
+  phone_canonical: string | null
 }
 
 type AddressRow = {
@@ -89,7 +92,7 @@ export default async function ProfilePage() {
 
   const { data: profileData } = await supabase
     .from('profiles')
-    .select('id, name, full_name, email, avatar_url, created_at, phone, phone_number, gst_number')
+    .select('id, name, full_name, email, avatar_url, created_at, phone, phone_number, gst_number, phone_verified, whatsapp_opt_in, phone_canonical')
     .eq('id', auth.user.id)
     .maybeSingle()
 
@@ -165,6 +168,9 @@ export default async function ProfilePage() {
     avatarUrl: profileRow?.avatar_url ?? auth.profile.avatarUrl,
     createdAt: auth.profile.createdAt,
     phone: profileRow?.phone ?? profileRow?.phone_number ?? '',
+    phoneVerified: profileRow?.phone_verified ?? false,
+    whatsappOptIn: profileRow?.whatsapp_opt_in ?? false,
+    phoneCanonical: profileRow?.phone_canonical ?? null,
     addressId: defaultAddress?.id ?? null,
     address: {
       addressLine1: defaultAddress?.address_line_1 ?? '',

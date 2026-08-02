@@ -22,7 +22,7 @@ let eqArgs: Array<{ col: string; val: unknown; table: string }>
 function makeBuilder(table: string): Builder {
   const b = function (): Builder {
     return b
-  } as Builder
+  } as unknown as Builder
   b._table = table
   b.update = vi.fn(() => b)
   b.insert = vi.fn(() => b)

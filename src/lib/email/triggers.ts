@@ -4,6 +4,7 @@ import type {
   WelcomeEmailPayload,
   EmailVerificationPayload,
   PasswordResetPayload,
+  AccountLinkConfirmationPayload,
   OrderPlacedCustomerPayload,
   OrderPlacedAdminPayload,
   ModelValidationPayload,
@@ -57,6 +58,23 @@ export async function sendPasswordReset(
     customerName,
     resetUrl,
   } as PasswordResetPayload)
+}
+
+export async function sendAccountLinkConfirmation(
+  userId: string,
+  email: string,
+  customerName: string,
+  confirmUrl: string,
+  orderCount: number
+) {
+  return enqueueEmail({
+    emailType: 'account_link_confirmation',
+    userId,
+    recipient: email,
+    customerName,
+    confirmUrl,
+    orderCount,
+  } as AccountLinkConfirmationPayload)
 }
 
 // ============================================================================

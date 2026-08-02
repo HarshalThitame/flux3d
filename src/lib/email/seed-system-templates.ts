@@ -55,7 +55,18 @@ const SKELETONS: Record<string, string> = {
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
   Didn't request this? You can safely ignore it. <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
-</p>`,
+</p>`.replace(/\s+$/g, ''),
+
+  account_link_confirmation: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
+<p style="font-size:15px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
+  We received a request to link your WhatsApp number to your Flux3D account. This will import {{order_count}} past guest order(s) placed via WhatsApp. This link is valid for 15 minutes.
+</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding:24px 0;">
+  <a href="{{confirm_url}}" style="background-color:#FF5C1A;color:#fff;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;">Confirm Account Link</a>
+</td></tr></table>
+<p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
+  If you didn't request this, you can safely ignore this email. Questions? <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+</p>`.replace(/\s+$/g, ''),
 
   order_placed_customer: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Thank you, {{customer_name}}!</p>
 <p style="font-size:15px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
@@ -271,6 +282,7 @@ export const SAMPLE_DATA: Record<string, Record<string, string>> = {
   welcome: { customer_name: 'Rutik' },
   email_verification: { customer_name: 'Rutik', verification_url: `${SITE_URL}/verify?token=abc123` },
   password_reset: { customer_name: 'Rutik', reset_url: `${SITE_URL}/reset?token=abc123` },
+  account_link_confirmation: { customer_name: 'Rutik', confirm_url: `${SITE_URL}/link/confirm?token=abc123`, order_count: '3' },
   order_placed_customer: {
     customer_name: 'Rutik',
     order_number: 'F3D-2026-001234',
@@ -449,6 +461,7 @@ export async function seedSystemTemplates() {
     { event_name: 'user_registered', template_id: templateMap.get('welcome')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
     { event_name: 'email_verification_requested', template_id: templateMap.get('email_verification')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
     { event_name: 'password_reset_requested', template_id: templateMap.get('password_reset')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
+    { event_name: 'account_linking_requested', template_id: templateMap.get('account_link_confirmation')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
     { event_name: 'order_created', template_id: templateMap.get('order_placed_customer')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
     { event_name: 'order_created', template_id: templateMap.get('order_placed_admin')!, target_audience: 'admin', delay_minutes: 0, priority: 1 },
     { event_name: 'model_validation_passed', template_id: templateMap.get('model_validation_pass')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },

@@ -13,6 +13,7 @@ const envSchema = z.object({
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),
   WHATSAPP_WEBHOOK_SECRET: z.string().optional(),
+  WHATSAPP_AUTH_TEMPLATE_NAME: z.string().optional(),
 
   // WhatsApp ordering
   WHATSAPP_ORDERING_ENABLED: z.enum(['true', 'false']).default('true'),

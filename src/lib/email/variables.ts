@@ -27,7 +27,12 @@ export const KNOWN_VARIABLES: Record<string, EmailVariableMeta[]> = {
   ],
   password_reset: [
     { name: 'customer_name', description: 'Customer name', example: 'Rutik' },
-    { name: 'reset_url', description: 'Password reset link (valid 1 hour)', example: 'https://flux3d.in/reset?token=abc' },
+    { name: 'reset_url', description: 'Password reset link (valid 1 hour)', example: 'https://flux3d.in/reset?token=abc123' },
+  ],
+  account_link_confirmation: [
+    { name: 'customer_name', description: 'Customer name', example: 'Rutik' },
+    { name: 'confirm_url', description: 'One-time confirmation link (valid 15 min)', example: 'https://flux3d.in/link/confirm?token=abc123' },
+    { name: 'order_count', description: 'Number of guest orders that will be imported', example: '3' },
   ],
   order_placed_customer: [
     { name: 'customer_name', description: 'Customer name', example: 'Rutik' },
@@ -110,6 +115,7 @@ export const EMAIL_TYPE_META: Record<string, { category: string; description: st
   welcome: { category: 'transactional', description: 'Sent when a new user signs up', subject: 'Welcome to Flux3D!' },
   email_verification: { category: 'transactional', description: 'Sent after sign-up to verify email', subject: 'Verify your email address' },
   password_reset: { category: 'transactional', description: 'Sent when user requests password reset', subject: 'Reset your Flux3D password' },
+  account_link_confirmation: { category: 'transactional', description: 'Sent to confirm a WhatsApp/website account link', subject: 'Confirm your WhatsApp account link' },
   order_placed_customer: { category: 'transactional', description: 'Order confirmation sent to customer', subject: 'Order {{order_number}} confirmed — Flux3D' },
   order_placed_admin: { category: 'admin', description: 'New order alert sent to admin team', subject: '[Admin] New order {{order_number}}' },
   model_validation_pass: { category: 'transactional', description: '3D model passed validation', subject: 'Your 3D model for order {{order_number}} passed validation' },
