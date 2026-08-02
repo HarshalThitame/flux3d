@@ -20,6 +20,13 @@ export async function createLinkRequest(
   const ttlMinutes = input.ttlMinutes ?? DEFAULT_TTL_MINUTES
   const expiresAt = new Date(Date.now() + ttlMinutes * 60_000).toISOString()
 
+  // Atomic: delete any stale unconfirmed request for this phone, then insert
+  await db
+    .from('link_requests')
+    .delete()
+    .eq('target_phone', phone)
+    .is('confirmed_at', null)
+
   const { data, error } = await db
     .from('link_requests')
     .insert({
