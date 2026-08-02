@@ -27,7 +27,8 @@ export async function handleAccountLinkWhatsApp({
   supabase,
   userId,
 }: AccountLinkFlowInput) {
-  const canonicalPhone = from.replace(/[^0-9]/g, '').slice(-10)
+  // Canonical phone: last 10 digits only
+  const phone10 = from.replace(/[^0-9]/g, '').slice(-10)
 
   // --- Turn 1: detect link intent, ask for email ---
   const linkKeywords = /(link|connect|account|save to account|connect account)/i
@@ -47,7 +48,7 @@ export async function handleAccountLinkWhatsApp({
   }
 
   const email = text.trim().toLowerCase()
-  const phone = canonicalPhone
+  const phone = phone10
 
   // Look up the profile by email (admin lookup — enumeration-safe)
   const { data: profile } = await supabase
@@ -90,11 +91,20 @@ export async function handleAccountLinkWhatsApp({
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'
   const confirmUrl = `${siteUrl}/link/confirm?token=${token}`
 
-  // Count past orders for the phone (preview)
-  const { count: orderCount } = await supabase
+  // Count past orders for the phone from both tables (not yet owned by this user)
+  const { count: shelfCount } = await supabase
     .from('shelf_orders')
     .select('id', { count: 'exact', head: true })
-    .eq('user_id', profile.id)
+    .neq('user_id', profile.id)
+    .filter('shipping_address->>phone', 'like', `%${phone10}`)
+
+  const { count: customCount } = await supabase
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .neq('user_id', profile.id)
+    .filter('phone', 'like', `%${phone10}`)
+
+  const totalPastOrders = (shelfCount ?? 0) + (customCount ?? 0)
 
   try {
     await sendAccountLinkConfirmation(
@@ -102,7 +112,8 @@ export async function handleAccountLinkWhatsApp({
       email,
       'there',
       confirmUrl,
-      orderCount ?? 0
+      totalPastOrders,
+      from
     )
   } catch (emailErr) {
     console.error('[account-link] failed to send email:', emailErr)

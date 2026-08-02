@@ -33,6 +33,7 @@ export const KNOWN_VARIABLES: Record<string, EmailVariableMeta[]> = {
     { name: 'customer_name', description: 'Customer name', example: 'Rutik' },
     { name: 'confirm_url', description: 'One-time confirmation link (valid 15 min)', example: 'https://flux3d.in/link/confirm?token=abc123' },
     { name: 'order_count', description: 'Number of guest orders that will be imported', example: '3' },
+    { name: 'phone', description: 'The WhatsApp phone number being linked', example: '+91 98765 43210' },
   ],
   order_placed_customer: [
     { name: 'customer_name', description: 'Customer name', example: 'Rutik' },

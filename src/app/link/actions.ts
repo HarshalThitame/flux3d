@@ -248,12 +248,27 @@ export async function linkWhatsappAction(
   const customerName = profile.data?.full_name ?? 'there'
   const confirmUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'}/link/confirm?token=${result.token}`
 
+  // Count past orders matching this phone (not yet owned by user)
+  const last10 = canonicalPhone(phone).slice(-10)
+  const { count: shelfCount } = await supabase
+    .from('shelf_orders')
+    .select('id', { count: 'exact', head: true })
+    .neq('user_id', auth.user.id)
+    .filter('shipping_address->>phone', 'like', `%${last10}`)
+  const { count: customCount } = await supabase
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .neq('user_id', auth.user.id)
+    .filter('phone', 'like', `%${last10}`)
+  const totalPastOrders = (shelfCount ?? 0) + (customCount ?? 0)
+
   await sendAccountLinkConfirmation(
     auth.user.id,
     email ?? '',
     customerName,
     confirmUrl,
-    0
+    totalPastOrders,
+    phone
   )
 
   if (whatsappOptIn) {
@@ -555,12 +570,27 @@ export async function changeWhatsAppAction(
   const customerName = profileData.data?.full_name ?? 'there'
   const confirmUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'}/link/confirm?token=${result.token}`
 
+  // Count past orders matching this phone (not yet owned by user)
+  const last10c = canonicalPhone(phone).slice(-10)
+  const { count: shelfCountC } = await supabase
+    .from('shelf_orders')
+    .select('id', { count: 'exact', head: true })
+    .neq('user_id', auth.user.id)
+    .filter('shipping_address->>phone', 'like', `%${last10c}`)
+  const { count: customCountC } = await supabase
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .neq('user_id', auth.user.id)
+    .filter('phone', 'like', `%${last10c}`)
+  const totalPastOrdersC = (shelfCountC ?? 0) + (customCountC ?? 0)
+
   await sendAccountLinkConfirmation(
     auth.user.id,
     email ?? '',
     customerName,
     confirmUrl,
-    0
+    totalPastOrdersC,
+    phone
   )
 
   if (whatsappOptIn) {

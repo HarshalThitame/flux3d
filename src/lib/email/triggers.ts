@@ -65,7 +65,8 @@ export async function sendAccountLinkConfirmation(
   email: string,
   customerName: string,
   confirmUrl: string,
-  orderCount: number
+  orderCount: number,
+  phone: string
 ) {
   return enqueueEmail({
     emailType: 'account_link_confirmation',
@@ -74,6 +75,7 @@ export async function sendAccountLinkConfirmation(
     customerName,
     confirmUrl,
     orderCount,
+    phone,
   } as AccountLinkConfirmationPayload)
 }
 
