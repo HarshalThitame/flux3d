@@ -15,6 +15,7 @@ import { validatePricesInResponse, type ValidationResult } from "@/lib/whatsapp-
 import { classifyIntent, type ClassifiedIntent } from "@/lib/whatsapp-intent-classifier";
 import { handleOrderFlow, type OrderInteraction, ORDERING_ENABLED } from "@/lib/whatsapp/order-flow";
 import { parseWhatsAppMessage } from "@/lib/whatsapp/message-parser";
+import { getOrderSession } from "@/lib/whatsapp/session";
 import { getQStashClient } from "@/lib/email/qstash";
 
 let cachedServiceClient: any = null;
@@ -1065,28 +1066,31 @@ export default async function handler(
       res.status(200).json({ success: true, queued })
 
       // Send a quick acknowledgment to verify the WhatsApp API works
-      // (skip for interactive/product messages — the ordering flow replies immediately)
+      // (skip while an ordering session is active — the flow replies with real prompts)
       if (!interaction) {
-        try {
-          const ackController = new AbortController();
-          const ackTimeout = setTimeout(() => ackController.abort(), 10000);
-          await fetch(`https://graph.facebook.com/${WHATSAPP_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              messaging_product: 'whatsapp',
-              to: from,
-              type: 'text',
-              text: { body: `👍 Got your message! Processing...` },
-            }),
-            signal: ackController.signal,
-          }).finally(() => clearTimeout(ackTimeout));
-          console.log("[whatsapp] ACK sent to", from?.slice(-4));
-        } catch (ackError) {
-          console.error("[whatsapp] ACK failed:", ackError);
+        const hasOrderSession = await getOrderSession(from ?? '').catch(() => null)
+        if (!hasOrderSession) {
+          try {
+            const ackController = new AbortController();
+            const ackTimeout = setTimeout(() => ackController.abort(), 10000);
+            await fetch(`https://graph.facebook.com/${WHATSAPP_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                messaging_product: 'whatsapp',
+                to: from,
+                type: 'text',
+                text: { body: `👍 Got your message! Processing...` },
+              }),
+              signal: ackController.signal,
+            }).finally(() => clearTimeout(ackTimeout));
+            console.log("[whatsapp] ACK sent to", from?.slice(-4));
+          } catch (ackError) {
+            console.error("[whatsapp] ACK failed:", ackError);
+          }
         }
       }
 
