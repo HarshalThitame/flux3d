@@ -19,6 +19,7 @@ import {
   sendWhatsAppList,
   sendWhatsAppText,
   sendWhatsAppPaymentLink,
+  sendWhatsAppFlow,
   mapCatalogItemToSku,
 } from '@/lib/whatsapp/messages'
 import { createWhatsappPaymentLink } from '@/lib/whatsapp/payment'
@@ -28,6 +29,7 @@ import {
   validateCity,
   validateState,
   validatePincode,
+  type FieldValidation,
 } from '@/lib/whatsapp/address-validator'
 
 async function withRetry<T>(
@@ -62,6 +64,8 @@ async function withRetry<T>(
 
 export const ORDERING_ENABLED = (process.env.WHATSAPP_ORDERING_ENABLED?.trim() || 'true') !== 'false'
 
+export const ADDRESS_FLOW_CTA = 'Fill Address'
+
 export type OrderInteraction =
   | {
       kind: 'list' | 'button' | 'product'
@@ -71,6 +75,10 @@ export type OrderInteraction =
   | {
       kind: 'order'
       items: Array<{ productRetailerId: string; quantity: number }>
+    }
+  | {
+      kind: 'flow_response'
+      data: Record<string, unknown>
     }
 
 type ProductRow = Record<string, unknown>
@@ -143,7 +151,7 @@ export function isBuyIntent(text: string): boolean {
 }
 
 export function isCancelIntent(text: string, interaction: OrderInteraction | null): boolean {
-  if (interaction && interaction.kind !== 'order' && interaction.id === 'cancel') return true
+  if (interaction && interaction.kind !== 'order' && interaction.kind !== 'flow_response' && interaction.id === 'cancel') return true
   return /^(cancel|cancel order|never mind|forget it|stop)$/i.test(text.trim())
 }
 
@@ -400,7 +408,7 @@ export async function handleOrderFlow(params: {
       return { handled: true }
     }
 
-    if (isBuyIntent(incomingText) || interaction?.id === 'order:start') {
+    if (isBuyIntent(incomingText) || (interaction && interaction.kind !== 'flow_response' && interaction.id === 'order:start')) {
       await showBrowse(phone, userId, sendAndLog)
       return { handled: true }
     }
@@ -448,31 +456,72 @@ export async function handleOrderFlow(params: {
     }
 
     case 'quantity': {
-      const qty = interaction && interaction.id.startsWith('qty:')
-        ? parseQuantity(interaction.id.slice('qty:'.length))
-        : parseQuantity(incomingText)
+      const qty =
+        interaction && interaction.kind !== 'flow_response' && interaction.id.startsWith('qty:')
+          ? parseQuantity(interaction.id.slice('qty:'.length))
+          : parseQuantity(incomingText)
       if (qty == null) {
         await sendAndLog('text', 'Please enter a number (1 to 99) or tap a quantity button.')
         return { handled: true }
       }
       state.quantity = qty
       state.address = { ...(state.address ?? {}), phone: phoneToTenDigit(phone) }
-      await saveOrderSession(phone, 'address_name', state)
-      await sendAndLog('text', `Great, ${qty} x ${state.productName ?? 'item'} (${state.variantLabel ?? 'Standard'}) = ${money(roundMoney((state.unitPrice ?? 0) * qty))} before shipping.\n\nPlease share the **delivery name** (full name of the person receiving the order):`)
+      await saveOrderSession(phone, 'address_flow', state)
+      await sendAddressFlow(phone, sendAndLog)
+      await sendAndLog('text', `Great, ${qty} x ${state.productName ?? 'item'} (${state.variantLabel ?? 'Standard'}) = ${money(roundMoney((state.unitPrice ?? 0) * qty))} before shipping.`)
+      return { handled: true }
+    }
+
+    case 'address_flow': {
+      if (interaction?.kind === 'flow_response') {
+        const data = interaction.data
+        const fields: Array<{ valid: FieldValidation; label: string; value: string }> = [
+          { label: 'full name', value: typeof data.full_name === 'string' ? data.full_name : '', valid: validateName(typeof data.full_name === 'string' ? data.full_name : '') },
+          { label: 'address (house no / street / area)', value: typeof data.line1 === 'string' ? data.line1 : '', valid: validateLine1(typeof data.line1 === 'string' ? data.line1 : '') },
+          { label: 'city', value: typeof data.city === 'string' ? data.city : '', valid: validateCity(typeof data.city === 'string' ? data.city : '') },
+          { label: 'state', value: typeof data.state === 'string' ? data.state : '', valid: validateState(typeof data.state === 'string' ? data.state : '') },
+          { label: 'pincode', value: typeof data.pincode === 'string' ? data.pincode : '', valid: validatePincode(typeof data.pincode === 'string' ? data.pincode : '') },
+        ]
+        const invalid = fields.find((f) => !f.valid.valid)
+        if (invalid) {
+          await sendAndLog('text', invalid.valid.error ?? `Please re-check the ${invalid.label}.`)
+          await sendAddressFlow(phone, sendAndLog)
+          return { handled: true }
+        }
+        state.address = {
+          ...(state.address ?? {}),
+          name: (typeof data.full_name === 'string' ? data.full_name : '').trim().slice(0, 80),
+          line1: (typeof data.line1 === 'string' ? data.line1 : '').trim().slice(0, 160),
+          line2: (typeof data.line2 === 'string' ? data.line2.trim() : '').slice(0, 160) || undefined,
+          city: (typeof data.city === 'string' ? data.city : '').trim().slice(0, 60),
+          state: (typeof data.state === 'string' ? data.state : '').trim().slice(0, 60),
+          pincode: (typeof data.pincode === 'string' ? data.pincode : '').replace(/\D/g, '').slice(0, 6),
+        }
+        const availability = await checkPincodeAvailability(state)
+        if (!availability.available) {
+          await sendAndLog('text', availability.reason)
+          return { handled: true }
+        }
+        await saveOrderSession(phone, 'confirm', state)
+        await showConfirm(phone, userId, state, sendAndLog)
+        return { handled: true }
+      }
+      // Text fallback: if the customer replies with text instead of opening the flow.
+      if (incomingText) {
+        await saveOrderSession(phone, 'address_name', state)
+        await handleAddressName(phone, state, incomingText, sendAndLog)
+        return { handled: true }
+      }
+      await sendAddressFlow(phone, sendAndLog)
       return { handled: true }
     }
 
     case 'address_name': {
-      if (!incomingText) return { handled: true }
-      const validation = validateName(incomingText)
-      if (!validation.valid) {
-        await sendAndLog('text', validation.error!)
+      if (!incomingText) {
+        await sendAndLog('text', 'Please share the **delivery name** (full name of the person receiving the order):')
         return { handled: true }
       }
-      const name = incomingText.slice(0, 80).trim()
-      state.address = { ...(state.address ?? {}), name }
-      await saveOrderSession(phone, 'address_line1', state)
-      await sendAndLog('text', `Thanks, ${name.slice(0, 40)}.\n\nNow your **full delivery address (house no., street, area)**:`)
+      await handleAddressName(phone, state, incomingText, sendAndLog)
       return { handled: true }
     }
 
@@ -748,16 +797,15 @@ async function handleCartOrder(
     ...resolved.map((item) => `• ${item.productName} (${item.variantLabel}) × ${item.quantity} = ${money(roundMoney(item.unitPrice * item.quantity))}`),
     '',
     `Subtotal: ${money(subtotal)}`,
-    '',
-    'Please share the **delivery name** (full name of the person receiving the order):',
   ]
 
   const state: OrderState = {
     items: resolved,
     address: { phone: phoneToTenDigit(phone) },
   }
-  await saveOrderSession(phone, 'address_name', state)
+  await saveOrderSession(phone, 'address_flow', state)
   await sendAndLog('text', lines.join('\n'))
+  await sendAddressFlow(phone, sendAndLog)
 }
 
 async function showBrowse(
@@ -912,6 +960,47 @@ async function askQuantity(
     automated: true,
     triggerEvent: 'order_flow',
   })
+}
+
+async function handleAddressName(
+  phone: string,
+  state: OrderState,
+  incomingText: string,
+  sendAndLog: (kind: 'text' | 'list' | 'buttons', body: string, extra?: Record<string, unknown>) => Promise<unknown>,
+) {
+  const validation = validateName(incomingText)
+  if (!validation.valid) {
+    await sendAndLog('text', validation.error!)
+    return
+  }
+  const name = incomingText.slice(0, 80).trim()
+  state.address = { ...(state.address ?? {}), name }
+  await saveOrderSession(phone, 'address_line1', state)
+  await sendAndLog('text', `Thanks, ${name.slice(0, 40)}.\n\nNow your **full delivery address (house no., street, area)**:`)
+}
+
+/**
+ * Sends the WhatsApp Flow address form. Falls back to a plain text prompt
+ * if no flow is configured or the send fails.
+ */
+export async function sendAddressFlow(
+  phone: string,
+  sendAndLog: (kind: 'text' | 'list' | 'buttons', body: string, extra?: Record<string, unknown>) => Promise<unknown>,
+) {
+  const flowId = process.env.WHATSAPP_ADDRESS_FLOW_ID?.trim() || ''
+  if (!flowId) {
+    await sendAndLog('text', 'Please share the **delivery name** (full name of the person receiving the order):')
+    return
+  }
+  const result = await sendWhatsAppFlow(phone, {
+    flowId,
+    flowToken: crypto.randomUUID(),
+    cta: ADDRESS_FLOW_CTA,
+    body: 'Tap below to fill in your delivery address.',
+  })
+  if (!result.ok) {
+    await sendAndLog('text', 'Please share the **delivery name** (full name of the person receiving the order):')
+  }
 }
 
 async function showConfirm(

@@ -36,6 +36,7 @@ import { isQuoteApproved } from '@/lib/quote/approval'
 import {
   updateOrderPaymentStatus,
   updatePaymentAttemptStatus,
+  tryUpdatePaymentAttemptStatus,
   type PaymentStatusUpdateReason,
 } from '@/lib/payments/state'
 import {
@@ -753,7 +754,7 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
   }
 
   if (eventName === 'payment.failed') {
-    await updatePaymentAttemptStatus(
+    const updatedRow = await tryUpdatePaymentAttemptStatus(
       attempt.id,
       attempt.status,
       'failed',
@@ -769,6 +770,18 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
       },
       systemReason(attempt.customer_id, `Webhook ${eventName}`)
     )
+
+    if (!updatedRow) {
+      await insertPaymentAuditLog({
+        actor_role: 'system',
+        action: 'payment_transition_skipped_duplicate',
+        entity_type: 'payment_attempt',
+        entity_id: attempt.id,
+        previous_state: { status: attempt.status },
+        new_state: { status: 'failed', skipped: true, reason: 'concurrent transition won' },
+      })
+      return { handled: true, processingStatus: 'processed' as const }
+    }
 
     await updateOrderPaymentStatus({
       type: attempt.internal_order_type,
@@ -805,7 +818,7 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
 
     const nextStatus: PaymentStatus = captured ? 'paid' : authorized ? 'authorized' : 'pending'
 
-    await updatePaymentAttemptStatus(
+    const updatedRow = await tryUpdatePaymentAttemptStatus(
       attempt.id,
       attempt.status,
       nextStatus,
@@ -821,6 +834,20 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
       },
       systemReason(attempt.customer_id, `Webhook ${eventName}`)
     )
+
+    // If a concurrent event already transitioned this attempt, skip — the
+    // first (winner) will have notified already. (Atomic guard.)
+    if (!updatedRow) {
+      await insertPaymentAuditLog({
+        actor_role: 'system',
+        action: 'payment_transition_skipped_duplicate',
+        entity_type: 'payment_attempt',
+        entity_id: attempt.id,
+        previous_state: { status: attempt.status },
+        new_state: { status: nextStatus, skipped: true, reason: 'concurrent transition won' },
+      })
+      return { handled: true, processingStatus: 'processed' as const }
+    }
 
     await updateOrderPaymentStatus({
       type: attempt.internal_order_type,
@@ -966,11 +993,23 @@ async function processRefundEvent(eventName: string, payload: Record<string, unk
   return { handled: true, processingStatus: 'processed' as const }
 }
 
-export async function processRazorpayWebhook(params: {
+export type WebhookIngestResult = {
+  acknowledged: boolean
+  duplicate: boolean
+  eventId: string | null
+}
+
+/**
+ * Fast-path: verify signature, persist + de-dupe the event record, and return
+ * immediately so the webhook endpoint can respond 200 quickly. The heavy
+ * processing runs later in the worker (processWebhookEventById), optionally
+ * enqueued via QStash.
+ */
+export async function ingestRazorpayWebhook(params: {
   rawBody: string
   signature: string
   eventId: string
-}) {
+}): Promise<WebhookIngestResult> {
   const payload = JSON.parse(params.rawBody) as Record<string, unknown>
   const eventName = normalizeText(payload.event)
   if (!eventName) {
@@ -982,12 +1021,15 @@ export async function processRazorpayWebhook(params: {
     throw new Error('Invalid webhook signature.')
   }
 
+  const providerOrderId = normalizeText(isRecord(payload.payload) ? unwrapRazorpayEntity(payload.payload.order).id : null) || null
+  const providerPaymentId = normalizeText(isRecord(payload.payload) ? unwrapRazorpayEntity(payload.payload.payment).id : null) || null
+
   const existingEvent = await insertPaymentEvent({
     provider: 'razorpay',
     provider_event_id: params.eventId,
     event_type: eventName,
-    provider_order_id: normalizeText(isRecord(payload.payload) ? unwrapRazorpayEntity(payload.payload.order).id : null) || null,
-    provider_payment_id: normalizeText(isRecord(payload.payload) ? unwrapRazorpayEntity(payload.payload.payment).id : null) || null,
+    provider_order_id: providerOrderId,
+    provider_payment_id: providerPaymentId,
     signature_verified: true,
     processing_status: 'received',
     retry_count: 0,
@@ -998,72 +1040,108 @@ export async function processRazorpayWebhook(params: {
     if (!message.toLowerCase().includes('duplicate key')) {
       throw error
     }
-    return null
+    // Already ingested — load the stored one so the caller can (re)process if needed.
+    const stored = await fetchPaymentEvent('razorpay', params.eventId)
+    return stored
   })
 
   if (!existingEvent) {
+    return { acknowledged: true, duplicate: true, eventId: null }
+  }
+
+  return { acknowledged: true, duplicate: false, eventId: existingEvent.id }
+}
+
+/**
+ * Process an already-ingested webhook event (loaded by id). Runs the capture-
+ * type de-dupe check and lifecycle handling. Used by the QStash worker.
+ */
+export async function processWebhookEventById(eventId: string): Promise<{ acknowledged: boolean; duplicate: boolean }> {
+  const event = await fetchPaymentEvent('razorpay', eventId)
+  if (!event) {
+    throw new Error('Webhook event not found.')
+  }
+  if (event.processing_status === 'processed') {
     return { acknowledged: true, duplicate: true }
   }
 
-  // Razorpay fires payment.authorized, payment.captured, order.paid and
-  // payment_link.paid for the same payment. Only the first capture-type event
-  // should transition the attempt and notify — the rest are duplicates.
-  const captureEventTypes = ['payment.captured', 'order.paid', 'payment_link.paid']
-  const providerPaymentId = normalizeText(existingEvent.provider_payment_id)
-  if (captureEventTypes.includes(eventName) && providerPaymentId) {
-    const sibling = await fetchCaptureEventForPayment(providerPaymentId, existingEvent.id, captureEventTypes)
-    if (sibling) {
-      await updatePaymentEvent(existingEvent.id, {
-        processing_status: 'processed',
-        processed_at: new Date().toISOString(),
-        processing_error: null,
-        retry_count: Number(existingEvent.retry_count ?? 0),
-      })
-      await insertPaymentAuditLog({
-        actor_role: 'system',
-        action: 'payment_webhook_processed',
-        entity_type: 'payment_event',
-        entity_id: existingEvent.id,
-        new_state: { event: eventName, duplicate_of: sibling.id, provider_event_id: params.eventId },
-      })
-      return { acknowledged: true, duplicate: true }
-    }
-  }
+  const eventName = event.event_type
+  const payload = rebuildWebhookPayload(eventName, event.sanitized_payload)
 
-  await updatePaymentEvent(existingEvent.id, { processing_status: 'processing' })
+  await updatePaymentEvent(event.id, { processing_status: 'processing', processing_error: null })
 
   try {
+    // Razorpay fires payment.authorized, payment.captured, order.paid and
+    // payment_link.paid for the same payment. Only the first capture-type
+    // event should transition the attempt and notify — the rest are duplicates.
+    const captureEventTypes = ['payment.captured', 'order.paid', 'payment_link.paid']
+    const providerPaymentId = normalizeText(event.provider_payment_id)
+    if (captureEventTypes.includes(eventName) && providerPaymentId) {
+      const sibling = await fetchCaptureEventForPayment(providerPaymentId, event.id, captureEventTypes)
+      if (sibling) {
+        await updatePaymentEvent(event.id, {
+          processing_status: 'processed',
+          processed_at: new Date().toISOString(),
+          processing_error: null,
+        })
+        await insertPaymentAuditLog({
+          actor_role: 'system',
+          action: 'payment_webhook_processed',
+          entity_type: 'payment_event',
+          entity_id: event.id,
+          new_state: { event: eventName, duplicate_of: sibling.id },
+        })
+        return { acknowledged: true, duplicate: true }
+      }
+    }
+
     if (eventName.startsWith('refund.')) {
       await processRefundEvent(eventName, payload)
     } else {
       await processPaymentLifecycleEvent(eventName, payload)
     }
 
-    await updatePaymentEvent(existingEvent.id, {
+    await updatePaymentEvent(event.id, {
       processing_status: 'processed',
       processed_at: new Date().toISOString(),
       processing_error: null,
-      retry_count: Number(existingEvent.retry_count ?? 0),
     })
 
     await insertPaymentAuditLog({
       actor_role: 'system',
       action: 'payment_webhook_processed',
       entity_type: 'payment_event',
-      entity_id: existingEvent.id,
-      new_state: { event: eventName, provider_event_id: params.eventId },
+      entity_id: event.id,
+      new_state: { event: eventName },
     })
 
     return { acknowledged: true, duplicate: false }
   } catch (error) {
-    await updatePaymentEvent(existingEvent.id, {
+    await updatePaymentEvent(event.id, {
       processing_status: 'failed',
       processed_at: null,
       processing_error: error instanceof Error ? error.message.slice(0, 500) : 'Webhook processing failed.',
-      retry_count: Number(existingEvent.retry_count ?? 0) + 1,
+      retry_count: Number(event.retry_count ?? 0) + 1,
     })
     throw error
   }
+}
+
+/**
+ * Backwards-compatible synchronous entry point: ingest + process inline.
+ * Still used by tests and the admin re-process flow.
+ */
+export async function processRazorpayWebhook(params: {
+  rawBody: string
+  signature: string
+  eventId: string
+}) {
+  const ingested = await ingestRazorpayWebhook(params)
+  if (ingested.duplicate || !ingested.eventId) {
+    return { acknowledged: true, duplicate: true }
+  }
+  const outcome = await processWebhookEventById(ingested.eventId)
+  return { acknowledged: outcome.acknowledged, duplicate: outcome.duplicate }
 }
 
 export async function initiateRefund(params: {

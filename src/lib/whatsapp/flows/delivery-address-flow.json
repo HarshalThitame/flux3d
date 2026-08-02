@@ -1,0 +1,121 @@
+{
+  "version": "5.1",
+  "screens": [
+    {
+      "id": "ADDRESS_FORM",
+      "title": "Delivery Address",
+      "terminal": true,
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "Please fill in your delivery address"
+          },
+          {
+            "type": "TextInput",
+            "label": "Full name",
+            "name": "full_name",
+            "required": true,
+            "input-type": "text",
+            "max-chars": 80,
+            "helper-text": "As it should appear on the parcel"
+          },
+          {
+            "type": "TextInput",
+            "label": "House no / Street / Area",
+            "name": "line1",
+            "required": true,
+            "input-type": "text",
+            "max-chars": 160
+          },
+          {
+            "type": "TextInput",
+            "label": "Apartment / Floor / Landmark (optional)",
+            "name": "line2",
+            "required": false,
+            "input-type": "text",
+            "max-chars": 160
+          },
+          {
+            "type": "TextInput",
+            "label": "City",
+            "name": "city",
+            "required": true,
+            "input-type": "text",
+            "max-chars": 60
+          },
+          {
+            "type": "Dropdown",
+            "label": "State",
+            "name": "state",
+            "required": true,
+            "data-source": [
+              { "id": "andhra pradesh", "title": "Andhra Pradesh" },
+              { "id": "arunachal pradesh", "title": "Arunachal Pradesh" },
+              { "id": "assam", "title": "Assam" },
+              { "id": "bihar", "title": "Bihar" },
+              { "id": "chhattisgarh", "title": "Chhattisgarh" },
+              { "id": "goa", "title": "Goa" },
+              { "id": "gujarat", "title": "Gujarat" },
+              { "id": "haryana", "title": "Haryana" },
+              { "id": "himachal pradesh", "title": "Himachal Pradesh" },
+              { "id": "jharkhand", "title": "Jharkhand" },
+              { "id": "karnataka", "title": "Karnataka" },
+              { "id": "kerala", "title": "Kerala" },
+              { "id": "madhya pradesh", "title": "Madhya Pradesh" },
+              { "id": "maharashtra", "title": "Maharashtra" },
+              { "id": "manipur", "title": "Manipur" },
+              { "id": "meghalaya", "title": "Meghalaya" },
+              { "id": "mizoram", "title": "Mizoram" },
+              { "id": "nagaland", "title": "Nagaland" },
+              { "id": "odisha", "title": "Odisha" },
+              { "id": "punjab", "title": "Punjab" },
+              { "id": "rajasthan", "title": "Rajasthan" },
+              { "id": "sikkim", "title": "Sikkim" },
+              { "id": "tamil nadu", "title": "Tamil Nadu" },
+              { "id": "telangana", "title": "Telangana" },
+              { "id": "tripura", "title": "Tripura" },
+              { "id": "uttar pradesh", "title": "Uttar Pradesh" },
+              { "id": "uttarakhand", "title": "Uttarakhand" },
+              { "id": "west bengal", "title": "West Bengal" },
+              { "id": "delhi", "title": "Delhi" },
+              { "id": "jammu and kashmir", "title": "Jammu and Kashmir" },
+              { "id": "ladakh", "title": "Ladakh" },
+              { "id": "chandigarh", "title": "Chandigarh" },
+              { "id": "puducherry", "title": "Puducherry" },
+              { "id": "andaman and nicobar islands", "title": "Andaman and Nicobar Islands" },
+              { "id": "dadra and nagar haveli", "title": "Dadra and Nagar Haveli" },
+              { "id": "daman and diu", "title": "Daman and Diu" },
+              { "id": "lakshadweep", "title": "Lakshadweep" }
+            ]
+          },
+          {
+            "type": "TextInput",
+            "label": "Pincode",
+            "name": "pincode",
+            "required": true,
+            "input-type": "passcode",
+            "max-chars": 6,
+            "helper-text": "6-digit Indian pincode"
+          },
+          {
+            "type": "Footer",
+            "label": "Submit",
+            "on-click-action": {
+              "name": "complete",
+              "payload": {
+                "full_name": "{{full_name}}",
+                "line1": "{{line1}}",
+                "line2": "{{line2}}",
+                "city": "{{city}}",
+                "state": "{{state}}",
+                "pincode": "{{pincode}}"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
