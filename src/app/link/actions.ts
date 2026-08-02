@@ -171,6 +171,13 @@ export async function linkWhatsappAction(
     return { error: 'This WhatsApp number is already linked to a different account.' }
   }
 
+  // Clean up any stale unconfirmed requests for this phone (handles retries, different users, etc.)
+  await supabase
+    .from('link_requests')
+    .delete()
+    .eq('target_phone', phone)
+    .is('confirmed_at', null)
+
   const env = getEnv()
   const useOtp = whatsappOptIn && !!env.WHATSAPP_AUTH_TEMPLATE_NAME
 
@@ -470,6 +477,13 @@ export async function changeWhatsAppAction(
   if (phoneOwner) {
     return { error: 'This WhatsApp number is already linked to a different account.' }
   }
+
+  // Clean up any stale unconfirmed requests for this phone (handles retries, different users, etc.)
+  await supabase
+    .from('link_requests')
+    .delete()
+    .eq('target_phone', phone)
+    .is('confirmed_at', null)
 
   const env = getEnv()
   const useOtp = whatsappOptIn && !!env.WHATSAPP_AUTH_TEMPLATE_NAME
