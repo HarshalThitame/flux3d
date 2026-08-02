@@ -4,28 +4,39 @@ import crypto from 'crypto'
  * Verify Resend webhook signature.
  *
  * Resend uses the Svix webhook standard:
+ *   - `svix-id` header: unique message ID
  *   - `svix-timestamp` header: Unix timestamp (seconds since epoch)
  *   - `svix-signature` header: `v1,<base64_hmac> v1,<base64_hmac>` (space-separated for key rotation)
  *
- * The signed payload is: `<timestamp>.<rawBody>`
- * HMAC-SHA256 is computed using the webhook secret.
+ * The signed payload is: `<svix-id>.<svix-timestamp>.<rawBody>`
+ * HMAC-SHA256 is computed using the base64-decoded webhook secret (stripping `whsec_` prefix).
  *
  * @param rawBody          — the raw request body as a string or Buffer
  * @param signatureHeader  — value of the `svix-signature` header
  * @param timestampHeader  — value of the `svix-timestamp` header (Unix timestamp)
- * @param secret           — the Resend webhook secret
+ * @param svixIdHeader     — value of the `svix-id` header
+ * @param secret           — the Resend webhook secret (with or without `whsec_` prefix)
  * @returns boolean        — true if any signature matches
  */
 export function verifyResendWebhookSignature(
   rawBody: string | Buffer,
   signatureHeader: string | null,
   timestampHeader: string | null,
+  svixIdHeader: string | null,
   secret: string
 ): boolean {
   if (!signatureHeader || !secret) return false
 
+  // Strip `whsec_` prefix and base64-decode the secret
+  let signingSecret = secret
+  if (secret.startsWith('whsec_')) {
+    signingSecret = secret.slice(6)
+  }
+  const secretBuffer = Buffer.from(signingSecret, 'base64')
+
   const timestamp = String(timestampHeader ?? '')
-  const payloadToSign = timestamp ? `${timestamp}.${rawBody}` : `${rawBody}`
+  const msgId = String(svixIdHeader ?? '')
+  const payloadToSign = `${msgId}.${timestamp}.${rawBody}`
 
   const signatures = signatureHeader.split(' ')
   for (const sig of signatures) {
@@ -36,7 +47,11 @@ export function verifyResendWebhookSignature(
     if (version !== 'v1') continue
 
     const signature = parts[1]
-    const expected = crypto.createHmac('sha256', secret).update(payloadToSign).digest('base64')
+    const expected = crypto
+      .createHmac('sha256', secretBuffer)
+      .update(payloadToSign)
+      .digest('base64')
+
     if (timingSafeCompare(signature, expected)) {
       return true
     }

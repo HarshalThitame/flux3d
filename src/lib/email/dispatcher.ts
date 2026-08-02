@@ -210,6 +210,7 @@ function payloadToVariables(
       vars.customer_name = payload.customerName
       vars.confirm_url = payload.confirmUrl
       vars.order_count = String(payload.orderCount)
+      vars.phone = payload.phone
       break
     case 'order_placed_customer':
       vars.order_number = payload.orderNumber

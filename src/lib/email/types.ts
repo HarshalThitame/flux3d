@@ -37,6 +37,7 @@ export type AccountLinkConfirmationPayload = BaseEmailPayload & {
   customerName: string
   confirmUrl: string
   orderCount: number
+  phone: string
 }
 
 export type OrderPlacedCustomerPayload = BaseEmailPayload & {

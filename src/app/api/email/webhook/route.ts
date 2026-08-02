@@ -32,10 +32,11 @@ export async function POST(req: Request) {
 
     const signatureHeader = req.headers.get('svix-signature')
     const timestampHeader = req.headers.get('svix-timestamp')
+    const svixIdHeader = req.headers.get('svix-id')
     const secret = process.env.RESEND_WEBHOOK_SECRET
 
     if (secret) {
-      const isValid = verifyResendWebhookSignature(rawBody, signatureHeader, timestampHeader, secret)
+      const isValid = verifyResendWebhookSignature(rawBody, signatureHeader, timestampHeader, svixIdHeader, secret)
       if (!isValid) {
         console.warn('[email-webhook] Invalid signature')
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
