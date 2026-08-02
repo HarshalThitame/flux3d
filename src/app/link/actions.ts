@@ -412,6 +412,13 @@ details: { source: 'profile_card', action: 'unlink' },
     return { error: 'Failed to unlink WhatsApp. Please try again.' }
   }
 
+  // Clean up any pending link requests for this phone to allow re-linking
+  await supabase
+    .from('link_requests')
+    .delete()
+    .eq('target_phone', phone)
+    .is('confirmed_at', null)
+
   return { success: true, message: 'WhatsApp number unlinked successfully.' }
 }
 
