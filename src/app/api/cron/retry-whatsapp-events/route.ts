@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'node:crypto'
+import { parseWhatsAppMessage } from '@/lib/whatsapp/message-parser'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -62,9 +63,9 @@ export async function GET(request: Request) {
       const payload = typeof event.payload === 'string' ? JSON.parse(event.payload) : event.payload
       const message = payload?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]
       const from = message?.from
-      const text = message?.text?.body
+      const { text, interaction } = parseWhatsAppMessage(message)
 
-      if (!from || typeof text !== 'string') {
+      if (!from || (typeof text !== 'string' && !interaction)) {
         // No actionable message — mark as processed to skip future retries
         await supabase
           .from('whatsapp_webhook_events')
@@ -92,7 +93,8 @@ export async function GET(request: Request) {
         payloadHash: event.payload_hash,
         payload: typeof event.payload === 'string' ? JSON.parse(event.payload) : event.payload,
         from,
-        text,
+        text: text ?? '',
+        interaction,
         eventRecord: { id: event.id },
         requestStartedAt,
       })
