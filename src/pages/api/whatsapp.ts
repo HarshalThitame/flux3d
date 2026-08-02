@@ -13,6 +13,7 @@ import { getWhatsAppRagContext, fetchStructuredData, type StructuredDataResult, 
 import { extractSearchKeywords } from "@/lib/whatsapp-keywords";
 import { validatePricesInResponse, type ValidationResult } from "@/lib/whatsapp-price-validation";
 import { classifyIntent, type ClassifiedIntent } from "@/lib/whatsapp-intent-classifier";
+import { handleAccountLinkWhatsApp } from '@/lib/whatsapp/account-link-flow'
 import { handleOrderFlow, type OrderInteraction, ORDERING_ENABLED } from "@/lib/whatsapp/order-flow";
 import { parseWhatsAppMessage } from "@/lib/whatsapp/message-parser";
 import { getOrderSession } from "@/lib/whatsapp/session";
@@ -162,6 +163,7 @@ export function detectWhatsAppIntent(messageText: string): WhatsAppIntent {
   if (/(order status|status of my order|where is my order|my order|order number|invoice)/i.test(text)) return 'order'
   if (/(material|pla\+?|abs|petg|asa|tpu|resin|filament|finish|colour|color)/i.test(text)) return 'materials'
   if (/(contact|call|phone|whatsapp number|support|hours|working hours)/i.test(text)) return 'contact'
+  if (/(link|connect|account|save to account|connect account)/i.test(text)) return 'link_account'
   if (/(hello|hi|hey|good morning|good afternoon|good evening)/i.test(text)) return 'greeting'
 
   return 'general'
@@ -531,6 +533,27 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       }
     }
     _log("profile_done recognized=" + senderRecognized);
+
+    // ── WhatsApp account linking flow (Direction A) ──
+    const intent = detectWhatsAppIntent(text)
+    if (intent === 'link_account') {
+      try {
+        await handleAccountLinkWhatsApp({ from, text, supabase, userId })
+      } catch (error) {
+        console.error('[whatsapp] Account link flow error:', error)
+      }
+      if (supabase && eventRecord?.id) {
+        try {
+          await supabase.from('whatsapp_webhook_events').update({
+            processed_at: new Date().toISOString(),
+            reply_sent: true,
+          }).eq('id', eventRecord.id)
+        } catch {
+          // best-effort marking
+        }
+      }
+      return
+    }
 
     // ── WhatsApp ordering flow (runs before the AI assistant) ──
     if (ORDERING_ENABLED) {
@@ -1007,8 +1030,8 @@ export default async function handler(
       // Extract text/interaction from supported message types (shared with the retry cron)
       const { text: parsedText, mediaInfo: parsedMedia, interaction: parsedInteraction } = parseWhatsAppMessage(message)
       let text: string | undefined = parsedText
-      let mediaInfo: string | null = parsedMedia
-      let interaction: OrderInteraction | null = parsedInteraction
+      const mediaInfo: string | null = parsedMedia
+      const interaction: OrderInteraction | null = parsedInteraction
 
       if (!message || !from) {
         await insertWebhookEvent(supabase, payloadHash, payload, { sender: from ?? null, processed_at: new Date().toISOString() }).catch(() => {})

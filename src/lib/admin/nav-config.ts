@@ -26,6 +26,7 @@ import {
   Factory,
   Database,
   Mail,
+  Link,
 } from 'lucide-react'
 
 export type NavItem = {
@@ -68,5 +69,6 @@ export const adminNavItems: NavItem[] = [
   { label: 'WhatsApp Knowledge', href: '/admin/settings/whatsapp-knowledge', icon: Database, section: 'secondary' },
   { label: 'WhatsApp Inbox', href: '/admin/whatsapp/inbox', icon: MessageCircle, section: 'secondary' },
   { label: 'WhatsApp Orders', href: '/admin/whatsapp/orders', icon: ShoppingCart, section: 'secondary' },
+  { label: 'Account Linking', href: '/admin/account-linking', icon: Link, section: 'secondary' },
   { label: 'Logout', href: '/admin/logout', icon: LogOut, section: 'secondary' },
 ]

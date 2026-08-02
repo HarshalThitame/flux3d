@@ -206,6 +206,11 @@ function payloadToVariables(
       vars.customer_name = payload.customerName
       vars.reset_url = payload.resetUrl
       break
+    case 'account_link_confirmation':
+      vars.customer_name = payload.customerName
+      vars.confirm_url = payload.confirmUrl
+      vars.order_count = String(payload.orderCount)
+      break
     case 'order_placed_customer':
       vars.order_number = payload.orderNumber
       vars.customer_name = payload.customerName
@@ -322,6 +327,8 @@ function buildSubject(payload: EmailJobPayload): string {
       return 'Verify your email address'
     case 'password_reset':
       return 'Reset your Flux3D password'
+    case 'account_link_confirmation':
+      return 'Confirm your WhatsApp account link'
     case 'order_placed_customer':
       return `Order ${payload.orderNumber} confirmed — Flux3D`
     case 'order_placed_admin':

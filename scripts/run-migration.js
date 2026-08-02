@@ -9,10 +9,20 @@ if (!connectionString) {
   process.exit(1)
 }
 
-const sqlFile = path.join(__dirname, '..', 'supabase', 'migrations', '20260728000000_email_system.sql')
+const migrationFile = process.argv[2] || '20260728000000_email_system.sql'
+const sqlFile = path.join(__dirname, '..', 'supabase', 'migrations', migrationFile)
 const sql = fs.readFileSync(sqlFile, 'utf-8')
 
-const client = new Client({ connectionString })
+// Supabase's direct :5432 endpoint uses a self-signed certificate. node-postgres'
+// connection-string parser treats sslmode=require as verify-full (rejecting it),
+// so strip any sslmode param and enable SSL via the `ssl` option with
+// rejectUnauthorized:false instead. The connection is still encrypted.
+const normalized = connectionString.replace(/(.*[?&])?sslmode=[^&]*&?/g, '$1').replace(/[?&]$/, '')
+
+const client = new Client({
+  connectionString: normalized,
+  ssl: { rejectUnauthorized: false },
+})
 
 async function run() {
   try {

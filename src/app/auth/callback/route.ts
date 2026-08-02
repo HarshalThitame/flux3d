@@ -4,6 +4,53 @@ import type { NextRequest } from 'next/server'
 import { normalizeNextPath } from '@/lib/auth/redirect'
 import { upsertProfileForUser } from '@/lib/auth/profile'
 import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/config'
+import { createAdminClient } from '@/lib/supabase/admin'
+
+function isGoogleSignIn(user: { identities?: Array<{ provider?: string }> }): boolean {
+  return user.identities?.some((id) => id.provider === 'google') ?? false
+}
+
+async function autoLinkGoogleToWhatsApp(supabase: ReturnType<typeof createServerClient>, user: { id: string; email?: string | null }) {
+  if (!user.email) return
+
+  const { data: waProfile } = await supabase
+    .from('profiles')
+    .select('id, phone, phone_number, phone_verified, whatsapp_opt_in, phone_canonical')
+    .eq('email', user.email)
+    .eq('phone_verified', true)
+    .eq('whatsapp_opt_in', true)
+    .neq('id', user.id)
+    .maybeSingle()
+
+  if (!waProfile) return
+
+  const admin = createAdminClient()
+
+  const { data: mergeResult, error: mergeError } = await admin
+    .rpc('account_linking_merge_to_user', {
+      p_target_user_id: waProfile.id,
+      p_phone: waProfile.phone_canonical ?? waProfile.phone ?? waProfile.phone_number ?? '',
+    })
+    .then((r) => ({ data: r.data, error: r.error }))
+
+  if (mergeError) {
+    console.error('[auto-link] merge failed:', mergeError.message)
+  }
+
+  const ordersAttributed = (mergeResult as { orders_attributed: number } | null)?.orders_attributed ?? 0
+  if (ordersAttributed > 0) {
+    console.log(`[auto-link] attributed ${ordersAttributed} orders from Google user ${user.id} to WhatsApp-linked user ${waProfile.id}`)
+  }
+
+  await admin.from('profiles').update({
+    phone: waProfile.phone,
+    phone_number: waProfile.phone_number,
+    phone_verified: true,
+    whatsapp_opt_in: true,
+    whatsapp_opt_in_at: new Date().toISOString(),
+    phone_canonical: waProfile.phone_canonical,
+  }).eq('id', user.id)
+}
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
@@ -60,6 +107,14 @@ export async function GET(request: NextRequest) {
         await upsertProfileForUser(supabase, user)
       } catch {
         // Do not block login if profile sync fails; downstream code can recover.
+      }
+
+      if (isGoogleSignIn(user)) {
+        try {
+          await autoLinkGoogleToWhatsApp(supabase, user)
+        } catch {
+          // Do not block login if auto-link fails
+        }
       }
     }
   } catch {

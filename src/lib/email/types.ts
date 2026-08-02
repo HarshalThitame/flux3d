@@ -32,6 +32,13 @@ export type PasswordResetPayload = BaseEmailPayload & {
   resetUrl: string
 }
 
+export type AccountLinkConfirmationPayload = BaseEmailPayload & {
+  emailType: 'account_link_confirmation'
+  customerName: string
+  confirmUrl: string
+  orderCount: number
+}
+
 export type OrderPlacedCustomerPayload = BaseEmailPayload & {
   emailType: 'order_placed_customer'
   orderNumber: string
@@ -165,6 +172,7 @@ export type EmailJobPayload =
   | WelcomeEmailPayload
   | EmailVerificationPayload
   | PasswordResetPayload
+  | AccountLinkConfirmationPayload
   | OrderPlacedCustomerPayload
   | OrderPlacedAdminPayload
   | ModelValidationPayload

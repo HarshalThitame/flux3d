@@ -16,6 +16,8 @@ const TABLES: TableInfo[] = [
   { table: 'user_sessions', dateColumn: 'started_at' },
   { table: 'search_logs', dateColumn: 'searched_at' },
   { table: 'feature_usage', dateColumn: 'used_at' },
+  { table: 'link_requests', dateColumn: 'expires_at' },
+  { table: 'consent_log', dateColumn: 'timestamp' },
 ]
 
 export async function GET() {
