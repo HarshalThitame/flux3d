@@ -897,6 +897,7 @@ async function showConfirm(
   lines.push('📍 *Delivery to:*')
   lines.push(`${address.name ?? ''}`)
   lines.push(`${address.line1 ?? ''}`)
+  if (address.line2) lines.push(`${address.line2}`)
   lines.push(`${[address.city, address.state, address.pincode].filter(Boolean).join(', ')}`)
   lines.push(`${address.phone ? `Phone: ${address.phone}` : ''}`)
 
@@ -963,7 +964,7 @@ async function placeOrderAndSendPaymentLink(
     name: address.name ?? 'WhatsApp Customer',
     phone: address.phone ?? phoneToTenDigit(phone),
     line1: address.line1 ?? '',
-    line2: '',
+    line2: address.line2 ?? '',
     city: address.city ?? '',
     state: address.state ?? '',
     pincode: address.pincode ?? '',
