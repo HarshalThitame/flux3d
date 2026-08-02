@@ -13,6 +13,7 @@ class Builder {
   insert(v: unknown) { this.calls.insert = [v]; return this }
   select(v?: unknown) { this.calls.select = [v]; return this }
   update(v: unknown) { this.calls.update = [v]; return this }
+  delete() { return this }
   eq(c: string, v: unknown) { ;(this.calls.eq ||= []).push([c, v]); return this }
   is(c: string, v: unknown) { ;(this.calls.is ||= []).push([c, v]); return this }
   not(c: string, op: string, v: unknown) { ;(this.calls.not ||= []).push([c, op, v]); return this }
@@ -32,10 +33,13 @@ vi.mock('@/lib/supabase/admin', () => ({
       insert: (...a: unknown[]) => { insertMock.insert(a[0]); return insertMock },
       select: (...a: unknown[]) => { selectMock.select(a[0]); return selectMock },
       update: (...a: unknown[]) => { updateMock.update(a[0]); return updateMock },
+      delete: () => deleteMock,
     }),
     rpc: () => Promise.resolve({ data: { orders_attributed: 0 }, error: null }),
   }),
 }))
+
+const deleteMock = new Builder()
 
 const {
   createLinkRequest,
@@ -49,10 +53,12 @@ describe('link-requests', () => {
     insertMock.data = null; insertMock.error = null
     selectMock.data = null; selectMock.error = null
     updateMock.data = null; updateMock.error = null
-    insertMock.calls = {}; selectMock.calls = {}; updateMock.calls = {}
+    deleteMock.data = null; deleteMock.error = null
+    insertMock.calls = {}; selectMock.calls = {}; updateMock.calls = {}; deleteMock.calls = {}
     insertMock.calls.eq = undefined; insertMock.calls.is = undefined; insertMock.calls.gt = undefined; insertMock.calls.not = undefined
     selectMock.calls.eq = undefined; selectMock.calls.is = undefined; selectMock.calls.gt = undefined; selectMock.calls.not = undefined; selectMock.calls.order = undefined
     updateMock.calls.eq = undefined; updateMock.calls.is = undefined; updateMock.calls.gt = undefined
+    deleteMock.calls.eq = undefined; deleteMock.calls.is = undefined; deleteMock.calls.gt = undefined
   })
 
   it('createLinkRequest stores a normalized phone and raw token', async () => {
