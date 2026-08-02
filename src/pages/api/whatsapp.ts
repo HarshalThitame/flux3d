@@ -13,7 +13,9 @@ import { getWhatsAppRagContext, fetchStructuredData, type StructuredDataResult, 
 import { extractSearchKeywords } from "@/lib/whatsapp-keywords";
 import { validatePricesInResponse, type ValidationResult } from "@/lib/whatsapp-price-validation";
 import { classifyIntent, type ClassifiedIntent } from "@/lib/whatsapp-intent-classifier";
-import { handleOrderFlow, parseOrderCartItems, type OrderInteraction, ORDERING_ENABLED } from "@/lib/whatsapp/order-flow";
+import { handleOrderFlow, type OrderInteraction, ORDERING_ENABLED } from "@/lib/whatsapp/order-flow";
+import { parseWhatsAppMessage } from "@/lib/whatsapp/message-parser";
+import { getQStashClient } from "@/lib/email/qstash";
 
 let cachedServiceClient: any = null;
 function getServiceClient() {
@@ -43,6 +45,7 @@ function getOpenAI() {
 const WHATSAPP_OPENAI_MODEL = process.env.WHATSAPP_OPENAI_MODEL?.trim() || "gpt-4.1-mini";
 const WHATSAPP_API_VERSION = process.env.WHATSAPP_API_VERSION?.trim() || "v22.0";
 const WHATSAPP_REPLY_TO_ALL = (process.env.WHATSAPP_REPLY_TO_ALL?.trim() || "true") !== "false";
+const WHATSAPP_AI_ASSISTANT_ENABLED = (process.env.WHATSAPP_AI_ASSISTANT_ENABLED?.trim() || "true") !== "false";
 const WHATSAPP_RAG_ENABLED = (process.env.WHATSAPP_RAG_ENABLED?.trim() || "true") !== "false";
 const WHATSAPP_RAG_CONFIDENCE_THRESHOLD = Number(process.env.WHATSAPP_RAG_CONFIDENCE_THRESHOLD ?? 0.55) || 0.55;
 const WHATSAPP_SESSION_TURNS = Math.max(1, Number(process.env.WHATSAPP_SESSION_TURNS ?? 4) || 4);
@@ -442,6 +445,37 @@ async function insertWebhookEvent(
   return data ?? null;
 }
 
+/**
+ * Enqueue message processing to the QStash queue. The worker at
+ * /api/whatsapp/process runs processIncomingMessage with full
+ * maxDuration (300s) and automatic retries — the async-after-200
+ * pattern on Vercel is unreliable (functions can be terminated
+ * seconds after the response is sent).
+ *
+ * Returns true if the job was queued. Never throws.
+ */
+async function enqueueWhatsAppProcessing(eventId: string | null): Promise<boolean> {
+  if (!eventId) return false
+  try {
+    const qstash = getQStashClient()
+    const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://flux3d.in').replace(/\/+$/, '')
+    await Promise.race([
+      qstash.publishJSON({
+        url: `${baseUrl}/api/whatsapp/process`,
+        body: { eventId },
+        retries: 5,
+        timeout: 120,
+        headers: { 'X-WhatsApp-Event': eventId },
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('QStash enqueue timeout (4s)')), 4000)),
+    ])
+    return true
+  } catch (error) {
+    console.error("[whatsapp] QStash enqueue failed, falling back to inline processing:", error)
+    return false
+  }
+}
+
 type IncomingMessageParams = {
   supabase: ReturnType<typeof getServiceClient>
   payloadHash: string
@@ -482,7 +516,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         _log("profile_lookup");
         const profilePromise = supabase
           .from("profiles")
-          .select("id, whatsapp_messages_sent")
+          .select("id")
           .eq("phone_number", from)
           .maybeSingle();
         const profileTimeout = new Promise((_, reject) =>
@@ -568,7 +602,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     let ragSources: Array<{ sourceKey: string; title: string; score: number; content: string }> = [];
     let retrievalLatencyMs: number | null = null;
     _log("rag_start");
-    if (WHATSAPP_RAG_ENABLED) {
+    if (WHATSAPP_AI_ASSISTANT_ENABLED && WHATSAPP_RAG_ENABLED) {
       const retrievalStartedAt = Date.now();
       const rag = await getWhatsAppRagContext(text).catch((error) => {
         console.error("[whatsapp] RAG lookup error:", error);
@@ -584,7 +618,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
 
     // Intent classification: use regex for unambiguous intents (saves GPT call)
     const regexIntent = detectWhatsAppIntent(text);
-    const skipGptClassifier = regexIntent === 'greeting' || regexIntent === 'contact';
+    const skipGptClassifier = !WHATSAPP_AI_ASSISTANT_ENABLED || regexIntent === 'greeting' || regexIntent === 'contact';
     const [classified] = skipGptClassifier
       ? [{ intent: regexIntent, keywords: [] as string[] }]
       : await Promise.all([
@@ -675,7 +709,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     const combinedKeywords = [...new Set([...gptKeywords, ...regexKeywords])]
 
     // Query live database for structured data using combined keywords
-    if (WHATSAPP_STRUCTURED_DATA_ENABLED && supabase && combinedKeywords.length > 0) {
+    if (WHATSAPP_AI_ASSISTANT_ENABLED && WHATSAPP_STRUCTURED_DATA_ENABLED && supabase && combinedKeywords.length > 0) {
       structuredData = await fetchStructuredData(combinedKeywords, classified.intent, from).catch((error) => {
         console.error("[whatsapp] Structured data query failed:", error);
         return { materials: '', products: '', orderStatus: '', orderResults: [], totalMatches: 0, materialPrices: [], productPrices: [] };
@@ -699,7 +733,8 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     // RAG context above threshold, OR live structured data from DB
     const hasGroundedRag = Boolean(knowledgeContext) && ragConfidence >= WHATSAPP_RAG_CONFIDENCE_THRESHOLD;
     const hasLiveData = structuredData.totalMatches > 0;
-    const shouldUseModel = (WHATSAPP_REPLY_TO_ALL || senderRecognized)
+    const shouldUseModel = WHATSAPP_AI_ASSISTANT_ENABLED
+      && (WHATSAPP_REPLY_TO_ALL || senderRecognized)
       && (hasGroundedRag || hasLiveData);
     _log("use_model=" + shouldUseModel + " rag=" + hasGroundedRag + " live=" + hasLiveData);
 
@@ -968,51 +1003,11 @@ export default async function handler(
       const from = message?.from
       const msgType = message?.type
 
-      // Extract text from supported message types
-      let text: string | undefined
-      let mediaInfo: string | null = null
-      let interaction: OrderInteraction | null = null
-      if (msgType === 'text') {
-        text = message?.text?.body
-      } else if (msgType === 'image') {
-        text = message?.image?.caption || undefined
-        mediaInfo = `[Image ID: ${message?.image?.id || 'unknown'}]`
-      } else if (msgType === 'document') {
-        text = message?.document?.caption || undefined
-        mediaInfo = `[Document: ${message?.document?.filename || 'unknown'}]`
-      } else if (msgType === 'audio' || msgType === 'video' || msgType === 'sticker') {
-        mediaInfo = `[${msgType}]`
-      } else if (msgType === 'interactive') {
-        const interactive = message?.interactive
-        const interactiveType = interactive?.type
-        if (interactiveType === 'list_reply') {
-          interaction = {
-            kind: 'list',
-            id: interactive?.list_reply?.id ?? '',
-            title: interactive?.list_reply?.title ?? '',
-          }
-          text = interaction.title || text
-        } else if (interactiveType === 'button_reply') {
-          interaction = {
-            kind: 'button',
-            id: interactive?.button_reply?.id ?? '',
-            title: interactive?.button_reply?.title ?? '',
-          }
-          text = interaction.title || text
-        } else if (interactiveType === 'product') {
-          const retailerId = interactive?.product?.product_retailer_id
-          if (retailerId) {
-            interaction = { kind: 'product', id: retailerId, title: 'Product' }
-            text = text || `[product:${retailerId}]`
-          }
-        }
-      } else if (msgType === 'order') {
-        const items = parseOrderCartItems(message?.order?.product_items)
-        if (items.length > 0) {
-          interaction = { kind: 'order', items }
-          text = text || `[order cart: ${items.length} item(s)]`
-        }
-      }
+      // Extract text/interaction from supported message types (shared with the retry cron)
+      const { text: parsedText, mediaInfo: parsedMedia, interaction: parsedInteraction } = parseWhatsAppMessage(message)
+      let text: string | undefined = parsedText
+      let mediaInfo: string | null = parsedMedia
+      let interaction: OrderInteraction | null = parsedInteraction
 
       if (!message || !from) {
         await insertWebhookEvent(supabase, payloadHash, payload, { sender: from ?? null, processed_at: new Date().toISOString() }).catch(() => {})
@@ -1059,12 +1054,15 @@ export default async function handler(
         return res.status(429).json({ success: false, error: "Too many messages. Please wait before sending another." })
       }
 
-      // Write the event record immediately (async path will use this ID)
+      // Write the event record immediately (worker will use this ID)
       const eventRecord = await insertWebhookEvent(supabase, payloadHash, payload, { sender: from }).catch(() => null)
 
-      // === RETURN 200 IMMEDIATELY, PROCESS ASYNC ===
-      const requestStartedAt = Date.now()
-      res.status(200).json({ success: true })
+      // Enqueue processing to the QStash queue BEFORE responding, so the job
+      // is durable even if the function is terminated right after the 200.
+      const queued = await enqueueWhatsAppProcessing(eventRecord?.id ?? null)
+
+      // === RETURN 200 IMMEDIATELY, PROCESS VIA QUEUE (OR INLINE FALLBACK) ===
+      res.status(200).json({ success: true, queued })
 
       // Send a quick acknowledgment to verify the WhatsApp API works
       // (skip for interactive/product messages — the ordering flow replies immediately)
@@ -1092,42 +1090,47 @@ export default async function handler(
         }
       }
 
-      const workKey = `webhook-${payloadHash.slice(0, 12)}`;
-      const workPromise = processIncomingMessage({ supabase, payloadHash, payload, from, text: text!, interaction, eventRecord, requestStartedAt }).catch((error) => {
-        console.error("[whatsapp] Async processing failed:", error)
-        Sentry.captureException(error, {
-          tags: { handler: 'webhook_async' },
-          extra: { sender: from },
+      if (!queued && eventRecord?.id) {
+        // Fallback: inline async processing (best effort — the queue is the
+        // primary path; this only runs if QStash was unreachable)
+        const requestStartedAt = Date.now()
+        const workKey = `webhook-${payloadHash.slice(0, 12)}`;
+        const workPromise = processIncomingMessage({ supabase, payloadHash, payload, from, text: text!, interaction, eventRecord, requestStartedAt }).catch((error) => {
+          console.error("[whatsapp] Async processing failed:", error)
+          Sentry.captureException(error, {
+            tags: { handler: 'webhook_async' },
+            extra: { sender: from },
+          });
+        }).finally(() => {
+          pendingWorkMap.delete(workKey);
         });
-      }).finally(() => {
-        pendingWorkMap.delete(workKey);
-      });
-      pendingWorkMap.set(workKey, workPromise);
+        pendingWorkMap.set(workKey, workPromise);
 
-      // Await processing (with 30s hard timeout) to prevent Vercel from
-      // terminating the function before async work completes. WhatsApp has
-      // a 20-second timeout for the 200 response — we already sent it above.
-      const PROCESSING_TIMEOUT_MS = 30_000;
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Processing timeout (30s)')), PROCESSING_TIMEOUT_MS)
-      );
-      try {
-        await Promise.race([workPromise, timeoutPromise]);
-      } catch (processingError) {
-        const errMsg = processingError instanceof Error ? processingError.message : String(processingError);
-        console.error("[whatsapp] Processing timed out or failed:", errMsg);
-        Sentry.captureException(processingError, {
-          tags: { handler: 'processing_timeout' },
-          extra: { sender: from },
-        });
-        // Mark event as failed so it's visible in the database
-        if (supabase && eventRecord?.id) {
-          try {
-            await supabase.from('whatsapp_webhook_events').update({
-              error: errMsg.slice(0, 500),
-            }).eq('id', eventRecord.id)
-          } catch {
-            // best-effort marking
+        // Await processing (with 30s hard timeout) to prevent Vercel from
+        // terminating the function before async work completes. WhatsApp has
+        // a 20-second timeout for the 200 response — we already sent it above.
+        const PROCESSING_TIMEOUT_MS = 30_000;
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Processing timeout (30s)')), PROCESSING_TIMEOUT_MS)
+        );
+        try {
+          await Promise.race([workPromise, timeoutPromise]);
+        } catch (processingError) {
+          const errMsg = processingError instanceof Error ? processingError.message : String(processingError);
+          console.error("[whatsapp] Processing timed out or failed:", errMsg);
+          Sentry.captureException(processingError, {
+            tags: { handler: 'processing_timeout' },
+            extra: { sender: from },
+          });
+          // Mark event as failed so it's visible in the database
+          if (supabase && eventRecord?.id) {
+            try {
+              await supabase.from('whatsapp_webhook_events').update({
+                error: errMsg.slice(0, 500),
+              }).eq('id', eventRecord.id)
+            } catch {
+              // best-effort marking
+            }
           }
         }
       }

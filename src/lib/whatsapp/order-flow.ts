@@ -352,6 +352,13 @@ export async function handleOrderFlow(params: {
 
   const session = await getOrderSession(phone)
 
+  // A new WhatsApp catalog cart always (re)starts the order flow, from any step.
+  if (interaction?.kind === 'order') {
+    await clearOrderSession(phone)
+    await handleCartOrder(phone, userId, interaction.items, sendAndLog)
+    return { handled: true }
+  }
+
   // Track order command: /track <orderId> or /track <orderNumber>
   const trackMatch = incomingText.match(/^\/track\s+(.+)$/i)
   if (trackMatch) {
@@ -362,12 +369,6 @@ export async function handleOrderFlow(params: {
 
   // ── No session: decide whether to start ordering ──
   if (!session) {
-    if (interaction?.kind === 'order') {
-      // Customer sent a WhatsApp catalog cart (multi-item). productRetailerId === sku_code.
-      await handleCartOrder(phone, userId, interaction.items, sendAndLog)
-      return { handled: true }
-    }
-
     if (interaction?.kind === 'product') {
       // Try to load SKU directly using interaction.id (in case it is already the sku_code)
       let found = await loadSkuByCode(interaction.id)
@@ -447,7 +448,7 @@ export async function handleOrderFlow(params: {
     }
 
     case 'quantity': {
-      const qty = interaction && interaction.kind !== 'order' && interaction.id.startsWith('qty:')
+      const qty = interaction && interaction.id.startsWith('qty:')
         ? parseQuantity(interaction.id.slice('qty:'.length))
         : parseQuantity(incomingText)
       if (qty == null) {
@@ -536,6 +537,14 @@ export async function handleOrderFlow(params: {
       }
       const pincode = incomingText.replace(/\D/g, '').slice(0, 6)
       state.address = { ...(state.address ?? {}), pincode }
+
+      // Verify delivery availability for this pincode before continuing
+      const availability = await checkPincodeAvailability(state)
+      if (!availability.available) {
+        await sendAndLog('text', availability.reason)
+        return { handled: true }
+      }
+
       await saveOrderSession(phone, 'confirm', state)
       await showConfirm(phone, userId, state, sendAndLog)
       return { handled: true }
@@ -565,12 +574,6 @@ export async function handleOrderFlow(params: {
     case 'payment_pending': {
       const orderNumber = state.orderNumber ?? 'your order'
       const orderId = state.orderId ?? orderNumber
-
-      if (interaction?.kind === 'order') {
-        await clearOrderSession(phone)
-        await handleCartOrder(phone, userId, interaction.items, sendAndLog)
-        return { handled: true }
-      }
 
       if (incomingText && incomingText.toLowerCase() === 'status') {
         const paid = await checkPaymentStatus(orderId)
@@ -661,6 +664,46 @@ async function handleTrackOrder(
   await sendAndLog('text', lines.join('\n'))
 }
 
+async function checkPincodeAvailability(state: OrderState): Promise<{ available: boolean; reason: string }> {
+  const pincode = state.address?.pincode
+  const addressState = state.address?.state
+  if (!pincode || !addressState) {
+    return { available: true, reason: '' }
+  }
+
+  let subtotal = 0
+  let weightGrams = 0
+  if (state.items?.length) {
+    for (const item of state.items) {
+      subtotal += item.unitPrice * item.quantity
+      weightGrams += item.weightGrams * item.quantity
+    }
+  } else {
+    subtotal = (state.unitPrice ?? 0) * (state.quantity ?? 1)
+  }
+  subtotal = roundMoney(subtotal)
+
+  try {
+    const settings = await getSettings()
+    const result = await calculateShippingFromRules({
+      pincode,
+      state: addressState,
+      subtotal,
+      weightGrams,
+      settings,
+    })
+    return {
+      available: result.available,
+      reason: result.available
+        ? ''
+        : `${result.reason ?? 'Sorry, we cannot deliver to this pincode yet.'} Please share a different pincode or reach us at support for alternatives.`,
+    }
+  } catch (error) {
+    console.error('[order-flow] Pincode availability check failed:', error)
+    return { available: true, reason: '' }
+  }
+}
+
 async function handleCartOrder(
   phone: string,
   userId: string | null,
@@ -723,7 +766,7 @@ async function showBrowse(
   sendAndLog: (kind: 'text' | 'list' | 'buttons', body: string, extra?: Record<string, unknown>) => Promise<unknown>,
   products?: Array<{ id: string; name: string; basePrice: number }>
 ) {
-  const list = products ?? await loadBrowseProducts()
+  const list = products && products.length > 0 ? products : await loadBrowseProducts()
   if (!list.length) {
     await sendAndLog('text', 'No products are available right now. Please check back soon!')
     return

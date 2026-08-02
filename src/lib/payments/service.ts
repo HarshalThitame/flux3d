@@ -10,6 +10,7 @@ import {
   fetchPaymentAttemptById,
   fetchPaymentAttemptByProviderOrderId,
   fetchPaymentAttemptByProviderPaymentId,
+  fetchPaymentAttemptByPaymentLinkId,
   fetchPaymentEvent,
   fetchActivePaymentAttempt,
   insertPaymentAuditLog,
@@ -659,12 +660,17 @@ export async function verifyCheckoutPayment(params: {
   }
 }
 
+function unwrapRazorpayEntity(value: unknown): Record<string, unknown> {
+  return isRecord(value) && isRecord(value.entity) ? asRecord(value.entity) : isRecord(value) ? asRecord(value) : {}
+}
+
 function sanitizeEventPayload(payload: Record<string, unknown>) {
   const event = normalizeText(payload.event)
   const entity = isRecord(payload.payload) ? payload.payload : {}
-  const payment = isRecord(entity.payment) ? entity.payment : {}
-  const order = isRecord(entity.order) ? entity.order : {}
-  const refund = isRecord(entity.refund) ? entity.refund : {}
+  const payment = unwrapRazorpayEntity(entity.payment)
+  const order = unwrapRazorpayEntity(entity.order)
+  const refund = unwrapRazorpayEntity(entity.refund)
+  const paymentLink = unwrapRazorpayEntity(entity.payment_link)
 
   return {
     event,
@@ -680,6 +686,7 @@ function sanitizeEventPayload(payload: Record<string, unknown>) {
       error_code: payment.error_code ?? null,
       error_description: payment.error_description ?? null,
       error_reason: payment.error_reason ?? null,
+      notes: isRecord(payment.notes) ? asRecord(payment.notes) : null,
     },
     order: {
       id: order.id ?? null,
@@ -697,23 +704,37 @@ function sanitizeEventPayload(payload: Record<string, unknown>) {
       speed: refund.speed ?? null,
       reason: refund.reason ?? null,
     },
+    payment_link: {
+      id: paymentLink.id ?? null,
+      status: paymentLink.status ?? null,
+      amount: paymentLink.amount ?? null,
+      notes: isRecord(paymentLink.notes) ? asRecord(paymentLink.notes) : null,
+    },
   }
 }
 
 async function processPaymentLifecycleEvent(eventName: string, payload: Record<string, unknown>) {
-  const paymentEntity = isRecord(payload.payload) && isRecord(payload.payload.payment)
-    ? asRecord(payload.payload.payment)
-    : {}
-  const orderEntity = isRecord(payload.payload) && isRecord(payload.payload.order)
-    ? asRecord(payload.payload.order)
-    : {}
+  const container = isRecord(payload.payload) ? asRecord(payload.payload) : {}
+  const paymentEntity = unwrapRazorpayEntity(container.payment)
+  const orderEntity = unwrapRazorpayEntity(container.order)
+  const paymentLinkEntity = unwrapRazorpayEntity(container.payment_link)
   const providerOrderId = normalizeText(paymentEntity.order_id) || normalizeText(orderEntity.id)
   const providerPaymentId = normalizeText(paymentEntity.id)
   const providerPaymentStatus = normalizeText(paymentEntity.status)
+  const paymentLinkId = normalizeText(paymentLinkEntity.id)
+  const paymentLinkNotes = isRecord(paymentLinkEntity.notes) ? asRecord(paymentLinkEntity.notes) : {}
+  const paymentNotes = isRecord(paymentEntity.notes) ? asRecord(paymentEntity.notes) : {}
 
   let attempt = providerOrderId ? await fetchPaymentAttemptByProviderOrderId(providerOrderId) : null
   if (!attempt && providerPaymentId) {
     attempt = await fetchPaymentAttemptByProviderPaymentId(providerPaymentId)
+  }
+  if (!attempt && paymentLinkId) {
+    attempt = await fetchPaymentAttemptByPaymentLinkId(paymentLinkId)
+  }
+  const linkAttemptId = normalizeText(paymentLinkNotes.payment_attempt_id) || normalizeText(paymentNotes.payment_attempt_id)
+  if (!attempt && linkAttemptId) {
+    attempt = await fetchPaymentAttemptById(linkAttemptId)
   }
 
   if (!attempt) {
@@ -843,9 +864,8 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
 }
 
 async function processRefundEvent(eventName: string, payload: Record<string, unknown>) {
-  const refundEntity = isRecord(payload.payload) && isRecord(payload.payload.refund)
-    ? asRecord(payload.payload.refund)
-    : {}
+  const container = isRecord(payload.payload) ? asRecord(payload.payload) : {}
+  const refundEntity = unwrapRazorpayEntity(container.refund)
   const providerRefundId = normalizeText(refundEntity.id)
   if (!providerRefundId) return { handled: false, processingStatus: 'ignored' as const }
 
@@ -955,8 +975,8 @@ export async function processRazorpayWebhook(params: {
     provider: 'razorpay',
     provider_event_id: params.eventId,
     event_type: eventName,
-    provider_order_id: normalizeText(isRecord(payload.payload) && isRecord(payload.payload.order) ? payload.payload.order.id : null) || null,
-    provider_payment_id: normalizeText(isRecord(payload.payload) && isRecord(payload.payload.payment) ? payload.payload.payment.id : null) || null,
+    provider_order_id: normalizeText(isRecord(payload.payload) ? unwrapRazorpayEntity(payload.payload.order).id : null) || null,
+    provider_payment_id: normalizeText(isRecord(payload.payload) ? unwrapRazorpayEntity(payload.payload.payment).id : null) || null,
     signature_verified: true,
     processing_status: 'received',
     retry_count: 0,
@@ -1258,6 +1278,7 @@ function rebuildWebhookPayload(eventType: string, payload: Record<string, unknow
   const payment = asRecord(payload.payment)
   const order = asRecord(payload.order)
   const refund = asRecord(payload.refund)
+  const paymentLink = asRecord(payload.payment_link)
   return {
     event: eventType,
     created_at: payload.created_at ?? null,
@@ -1265,6 +1286,7 @@ function rebuildWebhookPayload(eventType: string, payload: Record<string, unknow
       payment,
       order,
       refund,
+      ...(Object.keys(paymentLink).length > 0 ? { payment_link: paymentLink } : {}),
     },
   }
 }

@@ -186,6 +186,17 @@ export async function fetchPaymentAttemptByProviderPaymentId(providerPaymentId: 
   return data ? mapPaymentAttemptRow(asRecord(data)) : null
 }
 
+export async function fetchPaymentAttemptByPaymentLinkId(paymentLinkId: string) {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('payment_attempts')
+    .select('*')
+    .filter('metadata->>payment_link_id', 'eq', paymentLinkId)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  return data ? mapPaymentAttemptRow(asRecord(data)) : null
+}
+
 export async function upsertPaymentAttempt(record: Omit<PaymentAttemptRecord, 'id' | 'created_at' | 'updated_at'> & { id?: string }) {
   const supabase = createAdminSupabaseClient()
   const { data, error } = await supabase

@@ -47,6 +47,7 @@ export type PlaceOrderResult = {
 type SkuSnapshot = {
   id: string
   product_id: string
+  sku_code?: string
   price: number | string
   stock_quantity: number | string
   is_available: boolean | null
@@ -391,7 +392,9 @@ export async function placeShopOrder(input: PlaceOrderInput): Promise<PlaceOrder
     item.productThumbnail = typeof product?.thumbnail_url === 'string' ? product.thumbnail_url : ''
 
     const sku = skusById.get(item.skuId)
-    item.skuCode = typeof sku && typeof (sku as SkuSnapshot).id === 'string' ? String(item.skuId).slice(0, 8) : ''
+    item.skuCode = sku && typeof (sku as SkuSnapshot).sku_code === 'string' && (sku as SkuSnapshot).sku_code !== ''
+      ? (sku as SkuSnapshot).sku_code as string
+      : String(item.skuId).slice(0, 8)
     const variant = sku && typeof (sku as SkuSnapshot).variant_combination === 'object' && (sku as SkuSnapshot).variant_combination !== null
       ? (sku as SkuSnapshot).variant_combination
       : {}
@@ -450,7 +453,7 @@ export async function placeShopOrder(input: PlaceOrderInput): Promise<PlaceOrder
       p_items: items,
       p_subtotal_paise: toPaise(subtotal),
       p_discount_amount_paise: toPaise(discountAmount),
-      p_coupon_code: discountSource?.code ?? couponCode,
+      p_coupon_code: (discountSource?.code ?? couponCode) ?? '',
       p_shipping_charge_paise: shippingChargePaise,
       p_total_amount_paise: toPaise(totalAmount),
       p_shipping_address: shippingAddress,
