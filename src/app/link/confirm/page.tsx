@@ -79,6 +79,7 @@ export default async function LinkConfirmPage({
         )}
         <form
           action={async (formData: FormData) => {
+            'use server'
             const result = await confirmLinkAction(formData)
             if (result?.error) {
               // re-render with error — the page will show the error via revalidation
