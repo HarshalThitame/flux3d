@@ -44,6 +44,7 @@ const deleteMock = new Builder()
 const {
   createLinkRequest,
   consumeLinkRequestByToken,
+  getLinkRequestByToken,
   getPendingRequestByPhone,
   verifyOtpForPhone,
 } = await import('@/lib/account-linking/link-requests')
@@ -123,5 +124,23 @@ describe('link-requests', () => {
     selectMock.data = { id: 'lr-1', target_phone: '919623023480', confirmed_at: null }
     const res = await getPendingRequestByPhone('919623023480')
     expect(res?.id).toBe('lr-1')
+  })
+
+  it('getLinkRequestByToken reads a pending row without consuming it', async () => {
+    selectMock.data = { id: 'lr-1', token: 'tkn', target_phone: '919623023480', confirmed_at: null }
+    const res = await getLinkRequestByToken('tkn')
+    expect(res?.id).toBe('lr-1')
+    const eqs = selectMock.calls.eq as unknown as Array<[string, unknown]>
+    expect(eqs.find(([c]) => c === 'token')).toEqual(['token', 'tkn'])
+    // read-only: no UPDATE is ever issued
+    expect(selectMock.calls.select).toBeTruthy()
+    expect(updateMock.calls.update).toBeUndefined()
+  })
+
+  it('getLinkRequestByToken returns null for a confirmed/expired token', async () => {
+    selectMock.data = null
+    const res = await getLinkRequestByToken('tkn')
+    expect(res).toBeNull()
+    expect(updateMock.calls.update).toBeUndefined()
   })
 })

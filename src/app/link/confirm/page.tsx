@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { consumeLinkRequestByToken } from '@/lib/account-linking/link-requests'
+import { getLinkRequestByToken } from '@/lib/account-linking/link-requests'
 import { confirmLinkAction } from '../actions'
 
 export const dynamic = 'force-dynamic'
@@ -23,7 +23,8 @@ export default async function LinkConfirmPage({
     )
   }
 
-  const request = await consumeLinkRequestByToken(token)
+  // Read-only lookup — the token is only consumed when confirmLinkAction runs.
+  const request = await getLinkRequestByToken(token)
 
   if (!request) {
     return (
