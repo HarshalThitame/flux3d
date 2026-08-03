@@ -40,17 +40,28 @@ export default async function LinkConfirmPage({
 
   const { data: targetProfile } = await supabase
     .from('profiles')
-    .select('id, phone, phone_number, full_name')
+    .select('id, full_name')
     .eq('id', request.target_user_id)
     .maybeSingle()
 
-  const phone = targetProfile?.phone ?? targetProfile?.phone_number ?? ''
+  // The number being linked is the one on the (consumed) link request.
+  const phone = request.target_phone ?? ''
   const targetName = targetProfile?.full_name ?? 'your account'
 
-  const { count: orderCount } = await supabase
+  // Preview only counts orders NOT yet owned by the target account that match
+  // this phone — i.e. the orders that will actually be imported on confirm.
+  const last10 = phone.replace(/\D/g, '').slice(-10)
+  const { count: shelfCount } = await supabase
     .from('shelf_orders')
     .select('id', { count: 'exact', head: true })
-    .eq('user_id', request.target_user_id)
+    .neq('user_id', request.target_user_id)
+    .filter('shipping_address->>phone', 'like', `%${last10}`)
+  const { count: customCount } = await supabase
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .neq('user_id', request.target_user_id)
+    .filter('phone', 'like', `%${last10}`)
+  const orderCount = (shelfCount ?? 0) + (customCount ?? 0)
 
   return (
     <main className="min-h-screen bg-[#f9f7f4] px-4 pb-16 text-[#1a1a1a] md:px-8">

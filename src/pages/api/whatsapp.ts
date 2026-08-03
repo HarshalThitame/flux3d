@@ -535,13 +535,17 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     _log("profile_done recognized=" + senderRecognized);
 
     // ── WhatsApp account linking flow (Direction A) ──
-    const intent = detectWhatsAppIntent(text)
-    if (intent === 'link_account') {
-      try {
-        await handleAccountLinkWhatsApp({ from, text, supabase, userId })
-      } catch (error) {
-        console.error('[whatsapp] Account link flow error:', error)
-      }
+    // Runs before the ordering state machine so a link flow never collides
+    // with it. Returns true (and the webhook returns) only when the message
+    // was consumed by the linking flow — i.e. an explicit link intent, or a
+    // reply while a WhatsApp-initiated link request is pending for this phone.
+    let linkHandled = false
+    try {
+      linkHandled = await handleAccountLinkWhatsApp({ from, text, supabase, userId })
+    } catch (error) {
+      console.error('[whatsapp] Account link flow error:', error)
+    }
+    if (linkHandled) {
       if (supabase && eventRecord?.id) {
         try {
           await supabase.from('whatsapp_webhook_events').update({
