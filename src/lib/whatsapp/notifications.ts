@@ -1,9 +1,6 @@
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { sendWhatsAppTemplate, sendWhatsAppText, sendWhatsAppDocument } from '@/lib/whatsapp/messages'
+import { sendWhatsAppTemplate, sendWhatsAppText } from '@/lib/whatsapp/messages'
 import { ORDERING_ENABLED } from '@/lib/whatsapp/order-flow'
-import { createInvoiceShareToken } from '@/lib/orders/invoice-token'
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://flux3d.in'
 
 function money(amount: number | string): string {
   const value = typeof amount === 'number' ? amount : Number(amount)
@@ -205,12 +202,13 @@ export async function notifyWhatsAppPaymentCaptured(params: {
   }
 
   const message = [
-    '✅ *Payment captured & order locked in!*',
+    '🎊 *CHA-CHING! Payment received!*',
     '',
-    `Order #${params.orderNumber} — ${money(params.amountPaise / 100)} paid.`,
-    'We\'re already on it — your tax invoice PDF is coming through right behind this. 📎',
+    `Order #${params.orderNumber}`,
+    `Amount: ${money(params.amountPaise / 100)} ✅`,
+    'Status: Being packed with love 📦💕',
     '',
-    'You\'ll get the next ping the very second your print ships, tracking link in hand. 🚀',
+    'Sit back and relax — we\u2019ll message you the SECOND it ships, tracking link included! 🚀',
   ].join('\n')
 
   const result = await sendWhatsAppText(formatPhone(phoneRaw), message)
@@ -239,54 +237,4 @@ export async function notifyWhatsAppPaymentCaptured(params: {
   }
 
   return false
-}
-
-// Sends the tax-invoice PDF as a WhatsApp `document` message. Deliverable only
-// within the active 24h customer-service session (Meta rejects out-of-window
-// document sends) — for late/backfilled orders the session-text path above
-// already falls back to the ORDER_CONFIRMATION template. The PDF is rendered on
-// demand from a one-time, expiring token URL (no PII persisted to storage).
-export async function notifyWhatsAppPaymentReceipt(params: {
-  orderId: string
-  orderNumber: string
-  amountPaise: number
-}): Promise<boolean> {
-  if (!ORDERING_ENABLED) return false
-
-  const supabase = createAdminSupabaseClient()
-  const { data: order, error } = await supabase
-    .from('shelf_orders')
-    .select('order_number, total_amount_paise, payment_currency, payment_method, payment_verified_at, provider_order_id, provider_payment_id, placed_at, shipping_address')
-    .eq('id', params.orderId)
-    .maybeSingle()
-
-  if (error || !order) {
-    console.warn('[whatsapp] Payment receipt — order not found:', params.orderId)
-    return false
-  }
-
-  const address = order.shipping_address as Record<string, unknown> | null
-  const phoneRaw = String(address?.phone ?? '').replace(/\D/g, '')
-  if (!phoneRaw) {
-    console.warn('[whatsapp] Payment receipt — no phone on order, skipped PDF notify:', params.orderId)
-    return false
-  }
-
-  const token = createInvoiceShareToken(params.orderId)
-  const link = `${SITE_URL}/api/receipts/${params.orderId}/${token}.pdf`
-
-  const paidOn = order.payment_verified_at ?? order.placed_at
-  const paidOnStr = new Date(paidOn).toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  })
-
-  const result = await sendWhatsAppDocument(formatPhone(phoneRaw), {
-    link,
-    caption: `Tax invoice for order ${params.orderNumber} — ${money(params.amountPaise / 100)} paid on ${paidOnStr}. Tap to view.`,
-  })
-
-  if (!result.ok) {
-    console.error('[whatsapp] payment_receipt document failed:', result.status, result.error)
-  }
-  return result.ok
 }
