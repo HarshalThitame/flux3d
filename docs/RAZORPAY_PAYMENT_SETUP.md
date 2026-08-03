@@ -26,6 +26,8 @@ All payment creation, signature verification, webhook processing, and refund act
    - payment captured
    - payment failed
    - order paid
+   - payment link paid (`payment_link.paid` — required for WhatsApp payment-link orders,
+     otherwise paid links stay stuck in `pending` and no confirmation is sent)
    - refund created
    - refund processed
    - refund failed

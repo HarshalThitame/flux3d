@@ -800,7 +800,12 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
     return { handled: true, processingStatus: 'processed' as const }
   }
 
-  if (eventName === 'payment.authorized' || eventName === 'payment.captured' || eventName === 'order.paid') {
+  if (
+    eventName === 'payment.authorized' ||
+    eventName === 'payment.captured' ||
+    eventName === 'order.paid' ||
+    eventName === 'payment_link.paid'
+  ) {
     const payment = providerPaymentId ? await fetchRazorpayPayment(providerPaymentId) : null
     const order = providerOrderId ? await fetchRazorpayOrder(providerOrderId) : null
     const finalPayment = payment ?? {
@@ -813,8 +818,13 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
       captured: Boolean(paymentEntity.captured),
     }
 
-    const captured = normalizeText(finalPayment.status) === 'captured' || Boolean((finalPayment as Record<string, unknown>).captured) || normalizeText(order?.status) === 'paid'
-    const authorized = normalizeText(finalPayment.status) === 'authorized'
+    const paymentLinkStatus = normalizeText(paymentLinkEntity.status)
+    const captured =
+      normalizeText(finalPayment.status) === 'captured' ||
+      Boolean((finalPayment as Record<string, unknown>).captured) ||
+      normalizeText(order?.status) === 'paid' ||
+      (eventName === 'payment_link.paid' && paymentLinkStatus === 'paid')
+    const authorized = normalizeText(finalPayment.status) === 'authorized' && !captured
 
     const nextStatus: PaymentStatus = captured ? 'paid' : authorized ? 'authorized' : 'pending'
 

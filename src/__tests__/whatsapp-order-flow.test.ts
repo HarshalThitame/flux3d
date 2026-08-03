@@ -6,8 +6,12 @@ import {
   parseOrderCartItems,
   parseQuantity,
   phoneToTenDigit,
+  firstNameOf,
+  playfulGreeting,
+  playfulInvalidInput,
   type OrderInteraction,
 } from '@/lib/whatsapp/order-flow'
+import { validateState } from '@/lib/whatsapp/address-validator'
 
 describe('whatsapp order flow — intent detection', () => {
   it.each([
@@ -119,6 +123,34 @@ describe('whatsapp order flow — phone normalization', () => {
   })
 })
 
+describe('whatsapp order flow — playful message helpers', () => {
+  it('extracts the first name from a full name', () => {
+    expect(firstNameOf('Harshal Thitame')).toBe('Harshal')
+    expect(firstNameOf('Harshal')).toBe('Harshal')
+    expect(firstNameOf('')).toBeNull()
+    expect(firstNameOf(null)).toBeNull()
+    expect(firstNameOf(undefined)).toBeNull()
+  })
+
+  it('builds a personalized greeting with the brand', () => {
+    expect(playfulGreeting('Harshal', 'Flux3D')).toBe('👋 Heyy Harshal! Welcome to Flux3D ✨')
+    expect(playfulGreeting(null, 'Flux3D')).toBe('👋 Heyy! Welcome to Flux3D ✨')
+  })
+
+  it('wraps a validation error playfully with the offending value', () => {
+    const validation = validateState('422605')
+    const message = playfulInvalidInput(validation, '422605')
+    expect(message).toContain('Oops 🙈 "422605"')
+    expect(message).toContain(validation.error)
+  })
+
+  it('asks for a missing value without quoting an empty string', () => {
+    const message = playfulInvalidInput({ valid: false }, '   ')
+    expect(message).not.toContain('"  "')
+    expect(message).toContain('missing')
+  })
+})
+
 describe('whatsapp messages — Graph API payload shapes', () => {
   let payloads: Array<Record<string, unknown>>
 
@@ -227,7 +259,7 @@ describe('sendAddressFlow — flow form fallback', () => {
     const { sendAddressFlow } = await import('@/lib/whatsapp/order-flow')
     await sendAddressFlow('9199623023480', sendAndLog)
     expect(payloads).toHaveLength(0)
-    expect(logged.some((l) => l.kind === 'text' && l.body.includes('delivery name'))).toBe(true)
+    expect(logged.some((l) => l.kind === 'text' && l.body.toLowerCase().includes('full name'))).toBe(true)
   })
 
   it('sends the flow interactive message when a flow id is configured', async () => {
@@ -260,6 +292,6 @@ describe('sendAddressFlow — flow form fallback', () => {
     }
     const { sendAddressFlow } = await import('@/lib/whatsapp/order-flow')
     await sendAddressFlow('9199623023480', sendAndLog)
-    expect(logged.some((l) => l.kind === 'text' && l.body.includes('delivery name'))).toBe(true)
+    expect(logged.some((l) => l.kind === 'text' && l.body.toLowerCase().includes('full name'))).toBe(true)
   })
 })
