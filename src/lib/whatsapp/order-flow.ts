@@ -250,6 +250,51 @@ function money(value: number): string {
   return `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+async function getBrandName(): Promise<string> {
+  try {
+    const settings = await getSettings()
+    return settings.brandName || settings.businessName || 'Flux3D'
+  } catch {
+    return 'Flux3D'
+  }
+}
+
+async function getCustomerFirstName(phone: string): Promise<string | null> {
+  try {
+    const supabase = createAdminSupabaseClient()
+    const normalized = phone.replace(/\D/g, '')
+    if (!normalized) return null
+    const { data } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .or(`phone_number.eq.${normalized},phone_number.eq.+${normalized}`)
+      .maybeSingle()
+    const fullName = typeof data?.full_name === 'string' ? data.full_name.trim() : ''
+    if (!fullName) return null
+    const first = fullName.split(/\s+/)[0]
+    return first || null
+  } catch {
+    return null
+  }
+}
+
+export function firstNameOf(customerName: string | null | undefined): string | null {
+  const trimmed = (customerName ?? '').trim()
+  if (!trimmed) return null
+  const first = trimmed.split(/\s+/)[0]
+  return first || null
+}
+
+export function playfulGreeting(name: string | null, brand: string): string {
+  return `👋 Heyy${name ? ` ${name}` : ''}! Welcome to ${brand} ✨`
+}
+
+export function playfulInvalidInput(validation: FieldValidation, value: string): string {
+  const raw = (value ?? '').trim()
+  if (!raw) return 'Oh! This field is missing 👀\n\nPlease share it and we\u2019ll keep moving. We\u2019re almost there! 🙌'
+  return `Oops 🙈 "${raw.slice(0, 60)}" doesn't look right.\n\n${validation.error ?? 'Please try that again.'}`
+}
+
 async function checkPaymentStatus(orderId: string): Promise<boolean> {
   const supabase = createAdminSupabaseClient()
   const { data: order } = await supabase
@@ -354,7 +399,7 @@ export async function handleOrderFlow(params: {
   // Cancel intent clears any session immediately.
   if (isCancelIntent(incomingText, interaction)) {
     await clearOrderSession(phone)
-    await sendAndLog('text', 'Order cancelled. Anything else I can help you with?')
+    await sendAndLog('text', 'Order cancelled — no stress! 😊 Anything else I can help you with?')
     return { handled: true }
   }
 
@@ -484,7 +529,7 @@ export async function handleOrderFlow(params: {
         ]
         const invalid = fields.find((f) => !f.valid.valid)
         if (invalid) {
-          await sendAndLog('text', invalid.valid.error ?? `Please re-check the ${invalid.label}.`)
+          await sendAndLog('text', playfulInvalidInput(invalid.valid, invalid.value))
           await sendAddressFlow(phone, sendAndLog)
           return { handled: true }
         }
@@ -518,7 +563,7 @@ export async function handleOrderFlow(params: {
 
     case 'address_name': {
       if (!incomingText) {
-        await sendAndLog('text', 'Please share the **delivery name** (full name of the person receiving the order):')
+        await sendAndLog('text', "First up — who's the lucky human receiving this? 😄\n(Full name, please!)")
         return { handled: true }
       }
       await handleAddressName(phone, state, incomingText, sendAndLog)
@@ -529,13 +574,21 @@ export async function handleOrderFlow(params: {
       if (!incomingText) return { handled: true }
       const validation = validateLine1(incomingText)
       if (!validation.valid) {
-        await sendAndLog('text', validation.error!)
+        await sendAndLog('text', playfulInvalidInput(validation, incomingText))
         return { handled: true }
       }
       const line1 = incomingText.slice(0, 160).trim()
       state.address = { ...(state.address ?? {}), line1 }
       await saveOrderSession(phone, 'address_line2', state)
-      await sendAndLog('text', 'Any **apartment, floor, or landmark**? (or reply "skip" to continue):')
+      await sendAndLog('text', [
+        'Got it, logged! 📝',
+        '',
+        '🗺️ Any landmark nearby? Think "Near ZP School" or "Opposite Blue Gate"',
+        '',
+        'Why: our delivery riders LOVE landmarks — it\u2019s basically their GPS backup plan 😅',
+        '',
+        '(or type *skip*, no worries!)',
+      ].join('\n'))
       return { handled: true }
     }
 
@@ -545,7 +598,11 @@ export async function handleOrderFlow(params: {
         state.address = { ...(state.address ?? {}), line2: incomingText.slice(0, 160) }
       }
       await saveOrderSession(phone, 'address_city', state)
-      await sendAndLog('text', 'Got it. Now your **city**:')
+      await sendAndLog('text', [
+        'Almost building your full address map 🧩',
+        '',
+        '🏙️ Which city are we delivering to?',
+      ].join('\n'))
       return { handled: true }
     }
 
@@ -553,13 +610,20 @@ export async function handleOrderFlow(params: {
       if (!incomingText) return { handled: true }
       const validation = validateCity(incomingText)
       if (!validation.valid) {
-        await sendAndLog('text', validation.error!)
+        await sendAndLog('text', playfulInvalidInput(validation, incomingText))
         return { handled: true }
       }
       const city = incomingText.slice(0, 60).trim()
       state.address = { ...(state.address ?? {}), city }
       await saveOrderSession(phone, 'address_state', state)
-      await sendAndLog('text', 'And your **state**:')
+      await sendAndLog('text', [
+        'Nice! One more location piece 🌏',
+        '',
+        '📍 Your state? Full name or short code works —',
+        'e.g. Maharashtra or MH',
+        '',
+        'Why it helps: we pick the fastest courier route + correct tax invoice 🧾',
+      ].join('\n'))
       return { handled: true }
     }
 
@@ -567,13 +631,18 @@ export async function handleOrderFlow(params: {
       if (!incomingText) return { handled: true }
       const validation = validateState(incomingText)
       if (!validation.valid) {
-        await sendAndLog('text', validation.error!)
+        await sendAndLog('text', playfulInvalidInput(validation, incomingText))
         return { handled: true }
       }
       const stateName = incomingText.slice(0, 60).trim()
       state.address = { ...(state.address ?? {}), state: stateName }
       await saveOrderSession(phone, 'address_pincode', state)
-      await sendAndLog('text', 'Finally, your **6-digit pincode**:')
+      await sendAndLog('text', [
+        'Home stretch! 🏁',
+        '',
+        '🔢 Your 6-digit pincode please —',
+        'it\u2019s the secret code that tells our delivery partner EXACTLY which route to zoom down 🛵💨',
+      ].join('\n'))
       return { handled: true }
     }
 
@@ -581,7 +650,7 @@ export async function handleOrderFlow(params: {
       if (!incomingText) return { handled: true }
       const validation = validatePincode(incomingText)
       if (!validation.valid) {
-        await sendAndLog('text', validation.error!)
+        await sendAndLog('text', playfulInvalidInput(validation, incomingText))
         return { handled: true }
       }
       const pincode = incomingText.replace(/\D/g, '').slice(0, 6)
@@ -612,7 +681,7 @@ export async function handleOrderFlow(params: {
         }
         if (interaction.id === 'cancel') {
           await clearOrderSession(phone)
-          await sendAndLog('text', 'Order cancelled. Anything else I can help you with?')
+          await sendAndLog('text', 'Order cancelled — no stress! 😊 Anything else I can help you with?')
           return { handled: true }
         }
       }
@@ -629,10 +698,11 @@ export async function handleOrderFlow(params: {
         if (paid) {
           await clearOrderSession(phone)
           await sendAndLog('text', [
-            '✅ *Payment received!*',
+            '🎊 *CHA-CHING! Payment received!*',
             `Order #${orderNumber}`,
             '',
-            'Your order is being prepared. We will notify you here as it ships.',
+            'Your order is being packed with love 📦💕',
+            'We\u2019ll ping you here the second it ships, tracking link included! 🚀',
           ].join('\n'))
           return { handled: true }
         }
@@ -791,12 +861,27 @@ async function handleCartOrder(
   }
 
   const subtotal = roundMoney(resolved.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0))
+  const brand = await getBrandName()
+  const customerName = await getCustomerFirstName(phone)
+  const itemLines = resolved.map((item) => {
+    const amount = money(roundMoney(item.unitPrice * item.quantity))
+    return [
+      `• ${item.productName} (${item.variantLabel})`,
+      `   Qty: ${item.quantity}  →  ${amount}`,
+    ].join('\n')
+  })
   const lines = [
-    '🛒 *Cart received!*',
+    playfulGreeting(firstNameOf(customerName), brand),
+    'Your cart just got a serious upgrade 🛍️',
     '',
-    ...resolved.map((item) => `• ${item.productName} (${item.variantLabel}) × ${item.quantity} = ${money(roundMoney(item.unitPrice * item.quantity))}`),
+    '━━━━━━━━━━━━━━━',
+    ...itemLines,
+    '━━━━━━━━━━━━━━━',
     '',
     `Subtotal: ${money(subtotal)}`,
+    '',
+    "Let's get this beauty to your doorstep! 🚚",
+    'I just need 60 seconds of info from you — pinky promise, no boring forms 🤞',
   ]
 
   const state: OrderState = {
@@ -970,13 +1055,22 @@ async function handleAddressName(
 ) {
   const validation = validateName(incomingText)
   if (!validation.valid) {
-    await sendAndLog('text', validation.error!)
+    await sendAndLog('text', playfulInvalidInput(validation, incomingText))
     return
   }
   const name = incomingText.slice(0, 80).trim()
   state.address = { ...(state.address ?? {}), name }
   await saveOrderSession(phone, 'address_line1', state)
-  await sendAndLog('text', `Thanks, ${name.slice(0, 40)}.\n\nNow your **full delivery address (house no., street, area)**:`)
+  await sendAndLog('text', [
+    `Nice to meet you, ${name.slice(0, 40)}! ✅😎`,
+    '',
+    '📦 Now, where should your goodies call home?',
+    'Drop your house/flat no., street & area below.',
+    '',
+    'Why we ask: this is exactly what goes on the shipping label — precision here = no lost packages! 🎯',
+    '',
+    'e.g. "80, Sawargaon, Tal. Chandanapuri Road"',
+  ].join('\n'))
 }
 
 /**
@@ -989,7 +1083,7 @@ export async function sendAddressFlow(
 ) {
   const flowId = process.env.WHATSAPP_ADDRESS_FLOW_ID?.trim() || ''
   if (!flowId) {
-    await sendAndLog('text', 'Please share the **delivery name** (full name of the person receiving the order):')
+    await sendAndLog('text', "First up — who's the lucky human receiving this? 😄\n(Full name, please!)")
     return
   }
   const result = await sendWhatsAppFlow(phone, {
@@ -999,7 +1093,7 @@ export async function sendAddressFlow(
     body: 'Tap below to fill in your delivery address.',
   })
   if (!result.ok) {
-    await sendAndLog('text', 'Please share the **delivery name** (full name of the person receiving the order):')
+    await sendAndLog('text', "First up — who's the lucky human receiving this? 😄\n(Full name, please!)")
   }
 }
 
@@ -1017,6 +1111,8 @@ async function showConfirm(
     : [`Product: ${state.productName ?? ''} (${state.variantLabel ?? 'Standard'})`, `Quantity: ${state.quantity}`]
 
   const lines = [
+    '🎉 Boom! Here\u2019s everything, all wrapped up:',
+    '',
     '🧾 *ORDER SUMMARY*',
     '',
     ...itemLines,
@@ -1026,12 +1122,13 @@ async function showConfirm(
   if (preview.available && preview.tax > 0) lines.push(`Tax: ${money(preview.tax)}`)
   if (!preview.available) lines.push(`Delivery: not available to this pincode (${preview.reason ?? ''})`)
   lines.push('', `*Total: ${money(preview.total)}*`, '')
-  lines.push('📍 *Delivery to:*')
+  lines.push('📍 *Delivering to:*')
   lines.push(`${address.name ?? ''}`)
   lines.push(`${address.line1 ?? ''}`)
   if (address.line2) lines.push(`${address.line2}`)
   lines.push(`${[address.city, address.state, address.pincode].filter(Boolean).join(', ')}`)
   lines.push(`${address.phone ? `Phone: ${address.phone}` : ''}`)
+  lines.push('', 'Everything looking spot on? 👀')
 
   await sendAndLog('text', lines.join('\n'))
 
@@ -1042,10 +1139,10 @@ async function showConfirm(
   }
 
   await sendWhatsAppButtons(phone, {
-    body: 'Tap **Confirm** to place the order, or **Change** to modify.',
+    body: 'Tap **Confirm & Pay** to lock in your order, **Edit Info** to fix anything, or **Cancel**.',
     buttons: [
-      { id: 'confirm:yes', title: 'Confirm ✅' },
-      { id: 'confirm:no', title: 'Change' },
+      { id: 'confirm:yes', title: '🎯 Confirm & Pay' },
+      { id: 'confirm:no', title: '✏️ Edit Info' },
       { id: 'cancel', title: 'Cancel' },
     ],
   })
@@ -1114,11 +1211,13 @@ async function placeOrderAndSendPaymentLink(
     await clearOrderSession(phone)
 
     await sendAndLog('text', [
-      '✅ *Order placed!*',
-      `Order #${result.orderNumber}`,
+      '🥳 *Order Locked In!*',
+      '',
+      `Order ID: #${result.orderNumber}`,
       `Total: ${money(result.totalAmount)}`,
       '',
-      'Complete your payment with the link below:',
+      "You're SO close to owning this! 🏺✨",
+      'Tap below to pay securely — the link stays fresh for the next 15 mins ⏳',
     ].join('\n'))
 
     const paymentLink = await createWhatsappPaymentLink({
@@ -1135,7 +1234,7 @@ async function placeOrderAndSendPaymentLink(
         sendWhatsAppPaymentLink(
           phone,
           paymentLink.shortUrl,
-          `🔗 *Payment link for order ${result.orderNumber}*`
+          `🔗 *Tap here to pay for order ${result.orderNumber} securely*`
         ),
       )
       if (!sent.ok) {
@@ -1152,11 +1251,11 @@ async function placeOrderAndSendPaymentLink(
       totalAmount: result.totalAmount,
     })
 
-    await sendAndLog('text', 'Your order is confirmed on our website too. We will notify you here once payment is received and as it ships.')
+    await sendAndLog('text', "We\u2019ll ping you here the moment payment lands — and again the second it ships! 🚀")
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to place order.'
     console.error('[whatsapp] Order placement failed:', message)
     await clearOrderSession(phone)
-    await sendAndLog('text', `Sorry, we could not place the order: ${message}. Tap **Change** to adjust or **Cancel**.`)
+    await sendAndLog('text', `Oops 🙈 we could not place the order just now: ${message}. No payment was taken — please try again in a minute, or tap **Edit Info** to review your details.`)
   }
 }

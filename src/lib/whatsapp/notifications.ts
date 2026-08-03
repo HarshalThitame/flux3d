@@ -202,11 +202,13 @@ export async function notifyWhatsAppPaymentCaptured(params: {
   }
 
   const message = [
-    '✅ *Payment received!*',
-    `Order #${params.orderNumber}`,
-    `Amount: ${money(params.amountPaise / 100)}`,
+    '🎊 *CHA-CHING! Payment received!*',
     '',
-    'Your order is being prepared. We will notify you here as soon as it ships.',
+    `Order #${params.orderNumber}`,
+    `Amount: ${money(params.amountPaise / 100)} ✅`,
+    'Status: Being packed with love 📦💕',
+    '',
+    'Sit back and relax — we\u2019ll message you the SECOND it ships, tracking link included! 🚀',
   ].join('\n')
 
   const result = await sendWhatsAppText(formatPhone(phoneRaw), message)
