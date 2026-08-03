@@ -60,6 +60,17 @@ export async function sendWhatsAppText(
   })
 }
 
+export async function sendWhatsAppDocument(
+  to: string,
+  params: { link: string; caption?: string }
+): Promise<WhatsAppSendResult> {
+  return sendRaw(to, {
+    type: 'document',
+    document: { link: params.link },
+    ...(params.caption ? { caption: params.caption } : {}),
+  })
+}
+
 export type WhatsAppListRow = { id: string; title: string; description?: string }
 export type WhatsAppListSection = { title?: string; rows: WhatsAppListRow[] }
 
