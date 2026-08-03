@@ -2,7 +2,7 @@ import { getSettings } from '@/lib/settings'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
 import { notifyPaymentCaptured, notifyPaymentFailed, notifyRefundProcessed } from './email-triggers'
-import { notifyWhatsAppPaymentCaptured, notifyWhatsAppPaymentReceipt } from '@/lib/whatsapp/notifications'
+import { notifyWhatsAppPaymentCaptured } from '@/lib/whatsapp/notifications'
 import { sendCapiEvents, buildPurchaseEvent } from '@/lib/meta/conversions-api'
 import { generateEventId } from '@/lib/meta/event-utils'
 import {
@@ -900,15 +900,6 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
           amountPaise: attempt.amount_paise,
         }).catch((err) => {
           console.error('[payments] WhatsApp payment captured notify failed:', err)
-        })
-
-        // Send the tax-invoice PDF as a WhatsApp document (within the 24h window).
-        notifyWhatsAppPaymentReceipt({
-          orderId: attempt.internal_order_id,
-          orderNumber: normalizeText(orderNumberFromMeta) || attempt.internal_order_id,
-          amountPaise: attempt.amount_paise,
-        }).catch((err) => {
-          console.error('[payments] WhatsApp payment receipt PDF send failed:', err)
         })
       }
 
