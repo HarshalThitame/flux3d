@@ -17,6 +17,7 @@ import { recordConsent } from '@/lib/account-linking/consent'
 import { sendAccountLinkConfirmation } from '@/lib/email/triggers'
 import { sendWhatsAppTemplate } from '@/lib/whatsapp/messages'
 import { canonicalPhone } from '@/lib/account-linking/tokens'
+import { retireSyntheticWhatsappUser } from '@/lib/account-linking/merge'
 
 export async function confirmLinkAction(
   formData: FormData
@@ -47,17 +48,12 @@ export async function confirmLinkAction(
     return { error: 'This link belongs to a different account.' }
   }
 
-  const { data: profileRow } = await supabase
-    .from('profiles')
-    .select('phone, phone_number')
-    .eq('id', auth.user.id)
-    .maybeSingle()
-
-  const currentPhone = profileRow?.phone ?? profileRow?.phone_number ?? ''
-  const targetPhone = canonicalPhone(currentPhone)
+  // The verified WhatsApp number is the one on the (consumed) link request —
+  // never the profile's own pre-existing phone, which may be empty or different.
+  const targetPhone = canonicalPhone(request.target_phone)
 
   if (!targetPhone) {
-    return { error: 'No WhatsApp phone number on file. Please add one in your profile first.' }
+    return { error: 'No WhatsApp phone number on file for this link request.' }
   }
 
   const { data: mergeResult, error: mergeError } = await admin
@@ -108,6 +104,9 @@ export async function confirmLinkAction(
     method: 'button_click',
     details: { ordersAttributed, token },
   })
+
+  // Retire the synthetic WhatsApp customer whose orders were just merged.
+  await retireSyntheticWhatsappUser(auth.user.id, targetPhone)
 
   redirect('/profile?linked=whatsapp')
 }
@@ -307,23 +306,30 @@ export async function verifyOtpAction(
     return { error: 'Invalid phone number.' }
   }
 
+  // Brute-force guard: at most 5 verification attempts per phone per hour;
+  // after that a fresh OTP must be requested (rateLimitCheck keyed per phone).
+  const verifyRateLimit = await rateLimitCheck(`link_verify:phone:${phone}`, 3600, 5)
+  if (!verifyRateLimit.success) {
+    return { error: 'Too many verification attempts. Please request a new code.' }
+  }
+
   const confirmed = await verifyOtpForPhone(phone, otpCode)
 
   if (!confirmed) {
     return { error: 'Invalid or expired verification code. Please try again.' }
   }
 
-  const { data: profileRow } = await supabase
-    .from('profiles')
-    .select('phone, phone_number')
-    .eq('id', auth.user.id)
-    .maybeSingle()
+  // Cross-account guard: the OTP request belongs to the logged-in user.
+  if (confirmed.target_user_id !== auth.user.id) {
+    return { error: 'This verification code belongs to a different account.' }
+  }
 
-  const currentPhone = profileRow?.phone ?? profileRow?.phone_number ?? ''
-  const targetPhone = canonicalPhone(currentPhone)
+  // The verified WhatsApp number is the one the OTP was issued for — never
+  // the profile's own pre-existing phone, which may be empty or different.
+  const targetPhone = canonicalPhone(confirmed.target_phone ?? phone)
 
   if (!targetPhone) {
-    return { error: 'No WhatsApp phone number on file. Please add one in your profile first.' }
+    return { error: 'No WhatsApp phone number on file for this link request.' }
   }
 
   const admin = createAdminClient()
@@ -375,6 +381,9 @@ export async function verifyOtpAction(
     method: 'whatsapp_reply',
     details: { ordersAttributed, phone },
   })
+
+  // Retire the synthetic WhatsApp customer whose orders were just merged.
+  await retireSyntheticWhatsappUser(auth.user.id, targetPhone)
 
   redirect('/profile?linked=whatsapp')
 }

@@ -44,6 +44,7 @@ export default function AccountLinkingPage() {
   const [activeTab, setActiveTab] = useState<'requests' | 'consent'>('requests')
   const [toast, setToast] = useState<AdminToastState>(null)
   const [mergingId, setMergingId] = useState<string | null>(null)
+  const [withdrawingId, setWithdrawingId] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
     try {
@@ -90,6 +91,29 @@ export default function AccountLinkingPage() {
       setToast({ type: 'error', message: error instanceof Error ? error.message : 'Merge failed' })
     } finally {
       setMergingId(null)
+    }
+  }
+
+  async function handleWithdraw(phone: string) {
+    setWithdrawingId(phone)
+    setToast(null)
+    try {
+      const res = await fetch('/api/admin/account-linking/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setToast({ type: 'error', message: data.error ?? 'Withdraw failed' })
+      } else {
+        setToast({ type: 'success', message: `Consent withdrawn for ${phone}` })
+        fetchData()
+      }
+    } catch (error) {
+      setToast({ type: 'error', message: error instanceof Error ? error.message : 'Withdraw failed' })
+    } finally {
+      setWithdrawingId(null)
     }
   }
 
@@ -228,6 +252,7 @@ export default function AccountLinkingPage() {
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-[#4b4b4b]">Phone</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-[#4b4b4b]">Timestamp</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-[#4b4b4b]">Withdrawn</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-widest text-[#4b4b4b]">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -244,6 +269,18 @@ export default function AccountLinkingPage() {
                       <td className="px-4 py-3 font-mono text-[#1a1a1a]">{log.phone_number ? `+91 ${log.phone_number}` : '—'}</td>
                       <td className="px-4 py-3 text-[#6b7280]">{formatDate(log.timestamp)}</td>
                       <td className="px-4 py-3 text-[#6b7280]">{log.withdrawn_at ? formatDate(log.withdrawn_at) : '—'}</td>
+                      <td className="px-4 py-3 text-right">
+                        {log.granted && !log.withdrawn_at && log.phone_number && (
+                          <button
+                            type="button"
+                            onClick={() => handleWithdraw(log.phone_number!)}
+                            disabled={withdrawingId === log.phone_number}
+                            className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                          >
+                            {withdrawingId === log.phone_number ? 'Withdrawing…' : 'Withdraw'}
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

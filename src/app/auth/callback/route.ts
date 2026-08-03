@@ -5,6 +5,7 @@ import { normalizeNextPath } from '@/lib/auth/redirect'
 import { upsertProfileForUser } from '@/lib/auth/profile'
 import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/config'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { retireSyntheticWhatsappUser } from '@/lib/account-linking/merge'
 
 function isGoogleSignIn(user: { identities?: Array<{ provider?: string }> }): boolean {
   return user.identities?.some((id) => id.provider === 'google') ?? false
@@ -26,10 +27,13 @@ async function autoLinkGoogleToWhatsApp(supabase: ReturnType<typeof createServer
 
   const admin = createAdminClient()
 
+  // Google verified the email, so the Google account is the person's active
+  // account — attribute the WhatsApp orders to it (not to the old account).
+  const waPhone = waProfile.phone_canonical ?? waProfile.phone ?? waProfile.phone_number ?? ''
   const { data: mergeResult, error: mergeError } = await admin
     .rpc('account_linking_merge_to_user', {
-      p_target_user_id: waProfile.id,
-      p_phone: waProfile.phone_canonical ?? waProfile.phone ?? waProfile.phone_number ?? '',
+      p_target_user_id: user.id,
+      p_phone: waPhone,
     })
     .then((r) => ({ data: r.data, error: r.error }))
 
@@ -39,7 +43,7 @@ async function autoLinkGoogleToWhatsApp(supabase: ReturnType<typeof createServer
 
   const ordersAttributed = (mergeResult as { orders_attributed: number } | null)?.orders_attributed ?? 0
   if (ordersAttributed > 0) {
-    console.log(`[auto-link] attributed ${ordersAttributed} orders from Google user ${user.id} to WhatsApp-linked user ${waProfile.id}`)
+    console.log(`[auto-link] attributed ${ordersAttributed} orders to Google user ${user.id}`)
   }
 
   await admin.from('profiles').update({
@@ -50,6 +54,24 @@ async function autoLinkGoogleToWhatsApp(supabase: ReturnType<typeof createServer
     whatsapp_opt_in_at: new Date().toISOString(),
     phone_canonical: waProfile.phone_canonical,
   }).eq('id', user.id)
+
+  // The old account no longer claims the WhatsApp number, so the Google
+  // account stays the sole owner of the phone (re-linking from the Google
+  // account must not trip the "already linked to a different account" check).
+  await admin.from('profiles').update({
+    phone_verified: false,
+    whatsapp_opt_in: false,
+    whatsapp_opt_in_at: null,
+    phone_canonical: null,
+  }).eq('id', waProfile.id)
+
+  // Retire any synthetic WhatsApp customer (wa+<phone>@flux3d.in) whose
+  // orders were just attributed to the Google account.
+  if (waPhone) {
+    await retireSyntheticWhatsappUser(user.id, waPhone).catch((err) => {
+      console.error('[auto-link] synthetic retirement failed:', err)
+    })
+  }
 }
 
 export async function GET(request: NextRequest) {

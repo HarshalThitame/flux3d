@@ -2,7 +2,12 @@ import { verifyOtpAction } from '@/app/link/actions'
 
 export const dynamic = 'force-dynamic'
 
-export default function VerifyOtpPage() {
+export default async function VerifyOtpPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ phone?: string }>
+}) {
+  const params = await searchParams
   return (
     <main className="min-h-screen bg-[#f9f7f4] px-4 pb-16 text-[#1a1a1a] md:px-8">
       <div className="mx-auto mt-16 max-w-md">
@@ -20,7 +25,7 @@ export default function VerifyOtpPage() {
           }}
           className="mt-6 flex flex-col gap-4"
         >
-          <input type="hidden" name="phone" />
+          <input type="hidden" name="phone" value={params.phone ?? ''} />
           <div>
             <label className="block text-sm font-medium text-[#4b4b4b]">Verification Code</label>
             <input
