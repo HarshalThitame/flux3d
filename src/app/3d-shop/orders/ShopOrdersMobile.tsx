@@ -81,6 +81,17 @@ function getPaymentBadge(order: ShopOrder) {
   )
 }
 
+function getOrderSourceBadge(order: ShopOrder) {
+  if (order.order_source === 'whatsapp') {
+    return (
+      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+        WhatsApp
+      </span>
+    )
+  }
+  return null
+}
+
 function LoadingState() {
   return (
     <div className="space-y-3">
@@ -255,7 +266,8 @@ export default function ShopOrdersMobile() {
                       <div className="min-w-0 truncate text-xs font-bold text-[var(--shop-text-muted)]">
                         #{order.order_number}
                       </div>
-                      <div className="flex-shrink-0">
+                      <div className="flex flex-shrink-0 items-center gap-1.5">
+                        {getOrderSourceBadge(order)}
                         {getPaymentBadge(order)}
                       </div>
                     </div>

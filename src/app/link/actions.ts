@@ -250,14 +250,17 @@ export async function linkWhatsappAction(
   const customerName = profile.data?.full_name ?? 'there'
   const confirmUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'}/link/confirm?token=${result.token}`
 
-  // Count past orders matching this phone (not yet owned by user)
+  // Count past orders matching this phone (not yet owned by user).
+  // Admin client: the rows belong to other users and are RLS-invisible to the
+  // session client, which would silently undercount (0).
+  const adminCount = createAdminClient()
   const last10 = canonicalPhone(phone).slice(-10)
-  const { count: shelfCount } = await supabase
+  const { count: shelfCount } = await adminCount
     .from('shelf_orders')
     .select('id', { count: 'exact', head: true })
     .neq('user_id', auth.user.id)
     .filter('shipping_address->>phone', 'like', `%${last10}`)
-  const { count: customCount } = await supabase
+  const { count: customCount } = await adminCount
     .from('orders')
     .select('id', { count: 'exact', head: true })
     .neq('user_id', auth.user.id)
@@ -582,14 +585,17 @@ export async function changeWhatsAppAction(
   const customerName = profileData.data?.full_name ?? 'there'
   const confirmUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'}/link/confirm?token=${result.token}`
 
-  // Count past orders matching this phone (not yet owned by user)
+  // Count past orders matching this phone (not yet owned by user).
+  // Admin client: the rows belong to other users and are RLS-invisible to the
+  // session client, which would silently undercount (0).
+  const adminCount = createAdminClient()
   const last10c = canonicalPhone(phone).slice(-10)
-  const { count: shelfCountC } = await supabase
+  const { count: shelfCountC } = await adminCount
     .from('shelf_orders')
     .select('id', { count: 'exact', head: true })
     .neq('user_id', auth.user.id)
     .filter('shipping_address->>phone', 'like', `%${last10c}`)
-  const { count: customCountC } = await supabase
+  const { count: customCountC } = await adminCount
     .from('orders')
     .select('id', { count: 'exact', head: true })
     .neq('user_id', auth.user.id)

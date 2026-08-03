@@ -111,6 +111,17 @@ function getPaymentBadge(order: ShopOrder) {
   )
 }
 
+function getOrderSourceBadge(order: ShopOrder) {
+  if (order.order_source === 'whatsapp') {
+    return (
+      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
+        WhatsApp
+      </span>
+    )
+  }
+  return null
+}
+
 function getHeroMetricLabel(filter: FilterKey) {
   switch (filter) {
     case 'active':
@@ -443,7 +454,8 @@ export default function ShopOrdersClient() {
                           <div className="min-w-0 truncate text-xs font-bold text-[var(--shop-text-muted)]">
                             #{order.order_number}
                           </div>
-                          <div className="flex-shrink-0">
+                          <div className="flex flex-shrink-0 items-center gap-1.5">
+                            {getOrderSourceBadge(order)}
                             {getPaymentBadge(order)}
                           </div>
                         </div>
