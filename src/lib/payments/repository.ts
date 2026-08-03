@@ -250,6 +250,21 @@ export async function fetchPaymentEvent(provider: PaymentProvider, providerEvent
   return data ? mapPaymentEventRow(asRecord(data)) : null
 }
 
+/**
+ * Look up a payment event by its internal table id (UUID).
+ *
+ * `processWebhookEventById` and the retry cron are handed the internal `id`
+ * returned by `ingestRazorpayWebhook`, NOT the provider's event id. Looking up
+ * by `provider_event_id` (a different column) there returns nothing and silently
+ * strands the event as `received`, so this explicit by-id lookup is required.
+ */
+export async function fetchPaymentEventById(id: string): Promise<PaymentEventRecord | null> {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase.from('payment_events').select('*').eq('id', id).maybeSingle()
+  if (error) throw new Error(error.message)
+  return data ? mapPaymentEventRow(asRecord(data)) : null
+}
+
 export async function fetchCaptureEventForPayment(
   providerPaymentId: string,
   excludeEventId: string,
