@@ -212,9 +212,29 @@ export async function notifyWhatsAppPaymentCaptured(params: {
   ].join('\n')
 
   const result = await sendWhatsAppText(formatPhone(phoneRaw), message)
-  if (!result.ok) {
-    console.error('[whatsapp] payment_captured message failed:', result.status, result.error)
+  if (result.ok) return true
+
+  console.error('[whatsapp] payment_captured session message failed:', result.status, result.error)
+
+  // Fallback when the customer-service 24h session window has expired (e.g. a
+  // payment confirmation for an order processed retroactively/backfilled): retry
+  // via the approved ORDER_CONFIRMATION template, which is deliverable outside
+  // the 24h window.
+  const tpl = templateName('ORDER_CONFIRMATION')
+  if (tpl) {
+    const fallback = await sendWhatsAppTemplate(formatPhone(phoneRaw), {
+      name: tpl,
+      language: TEMPLATE_LANGUAGE,
+      components: [
+        { type: 'body', parameters: [
+          { type: 'text', text: params.orderNumber },
+          { type: 'text', text: money(params.amountPaise / 100) },
+        ] },
+      ],
+    })
+    if (fallback.ok) return true
+    console.error('[whatsapp] payment_captured template fallback failed:', fallback.status, fallback.error)
   }
 
-  return result.ok
+  return false
 }
