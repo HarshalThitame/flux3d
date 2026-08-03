@@ -31,7 +31,8 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_attributed BIGINT;
+  v_attributed_shelf BIGINT;
+  v_attributed_custom BIGINT;
 BEGIN
   -- Only the service role may reassign orders; authenticated/anon JWTs
   -- are rejected even if the EXECUTE grant is ever re-added.
@@ -45,6 +46,7 @@ BEGIN
     RETURN;
   END IF;
 
+  -- 1. shelf_orders (WhatsApp shelf orders) — matches shipping_address->>'phone'
   UPDATE public.shelf_orders
   SET user_id = p_target_user_id,
       order_source = COALESCE(order_source, 'whatsapp')
@@ -53,8 +55,20 @@ BEGIN
         = right(regexp_replace(p_phone::text, '[^0-9]', '', 'g'), 10)
     AND user_id <> p_target_user_id;
 
-  GET DIAGNOSTICS v_attributed = ROW_COUNT;
-  RETURN QUERY SELECT v_attributed;
+  GET DIAGNOSTICS v_attributed_shelf = ROW_COUNT;
+
+  -- 2. orders (custom 3D print orders) — matches on the top-level phone column
+  UPDATE public.orders
+  SET user_id = p_target_user_id
+  WHERE phone IS NOT NULL
+    AND phone <> ''
+    AND right(regexp_replace(phone, '[^0-9]', '', 'g'), 10)
+        = right(regexp_replace(p_phone::text, '[^0-9]', '', 'g'), 10)
+    AND user_id <> p_target_user_id;
+
+  GET DIAGNOSTICS v_attributed_custom = ROW_COUNT;
+
+  RETURN QUERY SELECT (v_attributed_shelf + v_attributed_custom)::BIGINT;
 END;
 $$;
 

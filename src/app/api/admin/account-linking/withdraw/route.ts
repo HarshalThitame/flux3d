@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { withdrawConsent, canonicalPhone } from '@/lib/account-linking/consent'
+import { requireAdminRequest } from '@/lib/admin/request'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
+  const auth = await requireAdminRequest()
+  if ('response' in auth) return auth.response
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
