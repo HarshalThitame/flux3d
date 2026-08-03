@@ -122,6 +122,33 @@ export async function getPendingRequestByPhone(
 }
 
 /**
+ * Read (without consuming) the latest pending (unconfirmed, unexpired)
+ * email-magic-link request for a user, so the profile card can show a
+ * "Verification pending" state until the user confirms via the emailed link.
+ * OTP (whatsapp_otp) requests are excluded — those surfaces are client-side.
+ */
+export async function getPendingEmailLinkRequestByUser(
+  userId: string,
+): Promise<LinkRequestRecord | null> {
+  const db = createAdminClient()
+  const now = new Date().toISOString()
+  const { data, error } = await db
+    .from('link_requests')
+    .select('*')
+    .eq('target_user_id', userId)
+    .eq('method', 'email_magic_link')
+    .is('confirmed_at', null)
+    .gt('expires_at', now)
+    .order('created_at', { ascending: false })
+    .maybeSingle()
+
+  if (error) {
+    console.error('[account-linking] getPendingEmailLinkRequestByUser failed:', error.message)
+  }
+  return (data ?? null) as LinkRequestRecord | null
+}
+
+/**
  * Issue a WhatsApp OTP for an already-created request (method === 'whatsapp_otp').
  * Stores the OTP hash and returns the raw code to send over WhatsApp.
  */

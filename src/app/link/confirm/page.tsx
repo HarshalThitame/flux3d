@@ -1,3 +1,4 @@
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { getLinkRequestByToken } from '@/lib/account-linking/link-requests'
 import { confirmLinkAction } from '../actions'
@@ -51,13 +52,16 @@ export default async function LinkConfirmPage({
 
   // Preview only counts orders NOT yet owned by the target account that match
   // this phone — i.e. the orders that will actually be imported on confirm.
+  // Admin client: the rows belong to other users and are RLS-invisible to the
+  // session client, which would silently undercount (0).
+  const admin = createAdminClient()
   const last10 = phone.replace(/\D/g, '').slice(-10)
-  const { count: shelfCount } = await supabase
+  const { count: shelfCount } = await admin
     .from('shelf_orders')
     .select('id', { count: 'exact', head: true })
     .neq('user_id', request.target_user_id)
     .filter('shipping_address->>phone', 'like', `%${last10}`)
-  const { count: customCount } = await supabase
+  const { count: customCount } = await admin
     .from('orders')
     .select('id', { count: 'exact', head: true })
     .neq('user_id', request.target_user_id)

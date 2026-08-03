@@ -41,6 +41,7 @@ export type ProfileDetailsData = {
   phoneVerified: boolean
   whatsappOptIn: boolean
   phoneCanonical: string | null
+  pendingLinkPhone: string | null
   addressId: string | null
   address: ProfileAddress
   addresses: ProfileSavedAddress[]
@@ -1007,8 +1008,40 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
   const [linkedPhone, setLinkedPhone] = useState(
     profile.phoneVerified ? profile.phoneCanonical ?? profile.phone : null
   )
+  const [pendingPhone, setPendingPhone] = useState<string | null>(profile.pendingLinkPhone)
   const [showChangeForm, setShowChangeForm] = useState(false)
   const [changeSubmitting, setChangeSubmitting] = useState(false)
+
+  if (pendingPhone && !showChangeForm) {
+    return (
+      <Card>
+        <SectionLabel>Connected accounts</SectionLabel>
+        <div className="mt-3 flex items-center gap-3 text-sm">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </span>
+          <div className="flex-1">
+            <div className="font-medium text-[#1a1a1a]">Verification pending</div>
+            <div className="text-[#6b7280]">+91 {pendingPhone}</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPendingPhone(null)}
+            className="rounded-xl border border-[#e8e4df] bg-white px-3 py-2 text-sm font-medium text-[#6b7280] transition hover:bg-[#f3f0ff]"
+          >
+            Dismiss
+          </button>
+        </div>
+        <p className="mt-3 text-sm leading-7 text-[#4b4b4b]">
+          A confirmation link was sent to your email. Click it to complete linking your WhatsApp number. Past
+          orders placed under this number will be imported once you confirm. The link expires in 15 minutes.
+        </p>
+      </Card>
+    )
+  }
 
   if (linkedPhone && !showChangeForm) {
     return (
@@ -1080,6 +1113,7 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
               setLinkedPhone(phoneDraft || null)
               setOtpSent(false)
               setOtpCode('')
+              setPendingPhone(null)
             }
           }}
           className="mt-4 flex flex-col gap-3"
@@ -1133,6 +1167,10 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
               if (result.message?.includes('verification code')) {
                 setOtpSent(true)
                 setShowChangeForm(false)
+              } else {
+                setPendingPhone(phoneDraft || null)
+                setShowChangeForm(false)
+                setPhoneDraft('')
               }
             }
           }}
@@ -1199,8 +1237,10 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
             setToast({ type: 'success', message: result.message ?? 'Check your email.' })
             if (result.message?.includes('verification code')) {
               setOtpSent(true)
+            } else {
+              setPendingPhone(phoneDraft || null)
+              setPhoneDraft('')
             }
-            setLinkedPhone(phoneDraft || null)
           }
         }}
         className="mt-4 flex flex-col gap-3"

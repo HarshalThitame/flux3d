@@ -7,6 +7,7 @@ import {
   QUOTES_TABLE_UNAVAILABLE_MESSAGE,
 } from '@/lib/quote/supabase-errors'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getPendingEmailLinkRequestByUser } from '@/lib/account-linking/link-requests'
 import ProfileClient, {
   type ProfileDetailsData,
   type ProfileModelFile,
@@ -171,6 +172,7 @@ export default async function ProfilePage() {
     phoneVerified: profileRow?.phone_verified ?? false,
     whatsappOptIn: profileRow?.whatsapp_opt_in ?? false,
     phoneCanonical: profileRow?.phone_canonical ?? null,
+    pendingLinkPhone: (await getPendingEmailLinkRequestByUser(auth.user.id))?.target_phone ?? null,
     addressId: defaultAddress?.id ?? null,
     address: {
       addressLine1: defaultAddress?.address_line_1 ?? '',
