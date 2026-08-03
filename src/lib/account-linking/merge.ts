@@ -41,6 +41,84 @@ export async function mergeWhatsAppOrdersToAccount(
 }
 
 /**
+ * Reverse the merge: re-home every order that was imported into `userId` on a
+ * previous link of `phone` back onto the synthetic WhatsApp guest, so the
+ * orders disappear from that account's views again. Delegates to the Postgres
+ * RPC `account_linking_unmerge_from_user` (see
+ * supabase/migrations/..._unmerge_account_linking.sql).
+ *
+ * Returns null on failure so callers can abort the unlink.
+ */
+export async function unmergeWhatsAppOrdersFromAccount(
+  userId: string,
+  phone: string,
+): Promise<{ ordersDetached: number } | null> {
+  const db = createAdminClient()
+  const canonical = canonicalPhone(phone)
+  if (!canonical) {
+    return { ordersDetached: 0 }
+  }
+
+  const guestId = await resolveSyntheticGuest(canonical)
+  if (!guestId) {
+    return null
+  }
+
+  const { data, error } = await db.rpc('account_linking_unmerge_from_user', {
+    p_user_id: userId,
+    p_phone: canonical,
+    p_guest_user_id: guestId,
+  })
+
+  if (error) {
+    console.error('[account-linking] unmerge rpc failed:', error.message)
+    return null
+  }
+
+  // Revive the guest so a future re-link can merge it again.
+  await db
+    .from('profiles')
+    .update({ status: 'active', suspended_at: null, suspended_reason: null })
+    .eq('id', guestId)
+
+  const row = Array.isArray(data) ? data[0] : data
+  const ordersDetached = Number(row?.orders_detached ?? 0)
+  return { ordersDetached }
+}
+
+/**
+ * Resolve the synthetic WhatsApp guest (wa+<phone>@flux3d.in) that originally
+ * owned orders for this number. Matches on the last-10-digit suffix so a
+ * 12-digit wa_id ("919623023480") resolves against a 10-digit canonical phone
+ * ("9623023480"). Falls back to provisioning a fresh guest when none exists.
+ */
+async function resolveSyntheticGuest(phone: string): Promise<string | null> {
+  const db = createAdminClient()
+  const last10 = canonicalPhone(phone).slice(-10)
+  if (!last10) return null
+
+  const { data: candidates, error } = await db
+    .from('profiles')
+    .select('id, email')
+    .ilike('phone_number', `%${last10}`)
+    .limit(5)
+
+  if (error) {
+    console.error('[account-linking] synthetic lookup failed:', error.message)
+    return null
+  }
+
+  const existing = (candidates ?? []).find(
+    (p) => p.email?.startsWith('wa+') && p.email.endsWith('@flux3d.in')
+  )
+  if (existing) return String(existing.id)
+
+  const { getOrCreateWhatsappCustomer } = await import('@/lib/whatsapp/customer')
+  const customer = await getOrCreateWhatsappCustomer(phone, { name: 'WhatsApp Customer' })
+  return customer.userId
+}
+
+/**
  * Soft-retire the synthetic WhatsApp customer whose orders were just merged
  * into a real account (decision (a) in the linking plan): mark the profile
  * `suspended` and stamp `user_metadata.merged_into` on the auth user so the

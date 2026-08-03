@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, ReactNode, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   Camera,
   FileArchive,
@@ -997,6 +998,82 @@ function SecurityCard() {
   )
 }
 
+function ConfirmModal({
+  open,
+  title,
+  body,
+  confirmLabel,
+  tone = 'whatsapp',
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean
+  title: string
+  body: ReactNode
+  confirmLabel: string
+  tone?: 'whatsapp' | 'danger'
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0f0f0f]/60 p-4 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onCancel}
+          role="dialog"
+          aria-modal="true"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 28, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 18, scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+            onClick={(event) => event.stopPropagation()}
+            className="w-full max-w-md overflow-hidden rounded-3xl border border-[#e8e4df] bg-[#faf9f7] shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-4 px-6 pt-6">
+              <h2 className="text-lg font-semibold text-[#1a1a1a]">{title}</h2>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="rounded-lg p-1 text-[#9ca3af] transition hover:bg-[#f0ede8] hover:text-[#4b4b4b]"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="px-6 pt-3 text-sm leading-7 text-[#4b4b4b]">{body}</div>
+            <div className="mt-6 flex flex-col-reverse gap-2 px-6 pb-6 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="rounded-xl border border-[#e8e4df] bg-white px-4 py-2.5 text-sm font-medium text-[#6b7280] transition hover:bg-[#f3f0ff]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={onConfirm}
+                className={`rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition ${
+                  tone === 'danger'
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-[#25d366] hover:bg-[#1da851]'
+                }`}
+              >
+                {confirmLabel}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
 function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
   const [toast, setToast] = useState<Toast>(null)
   const [phoneDraft, setPhoneDraft] = useState('')
@@ -1011,6 +1088,12 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
   const [pendingPhone, setPendingPhone] = useState<string | null>(profile.pendingLinkPhone)
   const [showChangeForm, setShowChangeForm] = useState(false)
   const [changeSubmitting, setChangeSubmitting] = useState(false)
+  const [showLinkConfirm, setShowLinkConfirm] = useState(false)
+  const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(false)
+  const [showChangeConfirm, setShowChangeConfirm] = useState(false)
+  const linkFormRef = useRef<HTMLFormElement>(null)
+  const unlinkFormRef = useRef<HTMLFormElement>(null)
+  const changeFormRef = useRef<HTMLFormElement>(null)
 
   if (pendingPhone && !showChangeForm) {
     return (
@@ -1045,7 +1128,8 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
 
   if (linkedPhone && !showChangeForm) {
     return (
-      <Card>
+      <>
+        <Card>
         <SectionLabel>Connected accounts</SectionLabel>
         <div className="mt-3 flex items-center gap-3 text-sm">
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#25d366] text-white">
@@ -1066,6 +1150,7 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
               Change
             </button>
             <form
+              ref={unlinkFormRef}
               action={async (formData: FormData) => {
                 setSubmitting(true)
                 setToast(null)
@@ -1080,7 +1165,8 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
               }}
             >
               <button
-                type="submit"
+                type="button"
+                onClick={() => setShowUnlinkConfirm(true)}
                 disabled={submitting}
                 className="rounded-xl border border-[#e8e4df] bg-white px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
               >
@@ -1090,6 +1176,25 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
           </div>
         </div>
       </Card>
+      <ConfirmModal
+        open={showUnlinkConfirm}
+        title="Unlink WhatsApp number?"
+        tone="danger"
+        confirmLabel="Unlink"
+        onConfirm={() => {
+          setShowUnlinkConfirm(false)
+          unlinkFormRef.current?.requestSubmit()
+        }}
+        onCancel={() => setShowUnlinkConfirm(false)}
+        body={
+          <>
+            This removes <strong>+91 {linkedPhone}</strong> from your account. WhatsApp orders previously
+            imported to your 3D Shop orders will be removed from your account. You can link the number again
+            anytime.
+          </>
+        }
+      />
+      </>
     )
   }
 
@@ -1149,12 +1254,14 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
 
   if (showChangeForm) {
     return (
-      <Card>
+      <>
+        <Card>
         <SectionLabel>Connected accounts</SectionLabel>
         <p className="mt-3 text-sm leading-7 text-[#4b4b4b]">
           Enter your new WhatsApp number to change the linked account.
         </p>
         <form
+          ref={changeFormRef}
           action={async (formData: FormData) => {
             setChangeSubmitting(true)
             setToast(null)
@@ -1197,9 +1304,10 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
           )}
           <div className="flex gap-3">
             <button
-              type="submit"
-              disabled={changeSubmitting}
-              className="rounded-xl bg-[#25d366] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1da851] disabled:opacity-50"
+              type="button"
+              onClick={() => setShowChangeConfirm(true)}
+              disabled={changeSubmitting || !optIn}
+              className="rounded-xl bg-[#25d366] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1da851] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {changeSubmitting ? 'Sending…' : 'Send confirmation link'}
             </button>
@@ -1212,8 +1320,31 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
               Cancel
             </button>
           </div>
+          {!optIn && (
+            <p className="-mt-1 text-xs leading-5 text-[#9ca3af]">
+              Please tick the consent checkbox above to enable sending.
+            </p>
+          )}
         </form>
       </Card>
+      <ConfirmModal
+        open={showChangeConfirm}
+        title="Change WhatsApp number?"
+        confirmLabel="Yes, send confirmation link"
+        onConfirm={() => {
+          setShowChangeConfirm(false)
+          changeFormRef.current?.requestSubmit()
+        }}
+        onCancel={() => setShowChangeConfirm(false)}
+        body={
+          <>
+            This connects <strong>+91 {phoneDraft}</strong> to your account. We&apos;ll send a one-time code on
+            WhatsApp or a confirmation link to your email to verify ownership. Past orders placed under this
+            number are imported once confirmed — your consent is recorded (DPDP Act, 2023).
+          </>
+        }
+      />
+      </>
     )
   }
 
@@ -1226,6 +1357,7 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
         WhatsApp. On confirmation, past orders placed under this number are imported to your profile.
       </p>
       <form
+        ref={linkFormRef}
         action={async (formData: FormData) => {
           setSubmitting(true)
           setToast(null)
@@ -1269,13 +1401,36 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
           </p>
         )}
         <button
-          type="submit"
-          disabled={submitting}
-          className="rounded-xl bg-[#25d366] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1da851] disabled:opacity-50"
+          type="button"
+          onClick={() => setShowLinkConfirm(true)}
+          disabled={submitting || !optIn}
+          className="rounded-xl bg-[#25d366] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1da851] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {submitting ? 'Sending…' : 'Send confirmation link'}
         </button>
+        {!optIn && (
+          <p className="-mt-1 text-xs leading-5 text-[#9ca3af]">
+            Please tick the consent checkbox above to enable sending.
+          </p>
+        )}
       </form>
+      <ConfirmModal
+        open={showLinkConfirm}
+        title="Link WhatsApp number?"
+        confirmLabel="Yes, send confirmation link"
+        onConfirm={() => {
+          setShowLinkConfirm(false)
+          linkFormRef.current?.requestSubmit()
+        }}
+        onCancel={() => setShowLinkConfirm(false)}
+        body={
+          <>
+            This connects <strong>+91 {phoneDraft}</strong> to your account. We&apos;ll send a one-time code on
+            WhatsApp or a confirmation link to your email to verify ownership. Past orders placed under this
+            number are imported once confirmed — your consent is recorded (DPDP Act, 2023).
+          </>
+        }
+      />
     </Card>
   )
 }

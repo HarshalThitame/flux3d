@@ -17,7 +17,8 @@ import { recordConsent } from '@/lib/account-linking/consent'
 import { sendAccountLinkConfirmation } from '@/lib/email/triggers'
 import { sendWhatsAppTemplate } from '@/lib/whatsapp/messages'
 import { canonicalPhone } from '@/lib/account-linking/tokens'
-import { retireSyntheticWhatsappUser } from '@/lib/account-linking/merge'
+import { retireSyntheticWhatsappUser, unmergeWhatsAppOrdersFromAccount } from '@/lib/account-linking/merge'
+import { notifyWhatsAppConnected } from '@/lib/whatsapp/notifications'
 
 export async function confirmLinkAction(
   formData: FormData
@@ -110,6 +111,13 @@ export async function confirmLinkAction(
 
   // Retire the synthetic WhatsApp customer whose orders were just merged.
   await retireSyntheticWhatsappUser(auth.user.id, targetPhone)
+
+  // Friendly connected message on WhatsApp (best-effort).
+  await notifyWhatsAppConnected({
+    phone: targetPhone,
+    customerName: auth.profile.name,
+    orderCount: ordersAttributed,
+  })
 
   redirect('/profile?linked=whatsapp')
 }
@@ -391,6 +399,13 @@ export async function verifyOtpAction(
   // Retire the synthetic WhatsApp customer whose orders were just merged.
   await retireSyntheticWhatsappUser(auth.user.id, targetPhone)
 
+  // Friendly connected message on WhatsApp (best-effort).
+  await notifyWhatsAppConnected({
+    phone: targetPhone,
+    customerName: auth.profile.name,
+    orderCount: ordersAttributed,
+  })
+
   redirect('/profile?linked=whatsapp')
 }
 
@@ -411,6 +426,13 @@ export async function unlinkWhatsAppAction(
   }
 
   const phone = profile.phone_canonical
+
+  // Detach every order that was imported into this account on a previous link
+  // of this number, so they no longer show in the user's 3D-shop orders.
+  const unmerge = await unmergeWhatsAppOrdersFromAccount(auth.user.id, phone)
+  if (unmerge === null) {
+    return { error: 'Failed to unlink WhatsApp. Please try again.' }
+  }
 
   await recordConsent({
     userId: auth.user.id,
