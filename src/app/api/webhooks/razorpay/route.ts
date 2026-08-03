@@ -5,6 +5,7 @@ import { rateLimitCheck } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+export const maxDuration = 30
 
 export async function POST(request: Request) {
   const rawBody = await request.text()
@@ -30,26 +31,34 @@ export async function POST(request: Request) {
     // Fast path: verify signature + persist the event, then return 200.
     const ingested = await ingestRazorpayWebhook({ rawBody, signature, eventId })
 
-    // Enqueue the heavy processing to a durable QStash worker.
+    // Process the event synchronously inline as the primary path. This is the
+    // reliable approach (used before the queue refactor) so payment
+    // confirmations are never stranded by an upstream delivery failure. The
+    // QStash worker is only a best-effort backup retry now.
     if (ingested.eventId) {
-      const queued = await enqueuePaymentWebhookProcessing(ingested.eventId)
-      if (!queued) {
-        // QStash unavailable — fall back to synchronous processing inline.
-        // The 200 response is delayed in this (rare) case, same as the WhatsApp
-        // webhook fallback. The queue is the primary path.
-        try {
-          const outcome = await processWebhookEventById(ingested.eventId)
-          return NextResponse.json({
-            acknowledged: outcome.acknowledged,
-            duplicate: outcome.duplicate,
-          })
-        } catch (processError) {
-          console.error('[payments] Inline fallback processing failed:', processError)
-          return NextResponse.json(
-            { error: 'Webhook enqueued but inline fallback failed.' },
-            { status: 500 }
-          )
-        }
+      try {
+        const outcome = await processWebhookEventById(ingested.eventId)
+        return NextResponse.json({
+          acknowledged: outcome.acknowledged,
+          duplicate: outcome.duplicate,
+          processed: true,
+        })
+      } catch (processError) {
+        console.error('[webhooks/razorpay] Inline processing failed:', processError)
+        // Best-effort: hand off to the durable worker for a retry, then return
+        // 5xx so Razorpay replays the webhook. Re-processing is idempotent
+        // (dedup on provider event id + capture sibling check), so retries are
+        // safe.
+        const queued = await enqueuePaymentWebhookProcessing(ingested.eventId).catch(() => false)
+        return NextResponse.json(
+          {
+            acknowledged: ingested.acknowledged,
+            duplicate: ingested.duplicate,
+            enqueued: queued,
+            error: processError instanceof Error ? processError.message : 'Processing failed',
+          },
+          { status: 500 },
+        )
       }
     }
 
