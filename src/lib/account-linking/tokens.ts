@@ -29,10 +29,6 @@ export function generateOtp(): string {
   return String(100000 + crypto.randomInt(0, 900000))
 }
 
-export function hashToken(token: string): string {
-  return crypto.createHash('sha256').update(token).digest('hex')
-}
-
 export function hashOtp(code: string): string {
   return crypto.createHash('sha256').update(code).digest('hex')
 }

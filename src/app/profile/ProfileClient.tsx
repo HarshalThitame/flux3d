@@ -1183,7 +1183,9 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
     <Card>
       <SectionLabel>Connected accounts</SectionLabel>
       <p className="mt-3 text-sm leading-7 text-[#4b4b4b]">
-        Link your WhatsApp number to receive order updates and verification codes.
+        Link your WhatsApp number to receive order updates and verification codes. The number and your profile
+        email are used only for this link and to send those messages — no other account details are shared to
+        WhatsApp. On confirmation, past orders placed under this number are imported to your profile.
       </p>
       <form
         action={async (formData: FormData) => {
@@ -1215,8 +1217,12 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
         />
         <label className="flex items-start gap-2 text-sm text-[#4b4b4b]">
           <input type="checkbox" name="whatsapp_opt_in" checked={optIn} onChange={(e) => setOptIn(e.target.checked)} className="mt-1" />
-          I agree to receive a verification message from Flux3D on WhatsApp.
+          I agree that Flux3D may send a verification message to this WhatsApp number and process the linked order data for account linking.
         </label>
+        <p className="text-xs leading-5 text-[#9ca3af]">
+          Your consent is recorded with a timestamp (DPDP Act, 2023) and can be withdrawn at any time from
+          the dashboard or by contacting support.
+        </p>
         {toast && (
           <p className={`text-sm ${toast.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>
             {toast.message}

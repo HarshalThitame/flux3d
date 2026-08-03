@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   generateToken,
   generateOtp,
-  hashToken,
   hashOtp,
   canonicalPhone,
   phoneMatchKey,
@@ -18,9 +17,9 @@ describe('tokens', () => {
 
   it('token hashes are deterministic and do not expose the raw token', () => {
     const t = generateToken()
-    expect(hashToken(t)).toHaveLength(64) // sha256 hex
-    expect(hashToken(t)).toBe(hashToken(t))
-    expect(hashToken(t)).not.toBe(t)
+    expect(hashOtp(t)).toHaveLength(64) // sha256 hex
+    expect(hashOtp(t)).toBe(hashOtp(t))
+    expect(hashOtp(t)).not.toBe(t)
   })
 
   it('generates a 6-digit OTP', () => {
@@ -51,7 +50,7 @@ describe('tokens', () => {
   })
 
   it('compares digests in constant time and rejects mismatches', () => {
-    const h = hashToken(generateToken())
+    const h = hashOtp(generateToken())
     expect(safeEqual(h, h)).toBe(true)
     expect(safeEqual(h, 'x')).toBe(false)
     expect(safeEqual('a', 'abc')).toBe(false)

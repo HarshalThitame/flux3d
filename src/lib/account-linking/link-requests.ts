@@ -75,6 +75,30 @@ export async function consumeLinkRequestByToken(
   return (data ?? null) as LinkRequestRecord | null
 }
 
+/**
+ * Read (without consuming) a pending, unexpired request by its raw token.
+ * Never mutates the row — used for preview rendering so opening the link
+ * does not burn the single-use token (consumption happens only on confirm).
+ */
+export async function getLinkRequestByToken(
+  token: string,
+): Promise<LinkRequestRecord | null> {
+  const db = createAdminClient()
+  const now = new Date().toISOString()
+  const { data, error } = await db
+    .from('link_requests')
+    .select('*')
+    .eq('token', token)
+    .is('confirmed_at', null)
+    .gt('expires_at', now)
+    .maybeSingle()
+
+  if (error) {
+    console.error('[account-linking] getLinkRequestByToken failed:', error.message)
+  }
+  return (data ?? null) as LinkRequestRecord | null
+}
+
 /** Read (without consuming) a pending, unexpired request for a phone. */
 export async function getPendingRequestByPhone(
   phone: string,

@@ -27,14 +27,17 @@ export async function confirmLinkAction(
     return { error: 'Missing token.' }
   }
 
+  // Authenticate first: an unauthenticated visit redirects to login with the
+  // token preserved in `next`, and waits until after auth to consume it.
+  const auth = await requireUser(`/link/confirm?token=${token}`)
+  const admin = createAdminClient()
+  const supabase = await createServerSupabaseClient()
+
+  // Single-use consumption happens only at confirm time, never on page render.
   const request = await consumeLinkRequestByToken(token)
   if (!request) {
     return { error: 'This link is invalid or has already been used.' }
   }
-
-  const auth = await requireUser('/link/confirm')
-  const admin = createAdminClient()
-  const supabase = await createServerSupabaseClient()
 
   if (auth.user.id !== request.target_user_id) {
     await recordConsent({
