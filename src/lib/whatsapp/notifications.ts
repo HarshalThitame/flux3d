@@ -126,6 +126,57 @@ export async function notifyWhatsAppPaymentLink(params: {
   return result.ok
 }
 
+// WhatsApp connected (after account linking) — sends a friendly "you're in!"
+// message. Prefers the WHATSAPP_TEMPLATE_CONNECTED HSM (body params {{1}} name,
+// {{2}} order count) when configured; otherwise falls back to a session text,
+// which only works inside the 24h customer window (e.g. right after the OTP
+// flow) and is ignored by the API otherwise.
+export async function notifyWhatsAppConnected(params: {
+  phone: string
+  customerName: string
+  orderCount: number
+}): Promise<boolean> {
+  const to = formatPhone(params.phone)
+  const name = templateName('CONNECTED')
+
+  if (name) {
+    const result = await sendWhatsAppTemplate(to, {
+      name,
+      language: TEMPLATE_LANGUAGE,
+      components: [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: params.customerName },
+            { type: 'text', text: String(params.orderCount) },
+          ],
+        },
+      ],
+    })
+    if (result.ok) return true
+    console.error('[whatsapp] connected template failed:', result.status, result.error)
+  }
+
+  const message = [
+    '🎉 *You\u2019re officially connected!*',
+    '',
+    `Hey ${params.customerName}! Your WhatsApp is now linked to Flux3D.`,
+    params.orderCount > 0
+      ? `We found ${params.orderCount} past order${params.orderCount === 1 ? '' : 's'} and brought them home to your account. 📦`
+      : 'No orphaned orders this time — your account is squeaky clean. ✨',
+    '',
+    'We\u2019ll only ping you for the good stuff: order updates, shipping, and the occasional high-five. 🖐️',
+    '',
+    'Ready to make something awesome? 🚀',
+  ].join('\n')
+
+  const result = await sendWhatsAppText(to, message)
+  if (!result.ok) {
+    console.error('[whatsapp] connected text failed:', result.status, result.error)
+  }
+  return result.ok
+}
+
 // Payment captured — sends within the 24h customer-service window as a plain
 // session text (no HSM approval needed), so it works even before business
 // verification approves the shipped/delivered HSM templates.
