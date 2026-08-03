@@ -12,6 +12,7 @@ import {
   fetchPaymentAttemptByProviderPaymentId,
   fetchPaymentAttemptByPaymentLinkId,
   fetchPaymentEvent,
+  fetchPaymentEventById,
   fetchCaptureEventForPayment,
   fetchActivePaymentAttempt,
   insertPaymentAuditLog,
@@ -1067,7 +1068,10 @@ export async function ingestRazorpayWebhook(params: {
  * type de-dupe check and lifecycle handling. Used by the QStash worker.
  */
 export async function processWebhookEventById(eventId: string): Promise<{ acknowledged: boolean; duplicate: boolean }> {
-  const event = await fetchPaymentEvent('razorpay', eventId)
+  // `eventId` here is the internal payment_events `id` (a UUID), as returned by
+  // ingestRazorpayWebhook. Fetch by that id directly — NOT by provider_event_id,
+  // which is a separate column and would silently return nothing.
+  const event = await fetchPaymentEventById(eventId)
   if (!event) {
     throw new Error('Webhook event not found.')
   }
