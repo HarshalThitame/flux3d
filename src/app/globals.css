@@ -54,9 +54,10 @@
   --teal-glow: var(--accent-glow);
   --teal-dim: rgba(109, 40, 217,0.08);
   --card: var(--bg-elevated);
-  --font-inter: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-syne: var(--font-playfair), 'Playfair Display', Georgia, serif;
-  --font-dm: var(--font-inter);
+  --font-inter: var(--font-space), 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-syne: var(--font-space), 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-dm: var(--font-space), 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-playfair), 'Playfair Display', Georgia, serif;
   --font-mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
@@ -105,7 +106,7 @@ button:active {
 body {
   background-color: #f9f7f4;
   color: #111827;
-  font-family: var(--font-inter), var(--font-dm), sans-serif;
+  font-family: var(--font-space), 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
@@ -131,20 +132,20 @@ body::before {
 }
 
 h1, h2, h3, h4 {
-  font-family: var(--font-inter), var(--font-dm), sans-serif;
+  font-family: var(--font-space), 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--text-primary);
-  line-height: 1.15;
-  letter-spacing: 0;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
 }
 
 h1 { font-size: clamp(36px, 5.5vw, 72px); font-weight: 800; }
-h2 { font-size: clamp(28px, 3.5vw, 48px); font-weight: 600; }
+h2 { font-size: clamp(28px, 3.5vw, 48px); font-weight: 700; letter-spacing: -0.02em; }
 h3 { font-size: clamp(20px, 2.5vw, 30px); font-weight: 600; }
 
 p, li, span {
-  font-family: var(--font-inter), var(--font-dm), sans-serif;
+  font-family: var(--font-space), 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: inherit;
-  line-height: 1.75;
+  line-height: 1.7;
 }
 
 .mono,
@@ -391,7 +392,7 @@ samp {
 }
 
 .logo {
-  font-family: var(--font-syne);
+  font-family: var(--font-display);
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: 0;
@@ -758,7 +759,7 @@ samp {
   bottom: -0.14em;
   left: 50%;
   transform: translateX(-50%);
-  font-family: var(--font-syne);
+  font-family: var(--font-display);
   font-size: clamp(80px, 15vw, 200px);
   font-weight: 800;
   color: rgba(91, 33, 182, 0.06);
@@ -769,7 +770,7 @@ samp {
 }
 
 .footer-brand {
-  font-family: var(--font-syne);
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 700;
   color: #0F1B3D;
