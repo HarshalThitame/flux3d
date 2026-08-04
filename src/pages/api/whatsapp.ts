@@ -1089,12 +1089,60 @@ export default async function handler(
       // is durable even if the function is terminated right after the 200.
       const queued = await enqueueWhatsAppProcessing(eventRecord?.id ?? null)
 
-      // === RETURN 200 IMMEDIATELY, PROCESS VIA QUEUE (OR INLINE FALLBACK) ===
+      // If QStash was unreachable, process inline BEFORE returning 200.
+      // Background work after the 200 is killed seconds later on Hobby plans,
+      // so doing this synchronously is the only reliable fallback. The
+      // order/guided-fallback paths are fast (<~3s) and fit within the
+      // function duration limit. The queue remains the primary path.
+      if (!queued && eventRecord?.id) {
+        const requestStartedAt = Date.now()
+        const workKey = `webhook-${payloadHash.slice(0, 12)}`;
+        const workPromise = processIncomingMessage({ supabase, payloadHash, payload, from, text: text!, interaction, eventRecord, requestStartedAt }).catch((error) => {
+          console.error("[whatsapp] Async processing failed:", error)
+          Sentry.captureException(error, {
+            tags: { handler: 'webhook_async' },
+            extra: { sender: from },
+          });
+        }).finally(() => {
+          pendingWorkMap.delete(workKey);
+        });
+        pendingWorkMap.set(workKey, workPromise);
+
+        // WhatsApp allows ~20s for the 200 ack; our Hobby cap is 10s, so bound
+        // the inline fallback well under that.
+        const PROCESSING_TIMEOUT_MS = 6_000;
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Processing timeout (6s)')), PROCESSING_TIMEOUT_MS)
+        );
+        try {
+          await Promise.race([workPromise, timeoutPromise]);
+        } catch (processingError) {
+          const errMsg = processingError instanceof Error ? processingError.message : String(processingError);
+          console.error("[whatsapp] Processing timed out or failed:", errMsg);
+          Sentry.captureException(processingError, {
+            tags: { handler: 'processing_timeout' },
+            extra: { sender: from },
+          });
+          // Mark event as failed so it's visible in the database
+          if (supabase && eventRecord?.id) {
+            try {
+              await supabase.from('whatsapp_webhook_events').update({
+                error: errMsg.slice(0, 500),
+              }).eq('id', eventRecord.id)
+            } catch {
+              // best-effort marking
+            }
+          }
+        }
+      }
+
+      // === RETURN 200 IMMEDIATELY; the queue (or the inline fallback above) handles processing ===
       res.status(200).json({ success: true, queued })
 
-      // Send a quick acknowledgment to verify the WhatsApp API works
-      // (skip while an ordering session is active — the flow replies with real prompts)
-      if (!interaction) {
+      // Quick acknowledgment for plain-text messages, sent only when the
+      // worker will also follow up (queue path). When we processed inline
+      // above the reply already went out, so we don't double up.
+      if (!interaction && queued) {
         const hasOrderSession = await getOrderSession(from ?? '').catch(() => null)
         if (!hasOrderSession) {
           try {
@@ -1117,51 +1165,6 @@ export default async function handler(
             console.log("[whatsapp] ACK sent to", from?.slice(-4));
           } catch (ackError) {
             console.error("[whatsapp] ACK failed:", ackError);
-          }
-        }
-      }
-
-      if (!queued && eventRecord?.id) {
-        // Fallback: inline async processing (best effort — the queue is the
-        // primary path; this only runs if QStash was unreachable)
-        const requestStartedAt = Date.now()
-        const workKey = `webhook-${payloadHash.slice(0, 12)}`;
-        const workPromise = processIncomingMessage({ supabase, payloadHash, payload, from, text: text!, interaction, eventRecord, requestStartedAt }).catch((error) => {
-          console.error("[whatsapp] Async processing failed:", error)
-          Sentry.captureException(error, {
-            tags: { handler: 'webhook_async' },
-            extra: { sender: from },
-          });
-        }).finally(() => {
-          pendingWorkMap.delete(workKey);
-        });
-        pendingWorkMap.set(workKey, workPromise);
-
-        // Await processing (with 30s hard timeout) to prevent Vercel from
-        // terminating the function before async work completes. WhatsApp has
-        // a 20-second timeout for the 200 response — we already sent it above.
-        const PROCESSING_TIMEOUT_MS = 30_000;
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Processing timeout (30s)')), PROCESSING_TIMEOUT_MS)
-        );
-        try {
-          await Promise.race([workPromise, timeoutPromise]);
-        } catch (processingError) {
-          const errMsg = processingError instanceof Error ? processingError.message : String(processingError);
-          console.error("[whatsapp] Processing timed out or failed:", errMsg);
-          Sentry.captureException(processingError, {
-            tags: { handler: 'processing_timeout' },
-            extra: { sender: from },
-          });
-          // Mark event as failed so it's visible in the database
-          if (supabase && eventRecord?.id) {
-            try {
-              await supabase.from('whatsapp_webhook_events').update({
-                error: errMsg.slice(0, 500),
-              }).eq('id', eventRecord.id)
-            } catch {
-              // best-effort marking
-            }
           }
         }
       }
