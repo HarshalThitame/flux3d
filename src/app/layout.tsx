@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
-import { Playfair_Display } from 'next/font/google'
+import { Playfair_Display, Space_Grotesk } from 'next/font/google'
 import { getSettings } from '@/lib/settings'
 import { FALLBACK_SETTINGS } from '@/lib/settings-fallback'
 import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data'
@@ -11,12 +11,24 @@ import MetaPixel from '@/components/MetaPixel'
 import ToastContainer from '@/components/Toast'
 import './globals.css'
 import './shop-luxury.css'
+import './landing-premium.css'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-playfair',
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+})
+
+// Space Grotesk — a premium, geometric sans-serif used for body and
+// interface typography across the landing experience. Loaded as a
+// single variable font so the full 100–900 weight range renders crisply
+// (the existing headings rely on font-black / font-extrabold).
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space',
+  display: 'swap',
+  weight: 'variable',
 })
 
 const GOOGLE_ANALYTICS_ID = 'G-KCK2459TBQ'
@@ -135,7 +147,7 @@ export default async function RootLayout({
       <html
         lang="en"
         data-scroll-behavior="smooth"
-        className={playfair.variable}
+        className={`${playfair.variable} ${spaceGrotesk.variable}`}
       >
       <head>
         {DNS_PREFETCH_ORIGINS.map((href) => (
