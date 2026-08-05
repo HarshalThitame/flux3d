@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { motion } from 'framer-motion'
 import {
   Megaphone,
   Plus,
@@ -9,15 +10,17 @@ import {
   PlayCircle,
   AlertCircle,
   CheckCircle2,
-  Clock,
   Loader2,
   IndianRupee,
   Tag,
-  Package,
   Eye,
-  ChevronRight,
   RefreshCw,
+  Trash2,
 } from 'lucide-react'
+import MetaAdsDashboard, { type MetaAdsMetric } from '@/components/admin/MetaAdsDashboard'
+import InsightsChart, { type InsightPoint } from '@/components/admin/InsightsChart'
+import ObjectivesChart from '@/components/admin/ObjectivesChart'
+import DataTable from '@/components/admin/DataTable'
 
 type Campaign = {
   id: string
@@ -40,13 +43,33 @@ type Campaign = {
   has_local_record: boolean
 }
 
+type InsightsData = {
+  today: { spend: number; impressions: number; clicks: number; conversions: number }
+  last7d: { spend: number; impressions: number; clicks: number; conversions: number }
+  last30d: { spend: number; impressions: number; clicks: number; conversions: number }
+}
+
+function useNow(interval = 1000) {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), interval)
+    return () => clearInterval(timer)
+  }, [interval])
+  return now
+}
+
 export default function AdminAdsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [insights, setInsights] = useState<InsightsData | null>(null)
+  const [chartPoints, setChartPoints] = useState<InsightPoint[]>([])
   const [loading, setLoading] = useState(true)
+  const [insightsLoading, setInsightsLoading] = useState(true)
   const [creating, setCreating] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [listError, setListError] = useState<string | null>(null)
   const [createError, setCreateError] = useState<string | null>(null)
   const [createSuccess, setCreateSuccess] = useState<Record<string, unknown> | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const hasInitialized = useRef(false)
 
   // Form state
   const [categoryName, setCategoryName] = useState('3D Printed Home Decor')
@@ -55,25 +78,78 @@ export default function AdminAdsPage() {
   const [pageId, setPageId] = useState('')
 
   const adAccountId = process.env.NEXT_PUBLIC_META_AD_ACCOUNT_ID || ''
+  const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  useEffect(() => {
-    loadCampaigns()
-  }, [])
-
-  async function loadCampaigns() {
+  const loadCampaigns = useCallback(async () => {
     setLoading(true)
-    setError(null)
+    setListError(null)
     try {
       const res = await fetch('/api/admin/ads/list')
       if (!res.ok) throw new Error((await res.json()).error ?? 'Failed to load')
       const data = (await res.json()) as { campaigns: Campaign[] }
       setCampaigns(data.campaigns ?? [])
+      setLastUpdated(new Date())
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load campaigns')
+      setListError(err instanceof Error ? err.message : 'Failed to load campaigns')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  const loadInsights = useCallback(async () => {
+    setInsightsLoading(true)
+    try {
+      const res = await fetch('/api/admin/ads/insights')
+      if (!res.ok) throw new Error((await res.json()).error ?? 'Failed to load insights')
+      const data = (await res.json()) as InsightsData
+      setInsights(data)
+
+      // Build chart points from last7d (mock daily breakdown — in production,
+      // you'd fetch time-series from /api/admin/ads/campaigns/[id]/insights)
+      const points: InsightPoint[] = []
+      const now = new Date()
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now)
+        d.setDate(d.getDate() - i)
+        points.push({
+          label: d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+          spend: Math.round(data.last7d.spend / 7),
+          impressions: Math.round(data.last7d.impressions / 7),
+          clicks: Math.round(data.last7d.clicks / 7),
+        })
+      }
+      setChartPoints(points)
+    } catch (err) {
+      // silently ignore insights errors so table still shows
+      console.error('Insights load error:', err)
+    } finally {
+      setInsightsLoading(false)
+    }
+  }, [])
+
+  const loadAll = useCallback(async () => {
+    await Promise.all([loadCampaigns(), loadInsights()])
+  }, [loadCampaigns, loadInsights])
+
+  // Initial load — guarded by ref to avoid cascading renders
+  useEffect(() => {
+    if (hasInitialized.current) return
+    hasInitialized.current = true
+    void loadAll()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Auto-refresh every 30s
+  useEffect(() => {
+    refreshIntervalRef.current = setInterval(() => {
+      void loadAll()
+    }, 30000)
+
+    return () => {
+      if (refreshIntervalRef.current) clearInterval(refreshIntervalRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
@@ -100,11 +176,37 @@ export default function AdminAdsPage() {
       }
 
       setCreateSuccess(data)
-      await loadCampaigns()
+      await loadAll()
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : 'Creation failed')
     } finally {
       setCreating(false)
+    }
+  }
+
+  async function toggleCampaign(id: string, currentStatus: string) {
+    const nextStatus = currentStatus === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'
+    try {
+      const res = await fetch(`/api/admin/ads/campaigns/${id}/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      })
+      if (!res.ok) throw new Error('Toggle failed')
+      await loadCampaigns()
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : 'Toggle failed')
+    }
+  }
+
+  async function deleteCampaign(id: string) {
+    if (!confirm('Are you sure you want to archive this campaign?')) return
+    try {
+      const res = await fetch(`/api/admin/ads/campaigns/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Delete failed')
+      await loadCampaigns()
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : 'Delete failed')
     }
   }
 
@@ -128,6 +230,45 @@ export default function AdminAdsPage() {
     )
   }
 
+  // Build metrics from insights
+  const metrics: MetaAdsMetric[] = insights
+    ? [
+        {
+          label: '7-Day Spend',
+          value: `₹${Math.round(insights.last7d.spend).toLocaleString('en-IN')}`,
+          change: `+${Math.round((insights.today.spend / Math.max(insights.last7d.spend / 7, 1)) * 100)}% vs avg`,
+          tone: 'positive',
+        },
+        {
+          label: '7-Day Impressions',
+          value: insights.last7d.impressions.toLocaleString('en-IN'),
+          change: `${Math.round((insights.last7d.clicks / Math.max(insights.last7d.impressions, 1)) * 100)}% CTR`,
+          tone: 'neutral',
+        },
+        {
+          label: '7-Day Clicks',
+          value: insights.last7d.clicks.toLocaleString('en-IN'),
+          change: `${Math.round(insights.last7d.conversions)} conversions`,
+          tone: 'positive',
+        },
+        {
+          label: 'Active Campaigns',
+          value: String(campaigns.filter((c) => c.status === 'ACTIVE').length),
+          change: `${campaigns.length} total`,
+          tone: 'neutral',
+        },
+      ]
+    : [
+        { label: '7-Day Spend', value: '₹0', tone: 'neutral' },
+        { label: '7-Day Impressions', value: '0', tone: 'neutral' },
+        { label: '7-Day Clicks', value: '0', tone: 'neutral' },
+        { label: 'Active Campaigns', value: '0', tone: 'neutral' },
+      ]
+
+  const now = useNow()
+  const seconds = Math.floor((now - lastUpdated.getTime()) / 1000)
+  const timeAgo = seconds < 5 ? 'just now' : seconds < 60 ? `${seconds}s ago` : `${Math.floor(seconds / 60)}m ago`
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -138,13 +279,46 @@ export default function AdminAdsPage() {
             Create and manage Facebook & Instagram ad campaigns for your 3D shop
           </p>
         </div>
-        <button
-          onClick={loadCampaigns}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-[#6F7192] bg-white border border-[rgba(109,40,217,0.2)] hover:border-[rgba(109,40,217,0.4)] transition-all"
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-[#6F7192]">Updated {timeAgo}</span>
+          <button
+            onClick={loadAll}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-[#6F7192] bg-white border border-[rgba(109,40,217,0.2)] hover:border-[rgba(109,40,217,0.4)] transition-all"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading || insightsLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <MetaAdsDashboard metrics={metrics} />
+
+      {/* Charts Row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
+          <InsightsChart
+            title="7-Day Performance"
+            subtitle="Daily spend, impressions, and clicks across all campaigns"
+            points={chartPoints}
+            activeMetrics={['spend', 'impressions', 'clicks']}
+          />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <ObjectivesChart
+            title="Campaign Objectives"
+            subtitle="Breakdown by objective type"
+            campaigns={campaigns}
+          />
+        </motion.div>
       </div>
 
       {/* Create Ad Form */}
@@ -172,9 +346,7 @@ export default function AdminAdsPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#6F7192] mb-1.5">
-                Daily Budget (₹)
-              </label>
+              <label className="block text-xs font-medium text-[#6F7192] mb-1.5">Daily Budget (₹)</label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6F7192]" />
                 <input
@@ -190,9 +362,7 @@ export default function AdminAdsPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#6F7192] mb-1.5">
-                Facebook Page ID
-              </label>
+              <label className="block text-xs font-medium text-[#6F7192] mb-1.5">Facebook Page ID</label>
               <div className="relative">
                 <Eye className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6F7192]" />
                 <input
@@ -284,111 +454,152 @@ export default function AdminAdsPage() {
         )}
       </div>
 
-      {/* Campaigns List */}
+      {/* Campaigns Table */}
       <div>
-        <h2 className="text-lg font-semibold text-[#0F1B3D] mb-4 flex items-center gap-2">
-          <Package className="w-5 h-5 text-[#6d28d9]" />
-          Active Campaigns
-        </h2>
-
-        {loading && (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-[#6d28d9] animate-spin" />
+        {listError && (
+          <div className="mb-4 rounded-xl border border-rose-400/20 bg-rose-50 p-4 text-sm text-rose-600 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium">Failed to load campaigns</p>
+              <p className="mt-1">{listError}</p>
+            </div>
           </div>
         )}
-
-        {!loading && error && (
-          <div className="rounded-xl border border-rose-400/20 bg-rose-50 p-6 text-rose-600 text-center">
-            <AlertCircle className="mx-auto w-8 h-8 mb-2" />
-            <p>{error}</p>
-            <button
-              onClick={loadCampaigns}
-              className="mt-3 text-sm font-medium text-[#6d28d9] hover:underline"
-            >
-              Try again
-            </button>
-          </div>
-        )}
-
-        {!loading && !error && campaigns.length === 0 && (
-          <div className="text-center py-16 rounded-2xl border border-dashed border-[rgba(109,40,217,0.2)] bg-white">
-            <Megaphone className="mx-auto w-12 h-12 text-[#6F7192] mb-4" />
-            <p className="text-[#6F7192]">No campaigns found in your Meta ad account</p>
-            <p className="text-xs text-[#6F7192] mt-1">
-              Create your first campaign using the form above
-            </p>
-          </div>
-        )}
-
-        {!loading && !error && campaigns.length > 0 && (
-          <div className="space-y-3">
-            {campaigns.map((c) => (
-              <div
-                key={c.id}
-                className="group bg-white rounded-2xl border border-[rgba(109,40,217,0.15)] p-5 hover:border-[rgba(109,40,217,0.3)] hover:shadow-[0_4px_20px_rgba(109,40,217,0.06)] transition-all"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2 flex-wrap">
-                      <h3 className="font-semibold text-[#0F1B3D] truncate">{c.name}</h3>
-                      {statusBadge(c.status)}
-                      {c.has_local_record && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium text-[#6d28d9] bg-[rgba(109,40,217,0.1)] border border-[rgba(109,40,217,0.2)]">
-                          <CheckCircle2 className="w-3 h-3" /> Flux3D
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#6F7192]">
-                      <span className="inline-flex items-center gap-1">
-                        <Tag className="w-3 h-3" />
-                        {c.objective}
+        <DataTable
+          title="Campaigns"
+          description={`${campaigns.length} campaigns in your Meta ad account. Auto-refreshes every 30 seconds.`}
+          data={campaigns}
+          columns={[
+            {
+              key: 'name',
+              label: 'Campaign',
+              sortable: true,
+              sortValue: (row: Campaign) => row.name,
+              render: (row: Campaign) => (
+                <div>
+                  <div className="font-semibold text-[#0F1B3D]">{row.name}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    {statusBadge(row.status)}
+                    {row.has_local_record && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium text-[#6d28d9] bg-[rgba(109,40,217,0.1)] border border-[rgba(109,40,217,0.2)]">
+                        <CheckCircle2 className="w-3 h-3" /> Flux3D
                       </span>
-                      {c.daily_budget && (
-                        <span className="inline-flex items-center gap-1">
-                          <IndianRupee className="w-3 h-3" />
-                          ₹{(Number(c.daily_budget) / 100).toLocaleString('en-IN')}/day
-                        </span>
-                      )}
-                      {c.budget_remaining && (
-                        <span className="inline-flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          ₹{(Number(c.budget_remaining) / 100).toLocaleString('en-IN')} remaining
-                        </span>
-                      )}
-                      <span className="inline-flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {new Date(c.created_time).toLocaleDateString('en-IN')}
-                      </span>
-                      {c.local_record?.category_name && (
-                        <span className="inline-flex items-center gap-1">
-                          <Package className="w-3 h-3" />
-                          {c.local_record.category_name}
-                        </span>
-                      )}
-                      {c.local_record?.product_count ? (
-                        <span className="inline-flex items-center gap-1">
-                          <Eye className="w-3 h-3" />
-                          {c.local_record.product_count} products
-                        </span>
-                      ) : null}
-                    </div>
+                    )}
                   </div>
-
+                </div>
+              ),
+            },
+            {
+              key: 'objective',
+              label: 'Objective',
+              sortable: true,
+              sortValue: (row: Campaign) => row.objective,
+              render: (row: Campaign) => (
+                <span className="text-sm text-[#6F7192]">{row.objective.replace(/_/g, ' ')}</span>
+              ),
+            },
+            {
+              key: 'budget',
+              label: 'Budget',
+              sortable: true,
+              sortValue: (row: Campaign) => Number(row.daily_budget ?? 0),
+              render: (row: Campaign) => (
+                <div className="text-sm">
+                  {row.daily_budget ? (
+                    <span className="font-medium text-[#0F1B3D]">
+                      ₹{(Number(row.daily_budget) / 100).toLocaleString('en-IN')}/day
+                    </span>
+                  ) : (
+                    <span className="text-[#6F7192]">—</span>
+                  )}
+                  {row.budget_remaining && (
+                    <div className="text-xs text-[#6F7192] mt-0.5">
+                      ₹{(Number(row.budget_remaining) / 100).toLocaleString('en-IN')} remaining
+                    </div>
+                  )}
+                </div>
+              ),
+            },
+            {
+              key: 'created',
+              label: 'Created',
+              sortable: true,
+              sortValue: (row: Campaign) => row.created_time,
+              render: (row: Campaign) => (
+                <span className="text-sm text-[#6F7192]">
+                  {new Date(row.created_time).toLocaleDateString('en-IN')}
+                </span>
+              ),
+            },
+            {
+              key: 'actions',
+              label: 'Actions',
+              render: (row: Campaign) => (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleCampaign(row.id, row.status)}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      row.status === 'ACTIVE'
+                        ? 'bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100'
+                        : 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100'
+                    }`}
+                    title={row.status === 'ACTIVE' ? 'Pause' : 'Activate'}
+                  >
+                    {row.status === 'ACTIVE' ? (
+                      <PauseCircle className="w-3.5 h-3.5" />
+                    ) : (
+                      <PlayCircle className="w-3.5 h-3.5" />
+                    )}
+                    {row.status === 'ACTIVE' ? 'Pause' : 'Resume'}
+                  </button>
                   <a
-                    href={`https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${adAccountId}&selected_campaign_ids=${c.id}`}
+                    href={`https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${adAccountId}&selected_campaign_ids=${row.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-medium text-[#6d28d9] hover:underline shrink-0"
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#6d28d9] bg-[rgba(109,40,217,0.08)] border border-[rgba(109,40,217,0.15)] hover:bg-[rgba(109,40,217,0.12)] transition-all"
                   >
-                    <ExternalLink className="w-3 h-3" />
+                    <ExternalLink className="w-3.5 h-3.5" />
                     Manage
-                    <ChevronRight className="w-3 h-3" />
                   </a>
+                  <button
+                    onClick={() => deleteCampaign(row.id)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition-all"
+                    title="Archive"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ),
+            },
+          ]}
+          searchPlaceholder="Search campaigns..."
+          searchKeys={['name', 'objective']}
+          filters={[
+            {
+              key: 'status',
+              label: 'Status',
+              options: [
+                { label: 'All', value: 'all' },
+                { label: 'Active', value: 'ACTIVE' },
+                { label: 'Paused', value: 'PAUSED' },
+                { label: 'Archived', value: 'ARCHIVED' },
+              ],
+              getValue: (row: Campaign) => row.status,
+            },
+            {
+              key: 'objective',
+              label: 'Objective',
+              options: [
+                { label: 'All', value: 'all' },
+                { label: 'Sales', value: 'OUTCOME_SALES' },
+                { label: 'Awareness', value: 'OUTCOME_AWARENESS' },
+                { label: 'Traffic', value: 'OUTCOME_TRAFFIC' },
+                { label: 'Conversions', value: 'CONVERSIONS' },
+              ],
+              getValue: (row: Campaign) => row.objective,
+            },
+          ]}
+        />
       </div>
     </div>
   )
