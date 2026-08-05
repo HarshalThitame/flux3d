@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import dynamic from 'next/dynamic'
 import { useReducedMotion } from 'framer-motion'
 import { Box3, Vector3 } from 'three'
@@ -49,12 +49,46 @@ type ProductModelViewerProps = {
   className?: string
 }
 
+type ModelCanvasBoundaryProps = {
+  children: ReactNode
+  onReset?: () => void
+}
+
+type ModelCanvasBoundaryState = {
+  hasError: boolean
+}
+
+class ModelCanvasBoundary extends Component<ModelCanvasBoundaryProps, ModelCanvasBoundaryState> {
+  state: ModelCanvasBoundaryState = { hasError: false }
+
+  static getDerivedStateFromError(): ModelCanvasBoundaryState {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error) {
+    console.error('3D model render error:', error)
+  }
+
+  handleRetry = () => {
+    this.setState({ hasError: false })
+    this.props.onReset?.()
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <ModelError message="Could not render the 3D model." onRetry={this.handleRetry} />
+    }
+    return this.props.children
+  }
+}
+
 export default function ProductModelViewer({ modelUrl, productName, className = '' }: ProductModelViewerProps) {
   const [model, setModel] = useState<LoadedShopModel | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [autoRotate, setAutoRotate] = useState(true)
+  const [reloadKey, setReloadKey] = useState(0)
   const reduceMotion = useReducedMotion()
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -79,7 +113,12 @@ export default function ProductModelViewer({ modelUrl, productName, className = 
     return () => {
       active = false
     }
-  }, [modelUrl])
+  }, [modelUrl, reloadKey])
+
+  function retryLoad() {
+    setError(null)
+    setReloadKey((key) => key + 1)
+  }
 
   const largestDimension = useMemo(() => {
     if (!model) return 0
@@ -92,14 +131,16 @@ export default function ProductModelViewer({ modelUrl, productName, className = 
       className={`group relative overflow-hidden bg-[var(--shop-bg-soft)] ${className}`}
     >
       {loading && <ModelSkeleton />}
-      {error && !loading && <ModelError message={error} onRetry={() => setError(null)} />}
+      {error && !loading && <ModelError message={error} onRetry={retryLoad} />}
       {!loading && !error && model && (
         <>
-          <ProductModelCanvas
-            object={model.object}
-            autoRotate={autoRotate && !reduceMotion}
-            productName={productName}
-          />
+          <ModelCanvasBoundary onReset={retryLoad}>
+            <ProductModelCanvas
+              object={model.object}
+              autoRotate={autoRotate && !reduceMotion}
+              productName={productName}
+            />
+          </ModelCanvasBoundary>
           <div className="pointer-events-none absolute inset-x-4 top-4 flex items-start justify-between">
             <span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-[var(--shop-border-gold)] bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--shop-gold)] backdrop-blur-sm">
               <Box className="h-3 w-3" />
@@ -156,14 +197,16 @@ export default function ProductModelViewer({ modelUrl, productName, className = 
       </div>
       <div className="relative flex-1 overflow-hidden rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)]">
         {!loading && !error && model && (
-          <ProductModelCanvas
-            object={model.object}
-            autoRotate={autoRotate && !reduceMotion}
-            productName={productName}
-          />
+          <ModelCanvasBoundary onReset={retryLoad}>
+            <ProductModelCanvas
+              object={model.object}
+              autoRotate={autoRotate && !reduceMotion}
+              productName={productName}
+            />
+          </ModelCanvasBoundary>
         )}
         {loading && <ModelSkeleton />}
-        {error && <ModelError message={error} onRetry={() => setError(null)} />}
+        {error && <ModelError message={error} onRetry={retryLoad} />}
       </div>
     </div>
   )
