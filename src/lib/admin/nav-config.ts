@@ -30,6 +30,7 @@ import {
   UserCog,
   FolderOpen,
   Warehouse,
+  Megaphone,
 } from 'lucide-react'
 
 export type NavItem = {
@@ -59,6 +60,7 @@ export const adminNavItems: NavItem[] = [
   { label: 'Coupons', href: '/admin/coupons', icon: TicketCheck, section: 'main' },
   { label: 'Blog', href: '/admin/blog', icon: Eye, section: 'main' },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3, section: 'main' },
+  { label: 'Meta Ads', href: '/admin/ads', icon: Megaphone, section: 'main' },
   { label: '3D Shop Categories', href: '/admin/3d-shop/categories', icon: Beaker, section: 'shop' },
   { label: '3D Shop Products', href: '/admin/3d-shop/products', icon: Package, section: 'shop' },
   { label: '3D Shop Stock', href: '/admin/3d-shop/stock', icon: Warehouse, section: 'shop' },
