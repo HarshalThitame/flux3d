@@ -19,7 +19,7 @@ type FilterConfig<T> = {
 
 type Column<T> = {
   key: string
-  label: string
+  label: React.ReactNode
   sortable?: boolean
   className?: string
   render: (row: T) => React.ReactNode

@@ -20,6 +20,7 @@ import DataTable from '@/components/admin/DataTable'
 import CampaignDetailDrawer from '@/components/admin/CampaignDetailDrawer'
 import CampaignEditModal from '@/components/admin/CampaignEditModal'
 import CreateCampaignForm from '@/components/admin/CreateCampaignForm'
+import QuickActionsToolbar from '@/components/admin/QuickActionsToolbar'
 
 type Campaign = {
   id: string
@@ -72,6 +73,10 @@ export default function AdminAdsPage() {
   // Drawer / Modal state
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
   const [editingCampaign, setEditingCampaign] = useState<{ id: string; name: string; daily_budget?: string } | null>(null)
+
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkProcessing, setBulkProcessing] = useState(false)
 
   const adAccountId = process.env.NEXT_PUBLIC_META_AD_ACCOUNT_ID || ''
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -170,6 +175,80 @@ export default function AdminAdsPage() {
       await loadCampaigns()
     } catch (err) {
       setListError(err instanceof Error ? err.message : 'Delete failed')
+    }
+  }
+
+  // ─── Bulk actions ─────────────────────────────────────────────────────────
+
+  async function bulkToggleSelected() {
+    setBulkProcessing(true)
+    const ids = Array.from(selectedIds)
+    const activeIds = ids.filter((id) => campaigns.find((c) => c.id === id)?.status === 'ACTIVE')
+    const pausedIds = ids.filter((id) => campaigns.find((c) => c.id === id)?.status === 'PAUSED')
+
+    try {
+      await Promise.all([
+        ...activeIds.map((id) =>
+          fetch(`/api/admin/ads/campaigns/${id}/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'PAUSED' }),
+          }),
+        ),
+        ...pausedIds.map((id) =>
+          fetch(`/api/admin/ads/campaigns/${id}/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'ACTIVE' }),
+          }),
+        ),
+      ])
+      setSelectedIds(new Set())
+      await loadCampaigns()
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : 'Bulk toggle failed')
+    } finally {
+      setBulkProcessing(false)
+    }
+  }
+
+  async function bulkArchiveSelected() {
+    setBulkProcessing(true)
+    const ids = Array.from(selectedIds)
+
+    try {
+      await Promise.all(
+        ids.map((id) => fetch(`/api/admin/ads/campaigns/${id}`, { method: 'DELETE' })),
+      )
+      setSelectedIds(new Set())
+      await loadCampaigns()
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : 'Bulk archive failed')
+    } finally {
+      setBulkProcessing(false)
+    }
+  }
+
+  async function bulkDuplicateSelected() {
+    setBulkProcessing(true)
+    const ids = Array.from(selectedIds)
+
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          fetch('/api/admin/ads/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ duplicateFromId: id }),
+          }),
+        ),
+      )
+      setSelectedIds(new Set())
+      await loadAll()
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : 'Bulk duplicate failed')
+    } finally {
+      setBulkProcessing(false)
     }
   }
 
@@ -328,7 +407,23 @@ export default function AdminAdsPage() {
       )}
 
       {/* Campaigns Table */}
-      <div>
+      <div className="space-y-4">
+        <QuickActionsToolbar
+          campaigns={campaigns.map((c) => ({ id: c.id, name: c.name, status: c.status }))}
+          selectedIds={selectedIds}
+          onSelectAll={(select) => {
+            if (select) {
+              setSelectedIds(new Set(campaigns.map((c) => c.id)))
+            } else {
+              setSelectedIds(new Set())
+            }
+          }}
+          onPauseSelected={bulkToggleSelected}
+          onArchiveSelected={bulkArchiveSelected}
+          onDuplicateSelected={bulkDuplicateSelected}
+          isProcessing={bulkProcessing}
+        />
+
         {listError && (
           <div className="mb-4 rounded-xl border border-rose-400/20 bg-rose-50 p-4 text-sm text-rose-600 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
@@ -343,6 +438,40 @@ export default function AdminAdsPage() {
           description={`${campaigns.length} campaigns in your Meta ad account. Auto-refreshes every 30 seconds.`}
           data={campaigns}
           columns={[
+            {
+              key: 'select',
+              label: (
+                <input
+                  type="checkbox"
+                  checked={campaigns.length > 0 && campaigns.every((c) => selectedIds.has(c.id))}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedIds(new Set(campaigns.map((c) => c.id)))
+                    } else {
+                      setSelectedIds(new Set())
+                    }
+                  }}
+                  className="w-4 h-4 rounded border-[rgba(109,40,217,0.3)] text-[#6d28d9] focus:ring-[#6d28d9]"
+                />
+              ),
+              sortable: false,
+              render: (row: Campaign) => (
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(row.id)}
+                  onChange={() => {
+                    const next = new Set(selectedIds)
+                    if (next.has(row.id)) {
+                      next.delete(row.id)
+                    } else {
+                      next.add(row.id)
+                    }
+                    setSelectedIds(next)
+                  }}
+                  className="w-4 h-4 rounded border-[rgba(109,40,217,0.3)] text-[#6d28d9] focus:ring-[#6d28d9]"
+                />
+              ),
+            },
             {
               key: 'name',
               label: 'Campaign',
