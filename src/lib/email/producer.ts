@@ -150,6 +150,10 @@ function buildSubject(payload: EmailJobPayload): string {
       return `Refund issued for order ${payload.orderNumber}`
     case 'contact_notification':
       return `New contact form submission from ${payload.senderName}`
+    case 'stock_alert':
+      return `[Admin] Stock alert digest — ${payload.alertCount} item${payload.alertCount === 1 ? '' : 's'} need attention`
+    case 'back_in_stock':
+      return `Good news — ${payload.productName} is back in stock`
     default:
       return 'Flux3D Notification'
   }

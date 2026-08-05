@@ -169,6 +169,33 @@ export type ContactNotificationPayload = BaseEmailPayload & {
   message: string
 }
 
+export type StockAlertDigestItem = {
+  productName: string
+  skuCode: string
+  variantLabel: string
+  stockQuantity: number
+  threshold: number
+  alertType: 'low_stock' | 'out_of_stock'
+}
+
+export type StockAlertDigestPayload = BaseEmailPayload & {
+  emailType: 'stock_alert'
+  alertCount: number
+  lowStockCount: number
+  outOfStockCount: number
+  items: StockAlertDigestItem[]
+  /** Pre-rendered HTML list of stock alerts (optional) */
+  itemsHtml?: string
+}
+
+export type BackInStockPayload = BaseEmailPayload & {
+  emailType: 'back_in_stock'
+  customerName: string
+  productName: string
+  variantLabel: string
+  productUrl: string
+}
+
 export type EmailJobPayload =
   | WelcomeEmailPayload
   | EmailVerificationPayload
@@ -184,6 +211,8 @@ export type EmailJobPayload =
   | PaymentFailedPayload
   | RefundIssuedPayload
   | ContactNotificationPayload
+  | StockAlertDigestPayload
+  | BackInStockPayload
 
 // ============================================================================
 // Dispatcher result shape

@@ -48,6 +48,8 @@ const TYPE_OPTIONS: EmailType[] = [
   'payment_failed',
   'refund_issued',
   'contact_notification',
+  'stock_alert',
+  'back_in_stock',
 ]
 
 function statusBadgeClass(status: EmailLogStatus): string {

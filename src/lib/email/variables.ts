@@ -110,6 +110,18 @@ export const KNOWN_VARIABLES: Record<string, EmailVariableMeta[]> = {
     { name: 'sender_phone', description: 'Contact form submitter phone', example: '+91 98765 43210' },
     { name: 'message', description: 'Message body (HTML-escaped)', example: 'Hello, I have a question…' },
   ],
+  stock_alert: [
+    { name: 'alert_count', description: 'Total items needing attention', example: '4' },
+    { name: 'low_stock_count', description: 'Number of low-stock SKUs', example: '3' },
+    { name: 'out_of_stock_count', description: 'Number of out-of-stock SKUs', example: '1' },
+    { name: 'items_html', description: 'Pre-rendered HTML list of stock alerts', example: '<tr>…</tr>' },
+  ],
+  back_in_stock: [
+    { name: 'customer_name', description: 'Customer name', example: 'Rutik' },
+    { name: 'product_name', description: 'Product name', example: 'Phone Stand Deluxe' },
+    { name: 'variant_label', description: 'Variant combination label', example: 'Color: Black · Size: Large' },
+    { name: 'product_url', description: 'Product page URL', example: 'https://flux3d.in/3d-shop/phone-stand-deluxe' },
+  ],
 }
 
 export const EMAIL_TYPE_META: Record<string, { category: string; description: string; subject: string }> = {
@@ -128,6 +140,8 @@ export const EMAIL_TYPE_META: Record<string, { category: string; description: st
   payment_failed: { category: 'transactional', description: 'Payment failure with retry link', subject: 'Payment failed for order {{order_number}}' },
   refund_issued: { category: 'transactional', description: 'Refund processed notification', subject: 'Refund issued for order {{order_number}}' },
   contact_notification: { category: 'support', description: 'Contact form submission to support team', subject: 'New contact form submission from {{sender_name}}' },
+  stock_alert: { category: 'admin', description: 'Low-stock / out-of-stock digest sent to admins', subject: '[Admin] Stock alert digest — {{alert_count}} items need attention' },
+  back_in_stock: { category: 'transactional', description: 'Notify customers who requested a restock alert', subject: 'Good news — {{product_name}} is back in stock' },
 }
 
 export function getVariableNames(emailType: string): string[] {
