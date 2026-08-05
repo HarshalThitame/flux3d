@@ -1,10 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, type RootState } from '@react-three/fiber'
 import { AdaptiveDpr, Bounds, ContactShadows, Environment, OrbitControls } from '@react-three/drei'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import type { Object3D } from 'three'
+import { Box3, Vector3, type Object3D } from 'three'
 
 type ProductModelCanvasProps = {
   object: Object3D
@@ -16,6 +16,18 @@ export default function ProductModelCanvas({ object, autoRotate = true }: Produc
   const [contextLost, setContextLost] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const controlsRef = useRef<OrbitControlsImpl>(null)
+
+  const shadowConfig = useMemo(() => {
+    const box = new Box3().setFromObject(object)
+    const size = box.getSize(new Vector3())
+    const center = box.getCenter(new Vector3())
+    const maxDim = Math.max(size.x, size.y, size.z) || 1
+    return {
+      position: [center.x, box.min.y - maxDim * 0.02, center.z] as [number, number, number],
+      scale: maxDim * 2,
+      far: maxDim * 0.6,
+    }
+  }, [object])
 
   const handleCreated = useCallback((state: RootState) => {
     const renderer = state.gl
@@ -76,7 +88,6 @@ export default function ProductModelCanvas({ object, autoRotate = true }: Produc
     >
       <AdaptiveDpr pixelated />
       <color attach="background" args={['#FAF9F5']} />
-      <fog attach="fog" args={['#FAF9F5', 8, 24]} />
 
       {/* Soft studio lighting for luxury presentation */}
       <ambientLight intensity={0.75} />
@@ -84,18 +95,18 @@ export default function ProductModelCanvas({ object, autoRotate = true }: Produc
       <directionalLight position={[-5, 4, -5]} intensity={0.35} color="#C9A962" />
       <pointLight position={[0, 4, 0]} intensity={0.25} color="#FFFFFF" />
 
-      <Environment preset="studio" />
+      <Environment files="/hdri/studio_small_03_1k.hdr" />
 
       <Bounds fit clip observe margin={1.2}>
         <primitive object={object} />
       </Bounds>
 
       <ContactShadows
-        position={[0, -1.45, 0]}
+        position={shadowConfig.position}
         opacity={0.35}
-        scale={12}
+        scale={shadowConfig.scale}
         blur={2.5}
-        far={4}
+        far={shadowConfig.far}
         color="#1C1917"
       />
 
