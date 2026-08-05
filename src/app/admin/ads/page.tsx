@@ -16,11 +16,14 @@ import {
   Eye,
   RefreshCw,
   Trash2,
+  Pencil,
 } from 'lucide-react'
 import MetaAdsDashboard, { type MetaAdsMetric } from '@/components/admin/MetaAdsDashboard'
 import InsightsChart, { type InsightPoint } from '@/components/admin/InsightsChart'
 import ObjectivesChart from '@/components/admin/ObjectivesChart'
 import DataTable from '@/components/admin/DataTable'
+import CampaignDetailDrawer from '@/components/admin/CampaignDetailDrawer'
+import CampaignEditModal from '@/components/admin/CampaignEditModal'
 
 type Campaign = {
   id: string
@@ -70,6 +73,10 @@ export default function AdminAdsPage() {
   const [createSuccess, setCreateSuccess] = useState<Record<string, unknown> | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const hasInitialized = useRef(false)
+
+  // Drawer / Modal state
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
+  const [editingCampaign, setEditingCampaign] = useState<{ id: string; name: string; daily_budget?: string } | null>(null)
 
   // Form state
   const [categoryName, setCategoryName] = useState('3D Printed Home Decor')
@@ -552,6 +559,23 @@ export default function AdminAdsPage() {
                     )}
                     {row.status === 'ACTIVE' ? 'Pause' : 'Resume'}
                   </button>
+                  <button
+                    onClick={() => setSelectedCampaignId(row.id)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#6d28d9] bg-[rgba(109,40,217,0.08)] border border-[rgba(109,40,217,0.15)] hover:bg-[rgba(109,40,217,0.12)] transition-all"
+                    title="View details"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    View
+                  </button>
+                  <button
+                    onClick={() =>
+                      setEditingCampaign({ id: row.id, name: row.name, daily_budget: row.daily_budget })
+                    }
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#6F7192] bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-all"
+                    title="Edit"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
                   <a
                     href={`https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${adAccountId}&selected_campaign_ids=${row.id}`}
                     target="_blank"
@@ -559,7 +583,6 @@ export default function AdminAdsPage() {
                     className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#6d28d9] bg-[rgba(109,40,217,0.08)] border border-[rgba(109,40,217,0.15)] hover:bg-[rgba(109,40,217,0.12)] transition-all"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
-                    Manage
                   </a>
                   <button
                     onClick={() => deleteCampaign(row.id)}
@@ -601,6 +624,22 @@ export default function AdminAdsPage() {
           ]}
         />
       </div>
+
+      {/* Campaign Detail Drawer */}
+      <CampaignDetailDrawer
+        campaignId={selectedCampaignId}
+        onClose={() => setSelectedCampaignId(null)}
+      />
+
+      {/* Campaign Edit Modal */}
+      <CampaignEditModal
+        campaign={editingCampaign}
+        onClose={() => setEditingCampaign(null)}
+        onSave={() => {
+          setEditingCampaign(null)
+          void loadCampaigns()
+        }}
+      />
     </div>
   )
 }
