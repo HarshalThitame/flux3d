@@ -47,7 +47,7 @@ export type CarouselCard = {
 
 export type CreateCampaignInput = {
   name: string
-  objective: 'SALES' | 'AWARENESS' | 'TRAFFIC' | 'CONVERSIONS'
+  objective: 'OUTCOME_SALES' | 'OUTCOME_AWARENESS' | 'OUTCOME_TRAFFIC' | 'CONVERSIONS' | 'PRODUCT_CATALOG_SALES'
   status: 'PAUSED' | 'ACTIVE'
   special_ad_categories?: string[]
 }
@@ -243,7 +243,7 @@ export async function createPausedCarouselCampaign(params: {
   // 1. Campaign
   const campaign = await createCampaign({
     name: params.campaignName,
-    objective: 'SALES',
+    objective: 'OUTCOME_SALES',
     status: 'PAUSED',
   })
 
@@ -303,10 +303,10 @@ export async function createPausedDPARetargetingCampaign(params: {
   const pixelId = getMetaPixelId()
   const catalogId = getMetaCatalogId()
 
-  // 1. Campaign (DPA uses same SALES objective)
+  // 1. Campaign (DPA uses same OUTCOME_SALES objective)
   const campaign = await createCampaign({
     name: params.campaignName,
-    objective: 'SALES',
+    objective: 'OUTCOME_SALES',
     status: 'PAUSED',
   })
 
