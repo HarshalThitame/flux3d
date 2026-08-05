@@ -505,3 +505,171 @@ export async function fetchNewArrivalProductsForAd(
 
   return cards
 }
+
+// ─── Extended Read / Update / Delete Operations ─────────────────────────────
+
+export type MetaCampaignInsight = {
+  campaign_id: string
+  campaign_name: string
+  spend: string
+  impressions: string
+  clicks: string
+  ctr: string
+  cpc: string
+  conversions: string
+  cost_per_conversion: string
+  date_start?: string
+  date_stop?: string
+}
+
+export type MetaAdSetDetail = {
+  id: string
+  name: string
+  campaign_id: string
+  status: string
+  daily_budget: string
+  targeting: Record<string, unknown>
+  optimization_goal?: string
+  billing_event?: string
+}
+
+export type MetaAdDetail = {
+  id: string
+  name: string
+  adset_id: string
+  creative: { id: string; name?: string }
+  status: string
+  preview_shareable_link?: string
+}
+
+export type MetaCampaignDetails = MetaCampaign & {
+  adsets?: { data?: MetaAdSetDetail[] }
+}
+
+async function metaApiDelete(path: string) {
+  const base = getMetaGraphBase()
+  const headers = getMetaApiHeaders()
+  const url = `${base}${path}`
+
+  const response = await fetch(url, { method: 'DELETE', headers })
+  const result = (await response.json().catch(() => ({}))) as Record<string, unknown>
+
+  if (!response.ok) {
+    const error = (result.error as Record<string, unknown>) ?? result
+    throw new Error(
+      `Meta API error ${response.status}: ${JSON.stringify(error)}`,
+    )
+  }
+
+  return result
+}
+
+// ─── Insights ─────────────────────────────────────────────────────────────
+
+export async function getCampaignInsights(
+  campaignIds: string[],
+  datePreset: 'today' | 'yesterday' | 'last_7d' | 'last_30d' = 'last_7d',
+): Promise<MetaCampaignInsight[]> {
+  const fields = 'campaign_id,campaign_name,spend,impressions,clicks,ctr,cpc,conversions,cost_per_conversion'
+  const ids = campaignIds.join(',')
+  const result = (await metaApiGet(
+    `/insights?level=campaign&campaign_ids=[${ids}]&fields=${encodeURIComponent(fields)}&date_preset=${datePreset}`,
+  )) as { data?: MetaCampaignInsight[] }
+
+  return result.data ?? []
+}
+
+export async function getAdAccountInsights(
+  datePreset: 'today' | 'yesterday' | 'last_7d' | 'last_30d' = 'today',
+): Promise<MetaCampaignInsight[]> {
+  const adAccountId = getMetaAdAccountId()
+  const fields = 'spend,impressions,clicks,ctr,cpc,conversions,cost_per_conversion'
+  const result = (await metaApiGet(
+    `/${adAccountId}/insights?fields=${encodeURIComponent(fields)}&date_preset=${datePreset}`,
+  )) as { data?: MetaCampaignInsight[] }
+
+  return result.data ?? []
+}
+
+export async function getCampaignInsightsTimeSeries(
+  campaignId: string,
+  days = 7,
+): Promise<MetaCampaignInsight[]> {
+  const fields = 'spend,impressions,clicks,date_start'
+  const timeRange = JSON.stringify({ since: `${days}_days_ago`, until: 'today' })
+  const result = (await metaApiGet(
+    `/${campaignId}/insights?fields=${encodeURIComponent(fields)}&time_range=${encodeURIComponent(timeRange)}&time_increment=1`,
+  )) as { data?: MetaCampaignInsight[] }
+
+  return result.data ?? []
+}
+
+// ─── Ad Sets ────────────────────────────────────────────────────────────────
+
+export async function listAdSets(
+  campaignId: string,
+  fields = 'id,name,campaign_id,status,daily_budget,targeting,optimization_goal,billing_event',
+): Promise<MetaAdSetDetail[]> {
+  const result = (await metaApiGet(
+    `/${campaignId}/adsets?fields=${encodeURIComponent(fields)}&limit=50`,
+  )) as { data?: MetaAdSetDetail[] }
+
+  return result.data ?? []
+}
+
+// ─── Ads ────────────────────────────────────────────────────────────────────
+
+export async function listAds(
+  adSetId: string,
+  fields = 'id,name,adset_id,creative{id,name},status,preview_shareable_link',
+): Promise<MetaAdDetail[]> {
+  const result = (await metaApiGet(
+    `/${adSetId}/ads?fields=${encodeURIComponent(fields)}&limit=50`,
+  )) as { data?: MetaAdDetail[] }
+
+  return result.data ?? []
+}
+
+// ─── Campaign Details ─────────────────────────────────────────────────────────
+
+export async function getCampaignDetails(
+  campaignId: string,
+): Promise<MetaCampaignDetails> {
+  const fields = 'id,name,objective,status,effective_status,daily_budget,budget_remaining,created_time,updated_time,adsets{id,name,status,daily_budget,targeting}'
+  const result = (await metaApiGet(
+    `/${campaignId}?fields=${encodeURIComponent(fields)}`,
+  )) as MetaCampaignDetails
+
+  return result
+}
+
+// ─── Campaign Updates ─────────────────────────────────────────────────────────
+
+export async function updateCampaignStatus(
+  campaignId: string,
+  status: 'ACTIVE' | 'PAUSED' | 'ARCHIVED',
+): Promise<{ success: boolean }> {
+  await metaApiPost(`/${campaignId}`, { status })
+  return { success: true }
+}
+
+export async function updateCampaignBudget(
+  campaignId: string,
+  dailyBudgetPaise: number,
+): Promise<{ success: boolean }> {
+  await metaApiPost(`/${campaignId}`, { daily_budget: dailyBudgetPaise })
+  return { success: true }
+}
+
+export async function updateCampaignName(
+  campaignId: string,
+  name: string,
+): Promise<{ success: boolean }> {
+  await metaApiPost(`/${campaignId}`, { name })
+  return { success: true }
+}
+
+export async function deleteCampaign(campaignId: string): Promise<{ success: boolean }> {
+  await metaApiDelete(`/${campaignId}`)
+  return { success: true }
+}
