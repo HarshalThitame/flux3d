@@ -29,7 +29,7 @@ export function getMetaBusinessId() {
 export function getMetaAdAccountId() {
   const id = process.env.META_AD_ACCOUNT_ID
   if (!id) throw new Error('Missing META_AD_ACCOUNT_ID')
-  return id
+  return `act_${id}`
 }
 
 export function getMetaApiVersion() {
