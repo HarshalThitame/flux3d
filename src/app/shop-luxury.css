@@ -67,6 +67,7 @@
   --shop-text-secondary: var(--luxury-stone);
   --shop-text-muted: var(--luxury-muted);
   --shop-text-subtle: var(--luxury-subtle);
+  --shop-sand: var(--luxury-sand);
   --shop-border-light: var(--luxury-taupe);
   --shop-border-medium: var(--luxury-sand);
   --shop-border-gold: rgba(201, 169, 98, 0.35);
@@ -111,6 +112,10 @@
   background-color: var(--shop-bg-base);
   color: var(--shop-text-secondary);
   font-family: var(--shop-font-body);
+}
+
+.shop-luxury .shop-cta-band h2 {
+  color: #fff;
 }
 
 /* Elegant selection */

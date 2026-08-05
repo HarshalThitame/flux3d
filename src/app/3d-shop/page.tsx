@@ -282,7 +282,7 @@ export default async function ShopHomePage() {
         </section>
 
         {/* Newsletter / CTA band */}
-        <section className="mx-4 mb-16 overflow-hidden rounded-[var(--shop-radius-xl)] bg-[var(--shop-text-primary)] px-6 py-12 text-center sm:mx-6 sm:px-10 md:mx-10 md:py-16 lg:mx-12 lg:px-12">
+        <section className="shop-cta-band mx-4 mb-16 overflow-hidden rounded-[var(--shop-radius-xl)] bg-[var(--shop-text-primary)] px-6 py-12 text-center sm:mx-6 sm:px-10 md:mx-10 md:py-16 lg:mx-12 lg:px-12">
           <div className="mx-auto max-w-2xl">
             <h2 className="font-[var(--shop-font-heading)] text-3xl font-semibold text-white sm:text-4xl">
               Ready to elevate your space?
