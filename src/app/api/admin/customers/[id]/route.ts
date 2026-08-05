@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { requireAdminRequest } from '@/lib/admin/request'
+import { logAdminAction } from '@/lib/admin/auditLog'
 
 export async function GET(
   request: Request,
@@ -35,15 +36,18 @@ export async function GET(
 
     if (profileError) throw new Error(profileError.message)
 
-    // Get sessions
-    const { data: sessions } = await supabase
+    // Lightweight counts for the Overview quick stats
+    const { count: sessionsCount } = await supabase
       .from('sessions')
-      .select('*')
+      .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .order('started_at', { ascending: false })
-      .limit(100)
 
-    // Get page views
+    const { count: quotesCount } = await supabase
+      .from('quotes')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+
+    // Bounded page views (powers both the quick stat and the Pages Visited tab)
     const { data: pageViews } = await supabase
       .from('page_views')
       .select(`
@@ -54,37 +58,9 @@ export async function GET(
       .order('entered_at', { ascending: false })
       .limit(200)
 
-    // Get quotes
-    const { data: quotes } = await supabase
-      .from('quotes')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-
-    // Get carts
-    const { data: carts } = await supabase
-      .from('cart_items')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-
     // Get orders
     const { data: orders } = await supabase
       .from('orders')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-
-    // Get WhatsApp messages
-    const { data: messages } = await supabase
-      .from('whatsapp_messages')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-
-    // Get support tickets
-    const { data: tickets } = await supabase
-      .from('support_tickets')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
@@ -147,25 +123,12 @@ export async function GET(
         joinedDate: profile.joined_date,
         lastSeenAt: profile.last_seen_at,
       } : null,
-      sessions: (sessions || []).map(s => ({
-        id: String(s.id),
-        sessionId: s.session_id,
-        userId: s.user_id ? String(s.user_id) : null,
-        startedAt: s.started_at,
-        endedAt: s.ended_at,
-        durationSeconds: s.duration_seconds,
-        pageViewsCount: s.page_views_count,
-        quoteChecked: s.quote_checked,
-        fileUploaded: s.file_uploaded,
-        orderPlaced: s.order_placed,
-        paymentReached: s.payment_reached,
-        exitedAtStep: s.exited_at_step,
-        exitReason: s.exit_reason,
-        device: s.device,
-        location: s.location,
-        ipAddress: s.ip_address,
-        referrer: s.referrer,
-      })),
+      quickStats: {
+        sessions: sessionsCount ?? 0,
+        pageViews: pageViews?.length ?? 0,
+        quotes: quotesCount ?? 0,
+        files: files?.length ?? 0,
+      },
       pageViews: (pageViews || []).map(p => ({
         id: String(p.id),
         sessionId: p.sessions?.session_id,
@@ -176,33 +139,6 @@ export async function GET(
         timeSpentSeconds: p.time_spent_seconds,
         scrollDepthPercent: p.scroll_depth_percent,
         actionsTaken: p.actions_taken,
-      })),
-      quotes: (quotes || []).map(q => ({
-        id: String(q.id),
-        quoteId: q.quote_id,
-        material: q.material,
-        quantity: q.quantity,
-        weightGrams: q.weight_grams,
-        estimatedCost: q.estimated_cost,
-        fileUploaded: q.file_uploaded,
-        convertedToOrder: q.converted_to_order,
-        orderId: q.converted_to_order_id ? String(q.converted_to_order_id) : null,
-        timeSpentSeconds: q.time_spent_seconds,
-        createdAt: q.created_at,
-      })),
-      carts: (carts || []).map(c => ({
-        id: String(c.id),
-        material: c.material,
-        quantity: c.quantity,
-        weightGrams: c.weight_grams,
-        estimatedCost: c.estimated_cost,
-        expressDelivery: c.express_delivery,
-        giftPackaging: c.gift_packaging,
-        status: c.status,
-        abandonedAt: c.abandoned_at,
-        abandonedReason: c.abandoned_reason,
-        convertedToOrderId: c.converted_to_order_id ? String(c.converted_to_order_id) : null,
-        createdAt: c.created_at,
       })),
       orders: (orders || []).map(o => ({
         id: String(o.id),
@@ -215,28 +151,6 @@ export async function GET(
         deliveryDate: o.delivery_date,
         rating: o.rating,
         createdAt: o.created_at,
-      })),
-      whatsappMessages: (messages || []).map(m => ({
-        id: String(m.id),
-        direction: m.direction,
-        messageText: m.message_text,
-        automated: m.automated,
-        triggerEvent: m.trigger_event,
-        responded: m.responded,
-        responseTimeMinutes: m.response_time_minutes,
-        createdAt: m.created_at,
-      })),
-      supportTickets: (tickets || []).map(t => ({
-        id: String(t.id),
-        ticketId: t.ticket_id,
-        subject: t.subject,
-        category: t.category,
-        priority: t.priority,
-        status: t.status,
-        assignedTo: t.assigned_to ? String(t.assigned_to) : null,
-        resolutionTimeMinutes: t.resolution_time_minutes,
-        satisfactionRating: t.satisfaction_rating,
-        createdAt: t.created_at,
       })),
       wishlist: (wishlist || []).map(w => ({
         id: String(w.id),
@@ -254,6 +168,54 @@ export async function GET(
         uploadedAt: f.created_at,
       })),
     })
+  } catch (error) {
+    return getAdminApiErrorResponse(error)
+  }
+}
+
+export async function PATCH(
+  request: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  const auth = await requireAdminRequest()
+  if ('response' in auth) return auth.response;
+
+  try {
+    const params = await context.params
+    const userId = params.id
+    const supabase = createAdminSupabaseClient()
+
+    const body = (await request.json().catch(() => ({}))) as {
+      notes?: string
+      tags?: string[]
+    }
+
+    const patch: { notes?: string; tags?: string[] } = {}
+    if (typeof body.notes === 'string') patch.notes = body.notes
+    if (Array.isArray(body.tags)) patch.tags = body.tags.filter((t) => typeof t === 'string')
+
+    if (Object.keys(patch).length === 0) {
+      return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 })
+    }
+
+    const { data: updated, error } = await supabase
+      .from('profiles')
+      .update(patch)
+      .eq('id', userId)
+      .select('id, notes, tags')
+      .single()
+
+    if (error) throw new Error(error.message)
+
+    await logAdminAction({
+      admin_id: auth.user.id,
+      action: 'update_customer_notes',
+      target_type: 'user',
+      target_id: userId,
+      new_value: patch,
+    })
+
+    return NextResponse.json({ profile: updated })
   } catch (error) {
     return getAdminApiErrorResponse(error)
   }

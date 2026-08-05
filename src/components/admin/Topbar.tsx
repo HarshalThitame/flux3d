@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Bell, ChevronDown, Menu, Search } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Bell, ChevronDown, Menu, Search, Settings, ShieldCheck } from 'lucide-react'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
 export default function Topbar({
@@ -9,14 +10,20 @@ export default function Topbar({
 }: {
   onOpenMobileNav: () => void
 }) {
+  const router = useRouter()
   const [profileOpen, setProfileOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
   const [adminName, setAdminName] = useState('Admin')
   const [adminInitials, setAdminInitials] = useState('AD')
   const [adminRole, setAdminRole] = useState('Administrator')
+  const [searchQuery, setSearchQuery] = useState('')
+
+  function submitSearch() {
+    const query = searchQuery.trim()
+    if (!query) return
+    router.push(`/admin/orders?query=${encodeURIComponent(query)}`)
+  }
 
   useEffect(() => {
-    setMounted(true)
     async function loadProfile() {
       const supabase = getSupabaseBrowserClient()
       const { data } = await supabase.auth.getUser()
@@ -47,6 +54,11 @@ export default function Topbar({
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6F7192]" />
           <input
             placeholder="Search orders, users, files, printers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submitSearch()
+            }}
             className="w-full rounded-[18px] border border-gray-200 bg-gray-100 py-3 pl-11 pr-4 text-sm text-[#0F1B3D] outline-none transition focus:border-[#6d28d9]/40"
           />
         </label>
@@ -82,12 +94,20 @@ export default function Topbar({
                 <div className="mt-1 text-sm text-[#6F7192]">Role-based controls enabled</div>
               </div>
               <div className="p-3">
-                <button
-                  type="button"
-                  className="mt-1 block w-full rounded-[16px] px-4 py-3 text-left text-sm text-[#6F7192] transition hover:bg-gray-100"
+                <a
+                  href="/admin/settings"
+                  className="mt-1 flex w-full items-center gap-3 rounded-[16px] px-4 py-3 text-left text-sm text-[#6F7192] transition hover:bg-gray-100"
                 >
-                  Switch to operator view
-                </button>
+                  <Settings className="h-4 w-4" />
+                  Account settings
+                </a>
+                <a
+                  href="/admin/audit-logs"
+                  className="mt-1 flex w-full items-center gap-3 rounded-[16px] px-4 py-3 text-left text-sm text-[#6F7192] transition hover:bg-gray-100"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Audit logs
+                </a>
               </div>
               <div className="border-t border-gray-200 p-3">
                 <a

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, ExternalLink, RefreshCcw, ShieldCheck, Wallet, ReceiptText } from 'lucide-react'
+import { ArrowLeft, ExternalLink, RefreshCcw, ShieldCheck, Wallet, ReceiptText, PenLine, X } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import SkeletonBlock from '@/components/admin/SkeletonBlock'
 import type { PaymentAuditLogData, PaymentData, PaymentEventData, PaymentRefundData } from '@/lib/admin/types'
@@ -46,6 +46,9 @@ export default function PaymentDetailClient({ paymentId }: { paymentId: string }
   const [refundAmount, setRefundAmount] = useState('')
   const [refundReason, setRefundReason] = useState('Admin initiated refund')
   const [refundSpeed, setRefundSpeed] = useState<'normal' | 'optimum'>('normal')
+  const [overrideOpen, setOverrideOpen] = useState(false)
+  const [overrideStatus, setOverrideStatus] = useState<'paid' | 'failed' | 'cancelled'>('paid')
+  const [overrideReason, setOverrideReason] = useState('')
 
   const load = useCallback(async () => {
     try {
@@ -130,6 +133,37 @@ export default function PaymentDetailClient({ paymentId }: { paymentId: string }
     }
   }
 
+  async function overridePayment() {
+    if (!overrideReason.trim()) {
+      setToast({ type: 'error', message: 'A reason is required for the override.' })
+      return
+    }
+
+    setSaving(true)
+    try {
+      const response = await fetch(`/api/admin/payments/${paymentId}/override`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          newStatus: overrideStatus,
+          reason: overrideReason,
+          internalOrderType: data?.payment.internalOrderType,
+          internalOrderId: data?.payment.internalOrderId,
+        }),
+      })
+      const body = await response.json().catch(() => ({})) as { error?: string }
+      if (!response.ok) throw new Error(body.error || 'Override failed.')
+      setToast({ type: 'success', message: `Payment marked as ${overrideStatus}.` })
+      setOverrideOpen(false)
+      setOverrideReason('')
+      await load()
+    } catch (error) {
+      setToast({ type: 'error', message: error instanceof Error ? error.message : 'Override failed.' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (!data) {
     return (
       <div className="space-y-6">
@@ -186,8 +220,80 @@ export default function PaymentDetailClient({ paymentId }: { paymentId: string }
             <RefreshCcw className="h-4 w-4" />
             Refresh status
           </button>
+          <button
+            type="button"
+            onClick={() => setOverrideOpen(true)}
+            disabled={saving}
+            className="inline-flex items-center gap-2 rounded-xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 px-4 py-2.5 text-sm font-semibold text-[#6d28d9] disabled:opacity-60"
+          >
+            <PenLine className="h-4 w-4" />
+            Override status
+          </button>
         </div>
       </motion.div>
+
+      {overrideOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"
+        >
+          <motion.div
+            initial={{ scale: 0.95, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            className="mx-4 w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-[#0F1B3D]">Override Payment Status</h2>
+              <button type="button" onClick={() => setOverrideOpen(false)} className="rounded-lg p-1 text-[#6F7192] hover:bg-gray-100">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-sm text-[#6F7192]">
+              Manually set this payment attempt to a terminal state. A reason is required and the action is logged to the audit trail.
+            </p>
+            <label className="mt-4 block text-sm">
+              <span className="text-[#6F7192]">New status</span>
+              <select
+                value={overrideStatus}
+                onChange={(event) => setOverrideStatus(event.target.value as 'paid' | 'failed' | 'cancelled')}
+                className="mt-1 w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-[#0F1B3D] outline-none"
+              >
+                <option value="paid">Paid</option>
+                <option value="failed">Failed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </label>
+            <label className="mt-3 block text-sm">
+              <span className="text-[#6F7192]">Reason</span>
+              <textarea
+                value={overrideReason}
+                onChange={(event) => setOverrideReason(event.target.value)}
+                rows={3}
+                placeholder="e.g. Payment confirmed manually via bank statement"
+                className="mt-1 w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-[#0F1B3D] outline-none"
+              />
+            </label>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => void overridePayment()}
+                disabled={saving}
+                className="flex-1 rounded-xl bg-[#6d28d9] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {saving ? 'Saving...' : 'Confirm override'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setOverrideOpen(false)}
+                className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-medium text-[#0F1B3D] hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <section className="space-y-6">

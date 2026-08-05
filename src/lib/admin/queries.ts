@@ -15,10 +15,8 @@ import type {
   DonutSlice,
   Offer,
   Redemption,
-  TrendPoint,
 } from '@/lib/admin/types'
 import {
-  getOrderStatusLabel,
   getOrderStatusTransitionError,
   isSequentialOrderStatusTransition,
   orderStatuses,
@@ -168,11 +166,6 @@ type CustomerOrderRow = {
 function normalizeMoney(value: number | string | null | undefined) {
   const amount = Number(value ?? 0)
   return Number.isFinite(amount) ? amount : 0
-}
-
-function normalizeDate(value: string | null | undefined) {
-  const timestamp = new Date(value ?? '').getTime()
-  return Number.isNaN(timestamp) ? null : new Date(timestamp)
 }
 
 function isOrderStatus(value: string): value is OrderStatus {
@@ -536,43 +529,6 @@ function mapOrderRowsToFiles(rows: CustomerOrderRow[]): AdminCustomerFile[] {
       uploadedAt: row.created_at ?? '',
       downloadUrl: `/api/admin/orders/${row.id}/file`,
     }))
-}
-
-function getStatusColor(status: OrderStatus) {
-  switch (status) {
-    case 'pending':
-      return '#F59E0B'
-    case 'confirmed':
-      return '#34D399'
-    case 'printing':
-      return '#22D3EE'
-    case 'shipped':
-      return '#a855f7'
-    case 'delivered':
-      return '#38BDF8'
-    case 'completed':
-      return '#10B981'
-    case 'cancelled':
-      return '#94A3B8'
-  }
-}
-
-function buildMonthlySeries(
-  orders: AdminOrder[],
-  getValue: (order: AdminOrder) => number
-) {
-  const buckets = orders.reduce<Record<string, number>>((acc, order) => {
-    const createdAt = normalizeDate(order.createdAt)
-    if (!createdAt) {
-      return acc
-    }
-
-    const label = createdAt.toLocaleString('en-US', { month: 'short' })
-    acc[label] = (acc[label] ?? 0) + getValue(order)
-    return acc
-  }, {})
-
-  return Object.entries(buckets).map(([label, value]) => ({ label, value })) as TrendPoint[]
 }
 
 async function listBucketFiles(prefix = ''): Promise<Array<StorageListItem & { path: string }>> {
@@ -1215,81 +1171,22 @@ export async function updateAdminMaterial(materialId: string, input: AdminMateri
   return normalizeAdminMaterialRow(data)
 }
 
+export async function deleteAdminMaterial(materialId: string) {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('materials')
+    .delete()
+    .eq('id', materialId)
+    .select('id, name')
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return data
+}
+
 export async function getAdminFilesData() {
   const files = await listBucketFiles()
   return formatAdminFiles(files)
-}
-
-export async function getAdminAnalyticsData() {
-  const supabase = createAdminSupabaseClient()
-  const { data, error } = await supabase
-    .from('orders')
-    .select(
-      'id, order_number, group_id, file_url, material, color, infill, quantity, price, price_per_unit, material_cost, machine_cost, subtotal, post_processing_charges, weight, difficulty_factor, total_price, final_price, grand_total, overhead_percent, overhead_amount, margin_percent, margin_amount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, coupon_code, coupon_id, discount_type, estimated_time, status, cancel_requested, created_at, notes, full_name, phone, address_line1, city, state, pincode, delivery_charge, user_id'
-    )
-  if (error) throw new Error(error.message)
-
-  const orders = groupAdminOrders((data ?? []) as OrderRow[])
-  const totalOrders = orders.length
-
-  const materialBuckets = orders.reduce<Record<string, number>>((acc, row) => {
-    acc[row.material] = (acc[row.material] ?? 0) + 1
-    return acc
-  }, {})
-
-  const statusBuckets = orders.reduce<Record<OrderStatus, number>>((acc, row) => {
-    acc[row.status] = (acc[row.status] ?? 0) + 1
-    return acc
-  }, {} as Record<OrderStatus, number>)
-
-  const totalRevenue = orders.reduce((sum, order) => sum + order.grandTotal, 0)
-  const averageOrderValue = totalOrders === 0 ? 0 : totalRevenue / totalOrders
-  const activeProduction = (statusBuckets.printing ?? 0) + (statusBuckets.confirmed ?? 0)
-  const blockedOrders = statusBuckets.pending ?? 0
-  const fulfilledOrders = (statusBuckets.completed ?? 0) + (statusBuckets.delivered ?? 0) + (statusBuckets.shipped ?? 0)
-
-  return {
-    metrics: [
-      {
-        label: 'Average Order Value',
-        value: `₹${Math.round(averageOrderValue).toLocaleString('en-IN')}`,
-        change: 'Across all tracked orders',
-        tone: 'positive' as const,
-      },
-      {
-        label: 'Active Production',
-        value: String(activeProduction),
-        change: 'Confirmed or currently printing',
-        tone: 'neutral' as const,
-      },
-      {
-        label: 'Blocked Orders',
-        value: String(blockedOrders),
-        change: 'Pending review',
-        tone: blockedOrders > 0 ? 'warning' as const : 'neutral' as const,
-      },
-      {
-        label: 'Fulfilled Orders',
-        value: String(fulfilledOrders),
-        change: 'Shipped or completed',
-        tone: 'positive' as const,
-      },
-    ] satisfies DashboardMetric[],
-    revenueTrend: buildMonthlySeries(orders, (order) => order.totalPrice),
-    ordersGrowth: buildMonthlySeries(orders, () => 1),
-    materialUsage: Object.entries(materialBuckets).map(([label, value]) => ({
-      label,
-      value: totalOrders === 0 ? 0 : Math.round((value / totalOrders) * 100),
-      color: '#FF7B43',
-    })) as DonutSlice[],
-    statusBreakdown: orderStatuses
-      .map((status) => ({
-        label: getOrderStatusLabel(status),
-        value: totalOrders === 0 ? 0 : Math.round(((statusBuckets[status] ?? 0) / totalOrders) * 100),
-        color: getStatusColor(status),
-      }))
-      .filter((slice) => slice.value > 0) as DonutSlice[],
-  }
 }
 
 export async function getAdminFullAnalytics() {
@@ -1661,10 +1558,6 @@ export async function deleteAdminOffer(id: string) {
   if (error) throw new Error(`Failed to delete offer: ${error.message}`)
 }
 
-export async function toggleAdminOfferStatus(id: string, isActive: boolean) {
-  return updateAdminOffer(id, { is_active: isActive } as Partial<Offer>)
-}
-
 // ============================================================
 // COUPONS QUERIES
 // ============================================================
@@ -1745,10 +1638,6 @@ export async function deleteAdminCoupon(id: string) {
     .eq('id', id)
 
   if (error) throw new Error(`Failed to delete coupon: ${error.message}`)
-}
-
-export async function toggleAdminCouponStatus(id: string, isActive: boolean) {
-  return updateAdminCoupon(id, { is_active: isActive } as Partial<Coupon>)
 }
 
 // ============================================================

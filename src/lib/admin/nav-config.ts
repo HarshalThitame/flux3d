@@ -27,6 +27,8 @@ import {
   Database,
   Mail,
   Link,
+  UserCog,
+  FolderOpen,
 } from 'lucide-react'
 
 export type NavItem = {
@@ -63,6 +65,8 @@ export const adminNavItems: NavItem[] = [
   { label: '3D Shop Notify Me', href: '/admin/3d-shop/notify-me', icon: Bell, section: 'shop' },
   { label: 'Support Tickets', href: '/admin/tickets', icon: Ticket, section: 'secondary' },
   { label: 'Team & Roles', href: '/admin/team', icon: ShieldCheck, section: 'secondary' },
+  { label: 'Users', href: '/admin/users', icon: UserCog, section: 'secondary' },
+  { label: 'Files', href: '/admin/files', icon: FolderOpen, section: 'secondary' },
   { label: 'Data Retention', href: '/admin/settings/retention', icon: Database, section: 'secondary' },
   { label: 'Settings', href: '/admin/settings', icon: Settings, section: 'secondary' },
   { label: 'Business Settings', href: '/admin/settings/business', icon: Building2, section: 'secondary' },

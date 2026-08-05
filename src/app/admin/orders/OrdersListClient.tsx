@@ -49,16 +49,17 @@ const PAGE_SIZE = 25
 type Props = {
   initialOrders: AdminOrder[]
   initialTotal: number
+  initialQuery?: string
 }
 
 function csvCell(value: string | number | null | undefined) {
   return `"${String(value ?? '').replace(/"/g, '""')}"`
 }
 
-export default function OrdersListClient({ initialOrders, initialTotal }: Props) {
+export default function OrdersListClient({ initialOrders, initialTotal, initialQuery = '' }: Props) {
   const router = useRouter()
   const [allOrders, setAllOrders] = useState(initialOrders)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(initialQuery)
   const [statusFilter, setStatusFilter] = useState<'all' | OrderStatus>('all')
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('all')
   const [materialFilter, setMaterialFilter] = useState('all')

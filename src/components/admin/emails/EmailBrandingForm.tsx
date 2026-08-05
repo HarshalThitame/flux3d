@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Save, RefreshCw, ImageIcon, AlertCircle } from 'lucide-react'
+import { Save, AlertCircle } from 'lucide-react'
 import ColorPickerField from './ColorPickerField'
+import LogoUploader from './LogoUploader'
 import type { EmailBrandingRow } from 'types/database'
 
 type SocialIcons = {
@@ -37,7 +38,6 @@ export default function EmailBrandingForm({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const [uploading, setUploading] = useState(false)
 
   const update = useCallback((key: keyof EmailBrandingRow, value: unknown) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -51,30 +51,6 @@ export default function EmailBrandingForm({
     }))
     setSuccess(false)
   }, [])
-
-  const handleLogoUpload = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file')
-      return
-    }
-    setUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append('field', 'logo_url')
-      formData.append('file', file)
-      const res = await fetch('/api/admin/upload-branding', { method: 'POST', body: formData })
-      const json = await res.json()
-      if (res.ok && json.url) {
-        update('logo_url', json.url)
-      } else {
-        alert(json.error ?? 'Upload failed')
-      }
-    } catch {
-      alert('Network error during upload')
-    } finally {
-      setUploading(false)
-    }
-  }
 
   const handleSave = async () => {
     setSaving(true)
@@ -126,37 +102,11 @@ export default function EmailBrandingForm({
           <div className={rowClass}>
             <div>
               <label className={labelClass}>Logo</label>
-              <div className="flex items-center gap-3">
-                {form.logo_url && (
-                  <img
-                    src={form.logo_url}
-                    alt="Logo preview"
-                    className="h-12 w-12 rounded-lg border border-gray-200 object-contain bg-white"
-                  />
-                )}
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[#6d28d9]/20 bg-[#6d28d9]/5 px-4 py-2.5 text-sm font-medium text-[#6d28d9] transition hover:bg-[#6d28d9]/10">
-                  <ImageIcon className="h-4 w-4" />
-                  {uploading ? 'Uploading...' : form.logo_url ? 'Change Logo' : 'Upload Logo'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleLogoUpload(file)
-                    }}
-                  />
-                </label>
-                {form.logo_url && (
-                  <button
-                    type="button"
-                    onClick={() => update('logo_url', '')}
-                    className="text-xs text-red-500 hover:underline"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
+              <LogoUploader
+                value={form.logo_url ?? ''}
+                onChange={(url) => update('logo_url', url)}
+                field="logo_url"
+              />
             </div>
             <div>
               <label className={labelClass}>Company Name</label>

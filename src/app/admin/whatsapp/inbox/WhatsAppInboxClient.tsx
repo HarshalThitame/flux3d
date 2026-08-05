@@ -62,6 +62,7 @@ export default function WhatsAppInboxClient() {
   const [sending, setSending] = useState(false)
   const [search, setSearch] = useState('')
   const [toast, setToast] = useState<AdminToastState>(null)
+  const [sessionStats, setSessionStats] = useState<{ totalSessions: number; active24h: number; staleCount: number } | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const replyInputRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -78,6 +79,13 @@ export default function WhatsAppInboxClient() {
       } finally {
         setLoading(false)
       }
+
+      try {
+        const statsRes = await fetch('/api/admin/whatsapp-sessions/stats')
+        if (statsRes.ok) {
+          setSessionStats(await statsRes.json())
+        }
+      } catch {}
     }
     load()
   }, [])
@@ -149,6 +157,22 @@ export default function WhatsAppInboxClient() {
 
   return (
     <>
+      {sessionStats && (
+        <div className="mb-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4">
+            <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Total Sessions</div>
+            <div className="mt-1 text-2xl font-bold text-[#0F1B3D]">{sessionStats.totalSessions}</div>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4">
+            <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Active (24h)</div>
+            <div className="mt-1 text-2xl font-bold text-emerald-600">{sessionStats.active24h}</div>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4">
+            <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Stale</div>
+            <div className="mt-1 text-2xl font-bold text-[#6F7192]">{sessionStats.staleCount}</div>
+          </div>
+        </div>
+      )}
       <div className="flex h-[calc(100vh-10rem)] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         {/* Left panel — Conversation list */}
         <div className={`flex w-full flex-col border-r border-gray-200 md:w-[380px] ${activeSender ? 'hidden md:flex' : 'flex'}`}>
