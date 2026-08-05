@@ -12,15 +12,15 @@ interface ShopCategoryGridProps {
 
 export default function ShopCategoryGrid({ categories }: ShopCategoryGridProps) {
   return (
-    <section id="shop-categories" className="px-4 py-20 sm:px-6 md:px-10 lg:px-12 lg:py-28">
+    <section id="shop-categories" className="px-4 py-12 sm:px-6 md:px-10 lg:px-12 lg:py-16">
       <div className="mx-auto w-full max-w-[1280px]">
-        <div className="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
             <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-gold)]">
               <Layers3 className="h-4 w-4" />
               Shop by category
             </div>
-            <h2 className="font-[var(--shop-font-heading)] mt-3 max-w-2xl text-[clamp(2rem,5vw,3.5rem)] font-semibold leading-tight text-[var(--shop-text-primary)]">
+            <h2 className="font-[var(--shop-font-heading)] mt-2 max-w-2xl text-[clamp(1.25rem,2.5vw,1.75rem)] font-semibold leading-snug text-[var(--shop-text-primary)]">
               Browse by purpose, finish, and setup.
             </h2>
           </div>
@@ -34,15 +34,13 @@ export default function ShopCategoryGrid({ categories }: ShopCategoryGridProps) 
         </div>
 
         <div
-          className={`grid gap-4 ${
+          className={`grid gap-3 ${
             categories.length <= 2
               ? 'grid-cols-1 sm:grid-cols-2'
               : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
           }`}
         >
           {categories.map((category, index) => {
-            const isFeatured = index === 0
-            const isTwoOnly = categories.length <= 2
             return (
               <motion.div
                 key={category.id}
@@ -50,38 +48,21 @@ export default function ShopCategoryGrid({ categories }: ShopCategoryGridProps) 
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-60px' }}
                 transition={{ duration: 0.55, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                className={`${
-                  isFeatured && !isTwoOnly
-                    ? 'sm:col-span-1 sm:row-span-2 lg:col-span-1 lg:row-span-2'
-                    : ''
-                }`}
               >
                 <Link
                   href={`/3d-shop/category/${category.slug}`}
-                  className="group relative block overflow-hidden rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] shadow-[var(--shop-shadow-sm)] transition-all duration-500 ease-out hover:-translate-y-1.5 hover:border-[var(--shop-gold)] hover:shadow-[var(--shop-shadow-gold)]"
+                  className="group relative block overflow-hidden rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] shadow-[var(--shop-shadow-sm)] transition-all duration-500 ease-out hover:-translate-y-1 hover:border-[var(--shop-gold)] hover:shadow-[var(--shop-shadow-gold)]"
                 >
                   {/* Shimmer sweep overlay */}
                   <span aria-hidden="true" className="bento-card-shimmer" />
 
-                  <div
-                    className={`relative overflow-hidden bg-[var(--shop-bg-muted)] ${
-                      isFeatured && !isTwoOnly
-                        ? 'aspect-[3/4] sm:aspect-[3/4]'
-                        : isTwoOnly
-                        ? 'aspect-[3/4] sm:aspect-[3/4]'
-                        : 'aspect-[4/3]'
-                    }`}
-                  >
+                  <div className="relative overflow-hidden bg-[var(--shop-bg-muted)] aspect-[16/10]">
                     {category.banner_image_url ? (
                       <Image
                         src={category.banner_image_url}
                         alt={category.name}
                         fill
-                        sizes={
-                          isFeatured && !isTwoOnly
-                            ? '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw'
-                            : '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw'
-                        }
+                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                         className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                       />
                     ) : (
@@ -96,23 +77,19 @@ export default function ShopCategoryGrid({ categories }: ShopCategoryGridProps) 
                     className="absolute bottom-0 left-1/2 z-10 h-[2px] w-0 -translate-x-1/2 bg-gradient-to-r from-transparent via-[var(--shop-gold)] to-transparent transition-all duration-500 ease-out group-hover:w-3/4"
                   />
 
-                  <div className="absolute inset-x-5 bottom-5 z-10">
-                    <div className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-sm transition-all duration-300 group-hover:border-[var(--shop-gold)] group-hover:bg-[var(--shop-gold)]/20 group-hover:shadow-[0_0_16px_rgba(201,169,98,0.35)]">
+                  <div className="absolute inset-x-4 bottom-4 z-10">
+                    <div className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-sm transition-all duration-300 group-hover:border-[var(--shop-gold)] group-hover:bg-[var(--shop-gold)]/20 group-hover:shadow-[0_0_16px_rgba(201,169,98,0.35)]">
                       {category.icon_emoji ? (
-                        <span className="text-base">{category.icon_emoji}</span>
+                        <span className="text-sm">{category.icon_emoji}</span>
                       ) : (
-                        <Sparkles className="h-4 w-4" />
+                        <Sparkles className="h-3.5 w-3.5" />
                       )}
                     </div>
-                    <h3
-                      className={`font-[var(--shop-font-heading)] mt-3 font-semibold text-white transition-all duration-300 group-hover:translate-y-[-2px] ${
-                        isFeatured && !isTwoOnly ? 'text-xl sm:text-2xl' : 'text-xl'
-                      }`}
-                    >
+                    <h3 className="font-[var(--shop-font-heading)] mt-2 text-base font-semibold text-white transition-all duration-300 group-hover:translate-y-[-2px]">
                       {category.name}
                     </h3>
                     {category.description ? (
-                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/70 transition-colors duration-300 group-hover:text-white/95">
+                      <p className="mt-1 line-clamp-1 text-xs leading-5 text-white/70 transition-colors duration-300 group-hover:text-white/95">
                         {category.description}
                       </p>
                     ) : null}
