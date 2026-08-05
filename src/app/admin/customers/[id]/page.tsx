@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
@@ -20,7 +20,6 @@ import {
   Save,
 } from 'lucide-react'
 import SkeletonBlock from '@/components/admin/SkeletonBlock'
-import { InputField } from '@/components/admin/FormField'
 
 type Tab = 'overview' | 'sessions' | 'pages' | 'time' | 'quotes' | 'cart' | 'orders' | 'payments' | 'files' | 'whatsapp' | 'tickets' | 'notes'
 
@@ -108,16 +107,48 @@ type CustomerSupportTicket = {
   status?: string
 }
 
+type CustomerWishlistItem = {
+  id: string
+  productName?: string
+  material?: string
+  price?: number
+  addedAt?: string
+  ordered?: boolean
+  orderId?: string
+}
+
+type CustomerPayment = {
+  id: string
+  orderNumber?: string
+  amountPaise: number
+  currency?: string
+  provider?: string
+  paymentPurpose?: string
+  status?: string
+  paymentMethod?: string
+  receipt?: string
+  refundedAmountPaise?: number
+  createdAt?: string
+}
+
 type CustomerProfileResponse = {
   profile?: CustomerProfile
-  sessions?: CustomerSession[]
+  quickStats?: { sessions: number; pageViews: number; quotes: number; files: number }
   pageViews?: CustomerPageView[]
-  quotes?: CustomerQuote[]
-  carts?: CustomerCart[]
   orders?: CustomerOrder[]
+  wishlist?: CustomerWishlistItem[]
   files?: CustomerFile[]
-  whatsappMessages?: CustomerWhatsAppMessage[]
-  supportTickets?: CustomerSupportTicket[]
+}
+
+const statusBadgeClass = (value: string | undefined, highlight: string, danger: string, warning: string) => {
+  const v = value?.toLowerCase() ?? ''
+  if (v === 'resolved' || v === 'delivered' || v === 'paid' || v === 'captured' || v === 'active' || v === 'processed') {
+    return highlight
+  }
+  if (v === 'cancelled' || v === 'abandoned' || v === 'failed' || v === 'refunded' || v === 'open') {
+    return danger
+  }
+  return warning
 }
 
 export default function CustomerProfilePage() {
@@ -126,16 +157,29 @@ export default function CustomerProfilePage() {
 
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [profile, setProfile] = useState<CustomerProfile | null>(null)
-  const [sessions, setSessions] = useState<CustomerSession[] | null>(null)
+  const [quickStats, setQuickStats] = useState<CustomerProfileResponse['quickStats'] | null>(null)
   const [pageViews, setPageViews] = useState<CustomerPageView[] | null>(null)
+  const [orders, setOrders] = useState<CustomerOrder[] | null>(null)
+  const [wishlist, setWishlist] = useState<CustomerWishlistItem[] | null>(null)
+  const [files, setFiles] = useState<CustomerFile[] | null>(null)
+
+  const [sessions, setSessions] = useState<CustomerSession[] | null>(null)
   const [quotes, setQuotes] = useState<CustomerQuote[] | null>(null)
   const [carts, setCarts] = useState<CustomerCart[] | null>(null)
-  const [orders, setOrders] = useState<CustomerOrder[] | null>(null)
-  const [files, setFiles] = useState<CustomerFile[] | null>(null)
   const [whatsappMessages, setWhatsappMessages] = useState<CustomerWhatsAppMessage[] | null>(null)
   const [supportTickets, setSupportTickets] = useState<CustomerSupportTicket[] | null>(null)
+  const [payments, setPayments] = useState<CustomerPayment[] | null>(null)
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [tabLoading, setTabLoading] = useState<Tab | null>(null)
+  const loadedTabs = useRef<Partial<Record<Tab, boolean>>>({})
+
+  // Notes & tags editing state
+  const [notes, setNotes] = useState<string>('')
+  const [tagsInput, setTagsInput] = useState<string>('')
+  const [savingNotes, setSavingNotes] = useState(false)
+  const [notesMessage, setNotesMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -157,14 +201,13 @@ export default function CustomerProfilePage() {
         const json = (await response.json()) as CustomerProfileResponse
         if (!cancelled) {
           setProfile(json.profile ?? null)
-          setSessions(json.sessions || [])
+          setQuickStats(json.quickStats ?? null)
           setPageViews(json.pageViews || [])
-          setQuotes(json.quotes || [])
-          setCarts(json.carts || [])
           setOrders(json.orders || [])
+          setWishlist(json.wishlist || [])
           setFiles(json.files || [])
-          setWhatsappMessages(json.whatsappMessages || [])
-          setSupportTickets(json.supportTickets || [])
+          setNotes(json.profile?.notes ?? '')
+          setTagsInput((json.profile?.tags ?? []).join(', '))
         }
       } catch (loadError) {
         if ((loadError as Error).name === 'AbortError') {
@@ -184,6 +227,73 @@ export default function CustomerProfilePage() {
     void load()
     return () => { cancelled = true; controller.abort() }
   }, [customerId])
+
+  async function ensureLoaded(tab: Tab) {
+    if (loadedTabs.current[tab] || !customerId) return
+    loadedTabs.current[tab] = true
+    setTabLoading(tab)
+    try {
+      const res = await fetch(`/api/admin/customers/${customerId}/${tabEndpoint(tab)}`)
+      if (!res.ok) throw new Error(`Failed to load ${tab} data.`)
+      const json = await res.json()
+
+      if (tab === 'sessions') setSessions(json.sessions || [])
+      if (tab === 'pages') setPageViews(json.pageViews || [])
+      if (tab === 'quotes') setQuotes(json.quotes || [])
+      if (tab === 'cart') setCarts(json.carts || [])
+      if (tab === 'tickets') setSupportTickets(json.tickets || [])
+      if (tab === 'whatsapp') setWhatsappMessages(json.messages || [])
+      if (tab === 'payments') setPayments(json.payments || [])
+    } catch {
+      loadedTabs.current[tab] = false
+    } finally {
+      setTabLoading(null)
+    }
+  }
+
+  function tabEndpoint(tab: Tab): string {
+    switch (tab) {
+      case 'sessions': return 'sessions'
+      case 'pages': return 'page-views'
+      case 'quotes': return 'quotes'
+      case 'cart': return 'carts'
+      case 'tickets': return 'tickets'
+      case 'whatsapp': return 'whatsapp'
+      case 'payments': return 'payments'
+      default: return ''
+    }
+  }
+
+  function handleTabChange(tab: Tab) {
+    setActiveTab(tab)
+    void ensureLoaded(tab)
+  }
+
+  async function saveNotes() {
+    setSavingNotes(true)
+    setNotesMessage(null)
+    try {
+      const res = await fetch(`/api/admin/customers/${customerId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notes,
+          tags: tagsInput.split(',').map((t) => t.trim()).filter(Boolean),
+        }),
+      })
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(body.error ?? 'Failed to save notes.')
+      }
+      const json = (await res.json()) as { profile?: { notes?: string; tags?: string[] } }
+      setProfile((prev) => (prev ? { ...prev, notes: json.profile?.notes ?? prev.notes, tags: json.profile?.tags ?? prev.tags } : prev))
+      setNotesMessage({ type: 'success', text: 'Notes saved.' })
+    } catch (saveError) {
+      setNotesMessage({ type: 'error', text: saveError instanceof Error ? saveError.message : 'Failed to save notes.' })
+    } finally {
+      setSavingNotes(false)
+    }
+  }
 
   const tabs = [
     { id: 'overview' as Tab, label: 'Overview', icon: User },
@@ -213,6 +323,8 @@ export default function CustomerProfilePage() {
     return <div className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-600">{error}</div>
   }
 
+  const isLoading = (tab: Tab) => tabLoading === tab
+
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -233,7 +345,7 @@ export default function CustomerProfilePage() {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium whitespace-nowrap transition ${
                 activeTab === tab.id
                   ? 'bg-[#6d28d9]/15 text-[#0F1B3D]'
@@ -310,19 +422,19 @@ export default function CustomerProfilePage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-xl bg-white p-4">
                     <div className="text-xs text-[#6F7192]">Sessions</div>
-                    <div className="mt-1 text-2xl font-bold text-[#0F1B3D]">{sessions?.length || 0}</div>
+                    <div className="mt-1 text-2xl font-bold text-[#0F1B3D]">{quickStats?.sessions ?? 0}</div>
                   </div>
                   <div className="rounded-xl bg-white p-4">
                     <div className="text-xs text-[#6F7192]">Page Views</div>
-                    <div className="mt-1 text-2xl font-bold text-[#0F1B3D]">{pageViews?.length || 0}</div>
+                    <div className="mt-1 text-2xl font-bold text-[#0F1B3D]">{quickStats?.pageViews ?? 0}</div>
                   </div>
                   <div className="rounded-xl bg-white p-4">
                     <div className="text-xs text-[#6F7192]">Quotes</div>
-                    <div className="mt-1 text-2xl font-bold text-[#0F1B3D]">{quotes?.length || 0}</div>
+                    <div className="mt-1 text-2xl font-bold text-[#0F1B3D]">{quickStats?.quotes ?? 0}</div>
                   </div>
                   <div className="rounded-xl bg-white p-4">
                     <div className="text-xs text-[#6F7192]">Files Uploaded</div>
-                    <div className="mt-1 text-2xl font-bold text-[#0F1B3D]">{files?.length || 0}</div>
+                    <div className="mt-1 text-2xl font-bold text-[#0F1B3D]">{quickStats?.files ?? 0}</div>
                   </div>
                 </div>
               </div>
@@ -333,7 +445,9 @@ export default function CustomerProfilePage() {
           {activeTab === 'sessions' && (
             <div className="rounded-2xl border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-lg font-semibold text-[#0F1B3D]">Session History</h2>
-              {!sessions || sessions.length === 0 ? (
+              {isLoading('sessions') ? (
+                <SkeletonBlock className="h-40 w-full" />
+              ) : !sessions || sessions.length === 0 ? (
                 <div className="rounded-xl bg-white p-8 text-center text-sm text-[#6F7192]">
                   No sessions recorded yet.
                 </div>
@@ -364,7 +478,9 @@ export default function CustomerProfilePage() {
           {activeTab === 'pages' && (
             <div className="rounded-2xl border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-lg font-semibold text-[#0F1B3D]">Pages Visited</h2>
-              {!pageViews || pageViews.length === 0 ? (
+              {isLoading('pages') ? (
+                <SkeletonBlock className="h-40 w-full" />
+              ) : !pageViews || pageViews.length === 0 ? (
                 <div className="rounded-xl bg-white p-8 text-center text-sm text-[#6F7192]">
                   No page views recorded yet.
                 </div>
@@ -394,7 +510,7 @@ export default function CustomerProfilePage() {
           {/* Time Spent Tab */}
           {activeTab === 'time' && (
             <div className="rounded-2xl border border-gray-200 bg-white p-6">
-              <h2 className="mb-4 text-lg font-semold text-[#0F1B3D]">Time Spent Analysis</h2>
+              <h2 className="mb-4 text-lg font-semibold text-[#0F1B3D]">Time Spent Analysis</h2>
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="rounded-xl bg-white p-4">
                   <div className="text-xs text-[#6F7192]">Total Time Spent</div>
@@ -416,7 +532,9 @@ export default function CustomerProfilePage() {
           {activeTab === 'quotes' && (
             <div className="rounded-2xl border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-lg font-semibold text-[#0F1B3D]">Quote History</h2>
-              {!quotes || quotes.length === 0 ? (
+              {isLoading('quotes') ? (
+                <SkeletonBlock className="h-40 w-full" />
+              ) : !quotes || quotes.length === 0 ? (
                 <div className="rounded-xl bg-white p-8 text-center text-sm text-[#6F7192]">
                   No quotes created yet.
                 </div>
@@ -451,7 +569,9 @@ export default function CustomerProfilePage() {
             <div className="space-y-6">
               <div className="rounded-2xl border border-gray-200 bg-white p-6">
                 <h2 className="mb-4 text-lg font-semibold text-[#0F1B3D]">Cart Items</h2>
-                {!carts || carts.length === 0 ? (
+                {isLoading('cart') ? (
+                  <SkeletonBlock className="h-40 w-full" />
+                ) : !carts || carts.length === 0 ? (
                   <div className="rounded-xl bg-white p-8 text-center text-sm text-[#6F7192]">
                     No cart items yet.
                   </div>
@@ -467,11 +587,46 @@ export default function CustomerProfilePage() {
                             </div>
                           </div>
                           <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                            cart.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
-                            cart.status === 'abandoned' ? 'bg-rose-400/20 text-rose-400' :
-                            'bg-blue-100 text-blue-700'
+                            statusBadgeClass(
+                              cart.status,
+                              'bg-emerald-100 text-emerald-700',
+                              'bg-rose-400/20 text-rose-400',
+                              'bg-blue-100 text-blue-700',
+                            )
                           }`}>
                             {cart.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 bg-white p-6">
+                <div className="mb-4 flex items-center gap-2">
+                  <Heart className="h-4 w-4 text-[#6F7192]" />
+                  <h2 className="text-lg font-semibold text-[#0F1B3D]">Wishlist</h2>
+                </div>
+                {!wishlist || wishlist.length === 0 ? (
+                  <div className="rounded-xl bg-white p-8 text-center text-sm text-[#6F7192]">
+                    No wishlist items yet.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {wishlist.map((item) => (
+                      <div key={item.id} className="rounded-xl bg-white p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium text-[#0F1B3D]">{item.productName || 'Product'}</div>
+                            <div className="text-xs text-[#6F7192]">
+                              {item.material} · ₹{item.price || 0}
+                            </div>
+                          </div>
+                          <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
+                            item.ordered ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {item.ordered ? 'Ordered' : 'Wishlisted'}
                           </span>
                         </div>
                       </div>
@@ -502,9 +657,12 @@ export default function CustomerProfilePage() {
                           </div>
                         </div>
                         <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                          order.status === 'delivered' ? 'bg-emerald-100 text-emerald-700' :
-                          order.status === 'cancelled' ? 'bg-rose-400/20 text-rose-400' :
-                          'bg-yellow-100 text-yellow-700'
+                          statusBadgeClass(
+                            order.status,
+                            'bg-emerald-100 text-emerald-700',
+                            'bg-rose-400/20 text-rose-400',
+                            'bg-yellow-100 text-yellow-700',
+                          )
                         }`}>
                           {order.status}
                         </span>
@@ -520,9 +678,44 @@ export default function CustomerProfilePage() {
           {activeTab === 'payments' && (
             <div className="rounded-2xl border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-lg font-semibold text-[#0F1B3D]">Payment History</h2>
-              <div className="rounded-xl bg-white p-8 text-center text-sm text-[#6F7192]">
-                No payment data available.
-              </div>
+              {isLoading('payments') ? (
+                <SkeletonBlock className="h-40 w-full" />
+              ) : !payments || payments.length === 0 ? (
+                <div className="rounded-xl bg-white p-8 text-center text-sm text-[#6F7192]">
+                  No payment data available.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {payments.map((payment) => (
+                    <div key={payment.id} className="rounded-xl bg-white p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-[#0F1B3D]">{payment.orderNumber}</div>
+                          <div className="text-xs text-[#6F7192]">
+                            ₹{((payment.amountPaise || 0) / 100).toLocaleString('en-IN')} · {payment.provider} ·{' '}
+                            {payment.paymentMethod || '—'} · {new Date(payment.createdAt || '').toLocaleString()}
+                          </div>
+                          {payment.refundedAmountPaise ? (
+                            <div className="mt-1 text-xs text-rose-500">
+                              Refunded: ₹{(payment.refundedAmountPaise / 100).toLocaleString('en-IN')}
+                            </div>
+                          ) : null}
+                        </div>
+                        <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
+                          statusBadgeClass(
+                            payment.status,
+                            'bg-emerald-100 text-emerald-700',
+                            'bg-rose-400/20 text-rose-400',
+                            'bg-yellow-100 text-yellow-700',
+                          )
+                        }`}>
+                          {payment.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -557,7 +750,9 @@ export default function CustomerProfilePage() {
           {activeTab === 'whatsapp' && (
             <div className="rounded-2xl border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-lg font-semibold text-[#0F1B3D]">WhatsApp Activity</h2>
-              {!whatsappMessages || whatsappMessages.length === 0 ? (
+              {isLoading('whatsapp') ? (
+                <SkeletonBlock className="h-40 w-full" />
+              ) : !whatsappMessages || whatsappMessages.length === 0 ? (
                 <div className="rounded-xl bg-white p-8 text-center text-sm text-[#6F7192]">
                   No WhatsApp messages yet.
                 </div>
@@ -596,7 +791,9 @@ export default function CustomerProfilePage() {
           {activeTab === 'tickets' && (
             <div className="rounded-2xl border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-lg font-semibold text-[#0F1B3D]">Support Tickets</h2>
-              {!supportTickets || supportTickets.length === 0 ? (
+              {isLoading('tickets') ? (
+                <SkeletonBlock className="h-40 w-full" />
+              ) : !supportTickets || supportTickets.length === 0 ? (
                 <div className="rounded-xl bg-white p-8 text-center text-sm text-[#6F7192]">
                   No support tickets raised yet.
                 </div>
@@ -612,9 +809,12 @@ export default function CustomerProfilePage() {
                           </div>
                         </div>
                         <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                          ticket.status === 'resolved' ? 'bg-emerald-100 text-emerald-700' :
-                          ticket.status === 'open' ? 'bg-rose-400/20 text-rose-400' :
-                          'bg-yellow-100 text-yellow-700'
+                          statusBadgeClass(
+                            ticket.status,
+                            'bg-emerald-100 text-emerald-700',
+                            'bg-rose-400/20 text-rose-400',
+                            'bg-yellow-100 text-yellow-700',
+                          )
                         }`}>
                           {ticket.status}
                         </span>
@@ -634,28 +834,47 @@ export default function CustomerProfilePage() {
                 <div>
                   <label className="mb-2 block text-xs font-medium text-[#6F7192]">Tags</label>
                   <div className="flex flex-wrap gap-2">
-                    {(profile?.tags || []).map((tag: string, index: number) => (
+                    {tagsInput.split(',').map((tag) => tag.trim()).filter(Boolean).map((tag: string, index: number) => (
                       <span key={index} className="rounded-full bg-[#6d28d9]/20 px-3 py-1 text-xs text-[#6d28d9]">
                         {tag}
                       </span>
                     ))}
-                    {(!profile?.tags || profile.tags.length === 0) && (
+                    {tagsInput.split(',').map((t) => t.trim()).filter(Boolean).length === 0 && (
                       <span className="text-sm text-[#6F7192]">No tags added yet.</span>
                     )}
                   </div>
+                  <input
+                    value={tagsInput}
+                    onChange={(e) => setTagsInput(e.target.value)}
+                    placeholder="Comma-separated tags (e.g. VIP, wholesale, repeat)"
+                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-[#0F1B3D] placeholder-[#5a6580] outline-none transition focus:border-[#6d28d9]/50"
+                  />
                 </div>
                 <div>
                   <label className="mb-2 block text-xs font-medium text-[#6F7192]">Notes</label>
                   <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
                     className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-[#0F1B3D] placeholder-[#5a6580] outline-none transition focus:border-[#6d28d9]/50"
                     rows={4}
                     placeholder="Add notes about this customer..."
-                    defaultValue={profile?.notes || ''}
                   />
-                  <button className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-medium text-[#0F1B3D] transition hover:opacity-90">
-                    <Save className="h-4 w-4" />
-                    Save Notes
-                  </button>
+                  <div className="mt-3 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => void saveNotes()}
+                      disabled={savingNotes}
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-medium text-[#0F1B3D] transition hover:opacity-90 disabled:opacity-60"
+                    >
+                      <Save className="h-4 w-4" />
+                      {savingNotes ? 'Saving...' : 'Save Notes'}
+                    </button>
+                    {notesMessage && (
+                      <span className={`text-sm ${notesMessage.type === 'success' ? 'text-emerald-600' : 'text-rose-500'}`}>
+                        {notesMessage.text}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

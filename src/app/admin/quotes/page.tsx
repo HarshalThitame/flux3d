@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Check, FileText, X, Zap } from 'lucide-react'
+import { Check, FileText, History, X, Zap } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import DataTable from '@/components/admin/DataTable'
 import EmptyState from '@/components/admin/EmptyState'
@@ -10,11 +10,45 @@ import SkeletonBlock from '@/components/admin/SkeletonBlock'
 import StatusBadge from '@/components/admin/StatusBadge'
 import type { AdminQuote } from '@/lib/admin/types'
 
+type QuoteEvent = {
+  id: string
+  event_type: string
+  actor_role: string
+  previous_status: string | null
+  new_status: string
+  note: string | null
+  occurred_at: string
+}
+
 export default function AdminQuotesPage() {
   const [quotes, setQuotes] = useState<AdminQuote[] | null>(null)
   const [toast, setToast] = useState<AdminToastState>(null)
   const [error, setError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [historyFor, setHistoryFor] = useState<string | null>(null)
+  const [events, setEvents] = useState<QuoteEvent[] | null>(null)
+  const [eventsError, setEventsError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!historyFor) return
+    const controller = new AbortController()
+
+    fetch(`/api/admin/quotes/${historyFor}/events`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) {
+          const body = (await response.json().catch(() => ({}))) as { error?: string }
+          throw new Error(body.error ?? 'Failed to load quote events.')
+        }
+        return response.json()
+      })
+      .then((json) => setEvents(json.events ?? []))
+      .catch((loadError) => {
+        if ((loadError as Error).name === 'AbortError') return
+        setEventsError(loadError instanceof Error ? loadError.message : 'Failed to load quote events.')
+      })
+
+    return () => controller.abort()
+  }, [historyFor])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -174,6 +208,19 @@ export default function AdminQuotesPage() {
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation()
+                      setHistoryFor(row.quote_id ?? String(row.id))
+                      setEvents(null)
+                      setEventsError(null)
+                    }}
+                    className="rounded-lg border border-[#6d28d9]/15 bg-[#6d28d9]/5 p-2 text-[#6d28d9] transition hover:bg-[#6d28d9]/15"
+                    title="Event history"
+                  >
+                    <History className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
                       updateQuoteStatus(row, 'converted', `${row.quote_id ?? row.id} converted to order.`)
                     }}
                     className="rounded-lg border border-cyan-200 bg-cyan-50 p-2 text-cyan-400 transition hover:bg-cyan-400/15"
@@ -188,6 +235,53 @@ export default function AdminQuotesPage() {
         />
       </div>
       <AdminToast toast={toast} />
+
+      {historyFor && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"
+        >
+          <motion.div
+            initial={{ scale: 0.95, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            className="mx-4 w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-[#0F1B3D]">Quote Event History</h2>
+                <p className="mt-1 text-xs text-[#6F7192]">{historyFor}</p>
+              </div>
+              <button type="button" onClick={() => setHistoryFor(null)} className="rounded-lg p-1 text-[#6F7192] hover:bg-gray-100">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {eventsError ? (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-600">{eventsError}</div>
+            ) : events === null ? (
+              <SkeletonBlock className="h-40 w-full" />
+            ) : events.length === 0 ? (
+              <div className="rounded-xl bg-gray-50 p-8 text-center text-sm text-[#6F7192]">No events recorded for this quote yet.</div>
+            ) : (
+              <div className="max-h-[60vh] space-y-3 overflow-y-auto">
+                {events.map((event) => (
+                  <div key={event.id} className="rounded-xl border border-gray-100 p-3 text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold capitalize text-[#0F1B3D]">{event.event_type.replace('_', ' ')}</span>
+                      <span className="text-[10px] text-[#6F7192]">{new Date(event.occurred_at).toLocaleString()}</span>
+                    </div>
+                    <div className="mt-1 text-xs text-[#6F7192]">
+                      {event.actor_role} · {event.previous_status ?? '—'} → {event.new_status}
+                    </div>
+                    {event.note && <div className="mt-1 text-xs text-[#6F7192]">{event.note}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
     </>
   )
 }

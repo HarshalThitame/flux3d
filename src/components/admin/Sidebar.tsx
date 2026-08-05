@@ -19,6 +19,7 @@ export default function Sidebar({
   const secondaryItems = adminNavItems.filter(item => item.section === 'secondary')
   const isActive = (href: string) => pathname === href || (href !== '/admin' && pathname.startsWith(`${href}/`))
   const [pendingReviewCount, setPendingReviewCount] = useState(0)
+  const [printerStats, setPrinterStats] = useState<{ total: number; active: number } | null>(null)
   const getBadge = (href: string) => href === '/admin/3d-shop/reviews' ? pendingReviewCount : 0
 
   useEffect(() => {
@@ -34,7 +35,23 @@ export default function Sidebar({
       }
     }
 
+    async function loadPrinterStats() {
+      try {
+        const response = await fetch('/api/admin/printers')
+        if (!active || !response.ok) return
+        const data = await response.json() as { printers: { status: string }[] }
+        const printers = data.printers ?? []
+        setPrinterStats({
+          total: printers.length,
+          active: printers.filter((printer) => printer.status === 'printing').length,
+        })
+      } catch {
+        if (active) setPrinterStats(null)
+      }
+    }
+
     void loadPendingReviews()
+    void loadPrinterStats()
     return () => {
       active = false
     }
@@ -193,13 +210,17 @@ export default function Sidebar({
         <div className="mt-auto rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(109, 40, 217,0.12),rgba(168, 85, 247,0.25))] p-4">
           {!collapsed ? (
             <>
-              <div className="text-sm font-semibold text-[#0F1B3D]">System Healthy</div>
+              <div className="text-sm font-semibold text-[#0F1B3D]">
+                {printerStats && printerStats.active > 0 ? 'Printers Online' : 'No Printers Active'}
+              </div>
               <div className="mt-2 text-sm leading-6 text-[#505880]">
-                6 printers active · 87% utilization
+                {printerStats
+                  ? `${printerStats.active} of ${printerStats.total} printers active · ${printerStats.total > 0 ? Math.round((printerStats.active / printerStats.total) * 100) : 0}% utilization`
+                  : 'Loading printer status...'}
               </div>
             </>
           ) : (
-            <div className="mx-auto h-3 w-3 rounded-full bg-emerald-500" />
+            <div className={`mx-auto h-3 w-3 rounded-full ${printerStats && printerStats.active > 0 ? 'bg-emerald-500' : 'bg-amber-500'}`} />
           )}
         </div>
       </div>

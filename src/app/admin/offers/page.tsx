@@ -2,8 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Search, Percent, Calendar, Tag, Eye, EyeOff, Pencil, Trash2, IndianRupee, Gift } from 'lucide-react'
+import { Plus, Search, Percent, Calendar, Tag, Eye, EyeOff, Pencil, Trash2, IndianRupee, Gift, TicketCheck, BadgeIndianRupee } from 'lucide-react'
 import { logSearch } from '@/lib/tracking/searchLogger'
+
+type OfferStats = {
+  total_redemptions: number
+  total_discount_given: number
+  total_revenue_from_offers: number
+  recent: Array<Record<string, unknown>>
+}
 
 type Offer = {
   id: string
@@ -46,12 +53,17 @@ export default function AdminOffersPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'active' | 'scheduled' | 'expired' | 'disabled'>('all')
+  const [stats, setStats] = useState<OfferStats | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/offers')
       .then(r => r.json())
       .then(d => { setOffers(d.data ?? []); setLoading(false) })
       .catch(() => setLoading(false))
+    fetch('/api/admin/offers/stats')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => setStats(d))
+      .catch(() => {})
   }, [])
 
   const now = new Date()
@@ -149,6 +161,32 @@ export default function AdminOffersPage() {
           ))}
         </div>
       </div>
+
+      {stats && (
+        <div className="grid gap-4 sm:grid-cols-3 mb-6">
+          <div className="rounded-2xl border border-[rgba(109,40,217,0.15)] bg-white p-5">
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Total Redemptions</div>
+              <TicketCheck className="h-4 w-4 text-[#6d28d9]" />
+            </div>
+            <div className="mt-2 text-2xl font-bold text-[#0F1B3D]">{stats.total_redemptions.toLocaleString('en-IN')}</div>
+          </div>
+          <div className="rounded-2xl border border-[rgba(109,40,217,0.15)] bg-white p-5">
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Discount Given</div>
+              <IndianRupee className="h-4 w-4 text-emerald-600" />
+            </div>
+            <div className="mt-2 text-2xl font-bold text-[#0F1B3D]">₹{stats.total_discount_given.toLocaleString('en-IN')}</div>
+          </div>
+          <div className="rounded-2xl border border-[rgba(109,40,217,0.15)] bg-white p-5">
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] uppercase tracking-[0.15em] text-[#6F7192]">Revenue via Offers</div>
+              <BadgeIndianRupee className="h-4 w-4 text-[#6d28d9]" />
+            </div>
+            <div className="mt-2 text-2xl font-bold text-[#0F1B3D]">₹{stats.total_revenue_from_offers.toLocaleString('en-IN')}</div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3">
         {filtered.length === 0 && (

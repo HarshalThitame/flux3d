@@ -1,14 +1,6 @@
-import type { LucideIcon } from 'lucide-react'
 import type { OrderStatus } from '@/lib/orders'
 
 export type { OrderStatus } from '@/lib/orders'
-
-export type AdminNavItem = {
-  label: string
-  href: string
-  icon: LucideIcon
-  section?: 'main' | 'secondary'
-}
 
 export type DashboardMetric = {
   label: string
@@ -256,14 +248,6 @@ export type AdminFile = {
   size: string
 }
 
-export type ActivityItem = {
-  id: string
-  title: string
-  meta: string
-  type: 'order' | 'quote' | 'user' | 'material'
-  time: string
-}
-
 export type TrendPoint = {
   label: string
   value: number
@@ -389,21 +373,6 @@ export type PaymentRefundData = {
   failedAt: string | null
 }
 
-export type PaymentDetailData = {
-  attempt: PaymentData & {
-    metadata: Record<string, unknown>
-    customerId: string
-  }
-  order: Record<string, unknown> | null
-  refunds: PaymentRefundData[]
-  events: PaymentEventData[]
-  auditLogs: PaymentAuditLogData[]
-  providerDashboard: {
-    paymentUrl: string | null
-    orderUrl: string | null
-  }
-}
-
 export type ReconciliationRunData = {
   id: string
   dateRangeStart: string | null
@@ -416,20 +385,6 @@ export type ReconciliationRunData = {
   report: Record<string, unknown>
   startedAt: string
   completedAt: string | null
-}
-
-export type WebhookHealthData = {
-  health: {
-    total: number
-    processed: number
-    failed: number
-    ignored: number
-    duplicateCount: number
-    lastReceivedAt: string | null
-    lastProcessedAt: string | null
-  }
-  events: PaymentEventData[]
-  reconciliationRuns: ReconciliationRunData[]
 }
 
 export type NotificationItem = {

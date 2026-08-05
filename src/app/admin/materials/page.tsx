@@ -22,12 +22,66 @@ const colorNameToHex = (input: string): string => {
   return colorMap[trimmed] || trimmed;
 };
 
+type AdminMaterialView = QuoteMaterial & { stock?: 'Healthy' | 'Low' | 'Paused' }
+
+type AdminMaterialRow = {
+  id: string
+  name: string
+  icon?: string | null
+  summary?: string | null
+  density: number | string
+  price_per_gram: number | string
+  machine_rate?: number | string | null
+  multiplier?: number | string | null
+  recommended_for?: string | null
+  properties?: Record<string, unknown> | null
+  colors?: unknown[]
+  difficulty_factor?: number | string
+  key_properties?: string[] | null
+  best_for?: string[] | null
+  difficulty_level?: 'Easy' | 'Medium' | 'Hard' | null
+  heat_resistance?: 'Low' | 'Medium' | 'High' | null
+  strength_rating?: 'Low' | 'Medium' | 'High' | null
+  finish_quality?: 'Basic' | 'Good' | 'Excellent' | null
+  sample_photo?: string | null
+  stock?: 'Healthy' | 'Low' | 'Paused' | null
+}
+
+// Maps a snake_case admin API material row to the camelCase QuoteMaterial shape used by this page.
+function mapAdminMaterial(row: AdminMaterialRow): AdminMaterialView {
+  return {
+    id: String(row.id),
+    name: row.name,
+    icon: row.icon ?? '🧩',
+    summary: row.summary ?? '',
+    density: Number(row.density ?? 0),
+    pricePerGram: Number(row.price_per_gram ?? 0),
+    machineRate: Number(row.machine_rate ?? 180),
+    multiplier: Number(row.multiplier ?? 1),
+    recommendedFor: row.recommended_for ?? '',
+    properties: (row.properties ?? {}) as QuoteMaterial['properties'],
+    colors: Array.isArray(row.colors)
+      ? row.colors.map((c) => (typeof c === 'string' ? { name: c, hex: colorNameToHex(c) } : { name: String(c) }))
+      : [],
+    difficultyFactor: Number(row.difficulty_factor ?? 1.1),
+    keyProperties: row.key_properties ?? [],
+    bestFor: row.best_for ?? [],
+    difficultyLevel: row.difficulty_level ?? 'Easy',
+    heatResistance: row.heat_resistance ?? 'Low',
+    strengthRating: row.strength_rating ?? 'Medium',
+    finishQuality: row.finish_quality ?? 'Good',
+    samplePhoto: row.sample_photo ?? '',
+    stock: row.stock ?? 'Healthy',
+  }
+}
+
 export default function AdminMaterialsPage() {
-  const [materials, setMaterials] = useState<QuoteMaterial[]>([])
+  const [materials, setMaterials] = useState<AdminMaterialView[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [editingMaterial, setEditingMaterial] = useState<QuoteMaterial | null>(null)
+  const [editingMaterial, setEditingMaterial] = useState<AdminMaterialView | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [stock, setStock] = useState<'Healthy' | 'Low' | 'Paused'>('Healthy')
   const [recommendedFor, setRecommendedFor] = useState<string[]>([''])
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
@@ -64,10 +118,10 @@ export default function AdminMaterialsPage() {
   async function fetchMaterials() {
     setLoading(true)
     try {
-      const res = await fetch('/api/materials')
+      const res = await fetch('/api/admin/materials')
       if (res.ok) {
         const data = await res.json()
-        setMaterials(data.materials || data)
+        setMaterials((data.materials || []).map(mapAdminMaterial))
       }
     } catch {
       // Failed to fetch
@@ -84,26 +138,27 @@ export default function AdminMaterialsPage() {
       icon: formData.icon,
       summary: formData.summary,
       density: formData.density,
-      price_per_gram: formData.pricePerGram,
-      machine_rate: formData.machineRate,
+      pricePerGram: formData.pricePerGram,
+      machineRate: formData.machineRate,
       multiplier: formData.multiplier,
-      difficulty_factor: formData.difficultyFactor,
-      recommended_for: recommendedFor.filter(Boolean).join(', '),
+      difficultyFactor: formData.difficultyFactor,
+      recommendedFor: recommendedFor.filter(Boolean).join(', '),
       properties: formData.properties,
-      colors: formData.colors.map(c => ({ name: c, hex: colorNameToHex(c) })),
-      key_properties: formData.keyProperties,
-      best_for: formData.bestFor,
-      difficulty_level: formData.difficultyLevel,
-      heat_resistance: formData.heatResistance,
-      strength_rating: formData.strengthRating,
-      finish_quality: formData.finishQuality,
-      sample_photo: formData.samplePhoto,
+      colors: formData.colors,
+      keyProperties: formData.keyProperties,
+      bestFor: formData.bestFor,
+      difficultyLevel: formData.difficultyLevel,
+      heatResistance: formData.heatResistance,
+      strengthRating: formData.strengthRating,
+      finishQuality: formData.finishQuality,
+      samplePhoto: formData.samplePhoto,
+      stock,
     }
 
     try {
       if (editingMaterial) {
-        const res = await fetch(`/api/materials`, {
-          method: 'PUT',
+        const res = await fetch('/api/admin/materials', {
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...payload, id: editingMaterial.id }),
         })
@@ -118,7 +173,7 @@ export default function AdminMaterialsPage() {
           setToast({ type: 'error', message: result.error || 'Failed to update material' })
         }
       } else {
-        const res = await fetch('/api/materials', {
+        const res = await fetch('/api/admin/materials', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -145,7 +200,7 @@ export default function AdminMaterialsPage() {
   async function confirmDelete() {
     if (!deleteConfirm) return
     try {
-      const res = await fetch(`/api/materials?id=${deleteConfirm}`, {
+      const res = await fetch(`/api/admin/materials?id=${deleteConfirm}`, {
         method: 'DELETE',
       })
       if (res.ok) {
@@ -161,8 +216,9 @@ export default function AdminMaterialsPage() {
     }
   }
 
-  function handleEdit(material: QuoteMaterial) {
+  function handleEdit(material: AdminMaterialView) {
     setEditingMaterial(material)
+    setStock(material.stock ?? 'Healthy')
     setFormData({
       name: material.name,
       icon: material.icon,
@@ -207,6 +263,7 @@ export default function AdminMaterialsPage() {
       samplePhoto: '',
     })
     setRecommendedFor([''])
+    setStock('Healthy')
   }
 
   function addRecommendedFor() {
@@ -434,6 +491,18 @@ export default function AdminMaterialsPage() {
                         <option value="Excellent">Excellent</option>
                       </select>
                     </div>
+                    <div>
+                      <label className="mb-1 block text-sm text-[#6F7192]">Stock</label>
+                      <select
+                        value={stock}
+                        onChange={(e) => setStock(e.target.value as 'Healthy' | 'Low' | 'Paused')}
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
+                      >
+                        <option value="Healthy">Healthy</option>
+                        <option value="Low">Low</option>
+                        <option value="Paused">Paused</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div>
@@ -540,6 +609,19 @@ export default function AdminMaterialsPage() {
                       <div className="flex items-center gap-2">
                         <span className="text-2xl">{material.icon}</span>
                         <h3 className="text-lg font-semibold text-[#0F1B3D]">{material.name}</h3>
+                        {material.stock && (
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                              material.stock === 'Healthy'
+                                ? 'bg-emerald-50 text-emerald-600'
+                                : material.stock === 'Low'
+                                  ? 'bg-amber-50 text-amber-600'
+                                  : 'bg-rose-50 text-rose-500'
+                            }`}
+                          >
+                            {material.stock}
+                          </span>
+                        )}
                       </div>
                       <p className="mt-1 text-sm text-[#6F7192]">{material.summary}</p>
                       <div className="mt-2 flex flex-wrap gap-4 text-xs text-[#6F7192]">

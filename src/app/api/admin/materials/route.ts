@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import {
   createAdminMaterial,
+  deleteAdminMaterial,
   getAdminMaterialsData,
   updateAdminMaterial,
 } from '@/lib/admin/queries'
@@ -44,7 +45,7 @@ type MaterialPayload = {
   stock?: 'Healthy' | 'Low' | 'Paused'
 }
 
-function validateMaterialPayload(body: MaterialPayload) {
+export function validateMaterialPayload(body: MaterialPayload) {
   const name = typeof body.name === 'string' ? body.name.trim() : ''
   const icon = typeof body.icon === 'string' && body.icon.trim() ? body.icon.trim() : '🧩'
   const summary = typeof body.summary === 'string' ? body.summary.trim() : ''
@@ -158,6 +159,45 @@ export async function PATCH(request: Request) {
       new_value: material as Record<string, unknown>,
     })
     return NextResponse.json({ material })
+  } catch (error) {
+    return getAdminApiErrorResponse(error)
+  }
+}
+
+export async function DELETE(request: Request) {
+  const auth = await requireAdminRequest()
+  if ('response' in auth) return auth.response
+
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'Material id is required.' }, { status: 400 })
+    }
+
+    const supabase = createAdminSupabaseClient()
+    const { data: oldMaterial } = await supabase
+      .from('materials')
+      .select('id, name')
+      .eq('id', id)
+      .maybeSingle()
+
+    const deleted = await deleteAdminMaterial(id)
+
+    if (!deleted) {
+      return NextResponse.json({ error: 'Material not found.' }, { status: 404 })
+    }
+
+    await logAdminAction({
+      admin_id: auth.user.id,
+      action: 'delete_material',
+      target_type: 'material',
+      target_id: id,
+      old_value: oldMaterial ?? null,
+      new_value: null,
+    })
+    return NextResponse.json({ success: true, id })
   } catch (error) {
     return getAdminApiErrorResponse(error)
   }

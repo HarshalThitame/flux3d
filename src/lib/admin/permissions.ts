@@ -158,20 +158,3 @@ export async function requireAdminPermission(permission: AdminPermission) {
   if (denied) return { response: denied }
   return check
 }
-
-export async function requireAnyAdminPermission(permissions: AdminPermission[]) {
-  const check = await getAdminPermissionCheck()
-  if ('response' in check) return check
-  const hasAny = await Promise.all(permissions.map((permission) => hasPermission(check, permission))).then(
-    (results) => results.some(Boolean)
-  )
-  if (!hasAny) {
-    return {
-      response: NextResponse.json(
-        { error: `Forbidden: one of ${permissions.join(', ')} required.` },
-        { status: 403 }
-      ),
-    }
-  }
-  return check
-}

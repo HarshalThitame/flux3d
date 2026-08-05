@@ -6,9 +6,11 @@ import { Upload, X, ImageIcon } from 'lucide-react'
 export default function LogoUploader({
   value,
   onChange,
+  field = 'logo',
 }: {
   value: string
   onChange: (url: string) => void
+  field?: string
 }) {
   const [uploading, setUploading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -21,6 +23,7 @@ export default function LogoUploader({
     setUploading(true)
     try {
       const formData = new FormData()
+      formData.append('field', field)
       formData.append('file', file)
       const res = await fetch('/api/admin/upload-branding', { method: 'POST', body: formData })
       const json = await res.json()

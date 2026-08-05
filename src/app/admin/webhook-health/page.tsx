@@ -21,15 +21,37 @@ type WebhookHealthResponse = {
   reconciliationRuns: ReconciliationRunData[]
 }
 
+type WhatsAppWebhookEvent = {
+  id: string
+  sender: string | null
+  payload_hash: string | null
+  signature_verified: boolean | null
+  processed_at: string | null
+  reply_sent: boolean | null
+  retry_count: number | null
+  last_error: string | null
+  last_retried_at: string | null
+  received_at: string | null
+  created_at: string
+}
+
 export default function AdminWebhookHealthPage() {
   const [data, setData] = useState<WebhookHealthResponse | null>(null)
+  const [whatsappEvents, setWhatsappEvents] = useState<WhatsAppWebhookEvent[]>([])
   const [busyEventId, setBusyEventId] = useState<string | null>(null)
+  const [busyWhatsappId, setBusyWhatsappId] = useState<string | null>(null)
 
   async function load() {
     const response = await fetch('/api/admin/webhook-health')
     if (!response.ok) throw new Error('Failed to load webhook health.')
     const json = await response.json() as WebhookHealthResponse
     setData(json)
+
+    const whatsappResponse = await fetch('/api/admin/whatsapp-webhook-events?status=failed&limit=20')
+    if (whatsappResponse.ok) {
+      const json = await whatsappResponse.json() as { events: WhatsAppWebhookEvent[] }
+      setWhatsappEvents(json.events)
+    }
   }
 
   useEffect(() => {
@@ -51,6 +73,19 @@ export default function AdminWebhookHealthPage() {
       await load()
     } finally {
       setBusyEventId(null)
+    }
+  }
+
+  async function reprocessWhatsapp(id: string) {
+    setBusyWhatsappId(id)
+    try {
+      const response = await fetch(`/api/admin/whatsapp-webhook-events/${id}/reprocess`, {
+        method: 'POST',
+      })
+      if (!response.ok) throw new Error('Failed to reprocess WhatsApp event.')
+      await load()
+    } finally {
+      setBusyWhatsappId(null)
     }
   }
 
@@ -126,6 +161,57 @@ export default function AdminWebhookHealthPage() {
                 className="rounded-lg border border-[#6d28d9]/10 bg-white px-3 py-2 text-xs font-semibold text-[#0F1B3D] disabled:opacity-60"
               >
                 {busyEventId === row.providerEventId ? 'Reprocessing...' : 'Reprocess'}
+              </button>
+            ),
+          },
+        ]}
+      />
+
+      <DataTable
+        title="Failed WhatsApp Webhook Events"
+        description="Inbound WhatsApp events that exhausted retries. Reprocess to reset retry state and re-deliver."
+        data={whatsappEvents}
+        searchPlaceholder="Search sender, event ID, error"
+        searchKeys={['id', 'sender', 'last_error']}
+        columns={[
+          {
+            key: 'id',
+            label: 'Event ID',
+            sortable: true,
+            render: (row) => <span className="break-all font-medium text-[#0F1B3D]">{row.id}</span>,
+          },
+          {
+            key: 'sender',
+            label: 'Sender',
+            sortable: true,
+            render: (row) => <span className="text-[#6F7192]">{row.sender ?? '—'}</span>,
+          },
+          {
+            key: 'last_error',
+            label: 'Error',
+            render: (row) => <span className="break-all text-[#6F7192]">{row.last_error ?? '—'}</span>,
+          },
+          {
+            key: 'received_at',
+            label: 'Received',
+            sortable: true,
+            render: (row) => (
+              <span className="text-[#6F7192]">
+                {row.received_at ? new Date(row.received_at).toLocaleString('en-IN') : '—'}
+              </span>
+            ),
+          },
+          {
+            key: 'actions',
+            label: 'Actions',
+            render: (row) => (
+              <button
+                type="button"
+                onClick={() => void reprocessWhatsapp(row.id)}
+                disabled={busyWhatsappId === row.id}
+                className="rounded-lg border border-[#6d28d9]/10 bg-white px-3 py-2 text-xs font-semibold text-[#0F1B3D] disabled:opacity-60"
+              >
+                {busyWhatsappId === row.id ? 'Reprocessing...' : 'Reprocess'}
               </button>
             ),
           },
