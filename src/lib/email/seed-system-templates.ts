@@ -272,6 +272,33 @@ const SKELETONS: Record<string, string> = {
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
   Reply to <a href="mailto:{{sender_email}}" style="color:#39BDF8;">{{sender_email}}</a> to respond.
 </p>`,
+
+  stock_alert: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Stock Alert Digest</p>
+<p style="font-size:15px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
+  <strong style="color:#1a1a1a;" class="email-text">{{alert_count}}</strong> item(s) need your attention — <strong style="color:#1a1a1a;" class="email-text">{{low_stock_count}}</strong> low on stock and <strong style="color:#1a1a1a;" class="email-text">{{out_of_stock_count}}</strong> out of stock.
+</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">{{items_html}}</table>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding:24px 0;">
+  <a href="https://flux3d.in/admin/3d-shop/stock" style="background-color:#FF5C1A;color:#fff;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;">Open Stock Dashboard</a>
+</td></tr></table>
+<p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
+  You are receiving this because you are an admin. Adjust thresholds or SKUs in the stock dashboard.
+</p>`,
+
+  back_in_stock: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">It&apos;s back!</p>
+<p style="font-size:15px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
+  Hi {{customer_name}}, the item you were waiting for is back in stock:
+</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f9fafb;border-radius:10px;padding:20px;border:1px solid #e5e7eb;margin:16px 0;" class="email-card"><tr><td>
+  <p style="font-size:16px;font-weight:700;color:#1a1a1a;margin:0 0 4px;" class="email-text">{{product_name}}</p>
+  <p style="font-size:14px;color:#6b7280;margin:0;" class="email-muted">{{variant_label}}</p>
+</td></tr></table>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding:24px 0;">
+  <a href="{{product_url}}" style="background-color:#FF5C1A;color:#fff;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;">Shop Now</a>
+</td></tr></table>
+<p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
+  Stock moves fast — grab yours while it lasts.
+</p>`,
 }
 
 // ---------------------------------------------------------------------------
@@ -355,6 +382,18 @@ export const SAMPLE_DATA: Record<string, Record<string, string>> = {
     sender_email: 'rutik@example.com',
     sender_phone: '+91 98765 43210',
     message: 'Hello, I have a question about my recent order.',
+  },
+  stock_alert: {
+    alert_count: '4',
+    low_stock_count: '3',
+    out_of_stock_count: '1',
+    items_html: `<p style="font-size:14px;color:#6b7280;margin:4px 0;" class="email-muted">Phone Stand Deluxe (SHOP-ABC-001) &middot; Low · 3 left</p><p style="font-size:14px;color:#6b7280;margin:4px 0;" class="email-muted">Desk Organizer Black (SHOP-ABC-002) &middot; Out of stock</p>`,
+  },
+  back_in_stock: {
+    customer_name: 'Rutik',
+    product_name: 'Phone Stand Deluxe',
+    variant_label: 'Color: Black · Size: Large',
+    product_url: `${SITE_URL}/3d-shop/phone-stand-deluxe`,
   },
 }
 

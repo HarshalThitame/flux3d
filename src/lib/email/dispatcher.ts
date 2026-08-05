@@ -10,6 +10,7 @@ import {
   renderPaymentHtml,
   renderShippingAddressHtml,
   renderIssuesHtml,
+  renderStockAlertItemsHtml,
 } from './payload-renderer'
 import { extractAttachments, stripAttachmentPlaceholders } from './template-engine'
 import { fetchAttachmentBase64 } from './attachments'
@@ -297,6 +298,19 @@ function payloadToVariables(
       vars.sender_phone = payload.senderPhone
       vars.message = payload.message
       break
+    case 'stock_alert':
+      vars.alert_count = String(payload.alertCount)
+      vars.low_stock_count = String(payload.lowStockCount)
+      vars.out_of_stock_count = String(payload.outOfStockCount)
+      if (payload.itemsHtml) vars.items_html = payload.itemsHtml
+      else if (payload.items?.length) vars.items_html = renderStockAlertItemsHtml(payload.items)
+      break
+    case 'back_in_stock':
+      vars.customer_name = payload.customerName
+      vars.product_name = payload.productName
+      vars.variant_label = payload.variantLabel
+      vars.product_url = payload.productUrl
+      break
   }
 
   return vars
@@ -352,6 +366,10 @@ function buildSubject(payload: EmailJobPayload): string {
       return `Refund issued for order ${payload.orderNumber}`
     case 'contact_notification':
       return `New contact form submission from ${payload.senderName}`
+    case 'stock_alert':
+      return `[Admin] Stock alert digest — ${payload.alertCount} item${payload.alertCount === 1 ? '' : 's'} need attention`
+    case 'back_in_stock':
+      return `Good news — ${payload.productName} is back in stock`
     default:
       return 'Flux3D Notification'
   }

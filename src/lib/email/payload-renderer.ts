@@ -14,6 +14,7 @@ import type {
   OrderShippedPayload,
   PaymentReceiptPayload,
   ModelValidationPayload,
+  StockAlertDigestPayload,
 } from './types'
 
 export function renderOrderItemsHtml(
@@ -119,6 +120,35 @@ export function renderIssuesHtml(
     )
     .join('')
   return list
+}
+
+export function renderStockAlertItemsHtml(
+  items: StockAlertDigestPayload['items']
+): string {
+  if (!items || items.length === 0) return ''
+  const rows = items
+    .slice(0, 30)
+    .map(
+      (it) => {
+        const tone =
+          it.alertType === 'out_of_stock'
+            ? 'color:#dc2626;font-weight:700'
+            : 'color:#b45309;font-weight:700'
+        const statusLabel =
+          it.alertType === 'out_of_stock' ? 'Out of stock' : `Low · ${it.stockQuantity} left`
+        return `<tr style="margin-bottom:12px;border-bottom:1px solid #e5e7eb;padding-bottom:12px;">
+  <td style="width:70%;vertical-align:middle;">
+    <p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0 0 4px;" class="email-text">${escapeHtml(it.productName)}</p>
+    <p style="font-size:13px;color:#6b7280;margin:0;" class="email-muted">${escapeHtml(it.skuCode)}${it.variantLabel ? ` · ${escapeHtml(it.variantLabel)}` : ''}</p>
+  </td>
+  <td style="width:30%;text-align:right;vertical-align:middle;">
+    <p style="font-size:13px;${tone};margin:0;" class="email-text">${escapeHtml(statusLabel)}</p>
+  </td>
+</tr>`
+      }
+    )
+    .join('')
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">${rows}</table>`
 }
 
 function escapeHtml(text: string): string {

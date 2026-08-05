@@ -72,6 +72,7 @@ export function isMaintenanceModeBlocking(
     'model_validation_pass',
     'model_validation_fail',
     'payment_failed',
+    'stock_alert',
   ]
 
   if (adminCriticalTypes.includes(emailType)) {

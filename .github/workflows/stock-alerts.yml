@@ -1,0 +1,16 @@
+name: Stock Alert Digest
+
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+jobs:
+  stock-alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call stock alerts endpoint
+        run: |
+          curl -sS --retry 3 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://${{ vars.VERCEL_URL || 'flux3d.vercel.app' }}/api/cron/stock-alerts"

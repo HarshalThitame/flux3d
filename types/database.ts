@@ -28,6 +28,8 @@ export type EmailType =
   | 'payment_failed'
   | 'refund_issued'
   | 'contact_notification'
+  | 'stock_alert'
+  | 'back_in_stock'
 
 export type EmailLogStatus =
   | 'queued'
@@ -370,6 +372,49 @@ export type ReferralRow = {
   created_at: string | null
 }
 
+export type StockMovementReasonType =
+  | 'order_placed'
+  | 'order_cancelled'
+  | 'order_returned'
+  | 'reservation_expired'
+  | 'manual_adjust'
+  | 'restock'
+  | 'release'
+  | 'system'
+
+export type StockMovementRow = {
+  id: string
+  sku_id: string
+  product_id: string
+  quantity_delta: number
+  previous_quantity: number
+  new_quantity: number
+  reason_type: StockMovementReasonType
+  reference_id: string | null
+  actor_id: string | null
+  note: string | null
+  created_at: string
+}
+
+export type StockAlertType = 'low_stock' | 'out_of_stock'
+export type StockAlertStatus = 'open' | 'acknowledged' | 'resolved'
+export type StockAlertSeverity = 'info' | 'warning' | 'critical'
+
+export type StockAlertRow = {
+  id: string
+  sku_id: string
+  product_id: string
+  alert_type: StockAlertType
+  severity: StockAlertSeverity
+  message: string
+  status: StockAlertStatus
+  stock_at_alert: number
+  notified_at: string | null
+  acknowledged_at: string | null
+  resolved_at: string | null
+  created_at: string
+}
+
 // ============================================================================
 // Database registry (Supabase shape)
 // ============================================================================
@@ -475,6 +520,16 @@ export type Database = {
         Row: ReferralRow
         Insert: Omit<Partial<ReferralRow>, 'id'> & Pick<ReferralRow, 'referrer_user_id' | 'referred_user_id' | 'referral_code'>
         Update: Partial<ReferralRow>
+      }
+      stock_movements: {
+        Row: StockMovementRow
+        Insert: Omit<Partial<StockMovementRow>, 'id'> & Pick<StockMovementRow, 'sku_id' | 'product_id' | 'quantity_delta'>
+        Update: Partial<StockMovementRow>
+      }
+      stock_alerts: {
+        Row: StockAlertRow
+        Insert: Omit<Partial<StockAlertRow>, 'id'> & Pick<StockAlertRow, 'sku_id' | 'product_id' | 'alert_type' | 'message'>
+        Update: Partial<StockAlertRow>
       }
     }
   }

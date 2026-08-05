@@ -15,6 +15,8 @@ import type {
   PaymentFailedPayload,
   RefundIssuedPayload,
   ContactNotificationPayload,
+  StockAlertDigestPayload,
+  BackInStockPayload,
 } from './types'
 
 // ============================================================================
@@ -305,4 +307,51 @@ export async function sendContactNotification(
     senderPhone,
     message,
   } as ContactNotificationPayload)
+}
+
+// ============================================================================
+// Stock Alert Digest (admin)
+// ============================================================================
+
+export async function sendStockAlertDigest(
+  items: StockAlertDigestPayload['items'],
+  alertCount: number,
+  lowStockCount: number,
+  outOfStockCount: number
+) {
+  const recipient = await getAdminEmail()
+  if (!recipient) {
+    console.warn('[email] Cannot send stock_alert — no admin email configured')
+    return
+  }
+  if (items.length === 0) {
+    return
+  }
+  return enqueueEmail({
+    emailType: 'stock_alert',
+    recipient,
+    alertCount,
+    lowStockCount,
+    outOfStockCount,
+    items,
+  } as StockAlertDigestPayload)
+}
+
+export async function sendBackInStock(
+  userId: string | null,
+  email: string,
+  customerName: string,
+  productName: string,
+  variantLabel: string,
+  productUrl: string
+) {
+  return enqueueEmail({
+    emailType: 'back_in_stock',
+    userId,
+    recipient: email,
+    customerName,
+    productName,
+    variantLabel,
+    productUrl,
+  } as BackInStockPayload)
 }
