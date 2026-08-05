@@ -3,16 +3,11 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Megaphone,
-  Plus,
   ExternalLink,
   PauseCircle,
   PlayCircle,
   AlertCircle,
   CheckCircle2,
-  Loader2,
-  IndianRupee,
-  Tag,
   Eye,
   RefreshCw,
   Trash2,
@@ -24,6 +19,7 @@ import ObjectivesChart from '@/components/admin/ObjectivesChart'
 import DataTable from '@/components/admin/DataTable'
 import CampaignDetailDrawer from '@/components/admin/CampaignDetailDrawer'
 import CampaignEditModal from '@/components/admin/CampaignEditModal'
+import CreateCampaignForm from '@/components/admin/CreateCampaignForm'
 
 type Campaign = {
   id: string
@@ -67,7 +63,6 @@ export default function AdminAdsPage() {
   const [chartPoints, setChartPoints] = useState<InsightPoint[]>([])
   const [loading, setLoading] = useState(true)
   const [insightsLoading, setInsightsLoading] = useState(true)
-  const [creating, setCreating] = useState(false)
   const [listError, setListError] = useState<string | null>(null)
   const [createError, setCreateError] = useState<string | null>(null)
   const [createSuccess, setCreateSuccess] = useState<Record<string, unknown> | null>(null)
@@ -77,12 +72,6 @@ export default function AdminAdsPage() {
   // Drawer / Modal state
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
   const [editingCampaign, setEditingCampaign] = useState<{ id: string; name: string; daily_budget?: string } | null>(null)
-
-  // Form state
-  const [categoryName, setCategoryName] = useState('3D Printed Home Decor')
-  const [dailyBudget, setDailyBudget] = useState(150)
-  const [createDpa, setCreateDpa] = useState(true)
-  const [pageId, setPageId] = useState('')
 
   const adAccountId = process.env.NEXT_PUBLIC_META_AD_ACCOUNT_ID || ''
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -157,39 +146,6 @@ export default function AdminAdsPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault()
-    setCreating(true)
-    setCreateError(null)
-    setCreateSuccess(null)
-
-    try {
-      const res = await fetch('/api/admin/ads/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          categoryName,
-          dailyBudgetPaise: dailyBudget * 100,
-          createDpa,
-          pageId: pageId || undefined,
-        }),
-      })
-
-      const data = (await res.json()) as Record<string, unknown>
-
-      if (!res.ok) {
-        throw new Error((data.error as string) ?? 'Creation failed')
-      }
-
-      setCreateSuccess(data)
-      await loadAll()
-    } catch (err) {
-      setCreateError(err instanceof Error ? err.message : 'Creation failed')
-    } finally {
-      setCreating(false)
-    }
-  }
 
   async function toggleCampaign(id: string, currentStatus: string) {
     const nextStatus = currentStatus === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'
@@ -329,137 +285,47 @@ export default function AdminAdsPage() {
       </div>
 
       {/* Create Ad Form */}
-      <div className="rounded-2xl border border-[rgba(109,40,217,0.15)] bg-white p-6">
-        <h2 className="text-lg font-semibold text-[#0F1B3D] mb-4 flex items-center gap-2">
-          <Plus className="w-5 h-5 text-[#6d28d9]" />
-          Create New Ad Campaign
-        </h2>
+      <CreateCampaignForm
+        onSuccess={(data: Record<string, unknown>) => {
+          setCreateSuccess(data)
+          setCreateError(null)
+          void loadAll()
+        }}
+        onError={(message: string) => {
+          setCreateError(message)
+          setCreateSuccess(null)
+        }}
+      />
 
-        <form onSubmit={handleCreate} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <label className="block text-xs font-medium text-[#6F7192] mb-1.5">Category</label>
-              <div className="relative">
-                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6F7192]" />
-                <input
-                  type="text"
-                  value={categoryName}
-                  onChange={(e) => setCategoryName(e.target.value)}
-                  placeholder="e.g. 3D Printed Home Decor"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[rgba(109,40,217,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9] transition-colors"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-[#6F7192] mb-1.5">Daily Budget (₹)</label>
-              <div className="relative">
-                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6F7192]" />
-                <input
-                  type="number"
-                  min={50}
-                  max={50000}
-                  value={dailyBudget}
-                  onChange={(e) => setDailyBudget(Number(e.target.value))}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[rgba(109,40,217,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9] transition-colors"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-[#6F7192] mb-1.5">Facebook Page ID</label>
-              <div className="relative">
-                <Eye className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6F7192]" />
-                <input
-                  type="text"
-                  value={pageId}
-                  onChange={(e) => setPageId(e.target.value)}
-                  placeholder="Optional — falls back to META_PAGE_ID"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[rgba(109,40,217,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9] transition-colors"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-end">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={createDpa}
-                  onChange={(e) => setCreateDpa(e.target.checked)}
-                  className="w-4 h-4 rounded border-[rgba(109,40,217,0.3)] text-[#6d28d9] focus:ring-[#6d28d9]"
-                />
-                <span className="text-sm text-[#0F1B3D]">Also create DPA retargeting</span>
-              </label>
-            </div>
+      {/* Page-level error / success display */}
+      {createError && (
+        <div className="rounded-xl border border-rose-400/20 bg-rose-50 p-4 text-sm text-rose-600 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium">Campaign creation failed</p>
+            <p className="mt-1">{createError}</p>
           </div>
+        </div>
+      )}
 
-          <div className="flex items-center gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={creating}
-              className="inline-flex items-center gap-2 bg-[#6d28d9] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#4c1d95] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      {createSuccess && (
+        <div className="rounded-xl border border-emerald-400/20 bg-emerald-50 p-4 text-sm text-emerald-700 flex items-start gap-3">
+          <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-medium">Campaign created successfully!</p>
+            <p className="mt-1">{(createSuccess.note as string) ?? 'Status: PAUSED'}</p>
+            <a
+              href={(createSuccess.metaAdsManagerUrl as string) ?? '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex items-center gap-1 text-[#6d28d9] hover:underline text-xs"
             >
-              {creating ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Creating…
-                </>
-              ) : (
-                <>
-                  <Megaphone className="w-4 h-4" />
-                  Create Paused Ad
-                </>
-              )}
-            </button>
-            <span className="text-xs text-[#6F7192]">
-              Campaigns are created in <strong>PAUSED</strong> status. Publish manually in Meta Ads Manager.
-            </span>
+              <ExternalLink className="w-3 h-3" />
+              Open in Meta Ads Manager
+            </a>
           </div>
-        </form>
-
-        {createError && (
-          <div className="mt-4 rounded-xl border border-rose-400/20 bg-rose-50 p-4 text-sm text-rose-600 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium">Failed to create campaign</p>
-              <p className="mt-1">{createError}</p>
-            </div>
-          </div>
-        )}
-
-        {createSuccess && (
-          <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-50 p-4 text-sm text-emerald-700 flex items-start gap-3">
-            <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="font-medium">Campaigns created successfully!</p>
-              <p className="mt-1">{(createSuccess.note as string) ?? 'Status: PAUSED'}</p>
-              {createSuccess.carousel != null && (
-                <div className="mt-2 space-y-1 text-xs font-mono text-emerald-800">
-                  <p>Carousel Campaign: {(createSuccess.carousel as Record<string, string>).campaignId}</p>
-                  <p>Ad Set: {(createSuccess.carousel as Record<string, string>).adSetId}</p>
-                  <p>Ad: {(createSuccess.carousel as Record<string, string>).adId}</p>
-                </div>
-              )}
-              {createSuccess.dpa != null && (
-                <div className="mt-2 space-y-1 text-xs font-mono text-emerald-800">
-                  <p>DPA Campaign: {((createSuccess.dpa as Record<string, string>) ?? {}).campaignId}</p>
-                </div>
-              )}
-              <a
-                href={(createSuccess.metaAdsManagerUrl as string) ?? '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1 text-[#6d28d9] hover:underline"
-              >
-                <ExternalLink className="w-3 h-3" />
-                Open in Meta Ads Manager
-              </a>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Campaigns Table */}
       <div>
