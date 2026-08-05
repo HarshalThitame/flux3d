@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Upload, X, ImageIcon } from 'lucide-react'
+import { X, ImageIcon } from 'lucide-react'
 
 export default function LogoUploader({
   value,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Plus, ChevronDown } from 'lucide-react'
+import { X } from 'lucide-react'
 
 export default function VariableAutocomplete({
   variables,

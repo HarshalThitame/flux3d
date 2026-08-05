@@ -178,7 +178,7 @@ export default function AdminRefundsPage() {
 
       {pendingApproval.length > 0 && selectedStatus === '' && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          <strong className="font-bold">{pendingApproval.length}</strong> refund{pendingApproval.length === 1 ? '' : 's'} need{/* eslint-disable-line */} approval.
+          <strong className="font-bold">{pendingApproval.length}</strong> refund{pendingApproval.length === 1 ? '' : 's'} need approval.
         </div>
       )}
 

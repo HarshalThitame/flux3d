@@ -5,9 +5,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import {
-  Building2, Phone, MapPin, Share2, Palette, FileText, MessageSquare,
-  Search, Mail, Scale, Settings2, Save, RotateCcw, Download, Upload,
-  Copy, Eye, EyeOff, ChevronDown, ChevronUp, Check, AlertCircle,
+  Building2, Palette, FileText, MessageSquare,
+  Search, Mail, Scale, Save, RotateCcw, Download, Upload,
+  Copy, Check,
   ArrowLeft, Plus, Trash2,
 } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
@@ -123,8 +123,7 @@ export default function BusinessSettingsPage() {
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<AdminToastState>(null)
   const [dirty, setDirty] = useState(false)
-  const [savingToast, setSavingToast] = useState<boolean>(false)
-  const [showSensitive, setShowSensitive] = useState<Record<string, boolean>>({})
+  const [savingToast] = useState<boolean>(false)
   const [uploading, setUploading] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploadField, setUploadField] = useState<string | null>(null)
@@ -418,11 +417,11 @@ export default function BusinessSettingsPage() {
             />
 
             {activeTab === 'business' && (
-              <BusinessInfoTab form={form} updateField={updateField} f={f} fn={fn} fb={fb} copyToClipboard={copyToClipboard} showSensitive={showSensitive} setShowSensitive={setShowSensitive} billingSame={billingSame} />
+              <BusinessInfoTab updateField={updateField} f={f} copyToClipboard={copyToClipboard} billingSame={billingSame} />
             )}
 
             {activeTab === 'branding' && (
-              <BrandingTab form={form} updateField={updateField} f={f} fb={fb} triggerFileInput={triggerFileInput} uploading={uploading} />
+              <BrandingTab updateField={updateField} f={f} triggerFileInput={triggerFileInput} uploading={uploading} />
             )}
 
             {activeTab === 'invoicing' && (
@@ -442,19 +441,19 @@ export default function BusinessSettingsPage() {
             )}
 
             {activeTab === 'communication' && (
-              <CommunicationTab form={form} updateField={updateField} f={f} fb={fb} copyToClipboard={copyToClipboard} />
+              <CommunicationTab updateField={updateField} f={f} copyToClipboard={copyToClipboard} />
             )}
 
             {activeTab === 'seo' && (
-              <SEOTab form={form} updateField={updateField} f={f} fb={fb} triggerFileInput={triggerFileInput} uploading={uploading} />
+              <SEOTab updateField={updateField} f={f} fb={fb} triggerFileInput={triggerFileInput} uploading={uploading} />
             )}
 
             {activeTab === 'email' && (
-              <EmailTab form={form} updateField={updateField} f={f} fn={fn} />
+              <EmailTab updateField={updateField} f={f} fn={fn} />
             )}
 
             {activeTab === 'legal-ops' && (
-              <LegalOpsTab form={form} updateField={updateField} f={f} fn={fn} fb={fb} />
+              <LegalOpsTab updateField={updateField} f={f} fn={fn} fb={fb} />
             )}
           </div>
         </div>
@@ -523,27 +522,14 @@ function SectionCard({ title, description, children }: { title: string; descript
   )
 }
 
-function Grid({ children, cols = 2 }: { children: React.ReactNode; cols?: number }) {
-  return (
-    <div className={`grid gap-4 md:grid-cols-${cols}`}>
-      {children}
-    </div>
-  )
-}
-
 function Divider() {
   return <div className="my-5 border-t border-gray-200" />
 }
 
-function BusinessInfoTab({ form, updateField, f, fn, fb, copyToClipboard, showSensitive, setShowSensitive, billingSame }: {
-  form: Record<string, unknown>
+function BusinessInfoTab({ updateField, f, copyToClipboard, billingSame }: {
   updateField: (key: string, value: unknown) => void
   f: (key: string) => string
-  fn: (key: string) => number
-  fb: (key: string) => boolean
   copyToClipboard: (text: string) => void
-  showSensitive: Record<string, boolean>
-  setShowSensitive: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
   billingSame: boolean
 }) {
   return (
@@ -651,11 +637,9 @@ function BusinessInfoTab({ form, updateField, f, fn, fb, copyToClipboard, showSe
   )
 }
 
-function BrandingTab({ form, updateField, f, fb, triggerFileInput, uploading }: {
-  form: Record<string, unknown>
+function BrandingTab({ updateField, f, triggerFileInput, uploading }: {
   updateField: (key: string, value: unknown) => void
   f: (key: string) => string
-  fb: (key: string) => boolean
   triggerFileInput: (field: string) => void
   uploading: string | null
 }) {
@@ -923,11 +907,9 @@ function InvoicingTab({ form, updateField, f, fn, fb, triggerFileInput, uploadin
   )
 }
 
-function CommunicationTab({ form, updateField, f, fb, copyToClipboard }: {
-  form: Record<string, unknown>
+function CommunicationTab({ updateField, f, copyToClipboard }: {
   updateField: (key: string, value: unknown) => void
   f: (key: string) => string
-  fb: (key: string) => boolean
   copyToClipboard: (text: string) => void
 }) {
   return (
@@ -988,8 +970,7 @@ function CommunicationTab({ form, updateField, f, fb, copyToClipboard }: {
   )
 }
 
-function SEOTab({ form, updateField, f, fb, triggerFileInput, uploading }: {
-  form: Record<string, unknown>
+function SEOTab({ updateField, f, fb, triggerFileInput, uploading }: {
   updateField: (key: string, value: unknown) => void
   f: (key: string) => string
   fb: (key: string) => boolean
@@ -1054,8 +1035,7 @@ function SEOTab({ form, updateField, f, fb, triggerFileInput, uploading }: {
   )
 }
 
-function EmailTab({ form, updateField, f, fn }: {
-  form: Record<string, unknown>
+function EmailTab({ updateField, f, fn }: {
   updateField: (key: string, value: unknown) => void
   f: (key: string) => string
   fn: (key: string) => number
@@ -1093,8 +1073,7 @@ function EmailTab({ form, updateField, f, fn }: {
   )
 }
 
-function LegalOpsTab({ form, updateField, f, fn, fb }: {
-  form: Record<string, unknown>
+function LegalOpsTab({ updateField, f, fn, fb }: {
   updateField: (key: string, value: unknown) => void
   f: (key: string) => string
   fn: (key: string) => number

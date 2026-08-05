@@ -179,9 +179,6 @@ export default function TicketsPage() {
             { key: 'assignedTo', label: 'Assigned To', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.assignedTo}</span> },
             { key: 'created', label: 'Created', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.created}</span> },
             { key: 'lastUpdated', label: 'Last Updated', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.lastUpdated}</span> },
-            { key: 'action', label: 'Action', render: () => (
-              <button className="text-[#6d28d9] hover:text-[#6d28d9] text-sm">View</button>
-            )},
           ]}
         />
       </motion.div>

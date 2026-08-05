@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Package, Search, Plus } from 'lucide-react'
+import { Package } from 'lucide-react'
 import DataTable from '@/components/admin/DataTable'
 import type { AdminMaterial } from '@/lib/admin/types'
 import SkeletonBlock from '@/components/admin/SkeletonBlock'
@@ -93,9 +93,6 @@ export default function ProductsPage() {
               }`}>
                 {row.stock}
               </span>
-            )},
-            { key: 'action', label: 'Action', render: () => (
-              <button className="text-[#6d28d9] hover:text-[#6d28d9] text-sm">Edit</button>
             )},
           ]}
         />

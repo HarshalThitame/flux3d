@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Link, RefreshCw, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react'
-import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
+import { RefreshCw, CheckCircle, XCircle, Clock } from 'lucide-react'
+import type { AdminToastState } from '@/components/admin/AdminToast'
 
 type LinkRequest = {
   id: string
@@ -31,10 +31,6 @@ type ConsentLog = {
   details: Record<string, unknown> | null
   timestamp: string
   withdrawn_at: string | null
-}
-
-type MergeResult = {
-  orders_attributed: number
 }
 
 export default function AccountLinkingPage() {

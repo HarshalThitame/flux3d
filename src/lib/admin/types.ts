@@ -387,36 +387,6 @@ export type ReconciliationRunData = {
   completedAt: string | null
 }
 
-export type NotificationItem = {
-  id: string
-  message: string
-  time: string
-  read: boolean
-}
-
-export type TeamMember = {
-  name: string
-  email: string
-  role: UserRole
-  status: 'Active' | 'Inactive'
-}
-
-export type Integration = {
-  name: string
-  status: 'Connected' | 'Not Connected'
-  key?: string
-  autoSync?: boolean
-  disconnectable: boolean
-}
-
-export type BillingInfo = {
-  plan: string
-  price: string
-  nextBillingDate: string
-  paymentMethod: string
-  features: string[]
-}
-
 export type Offer = {
   id: string
   title: string

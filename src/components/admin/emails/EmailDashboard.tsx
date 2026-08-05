@@ -12,7 +12,6 @@ import {
   MousePointerClick,
   LayoutTemplate,
   AlertTriangle,
-  ArrowRight,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import LineChartCard from '@/components/admin/LineChartCard'
@@ -142,7 +141,6 @@ export default function EmailDashboard() {
 
   // Build chart data
   const sentTrend = history.map((h) => ({ label: h.date.slice(5), value: h.sent }))
-  const deliveredTrend = history.map((h) => ({ label: h.date.slice(5), value: h.delivered }))
 
   // Today's status breakdown for donut
   const statusSlices = [

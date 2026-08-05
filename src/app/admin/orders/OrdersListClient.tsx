@@ -67,7 +67,7 @@ export default function OrdersListClient({ initialOrders, initialTotal, initialQ
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [page, setPage] = useState(1)
-  const [totalCount, setTotalCount] = useState(initialTotal)
+  const [totalCount] = useState(initialTotal)
   const [fetchingPage, setFetchingPage] = useState(false)
   const [updatingGroupId, setUpdatingGroupId] = useState<string | null>(null)
   const [sortColumn, setSortColumn] = useState<string>('createdAt')

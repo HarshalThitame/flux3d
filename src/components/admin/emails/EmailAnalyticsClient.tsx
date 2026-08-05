@@ -1,18 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { TrendPoint, DonutSlice } from '@/lib/admin/types'
+import { DonutSlice } from '@/lib/admin/types'
 import DonutChartCard from '@/components/admin/DonutChartCard'
 import LineChartCard from '@/components/admin/LineChartCard'
 import { motion } from 'framer-motion'
 import {
-  Calendar,
   MailCheck,
   Eye,
   MousePointerClick,
-  ArrowDown,
   AlertTriangle,
-  BarChart3,
 } from 'lucide-react'
 
 type AnalyticsData = {
