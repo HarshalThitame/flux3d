@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion'
 import type { TrendPoint } from '@/lib/admin/types'
 
 function buildPath(points: TrendPoint[], width: number, height: number, valueKey: 'value' | 'orders' = 'value') {

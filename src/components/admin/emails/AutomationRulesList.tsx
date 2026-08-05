@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Edit2, Trash2, Plus, ChevronDown, ChevronUp } from 'lucide-react'
+import { Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import type { EmailAutomationRuleRow, EmailTemplateRow } from 'types/database'
 
 const AUDIENCE_LABELS: Record<string, string> = {

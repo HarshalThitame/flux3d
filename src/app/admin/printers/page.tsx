@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Printer, Plus, RefreshCcw } from 'lucide-react'
+import { Printer, RefreshCcw } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 
 type PrinterRecord = {

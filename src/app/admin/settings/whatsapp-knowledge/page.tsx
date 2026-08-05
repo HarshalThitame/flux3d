@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Database, Edit3, Plus, RefreshCcw, Save, Sparkles, Trash2 } from 'lucide-react'
+import { Database, Edit3, Plus, RefreshCcw, Save, Trash2 } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import DataTable from '@/components/admin/DataTable'
 import Modal from '@/components/admin/Modal'

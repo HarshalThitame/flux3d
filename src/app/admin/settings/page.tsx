@@ -1,16 +1,16 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, Save, Printer, Tag, Bell, Users, Link as LinkIcon, CreditCard } from 'lucide-react'
+import Link from 'next/link'
+import { Settings, Save, Printer, Tag } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
-import { InputField, ToggleField } from '@/components/admin/FormField'
+import { InputField } from '@/components/admin/FormField'
 import SkeletonBlock from '@/components/admin/SkeletonBlock'
 import type { PrinterStatus } from '@/lib/admin/types'
 
-type Tab = 'general' | 'printers' | 'pricing' | 'notifications' | 'team' | 'integrations' | 'billing'
+type Tab = 'printers' | 'pricing'
 
 type PricingSettingsForm = {
   deliveryChargeThreshold: string
@@ -20,9 +20,7 @@ type PricingSettingsForm = {
 export default function AdminSettingsPage() {
   const router = useRouter()
   const [toast, setToast] = useState<AdminToastState>(null)
-  const [activeTab, setActiveTab] = useState<Tab>('general')
-  const [rushEnabled, setRushEnabled] = useState(true)
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
+  const [activeTab, setActiveTab] = useState<Tab>('pricing')
   const [printers, setPrinters] = useState<PrinterStatus[] | null>(null)
   const [printersError, setPrintersError] = useState<string | null>(null)
   const [pricingSettings, setPricingSettings] = useState<PricingSettingsForm>({
@@ -117,10 +115,6 @@ export default function AdminSettingsPage() {
     return () => controller.abort()
   }, [activeTab, pricingHydrated, router])
 
-  const handleSave = () => {
-    setToast({ type: 'success', message: 'Settings saved successfully.' })
-  }
-
   const handlePricingSave = async () => {
     setPricingSaving(true)
     setPricingError(null)
@@ -168,13 +162,8 @@ export default function AdminSettingsPage() {
   }
 
   const tabs = [
-    { id: 'general' as Tab, label: 'General', icon: Settings },
     { id: 'printers' as Tab, label: 'Printers', icon: Printer },
     { id: 'pricing' as Tab, label: 'Pricing', icon: Tag },
-    { id: 'notifications' as Tab, label: 'Notifications', icon: Bell },
-    { id: 'team' as Tab, label: 'Team', icon: Users },
-    { id: 'integrations' as Tab, label: 'Integrations', icon: LinkIcon },
-    { id: 'billing' as Tab, label: 'Billing', icon: CreditCard },
   ]
 
   return (
@@ -215,53 +204,6 @@ export default function AdminSettingsPage() {
           </div>
 
           <div className="min-w-0 flex-1">
-            {activeTab === 'general' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                <SectionCard title="Business Info">
-                  <div className="space-y-3">
-                    <InputField label="Business Name" value="" />
-                    <InputField label="Tagline" value="" />
-                    <InputField label="Email" value="" />
-                    <InputField label="Phone" value="" />
-                    <InputField label="WhatsApp Business" value="" />
-                    <InputField label="PAN" value="" />
-                    <InputField label="Address Line 1" value="" />
-                    <InputField label="Address Line 2" value="" />
-                    <InputField label="City" value="" />
-                    <InputField label="State" value="" />
-                    <InputField label="PIN" value="" />
-                    <InputField label="Country" value="" />
-                  </div>
-                </SectionCard>
-
-                <SectionCard title="Working Hours">
-                  <div className="space-y-3">
-                    <InputField label="Hours" value="" />
-                    <ToggleField
-                      label="Holiday Mode"
-                      description="Toggle off to disable new orders"
-                      checked={false}
-                      onChange={() => {}}
-                    />
-                  </div>
-                </SectionCard>
-
-                <SectionCard title="Save Changes">
-                  <p className="text-sm text-[#6F7192]">
-                    Settings are ready for server actions or API integration.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-5 py-2.5 text-sm font-medium text-[#0F1B3D] transition hover:opacity-90"
-                  >
-                    <Save className="h-4 w-4" />
-                    Save Changes
-                  </button>
-                </SectionCard>
-              </motion.div>
-            )}
-
             {activeTab === 'printers' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                 <SectionCard title="Printer Management">
@@ -367,182 +309,6 @@ export default function AdminSettingsPage() {
                         Open Business Settings
                       </Link>
                     </div>
-                  </div>
-                </SectionCard>
-
-                <SectionCard title="Base Pricing Rules">
-                  <div className="space-y-3">
-                    <InputField label="FDM Print (per gram)" value="0" />
-                    <InputField label="Resin Print (per gram)" value="0" />
-                    <InputField label="Multi-Color Surcharge" value="0" />
-                    <InputField label="Express 24hr Surcharge" value="0" />
-                    <InputField label="Bulk Discount (10+ parts)" value="0" />
-                    <InputField label="Design / Modeling" value="0" />
-                    <InputField label="Shipping — Local (Mumbai)" value="0" />
-                    <InputField label="Shipping — Pan India" value="0" />
-                    <InputField label="Free Shipping Above" value="0" />
-                  </div>
-                </SectionCard>
-
-                <SectionCard title="Save Changes">
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-5 py-2.5 text-sm font-medium text-[#0F1B3D] transition hover:opacity-90"
-                  >
-                    <Save className="h-4 w-4" />
-                    Save Changes
-                  </button>
-                </SectionCard>
-              </motion.div>
-            )}
-
-            {activeTab === 'notifications' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                <SectionCard title="Notification Preferences">
-                  <div className="space-y-3">
-                    <ToggleField label="Email alert on new order" description="Receive email when new orders are placed" checked={false} onChange={() => {}} />
-                    <ToggleField label="WhatsApp alert on new order" description="Get WhatsApp notifications for new orders" checked={false} onChange={() => {}} />
-                    <ToggleField label="Email alert on low inventory" description="Alert when materials fall below threshold" checked={false} onChange={() => {}} />
-                    <ToggleField label="SMS on order shipped" description="Send SMS when orders are shipped" checked={false} onChange={() => {}} />
-                    <ToggleField label="Daily revenue summary email" description="Daily email with revenue summary" checked={false} onChange={() => {}} />
-                    <ToggleField label="Weekly analytics report" description="Weekly email with analytics" checked={false} onChange={() => {}} />
-                    <ToggleField label="Printer error alert" description="Immediate alert on printer errors" checked={false} onChange={() => {}} />
-                    <ToggleField label="New support ticket alert" description="Notification for new support tickets" checked={false} onChange={() => {}} />
-                    <ToggleField label="Payment failure alert" description="Alert when payments fail" checked={false} onChange={() => {}} />
-                  </div>
-                </SectionCard>
-
-                <SectionCard title="Notification Contacts">
-                  <div className="space-y-3">
-                    <InputField label="Notification Email" value="" placeholder="admin@flux3d.in" />
-                    <InputField label="WhatsApp Alert Number" value="" placeholder="+91 98765 00000" />
-                  </div>
-                </SectionCard>
-              </motion.div>
-            )}
-
-            {activeTab === 'team' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                <SectionCard title="Team Members">
-                  <div className="mb-4">
-                    <button className="rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#6d28d9]/90">
-                      + Invite Member
-                    </button>
-                  </div>
-                  <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-[#6F7192]">
-                    No team members yet. Click &quot;+ Invite Member&quot; to get started.
-                  </div>
-                </SectionCard>
-
-                <SectionCard title="Invite Member">
-                  <div className="space-y-3">
-                    <InputField label="Email Address" placeholder="email@example.com" />
-                    <div>
-                      <label className="mb-1 block text-xs font-medium text-[#6F7192]">Role</label>
-                      <select className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-[#0F1B3D]">
-                        <option value="super-admin">Super Admin</option>
-                        <option value="admin">Admin</option>
-                        <option value="operator">Operator</option>
-                        <option value="support-agent">Support Agent</option>
-                        <option value="viewer">Viewer</option>
-                      </select>
-                    </div>
-                    <button className="rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#6d28d9]/90">
-                      Send Invite
-                    </button>
-                  </div>
-                </SectionCard>
-
-                <SectionCard title="Roles Explained">
-                  <div className="space-y-2 text-sm text-[#6F7192]">
-                    <div><strong className="text-[#0F1B3D]">Super Admin:</strong> Full access including billing and settings</div>
-                    <div><strong className="text-[#0F1B3D]">Admin:</strong> Access to all except billing</div>
-                    <div><strong className="text-[#0F1B3D]">Operator:</strong> Orders, printers, inventory only</div>
-                    <div><strong className="text-[#0F1B3D]">Support Agent:</strong> Tickets and customers only</div>
-                    <div><strong className="text-[#0F1B3D]">Viewer:</strong> Read-only access</div>
-                  </div>
-                </SectionCard>
-              </motion.div>
-            )}
-
-            {activeTab === 'integrations' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                <SectionCard title="Payment & Shipping Integrations">
-                  <div className="space-y-3">
-                    {['Razorpay', 'Shiprocket', 'Delhivery'].map((name) => (
-                      <div key={name} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4">
-                        <div>
-                          <div className="font-medium text-[#0F1B3D]">{name}</div>
-                          <div className="text-sm text-[#6F7192]">Not Connected</div>
-                        </div>
-                        <button className="rounded-lg bg-[#6d28d9] px-3 py-1.5 text-xs font-semibold text-[#0F1B3D]">
-                          Connect
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </SectionCard>
-
-                <SectionCard title="Communication & Storage">
-                  <div className="space-y-3">
-                    {['WhatsApp Business API', 'Google Analytics', 'Supabase Storage'].map((name) => (
-                      <div key={name} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4">
-                        <div>
-                          <div className="font-medium text-[#0F1B3D]">{name}</div>
-                          <div className="text-sm text-[#6F7192]">Not Connected</div>
-                        </div>
-                        <button className="rounded-lg bg-[#6d28d9] px-3 py-1.5 text-xs font-semibold text-[#0F1B3D]">
-                          Connect
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </SectionCard>
-
-                <SectionCard title="Accounting & Alerts">
-                  <div className="space-y-3">
-                    {['Slack Alerts'].map((name) => (
-                      <div key={name} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4">
-                        <div>
-                          <div className="font-medium text-[#0F1B3D]">{name}</div>
-                          <div className="text-sm text-[#6F7192]">Not Connected</div>
-                        </div>
-                        <button className="rounded-lg bg-[#6d28d9] px-3 py-1.5 text-xs font-semibold text-[#0F1B3D]">
-                          Connect
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </SectionCard>
-              </motion.div>
-            )}
-
-            {activeTab === 'billing' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                <SectionCard title="Your SaaS Plan">
-                  <div className="mb-4">
-                    <div className="mb-2 text-2xl font-bold text-[#0F1B3D]">No Plan Selected</div>
-                    <div className="mb-4 text-sm text-[#6F7192]">
-                      Next Billing Date: N/A · Payment Method: Not Set
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-[#6F7192]">
-                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        No features enabled
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <button className="rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-[#0F1B3D] transition hover:bg-[#6d28d9]/90">
-                      Upgrade to Enterprise
-                    </button>
-                    <button className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-[#6F7192] transition hover:bg-gray-100">
-                      Manage Billing
-                    </button>
-                    <button className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-[#6F7192] transition hover:bg-gray-100">
-                      Download Invoice
-                    </button>
                   </div>
                 </SectionCard>
               </motion.div>

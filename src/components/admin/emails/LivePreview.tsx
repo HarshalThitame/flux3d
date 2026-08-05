@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useState } from 'react'
-import { X, Monitor, Smartphone, Sun, Moon } from 'lucide-react'
+import { Monitor, Smartphone, Sun, Moon } from 'lucide-react'
 
 export default function LivePreview({
   templateId,

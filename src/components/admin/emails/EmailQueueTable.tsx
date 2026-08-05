@@ -1,22 +1,18 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
-  Search,
   Clock,
   RotateCcw,
   Ban,
-  AlertTriangle,
   CheckCircle2,
   Send,
   LoaderCircle,
   XCircle,
   Inbox,
-  Filter,
 } from 'lucide-react'
 import type { EmailQueueRow, EmailQueueStatus } from 'types/database'
 
@@ -41,7 +37,6 @@ const STATUS_ICONS: Record<EmailQueueStatus, React.ReactNode> = {
 }
 
 export default function EmailQueueTable() {
-  const router = useRouter()
   const [items, setItems] = useState<QueueItem[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)

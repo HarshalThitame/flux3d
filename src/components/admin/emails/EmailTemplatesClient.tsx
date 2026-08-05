@@ -11,7 +11,6 @@ import {
   Copy,
   Send,
   Eye,
-  Filter,
   ChevronLeft,
   ChevronRight,
   Clock,

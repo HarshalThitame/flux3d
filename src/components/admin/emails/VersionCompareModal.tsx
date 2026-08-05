@@ -27,7 +27,7 @@ export default function VersionCompareModal({
   )
 
   const fetchPreview = useCallback(
-    async (htmlBody: string, subject: string) => {
+    async (htmlBody: string) => {
       const res = await fetch('/api/admin/email-templates/preview-html', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,8 +47,8 @@ export default function VersionCompareModal({
     setLoading(true)
     void (async () => {
       const [left, right] = await Promise.all([
-        fetchPreview(version.html_body ?? '', version.subject ?? ''),
-        fetchPreview(currentHtmlBody, currentSubject),
+        fetchPreview(version.html_body ?? ''),
+        fetchPreview(currentHtmlBody),
       ])
       if (!cancelled) {
         setLeftHtml(left)

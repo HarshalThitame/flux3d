@@ -24,7 +24,7 @@ export default function AdminQuotesPage() {
   const [quotes, setQuotes] = useState<AdminQuote[] | null>(null)
   const [toast, setToast] = useState<AdminToastState>(null)
   const [error, setError] = useState<string | null>(null)
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [, setActionLoading] = useState<string | null>(null)
   const [historyFor, setHistoryFor] = useState<string | null>(null)
   const [events, setEvents] = useState<QuoteEvent[] | null>(null)
   const [eventsError, setEventsError] = useState<string | null>(null)
@@ -106,7 +106,7 @@ export default function AdminQuotesPage() {
     )
   }
 
-  async function updateQuoteStatus(quote: AdminQuote, newStatus: string, _message: string) {
+  async function updateQuoteStatus(quote: AdminQuote, newStatus: string) {
     const quoteId = quote.quote_id ?? String(quote.id)
     setActionLoading(quoteId)
 
@@ -186,7 +186,7 @@ export default function AdminQuotesPage() {
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation()
-                      updateQuoteStatus(row, 'approved', `${row.quote_id ?? row.id} approved.`)
+                      updateQuoteStatus(row, 'approved')
                     }}
                     className="rounded-lg border border-emerald-400/20 bg-emerald-50 p-2 text-emerald-600 transition hover:bg-emerald-400/15"
                     title="Approve"
@@ -197,7 +197,7 @@ export default function AdminQuotesPage() {
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation()
-                      updateQuoteStatus(row, 'rejected', `${row.quote_id ?? row.id} rejected.`)
+                      updateQuoteStatus(row, 'rejected')
                     }}
                     className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-400 transition hover:bg-rose-400/15"
                     title="Reject"
@@ -221,7 +221,7 @@ export default function AdminQuotesPage() {
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation()
-                      updateQuoteStatus(row, 'converted', `${row.quote_id ?? row.id} converted to order.`)
+                      updateQuoteStatus(row, 'converted')
                     }}
                     className="rounded-lg border border-cyan-200 bg-cyan-50 p-2 text-cyan-400 transition hover:bg-cyan-400/15"
                     title="Convert to order"

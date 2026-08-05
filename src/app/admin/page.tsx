@@ -33,7 +33,7 @@ function timeSeriesFromOrders(orders: AdminOrder[]) {
 }
 
 export default function AdminDashboardPage() {
-  const { profile, loading: profileLoading } = useProfile()
+  const { loading: profileLoading } = useProfile()
   const [data, setData] = useState<DashboardResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 

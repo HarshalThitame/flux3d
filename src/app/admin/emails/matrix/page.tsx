@@ -1,7 +1,7 @@
 import { requireAdminUser } from '@/lib/admin/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import NotificationMatrix from '@/components/admin/emails/NotificationMatrix'
-import type { EmailAutomationRuleRow, EmailTemplateRow } from 'types/database'
+import type { EmailAutomationRuleRow } from 'types/database'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,16 +25,6 @@ export default async function EmailMatrixPage() {
   await requireAdminUser()
 
   const supabase = createAdminClient()
-
-  // Fetch all system templates (to link rules to template names)
-  const { data: templates } = await supabase
-    .from('email_templates')
-    .select('id, name, email_type')
-    .eq('is_system', true)
-
-  const templateMap = new Map(
-    (templates ?? []).map((t: { id: string; name: string; email_type: string }) => [t.email_type, t])
-  )
 
   // Fetch all automation rules
   const { data: rules } = await supabase

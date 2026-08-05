@@ -1,4 +1,3 @@
-import { getAdminOrdersData } from '@/lib/admin/queries'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAdminUser } from '@/lib/admin/server'
 import EmailLogsTable from '@/components/admin/EmailLogsTable'
