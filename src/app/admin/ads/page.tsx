@@ -12,6 +12,8 @@ import {
   RefreshCw,
   Trash2,
   Pencil,
+  Loader2,
+  FileDown,
 } from 'lucide-react'
 import MetaAdsDashboard, { type MetaAdsMetric } from '@/components/admin/MetaAdsDashboard'
 import InsightsChart, { type InsightPoint } from '@/components/admin/InsightsChart'
@@ -67,6 +69,9 @@ export default function AdminAdsPage() {
   const [listError, setListError] = useState<string | null>(null)
   const [createError, setCreateError] = useState<string | null>(null)
   const [createSuccess, setCreateSuccess] = useState<Record<string, unknown> | null>(null)
+  const [asyncJobId, setAsyncJobId] = useState<string | null>(null)
+  const [asyncJobStatus, setAsyncJobStatus] = useState<string>('pending')
+  const [asyncJobError, setAsyncJobError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const hasInitialized = useRef(false)
 
@@ -78,8 +83,12 @@ export default function AdminAdsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkProcessing, setBulkProcessing] = useState(false)
 
+  // Per-row action loading
+  const [actionLoadingIds, setActionLoadingIds] = useState<Set<string>>(new Set())
+
   const adAccountId = process.env.NEXT_PUBLIC_META_AD_ACCOUNT_ID || ''
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const asyncPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const loadCampaigns = useCallback(async () => {
     setLoading(true)
@@ -104,33 +113,27 @@ export default function AdminAdsPage() {
       if (!res.ok) throw new Error((await res.json()).error ?? 'Failed to load insights')
       const data = (await res.json()) as InsightsData
       setInsights(data)
-
-      // Build chart points from last7d (mock daily breakdown — in production,
-      // you'd fetch time-series from /api/admin/ads/campaigns/[id]/insights)
-      const points: InsightPoint[] = []
-      const now = new Date()
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date(now)
-        d.setDate(d.getDate() - i)
-        points.push({
-          label: d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
-          spend: Math.round(data.last7d.spend / 7),
-          impressions: Math.round(data.last7d.impressions / 7),
-          clicks: Math.round(data.last7d.clicks / 7),
-        })
-      }
-      setChartPoints(points)
     } catch (err) {
-      // silently ignore insights errors so table still shows
       console.error('Insights load error:', err)
     } finally {
       setInsightsLoading(false)
     }
   }, [])
 
+  const loadTimeSeries = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/ads/time-series')
+      if (!res.ok) throw new Error('Failed to load time-series')
+      const data = (await res.json()) as { points: InsightPoint[] }
+      setChartPoints(data.points ?? [])
+    } catch (err) {
+      console.error('Time-series load error:', err)
+    }
+  }, [])
+
   const loadAll = useCallback(async () => {
-    await Promise.all([loadCampaigns(), loadInsights()])
-  }, [loadCampaigns, loadInsights])
+    await Promise.all([loadCampaigns(), loadInsights(), loadTimeSeries()])
+  }, [loadCampaigns, loadInsights, loadTimeSeries])
 
   // Initial load — guarded by ref to avoid cascading renders
   useEffect(() => {
@@ -152,8 +155,42 @@ export default function AdminAdsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Async job polling
+  useEffect(() => {
+    if (!asyncJobId) {
+      if (asyncPollRef.current) clearInterval(asyncPollRef.current)
+      return
+    }
+
+    asyncPollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/admin/ads/jobs/${asyncJobId}`)
+        const data = (await res.json()) as { status: string; error_message?: string; result?: Record<string, unknown> }
+        setAsyncJobStatus(data.status)
+        if (data.status === 'completed') {
+          setCreateSuccess(data.result ?? { note: 'Campaign created asynchronously.' })
+          setCreateError(null)
+          setAsyncJobId(null)
+          void loadAll()
+        } else if (data.status === 'failed') {
+          setAsyncJobError(data.error_message ?? 'Async creation failed')
+          setCreateError(data.error_message ?? 'Async creation failed')
+          setAsyncJobId(null)
+        }
+      } catch {
+        // Ignore poll errors
+      }
+    }, 3000)
+
+    return () => {
+      if (asyncPollRef.current) clearInterval(asyncPollRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asyncJobId])
+
   async function toggleCampaign(id: string, currentStatus: string) {
     const nextStatus = currentStatus === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'
+    setActionLoadingIds((prev) => new Set(prev).add(id))
     try {
       const res = await fetch(`/api/admin/ads/campaigns/${id}/toggle`, {
         method: 'POST',
@@ -164,17 +201,30 @@ export default function AdminAdsPage() {
       await loadCampaigns()
     } catch (err) {
       setListError(err instanceof Error ? err.message : 'Toggle failed')
+    } finally {
+      setActionLoadingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
     }
   }
 
   async function deleteCampaign(id: string) {
     if (!confirm('Are you sure you want to archive this campaign?')) return
+    setActionLoadingIds((prev) => new Set(prev).add(id))
     try {
       const res = await fetch(`/api/admin/ads/campaigns/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Delete failed')
       await loadCampaigns()
     } catch (err) {
       setListError(err instanceof Error ? err.message : 'Delete failed')
+    } finally {
+      setActionLoadingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
     }
   }
 
@@ -186,23 +236,42 @@ export default function AdminAdsPage() {
     const activeIds = ids.filter((id) => campaigns.find((c) => c.id === id)?.status === 'ACTIVE')
     const pausedIds = ids.filter((id) => campaigns.find((c) => c.id === id)?.status === 'PAUSED')
 
+    const statusMap = new Map<string, 'ACTIVE' | 'PAUSED'>()
+    activeIds.forEach((id) => statusMap.set(id, 'PAUSED'))
+    pausedIds.forEach((id) => statusMap.set(id, 'ACTIVE'))
+
+    // Group by status for API efficiency
+    const toPause = activeIds
+    const toResume = pausedIds
+
     try {
-      await Promise.all([
-        ...activeIds.map((id) =>
-          fetch(`/api/admin/ads/campaigns/${id}/toggle`, {
+      const promises: Promise<Response>[] = []
+      if (toPause.length > 0) {
+        promises.push(
+          fetch('/api/admin/ads/bulk/toggle', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'PAUSED' }),
-          }),
-        ),
-        ...pausedIds.map((id) =>
-          fetch(`/api/admin/ads/campaigns/${id}/toggle`, {
+            body: JSON.stringify({ ids: toPause, status: 'PAUSED' }),
+          })
+        )
+      }
+      if (toResume.length > 0) {
+        promises.push(
+          fetch('/api/admin/ads/bulk/toggle', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'ACTIVE' }),
-          }),
-        ),
-      ])
+            body: JSON.stringify({ ids: toResume, status: 'ACTIVE' }),
+          })
+        )
+      }
+
+      const results = await Promise.all(promises)
+      const allOk = results.every((r) => r.ok)
+      if (!allOk) {
+        const errors = await Promise.all(results.filter((r) => !r.ok).map((r) => r.json().catch(() => ({}))))
+        throw new Error(errors.map((e) => e.error ?? 'Bulk toggle failed').join('; '))
+      }
+
       setSelectedIds(new Set())
       await loadCampaigns()
     } catch (err) {
@@ -217,9 +286,15 @@ export default function AdminAdsPage() {
     const ids = Array.from(selectedIds)
 
     try {
-      await Promise.all(
-        ids.map((id) => fetch(`/api/admin/ads/campaigns/${id}`, { method: 'DELETE' })),
-      )
+      const res = await fetch('/api/admin/ads/bulk/archive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      })
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(data.error ?? 'Bulk archive failed')
+      }
       setSelectedIds(new Set())
       await loadCampaigns()
     } catch (err) {
@@ -234,15 +309,31 @@ export default function AdminAdsPage() {
     const ids = Array.from(selectedIds)
 
     try {
-      await Promise.all(
+      // Duplicate one by one via create endpoint (now supports duplicateFromId properly)
+      const results = await Promise.allSettled(
         ids.map((id) =>
           fetch('/api/admin/ads/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ duplicateFromId: id }),
-          }),
-        ),
+          }).then(async (res) => {
+            if (!res.ok) {
+              const data = (await res.json().catch(() => ({}))) as { error?: string }
+              throw new Error(data.error ?? 'Duplicate failed')
+            }
+            return res.json()
+          })
+        )
       )
+
+      const failed = results
+        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+        .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)))
+
+      if (failed.length > 0) {
+        throw new Error(`${failed.length} duplication(s) failed: ${failed.join('; ')}`)
+      }
+
       setSelectedIds(new Set())
       await loadAll()
     } catch (err) {
@@ -311,6 +402,46 @@ export default function AdminAdsPage() {
   const seconds = Math.floor((now - lastUpdated.getTime()) / 1000)
   const timeAgo = seconds < 5 ? 'just now' : seconds < 60 ? `${seconds}s ago` : `${Math.floor(seconds / 60)}m ago`
 
+  function exportCampaignsToCSV(campaigns: Campaign[]) {
+    const headers = ['ID', 'Name', 'Objective', 'Status', 'Effective Status', 'Daily Budget (₹)', 'Budget Remaining (₹)', 'Created', 'Updated', 'Flux3D Record']
+    const rows = campaigns.map((c) => [
+      c.id,
+      c.name,
+      c.objective.replace(/_/g, ' '),
+      c.status,
+      c.effective_status,
+      c.daily_budget ? (Number(c.daily_budget) / 100).toString() : '',
+      c.budget_remaining ? (Number(c.budget_remaining) / 100).toString() : '',
+      new Date(c.created_time).toLocaleDateString('en-IN'),
+      new Date(c.updated_time).toLocaleDateString('en-IN'),
+      c.has_local_record ? 'Yes' : 'No',
+    ])
+
+    const csv = [headers, ...rows]
+      .map((row) =>
+        row
+          .map((cell) => {
+            const str = String(cell ?? '')
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+              return `"${str.replace(/"/g, '""')}"`
+            }
+            return str
+          })
+          .join(','),
+      )
+      .join('\n')
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.href = url
+    link.setAttribute('download', `meta-campaigns-${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -345,7 +476,7 @@ export default function AdminAdsPage() {
         >
           <InsightsChart
             title="7-Day Performance"
-            subtitle="Daily spend, impressions, and clicks across all campaigns"
+            subtitle="Daily spend, impressions, and clicks across all campaigns (live Meta data)"
             points={chartPoints}
             activeMetrics={['spend', 'impressions', 'clicks']}
           />
@@ -368,11 +499,21 @@ export default function AdminAdsPage() {
         onSuccess={(data: Record<string, unknown>) => {
           setCreateSuccess(data)
           setCreateError(null)
+          setAsyncJobId(null)
+          setAsyncJobStatus('pending')
+          setAsyncJobError(null)
           void loadAll()
+        }}
+        onAsyncInitiated={(jobId: string) => {
+          setAsyncJobId(jobId)
+          setAsyncJobStatus('pending')
+          setCreateError(null)
+          setCreateSuccess(null)
         }}
         onError={(message: string) => {
           setCreateError(message)
           setCreateSuccess(null)
+          setAsyncJobId(null)
         }}
       />
 
@@ -383,6 +524,17 @@ export default function AdminAdsPage() {
           <div>
             <p className="font-medium">Campaign creation failed</p>
             <p className="mt-1">{createError}</p>
+          </div>
+        </div>
+      )}
+
+      {asyncJobId && (
+        <div className="rounded-xl border border-[rgba(109,40,217,0.15)] bg-[rgba(109,40,217,0.05)] p-4 text-sm text-[#0F1B3D] flex items-start gap-3">
+          <Loader2 className="w-5 h-5 shrink-0 mt-0.5 animate-spin text-[#6d28d9]" />
+          <div>
+            <p className="font-medium">Creating campaign in background…</p>
+            <p className="mt-1">Job ID: {asyncJobId}</p>
+            <p className="mt-1 text-xs text-[#6F7192]">Status: {asyncJobStatus}. Polling every 3 seconds.</p>
           </div>
         </div>
       )}
@@ -437,6 +589,15 @@ export default function AdminAdsPage() {
           title="Campaigns"
           description={`${campaigns.length} campaigns in your Meta ad account. Auto-refreshes every 30 seconds.`}
           data={campaigns}
+          action={
+            <button
+              onClick={() => exportCampaignsToCSV(campaigns)}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-[#6d28d9] bg-[rgba(109,40,217,0.08)] border border-[rgba(109,40,217,0.15)] hover:bg-[rgba(109,40,217,0.12)] transition-all"
+            >
+              <FileDown className="w-4 h-4" />
+              Export CSV
+            </button>
+          }
           columns={[
             {
               key: 'select',
@@ -536,18 +697,23 @@ export default function AdminAdsPage() {
             {
               key: 'actions',
               label: 'Actions',
-              render: (row: Campaign) => (
+              render: (row: Campaign) => {
+                const isLoading = actionLoadingIds.has(row.id)
+                return (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => toggleCampaign(row.id, row.status)}
-                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    disabled={isLoading}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50 ${
                       row.status === 'ACTIVE'
                         ? 'bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100'
                         : 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100'
                     }`}
                     title={row.status === 'ACTIVE' ? 'Pause' : 'Activate'}
                   >
-                    {row.status === 'ACTIVE' ? (
+                    {isLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : row.status === 'ACTIVE' ? (
                       <PauseCircle className="w-3.5 h-3.5" />
                     ) : (
                       <PlayCircle className="w-3.5 h-3.5" />
@@ -556,7 +722,8 @@ export default function AdminAdsPage() {
                   </button>
                   <button
                     onClick={() => setSelectedCampaignId(row.id)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#6d28d9] bg-[rgba(109,40,217,0.08)] border border-[rgba(109,40,217,0.15)] hover:bg-[rgba(109,40,217,0.12)] transition-all"
+                    disabled={isLoading}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#6d28d9] bg-[rgba(109,40,217,0.08)] border border-[rgba(109,40,217,0.15)] hover:bg-[rgba(109,40,217,0.12)] transition-all disabled:opacity-50"
                     title="View details"
                   >
                     <Eye className="w-3.5 h-3.5" />
@@ -566,7 +733,8 @@ export default function AdminAdsPage() {
                     onClick={() =>
                       setEditingCampaign({ id: row.id, name: row.name, daily_budget: row.daily_budget })
                     }
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#6F7192] bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-all"
+                    disabled={isLoading}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#6F7192] bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-all disabled:opacity-50"
                     title="Edit"
                   >
                     <Pencil className="w-3.5 h-3.5" />
@@ -581,13 +749,14 @@ export default function AdminAdsPage() {
                   </a>
                   <button
                     onClick={() => deleteCampaign(row.id)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition-all"
+                    disabled={isLoading}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition-all disabled:opacity-50"
                     title="Archive"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
-              ),
+              )},
             },
           ]}
           searchPlaceholder="Search campaigns..."

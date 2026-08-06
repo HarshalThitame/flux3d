@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X,
@@ -30,6 +30,14 @@ export default function CampaignEditModal({ campaign, onClose, onSave }: Campaig
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
+  // Reset state when campaign changes
+  useEffect(() => {
+    setName(campaign?.name ?? '')
+    setBudget(campaign?.daily_budget ? Number(campaign.daily_budget) / 100 : 150)
+    setError(null)
+    setSuccess(false)
+  }, [campaign?.id])
+
   async function handleSave() {
     if (!campaign) return
     setSaving(true)
@@ -39,7 +47,10 @@ export default function CampaignEditModal({ campaign, onClose, onSave }: Campaig
     try {
       const body: Record<string, unknown> = {}
       if (name !== campaign.name) body.name = name
-      if (budget !== (campaign.daily_budget ? Number(campaign.daily_budget) / 100 : 150)) {
+      const originalBudget = campaign.daily_budget ? Number(campaign.daily_budget) / 100 : 150
+      if (budget !== originalBudget) {
+        if (budget < 50) throw new Error('Minimum daily budget is ₹50')
+        if (budget > 100000) throw new Error('Maximum daily budget is ₹1,00,000')
         body.dailyBudgetPaise = Math.round(budget * 100)
       }
 
@@ -54,7 +65,10 @@ export default function CampaignEditModal({ campaign, onClose, onSave }: Campaig
         body: JSON.stringify(body),
       })
 
-      if (!res.ok) throw new Error((await res.json()).error ?? 'Update failed')
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string; issues?: unknown[] }
+        throw new Error(data.error ?? 'Update failed')
+      }
 
       setSuccess(true)
       onSave()
@@ -119,7 +133,7 @@ export default function CampaignEditModal({ campaign, onClose, onSave }: Campaig
                     <input
                       type="number"
                       min={50}
-                      max={50000}
+                      max={100000}
                       value={budget}
                       onChange={(e) => setBudget(Number(e.target.value))}
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[rgba(109,40,217,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9] transition-colors"

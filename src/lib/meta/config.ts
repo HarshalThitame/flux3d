@@ -1,4 +1,4 @@
-const META_API_VERSION = 'v22.0'
+const META_API_VERSION = process.env.META_API_VERSION || 'v22.0'
 const META_GRAPH_BASE = `https://graph.facebook.com/${META_API_VERSION}`
 
 export function getMetaApiHeaders() {

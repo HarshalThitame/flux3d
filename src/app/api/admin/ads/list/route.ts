@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
 import { listCampaigns, type MetaCampaign } from '@/lib/meta/marketing-api'
+import { requireMetaAdsAuth } from '@/lib/admin/meta-ads-route'
+import { logError } from '@/lib/logger'
 
 export const runtime = 'nodejs'
 
@@ -10,29 +11,14 @@ export const runtime = 'nodejs'
  * Returns Meta campaigns for this ad account, enriched with any
  * locally persisted records from meta_ad_campaigns.
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const supabase = await createServerClient()
+    const auth = await requireMetaAdsAuth(request, {
+      rateLimit: { prefix: 'meta-ads-list', windowSeconds: 60, maxRequests: 60 },
+    })
+    if ('response' in auth) return auth.response
 
-    // ─── Auth check ────────────────────────────────────────────────────────
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || !profile.is_admin) {
-      return NextResponse.json({ error: 'Forbidden: admin only' }, { status: 403 })
-    }
+    const { supabase } = auth
 
     // ─── Fetch from Meta ──────────────────────────────────────────────────
     const campaigns = await listCampaigns()
@@ -62,11 +48,12 @@ export async function GET() {
       total: enriched.length,
     })
   } catch (err) {
-    console.error('Meta ad list error:', err)
+    logError('Meta ad list error', {
+      module: 'meta-ads',
+      error: err instanceof Error ? err : new Error(String(err)),
+    })
     return NextResponse.json(
-      {
-        error: err instanceof Error ? err.message : 'Failed to list campaigns',
-      },
+      { error: err instanceof Error ? err.message : 'Failed to list campaigns' },
       { status: 500 },
     )
   }

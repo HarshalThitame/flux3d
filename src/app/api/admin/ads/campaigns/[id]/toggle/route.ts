@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
 import { updateCampaignStatus } from '@/lib/meta/marketing-api'
+import { ToggleCampaignSchema } from '@/lib/admin/meta-ads-schemas'
+import { validateBody, requireMetaAdsAuth } from '@/lib/admin/meta-ads-route'
+import { logMetaAdAudit } from '@/lib/admin/meta-ads-audit'
+import { logError } from '@/lib/logger'
 
 export const runtime = 'nodejs'
 
@@ -8,7 +11,7 @@ export const runtime = 'nodejs'
  * POST /api/admin/ads/campaigns/[id]/toggle
  *
  * Toggles campaign status between ACTIVE and PAUSED.
- * Body: { status: 'ACTIVE' | 'PAUSED' | 'ARCHIVED' }
+ * Body validated by ToggleCampaignSchema (Zod).
  */
 
 export async function POST(
@@ -17,45 +20,56 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const supabase = await createServerClient()
 
-    // ─── Auth check ────────────────────────────────────────────────────────
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const auth = await requireMetaAdsAuth(request, {
+      rateLimit: { prefix: 'meta-ads-toggle', windowSeconds: 60, maxRequests: 30 },
+    })
+    if ('response' in auth) return auth.response
 
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { user, supabase } = auth
+
+    // ─── Validate body ─────────────────────────────────────────────────────
+    const rawBody = (await request.json().catch(() => ({}))) as unknown
+    const validation = validateBody(ToggleCampaignSchema, rawBody)
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error, issues: validation.issues }, { status: 400 })
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
+    const { status } = validation.data
 
-    if (!profile || !profile.is_admin) {
-      return NextResponse.json({ error: 'Forbidden: admin only' }, { status: 403 })
-    }
-
-    // ─── Parse body ────────────────────────────────────────────────────────
-    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
-    const status = body.status as 'ACTIVE' | 'PAUSED' | 'ARCHIVED' | undefined
-
-    if (!status || !['ACTIVE', 'PAUSED', 'ARCHIVED'].includes(status)) {
-      return NextResponse.json(
-        { error: 'Invalid status. Use ACTIVE, PAUSED, or ARCHIVED.' },
-        { status: 400 },
-      )
-    }
+    // ─── Fetch local record for audit old value ────────────────────────────
+    const { data: localRecord } = await supabase
+      .from('meta_ad_campaigns')
+      .select('id, status')
+      .eq('campaign_id', id)
+      .maybeSingle()
 
     // ─── Toggle status ─────────────────────────────────────────────────────
     await updateCampaignStatus(id, status)
 
+    // ─── Update local record if present ────────────────────────────────────
+    if (localRecord) {
+      await supabase
+        .from('meta_ad_campaigns')
+        .update({ status, updated_at: new Date().toISOString(), updated_by: user.id })
+        .eq('campaign_id', id)
+
+      await logMetaAdAudit({
+        campaignId: localRecord.id,
+        action: 'toggle',
+        performedBy: user.id,
+        oldValue: { status: localRecord.status },
+        newValue: { status },
+        request,
+      })
+    }
+
     return NextResponse.json({ success: true, status })
   } catch (err) {
-    console.error('Meta campaign toggle error:', err)
+    logError('Meta campaign toggle error', {
+      module: 'meta-ads',
+      error: err instanceof Error ? err : new Error(String(err)),
+    })
     return NextResponse.json(
       {
         error: err instanceof Error ? err.message : 'Failed to toggle campaign status',

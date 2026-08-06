@@ -1,5 +1,55 @@
 import { createServerClient } from '@/lib/supabase/server'
-import { getMetaApiHeaders, getMetaAdAccountId, getMetaGraphBase, getMetaCatalogId, getMetaPixelId } from '@/lib/meta/config'
+import { getMetaApiHeaders, getMetaAdAccountId, getMetaGraphBase, getMetaCatalogId, getMetaPixelId, getMetaApiVersion } from '@/lib/meta/config'
+import { logWarn, logError } from '@/lib/logger'
+
+// ─── API version deprecation warning ───────────────────────────────────────
+const apiVersion = getMetaApiVersion()
+const versionDate = new Date(`${apiVersion.slice(1).split('.')[0]}-01-01`) // rough heuristic
+const ageMonths = (Date.now() - versionDate.getTime()) / (1000 * 60 * 60 * 24 * 30)
+if (ageMonths > 18) {
+  logWarn(`Meta Graph API version ${apiVersion} is older than 18 months and may be deprecated soon. Consider upgrading META_API_VERSION.`, {
+    module: 'meta-ads',
+    metadata: { apiVersion, ageMonths: Math.round(ageMonths) },
+  })
+}
+
+// ─── Retry configuration ─────────────────────────────────────────────────────
+const MAX_RETRIES = 3
+const RETRY_DELAY_MS = 1000
+
+function extractMetaErrorMessage(result: Record<string, unknown>): string {
+  const errorObj = (result.error ?? result) as Record<string, unknown>
+  if (typeof errorObj.message === 'string') return errorObj.message
+  if (typeof errorObj.error_user_msg === 'string') return errorObj.error_user_msg
+  if (typeof errorObj.error_msg === 'string') return errorObj.error_msg
+  return JSON.stringify(errorObj)
+}
+
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function withRetry<T>(
+  label: string,
+  fn: () => Promise<T>,
+  isRetryable: (status: number, result: Record<string, unknown>) => boolean,
+): Promise<T> {
+  let lastErr: Error | undefined
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      lastErr = err instanceof Error ? err : new Error(String(err))
+      if (attempt >= MAX_RETRIES) break
+      logWarn(`Meta API retry ${attempt}/${MAX_RETRIES} for ${label}`, {
+        module: 'meta-ads',
+        error: lastErr,
+      })
+      await sleep(RETRY_DELAY_MS * Math.pow(2, attempt - 1))
+    }
+  }
+  throw lastErr ?? new Error(`Max retries exceeded for ${label}`)
+}
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -88,7 +138,7 @@ export type CreateAdCampaignResult = {
 
 // ─── Low-level fetch wrapper ────────────────────────────────────────────────
 
-async function metaApiPost(path: string, body: Record<string, unknown>) {
+async function metaApiPostRaw(path: string, body: Record<string, unknown>) {
   const base = getMetaGraphBase()
   const headers = getMetaApiHeaders()
   const url = `${base}${path}`
@@ -102,20 +152,23 @@ async function metaApiPost(path: string, body: Record<string, unknown>) {
   const result = (await response.json().catch(() => ({}))) as Record<string, unknown>
 
   if (!response.ok) {
-    const error = (result.error as Record<string, unknown>) ?? result
-    throw new Error(
-      `Meta API error ${response.status}: ${JSON.stringify(error)}`,
-    )
+    const message = extractMetaErrorMessage(result)
+    throw new Error(`Meta API error ${response.status}: ${message}`)
   }
 
   if (result.error) {
-    throw new Error(`Meta API error: ${JSON.stringify(result.error)}`)
+    const message = extractMetaErrorMessage(result)
+    throw new Error(`Meta API error: ${message}`)
   }
 
   return result
 }
 
-async function metaApiGet(path: string) {
+function metaApiPost(path: string, body: Record<string, unknown>) {
+  return withRetry(`POST ${path}`, () => metaApiPostRaw(path, body), (status) => status >= 500 || status === 429)
+}
+
+async function metaApiGetRaw(path: string) {
   const base = getMetaGraphBase()
   const headers = getMetaApiHeaders()
   const url = `${base}${path}`
@@ -124,13 +177,15 @@ async function metaApiGet(path: string) {
   const result = (await response.json().catch(() => ({}))) as Record<string, unknown>
 
   if (!response.ok) {
-    const error = (result.error as Record<string, unknown>) ?? result
-    throw new Error(
-      `Meta API error ${response.status}: ${JSON.stringify(error)}`,
-    )
+    const message = extractMetaErrorMessage(result)
+    throw new Error(`Meta API error ${response.status}: ${message}`)
   }
 
   return result
+}
+
+function metaApiGet(path: string) {
+  return withRetry(`GET ${path}`, () => metaApiGetRaw(path), (status) => status >= 500 || status === 429)
 }
 
 // ─── Campaign ───────────────────────────────────────────────────────────────
@@ -237,6 +292,7 @@ export async function createPausedCarouselCampaign(params: {
   siteUrl: string
   message: string
   cards: CarouselCard[]
+  targeting?: Record<string, unknown>
 }): Promise<CreateAdCampaignResult> {
   const pixelId = getMetaPixelId()
 
@@ -248,7 +304,7 @@ export async function createPausedCarouselCampaign(params: {
   })
 
   // 2. Ad Set with cold-audience targeting
-  const targeting = buildColdAudienceTargeting()
+  const targeting = params.targeting ?? buildColdAudienceTargeting()
   const adSet = await createAdSet({
     campaignId: campaign.id,
     name: params.adSetName,
@@ -299,6 +355,7 @@ export async function createPausedDPARetargetingCampaign(params: {
   pageId: string
   siteUrl: string
   message: string
+  targeting?: Record<string, unknown>
 }): Promise<CreateAdCampaignResult> {
   const pixelId = getMetaPixelId()
   const catalogId = getMetaCatalogId()
@@ -311,7 +368,7 @@ export async function createPausedDPARetargetingCampaign(params: {
   })
 
   // 2. Ad Set optimized for DPA
-  const targeting = buildRetargetingTargeting(pixelId)
+  const targeting = params.targeting ?? buildRetargetingTargeting(pixelId)
   const adSet = await createAdSet({
     campaignId: campaign.id,
     name: params.adSetName,
@@ -546,7 +603,7 @@ export type MetaCampaignDetails = MetaCampaign & {
   adsets?: { data?: MetaAdSetDetail[] }
 }
 
-async function metaApiDelete(path: string) {
+async function metaApiDeleteRaw(path: string) {
   const base = getMetaGraphBase()
   const headers = getMetaApiHeaders()
   const url = `${base}${path}`
@@ -555,13 +612,32 @@ async function metaApiDelete(path: string) {
   const result = (await response.json().catch(() => ({}))) as Record<string, unknown>
 
   if (!response.ok) {
-    const error = (result.error as Record<string, unknown>) ?? result
-    throw new Error(
-      `Meta API error ${response.status}: ${JSON.stringify(error)}`,
-    )
+    const message = extractMetaErrorMessage(result)
+    throw new Error(`Meta API error ${response.status}: ${message}`)
   }
 
   return result
+}
+
+function metaApiDelete(path: string) {
+  return withRetry(`DELETE ${path}`, () => metaApiDeleteRaw(path), (status) => status >= 500 || status === 429)
+}
+
+// ─── Cleanup helpers for rollback ───────────────────────────────────────────
+
+export async function deleteAdSet(adSetId: string): Promise<{ success: boolean }> {
+  await metaApiDelete(`/${adSetId}`)
+  return { success: true }
+}
+
+export async function deleteAd(adId: string): Promise<{ success: boolean }> {
+  await metaApiDelete(`/${adId}`)
+  return { success: true }
+}
+
+export async function deleteCreative(creativeId: string): Promise<{ success: boolean }> {
+  await metaApiDelete(`/${creativeId}`)
+  return { success: true }
 }
 
 // ─── Insights ─────────────────────────────────────────────────────────────
@@ -586,6 +662,19 @@ export async function getAdAccountInsights(
   const fields = 'spend,impressions,clicks,ctr,cpc,conversions,cost_per_conversion'
   const result = (await metaApiGet(
     `/${adAccountId}/insights?fields=${encodeURIComponent(fields)}&date_preset=${datePreset}`,
+  )) as { data?: MetaCampaignInsight[] }
+
+  return result.data ?? []
+}
+
+export async function getAdAccountInsightsTimeSeries(
+  days = 7,
+): Promise<MetaCampaignInsight[]> {
+  const adAccountId = getMetaAdAccountId()
+  const fields = 'spend,impressions,clicks,date_start'
+  const timeRange = JSON.stringify({ since: `${days}_days_ago`, until: 'today' })
+  const result = (await metaApiGet(
+    `/${adAccountId}/insights?fields=${encodeURIComponent(fields)}&time_range=${encodeURIComponent(timeRange)}&time_increment=1`,
   )) as { data?: MetaCampaignInsight[] }
 
   return result.data ?? []
@@ -672,4 +761,18 @@ export async function updateCampaignName(
 export async function deleteCampaign(campaignId: string): Promise<{ success: boolean }> {
   await metaApiDelete(`/${campaignId}`)
   return { success: true }
+}
+
+// ─── Ad Preview ─────────────────────────────────────────────────────────────
+
+export async function generateAdPreview(
+  adId: string,
+  format: 'DESKTOP_FEED_STANDARD' | 'MOBILE_FEED_STANDARD' = 'DESKTOP_FEED_STANDARD',
+): Promise<{ previewUrl: string }> {
+  const result = (await metaApiPost(`/${adId}/previews`, {
+    ad_format: format,
+  })) as { data?: Array<{ body: string }> }
+
+  const previewUrl = result.data?.[0]?.body ?? ''
+  return { previewUrl }
 }

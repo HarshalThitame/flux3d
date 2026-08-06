@@ -1,12 +1,14 @@
 'use client'
 
 import { motion, useInView, useReducedMotion } from 'framer-motion'
-import { memo, useRef } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { Settings as Gear, Building2, GraduationCap, ShoppingBag, Heart, Clapperboard, Gift, ArrowRight } from 'lucide-react'
 import { staggerContainer, cardItem, fadeUp, viewportOnce, viewportHeader } from '@/lib/animation-variants'
+import { getScrollTargetEventName } from '@/lib/scroll-to'
 
 const services = [
   {
+    slug: 'custom-3d-printing',
     icon: Gear,
     tag: 'Custom Printing',
     title: 'Custom 3D Printing',
@@ -18,6 +20,7 @@ const services = [
     span: true,
   },
   {
+    slug: 'model-printing',
     icon: Building2,
     tag: 'Model Printing',
     title: 'Architectural and Presentation Models',
@@ -28,6 +31,7 @@ const services = [
     color: 'from-[#a855f7] to-[#a855f7]',
   },
   {
+    slug: 'ready-made-products',
     icon: GraduationCap,
     tag: 'Ready-made',
     title: 'Ready-Made Products',
@@ -39,6 +43,7 @@ const services = [
     color: 'from-[#6d28d9] to-[#6d28d9]',
   },
   {
+    slug: 'finishing',
     icon: ShoppingBag,
     tag: 'Finishing',
     title: 'Finishing and Post-Processing',
@@ -49,6 +54,7 @@ const services = [
     color: 'from-[#a855f7] to-[#a855f7]',
   },
   {
+    slug: 'business-and-bulk-orders',
     icon: Heart,
     tag: 'Business',
     title: 'Business and Bulk Orders',
@@ -59,6 +65,7 @@ const services = [
     color: 'from-[#fb7185] to-[#6d28d9]',
   },
   {
+    slug: 'design-review',
     icon: Clapperboard,
     tag: 'Support',
     title: 'Design Review and File Checks',
@@ -69,6 +76,7 @@ const services = [
     color: 'from-[#a855f7] to-[#6d28d9]',
   },
   {
+    slug: 'dispatch-delivery',
     icon: Gift,
     tag: 'Delivery',
     title: 'Dispatch and Delivery',
@@ -80,14 +88,25 @@ const services = [
   },
 ]
 
-function ServiceCard({ service }: { service: typeof services[0] }) {
+function ServiceCard({ service, highlighted }: { service: typeof services[0]; highlighted: boolean }) {
   return (
     <motion.div
+      id={service.slug}
       variants={cardItem}
-      className={`group relative bg-[#faf9f7] border border-[rgba(109,40,217,0.5)] rounded-2xl overflow-hidden transition-all duration-300 hover:border-[rgba(109,40,217,0.3)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.08)] hover:-translate-y-1.5 flex flex-col ${
+      className={`group relative scroll-mt-24 bg-[#faf9f7] border border-[rgba(109,40,217,0.5)] rounded-2xl overflow-hidden transition-all duration-300 hover:border-[rgba(109,40,217,0.3)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.08)] hover:-translate-y-1.5 flex flex-col ${
         service.span ? 'md:col-span-2' : ''
-      }`}
+      } ${highlighted ? 'ring-2 ring-[#a855f7] ring-offset-2 ring-offset-[#f9f7f4] shadow-[0_0_0_1px_rgba(168,85,247,0.35),0_8px_40px_rgba(168,85,247,0.22)]' : ''}`}
     >
+      {highlighted && (
+        <motion.div
+          key={`highlight-${service.slug}`}
+          initial={{ opacity: 0.6 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 1.4, ease: 'easeOut' }}
+          className="pointer-events-none absolute inset-0 rounded-2xl ring-4 ring-[#a855f7] z-20"
+          aria-hidden="true"
+        />
+      )}
       <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
 
       <div className="relative z-10 p-5 sm:p-6 md:p-8 flex flex-col flex-1">
@@ -144,6 +163,33 @@ function ServicesSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, viewportHeader)
   const reduceMotion = useReducedMotion()
+  const [highlighted, setHighlighted] = useState<string | null>(null)
+
+  useEffect(() => {
+    let timer: number | undefined
+
+    const flash = (id: string) => {
+      if (!services.some((service) => service.slug === id)) return
+      setHighlighted(id)
+      if (timer) window.clearTimeout(timer)
+      timer = window.setTimeout(() => setHighlighted(null), 2000)
+    }
+
+    const initialHash = window.location.hash.replace(/^#/, '')
+    if (initialHash) flash(initialHash)
+
+    const eventName = getScrollTargetEventName()
+    const handleEvent = (event: Event) => {
+      const detail = (event as CustomEvent<{ id?: string }>).detail
+      if (detail?.id) flash(detail.id)
+    }
+
+    window.addEventListener(eventName, handleEvent)
+    return () => {
+      window.removeEventListener(eventName, handleEvent)
+      if (timer) window.clearTimeout(timer)
+    }
+  }, [])
 
   return (
     <section id="services" ref={ref} className="relative scroll-mt-20 overflow-hidden px-6 py-12 md:py-16 lg:py-24">
@@ -179,7 +225,7 @@ function ServicesSection() {
           viewport={reduceMotion ? undefined : viewportOnce}
         >
           {services.map((service, i) => (
-            <ServiceCard key={i} service={service} />
+            <ServiceCard key={i} service={service} highlighted={highlighted === service.slug} />
           ))}
         </motion.div>
 
