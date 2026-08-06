@@ -6,6 +6,7 @@ import type { CSSProperties } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowRight, ArrowDown, MapPin, Shield, Clock, Printer, Sparkles, Layers } from 'lucide-react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { scrollToTarget } from '@/lib/scroll-to'
 
 function HeroFadeIn({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -33,11 +34,11 @@ const productionSignals = [
 ]
 
 const heroBadges = [
-  'Custom 3D printing',
-  'Prototyping',
-  'Model printing',
-  'Custom manufacturing',
-  'Ready-made products',
+  { label: 'Custom 3D printing', slug: 'custom-3d-printing' },
+  { label: 'Prototyping', slug: 'custom-3d-printing' },
+  { label: 'Model printing', slug: 'model-printing' },
+  { label: 'Custom manufacturing', slug: 'business-and-bulk-orders' },
+  { label: 'Ready-made products', slug: 'ready-made-products' },
 ]
 
 const atelierMetrics = [
@@ -142,7 +143,17 @@ export default function HeroSection() {
 
             <HeroFadeIn delay={0.45} className="mt-6 flex flex-wrap justify-center gap-2 lg:justify-start">
               {heroBadges.map((badge) => (
-                <span key={badge} className="premium-chip">{badge}</span>
+                <a
+                  key={badge.label}
+                  href={`#${badge.slug}`}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    scrollToTarget(badge.slug)
+                  }}
+                  className="premium-chip premium-chip-link"
+                >
+                  {badge.label}
+                </a>
               ))}
             </HeroFadeIn>
 
@@ -165,6 +176,10 @@ export default function HeroSection() {
               </motion.div>
               <motion.div whileHover={enableHover ? { scale: 1.02 } : undefined} whileTap={enableHover ? { scale: 0.98 } : undefined}>
                 <a href="#services"
+                  onClick={(event) => {
+                    event.preventDefault()
+                    scrollToTarget('services')
+                  }}
                   className="premium-secondary-cta flex min-h-[56px] min-w-[170px] items-center justify-center gap-2 whitespace-nowrap rounded-full px-7 py-4 text-sm font-bold text-[#0F1B3D]">
                   Explore Services
                   <ArrowDown className="h-4 w-4" />

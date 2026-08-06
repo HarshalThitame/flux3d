@@ -148,6 +148,29 @@ body {
   color: var(--pm-primary-700);
 }
 
+.premium-chip-link {
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.premium-chip-link:hover {
+  background: rgba(168, 85, 247, 0.14);
+  border-color: rgba(168, 85, 247, 0.45);
+  color: #4c1d95;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(109, 40, 217, 0.16);
+}
+
+.premium-chip-link:focus-visible {
+  outline: 2px solid #a855f7;
+  outline-offset: 2px;
+}
+
+.premium-chip-link:active {
+  transform: translateY(0) scale(0.97);
+}
+
 .premium-live-dot {
   background: #6d28d9;
   box-shadow: 0 0 0 6px rgba(109, 40, 217, 0.08), 0 0 18px rgba(109, 40, 217, 0.64);

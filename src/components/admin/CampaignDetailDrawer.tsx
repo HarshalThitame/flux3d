@@ -30,6 +30,13 @@ type CampaignDetail = {
   adsets?: { data?: Array<Record<string, unknown>> }
 }
 
+type InsightPoint = {
+  label: string
+  spend: number
+  impressions: number
+  clicks: number
+}
+
 export default function CampaignDetailDrawer({
   campaignId,
   onClose,
@@ -38,6 +45,8 @@ export default function CampaignDetailDrawer({
   onClose: () => void
 }) {
   const [campaign, setCampaign] = useState<CampaignDetail | null>(null)
+  const [insights, setInsights] = useState<InsightPoint[]>([])
+  const [insightsLoading, setInsightsLoading] = useState(false)
   const [loading, setLoading] = useState(() => false)
   const [error, setError] = useState<string | null>(null)
   const [showAdsets, setShowAdsets] = useState(true)
@@ -58,6 +67,22 @@ export default function CampaignDetailDrawer({
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
+      })
+
+    // Fetch insights
+    setInsightsLoading(true)
+    fetch(`/api/admin/ads/campaigns/${campaignId}/insights`)
+      .then((res) => res.json())
+      .then((data: { points?: InsightPoint[]; error?: string }) => {
+        if (cancelled) return
+        if (data.error) throw new Error(data.error)
+        setInsights(data.points ?? [])
+      })
+      .catch(() => {
+        // Non-critical
+      })
+      .finally(() => {
+        if (!cancelled) setInsightsLoading(false)
       })
 
     return () => { cancelled = true }
@@ -146,6 +171,39 @@ export default function CampaignDetailDrawer({
                         Open in Ads Manager
                       </a>
                     </div>
+                  </div>
+
+                  {/* Insights Section */}
+                  <div className="rounded-2xl border border-[rgba(109,40,217,0.12)] bg-white p-5">
+                    <h3 className="text-sm font-semibold text-[#0F1B3D] mb-3">7-Day Performance</h3>
+                    {insightsLoading ? (
+                      <div className="flex items-center justify-center py-6">
+                        <Loader2 className="w-5 h-5 text-[#6d28d9] animate-spin" />
+                      </div>
+                    ) : insights.length === 0 ? (
+                      <p className="text-sm text-[#6F7192]">No insights available for this period.</p>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="text-center">
+                          <div className="text-xs text-[#6F7192] uppercase tracking-wider">Spend</div>
+                          <div className="mt-1 text-lg font-bold text-[#0F1B3D]">
+                            ₹{Math.round(insights.reduce((s, p) => s + p.spend, 0)).toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs text-[#6F7192] uppercase tracking-wider">Impressions</div>
+                          <div className="mt-1 text-lg font-bold text-[#0F1B3D]">
+                            {insights.reduce((s, p) => s + p.impressions, 0).toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs text-[#6F7192] uppercase tracking-wider">Clicks</div>
+                          <div className="mt-1 text-lg font-bold text-[#0F1B3D]">
+                            {insights.reduce((s, p) => s + p.clicks, 0).toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Ad Sets Section */}

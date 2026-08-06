@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
 import { getAdAccountInsights } from '@/lib/meta/marketing-api'
+import { requireMetaAdsAuth } from '@/lib/admin/meta-ads-route'
+import { logError } from '@/lib/logger'
 
 export const runtime = 'nodejs'
 
@@ -10,31 +11,14 @@ export const runtime = 'nodejs'
  * Returns aggregate account-level insights for the stats header cards
  * and charts (spend, impressions, clicks, CTR, conversions).
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const supabase = await createServerClient()
+    const auth = await requireMetaAdsAuth(request, {
+      rateLimit: { prefix: 'meta-ads-insights', windowSeconds: 60, maxRequests: 60 },
+    })
+    if ('response' in auth) return auth.response
 
-    // ─── Auth check ────────────────────────────────────────────────────────
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || !profile.is_admin) {
-      return NextResponse.json({ error: 'Forbidden: admin only' }, { status: 403 })
-    }
-
-    // ─── Fetch insights ────────────────────────────────────────────────────
+    // ─── Fetch insights ──────────────────────────────────────────────────
     const todayInsights = await getAdAccountInsights('today')
     const last7dInsights = await getAdAccountInsights('last_7d')
     const last30dInsights = await getAdAccountInsights('last_30d')
@@ -58,11 +42,12 @@ export async function GET() {
       last30d: aggregate(last30dInsights),
     })
   } catch (err) {
-    console.error('Meta insights error:', err)
+    logError('Meta insights error', {
+      module: 'meta-ads',
+      error: err instanceof Error ? err : new Error(String(err)),
+    })
     return NextResponse.json(
-      {
-        error: err instanceof Error ? err.message : 'Failed to fetch insights',
-      },
+      { error: err instanceof Error ? err.message : 'Failed to fetch insights' },
       { status: 500 },
     )
   }

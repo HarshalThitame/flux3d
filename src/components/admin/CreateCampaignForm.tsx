@@ -28,18 +28,24 @@ type ProductPreview = {
 
 type CreateCampaignFormProps = {
   onSuccess: (data: Record<string, unknown>) => void
+  onAsyncInitiated: (jobId: string, pollUrl: string) => void
   onError: (message: string) => void
 }
 
-export default function CreateCampaignForm({ onSuccess, onError }: CreateCampaignFormProps) {
+export default function CreateCampaignForm({ onSuccess, onAsyncInitiated, onError }: CreateCampaignFormProps) {
   const [step, setStep] = useState(1)
   const [categoryName, setCategoryName] = useState('3D Printed Home Decor')
   const [dailyBudget, setDailyBudget] = useState(150)
   const [createDpa, setCreateDpa] = useState(true)
   const [pageId, setPageId] = useState('')
+  const [ageMin, setAgeMin] = useState(25)
+  const [ageMax, setAgeMax] = useState(55)
+  const [countries, setCountries] = useState('IN')
+  const [placements, setPlacements] = useState<string[]>(['facebook', 'instagram', 'audience_network', 'messenger'])
   const [products, setProducts] = useState<ProductPreview[]>([])
   const [productsLoading, setProductsLoading] = useState(() => false)
   const [creating, setCreating] = useState(false)
+  const [createAsync, setCreateAsync] = useState(false)
   const [previewIndex, setPreviewIndex] = useState(0)
 
   const shouldLoadProducts = step === 2 && products.length === 0 && !productsLoading
@@ -85,7 +91,8 @@ export default function CreateCampaignForm({ onSuccess, onError }: CreateCampaig
   async function handleCreate() {
     setCreating(true)
     try {
-      const res = await fetch('/api/admin/ads/create', {
+      const endpoint = createAsync ? '/api/admin/ads/create-async' : '/api/admin/ads/create'
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -93,6 +100,12 @@ export default function CreateCampaignForm({ onSuccess, onError }: CreateCampaig
           dailyBudgetPaise: dailyBudget * 100,
           createDpa,
           pageId: pageId || undefined,
+          targetingConfig: {
+            ageMin,
+            ageMax,
+            countries: countries.split(',').map((c) => c.trim()).filter(Boolean),
+            placements,
+          },
         }),
       })
 
@@ -102,12 +115,22 @@ export default function CreateCampaignForm({ onSuccess, onError }: CreateCampaig
         throw new Error((data.error as string) ?? 'Creation failed')
       }
 
-      onSuccess(data)
+      if (createAsync && data.jobId && data.pollUrl) {
+        onAsyncInitiated(data.jobId as string, data.pollUrl as string)
+      } else {
+        onSuccess(data)
+      }
+
       setStep(1)
       setCategoryName('3D Printed Home Decor')
       setDailyBudget(150)
       setCreateDpa(true)
       setPageId('')
+      setAgeMin(25)
+      setAgeMax(55)
+      setCountries('IN')
+      setPlacements(['facebook', 'instagram', 'audience_network', 'messenger'])
+      setCreateAsync(false)
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Creation failed')
     } finally {
@@ -202,6 +225,7 @@ export default function CreateCampaignForm({ onSuccess, onError }: CreateCampaig
                     type="number"
                     min={50}
                     max={50000}
+                    step={1}
                     value={dailyBudget}
                     onChange={(e) => setDailyBudget(Number(e.target.value))}
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[rgba(109,40,217,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9] transition-colors"
@@ -236,6 +260,69 @@ export default function CreateCampaignForm({ onSuccess, onError }: CreateCampaig
                   />
                   <span className="text-sm text-[#0F1B3D]">Also create DPA retargeting</span>
                 </label>
+              </div>
+            </div>
+
+            {/* Targeting Config */}
+            <div className="mt-4 pt-4 border-t border-[rgba(109,40,217,0.1)]">
+              <h3 className="text-sm font-semibold text-[#0F1B3D] mb-3 flex items-center gap-2">
+                <Target className="w-4 h-4 text-[#6d28d9]" />
+                Audience Targeting
+              </h3>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <label className="block text-xs font-medium text-[#6F7192] mb-1.5">Age Min</label>
+                  <input
+                    type="number"
+                    min={13}
+                    max={65}
+                    value={ageMin}
+                    onChange={(e) => setAgeMin(Number(e.target.value))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-[rgba(109,40,217,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9] transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[#6F7192] mb-1.5">Age Max</label>
+                  <input
+                    type="number"
+                    min={13}
+                    max={65}
+                    value={ageMax}
+                    onChange={(e) => setAgeMax(Number(e.target.value))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-[rgba(109,40,217,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9] transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[#6F7192] mb-1.5">Countries (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={countries}
+                    onChange={(e) => setCountries(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-[rgba(109,40,217,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9] transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[#6F7192] mb-1.5">Placements</label>
+                  <div className="flex flex-wrap gap-2">
+                    {['facebook', 'instagram', 'audience_network', 'messenger'].map((platform) => (
+                      <label key={platform} className="flex items-center gap-1 text-xs text-[#0F1B3D] cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={placements.includes(platform)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setPlacements([...placements, platform])
+                            } else {
+                              setPlacements(placements.filter((p) => p !== platform))
+                            }
+                          }}
+                          className="w-3 h-3 rounded border-[rgba(109,40,217,0.3)] text-[#6d28d9] focus:ring-[#6d28d9]"
+                        />
+                        {platform.replace('_', ' ')}
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -362,7 +449,7 @@ export default function CreateCampaignForm({ onSuccess, onError }: CreateCampaig
                   <MapPin className="w-4 h-4 text-[#6d28d9]" />
                   Location
                 </div>
-                <div className="text-sm text-[#6F7192]">India — all states</div>
+                <div className="text-sm text-[#6F7192]">{countries.split(',').join(', ')}</div>
                 <div className="text-xs text-[#6F7192] mt-1">Home + Recent location</div>
               </div>
 
@@ -371,7 +458,7 @@ export default function CreateCampaignForm({ onSuccess, onError }: CreateCampaig
                   <Users className="w-4 h-4 text-[#6d28d9]" />
                   Demographics
                 </div>
-                <div className="text-sm text-[#6F7192]">Ages 25 — 55</div>
+                <div className="text-sm text-[#6F7192]">Ages {ageMin} — {ageMax}</div>
                 <div className="text-xs text-[#6F7192] mt-1">All genders</div>
               </div>
 
@@ -399,7 +486,7 @@ export default function CreateCampaignForm({ onSuccess, onError }: CreateCampaig
                   <Megaphone className="w-4 h-4 text-[#6d28d9]" />
                   Placements
                 </div>
-                <div className="text-sm text-[#6F7192]">Facebook + Instagram</div>
+                <div className="text-sm text-[#6F7192]">{placements.map((p) => p.replace('_', ' ')).join(', ')}</div>
                 <div className="text-xs text-[#6F7192] mt-1">Feed, Stories, Reels, Marketplace</div>
               </div>
 
@@ -456,11 +543,27 @@ export default function CreateCampaignForm({ onSuccess, onError }: CreateCampaig
                 <span className="font-medium text-[#0F1B3D]">{createDpa ? 'Yes' : 'No'}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
+                <span className="text-[#6F7192]">Audience</span>
+                <span className="font-medium text-[#0F1B3D]">{countries} · Ages {ageMin}–{ageMax}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
                 <span className="text-[#6F7192]">Status</span>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium text-[#F59E0B] bg-[rgba(245,158,11,0.1)] border border-[rgba(245,158,11,0.2)]">
                   Will be created PAUSED
                 </span>
               </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={createAsync}
+                  onChange={(e) => setCreateAsync(e.target.checked)}
+                  className="w-4 h-4 rounded border-[rgba(109,40,217,0.3)] text-[#6d28d9] focus:ring-[#6d28d9]"
+                />
+                <span className="text-sm text-[#0F1B3D]">Create in background (async)</span>
+              </label>
             </div>
 
             <div className="flex items-center gap-3 pt-2">
