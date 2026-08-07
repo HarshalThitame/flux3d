@@ -57,7 +57,7 @@ export default function LiquidMorphLoader() {
           initial="hidden"
           animate="visible"
           exit="exit"
-          className="fixed inset-0 z-[9990] flex items-center justify-center overflow-hidden bg-[#0a0612]/85 backdrop-blur-xl"
+          className="fixed inset-0 z-[9990] flex items-center justify-center overflow-hidden bg-[#f9f7f4]/88 backdrop-blur-xl"
           role="status"
           aria-busy="true"
           aria-live="polite"
@@ -114,7 +114,7 @@ export default function LiquidMorphLoader() {
               className="mt-4 flex items-center gap-3 px-6"
             >
               <span className="h-px w-10 bg-gradient-to-r from-transparent to-[#d4af37]/70" />
-              <p className="text-center text-xs font-medium tracking-[0.3em] text-[#d4af37]/90 uppercase sm:text-sm">
+              <p className="text-center text-xs font-semibold tracking-[0.3em] text-[#4c1d95]/85 uppercase sm:text-sm">
                 {message ?? 'Preparing your experience…'}
               </p>
               <span className="h-px w-10 bg-gradient-to-l from-transparent to-[#d4af37]/70" />
@@ -126,7 +126,7 @@ export default function LiquidMorphLoader() {
               animate="visible"
               exit="exit"
               custom={2}
-              className="mt-8 h-[2px] w-40 overflow-hidden rounded-full bg-white/10"
+              className="mt-8 h-[2px] w-40 overflow-hidden rounded-full bg-[#4c1d95]/10"
             >
               <div className="loading-progress h-full w-full origin-left rounded-full bg-gradient-to-r from-[#5b21b6] via-[#a855f7] to-[#d4af37]" />
             </motion.div>

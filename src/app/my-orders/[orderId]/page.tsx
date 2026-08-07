@@ -163,14 +163,14 @@ export default async function OrderDetailPage({
   })
 
   return (
-    <div className="min-h-screen bg-[#f9f7f4] text-[#0F1B3D]">
+    <div className="min-h-screen bg-[#f9f7f4] text-[#070b1d]">
       <Navbar transparent />
       <main className="px-4 pb-24 pt-6 md:px-6 md:pt-8">
         <div className="mx-auto max-w-3xl space-y-4">
           <div className="flex items-center justify-between gap-4">
             <Link
               href="/my-orders"
-              className="inline-flex items-center gap-1.5 text-sm text-gray-500 transition hover:text-[#0F1B3D]"
+              className="inline-flex items-center gap-1.5 text-sm text-gray-500 transition hover:text-[#070b1d]"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -189,7 +189,7 @@ export default async function OrderDetailPage({
               Order Details
             </div>
             <div className="mt-1 flex items-center gap-2">
-              <h1 className="min-w-0 flex-1 truncate text-xl font-bold text-[#0F1B3D] md:text-2xl">
+              <h1 className="min-w-0 flex-1 truncate text-xl font-bold text-[#070b1d] md:text-2xl">
                 {row.order_number ?? row.id}
               </h1>
               <span className={`flex-shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${getOrderStatusClasses(row.status)}`}>

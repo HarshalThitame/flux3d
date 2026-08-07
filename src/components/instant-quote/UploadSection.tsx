@@ -43,7 +43,7 @@ export default function UploadSection({
       />
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+          <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
             Upload your file
           </h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-[#6F7192]">
@@ -84,7 +84,7 @@ export default function UploadSection({
           >
             <UploadCloud className="h-7 w-7" />
           </motion.div>
-          <div className="font-[var(--font-syne)] text-2xl font-semibold text-[#0F1B3D]">
+          <div className="font-[var(--font-syne)] text-2xl font-semibold text-[#070b1d]">
             Drag and drop your model
           </div>
           <p className="mt-3 text-sm leading-7 text-[#6F7192]">
@@ -104,7 +104,7 @@ export default function UploadSection({
               <FileArchive className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <div className="truncate text-sm font-medium text-[#0F1B3D]">
+              <div className="truncate text-sm font-medium text-[#070b1d]">
                 {selectedFileName ?? 'No file selected yet'}
               </div>
               <div className="text-xs text-[#6F7192]">
@@ -145,7 +145,7 @@ export default function UploadSection({
 
       {!isSignedIn ? (
         <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-          Explore the experience without logging in. <Link href="/login?next=%2Finstant-quote" className="font-medium text-[#0F1B3D] underline underline-offset-4">Sign in</Link> when you want synced uploads, saved quotes, and a smoother ordering flow.
+          Explore the experience without logging in. <Link href="/login?next=%2Finstant-quote" className="font-medium text-[#070b1d] underline underline-offset-4">Sign in</Link> when you want synced uploads, saved quotes, and a smoother ordering flow.
         </div>
       ) : null}
 

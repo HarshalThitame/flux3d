@@ -12,8 +12,8 @@
 
 /* ── Refined premium color system ── */
 :root {
-  --pm-ink: #0f1b3d;               /* deep navy primary copy */
-  --pm-ink-2: #242e50;             /* secondary copy */
+  --pm-ink: #070b1d;               /* deep navy primary copy */
+  --pm-ink-2: #1e293b;             /* secondary copy */
   --pm-slate: #5b6277;             /* muted copy */
   --pm-hint: #7b879c;             /* placeholder / hint */
   --pm-paper: #faf9f7;            /* warm paper base */

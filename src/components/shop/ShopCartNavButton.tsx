@@ -32,7 +32,7 @@ export default function ShopCartNavButton({
       <ShoppingBag className="h-4 w-4" />
       <span className={mobile ? undefined : 'sr-only'}>{label}</span>
       {itemCount > 0 && (
-        <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--shop-gold)] px-1 text-[10px] font-bold text-white shadow-[var(--shop-shadow-gold)]">
+        <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--shop-gold)] px-1 text-[10px] font-bold text-[var(--luxury-charcoal)] shadow-[var(--shop-shadow-gold)]">
           {itemCount}
         </span>
       )}

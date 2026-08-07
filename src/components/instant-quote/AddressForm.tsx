@@ -29,7 +29,7 @@ function Field({
   const errorId = `${id}-error`
   return (
     <label className="block" htmlFor={id}>
-      <div className="mb-2 text-sm font-medium text-[#0F1B3D]">
+      <div className="mb-2 text-sm font-medium text-[#070b1d]">
         {label}
         {required ? <span className="ml-1 text-[#6d28d9]">*</span> : null}
       </div>
@@ -40,7 +40,7 @@ function Field({
         placeholder={placeholder}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? errorId : undefined}
-        className={`w-full rounded-[18px] border bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D] outline-none transition ${
+        className={`w-full rounded-[18px] border bg-[#FFFFFF] px-4 py-3 text-sm text-[#070b1d] outline-none transition ${
           error ? 'border-red-400 ring-1 ring-red-400/30' : 'border-[#6d28d9]/10 focus:border-[#6d28d9]/40'
         }`}
       />
@@ -58,7 +58,7 @@ export default function AddressForm({ values, errors, onChange }: AddressFormPro
       className="rounded-[28px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]"
     >
       <div className="mb-5">
-        <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+        <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
           Delivery Address
         </h2>
         <p className="mt-2 text-sm leading-6 text-[#6F7192]">

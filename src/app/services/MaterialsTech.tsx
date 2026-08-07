@@ -9,7 +9,7 @@ export default function MaterialsTech() {
         {/* Section header */}
         <div className="text-center mb-16">
           <p className="text-sm font-medium text-[#6d28d9] uppercase tracking-[3px] mb-4">Materials That Matter</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] leading-[1.1]">
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#070b1d] tracking-[-1px] leading-[1.1]">
             Built for Strength, Finish <br /><span className="text-[#6F7192]">and the Right First Impression</span>
           </h2>
           <p className="text-[#6F7192] mt-4 max-w-[600px] mx-auto">
@@ -28,7 +28,7 @@ export default function MaterialsTech() {
                 <span className="text-2xl">🖨️</span>
               </div>
               <div>
-                <h3 className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D]">FDM Materials</h3>
+                <h3 className="font-[var(--font-syne)] text-lg font-bold text-[#070b1d]">FDM Materials</h3>
                 <p className="text-sm text-[#6F7192]">Functional, reliable, and production-ready</p>
               </div>
             </div>
@@ -51,7 +51,7 @@ export default function MaterialsTech() {
                 <span className="text-2xl">💎</span>
               </div>
               <div>
-                <h3 className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D]">Resin Materials</h3>
+                <h3 className="font-[var(--font-syne)] text-lg font-bold text-[#070b1d]">Resin Materials</h3>
                 <p className="text-sm text-[#6F7192]">Fine detail for premium finishes</p>
               </div>
             </div>

@@ -23,7 +23,7 @@ export default function MaterialsCTA() {
         <span className="mb-3 inline-flex items-center rounded-full bg-[#ede9fe] px-4 py-2 text-xs font-bold uppercase text-[#6d28d9]">
           From material to quote
         </span>
-        <h2 className="mx-auto max-w-2xl text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#111827] md:text-4xl">
+        <h2 className="mx-auto max-w-2xl text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#070b1d] md:text-4xl">
           Upload once. Get a material recommendation and a production-ready quote.
         </h2>
         <p className="mx-auto mb-8 mt-4 max-w-[560px] text-sm leading-6 text-[#6F7192]">
@@ -51,7 +51,7 @@ export default function MaterialsCTA() {
 
         <div className="mb-6 flex items-center justify-center gap-2">
           <Mail className="w-4 h-4 text-[#6F7192]" />
-          <a href={`mailto:${settings.primaryEmail || 'hello@flux3d.in'}`} className="text-sm text-[#6F7192] hover:text-[#0F1B3D] transition-colors">
+          <a href={`mailto:${settings.primaryEmail || 'hello@flux3d.in'}`} className="text-sm text-[#6F7192] hover:text-[#070b1d] transition-colors">
             {settings.primaryEmail || 'hello@flux3d.in'}
           </a>
         </div>

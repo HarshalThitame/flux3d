@@ -31,7 +31,7 @@ export default async function CartPage() {
   ])
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#070b1d]">
       <Navbar transparent />
       <CartProvider initialSettings={settings}>
         <CartClient user={auth?.profile ?? null} materials={materials} />

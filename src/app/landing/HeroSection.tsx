@@ -2,11 +2,13 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import type { CSSProperties } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { type CSSProperties, useRef } from 'react'
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import { ArrowRight, ArrowDown, MapPin, Shield, Clock, Printer, Sparkles, Layers } from 'lucide-react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { scrollToTarget } from '@/lib/scroll-to'
+import WordReveal from '@/components/ui/WordReveal'
+import MagneticButton from '@/components/ui/MagneticButton'
 
 function HeroFadeIn({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -67,14 +69,24 @@ export default function HeroSection() {
   const enableHover = isFinePointer && !reduceMotion
   const heroTransition = reduceMotion ? { duration: 0.3 } : { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const }
   const quickFade = reduceMotion ? { duration: 0.2 } : { duration: 0.6 }
+  const sectionRef = useRef<HTMLElement>(null)
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end start'],
+  })
+  const posterY = useTransform(scrollYProgress, [0, 1], [0, 90])
+  const panelY = useTransform(scrollYProgress, [0, 1], [0, -50])
+  const contentY = useTransform(scrollYProgress, [0, 1], [0, -70])
+  const parallaxDisabled = reduceMotion
 
   return (
-    <section className="premium-hero relative overflow-hidden px-4 pb-8 pt-16 sm:px-6 sm:pt-20 md:pt-24 lg:px-10">
+    <section ref={sectionRef} className="premium-hero relative overflow-hidden px-4 pb-8 pt-16 sm:px-6 sm:pt-20 md:pt-24 lg:px-10">
       {!reduceMotion && (
         <>
-          <div className="premium-hero-media" aria-hidden="true">
+          <motion.div className="premium-hero-media" aria-hidden="true" style={parallaxDisabled ? undefined : { y: posterY }}>
             <Image src="/printer-poster.webp" alt="" fill quality={50} sizes="100vw" className="premium-hero-poster" />
-          </div>
+          </motion.div>
 
           <div className="premium-hero-mobile-bg md:hidden" aria-hidden="true">
             <Image src="/landing page 1.png" alt="" fill quality={75} sizes="100vw" className="object-cover object-[center_15%]" priority />
@@ -103,7 +115,10 @@ export default function HeroSection() {
         </>
       )}
 
-      <div className="relative z-10 mx-auto flex min-h-0 md:min-h-[calc(88svh-7rem)] w-full max-w-7xl flex-col justify-center gap-8 py-4 md:gap-10 md:py-6">
+      <motion.div
+        style={parallaxDisabled ? undefined : { y: contentY }}
+        className="relative z-10 mx-auto flex min-h-0 md:min-h-[calc(88svh-7rem)] w-full max-w-7xl flex-col justify-center gap-8 py-4 md:gap-10 md:py-6"
+      >
         <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,1fr)_420px] xl:grid-cols-[minmax(0,1fr)_470px]">
           <motion.div
             initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
@@ -125,11 +140,15 @@ export default function HeroSection() {
             <motion.h1
               initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={reduceMotion ? { duration: 0.3 } : { duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] as const }}
-              className="premium-hero-title text-[clamp(2.4rem,9vw,5rem)] font-black leading-[0.86] text-[#0F1B3D] sm:text-6xl md:text-7xl lg:text-8xl"
+              transition={reduceMotion ? { duration: 0.3 } : { duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] as const }}
+              className="premium-hero-title text-[clamp(2.4rem,9vw,5rem)] font-black leading-[0.86] text-[#070b1d] sm:text-6xl md:text-7xl lg:text-8xl"
             >
-              <span className="premium-title-line premium-title-brand">Flux3D</span>
-              <span className="premium-title-line premium-title-service">Custom 3D Printing &amp; Manufacturing</span>
+              <span className="premium-title-line premium-title-brand block">
+                <WordReveal text="Flux3D" delay={0.28} blur={false} />
+              </span>
+              <span className="premium-title-line premium-title-service block">
+                <WordReveal text="Custom 3D Printing & Manufacturing" delay={0.42} stagger={0.05} blur />
+              </span>
             </motion.h1>
 
             <motion.p
@@ -167,24 +186,28 @@ export default function HeroSection() {
               transition={quickFade}
               className="mt-8 flex flex-col justify-center gap-4 sm:flex-row lg:justify-start"
             >
-              <motion.div whileHover={enableHover ? { scale: 1.02 } : undefined} whileTap={enableHover ? { scale: 0.98 } : undefined}>
-                <Link href="/instant-quote" prefetch={false}
-                  className="premium-primary-cta group relative flex min-h-[56px] items-center justify-center gap-2 overflow-hidden rounded-full px-7 py-4 text-center text-sm font-bold text-white">
-                  <span className="relative z-10">Request a Quote</span>
-                  <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </motion.div>
-              <motion.div whileHover={enableHover ? { scale: 1.02 } : undefined} whileTap={enableHover ? { scale: 0.98 } : undefined}>
-                <a href="#services"
-                  onClick={(event) => {
-                    event.preventDefault()
-                    scrollToTarget('services')
-                  }}
-                  className="premium-secondary-cta flex min-h-[56px] min-w-[170px] items-center justify-center gap-2 whitespace-nowrap rounded-full px-7 py-4 text-sm font-bold text-[#0F1B3D]">
-                  Explore Services
-                  <ArrowDown className="h-4 w-4" />
-                </a>
-              </motion.div>
+              <MagneticButton>
+                <motion.div whileHover={enableHover ? { scale: 1.02 } : undefined} whileTap={enableHover ? { scale: 0.98 } : undefined}>
+                  <Link href="/instant-quote" prefetch={false}
+                    className="premium-primary-cta group relative flex min-h-[56px] items-center justify-center gap-2 overflow-hidden rounded-full px-7 py-4 text-center text-sm font-bold text-white">
+                    <span className="relative z-10">Request a Quote</span>
+                    <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </motion.div>
+              </MagneticButton>
+              <MagneticButton>
+                <motion.div whileHover={enableHover ? { scale: 1.02 } : undefined} whileTap={enableHover ? { scale: 0.98 } : undefined}>
+                  <a href="#services"
+                    onClick={(event) => {
+                      event.preventDefault()
+                      scrollToTarget('services')
+                    }}
+                    className="premium-secondary-cta flex min-h-[56px] min-w-[170px] items-center justify-center gap-2 whitespace-nowrap rounded-full px-7 py-4 text-sm font-bold text-[#070b1d]">
+                    Explore Services
+                    <ArrowDown className="h-4 w-4" />
+                  </a>
+                </motion.div>
+              </MagneticButton>
             </motion.div>
 
             <HeroFadeIn delay={0.6} className="mt-4 text-center text-xs font-medium text-[#5b21b6] lg:text-left">
@@ -205,6 +228,7 @@ export default function HeroSection() {
             initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={reduceMotion ? { duration: 0.3 } : { duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] as const }}
+            style={parallaxDisabled ? undefined : { y: panelY }}
             className="relative hidden lg:block"
           >
             <div className="premium-machine-panel">
@@ -275,7 +299,7 @@ export default function HeroSection() {
           Production timelines shared before confirmation
           <Sparkles className="h-3.5 w-3.5 text-[#5b21b6]" />
         </HeroFadeIn>
-      </div>
+      </motion.div>
     </section>
   )
 }

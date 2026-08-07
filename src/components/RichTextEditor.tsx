@@ -93,7 +93,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-invert max-w-none min-h-[300px] p-4 focus:outline-none text-[#0F1B3D] leading-7',
+        class: 'prose prose-invert max-w-none min-h-[300px] p-4 focus:outline-none text-[#070b1d] leading-7',
         'aria-label': placeholder,
       },
     },
@@ -240,7 +240,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
               }
             }}
             placeholder="red, blue, green"
-            className="w-32 rounded border border-[#6d28d9]/10 bg-transparent px-2 py-1 text-xs text-[#0F1B3D] placeholder:text-[#6F7192] focus:outline-none"
+            className="w-32 rounded border border-[#6d28d9]/10 bg-transparent px-2 py-1 text-xs text-[#070b1d] placeholder:text-[#6F7192] focus:outline-none"
             title="Enter color names or hex codes (comma-separated)"
           />
         </div>

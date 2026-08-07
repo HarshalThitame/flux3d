@@ -22,14 +22,14 @@ export default function ShippingPolicyClient() {
   const updatedDate = 'July 17, 2026'
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#070b1d]">
       <div className="sticky top-0 z-50 border-b border-[#6d28d9]/10 bg-[#FFFFFF]/50 backdrop-blur-sm">
         <div className="mx-auto max-w-[1200px] px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D]">
+            <Link href="/" className="font-[var(--font-syne)] text-2xl font-extrabold text-[#070b1d]">
               flux<span className="text-[#6d28d9]">3d</span>
             </Link>
-            <Link href="/" className="inline-flex items-center gap-2 text-sm text-[#6F7192] transition-colors hover:text-[#0F1B3D]">
+            <Link href="/" className="inline-flex items-center gap-2 text-sm text-[#6F7192] transition-colors hover:text-[#070b1d]">
               <ArrowLeft className="h-4 w-4" />
               Back to Home
             </Link>
@@ -44,7 +44,7 @@ export default function ShippingPolicyClient() {
               <Truck className="h-4 w-4" />
               Shipping & Delivery Policy
             </div>
-            <h1 className="mb-4 font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D] md:text-5xl">
+            <h1 className="mb-4 font-[var(--font-syne)] text-4xl font-extrabold text-[#070b1d] md:text-5xl">
               Shipping & <span className="text-[#6d28d9]">Delivery</span>
             </h1>
             <div className="flex flex-wrap gap-4 text-sm text-[#6F7192]">
@@ -58,7 +58,7 @@ export default function ShippingPolicyClient() {
             <div className="flex items-start gap-4">
               <MapPin className="mt-1 h-8 w-8 shrink-0 text-[#6d28d9]" />
               <div>
-                <h2 className="mb-2 text-2xl font-bold text-[#0F1B3D]">Digital service, physical dispatch</h2>
+                <h2 className="mb-2 text-2xl font-bold text-[#070b1d]">Digital service, physical dispatch</h2>
                 <p className="leading-relaxed text-[#6F7192]">
                   Flux 3D delivers digitally ordered manufacturing services and ready-made products. No physical goods unrelated to the service are sold, and no shipping charge applies unless it is shown before checkout or included in the approved quotation.
                 </p>
@@ -68,7 +68,7 @@ export default function ShippingPolicyClient() {
 
           <div className="space-y-10">
             <section>
-              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">1</span>
                 Delivery Coverage
               </h2>
@@ -79,19 +79,19 @@ export default function ShippingPolicyClient() {
             </section>
 
             <section>
-              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">2</span>
                 Production and Processing Time
               </h2>
               <div className="space-y-4 leading-relaxed text-[#6F7192]">
-                <p><strong className="text-[#0F1B3D]">Custom 3D-printed orders:</strong> Production normally begins after payment confirmation and acceptance of the final specifications. Estimated production time is generally 3-7 business days. Large, complex, high-quantity or specially finished orders may require additional time.</p>
-                <p><strong className="text-[#0F1B3D]">Ready-made products:</strong> In-stock ready-made products are normally processed for dispatch within 1-3 business days after payment confirmation. Orders placed on Sundays or public holidays will be processed on the next working day.</p>
+                <p><strong className="text-[#070b1d]">Custom 3D-printed orders:</strong> Production normally begins after payment confirmation and acceptance of the final specifications. Estimated production time is generally 3-7 business days. Large, complex, high-quantity or specially finished orders may require additional time.</p>
+                <p><strong className="text-[#070b1d]">Ready-made products:</strong> In-stock ready-made products are normally processed for dispatch within 1-3 business days after payment confirmation. Orders placed on Sundays or public holidays will be processed on the next working day.</p>
                 <p>Production time and courier-delivery time are separate.</p>
               </div>
             </section>
 
             <section>
-              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">3</span>
                 Delivery Time
               </h2>
@@ -103,7 +103,7 @@ export default function ShippingPolicyClient() {
             </section>
 
             <section>
-              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">4</span>
                 Shipping Charges
               </h2>
@@ -114,7 +114,7 @@ export default function ShippingPolicyClient() {
             </section>
 
             <section>
-              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">5</span>
                 Order Tracking and Inspection
               </h2>
@@ -125,7 +125,7 @@ export default function ShippingPolicyClient() {
             </section>
 
             <section>
-              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+              <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">6</span>
                 Lost, Delayed and Returned Shipments
               </h2>
@@ -138,16 +138,16 @@ export default function ShippingPolicyClient() {
             </section>
 
             <section className="rounded-2xl border border-[#6d28d9]/10 bg-[#faf9f7] p-8">
-              <h2 className="mb-6 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+              <h2 className="mb-6 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">7</span>
                 Customer Responsibility and Support
               </h2>
               <div className="space-y-4 leading-relaxed text-[#6F7192]">
                 <p>Customers must provide a complete and accurate shipping address, including recipient name, house or business details, street and locality, city and state, correct PIN code, active mobile number and delivery instructions where necessary.</p>
                 <p>Flux 3D is not responsible for delays or failed deliveries caused by an incomplete or incorrect address supplied by the customer. Any additional shipping cost caused by an incorrect address, refused delivery or repeated delivery attempt may be charged to the customer.</p>
-                <p><strong className="text-[#0F1B3D]">Support email:</strong> <a className="text-[#6d28d9] hover:underline" href={`mailto:${supportEmail}`}>{supportEmail}</a></p>
-                <p><strong className="text-[#0F1B3D]">Support phone:</strong> <a className="text-[#6d28d9] hover:underline" href={`tel:${supportPhone.replace(/[^0-9+]/g, '')}`}>{supportPhone}</a></p>
-                <p><strong className="text-[#0F1B3D]">Address:</strong> {address || 'Not published'}</p>
+                <p><strong className="text-[#070b1d]">Support email:</strong> <a className="text-[#6d28d9] hover:underline" href={`mailto:${supportEmail}`}>{supportEmail}</a></p>
+                <p><strong className="text-[#070b1d]">Support phone:</strong> <a className="text-[#6d28d9] hover:underline" href={`tel:${supportPhone.replace(/[^0-9+]/g, '')}`}>{supportPhone}</a></p>
+                <p><strong className="text-[#070b1d]">Address:</strong> {address || 'Not published'}</p>
                 <p>The customer should not discard the product or packaging until the claim has been reviewed.</p>
               </div>
             </section>

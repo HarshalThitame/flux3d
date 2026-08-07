@@ -67,7 +67,7 @@ export default function WhyChooseUs() {
         >
           <div>
             <span className="text-xs font-bold uppercase text-[#6d28d9]">Why clients come back</span>
-            <h2 className="mt-3 max-w-3xl !text-[clamp(2rem,6vw,3rem)] font-extrabold leading-tight !text-[#0F1B3D] md:!text-5xl">
+            <h2 className="mt-3 max-w-3xl !text-[clamp(2rem,6vw,3rem)] font-extrabold leading-tight !text-[#070b1d] md:!text-5xl">
               Premium is not decoration. It is controlled output.
             </h2>
           </div>
@@ -89,7 +89,7 @@ export default function WhyChooseUs() {
                 <span className="text-xs font-bold uppercase text-[#6b7280]">Gate {index + 1}</span>
                 <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.5)]" />
               </div>
-              <div className="text-sm font-extrabold text-[#0F1B3D]">{stage}</div>
+              <div className="text-sm font-extrabold text-[#070b1d]">{stage}</div>
             </motion.div>
           ))}
         </div>
@@ -111,9 +111,9 @@ export default function WhyChooseUs() {
                 </div>
                 <span className={`h-2.5 w-12 rounded-full ${card.accent}`} />
               </div>
-              <div className="text-3xl font-extrabold text-[#0F1B3D]">{card.metric}</div>
+              <div className="text-3xl font-extrabold text-[#070b1d]">{card.metric}</div>
               <div className="mt-1 text-xs font-bold uppercase text-[#6b7280]">{card.label}</div>
-              <h3 className="mt-6 !text-lg font-extrabold !text-[#0F1B3D]">{card.title}</h3>
+              <h3 className="mt-6 !text-lg font-extrabold !text-[#070b1d]">{card.title}</h3>
               <p className="mt-3 text-sm leading-6 text-[#6b7280]">{card.body}</p>
               <div className="mt-6 h-1 overflow-hidden rounded-full bg-purple-100">
                 <motion.div

@@ -392,14 +392,14 @@ export default function DeliveryStepClient({
 
   return (
     <>
-      <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(109, 40, 217,0.08),transparent_24%),radial-gradient(circle_at_right,rgba(168, 85, 247,0.08),transparent_28%),#FFFFFF] px-4 pb-16 pt-8 text-[#0F1B3D] md:px-8 md:pt-10 xl:px-10">
+      <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(109, 40, 217,0.08),transparent_24%),radial-gradient(circle_at_right,rgba(168, 85, 247,0.08),transparent_28%),#FFFFFF] px-4 pb-16 pt-8 text-[#070b1d] md:px-8 md:pt-10 xl:px-10">
         <div className="mx-auto max-w-[1500px]">
           <div className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div className="max-w-[760px]">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/25 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#6d28d9]">
                 Delivery Step
               </div>
-              <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2.3rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#0F1B3D]">
+              <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2.3rem,5vw,4.6rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#070b1d]">
                 Confirm Delivery and Submit <span className="text-[#6d28d9]">Your Print Request</span>
               </h1>
               <p className="mt-5 max-w-[720px] text-base leading-8 text-[#6F7192]">
@@ -409,7 +409,7 @@ export default function DeliveryStepClient({
 
             <div className="rounded-[24px] border border-[#6d28d9]/10 bg-white px-5 py-4">
               <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Signed in</div>
-              <div className="mt-2 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">{user.name}</div>
+              <div className="mt-2 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">{user.name}</div>
               <div className="mt-1 text-sm text-[#6F7192]">{user.email}</div>
             </div>
           </div>
@@ -425,7 +425,7 @@ export default function DeliveryStepClient({
                 >
                   <div className="mb-5 flex items-start justify-between gap-4">
                     <div>
-                      <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                      <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                         Saved Addresses
                       </h2>
                       <p className="mt-2 text-sm leading-6 text-[#6F7192]">
@@ -452,7 +452,7 @@ export default function DeliveryStepClient({
                               : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10 hover:bg-gray-50'
                           }`}
                         >
-                          <div className={`text-sm font-semibold ${selectedAddressId === savedAddress.id ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{savedAddress.fullName}</div>
+                          <div className={`text-sm font-semibold ${selectedAddressId === savedAddress.id ? 'text-[var(--brand-primary)]' : 'text-[#070b1d]'}`}>{savedAddress.fullName}</div>
                           <div className={`mt-1 text-sm ${selectedAddressId === savedAddress.id ? 'text-[var(--text-secondary)]' : 'text-[#6F7192]'}`}>{savedAddress.phone}</div>
                           <div className={`mt-3 space-y-1 text-xs leading-6 ${selectedAddressId === savedAddress.id ? 'text-[var(--text-secondary)]' : 'text-[#6F7192]'}`}>
                             {summary.map((line) => (
@@ -495,7 +495,7 @@ export default function DeliveryStepClient({
             >
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                  <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                     Delivery Summary
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-[#6F7192]">
@@ -510,7 +510,7 @@ export default function DeliveryStepClient({
               <div className="space-y-3">
                 <div className="rounded-[20px] border border-[#6d28d9]/10 bg-white p-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Quote</div>
-                  <div className="mt-2 text-lg font-semibold text-[#0F1B3D]">{draft.quoteId}</div>
+                  <div className="mt-2 text-lg font-semibold text-[#070b1d]">{draft.quoteId}</div>
                   <div className="mt-2 text-sm text-[#6F7192]">
                     {draft.material}, {draft.color}, {draft.infill}% infill, {draft.layerHeight} mm
                   </div>
@@ -518,7 +518,7 @@ export default function DeliveryStepClient({
 
                 <div className="rounded-[24px] border border-[#6d28d9]/20 bg-[linear-gradient(180deg,rgba(109, 40, 217,0.12),rgba(109, 40, 217,0.06))] p-5 shadow-[0_12px_48px_rgba(109, 40, 217,0.1)]">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Grand Total</div>
-                  <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
+                  <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#070b1d]">
                     ₹{pricing.totalPrice.toFixed(0)}
                   </div>
                   <div className="mt-3 grid gap-2 text-sm text-[#6F7192]">
@@ -562,7 +562,7 @@ export default function DeliveryStepClient({
                 </button>
                 <Link
                   href="/instant-quote"
-                  className="inline-flex w-full items-center justify-center rounded-[18px] border border-[#6d28d9]/10 bg-white px-4 py-3 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-purple-50"
+                  className="inline-flex w-full items-center justify-center rounded-[18px] border border-[#6d28d9]/10 bg-white px-4 py-3 text-sm font-medium text-[#070b1d] transition-colors hover:bg-purple-50"
                 >
                   Back to quote
                 </Link>
@@ -596,7 +596,7 @@ export default function DeliveryStepClient({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-3xl font-black text-[#0F1B3D]"
+                className="text-3xl font-black text-[#070b1d]"
               >
                 Payment Successful!
               </motion.h2>
@@ -651,7 +651,7 @@ export default function DeliveryStepClient({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-3xl font-black text-[#0F1B3D]"
+                className="text-3xl font-black text-[#070b1d]"
               >
                 Payment Failed
               </motion.h2>
@@ -676,7 +676,7 @@ export default function DeliveryStepClient({
                 >
                   Try Again
                 </button>
-                <a href="mailto:support@flux3d.com" className="text-sm font-medium text-[#6b7280] transition hover:text-[#0F1B3D]">
+                <a href="mailto:support@flux3d.com" className="text-sm font-medium text-[#6b7280] transition hover:text-[#070b1d]">
                   Contact Support
                 </a>
               </motion.div>

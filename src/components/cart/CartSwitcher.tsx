@@ -40,7 +40,7 @@ export default function CartSwitcher({ variant, quoteCartCount = 0 }: CartSwitch
             <ArrowLeftRight className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-[#0F1B3D]">
+            <p className="text-sm font-semibold text-[#070b1d]">
               Switch to {OtherCartLabel}
             </p>
             <p className="mt-0.5 text-xs text-[#6F7192]">

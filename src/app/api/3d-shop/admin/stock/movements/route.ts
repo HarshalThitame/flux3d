@@ -23,7 +23,7 @@ type RawMovement = {
   created_at: string
   sku: { sku_code: string } | null
   product: { name: string | null; thumbnail_url: string | null } | null
-  actor: { name: string | null } | null
+  actor: { full_name: string | null } | null
 }
 
 export async function GET(request: Request) {
@@ -57,7 +57,7 @@ export async function GET(request: Request) {
         created_at,
         sku:shelf_skus(sku_code),
         product:shelf_products(name, thumbnail_url),
-        actor:profiles(name)
+        actor:profiles(full_name)
       `, { count: 'exact' })
 
     if (reason && REASONS.includes(reason)) query = query.eq('reason_type', reason)
@@ -89,7 +89,7 @@ export async function GET(request: Request) {
       reason_type: movement.reason_type,
       reference_id: movement.reference_id,
       actor_id: movement.actor_id,
-      actor_name: movement.actor?.name ?? null,
+      actor_name: movement.actor?.full_name ?? null,
       note: movement.note,
       created_at: movement.created_at,
       sku_code: movement.sku?.sku_code ?? null,

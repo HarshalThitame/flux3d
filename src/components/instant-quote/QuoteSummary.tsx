@@ -63,7 +63,7 @@ export default function QuoteSummary({
       <div className="lg:sticky lg:top-24">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+            <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
               Price & Quotation
             </h2>
             <p className="mt-2 text-sm leading-6 text-[#6F7192]">
@@ -81,7 +81,7 @@ export default function QuoteSummary({
           className="mb-4 rounded-[22px] border border-[#6d28d9]/15 bg-[radial-gradient(circle_at_top,rgba(109, 40, 217,0.18),transparent_48%),rgba(109, 40, 217,0.25)] p-4"
         >
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Quote Session</div>
-          <div className="mt-2 text-xl font-semibold text-[#0F1B3D]">{quoteId}</div>
+          <div className="mt-2 text-xl font-semibold text-[#070b1d]">{quoteId}</div>
           <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/10 bg-white px-3 py-1 text-xs text-[var(--text-secondary)]">
             <Sparkles className="h-3.5 w-3.5 text-[#6d28d9]" />
             {material.name}
@@ -96,7 +96,7 @@ export default function QuoteSummary({
               <motion.div whileHover={{ y: -2 }} className="rounded-[20px] border border-[#6d28d9]/10 bg-white p-4">
                 <div className="flex items-center justify-between text-sm text-[var(--text-secondary)]">
                   <span>Print weight</span>
-                  <span className="font-medium text-[#0F1B3D]">
+                  <span className="font-medium text-[#070b1d]">
                     {priceBreakdown.materialWeightGrams.toFixed(2)} g
                   </span>
                 </div>
@@ -108,7 +108,7 @@ export default function QuoteSummary({
               <motion.div whileHover={{ y: -2 }} className="rounded-[20px] border border-[#6d28d9]/10 bg-white p-4">
                 <div className="flex items-center justify-between text-sm text-[var(--text-secondary)]">
                   <span>Estimated print time</span>
-                  <span className="font-medium text-[#0F1B3D]">
+                  <span className="font-medium text-[#070b1d]">
                     {formatDurationMinutes(priceBreakdown.estimatedMinutes)}
                   </span>
                 </div>
@@ -123,7 +123,7 @@ export default function QuoteSummary({
                 className="rounded-[24px] border border-[#6d28d9]/20 bg-[linear-gradient(180deg,rgba(109, 40, 217,0.12),rgba(109, 40, 217,0.06))] p-5 shadow-[0_12px_48px_rgba(109, 40, 217,0.1)]"
               >
                 <div className="text-[11px] uppercase tracking-[0.22em] text-[var(--brand-primary)]">Total Price</div>
-                <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#0F1B3D]">
+                <div className="mt-2 font-[var(--font-syne)] text-4xl font-bold text-[#070b1d]">
                   ₹{priceBreakdown.priceBeforeDiscount.toFixed(0)}
                 </div>
                 <div className="mt-3 grid gap-2 text-sm text-[var(--text-secondary)]">
@@ -161,7 +161,7 @@ export default function QuoteSummary({
                     <span>Cart discount</span>
                     <span>{priceBreakdown.cartDiscountPercent}% · {priceBreakdown.cartDiscountAmount > 0 ? '-' : ''}₹{priceBreakdown.cartDiscountAmount.toFixed(2)}</span>
                   </div>
-                  <div className="border-t border-[#6d28d9]/10 pt-2 mt-1 flex justify-between font-medium text-[#0F1B3D]">
+                  <div className="border-t border-[#6d28d9]/10 pt-2 mt-1 flex justify-between font-medium text-[#070b1d]">
                     <span>Total price</span>
                     <span>₹{priceBreakdown.priceBeforeDiscount.toFixed(2)}</span>
                   </div>
@@ -190,7 +190,7 @@ export default function QuoteSummary({
                     <Cuboid className="h-3.5 w-3.5" />
                     Dimensions
                   </div>
-                  <div className="text-sm text-[#0F1B3D]">
+                  <div className="text-sm text-[#070b1d]">
                     {priceBreakdown.dimensionsMm.x.toFixed(1)} × {priceBreakdown.dimensionsMm.y.toFixed(1)} × {priceBreakdown.dimensionsMm.z.toFixed(1)} mm
                   </div>
                 </motion.div>
@@ -200,7 +200,7 @@ export default function QuoteSummary({
                     <Truck className="h-3.5 w-3.5" />
                     Delivery Window
                   </div>
-                  <div className="text-sm font-medium text-[#0F1B3D]">Advertised under ~48 hour print and delivery</div>
+                  <div className="text-sm font-medium text-[#070b1d]">Advertised under ~48 hour print and delivery</div>
                 </motion.div>
               </div>
             </div>
@@ -245,7 +245,7 @@ export default function QuoteSummary({
             {!isSignedIn ? (
               <Link
                 href="/login?next=%2Finstant-quote"
-                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[18px] border border-[#6d28d9]/10 bg-white px-4 py-3 text-sm font-medium text-[#0F1B3D] transition-colors hover:bg-[var(--bg-soft)]"
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[18px] border border-[#6d28d9]/10 bg-white px-4 py-3 text-sm font-medium text-[#070b1d] transition-colors hover:bg-[var(--bg-soft)]"
               >
                 Sign in to save and order faster
                 <ArrowRight className="h-4 w-4" />

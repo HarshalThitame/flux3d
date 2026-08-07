@@ -20,7 +20,7 @@ export default function Image() {
           padding: '56px 64px',
           background:
             'radial-gradient(circle at top, rgba(109, 40, 217,0.22), transparent 42%), linear-gradient(135deg, #f8f6f2 0%, #faf9f7 58%, #ede9fe 100%)',
-          color: '#1a1a1a',
+          color: '#070b1d',
         }}
       >
         <div

@@ -142,7 +142,7 @@ export default function ServicesHero() {
   const businessName = settings.businessName || 'Flux3D'
 
   return (
-    <section className="services-hero-premium relative isolate overflow-hidden px-4 pb-10 pt-8 text-[#0F1B3D] md:px-8 lg:px-16">
+    <section className="services-hero-premium relative isolate overflow-hidden px-4 pb-10 pt-8 text-[#070b1d] md:px-8 lg:px-16">
       <ServicesPremiumFX />
       <div className="services-hero-depth" aria-hidden="true" />
       <div className="services-hero-grid" aria-hidden="true" />
@@ -155,9 +155,9 @@ export default function ServicesHero() {
         className="relative z-10 mx-auto flex min-h-[76svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-10 pt-10 md:pt-12 lg:pt-14"
       >
         <motion.div variants={item} className="mb-4 flex items-center gap-2 text-sm font-medium text-[#6b7280]">
-          <Link href="/" className="transition hover:text-[#0F1B3D]">Home</Link>
+          <Link href="/" className="transition hover:text-[#070b1d]">Home</Link>
           <ChevronRight className="h-3.5 w-3.5" />
-          <span className="text-[#0F1B3D]">Services</span>
+          <span className="text-[#070b1d]">Services</span>
         </motion.div>
 
         <motion.div
@@ -172,7 +172,7 @@ export default function ServicesHero() {
           <div className="min-w-0">
             <motion.h1
               variants={item}
-              className="services-hero-title max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.06] text-[#0F1B3D] sm:text-6xl sm:leading-[0.98] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
+              className="services-hero-title max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.06] text-[#070b1d] sm:text-6xl sm:leading-[0.98] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
             >
               Services engineered for premium output.
             </motion.h1>
@@ -254,7 +254,7 @@ export default function ServicesHero() {
                     <signal.icon className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-extrabold text-[#0F1B3D]">{signal.title}</div>
+                    <div className="text-sm font-extrabold text-[#070b1d]">{signal.title}</div>
                     <p className="mt-1 break-words text-xs leading-5 text-[#6b7280]">{signal.body}</p>
                   </div>
                 </div>
@@ -266,7 +266,7 @@ export default function ServicesHero() {
         <motion.div variants={item} className="services-hero-stats mt-10 grid w-full overflow-hidden rounded-lg border border-purple-200 bg-white shadow-sm sm:grid-cols-2 lg:grid-cols-4">
           {heroStats.map((stat) => (
             <div key={stat.label} className="border-b border-purple-100 p-5 last:border-b-0 sm:border-r sm:last:border-r-0 lg:border-b-0">
-              <div className="text-3xl font-extrabold text-[#0F1B3D]">{stat.value}</div>
+              <div className="text-3xl font-extrabold text-[#070b1d]">{stat.value}</div>
               <div className="mt-1 text-xs font-bold uppercase text-[#6b7280]">{stat.label}</div>
             </div>
           ))}

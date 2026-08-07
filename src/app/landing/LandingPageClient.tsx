@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { startTransition, useEffect, useRef, useState } from 'react'
 import { MessageCircle } from 'lucide-react'
 import FadeIn from '@/components/FadeIn'
+import ScrollVelocitySkew from '@/components/ui/ScrollVelocitySkew'
 import { useBusinessSettings } from '@/lib/settings-context'
 import { useIsFinePointer } from '@/hooks/useMediaQuery'
 import { createRafThrottledCallback } from '@/lib/raf-throttle'
@@ -177,32 +178,34 @@ export default function LandingPageClient() {
       <FloatingOrbs />
       <PremiumLandingFX />
       <FloatingWhatsAppButton />
-      <LazySection minHeight={520} className="premium-band premium-band-ink">
-        <ProblemSection />
-      </LazySection>
-      <LazySection minHeight={760} className="premium-band premium-band-panel">
-        <ServicesSection />
-      </LazySection>
-      <LazySection minHeight={160} className="premium-band premium-band-panel">
-        <section className="premium-offer-shell mx-auto mb-8 max-w-[1200px] px-6 md:mb-12 lg:mb-16">
-          <OfferBanner />
-        </section>
-      </LazySection>
-      <LazySection minHeight={720} className="premium-band premium-band-ink">
-        <HowItWorksSection />
-      </LazySection>
-      <LazySection minHeight={860} className="premium-band premium-band-panel">
-        <PricingSection />
-      </LazySection>
-      <LazySection minHeight={720} className="premium-band premium-band-panel">
-        <FAQSection />
-      </LazySection>
-      <LazySection minHeight={560} className="premium-band premium-band-black">
-        <FinalCTASection />
-      </LazySection>
-      <LazySection minHeight={640}>
-        <FooterSection />
-      </LazySection>
+      <ScrollVelocitySkew>
+        <LazySection minHeight={520} className="premium-band premium-band-ink">
+          <ProblemSection />
+        </LazySection>
+        <LazySection minHeight={760} className="premium-band premium-band-panel">
+          <ServicesSection />
+        </LazySection>
+        <LazySection minHeight={160} className="premium-band premium-band-panel">
+          <section className="premium-offer-shell mx-auto mb-8 max-w-[1200px] px-6 md:mb-12 lg:mb-16">
+            <OfferBanner />
+          </section>
+        </LazySection>
+        <LazySection minHeight={720} className="premium-band premium-band-ink">
+          <HowItWorksSection />
+        </LazySection>
+        <LazySection minHeight={860} className="premium-band premium-band-panel">
+          <PricingSection />
+        </LazySection>
+        <LazySection minHeight={720} className="premium-band premium-band-panel">
+          <FAQSection />
+        </LazySection>
+        <LazySection minHeight={560} className="premium-band premium-band-black">
+          <FinalCTASection />
+        </LazySection>
+        <LazySection minHeight={640}>
+          <FooterSection />
+        </LazySection>
+      </ScrollVelocitySkew>
     </div>
   )
 }

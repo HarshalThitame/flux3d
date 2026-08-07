@@ -37,7 +37,7 @@ export default function ContactContent() {
             className="mx-auto max-w-4xl text-center"
           >
             <p className="mb-5 text-sm font-semibold uppercase tracking-[3px] text-[#6d28d9]">Contact Us</p>
-            <h1 className="font-[var(--font-syne)] text-[clamp(2rem,6vw,4rem)] font-extrabold leading-[1.1] text-[#0F1B3D]">
+            <h1 className="font-[var(--font-syne)] text-[clamp(2rem,6vw,4rem)] font-extrabold leading-[1.1] text-[#070b1d]">
               Speak to {brandName} about a custom print, quote, or delivery question.
             </h1>
             <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-[#6F7192]">
@@ -62,7 +62,7 @@ export default function ContactContent() {
                   <div className="flex items-start gap-3">
                     <Mail className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
                     <div>
-                      <p className="text-sm font-semibold text-[#0F1B3D]">Email</p>
+                      <p className="text-sm font-semibold text-[#070b1d]">Email</p>
                       <a href={`mailto:${supportEmail}`} className="text-sm text-[#6F7192] hover:text-[#6d28d9]">
                         {supportEmail}
                       </a>
@@ -72,7 +72,7 @@ export default function ContactContent() {
                   <div className="flex items-start gap-3">
                     <Phone className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
                     <div>
-                      <p className="text-sm font-semibold text-[#0F1B3D]">Phone</p>
+                      <p className="text-sm font-semibold text-[#070b1d]">Phone</p>
                       <a href={`tel:${supportPhone.replace(/[^0-9+]/g, '')}`} className="text-sm text-[#6F7192] hover:text-[#6d28d9]">
                         {supportPhone}
                       </a>
@@ -82,7 +82,7 @@ export default function ContactContent() {
                   <div className="flex items-start gap-3">
                     <MapPin className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
                     <div>
-                      <p className="text-sm font-semibold text-[#0F1B3D]">Address</p>
+                      <p className="text-sm font-semibold text-[#070b1d]">Address</p>
                       <p className="text-sm leading-7 text-[#6F7192]">{address || 'Not published'}</p>
                     </div>
                   </div>
@@ -90,7 +90,7 @@ export default function ContactContent() {
                   <div className="flex items-start gap-3">
                     <Clock3 className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
                     <div>
-                      <p className="text-sm font-semibold text-[#0F1B3D]">Business Hours</p>
+                      <p className="text-sm font-semibold text-[#070b1d]">Business Hours</p>
                       <p className="text-sm leading-7 text-[#6F7192]">
                         {[settings.workingDays, settings.businessHours || settings.workingHours].filter(Boolean).join(' · ') || 'We review messages during business hours when available and respond as soon as possible through the contact details you provide.'}
                       </p>
@@ -100,7 +100,7 @@ export default function ContactContent() {
                     <div className="flex items-start gap-3">
                       <Clock3 className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
                       <div>
-                        <p className="text-sm font-semibold text-[#0F1B3D]">Processing Time</p>
+                        <p className="text-sm font-semibold text-[#070b1d]">Processing Time</p>
                         <p className="text-sm text-[#6F7192]">{settings.orderProcessingTime}</p>
                       </div>
                     </div>
@@ -109,7 +109,7 @@ export default function ContactContent() {
                     <div className="flex items-start gap-3">
                       <Clock3 className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
                       <div>
-                        <p className="text-sm font-semibold text-[#0F1B3D]">Notice</p>
+                        <p className="text-sm font-semibold text-[#070b1d]">Notice</p>
                         <p className="text-sm text-[#6F7192]">{settings.holidayMessage}</p>
                       </div>
                     </div>
@@ -118,7 +118,7 @@ export default function ContactContent() {
                     <div className="flex items-start gap-3">
                       <Mail className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
                       <div>
-                        <p className="text-sm font-semibold text-[#0F1B3D]">Sales</p>
+                        <p className="text-sm font-semibold text-[#070b1d]">Sales</p>
                         <a href={`mailto:${settings.salesEmail}`} className="text-sm text-[#6F7192] hover:text-[#6d28d9]">{settings.salesEmail}</a>
                       </div>
                     </div>
@@ -127,7 +127,7 @@ export default function ContactContent() {
                     <div className="flex items-start gap-3">
                       <Mail className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
                       <div>
-                        <p className="text-sm font-semibold text-[#0F1B3D]">Billing</p>
+                        <p className="text-sm font-semibold text-[#070b1d]">Billing</p>
                         <a href={`mailto:${settings.billingEmail}`} className="text-sm text-[#6F7192] hover:text-[#6d28d9]">{settings.billingEmail}</a>
                       </div>
                     </div>
@@ -136,7 +136,7 @@ export default function ContactContent() {
                     <div className="flex items-start gap-3">
                       <Phone className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
                       <div>
-                        <p className="text-sm font-semibold text-[#0F1B3D]">Alternate</p>
+                        <p className="text-sm font-semibold text-[#070b1d]">Alternate</p>
                         <a href={`tel:${settings.alternatePhone.replace(/[^0-9+]/g, '')}`} className="text-sm text-[#6F7192] hover:text-[#6d28d9]">{settings.alternatePhone}</a>
                       </div>
                     </div>
@@ -145,7 +145,7 @@ export default function ContactContent() {
                     <div className="flex items-start gap-3">
                       <Phone className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
                       <div>
-                        <p className="text-sm font-semibold text-[#0F1B3D]">Toll-Free</p>
+                        <p className="text-sm font-semibold text-[#070b1d]">Toll-Free</p>
                         <a href={`tel:${settings.tollFreeNumber.replace(/[^0-9+]/g, '')}`} className="text-sm text-[#6F7192] hover:text-[#6d28d9]">{settings.tollFreeNumber}</a>
                       </div>
                     </div>
@@ -154,7 +154,7 @@ export default function ContactContent() {
                     <div className="flex items-start gap-3">
                       <Phone className="mt-0.5 h-5 w-5 text-[#6d28d9]" />
                       <div>
-                        <p className="text-sm font-semibold text-[#0F1B3D]">Emergency</p>
+                        <p className="text-sm font-semibold text-[#070b1d]">Emergency</p>
                         <a href={`tel:${settings.emergencyContact.replace(/[^0-9+]/g, '')}`} className="text-sm text-[#6F7192] hover:text-[#6d28d9]">{settings.emergencyContact}</a>
                       </div>
                     </div>
@@ -169,7 +169,7 @@ export default function ContactContent() {
                   Do not send payment card details, UPI PINs, or passwords.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <Link href="/privacy-policy" className="rounded-xl border border-[#6d28d9]/20 bg-white px-4 py-3 text-sm font-semibold text-[#0F1B3D]">
+                  <Link href="/privacy-policy" className="rounded-xl border border-[#6d28d9]/20 bg-white px-4 py-3 text-sm font-semibold text-[#070b1d]">
                     Privacy Policy
                   </Link>
                   <Link href="/pricing" className="rounded-xl bg-[#6d28d9] px-4 py-3 text-sm font-semibold text-white">

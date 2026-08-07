@@ -384,7 +384,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[110] grid place-items-center bg-slate-950/40 px-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[110] grid place-items-center bg-[#2e1065]/40 px-4 backdrop-blur-sm"
           >
             <motion.div
               initial={{ opacity: 0, y: 18, scale: 0.98 }}
@@ -813,7 +813,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                     </p>
                     <Link
                       href={`/3d-shop/payment/${order.id}`}
-                      className="mt-2 inline-flex min-h-[36px] items-center justify-center rounded-lg bg-[var(--shop-gold)] px-3 text-xs font-bold text-white"
+                      className="mt-2 inline-flex min-h-[36px] items-center justify-center rounded-lg bg-[var(--shop-gold)] px-3 text-xs font-bold text-[var(--luxury-charcoal)]"
                     >
                       Complete payment
                     </Link>

@@ -205,7 +205,7 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
 
       {/* Cancel/Return Dialog */}
       {dialogType && (
-        <div className="fixed inset-0 z-[110] grid place-items-center bg-slate-950/40 px-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[110] grid place-items-center bg-[#2e1065]/40 px-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-[var(--shop-border-light)] bg-white p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-2.5">
@@ -489,7 +489,7 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
                 <p className="font-bold">Payment is still pending or failed.</p>
                 <Link
                   href={`/3d-shop/payment/${order.id}`}
-                  className="mt-2 inline-flex min-h-[36px] items-center justify-center rounded-lg bg-[var(--shop-gold)] px-3 text-xs font-bold text-white"
+                  className="mt-2 inline-flex min-h-[36px] items-center justify-center rounded-lg bg-[var(--shop-gold)] px-3 text-xs font-bold text-[var(--luxury-charcoal)]"
                 >
                   Complete payment
                 </Link>

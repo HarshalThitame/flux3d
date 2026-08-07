@@ -36,7 +36,7 @@ export function ShopCartNavButton({ mobile = false, onOpenAction }: { mobile?: b
       <ShoppingBag className="h-4 w-4" />
       <span className={mobile ? undefined : 'sr-only'}>{label}</span>
       {itemCount > 0 && (
-        <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--shop-gold)] px-1 text-[10px] font-bold text-white shadow-[var(--shop-shadow-gold)]">
+        <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--shop-gold)] px-1 text-[10px] font-bold text-[var(--luxury-charcoal)] shadow-[var(--shop-shadow-gold)]">
           {itemCount}
         </span>
       )}
@@ -57,7 +57,8 @@ export default function ShopCartDrawer({
   const discountAmount = useShopCartStore((state) => state.discountAmount)
   const appliedCoupon = useShopCartStore((state) => state.appliedCoupon)
   const autoApplyOffer = useShopCartStore((state) => state.autoApplyOffer)
-  const isCartOpen = open ?? useShopCartStore((state) => state.isCartOpen)
+  const storeIsCartOpen = useShopCartStore((state) => state.isCartOpen)
+  const isCartOpen = open ?? storeIsCartOpen
   const storeCloseCart = useShopCartStore((state) => state.closeCart)
   const removeItem = useShopCartStore((state) => state.removeItem)
   const updateQuantity = useShopCartStore((state) => state.updateQuantity)
@@ -115,7 +116,7 @@ export default function ShopCartDrawer({
           <button
             type="button"
             aria-label="Close 3D Shop cart"
-            className="absolute inset-0 bg-[#1C1917]/55 backdrop-blur-sm"
+            className="absolute inset-0 bg-[#2e1065]/40 backdrop-blur-sm"
             onClick={closeCart}
           />
           <motion.aside
@@ -123,7 +124,7 @@ export default function ShopCartDrawer({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute bottom-0 left-0 right-0 flex h-[92vh] min-h-0 flex-col overflow-hidden rounded-t-3xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-base)] shadow-[var(--shop-shadow-lg)] md:bottom-0 md:left-auto md:top-0 md:h-full md:w-[440px] md:rounded-none md:rounded-l-3xl"
+            className="absolute bottom-0 left-0 right-0 flex h-[92vh] min-h-0 flex-col overflow-hidden rounded-t-3xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-base)]/90 shadow-[var(--shop-shadow-lg)] backdrop-blur-2xl md:bottom-0 md:left-auto md:top-0 md:h-full md:w-[440px] md:rounded-none md:rounded-l-3xl"
           >
             <div className="flex items-center justify-between border-b border-[var(--shop-border-light)] px-5 py-4">
               <div>

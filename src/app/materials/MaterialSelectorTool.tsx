@@ -41,7 +41,7 @@ function PropertyBadge({
         <Icon className="h-3.5 w-3.5 text-[#6d28d9]" />
         {label}
       </div>
-      <div className="text-sm font-extrabold text-[#111827]">{value}</div>
+      <div className="text-sm font-extrabold text-[#070b1d]">{value}</div>
     </div>
   )
 }
@@ -121,7 +121,7 @@ export default function MaterialSelectorTool() {
           <span className="mb-2 inline-block text-xs font-bold uppercase text-[#6d28d9]">
             Material Selector
           </span>
-          <h2 className="mx-auto max-w-2xl text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#111827] md:text-4xl">
+          <h2 className="mx-auto max-w-2xl text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#070b1d] md:text-4xl">
             Let the part decide the material.
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#6F7192]">
@@ -156,7 +156,7 @@ export default function MaterialSelectorTool() {
                 exit={{ opacity: 0, x: -28 }}
                 transition={{ duration: 0.22 }}
               >
-                <p className="mb-5 text-lg font-extrabold leading-7 text-[#111827]">
+                <p className="mb-5 text-lg font-extrabold leading-7 text-[#070b1d]">
                   <span className="mr-2 text-[#6d28d9]">Q{activeQuestion + 1}.</span>
                   {currentQuestion.label}
                 </p>
@@ -172,7 +172,7 @@ export default function MaterialSelectorTool() {
                         className={`min-h-14 rounded-2xl border px-4 py-3 text-left text-sm font-bold transition-all ${
                           selected
                             ? 'border-[#6d28d9] bg-[#f5f3ff] text-[#5B3FD6] shadow-sm'
-                            : 'border-gray-200 bg-[#FAFBFD] text-[#4B5563] hover:border-[#6d28d9]/40 hover:bg-white hover:text-[#111827]'
+                            : 'border-gray-200 bg-[#FAFBFD] text-[#4B5563] hover:border-[#6d28d9]/40 hover:bg-white hover:text-[#070b1d]'
                         }`}
                       >
                         <span className="flex items-start gap-2">
@@ -201,11 +201,11 @@ export default function MaterialSelectorTool() {
                   <p className="mb-2 text-xs font-bold uppercase text-[#6d28d9]">
                     Primary Recommendation
                   </p>
-                  <h3 className="text-3xl font-extrabold text-[#111827]">
+                  <h3 className="text-3xl font-extrabold text-[#070b1d]">
                     {recommendation.primary.material.displayName}
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-[#4B5563]">
-                    <span className="font-bold text-[#111827]">Recommended because:</span>{' '}
+                    <span className="font-bold text-[#070b1d]">Recommended because:</span>{' '}
                     {recommendation.primary.reason}
                   </p>
                   <p className="mt-2 text-sm leading-6 text-[#6F7192]">
@@ -237,7 +237,7 @@ export default function MaterialSelectorTool() {
                 {recommendation.secondary && (
                   <div className="materials-result-card rounded-lg border border-gray-200 bg-[#FAFBFD] p-4">
                     <p className="text-sm text-[#4B5563]">
-                      <span className="font-semibold text-[#0F1B3D]">
+                      <span className="font-semibold text-[#070b1d]">
                         Also consider: {recommendation.secondary.material.displayName}
                       </span>{' '}
                       — {recommendation.secondary.tradeoff}.
@@ -259,7 +259,7 @@ export default function MaterialSelectorTool() {
                 <button
                   type="button"
                   onClick={handleRetake}
-                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-5 text-sm font-bold text-[#4B5563] transition hover:bg-gray-50 hover:text-[#111827] sm:w-auto"
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-5 text-sm font-bold text-[#4B5563] transition hover:bg-gray-50 hover:text-[#070b1d] sm:w-auto"
                 >
                   <RotateCcw className="h-4 w-4" />
                   Retake Quiz

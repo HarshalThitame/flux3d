@@ -102,7 +102,7 @@ function OrderItemAccordion({ item }: { item: OrderDetailRow }) {
         onClick={() => setExpanded(!expanded)}
       >
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold text-[#0F1B3D]">{item.material}</div>
+          <div className="truncate text-sm font-semibold text-[#070b1d]">{item.material}</div>
           <div className="text-xs text-gray-500">{item.color} · Qty: {item.quantity ?? 1}</div>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
@@ -193,14 +193,14 @@ export function OrderDetailClient({
     <>
       {/* Status Timeline */}
       <div className="order-section">
-        <h2 className="mb-3 text-sm font-semibold text-[#0F1B3D]">Order Progress</h2>
+        <h2 className="mb-3 text-sm font-semibold text-[#070b1d]">Order Progress</h2>
         <OrderStatusTimeline currentStatus={row.status} />
       </div>
 
       {/* Configuration / Items */}
       {isMultiItem ? (
         <div className="order-section">
-          <h2 className="mb-3 text-sm font-semibold text-[#0F1B3D]">
+          <h2 className="mb-3 text-sm font-semibold text-[#070b1d]">
             Order Items ({groupedItems.length})
           </h2>
           <div className="space-y-2">
@@ -211,7 +211,7 @@ export function OrderDetailClient({
         </div>
       ) : (
         <div className="order-section">
-          <h2 className="mb-3 text-sm font-semibold text-[#0F1B3D]">Configuration</h2>
+          <h2 className="mb-3 text-sm font-semibold text-[#070b1d]">Configuration</h2>
           <CompactInfoGrid
             columns={2}
             items={[
@@ -241,7 +241,7 @@ export function OrderDetailClient({
           {row.notes?.trim() && (
             <div className="mt-3 rounded-xl bg-gray-50 px-3 py-2.5">
               <div className="text-[10px] font-medium uppercase tracking-wider text-gray-500">Notes</div>
-              <div className="mt-1 text-sm leading-relaxed text-[#0F1B3D]">{row.notes}</div>
+              <div className="mt-1 text-sm leading-relaxed text-[#070b1d]">{row.notes}</div>
             </div>
           )}
         </div>
@@ -250,7 +250,7 @@ export function OrderDetailClient({
       {/* Payment Status */}
       <div className="order-section">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-[#0F1B3D]">Payment</h2>
+          <h2 className="text-sm font-semibold text-[#070b1d]">Payment</h2>
           {row.payment_status === 'paid' ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -268,13 +268,13 @@ export function OrderDetailClient({
         <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
           <div>
             <div className="text-[10px] uppercase tracking-wider text-gray-500">Method</div>
-            <div className="mt-0.5 font-medium text-[#0F1B3D]">
+            <div className="mt-0.5 font-medium text-[#070b1d]">
               {row.payment_provider ?? row.payment_method ?? 'Not set'}
             </div>
           </div>
           <div>
             <div className="text-[10px] uppercase tracking-wider text-gray-500">Amount</div>
-            <div className="mt-0.5 font-medium text-[#0F1B3D]">
+            <div className="mt-0.5 font-medium text-[#070b1d]">
               ₹{Math.round(Number(row.payment_amount_paise ?? 0) / 100).toLocaleString('en-IN')}
             </div>
           </div>
@@ -315,10 +315,10 @@ export function OrderDetailClient({
 
       {/* Delivery Address */}
       <div className="order-section">
-        <h2 className="mb-3 text-sm font-semibold text-[#0F1B3D]">Delivery Address</h2>
+        <h2 className="mb-3 text-sm font-semibold text-[#070b1d]">Delivery Address</h2>
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1">
-            <div className="text-sm font-semibold text-[#0F1B3D]">
+            <div className="text-sm font-semibold text-[#070b1d]">
               {row.full_name} · {row.phone}
             </div>
             <div className="mt-1.5 space-y-0.5 text-sm leading-relaxed text-gray-600">

@@ -164,12 +164,12 @@ export default function PricingClient({
   const displayMaterials = materials.filter((material) => material.name).slice(0, 8)
   if (displayMaterials.length === 0) {
     return (
-      <main className="pricing-premium-content text-[#0F1B3D]">
+      <main className="pricing-premium-content text-[#070b1d]">
         <PricingPremiumFX />
         <section className="relative mx-auto flex min-h-[82svh] w-full max-w-[1220px] items-center px-6 py-20">
           <div className="max-w-2xl">
             <p className="text-sm font-bold uppercase text-[#6d28d9]">Pricing unavailable</p>
-            <h1 className="mt-3 text-4xl font-black leading-tight text-[#0F1B3D] md:text-6xl">
+            <h1 className="mt-3 text-4xl font-black leading-tight text-[#070b1d] md:text-6xl">
               Public material pricing is not configured yet.
             </h1>
             <p className="mt-4 text-sm leading-7 text-[#6b7280]">
@@ -199,10 +199,10 @@ export default function PricingClient({
   ]
 
   return (
-    <main className="pricing-premium-content text-[#0F1B3D]">
+    <main className="pricing-premium-content text-[#070b1d]">
       <PricingPremiumFX />
 
-      <section className="pricing-hero-premium relative isolate overflow-hidden px-4 pb-12 pt-6 text-[#0F1B3D] sm:px-6 md:px-10 lg:px-12">
+      <section className="pricing-hero-premium relative isolate overflow-hidden px-4 pb-12 pt-6 text-[#070b1d] sm:px-6 md:px-10 lg:px-12">
         <div className="pricing-hero-depth" aria-hidden="true" />
         <div className="pricing-hero-grid" aria-hidden="true" />
         <div className="pricing-hero-beam" aria-hidden="true" />
@@ -215,9 +215,9 @@ export default function PricingClient({
           className="relative z-10 mx-auto flex min-h-[82svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-10 pt-8 md:pt-10 lg:pt-12"
         >
           <motion.div variants={item} className="mb-4 flex items-center gap-2 text-sm font-medium text-[#6b7280]">
-            <Link href="/" className="transition hover:text-[#0F1B3D]">Home</Link>
+            <Link href="/" className="transition hover:text-[#070b1d]">Home</Link>
             <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-[#0F1B3D]">Pricing</span>
+            <span className="text-[#070b1d]">Pricing</span>
           </motion.div>
 
           <motion.div
@@ -232,7 +232,7 @@ export default function PricingClient({
             <div className="min-w-0">
               <motion.h1
                 variants={item}
-                className="pricing-hero-title max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#0F1B3D] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
+                className="pricing-hero-title max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#070b1d] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
               >
                 Pricing engineered before production starts.
               </motion.h1>
@@ -264,7 +264,7 @@ export default function PricingClient({
                 {heroStats.map((stat) => (
                   <div key={stat.label} className="min-w-0 rounded-lg border border-purple-200 bg-white p-4 shadow-sm">
                     <div className="text-xs font-bold uppercase text-[#6b7280]">{stat.label}</div>
-                    <div className="mt-2 text-sm font-extrabold text-[#0F1B3D]">{stat.value}</div>
+                    <div className="mt-2 text-sm font-extrabold text-[#070b1d]">{stat.value}</div>
                   </div>
                 ))}
               </motion.div>
@@ -335,7 +335,7 @@ export default function PricingClient({
           >
             <div>
               <p className="text-sm font-bold uppercase text-[#6d28d9]">Quote drivers</p>
-              <h2 className="mt-2 text-3xl font-extrabold text-[#0F1B3D] md:text-5xl">What shapes the final quote</h2>
+              <h2 className="mt-2 text-3xl font-extrabold text-[#070b1d] md:text-5xl">What shapes the final quote</h2>
             </div>
             <p className="max-w-md text-sm leading-7 text-[#6b7280]">
               The listed material rate is only the starting point. The production review locks the final amount.
@@ -355,7 +355,7 @@ export default function PricingClient({
                 <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-lg bg-[#6d28d9] text-white">
                   <driver.icon className="h-5 w-5" />
                 </div>
-                <h3 className="text-xl font-extrabold text-[#0F1B3D]">{driver.title}</h3>
+                <h3 className="text-xl font-extrabold text-[#070b1d]">{driver.title}</h3>
                 <p className="mt-3 text-sm leading-6 text-[#6b7280]">{driver.description}</p>
               </motion.div>
             ))}
@@ -372,7 +372,7 @@ export default function PricingClient({
             viewport={{ once: true }}
           >
             <p className="text-sm font-bold uppercase text-[#6d28d9]">Material rates</p>
-            <h2 className="mt-2 text-3xl font-extrabold text-[#0F1B3D] md:text-5xl">Clear per-gram starting points</h2>
+            <h2 className="mt-2 text-3xl font-extrabold text-[#070b1d] md:text-5xl">Clear per-gram starting points</h2>
             <p className="mt-4 text-sm leading-7 text-[#6b7280]">
               Use these rates to compare material direction before upload. The final quote includes print setup, supports, finish, quantity, and delivery needs.
             </p>
@@ -395,7 +395,7 @@ export default function PricingClient({
                 className="grid grid-cols-[1.2fr_0.8fr_0.8fr] items-center gap-3 border-b border-purple-100 px-4 py-4 last:border-b-0"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-extrabold text-[#0F1B3D]">{material.name}</p>
+                  <p className="truncate text-sm font-extrabold text-[#070b1d]">{material.name}</p>
                   <p className="mt-1 text-xs text-[#6b7280]">Production material</p>
                 </div>
                 <p className="text-sm font-extrabold text-[#6d28d9]">₹{formatCurrency(Number(material.price_per_gram || 0))}/g</p>
@@ -417,7 +417,7 @@ export default function PricingClient({
           <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
             <div>
               <p className="text-sm font-bold uppercase text-[#6d28d9]">Quote workflow</p>
-              <h2 className="mt-2 text-3xl font-extrabold text-[#0F1B3D] md:text-5xl">From upload to dispatch</h2>
+              <h2 className="mt-2 text-3xl font-extrabold text-[#070b1d] md:text-5xl">From upload to dispatch</h2>
               <p className="mt-4 text-sm leading-7 text-[#6b7280]">
                 A clear review path keeps pricing accurate before production starts.
               </p>
@@ -448,7 +448,7 @@ export default function PricingClient({
             <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-[#6d28d9] text-white">
               <PackageCheck className="h-5 w-5 text-white" />
             </div>
-            <h2 className="text-3xl font-extrabold text-[#0F1B3D] md:text-5xl">Ready for a real quote?</h2>
+            <h2 className="text-3xl font-extrabold text-[#070b1d] md:text-5xl">Ready for a real quote?</h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-[#6b7280]">
               Upload your file and Flux3D will price the part around actual geometry, material, finish, and production timeline.
             </p>

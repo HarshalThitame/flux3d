@@ -12,10 +12,10 @@ import { validateEmail } from '@/lib/auth/validation'
 const initialState: AuthFormState = {}
 
 const fieldClass =
-  'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-[#111827] outline-none transition-[border-color] duration-150 placeholder:text-[#9CA3AF] focus:border-[#6d28d9]'
+  'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-[#070b1d] outline-none transition-[border-color] duration-150 placeholder:text-[#9CA3AF] focus:border-[#6d28d9]'
 
 const errorFieldClass =
-  'h-11 w-full rounded-lg border bg-white px-3 text-sm font-medium text-[#111827] outline-none transition-[border-color] duration-150 placeholder:text-[#9CA3AF] border-red-400 ring-1 ring-red-400/30 focus:border-red-500'
+  'h-11 w-full rounded-lg border bg-white px-3 text-sm font-medium text-[#070b1d] outline-none transition-[border-color] duration-150 placeholder:text-[#9CA3AF] border-red-400 ring-1 ring-red-400/30 focus:border-red-500'
 
 type ForgotPasswordFormProps = {
   nextPath: string
@@ -38,7 +38,7 @@ function RequestButton() {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#00c896] px-4 text-sm font-semibold text-white transition-opacity duration-150 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#00c896] px-4 text-sm font-semibold text-[#043a2d] shadow-[var(--shadow-soft)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? (
         <>
@@ -63,7 +63,7 @@ function ResendButton({ countdown }: { countdown: number }) {
     <button
       type="submit"
       disabled={disabled}
-      className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-[#111827] transition-opacity duration-150 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-[#070b1d] transition-opacity duration-150 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? (
         <>
@@ -183,7 +183,7 @@ export default function ForgotPasswordForm({ nextPath }: ForgotPasswordFormProps
             </div>
 
             <div className="mb-7">
-              <h2 className="text-[28px] font-medium leading-tight !text-[#111827]">
+              <h2 className="text-[28px] font-medium leading-tight !text-[#070b1d]">
                 Reset your password.
               </h2>
               <p className="mt-2 text-[15px] leading-6 !text-[#6F7192]">
@@ -246,7 +246,7 @@ export default function ForgotPasswordForm({ nextPath }: ForgotPasswordFormProps
             </div>
 
             <div className="mb-6 text-center">
-              <h2 className="text-[28px] font-medium leading-tight !text-[#111827]">
+              <h2 className="text-[28px] font-medium leading-tight !text-[#070b1d]">
                 Check your inbox.
               </h2>
               <p className="mt-3 text-[15px] leading-7 !text-[#6F7192]">

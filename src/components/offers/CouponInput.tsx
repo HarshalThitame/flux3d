@@ -97,7 +97,7 @@ export default function CouponInput({ orderAmount, userId, onApply, appliedCoupo
             onChange={e => { setCode(e.target.value.toUpperCase()); setError('') }}
             onKeyDown={e => e.key === 'Enter' && handleApply()}
             placeholder="Enter coupon code"
-            className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-[rgba(109, 40, 217,0.2)] bg-white text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9] transition-colors"
+            className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-[rgba(109, 40, 217,0.2)] bg-white text-sm text-[#070b1d] outline-none focus:border-[#6d28d9] transition-colors"
           />
         </div>
         <button

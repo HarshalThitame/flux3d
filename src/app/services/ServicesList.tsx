@@ -127,7 +127,7 @@ function ServiceCard({ service, index }: { service: typeof services[number]; ind
           <PackageCheck className="h-3.5 w-3.5" />
           {service.spec}
         </div>
-        <h3 className="mt-3 !text-xl font-extrabold leading-tight !text-[#0F1B3D] transition-colors group-hover:!text-[#6d28d9]">
+        <h3 className="mt-3 !text-xl font-extrabold leading-tight !text-[#070b1d] transition-colors group-hover:!text-[#6d28d9]">
           {service.title}
         </h3>
         <p className="mt-3 text-sm leading-6 text-[#667085]">{service.description}</p>
@@ -172,7 +172,7 @@ export default function ServicesList() {
         >
           <div>
             <span className="text-xs font-bold uppercase text-[#6d28d9]">Service portfolio</span>
-            <h2 className="mt-3 max-w-3xl !text-[clamp(2rem,6vw,3rem)] font-extrabold leading-tight !text-[#0F1B3D] md:!text-5xl">
+            <h2 className="mt-3 max-w-3xl !text-[clamp(2rem,6vw,3rem)] font-extrabold leading-tight !text-[#070b1d] md:!text-5xl">
               Every print category, handled with the same production discipline.
             </h2>
           </div>

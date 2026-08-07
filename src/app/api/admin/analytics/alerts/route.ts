@@ -45,7 +45,7 @@ export async function GET() {
     // Printer issues
     const { data: printerIssues } = await supabase
       .from('printers')
-      .select('name, status, note')
+      .select('name, status, notes')
       .neq('status', 'Printing')
       .neq('status', 'Idle')
 
@@ -94,7 +94,7 @@ export async function GET() {
         })),
         ...(printerIssues || []).map(p => ({
           type: '🔴 URGENT',
-          message: `${p.name} — ${p.status} · ${p.note || 'Requires attention'}`,
+          message: `${p.name} — ${p.status} · ${p.notes || 'Requires attention'}`,
         })),
         ...((wishlistItems ?? []) as WishlistRow[]).map((w) => ({
           type: '🟢 FOLLOW-UP',

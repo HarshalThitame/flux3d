@@ -135,7 +135,7 @@ export function OrderStatusTimeline({ currentStatus }: { currentStatus: OrderSta
                 >
                   <span
                     className={`text-sm font-semibold transition-colors ${
-                      isCompleted || isCurrent ? 'text-[#0F1B3D]' : 'text-gray-400'
+                      isCompleted || isCurrent ? 'text-[#070b1d]' : 'text-gray-400'
                     }`}
                   >
                     {label}

@@ -96,7 +96,7 @@ export default function ModelViewer({ model, isLoading }: ModelViewerProps) {
       <div className="flex items-center justify-between border-b border-[#6d28d9]/10 px-5 py-4">
         <div>
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Interactive Viewer</div>
-          <div className="mt-1 text-sm font-medium text-[#0F1B3D]">
+          <div className="mt-1 text-sm font-medium text-[#070b1d]">
             {model ? model.fileName : 'Upload a model to begin'}
           </div>
         </div>
@@ -113,7 +113,7 @@ export default function ModelViewer({ model, isLoading }: ModelViewerProps) {
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
             <div className="h-16 w-16 rounded-2xl border border-[#6d28d9]/10 bg-white/5" />
-            <div className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">Preview unavailable</div>
+            <div className="font-[var(--font-syne)] text-xl font-bold text-[#070b1d]">Preview unavailable</div>
             <p className="max-w-[420px] text-sm leading-7 text-[#6F7192]">
               Upload a supported 3D model to inspect geometry, auto-fit the camera, and calculate instant pricing.
             </p>
@@ -122,7 +122,7 @@ export default function ModelViewer({ model, isLoading }: ModelViewerProps) {
 
         {isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-[rgba(4,8,16,0.56)] backdrop-blur-sm">
-            <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#0F1B3D]">
+            <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FFFFFF] px-4 py-3 text-sm text-[#070b1d]">
               Parsing model geometry...
             </div>
           </div>
@@ -132,7 +132,7 @@ export default function ModelViewer({ model, isLoading }: ModelViewerProps) {
       <div className="grid gap-3 border-t border-[#6d28d9]/10 px-5 py-4 sm:grid-cols-3">
         <div className="rounded-2xl bg-white/[0.03] px-4 py-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Bounding Box</div>
-          <div className="mt-2 text-sm text-[#0F1B3D]">
+          <div className="mt-2 text-sm text-[#070b1d]">
             {model
               ? `${model.dimensionsMm.x.toFixed(1)} × ${model.dimensionsMm.y.toFixed(1)} × ${model.dimensionsMm.z.toFixed(1)} mm`
               : 'Waiting for file'}
@@ -140,13 +140,13 @@ export default function ModelViewer({ model, isLoading }: ModelViewerProps) {
         </div>
         <div className="rounded-2xl bg-white/[0.03] px-4 py-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Triangles</div>
-          <div className="mt-2 text-sm text-[#0F1B3D]">
+          <div className="mt-2 text-sm text-[#070b1d]">
             {model ? model.triangleCount.toLocaleString() : '0'}
           </div>
         </div>
         <div className="rounded-2xl bg-white/[0.03] px-4 py-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Volume</div>
-          <div className="mt-2 text-sm text-[#0F1B3D]">
+          <div className="mt-2 text-sm text-[#070b1d]">
             {model ? `${(model.volumeMm3 / 1000).toFixed(2)} cm³` : '0 cm³'}
           </div>
         </div>

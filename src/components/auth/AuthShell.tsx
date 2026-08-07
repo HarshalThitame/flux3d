@@ -109,7 +109,7 @@ export default function AuthShell({
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">
                   Production pass
                 </p>
-                <p className="mt-1 text-xl font-black leading-tight text-gray-900">
+                <p className="mt-1 text-xl font-black leading-tight text-[#070b1d]">
                   Secure access for quotes, files, and orders
                 </p>
                 <p className="mt-2 text-sm leading-6 text-gray-600">
@@ -126,7 +126,7 @@ export default function AuthShell({
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
-                  <div className="text-sm font-black text-gray-900">{label}</div>
+                  <div className="text-sm font-black text-[#070b1d]">{label}</div>
                   <p className="mt-1 text-xs leading-5 text-gray-500">{value}</p>
                 </div>
               </div>

@@ -64,7 +64,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         <div className="absolute inset-0 bg-white/70" aria-hidden="true" />
 
         <div className="relative z-10 flex w-full max-w-3xl min-w-0 flex-col justify-center">
-          <h1 className="max-w-3xl break-words text-4xl font-black leading-[1.03] tracking-normal text-gray-900 sm:text-5xl lg:text-7xl">
+          <h1 className="max-w-3xl break-words text-4xl font-black leading-[1.03] tracking-normal text-[#070b1d] sm:text-5xl lg:text-7xl">
             Start building with <span className="text-purple-600">Flux3D</span>.
           </h1>
 
@@ -103,7 +103,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                   <span className="mt-2 block text-[9px] font-black uppercase leading-tight tracking-[0.14em] text-gray-500">
                     {metric.label}
                   </span>
-                  <strong className="mt-1.5 block text-[12px] font-bold leading-tight text-gray-900">
+                  <strong className="mt-1.5 block text-[12px] font-bold leading-tight text-[#070b1d]">
                     {metric.value}
                   </strong>
                 </div>
@@ -124,7 +124,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                     <p className="text-[11px] font-black uppercase leading-tight tracking-[0.12em] text-gray-700">
                       {item.label}
                     </p>
-                    <strong className="mt-1 block text-[12px] font-bold leading-tight text-gray-900">
+                    <strong className="mt-1 block text-[12px] font-bold leading-tight text-[#070b1d]">
                       {item.value}
                     </strong>
                   </div>

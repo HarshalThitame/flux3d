@@ -34,7 +34,7 @@ export default function ToastContainer() {
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 80, scale: 0.92 }}
               transition={{ type: 'spring', damping: 22, stiffness: 260 }}
-              className={`pointer-events-auto flex w-[360px] gap-3 rounded-2xl border ${c.border} ${c.bg} p-4 shadow-[0_12px_40px_rgba(0,0,0,0.08)] backdrop-blur-xl`}
+              className={`pointer-events-auto flex w-[360px] gap-3 rounded-2xl border ${c.border} ${c.bg} p-4 shadow-[var(--shadow-elevated)] backdrop-blur-xl`}
             >
               <span className={`mt-0.5 shrink-0 ${c.icon}`}>
                 <Icon className="h-5 w-5" />

@@ -14,7 +14,7 @@ export default function PricingCTA() {
           <div className="absolute -top-[100px] left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-[radial-gradient(ellipse,rgba(109, 40, 217,0.15),transparent_70%)] pointer-events-none" />
 
           {/* Heading */}
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#0F1B3D] tracking-[-1px] mb-4 relative">
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#070b1d] tracking-[-1px] mb-4 relative">
             Your Next Product Starts <br className="hidden md:block" />
             <span className="text-[#5B3FD6]">With One Message.</span>
           </h2>
@@ -33,7 +33,7 @@ export default function PricingCTA() {
               href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-transparent text-[#0F1B3D] px-8 py-4 rounded-lg text-lg font-medium border border-[rgba(109, 40, 217,0.5)] cursor-pointer transition-colors hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(109, 40, 217,0.3)]"
+              className="bg-transparent text-[#070b1d] px-8 py-4 rounded-lg text-lg font-medium border border-[rgba(109, 40, 217,0.5)] cursor-pointer transition-colors hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(109, 40, 217,0.3)]"
             >
               WhatsApp Us Now
             </a>

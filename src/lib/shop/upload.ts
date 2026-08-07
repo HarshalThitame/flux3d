@@ -65,7 +65,7 @@ export function uploadModelFileWithProgress(
         onProgress(15)
         const xhr = new XMLHttpRequest()
         xhr.open('PUT', body.signedUrl)
-        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
+        xhr.setRequestHeader('Content-Type', 'application/octet-stream')
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
             onProgress(Math.min(99, Math.round(15 + (event.loaded / event.total) * 84)))

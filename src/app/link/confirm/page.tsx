@@ -15,7 +15,7 @@ export default async function LinkConfirmPage({
 
   if (!token) {
     return (
-      <main className="min-h-screen bg-[#f9f7f4] px-4 pb-16 text-[#1a1a1a] md:px-8">
+      <main className="min-h-screen bg-[#f9f7f4] px-4 pb-16 text-[#070b1d] md:px-8">
         <div className="mx-auto mt-24 max-w-md text-center">
           <h1 className="text-2xl font-semibold">Invalid link</h1>
           <p className="mt-2 text-[#6b7280]">No token was provided. Please use the link from your email.</p>
@@ -29,7 +29,7 @@ export default async function LinkConfirmPage({
 
   if (!request) {
     return (
-      <main className="min-h-screen bg-[#f9f7f4] px-4 pb-16 text-[#1a1a1a] md:px-8">
+      <main className="min-h-screen bg-[#f9f7f4] px-4 pb-16 text-[#070b1d] md:px-8">
         <div className="mx-auto mt-24 max-w-md text-center">
           <h1 className="text-2xl font-semibold">Link expired or already used</h1>
           <p className="mt-2 text-[#6b7280]">This confirmation link is no longer valid. Please request a new one from your profile.</p>
@@ -69,7 +69,7 @@ export default async function LinkConfirmPage({
   const orderCount = (shelfCount ?? 0) + (customCount ?? 0)
 
   return (
-    <main className="min-h-screen bg-[#f9f7f4] px-4 pb-16 text-[#1a1a1a] md:px-8">
+    <main className="min-h-screen bg-[#f9f7f4] px-4 pb-16 text-[#070b1d] md:px-8">
       <div className="mx-auto mt-16 max-w-md">
         <h1 className="text-2xl font-semibold">Confirm account link</h1>
         <p className="mt-3 text-[#4b5563]">
@@ -95,7 +95,7 @@ export default async function LinkConfirmPage({
           <input type="hidden" name="token" value={token} />
           <button
             type="submit"
-            className="w-full rounded-lg bg-[#1a1a1a] px-4 py-3 text-center text-sm font-medium text-white hover:bg-[#333]"
+            className="w-full rounded-lg bg-[#070b1d] px-4 py-3 text-center text-sm font-medium text-white hover:bg-[#0d1230]"
           >
             Confirm and link account
           </button>

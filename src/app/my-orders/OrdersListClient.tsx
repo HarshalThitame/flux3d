@@ -172,7 +172,7 @@ export default function OrdersListClient({ orders, ordersTableUnavailable }: Ord
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
           </svg>
         </div>
-        <div className="mt-3 text-base font-semibold text-[#0F1B3D]">Orders unavailable</div>
+        <div className="mt-3 text-base font-semibold text-[#070b1d]">Orders unavailable</div>
         <p className="mt-1 text-sm text-gray-500">{ORDERS_TABLE_UNAVAILABLE_MESSAGE}</p>
       </div>
     )
@@ -186,7 +186,7 @@ export default function OrdersListClient({ orders, ordersTableUnavailable }: Ord
             <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
           </svg>
         </div>
-        <div className="mt-3 text-base font-semibold text-[#0F1B3D]">No print requests yet</div>
+        <div className="mt-3 text-base font-semibold text-[#070b1d]">No print requests yet</div>
         <p className="mt-1 text-sm text-gray-500">
           Create an instant quote and submit your first print request to start tracking it here.
         </p>
@@ -216,7 +216,7 @@ export default function OrdersListClient({ orders, ordersTableUnavailable }: Ord
               setSearchQuery(e.target.value)
               setVisibleCount(PAGE_SIZE)
             }}
-            className="order-search-input w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-[#0F1B3D] placeholder-gray-400 shadow-sm transition focus:border-[#6d28d9]/40 focus:outline-none focus:ring-2 focus:ring-[#6d28d9]/10"
+            className="order-search-input w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-[#070b1d] placeholder-gray-400 shadow-sm transition focus:border-[#6d28d9]/40 focus:outline-none focus:ring-2 focus:ring-[#6d28d9]/10"
           />
           {searchQuery && (
             <button
@@ -241,7 +241,7 @@ export default function OrdersListClient({ orders, ordersTableUnavailable }: Ord
               setDateFilter(e.target.value as DateFilter)
               setVisibleCount(PAGE_SIZE)
             }}
-            className="order-filter-select rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-[#0F1B3D] shadow-sm transition focus:border-[#6d28d9]/40 focus:outline-none focus:ring-2 focus:ring-[#6d28d9]/10"
+            className="order-filter-select rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-[#070b1d] shadow-sm transition focus:border-[#6d28d9]/40 focus:outline-none focus:ring-2 focus:ring-[#6d28d9]/10"
           >
             <option value="all">All Time</option>
             <option value="today">Today</option>
@@ -262,7 +262,7 @@ export default function OrdersListClient({ orders, ordersTableUnavailable }: Ord
               setCustomStart(e.target.value)
               setVisibleCount(PAGE_SIZE)
             }}
-            className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-[#0F1B3D] shadow-sm focus:border-[#6d28d9]/40 focus:outline-none focus:ring-2 focus:ring-[#6d28d9]/10"
+            className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-[#070b1d] shadow-sm focus:border-[#6d28d9]/40 focus:outline-none focus:ring-2 focus:ring-[#6d28d9]/10"
           />
           <span className="text-xs text-gray-400">to</span>
           <input
@@ -272,7 +272,7 @@ export default function OrdersListClient({ orders, ordersTableUnavailable }: Ord
               setCustomEnd(e.target.value)
               setVisibleCount(PAGE_SIZE)
             }}
-            className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-[#0F1B3D] shadow-sm focus:border-[#6d28d9]/40 focus:outline-none focus:ring-2 focus:ring-[#6d28d9]/10"
+            className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-[#070b1d] shadow-sm focus:border-[#6d28d9]/40 focus:outline-none focus:ring-2 focus:ring-[#6d28d9]/10"
           />
         </div>
       )}
@@ -345,7 +345,7 @@ export default function OrdersListClient({ orders, ordersTableUnavailable }: Ord
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
           </div>
-          <div className="mt-2 text-sm font-semibold text-[#0F1B3D]">No orders found</div>
+          <div className="mt-2 text-sm font-semibold text-[#070b1d]">No orders found</div>
           <p className="mt-1 text-xs text-gray-500">
             {searchQuery ? `No orders matching "${searchQuery}"` : 'No orders in the selected date range'}
           </p>
@@ -388,7 +388,7 @@ export default function OrdersListClient({ orders, ordersTableUnavailable }: Ord
                       {/* Row 1: Title + Status badge */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-semibold text-[#0F1B3D]">
+                          <div className="truncate text-sm font-semibold text-[#070b1d]">
                             {getFileName(order.items[0].fileUrl)}
                           </div>
                           {order.itemCount > 1 && (

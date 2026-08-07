@@ -117,7 +117,7 @@ export default function MaterialsHero() {
   const whatsappNumber = (settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')
 
   return (
-    <section ref={ref} className="materials-hero-premium relative isolate overflow-hidden px-4 pb-12 pt-8 text-[#0F1B3D] md:px-8 lg:px-16">
+    <section ref={ref} className="materials-hero-premium relative isolate overflow-hidden px-4 pb-12 pt-8 text-[#070b1d] md:px-8 lg:px-16">
       <MaterialsPremiumFX />
       <div className="materials-hero-depth" aria-hidden="true" />
       <div className="materials-hero-grid" aria-hidden="true" />
@@ -131,9 +131,9 @@ export default function MaterialsHero() {
         className="relative z-10 mx-auto flex min-h-[82svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-10 pt-10 md:pt-14 lg:pt-16"
       >
         <motion.div variants={item} className="mb-4 flex items-center gap-2 text-sm font-medium text-[#6b7280]">
-          <Link href="/" className="transition hover:text-[#0F1B3D]">Home</Link>
+          <Link href="/" className="transition hover:text-[#070b1d]">Home</Link>
           <ChevronRight className="h-3.5 w-3.5" />
-          <span className="text-[#0F1B3D]">Materials</span>
+          <span className="text-[#070b1d]">Materials</span>
         </motion.div>
 
         <motion.div
@@ -148,7 +148,7 @@ export default function MaterialsHero() {
           <div className="min-w-0">
             <motion.h1
               variants={item}
-              className="materials-hero-title max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#0F1B3D] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
+              className="materials-hero-title max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#070b1d] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
             >
               Materials chosen with engineering precision.
             </motion.h1>
@@ -190,7 +190,7 @@ export default function MaterialsHero() {
               <div key={stat.label} className="min-w-0 rounded-lg border border-purple-200 bg-white p-4 shadow-sm">
                 <stat.icon className="mb-4 h-4 w-4 text-[#6d28d9]" />
                 <div className="text-xs font-bold uppercase text-[#6b7280]">{stat.label}</div>
-                <div className="mt-1 text-sm font-extrabold text-[#0F1B3D]">{stat.value}</div>
+                <div className="mt-1 text-sm font-extrabold text-[#070b1d]">{stat.value}</div>
               </div>
             ))}
           </motion.div>
@@ -235,7 +235,7 @@ export default function MaterialsHero() {
                   transition={reduceMotion ? undefined : { duration: 4.8, repeat: Infinity, ease: 'easeInOut' }}
                 >
                   <div className="min-w-0">
-                    <div className="text-sm font-extrabold text-[#0F1B3D]">{material.label}</div>
+                    <div className="text-sm font-extrabold text-[#070b1d]">{material.label}</div>
                     <div className="mt-0.5 text-xs font-medium text-[#6b7280]">{material.value}</div>
                   </div>
                   <span>

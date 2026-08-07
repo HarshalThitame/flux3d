@@ -71,7 +71,7 @@ const projects: GalleryProject[] = [
     finish: 'Sanded satin',
     lead: 'Display ready',
     accent: '#67e8f9',
-    backdrop: 'linear-gradient(135deg, #111827 0%, #0f766e 48%, #fbbf24 140%)',
+    backdrop: 'linear-gradient(135deg, #070b1d 0%, #0f766e 48%, #fbbf24 140%)',
     media: { type: 'image', src: '/pot.webp', alt: 'Matte 3D printed planter sample', fit: 'contain' },
     metrics: [
       { label: 'Layer height', value: '0.16 mm' },
@@ -87,7 +87,7 @@ const projects: GalleryProject[] = [
     finish: 'As printed',
     lead: 'Build validated',
     accent: '#fbbf24',
-    backdrop: 'linear-gradient(135deg, #111827 0%, #6d28d9 52%, #f97316 138%)',
+    backdrop: 'linear-gradient(135deg, #070b1d 0%, #6d28d9 52%, #f97316 138%)',
     media: { type: 'video', src: '/printer-optimized.mp4', label: '3D printer running a live print job' },
     metrics: [
       { label: 'Setup', value: 'Calibrated' },
@@ -103,7 +103,7 @@ const projects: GalleryProject[] = [
     finish: 'Fine texture',
     lead: 'Iteration ready',
     accent: '#a78bfa',
-    backdrop: 'linear-gradient(135deg, #111827 0%, #334155 42%, #7c3aed 128%)',
+    backdrop: 'linear-gradient(135deg, #070b1d 0%, #334155 42%, #7c3aed 128%)',
     media: { type: 'image', src: '/pot.webp', alt: '3D printed prototype object on a clean background', fit: 'contain' },
     metrics: [
       { label: 'Cycle', value: '2 days' },
@@ -119,7 +119,7 @@ const projects: GalleryProject[] = [
     finish: 'Gloss accent',
     lead: 'Presentation finish',
     accent: '#f472b6',
-    backdrop: 'linear-gradient(135deg, #111827 0%, #831843 48%, #22d3ee 145%)',
+    backdrop: 'linear-gradient(135deg, #070b1d 0%, #831843 48%, #22d3ee 145%)',
     media: { type: 'image', src: '/logo.webp', alt: 'Flux3D brand mark used as a printed display reference', fit: 'contain' },
     metrics: [
       { label: 'Detail', value: 'Clean edges' },
@@ -135,7 +135,7 @@ const projects: GalleryProject[] = [
     finish: 'Low sheen',
     lead: 'Studio model',
     accent: '#34d399',
-    backdrop: 'linear-gradient(135deg, #111827 0%, #166534 50%, #e0f2fe 152%)',
+    backdrop: 'linear-gradient(135deg, #070b1d 0%, #166534 50%, #e0f2fe 152%)',
     media: { type: 'image', src: '/pot.webp', alt: 'White 3D printed model used as architectural form reference', fit: 'contain' },
     metrics: [
       { label: 'Scale', value: 'Compact' },
@@ -151,7 +151,7 @@ const projects: GalleryProject[] = [
     finish: 'Smooth pass',
     lead: 'Detail checked',
     accent: '#38bdf8',
-    backdrop: 'linear-gradient(135deg, #111827 0%, #075985 50%, #fef3c7 150%)',
+    backdrop: 'linear-gradient(135deg, #070b1d 0%, #075985 50%, #fef3c7 150%)',
     media: { type: 'image', src: '/pot.webp', alt: 'Detailed 3D printed sample for surface quality review', fit: 'contain' },
     metrics: [
       { label: 'Tolerance', value: 'Tight' },
@@ -318,10 +318,10 @@ export default function GalleryClient() {
   ]
 
   return (
-    <main className="gallery-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-[#0F1B3D]">
+    <main className="gallery-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-[#070b1d]">
       <GalleryPremiumFX />
 
-      <section className="gallery-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-[#111827] sm:px-6 md:px-10 lg:px-12">
+      <section className="gallery-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-[#070b1d] sm:px-6 md:px-10 lg:px-12">
         <Image
           src="/printer2-poster.webp"
           alt=""
@@ -347,9 +347,9 @@ export default function GalleryClient() {
           className="relative z-10 mx-auto flex min-h-[86svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-8 pt-8 md:pt-10 lg:pt-12"
         >
           <motion.div variants={itemVariants} className="mb-5 flex items-center gap-2 text-sm font-medium text-[#6F7192]">
-            <Link href="/" className="transition hover:text-[#111827]">Home</Link>
+            <Link href="/" className="transition hover:text-[#070b1d]">Home</Link>
             <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-[#111827]">Gallery</span>
+            <span className="text-[#070b1d]">Gallery</span>
           </motion.div>
 
           <div className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-start">
@@ -364,7 +364,7 @@ export default function GalleryClient() {
 
               <motion.h1
                 variants={itemVariants}
-                className="gallery-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#111827] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
+                className="gallery-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#070b1d] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
               >
                 A cinematic archive of real 3D print outcomes.
               </motion.h1>
@@ -386,7 +386,7 @@ export default function GalleryClient() {
                 </Link>
                 <Link
                   href="/3d-shop"
-                  className="gallery-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 text-sm font-black text-[#111827] shadow-sm transition hover:border-[#6d28d9]/30 hover:bg-[#f5f3ff]"
+                  className="gallery-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 text-sm font-black text-[#070b1d] shadow-sm transition hover:border-[#6d28d9]/30 hover:bg-[#f5f3ff]"
                 >
                   Shop 3D prints
                   <Box className="h-4 w-4" />
@@ -398,7 +398,7 @@ export default function GalleryClient() {
                   const Icon = stat.icon
                   return (
                     <div key={stat.label} className="min-w-0 rounded-lg border border-gray-200 bg-white/80 p-4 shadow-sm backdrop-blur">
-                      <div className="flex items-center gap-2 text-sm font-black text-[#111827]">
+                      <div className="flex items-center gap-2 text-sm font-black text-[#070b1d]">
                         <Icon className="h-4 w-4 text-[#6d28d9]" />
                         {stat.value}
                       </div>
@@ -441,7 +441,7 @@ export default function GalleryClient() {
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs font-black uppercase tracking-[0.16em] text-[#6d28d9]">{featuredProject.category}</div>
-                  <h2 className="mt-2 line-clamp-2 text-xl font-black leading-tight text-[#111827]">{featuredProject.title}</h2>
+                  <h2 className="mt-2 line-clamp-2 text-xl font-black leading-tight text-[#070b1d]">{featuredProject.title}</h2>
                   <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-[#6F7192]">
                     {featuredProject.summary}
                   </p>
@@ -490,7 +490,7 @@ export default function GalleryClient() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-3 max-w-2xl text-[clamp(2rem,6vw,3rem)] font-black leading-tight text-[#0F1B3D] sm:text-5xl"
+                className="mt-3 max-w-2xl text-[clamp(2rem,6vw,3rem)] font-black leading-tight text-[#070b1d] sm:text-5xl"
               >
                 A board built for visual proof, finish detail, and fast project selection.
               </motion.h2>
@@ -543,14 +543,14 @@ export default function GalleryClient() {
                       <span className="gallery-card-category">{project.category}</span>
                       <span className="text-xs font-bold text-[#6b7280]">{project.eyebrow}</span>
                     </div>
-                    <h3 className="mt-4 text-xl font-black tracking-[0] text-[#0F1B3D]">{project.title}</h3>
+                    <h3 className="mt-4 text-xl font-black tracking-[0] text-[#070b1d]">{project.title}</h3>
                     <p className="mt-3 min-h-[72px] text-sm font-semibold leading-6 text-[#374151]">
                       {project.summary}
                     </p>
                     <div className="mt-5 grid grid-cols-2 gap-3">
                       {project.metrics.map((metric) => (
                         <div key={metric.label} className="gallery-card-metric">
-                          <div className="text-sm font-black text-[#0F1B3D]">{metric.value}</div>
+                          <div className="text-sm font-black text-[#070b1d]">{metric.value}</div>
                           <div className="mt-1 text-xs font-bold text-[#6b7280]">{metric.label}</div>
                         </div>
                       ))}
@@ -582,13 +582,13 @@ export default function GalleryClient() {
             >
               <div className="flex items-center justify-between gap-4 pb-4">
                 <div className="min-w-0">
-                  <div className="text-sm font-black uppercase tracking-[0.16em] text-cyan-100">{selectedProject.category}</div>
-                  <h2 className="mt-1 text-2xl font-black tracking-[0] text-white">{selectedProject.title}</h2>
+                  <div className="text-sm font-black uppercase tracking-[0.16em] text-[#6d28d9]">{selectedProject.category}</div>
+                  <h2 className="mt-1 text-2xl font-black tracking-[0] text-[#070b1d]">{selectedProject.title}</h2>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSelectedProject(null)}
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/[0.08] text-white/[0.72] transition hover:bg-white/[0.14] hover:text-white"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-[#6d28d9]/15 bg-white text-[#475569] transition hover:bg-[#f5f3ff] hover:text-[#070b1d]"
                   aria-label="Close gallery preview"
                 >
                   <X className="h-5 w-5" />
@@ -598,18 +598,18 @@ export default function GalleryClient() {
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)]">
                 <ProjectVisual project={selectedProject} large />
                 <div className="gallery-modal-detail p-5">
-                  <p className="text-sm font-semibold leading-7 text-white/[0.68]">{selectedProject.summary}</p>
+                  <p className="text-sm font-semibold leading-7 text-[#475569]">{selectedProject.summary}</p>
                   <div className="mt-5 space-y-3">
                     {projectDetails(selectedProject).map((detail) => (
-                      <div key={detail.label} className="flex items-center justify-between gap-4 border-b border-white/10 pb-3 text-sm last:border-b-0">
-                        <span className="font-bold text-white/[0.54]">{detail.label}</span>
-                        <span className="text-right font-black text-white">{detail.value}</span>
+                      <div key={detail.label} className="flex items-center justify-between gap-4 border-b border-[#6d28d9]/10 pb-3 text-sm last:border-b-0">
+                        <span className="font-bold text-[#6F7192]">{detail.label}</span>
+                        <span className="text-right font-black text-[#070b1d]">{detail.value}</span>
                       </div>
                     ))}
                   </div>
                   <Link
                     href="/quote"
-                    className="gallery-primary-action mt-6 inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-lg bg-white px-5 text-sm font-black text-[#05060a] transition hover:bg-[#ecfeff]"
+                    className="gallery-primary-action mt-6 inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-lg bg-[#6d28d9] px-5 text-sm font-black text-white shadow-lg transition hover:bg-[#4c1d95]"
                   >
                     Request similar work
                     <ArrowRight className="h-4 w-4" />

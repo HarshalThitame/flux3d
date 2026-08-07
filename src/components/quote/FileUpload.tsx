@@ -43,7 +43,7 @@ export default function FileUpload({
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 text-[#6d28d9]">
           <UploadCloud className="h-6 w-6" />
         </div>
-        <div className="font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">
+        <div className="font-[var(--font-syne)] text-xl font-bold text-[#070b1d]">
           Upload your 3D model
         </div>
         <p className="mx-auto mt-3 max-w-[460px] text-sm leading-7 text-[#6F7192]">
@@ -61,7 +61,7 @@ export default function FileUpload({
               <FileArchive className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium text-[#0F1B3D]">{selectedFileName}</div>
+              <div className="truncate text-sm font-medium text-[#070b1d]">{selectedFileName}</div>
               <div className="text-xs text-[#6F7192]">File ready for preview and pricing</div>
             </div>
             {uploadState.status === 'success' ? (

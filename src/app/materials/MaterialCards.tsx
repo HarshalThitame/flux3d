@@ -61,7 +61,7 @@ function SpecTile({ label, value, icon: Icon }: { label: string; value: string; 
         <Icon className="h-3.5 w-3.5 text-[#6d28d9]" />
         {label}
       </div>
-      <div className="mt-1 truncate text-sm font-extrabold text-[#111827]" title={value}>{value}</div>
+      <div className="mt-1 truncate text-sm font-extrabold text-[#070b1d]" title={value}>{value}</div>
     </div>
   )
 }
@@ -87,7 +87,7 @@ function MaterialCard({ data, index }: { data: MaterialCardData; index: number }
               {getMaterialInitials(data.name)}
             </span>
             <div>
-              <h3 className="text-xl font-extrabold leading-tight text-[#111827]">
+              <h3 className="text-xl font-extrabold leading-tight text-[#070b1d]">
                 {data.name}
               </h3>
               {data.difficultyLevel && (
@@ -164,7 +164,7 @@ function MaterialCard({ data, index }: { data: MaterialCardData; index: number }
             <div className="space-y-5 pt-5">
               {data.useCases && data.useCases.length > 0 && (
                 <div>
-                  <h4 className="mb-3 text-sm font-extrabold text-[#111827]">Use Cases</h4>
+                  <h4 className="mb-3 text-sm font-extrabold text-[#070b1d]">Use Cases</h4>
                   <div className="grid grid-cols-2 gap-2">
                     {data.useCases.map((useCase, idx) => (
                       <div key={idx} className="flex items-center gap-2 text-xs font-medium text-[#4B5563]">
@@ -206,7 +206,7 @@ function MaterialCard({ data, index }: { data: MaterialCardData; index: number }
 
               {data.samplePhoto && (
                 <div>
-                  <h4 className="mb-2 text-sm font-extrabold text-[#111827]">Sample Photo</h4>
+                  <h4 className="mb-2 text-sm font-extrabold text-[#070b1d]">Sample Photo</h4>
                   <Image
                     src={data.samplePhoto}
                     alt={`${data.name} 3D printed sample by Flux3D`}
@@ -258,7 +258,7 @@ export default function MaterialCards({ materials }: MaterialCardsProps) {
             <span className="inline-block text-xs font-bold uppercase text-[#6d28d9]">
               Material details
             </span>
-            <h2 className="mt-2 text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#111827] md:text-4xl">
+            <h2 className="mt-2 text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#070b1d] md:text-4xl">
               Premium material cards for real decisions.
             </h2>
           </div>
