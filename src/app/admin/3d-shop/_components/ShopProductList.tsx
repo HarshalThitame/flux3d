@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Archive, Copy, Edit3, Package, Plus, Search } from 'lucide-react'
+import { Archive, ChevronDown, Copy, Download, Edit3, FileJson, FileSpreadsheet, Loader2, Package, Plus, Search, Upload } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
+import { ImportModal } from './ImportModal'
 import type { ShopCategory, ShopProduct } from '@/lib/shop/admin-types'
 import { slugifyShopValue } from '@/lib/shop/admin-types'
 
@@ -27,6 +28,9 @@ export default function ShopProductList() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [toast, setToast] = useState<AdminToastState>(null)
+  const [exportOpen, setExportOpen] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
 
   const loadCategories = useCallback(async () => {
     const response = await fetch('/api/3d-shop/admin/categories')
@@ -107,6 +111,8 @@ export default function ShopProductList() {
       occasion_tags: product.occasion_tags ?? [],
       thumbnail_url: product.thumbnail_url,
       image_urls: product.image_urls ?? [],
+      image_alt: product.image_alt ?? {},
+      model_url: product.model_url,
       base_price: product.base_price,
       is_customizable: product.is_customizable ?? false,
       customization_label: product.customization_label,
@@ -114,6 +120,7 @@ export default function ShopProductList() {
       is_active: false,
       meta_title: product.meta_title,
       meta_description: product.meta_description,
+      published_at: null,
     }
 
     const response = await fetch('/api/3d-shop/admin/products', {
@@ -133,6 +140,37 @@ export default function ShopProductList() {
   const totalPages = Math.max(Math.ceil(products.length / PAGE_SIZE), 1)
   const visibleProducts = useMemo(() => products.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [page, products])
 
+  async function exportProducts(format: 'csv' | 'json') {
+    setExporting(true)
+    setExportOpen(false)
+    try {
+      const params = new URLSearchParams({ format })
+      if (categoryId) params.set('category_id', categoryId)
+      if (status) params.set('status', status)
+      if (search.trim()) params.set('search', search.trim())
+      const response = await fetch(`/api/3d-shop/admin/products/export?${params.toString()}`)
+      if (!response.ok) {
+        const data = (await response.json().catch(() => ({}))) as { error?: string }
+        throw new Error(data.error || 'Export failed.')
+      }
+      const blob = await response.blob()
+      const disposition = response.headers.get('content-disposition') || ''
+      const match = disposition.match(/filename="([^"]+)"/)
+      const filename = match ? match[1] : `3d-shop-products.${format}`
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = filename
+      anchor.click()
+      URL.revokeObjectURL(url)
+      setToast({ type: 'success', message: `Exported ${format.toUpperCase()} file.` })
+    } catch (error) {
+      setToast({ type: 'error', message: error instanceof Error ? error.message : 'Export failed.' })
+    } finally {
+      setExporting(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <AdminToast toast={toast} />
@@ -145,13 +183,57 @@ export default function ShopProductList() {
           <h1 className="font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">Products</h1>
           <p className="mt-2 max-w-2xl text-sm text-[#6F7192]">Create, price, and manage 3D Shop products.</p>
         </div>
-        <Link
-          href="/admin/3d-shop/products/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5b21b6]"
-        >
-          <Plus className="h-4 w-4" />
-          Add Product
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/20 px-4 py-3 text-sm font-semibold text-[#6d28d9] transition hover:bg-[#6d28d9]/5"
+            >
+              <Upload className="h-4 w-4" />
+              Import
+            </button>
+          </div>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setExportOpen((current) => !current)}
+              disabled={exporting}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-[#0F1B3D] transition hover:bg-gray-50 disabled:opacity-60"
+            >
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              Export
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+            {exportOpen && (
+              <div className="absolute right-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+                <button
+                  type="button"
+                  onClick={() => void exportProducts('csv')}
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-[#0F1B3D] hover:bg-gray-50"
+                >
+                  <FileSpreadsheet className="h-4 w-4 text-[#6d28d9]" />
+                  Export CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void exportProducts('json')}
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-[#0F1B3D] hover:bg-gray-50"
+                >
+                  <FileJson className="h-4 w-4 text-[#6d28d9]" />
+                  Export JSON
+                </button>
+              </div>
+            )}
+          </div>
+          <Link
+            href="/admin/3d-shop/products/new"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5b21b6]"
+          >
+            <Plus className="h-4 w-4" />
+            Add Product
+          </Link>
+        </div>
       </motion.div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-4">
@@ -262,6 +344,9 @@ export default function ShopProductList() {
           </div>
         )}
       </div>
+
+      {exportOpen && <div className="fixed inset-0 z-20" onClick={() => setExportOpen(false)} />}
+      <ImportModal open={importOpen} onClose={() => setImportOpen(false)} onImported={() => void loadProducts()} />
     </div>
   )
 }

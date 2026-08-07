@@ -14,6 +14,7 @@ type ProductPayload = {
   occasion_tags?: string[]
   thumbnail_url?: string | null
   image_urls?: string[] | null
+  image_alt?: Record<string, string> | null
   model_url?: string | null
   base_price?: number
   is_customizable?: boolean
@@ -23,6 +24,7 @@ type ProductPayload = {
   is_archived?: boolean
   meta_title?: string | null
   meta_description?: string | null
+  published_at?: string | null
 }
 
 type SkuRow = {
@@ -53,6 +55,15 @@ function normalizeProductPayload(body: ProductPayload, partial = false) {
     occasion_tags: normalizeStringArray(body.occasion_tags),
     thumbnail_url: typeof body.thumbnail_url === 'string' ? body.thumbnail_url.trim() || null : body.thumbnail_url ?? null,
     image_urls: normalizeStringArray(body.image_urls),
+    image_alt:
+      body.image_alt && typeof body.image_alt === 'object'
+        ? Object.fromEntries(
+            Object.entries(body.image_alt)
+              .filter(([key]) => typeof key === 'string' && key.trim())
+              .map(([key, value]) => [key, typeof value === 'string' ? value.trim() : ''])
+              .filter(([, value]) => value)
+          )
+        : {},
     model_url: typeof body.model_url === 'string' ? body.model_url.trim() || null : body.model_url ?? null,
     base_price: Number.isFinite(Number(body.base_price)) ? Number(body.base_price) : 0,
     is_customizable: body.is_customizable ?? false,
@@ -64,6 +75,10 @@ function normalizeProductPayload(body: ProductPayload, partial = false) {
     meta_title: typeof body.meta_title === 'string' ? body.meta_title.trim() || null : body.meta_title ?? null,
     meta_description:
       typeof body.meta_description === 'string' ? body.meta_description.trim() || null : body.meta_description ?? null,
+    published_at:
+      typeof body.published_at === 'string' && body.published_at.trim()
+        ? new Date(body.published_at).toISOString()
+        : null,
   }
 }
 
