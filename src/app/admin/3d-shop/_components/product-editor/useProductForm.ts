@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { ProductForm, ProductFormErrors } from '@/lib/shop/product-schema'
 import { validateField, validateProduct } from '@/lib/shop/product-schema'
 import type { DraftSku, DraftVariant } from './types'
@@ -206,26 +206,53 @@ export function useProductForm(
     applySnapshot(next)
   }, [applySnapshot, buildSnapshot])
 
-  return {
-    product,
-    past,
-    future,
-    dirty,
-    touched,
-    errors,
-    canUndo: past.length > 0,
-    canRedo: future.length > 0,
-    productRef,
-    update,
-    updateMany,
-    patchLocal,
-    pushUndoPoint,
-    markSaved,
-    reset,
-    markTouched,
-    markAllTouched,
-    undo,
-    redo,
-    setDirty,
-  }
+  const canUndo = past.length > 0
+  const canRedo = future.length > 0
+
+  return useMemo(
+    () => ({
+      product,
+      past,
+      future,
+      dirty,
+      touched,
+      errors,
+      canUndo,
+      canRedo,
+      productRef,
+      update,
+      updateMany,
+      patchLocal,
+      pushUndoPoint,
+      markSaved,
+      reset,
+      markTouched,
+      markAllTouched,
+      undo,
+      redo,
+      setDirty,
+    }),
+    [
+      product,
+      past,
+      future,
+      dirty,
+      touched,
+      errors,
+      canUndo,
+      canRedo,
+      productRef,
+      update,
+      updateMany,
+      patchLocal,
+      pushUndoPoint,
+      markSaved,
+      reset,
+      markTouched,
+      markAllTouched,
+      undo,
+      redo,
+      setDirty,
+    ]
+  )
 }
