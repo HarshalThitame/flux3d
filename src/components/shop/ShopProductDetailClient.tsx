@@ -7,11 +7,6 @@ import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Box,
-  ChevronDown,
-  ChevronUp,
-  Heart,
-  MapPin,
-  PackageCheck,
   RefreshCcw,
   ShieldCheck,
   ShoppingBag,
@@ -71,41 +66,100 @@ function Stars({ value }: { value: number }) {
   )
 }
 
-function DetailDisclosure({
-  title,
-  children,
-  defaultOpen = false,
+type InfoTab = 'description' | 'specifications' | 'shipping'
+
+function ProductInfoTabs({
+  description,
+  longDescription,
+  skuCode,
+  weightGrams,
 }: {
-  title: string
-  children: React.ReactNode
-  defaultOpen?: boolean
+  description: string
+  longDescription: string | null
+  skuCode: string | null
+  weightGrams: number | null
 }) {
-  const [open, setOpen] = useState(defaultOpen)
+  const [active, setActive] = useState<InfoTab>('description')
+  const tabs: { id: InfoTab; label: string }[] = [
+    { id: 'description', label: 'Description' },
+    { id: 'specifications', label: 'Specifications' },
+    { id: 'shipping', label: 'Shipping & Returns' },
+  ]
   return (
-    <section className="border-b border-[var(--shop-border-light)]">
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center justify-between py-4 text-left transition hover:text-[var(--shop-gold)]"
-      >
-        <span className="font-semibold text-[var(--shop-text-primary)]">{title}</span>
-        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <ChevronDown className="h-4 w-4 text-[var(--shop-text-muted)]" />
-        </motion.div>
-      </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="overflow-hidden"
+    <section className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] shadow-[var(--shop-shadow-sm)]">
+      <div className="flex gap-1 overflow-x-auto border-b border-[var(--shop-border-light)] px-2 md:gap-2 md:px-6" role="tablist" aria-label="Product information">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={active === tab.id}
+            onClick={() => setActive(tab.id)}
+            className={`relative shrink-0 px-3 py-4 text-sm font-semibold transition md:px-4 ${
+              active === tab.id
+                ? 'text-[var(--shop-text-primary)]'
+                : 'text-[var(--shop-text-muted)] hover:text-[var(--shop-text-secondary)]'
+            }`}
           >
-            <div className="pb-5 text-sm leading-7 text-[var(--shop-text-secondary)]">{children}</div>
+            {tab.label}
+            {active === tab.id && (
+              <motion.span
+                layoutId="product-tab-underline"
+                className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[var(--shop-gold)]"
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              />
+            )}
+          </button>
+        ))}
+      </div>
+      <div className="p-5 md:p-8">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={active}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            {active === 'description' && (
+              <div className="max-w-4xl">
+                {longDescription ? (
+                  <div className="prose prose-sm max-w-none leading-7 text-[var(--shop-text-secondary)] md:prose-base" dangerouslySetInnerHTML={{ __html: longDescription }} />
+                ) : (
+                  <p className="text-sm leading-7 text-[var(--shop-text-secondary)]">{description || 'Details coming soon.'}</p>
+                )}
+              </div>
+            )}
+            {active === 'specifications' && (
+              <dl className="grid max-w-4xl gap-4 md:grid-cols-2">
+                {[
+                  { label: 'SKU', value: skuCode ?? 'Select options' },
+                  { label: 'Weight', value: weightGrams ? `${weightGrams} grams` : 'Select options' },
+                ].map((row) => (
+                  <div key={row.label} className="rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-4">
+                    <dt className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">{row.label}</dt>
+                    <dd className="mt-1.5 text-sm font-medium text-[var(--shop-text-primary)]">{row.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            {active === 'shipping' && (
+              <div className="grid max-w-4xl gap-4 md:grid-cols-3">
+                {[
+                  { title: 'Dispatch', body: 'Orders are shipped within 1-2 business days.' },
+                  { title: 'Delivery', body: 'Standard delivery: 4-7 business days across India.' },
+                  { title: 'Returns', body: 'Easy 7-day return policy on unused items.' },
+                ].map((item) => (
+                  <div key={item.title} className="rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-4">
+                    <h3 className="text-sm font-semibold text-[var(--shop-text-primary)]">{item.title}</h3>
+                    <p className="mt-1.5 text-sm leading-6 text-[var(--shop-text-secondary)]">{item.body}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>
+      </div>
     </section>
   )
 }
@@ -369,7 +423,7 @@ export default function ShopProductDetailClient({
           <span className="text-[var(--shop-text-primary)]">{product.name}</span>
         </nav>
 
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_460px]">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_520px]">
           <section>
             <button
               type="button"
@@ -411,7 +465,7 @@ export default function ShopProductDetailClient({
           <aside className="lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-5 shadow-[var(--shop-shadow-sm)] md:p-6">
               <div className="flex items-start justify-between gap-3">
-                <h1 className="font-[var(--shop-font-heading)] min-w-0 text-lg font-semibold leading-snug text-[var(--shop-text-primary)] md:text-xl">
+                <h1 className="font-[var(--shop-font-heading)] min-w-0 text-base font-medium leading-snug text-[var(--shop-text-primary)] md:text-lg">
                   {product.name}
                 </h1>
                 <WishlistButton productId={product.id} label className="shrink-0 rounded-xl border-[var(--shop-border-light)]" />
@@ -547,27 +601,17 @@ export default function ShopProductDetailClient({
                   </div>
                 ))}
               </div>
-
-              <div className="mt-6">
-                <DetailDisclosure title="Description" defaultOpen>
-                  {product.long_description ? (
-                    <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: product.long_description }} />
-                  ) : (
-                    product.description || 'Details coming soon.'
-                  )}
-                </DetailDisclosure>
-                <DetailDisclosure title="Specifications">
-                  <div className="grid gap-2">
-                    <div>SKU: {resolvedSku?.sku_code ?? 'Select options'}</div>
-                    <div>Weight: {resolvedSku?.weight_grams ? `${resolvedSku.weight_grams} grams` : 'Select options'}</div>
-                  </div>
-                </DetailDisclosure>
-                <DetailDisclosure title="Shipping & Returns">
-                  Orders are shipped within 1-2 business days. Standard delivery: 4-7 business days. Easy 7-day return policy on unused items.
-                </DetailDisclosure>
-              </div>
             </div>
           </aside>
+        </div>
+
+        <div className="mt-16">
+          <ProductInfoTabs
+            description={product.description ?? ''}
+            longDescription={product.long_description}
+            skuCode={resolvedSku?.sku_code ?? null}
+            weightGrams={resolvedSku?.weight_grams ?? null}
+          />
         </div>
 
         <section id="reviews" className="mt-20 rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-5 shadow-[var(--shop-shadow-sm)] md:p-8">
