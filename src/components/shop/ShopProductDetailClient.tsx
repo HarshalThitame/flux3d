@@ -465,7 +465,7 @@ export default function ShopProductDetailClient({
           <aside className="lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-5 shadow-[var(--shop-shadow-sm)] md:p-6">
               <div className="flex items-start justify-between gap-3">
-                <h1 className="font-[var(--shop-font-heading)] min-w-0 text-base font-medium leading-snug text-[var(--shop-text-primary)] md:text-lg">
+                <h1 className="font-[var(--shop-font-heading)] min-w-0 text-lg font-medium leading-snug text-[var(--shop-text-primary)]">
                   {product.name}
                 </h1>
                 <WishlistButton productId={product.id} label className="shrink-0 rounded-xl border-[var(--shop-border-light)]" />
