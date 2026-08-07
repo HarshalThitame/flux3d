@@ -7,13 +7,22 @@ const SHOP_BUCKET = 'shop-images'
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
 const ALLOWED_EXTENSIONS = new Set(['glb', 'gltf', 'stl', 'obj', '3mf'])
-const ALLOWED_TYPES = new Set([
-  'model/gltf-binary',
-  'model/gltf+json',
-  'application/octet-stream',
-  'text/plain',
-  'application/vnd.ms-package.3dmanufacturing-3dmodel+xml',
-  '',
+const REJECTED_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/svg+xml',
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+  'audio/mpeg',
+  'audio/wav',
+  'audio/ogg',
+  'application/pdf',
+  'text/html',
+  'application/x-zip-compressed',
+  'application/zip',
 ])
 
 function getFileExtension(name: string) {
@@ -45,7 +54,14 @@ export async function POST(request: Request) {
     }
 
     const extension = getFileExtension(file.name)
-    if (!ALLOWED_EXTENSIONS.has(extension) || !ALLOWED_TYPES.has(file.type)) {
+    if (!ALLOWED_EXTENSIONS.has(extension)) {
+      return NextResponse.json(
+        { error: 'Only GLB, GLTF, STL, OBJ, and 3MF model files are allowed.' },
+        { status: 400 }
+      )
+    }
+
+    if (file.type && REJECTED_TYPES.has(file.type)) {
       return NextResponse.json(
         { error: 'Only GLB, GLTF, STL, OBJ, and 3MF model files are allowed.' },
         { status: 400 }
