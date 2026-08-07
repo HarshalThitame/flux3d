@@ -130,6 +130,7 @@ export function ProductEditorProvider({
   const autosaveTimerRef = useRef<number | null>(null)
   const variantsRef = useRef<DraftVariant[]>([])
   const skusRef = useRef<DraftSku[]>([])
+  const hasLoadedRef = useRef(false)
 
   useEffect(() => {
     variantsRef.current = variants
@@ -184,10 +185,9 @@ export function ProductEditorProvider({
   }, [form, loadSkus, loadVariants, mode, productId])
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      void loadInitialData()
-    }, 0)
-    return () => window.clearTimeout(timeout)
+    if (hasLoadedRef.current) return
+    hasLoadedRef.current = true
+    void loadInitialData()
   }, [loadInitialData])
 
   useEffect(() => {
