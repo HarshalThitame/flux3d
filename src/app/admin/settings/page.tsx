@@ -240,12 +240,11 @@ export default function AdminSettingsPage() {
                           <div className="text-xs text-[#6F7192]">
                             {printer.model && `Model: ${printer.model} · `}
                             Status: {printer.status}
-                            {printer.job && ` · Current Job: ${printer.job}`}
                           </div>
                           <div className="mt-2">
                             <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                              printer.status === 'Printing' || printer.status === 'Idle' ? 'bg-emerald-100 text-emerald-700' :
-                              printer.status === 'Maintenance' ? 'bg-yellow-100 text-yellow-700' :
+                              printer.status === 'printing' || printer.status === 'idle' ? 'bg-emerald-100 text-emerald-700' :
+                              printer.status === 'maintenance' ? 'bg-yellow-100 text-yellow-700' :
                               'bg-gray-100 text-gray-700'
                             }`}>
                               {printer.status}

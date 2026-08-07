@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AlertTriangle, Banknote, CheckCircle2, MapPin, PackageCheck, Plus, ShieldCheck } from 'lucide-react'
 import { useAddresses } from '@/hooks/useAddresses'
+import { useGlobalLoading } from '@/hooks/useGlobalLoading'
 import { calculateDeliveryChargeFromSettings } from '@/lib/quote/pricing-waterfall'
 import { formatShopPrice } from '@/lib/shop/selection'
 import { getShopCartTotals, type ShopCartItem, useShopCartStore } from '@/stores/shopCartStore'
@@ -109,6 +110,7 @@ export default function ShopCheckoutClient({
   const [reviewBanner, setReviewBanner] = useState(false)
   const [affectedItemIds, setAffectedItemIds] = useState<string[]>([])
   const [completedOrderId, setCompletedOrderId] = useState<string | null>(null)
+  const { withLoading } = useGlobalLoading()
 
   const totals = useMemo(
     () =>
@@ -280,65 +282,67 @@ export default function ShopCheckoutClient({
 
     setIsPlacing(true)
     try {
-      if (showAddressForm && saveAddress) {
-        await addAddress({
-          full_name: shippingAddress.name,
-          phone: shippingAddress.phone,
-          address_line_1: shippingAddress.line1,
-          address_line_2: shippingAddress.line2,
-          city: shippingAddress.city,
-          state: shippingAddress.state,
-          pincode: shippingAddress.pincode,
-          country: 'India',
-          is_default: addresses.length === 0,
-        })
-      }
-
-      const payload = {
-        items: items.map((item) => ({
-          productId: item.productId,
-          productName: item.productName,
-          productThumbnail: item.thumbnail,
-          productSlug: item.productSlug,
-          skuId: item.skuId,
-          skuCode: item.skuCode,
-          variantCombination: item.variantCombination,
-          variantLabel: item.variantLabel,
-          quantity: item.quantity,
-          unitPrice: item.price,
-          customizationText: item.customizationText || null,
-        })),
-        subtotal: totals.subtotal,
-        discountAmount: totals.discount,
-        couponCode: totals.couponCode,
-        appliedCouponId: totals.appliedCoupon?.id ?? null,
-        appliedOfferId: totals.appliedOffer?.id ?? null,
-        shippingCharge,
-        totalAmount: payableTotal,
-        shippingAddress,
-      }
-
-      const response = await fetch('/api/3d-shop/orders/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      const data = await response.json().catch(() => ({})) as { success?: boolean; orderId?: string; error?: string }
-      if (!response.ok || !data.success || !data.orderId) {
-        const message = data.error || 'Failed to place order.'
-        setToast(message)
-        if (/stock|quantity|price|available|refresh/i.test(message)) {
-          setReviewBanner(true)
-          setAffectedItemIds(
-            items.filter((item) => message.toLowerCase().includes(item.productName.toLowerCase()))
-              .map((item) => item.cartItemId)
-          )
+      await withLoading(async () => {
+        if (showAddressForm && saveAddress) {
+          await addAddress({
+            full_name: shippingAddress.name,
+            phone: shippingAddress.phone,
+            address_line_1: shippingAddress.line1,
+            address_line_2: shippingAddress.line2,
+            city: shippingAddress.city,
+            state: shippingAddress.state,
+            pincode: shippingAddress.pincode,
+            country: 'India',
+            is_default: addresses.length === 0,
+          })
         }
-        return
-      }
 
-      orderCompletionRef.current = true
-      setCompletedOrderId(data.orderId)
+        const payload = {
+          items: items.map((item) => ({
+            productId: item.productId,
+            productName: item.productName,
+            productThumbnail: item.thumbnail,
+            productSlug: item.productSlug,
+            skuId: item.skuId,
+            skuCode: item.skuCode,
+            variantCombination: item.variantCombination,
+            variantLabel: item.variantLabel,
+            quantity: item.quantity,
+            unitPrice: item.price,
+            customizationText: item.customizationText || null,
+          })),
+          subtotal: totals.subtotal,
+          discountAmount: totals.discount,
+          couponCode: totals.couponCode,
+          appliedCouponId: totals.appliedCoupon?.id ?? null,
+          appliedOfferId: totals.appliedOffer?.id ?? null,
+          shippingCharge,
+          totalAmount: payableTotal,
+          shippingAddress,
+        }
+
+        const response = await fetch('/api/3d-shop/orders/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const data = await response.json().catch(() => ({})) as { success?: boolean; orderId?: string; error?: string }
+        if (!response.ok || !data.success || !data.orderId) {
+          const message = data.error || 'Failed to place order.'
+          setToast(message)
+          if (/stock|quantity|price|available|refresh/i.test(message)) {
+            setReviewBanner(true)
+            setAffectedItemIds(
+              items.filter((item) => message.toLowerCase().includes(item.productName.toLowerCase()))
+                .map((item) => item.cartItemId)
+            )
+          }
+          return
+        }
+
+        orderCompletionRef.current = true
+        setCompletedOrderId(data.orderId)
+      }, 'Placing your order…')
     } catch (error) {
       setToast(error instanceof Error ? error.message : 'Failed to place order.')
     } finally {

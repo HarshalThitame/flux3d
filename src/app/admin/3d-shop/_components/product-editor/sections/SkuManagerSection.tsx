@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
-import { ImagePlus, Loader2 } from 'lucide-react'
+import { ImagePlus, Loader2, Trash2 } from 'lucide-react'
 import { useProductEditor } from '../editor-context'
 import { Section } from '../ui'
 import { comboLabel } from '../types'
@@ -47,7 +47,7 @@ function SkuImageUpload({ skuId, url }: { skuId: string; url: string | null }) {
 }
 
 export function SkuManagerSection() {
-  const { skus, skuSectionRef, updateSku, bulkUpdateSkus, saveAllSkus, saving, defaultWeight, setDefaultWeight, setToast } =
+  const { skus, skuSectionRef, updateSku, bulkUpdateSkus, saveAllSkus, deleteSku, saving, defaultWeight, setDefaultWeight, setToast } =
     useProductEditor()
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [bulk, setBulk] = useState<Record<BulkField, string>>({ price: '', compare_at: '', stock: '', low_stock: '', weight: '' })
@@ -77,6 +77,19 @@ export function SkuManagerSection() {
 
   function toggleSelectAll() {
     setSelected(allSelected ? new Set() : new Set(skus.map((sku) => sku.id)))
+  }
+
+  function handleDeleteSku(skuId: string) {
+    void deleteSku(skuId)
+      .then(() => {
+        setSelected((prev) => {
+          if (!prev.has(skuId)) return prev
+          const next = new Set(prev)
+          next.delete(skuId)
+          return next
+        })
+      })
+      .catch(() => {})
   }
 
   function applyBulk(field: BulkField) {
@@ -202,6 +215,7 @@ export function SkuManagerSection() {
                     </th>
                   )
                 )}
+                <th className="px-3 py-3 text-right text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -282,6 +296,17 @@ export function SkuManagerSection() {
                         <span
                           className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${sku.is_available ?? true ? 'translate-x-6' : 'translate-x-1'}`}
                         />
+                      </button>
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSku(sku.id)}
+                        className="rounded-lg p-2 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600"
+                        title="Delete SKU"
+                        aria-label={`Delete SKU ${sku.sku_code}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </td>
                   </tr>
@@ -368,9 +393,20 @@ export function SkuManagerSection() {
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-2">
                   <SkuImageUpload skuId={sku.id} url={sku.variant_image_url} />
-                  {isSelected && (
-                    <span className="rounded-full bg-[#6d28d9]/10 px-2 py-0.5 text-xs font-semibold text-[#6d28d9]">Selected</span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {isSelected && (
+                      <span className="rounded-full bg-[#6d28d9]/10 px-2 py-0.5 text-xs font-semibold text-[#6d28d9]">Selected</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteSku(sku.id)}
+                      className="rounded-lg p-2 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600"
+                      title="Delete SKU"
+                      aria-label={`Delete SKU ${sku.sku_code}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             )

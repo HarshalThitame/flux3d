@@ -2,13 +2,8 @@
 
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import { Bold } from '@tiptap/extension-bold'
-import { Italic } from '@tiptap/extension-italic'
 import { Color } from '@tiptap/extension-color'
 import Highlight from '@tiptap/extension-highlight'
-import { BulletList } from '@tiptap/extension-bullet-list'
-import { OrderedList } from '@tiptap/extension-ordered-list'
-import { ListItem } from '@tiptap/extension-list-item'
 import LinkExtension from '@tiptap/extension-link'
 import { useEffect, useState } from 'react'
 import { Bold as BoldIcon, Italic as ItalicIcon, List, ListOrdered, Highlighter, Undo, Redo, Link as LinkIcon, Unlink } from 'lucide-react'
@@ -80,14 +75,9 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
-      Bold,
-      Italic,
+      StarterKit.configure({ link: false }),
       Color,
       Highlight,
-      BulletList,
-      OrderedList,
-      ListItem,
       LinkExtension.configure({
         autolink: true,
         openOnClick: false,

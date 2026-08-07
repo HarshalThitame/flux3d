@@ -8944,3 +8944,240 @@ body:has(.premium-auth-shell) {
   }
 }
 
+/* ===================================================
+   CINEMATIC LIQUID-MORPH GLOBAL LOADER
+   Organic blob shapes, flux-purple → gold gradients,
+   orbiting particles + Playfair Display brand wordmark.
+   =================================================== */
+@keyframes liquidMorphMain {
+  0%, 100% {
+    border-radius: 58% 42% 34% 66% / 62% 34% 66% 38%;
+    transform: rotate(0deg) scale(1);
+  }
+  20% {
+    border-radius: 36% 64% 68% 32% / 46% 62% 38% 54%;
+    transform: rotate(18deg) scale(1.04);
+  }
+  40% {
+    border-radius: 52% 48% 32% 68% / 34% 42% 72% 66%;
+    transform: rotate(-14deg) scale(0.97);
+  }
+  60% {
+    border-radius: 42% 58% 64% 36% / 58% 34% 62% 42%;
+    transform: rotate(24deg) scale(1.06);
+  }
+  80% {
+    border-radius: 66% 34% 44% 56% / 40% 68% 32% 60%;
+    transform: rotate(-10deg) scale(0.99);
+  }
+}
+
+@keyframes liquidMorphInner {
+  0%, 100% {
+    border-radius: 40% 60% 66% 34% / 50% 38% 62% 50%;
+    transform: rotate(0deg) scale(1);
+  }
+  33% {
+    border-radius: 62% 38% 34% 66% / 34% 64% 36% 66%;
+    transform: rotate(-20deg) scale(1.05);
+  }
+  66% {
+    border-radius: 34% 66% 58% 42% / 66% 44% 56% 34%;
+    transform: rotate(22deg) scale(0.96);
+  }
+}
+
+@keyframes liquidGradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes goldGlowPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 40px rgba(124, 58, 237, 0.45),
+      0 0 90px rgba(212, 175, 55, 0.22),
+      inset 0 0 24px rgba(255, 255, 255, 0.10);
+    opacity: 0.85;
+  }
+  50% {
+    box-shadow:
+      0 0 70px rgba(124, 58, 237, 0.65),
+      0 0 140px rgba(212, 175, 55, 0.38),
+      inset 0 0 34px rgba(255, 255, 255, 0.18);
+    opacity: 1;
+  }
+}
+
+@keyframes loaderOrbit {
+  0% { transform: rotate(0deg) translateX(86px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(86px) rotate(-360deg); }
+}
+
+@keyframes loaderOrbitReverse {
+  0% { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+  100% { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+}
+
+@keyframes textShimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes loaderRingSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes loaderRingSpinReverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes loaderTwinkle {
+  0%, 100% { opacity: 0.1; transform: scale(0.6); }
+  50% { opacity: 0.6; transform: scale(1); }
+}
+
+.liquid-morph-blob-main {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #3b0764 0%, #5b21b6 30%, #7c3aed 60%, #a855f7 80%, #d4af37 100%);
+  background-size: 220% 220%;
+  animation:
+    liquidMorphMain 8s ease-in-out infinite,
+    liquidGradientShift 6s ease-in-out infinite;
+  will-change: transform, border-radius, background-position;
+}
+
+.liquid-morph-blob-inner {
+  position: absolute;
+  inset: 26px;
+  background: linear-gradient(225deg, #2e1065 0%, #6d28d9 45%, #d4af37 100%);
+  background-size: 220% 220%;
+  animation:
+    liquidMorphInner 7s ease-in-out infinite,
+    liquidGradientShift 8s ease-in-out infinite;
+  will-change: transform, border-radius, background-position;
+}
+
+.liquid-morph-blob-core {
+  position: absolute;
+  inset: 62px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #fff7d6 0%, #f5d061 30%, #d4af37 62%, #b8860b 100%);
+  animation: goldGlowPulse 2.4s ease-in-out infinite;
+  will-change: box-shadow, opacity;
+}
+
+.liquid-morph-ring {
+  position: absolute;
+  inset: -22px;
+  border: 1.5px solid rgba(212, 175, 55, 0.35);
+  border-radius: 50%;
+  animation: loaderRingSpin 14s linear infinite;
+  will-change: transform;
+}
+
+.liquid-morph-ring::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d4af37;
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.9);
+}
+
+.liquid-morph-ring-reverse {
+  position: absolute;
+  inset: -46px;
+  border: 1px dashed rgba(168, 85, 247, 0.4);
+  border-radius: 50%;
+  animation: loaderRingSpinReverse 22s linear infinite;
+  will-change: transform;
+}
+
+.liquid-morph-ring-reverse::after {
+  content: '';
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #a855f7;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.9);
+}
+
+.liquid-morph-particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff 0%, #d4af37 55%, #b8860b 100%);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
+  animation: loaderOrbit 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.liquid-morph-particle-reverse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff 0%, #a855f7 55%, #6d28d9 100%);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.8);
+  animation: loaderOrbitReverse 9s ease-in-out infinite;
+  will-change: transform;
+}
+
+.liquid-morph-twinkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #d4af37;
+  animation: loaderTwinkle 3s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+.liquid-morph-wordmark {
+  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  background: linear-gradient(100deg, #b8860b 0%, #d4af37 25%, #fff7d6 45%, #d4af37 55%, #b8860b 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textShimmer 3.5s linear infinite;
+  will-change: background-position;
+}
+
+.liquid-morph-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(10, 6, 18, 0.55) 78%, rgba(10, 6, 18, 0.92) 100%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-morph-blob-main,
+  .liquid-morph-blob-inner,
+  .liquid-morph-ring,
+  .liquid-morph-ring-reverse,
+  .liquid-morph-particle,
+  .liquid-morph-particle-reverse,
+  .liquid-morph-twinkle,
+  .liquid-morph-wordmark {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+  }
+}
+

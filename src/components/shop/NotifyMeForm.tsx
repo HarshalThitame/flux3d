@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Bell, CheckCircle2, Loader2 } from 'lucide-react'
+import { useGlobalLoading } from '@/hooks/useGlobalLoading'
 
 export default function NotifyMeForm({
   productId,
@@ -18,6 +19,7 @@ export default function NotifyMeForm({
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const { withLoading } = useGlobalLoading()
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
@@ -25,16 +27,18 @@ export default function NotifyMeForm({
     setError('')
 
     try {
-      const response = await fetch('/api/3d-shop/notify-me', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId, skuId, email }),
-      })
-      const data = await response.json().catch(() => ({})) as { success?: boolean; error?: string; message?: string }
+      await withLoading(async () => {
+        const response = await fetch('/api/3d-shop/notify-me', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId, skuId, email }),
+        })
+        const data = await response.json().catch(() => ({})) as { success?: boolean; error?: string; message?: string }
 
-      if (!response.ok && !String(data.error || '').toLowerCase().includes('already')) {
-        throw new Error(data.error || 'Could not save your request.')
-      }
+        if (!response.ok && !String(data.error || '').toLowerCase().includes('already')) {
+          throw new Error(data.error || 'Could not save your request.')
+        }
+      }, 'Saving your notification…')
 
       setSuccess(true)
     } catch (submitError) {

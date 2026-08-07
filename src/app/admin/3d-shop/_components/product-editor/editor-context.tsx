@@ -7,7 +7,7 @@ import { slugifyShopValue, stableStringify } from '@/lib/shop/admin-types'
 import type { ProductForm, ProductFormErrors } from '@/lib/shop/product-schema'
 import { getPublishBlockers } from '@/lib/shop/product-schema'
 import type { AiGenerationKind, AiGenerateResult, AiTone } from '@/lib/shop/ai'
-import { uploadFileWithProgress } from '@/lib/shop/upload'
+import { uploadFileWithProgress, uploadModelFileWithProgress } from '@/lib/shop/upload'
 import type { ProductTemplate } from '@/lib/shop/templates'
 import { templateLongDescription } from '@/lib/shop/templates'
 import { addRevision, clearRevisions, loadRevisions, type ShopRevision } from '@/lib/shop/revisions'
@@ -89,6 +89,7 @@ type ProductEditorContextValue = {
   updateSku: <K extends keyof ShopSku>(skuId: string, key: K, value: ShopSku[K]) => void
   bulkUpdateSkus: (partial: Partial<ShopSku>, ids?: string[]) => void
   saveAllSkus: () => Promise<void>
+  deleteSku: (skuId: string) => Promise<void>
 }
 
 const ProductEditorContext = createContext<ProductEditorContextValue | null>(null)
@@ -751,7 +752,7 @@ export function ProductEditorProvider({
       const tempKey = `model-${file.name}-${Date.now()}`
       setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress: 0 } }))
       try {
-        const { publicUrl } = await uploadFileWithProgress('/api/3d-shop/admin/models/upload', file, id, (progress) => {
+        const { publicUrl } = await uploadModelFileWithProgress(file, id, (progress) => {
           setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress } }))
         })
         setUploadState((current) => ({ ...current, [tempKey]: { status: 'done', progress: 100 } }))
@@ -991,6 +992,31 @@ export function ProductEditorProvider({
     }
   }, [saveAllSkus])
 
+  const deleteSku = useCallback(
+    async (skuId: string) => {
+      const id = form.productRef.current.id
+      if (!id) return
+      if (!window.confirm('Delete this SKU? This action cannot be undone.')) return
+
+      const response = await fetch(`/api/3d-shop/admin/products/${id}/skus?id=${encodeURIComponent(skuId)}`, {
+        method: 'DELETE',
+      })
+      const data = (await response.json().catch(() => ({}))) as { error?: string }
+      if (!response.ok) {
+        const message = data.error || 'Failed to delete SKU.'
+        setToast({ type: 'error', message })
+        throw new Error(message)
+      }
+
+      setSkus((current) => current.filter((sku) => sku.id !== skuId))
+      const remaining = skusRef.current.filter((sku) => sku.id !== skuId)
+      syncBasePriceFromSkus(remaining)
+      form.setDirty(true)
+      setToast({ type: 'success', message: 'SKU deleted.' })
+    },
+    [form, syncBasePriceFromSkus]
+  )
+
   const archiveProduct = useCallback(async () => {
     const id = form.productRef.current.id
     if (!id || !window.confirm('Archive this product?')) return
@@ -1065,6 +1091,7 @@ export function ProductEditorProvider({
     updateSku,
     bulkUpdateSkus,
     saveAllSkus: saveAllSkusWithToast,
+    deleteSku,
   }
 
   return <ProductEditorContext.Provider value={value}>{children}</ProductEditorContext.Provider>

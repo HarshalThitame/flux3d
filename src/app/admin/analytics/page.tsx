@@ -53,7 +53,7 @@ type BusinessIntelData = {
   orderAnalytics: { totalOrders: number; ordersByStatus: { status: string; count: number }[]; ordersByCity: { city: string; count: number }[] }
   materialAnalytics: { topMaterialsByRevenue: { material: string; revenue: number }[]; materials: { id: string; name: string; sku: string | null; type: string | null; brand: string | null; price_per_gram: number | null; stock: string | null; current_stock: number | null; min_threshold: number | null; unit: string | null }[] }
   customerAnalytics: { newCustomers: number; returningCustomers: number; totalCustomers: number }
-  printerPerformance: { id: string; name: string; model: string | null; status: string; job: string | null; customer: string | null; material: string | null; progress: number | null; lastActive: string | null }[]
+  printerPerformance: { id: string; name: string; model: string | null; status: string; lastActive: string | null }[]
 }
 
 type VisitorsData = {
@@ -445,13 +445,7 @@ export default function AnalyticsPage() {
                         </span>
                       </div>
                       <div className="mt-1 text-xs text-[#6F7192]">
-                        {printer.model || 'Model unknown'} · {printer.job || 'No job'} · {printer.material || '—'}
-                      </div>
-                      <div className="mt-3 h-1.5 rounded-full bg-gray-200">
-                        <div className="h-full rounded-full bg-[#6d28d9]" style={{ width: `${Math.min(100, Math.max(0, printer.progress ?? 0))}%` }} />
-                      </div>
-                      <div className="mt-1 text-[10px] text-[#6F7192]">
-                        {printer.progress ?? 0}% · last active {printer.lastActive ? new Date(printer.lastActive).toLocaleString() : 'never'}
+                        {printer.model || 'Model unknown'} · {printer.lastActive ? `last active ${new Date(printer.lastActive).toLocaleString()}` : 'never active'}
                       </div>
                     </div>
                   ))}
