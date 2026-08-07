@@ -40,9 +40,9 @@ type MaterialCardsProps = {
 
 function getDifficultyClass(value?: string) {
   const normalized = value?.toLowerCase() ?? ''
-  if (normalized.includes('easy')) return 'border border-emerald-300/25 bg-emerald-400/10 text-emerald-200'
-  if (normalized.includes('medium')) return 'border border-amber-300/25 bg-amber-400/10 text-amber-200'
-  return 'border border-cyan-300/20 bg-cyan-400/10 text-cyan-100'
+  if (normalized.includes('easy')) return 'border border-emerald-300/25 bg-emerald-400/10 text-emerald-800'
+  if (normalized.includes('medium')) return 'border border-amber-300/25 bg-amber-400/10 text-amber-800'
+  return 'border border-cyan-300/20 bg-cyan-400/10 text-cyan-800'
 }
 
 function getMaterialInitials(name: string) {
@@ -57,7 +57,7 @@ function getMaterialInitials(name: string) {
 function SpecTile({ label, value, icon: Icon }: { label: string; value: string; icon: ComponentType<{ className?: string }> }) {
   return (
     <div className="materials-spec-tile min-w-0 rounded-lg border border-gray-100 bg-[#FAFBFD] px-3 py-3">
-      <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase text-[#6F7192]">
+      <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase text-[#4B5563]">
         <Icon className="h-3.5 w-3.5 text-[#6d28d9]" />
         {label}
       </div>
@@ -100,7 +100,7 @@ function MaterialCard({ data, index }: { data: MaterialCardData; index: number }
           {data.pricePerGram && (
             <div className="shrink-0 rounded-2xl border border-[#6d28d9]/10 bg-[#f5f3ff] px-3 py-2 text-right">
               <div className="text-xl font-extrabold text-[#6d28d9]">₹{data.pricePerGram}</div>
-              <div className="text-[11px] font-bold uppercase text-[#6F7192]">per gram</div>
+              <div className="text-[11px] font-bold uppercase text-[#4B5563]">per gram</div>
             </div>
           )}
         </div>
@@ -136,7 +136,7 @@ function MaterialCard({ data, index }: { data: MaterialCardData; index: number }
 
         {data.bestFor && data.bestFor.length > 0 && (
           <div className="mb-5">
-            <div className="mb-2 text-xs font-bold uppercase text-[#6F7192]">Best for</div>
+            <div className="mb-2 text-xs font-bold uppercase text-[#4B5563]">Best for</div>
             <div className="flex flex-wrap gap-2">
               {data.bestFor.map((item, idx) => (
                 <span key={idx} className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-[#4B5563]">
@@ -238,7 +238,7 @@ export default function MaterialCards({ materials }: MaterialCardsProps) {
       <section className="materials-premium-section relative overflow-hidden px-4 py-12 md:px-8 lg:px-16">
         <div className="materials-section-grid" aria-hidden="true" />
         <div className="materials-panel-premium relative z-10 mx-auto max-w-[1200px] rounded-lg border border-gray-200 bg-white py-12 text-center shadow-sm">
-          <p className="text-[#6F7192]">No materials available. Add materials in the admin panel.</p>
+          <p className="text-[#4B5563]">No materials available. Add materials in the admin panel.</p>
         </div>
       </section>
     )
@@ -262,7 +262,7 @@ export default function MaterialCards({ materials }: MaterialCardsProps) {
               Premium material cards for real decisions.
             </h2>
           </div>
-          <p className="max-w-md text-sm leading-6 text-[#6F7192]">
+          <p className="max-w-md text-sm leading-6 text-[#4B5563]">
             Every material is framed around what a buyer actually needs: price, finish, durability, and recommended applications.
           </p>
         </motion.div>

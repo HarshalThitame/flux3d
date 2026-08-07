@@ -105,7 +105,7 @@ export default function MaterialPopup({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-full border border-[#6d28d9]/10 bg-white/5 px-2.5 py-1 text-xs text-[#aeb7d3] transition-colors hover:bg-white/10 hover:text-[#070b1d]"
+                  className="rounded-full border border-[#6d28d9]/10 bg-[#F7F8FB] px-2.5 py-1 text-xs text-[#4B5563] transition-colors hover:bg-gray-100 hover:text-[#070b1d]"
                   aria-label="Close material details"
                 >
                   Close
@@ -113,7 +113,7 @@ export default function MaterialPopup({
               </div>
 
               <div className="overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
-                <p className="text-sm leading-6 text-[#b0b8d3]">{material.description}</p>
+                <p className="text-sm leading-6 text-[#4B5563]">{material.description}</p>
 
                 <div className="mt-4 grid grid-cols-2 gap-2.5">
                   {(Object.entries(material.properties) as Array<[keyof MaterialSpec['properties'], string]>).map(([key, value]) => {
@@ -122,9 +122,9 @@ export default function MaterialPopup({
                     return (
                       <div
                         key={key}
-                        className="rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] p-3"
+                        className="rounded-2xl border border-[#6d28d9]/10 bg-[#FAFBFD] p-3"
                       >
-                        <div className="mb-1.5 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-[#6F7192]">
+                        <div className="mb-1.5 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-[#4B5563]">
                           <Icon className="h-3.5 w-3.5 text-[#6d28d9]" />
                           {propertyLabels[key]}
                         </div>
@@ -135,11 +135,11 @@ export default function MaterialPopup({
                 </div>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] p-4">
-                    <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-[#6F7192]">
+                  <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FAFBFD] p-4">
+                    <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-[#4B5563]">
                       Best Use Cases
                     </div>
-                    <ul className="space-y-2 text-sm text-[#d7dcef]">
+                    <ul className="space-y-2 text-sm text-[#4B5563]">
                       {material.useCases.map((item) => (
                         <li key={item} className="flex items-start gap-2">
                           <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#6d28d9]" />
@@ -149,21 +149,21 @@ export default function MaterialPopup({
                     </ul>
                   </div>
 
-                  <div className="rounded-2xl border border-[#6d28d9]/10 bg-white/[0.03] p-4">
-                    <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-[#6F7192]">
+                  <div className="rounded-2xl border border-[#6d28d9]/10 bg-[#FAFBFD] p-4">
+                    <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-[#4B5563]">
                       Print Settings
                     </div>
-                    <div className="space-y-2 text-sm text-[#d7dcef]">
+                    <div className="space-y-2 text-sm text-[#4B5563]">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-[#8f98b7]">Nozzle</span>
+                        <span className="text-[#4B5563]">Nozzle</span>
                         <span>{material.settings?.nozzle ?? 'N/A'}</span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-[#8f98b7]">Bed</span>
+                        <span className="text-[#4B5563]">Bed</span>
                         <span>{material.settings?.bed ?? 'N/A'}</span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-[#8f98b7]">Speed</span>
+                        <span className="text-[#4B5563]">Speed</span>
                         <span>{material.settings?.speed ?? 'N/A'}</span>
                       </div>
                     </div>
@@ -171,23 +171,23 @@ export default function MaterialPopup({
                 </div>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-emerald-400/15 bg-emerald-400/5 p-4">
-                    <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-emerald-200">
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                    <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-emerald-700">
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       Pros
                     </div>
-                    <ul className="space-y-2 text-sm text-[#d7dcef]">
+                    <ul className="space-y-2 text-sm text-[#4B5563]">
                       {material.pros.map((item) => (
                         <li key={item}>{item}</li>
                       ))}
                     </ul>
                   </div>
-                  <div className="rounded-2xl border border-amber-400/15 bg-amber-400/5 p-4">
-                    <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-amber-200">
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-amber-700">
                       <CircleAlert className="h-3.5 w-3.5" />
                       Cons
                     </div>
-                    <ul className="space-y-2 text-sm text-[#d7dcef]">
+                    <ul className="space-y-2 text-sm text-[#4B5563]">
                       {material.cons.map((item) => (
                         <li key={item}>{item}</li>
                       ))}

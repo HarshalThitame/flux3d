@@ -75,7 +75,7 @@ export default function PostProcessing() {
           <h2 className="mx-auto max-w-2xl text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#070b1d] md:text-4xl">
             Premium finish options, matched to your material.
           </h2>
-          <p className="mx-auto mt-3 max-w-[620px] text-sm leading-6 text-[#6F7192]">
+          <p className="mx-auto mt-3 max-w-[620px] text-sm leading-6 text-[#4B5563]">
             Raw prints are great. Finished prints are impressive. We offer post-processing services to take your print from good to gallery-worthy.
           </p>
         </motion.div>
@@ -93,7 +93,7 @@ export default function PostProcessing() {
                 <s.icon className="h-5 w-5" />
               </div>
               <h3 className="mb-2 text-lg font-extrabold text-[#070b1d] transition-colors group-hover:text-[#6d28d9]">{s.title}</h3>
-              <p className="mb-4 min-h-[72px] text-sm leading-6 text-[#6F7192]">{s.body}</p>
+              <p className="mb-4 min-h-[72px] text-sm leading-6 text-[#4B5563]">{s.body}</p>
               <div className="flex items-end justify-between gap-4 border-t border-gray-100 pt-4 text-xs">
                 <span className="font-semibold leading-5 text-[#4B5563]">For: {s.available}</span>
                 <span className="shrink-0 font-extrabold text-[#6d28d9]">{s.price}</span>

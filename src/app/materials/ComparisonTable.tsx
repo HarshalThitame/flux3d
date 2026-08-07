@@ -38,7 +38,7 @@ type ComparisonTableProps = {
 function Availability({ stock }: { stock?: string | boolean }) {
   if (stock === true || stock === 'Healthy') {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-2.5 py-1 text-xs font-bold text-emerald-200">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-2.5 py-1 text-xs font-bold text-emerald-800">
         <CheckCircle2 className="h-3.5 w-3.5" />
         In stock
       </span>
@@ -47,7 +47,7 @@ function Availability({ stock }: { stock?: string | boolean }) {
 
   if (stock === 'Low' || stock === false) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/25 bg-amber-400/10 px-2.5 py-1 text-xs font-bold text-amber-200">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/25 bg-amber-400/10 px-2.5 py-1 text-xs font-bold text-amber-800">
         <AlertTriangle className="h-3.5 w-3.5" />
         Low stock
       </span>
@@ -55,7 +55,7 @@ function Availability({ stock }: { stock?: string | boolean }) {
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-xs font-bold text-cyan-100">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-xs font-bold text-cyan-800">
       <PhoneCall className="h-3.5 w-3.5" />
       {typeof stock === 'string' ? stock : 'Request'}
     </span>
@@ -71,7 +71,7 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
       <section ref={ref} className="materials-premium-section relative overflow-hidden px-4 py-12 md:px-8 lg:px-16">
         <div className="materials-section-grid" aria-hidden="true" />
         <div className="materials-panel-premium relative z-10 mx-auto max-w-[1200px] rounded-lg border border-gray-200 bg-white py-12 text-center shadow-sm">
-          <p className="text-[#6F7192]">No materials available for comparison.</p>
+          <p className="text-[#4B5563]">No materials available for comparison.</p>
         </div>
       </section>
     )
@@ -94,7 +94,7 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
               Compare materials without guessing.
             </h2>
           </div>
-          <p className="max-w-md text-sm leading-6 text-[#6F7192]">
+          <p className="max-w-md text-sm leading-6 text-[#4B5563]">
             Price, finish, strength, heat, and availability in one clean view before you open the detailed cards.
           </p>
         </motion.div>
@@ -103,7 +103,7 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
           <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] text-sm">
             <thead>
-              <tr className="bg-[#F7F8FB] text-xs uppercase text-[#6F7192]">
+              <tr className="bg-[#F7F8FB] text-xs uppercase text-[#4B5563]">
                 <th className="px-5 py-4 text-left font-bold">Material</th>
                 <th className="px-4 py-4 text-left font-bold">Type</th>
                 <th className="px-4 py-4 text-left font-bold">Price/g</th>
@@ -126,7 +126,7 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
                   className="border-t border-gray-100 transition-colors hover:bg-[#FAFBFD]"
                 >
                   <td className="px-5 py-4 font-extrabold text-[#070b1d]">{m.name}</td>
-                  <td className="px-4 py-4 text-[#6F7192]">
+                  <td className="px-4 py-4 text-[#4B5563]">
                     <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${m.type === 'FDM' ? 'bg-[#ede9fe] text-[#5b21b6]' : 'bg-[#eef2ff] text-[#3730a3]'}`}>
                       {m.type || 'FDM'}
                     </span>
@@ -136,8 +136,8 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
                   <td className="px-4 py-4 text-[#4B5563]">{m.properties?.flexibility || <Stars count={2} />}</td>
                   <td className="px-4 py-4 text-[#4B5563]">{m.heatResistance || m.properties?.tempResistance || <Stars count={2} />}</td>
                   <td className="px-4 py-4 text-[#4B5563]">{m.finishQuality || <Stars count={3} />}</td>
-                  <td className="px-4 py-4 text-xs font-semibold text-[#6F7192]">{m.difficultyLevel || 'Easy'}</td>
-                  <td className="hidden max-w-[240px] px-4 py-4 text-[#6F7192] lg:table-cell">
+                  <td className="px-4 py-4 text-xs font-semibold text-[#4B5563]">{m.difficultyLevel || 'Easy'}</td>
+                  <td className="hidden max-w-[240px] px-4 py-4 text-[#4B5563] lg:table-cell">
                     {Array.isArray(m.bestFor) ? m.bestFor.join(', ') : (m.bestFor || 'General')}
                   </td>
                   <td className="px-5 py-4">

@@ -24,7 +24,7 @@ export default function FDMvsResin() {
           <h2 className="mx-auto max-w-2xl text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#070b1d] md:text-4xl">
             FDM or resin? Decide by outcome.
           </h2>
-          <p className="mx-auto mt-3 max-w-[640px] text-sm leading-6 text-[#6F7192]">
+          <p className="mx-auto mt-3 max-w-[640px] text-sm leading-6 text-[#4B5563]">
             The two most common 3D printing technologies have very different strengths. Here&apos;s what you actually need to know — without the jargon.
           </p>
         </motion.div>
@@ -57,12 +57,12 @@ export default function FDMvsResin() {
                 ['Post-Processing', 'Sanding, painting, acetone smoothing'],
               ].map(([label, value]) => (
                 <div key={label} className="flex gap-4 border-b border-gray-100 pb-3 last:border-b-0">
-                  <span className="min-w-[118px] font-bold text-[#6F7192]">{label}</span>
+                  <span className="min-w-[118px] font-bold text-[#4B5563]">{label}</span>
                   <span className="font-semibold text-[#070b1d]">{value}</span>
                 </div>
               ))}
               <div className="rounded-2xl bg-[#FAFBFD] p-4">
-                <p className="mb-1 text-xs font-bold uppercase text-[#6F7192]">Ideal For</p>
+                <p className="mb-1 text-xs font-bold uppercase text-[#4B5563]">Ideal For</p>
                 <p className="text-sm font-semibold leading-6 text-[#070b1d]">Industrial parts, functional prototypes, architecture models, student projects, large prints, outdoor parts</p>
               </div>
             </div>
@@ -95,12 +95,12 @@ export default function FDMvsResin() {
                 ['Post-Processing', 'UV curing, alcohol wash, painting'],
               ].map(([label, value]) => (
                 <div key={label} className="flex gap-4 border-b border-gray-100 pb-3 last:border-b-0">
-                  <span className="min-w-[118px] font-bold text-[#6F7192]">{label}</span>
+                  <span className="min-w-[118px] font-bold text-[#4B5563]">{label}</span>
                   <span className="font-semibold text-[#070b1d]">{value}</span>
                 </div>
               ))}
               <div className="rounded-2xl bg-[#FAFBFD] p-4">
-                <p className="mb-1 text-xs font-bold uppercase text-[#6F7192]">Ideal For</p>
+                <p className="mb-1 text-xs font-bold uppercase text-[#4B5563]">Ideal For</p>
                 <p className="text-sm font-semibold leading-6 text-[#070b1d]">Dental models, jewelry, miniatures, medical models, fine detail props, product presentation models</p>
               </div>
             </div>

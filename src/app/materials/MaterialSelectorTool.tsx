@@ -37,7 +37,7 @@ function PropertyBadge({
 }) {
   return (
     <div className="materials-property-badge rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
-      <div className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase text-gray-500">
+      <div className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase text-gray-600">
         <Icon className="h-3.5 w-3.5 text-[#6d28d9]" />
         {label}
       </div>
@@ -124,7 +124,7 @@ export default function MaterialSelectorTool() {
           <h2 className="mx-auto max-w-2xl text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#070b1d] md:text-4xl">
             Let the part decide the material.
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#6F7192]">
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#4B5563]">
             Answer 4 quick questions and get a recommendation based on use case, finish, heat, flexibility, and cost.
           </p>
         </motion.div>
@@ -135,7 +135,7 @@ export default function MaterialSelectorTool() {
           className="materials-quiz-panel overflow-hidden rounded-lg border border-gray-200 bg-white p-5 shadow-[0_24px_70px_rgba(17,24,39,0.10)] md:p-7"
         >
           <div className="mb-6">
-            <div className="mb-2 flex items-center justify-between text-xs font-bold uppercase text-gray-500">
+            <div className="mb-2 flex items-center justify-between text-xs font-bold uppercase text-gray-600">
               <span>Q{progressIndex}/{MATERIAL_QUIZ_QUESTIONS.length}</span>
               <span>{Math.round(progressPercent)}%</span>
             </div>
@@ -208,7 +208,7 @@ export default function MaterialSelectorTool() {
                     <span className="font-bold text-[#070b1d]">Recommended because:</span>{' '}
                     {recommendation.primary.reason}
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-[#6F7192]">
+                  <p className="mt-2 text-sm leading-6 text-[#4B5563]">
                     {recommendation.primary.material.summary}
                   </p>
 

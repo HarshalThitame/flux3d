@@ -52,10 +52,10 @@ function FAQItem({ faq }: { faq: { q: string; a: string } }) {
         <span className="pr-4 text-sm font-extrabold leading-6 text-[#070b1d] transition-colors group-hover:text-[#6d28d9]">
           {faq.q}
         </span>
-        <ChevronDown className={`h-4 w-4 flex-shrink-0 text-[#6F7192] transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`h-4 w-4 flex-shrink-0 text-[#4B5563] transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <p className="pb-5 text-sm leading-6 text-[#6F7192]">{faq.a}</p>
+        <p className="pb-5 text-sm leading-6 text-[#4B5563]">{faq.a}</p>
       )}
     </div>
   )

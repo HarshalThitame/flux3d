@@ -67,13 +67,13 @@ export default function MaterialCard({
           <div className="font-[var(--font-syne)] text-base font-bold text-[#070b1d]">
             {material.name}
           </div>
-          <div className="mt-1 inline-flex rounded-full border border-[#6d28d9]/10 bg-white/[0.04] px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-[#9aa3c0]">
+          <div className="mt-1 inline-flex rounded-full border border-[#6d28d9]/10 bg-[#6d28d9]/10 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-[#6d28d9]">
             {material.tag}
           </div>
         </div>
       </div>
 
-      <p className="relative mt-4 line-clamp-3 text-sm leading-6 text-[#7f89aa]">
+      <p className="relative mt-4 line-clamp-3 text-sm leading-6 text-[#4B5563]">
         {material.description}
       </p>
 

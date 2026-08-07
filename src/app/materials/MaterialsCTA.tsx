@@ -26,7 +26,7 @@ export default function MaterialsCTA() {
         <h2 className="mx-auto max-w-2xl text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#070b1d] md:text-4xl">
           Upload once. Get a material recommendation and a production-ready quote.
         </h2>
-        <p className="mx-auto mb-8 mt-4 max-w-[560px] text-sm leading-6 text-[#6F7192]">
+        <p className="mx-auto mb-8 mt-4 max-w-[560px] text-sm leading-6 text-[#4B5563]">
           Upload your file and we&apos;ll recommend the perfect material and give you an instant quote. No account, no commitment — just a fast answer.
         </p>
 
@@ -50,13 +50,13 @@ export default function MaterialsCTA() {
         </div>
 
         <div className="mb-6 flex items-center justify-center gap-2">
-          <Mail className="w-4 h-4 text-[#6F7192]" />
-          <a href={`mailto:${settings.primaryEmail || 'hello@flux3d.in'}`} className="text-sm text-[#6F7192] hover:text-[#070b1d] transition-colors">
+          <Mail className="w-4 h-4 text-[#4B5563]" />
+          <a href={`mailto:${settings.primaryEmail || 'hello@flux3d.in'}`} className="text-sm text-[#4B5563] hover:text-[#070b1d] transition-colors">
             {settings.primaryEmail || 'hello@flux3d.in'}
           </a>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#6F7192]">
+        <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#4B5563]">
           {['Free Quote', 'Expert Recommendation', 'Pan-India Delivery', 'No Minimum Order'].map(item => (
             <span key={item} className="inline-flex items-center gap-1 rounded-full bg-[#F7F8FB] px-3 py-1.5">
               <Check className="h-3 w-3 text-[#6d28d9]" />
