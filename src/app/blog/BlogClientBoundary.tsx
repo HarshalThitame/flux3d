@@ -6,7 +6,7 @@ import type { BlogPost } from '@/lib/blog/types'
 
 const BlogClient = dynamic(() => import('./BlogClient'), {
   ssr: false,
-  loading: () => <RouteChunkLoader className="text-[#0F1B3D]" minHeight="86svh" label="Loading blog" />,
+  loading: () => <RouteChunkLoader className="text-[#070b1d]" minHeight="86svh" label="Loading blog" />,
 })
 
 export default function BlogClientBoundary({

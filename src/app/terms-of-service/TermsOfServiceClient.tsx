@@ -24,7 +24,7 @@ const sections = [
 
 function SectionTitle({ index, children }: { index: number; children: React.ReactNode }) {
   return (
-    <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+    <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
       <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">{index}</span>
       {children}
     </h2>
@@ -49,14 +49,14 @@ export default function TermsOfServiceClient() {
   const updatedDate = 'July 17, 2026'
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#070b1d]">
       <div className="sticky top-0 z-50 border-b border-[#6d28d9]/10 bg-[#FFFFFF]/50 backdrop-blur-sm">
         <div className="mx-auto max-w-[1200px] px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D]">
+            <Link href="/" className="font-[var(--font-syne)] text-2xl font-extrabold text-[#070b1d]">
               flux<span className="text-[#6d28d9]">3d</span>
             </Link>
-            <Link href="/" className="inline-flex items-center gap-2 text-sm text-[#6F7192] transition-colors hover:text-[#0F1B3D]">
+            <Link href="/" className="inline-flex items-center gap-2 text-sm text-[#6F7192] transition-colors hover:text-[#070b1d]">
               <ArrowLeft className="h-4 w-4" />
               Back to Home
             </Link>
@@ -68,13 +68,13 @@ export default function TermsOfServiceClient() {
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-[280px_1fr]">
           <motion.aside initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="hidden lg:block">
             <div className="sticky top-24">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[#0F1B3D]">Contents</h3>
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[#070b1d]">Contents</h3>
               <nav className="space-y-1">
                 {sections.map((section) => (
                   <a
                     key={section.id}
                     href={`#${section.id}`}
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#6F7192] transition-colors hover:bg-white/[0.03] hover:text-[#0F1B3D]"
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#6F7192] transition-colors hover:bg-white/[0.03] hover:text-[#070b1d]"
                   >
                     <section.icon className="h-3.5 w-3.5" />
                     <span className="line-clamp-1">{section.title}</span>
@@ -90,7 +90,7 @@ export default function TermsOfServiceClient() {
                 <FileText className="h-4 w-4" />
                 Legal Document
               </div>
-              <h1 className="mb-4 font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D] md:text-5xl">
+              <h1 className="mb-4 font-[var(--font-syne)] text-4xl font-extrabold text-[#070b1d] md:text-5xl">
                 Terms & <span className="text-[#6d28d9]">Conditions</span>
               </h1>
               <div className="flex flex-wrap gap-4 text-sm text-[#6F7192]">
@@ -104,7 +104,7 @@ export default function TermsOfServiceClient() {
               <div className="flex gap-3">
                 <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0 text-[#6d28d9]" />
                 <div>
-                  <h3 className="mb-2 font-semibold text-[#0F1B3D]">Important notice</h3>
+                  <h3 className="mb-2 font-semibold text-[#070b1d]">Important notice</h3>
                   <p className="text-sm leading-relaxed text-[#6F7192]">
                     These Terms apply to Flux 3D&apos;s custom 3D printing, prototyping, model printing, ready-made products,
                     and related manufacturing services. By placing an order or using the website, you agree to these Terms
@@ -126,7 +126,7 @@ export default function TermsOfServiceClient() {
               <section id="operator">
                 <SectionTitle index={2}>Business and Legal Operator</SectionTitle>
                 <div className="space-y-4 leading-relaxed text-[#6F7192]">
-                  <p><strong className="text-[#0F1B3D]">{brandName}</strong> is the public brand. The legal operator is <strong className="text-[#0F1B3D]">{legalName}</strong>.</p>
+                  <p><strong className="text-[#070b1d]">{brandName}</strong> is the public brand. The legal operator is <strong className="text-[#070b1d]">{legalName}</strong>.</p>
                   <p>Public contact details: <a className="text-[#6d28d9] hover:underline" href={`mailto:${supportEmail}`}>{supportEmail}</a>, <a className="text-[#6d28d9] hover:underline" href={`tel:${phone.replace(/[^0-9+]/g, '')}`}>{phone}</a>, {address}.</p>
                 </div>
               </section>

@@ -51,7 +51,7 @@ export default async function SecurityPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#070b1d]">
       <main className="mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:px-8">
         <section className="mx-auto max-w-3xl text-center">
           <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full bg-[#6d28d9]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#6d28d9]">
@@ -78,7 +78,7 @@ export default async function SecurityPage() {
 
         <section className="mt-14 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <article className="rounded-3xl border border-[#6d28d9]/20 bg-[#f5f3ff] p-8 shadow-lg">
-            <h2 className="text-2xl font-bold text-[#111827]">What is verified today</h2>
+            <h2 className="text-2xl font-bold text-[#070b1d]">What is verified today</h2>
             <ul className="mt-5 space-y-3 text-sm leading-7 text-[#475569]">
               <li className="flex items-start gap-2 before:mt-2 before:h-1.5 before:w-1.5 before:shrink-0 before:rounded-full before:bg-[#6d28d9]">Public pages are served without login.</li>
               <li className="flex items-start gap-2 before:mt-2 before:h-1.5 before:w-1.5 before:shrink-0 before:rounded-full before:bg-[#6d28d9]">Support details shown on the site use the verified Flux3D contact information.</li>
@@ -104,7 +104,7 @@ export default async function SecurityPage() {
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/contact" className="rounded-xl bg-[#6d28d9] px-5 py-3 text-sm font-semibold text-white">Contact Us</Link>
-              <Link href="/privacy-policy" className="rounded-xl border border-[#6d28d9]/20 bg-white px-5 py-3 text-sm font-semibold text-[#0F1B3D]">Privacy Policy</Link>
+              <Link href="/privacy-policy" className="rounded-xl border border-[#6d28d9]/20 bg-white px-5 py-3 text-sm font-semibold text-[#070b1d]">Privacy Policy</Link>
             </div>
           </article>
         </section>

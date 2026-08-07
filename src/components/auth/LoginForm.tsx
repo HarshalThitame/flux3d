@@ -12,10 +12,10 @@ import type { AuthFormState } from '@/lib/auth/validation'
 const initialState: AuthFormState = {}
 
 const fieldClass =
-  'h-11 w-full rounded-xl border bg-white px-4 text-sm font-semibold text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-purple-400 focus:ring-4 focus:ring-purple-100'
+  'h-11 w-full rounded-xl border bg-white px-4 text-sm font-semibold text-[#070b1d] shadow-sm outline-none transition placeholder:text-gray-400 focus:border-purple-400 focus:ring-4 focus:ring-purple-100'
 
 const errorFieldClass =
-  'h-11 w-full rounded-xl border bg-white px-4 text-sm font-semibold text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 border-red-400 ring-1 ring-red-400/30 focus:border-red-500 focus:ring-red-200'
+  'h-11 w-full rounded-xl border bg-white px-4 text-sm font-semibold text-[#070b1d] shadow-sm outline-none transition placeholder:text-gray-400 border-red-400 ring-1 ring-red-400/30 focus:border-red-500 focus:ring-red-200'
 
 export type LoginFormProps = {
   nextPath: string
@@ -169,7 +169,7 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
           />
         </span>
         <div className="min-w-0">
-          <h2 className="!text-[30px] font-black leading-[1.02] !text-gray-900">Welcome back.</h2>
+          <h2 className="!text-[30px] font-black leading-[1.02] !text-[#070b1d]">Welcome back.</h2>
           <p className="mt-1 text-sm leading-6 text-gray-500">
             Continue to your production workspace.
           </p>

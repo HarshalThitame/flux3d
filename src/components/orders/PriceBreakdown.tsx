@@ -56,7 +56,7 @@ export function PriceBreakdown({
   return (
     <div className="rounded-2xl border border-[#6d28d9]/10 bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[#0F1B3D]">
+        <h3 className="text-sm font-semibold text-[#070b1d]">
           {isMultiItem ? 'Order Total' : 'Price Breakdown'}
         </h3>
         <div className="text-right">
@@ -131,7 +131,7 @@ export function PriceBreakdown({
         </div>
 
         <div className="flex justify-between border-t-2 border-[#6d28d9]/20 pt-2">
-          <span className="text-base font-bold text-[#0F1B3D]">Grand total</span>
+          <span className="text-base font-bold text-[#070b1d]">Grand total</span>
           <span className="text-base font-bold text-[#6d28d9]">₹{grandTotal.toFixed(0)}</span>
         </div>
 

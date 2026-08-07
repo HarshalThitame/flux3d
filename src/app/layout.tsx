@@ -11,6 +11,9 @@ import MetaPixel from '@/components/MetaPixel'
 import ToastContainer from '@/components/Toast'
 import LoadingProvider from '@/components/providers/LoadingProvider'
 import LiquidMorphLoader from '@/components/ui/LiquidMorphLoader'
+import ThemeProvider from '@/components/providers/ThemeProvider'
+import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider'
+import PageTransition from '@/components/providers/PageTransition'
 import './globals.css'
 import './shop-luxury.css'
 import './landing-premium.css'
@@ -149,6 +152,7 @@ export default async function RootLayout({
       <html
         lang="en"
         data-scroll-behavior="smooth"
+        data-theme="light"
         className={`${playfair.variable} ${spaceGrotesk.variable}`}
       >
       <head>
@@ -179,15 +183,21 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: toJsonLd(webJsonLd) }}
         />
-        <ErrorBoundary>
-          <MetaPixel />
-        <DeferredTracking />
-          <LoadingProvider>
-            {children}
-          </LoadingProvider>
-        </ErrorBoundary>
-        <LiquidMorphLoader />
-        <ToastContainer />
+        <ThemeProvider>
+          <SmoothScrollProvider>
+            <ErrorBoundary>
+              <MetaPixel />
+              <DeferredTracking />
+              <LoadingProvider>
+                <PageTransition>
+                  {children}
+                </PageTransition>
+              </LoadingProvider>
+            </ErrorBoundary>
+            <LiquidMorphLoader />
+            <ToastContainer />
+          </SmoothScrollProvider>
+        </ThemeProvider>
         <DeferredGoogleAnalytics measurementId={GOOGLE_ANALYTICS_ID} />
       </body>
     </html>

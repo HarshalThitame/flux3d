@@ -40,7 +40,7 @@ export default async function ForgotPasswordPage({
   )
 
   return (
-    <main className="flex min-h-screen flex-col overflow-x-hidden bg-[#f9f7f4] text-[#111827] md:grid md:grid-cols-[55fr_45fr]">
+    <main className="flex min-h-screen flex-col overflow-x-hidden bg-[#f9f7f4] text-[#070b1d] md:grid md:grid-cols-[55fr_45fr]">
       <section className="relative order-2 flex min-h-[82svh] w-full min-w-0 overflow-hidden bg-white px-6 py-12 md:order-1 md:min-h-screen md:px-12 lg:px-16">
         <Image
           src="/printer2-poster.webp"
@@ -54,7 +54,7 @@ export default async function ForgotPasswordPage({
         <div className="absolute inset-0 bg-gradient-to-br from-[#faf9f7]/40 to-white/60" aria-hidden="true" />
 
         <div className="relative z-10 flex w-full max-w-3xl min-w-0 flex-col justify-center">
-          <h1 className="max-w-3xl break-words text-4xl font-black leading-[1.03] tracking-normal !text-[#111827] sm:text-5xl lg:text-7xl">
+          <h1 className="max-w-3xl break-words text-4xl font-black leading-[1.03] tracking-normal !text-[#070b1d] sm:text-5xl lg:text-7xl">
             Recover your <span className="!text-[#6d28d9]">Flux3D</span> workspace.
           </h1>
 
@@ -93,7 +93,7 @@ export default async function ForgotPasswordPage({
                   <span className="mt-2 block text-[9px] font-black uppercase leading-tight tracking-[0.14em] !text-[#6F7192]">
                     {metric.label}
                   </span>
-                  <strong className="mt-1.5 block text-[12px] font-bold leading-tight text-[#111827]">
+                  <strong className="mt-1.5 block text-[12px] font-bold leading-tight text-[#070b1d]">
                     {metric.value}
                   </strong>
                 </div>
@@ -114,7 +114,7 @@ export default async function ForgotPasswordPage({
                     <p className="text-[11px] font-black uppercase leading-tight tracking-[0.12em] !text-[#6F7192]">
                       {item.label}
                     </p>
-                    <strong className="mt-1 block text-[12px] font-bold leading-tight text-[#111827]">
+                    <strong className="mt-1 block text-[12px] font-bold leading-tight text-[#070b1d]">
                       {item.value}
                     </strong>
                   </div>

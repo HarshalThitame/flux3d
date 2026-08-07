@@ -80,7 +80,7 @@ export default function InstantQuoteWorkspace({
   const shouldReduceMotion = useReducedMotion()
   if (materials.length === 0) {
     return (
-      <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-8 text-[#0F1B3D] md:px-8 md:pt-10 xl:px-10">
+      <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-8 text-[#070b1d] md:px-8 md:pt-10 xl:px-10">
         <div className="mx-auto max-w-[1100px]">
           <EmptyState
             title="No materials available"
@@ -645,7 +645,7 @@ function CartEnabledWorkspace({
                 <div className="quote-hero-kicker inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/25 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#6d28d9]">
                   Instant Pricing Experience
                 </div>
-                <h1 className="quote-hero-title mt-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3.2rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#0F1B3D]">
+                <h1 className="quote-hero-title mt-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3.2rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#070b1d]">
                   Get Your <span className="quote-title-accent text-[#6d28d9]">Instant Quote</span>
                 </h1>
                 <p className="quote-hero-copy mt-3 max-w-[600px] text-sm leading-7 text-[#6F7192]">
@@ -675,7 +675,7 @@ function CartEnabledWorkspace({
                       {step.label}
                     </span>
                     {i < stepConfigs.length - 1 && (
-                      <ArrowRight className="ml-1 h-3 w-3 text-[#0F1B3D]/20" />
+                      <ArrowRight className="ml-1 h-3 w-3 text-[#070b1d]/20" />
                     )}
                   </button>
                     )
@@ -691,7 +691,7 @@ function CartEnabledWorkspace({
             <div className="quote-layout-grid grid gap-6 lg:gap-8 xl:grid-cols-[1fr_380px]">
               {/* Left Column */}
               <div className="space-y-6">
-                <div className="quote-bulk-strip rounded-2xl border border-cyan-400/15 bg-cyan-400/8 px-4 py-3 text-sm text-[#0F1B3D]">
+                <div className="quote-bulk-strip rounded-2xl border border-cyan-400/15 bg-cyan-400/8 px-4 py-3 text-sm text-[#070b1d]">
                   For bulk orders contact{' '}
                   <a className="font-medium text-[#6d28d9] hover:underline" href={`mailto:${bulkOrderContact.email}`}>
                     {bulkOrderContact.email}
@@ -721,7 +721,7 @@ function CartEnabledWorkspace({
                         <UploadCloud className="h-5 w-5" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-[#0F1B3D]">1. Upload Your Model</h2>
+                        <h2 className="text-lg font-semibold text-[#070b1d]">1. Upload Your Model</h2>
                         <p className="text-xs text-[#6F7192]">STL, OBJ, 3MF, STEP, DXF, or DWG files supported</p>
                       </div>
                     </div>
@@ -751,7 +751,7 @@ function CartEnabledWorkspace({
                         >
                           <UploadCloud className="h-6 w-6" />
                         </motion.div>
-                        <div className="text-base font-semibold text-[#0F1B3D]">
+                        <div className="text-base font-semibold text-[#070b1d]">
                           {selectedFile ? selectedFile.name : 'Drop your file or click to browse'}
                         </div>
                         {!selectedFile && (
@@ -835,7 +835,7 @@ function CartEnabledWorkspace({
                         <Palette className="h-5 w-5" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-[#0F1B3D]">3. Material & Color</h2>
+                        <h2 className="text-lg font-semibold text-[#070b1d]">3. Material & Color</h2>
                         <p className="text-xs text-[#6F7192]">Choose the best material and finish for your part</p>
                       </div>
                     </div>
@@ -862,7 +862,7 @@ function CartEnabledWorkspace({
                               </span>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-2">
-                                  <span className={`truncate text-sm font-medium ${isActive ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{material.name}</span>
+                                  <span className={`truncate text-sm font-medium ${isActive ? 'text-[var(--brand-primary)]' : 'text-[#070b1d]'}`}>{material.name}</span>
                                   {isActive && <CheckCircle2 className="h-4 w-4 shrink-0 text-[#6d28d9]" />}
                                 </div>
                                 <p className={`mt-0.5 truncate text-[11px] ${isActive ? 'text-[var(--text-secondary)]' : 'text-[#6F7192]'}`}>{material.summary}</p>
@@ -892,7 +892,7 @@ function CartEnabledWorkspace({
                                   : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10'
                               }`}
                             >
-                              <span className={`text-xs font-medium ${isActive ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{color.name}</span>
+                              <span className={`text-xs font-medium ${isActive ? 'text-[var(--brand-primary)]' : 'text-[#070b1d]'}`}>{color.name}</span>
                               {isActive && <CheckCircle2 className="h-3.5 w-3.5 text-[#6d28d9]" />}
                             </button>
                           )
@@ -915,7 +915,7 @@ function CartEnabledWorkspace({
                         <Layers3 className="h-5 w-5" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-[#0F1B3D]">4. Print Settings</h2>
+                        <h2 className="text-lg font-semibold text-[#070b1d]">4. Print Settings</h2>
                         <p className="text-xs text-[#6F7192]">Fine-tune quality, strength, and scale</p>
                       </div>
                     </div>
@@ -925,7 +925,7 @@ function CartEnabledWorkspace({
                       <div>
                         <div className="mb-2 flex items-center justify-between text-sm">
                           <span className="text-[#6F7192]">Infill Density</span>
-                          <span className="font-semibold text-[#0F1B3D]">{config.infill}%</span>
+                          <span className="font-semibold text-[#070b1d]">{config.infill}%</span>
                         </div>
                         <input
                           type="range"
@@ -946,7 +946,7 @@ function CartEnabledWorkspace({
                       <div>
                         <div className="mb-2 flex items-center justify-between text-sm">
                           <span className="text-[#6F7192]">Quantity</span>
-                          <span className="font-semibold text-[#0F1B3D]">{config.quantity} pcs</span>
+                          <span className="font-semibold text-[#070b1d]">{config.quantity} pcs</span>
                         </div>
                         <input
                           type="number"
@@ -955,7 +955,7 @@ function CartEnabledWorkspace({
                           step={1}
                           value={config.quantity}
                           onChange={(e) => setConfig((c) => ({ ...c, quantity: Math.max(1, Math.floor(Number(e.target.value) || 1)) }))}
-                          className="w-full rounded-xl border border-[#6d28d9]/10 bg-white px-3 py-3 text-sm text-[#0F1B3D] outline-none"
+                          className="w-full rounded-xl border border-[#6d28d9]/10 bg-white px-3 py-3 text-sm text-[#070b1d] outline-none"
                         />
                       </div>
 
@@ -975,7 +975,7 @@ function CartEnabledWorkspace({
                               }`}
                             >
                               <div className="flex items-center justify-between gap-3">
-                                <div className={`text-xs font-medium ${option.value === config.postProcessingLevel ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{option.label}</div>
+                                <div className={`text-xs font-medium ${option.value === config.postProcessingLevel ? 'text-[var(--brand-primary)]' : 'text-[#070b1d]'}`}>{option.label}</div>
                                 <div className="text-[10px] uppercase tracking-[0.18em] text-[#6d28d9]">
                                   {priceBreakdown
                                     ? `₹${getPostProcessingCharge(
@@ -1008,7 +1008,7 @@ function CartEnabledWorkspace({
                                   : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10'
                               }`}
                             >
-                              <div className={`text-xs font-medium ${option.value === config.layerHeight ? 'text-[var(--brand-primary)]' : 'text-[#0F1B3D]'}`}>{option.label}</div>
+                              <div className={`text-xs font-medium ${option.value === config.layerHeight ? 'text-[var(--brand-primary)]' : 'text-[#070b1d]'}`}>{option.label}</div>
                               <div className={`mt-0.5 text-[10px] ${option.value === config.layerHeight ? 'text-[var(--text-secondary)]' : 'text-[#6F7192]'}`}>{option.description}</div>
                             </button>
                           ))}
@@ -1022,7 +1022,7 @@ function CartEnabledWorkspace({
                         <div className="flex items-center gap-3">
                           <ShieldCheck className="h-5 w-5 text-emerald-700" />
                           <div>
-                            <div className="text-xs font-medium text-[#0F1B3D]">{user.name}</div>
+                            <div className="text-xs font-medium text-[#070b1d]">{user.name}</div>
                             <div className="text-[10px] text-[#6F7192]">{user.email}</div>
                           </div>
                         </div>
@@ -1030,7 +1030,7 @@ function CartEnabledWorkspace({
                           type="button"
                           onClick={handleSaveQuote}
                           disabled={!selectedModel || savingQuote || uploadState.status === 'uploading'}
-                          className="quote-secondary-action inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-gray-50 px-4 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                          className="quote-secondary-action inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-gray-50 px-4 text-xs font-medium text-[#070b1d] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                         >
                           <BookmarkPlus className="h-3.5 w-3.5" />
                           {savingQuote ? 'Saving...' : 'Save Quote'}
@@ -1051,7 +1051,7 @@ function CartEnabledWorkspace({
                 <div className="quote-summary-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-5 shadow-[0_10px_40px_rgba(0,0,0,0.2)] sm:p-6 sm:shadow-[0_18px_70px_rgba(0,0,0,0.3)]">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-[#0F1B3D]">Quote Summary</h2>
+                      <h2 className="text-lg font-semibold text-[#070b1d]">Quote Summary</h2>
                       <p className="text-xs text-[#6F7192]">{initialQuoteId}</p>
                     </div>
                     <div className="rounded-xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-2 text-[#6d28d9]">
@@ -1070,7 +1070,7 @@ function CartEnabledWorkspace({
                       {/* Config Summary */}
                       <div className="quote-config-pill mb-4 rounded-xl border border-[#6d28d9]/10 bg-white p-3">
                         <div className="flex items-center gap-2 text-xs">
-                          <span className="text-[#0F1B3D]">{selectedMaterial?.name ?? 'Material'}</span>
+                          <span className="text-[#070b1d]">{selectedMaterial?.name ?? 'Material'}</span>
                           <span className="text-[#6F7192]">·</span>
                           <span className="text-[#6F7192]">{config.infill}% infill</span>
                           <span className="text-[#6F7192]">·</span>
@@ -1081,7 +1081,7 @@ function CartEnabledWorkspace({
                       {/* Price Breakdown */}
                       <div className="quote-total-card rounded-xl border border-[#6d28d9]/20 bg-[linear-gradient(180deg,rgba(109,40,217,0.12),rgba(109,40,217,0.06))] p-4">
                         <div className="text-[10px] uppercase tracking-[0.22em] text-[#6F7192]">Total Price</div>
-                        <div className="mt-1 font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">
+                        <div className="mt-1 font-[var(--font-syne)] text-3xl font-bold text-[#070b1d]">
                           ₹{priceBreakdown.priceBeforeDiscount.toFixed(0)}
                         </div>
                         <div className="mt-3 space-y-1.5 text-xs text-[#6F7192]">
@@ -1109,7 +1109,7 @@ function CartEnabledWorkspace({
                             <span>Post-processing</span>
                             <span>₹{priceBreakdown.postProcessingCharges.toFixed(2)}</span>
                           </div>
-                          <div className="border-t border-[#6d28d9]/10 pt-1.5 flex justify-between font-medium text-[#0F1B3D]">
+                          <div className="border-t border-[#6d28d9]/10 pt-1.5 flex justify-between font-medium text-[#070b1d]">
                             <span>Subtotal</span>
                             <span>₹{priceBreakdown.subtotal.toFixed(2)}</span>
                           </div>
@@ -1125,7 +1125,7 @@ function CartEnabledWorkspace({
                             <span>Cart discount</span>
                             <span>{priceBreakdown.cartDiscountPercent}% · {priceBreakdown.cartDiscountAmount > 0 ? '-' : ''}₹{priceBreakdown.cartDiscountAmount.toFixed(2)}</span>
                           </div>
-                          <div className="border-t border-[#6d28d9]/10 pt-1.5 flex justify-between font-medium text-[#0F1B3D]">
+                          <div className="border-t border-[#6d28d9]/10 pt-1.5 flex justify-between font-medium text-[#070b1d]">
                             <span>Total price</span>
                             <span>₹{priceBreakdown.priceBeforeDiscount.toFixed(2)}</span>
                           </div>
@@ -1148,18 +1148,18 @@ function CartEnabledWorkspace({
                       <div className="mt-4 grid grid-cols-2 gap-3">
                         <div className="quote-mini-stat rounded-xl border border-[#6d28d9]/10 bg-white p-3">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Weight</div>
-                          <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{priceBreakdown.materialUsageGramsPerUnit.toFixed(2)} g / unit</div>
+                          <div className="mt-1 text-sm font-medium text-[#070b1d]">{priceBreakdown.materialUsageGramsPerUnit.toFixed(2)} g / unit</div>
                         </div>
                         <div className="quote-mini-stat rounded-xl border border-[#6d28d9]/10 bg-white p-3">
                           <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Print time</div>
-                          <div className="mt-1 text-sm font-medium text-[#0F1B3D]">{formatDurationMinutes(priceBreakdown.estimatedMinutes)}</div>
+                          <div className="mt-1 text-sm font-medium text-[#070b1d]">{formatDurationMinutes(priceBreakdown.estimatedMinutes)}</div>
                         </div>
                         <div className="quote-mini-stat col-span-2 rounded-xl border border-[#6d28d9]/10 bg-white p-3">
                           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
                             <Cuboid className="h-3 w-3" />
                             Dimensions
                           </div>
-                          <div className="mt-1 text-xs text-[#0F1B3D]">
+                          <div className="mt-1 text-xs text-[#070b1d]">
                             {priceBreakdown.dimensionsMm.x.toFixed(0)} × {priceBreakdown.dimensionsMm.y.toFixed(0)} × {priceBreakdown.dimensionsMm.z.toFixed(0)} mm
                           </div>
                         </div>
@@ -1171,7 +1171,7 @@ function CartEnabledWorkspace({
                           <Truck className="h-3 w-3" />
                           Delivery
                         </div>
-                        <div className="mt-1 text-xs font-medium text-[#0F1B3D]">~48 hour print and delivery</div>
+                        <div className="mt-1 text-xs font-medium text-[#070b1d]">~48 hour print and delivery</div>
                       </div>
 
                       {/* Actions */}
@@ -1213,7 +1213,7 @@ function CartEnabledWorkspace({
                       {!user && (
                         <Link
                           href="/login?next=%2Finstant-quote"
-                          className="quote-secondary-action mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/10 bg-white px-4 text-xs font-medium text-[#0F1B3D] transition-colors hover:bg-purple-50"
+                          className="quote-secondary-action mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/10 bg-white px-4 text-xs font-medium text-[#070b1d] transition-colors hover:bg-purple-50"
                         >
                           Sign in to save quotes
                           <ArrowRight className="h-3 w-3" />

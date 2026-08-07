@@ -23,10 +23,10 @@ import { validateEmail, validateName, validatePassword } from '@/lib/auth/valida
 const initialState: AuthFormState = {}
 
 const fieldClass =
-  'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 outline-none transition-[border-color] duration-150 placeholder:text-gray-400 focus:border-purple-400'
+  'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-[#070b1d] outline-none transition-[border-color] duration-150 placeholder:text-gray-400 focus:border-purple-400'
 
 const errorFieldClass =
-  'h-11 w-full rounded-lg border bg-white px-3 text-sm font-medium text-gray-900 outline-none transition-[border-color] duration-150 placeholder:text-gray-400 border-red-400 ring-1 ring-red-400/30 focus:border-red-500'
+  'h-11 w-full rounded-lg border bg-white px-3 text-sm font-medium text-[#070b1d] outline-none transition-[border-color] duration-150 placeholder:text-gray-400 border-red-400 ring-1 ring-red-400/30 focus:border-red-500'
 
 const passwordRules = [
   (value: string) => value.length >= 8,
@@ -275,7 +275,7 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
       </div>
 
       <div className="mb-6">
-        <h2 className="text-[28px] font-medium leading-tight text-gray-900">Join Flux3D.</h2>
+        <h2 className="text-[28px] font-medium leading-tight text-[#070b1d]">Join Flux3D.</h2>
         <p className="mt-2 text-[15px] leading-6 text-gray-500">
           Your production workspace, ready in seconds.
         </p>

@@ -367,7 +367,7 @@ export default function RazorpayCheckoutClient({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-3xl font-black text-[#0F1B3D]"
+              className="text-3xl font-black text-[#070b1d]"
             >
               Payment Successful
             </motion.h2>
@@ -410,7 +410,7 @@ export default function RazorpayCheckoutClient({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-3xl font-black text-[#0F1B3D]"
+              className="text-3xl font-black text-[#070b1d]"
             >
               Payment Failed
             </motion.h2>
@@ -440,7 +440,7 @@ export default function RazorpayCheckoutClient({
               </button>
               <a
                 href={`mailto:${supportEmail}`}
-                className="text-sm font-medium text-[#6b7280] transition hover:text-[#0F1B3D]"
+                className="text-sm font-medium text-[#6b7280] transition hover:text-[#070b1d]"
               >
                 Contact Support
               </a>
@@ -459,12 +459,12 @@ export default function RazorpayCheckoutClient({
               <ShieldCheck className="h-3.5 w-3.5" />
               Secure payment
             </div>
-            <h2 className="mt-4 text-2xl font-black tracking-tight text-[var(--shop-text-primary,#0F1B3D)]">{title}</h2>
+            <h2 className="mt-4 text-2xl font-black tracking-tight text-[var(--shop-text-primary,#070b1d)]">{title}</h2>
             <p className="mt-2 text-sm leading-7 text-[var(--shop-text-muted,#6b7280)]">{subtitle}</p>
           </div>
           <div className="rounded-2xl px-3 py-2 text-right" style={{ border: `1px solid ${theme.containerBorder}`, backgroundColor: theme.accentFaint }}>
             <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--shop-text-muted,#6b7280)]">Amount</div>
-            <div className="mt-1 text-xl font-black text-[var(--shop-text-primary,#0F1B3D)]">{amountDisplay}</div>
+            <div className="mt-1 text-xl font-black text-[var(--shop-text-primary,#070b1d)]">{amountDisplay}</div>
           </div>
         </div>
 
@@ -473,7 +473,7 @@ export default function RazorpayCheckoutClient({
         </div>
 
         <div className="mt-5 rounded-3xl p-4 text-sm leading-7 text-[#374151]" style={{ border: `1px solid ${theme.containerBorder}`, backgroundColor: theme.accentFaint }}>
-          <div className="font-bold text-[var(--shop-text-primary,#0F1B3D)]">What happens next</div>
+          <div className="font-bold text-[var(--shop-text-primary,#070b1d)]">What happens next</div>
           <ul className="mt-2 space-y-2">
             <li className="flex items-start gap-2">
               <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: theme.accent }}>1</span>
@@ -524,7 +524,7 @@ export default function RazorpayCheckoutClient({
         </button>
 
         <div className="mt-4 rounded-2xl p-4 text-xs leading-6 text-[var(--shop-text-muted,#6b7280)]" style={{ border: `1px solid ${theme.containerBorder}`, backgroundColor: theme.accentFaint }}>
-          <div className="font-bold text-[var(--shop-text-primary,#0F1B3D)]">Support</div>
+          <div className="font-bold text-[var(--shop-text-primary,#070b1d)]">Support</div>
           <div className="mt-1">
             <a href={`mailto:${supportEmail}`} className="underline-offset-4 hover:underline" style={{ color: theme.accent }}>{supportEmail}</a>
             {' · '}

@@ -58,7 +58,7 @@ export default function ViewerSection({
         <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                 3D File Viewer
               </h2>
               <span className="inline-flex items-center gap-1 rounded-full border border-purple-500/20 bg-purple-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-700">
@@ -89,7 +89,7 @@ export default function ViewerSection({
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
                   displayMode === 'solid'
                     ? 'bg-[#6d28d9] text-white shadow-sm'
-                    : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#0F1B3D]'
+                    : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#070b1d]'
                 }`}
               >
                 <Eye className="h-3.5 w-3.5" /> Solid
@@ -100,7 +100,7 @@ export default function ViewerSection({
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
                   displayMode === 'wireframe'
                     ? 'bg-[#6d28d9] text-white shadow-sm'
-                    : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#0F1B3D]'
+                    : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#070b1d]'
                 }`}
               >
                 <Grid3X3 className="h-3.5 w-3.5" /> Wireframe
@@ -111,7 +111,7 @@ export default function ViewerSection({
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
                   displayMode === 'xray'
                     ? 'bg-[#6d28d9] text-white shadow-sm'
-                    : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#0F1B3D]'
+                    : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#070b1d]'
                 }`}
               >
                 <Layers className="h-3.5 w-3.5" /> X-Ray
@@ -189,7 +189,7 @@ export default function ViewerSection({
                 type="button"
                 onClick={() => setIsFullScreen(true)}
                 title="Full Screen Inspection"
-                className="rounded-xl border border-[#6d28d9]/10 bg-white p-1.5 text-[#6F7192] hover:bg-gray-50 hover:text-[#0F1B3D]"
+                className="rounded-xl border border-[#6d28d9]/10 bg-white p-1.5 text-[#6F7192] hover:bg-gray-50 hover:text-[#070b1d]"
               >
                 <Maximize2 className="h-4 w-4" />
               </button>
@@ -228,6 +228,9 @@ export default function ViewerSection({
           transition={{ type: 'spring', stiffness: 240, damping: 22 }}
           className="relative min-h-[320px] flex-1 overflow-hidden rounded-[24px] border border-[#6d28d9]/10 bg-[#070a12]"
         >
+          {/* Soft seam — light chrome bleeds gently into the dark canvas */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-16 bg-gradient-to-b from-[#faf9f7]/45 via-[#faf9f7]/10 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-gradient-to-t from-[#faf9f7]/25 to-transparent" />
           {model ? (
             <>
               <ModelPreviewCanvas
@@ -279,11 +282,11 @@ export default function ViewerSection({
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3">
             <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Controls</div>
-            <div className="mt-2 text-sm text-[#0F1B3D]">Rotate · Zoom · Pan</div>
+            <div className="mt-2 text-sm text-[#070b1d]">Rotate · Zoom · Pan</div>
           </motion.div>
           <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3">
             <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Bounding Box</div>
-            <div className="mt-2 text-sm text-[#0F1B3D]">
+            <div className="mt-2 text-sm text-[#070b1d]">
               {model
                 ? `${model.dimensionsMm.x.toFixed(1)} × ${model.dimensionsMm.y.toFixed(1)} × ${model.dimensionsMm.z.toFixed(1)} mm`
                 : 'Waiting for geometry'}
@@ -291,7 +294,7 @@ export default function ViewerSection({
           </motion.div>
           <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3">
             <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Mesh Density</div>
-            <div className="mt-2 text-sm text-[#0F1B3D]">
+            <div className="mt-2 text-sm text-[#070b1d]">
               {model ? `${model.triangleCount.toLocaleString()} tris` : '0 tris'}
             </div>
           </motion.div>

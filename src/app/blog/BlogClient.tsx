@@ -191,8 +191,8 @@ function ArticleImage({ post, priority = false }: { post: BlogPost; priority?: b
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
       {post.category && (
-        <div className="blog-image-tag absolute left-4 top-4 inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white/90 px-3 py-1 text-xs font-black text-[#111827] shadow-sm backdrop-blur">
-          <Tag className="h-3.5 w-3.5 text-cyan-200" />
+        <div className="blog-image-tag absolute left-4 top-4 inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white/90 px-3 py-1 text-xs font-black text-[#070b1d] shadow-sm backdrop-blur">
+          <Tag className="h-3.5 w-3.5 text-[#6d28d9]" />
           {post.category}
         </div>
       )}
@@ -257,10 +257,10 @@ export default function BlogClient({
   ]
 
   return (
-    <main className="blog-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-[#0F1B3D]">
+    <main className="blog-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-[#070b1d]">
       <BlogPremiumFX />
 
-      <section className="blog-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-[#111827] sm:px-6 md:px-10 lg:px-12">
+      <section className="blog-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-[#070b1d] sm:px-6 md:px-10 lg:px-12">
         <Image
           src="/printer2-poster.webp"
           alt=""
@@ -285,9 +285,9 @@ export default function BlogClient({
           className="relative z-10 mx-auto flex min-h-[86svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-8 pt-8 md:pt-10 lg:pt-12"
         >
           <motion.div variants={itemVariants} className="mb-5 flex items-center gap-2 text-sm font-medium text-[#6F7192]">
-            <Link href="/" className="transition hover:text-[#111827]">Home</Link>
+            <Link href="/" className="transition hover:text-[#070b1d]">Home</Link>
             <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-[#111827]">Blog</span>
+            <span className="text-[#070b1d]">Blog</span>
           </motion.div>
 
           <div className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start">
@@ -302,7 +302,7 @@ export default function BlogClient({
 
               <motion.h1
                 variants={itemVariants}
-                className="blog-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#111827] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
+                className="blog-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#070b1d] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
               >
                 Practical 3D printing intelligence for better parts.
               </motion.h1>
@@ -324,7 +324,7 @@ export default function BlogClient({
                 </Link>
                 <Link
                   href="/instant-quote"
-                  className="blog-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 text-sm font-black text-[#111827] shadow-sm transition hover:border-[#6d28d9]/30 hover:bg-[#f5f3ff]"
+                  className="blog-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 text-sm font-black text-[#070b1d] shadow-sm transition hover:border-[#6d28d9]/30 hover:bg-[#f5f3ff]"
                 >
                   Start a quote
                   <ArrowUpRight className="h-4 w-4" />
@@ -336,7 +336,7 @@ export default function BlogClient({
                   const Icon = stat.icon
                   return (
                     <div key={stat.label} className="min-w-0 rounded-lg border border-gray-200 bg-white/80 p-4 shadow-sm backdrop-blur">
-                      <div className="flex items-center gap-2 text-sm font-black text-[#111827]">
+                      <div className="flex items-center gap-2 text-sm font-black text-[#070b1d]">
                         <Icon className="h-4 w-4 text-[#6d28d9]" />
                         {stat.value}
                       </div>
@@ -371,27 +371,27 @@ export default function BlogClient({
 
               {heroPost ? (
                 <Link href={`/blog/${heroPost.slug}`} className="blog-console-feature group grid min-w-0 gap-3">
-                  <div className="blog-console-feature-media relative aspect-[16/9] overflow-hidden rounded-lg border border-white/10">
+                  <div className="blog-console-feature-media relative aspect-[16/9] overflow-hidden rounded-lg border border-[#6d28d9]/10">
                     <ArticleImage post={heroPost} priority />
                   </div>
                   <div className="min-w-0">
                     <MetaRow post={heroPost} compact />
-                    <h2 className="mt-3 line-clamp-2 text-xl font-black leading-tight text-white">
+                    <h2 className="mt-3 line-clamp-2 text-xl font-black leading-tight text-[#070b1d]">
                       {postTitle(heroPost)}
                     </h2>
-                    <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-white/[0.62]">
+                    <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-[#475569]">
                       {heroPost.excerpt || 'A practical Flux3D guide for cleaner, more predictable 3D printing outcomes.'}
                     </p>
-                    <span className="mt-4 inline-flex items-center gap-2 text-sm font-black text-cyan-200">
+                    <span className="mt-4 inline-flex items-center gap-2 text-sm font-black text-[#6d28d9]">
                       Read latest
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </span>
                   </div>
                 </Link>
               ) : (
-                <div className="rounded-lg border border-white/10 bg-white/[0.065] p-5">
-                  <p className="text-xl font-black text-white">Journal is warming up.</p>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-white/[0.62]">
+                <div className="rounded-lg border border-[#6d28d9]/10 bg-[#f5f3ff] p-5">
+                  <p className="text-xl font-black text-[#070b1d]">Journal is warming up.</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-[#475569]">
                     Check back soon for Flux3D production notes.
                   </p>
                 </div>
@@ -456,7 +456,7 @@ export default function BlogClient({
                       Featured article
                     </div>
                     <MetaRow post={featuredPost} />
-                    <h2 className="mt-5 break-words text-2xl font-black leading-tight text-[#0F1B3D] sm:text-3xl md:text-4xl">
+                    <h2 className="mt-5 break-words text-2xl font-black leading-tight text-[#070b1d] sm:text-3xl md:text-4xl">
                       {postTitle(featuredPost)}
                     </h2>
                     <p className="mt-4 max-w-2xl text-base font-semibold leading-8 text-[#6b7280]">
@@ -476,7 +476,7 @@ export default function BlogClient({
                         </div>
                       )}
                       <div>
-                        <p className="text-sm font-black text-[#0F1B3D]">{featuredPost.author_name || 'Flux3D Team'}</p>
+                        <p className="text-sm font-black text-[#070b1d]">{featuredPost.author_name || 'Flux3D Team'}</p>
                         <p className="text-xs font-bold text-[#6b7280]">Flux3D editorial</p>
                       </div>
                     </div>
@@ -490,7 +490,7 @@ export default function BlogClient({
             </motion.article>
           ) : (
             <div className="blog-empty-panel rounded-lg border border-purple-200 bg-white p-10 text-center">
-              <p className="text-2xl font-black text-[#0F1B3D]">No blog posts yet.</p>
+              <p className="text-2xl font-black text-[#070b1d]">No blog posts yet.</p>
               <p className="mt-2 text-sm font-semibold leading-6 text-[#6b7280]">Check back soon for Flux3D guides and production notes.</p>
                 </div>
               )}
@@ -507,7 +507,7 @@ export default function BlogClient({
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search topics"
-                  className="min-w-0 flex-1 bg-transparent text-[#0F1B3D] outline-none placeholder:text-[#9ca3af]"
+                  className="min-w-0 flex-1 bg-transparent text-[#070b1d] outline-none placeholder:text-[#9ca3af]"
                 />
               </label>
 
@@ -541,7 +541,7 @@ export default function BlogClient({
                         <Icon className="h-4 w-4" />
                       </span>
                       <div className="min-w-0">
-                        <p className="text-sm font-black text-[#0F1B3D]">{highlight.label}</p>
+                        <p className="text-sm font-black text-[#070b1d]">{highlight.label}</p>
                         <p className="text-xs font-bold leading-5 text-[#6b7280]">{highlight.value}</p>
                       </div>
                     </div>
@@ -562,7 +562,7 @@ export default function BlogClient({
                 <Wand2 className="h-4 w-4" />
                 Latest notes
               </div>
-              <h2 className="mt-2 break-words text-3xl font-black tracking-[0] text-[#0F1B3D] md:text-5xl">
+              <h2 className="mt-2 break-words text-3xl font-black tracking-[0] text-[#070b1d] md:text-5xl">
                 Manufacturing reads
               </h2>
             </div>
@@ -592,7 +592,7 @@ export default function BlogClient({
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col p-5">
                       <MetaRow post={post} compact />
-                      <h3 className="mt-4 break-words text-xl font-black leading-snug tracking-[0] text-[#0F1B3D] transition-colors group-hover:text-[#6d28d9]">
+                      <h3 className="mt-4 break-words text-xl font-black leading-snug tracking-[0] text-[#070b1d] transition-colors group-hover:text-[#6d28d9]">
                         {postTitle(post)}
                       </h3>
                       <p className="mt-3 line-clamp-3 text-sm font-semibold leading-6 text-[#6b7280]">
@@ -621,7 +621,7 @@ export default function BlogClient({
               animate={{ opacity: 1, y: 0 }}
               className="blog-empty-panel rounded-lg border border-purple-200 bg-white p-10 text-center"
             >
-              <p className="text-2xl font-black text-[#0F1B3D]">No matching articles.</p>
+              <p className="text-2xl font-black text-[#070b1d]">No matching articles.</p>
               <p className="mt-2 text-sm font-semibold leading-6 text-[#6b7280]">Try a different topic or clear the search field.</p>
               <button
                 type="button"

@@ -35,14 +35,14 @@ export default function PrivacyPolicyClient() {
   const updatedDate = 'July 17, 2026'
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] text-[#0F1B3D]">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#070b1d]">
       <div className="sticky top-0 z-50 border-b border-[#6d28d9]/10 bg-[#FFFFFF]/50 backdrop-blur-sm">
         <div className="mx-auto max-w-[1200px] px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="font-[var(--font-syne)] text-2xl font-extrabold text-[#0F1B3D]">
+            <Link href="/" className="font-[var(--font-syne)] text-2xl font-extrabold text-[#070b1d]">
               flux<span className="text-[#6d28d9]">3d</span>
             </Link>
-            <Link href="/" className="inline-flex items-center gap-2 text-sm text-[#6F7192] transition-colors hover:text-[#0F1B3D]">
+            <Link href="/" className="inline-flex items-center gap-2 text-sm text-[#6F7192] transition-colors hover:text-[#070b1d]">
               <ArrowLeft className="h-4 w-4" />
               Back to Home
             </Link>
@@ -54,10 +54,10 @@ export default function PrivacyPolicyClient() {
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-[280px_1fr]">
           <motion.aside initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="hidden lg:block">
             <div className="sticky top-24">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[#0F1B3D]">Contents</h3>
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[#070b1d]">Contents</h3>
               <nav className="space-y-1">
                 {sections.map((section) => (
-                  <a key={section.id} href={`#${section.id}`} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#6F7192] transition-colors hover:bg-white/[0.03] hover:text-[#0F1B3D]">
+                  <a key={section.id} href={`#${section.id}`} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#6F7192] transition-colors hover:bg-white/[0.03] hover:text-[#070b1d]">
                     <section.icon className="h-3.5 w-3.5" />
                     <span className="line-clamp-1">{section.title}</span>
                   </a>
@@ -72,7 +72,7 @@ export default function PrivacyPolicyClient() {
                 <Shield className="h-4 w-4" />
                 Privacy Document
               </div>
-              <h1 className="mb-4 font-[var(--font-syne)] text-4xl font-extrabold text-[#0F1B3D] md:text-5xl">
+              <h1 className="mb-4 font-[var(--font-syne)] text-4xl font-extrabold text-[#070b1d] md:text-5xl">
                 Privacy <span className="text-[#6d28d9]">Policy</span>
               </h1>
               <div className="flex flex-wrap gap-4 text-sm text-[#6F7192]">
@@ -90,7 +90,7 @@ export default function PrivacyPolicyClient() {
 
             <div className="space-y-12">
               <section id="information">
-                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">1</span>
                   Information We Collect
                 </h2>
@@ -102,7 +102,7 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="usage">
-                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">2</span>
                   How We Use Information
                 </h2>
@@ -112,7 +112,7 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="sharing">
-                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">3</span>
                   Information Sharing
                 </h2>
@@ -123,7 +123,7 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="cookies">
-                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">4</span>
                   Cookies and Tracking
                 </h2>
@@ -133,7 +133,7 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="security">
-                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">5</span>
                   Data Security
                 </h2>
@@ -143,7 +143,7 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="rights">
-                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">6</span>
                   Your Rights and Requests
                 </h2>
@@ -154,7 +154,7 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="retention">
-                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">7</span>
                   Data Retention
                 </h2>
@@ -164,7 +164,7 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="children">
-                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">8</span>
                   Children&apos;s Data
                 </h2>
@@ -174,7 +174,7 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="updates">
-                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">9</span>
                   Changes to this Policy
                 </h2>
@@ -184,14 +184,14 @@ export default function PrivacyPolicyClient() {
               </section>
 
               <section id="contact">
-                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#0F1B3D]">
+                <h2 className="mb-4 flex items-center gap-3 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-sm font-bold text-[#6d28d9]">10</span>
                   Contact Us
                 </h2>
                 <div className="space-y-4 leading-relaxed text-[#6F7192]">
                   <p>For privacy questions or requests, contact <a className="text-[#6d28d9] hover:underline" href={`mailto:${supportEmail}`}>{supportEmail}</a> or use the public contact page.</p>
-                  <p><strong className="text-[#0F1B3D]">Address:</strong> {address || 'Not published'}</p>
-                  <p><strong className="text-[#0F1B3D]">Phone:</strong> <a className="text-[#6d28d9] hover:underline" href={`tel:${supportPhone.replace(/[^0-9+]/g, '')}`}>{supportPhone}</a></p>
+                  <p><strong className="text-[#070b1d]">Address:</strong> {address || 'Not published'}</p>
+                  <p><strong className="text-[#070b1d]">Phone:</strong> <a className="text-[#6d28d9] hover:underline" href={`tel:${supportPhone.replace(/[^0-9+]/g, '')}`}>{supportPhone}</a></p>
                 </div>
               </section>
             </div>

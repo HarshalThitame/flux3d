@@ -49,7 +49,7 @@ function FAQItem({ faq }: { faq: { q: string; a: string } }) {
         onClick={() => setOpen(!open)}
         className="group flex w-full items-center justify-between py-5 text-left"
       >
-        <span className="pr-4 text-sm font-extrabold leading-6 text-[#111827] transition-colors group-hover:text-[#6d28d9]">
+        <span className="pr-4 text-sm font-extrabold leading-6 text-[#070b1d] transition-colors group-hover:text-[#6d28d9]">
           {faq.q}
         </span>
         <ChevronDown className={`h-4 w-4 flex-shrink-0 text-[#6F7192] transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -77,7 +77,7 @@ export default function MaterialFAQ() {
           <span className="mb-2 inline-block text-xs font-bold uppercase text-[#6d28d9]">
             Buying guidance
           </span>
-          <h2 className="text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#111827] md:text-4xl">
+          <h2 className="text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#070b1d] md:text-4xl">
             Material questions, answered plainly.
           </h2>
         </motion.div>

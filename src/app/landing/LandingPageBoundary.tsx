@@ -6,7 +6,7 @@ import RouteChunkLoader from '@/components/RouteChunkLoader'
 
 const LandingPageClient = dynamic(() => import('./LandingPageClient'), {
   ssr: false,
-  loading: () => <RouteChunkLoader className="bg-[#f9f7f4] text-[#111827]" minHeight="520px" label="Loading page sections" />,
+  loading: () => <RouteChunkLoader className="bg-[#f9f7f4] text-[#070b1d]" minHeight="520px" label="Loading page sections" />,
 })
 
 export default function LandingPageBoundary() {

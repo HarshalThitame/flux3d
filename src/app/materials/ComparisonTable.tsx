@@ -90,7 +90,7 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
             <span className="inline-block text-xs font-bold uppercase text-[#6d28d9]">
               At a glance
             </span>
-            <h2 className="mt-2 text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#111827] md:text-4xl">
+            <h2 className="mt-2 text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#070b1d] md:text-4xl">
               Compare materials without guessing.
             </h2>
           </div>
@@ -125,7 +125,7 @@ export default function ComparisonTable({ materials = [] }: ComparisonTableProps
                   transition={{ delay: i * 0.03 }}
                   className="border-t border-gray-100 transition-colors hover:bg-[#FAFBFD]"
                 >
-                  <td className="px-5 py-4 font-extrabold text-[#111827]">{m.name}</td>
+                  <td className="px-5 py-4 font-extrabold text-[#070b1d]">{m.name}</td>
                   <td className="px-4 py-4 text-[#6F7192]">
                     <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${m.type === 'FDM' ? 'bg-[#ede9fe] text-[#5b21b6]' : 'bg-[#eef2ff] text-[#3730a3]'}`}>
                       {m.type || 'FDM'}

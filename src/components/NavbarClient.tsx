@@ -512,7 +512,7 @@ export default function NavbarClient({
           <button
             type="button"
             aria-label="Close menu"
-            className="absolute inset-0 bg-slate-950/45 backdrop-blur-md transition-opacity"
+            className="absolute inset-0 bg-[#4a20a5]/25 backdrop-blur-md transition-opacity"
             onClick={() => setIsOpen(false)}
           />
 

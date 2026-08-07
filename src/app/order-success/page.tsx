@@ -56,7 +56,7 @@ export default function OrderSuccessPage() {
         <div className="absolute bottom-0 left-0 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(56,189,248,0.06),transparent_70%)] blur-[70px]" />
       </div>
 
-      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 pb-16 pt-8 text-[#0F1B3D] md:px-8 md:pt-10">
+      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 pb-16 pt-8 text-[#070b1d] md:px-8 md:pt-10">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -83,7 +83,7 @@ export default function OrderSuccessPage() {
             Order Confirmed
           </div>
 
-          <h1 className="font-[var(--font-syne)] text-[clamp(2.5rem,6vw,4.5rem)] font-extrabold leading-[0.95] tracking-[-2px] text-[#0F1B3D]">
+          <h1 className="font-[var(--font-syne)] text-[clamp(2.5rem,6vw,4.5rem)] font-extrabold leading-[0.95] tracking-[-2px] text-[#070b1d]">
             Order{' '}
             <span className="bg-[linear-gradient(135deg,#6d28d9,#a855f7,#6d28d9)] bg-clip-text text-transparent">
               Submitted
@@ -108,7 +108,7 @@ export default function OrderSuccessPage() {
               </div>
               <div>
                 <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Order Number</div>
-                <div className="mt-0.5 font-[var(--font-syne)] text-xl font-bold text-[#0F1B3D]">
+                <div className="mt-0.5 font-[var(--font-syne)] text-xl font-bold text-[#070b1d]">
                   {orderData.orderNumber}
                 </div>
               </div>
@@ -118,7 +118,7 @@ export default function OrderSuccessPage() {
               {orderData.itemCount !== undefined && (
                 <div className="flex items-center justify-between rounded-[16px] border border-[#6d28d9]/10 bg-white/[0.02] px-4 py-3">
                   <span className="text-sm text-[#6F7192]">Items</span>
-                  <span className="text-sm font-semibold text-[#0F1B3D]">{orderData.itemCount} item{orderData.itemCount !== 1 ? 's' : ''}</span>
+                  <span className="text-sm font-semibold text-[#070b1d]">{orderData.itemCount} item{orderData.itemCount !== 1 ? 's' : ''}</span>
                 </div>
               )}
 

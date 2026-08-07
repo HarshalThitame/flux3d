@@ -9,7 +9,7 @@ export default async function VerifyOtpPage({
 }) {
   const params = await searchParams
   return (
-    <main className="min-h-screen bg-[#f9f7f4] px-4 pb-16 text-[#1a1a1a] md:px-8">
+    <main className="min-h-screen bg-[#f9f7f4] px-4 pb-16 text-[#070b1d] md:px-8">
       <div className="mx-auto mt-16 max-w-md">
         <h1 className="text-2xl font-semibold">Verify WhatsApp OTP</h1>
         <p className="mt-3 text-[#4b5563]">
@@ -33,7 +33,7 @@ export default async function VerifyOtpPage({
               name="otp"
               maxLength={6}
               placeholder="123456"
-              className="mt-2 w-full rounded-xl border border-[#e8e4df] bg-white px-3.5 py-3 text-sm text-[#1a1a1a] outline-none transition focus:border-[#c8bfff] focus:ring-4 focus:ring-[#ebe5ff]"
+              className="mt-2 w-full rounded-xl border border-[#e8e4df] bg-white px-3.5 py-3 text-sm text-[#070b1d] outline-none transition focus:border-[#c8bfff] focus:ring-4 focus:ring-[#ebe5ff]"
               required
             />
           </div>

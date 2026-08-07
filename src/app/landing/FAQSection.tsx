@@ -60,7 +60,7 @@ function FAQItem({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index:
         onClick={onToggle}
         className="w-full flex items-center justify-between py-5 px-2 text-left group hover:bg-[rgba(109, 40, 217,0.2)] rounded-lg transition-colors"
       >
-        <span className="text-base font-medium text-[#0F1B3D] group-hover:text-[#6d28d9] transition-colors pr-4">
+        <span className="text-base font-medium text-[#070b1d] group-hover:text-[#6d28d9] transition-colors pr-4">
           {faq.q}
         </span>
         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[rgba(109, 40, 217,0.4)] flex items-center justify-center group-hover:bg-[rgba(109, 40, 217,0.1)] transition-colors">
@@ -102,7 +102,7 @@ function FAQSection() {
           className="mb-8 md:mb-12 text-center"
         >
           <p className="mb-4 text-sm font-medium uppercase tracking-normal text-[#6d28d9]">FAQ</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold leading-[1.1] tracking-normal text-[#0F1B3D]">
+          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold leading-[1.1] tracking-normal text-[#070b1d]">
             Questions? We&apos;ve Got{' '}
             <span className="text-[#6F7192]">Clear Answers.</span>
           </h2>

@@ -83,7 +83,7 @@ export default function ContactForm() {
               type={field.type}
               value={form[field.key]}
               onChange={(event) => setForm((current) => ({ ...current, [field.key]: event.target.value }))}
-              className="mt-2 min-h-[48px] w-full rounded-xl border border-[#e4dff5] bg-white px-4 text-sm text-[#0F1B3D] outline-none transition focus:border-[#6d28d9]"
+              className="mt-2 min-h-[48px] w-full rounded-xl border border-[#e4dff5] bg-white px-4 text-sm text-[#070b1d] outline-none transition focus:border-[#6d28d9]"
             />
           </label>
         ))}
@@ -95,7 +95,7 @@ export default function ContactForm() {
             rows={6}
             value={form.message}
             onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))}
-            className="mt-2 w-full rounded-xl border border-[#e4dff5] bg-white px-4 py-3 text-sm text-[#0F1B3D] outline-none transition focus:border-[#6d28d9]"
+            className="mt-2 w-full rounded-xl border border-[#e4dff5] bg-white px-4 py-3 text-sm text-[#070b1d] outline-none transition focus:border-[#6d28d9]"
             placeholder="Tell us what you want to print or manufacture."
           />
         </label>

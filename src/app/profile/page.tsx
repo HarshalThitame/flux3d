@@ -194,7 +194,7 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f9f7f4] px-4 pb-16 text-[#1a1a1a] md:px-8">
+    <div className="min-h-screen bg-[#f9f7f4] px-4 pb-16 text-[#070b1d] md:px-8">
       <Navbar transparent />
       <ProfileClient
         profile={profile}

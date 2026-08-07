@@ -104,7 +104,7 @@ function FinalCTASection() {
 
             <motion.div variants={reduceMotion ? simpleChild : childVariant} className="mb-6 flex items-center justify-center gap-4">
               <div className="h-px w-12 bg-[rgba(91,33,182,0.25)]" />
-              <span className="text-sm text-[#a78bfa]">or email us</span>
+              <span className="text-sm text-[#7c74b3]">or email us</span>
               <div className="h-px w-12 bg-[rgba(91,33,182,0.25)]" />
             </motion.div>
 
@@ -129,7 +129,7 @@ function FinalCTASection() {
               ))}
             </motion.div>
 
-            <motion.p variants={reduceMotion ? simpleChild : childVariant} className="mt-8 text-xs text-[#a78bfa]">
+            <motion.p variants={reduceMotion ? simpleChild : childVariant} className="mt-8 text-xs text-[#7c74b3]">
               Service delivery and payment terms are published on this site.
             </motion.p>
           </motion.div>

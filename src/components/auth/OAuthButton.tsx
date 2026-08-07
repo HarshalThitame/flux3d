@@ -73,7 +73,7 @@ export default function OAuthButton({
       type="button"
       onClick={handleOAuthLogin}
       disabled={loading}
-      className={`inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-white/12 bg-white/[0.075] px-4 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:border-white/22 hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+      className={`inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-800 shadow-[var(--shadow-soft)] transition hover:border-[#6d28d9]/25 hover:bg-[#f5f3ff] hover:text-[#4c1d95] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
     >
       {config.icon}
       {loading ? config.loadingLabel : config.label}

@@ -9,10 +9,10 @@ import SubmitButton from '@/components/auth/SubmitButton'
 
 const initialState: AuthFormState = {}
 const fieldClass =
-  'h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#111827] shadow-sm outline-none transition placeholder:text-gray-400 focus:border-[#6d28d9] focus:ring-4 focus:ring-purple-100'
+  'h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#070b1d] shadow-sm outline-none transition placeholder:text-gray-400 focus:border-[#6d28d9] focus:ring-4 focus:ring-purple-100'
 
 const errorFieldClass =
-  'h-12 w-full rounded-xl border bg-white px-4 text-sm font-semibold text-[#111827] shadow-sm outline-none transition placeholder:text-gray-400 border-red-400 ring-1 ring-red-400/30 focus:border-red-500 focus:ring-red-200'
+  'h-12 w-full rounded-xl border bg-white px-4 text-sm font-semibold text-[#070b1d] shadow-sm outline-none transition placeholder:text-gray-400 border-red-400 ring-1 ring-red-400/30 focus:border-red-500 focus:ring-red-200'
 
 type UpdatePasswordFormProps = {
   nextPath: string
@@ -54,7 +54,7 @@ export default function UpdatePasswordForm({ nextPath }: UpdatePasswordFormProps
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-3xl font-black !text-[#111827]">Choose a new password</h2>
+        <h2 className="text-3xl font-black !text-[#070b1d]">Choose a new password</h2>
         <p className="text-sm leading-7 text-[#6F7192]">
           Update your account security, then continue back to your authenticated workspace.
         </p>

@@ -167,7 +167,7 @@ export default async function MyOrdersPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#f9f7f4] text-[#0F1B3D]">
+    <div className="min-h-screen bg-[#f9f7f4] text-[#070b1d]">
       <Navbar transparent />
       <main className="px-4 pb-24 pt-6 md:px-6 md:pt-8">
         <div className="mx-auto max-w-4xl space-y-4">
@@ -177,7 +177,7 @@ export default async function MyOrdersPage() {
               <div className="text-[10px] font-medium uppercase tracking-widest text-[#6d28d9]">
                 My Orders
               </div>
-              <h1 className="mt-1 text-2xl font-bold text-[#0F1B3D] md:text-3xl">
+              <h1 className="mt-1 text-2xl font-bold text-[#070b1d] md:text-3xl">
                 Order Requests
               </h1>
             </div>

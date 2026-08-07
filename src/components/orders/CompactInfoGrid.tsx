@@ -25,7 +25,7 @@ export function CompactInfoGrid({
           <div className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
             {item.label}
           </div>
-          <div className="mt-1 text-sm font-semibold text-[#0F1B3D]">
+          <div className="mt-1 text-sm font-semibold text-[#070b1d]">
             {item.value}
           </div>
         </div>

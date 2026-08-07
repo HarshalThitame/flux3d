@@ -50,7 +50,7 @@ export default function FooterSection() {
             <p className="mb-6 max-w-[320px] text-sm leading-[1.7] text-[#5b21b6]">
               {settings.businessDescription || `Flux3D provides custom 3D printing, prototyping, model printing and related manufacturing services for individuals and businesses across India.`}
             </p>
-            <p className="mb-6 max-w-[320px] text-xs leading-[1.7] text-[#a78bfa]">
+            <p className="mb-6 max-w-[320px] text-xs leading-[1.7] text-[#7c74b3]">
               Brand: {settings.brandName || settings.businessName}. Legal operator: {settings.legalBusinessName || settings.businessName}. {settings.city ? `${settings.city}, ${settings.state}` : 'India'}.
             </p>
 
@@ -149,7 +149,7 @@ export default function FooterSection() {
         <div className="mb-8 border-t border-[rgba(91,33,182,0.10)] pt-8">
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-normal text-[#a78bfa]">Payment Methods</p>
+              <p className="mb-2 text-xs font-medium uppercase tracking-normal text-[#7c74b3]">Payment Methods</p>
               <div className="flex flex-wrap gap-2">
                 {['UPI', 'Cards', 'Net Banking', 'Razorpay'].map((method) => (
                   <span key={method} className={badgeClass}>{method}</span>
@@ -157,7 +157,7 @@ export default function FooterSection() {
               </div>
             </div>
             <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-normal text-[#a78bfa]">Delivery Partners</p>
+              <p className="mb-2 text-xs font-medium uppercase tracking-normal text-[#7c74b3]">Delivery Partners</p>
               <div className="flex flex-wrap gap-2">
                 {['Courier partner', 'Dispatch tracking', 'Serviceable locations'].map((partner) => (
                   <span key={partner} className={badgeClass}>{partner}</span>
@@ -178,7 +178,7 @@ export default function FooterSection() {
           </div>
         </div>
 
-        <p className="mt-8 text-center text-[10px] leading-[1.6] text-[#a78bfa]">
+        <p className="mt-8 text-center text-[10px] leading-[1.6] text-[#7c74b3]">
           {settings.brandName || settings.businessName} provides custom 3D printing and manufacturing services. Ready-made products are shipped after order confirmation where applicable.
         </p>
       </motion.div>

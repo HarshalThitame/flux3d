@@ -277,7 +277,7 @@ function Modal({
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#2e1065]/25 px-4 backdrop-blur-sm">
       <div className="w-full max-w-lg rounded-2xl border border-[#e8e4df] bg-[#faf9f7] p-6 shadow-xl">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-lg font-semibold tracking-tight text-[#1a1a1a]">{title}</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-[#070b1d]">{title}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -311,7 +311,7 @@ function TextInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="mt-2 w-full rounded-xl border border-[#e8e4df] bg-white px-3.5 py-3 text-sm text-[#1a1a1a] outline-none transition focus:border-[#c8bfff] focus:ring-4 focus:ring-[#ebe5ff]"
+        className="mt-2 w-full rounded-xl border border-[#e8e4df] bg-white px-3.5 py-3 text-sm text-[#070b1d] outline-none transition focus:border-[#c8bfff] focus:ring-4 focus:ring-[#ebe5ff]"
       />
     </label>
   )
@@ -610,7 +610,7 @@ export default function ProfileClient({
         <div className="inline-flex items-center gap-2 rounded-full border border-[#ded7ff] bg-[#f3f0ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-[#4c1d95]">
           Account Profile
         </div>
-        <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-[#1a1a1a]">
+        <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-[#070b1d]">
           {profile.name}
         </h1>
         <p className="mt-3 max-w-2xl text-base leading-8 text-[#4b4b4b]">
@@ -826,7 +826,7 @@ function AddressesField({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className="text-sm font-semibold text-[#1a1a1a]">
+                    <div className="text-sm font-semibold text-[#070b1d]">
                       {address.city}, {address.state}
                     </div>
                     {address.isDefault && (
@@ -865,7 +865,7 @@ function ProfileField({
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="text-xs uppercase tracking-[0.18em] text-[#9ca3af]">{label}</div>
-          <div className={`mt-2 break-words text-sm ${muted ? 'text-[#9ca3af]' : 'text-[#1a1a1a]'}`}>{value}</div>
+          <div className={`mt-2 break-words text-sm ${muted ? 'text-[#9ca3af]' : 'text-[#070b1d]'}`}>{value}</div>
         </div>
         {action}
       </div>
@@ -907,7 +907,7 @@ function UsageSnapshotCard({ count, message }: { count: number; message: string 
   return (
     <Card>
       <SectionLabel>Usage snapshot</SectionLabel>
-      <div className="mt-4 text-4xl font-extrabold text-[#1a1a1a]">{count}</div>
+      <div className="mt-4 text-4xl font-extrabold text-[#070b1d]">{count}</div>
       <div className="mt-2 text-sm leading-6 text-[#4b4b4b]">{message}</div>
     </Card>
   )
@@ -929,7 +929,7 @@ function OrderActivityCard({ orderActivity }: { orderActivity: ProfileOrderActiv
         <SectionLabel>Order activity</SectionLabel>
         <div className="mt-5 rounded-2xl border border-dashed border-[#e8e4df] bg-[#fffdfb] p-5 text-center">
           <PackageCheck className="mx-auto h-8 w-8 text-[#6d28d9]" />
-          <p className="mt-3 text-sm font-semibold text-[#1a1a1a]">No orders yet. Upload your first model to get started.</p>
+          <p className="mt-3 text-sm font-semibold text-[#070b1d]">No orders yet. Upload your first model to get started.</p>
           <Link
             href="/instant-quote"
             className="mt-4 inline-flex h-10 items-center justify-center rounded-xl bg-[#6d28d9] px-4 text-sm font-semibold text-white transition hover:bg-[#4c1d95]"
@@ -956,12 +956,12 @@ function OrderActivityCard({ orderActivity }: { orderActivity: ProfileOrderActiv
         <div className="mt-5 grid gap-4">
           <div>
             <div className="text-xs uppercase tracking-[0.18em] text-[#9ca3af]">Total Orders Placed</div>
-            <div className="mt-1 text-3xl font-extrabold text-[#1a1a1a]">{orderActivity.totalOrders}</div>
+            <div className="mt-1 text-3xl font-extrabold text-[#070b1d]">{orderActivity.totalOrders}</div>
           </div>
           <div className="rounded-2xl border border-[#e8e4df] bg-[#fffdfb] px-4 py-4">
             <div className="text-xs uppercase tracking-[0.18em] text-[#9ca3af]">Last Order</div>
             {orderActivity.lastOrder ? (
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#1a1a1a]">
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#070b1d]">
                 <span>{formatShortDate(orderActivity.lastOrder.createdAt)}</span>
                 <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getOrderStatusClasses(orderActivity.lastOrder.status)}`}>
                   {getOrderStatusLabel(orderActivity.lastOrder.status)}
@@ -973,7 +973,7 @@ function OrderActivityCard({ orderActivity }: { orderActivity: ProfileOrderActiv
           </div>
           <div>
             <div className="text-xs uppercase tracking-[0.18em] text-[#9ca3af]">Favourite Material</div>
-            <div className="mt-2 text-sm font-semibold text-[#1a1a1a]">{orderActivity.favoriteMaterial || '—'}</div>
+            <div className="mt-2 text-sm font-semibold text-[#070b1d]">{orderActivity.favoriteMaterial || '—'}</div>
           </div>
         </div>
       )}
@@ -990,7 +990,7 @@ function SecurityCard() {
       </p>
       <Link
         href="/saved-quotes"
-        className="mt-5 inline-flex rounded-xl bg-white px-4 py-3 text-sm font-semibold text-[#1a1a1a] shadow-sm transition hover:bg-[#f3f0ff]"
+        className="mt-5 inline-flex rounded-xl bg-white px-4 py-3 text-sm font-semibold text-[#070b1d] shadow-sm transition hover:bg-[#f3f0ff]"
       >
         Review saved quotes
       </Link>
@@ -1036,7 +1036,7 @@ function ConfirmModal({
             className="w-full max-w-md overflow-hidden rounded-3xl border border-[#e8e4df] bg-[#faf9f7] shadow-2xl"
           >
             <div className="flex items-start justify-between gap-4 px-6 pt-6">
-              <h2 className="text-lg font-semibold text-[#1a1a1a]">{title}</h2>
+              <h2 className="text-lg font-semibold text-[#070b1d]">{title}</h2>
               <button
                 type="button"
                 onClick={onCancel}
@@ -1107,7 +1107,7 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
             </svg>
           </span>
           <div className="flex-1">
-            <div className="font-medium text-[#1a1a1a]">Verification pending</div>
+            <div className="font-medium text-[#070b1d]">Verification pending</div>
             <div className="text-[#6b7280]">+91 {pendingPhone}</div>
           </div>
           <button
@@ -1138,7 +1138,7 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
             </svg>
           </span>
           <div className="flex-1">
-            <div className="font-medium text-[#1a1a1a]">WhatsApp</div>
+            <div className="font-medium text-[#070b1d]">WhatsApp</div>
             <div className="text-[#6b7280]">+91 {linkedPhone}</div>
           </div>
           <div className="flex items-center gap-2">
@@ -1232,7 +1232,7 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
             onChange={(e) => setOtpCode(e.target.value)}
             maxLength={6}
             placeholder="123456"
-            className="rounded-xl border border-[#e8e4df] bg-white px-3.5 py-3 text-sm text-[#1a1a1a] outline-none transition focus:border-[#c8bfff] focus:ring-4 focus:ring-[#ebe5ff]"
+            className="rounded-xl border border-[#e8e4df] bg-white px-3.5 py-3 text-sm text-[#070b1d] outline-none transition focus:border-[#c8bfff] focus:ring-4 focus:ring-[#ebe5ff]"
             required
           />
           {toast && (
@@ -1290,7 +1290,7 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
             value={phoneDraft}
             onChange={(e) => setPhoneDraft(e.target.value)}
             placeholder="+91 98765 43210"
-            className="rounded-xl border border-[#e8e4df] bg-white px-3.5 py-3 text-sm text-[#1a1a1a] outline-none transition focus:border-[#c8bfff] focus:ring-4 focus:ring-[#ebe5ff]"
+            className="rounded-xl border border-[#e8e4df] bg-white px-3.5 py-3 text-sm text-[#070b1d] outline-none transition focus:border-[#c8bfff] focus:ring-4 focus:ring-[#ebe5ff]"
             required
           />
           <label className="flex items-start gap-2 text-sm text-[#4b4b4b]">
@@ -1384,7 +1384,7 @@ function WhatsAppLinkCard({ profile }: { profile: ProfileDetailsData }) {
           value={phoneDraft}
           onChange={(e) => setPhoneDraft(e.target.value)}
           placeholder="+91 98765 43210"
-          className="rounded-xl border border-[#e8e4df] bg-white px-3.5 py-3 text-sm text-[#1a1a1a] outline-none transition focus:border-[#c8bfff] focus:ring-4 focus:ring-[#ebe5ff]"
+          className="rounded-xl border border-[#e8e4df] bg-white px-3.5 py-3 text-sm text-[#070b1d] outline-none transition focus:border-[#c8bfff] focus:ring-4 focus:ring-[#ebe5ff]"
           required
         />
         <label className="flex items-start gap-2 text-sm text-[#4b4b4b]">
@@ -1460,7 +1460,7 @@ function MyFilesCard({
       {files.length === 0 ? (
         <div className="mt-5 rounded-2xl border border-dashed border-[#e8e4df] bg-[#fffdfb] p-6 text-center">
           <FileArchive className="mx-auto h-8 w-8 text-[#9ca3af]" />
-          <p className="mt-3 text-sm font-semibold text-[#1a1a1a]">No models uploaded yet</p>
+          <p className="mt-3 text-sm font-semibold text-[#070b1d]">No models uploaded yet</p>
           <Link
             href="/instant-quote"
             className="mt-4 inline-flex h-10 items-center justify-center rounded-xl bg-[#6d28d9] px-4 text-sm font-semibold text-white transition hover:bg-[#4c1d95]"
@@ -1477,7 +1477,7 @@ function MyFilesCard({
                   {getFileExtension(file.fileName)}
                 </div>
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-[#1a1a1a]">{file.fileName}</div>
+                  <div className="truncate text-sm font-semibold text-[#070b1d]">{file.fileName}</div>
                   <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[#9ca3af]">
                     <span>{formatShortDate(file.uploadedAt)}</span>
                     <span>{file.material || 'Material not set'}</span>

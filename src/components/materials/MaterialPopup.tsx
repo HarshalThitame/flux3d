@@ -94,7 +94,7 @@ export default function MaterialPopup({
                     <span>{material.icon}</span>
                   </div>
                   <div>
-                    <div className="font-[var(--font-syne)] text-lg font-bold text-[#0F1B3D]">
+                    <div className="font-[var(--font-syne)] text-lg font-bold text-[#070b1d]">
                       {material.name}
                     </div>
                     <div className="mt-1 inline-flex rounded-full border border-[#6d28d9]/20 bg-[#6d28d9]/10 px-2.5 py-1 text-[11px] uppercase tracking-[0.22em] text-[#6d28d9]">
@@ -105,7 +105,7 @@ export default function MaterialPopup({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-full border border-[#6d28d9]/10 bg-white/5 px-2.5 py-1 text-xs text-[#aeb7d3] transition-colors hover:bg-white/10 hover:text-[#0F1B3D]"
+                  className="rounded-full border border-[#6d28d9]/10 bg-white/5 px-2.5 py-1 text-xs text-[#aeb7d3] transition-colors hover:bg-white/10 hover:text-[#070b1d]"
                   aria-label="Close material details"
                 >
                   Close
@@ -128,7 +128,7 @@ export default function MaterialPopup({
                           <Icon className="h-3.5 w-3.5 text-[#6d28d9]" />
                           {propertyLabels[key]}
                         </div>
-                        <div className="text-sm font-medium text-[#0F1B3D]">{value}</div>
+                        <div className="text-sm font-medium text-[#070b1d]">{value}</div>
                       </div>
                     )
                   })}
