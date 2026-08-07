@@ -62,7 +62,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const supabase = createAdminSupabaseClient()
     const { data, error } = await supabase
       .from('shelf_variant_options')
-      .insert(normalizeVariantPayload(body, id))
+      .insert({ ...normalizeVariantPayload(body, id), ...(typeof body.id === 'string' ? { id: body.id } : {}) })
       .select('*')
       .single()
 

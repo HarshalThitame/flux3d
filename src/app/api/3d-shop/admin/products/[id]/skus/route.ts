@@ -115,6 +115,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       })
       .map((sku, index) => ({
         product_id: id,
+        ...(typeof sku.id === 'string' ? { id: sku.id } : {}),
         sku_code: sku.sku_code || `SHOP-${id.slice(0, 8).toUpperCase()}-${Date.now()}-${index + 1}`,
         variant_combination: sku.variant_combination ?? {},
         price: Number.isFinite(Number(sku.price)) ? Number(sku.price) : 0,

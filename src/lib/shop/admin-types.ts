@@ -24,6 +24,7 @@ export type ShopProduct = {
   occasion_tags: string[] | null
   thumbnail_url: string | null
   image_urls: string[] | null
+  image_alt: Record<string, string> | null
   model_url: string | null
   base_price: number
   is_customizable: boolean | null
@@ -33,6 +34,7 @@ export type ShopProduct = {
   is_archived: boolean | null
   meta_title: string | null
   meta_description: string | null
+  published_at: string | null
   created_at: string | null
   updated_at: string | null
   category_name?: string | null

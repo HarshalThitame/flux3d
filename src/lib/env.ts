@@ -8,6 +8,9 @@ const envSchema = z.object({
   // OpenAI
   OPENAI_API_KEY: z.string().min(1).optional(),
 
+  // Shop AI writing assist
+  SHOP_AI_MODEL: z.string().default('gpt-4.1-mini'),
+
   // WhatsApp
   WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),
