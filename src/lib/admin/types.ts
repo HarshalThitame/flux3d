@@ -264,28 +264,13 @@ export type PrinterStatus = {
   id: string
   name: string
   model?: string
-  status: 'Printing' | 'Idle' | 'Maintenance' | 'Offline'
-  job?: string
-  customer?: string
-  material?: string
-  progress?: number
-  layerCurrent?: number
-  layerTotal?: number
-  eta?: string
-  tempNozzle?: number
-  tempBed?: number
-  speed?: number
-  uvPower?: number
-  layerTime?: number
-  lastCompleted?: string
-  idleSince?: string
-  lastActive?: string
-  note?: string
-  uptime?: number
-  jobsCompleted?: number
+  status: string
   buildVolume?: string
+  materials?: string[]
   maxSpeed?: string
-  assignedMaterials?: string[]
+  notes?: string
+  lastActive?: string
+  createdAt?: string
 }
 
 export type SupportTicket = {

@@ -1205,7 +1205,7 @@ export async function getAdminFullAnalytics() {
       .select('id, name, price_per_gram, stock, current_stock, min_threshold, sku, type, brand, unit'),
     supabase
       .from('printers')
-      .select('id, name, model, status, job, customer, material, progress, last_active'),
+      .select('id, name, model, status, last_active'),
   ])
 
   if (ordersResult.error) throw new Error(ordersResult.error.message)
@@ -1254,10 +1254,6 @@ export async function getAdminFullAnalytics() {
     name: printer.name ?? 'Unknown Printer',
     model: printer.model,
     status: printer.status ?? 'Unknown',
-    job: printer.job,
-    customer: printer.customer,
-    material: printer.material,
-    progress: printer.progress ?? 0,
     lastActive: printer.last_active,
   }))
 
@@ -1355,7 +1351,7 @@ export async function getAdminPrintersData() {
   const supabase = createAdminSupabaseClient()
   const { data, error } = await supabase
     .from('printers')
-    .select('id, name, model, status, job, customer, material, progress, layer_current, layer_total, eta, temp_nozzle, temp_bed, speed, uv_power, layer_time, last_completed, idle_since, last_active, note, uptime, jobs_completed, build_volume, max_speed, assigned_materials')
+    .select('id, name, model, status, build_volume, materials, max_speed, notes, last_active, created_at')
     .order('name', { ascending: true })
 
   if (error) throw new Error(error.message)
@@ -1364,28 +1360,13 @@ export async function getAdminPrintersData() {
     id: String(p.id),
     name: p.name ?? 'Unknown Printer',
     model: p.model,
-    status: p.status ?? 'Offline',
-    job: p.job,
-    customer: p.customer,
-    material: p.material,
-    progress: p.progress ?? 0,
-    layerCurrent: p.layer_current,
-    layerTotal: p.layer_total,
-    eta: p.eta,
-    tempNozzle: p.temp_nozzle,
-    tempBed: p.temp_bed,
-    speed: p.speed,
-    uvPower: p.uv_power,
-    layerTime: p.layer_time,
-    lastCompleted: p.last_completed,
-    idleSince: p.idle_since,
-    lastActive: p.last_active,
-    note: p.note,
-    uptime: p.uptime,
-    jobsCompleted: p.jobs_completed ?? 0,
+    status: p.status ?? 'offline',
     buildVolume: p.build_volume,
+    materials: Array.isArray(p.materials) ? p.materials : [],
     maxSpeed: p.max_speed,
-    assignedMaterials: Array.isArray(p.assigned_materials) ? p.assigned_materials : [],
+    notes: p.notes,
+    lastActive: p.last_active,
+    createdAt: p.created_at,
   }))
 }
 

@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { prepareCartPaymentAction, verifyCartPaymentAndCreateOrder, type PrepareCartPaymentResult } from '@/app/cart/delivery/actions'
 import { trackPixelEvent, generateEventId } from '@/lib/meta/event-utils'
+import { useGlobalLoading } from '@/hooks/useGlobalLoading'
 import AddressForm from '@/components/instant-quote/AddressForm'
 import Toast, { type ToastState } from '@/components/quote/Toast'
 import { useCart } from '@/lib/cart/context'
@@ -62,6 +63,7 @@ export default function CartDeliveryClient({
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'creating' | 'opened' | 'verifying' | 'paid' | 'failed'>('idle')
   const [paymentMessage, setPaymentMessage] = useState('')
   const [paymentResult, setPaymentResult] = useState<{ orderId: string; orderNumber: string; amount: number } | null>(null)
+  const { withLoading } = useGlobalLoading()
   const checkoutRef = useRef<{ open: () => void; on?: (event: string, handler: (response: Record<string, string>) => void) => void; close?: () => void } | null>(null)
   type RazorpayWindow = Window & { Razorpay?: new (options: Record<string, unknown>) => { open: () => void; on?: (eventName: string, handler: (response: Record<string, string>) => void) => void; close?: () => void } }
   let razorpayScriptPromise: Promise<boolean> | null = null
@@ -212,7 +214,8 @@ export default function CartDeliveryClient({
       setPaymentStatus('creating')
       setPaymentMessage('Preparing secure payment...')
 
-      const paymentResult = await prepareCartPaymentAction({
+      const paymentResult = await withLoading(async () => {
+        const result = await prepareCartPaymentAction({
         items: items.map((item) => ({
           quoteId: item.quoteId ?? item.id ?? '',
           fileUrl: item.fileUrl ?? '',
@@ -270,10 +273,11 @@ export default function CartDeliveryClient({
         state: address.state,
         pincode: address.pincode,
         landmark: address.landmark,
-      })
-
-      const loaded = await loadRazorpayScript()
-      if (!loaded) throw new Error('Secure payment script failed to load.')
+        })
+        const loaded = await loadRazorpayScript()
+        if (!loaded) throw new Error('Secure payment script failed to load.')
+        return result
+      }, 'Preparing secure payment…')
 
       const RazorpayCtor = (window as RazorpayWindow).Razorpay
       if (!RazorpayCtor) throw new Error('Secure payment script is unavailable.')

@@ -10,10 +10,10 @@ type PrinterRecord = {
   name: string
   model: string | null
   status: string
-  build_volume: string | null
-  materials: string[] | null
-  last_active: string | null
-  created_at: string
+  buildVolume: string | null
+  materials: string[]
+  lastActive: string | null
+  createdAt: string
 }
 
 export default function AdminPrintersPage() {
@@ -87,14 +87,14 @@ export default function AdminPrintersPage() {
                   {printer.status}
                 </span>
               </div>
-              {printer.build_volume && (
-                <div className="mt-3 text-xs text-[#6F7192]">Build volume: {printer.build_volume}</div>
+              {printer.buildVolume && (
+                <div className="mt-3 text-xs text-[#6F7192]">Build volume: {printer.buildVolume}</div>
               )}
               {printer.materials && printer.materials.length > 0 && (
                 <div className="mt-1 text-xs text-[#6F7192]">Materials: {printer.materials.join(', ')}</div>
               )}
               <div className="mt-3 text-xs text-[#6F7192]">
-                Last active: {printer.last_active ? new Date(printer.last_active).toLocaleString() : 'Never'}
+                Last active: {printer.lastActive ? new Date(printer.lastActive).toLocaleString() : 'Never'}
               </div>
             </div>
           ))}

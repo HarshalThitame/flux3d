@@ -183,6 +183,20 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     if (!skuId) return NextResponse.json({ error: 'SKU id is required.' }, { status: 400 })
 
     const supabase = createAdminSupabaseClient()
+
+    const { data: checkData, error: checkError } = await supabase.rpc('can_delete_sku', {
+      p_sku_id: skuId,
+    })
+    if (checkError) throw new Error(checkError.message)
+
+    const check = Array.isArray(checkData) ? checkData[0] : undefined
+    if (check && check.can_delete === false) {
+      return NextResponse.json(
+        { error: check.reason || 'This SKU cannot be deleted because it is tied to orders.' },
+        { status: 409 }
+      )
+    }
+
     const { error } = await supabase.from('shelf_skus').delete().eq('product_id', id).eq('id', skuId)
     if (error) throw new Error(error.message)
     await updateProductBasePrice(id)

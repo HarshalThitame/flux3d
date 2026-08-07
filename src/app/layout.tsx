@@ -9,6 +9,8 @@ import DeferredTracking from '@/components/DeferredTracking'
 import DeferredGoogleAnalytics from '@/components/DeferredGoogleAnalytics'
 import MetaPixel from '@/components/MetaPixel'
 import ToastContainer from '@/components/Toast'
+import LoadingProvider from '@/components/providers/LoadingProvider'
+import LiquidMorphLoader from '@/components/ui/LiquidMorphLoader'
 import './globals.css'
 import './shop-luxury.css'
 import './landing-premium.css'
@@ -180,8 +182,11 @@ export default async function RootLayout({
         <ErrorBoundary>
           <MetaPixel />
         <DeferredTracking />
-          {children}
+          <LoadingProvider>
+            {children}
+          </LoadingProvider>
         </ErrorBoundary>
+        <LiquidMorphLoader />
         <ToastContainer />
         <DeferredGoogleAnalytics measurementId={GOOGLE_ANALYTICS_ID} />
       </body>

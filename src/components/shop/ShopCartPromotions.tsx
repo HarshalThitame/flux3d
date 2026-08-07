@@ -5,6 +5,7 @@ import { Check, Loader2, Percent, Tag, X } from 'lucide-react'
 import type { AppliedCoupon, AppliedOffer } from '@/lib/cart/types'
 import { formatShopPrice } from '@/lib/shop/selection'
 import { useShopCartStore } from '@/stores/shopCartStore'
+import { useGlobalLoading } from '@/hooks/useGlobalLoading'
 
 type CouponValidationResult = {
   valid: boolean
@@ -109,6 +110,7 @@ export function ShopCouponInput({
   const [code, setCode] = useState(couponCode ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const { withLoading } = useGlobalLoading()
 
   const handleApply = useCallback(async () => {
     const trimmed = code.trim().toUpperCase().replace(/\s+/g, '')
@@ -120,26 +122,28 @@ export function ShopCouponInput({
     setError('')
 
     try {
-      const params = new URLSearchParams({
-        code: trimmed,
-        orderAmount: String(orderAmount),
-      })
-      const response = await fetch(`/api/coupons/validate?${params}`)
-      const data = (await response.json()) as CouponValidationResult
+      await withLoading(async () => {
+        const params = new URLSearchParams({
+          code: trimmed,
+          orderAmount: String(orderAmount),
+        })
+        const response = await fetch(`/api/coupons/validate?${params}`)
+        const data = (await response.json()) as CouponValidationResult
 
-      if (!response.ok || !data.valid || !data.coupon) {
-        setError(data.error ?? 'Invalid coupon')
-        return
-      }
+        if (!response.ok || !data.valid || !data.coupon) {
+          setError(data.error ?? 'Invalid coupon')
+          return
+        }
 
-      applyCoupon(data.coupon)
-      setCode(data.coupon.code)
+        applyCoupon(data.coupon)
+        setCode(data.coupon.code)
+      }, 'Validating your coupon…')
     } catch {
       setError('Failed to validate coupon')
     } finally {
       setLoading(false)
     }
-  }, [applyCoupon, code, loading, orderAmount])
+  }, [applyCoupon, code, loading, orderAmount, withLoading])
 
   const handleRemoveCoupon = useCallback(() => {
     setCode('')
