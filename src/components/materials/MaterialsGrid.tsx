@@ -226,7 +226,7 @@ export default function MaterialsGrid() {
       <div ref={rootRef} className="relative">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="animate-pulse rounded-[24px] bg-white/[0.04] h-48" />
+            <div key={i} className="animate-pulse rounded-[24px] bg-gray-100 h-48" />
           ))}
         </div>
       </div>
@@ -236,7 +236,7 @@ export default function MaterialsGrid() {
   if (materials.length === 0) {
     return (
       <div ref={rootRef} className="relative text-center py-12">
-        <p className="text-[#6F7192]">No materials available at the moment.</p>
+        <p className="text-[#4B5563]">No materials available at the moment.</p>
       </div>
     )
   }

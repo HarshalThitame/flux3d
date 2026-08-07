@@ -130,7 +130,7 @@ export default function MaterialsHero() {
         animate={isInView ? 'visible' : 'hidden'}
         className="relative z-10 mx-auto flex min-h-[82svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-10 pt-10 md:pt-14 lg:pt-16"
       >
-        <motion.div variants={item} className="mb-4 flex items-center gap-2 text-sm font-medium text-[#6b7280]">
+        <motion.div variants={item} className="mb-4 flex items-center gap-2 text-sm font-medium text-[#4B5563]">
           <Link href="/" className="transition hover:text-[#070b1d]">Home</Link>
           <ChevronRight className="h-3.5 w-3.5" />
           <span className="text-[#070b1d]">Materials</span>
@@ -155,7 +155,7 @@ export default function MaterialsHero() {
 
             <motion.p
               variants={item}
-              className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-7 text-[#6b7280] sm:text-lg lg:max-w-2xl lg:leading-8"
+              className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-7 text-[#4B5563] sm:text-lg lg:max-w-2xl lg:leading-8"
             >
               Compare finish, strength, heat resistance, flexibility, and cost before you upload. Flux3D pairs each job with a material that fits the part, not just the printer.
             </motion.p>
@@ -189,7 +189,7 @@ export default function MaterialsHero() {
             {heroStats.map((stat) => (
               <div key={stat.label} className="min-w-0 rounded-lg border border-purple-200 bg-white p-4 shadow-sm">
                 <stat.icon className="mb-4 h-4 w-4 text-[#6d28d9]" />
-                <div className="text-xs font-bold uppercase text-[#6b7280]">{stat.label}</div>
+                <div className="text-xs font-bold uppercase text-[#4B5563]">{stat.label}</div>
                 <div className="mt-1 text-sm font-extrabold text-[#070b1d]">{stat.value}</div>
               </div>
             ))}
@@ -236,7 +236,7 @@ export default function MaterialsHero() {
                 >
                   <div className="min-w-0">
                     <div className="text-sm font-extrabold text-[#070b1d]">{material.label}</div>
-                    <div className="mt-0.5 text-xs font-medium text-[#6b7280]">{material.value}</div>
+                    <div className="mt-0.5 text-xs font-medium text-[#4B5563]">{material.value}</div>
                   </div>
                   <span>
                     {material.meta}
@@ -246,7 +246,7 @@ export default function MaterialsHero() {
             </div>
 
             <div className="materials-selection-rule">
-              <p className="text-xs font-semibold uppercase text-[#6b7280]">Selection rule</p>
+              <p className="text-xs font-semibold uppercase text-[#4B5563]">Selection rule</p>
               <p className="mt-2 text-sm leading-6 text-[#374151]">
                 Strong parts start with PETG, ABS, ASA, or Nylon. Display pieces start with PLA+, Silk PLA, or Resin.
               </p>

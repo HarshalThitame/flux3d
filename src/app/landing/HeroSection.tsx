@@ -143,8 +143,8 @@ export default function HeroSection() {
               transition={reduceMotion ? { duration: 0.3 } : { duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] as const }}
               className="premium-hero-title text-[clamp(2.4rem,9vw,5rem)] font-black leading-[0.86] text-[#070b1d] sm:text-6xl md:text-7xl lg:text-8xl"
             >
-              <span className="premium-title-line premium-title-brand block">
-                <WordReveal text="Flux3D" delay={0.28} blur={false} />
+              <span className="premium-title-line block">
+                <WordReveal text="Flux3D" delay={0.28} blur={false} wordClassName="premium-title-brand" />
               </span>
               <span className="premium-title-line premium-title-service block">
                 <WordReveal text="Custom 3D Printing & Manufacturing" delay={0.42} stagger={0.05} blur />

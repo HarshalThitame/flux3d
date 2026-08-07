@@ -2564,13 +2564,34 @@ samp {
 }
 
 .premium-title-brand {
-  width: fit-content;
-  margin-inline: auto;
-  background: linear-gradient(100deg, #4c1d95 0%, #5b21b6 25%, #a855f7 55%, #7c3aed 75%, #5b21b6 100%);
-  background-size: 200% 100%;
+  display: inline-block;
+  padding-right: 0.05em;
+  background: linear-gradient(
+    100deg,
+    #4c1d95 0%,
+    #6d28d9 18%,
+    #a855f7 36%,
+    #d4af37 52%,
+    #a855f7 68%,
+    #6d28d9 84%,
+    #4c1d95 100%
+  );
+  background-size: 220% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 16px rgba(109, 40, 217, 0.28));
+  animation: premiumBrandShimmer 7s ease-in-out infinite;
+}
+
+@keyframes premiumBrandShimmer {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 .premium-title-service {
@@ -2579,12 +2600,6 @@ samp {
   font-size: 0.5em;
   font-weight: 900;
   letter-spacing: -0.01em;
-}
-
-@media (min-width: 1024px) {
-  .premium-title-brand {
-    margin-inline: 0;
-  }
 }
 
 .premium-chip {
@@ -4034,7 +4049,7 @@ body:has(.premium-auth-shell) {
 }
 
 .services-command-topline span {
-  color: rgba(109, 40, 217, 0.62);
+  color: #4c1d95;
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.18em;
@@ -4173,7 +4188,7 @@ body:has(.premium-auth-shell) {
 .services-workflow-stack span {
   display: block;
   margin-top: 8px;
-  color: rgba(109, 40, 217, 0.48);
+  color: #6d28d9;
   font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.14em;
@@ -4721,7 +4736,7 @@ body:has(.premium-auth-shell) {
 }
 
 .materials-lab-topline span {
-  color: rgba(109, 40, 217, 0.62);
+  color: #4c1d95;
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.18em;
@@ -4832,7 +4847,7 @@ body:has(.premium-auth-shell) {
   border-radius: 8px;
   background: rgba(109, 40, 217, 0.045);
   padding: 10px;
-  color: rgba(109, 40, 217, 0.7);
+  color: #5b21b6;
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
@@ -4844,7 +4859,7 @@ body:has(.premium-auth-shell) {
 .materials-lab-metric span {
   display: block;
   margin-top: 8px;
-  color: rgba(109, 40, 217, 0.48);
+  color: #6d28d9;
   font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.13em;
@@ -4878,7 +4893,7 @@ body:has(.premium-auth-shell) {
 
 .materials-shortlist > div > span {
   max-width: 134px;
-  color: rgba(109, 40, 217, 0.72);
+  color: #5b21b6;
   font-size: 11px;
   font-weight: 800;
   line-height: 1.35;
@@ -5499,7 +5514,7 @@ body:has(.premium-auth-shell) {
 }
 
 .pricing-command-topline span {
-  color: rgba(109, 40, 217, 0.62);
+  color: #4c1d95;
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.18em;
@@ -5573,7 +5588,7 @@ body:has(.premium-auth-shell) {
 .pricing-command-metric span {
   display: block;
   margin-top: 6px;
-  color: rgba(109, 40, 217, 0.48);
+  color: #6d28d9;
   font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.13em;
@@ -6116,7 +6131,7 @@ body:has(.premium-auth-shell) {
 }
 
 .blog-signal-topline span {
-  color: rgba(109, 40, 217, 0.62);
+  color: #4c1d95;
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.18em;
@@ -6690,7 +6705,7 @@ body:has(.premium-auth-shell) {
 }
 
 .gallery-console-topline span {
-  color: rgba(109, 40, 217, 0.62);
+  color: #4c1d95;
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.18em;
@@ -7430,7 +7445,7 @@ body:has(.premium-auth-shell) {
 }
 
 .shop-console-topline span {
-  color: rgba(109, 40, 217, 0.62);
+  color: #4c1d95;
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.18em;
