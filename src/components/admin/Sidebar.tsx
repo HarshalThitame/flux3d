@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ChevronLeft, Printer } from 'lucide-react'
@@ -21,6 +21,60 @@ export default function Sidebar({
   const [pendingReviewCount, setPendingReviewCount] = useState(0)
   const [printerStats, setPrinterStats] = useState<{ total: number; active: number } | null>(null)
   const getBadge = (href: string) => href === '/admin/3d-shop/reviews' ? pendingReviewCount : 0
+
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollUp, setCanScrollUp] = useState(false)
+  const [canScrollDown, setCanScrollDown] = useState(false)
+
+  const updateScrollIndicators = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    setCanScrollUp(el.scrollTop > 8)
+    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 8)
+  }, [])
+
+  useEffect(() => {
+    updateScrollIndicators()
+    window.addEventListener('resize', updateScrollIndicators)
+    return () => window.removeEventListener('resize', updateScrollIndicators)
+  }, [updateScrollIndicators])
+
+  useEffect(() => {
+    const active = scrollRef.current?.querySelector<HTMLElement>('[data-active="true"]')
+    active?.scrollIntoView({ block: 'nearest' })
+  }, [pathname])
+
+  function handleNavKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    const el = scrollRef.current
+    if (!el) return
+    const step = 120
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault()
+        el.scrollBy({ top: step, behavior: 'smooth' })
+        break
+      case 'ArrowUp':
+        event.preventDefault()
+        el.scrollBy({ top: -step, behavior: 'smooth' })
+        break
+      case 'PageDown':
+        event.preventDefault()
+        el.scrollBy({ top: el.clientHeight * 0.8, behavior: 'smooth' })
+        break
+      case 'PageUp':
+        event.preventDefault()
+        el.scrollBy({ top: -el.clientHeight * 0.8, behavior: 'smooth' })
+        break
+      case 'Home':
+        event.preventDefault()
+        el.scrollTo({ top: 0, behavior: 'smooth' })
+        break
+      case 'End':
+        event.preventDefault()
+        el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+        break
+    }
+  }
 
   useEffect(() => {
     let active = true
@@ -81,7 +135,17 @@ export default function Sidebar({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-hide admin-sidebar-scroll px-4 pb-4 [-webkit-overflow-scrolling:touch]">
+        <div className="relative min-h-0 flex-1">
+          <div
+            ref={scrollRef}
+            data-lenis-prevent
+            tabIndex={0}
+            role="navigation"
+            aria-label="Admin navigation"
+            onScroll={updateScrollIndicators}
+            onKeyDown={handleNavKeyDown}
+            className="admin-sidebar-scroll h-full overflow-y-auto overscroll-contain px-4 pb-4 [-webkit-overflow-scrolling:touch]"
+          >
           <nav className="mt-8 space-y-2">
           {mainItems.map((item) => {
             const active = isActive(item.href)
@@ -92,6 +156,7 @@ export default function Sidebar({
                 key={item.href}
                 href={item.href}
                 prefetch={false}
+                data-active={active ? 'true' : undefined}
                 className={`group flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition ${
                   active
                     ? 'bg-[linear-gradient(90deg,rgba(109, 40, 217,0.15),rgba(168, 85, 247,0.12))] text-[#0F1B3D] shadow-[inset_0_0_0_1px_rgba(109, 40, 217,0.4)]'
@@ -118,6 +183,7 @@ export default function Sidebar({
                     key={item.href}
                     href={item.href}
                     prefetch={false}
+                    data-active={active ? 'true' : undefined}
                     className={`flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition ${
                       active
                         ? 'bg-[linear-gradient(90deg,rgba(109, 40, 217,0.15),rgba(168, 85, 247,0.12))] text-[#0F1B3D] shadow-[inset_0_0_0_1px_rgba(109, 40, 217,0.4)]'
@@ -149,6 +215,7 @@ export default function Sidebar({
                   key={item.href}
                   href={item.href}
                   prefetch={false}
+                  data-active={active ? 'true' : undefined}
                   className={`group relative flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition ${
                     active
                       ? 'bg-[linear-gradient(90deg,rgba(109, 40, 217,0.15),rgba(168, 85, 247,0.12))] text-[#0F1B3D] shadow-[inset_0_0_0_1px_rgba(109, 40, 217,0.4)]'
@@ -173,6 +240,7 @@ export default function Sidebar({
                   key={item.href}
                   href={item.href}
                   prefetch={false}
+                  data-active={active ? 'true' : undefined}
                   className={`group relative flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition ${
                     active
                       ? 'bg-[linear-gradient(90deg,rgba(109, 40, 217,0.15),rgba(168, 85, 247,0.12))] text-[#0F1B3D] shadow-[inset_0_0_0_1px_rgba(109, 40, 217,0.4)]'
@@ -192,12 +260,18 @@ export default function Sidebar({
             <div className="space-y-2">
               {secondaryItems.map((item) => {
                 const Icon = item.icon
+                const active = isActive(item.href)
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     prefetch={false}
-                    className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium text-[#6F7192] transition hover:bg-gray-100 hover:text-[#0F1B3D]"
+                    data-active={active ? 'true' : undefined}
+                    className={`flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-medium transition ${
+                      active
+                        ? 'bg-[linear-gradient(90deg,rgba(109, 40, 217,0.15),rgba(168, 85, 247,0.12))] text-[#0F1B3D] shadow-[inset_0_0_0_1px_rgba(109, 40, 217,0.4)]'
+                        : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#0F1B3D]'
+                    }`}
                   >
                     <Icon className="h-5 w-5 shrink-0" />
                     <span>{item.label}</span>
@@ -207,6 +281,10 @@ export default function Sidebar({
             </div>
           </div>
         )}
+        </div>
+
+        <div aria-hidden="true" className={`pointer-events-none absolute inset-x-0 top-0 z-10 h-6 bg-gradient-to-b from-white to-transparent transition-opacity duration-200 ${canScrollUp ? 'opacity-100' : 'opacity-0'}`} />
+        <div aria-hidden="true" className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 h-6 bg-gradient-to-t from-white to-transparent transition-opacity duration-200 ${canScrollDown ? 'opacity-100' : 'opacity-0'}`} />
         </div>
 
         <div className="shrink-0 px-4 pb-5 pt-2">
