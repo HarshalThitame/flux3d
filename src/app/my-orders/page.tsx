@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import { requireUser } from '@/lib/auth/server'
 import { type OrderStatus } from '@/lib/orders'
@@ -75,6 +76,15 @@ type GroupedOrder = {
     estimatedTime: number
     fileUrl: string | null
   }[]
+}
+
+export const metadata: Metadata = {
+  title: 'My Orders | Flux3D',
+  description: 'Track and manage your Flux3D order requests.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function MyOrdersPage() {

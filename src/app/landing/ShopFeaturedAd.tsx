@@ -31,7 +31,7 @@ function ShopFallback() {
           <Box className="h-7 w-7" />
         </div>
         <div>
-          <h3 className="text-xl font-black leading-tight text-[#070b1d]">Browse the 3D Shop</h3>
+          <h2 className="text-xl font-black leading-tight text-[#070b1d]">Browse the 3D Shop</h2>
           <p className="mt-2 max-w-[320px] text-sm leading-6 text-[#4B5563]">
             Ready-made products, desk objects, and curated prints — shipped across India.
           </p>
@@ -134,9 +134,9 @@ function Slide({ product, index, count, onNav }: { product: ShopPublicProduct; i
         <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[#6d28d9]">{product.category_name}</div>
       )}
 
-      <h3 className="line-clamp-2 text-[clamp(1.15rem,1.9vw,1.45rem)] font-black leading-[1.15] text-[#070b1d]">
+      <h2 className="line-clamp-2 text-[clamp(1.15rem,1.9vw,1.45rem)] font-black leading-[1.15] text-[#070b1d]">
         {product.name}
-      </h3>
+      </h2>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         {hasRating ? (

@@ -1,9 +1,18 @@
+import type { Metadata } from 'next'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { getLinkRequestByToken } from '@/lib/account-linking/link-requests'
 import { confirmLinkAction } from '../actions'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  title: 'Confirm Account Link | Flux3D',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default async function LinkConfirmPage({
   searchParams,

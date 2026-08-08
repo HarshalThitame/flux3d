@@ -1,6 +1,15 @@
+import type { Metadata } from 'next'
 import { verifyOtpAction } from '@/app/link/actions'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  title: 'Verify WhatsApp OTP | Flux3D',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default async function VerifyOtpPage({
   searchParams,

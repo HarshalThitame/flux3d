@@ -3,9 +3,37 @@ import { notFound } from 'next/navigation'
 import ShopShell from '@/components/shop/ShopShell'
 import ShopCategoryBrowser from '@/components/shop/ShopCategoryBrowser'
 import { getShopCategoryBySlug, getShopProducts } from '@/lib/shop/public-data'
+import type { ShopPublicCategory } from '@/lib/shop/public-types'
 import { absoluteUrl } from '@/lib/site'
 
 export const dynamic = 'force-dynamic'
+
+function toJsonLd(value: unknown) {
+  return JSON.stringify(value).replace(/</g, '\\u003c')
+}
+
+function makeBreadcrumbSchema(category: ShopPublicCategory) {
+  const items = [
+    { position: 1, name: 'Home', item: absoluteUrl('/') },
+    { position: 2, name: '3D Shop', item: absoluteUrl('/3d-shop') },
+    {
+      position: 3,
+      name: category.name,
+      item: absoluteUrl(`/3d-shop/category/${category.slug}`),
+    },
+  ]
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item) => ({
+      '@type': 'ListItem',
+      position: item.position,
+      name: item.name,
+      item: item.item,
+    })),
+  }
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
@@ -33,6 +61,10 @@ export default async function ShopCategoryPage({ params }: { params: Promise<{ s
 
   return (
     <ShopShell transparentNav>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: toJsonLd(makeBreadcrumbSchema(category)) }}
+      />
       <ShopCategoryBrowser category={category} products={result.products} />
     </ShopShell>
   )

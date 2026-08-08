@@ -17,6 +17,7 @@ import {
   Filter,
   Layers3,
   PenTool,
+  Rss,
   Search,
   Sparkles,
   Tag,
@@ -328,6 +329,14 @@ export default function BlogClient({
                 >
                   Start a quote
                   <ArrowUpRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/rss.xml"
+                  className="blog-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 text-sm font-black text-[#070b1d] shadow-sm transition hover:border-[#6d28d9]/30 hover:bg-[#f5f3ff]"
+                  aria-label="Subscribe to the Flux3D blog RSS feed"
+                >
+                  <Rss className="h-4 w-4 text-[#6d28d9]" />
+                  RSS
                 </Link>
               </motion.div>
 

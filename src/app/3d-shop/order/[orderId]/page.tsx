@@ -8,6 +8,10 @@ import ShopOrderDetailMobile from './ShopOrderDetailMobile'
 export const metadata: Metadata = {
   title: '3D Shop Order — Flux3D',
   description: 'View your 3D Shop order details.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function ShopOrderPage({ params }: { params: Promise<{ orderId: string }> }) {

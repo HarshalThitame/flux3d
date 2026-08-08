@@ -8,6 +8,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `${settings.businessName} — Admin Dashboard`,
     description: settings.businessDescription || 'Flux3D SaaS admin dashboard for orders, quotes, users, analytics, and operations control.',
+    robots: {
+      index: false,
+      follow: false,
+    },
   }
 }
 

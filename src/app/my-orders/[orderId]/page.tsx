@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import { requireUser } from '@/lib/auth/server'
@@ -70,6 +71,15 @@ type OrderDetailRow = {
   payment_failed_at: string | null
   notes: string | null
   created_at: string
+}
+
+export const metadata: Metadata = {
+  title: 'Order Details | Flux3D',
+  description: 'View your Flux3D order details and status.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function OrderDetailPage({

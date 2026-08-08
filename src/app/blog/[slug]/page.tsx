@@ -319,13 +319,19 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-white/25" />
         <div className="relative z-10 mx-auto w-full max-w-[1120px]">
-          <Link
-            href="/blog"
-            className="mb-8 inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Blog
-          </Link>
+          <nav aria-label="Breadcrumb" className="mb-8 flex flex-wrap items-center gap-2 text-sm text-[var(--text-secondary)]">
+            <Link href="/" className="transition-colors hover:text-[var(--text-primary)]">Home</Link>
+            <span aria-hidden="true">/</span>
+            <Link
+              href="/blog"
+              className="inline-flex items-center gap-2 transition-colors hover:text-[var(--text-primary)]"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Blog
+            </Link>
+            <span aria-hidden="true">/</span>
+            <span className="line-clamp-1 font-medium text-[var(--text-primary)]">{post.title}</span>
+          </nav>
 
           {preview && (
             <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">

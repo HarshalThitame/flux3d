@@ -5,9 +5,93 @@ import ShopShell from '@/components/shop/ShopShell'
 import ShopProductDetailClient from '@/components/shop/ShopProductDetailClient'
 import { getCurrentUserProfile } from '@/lib/auth/server'
 import { getShopProductBySlug, getShopProductReviews } from '@/lib/shop/public-data'
+import type { ShopPublicProduct } from '@/lib/shop/public-types'
 import { absoluteUrl } from '@/lib/site'
 
 export const dynamic = 'force-dynamic'
+
+function toJsonLd(value: unknown) {
+  return JSON.stringify(value).replace(/</g, '\\u003c')
+}
+
+function getShopAvailability(product: ShopPublicProduct) {
+  if (product.stock_status === 'pre_order') return 'https://schema.org/PreOrder'
+  if (product.stock_status === 'out_of_stock' || product.stock_status === 'unavailable') {
+    return 'https://schema.org/OutOfStock'
+  }
+  if (product.stock_status === 'low_stock') return 'https://schema.org/LimitedAvailability'
+  return 'https://schema.org/InStock'
+}
+
+function makeProductSchema(product: ShopPublicProduct) {
+  const url = absoluteUrl(`/3d-shop/product/${product.slug}`)
+  const images = [product.thumbnail_url, ...(product.image_urls ?? [])].filter(Boolean) as string[]
+  const schema: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    '@id': `${url}#product`,
+    name: product.name,
+    description: product.meta_description || product.description || undefined,
+    url,
+    image: images,
+    sku: product.skus[0]?.sku_code ?? undefined,
+    brand: { '@type': 'Brand', name: 'Flux3D' },
+    category: product.category_name ?? undefined,
+    offers: {
+      '@type': 'Offer',
+      url,
+      priceCurrency: 'INR',
+      price: product.display_price,
+      availability: getShopAvailability(product),
+      itemCondition: 'https://schema.org/NewCondition',
+      seller: { '@type': 'Organization', name: 'Flux3D' },
+    },
+  }
+
+  if (product.review_count > 0) {
+    schema.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: product.avg_rating,
+      reviewCount: product.review_count,
+      bestRating: 5,
+      worstRating: 1,
+    }
+  }
+
+  return schema
+}
+
+function makeBreadcrumbSchema(product: ShopPublicProduct) {
+  const items = [
+    { position: 1, name: 'Home', item: absoluteUrl('/') },
+    { position: 2, name: '3D Shop', item: absoluteUrl('/3d-shop') },
+  ]
+
+  if (product.category_slug && product.category_name) {
+    items.push({
+      position: 3,
+      name: product.category_name,
+      item: absoluteUrl(`/3d-shop/category/${product.category_slug}`),
+    })
+  }
+
+  items.push({
+    position: items.length + 1,
+    name: product.name,
+    item: absoluteUrl(`/3d-shop/product/${product.slug}`),
+  })
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item) => ({
+      '@type': 'ListItem',
+      position: item.position,
+      name: item.name,
+      item: item.item,
+    })),
+  }
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
@@ -51,6 +135,14 @@ export default async function ShopProductPage({ params }: { params: Promise<{ sl
 
   return (
     <ShopShell transparentNav>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: toJsonLd(makeProductSchema(product)) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: toJsonLd(makeBreadcrumbSchema(product)) }}
+      />
       <ShopProductDetailClient product={product} initialReviews={reviews.reviews} currentUser={auth?.profile ?? null} />
     </ShopShell>
   )

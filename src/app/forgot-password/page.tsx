@@ -14,6 +14,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `${settings.businessName} - Forgot Password`,
     description: settings.businessDescription || 'Reset your account password.',
+    robots: {
+      index: false,
+      follow: false,
+    },
   }
 }
 

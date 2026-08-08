@@ -8,6 +8,10 @@ import ShopOrdersMobile from './ShopOrdersMobile'
 export const metadata: Metadata = {
   title: 'My 3D Shop Orders — Flux3D',
   description: 'Track your 3D Shop orders.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function ShopOrdersPage() {
