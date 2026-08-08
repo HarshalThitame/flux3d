@@ -2,13 +2,15 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { type CSSProperties, useRef } from 'react'
+import { useRef } from 'react'
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
-import { ArrowRight, ArrowDown, MapPin, Shield, Clock, Printer, Sparkles, Layers } from 'lucide-react'
+import { ArrowRight, ArrowDown, MapPin, Clock, Sparkles } from 'lucide-react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { scrollToTarget } from '@/lib/scroll-to'
 import WordReveal from '@/components/ui/WordReveal'
 import MagneticButton from '@/components/ui/MagneticButton'
+import ShopFeaturedAd from './ShopFeaturedAd'
+import type { ShopPublicProduct } from '@/lib/shop/public-types'
 
 function HeroFadeIn({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -27,12 +29,6 @@ const stats = [
   { value: 3, prefix: '', suffix: '', label: 'Service categories' },
   { value: 4, prefix: '', suffix: '', label: 'Payment / support touchpoints' },
   { value: 5, prefix: '', suffix: '', label: 'Public policies' },
-]
-
-const productionSignals = [
-  { icon: Printer, label: 'Custom 3D printing', value: 'Parts, prototypes, and models' },
-  { icon: Layers, label: 'Ready-made products', value: 'Pre-designed items for direct purchase' },
-  { icon: Shield, label: 'Support and policy clarity', value: 'Transparent terms and contact details' },
 ]
 
 const heroBadges = [
@@ -63,7 +59,7 @@ function CountStat({ stat }: { stat: typeof stats[0]; index: number }) {
   )
 }
 
-export default function HeroSection() {
+export default function HeroSection({ featuredProducts }: { featuredProducts?: ShopPublicProduct[] }) {
   const reduceMotion = useReducedMotion()
   const isFinePointer = useMediaQuery('(pointer: fine)')
   const enableHover = isFinePointer && !reduceMotion
@@ -231,55 +227,7 @@ export default function HeroSection() {
             style={parallaxDisabled ? undefined : { y: panelY }}
             className="relative hidden lg:block"
           >
-            <div className="premium-machine-panel">
-              <div className="relative">
-                <div className="premium-console-header">
-                  <span>Production Command</span>
-                  <strong>LIVE</strong>
-                </div>
-                <div className="premium-gantry-stage" aria-hidden="true">
-                  <div className="premium-gantry-rail" />
-                  <div className="premium-gantry-head"><span /></div>
-                  <div className="premium-gantry-bed"><span /><span /><span /></div>
-                </div>
-                  <div className="premium-machine-window">
-                  <div className="premium-machine-scan" aria-hidden="true" />
-                  <div className="premium-print-preview" aria-hidden="true">
-                    {Array.from({ length: 9 }).map((_, index) => (
-                      <span key={index} style={{ '--layer-y': `${(index - 4) * 9}px`, '--layer-width': `${78 - index * 4}px`, '--layer-delay': `${index * 90}ms` } as CSSProperties} />
-                    ))}
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a855f7]">Current build</p>
-                    <p className="mt-1 text-2xl font-black text-[#4c1d95]">Functional PETG bracket</p>
-                    <p className="mt-2 text-sm leading-6 text-[#5b21b6]">Layer 1,286 of 1,920 · quality camera active</p>
-                  </div>
-                </div>
-                <div className="premium-build-progress" aria-hidden="true"><span /></div>
-                <div className="premium-material-rack">
-                  {[
-                    { label: 'PLA+', color: '#6d28d9' },
-                    { label: 'PETG', color: '#059669' },
-                    { label: 'Resin', color: '#7c3aed' },
-                    { label: 'Nylon', color: '#d97706' },
-                  ].map((material) => (
-                    <div key={material.label}>
-                      <span style={{ backgroundColor: material.color }} />
-                      {material.label}
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 space-y-3">
-                  {productionSignals.map((signal, index) => (
-                    <div key={signal.label} className="premium-signal-row" style={{ '--signal-index': index } as CSSProperties}>
-                      <signal.icon className="h-4 w-4 text-[#5b21b6]" />
-                      <span>{signal.label}</span>
-                      <strong>{signal.value}</strong>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <ShopFeaturedAd products={featuredProducts ?? []} />
           </motion.div>
         </div>
 
