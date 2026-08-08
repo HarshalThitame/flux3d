@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Box,
+  ChevronLeft,
+  ChevronRight,
   RefreshCcw,
   ShieldCheck,
   ShoppingBag,
@@ -178,6 +180,9 @@ export default function ShopProductDetailClient({
   const openCart = useShopCartStore((state) => state.openCart)
   const images = getShopProductImages(product)
   const [selectedImage, setSelectedImage] = useState(images[0] ?? '')
+  const [imageIndex, setImageIndex] = useState(0)
+  const [slideDir, setSlideDir] = useState<1 | -1>(1)
+  const draggingRef = useRef(false)
   const [selected, setSelected] = useState<ShopSelectedOptions>({})
   const [customizationText, setCustomizationText] = useState('')
   const [quantity, setQuantity] = useState(1)
@@ -194,12 +199,31 @@ export default function ShopProductDetailClient({
   )
   const [toast, setToast] = useState('')
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+  const [lightboxDir, setLightboxDir] = useState<1 | -1>(1)
   const [modelOpen, setModelOpen] = useState(false)
   useScrollLock(Boolean(lightboxImage) || modelOpen)
   useEscape(() => setLightboxImage(null), Boolean(lightboxImage))
 
   const resolvedSku = useMemo(() => resolveShopSku(product.skus, product.variant_options, selected), [product, selected])
   const visibleImage = resolvedSku?.variant_image_url || selectedImage || images[0] || ''
+
+  function goImage(dir: 1 | -1) {
+    if (images.length < 2) return
+    const next = Math.min(Math.max(imageIndex + dir, 0), images.length - 1)
+    if (next === imageIndex) return
+    setSlideDir(dir)
+    setImageIndex(next)
+    setSelectedImage(images[next])
+  }
+
+  function goLightboxImage(dir: 1 | -1) {
+    if (images.length < 2) return
+    const idx = lightboxImage ? Math.max(0, images.indexOf(lightboxImage)) : 0
+    const next = Math.min(Math.max(idx + dir, 0), images.length - 1)
+    if (next === idx) return
+    setLightboxDir(dir)
+    setLightboxImage(images[next])
+  }
   const stock = getShopStockLabel(resolvedSku)
   const maxStock = resolvedSku?.pre_order_eta ? 10 : resolvedSku?.stock_quantity ?? 1
   const canAdd = Boolean(resolvedSku && resolvedSku.is_available !== false && (resolvedSku.stock_quantity > 0 || resolvedSku.pre_order_eta))
@@ -402,7 +426,51 @@ export default function ShopProductDetailClient({
               className="relative z-10 aspect-square max-h-[85dvh] w-full max-w-3xl overflow-hidden rounded-[var(--shop-radius-xl)] bg-white"
               onClick={(event) => event.stopPropagation()}
             >
-              <Image src={lightboxImage} alt="Review image" fill sizes="90vw" className="object-contain" />
+              <motion.div
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.12}
+                onDragStart={() => { draggingRef.current = true }}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -42) goLightboxImage(1)
+                  else if (info.offset.x > 42) goLightboxImage(-1)
+                  window.setTimeout(() => { draggingRef.current = false }, 80)
+                }}
+                className="absolute inset-0 cursor-grab touch-pan-y select-none"
+              >
+                <AnimatePresence initial={false} mode="wait">
+                  <motion.div
+                    key={lightboxImage}
+                    initial={{ opacity: 0, x: 26 * lightboxDir }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -26 * lightboxDir }}
+                    transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute inset-0"
+                  >
+                    <Image src={lightboxImage} alt="Review image" fill sizes="90vw" className="object-contain" />
+                  </motion.div>
+                </AnimatePresence>
+              </motion.div>
+              {images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Previous image"
+                    onClick={() => goLightboxImage(-1)}
+                    className="absolute left-3 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/80 text-[var(--shop-text-primary)] shadow-lg backdrop-blur transition hover:bg-white active:scale-95"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Next image"
+                    onClick={() => goLightboxImage(1)}
+                    className="absolute right-3 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/80 text-[var(--shop-text-primary)] shadow-lg backdrop-blur transition hover:bg-white active:scale-95"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}
@@ -423,26 +491,64 @@ export default function ShopProductDetailClient({
           <span className="text-[var(--shop-text-primary)]">{product.name}</span>
         </nav>
 
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_520px]">
-          <section>
-            <button
-              type="button"
-              onClick={() => visibleImage && setLightboxImage(visibleImage)}
-              className="relative aspect-square w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)] transition hover:shadow-[var(--shop-shadow-md)]"
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_520px]">
+          <section className="min-w-0">
+            <motion.div
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.12}
+              dragTransition={{ bounceStiffness: 600, bounceDamping: 30 }}
+              onDragStart={() => { draggingRef.current = true }}
+              onDragEnd={(_, info) => {
+                if (info.offset.x < -42) goImage(1)
+                else if (info.offset.x > 42) goImage(-1)
+                window.setTimeout(() => { draggingRef.current = false }, 80)
+              }}
+              className="cursor-grab touch-pan-y select-none active:cursor-grabbing"
             >
-              {visibleImage ? (
-                <Image src={visibleImage} alt={product.name} fill priority sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover" />
-              ) : (
-                <div className="grid h-full place-items-center text-6xl text-[var(--shop-text-subtle)]">🧩</div>
-              )}
-            </button>
+              <button
+                type="button"
+                onClick={() => { if (!draggingRef.current && visibleImage) setLightboxImage(visibleImage) }}
+                className="relative aspect-square w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)] transition hover:shadow-[var(--shop-shadow-md)]"
+              >
+                {visibleImage ? (
+                  <AnimatePresence initial={false} mode="wait">
+                    <motion.div
+                      key={visibleImage}
+                      initial={{ opacity: 0, x: 24 * slideDir }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -24 * slideDir }}
+                      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                      className="absolute inset-0"
+                    >
+                      <Image src={visibleImage} alt={product.name} fill priority sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover" />
+                    </motion.div>
+                  </AnimatePresence>
+                ) : (
+                  <div className="grid h-full place-items-center text-6xl text-[var(--shop-text-subtle)]">🧩</div>
+                )}
+              </button>
+            </motion.div>
+            {images.length > 1 && (
+              <div className="mt-4 flex items-center justify-center gap-1.5 lg:hidden">
+                {images.map((image, index) => (
+                  <button
+                    key={image}
+                    type="button"
+                    aria-label={`Go to image ${index + 1}`}
+                    onClick={() => { setImageIndex(index); setSelectedImage(image) }}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${index === imageIndex ? 'w-5 bg-[var(--shop-gold)]' : 'w-1.5 bg-[var(--shop-border-medium)]'}`}
+                  />
+                ))}
+              </div>
+            )}
             {images.length > 1 && (
               <div className="mt-4 flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 scroll-padding-x-1 scrollbar-hide [scrollbar-width:none] [-webkit-overflow-scrolling:touch]">
                 {images.map((image, index) => (
                   <button
                     key={image}
                     type="button"
-                    onClick={() => setSelectedImage(image)}
+                    onClick={() => { setImageIndex(index); setSelectedImage(image) }}
                     aria-label={`View product image ${index + 1}`}
                     className={`relative aspect-square w-[72px] shrink-0 snap-start overflow-hidden rounded-2xl border bg-white transition hover:border-[var(--shop-border-gold)] active:scale-95 ${visibleImage === image ? 'border-[var(--shop-gold)] ring-2 ring-[var(--shop-gold)]/25' : 'border-[var(--shop-border-light)]'}`}
                   >
@@ -463,10 +569,10 @@ export default function ShopProductDetailClient({
             )}
           </section>
 
-          <aside className="lg:sticky lg:top-24 lg:self-start">
+          <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-5 shadow-[var(--shop-shadow-sm)] md:p-6">
               <div className="flex items-start justify-between gap-3">
-                <h1 className="font-[var(--shop-font-heading)] min-w-0 text-lg font-medium leading-snug text-[var(--shop-text-primary)]">
+                <h1 className="font-[var(--shop-font-heading)] min-w-0 !text-xl font-semibold leading-snug text-[var(--shop-text-primary)] md:!text-2xl">
                   {product.name}
                 </h1>
                 <WishlistButton productId={product.id} label className="shrink-0 rounded-xl border-[var(--shop-border-light)]" />
