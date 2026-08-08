@@ -210,9 +210,9 @@ export default function ShopCategoryBrowser({
 
       {category.children && category.children.length > 0 && (
         <div className="px-4 pt-6 md:px-8 lg:px-16">
-          <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto">
+          <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto pb-1 scrollbar-hide [-webkit-overflow-scrolling:touch] snap-x snap-mandatory scroll-padding-left-4">
             {category.children.map((child) => (
-              <Link key={child.id} href={`/3d-shop/category/${child.slug}`} className="whitespace-nowrap rounded-full border border-[var(--shop-border-light)] bg-white px-4 py-2 text-sm font-semibold text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-border-gold)] hover:text-[var(--shop-gold)]">
+              <Link key={child.id} href={`/3d-shop/category/${child.slug}`} className="inline-flex h-11 shrink-0 snap-start items-center whitespace-nowrap rounded-full border border-[var(--shop-border-light)] bg-white px-4 text-sm font-semibold text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-border-gold)] hover:text-[var(--shop-gold)]">
                 {child.icon_emoji || '🧩'} {child.name}
               </Link>
             ))}
@@ -275,14 +275,14 @@ export default function ShopCategoryBrowser({
       </section>
 
       {filterOpen && (
-        <div className="fixed inset-0 z-[120] bg-[var(--shop-bg-base)] p-5 lg:hidden">
+        <div className="fixed inset-0 z-[120] overflow-y-auto bg-[var(--shop-bg-base)] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] lg:hidden">
           <div className="mb-5 flex items-center justify-between">
             <h2 className="font-[var(--shop-font-heading)] text-2xl font-semibold text-[var(--shop-text-primary)]">Filters</h2>
-            <button type="button" onClick={() => setFilterOpen(false)} className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--shop-border-light)] bg-white">
-              <X className="h-4 w-4 text-[var(--shop-text-secondary)]" />
+            <button type="button" onClick={() => setFilterOpen(false)} aria-label="Close filters" className="grid h-11 w-11 place-items-center rounded-xl border border-[var(--shop-border-light)] bg-white">
+              <X className="h-5 w-5 text-[var(--shop-text-secondary)]" />
             </button>
           </div>
-          <div className="h-[calc(100vh-96px)] overflow-y-auto pb-8">{panel}</div>
+          <div className="h-[calc(100dvh-128px)] overflow-y-auto pb-8">{panel}</div>
         </div>
       )}
     </>

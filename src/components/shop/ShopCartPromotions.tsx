@@ -172,7 +172,7 @@ export function ShopCouponInput({
           <button
             type="button"
             onClick={handleRemoveCoupon}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[var(--shop-gold)] hover:bg-white"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-[var(--shop-gold)] hover:bg-white"
             aria-label={`Remove ${appliedCoupon.code} coupon`}
           >
             <X className="h-4 w-4" />

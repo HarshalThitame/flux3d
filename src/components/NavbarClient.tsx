@@ -519,7 +519,7 @@ export default function NavbarClient({
           {/* Drawer Content */}
           <div className="navbar-mobile-panel absolute right-0 top-0 flex h-[100dvh] w-full max-w-md flex-col overflow-hidden rounded-l-3xl backdrop-blur-2xl">
             {/* Header bar */}
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b px-6 py-4">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b px-6 pb-4 pt-[calc(1rem+env(safe-area-inset-top))]">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-gradient-to-r from-orange-400 to-purple-600" />
                 <p className="font-mono text-xs uppercase tracking-widest">Navigation</p>
@@ -528,9 +528,9 @@ export default function NavbarClient({
                 type="button"
                 onClick={() => setIsOpen(false)}
                 aria-label="Close menu"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-50 text-purple-500 transition-all duration-200 hover:bg-purple-100 hover:text-purple-900"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-purple-50 text-purple-500 transition-all duration-200 hover:bg-purple-100 hover:text-purple-900"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 

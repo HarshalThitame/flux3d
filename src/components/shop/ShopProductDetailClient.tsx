@@ -379,7 +379,7 @@ export default function ShopProductDetailClient({
   return (
     <main className="px-4 pb-24 pt-6 md:px-8 lg:px-16 lg:pt-8">
       {toast && (
-        <div className="fixed bottom-5 right-5 z-[130] rounded-2xl border border-[var(--shop-border-light)] bg-white px-4 py-3 text-sm font-semibold text-[var(--shop-text-primary)] shadow-xl">
+        <div className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-[130] max-w-[calc(100vw-2rem)] rounded-2xl border border-[var(--shop-border-light)] bg-white px-4 py-3 text-sm font-semibold text-[var(--shop-text-primary)] shadow-xl sm:right-5 sm:max-w-sm sm:bottom-5">
           {toast}
         </div>
       )}
@@ -399,7 +399,7 @@ export default function ShopProductDetailClient({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.92, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="relative z-10 aspect-square w-full max-w-3xl overflow-hidden rounded-[var(--shop-radius-xl)] bg-white"
+              className="relative z-10 aspect-square max-h-[85dvh] w-full max-w-3xl overflow-hidden rounded-[var(--shop-radius-xl)] bg-white"
               onClick={(event) => event.stopPropagation()}
             >
               <Image src={lightboxImage} alt="Review image" fill sizes="90vw" className="object-contain" />
@@ -437,15 +437,16 @@ export default function ShopProductDetailClient({
               )}
             </button>
             {images.length > 1 && (
-              <div className="mt-4 grid auto-cols-[84px] grid-flow-col gap-3 overflow-x-auto">
-                {images.map((image) => (
+              <div className="mt-4 flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 scroll-padding-x-1 scrollbar-hide [scrollbar-width:none] [-webkit-overflow-scrolling:touch]">
+                {images.map((image, index) => (
                   <button
                     key={image}
                     type="button"
                     onClick={() => setSelectedImage(image)}
-                    className={`relative aspect-square overflow-hidden rounded-2xl border bg-white transition hover:border-[var(--shop-border-gold)] ${visibleImage === image ? 'border-[var(--shop-gold)]' : 'border-[var(--shop-border-light)]'}`}
+                    aria-label={`View product image ${index + 1}`}
+                    className={`relative aspect-square w-[72px] shrink-0 snap-start overflow-hidden rounded-2xl border bg-white transition hover:border-[var(--shop-border-gold)] active:scale-95 ${visibleImage === image ? 'border-[var(--shop-gold)] ring-2 ring-[var(--shop-gold)]/25' : 'border-[var(--shop-border-light)]'}`}
                   >
-                    <Image src={image} alt={product.name} fill sizes="84px" className="object-cover" />
+                    <Image src={image} alt={product.name} fill sizes="72px" className="object-cover" />
                   </button>
                 ))}
               </div>

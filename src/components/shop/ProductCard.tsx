@@ -24,10 +24,12 @@ export default function ProductCard({
   product,
   actionLabel = 'Add',
   index = 0,
+  className = '',
 }: {
   product: ShopPublicProduct
   actionLabel?: string
   index?: number
+  className?: string
 }) {
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [modelOpen, setModelOpen] = useState(false)
@@ -89,7 +91,7 @@ export default function ProductCard({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-40px' }}
         transition={{ duration: 0.5, delay: index * 0.06, ease: [0.16, 1, 0.3, 1] }}
-        className="group relative flex flex-col overflow-hidden rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] shadow-[var(--shop-shadow-sm)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--shop-border-gold)] hover:shadow-[var(--shop-shadow-md)]"
+        className={`group relative flex h-full flex-col overflow-hidden rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] shadow-[var(--shop-shadow-sm)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--shop-border-gold)] hover:shadow-[var(--shop-shadow-md)] ${className}`}
       >
         <WishlistButton productId={product.id} className="absolute right-3 top-3 z-10" />
         <Link href={`/3d-shop/product/${product.slug}`} className="relative block">

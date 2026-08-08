@@ -16,7 +16,7 @@ export default function QuantityStepper({
   compact?: boolean
 }) {
   const clampedMax = Math.max(min, max)
-  const size = compact ? 'h-8 w-8' : 'h-11 w-11'
+  const size = compact ? 'h-10 w-10' : 'h-11 w-11'
 
   return (
     <div className="inline-flex items-center overflow-hidden rounded-xl border border-[var(--shop-border-light)] bg-white">
