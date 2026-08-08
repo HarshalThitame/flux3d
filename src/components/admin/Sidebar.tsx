@@ -58,8 +58,8 @@ export default function Sidebar({
   }, [])
 
   return (
-    <aside className={`fixed left-0 top-0 z-40 hidden h-screen border-r border-gray-200 bg-white backdrop-blur-xl transition-all md:block ${collapsed ? 'w-[92px]' : 'w-[280px]'}`}>
-      <div className="flex h-full flex-col px-4 py-5 overflow-y-auto scrollbar-hide">
+    <aside className={`fixed left-0 top-0 z-40 hidden h-[100dvh] border-r border-gray-200 bg-white backdrop-blur-xl transition-all md:block ${collapsed ? 'w-[92px]' : 'w-[280px]'}`}>
+      <div className="flex h-full flex-col overflow-y-auto overscroll-contain px-4 pt-5 pb-8 scrollbar-hide">
         <div className="flex items-center justify-between gap-3 px-2">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[linear-gradient(135deg,#6d28d9,#a855f7)] text-white shadow-[0_10px_30px_rgba(109, 40, 217,0.2)]">
