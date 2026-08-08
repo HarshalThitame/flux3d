@@ -85,7 +85,7 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
           </motion.div>
 
           <div className="premium-hero-mobile-bg md:hidden" aria-hidden="true">
-            <Image src="/landing page 1.png" alt="" fill quality={75} sizes="100vw" loading="eager" fetchPriority="high" className="object-cover object-[center_15%]" />
+            <Image src="/landing-page-1.webp" alt="" fill quality={75} sizes="100vw" loading="eager" fetchPriority="high" className="object-cover object-[center_15%]" />
           </div>
         </>
       )}

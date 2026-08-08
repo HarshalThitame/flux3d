@@ -193,17 +193,11 @@ body {
   font-weight: 900;
   letter-spacing: -0.025em;
   background: linear-gradient(100deg, #4c1d95 0%, #5b21b6 30%, #7c3aed 65%, #a855f7 100%);
-  background-size: 220% 100%;
-  background-position: 0 0;
+  background-size: 160% auto;
+  background-position: center;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: pmBrandGlow 9s ease-in-out infinite;
-}
-
-@keyframes pmBrandGlow {
-  0%, 100% { background-position: 0 0; }
-  50% { background-position: 100% 0; }
 }
 
 .premium-title-service {
