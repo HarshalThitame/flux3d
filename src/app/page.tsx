@@ -3,9 +3,12 @@ import type { Metadata } from 'next'
 import { getSettings } from '@/lib/settings'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
 import { faqPageJsonLd, makeLocalBusinessJsonLd } from '@/lib/structured-data'
+import { getShopHomeData } from '@/lib/shop/public-data'
 import HeroSection from './landing/HeroSection'
 import LandingPageBoundary from './landing/LandingPageBoundary'
 import Navbar from '@/components/Navbar'
+
+export const revalidate = 300
 
 export const metadata: Metadata = {
   title: {
@@ -25,6 +28,11 @@ function toJsonLd(value: unknown) {
 export default async function Home() {
   const settings = await getSettings()
   const profile = buildPublicBusinessProfile(settings)
+  const shopData = await getShopHomeData()
+  const featuredProducts =
+    shopData.featured_products.length > 0
+      ? shopData.featured_products.slice(0, 3)
+      : shopData.new_arrivals.slice(0, 3)
   const structuredData = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -63,7 +71,7 @@ export default async function Home() {
       />
       <Navbar transparent />
       <main>
-        <HeroSection />
+        <HeroSection featuredProducts={featuredProducts} />
         <LandingPageBoundary />
       </main>
     </div>
