@@ -59,8 +59,8 @@ export default function Sidebar({
 
   return (
     <aside className={`fixed left-0 top-0 z-40 hidden h-[100dvh] border-r border-gray-200 bg-white backdrop-blur-xl transition-all md:block ${collapsed ? 'w-[92px]' : 'w-[280px]'}`}>
-      <div className="flex h-full flex-col overflow-y-auto overscroll-contain px-4 pt-5 pb-8 scrollbar-hide">
-        <div className="flex items-center justify-between gap-3 px-2">
+      <div className="flex h-full flex-col">
+        <div className="flex shrink-0 items-center justify-between gap-3 px-4 pt-5">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[linear-gradient(135deg,#6d28d9,#a855f7)] text-white shadow-[0_10px_30px_rgba(109, 40, 217,0.2)]">
               <Printer className="h-5 w-5" />
@@ -81,7 +81,8 @@ export default function Sidebar({
           </button>
         </div>
 
-        <nav className="mt-8 space-y-2">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-hide admin-sidebar-scroll px-4 pb-4 [-webkit-overflow-scrolling:touch]">
+          <nav className="mt-8 space-y-2">
           {mainItems.map((item) => {
             const active = isActive(item.href)
             const Icon = item.icon
@@ -206,22 +207,25 @@ export default function Sidebar({
             </div>
           </div>
         )}
+        </div>
 
-        <div className="mt-auto rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(109, 40, 217,0.12),rgba(168, 85, 247,0.25))] p-4">
-          {!collapsed ? (
-            <>
-              <div className="text-sm font-semibold text-[#0F1B3D]">
-                {printerStats && printerStats.active > 0 ? 'Printers Online' : 'No Printers Active'}
-              </div>
-              <div className="mt-2 text-sm leading-6 text-[#505880]">
-                {printerStats
-                  ? `${printerStats.active} of ${printerStats.total} printers active · ${printerStats.total > 0 ? Math.round((printerStats.active / printerStats.total) * 100) : 0}% utilization`
-                  : 'Loading printer status...'}
-              </div>
-            </>
-          ) : (
-            <div className={`mx-auto h-3 w-3 rounded-full ${printerStats && printerStats.active > 0 ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-          )}
+        <div className="shrink-0 px-4 pb-5 pt-2">
+          <div className="rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(109, 40, 217,0.12),rgba(168, 85, 247,0.25))] p-4">
+            {!collapsed ? (
+              <>
+                <div className="text-sm font-semibold text-[#0F1B3D]">
+                  {printerStats && printerStats.active > 0 ? 'Printers Online' : 'No Printers Active'}
+                </div>
+                <div className="mt-2 text-sm leading-6 text-[#505880]">
+                  {printerStats
+                    ? `${printerStats.active} of ${printerStats.total} printers active · ${printerStats.total > 0 ? Math.round((printerStats.active / printerStats.total) * 100) : 0}% utilization`
+                    : 'Loading printer status...'}
+                </div>
+              </>
+            ) : (
+              <div className={`mx-auto h-3 w-3 rounded-full ${printerStats && printerStats.active > 0 ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            )}
+          </div>
         </div>
       </div>
     </aside>
