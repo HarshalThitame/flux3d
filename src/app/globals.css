@@ -2568,22 +2568,11 @@ samp {
     #6d28d9 84%,
     #4c1d95 100%
   );
-  background-size: 220% 100%;
+  background-size: 160% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 3px 16px rgba(109, 40, 217, 0.28));
-  animation: premiumBrandShimmer 7s ease-in-out infinite;
-}
-
-@keyframes premiumBrandShimmer {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
 }
 
 .premium-title-service {

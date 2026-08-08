@@ -6,12 +6,6 @@
   100% { transform: translateX(220%) rotate(22deg); }
 }
 
-/* ── Bento card gold glow pulse ── */
-@keyframes bentoGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 169, 98, 0.0); }
-  50%      { box-shadow: 0 0 28px 6px rgba(201, 169, 98, 0.18); }
-}
-
 /* ── Bento card hover shimmer (pure CSS) ── */
 .bento-card-shimmer {
   position: absolute;

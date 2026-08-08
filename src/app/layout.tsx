@@ -7,7 +7,6 @@ import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data
 import ErrorBoundary from '@/components/ErrorBoundary'
 import DeferredTracking from '@/components/DeferredTracking'
 import DeferredGoogleAnalytics from '@/components/DeferredGoogleAnalytics'
-import MetaPixel from '@/components/MetaPixel'
 import ToastContainer from '@/components/Toast'
 import LoadingProvider from '@/components/providers/LoadingProvider'
 import LiquidMorphLoader from '@/components/ui/LiquidMorphLoader'
@@ -48,9 +47,11 @@ const DNS_PREFETCH_ORIGINS = [
   '//lh3.googleusercontent.com',
   '//avatars.githubusercontent.com',
   '//wa.me',
-  '//connect.facebook.net',
-  '//graph.facebook.com',
-  'https://connect.facebook.net',
+]
+
+const PRECONNECT_ORIGINS = [
+  'https://jqgaebdtuasenyojvbsi.supabase.co',
+  'https://www.googletagmanager.com',
 ]
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -156,6 +157,9 @@ export default async function RootLayout({
         className={`${playfair.variable} ${spaceGrotesk.variable}`}
       >
       <head>
+        {PRECONNECT_ORIGINS.map((href) => (
+          <link key={`preconnect-${href}`} rel="preconnect" href={href} crossOrigin="anonymous" />
+        ))}
         {DNS_PREFETCH_ORIGINS.map((href) => (
           <link key={`dns-prefetch-${href}`} rel="dns-prefetch" href={href} />
         ))}
@@ -186,7 +190,6 @@ export default async function RootLayout({
         <ThemeProvider>
           <SmoothScrollProvider>
             <ErrorBoundary>
-              <MetaPixel />
               <DeferredTracking />
               <LoadingProvider>
                 <PageTransition>
