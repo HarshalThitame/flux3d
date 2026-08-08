@@ -68,7 +68,7 @@ export default function AdminShell({
               </div>
 
               {/* Scrollable nav */}
-              <nav className="admin-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-3 pb-6">
+              <nav data-lenis-prevent className="admin-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-3 pb-6">
                 <div className="space-y-1">
                   {mainItems.map((item) => {
                     const Icon = item.icon
