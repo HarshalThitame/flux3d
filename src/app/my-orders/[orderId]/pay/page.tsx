@@ -65,6 +65,10 @@ export async function generateMetadata({ params }: PaymentPageProps): Promise<Me
     title: 'Secure Razorpay Payment',
     description: 'Review your Flux3D custom order and complete payment through Razorpay Checkout.',
     alternates: { canonical: absoluteUrl(`/my-orders/${orderId}/pay`) },
+    robots: {
+      index: false,
+      follow: false,
+    },
   }
 }
 

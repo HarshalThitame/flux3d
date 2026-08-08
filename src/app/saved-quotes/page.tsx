@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import DeleteSavedQuoteButton from '@/app/saved-quotes/DeleteSavedQuoteButton'
 import { deleteSavedQuoteAction } from '@/app/saved-quotes/actions'
 import Navbar from '@/components/Navbar'
@@ -24,6 +25,15 @@ type SavedQuoteRow = {
     infill?: number
   } | null
   created_at: string
+}
+
+export const metadata: Metadata = {
+  title: 'Saved Quotes | Flux3D',
+  description: 'Review your previous pricing snapshots and saved 3D printing quotes.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function SavedQuotesPage() {

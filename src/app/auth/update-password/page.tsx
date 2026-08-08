@@ -1,6 +1,15 @@
+import type { Metadata } from 'next'
 import AuthShell from '@/components/auth/AuthShell'
 import UpdatePasswordForm from '@/components/auth/UpdatePasswordForm'
 import { normalizeNextPath } from '@/lib/auth/redirect'
+
+export const metadata: Metadata = {
+  title: 'Update Password | Flux3D',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 type UpdatePasswordPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>

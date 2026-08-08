@@ -34,6 +34,10 @@ import ShopOrderTracking from './ShopOrderTracking'
 export const metadata: Metadata = {
   title: 'Order Placed — 3D Shop',
   description: 'Your 3D Shop order has been placed successfully.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 type ShopOrderSuccessPageProps = {

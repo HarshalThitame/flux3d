@@ -16,6 +16,10 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: {
       canonical: '/instant-quote/delivery',
     },
+    robots: {
+      index: false,
+      follow: false,
+    },
     openGraph: {
       title: `${settings.businessName} — Delivery Details`,
       description: settings.businessDescription || 'Complete delivery details and shipping estimate for your 3D print request.',

@@ -7,6 +7,10 @@ import ShopWishlistClient from './ShopWishlistClient'
 export const metadata: Metadata = {
   title: 'My Wishlist — Flux3D',
   description: 'Saved 3D Shop products.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function ShopWishlistPage() {

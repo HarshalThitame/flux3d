@@ -1,4 +1,13 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
+
+export const metadata: Metadata = {
+  title: 'My Orders | Flux3D',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 type OrdersPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>

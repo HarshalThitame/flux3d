@@ -8,6 +8,10 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: 'Search — 3D Shop',
   description: 'Search ready-to-ship products on 3D Shop by Flux3D.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function ShopSearchPage({

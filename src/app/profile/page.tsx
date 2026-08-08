@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import { requireUser } from '@/lib/auth/server'
 import { getSettings } from '@/lib/settings'
@@ -75,6 +76,15 @@ function getGroupedOrderCount(orders: OrderRow[]) {
 function normalizeFileStatus(value: string | null): ProfileModelFile['status'] {
   if (value === 'ordered' || value === 'draft' || value === 'quoted') return value
   return 'quoted'
+}
+
+export const metadata: Metadata = {
+  title: 'My Profile | Flux3D',
+  description: 'Manage your Flux3D account, addresses, saved quotes, and model files.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function ProfilePage() {

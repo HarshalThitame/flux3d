@@ -17,6 +17,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `${settings.businessName} - Create Account`,
     description: settings.businessDescription || 'Create your account to save quotes and manage orders.',
+    robots: {
+      index: false,
+      follow: false,
+    },
   }
 }
 

@@ -8,6 +8,10 @@ import ShopCheckoutClient from './ShopCheckoutClient'
 export const metadata: Metadata = {
   title: 'Checkout — 3D Shop',
   description: 'Review your 3D Shop order and proceed to secure Razorpay payment.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function ShopCheckoutPage() {

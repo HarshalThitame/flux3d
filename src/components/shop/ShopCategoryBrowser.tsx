@@ -200,6 +200,13 @@ export default function ShopCategoryBrowser({
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-[var(--shop-text-primary)]/80 via-[var(--shop-text-primary)]/50 to-transparent" />
         <div className="relative z-10 mx-auto max-w-7xl">
+          <nav aria-label="Breadcrumb" className="mb-5 flex flex-wrap items-center gap-2 text-sm text-white/70">
+            <Link href="/" className="transition hover:text-white">Home</Link>
+            <span aria-hidden="true">/</span>
+            <Link href="/3d-shop" className="transition hover:text-white">3D Shop</Link>
+            <span aria-hidden="true">/</span>
+            <span className="font-medium text-white">{category.name}</span>
+          </nav>
           <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-2xl text-white backdrop-blur-sm">
             {category.icon_emoji || '🧩'}
           </div>

@@ -81,17 +81,17 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
       {!reduceMotion && (
         <>
           <motion.div className="premium-hero-media" aria-hidden="true" style={parallaxDisabled ? undefined : { y: posterY }}>
-            <Image src="/printer-poster.webp" alt="" fill quality={50} sizes="100vw" className="premium-hero-poster" />
+<Image src="/printer-poster.webp" alt="" fill quality={50} sizes="100vw" loading="eager" fetchPriority="high" className="premium-hero-poster" />
           </motion.div>
 
           <div className="premium-hero-mobile-bg md:hidden" aria-hidden="true">
-            <Image src="/landing page 1.png" alt="" fill quality={75} sizes="100vw" className="object-cover object-[center_15%]" priority />
+            <Image src="/landing page 1.png" alt="" fill quality={75} sizes="100vw" loading="eager" fetchPriority="high" className="object-cover object-[center_15%]" />
           </div>
         </>
       )}
       {reduceMotion && (
         <div className="premium-hero-media" aria-hidden="true">
-          <Image src="/printer-poster.webp" alt="" fill quality={50} sizes="100vw" className="premium-hero-poster" />
+          <Image src="/printer-poster.webp" alt="" fill quality={50} sizes="100vw" loading="eager" fetchPriority="high" className="premium-hero-poster" />
         </div>
       )}
 
