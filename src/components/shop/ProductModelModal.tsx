@@ -56,23 +56,23 @@ export default function ProductModelModal({ open, modelUrl, productName, onClose
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 16 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-2xl overflow-hidden rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] shadow-[var(--shop-shadow-lg)]"
+            className="relative flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] shadow-[var(--shop-shadow-lg)]"
           >
-            <div className="flex items-center justify-between border-b border-[var(--shop-border-light)] px-5 py-3">
-              <h3 className="font-[var(--shop-font-heading)] text-lg font-semibold text-[var(--shop-text-primary)]">
+            <div className="flex shrink-0 items-center justify-between border-b border-[var(--shop-border-light)] px-5 py-3">
+              <h3 className="font-[var(--shop-font-heading)] min-w-0 truncate text-lg font-semibold text-[var(--shop-text-primary)]">
                 {productName || '3D Preview'}
               </h3>
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg border border-[var(--shop-border-light)] p-1.5 text-[var(--shop-text-muted)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-[var(--shop-border-light)] text-[var(--shop-text-muted)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
                 aria-label="Close 3D preview"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="aspect-square">
-              <ProductModelViewer modelUrl={modelUrl} productName={productName} className="h-full w-full" />
+            <div className="min-h-0 flex-1">
+              <ProductModelViewer modelUrl={modelUrl} productName={productName} className="h-full w-full aspect-square max-h-[70dvh]" />
             </div>
           </motion.div>
         </motion.div>

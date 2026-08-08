@@ -147,25 +147,25 @@ export default function ProductModelViewer({ modelUrl, productName, className = 
               3D Preview
             </span>
           </div>
-          <div className="absolute inset-x-4 bottom-4 flex items-center justify-between gap-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div className="absolute inset-x-4 bottom-4 flex items-center justify-between gap-3 opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100">
             <button
               type="button"
               onClick={() => setAutoRotate((current) => !current)}
-              className="pointer-events-auto rounded-lg border border-[var(--shop-border-light)] bg-white/90 px-3 py-1.5 text-xs font-semibold text-[var(--shop-text-secondary)] backdrop-blur-sm transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
+              className="pointer-events-auto flex min-h-[40px] items-center gap-1.5 rounded-lg border border-[var(--shop-border-light)] bg-white/95 px-3 text-xs font-semibold text-[var(--shop-text-secondary)] shadow-[var(--shop-shadow-sm)] backdrop-blur-sm transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)] active:scale-95"
             >
               {autoRotate ? 'Pause rotation' : 'Auto-rotate'}
             </button>
             <button
               type="button"
               onClick={() => setIsFullscreen((current) => !current)}
-              className="pointer-events-auto rounded-lg border border-[var(--shop-border-light)] bg-white/90 p-2 text-[var(--shop-text-secondary)] backdrop-blur-sm transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
+              className="pointer-events-auto grid h-11 w-11 place-items-center rounded-lg border border-[var(--shop-border-light)] bg-white/95 text-[var(--shop-text-secondary)] shadow-[var(--shop-shadow-sm)] backdrop-blur-sm transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)] active:scale-95"
               aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen 3D view'}
             >
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
             </button>
           </div>
           {largestDimension > 0 && (
-            <div className="pointer-events-none absolute bottom-4 left-4 rounded-lg border border-[var(--shop-border-light)] bg-white/80 px-2 py-1 text-[10px] font-medium text-[var(--shop-text-muted)] backdrop-blur-sm">
+            <div className="pointer-events-none absolute bottom-4 left-1/2 hidden -translate-x-1/2 rounded-lg border border-[var(--shop-border-light)] bg-white/80 px-2 py-1 text-[10px] font-medium text-[var(--shop-text-muted)] backdrop-blur-sm md:block">
               {`${model.dimensions.x.toFixed(1)} × ${model.dimensions.y.toFixed(1)} × ${model.dimensions.z.toFixed(1)} mm`}
             </div>
           )}
@@ -178,7 +178,7 @@ export default function ProductModelViewer({ modelUrl, productName, className = 
 
   return (
     <div
-      className="fixed inset-0 z-[150] flex flex-col bg-[var(--shop-bg-base)] p-4 sm:p-6"
+      className="fixed inset-0 z-[150] flex flex-col bg-[var(--shop-bg-base)] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:p-6 sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:pt-[calc(1.5rem+env(safe-area-inset-top))]"
       onClick={(event) => {
         if (event.target === event.currentTarget) setIsFullscreen(false)
       }}
@@ -190,7 +190,7 @@ export default function ProductModelViewer({ modelUrl, productName, className = 
         <button
           type="button"
           onClick={() => setIsFullscreen(false)}
-          className="rounded-lg border border-[var(--shop-border-light)] bg-white p-2 text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-[var(--shop-border-light)] bg-white text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)] active:scale-95"
         >
           <Minimize2 className="h-5 w-5" />
         </button>

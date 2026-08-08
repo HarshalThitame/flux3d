@@ -167,7 +167,7 @@ export default function ReviewModal({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 24, opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.2 }}
-            className="absolute bottom-0 left-0 right-0 max-h-[92vh] overflow-y-auto rounded-t-3xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-base)] p-5 shadow-[var(--shop-shadow-lg)] md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:w-[min(92vw,620px)] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl"
+            className="absolute bottom-0 left-0 right-0 max-h-[92dvh] overflow-y-auto rounded-t-3xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-base)] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-[var(--shop-shadow-lg)] md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:w-[min(92vw,620px)] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl md:pb-5"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex min-w-0 gap-3">
@@ -182,9 +182,10 @@ export default function ReviewModal({
               <button
                 type="button"
                 onClick={() => onOpenChangeAction(false)}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[var(--shop-border-light)] bg-white text-[var(--shop-text-secondary)]"
+                aria-label="Close review modal"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[var(--shop-border-light)] bg-white text-[var(--shop-text-secondary)]"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 

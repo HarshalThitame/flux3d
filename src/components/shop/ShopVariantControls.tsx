@@ -67,9 +67,9 @@ export default function ShopVariantControls({
                 type="button"
                 aria-pressed={Boolean(selectedValue)}
                 onClick={() => onChangeAction(option.option_name, !selectedValue)}
-                className={`relative h-7 w-12 rounded-full transition ${selectedValue ? 'bg-[var(--shop-gold)]' : 'bg-[var(--shop-border-medium)]'}`}
+                className={`relative h-10 w-[52px] rounded-full transition ${selectedValue ? 'bg-[var(--shop-gold)]' : 'bg-[var(--shop-border-medium)]'}`}
               >
-                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition ${selectedValue ? 'translate-x-6' : 'translate-x-1'}`} />
+                <span className={`absolute top-1 h-8 w-8 rounded-full bg-white shadow-sm transition ${selectedValue ? 'translate-x-4' : 'translate-x-1'}`} />
               </button>
             ) : option.option_type === 'text_input' ? (
               <input

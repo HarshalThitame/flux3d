@@ -355,7 +355,7 @@ export default function ShopCheckoutClient({
   return (
     <main className="px-4 pb-20 pt-5 md:px-8 lg:px-16">
       {toast && (
-        <div className="fixed bottom-5 right-5 z-[120] max-w-sm rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 shadow-xl">
+        <div className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-[120] max-w-[calc(100vw-2rem)] rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 shadow-xl sm:right-5 sm:max-w-sm">
           {toast}
         </div>
       )}
@@ -400,7 +400,7 @@ export default function ShopCheckoutClient({
                         }`}
                       >
                         <div className="flex items-start justify-between gap-4">
-                          <div>
+                          <div className="min-w-0 flex-1">
                             <div className="font-bold text-[var(--shop-text-primary)]">{address.full_name}</div>
                             <div className="mt-1 text-sm text-[var(--shop-text-secondary)]">{address.phone}</div>
                             <div className="mt-2 text-sm leading-6 text-[var(--shop-text-secondary)]">{formatAddressLine(address)}</div>
@@ -539,7 +539,7 @@ export default function ShopCheckoutClient({
                       : 'border-[var(--shop-border-light)] bg-white'
                   }`}
                 >
-                  <div className="grid grid-cols-[40px_1fr_auto] gap-3">
+                  <div className="grid grid-cols-[40px_minmax(0,1fr)_auto] gap-3">
                     <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-[var(--shop-bg-muted)]">
                       {item.thumbnail ? (
                         <Image src={item.thumbnail} alt={item.productName} fill sizes="40px" className="object-cover" />

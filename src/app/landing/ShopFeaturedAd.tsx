@@ -114,17 +114,17 @@ function Slide({ product, index, count, onNav }: { product: ShopPublicProduct; i
               type="button"
               aria-label="Previous product"
               onClick={() => onNav((index - 1 + count) % count)}
-              className="absolute left-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/85 text-[#070b1d] opacity-0 shadow-sm backdrop-blur transition group-hover:opacity-100 hover:bg-white"
+              className="absolute left-2.5 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-[#070b1d] shadow-sm backdrop-blur transition opacity-100 hover:bg-white md:opacity-0 md:group-hover:opacity-100"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               type="button"
               aria-label="Next product"
               onClick={() => onNav((index + 1) % count)}
-              className="absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/85 text-[#070b1d] opacity-0 shadow-sm backdrop-blur transition group-hover:opacity-100 hover:bg-white"
+              className="absolute right-2.5 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/85 text-[#070b1d] opacity-100 shadow-sm backdrop-blur transition hover:bg-white md:opacity-0 md:group-hover:opacity-100"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-5 w-5" />
             </button>
           </>
         )}

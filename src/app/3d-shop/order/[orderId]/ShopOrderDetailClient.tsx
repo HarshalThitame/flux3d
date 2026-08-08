@@ -371,7 +371,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
             initial={{ opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
-            className="fixed bottom-5 right-5 z-[120] max-w-sm rounded-xl border border-[var(--shop-border-light)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--shop-text-primary)] shadow-lg"
+            className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-[120] max-w-[calc(100vw-2rem)] rounded-xl border border-[var(--shop-border-light)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--shop-text-primary)] shadow-lg sm:bottom-5 sm:right-5 sm:max-w-sm"
           >
             {toast}
           </motion.div>

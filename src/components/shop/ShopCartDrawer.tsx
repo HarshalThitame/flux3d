@@ -30,7 +30,7 @@ export function ShopCartNavButton({ mobile = false, onOpenAction }: { mobile?: b
       className={
         mobile
           ? 'navbar-mobile-action-light relative flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-[var(--shop-border-light)] bg-white py-3.5 text-base font-medium text-[var(--shop-text-secondary)]'
-          : 'shop-cart-nav-button group relative inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full border border-[var(--shop-border-light)] bg-white text-[var(--shop-text-secondary)] shadow-[0_10px_28px_rgba(28,25,23,0.06)] backdrop-blur transition hover:border-[var(--shop-border-gold)] hover:bg-white hover:text-[var(--shop-text-primary)]'
+          : 'shop-cart-nav-button group relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--shop-border-light)] bg-white text-[var(--shop-text-secondary)] shadow-[0_10px_28px_rgba(28,25,23,0.06)] backdrop-blur transition hover:border-[var(--shop-border-gold)] hover:bg-white hover:text-[var(--shop-text-primary)]'
       }
     >
       <ShoppingBag className="h-4 w-4" />
@@ -124,7 +124,7 @@ export default function ShopCartDrawer({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute bottom-0 left-0 right-0 flex h-[92vh] min-h-0 flex-col overflow-hidden rounded-t-3xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-base)]/90 shadow-[var(--shop-shadow-lg)] backdrop-blur-2xl md:bottom-0 md:left-auto md:top-0 md:h-full md:w-[440px] md:rounded-none md:rounded-l-3xl"
+            className="absolute bottom-0 left-0 right-0 flex h-[92dvh] min-h-0 flex-col overflow-hidden rounded-t-3xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-base)]/90 pb-[env(safe-area-inset-bottom)] shadow-[var(--shop-shadow-lg)] backdrop-blur-2xl md:bottom-0 md:left-auto md:top-0 md:h-full md:w-[440px] md:rounded-none md:rounded-l-3xl md:pb-0"
           >
             <div className="flex items-center justify-between border-b border-[var(--shop-border-light)] px-5 py-4">
               <div>
@@ -134,9 +134,10 @@ export default function ShopCartDrawer({
               <button
                 type="button"
                 onClick={closeCart}
-                className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--shop-border-light)] bg-white text-[var(--shop-text-secondary)]"
+                aria-label="Close cart"
+                className="grid h-11 w-11 place-items-center rounded-xl border border-[var(--shop-border-light)] bg-white text-[var(--shop-text-secondary)]"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
@@ -171,7 +172,8 @@ export default function ShopCartDrawer({
                         <button
                           type="button"
                           onClick={() => removeItem(item.cartItemId)}
-                          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[var(--shop-text-muted)] transition hover:bg-rose-50 hover:text-rose-600"
+                          aria-label={`Remove ${item.productName} from cart`}
+                          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-[var(--shop-text-muted)] transition hover:bg-rose-50 hover:text-rose-600"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

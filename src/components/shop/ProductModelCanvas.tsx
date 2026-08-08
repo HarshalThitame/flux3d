@@ -72,20 +72,21 @@ export default function ProductModelCanvas({ object, autoRotate = true }: Produc
   }
 
   return (
-    <Canvas
-      ref={canvasRef}
-      className="!absolute !inset-0"
-      camera={{ position: [0, 0, 8], fov: 38 }}
-      dpr={[1, 1.5]}
-      frameloop="demand"
-      onCreated={handleCreated}
-      gl={{
-        powerPreference: 'high-performance',
-        failIfMajorPerformanceCaveat: false,
-        antialias: true,
-        alpha: true,
-      }}
-    >
+    <div className="!absolute !inset-0" style={{ touchAction: 'none' }}>
+      <Canvas
+        ref={canvasRef}
+        className="!absolute !inset-0"
+        camera={{ position: [0, 0, 8], fov: 38 }}
+        dpr={[1, 1.5]}
+        frameloop="demand"
+        onCreated={handleCreated}
+        gl={{
+          powerPreference: 'high-performance',
+          failIfMajorPerformanceCaveat: false,
+          antialias: true,
+          alpha: true,
+        }}
+      >
       <AdaptiveDpr pixelated />
       <color attach="background" args={['#FAF9F5']} />
 
@@ -121,6 +122,7 @@ export default function ProductModelCanvas({ object, autoRotate = true }: Produc
         autoRotate={autoRotate}
         autoRotateSpeed={1.2}
       />
-    </Canvas>
+      </Canvas>
+    </div>
   )
 }

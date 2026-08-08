@@ -198,7 +198,7 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
     <>
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-5 right-5 z-[120] max-w-sm rounded-xl border border-[var(--shop-border-light)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--shop-text-primary)] shadow-lg">
+        <div className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-[120] max-w-[calc(100vw-2rem)] rounded-xl border border-[var(--shop-border-light)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--shop-text-primary)] shadow-lg sm:bottom-5 sm:right-5 sm:max-w-sm">
           {toast}
         </div>
       )}
@@ -571,7 +571,7 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
       </div>
 
       {/* Sticky Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--shop-border-light)] bg-white/95 p-4 backdrop-blur-xl">
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--shop-border-light)] bg-white/95 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl">
         <div className="mx-auto max-w-lg space-y-2">
           {isShopOrderCancellable(order.order_status) && (
             <button

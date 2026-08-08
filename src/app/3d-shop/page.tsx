@@ -205,9 +205,9 @@ export default async function ShopHomePage() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
-              <div className="grid auto-cols-[74%] grid-flow-col gap-4 overflow-x-auto pb-2 sm:auto-cols-[42%] lg:auto-cols-[24%]">
+              <div className="grid auto-cols-[74%] grid-flow-col gap-4 overflow-x-auto pb-2 scrollbar-hide [-webkit-overflow-scrolling:touch] snap-x snap-mandatory scroll-padding-left-4 sm:auto-cols-[42%] lg:auto-cols-[24%]">
                 {data.featured_products.map((product, index) => (
-                  <ProductCard key={product.id} product={product} index={index} />
+                  <ProductCard key={product.id} product={product} index={index} className="h-full snap-start" />
                 ))}
               </div>
             </div>
@@ -229,9 +229,9 @@ export default async function ShopHomePage() {
                   </h2>
                 </div>
               </div>
-              <div className="grid auto-cols-[74%] grid-flow-col gap-4 overflow-x-auto pb-2 sm:auto-cols-[42%] lg:auto-cols-[24%]">
+              <div className="grid auto-cols-[74%] grid-flow-col gap-4 overflow-x-auto pb-2 scrollbar-hide [-webkit-overflow-scrolling:touch] snap-x snap-mandatory scroll-padding-left-4 sm:auto-cols-[42%] lg:auto-cols-[24%]">
                 {collection.products.map((product, index) => (
-                  <ProductCard key={product.id} product={product} index={index} />
+                  <ProductCard key={product.id} product={product} index={index} className="h-full snap-start" />
                 ))}
               </div>
             </div>

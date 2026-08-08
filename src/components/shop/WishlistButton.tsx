@@ -78,7 +78,7 @@ export default function WishlistButton({
       whileTap={{ scale: 0.85 }}
       animate={wishlisted ? { scale: [1, 1.2, 1] } : {}}
       transition={{ duration: 0.3 }}
-      className={`inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-2 rounded-full border border-[var(--shop-border-light)] bg-white px-3 text-sm font-bold shadow-[var(--shop-shadow-sm)] transition hover:scale-105 disabled:opacity-60 ${wishlisted ? 'text-rose-600' : 'text-[var(--shop-text-secondary)]'} ${className}`}
+      className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-full border border-[var(--shop-border-light)] bg-white px-3 text-sm font-bold shadow-[var(--shop-shadow-sm)] transition hover:scale-105 disabled:opacity-60 ${wishlisted ? 'text-rose-600' : 'text-[var(--shop-text-secondary)]'} ${className}`}
       disabled={pending}
     >
       <Heart className={`h-4 w-4 ${wishlisted ? 'fill-rose-600 text-rose-600' : ''}`} />

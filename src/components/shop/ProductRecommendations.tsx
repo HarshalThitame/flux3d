@@ -57,9 +57,9 @@ export default function ProductRecommendations({
       {loading && products.length === 0 ? (
         <div className="mt-6 text-sm font-medium text-[var(--shop-text-muted)]">Loading products...</div>
       ) : (
-        <div className="mt-6 grid auto-cols-[72%] grid-flow-col gap-4 overflow-x-auto pb-2 sm:auto-cols-[42%] lg:grid-flow-row lg:grid-cols-4 lg:overflow-visible">
+        <div className="mt-6 grid auto-cols-[72%] grid-flow-col gap-4 overflow-x-auto pb-2 scrollbar-hide [-webkit-overflow-scrolling:touch] snap-x snap-mandatory scroll-padding-left-4 sm:auto-cols-[42%] lg:grid-flow-row lg:grid-cols-4 lg:overflow-visible">
           {products.map((product, index) => (
-            <ProductCard key={product.id} product={product} index={index} />
+            <ProductCard key={product.id} product={product} index={index} className="h-full snap-start" />
           ))}
         </div>
       )}
