@@ -1,3 +1,48 @@
+export type DimensionUnit = 'mm' | 'cm' | 'inch'
+export type WeightUnit = 'g' | 'kg' | 'oz' | 'lb'
+
+export type ProductDimensions = {
+  length_mm: number | null
+  width_mm: number | null
+  height_mm: number | null
+  weight_g: number | null
+  volume_cc: number | null
+  dimension_unit: DimensionUnit
+  weight_unit: WeightUnit
+}
+
+export type ShopVariantOptionDimension = {
+  id: string
+  product_id: string
+  option_name: string
+  option_value: string
+  dimensions: ProductDimensions
+  created_at: string | null
+  updated_at: string | null
+}
+
+export type ShopVariantOptionImage = {
+  id: string
+  product_id: string
+  option_name: string
+  option_value: string
+  image_url: string
+  alt_text: string | null
+  display_order: number
+  is_primary: boolean
+  created_at: string | null
+}
+
+export type ShopSkuImage = {
+  id: string
+  sku_id: string
+  image_url: string
+  alt_text: string | null
+  display_order: number
+  is_primary: boolean
+  created_at: string | null
+}
+
 export type ShopCategory = {
   id: string
   name: string
@@ -25,6 +70,7 @@ export type ShopProduct = {
   thumbnail_url: string | null
   image_urls: string[] | null
   image_alt: Record<string, string> | null
+  default_dimensions: ProductDimensions | null
   model_url: string | null
   base_price: number
   is_customizable: boolean | null

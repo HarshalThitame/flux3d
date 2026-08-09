@@ -1,5 +1,12 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import type { ShopSku, ShopVariantOption } from '@/lib/shop/admin-types'
+import type {
+  ShopSku,
+  ShopSkuImage,
+  ShopVariantOption,
+  ShopVariantOptionDimension,
+  ShopVariantOptionImage,
+} from '@/lib/shop/admin-types'
+import { parseDimensionsJson } from '@/lib/shop/dimensions'
 import type {
   ShopHomeData,
   ShopProductListResult,
@@ -52,8 +59,11 @@ type RawProduct = {
   created_at?: string | null
   updated_at?: string | null
   category?: { id?: string; name?: string | null; slug?: string | null } | null
-  skus?: ShopSku[] | null
+  skus?: (ShopSku & { images?: ShopSkuImage[] | null })[] | null
   variant_options?: ShopVariantOption[] | null
+  default_dimensions?: unknown
+  variant_option_dimensions?: (Omit<ShopVariantOptionDimension, 'dimensions'> & { dimensions?: unknown })[] | null
+  variant_option_images?: ShopVariantOptionImage[] | null
   reviews?: RawReview[] | null
 }
 
@@ -79,6 +89,7 @@ const PRODUCT_SELECT = `
   meta_description,
   created_at,
   updated_at,
+  default_dimensions,
   category:shelf_categories(id,name,slug),
   skus:shelf_skus(
     id,
@@ -94,7 +105,16 @@ const PRODUCT_SELECT = `
     is_available,
     pre_order_eta,
     created_at,
-    updated_at
+    updated_at,
+    images:shelf_sku_images(
+      id,
+      sku_id,
+      image_url,
+      alt_text,
+      display_order,
+      is_primary,
+      created_at
+    )
   ),
   variant_options:shelf_variant_options(
     id,
@@ -104,6 +124,26 @@ const PRODUCT_SELECT = `
     values,
     display_order,
     is_required,
+    created_at
+  ),
+  variant_option_dimensions:shelf_variant_option_dimensions(
+    id,
+    product_id,
+    option_name,
+    option_value,
+    dimensions,
+    created_at,
+    updated_at
+  ),
+  variant_option_images:shelf_variant_option_images(
+    id,
+    product_id,
+    option_name,
+    option_value,
+    image_url,
+    alt_text,
+    display_order,
+    is_primary,
     created_at
   ),
   reviews:shelf_reviews(rating,is_approved)
@@ -135,6 +175,22 @@ export function formatShopReviewerName(name: string | null | undefined) {
 
 function mapProduct(row: RawProduct): ShopPublicProduct {
   const skus = (row.skus ?? []).map(normalizeSku).sort((a, b) => a.price - b.price)
+  const skuImages: Record<string, ShopSkuImage[]> = {}
+  for (const sku of row.skus ?? []) {
+    if (sku.id && Array.isArray(sku.images) && sku.images.length > 0) {
+      skuImages[sku.id] = [...sku.images].sort((a, b) => a.display_order - b.display_order)
+    }
+  }
+  const variantOptionDimensions: ShopVariantOptionDimension[] = (row.variant_option_dimensions ?? [])
+    .map((entry) => {
+      const parsed = parseDimensionsJson(entry.dimensions)
+      if (!parsed) return null
+      return { ...entry, dimensions: parsed }
+    })
+    .filter(Boolean) as ShopVariantOptionDimension[]
+  const variantOptionImages = (row.variant_option_images ?? []).sort(
+    (a, b) => a.display_order - b.display_order
+  )
   const availableSkus = skus.filter((sku) => sku.is_available !== false)
   const stockedSkus = availableSkus.filter((sku) => sku.stock_quantity > 0)
   const minSku = availableSkus[0] ?? skus[0] ?? null
@@ -189,6 +245,10 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
     updated_at: row.updated_at ?? null,
     skus,
     variant_options: (row.variant_options ?? []).sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
+    default_dimensions: parseDimensionsJson(row.default_dimensions),
+    variant_option_dimensions: variantOptionDimensions,
+    variant_option_images: variantOptionImages,
+    sku_images: skuImages,
     sku_count: skus.length,
     avg_rating: Number(avgRating.toFixed(1)),
     review_count: reviewCount,

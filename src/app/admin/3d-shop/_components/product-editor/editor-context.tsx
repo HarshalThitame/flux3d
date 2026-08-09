@@ -2,12 +2,21 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { useRouter } from 'next/navigation'
-import type { ShopCategory, ShopProduct, ShopSku, ShopVariantOption } from '@/lib/shop/admin-types'
+import type {
+  ShopCategory,
+  ShopProduct,
+  ShopSku,
+  ShopSkuImage,
+  ShopVariantOption,
+  ShopVariantOptionDimension,
+  ShopVariantOptionImage,
+  ProductDimensions,
+} from '@/lib/shop/admin-types'
 import { slugifyShopValue, stableStringify } from '@/lib/shop/admin-types'
 import type { ProductForm, ProductFormErrors } from '@/lib/shop/product-schema'
 import { getPublishBlockers } from '@/lib/shop/product-schema'
 import type { AiGenerationKind, AiGenerateResult, AiTone } from '@/lib/shop/ai'
-import { uploadFileWithProgress, uploadModelFileWithProgress } from '@/lib/shop/upload'
+import { uploadFileWithProgress, uploadFormFileWithProgress, uploadModelFileWithProgress } from '@/lib/shop/upload'
 import type { ProductTemplate } from '@/lib/shop/templates'
 import { templateLongDescription } from '@/lib/shop/templates'
 import { addRevision, clearRevisions, loadRevisions, type ShopRevision } from '@/lib/shop/revisions'
@@ -44,6 +53,9 @@ type ProductEditorContextValue = {
   uploadState: UploadState
   variants: DraftVariant[]
   skus: DraftSku[]
+  variantDimensions: ShopVariantOptionDimension[]
+  variantOptionImages: ShopVariantOptionImage[]
+  skuImages: Record<string, ShopSkuImage[]>
   defaultWeight: string
   skuSectionRef: RefObject<HTMLDivElement | null>
   dragImage: string | null
@@ -90,6 +102,18 @@ type ProductEditorContextValue = {
   bulkUpdateSkus: (partial: Partial<ShopSku>, ids?: string[]) => void
   saveAllSkus: () => Promise<void>
   deleteSku: (skuId: string) => Promise<void>
+
+  updateVariantDimension: (optionName: string, optionValue: string, dimensions: ProductDimensions) => void
+  deleteVariantDimension: (dimensionId: string) => Promise<void>
+  applyDefaultDimensionsToUnset: () => void
+  addVariantOptionImage: (optionName: string, optionValue: string, file: File) => Promise<void>
+  updateVariantOptionImage: (imageId: string, patch: { alt_text?: string; is_primary?: boolean }) => Promise<void>
+  removeVariantOptionImage: (imageId: string) => Promise<void>
+  reorderVariantOptionImages: (optionName: string, optionValue: string, orderedIds: string[]) => Promise<void>
+  addSkuImage: (skuId: string, file: File) => Promise<void>
+  updateSkuImage: (imageId: string, patch: { alt_text?: string; is_primary?: boolean }) => Promise<void>
+  removeSkuImage: (imageId: string) => Promise<void>
+  reorderSkuImages: (skuId: string, orderedIds: string[]) => Promise<void>
 }
 
 const ProductEditorContext = createContext<ProductEditorContextValue | null>(null)
@@ -113,6 +137,9 @@ export function ProductEditorProvider({
   const [categories, setCategories] = useState<ShopCategory[]>([])
   const [variants, setVariants] = useState<DraftVariant[]>([])
   const [skus, setSkus] = useState<DraftSku[]>([])
+  const [variantDimensions, setVariantDimensions] = useState<ShopVariantOptionDimension[]>([])
+  const [variantOptionImages, setVariantOptionImages] = useState<ShopVariantOptionImage[]>([])
+  const [skuImages, setSkuImages] = useState<Record<string, ShopSkuImage[]>>({})
   const [loading, setLoading] = useState(mode === 'edit')
   const [saving, setSaving] = useState(false)
   const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle')
@@ -131,12 +158,18 @@ export function ProductEditorProvider({
   const autosaveTimerRef = useRef<number | null>(null)
   const variantsRef = useRef<DraftVariant[]>([])
   const skusRef = useRef<DraftSku[]>([])
+  const variantDimensionsRef = useRef<ShopVariantOptionDimension[]>([])
+  const variantOptionImagesRef = useRef<ShopVariantOptionImage[]>([])
+  const skuImagesRef = useRef<Record<string, ShopSkuImage[]>>({})
   const hasLoadedRef = useRef(false)
 
   useEffect(() => {
     variantsRef.current = variants
     skusRef.current = skus
-  }, [variants, skus])
+    variantDimensionsRef.current = variantDimensions
+    variantOptionImagesRef.current = variantOptionImages
+    skuImagesRef.current = skuImages
+  }, [variants, skus, variantDimensions, variantOptionImages, skuImages])
 
   const getEditorExtras = useCallback<() => EditorExtras>(
     () => ({ variants: variantsRef.current, skus: skusRef.current }),
@@ -160,7 +193,30 @@ export function ProductEditorProvider({
   const loadSkus = useCallback(async (id: string) => {
     const response = await fetch(`/api/3d-shop/admin/products/${id}/skus`)
     const data = (await response.json()) as { skus?: ShopSku[] }
-    setSkus(data.skus ?? [])
+    const rows = data.skus ?? []
+    setSkus(rows)
+    return rows
+  }, [])
+
+  const loadVariantDimensions = useCallback(async (id: string) => {
+    const response = await fetch(`/api/3d-shop/admin/products/${id}/variant-dimensions`)
+    const data = (await response.json()) as { dimensions?: ShopVariantOptionDimension[] }
+    setVariantDimensions(data.dimensions ?? [])
+  }, [])
+
+  const loadVariantOptionImages = useCallback(async (id: string) => {
+    const response = await fetch(`/api/3d-shop/admin/products/${id}/variant-images`)
+    const data = (await response.json()) as { images?: ShopVariantOptionImage[] }
+    setVariantOptionImages(data.images ?? [])
+  }, [])
+
+  const loadSkuImages = useCallback(async (skuIds: string[]) => {
+    if (skuIds.length === 0) return
+    const params = new URLSearchParams()
+    for (const id of skuIds) params.append('sku_ids', id)
+    const response = await fetch(`/api/3d-shop/admin/skus/images?${params.toString()}`)
+    const data = (await response.json()) as { images?: Record<string, ShopSkuImage[]> }
+    setSkuImages(data.images ?? {})
   }, [])
 
   const loadInitialData = useCallback(async () => {
@@ -176,14 +232,19 @@ export function ProductEditorProvider({
         if (!productResponse.ok || !productData.product) throw new Error(productData.error || 'Product not found.')
         form.reset(toProductForm(productData.product))
         setRevisions(loadRevisions(productId))
-        await Promise.all([loadVariants(productId), loadSkus(productId)])
+        await Promise.all([
+          loadVariants(productId),
+          loadVariantDimensions(productId),
+          loadVariantOptionImages(productId),
+          loadSkus(productId).then((rows) => loadSkuImages(rows.map((sku) => sku.id))),
+        ])
       }
     } catch (error) {
       setToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to load product.' })
     } finally {
       setLoading(false)
     }
-  }, [form, loadSkus, loadVariants, mode, productId])
+  }, [form, loadSkus, loadSkuImages, loadVariantDimensions, loadVariantOptionImages, loadVariants, mode, productId])
 
   useEffect(() => {
     if (hasLoadedRef.current) return
@@ -292,6 +353,25 @@ export function ProductEditorProvider({
     setVariants((current) => current.map((variant) => ({ ...variant, dirty: false })))
   }, [form])
 
+  const saveAllVariantDimensions = useCallback(async () => {
+    const id = form.productRef.current.id
+    if (!id) return
+    const entries = variantDimensionsRef.current.map((entry) => ({
+      option_name: entry.option_name,
+      option_value: entry.option_value,
+      dimensions: entry.dimensions,
+    }))
+    if (entries.length === 0) return
+
+    const response = await fetch(`/api/3d-shop/admin/products/${id}/variant-dimensions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dimensions: entries }),
+    })
+    const data = (await response.json().catch(() => ({}))) as { error?: string }
+    if (!response.ok) throw new Error(data.error || 'Failed to save variant dimensions.')
+  }, [form])
+
   const saveAllSkus = useCallback(async () => {
     const id = form.productRef.current.id
     if (!id) return
@@ -342,6 +422,9 @@ export function ProductEditorProvider({
           void _discard
           return rest
         }),
+        variant_dimensions: variantDimensionsRef.current,
+        variant_option_images: variantOptionImagesRef.current,
+        sku_images: skuImagesRef.current,
       }
       setRevisions(addRevision(productId, revision))
     },
@@ -370,6 +453,7 @@ export function ProductEditorProvider({
         form.markSaved(toProductForm(data.product))
         form.setDirty(true)
         await saveAllVariants()
+        await saveAllVariantDimensions()
         await saveAllSkus()
         form.markSaved(form.productRef.current)
         captureRevision(id)
@@ -387,7 +471,7 @@ export function ProductEditorProvider({
         setSaving(false)
       }
     },
-    [captureRevision, ensureProductId, form, saveAllSkus, saveAllVariants]
+    [captureRevision, ensureProductId, form, saveAllSkus, saveAllVariantDimensions, saveAllVariants]
   )
 
   const saveProduct = useCallback(
@@ -497,6 +581,9 @@ export function ProductEditorProvider({
           }
           setSkus([])
           setVariants([])
+          setVariantDimensions([])
+          setVariantOptionImages([])
+          setSkuImages({})
         }
 
         const currentName = form.productRef.current.name.trim() || template.name
@@ -600,6 +687,39 @@ export function ProductEditorProvider({
         if (!res.ok) throw new Error(vData.error || 'Failed to duplicate variants.')
       }
 
+      const variantDimensionsPayload = variantDimensionsRef.current.map((entry) => ({
+        option_name: entry.option_name,
+        option_value: entry.option_value,
+        dimensions: entry.dimensions,
+      }))
+      if (variantDimensionsPayload.length > 0) {
+        const res = await fetch(`/api/3d-shop/admin/products/${newId}/variant-dimensions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dimensions: variantDimensionsPayload }),
+        })
+        const dData = (await res.json().catch(() => ({}))) as { error?: string }
+        if (!res.ok) throw new Error(dData.error || 'Failed to duplicate dimensions.')
+      }
+
+      const variantImagesPayload = variantOptionImagesRef.current.map((image) => ({
+        option_name: image.option_name,
+        option_value: image.option_value,
+        image_url: image.image_url,
+        alt_text: image.alt_text,
+        display_order: image.display_order,
+        is_primary: image.is_primary,
+      }))
+      if (variantImagesPayload.length > 0) {
+        const res = await fetch(`/api/3d-shop/admin/products/${newId}/variant-images`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ images: variantImagesPayload }),
+        })
+        const iData = (await res.json().catch(() => ({}))) as { error?: string }
+        if (!res.ok) throw new Error(iData.error || 'Failed to duplicate variant images.')
+      }
+
       const skuRows = skusRef.current.map((sku, index) => ({
         sku_code: `${slug.toUpperCase().replace(/[^A-Z0-9]+/g, '-')}-${Date.now().toString(36).toUpperCase()}-${index + 1}`,
         variant_combination: sku.variant_combination,
@@ -617,8 +737,31 @@ export function ProductEditorProvider({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ skus: skuRows }),
         })
-        const sData = (await res.json()) as { error?: string }
+        const sData = (await res.json()) as { skus?: ShopSku[]; error?: string }
         if (!res.ok) throw new Error(sData.error || 'Failed to duplicate SKUs.')
+
+        const newSkus = sData.skus ?? []
+        for (const sku of skusRef.current) {
+          const images = skuImagesRef.current[sku.id] ?? []
+          if (images.length === 0) continue
+          const match = newSkus.find(
+            (newSku) => stableStringify(newSku.variant_combination) === stableStringify(sku.variant_combination)
+          )
+          if (!match) continue
+          const imageResponse = await fetch(`/api/3d-shop/admin/skus/${match.id}/images`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              images: images.map((image, index) => ({
+                image_url: image.image_url,
+                alt_text: image.alt_text,
+                display_order: index,
+                is_primary: image.is_primary,
+              })),
+            }),
+          })
+          if (!imageResponse.ok) throw new Error('Failed to duplicate SKU images.')
+        }
       }
 
       setToast({ type: 'success', message: 'Product duplicated. Opening the copy…' })
@@ -637,6 +780,9 @@ export function ProductEditorProvider({
         form.updateMany(target.product)
         setVariants(target.variants.map((variant) => ({ ...variant, dirty: true })))
         setSkus(target.skus.map((sku) => ({ ...sku, dirty: true })))
+        setVariantDimensions(target.variant_dimensions ?? [])
+        setVariantOptionImages(target.variant_option_images ?? [])
+        setSkuImages(target.sku_images ?? {})
         setToast({ type: 'info', message: 'Snapshot restored — saving…' })
         await persist('draft')
       } catch (error) {
@@ -1017,6 +1163,276 @@ export function ProductEditorProvider({
     [form, syncBasePriceFromSkus]
   )
 
+  const updateVariantDimension = useCallback(
+    (optionName: string, optionValue: string, dimensions: ProductDimensions) => {
+      form.pushUndoPoint()
+      setVariantDimensions((current) => {
+        const existing = current.find(
+          (entry) => entry.option_name === optionName && entry.option_value === optionValue
+        )
+        if (existing) {
+          return current.map((entry) =>
+            entry.id === existing.id ? { ...entry, dimensions, updated_at: new Date().toISOString() } : entry
+          )
+        }
+        return [
+          ...current,
+          {
+            id: `draft-${Date.now()}`,
+            product_id: form.productRef.current.id ?? '',
+            option_name: optionName,
+            option_value: optionValue,
+            dimensions,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ]
+      })
+      form.setDirty(true)
+    },
+    [form]
+  )
+
+  const deleteVariantDimension = useCallback(
+    async (dimensionId: string) => {
+      const id = form.productRef.current.id
+      if (!dimensionId || dimensionId.startsWith('draft-')) {
+        setVariantDimensions((current) => current.filter((entry) => entry.id !== dimensionId))
+        return
+      }
+      if (!id) return
+      const response = await fetch(
+        `/api/3d-shop/admin/products/${id}/variant-dimensions?id=${encodeURIComponent(dimensionId)}`,
+        { method: 'DELETE' }
+      )
+      const data = (await response.json().catch(() => ({}))) as { error?: string }
+      if (!response.ok) {
+        setToast({ type: 'error', message: data.error || 'Failed to delete dimension.' })
+        return
+      }
+      setVariantDimensions((current) => current.filter((entry) => entry.id !== dimensionId))
+      form.setDirty(true)
+    },
+    [form]
+  )
+
+  const applyDefaultDimensionsToUnset = useCallback(() => {
+    const defaults = form.productRef.current.default_dimensions
+    if (!defaults) {
+      setToast({ type: 'error', message: 'Set default dimensions on the product first.' })
+      return
+    }
+    const variants = variantsRef.current
+    const current = variantDimensionsRef.current
+    const existing = new Set(current.map((entry) => `${entry.option_name}\u0000${entry.option_value}`))
+    const additions: ShopVariantOptionDimension[] = []
+    for (const variant of variants) {
+      for (const value of variant.values ?? []) {
+        const key = `${variant.option_name}\u0000${value}`
+        if (existing.has(key)) continue
+        additions.push({
+          id: `draft-${Date.now()}-${additions.length}`,
+          product_id: form.productRef.current.id ?? '',
+          option_name: variant.option_name,
+          option_value: value,
+          dimensions: { ...defaults },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+      }
+    }
+    if (additions.length === 0) {
+      setToast({ type: 'info', message: 'All option values already have dimensions.' })
+      return
+    }
+    setVariantDimensions((currentRows) => [...currentRows, ...additions])
+    form.setDirty(true)
+    setToast({ type: 'success', message: `Applied defaults to ${additions.length} value${additions.length === 1 ? '' : 's'}.` })
+  }, [form])
+
+  const addVariantOptionImage = useCallback(
+    async (optionName: string, optionValue: string, file: File) => {
+      const id = await ensureProductId()
+      const tempKey = `variant-${optionName}-${optionValue}-${file.name}-${Date.now()}`
+      setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress: 0 } }))
+      try {
+        const data = (await uploadFormFileWithProgress(
+          `/api/3d-shop/admin/products/${id}/variant-images`,
+          file,
+          { option_name: optionName, option_value: optionValue },
+          (progress) => {
+            setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress } }))
+          }
+        )) as { image?: ShopVariantOptionImage; error?: string }
+        if (!data.image) throw new Error(data.error || 'Upload failed.')
+        setUploadState((current) => ({ ...current, [tempKey]: { status: 'done', progress: 100 } }))
+        setVariantOptionImages((current) => [...current, data.image!])
+      } catch (error) {
+        setUploadState((current) => ({ ...current, [tempKey]: { status: 'error', progress: 0 } }))
+        throw error
+      }
+    },
+    [ensureProductId]
+  )
+
+  const updateVariantOptionImage = useCallback(
+    async (imageId: string, patch: { alt_text?: string; is_primary?: boolean }) => {
+      const id = form.productRef.current.id
+      if (!id) return
+      const response = await fetch(`/api/3d-shop/admin/products/${id}/variant-images`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_id: imageId, ...patch }),
+      })
+      const data = (await response.json().catch(() => ({}))) as { image?: ShopVariantOptionImage; error?: string }
+      const updatedImage = data.image
+      if (!response.ok || !updatedImage) throw new Error(data.error || 'Failed to update image.')
+      setVariantOptionImages((current) =>
+        current.map((image) => {
+          if (image.id !== imageId) {
+            if (
+              patch.is_primary === true &&
+              image.option_name === updatedImage.option_name &&
+              image.option_value === updatedImage.option_value
+            ) {
+              return { ...image, is_primary: false }
+            }
+            return image
+          }
+          return updatedImage
+        })
+      )
+    },
+    [form]
+  )
+
+  const removeVariantOptionImage = useCallback(
+    async (imageId: string) => {
+      const id = form.productRef.current.id
+      if (!id) return
+      const response = await fetch(
+        `/api/3d-shop/admin/products/${id}/variant-images?id=${encodeURIComponent(imageId)}`,
+        { method: 'DELETE' }
+      )
+      const data = (await response.json().catch(() => ({}))) as { error?: string }
+      if (!response.ok) throw new Error(data.error || 'Failed to remove image.')
+      setVariantOptionImages((current) => current.filter((image) => image.id !== imageId))
+    },
+    [form]
+  )
+
+  const reorderVariantOptionImages = useCallback(
+    async (optionName: string, optionValue: string, orderedIds: string[]) => {
+      const id = form.productRef.current.id
+      if (!id) return
+      setVariantOptionImages((current) =>
+        current.map((image) =>
+          image.option_name === optionName && image.option_value === optionValue
+            ? { ...image, display_order: Math.max(0, orderedIds.indexOf(image.id)) }
+            : image
+        )
+      )
+      await Promise.all(
+        orderedIds.map(async (imageId, index) => {
+          const response = await fetch(`/api/3d-shop/admin/products/${id}/variant-images`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_id: imageId, display_order: index }),
+          })
+          if (!response.ok) throw new Error('Failed to reorder images.')
+        })
+      )
+    },
+    [form]
+  )
+
+  const addSkuImage = useCallback(
+    async (skuId: string, file: File) => {
+      const tempKey = `sku-${skuId}-${file.name}-${Date.now()}`
+      setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress: 0 } }))
+      try {
+        const data = (await uploadFormFileWithProgress(
+          `/api/3d-shop/admin/skus/${skuId}/images`,
+          file,
+          {},
+          (progress) => {
+            setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress } }))
+          }
+        )) as { image?: ShopSkuImage; error?: string }
+        const uploadedImage = data.image
+        if (!uploadedImage) throw new Error(data.error || 'Upload failed.')
+        setUploadState((current) => ({ ...current, [tempKey]: { status: 'done', progress: 100 } }))
+        setSkuImages((current) => ({ ...current, [skuId]: [...(current[skuId] ?? []), uploadedImage] }))
+      } catch (error) {
+        setUploadState((current) => ({ ...current, [tempKey]: { status: 'error', progress: 0 } }))
+        throw error
+      }
+    },
+    []
+  )
+
+  const updateSkuImage = useCallback(
+    async (imageId: string, patch: { alt_text?: string; is_primary?: boolean }) => {
+      const skuId = Object.entries(skuImagesRef.current).find(([, images]) =>
+        images.some((image) => image.id === imageId)
+      )?.[0]
+      if (!skuId) return
+      const response = await fetch(`/api/3d-shop/admin/skus/${skuId}/images`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_id: imageId, ...patch }),
+      })
+      const data = (await response.json().catch(() => ({}))) as { image?: ShopSkuImage; error?: string }
+      const updatedSkuImage = data.image
+      if (!response.ok || !updatedSkuImage) throw new Error(data.error || 'Failed to update image.')
+      setSkuImages((current) => ({
+        ...current,
+        [skuId]: (current[skuId] ?? []).map((image) => {
+          if (image.id === imageId) return updatedSkuImage
+          if (patch.is_primary === true) return { ...image, is_primary: false }
+          return image
+        }),
+      }))
+    },
+    []
+  )
+
+  const removeSkuImage = useCallback(async (imageId: string) => {
+    const skuId = Object.entries(skuImagesRef.current).find(([, images]) =>
+      images.some((image) => image.id === imageId)
+    )?.[0]
+    if (!skuId) return
+    const response = await fetch(`/api/3d-shop/admin/skus/${skuId}/images?id=${encodeURIComponent(imageId)}`, {
+      method: 'DELETE',
+    })
+    const data = (await response.json().catch(() => ({}))) as { error?: string }
+    if (!response.ok) throw new Error(data.error || 'Failed to remove image.')
+    setSkuImages((current) => ({ ...current, [skuId]: (current[skuId] ?? []).filter((image) => image.id !== imageId) }))
+  }, [])
+
+  const reorderSkuImages = useCallback(
+    async (skuId: string, orderedIds: string[]) => {
+      setSkuImages((current) => ({
+        ...current,
+        [skuId]: (current[skuId] ?? []).map((image) => ({
+          ...image,
+          display_order: Math.max(0, orderedIds.indexOf(image.id)),
+        })),
+      }))
+      await Promise.all(
+        orderedIds.map(async (imageId, index) => {
+          const response = await fetch(`/api/3d-shop/admin/skus/${skuId}/images`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_id: imageId, display_order: index }),
+          })
+          if (!response.ok) throw new Error('Failed to reorder images.')
+        })
+      )
+    },
+    []
+  )
+
   const archiveProduct = useCallback(async () => {
     const id = form.productRef.current.id
     if (!id || !window.confirm('Archive this product?')) return
@@ -1048,6 +1464,9 @@ export function ProductEditorProvider({
     uploadState,
     variants,
     skus,
+    variantDimensions,
+    variantOptionImages,
+    skuImages,
     defaultWeight,
     skuSectionRef,
     dragImage,
@@ -1092,6 +1511,17 @@ export function ProductEditorProvider({
     bulkUpdateSkus,
     saveAllSkus: saveAllSkusWithToast,
     deleteSku,
+    updateVariantDimension,
+    deleteVariantDimension,
+    applyDefaultDimensionsToUnset,
+    addVariantOptionImage,
+    updateVariantOptionImage,
+    removeVariantOptionImage,
+    reorderVariantOptionImages,
+    addSkuImage,
+    updateSkuImage,
+    removeSkuImage,
+    reorderSkuImages,
   }
 
   return <ProductEditorContext.Provider value={value}>{children}</ProductEditorContext.Provider>

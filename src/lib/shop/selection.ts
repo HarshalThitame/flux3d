@@ -1,4 +1,5 @@
-import type { ShopSku, ShopVariantOption } from '@/lib/shop/admin-types'
+import type { ShopSku, ShopSkuImage, ShopVariantOption } from '@/lib/shop/admin-types'
+import { resolveDimensionsForSelection } from '@/lib/shop/dimensions'
 import type { ShopPublicProduct } from '@/lib/shop/public-types'
 
 export type ShopSelectedOptions = Record<string, string | boolean | null>
@@ -14,6 +15,61 @@ export function normalizeShopNumber(value: unknown, fallback = 0) {
 
 export function getShopProductImages(product: Pick<ShopPublicProduct, 'thumbnail_url' | 'image_urls'>) {
   return [product.thumbnail_url, ...(product.image_urls ?? [])].filter(Boolean) as string[]
+}
+
+export function getShopVariantOptionImages(
+  product: Pick<ShopPublicProduct, 'variant_option_images'>,
+  optionName: string,
+  optionValue: string
+) {
+  return (product.variant_option_images ?? []).filter(
+    (image) => image.option_name === optionName && image.option_value === optionValue
+  )
+}
+
+export function getShopSkuImages(product: ShopPublicProduct, sku: ShopSku | null): ShopSkuImage[] {
+  if (!sku) return []
+  return (product.sku_images ?? {})[sku.id] ?? []
+}
+
+export type ShopGallerySource = 'option' | 'sku' | 'product'
+
+export function getShopGalleryImages(
+  product: ShopPublicProduct,
+  selected: ShopSelectedOptions
+): { images: string[]; caption?: string; source: ShopGallerySource } {
+  for (const option of getSkuRelevantOptions(product.variant_options)) {
+    const value = selected[option.option_name]
+    if (typeof value !== 'string') continue
+    const optionImages = getShopVariantOptionImages(product, option.option_name, value)
+    if (optionImages.length > 0) {
+      return {
+        images: optionImages.map((image) => image.image_url),
+        caption: `${option.option_name}: ${value}`,
+        source: 'option',
+      }
+    }
+  }
+
+  const resolvedSku = resolveShopSku(product.skus, product.variant_options, selected)
+  const skuImages = getShopSkuImages(product, resolvedSku)
+  if (skuImages.length > 0) {
+    return { images: skuImages.map((image) => image.image_url), source: 'sku' }
+  }
+  if (resolvedSku?.variant_image_url) {
+    return { images: [resolvedSku.variant_image_url], source: 'sku' }
+  }
+
+  return { images: getShopProductImages(product), source: 'product' }
+}
+
+export function getShopDisplayDimensions(product: ShopPublicProduct, selected: ShopSelectedOptions) {
+  return resolveDimensionsForSelection(
+    product.variant_option_dimensions ?? [],
+    product.default_dimensions ?? null,
+    selected,
+    product.variant_options
+  )
 }
 
 export function shopVariantAffectsSku(option: ShopVariantOption) {

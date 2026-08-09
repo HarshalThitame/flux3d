@@ -24,10 +24,14 @@ import ReviewModal, { type ReviewEligibility } from '@/components/shop/ReviewMod
 import WishlistButton from '@/components/shop/WishlistButton'
 import ProductModelModal from '@/components/shop/ProductModelModal'
 import type { AppUserProfile } from '@/lib/auth/server'
+import type { ProductDimensions } from '@/lib/shop/admin-types'
 import type { ShopPublicProduct, ShopPublicReview } from '@/lib/shop/public-types'
+import { convertWeight, displayDimensions } from '@/lib/shop/dimensions'
 import {
   formatShopPrice,
   formatVariantLabel,
+  getShopDisplayDimensions,
+  getShopGalleryImages,
   getShopProductImages,
   getShopStockLabel,
   resolveShopSku,
@@ -75,11 +79,13 @@ function ProductInfoTabs({
   longDescription,
   skuCode,
   weightGrams,
+  dimensions,
 }: {
   description: string
   longDescription: string | null
   skuCode: string | null
   weightGrams: number | null
+  dimensions: ProductDimensions | null
 }) {
   const [active, setActive] = useState<InfoTab>('description')
   const tabs: { id: InfoTab; label: string }[] = [
@@ -134,15 +140,27 @@ function ProductInfoTabs({
             )}
             {active === 'specifications' && (
               <dl className="grid max-w-4xl gap-4 md:grid-cols-2">
-                {[
-                  { label: 'SKU', value: skuCode ?? 'Select options' },
-                  { label: 'Weight', value: weightGrams ? `${weightGrams} grams` : 'Select options' },
-                ].map((row) => (
-                  <div key={row.label} className="rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-4">
-                    <dt className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">{row.label}</dt>
-                    <dd className="mt-1.5 text-sm font-medium text-[var(--shop-text-primary)]">{row.value}</dd>
-                  </div>
-                ))}
+                {(() => {
+                  const dims = displayDimensions(dimensions)
+                  const weightValue = dimensions?.weight_g != null
+                    ? `${convertWeight(dimensions.weight_g, dimensions.weight_unit)} ${dimensions.weight_unit}`
+                    : weightGrams
+                    ? `${weightGrams} grams`
+                    : null
+                  const volumeValue = dimensions?.volume_cc != null ? `${dimensions.volume_cc} cc` : null
+                  const rows = [
+                    { label: 'SKU', value: skuCode ?? 'Select options' },
+                    { label: 'Dimensions', value: dims.dimensionText ?? 'Select options' },
+                    { label: 'Weight', value: weightValue ?? 'Select options' },
+                    { label: 'Volume', value: volumeValue ?? 'Select options' },
+                  ]
+                  return rows.map((row) => (
+                    <div key={row.label} className="rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-4">
+                      <dt className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">{row.label}</dt>
+                      <dd className="mt-1.5 text-sm font-medium text-[var(--shop-text-primary)]">{row.value}</dd>
+                    </div>
+                  ))
+                })()}
               </dl>
             )}
             {active === 'shipping' && (
@@ -178,12 +196,14 @@ export default function ShopProductDetailClient({
   const router = useRouter()
   const addItem = useShopCartStore((state) => state.addItem)
   const openCart = useShopCartStore((state) => state.openCart)
-  const images = getShopProductImages(product)
-  const [selectedImage, setSelectedImage] = useState(images[0] ?? '')
+  const baseImages = useMemo(() => getShopProductImages(product), [product])
+  const [selectedImage, setSelectedImage] = useState(baseImages[0] ?? '')
   const [imageIndex, setImageIndex] = useState(0)
   const [slideDir, setSlideDir] = useState<1 | -1>(1)
   const draggingRef = useRef(false)
   const [selected, setSelected] = useState<ShopSelectedOptions>({})
+  const gallery = useMemo(() => getShopGalleryImages(product, selected), [product, selected])
+  const images = gallery.images
   const [customizationText, setCustomizationText] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [pincode, setPincode] = useState('')
@@ -205,7 +225,16 @@ export default function ShopProductDetailClient({
   useEscape(() => setLightboxImage(null), Boolean(lightboxImage))
 
   const resolvedSku = useMemo(() => resolveShopSku(product.skus, product.variant_options, selected), [product, selected])
-  const visibleImage = resolvedSku?.variant_image_url || selectedImage || images[0] || ''
+  const productDimensions = useMemo(() => getShopDisplayDimensions(product, selected), [product, selected])
+  const visibleImage = resolvedSku?.variant_image_url || selectedImage || images[0] || baseImages[0] || ''
+
+  const gallerySignature = `${gallery.source}|${images.join(',')}`
+  const [seenGallery, setSeenGallery] = useState(gallerySignature)
+  if (seenGallery !== gallerySignature) {
+    setSeenGallery(gallerySignature)
+    setSelectedImage(images[0] ?? baseImages[0] ?? '')
+    setImageIndex(0)
+  }
 
   function goImage(dir: 1 | -1) {
     if (images.length < 2) return
@@ -607,6 +636,26 @@ export default function ShopProductDetailClient({
                 />
               </div>
 
+              {productDimensions && (
+                <div className="mt-5">
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--shop-text-secondary)]">
+                    {(() => {
+                      const dims = displayDimensions(productDimensions)
+                      const weight = productDimensions.weight_g != null
+                        ? `${convertWeight(productDimensions.weight_g, productDimensions.weight_unit)} ${productDimensions.weight_unit}`
+                        : null
+                      const parts = [dims.dimensionText, weight].filter(Boolean) as string[]
+                      return parts.length > 0 ? (
+                        <>
+                          <span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">Size</span>
+                          <span className="rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] px-3 py-1.5 font-medium text-[var(--shop-text-primary)]">{parts.join(' · ')}</span>
+                        </>
+                      ) : null
+                    })()}
+                  </div>
+                </div>
+              )}
+
               {resolvedSku === null && product.skus.length > 0 && product.variant_options.length > 0 && (
                 <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
                   This combination is not available
@@ -718,6 +767,7 @@ export default function ShopProductDetailClient({
             longDescription={product.long_description}
             skuCode={resolvedSku?.sku_code ?? null}
             weightGrams={resolvedSku?.weight_grams ?? null}
+            dimensions={productDimensions}
           />
         </div>
 
