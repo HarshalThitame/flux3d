@@ -62,7 +62,7 @@ export default function AddressForm({ values, errors, onChange }: AddressFormPro
           Delivery Address
         </h2>
         <p className="mt-2 text-sm leading-6 text-[#6F7192]">
-          Add the delivery details before submitting your print request. Shipping is free for orders of ₹499 or more.
+          Add the delivery details before submitting your print request. Shipping is free for orders of ₹349 or more.
         </p>
       </div>
 

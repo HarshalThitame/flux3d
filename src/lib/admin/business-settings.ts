@@ -128,6 +128,8 @@ export type BusinessSettings = {
   postProcessingMultipliers: PostProcessingMultipliers
   cartDiscountEnabled: boolean
   cartDiscountTiers: CartDiscountTier[]
+  minimumOrderValue: number
+  gstInclusivePricing: boolean
   pickupAvailable: boolean
   codAvailable: boolean
   paymentsEnabled: boolean
@@ -306,6 +308,8 @@ export type BusinessSettingsRow = {
   post_processing_multipliers: unknown | null
   cart_discount_enabled: boolean | null
   cart_discount_tiers: unknown | null
+  minimum_order_value: number | null
+  gst_inclusive_pricing: boolean | null
   pickup_available: boolean | null
   cod_available: boolean | null
   payments_enabled: boolean | null
@@ -505,6 +509,8 @@ export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettin
     postProcessingMultipliers: parsePostProcessingMultipliers(row.post_processing_multipliers),
     cartDiscountEnabled: bool(row.cart_discount_enabled ?? true),
     cartDiscountTiers: parseCartDiscountTiers(row.cart_discount_tiers),
+    minimumOrderValue: num(row.minimum_order_value ?? 100),
+    gstInclusivePricing: bool(row.gst_inclusive_pricing ?? true),
     pickupAvailable: bool(row.pickup_available),
     codAvailable: bool(row.cod_available),
     paymentsEnabled: bool(row.payments_enabled ?? true),
@@ -639,6 +645,8 @@ export function toSnakeCase(data: Partial<BusinessSettings>): Record<string, unk
     postProcessingMultipliers: 'post_processing_multipliers',
     cartDiscountEnabled: 'cart_discount_enabled',
     cartDiscountTiers: 'cart_discount_tiers',
+    minimumOrderValue: 'minimum_order_value',
+    gstInclusivePricing: 'gst_inclusive_pricing',
     pickupAvailable: 'pickup_available',
     codAvailable: 'cod_available',
     paymentsEnabled: 'payments_enabled',

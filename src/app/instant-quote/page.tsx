@@ -71,6 +71,8 @@ export default async function InstantQuotePage({ searchParams }: InstantQuotePag
             defaultDeliveryCharge: settings.defaultDeliveryCharge,
             cartDiscountEnabled: settings.cartDiscountEnabled,
             cartDiscountTiers: settings.cartDiscountTiers,
+            minimumOrderValue: settings.minimumOrderValue,
+            gstInclusivePricing: settings.gstInclusivePricing,
           }}
           bulkOrderContact={{
             email: settings.primaryEmail,

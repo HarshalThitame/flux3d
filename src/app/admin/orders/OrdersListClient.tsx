@@ -87,13 +87,19 @@ export default function OrdersListClient({ initialOrders, initialTotal, initialQ
   }
 
   const stats = useMemo(() => {
+    const revenue = allOrders.reduce((sum, order) => {
+      if (order.status === 'cancelled') return sum
+      const paymentState = order.paymentStatus ?? ''
+      if (!['paid', 'captured', 'refunded', 'partially_refunded'].includes(paymentState)) return sum
+      return sum + order.grandTotal - (Number(order.paymentRefundAmountPaise ?? 0) / 100)
+    }, 0)
     return {
       totalOrders: totalCount,
-      revenue: allOrders.reduce((sum, order) => sum + order.grandTotal, 0),
+      revenue,
       pending: allOrders.filter((order) => order.status === 'pending').length,
       printing: allOrders.filter((order) => order.status === 'printing').length,
     }
-  }, [allOrders])
+  }, [allOrders, totalCount])
 
   const materialOptions = useMemo(() => {
     return Array.from(new Set(allOrders.flatMap((order) => order.items.map((item) => item.material)).filter(Boolean)))

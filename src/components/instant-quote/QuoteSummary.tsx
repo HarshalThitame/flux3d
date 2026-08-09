@@ -146,21 +146,23 @@ export default function QuoteSummary({
                     </span>
                   </div>
                   <div className="border-t border-[#6d28d9]/10 pt-2 mt-1 flex justify-between text-xs text-[#6F7192]">
-                    <span>Subtotal</span>
+                    <span>Production cost</span>
                     <span>₹{priceBreakdown.subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-[#6F7192]">
-                    <span>Overhead ({priceBreakdown.overheadPercentage}%)</span>
-                    <span>₹{priceBreakdown.overheadAmount.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-[#6F7192]">
-                    <span>Margin ({priceBreakdown.marginPercentage}%)</span>
-                    <span>₹{priceBreakdown.marginAmount.toFixed(2)}</span>
+                    <span>Service fee ({priceBreakdown.overheadPercentage + priceBreakdown.marginPercentage}%)</span>
+                    <span>₹{(priceBreakdown.overheadAmount + priceBreakdown.marginAmount).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-[#6F7192]">
                     <span>Cart discount</span>
                     <span>{priceBreakdown.cartDiscountPercent}% · {priceBreakdown.cartDiscountAmount > 0 ? '-' : ''}₹{priceBreakdown.cartDiscountAmount.toFixed(2)}</span>
                   </div>
+                  {priceBreakdown.priceBeforeMinimum !== priceBreakdown.finalPrice && priceBreakdown.minimumOrderValue > 0 && (
+                    <div className="flex justify-between text-xs text-[#6F7192]">
+                      <span>Minimum order value</span>
+                      <span>₹{priceBreakdown.minimumOrderValue.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="border-t border-[#6d28d9]/10 pt-2 mt-1 flex justify-between font-medium text-[#070b1d]">
                     <span>Total price</span>
                     <span>₹{priceBreakdown.priceBeforeDiscount.toFixed(2)}</span>

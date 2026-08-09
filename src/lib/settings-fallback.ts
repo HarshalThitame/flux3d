@@ -101,18 +101,20 @@ export const FALLBACK_SETTINGS: BusinessSettings = {
   holidayMessage: '',
   emergencyContact: '',
   orderProcessingTime: '2-3 business days',
-  deliveryChargeThreshold: 499,
+  deliveryChargeThreshold: 349,
   defaultDeliveryCharge: 50,
-  overheadPercentage: 15,
-  // Database migration 015/020 and pricing-waterfall.ts use this as the application fallback.
-  marginPercentage: 30,
-  materialMarkupPercent: 15,
-  printSpeedGramsPerHour: 14.5,
+  overheadPercentage: 10,
+  // Database migration 015/020/021 and pricing-waterfall.ts use this as the application fallback.
+  marginPercentage: 20,
+  materialMarkupPercent: 0,
+  printSpeedGramsPerHour: 40,
   postProcessingMultipliers: {
     none: 0,
-    sanded: 0.25,
-    'sanded-painted': 0.6,
+    sanded: 0.15,
+    'sanded-painted': 0.35,
   },
+  minimumOrderValue: 100,
+  gstInclusivePricing: true,
   cartDiscountEnabled: true,
   cartDiscountTiers: [
     { minCartValue: 2000, discountPercent: 3 },

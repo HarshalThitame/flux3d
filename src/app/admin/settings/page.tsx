@@ -24,7 +24,7 @@ export default function AdminSettingsPage() {
   const [printers, setPrinters] = useState<PrinterStatus[] | null>(null)
   const [printersError, setPrintersError] = useState<string | null>(null)
   const [pricingSettings, setPricingSettings] = useState<PricingSettingsForm>({
-    deliveryChargeThreshold: '499',
+    deliveryChargeThreshold: '349',
     defaultDeliveryCharge: '50',
   })
   const [pricingSaving, setPricingSaving] = useState(false)
@@ -97,7 +97,7 @@ export default function AdminSettingsPage() {
         }
 
         setPricingSettings({
-          deliveryChargeThreshold: String(json.settings?.deliveryChargeThreshold ?? 499),
+          deliveryChargeThreshold: String(json.settings?.deliveryChargeThreshold ?? 349),
           defaultDeliveryCharge: String(json.settings?.defaultDeliveryCharge ?? 50),
         })
         setPricingHydrated(true)

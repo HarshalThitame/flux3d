@@ -24,6 +24,19 @@ import {
 } from '@/lib/orders'
 
 const QUOTE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? 'quote-models'
+
+const MATERIAL_COLORS = [
+  '#6d28d9',
+  '#0ea5e9',
+  '#10b981',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#14b8a6',
+  '#f97316',
+  '#6366f1',
+  '#ec4899',
+]
 const ADMIN_ORDER_SELECT =
   'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, price, price_per_unit, material_cost, machine_cost, subtotal, post_processing_charges, weight, difficulty_factor, total_price, final_price, grand_total, overhead_percent, overhead_amount, margin_percent, margin_amount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, coupon_code, coupon_id, discount_type, estimated_time, supports, post_processing_level, status, status_timestamps, cancel_requested, created_at, updated_at, notes, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, payment_provider, payment_status, provider_order_id, provider_payment_id, payment_method, payment_verified_at, payment_failed_at, payment_refund_status, payment_refund_amount_paise, payment_attempt_id, tracking_number, courier_name, tracking_url'
 
@@ -229,15 +242,13 @@ function buildNextStatusTimestamps(rows: OrderRow[], status: OrderStatus, timest
   return merged
 }
 
-function resolveGrandTotal(row: Pick<OrderRow, 'grand_total' | 'final_price' | 'total_price' | 'delivery_charge' | 'cart_discount'>) {
-  return normalizeMoney(
-    row.grand_total ??
-    resolveFinalPrice(row) + normalizeMoney(row.delivery_charge)
-  )
+function resolveFinalPrice(row: Pick<OrderRow, 'final_price' | 'total_price' | 'cart_discount'>) {
+  const totalAfterCartDiscount = normalizeMoney(row.total_price) - normalizeMoney(row.cart_discount)
+  return normalizeMoney(row.final_price ?? totalAfterCartDiscount)
 }
 
-function resolveFinalPrice(row: Pick<OrderRow, 'final_price' | 'total_price' | 'cart_discount'>) {
-  return normalizeMoney(row.final_price ?? normalizeMoney(row.total_price) - normalizeMoney(row.cart_discount))
+function resolveGrandTotal(row: Pick<OrderRow, 'grand_total' | 'final_price' | 'total_price' | 'delivery_charge' | 'cart_discount'>) {
+  return normalizeMoney(row.grand_total ?? (resolveFinalPrice(row) + normalizeMoney(row.delivery_charge)))
 }
 
 export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
@@ -291,9 +302,9 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
         existing.updatedAt = row.updated_at
       }
       existing.totalPriceBeforeDiscount += normalizeMoney(row.total_price)
+      existing.totalPrice += resolveFinalPrice(row)
       existing.finalPrice += resolveFinalPrice(row)
       existing.grandTotal += resolveGrandTotal(row)
-      existing.totalPrice += resolveGrandTotal(row)
       existing.deliveryCharge += normalizeMoney(row.delivery_charge)
       existing.materialCost += normalizeMoney(row.material_cost)
       existing.machineCost += normalizeMoney(row.machine_cost)
@@ -323,7 +334,7 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
         pincode: row.pincode ?? undefined,
         landmark: row.landmark ?? undefined,
         deliveryCharge: normalizeMoney(row.delivery_charge),
-        totalPrice: resolveGrandTotal(row),
+        totalPrice: resolveFinalPrice(row),
         totalPriceBeforeDiscount: normalizeMoney(row.total_price),
         finalPrice: resolveFinalPrice(row),
         grandTotal: resolveGrandTotal(row),
@@ -662,12 +673,18 @@ export async function getAdminDashboardData() {
     return acc
   }, {})
 
-  const revenue = normalizedOrders.reduce((sum, row) => sum + row.grandTotal, 0)
+  const revenue = normalizedOrders.reduce((sum, row) => {
+    if (row.status === 'cancelled') return sum
+    const paymentState = row.paymentStatus ?? ''
+    if (!['paid', 'captured', 'refunded', 'partially_refunded'].includes(paymentState)) return sum
+    const refundedAmount = Number(row.paymentRefundAmountPaise ?? 0) / 100
+    return sum + row.grandTotal - refundedAmount
+  }, 0)
 
   return {
     metrics: [
       { label: 'Total Orders', value: String(totalOrders.count ?? 0), change: '+ live', tone: 'positive' as const },
-      { label: 'Revenue', value: `₹${revenue.toLocaleString('en-IN')}`, change: 'Live from orders', tone: 'positive' as const },
+      { label: 'Revenue', value: `₹${revenue.toLocaleString('en-IN')}`, change: 'Net of refunds', tone: 'positive' as const },
       { label: 'Pending Requests', value: String(pendingOrders.count ?? 0), change: 'Needs review', tone: 'warning' as const },
       { label: 'Active Prints', value: String(activeOrders.count ?? 0), change: 'In production', tone: 'neutral' as const },
     ] satisfies DashboardMetric[],
@@ -676,10 +693,10 @@ export async function getAdminDashboardData() {
     users: normalizedUsers,
     materials: normalizedMaterials,
     files: formatAdminFiles(fileRows),
-    materialUsage: Object.entries(materialUsage).map(([label, value]) => ({
+    materialUsage: Object.entries(materialUsage).map(([label, value], index) => ({
       label,
       value,
-      color: '#FF7B43',
+      color: MATERIAL_COLORS[index % MATERIAL_COLORS.length],
     })) as DonutSlice[],
   }
 }
@@ -1199,7 +1216,7 @@ export async function getAdminFullAnalytics() {
   ] = await Promise.all([
     supabase
       .from('orders')
-      .select('id, group_id, total_price, final_price, grand_total, status, material, city, user_id, created_at'),
+      .select('id, group_id, total_price, final_price, grand_total, status, payment_status, payment_refund_amount_paise, material, city, user_id, created_at'),
     supabase
       .from('materials')
       .select('id, name, price_per_gram, stock, current_stock, min_threshold, sku, type, brand, unit'),
@@ -1216,7 +1233,23 @@ export async function getAdminFullAnalytics() {
   const materials = materialsResult.data ?? []
   const printers = printersResult.data ?? []
 
-  const totalRevenue = orders.reduce((sum, o) => sum + normalizeMoney(o.grand_total ?? o.final_price ?? o.total_price), 0)
+  const paidRows = orders.filter((o) => {
+    if (o.status === 'cancelled') return false
+    return ['paid', 'captured', 'refunded', 'partially_refunded'].includes(String(o.payment_status ?? ''))
+  })
+
+  const grossRevenue = paidRows.reduce((sum, o) => sum + normalizeMoney(o.grand_total ?? o.final_price ?? o.total_price), 0)
+
+  const refundsByGroup = new Map<string, number>()
+  for (const o of orders) {
+    const refundPaise = normalizeMoney(o.payment_refund_amount_paise ?? 0)
+    if (refundPaise <= 0) continue
+    const groupKey = String(o.group_id ?? o.id)
+    if (refundsByGroup.has(groupKey)) continue
+    refundsByGroup.set(groupKey, refundPaise / 100)
+  }
+
+  const totalRevenue = grossRevenue - Array.from(refundsByGroup.values()).reduce((sum, amount) => sum + amount, 0)
 
   const ordersByStatus = orders.reduce<Record<string, number>>((acc, o) => {
     acc[o.status] = (acc[o.status] ?? 0) + 1
@@ -1224,7 +1257,7 @@ export async function getAdminFullAnalytics() {
   }, {})
 
   const topMaterialsByRevenue = Object.entries(
-    orders.reduce<Record<string, number>>((acc, o) => {
+    paidRows.reduce<Record<string, number>>((acc, o) => {
       acc[o.material] = (acc[o.material] ?? 0) + normalizeMoney(o.grand_total ?? o.final_price ?? o.total_price)
       return acc
     }, {})

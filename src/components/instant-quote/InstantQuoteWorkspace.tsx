@@ -274,6 +274,8 @@ function CartEnabledWorkspace({
       cartDiscountAmount: priceBreakdown.cartDiscountAmount,
       cartDiscountPercent: priceBreakdown.cartDiscountPercent,
       finalPrice: priceBreakdown.finalPrice,
+      minimumOrderValue: priceBreakdown.minimumOrderValue,
+      priceBeforeMinimum: priceBreakdown.priceBeforeMinimum,
       deliveryCharge: priceBreakdown.deliveryCharge,
       grandTotal: priceBreakdown.grandTotal,
       supports: config.supports,
@@ -300,6 +302,8 @@ function CartEnabledWorkspace({
         finalPrice: priceBreakdown.finalPrice,
         deliveryCharge: priceBreakdown.deliveryCharge,
         grandTotal: priceBreakdown.grandTotal,
+        minimumOrderValue: priceBreakdown.minimumOrderValue,
+        priceBeforeMinimum: priceBreakdown.priceBeforeMinimum,
       },
       notes: '',
       modelMetadata: {
@@ -1110,21 +1114,23 @@ function CartEnabledWorkspace({
                             <span>₹{priceBreakdown.postProcessingCharges.toFixed(2)}</span>
                           </div>
                           <div className="border-t border-[#6d28d9]/10 pt-1.5 flex justify-between font-medium text-[#070b1d]">
-                            <span>Subtotal</span>
+                            <span>Production cost</span>
                             <span>₹{priceBreakdown.subtotal.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>Overhead ({priceBreakdown.overheadPercentage}%)</span>
-                            <span>₹{priceBreakdown.overheadAmount.toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Margin ({priceBreakdown.marginPercentage}%)</span>
-                            <span>₹{priceBreakdown.marginAmount.toFixed(2)}</span>
+                            <span>Service fee ({priceBreakdown.overheadPercentage + priceBreakdown.marginPercentage}%)</span>
+                            <span>₹{(priceBreakdown.overheadAmount + priceBreakdown.marginAmount).toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Cart discount</span>
                             <span>{priceBreakdown.cartDiscountPercent}% · {priceBreakdown.cartDiscountAmount > 0 ? '-' : ''}₹{priceBreakdown.cartDiscountAmount.toFixed(2)}</span>
                           </div>
+                          {priceBreakdown.priceBeforeMinimum !== priceBreakdown.finalPrice && priceBreakdown.minimumOrderValue > 0 && (
+                            <div className="flex justify-between">
+                              <span>Minimum order value</span>
+                              <span className="text-[#070b1d]">₹{priceBreakdown.minimumOrderValue.toFixed(2)}</span>
+                            </div>
+                          )}
                           <div className="border-t border-[#6d28d9]/10 pt-1.5 flex justify-between font-medium text-[#070b1d]">
                             <span>Total price</span>
                             <span>₹{priceBreakdown.priceBeforeDiscount.toFixed(2)}</span>
@@ -1172,6 +1178,9 @@ function CartEnabledWorkspace({
                           Delivery
                         </div>
                         <div className="mt-1 text-xs font-medium text-[#070b1d]">~48 hour print and delivery</div>
+                        {pricingSettings.gstInclusivePricing && (
+                          <div className="mt-1 text-[10px] text-[#6F7192]">Prices inclusive of all applicable taxes</div>
+                        )}
                       </div>
 
                       {/* Actions */}
