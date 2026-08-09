@@ -100,7 +100,7 @@ export default function CouponFormPage({ couponId }: { couponId: string }) {
         body: JSON.stringify(body),
       })
       if (!res.ok) throw new Error('Failed to save')
-      router.push('/admin/coupons')
+      router.push('/admin/promotions?tab=coupons')
     } catch {
       alert('Failed to save coupon')
     } finally {
