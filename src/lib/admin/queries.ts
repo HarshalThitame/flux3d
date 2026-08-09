@@ -38,7 +38,7 @@ const MATERIAL_COLORS = [
   '#ec4899',
 ]
 const ADMIN_ORDER_SELECT =
-  'id, order_number, group_id, file_url, material, color, infill, layer_height, quantity, price, price_per_unit, material_cost, machine_cost, subtotal, post_processing_charges, weight, difficulty_factor, total_price, final_price, grand_total, overhead_percent, overhead_amount, margin_percent, margin_amount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, coupon_code, coupon_id, discount_type, estimated_time, supports, post_processing_level, status, status_timestamps, cancel_requested, created_at, updated_at, notes, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, payment_provider, payment_status, provider_order_id, provider_payment_id, payment_method, payment_verified_at, payment_failed_at, payment_refund_status, payment_refund_amount_paise, payment_attempt_id, tracking_number, courier_name, tracking_url'
+  'id, user_id, group_id, order_number, file_url, material, color, infill, layer_height, quantity, price, price_per_unit, material_cost, machine_cost, subtotal, post_processing_charges, weight, difficulty_factor, total_price, final_price, grand_total, overhead_percent, overhead_amount, margin_percent, margin_amount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, coupon_code, coupon_id, discount_type, estimated_time, supports, post_processing_level, status, status_timestamps, cancel_requested, created_at, updated_at, notes, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, payment_provider, payment_status, provider_order_id, provider_payment_id, payment_method, payment_verified_at, payment_failed_at, payment_refund_status, payment_refund_amount_paise, payment_attempt_id, tracking_number, courier_name, tracking_url'
 
 export class AdminOrderStatusTransitionError extends Error {
   constructor(message: string) {
@@ -73,6 +73,7 @@ type StorageListItem = {
 
 type OrderRow = {
   id: string | number
+  user_id?: string | null
   order_number: string | null
   group_id: string | null
   file_url?: string | null
@@ -179,6 +180,41 @@ type CustomerOrderRow = {
 function normalizeMoney(value: number | string | null | undefined) {
   const amount = Number(value ?? 0)
   return Number.isFinite(amount) ? amount : 0
+}
+
+const PAID_PAYMENT_STATES = ['paid', 'captured', 'refunded', 'partially_refunded']
+
+function isEligiblePaidOrder(order: Pick<AdminOrder, 'status' | 'paymentStatus'>) {
+  if (order.status === 'cancelled') return false
+  return PAID_PAYMENT_STATES.includes(order.paymentStatus ?? '')
+}
+
+function calculateNetRevenue(orders: AdminOrder[]) {
+  return orders.reduce((sum, row) => {
+    if (!isEligiblePaidOrder(row)) return sum
+    const refundedAmount = Number(row.paymentRefundAmountPaise ?? 0) / 100
+    return sum + row.grandTotal - refundedAmount
+  }, 0)
+}
+
+function calculateGrossCollected(orders: AdminOrder[]) {
+  return orders.reduce((sum, row) => {
+    if (!isEligiblePaidOrder(row)) return sum
+    return sum + row.grandTotal
+  }, 0)
+}
+
+function formatPercentChange(current: number, previous: number, label = 'prev 30d') {
+  if (previous <= 0) {
+    return current > 0 ? 'New' : 'No change'
+  }
+  const change = Math.round(((current - previous) / previous) * 100)
+  return `${change > 0 ? '+' : ''}${change}% vs ${label}`
+}
+
+function changeTone(current: number, previous: number): DashboardMetric['tone'] {
+  if (previous <= 0) return 'positive'
+  return current >= previous ? 'positive' : 'warning'
 }
 
 function isOrderStatus(value: string): value is OrderStatus {
@@ -294,6 +330,7 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
         cancelRequested: Boolean(row.cancel_requested),
       })
       existing.cancelRequested = existing.cancelRequested || Boolean(row.cancel_requested)
+      existing.userId = existing.userId ?? row.user_id ?? null
       existing.statusTimestamps = mergeStatusTimestamps(
         existing.statusTimestamps,
         normalizeOrderStatusTimestamps(row)
@@ -323,6 +360,7 @@ export function groupAdminOrders(rows: OrderRow[]): AdminOrder[] {
       acc.set(groupId, {
         id: String(row.id),
         groupId,
+        userId: row.user_id ?? null,
         orderNumber: row.order_number ?? String(row.id),
         fileUrl: row.file_url ?? undefined,
         fullName: row.full_name ?? 'Unknown customer',
@@ -571,6 +609,18 @@ async function listBucketFiles(prefix = ''): Promise<Array<StorageListItem & { p
   return files
 }
 
+function getMaterialUsageContext(orders: AdminOrder[]) {
+  const usage = orders.reduce<Record<string, number>>((acc, row) => {
+    acc[row.material] = (acc[row.material] ?? 0) + 1
+    return acc
+  }, {})
+  return Object.entries(usage).map(([label, value], index) => ({
+    label,
+    value,
+    color: MATERIAL_COLORS[index % MATERIAL_COLORS.length],
+  })) as DonutSlice[]
+}
+
 function formatAdminFiles(files: Array<StorageListItem & { path: string }>) {
   return files
     .sort((left, right) => {
@@ -594,10 +644,17 @@ function formatAdminFiles(files: Array<StorageListItem & { path: string }>) {
     }) as AdminFile[]
 }
 
-export async function getAdminDashboardData() {
+export const DASHBOARD_RANGE_DAYS = [7, 30, 90] as const
+export type DashboardRangeDays = (typeof DASHBOARD_RANGE_DAYS)[number]
+
+export async function getAdminDashboardData(days: DashboardRangeDays = 30) {
   const supabase = createAdminSupabaseClient()
+
+  const DAY_MS = 86_400_000
+  const periodStart = new Date(Date.now() - days * DAY_MS)
+  const previousPeriodStart = new Date(Date.now() - 2 * days * DAY_MS)
+
   const [
-    totalOrders,
     pendingOrders,
     activeOrders,
     orderRows,
@@ -605,17 +662,20 @@ export async function getAdminDashboardData() {
     profileRows,
     materialRows,
     fileRows,
+    periodQuoteCount,
+    previousPeriodQuoteCount,
   ] = await Promise.all([
-    supabase.from('orders').select('id', { count: 'exact', head: true }),
     supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('orders').select('id', { count: 'exact', head: true }).in('status', ['confirmed', 'printing']),
     supabase
       .from('orders')
       .select(ADMIN_ORDER_SELECT)
+      .gte('created_at', previousPeriodStart.toISOString())
       .order('created_at', { ascending: false }),
     supabase
       .from('quotes')
       .select('id, quote_id, name, email, config, estimate, created_at, user_id')
+      .gte('created_at', previousPeriodStart.toISOString())
       .order('created_at', { ascending: false })
       .limit(8),
     supabase.from('profiles').select('id, name, full_name, email, is_admin, created_at').order('created_at', { ascending: false }).limit(8),
@@ -624,15 +684,22 @@ export async function getAdminDashboardData() {
       .select('id, name, icon, summary, density, price_per_gram, machine_rate, multiplier, recommended_for, properties, colors, difficulty_factor, key_properties, best_for, difficulty_level, heat_resistance, strength_rating, finish_quality, sample_photo, stock, created_at, updated_at')
       .order('created_at', { ascending: false }),
     listBucketFiles(),
+    supabase.from('quotes').select('id', { count: 'exact', head: true }).gte('created_at', periodStart.toISOString()),
+    supabase
+      .from('quotes')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', previousPeriodStart.toISOString())
+      .lt('created_at', periodStart.toISOString()),
   ])
 
-  ensureNoError(totalOrders, 'Total orders')
   ensureNoError(pendingOrders, 'Pending orders')
   ensureNoError(activeOrders, 'Active orders')
   ensureNoError(orderRows, 'Orders')
   ensureNoError(quoteRows, 'Quotes')
   ensureNoError(profileRows, 'Users')
   ensureNoError(materialRows, 'Materials')
+  ensureNoError(periodQuoteCount, 'Period quotes')
+  ensureNoError(previousPeriodQuoteCount, 'Previous period quotes')
 
   const normalizedOrders = groupAdminOrders((orderRows.data ?? []) as OrderRow[])
   const normalizedQuotes = (quoteRows.data ?? []).map((row) =>
@@ -668,36 +735,90 @@ export async function getAdminDashboardData() {
     })
   )
 
-  const materialUsage = normalizedOrders.reduce<Record<string, number>>((acc, row) => {
-    acc[row.material] = (acc[row.material] ?? 0) + 1
-    return acc
-  }, {})
+  const periodOrders = normalizedOrders.filter(
+    (order) => new Date(order.createdAt).getTime() >= periodStart.getTime()
+  )
+  const previousPeriodOrders = normalizedOrders.filter((order) => {
+    const time = new Date(order.createdAt).getTime()
+    return time >= previousPeriodStart.getTime() && time < periodStart.getTime()
+  })
 
-  const revenue = normalizedOrders.reduce((sum, row) => {
-    if (row.status === 'cancelled') return sum
-    const paymentState = row.paymentStatus ?? ''
-    if (!['paid', 'captured', 'refunded', 'partially_refunded'].includes(paymentState)) return sum
-    const refundedAmount = Number(row.paymentRefundAmountPaise ?? 0) / 100
-    return sum + row.grandTotal - refundedAmount
-  }, 0)
+  const revenue = calculateNetRevenue(periodOrders)
+  const previousRevenue = calculateNetRevenue(previousPeriodOrders)
+  const grossCollected = calculateGrossCollected(periodOrders)
+  const refundedInPeriod = grossCollected - revenue
+  const previousGrossCollected = calculateGrossCollected(previousPeriodOrders)
+  const previousRefunded = previousGrossCollected - previousRevenue
+
+  const paidOrderCount = periodOrders.filter((order) => isEligiblePaidOrder(order)).length
+  const previousPaidOrderCount = previousPeriodOrders.filter((order) => isEligiblePaidOrder(order)).length
+  const averageOrderValue = paidOrderCount > 0 ? revenue / paidOrderCount : 0
+  const previousAverageOrderValue = previousPaidOrderCount > 0 ? previousRevenue / previousPaidOrderCount : 0
+
+  const quoteCount = periodQuoteCount.count ?? 0
+  const previousQuoteCount = previousPeriodQuoteCount.count ?? 0
+  const conversionRate = quoteCount > 0 ? (paidOrderCount / quoteCount) * 100 : 0
+  const previousConversionRate = previousQuoteCount > 0 ? (previousPaidOrderCount / previousQuoteCount) * 100 : 0
+
+  const refundRate = grossCollected > 0 ? (refundedInPeriod / grossCollected) * 100 : 0
+  const previousRefundRate = previousGrossCollected > 0 ? (previousRefunded / previousGrossCollected) * 100 : 0
+
+  const activeCustomers = new Set(
+    periodOrders.map((order) => order.userId).filter((userId): userId is string => Boolean(userId))
+  ).size
+  const previousActiveCustomers = new Set(
+    previousPeriodOrders.map((order) => order.userId).filter((userId): userId is string => Boolean(userId))
+  ).size
+
+  const rangeLabel = `prev ${days}d`
 
   return {
     metrics: [
-      { label: 'Total Orders', value: String(totalOrders.count ?? 0), change: '+ live', tone: 'positive' as const },
-      { label: 'Revenue', value: `₹${revenue.toLocaleString('en-IN')}`, change: 'Net of refunds', tone: 'positive' as const },
+      {
+        label: `Orders (${days}d)`,
+        value: String(periodOrders.length),
+        change: formatPercentChange(periodOrders.length, previousPeriodOrders.length, rangeLabel),
+        tone: changeTone(periodOrders.length, previousPeriodOrders.length),
+      },
+      {
+        label: `Net Revenue (${days}d)`,
+        value: `₹${revenue.toLocaleString('en-IN')}`,
+        change: formatPercentChange(revenue, previousRevenue, rangeLabel),
+        tone: changeTone(revenue, previousRevenue),
+      },
       { label: 'Pending Requests', value: String(pendingOrders.count ?? 0), change: 'Needs review', tone: 'warning' as const },
       { label: 'Active Prints', value: String(activeOrders.count ?? 0), change: 'In production', tone: 'neutral' as const },
+      {
+        label: `Avg Order Value (${days}d)`,
+        value: `₹${averageOrderValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`,
+        change: formatPercentChange(averageOrderValue, previousAverageOrderValue, rangeLabel),
+        tone: changeTone(averageOrderValue, previousAverageOrderValue),
+      },
+      {
+        label: `Quote→Order Rate (${days}d)`,
+        value: `${conversionRate.toFixed(1)}%`,
+        change: `${paidOrderCount} orders · ${quoteCount} quotes (prev ${previousConversionRate.toFixed(1)}%)`,
+        tone: 'positive' as const,
+      },
+      {
+        label: `Refund Rate (${days}d)`,
+        value: `${refundRate.toFixed(1)}%`,
+        change: formatPercentChange(refundRate, previousRefundRate, rangeLabel),
+        tone: refundRate <= previousRefundRate ? 'positive' : 'warning',
+      },
+      {
+        label: `Active Customers (${days}d)`,
+        value: String(activeCustomers),
+        change: formatPercentChange(activeCustomers, previousActiveCustomers, rangeLabel),
+        tone: changeTone(activeCustomers, previousActiveCustomers),
+      },
     ] satisfies DashboardMetric[],
-    orders: normalizedOrders,
+    orders: periodOrders,
     quotes: normalizedQuotes,
     users: normalizedUsers,
     materials: normalizedMaterials,
     files: formatAdminFiles(fileRows),
-    materialUsage: Object.entries(materialUsage).map(([label, value], index) => ({
-      label,
-      value,
-      color: MATERIAL_COLORS[index % MATERIAL_COLORS.length],
-    })) as DonutSlice[],
+    materialUsage: getMaterialUsageContext(periodOrders),
   }
 }
 
@@ -1623,5 +1744,79 @@ export async function getAdminRedemptionStats() {
     total_redemptions: items.length,
     total_discount_given: items.reduce((s, r) => s + Number(r.discount_applied), 0),
     total_revenue_from_offers: items.reduce((s, r) => s + Number(r.order_amount), 0),
+  }
+}
+
+export type AdminAttentionItem = {
+  id: string
+  label: string
+  count: number
+  href: string
+  tone: 'info' | 'warning' | 'danger'
+}
+
+export async function getAdminAttentionSummary() {
+  const supabase = createAdminSupabaseClient()
+
+  const [refundApprovals, failedEmails, deadWebhooks, retryableWebhooks] = await Promise.all([
+    supabase
+      .from('refund_approvals')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending'),
+    supabase
+      .from('email_queue')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'failed'),
+    supabase
+      .from('whatsapp_webhook_events')
+      .select('id', { count: 'exact', head: true })
+      .is('processed_at', null)
+      .gte('retry_count', 3),
+    supabase
+      .from('whatsapp_webhook_events')
+      .select('id', { count: 'exact', head: true })
+      .is('processed_at', null)
+      .lt('retry_count', 3),
+  ])
+
+  for (const result of [refundApprovals, failedEmails, deadWebhooks, retryableWebhooks]) {
+    if (result.error) throw new Error(`Failed to fetch attention summary: ${result.error.message}`)
+  }
+
+  const allItems: AdminAttentionItem[] = [
+    {
+      id: 'refund-approvals',
+      label: 'Refund approvals pending',
+      count: refundApprovals.count ?? 0,
+      href: '/admin/refunds',
+      tone: 'danger',
+    },
+    {
+      id: 'failed-emails',
+      label: 'Failed emails',
+      count: failedEmails.count ?? 0,
+      href: '/admin/emails',
+      tone: 'warning',
+    },
+    {
+      id: 'dead-webhooks',
+      label: 'Webhook failures (retries exhausted)',
+      count: deadWebhooks.count ?? 0,
+      href: '/admin/webhook-health',
+      tone: 'warning',
+    },
+    {
+      id: 'retryable-webhooks',
+      label: 'Webhook events awaiting retry',
+      count: retryableWebhooks.count ?? 0,
+      href: '/admin/webhook-health',
+      tone: 'info',
+    },
+  ]
+  const items = allItems.filter((item) => item.count > 0)
+
+  return {
+    total: items.reduce((sum, item) => sum + item.count, 0),
+    items,
   }
 }

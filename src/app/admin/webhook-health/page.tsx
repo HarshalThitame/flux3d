@@ -144,12 +144,13 @@ export default function AdminWebhookHealthPage() {
         data={data.events}
         searchPlaceholder="Search event type, event ID, payment ID"
         searchKeys={['providerEventId', 'eventType', 'providerOrderId', 'providerPaymentId', 'processingStatus']}
+        exportFilename="webhook-events.csv"
         columns={[
-          { key: 'eventType', label: 'Event', sortable: true, render: (row) => <span className="font-medium text-[#0F1B3D]">{row.eventType}</span> },
-          { key: 'providerEventId', label: 'Event ID', sortable: true, render: (row) => <span className="break-all text-[#6F7192]">{row.providerEventId}</span> },
-          { key: 'processingStatus', label: 'Processing', sortable: true, render: (row) => <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-[#0F1B3D]">{row.processingStatus}</span> },
-          { key: 'providerPaymentId', label: 'Payment', sortable: true, render: (row) => <span className="break-all text-[#6F7192]">{row.providerPaymentId ?? '—'}</span> },
-          { key: 'receivedAt', label: 'Received', sortable: true, render: (row) => <span className="text-[#6F7192]">{new Date(row.receivedAt).toLocaleString('en-IN')}</span> },
+          { key: 'eventType', label: 'Event', sortable: true, exportValue: (row) => row.eventType, render: (row) => <span className="font-medium text-[#0F1B3D]">{row.eventType}</span> },
+          { key: 'providerEventId', label: 'Event ID', sortable: true, exportValue: (row) => row.providerEventId, render: (row) => <span className="break-all text-[#6F7192]">{row.providerEventId}</span> },
+          { key: 'processingStatus', label: 'Processing', sortable: true, exportValue: (row) => row.processingStatus, render: (row) => <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-[#0F1B3D]">{row.processingStatus}</span> },
+          { key: 'providerPaymentId', label: 'Payment', sortable: true, exportValue: (row) => row.providerPaymentId ?? '', render: (row) => <span className="break-all text-[#6F7192]">{row.providerPaymentId ?? '—'}</span> },
+          { key: 'receivedAt', label: 'Received', sortable: true, exportValue: (row) => new Date(row.receivedAt).toISOString(), render: (row) => <span className="text-[#6F7192]">{new Date(row.receivedAt).toLocaleString('en-IN')}</span> },
           {
             key: 'actions',
             label: 'Actions',
@@ -173,28 +174,33 @@ export default function AdminWebhookHealthPage() {
         data={whatsappEvents}
         searchPlaceholder="Search sender, event ID, error"
         searchKeys={['id', 'sender', 'last_error']}
+        exportFilename="failed-whatsapp-webhooks.csv"
         columns={[
           {
             key: 'id',
             label: 'Event ID',
             sortable: true,
+            exportValue: (row) => row.id,
             render: (row) => <span className="break-all font-medium text-[#0F1B3D]">{row.id}</span>,
           },
           {
             key: 'sender',
             label: 'Sender',
             sortable: true,
+            exportValue: (row) => row.sender ?? '',
             render: (row) => <span className="text-[#6F7192]">{row.sender ?? '—'}</span>,
           },
           {
             key: 'last_error',
             label: 'Error',
+            exportValue: (row) => row.last_error ?? '',
             render: (row) => <span className="break-all text-[#6F7192]">{row.last_error ?? '—'}</span>,
           },
           {
             key: 'received_at',
             label: 'Received',
             sortable: true,
+            exportValue: (row) => (row.received_at ? new Date(row.received_at).toISOString() : ''),
             render: (row) => (
               <span className="text-[#6F7192]">
                 {row.received_at ? new Date(row.received_at).toLocaleString('en-IN') : '—'}

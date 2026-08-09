@@ -1,7 +1,7 @@
 'use client'
 
 import { useDeferredValue, useEffect, useState } from 'react'
-import { ArrowDownWideNarrow, ArrowUpWideNarrow, ChevronLeft, ChevronRight, Search, Filter } from 'lucide-react'
+import { ArrowDownWideNarrow, ArrowUpWideNarrow, ChevronLeft, ChevronRight, Search, Filter, Download } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { logSearch } from '@/lib/tracking/searchLogger'
 
@@ -24,6 +24,40 @@ type Column<T> = {
   className?: string
   render: (row: T) => React.ReactNode
   sortValue?: (row: T) => string | number
+  exportValue?: (row: T) => string | number | null
+}
+
+function toCsvValue(value: string | number | null) {
+  if (value === null || value === undefined) return ''
+  const stringified = String(value)
+  return /[",\n]/.test(stringified) ? `"${stringified.replace(/"/g, '""')}"` : stringified
+}
+
+function exportRowsToCsv<T>(
+  rows: T[],
+  columns: Column<T>[],
+  filename: string
+) {
+  const exportColumns = columns.filter((column) => column.exportValue)
+  if (exportColumns.length === 0) return
+
+  const header = exportColumns.map((column) =>
+    typeof column.label === 'string' ? column.label : column.key
+  )
+  const lines = rows.map((row) =>
+    exportColumns.map((column) => toCsvValue(column.exportValue?.(row) ?? null)).join(',')
+  )
+
+  const csv = [header.join(','), ...lines].join('\n')
+  const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  URL.revokeObjectURL(url)
 }
 
 export default function DataTable<T extends { id: string }>({
@@ -36,6 +70,7 @@ export default function DataTable<T extends { id: string }>({
   filters = [],
   onRowClick,
   action,
+  exportFilename,
 }: {
   title: string
   description: string
@@ -46,6 +81,7 @@ export default function DataTable<T extends { id: string }>({
   filters?: FilterConfig<T>[]
   onRowClick?: (row: T) => void
   action?: React.ReactNode
+  exportFilename?: string
 }) {
   const [query, setQuery] = useState('')
   const deferredQuery = useDeferredValue(query)
@@ -136,6 +172,16 @@ export default function DataTable<T extends { id: string }>({
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {exportFilename && (
+              <button
+                type="button"
+                onClick={() => exportRowsToCsv(rows, columns, exportFilename)}
+                className="inline-flex items-center gap-2 rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3.5 py-2.5 text-sm text-[#6F7192] transition whitespace-nowrap min-h-[44px] hover:bg-gray-100 hover:text-[#0F1B3D]"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Export CSV
+              </button>
+            )}
             {filters.length > 0 && (
               <button
                 type="button"

@@ -188,13 +188,14 @@ export default function AdminRefundsPage() {
         data={filteredRefunds}
         searchPlaceholder="Search refund reason, refund ID, payment ID"
         searchKeys={['id', 'providerRefundId', 'paymentAttemptId', 'reason', 'status']}
+        exportFilename="refunds.csv"
         columns={[
-          { key: 'id', label: 'Refund ID', sortable: true, render: (row) => <span className="font-mono text-xs text-[#0F1B3D]">{row.id.slice(0, 8)}...</span> },
-          { key: 'paymentAttemptId', label: 'Payment', sortable: true, render: (row) => <Link href={`/admin/payments/${row.paymentAttemptId}`} className="text-[#6d28d9]">{row.paymentAttemptId.slice(0, 8)}...</Link> },
-          { key: 'amountPaise', label: 'Amount', sortable: true, render: (row) => <span className="font-semibold text-[#0F1B3D]">{formatMoney(row.amountPaise)}</span> },
-          { key: 'status', label: 'Status', sortable: true, render: (row) => <span className={statusBadge(row.status)}>{row.status}</span> },
-          { key: 'reason', label: 'Reason', sortable: true, render: (row) => <span className="text-[#6F7192]">{row.reason}</span> },
-          { key: 'providerRefundId', label: 'Provider Ref', sortable: true, render: (row) => <span className="text-[#6F7192] break-all">{row.providerRefundId?.slice(0, 20) ?? '—'}</span> },
+          { key: 'id', label: 'Refund ID', sortable: true, exportValue: (row) => row.id, render: (row) => <span className="font-mono text-xs text-[#0F1B3D]">{row.id.slice(0, 8)}...</span> },
+          { key: 'paymentAttemptId', label: 'Payment', sortable: true, exportValue: (row) => row.paymentAttemptId, render: (row) => <Link href={`/admin/payments/${row.paymentAttemptId}`} className="text-[#6d28d9]">{row.paymentAttemptId.slice(0, 8)}...</Link> },
+          { key: 'amountPaise', label: 'Amount', sortable: true, exportValue: (row) => (row.amountPaise / 100).toFixed(2), render: (row) => <span className="font-semibold text-[#0F1B3D]">{formatMoney(row.amountPaise)}</span> },
+          { key: 'status', label: 'Status', sortable: true, exportValue: (row) => row.status, render: (row) => <span className={statusBadge(row.status)}>{row.status}</span> },
+          { key: 'reason', label: 'Reason', sortable: true, exportValue: (row) => row.reason, render: (row) => <span className="text-[#6F7192]">{row.reason}</span> },
+          { key: 'providerRefundId', label: 'Provider Ref', sortable: true, exportValue: (row) => row.providerRefundId ?? '', render: (row) => <span className="text-[#6F7192] break-all">{row.providerRefundId?.slice(0, 20) ?? '—'}</span> },
           {
             key: 'actions', label: 'Actions',
             render: (row) => row.status === 'pending_approval' ? (

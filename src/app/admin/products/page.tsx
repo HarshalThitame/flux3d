@@ -72,11 +72,12 @@ export default function ProductsPage() {
           data={materials}
           searchPlaceholder="Search products..."
           searchKeys={['name']}
+          exportFilename="products.csv"
           columns={[
-            { key: 'name', label: 'Product Name', sortable: true, render: (row: AdminMaterial) => <span className="font-medium text-[#0F1B3D]">{row.name}</span> },
-            { key: 'price_per_gram', label: 'Price/Gram', sortable: true, render: (row: AdminMaterial) => <span className="font-medium text-[#0F1B3D]">₹{row.price_per_gram}</span> },
-            { key: 'density', label: 'Density', sortable: true, render: (row: AdminMaterial) => <span className="text-[#6F7192]">{row.density}</span> },
-            { key: 'colors', label: 'Colors', render: (row: AdminMaterial) => (
+            { key: 'name', label: 'Product Name', sortable: true, exportValue: (row: AdminMaterial) => row.name, render: (row: AdminMaterial) => <span className="font-medium text-[#0F1B3D]">{row.name}</span> },
+            { key: 'price_per_gram', label: 'Price/Gram', sortable: true, exportValue: (row: AdminMaterial) => row.price_per_gram, render: (row: AdminMaterial) => <span className="font-medium text-[#0F1B3D]">₹{row.price_per_gram}</span> },
+            { key: 'density', label: 'Density', sortable: true, exportValue: (row: AdminMaterial) => row.density, render: (row: AdminMaterial) => <span className="text-[#6F7192]">{row.density}</span> },
+            { key: 'colors', label: 'Colors', exportValue: (row: AdminMaterial) => row.colors.map((color) => typeof color === 'string' ? color : (color as {name?: string}).name ?? JSON.stringify(color)).join(', '), render: (row: AdminMaterial) => (
               <div className="flex flex-wrap gap-1">
                 {row.colors.map((color, i) => (
                   <span key={i} className="rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] text-[#6F7192]">
@@ -85,7 +86,7 @@ export default function ProductsPage() {
                 ))}
               </div>
             )},
-            { key: 'stock', label: 'Status', sortable: true, render: (row: AdminMaterial) => (
+            { key: 'stock', label: 'Status', sortable: true, exportValue: (row: AdminMaterial) => row.stock, render: (row: AdminMaterial) => (
               <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
                 row.stock === 'Healthy' ? 'bg-emerald-100 text-emerald-700' :
                 row.stock === 'Low' ? 'bg-yellow-100 text-yellow-700' :

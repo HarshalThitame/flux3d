@@ -116,13 +116,14 @@ export default function AdminReconciliationPage() {
         data={data.reconciliationRuns}
         searchPlaceholder="Search run id, status, mismatch"
         searchKeys={['id', 'status']}
+        exportFilename="reconciliation-runs.csv"
         columns={[
-          { key: 'id', label: 'Run ID', sortable: true, render: (row) => <span className="font-medium text-[#0F1B3D]">{row.id}</span> },
-          { key: 'status', label: 'Status', sortable: true, render: (row) => <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-[#0F1B3D]">{row.status}</span> },
-          { key: 'matchedCount', label: 'Matched', sortable: true, render: (row) => <span className="text-[#6F7192]">{row.matchedCount}</span> },
-          { key: 'mismatchCount', label: 'Mismatch', sortable: true, render: (row) => <span className="text-[#6F7192]">{row.mismatchCount}</span> },
-          { key: 'missingCount', label: 'Missing', sortable: true, render: (row) => <span className="text-[#6F7192]">{row.missingCount}</span> },
-          { key: 'startedAt', label: 'Started', sortable: true, render: (row) => <span className="text-[#6F7192]">{new Date(row.startedAt).toLocaleString('en-IN')}</span> },
+          { key: 'id', label: 'Run ID', sortable: true, exportValue: (row) => row.id, render: (row) => <span className="font-medium text-[#0F1B3D]">{row.id}</span> },
+          { key: 'status', label: 'Status', sortable: true, exportValue: (row) => row.status, render: (row) => <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-[#0F1B3D]">{row.status}</span> },
+          { key: 'matchedCount', label: 'Matched', sortable: true, exportValue: (row) => row.matchedCount, render: (row) => <span className="text-[#6F7192]">{row.matchedCount}</span> },
+          { key: 'mismatchCount', label: 'Mismatch', sortable: true, exportValue: (row) => row.mismatchCount, render: (row) => <span className="text-[#6F7192]">{row.mismatchCount}</span> },
+          { key: 'missingCount', label: 'Missing', sortable: true, exportValue: (row) => row.missingCount, render: (row) => <span className="text-[#6F7192]">{row.missingCount}</span> },
+          { key: 'startedAt', label: 'Started', sortable: true, exportValue: (row) => new Date(row.startedAt).toISOString(), render: (row) => <span className="text-[#6F7192]">{new Date(row.startedAt).toLocaleString('en-IN')}</span> },
         ]}
       />
     </div>

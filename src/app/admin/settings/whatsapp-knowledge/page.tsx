@@ -332,12 +332,14 @@ export default function WhatsAppKnowledgePage() {
             },
           ]}
           onRowClick={(row) => openEditModal(row)}
+          exportFilename="whatsapp-knowledge-chunks.csv"
           columns={[
             {
               key: 'sourceKey',
               label: 'Source Key',
               sortable: true,
               sortValue: (row) => row.sourceKey,
+              exportValue: (row) => row.sourceKey,
               render: (row) => <span className="font-medium text-[#0F1B3D]">{row.sourceKey}</span>,
             },
             {
@@ -345,11 +347,13 @@ export default function WhatsAppKnowledgePage() {
               label: 'Title',
               sortable: true,
               sortValue: (row) => row.title,
+              exportValue: (row) => row.title,
               render: (row) => <span className="text-[#6F7192]">{row.title}</span>,
             },
             {
               key: 'tags',
               label: 'Tags',
+              exportValue: (row) => row.tagsText || '',
               render: (row) => <span className="text-[#6F7192]">{row.tagsText || '—'}</span>,
             },
             {
@@ -357,6 +361,7 @@ export default function WhatsAppKnowledgePage() {
               label: 'Priority',
               sortable: true,
               sortValue: (row) => row.priority,
+              exportValue: (row) => row.priority,
               render: (row) => <span className="font-medium text-[#0F1B3D]">{row.priority}</span>,
             },
             {
@@ -364,6 +369,7 @@ export default function WhatsAppKnowledgePage() {
               label: 'Status',
               sortable: true,
               sortValue: (row) => (row.active ? 1 : 0),
+              exportValue: (row) => row.statusLabel,
               render: (row) => (
                 <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${row.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-[#6F7192]'}`}>
                   {row.statusLabel}
@@ -375,6 +381,7 @@ export default function WhatsAppKnowledgePage() {
               label: 'Updated',
               sortable: true,
               sortValue: (row) => row.updatedAt ?? '',
+              exportValue: (row) => row.updatedAt ?? '',
               render: (row) => <span className="text-[#6F7192]">{formatUpdatedLabel(row.updatedAt)}</span>,
             },
             {

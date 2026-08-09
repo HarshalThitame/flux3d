@@ -90,11 +90,12 @@ export default function AdminFilesPage() {
           data={files}
           searchPlaceholder="Search file name or user"
           searchKeys={['name', 'user', 'uploadedAt', 'size']}
+          exportFilename="uploaded-models.csv"
           columns={[
-            { key: 'name', label: 'File Name', sortable: true, sortValue: (row) => row.name, render: (row) => <span className="font-medium text-[#0F1B3D]">{row.name}</span> },
-            { key: 'user', label: 'User', sortable: true, sortValue: (row) => row.user, render: (row) => <span className="text-[#6F7192]">{row.user}</span> },
-            { key: 'uploadedAt', label: 'Upload Date', sortable: true, sortValue: (row) => row.uploadedAt, render: (row) => <span className="text-[#6F7192]">{row.uploadedAt}</span> },
-            { key: 'size', label: 'Size', sortable: true, sortValue: (row) => row.size, render: (row) => <span className="font-medium text-[#0F1B3D]">{row.size}</span> },
+            { key: 'name', label: 'File Name', sortable: true, sortValue: (row) => row.name, exportValue: (row) => row.name, render: (row) => <span className="font-medium text-[#0F1B3D]">{row.name}</span> },
+            { key: 'user', label: 'User', sortable: true, sortValue: (row) => row.user, exportValue: (row) => row.user, render: (row) => <span className="text-[#6F7192]">{row.user}</span> },
+            { key: 'uploadedAt', label: 'Upload Date', sortable: true, sortValue: (row) => row.uploadedAt, exportValue: (row) => row.uploadedAt, render: (row) => <span className="text-[#6F7192]">{row.uploadedAt}</span> },
+            { key: 'size', label: 'Size', sortable: true, sortValue: (row) => row.size, exportValue: (row) => row.size, render: (row) => <span className="font-medium text-[#0F1B3D]">{row.size}</span> },
             {
               key: 'actions',
               label: 'Actions',
