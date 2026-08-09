@@ -122,7 +122,7 @@ export default function OfferFormPage({ offerId }: { offerId: string }) {
         body: JSON.stringify(body),
       })
       if (!res.ok) throw new Error('Failed to save')
-      router.push('/admin/offers')
+      router.push('/admin/promotions?tab=offers')
     } catch {
       alert('Failed to save offer')
     } finally {
