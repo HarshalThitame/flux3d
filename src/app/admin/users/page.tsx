@@ -94,6 +94,7 @@ export default function AdminUsersPage() {
           searchPlaceholder="Search name or email"
           searchKeys={['name', 'email', 'signupMethod', 'role']}
           onRowClick={setSelectedUser}
+          exportFilename="user-directory.csv"
           filters={[
             {
               key: 'role',
@@ -107,11 +108,11 @@ export default function AdminUsersPage() {
             },
           ]}
           columns={[
-            { key: 'name', label: 'Name', sortable: true, sortValue: (row) => row.name, render: (row) => <span className="font-medium text-[#0F1B3D]">{row.name}</span> },
-            { key: 'email', label: 'Email', sortable: true, sortValue: (row) => row.email, render: (row) => <span className="text-[#6F7192]">{row.email}</span> },
-            { key: 'signupMethod', label: 'Signup Method', sortable: true, sortValue: (row) => row.signupMethod, render: (row) => <span className="text-[#6F7192]">{row.signupMethod}</span> },
-            { key: 'role', label: 'Role', sortable: true, sortValue: (row) => row.role, render: (row) => <StatusBadge status={row.role} /> },
-            { key: 'lastActive', label: 'Last Active', sortable: true, sortValue: (row) => row.lastActive, render: (row) => <span className="text-[#6F7192]">{row.lastActive}</span> },
+            { key: 'name', label: 'Name', sortable: true, sortValue: (row) => row.name, exportValue: (row) => row.name, render: (row) => <span className="font-medium text-[#0F1B3D]">{row.name}</span> },
+            { key: 'email', label: 'Email', sortable: true, sortValue: (row) => row.email, exportValue: (row) => row.email, render: (row) => <span className="text-[#6F7192]">{row.email}</span> },
+            { key: 'signupMethod', label: 'Signup Method', sortable: true, sortValue: (row) => row.signupMethod, exportValue: (row) => row.signupMethod, render: (row) => <span className="text-[#6F7192]">{row.signupMethod}</span> },
+            { key: 'role', label: 'Role', sortable: true, sortValue: (row) => row.role, exportValue: (row) => row.role, render: (row) => <StatusBadge status={row.role} /> },
+            { key: 'lastActive', label: 'Last Active', sortable: true, sortValue: (row) => row.lastActive, exportValue: (row) => row.lastActive, render: (row) => <span className="text-[#6F7192]">{row.lastActive}</span> },
           ]}
         />
       </div>

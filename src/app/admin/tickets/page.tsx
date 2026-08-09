@@ -124,6 +124,7 @@ export default function TicketsPage() {
           data={filteredTickets}
           searchPlaceholder="Search by ticket ID, customer, subject..."
           searchKeys={['ticketId', 'customer', 'subject', 'category']}
+          exportFilename="support-tickets.csv"
           filters={[
             {
               key: 'priority',
@@ -152,11 +153,11 @@ export default function TicketsPage() {
             },
           ]}
           columns={[
-            { key: 'ticketId', label: 'Ticket ID', sortable: true, render: (row: SupportTicket) => <span className="font-medium text-[#0F1B3D]">{row.ticketId}</span> },
-            { key: 'customer', label: 'Customer', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.customer}</span> },
-            { key: 'subject', label: 'Subject', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.subject}</span> },
-            { key: 'category', label: 'Category', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.category}</span> },
-            { key: 'priority', label: 'Priority', sortable: true, render: (row: SupportTicket) => (
+            { key: 'ticketId', label: 'Ticket ID', sortable: true, exportValue: (row: SupportTicket) => row.ticketId, render: (row: SupportTicket) => <span className="font-medium text-[#0F1B3D]">{row.ticketId}</span> },
+            { key: 'customer', label: 'Customer', sortable: true, exportValue: (row: SupportTicket) => row.customer, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.customer}</span> },
+            { key: 'subject', label: 'Subject', sortable: true, exportValue: (row: SupportTicket) => row.subject, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.subject}</span> },
+            { key: 'category', label: 'Category', sortable: true, exportValue: (row: SupportTicket) => row.category, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.category}</span> },
+            { key: 'priority', label: 'Priority', sortable: true, exportValue: (row: SupportTicket) => row.priority || 'Normal', render: (row: SupportTicket) => (
               <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
                 row.priority === 'Urgent' ? 'bg-red-100 text-red-700' :
                 row.priority === 'High' ? 'bg-orange-100 text-orange-700' :
@@ -166,7 +167,7 @@ export default function TicketsPage() {
                 {row.priority}
               </span>
             )},
-            { key: 'status', label: 'Status', sortable: true, render: (row: SupportTicket) => (
+            { key: 'status', label: 'Status', sortable: true, exportValue: (row: SupportTicket) => row.status, render: (row: SupportTicket) => (
               <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
                 row.status === 'Open' ? 'bg-red-100 text-red-700' :
                 row.status === 'In Progress' ? 'bg-yellow-100 text-yellow-700' :
@@ -176,9 +177,9 @@ export default function TicketsPage() {
                 {row.status}
               </span>
             )},
-            { key: 'assignedTo', label: 'Assigned To', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.assignedTo}</span> },
-            { key: 'created', label: 'Created', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.created}</span> },
-            { key: 'lastUpdated', label: 'Last Updated', sortable: true, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.lastUpdated}</span> },
+            { key: 'assignedTo', label: 'Assigned To', sortable: true, exportValue: (row: SupportTicket) => row.assignedTo ?? '', render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.assignedTo}</span> },
+            { key: 'created', label: 'Created', sortable: true, exportValue: (row: SupportTicket) => row.created, render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.created}</span> },
+            { key: 'lastUpdated', label: 'Last Updated', sortable: true, exportValue: (row: SupportTicket) => row.lastUpdated ?? '', render: (row: SupportTicket) => <span className="text-[#6F7192]">{row.lastUpdated}</span> },
           ]}
         />
       </motion.div>

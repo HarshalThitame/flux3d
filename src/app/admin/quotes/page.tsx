@@ -158,6 +158,7 @@ export default function AdminQuotesPage() {
           data={quotes}
           searchPlaceholder="Search quote, customer, material"
           searchKeys={['quote_id', 'name', 'email', 'status']}
+          exportFilename="quotes.csv"
           filters={[
             {
               key: 'status',
@@ -172,11 +173,11 @@ export default function AdminQuotesPage() {
             },
           ]}
           columns={[
-            { key: 'id', label: 'Quote ID', sortable: true, sortValue: (row) => row.quote_id ?? String(row.id), render: (row) => <span className="font-medium text-[#0F1B3D]">{row.quote_id ?? `Q-${row.id}`}</span> },
-            { key: 'customer', label: 'Customer', sortable: true, sortValue: (row) => row.name, render: (row) => <span className="text-[#6F7192]">{row.name}</span> },
-            { key: 'material', label: 'Material', sortable: true, sortValue: (row) => row.config?.materialId ?? '', render: (row) => <span className="text-[#6F7192]">{row.config?.materialId ?? 'Unknown'}</span> },
-            { key: 'estimate', label: 'Estimate', sortable: true, sortValue: (row) => row.estimate?.total ?? 0, render: (row) => <span className="font-medium text-[#0F1B3D]">₹{Number(row.estimate?.total ?? 0).toLocaleString('en-IN')}</span> },
-            { key: 'status', label: 'Status', sortable: true, sortValue: (row) => row.status, render: (row) => <StatusBadge status={row.status} /> },
+            { key: 'id', label: 'Quote ID', sortable: true, sortValue: (row) => row.quote_id ?? String(row.id), exportValue: (row) => row.quote_id ?? String(row.id), render: (row) => <span className="font-medium text-[#0F1B3D]">{row.quote_id ?? `Q-${row.id}`}</span> },
+            { key: 'customer', label: 'Customer', sortable: true, sortValue: (row) => row.name, exportValue: (row) => row.name, render: (row) => <span className="text-[#6F7192]">{row.name}</span> },
+            { key: 'material', label: 'Material', sortable: true, sortValue: (row) => row.config?.materialId ?? '', exportValue: (row) => row.config?.materialId ?? 'Unknown', render: (row) => <span className="text-[#6F7192]">{row.config?.materialId ?? 'Unknown'}</span> },
+            { key: 'estimate', label: 'Estimate', sortable: true, sortValue: (row) => row.estimate?.total ?? 0, exportValue: (row) => Number(row.estimate?.total ?? 0).toFixed(2), render: (row) => <span className="font-medium text-[#0F1B3D]">₹{Number(row.estimate?.total ?? 0).toLocaleString('en-IN')}</span> },
+            { key: 'status', label: 'Status', sortable: true, sortValue: (row) => row.status, exportValue: (row) => row.status, render: (row) => <StatusBadge status={row.status} /> },
             {
               key: 'actions',
               label: 'Actions',

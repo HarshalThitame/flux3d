@@ -55,6 +55,7 @@ export type AdminOrderItem = {
 export type AdminOrder = {
   id: string
   groupId: string
+  userId?: string | null
   orderNumber: string
   fileUrl?: string
   fullName: string

@@ -1,8 +1,8 @@
-import { ArrowUpRight, Clock3, IndianRupee, Layers3, PackageOpen } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Clock3, IndianRupee, Layers3, PackageOpen, Percent, RefreshCcw, Target, Users } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { DashboardMetric } from '@/lib/admin/types'
 
-const icons = [PackageOpen, IndianRupee, Clock3, Layers3]
+const icons = [PackageOpen, IndianRupee, Clock3, Layers3, Percent, Target, RefreshCcw, Users]
 
 const gradients = [
   'from-[#6d28d9]/10 to-transparent',
@@ -27,6 +27,8 @@ export default function DashboardCards({
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       {metrics.map((metric, index) => {
         const Icon = icons[index] ?? PackageOpen
+        const isNegative = typeof metric.change === 'string' && metric.change.startsWith('-')
+        const ChangeIcon = isNegative ? ArrowDownRight : ArrowUpRight
 
         return (
           <motion.div
@@ -49,13 +51,15 @@ export default function DashboardCards({
                 </div>
               </div>
               <div className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${
-                metric.tone === 'positive'
-                  ? 'border-emerald-400/20 bg-emerald-50 text-emerald-600'
-                  : metric.tone === 'warning'
-                    ? 'border-amber-200 bg-amber-50 text-amber-600'
-                    : 'border-cyan-200 bg-cyan-50 text-cyan-600'
+                isNegative
+                  ? 'border-rose-200 bg-rose-50 text-rose-600'
+                  : metric.tone === 'positive'
+                    ? 'border-emerald-400/20 bg-emerald-50 text-emerald-600'
+                    : metric.tone === 'warning'
+                      ? 'border-amber-200 bg-amber-50 text-amber-600'
+                      : 'border-cyan-200 bg-cyan-50 text-cyan-600'
               }`}>
-                <ArrowUpRight className="h-3 w-3" />
+                <ChangeIcon className="h-3 w-3" />
                 {metric.change}
               </div>
             </div>

@@ -162,9 +162,10 @@ export default function PaymentsPage() {
           data={payments ?? []}
           searchPlaceholder="Search by order number, payment ID, customer..."
           searchKeys={['orderNumber', 'providerOrderId', 'providerPaymentId', 'internalOrderId']}
+          exportFilename="payment-ledger.csv"
           columns={[
             {
-              key: 'orderNumber', label: 'Order', sortable: true,
+              key: 'orderNumber', label: 'Order', sortable: true, exportValue: (row: PaymentData) => row.orderNumber,
               render: (row: PaymentData) => (
                 <div>
                   <Link href={`/admin/payments/${row.id}`} className="font-medium text-[#0F1B3D] hover:text-[#6d28d9]">{row.orderNumber}</Link>
@@ -172,12 +173,12 @@ export default function PaymentsPage() {
                 </div>
               ),
             },
-            { key: 'amountPaise', label: 'Amount', sortable: true, render: (row: PaymentData) => <span className="font-medium text-[#0F1B3D]">₹{Math.round(row.amountPaise / 100).toLocaleString('en-IN')}</span> },
-            { key: 'provider', label: 'Provider', sortable: true, render: (row: PaymentData) => <span className="text-[#6F7192]">{getProviderLabel(row.provider)}</span> },
-            { key: 'providerOrderId', label: 'Provider Order', sortable: true, render: (row: PaymentData) => <span className="text-[#6F7192] break-all">{row.providerOrderId ?? '—'}</span> },
-            { key: 'providerPaymentId', label: 'Payment ID', sortable: true, render: (row: PaymentData) => <span className="text-[#6F7192] break-all">{row.providerPaymentId ?? '—'}</span> },
+            { key: 'amountPaise', label: 'Amount', sortable: true, exportValue: (row: PaymentData) => (row.amountPaise / 100).toFixed(2), render: (row: PaymentData) => <span className="font-medium text-[#0F1B3D]">₹{Math.round(row.amountPaise / 100).toLocaleString('en-IN')}</span> },
+            { key: 'provider', label: 'Provider', sortable: true, exportValue: (row: PaymentData) => getProviderLabel(row.provider), render: (row: PaymentData) => <span className="text-[#6F7192]">{getProviderLabel(row.provider)}</span> },
+            { key: 'providerOrderId', label: 'Provider Order', sortable: true, exportValue: (row: PaymentData) => row.providerOrderId ?? '', render: (row: PaymentData) => <span className="text-[#6F7192] break-all">{row.providerOrderId ?? '—'}</span> },
+            { key: 'providerPaymentId', label: 'Payment ID', sortable: true, exportValue: (row: PaymentData) => row.providerPaymentId ?? '', render: (row: PaymentData) => <span className="text-[#6F7192] break-all">{row.providerPaymentId ?? '—'}</span> },
             {
-              key: 'status', label: 'Status', sortable: true,
+              key: 'status', label: 'Status', sortable: true, exportValue: (row: PaymentData) => row.status,
               render: (row: PaymentData) => (
                 <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
                   row.status === 'paid' || row.status === 'captured' ? 'bg-emerald-100 text-emerald-700'
@@ -187,8 +188,8 @@ export default function PaymentsPage() {
                 }`}>{row.status}</span>
               ),
             },
-            { key: 'paymentMethod', label: 'Method', sortable: true, render: (row: PaymentData) => <span className="text-[#6F7192]">{row.paymentMethod ?? '—'}</span> },
-            { key: 'createdAt', label: 'Created', sortable: true, render: (row: PaymentData) => <span className="text-[#6F7192]">{new Date(row.createdAt).toLocaleString('en-IN')}</span> },
+            { key: 'paymentMethod', label: 'Method', sortable: true, exportValue: (row: PaymentData) => row.paymentMethod ?? '', render: (row: PaymentData) => <span className="text-[#6F7192]">{row.paymentMethod ?? '—'}</span> },
+            { key: 'createdAt', label: 'Created', sortable: true, exportValue: (row: PaymentData) => new Date(row.createdAt).toISOString(), render: (row: PaymentData) => <span className="text-[#6F7192]">{new Date(row.createdAt).toLocaleString('en-IN')}</span> },
           ]}
         />
         {totalPages > 1 && (
