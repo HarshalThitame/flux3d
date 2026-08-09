@@ -166,18 +166,18 @@ describe('calculatePricingWaterfall', () => {
     expect(result.machineCost).toBe(150)
     expect(result.subtotal).toBe(400)
     expect(result.overheadAmount).toBe(60)
-    expect(result.marginAmount).toBe(138)
-    expect(result.totalPrice).toBe(598)
+    expect(result.marginAmount).toBe(120)
+    expect(result.totalPrice).toBe(580)
     expect(result.cartDiscountAmount).toBe(0)
-    expect(result.finalPrice).toBe(598)
+    expect(result.finalPrice).toBe(580)
     expect(result.deliveryCharge).toBe(50)
-    expect(result.grandTotal).toBe(648)
+    expect(result.grandTotal).toBe(630)
   })
 
   it('applies cart discount', () => {
     const result = calculatePricingWaterfall({ ...baseInput, cartDiscountPercent: 10 })
     expect(result.cartDiscountPercent).toBe(10)
-    expect(result.cartDiscountAmount).toBe(59.8)
+    expect(result.cartDiscountAmount).toBe(58)
     expect(result.finalPrice).toBeLessThan(result.totalPrice)
   })
 
@@ -186,8 +186,8 @@ describe('calculatePricingWaterfall', () => {
       ...baseInput,
       coupon: { discountType: 'percentage', discountValue: 20 },
     })
-    expect(result.couponDiscountAmount).toBe(119.6)
-    expect(result.finalPrice).toBe(478.4)
+    expect(result.couponDiscountAmount).toBe(116)
+    expect(result.finalPrice).toBe(464)
   })
 
   it('applies offer discount', () => {
@@ -196,7 +196,7 @@ describe('calculatePricingWaterfall', () => {
       offer: { discountType: 'fixed_amount', discountValue: 100 },
     })
     expect(result.offerDiscountAmount).toBe(100)
-    expect(result.finalPrice).toBe(498)
+    expect(result.finalPrice).toBe(480)
   })
 
   it('stacks cart + coupon + offer discounts', () => {
@@ -247,5 +247,104 @@ describe('calculatePricingWaterfall', () => {
     expect(result.overheadAmount).toBe(0)
     expect(result.marginAmount).toBe(0)
     expect(result.totalPrice).toBe(100)
+  })
+
+  it('applies minimum order value when final price is below it', () => {
+    const result = calculatePricingWaterfall({
+      materialCost: 40,
+      machineCost: 20,
+      quantity: 1,
+      overheadPercent: 0,
+      marginPercent: 0,
+      minimumOrderValue: 100,
+      deliveryThreshold: 999,
+      defaultDeliveryCharge: 50,
+    })
+    expect(result.priceBeforeMinimum).toBe(60)
+    expect(result.minimumOrderValue).toBe(100)
+    expect(result.finalPrice).toBe(100)
+    expect(result.grandTotal).toBe(150)
+  })
+
+  it('does not apply minimum order value when final price is equal or above it', () => {
+    const result = calculatePricingWaterfall({
+      materialCost: 120,
+      machineCost: 30,
+      quantity: 1,
+      overheadPercent: 0,
+      marginPercent: 0,
+      minimumOrderValue: 100,
+    })
+    expect(result.priceBeforeMinimum).toBe(150)
+    expect(result.finalPrice).toBe(150)
+  })
+
+  it('does not apply minimum order value for zero-priced orders', () => {
+    const result = calculatePricingWaterfall({
+      materialCost: 0,
+      machineCost: 0,
+      quantity: 1,
+      overheadPercent: 0,
+      marginPercent: 0,
+      coupon: { discountType: 'fixed_amount', discountValue: 100 },
+      minimumOrderValue: 100,
+    })
+    expect(result.finalPrice).toBe(0)
+  })
+
+  it('uses minimum order value for free-delivery threshold decision', () => {
+    const result = calculatePricingWaterfall({
+      materialCost: 60,
+      machineCost: 20,
+      quantity: 1,
+      overheadPercent: 0,
+      marginPercent: 0,
+      minimumOrderValue: 400,
+      deliveryThreshold: 350,
+      defaultDeliveryCharge: 50,
+    })
+    expect(result.priceBeforeMinimum).toBe(80)
+    expect(result.finalPrice).toBe(400)
+    expect(result.deliveryCharge).toBe(0)
+  })
+
+  it('delivery falls back to the updated default threshold of 349', () => {
+    const result = calculatePricingWaterfall({
+      materialCost: 200,
+      machineCost: 100,
+      quantity: 1,
+      overheadPercent: 0,
+      marginPercent: 0,
+      deliveryThreshold: 349,
+      defaultDeliveryCharge: 50,
+    })
+    expect(result.finalPrice).toBe(300)
+    expect(result.deliveryCharge).toBe(50)
+
+    const free = calculatePricingWaterfall({
+      materialCost: 300,
+      machineCost: 100,
+      quantity: 1,
+      overheadPercent: 0,
+      marginPercent: 0,
+      deliveryThreshold: 349,
+      defaultDeliveryCharge: 50,
+    })
+    expect(free.deliveryCharge).toBe(0)
+  })
+
+  it('margin is applied to subtotal only, not subtotal plus overhead', () => {
+    const result = calculatePricingWaterfall({
+      materialCost: 100,
+      machineCost: 100,
+      quantity: 1,
+      overheadPercent: 10,
+      marginPercent: 20,
+    })
+    expect(result.subtotal).toBe(200)
+    expect(result.overheadAmount).toBe(20)
+    // (subtotal + overhead) * 20% would be 44; non-compound is subtotal * 20% = 40
+    expect(result.marginAmount).toBe(40)
+    expect(result.totalPrice).toBe(260)
   })
 })

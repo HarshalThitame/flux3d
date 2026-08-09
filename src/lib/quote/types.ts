@@ -115,6 +115,8 @@ export type PriceBreakdown = {
   offerDiscountAmount: number
   discount: number
   finalPrice: number
+  minimumOrderValue: number
+  priceBeforeMinimum: number
   deliveryCharge: number
   grandTotal: number
   price: number

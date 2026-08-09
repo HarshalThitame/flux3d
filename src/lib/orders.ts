@@ -142,6 +142,8 @@ export type OrderDraft = {
   cartDiscountAmount: number
   cartDiscountPercent: number
   finalPrice: number
+  minimumOrderValue: number
+  priceBeforeMinimum: number
   deliveryCharge: number
   grandTotal: number
   price: number
@@ -164,6 +166,8 @@ export type OrderDraft = {
     | 'finalPrice'
     | 'deliveryCharge'
     | 'grandTotal'
+    | 'minimumOrderValue'
+    | 'priceBeforeMinimum'
   >
   notes: string
   modelMetadata: ModelMetadata

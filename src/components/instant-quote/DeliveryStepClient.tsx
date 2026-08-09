@@ -68,6 +68,8 @@ export default function DeliveryStepClient({
           finalPrice: parsed.finalPrice ?? 0,
           deliveryCharge: parsed.deliveryCharge ?? 0,
           grandTotal: parsed.grandTotal ?? 0,
+          minimumOrderValue: parsed.minimumOrderValue ?? 0,
+          priceBeforeMinimum: parsed.priceBeforeMinimum ?? parsed.finalPrice ?? 0,
         },
         fileUrl: normalizedFileUrl,
       }

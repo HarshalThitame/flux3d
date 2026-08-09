@@ -24,12 +24,23 @@ type DashboardResponse = {
 
 function timeSeriesFromOrders(orders: AdminOrder[]) {
   const monthly = orders.reduce<Record<string, number>>((acc, order) => {
-    const month = new Date(order.createdAt).toLocaleString('en-US', { month: 'short' })
-    acc[month] = (acc[month] ?? 0) + 1
+    const date = new Date(order.createdAt)
+    if (Number.isNaN(date.getTime())) return acc
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+    acc[key] = (acc[key] ?? 0) + 1
     return acc
   }, {})
 
-  return Object.entries(monthly).map(([label, value]) => ({ label, value }))
+  return Object.entries(monthly)
+    .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+    .map(([key, value]) => {
+      const [year, month] = key.split('-')
+      const label = new Date(Number(year), Number(month) - 1, 1).toLocaleString('en-US', {
+        month: 'short',
+        year: '2-digit',
+      })
+      return { label, value }
+    })
 }
 
 export default function AdminDashboardPage() {
@@ -130,8 +141,8 @@ export default function AdminDashboardPage() {
           points={chartOrders}
         />
         <DonutChartCard
-          title="Material Usage"
-          subtitle="Current demand split by material family."
+          title="Orders by Material"
+          subtitle="Share of print orders by material family."
           slices={data.materialUsage}
         />
       </div>
@@ -185,7 +196,7 @@ export default function AdminDashboardPage() {
            { key: 'fullName', label: 'Customer', sortable: true, sortValue: (row) => row.fullName, render: (row) => row.fullName },
            { key: 'material', label: 'Material', sortable: true, sortValue: (row) => row.material, render: (row) => row.material },
            { key: 'status', label: 'Status', sortable: true, sortValue: (row) => row.status, render: (row) => <StatusBadge status={row.status} /> },
-           { key: 'price', label: 'Price', sortable: true, sortValue: (row) => row.totalPrice, render: (row) => `₹${Number(row.totalPrice).toLocaleString('en-IN')}` },
+           { key: 'price', label: 'Price', sortable: true, sortValue: (row) => row.grandTotal, render: (row) => `₹${Number(row.grandTotal).toLocaleString('en-IN')}` },
          ]}
        />
 

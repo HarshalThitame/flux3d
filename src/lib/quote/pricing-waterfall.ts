@@ -21,6 +21,8 @@ export type PricingSettingsInput = Pick<
   | 'defaultDeliveryCharge'
   | 'cartDiscountEnabled'
   | 'cartDiscountTiers'
+  | 'minimumOrderValue'
+  | 'gstInclusivePricing'
 >
 
 export type WaterfallInput = {
@@ -36,6 +38,7 @@ export type WaterfallInput = {
   deliveryCharge?: number | null
   deliveryThreshold?: number
   defaultDeliveryCharge?: number
+  minimumOrderValue?: number
 }
 
 export type PricingWaterfall = {
@@ -60,6 +63,8 @@ export type PricingWaterfall = {
   offerDiscountAmount: number
   discount: number
   finalPrice: number
+  minimumOrderValue: number
+  priceBeforeMinimum: number
   deliveryCharge: number
   grandTotal: number
   price: number
@@ -109,7 +114,7 @@ export function calculateDeliveryChargeFromSettings(
   price: number,
   settings: Pick<BusinessSettings, 'deliveryChargeThreshold' | 'defaultDeliveryCharge'>
 ) {
-  const threshold = positiveNumber(settings.deliveryChargeThreshold, 499)
+  const threshold = positiveNumber(settings.deliveryChargeThreshold, 349)
   const charge = positiveNumber(settings.defaultDeliveryCharge, 50)
   return price >= threshold ? 0 : charge
 }
@@ -166,7 +171,7 @@ export function calculatePricingWaterfall(input: WaterfallInput): PricingWaterfa
   const overheadPercent = positiveNumber(input.overheadPercent)
   const overheadAmount = roundMoney(subtotal * (overheadPercent / 100))
   const marginPercent = positiveNumber(input.marginPercent)
-  const marginAmount = roundMoney((subtotal + overheadAmount) * (marginPercent / 100))
+  const marginAmount = roundMoney(subtotal * (marginPercent / 100))
   const totalPrice = roundMoney(subtotal + overheadAmount + marginAmount)
   const cartDiscountPercent = positiveNumber(input.cartDiscountPercent)
   const cartDiscountAmount = roundMoney(totalPrice * (cartDiscountPercent / 100))
@@ -175,16 +180,21 @@ export function calculatePricingWaterfall(input: WaterfallInput): PricingWaterfa
   const afterCoupon = roundMoney(Math.max(0, afterCart - couponDiscountAmount))
   const offerDiscountAmount = calculatePromotionDiscount(afterCoupon, input.offer)
   const finalPrice = roundMoney(Math.max(0, afterCoupon - offerDiscountAmount))
+  const minimumOrderValue = Math.max(0, positiveNumber(input.minimumOrderValue, 0))
+  const priceBeforeMinimum = finalPrice
+  const priceAfterMinimum = minimumOrderValue > 0 && finalPrice > 0 && finalPrice < minimumOrderValue
+    ? roundMoney(minimumOrderValue)
+    : finalPrice
   const deliveryCharge = roundMoney(
     input.deliveryCharge == null
-      ? calculateDeliveryChargeFromSettings(finalPrice, {
-          deliveryChargeThreshold: input.deliveryThreshold ?? 499,
+      ? calculateDeliveryChargeFromSettings(priceAfterMinimum, {
+          deliveryChargeThreshold: input.deliveryThreshold ?? 349,
           defaultDeliveryCharge: input.defaultDeliveryCharge ?? 50,
         })
       : input.deliveryCharge
   )
   const discount = roundMoney(cartDiscountAmount + couponDiscountAmount + offerDiscountAmount)
-  const grandTotal = roundMoney(finalPrice + deliveryCharge)
+  const grandTotal = roundMoney(priceAfterMinimum + deliveryCharge)
 
   return {
     materialCost,
@@ -206,10 +216,12 @@ export function calculatePricingWaterfall(input: WaterfallInput): PricingWaterfa
     afterCoupon,
     offerDiscountAmount,
     discount,
-    finalPrice,
+    finalPrice: priceAfterMinimum,
+    minimumOrderValue,
+    priceBeforeMinimum,
     deliveryCharge,
     grandTotal,
-    price: finalPrice,
+    price: priceAfterMinimum,
     pricePerUnit: roundMoney(totalPrice / quantity),
   }
 }
@@ -237,13 +249,13 @@ export function calculateQuotePricing(
   const materialWeightGramsTotal = materialWeightGramsPerUnit * quantity
   const supportWeightGramsTotal = supportWeightGramsPerUnit * quantity
   const materialRatePerKg = material.pricePerGram * 1000
-  const markupMultiplier = 1 + positiveNumber(settings.materialMarkupPercent, 15) / 100
+  const markupMultiplier = 1 + positiveNumber(settings.materialMarkupPercent, 0) / 100
   const materialCostPerUnit = materialWeightGramsPerUnit * material.pricePerGram * markupMultiplier
   const materialCost = materialCostPerUnit * quantity
   const supportCost = config.supports ? supportWeightGramsTotal * material.pricePerGram : 0
-  const printSpeedGramsPerHour = Math.max(0.01, positiveNumber(settings.printSpeedGramsPerHour, 14.5))
+  const printSpeedGramsPerHour = Math.max(0.01, positiveNumber(settings.printSpeedGramsPerHour, 40))
   const basePrintTimeMinutesPerUnit = (materialWeightGramsPerUnit / printSpeedGramsPerHour) * 60
-  const layerHeightMultiplier = 0.2 / layerHeight.value
+  const layerHeightMultiplier = layerHeight.multiplier
   const estimatedMinutesPerUnit = basePrintTimeMinutesPerUnit * layerHeightMultiplier
   const estimatedMinutes = estimatedMinutesPerUnit * quantity
   const estimatedHours = estimatedMinutes / 60
@@ -268,6 +280,7 @@ export function calculateQuotePricing(
     cartDiscountPercent: 0,
     deliveryThreshold: settings.deliveryChargeThreshold,
     defaultDeliveryCharge: settings.defaultDeliveryCharge,
+    minimumOrderValue: settings.minimumOrderValue,
   })
   const matchedCartTier = getHighestCartDiscountTier(
     preliminaryWaterfall.priceBeforeDiscount,
@@ -284,6 +297,7 @@ export function calculateQuotePricing(
     cartDiscountPercent: matchedCartTier?.discountPercent ?? 0,
     deliveryThreshold: settings.deliveryChargeThreshold,
     defaultDeliveryCharge: settings.defaultDeliveryCharge,
+    minimumOrderValue: settings.minimumOrderValue,
   })
 
   return {

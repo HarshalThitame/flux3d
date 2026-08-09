@@ -175,6 +175,8 @@ function mapRow(row: BusinessSettingsRow): BusinessSettings {
     postProcessingMultipliers: parsePostProcessingMultipliers(row.post_processing_multipliers, FALLBACK.postProcessingMultipliers),
     cartDiscountEnabled: row.cart_discount_enabled ?? FALLBACK.cartDiscountEnabled,
     cartDiscountTiers: parseCartDiscountTiers(row.cart_discount_tiers, FALLBACK.cartDiscountTiers),
+    minimumOrderValue: row.minimum_order_value ?? FALLBACK.minimumOrderValue,
+    gstInclusivePricing: row.gst_inclusive_pricing ?? FALLBACK.gstInclusivePricing,
     pickupAvailable: bool(row.pickup_available),
     codAvailable: bool(row.cod_available),
     paymentsEnabled: bool(row.payments_enabled ?? true),

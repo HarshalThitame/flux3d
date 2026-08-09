@@ -746,28 +746,41 @@ function InvoicingTab({ form, updateField, f, fn, fb, triggerFileInput, uploadin
             type="number"
             value={String(fn('overheadPercentage'))}
             onChange={(v) => updateField('overheadPercentage', Number(v))}
-            placeholder="15"
+            placeholder="10"
           />
           <InputField
             label="Margin Percentage (%)"
             type="number"
             value={String(fn('marginPercentage'))}
             onChange={(v) => updateField('marginPercentage', Number(v))}
-            placeholder="30"
+            placeholder="20"
           />
           <InputField
             label="Material Markup (%)"
             type="number"
             value={String(fn('materialMarkupPercent'))}
             onChange={(v) => updateField('materialMarkupPercent', Number(v))}
-            placeholder="15"
+            placeholder="0"
           />
           <InputField
             label="Print Speed (g/hour)"
             type="number"
             value={String(fn('printSpeedGramsPerHour'))}
             onChange={(v) => updateField('printSpeedGramsPerHour', Number(v))}
-            placeholder="14.5"
+            placeholder="40"
+          />
+          <InputField
+            label="Minimum Order Value (₹)"
+            type="number"
+            value={String(fn('minimumOrderValue'))}
+            onChange={(v) => updateField('minimumOrderValue', Number(v))}
+            placeholder="100"
+          />
+          <ToggleField
+            label="GST Inclusive Pricing Display"
+            description="Show 'Prices inclusive of all applicable taxes' on instant quotes even before GST registration."
+            checked={fb('gstInclusivePricing')}
+            onChange={(v) => updateField('gstInclusivePricing', v)}
           />
           <InputField label="SAC / HSN Code" value={f('sacHsnCode')} onChange={(v) => updateField('sacHsnCode', v)} placeholder="9983" />
         </div>

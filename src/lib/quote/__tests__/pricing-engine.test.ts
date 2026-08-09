@@ -90,10 +90,10 @@ describe('calculateInstantQuote', () => {
     const config: QuoteConfig = { materialId: 'pla', color: 'Red', infill: 20, layerHeight: 0.2, quantity: 1, postProcessingLevel: 'none', supports: false }
 
     const result = calculateInstantQuote(model, config, [material], {
-      overheadPercentage: 15, marginPercentage: 30, materialMarkupPercent: 15,
-      printSpeedGramsPerHour: 14.5, postProcessingMultipliers: { none: 0, sanded: 0.25, 'sanded-painted': 0.6 },
-      deliveryChargeThreshold: 499, defaultDeliveryCharge: 50,
-      cartDiscountEnabled: false, cartDiscountTiers: [],
+      overheadPercentage: 15, marginPercentage: 30, materialMarkupPercent: 0,
+      printSpeedGramsPerHour: 40, postProcessingMultipliers: { none: 0, sanded: 0.15, 'sanded-painted': 0.35 },
+      deliveryChargeThreshold: 349, defaultDeliveryCharge: 50,
+      cartDiscountEnabled: false, cartDiscountTiers: [], minimumOrderValue: 0, gstInclusivePricing: true,
     })
 
     expect(result).not.toBeNull()
@@ -123,6 +123,102 @@ describe('calculateInstantQuote', () => {
     expect(result).not.toBeNull()
     if (result) {
       expect(result.quantity).toBe(2)
+    }
+  })
+
+  it('uses the layerHeight multiplier from layerHeightOptions, not 0.2 / value', async () => {
+    const { calculateInstantQuote } = await import('../pricing-engine')
+    const model = {
+      volumeMm3: 20000, dimensionsMm: { x: 20, y: 15, z: 10 }, fileName: 'cube.stl', fileSize: 1000, extension: 'stl', triangleCount: 100, suggestedMaterialId: 'pla',
+      object: null,
+    } as unknown as ParsedModel
+    const material: QuoteMaterial = {
+      id: 'pla', name: 'PLA+', icon: '🧩', summary: '', density: 1.24, pricePerGram: 2.8, machineRate: 180,
+      multiplier: 1, recommendedFor: '', properties: { strength: 'Medium', flexibility: 'Low', tempResistance: 'Low', difficulty: 'Easy' },
+      colors: [{ name: 'Red' }], difficultyFactor: 1,
+      keyProperties: [], bestFor: [], difficultyLevel: 'Easy', heatResistance: 'Low',
+      strengthRating: 'Medium', finishQuality: 'Good',
+    }
+    const settings = {
+      overheadPercentage: 10, marginPercentage: 20, materialMarkupPercent: 0,
+      printSpeedGramsPerHour: 40, postProcessingMultipliers: { none: 0, sanded: 0.15, 'sanded-painted': 0.35 },
+      deliveryChargeThreshold: 349, defaultDeliveryCharge: 50,
+      cartDiscountEnabled: false, cartDiscountTiers: [], minimumOrderValue: 100, gstInclusivePricing: true,
+    }
+
+    const standard = calculateInstantQuote(model, { ...createConfig(0.2) }, [material], settings)
+    const high = calculateInstantQuote(model, { ...createConfig(0.12) }, [material], settings)
+
+    expect(standard).not.toBeNull()
+    expect(high).not.toBeNull()
+    if (standard && high) {
+      // layerHeightOptions multiplier: 0.12mm = 1.3x the 0.2mm machine time
+      expect(high.estimatedMinutesPerUnit).toBeCloseTo(standard.estimatedMinutesPerUnit * 1.3, 4)
+      // Legacy behavior (0.2 / 0.12 = 1.6667) must NOT be used
+      expect(high.estimatedMinutesPerUnit).toBeLessThan(standard.estimatedMinutesPerUnit * 1.67)
+    }
+
+    function createConfig(layerHeight: number): QuoteConfig {
+      return { materialId: 'pla', color: 'Red', infill: 20, layerHeight, quantity: 1, postProcessingLevel: 'none', supports: false }
+    }
+  })
+
+  it('applies minimum order value and reports priceBeforeMinimum', async () => {
+    const { calculateInstantQuote } = await import('../pricing-engine')
+    const model = {
+      volumeMm3: 5000, dimensionsMm: { x: 17, y: 17, z: 17 }, fileName: 'tiny.stl', fileSize: 500, extension: 'stl', triangleCount: 50, suggestedMaterialId: 'pla',
+      object: null,
+    } as unknown as ParsedModel
+    const material: QuoteMaterial = {
+      id: 'pla', name: 'PLA+', icon: '🧩', summary: '', density: 1.24, pricePerGram: 2.8, machineRate: 180,
+      multiplier: 1, recommendedFor: '', properties: { strength: 'Medium', flexibility: 'Low', tempResistance: 'Low', difficulty: 'Easy' },
+      colors: [{ name: 'Red' }], difficultyFactor: 1,
+      keyProperties: [], bestFor: [], difficultyLevel: 'Easy', heatResistance: 'Low',
+      strengthRating: 'Medium', finishQuality: 'Good',
+    }
+    const config: QuoteConfig = { materialId: 'pla', color: 'Red', infill: 20, layerHeight: 0.2, quantity: 1, postProcessingLevel: 'none', supports: false }
+    const settings = {
+      overheadPercentage: 10, marginPercentage: 20, materialMarkupPercent: 0,
+      printSpeedGramsPerHour: 40, postProcessingMultipliers: { none: 0, sanded: 0.15, 'sanded-painted': 0.35 },
+      deliveryChargeThreshold: 349, defaultDeliveryCharge: 50,
+      cartDiscountEnabled: false, cartDiscountTiers: [], minimumOrderValue: 100, gstInclusivePricing: true,
+    }
+
+    const result = calculateInstantQuote(model, config, [material], settings)
+    expect(result).not.toBeNull()
+    if (result) {
+      expect(result.minimumOrderValue).toBe(100)
+      expect(result.finalPrice).toBeGreaterThanOrEqual(100)
+      expect(result.priceBeforeMinimum).toBeLessThanOrEqual(result.finalPrice)
+    }
+  })
+
+  it('does not apply markup when materialMarkupPercent is 0', async () => {
+    const { calculateInstantQuote } = await import('../pricing-engine')
+    const model = {
+      volumeMm3: 10000, dimensionsMm: { x: 10, y: 10, z: 10 }, fileName: 'cube.stl', fileSize: 1000, extension: 'stl', triangleCount: 100, suggestedMaterialId: 'pla',
+      object: null,
+    } as unknown as ParsedModel
+    const material: QuoteMaterial = {
+      id: 'pla', name: 'PLA+', icon: '🧩', summary: '', density: 1.24, pricePerGram: 2.8, machineRate: 180,
+      multiplier: 1, recommendedFor: '', properties: { strength: 'Medium', flexibility: 'Low', tempResistance: 'Low', difficulty: 'Easy' },
+      colors: [{ name: 'Red' }], difficultyFactor: 1,
+      keyProperties: [], bestFor: [], difficultyLevel: 'Easy', heatResistance: 'Low',
+      strengthRating: 'Medium', finishQuality: 'Good',
+    }
+    const config: QuoteConfig = { materialId: 'pla', color: 'Red', infill: 100, layerHeight: 0.2, quantity: 1, postProcessingLevel: 'none', supports: false }
+    const settings = {
+      overheadPercentage: 0, marginPercentage: 0, materialMarkupPercent: 0,
+      printSpeedGramsPerHour: 40, postProcessingMultipliers: { none: 0, sanded: 0.15, 'sanded-painted': 0.35 },
+      deliveryChargeThreshold: 349, defaultDeliveryCharge: 50,
+      cartDiscountEnabled: false, cartDiscountTiers: [], minimumOrderValue: 0, gstInclusivePricing: true,
+    }
+
+    const result = calculateInstantQuote(model, config, [material], settings)
+    expect(result).not.toBeNull()
+    if (result) {
+      // 10 cm3 * 1.24 g/cm3 = 12.4 g solid; 100% infill -> 12.4 g; markup 0% -> 12.4 * 2.8 = 34.72
+      expect(result.materialCost).toBeCloseTo(34.72, 2)
     }
   })
 })

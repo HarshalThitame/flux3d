@@ -50,7 +50,7 @@ export async function seedTestData() {
 
   await db.from('business_settings').insert({
     overhead_percent: 15, margin_percentage: 30, material_markup_percent: 15,
-    print_speed_grams_per_hour: 14.5, delivery_charge_threshold: 499, default_delivery_charge: 50,
+    print_speed_grams_per_hour: 40, delivery_charge_threshold: 349, default_delivery_charge: 50,
     gst_enabled: true, cgst_percent: 9, sgst_percent: 9,
     business_name: 'Test Business',
   })

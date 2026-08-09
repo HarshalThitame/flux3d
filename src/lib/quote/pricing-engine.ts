@@ -55,6 +55,8 @@ function legacySettings(
     defaultDeliveryCharge: FALLBACK_SETTINGS.defaultDeliveryCharge,
     cartDiscountEnabled,
     cartDiscountTiers,
+    minimumOrderValue: FALLBACK_SETTINGS.minimumOrderValue,
+    gstInclusivePricing: FALLBACK_SETTINGS.gstInclusivePricing,
   }
 }
 
