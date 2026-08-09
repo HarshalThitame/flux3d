@@ -38,6 +38,21 @@ function getCookieValue(name: string) {
   return match?.[1] ?? ''
 }
 
+function setCookie(name: string, value: string, days = 365) {
+  if (typeof document === 'undefined') return
+  const expires = new Date(Date.now() + days * 864e5).toUTCString()
+  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`
+}
+
+function getOrCreateTrackToken(): string {
+  let token = getCookieValue(TRACK_TOKEN_COOKIE)
+  if (!token) {
+    token = crypto.randomUUID()
+    setCookie(TRACK_TOKEN_COOKIE, token)
+  }
+  return token
+}
+
 export default function VisitorTracker() {
   const pathname = usePathname()
   const sessionIdRef = useRef<string>('')
@@ -52,7 +67,7 @@ export default function VisitorTracker() {
 
     const cancelIdle = runWhenIdle(() => {
       const anonId = getOrCreateAnonId()
-      trackToken = getCookieValue(TRACK_TOKEN_COOKIE)
+      trackToken = getOrCreateTrackToken()
       startTime = Date.now()
       started = true
 
