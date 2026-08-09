@@ -1,4 +1,11 @@
-import type { ShopSku, ShopVariantOption } from '@/lib/shop/admin-types'
+import type {
+  ProductDimensions,
+  ShopSku,
+  ShopSkuImage,
+  ShopVariantOption,
+  ShopVariantOptionDimension,
+  ShopVariantOptionImage,
+} from '@/lib/shop/admin-types'
 
 export type ShopPublicCategory = {
   id: string
@@ -45,6 +52,10 @@ export type ShopPublicProduct = {
   updated_at: string | null
   skus: ShopSku[]
   variant_options: ShopVariantOption[]
+  default_dimensions?: ProductDimensions | null
+  variant_option_dimensions: ShopVariantOptionDimension[]
+  variant_option_images: ShopVariantOptionImage[]
+  sku_images: Record<string, ShopSkuImage[]>
   sku_count: number
   avg_rating: number
   review_count: number

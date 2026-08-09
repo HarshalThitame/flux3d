@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
-import { ImagePlus, Loader2, Trash2 } from 'lucide-react'
+import { ImagePlus, Images, Loader2, Trash2 } from 'lucide-react'
 import { useProductEditor } from '../editor-context'
 import { Section } from '../ui'
 import { comboLabel } from '../types'
-import type { ShopSku } from '@/lib/shop/admin-types'
+import { ImageGalleryModal } from './ImageGalleryModal'
+import type { ShopSku, ShopSkuImage } from '@/lib/shop/admin-types'
 
 type BulkField = 'price' | 'compare_at' | 'stock' | 'low_stock' | 'weight'
 
@@ -43,6 +44,49 @@ function SkuImageUpload({ skuId, url }: { skuId: string; url: string | null }) {
         }}
       />
     </label>
+  )
+}
+
+function SkuGalleryButton({ sku }: { sku: ShopSku }) {
+  const { skuImages, addSkuImage, updateSkuImage, removeSkuImage, reorderSkuImages, uploadState, setToast } =
+    useProductEditor()
+  const [open, setOpen] = useState(false)
+  const images: ShopSkuImage[] = skuImages[sku.id] ?? []
+  const uploadPrefix = `sku-${sku.id}-`
+  const activeUploads = Object.fromEntries(
+    Object.entries(uploadState).filter(([key]) => key.startsWith(uploadPrefix))
+  )
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-2 text-xs font-semibold text-[#0F1B3D] transition hover:border-[#6d28d9]/40 hover:text-[#6d28d9]"
+        title="Manage gallery images"
+      >
+        <Images className="h-4 w-4" />
+        Gallery
+        {images.length > 0 && (
+          <span className="rounded-full bg-[#6d28d9]/10 px-1.5 py-0.5 text-[10px] font-bold text-[#6d28d9]">{images.length}</span>
+        )}
+      </button>
+      <ImageGalleryModal
+        open={open}
+        title={`Gallery — ${comboLabel(sku.variant_combination)}`}
+        images={images}
+        uploadState={activeUploads}
+        onClose={() => setOpen(false)}
+        onAddFiles={(files) => {
+          void Promise.all(files.map((file) => addSkuImage(sku.id, file))).catch((error) =>
+            setToast({ type: 'error', message: error instanceof Error ? error.message : 'Upload failed.' })
+          )
+        }}
+        onUpdate={(imageId, patch) => updateSkuImage(imageId, patch)}
+        onRemove={(imageId) => removeSkuImage(imageId)}
+        onReorder={(orderedIds) => reorderSkuImages(sku.id, orderedIds)}
+      />
+    </>
   )
 }
 
@@ -208,7 +252,7 @@ export function SkuManagerSection() {
                 <th className="px-3 py-3">
                   <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Select all SKUs" className="h-4 w-4 accent-[#6d28d9]" />
                 </th>
-                {['Variant Combo', 'Price', 'Compare At', 'Stock Qty', 'Low Stock', 'Weight', 'Variant Image', 'Available'].map(
+                {['Variant Combo', 'Price', 'Compare At', 'Stock Qty', 'Low Stock', 'Weight', 'Variant Image', 'Media', 'Available'].map(
                   (label) => (
                     <th key={label} className="px-3 py-3 text-left text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">
                       {label}
@@ -285,6 +329,9 @@ export function SkuManagerSection() {
                     </td>
                     <td className="px-3 py-3">
                       <SkuImageUpload skuId={sku.id} url={sku.variant_image_url} />
+                    </td>
+                    <td className="px-3 py-3">
+                      <SkuGalleryButton sku={sku} />
                     </td>
                     <td className="px-3 py-3">
                       <button
@@ -393,6 +440,7 @@ export function SkuManagerSection() {
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-2">
                   <SkuImageUpload skuId={sku.id} url={sku.variant_image_url} />
+                  <SkuGalleryButton sku={sku} />
                   <div className="flex items-center gap-2">
                     {isSelected && (
                       <span className="rounded-full bg-[#6d28d9]/10 px-2 py-0.5 text-xs font-semibold text-[#6d28d9]">Selected</span>

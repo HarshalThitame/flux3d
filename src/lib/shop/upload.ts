@@ -1,5 +1,45 @@
 export type UploadProgressHandler = (percent: number) => void
 
+export function uploadFormFileWithProgress(
+  url: string,
+  file: File,
+  fields: Record<string, string>,
+  onProgress: UploadProgressHandler
+) {
+  return new Promise<Record<string, unknown>>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', url)
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        onProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)))
+      }
+    }
+    xhr.onload = () => {
+      let data: Record<string, unknown> = {}
+      try {
+        data = JSON.parse(xhr.responseText)
+      } catch {
+        data = {}
+      }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onProgress(100)
+        resolve(data)
+      } else {
+        const errorBody = data as { error?: string }
+        reject(new Error(errorBody.error || 'Upload failed.'))
+      }
+    }
+    xhr.onerror = () => reject(new Error('Upload failed. Check your connection.'))
+    xhr.ontimeout = () => reject(new Error('Upload timed out.'))
+    const form = new FormData()
+    form.append('file', file)
+    for (const [key, value] of Object.entries(fields)) {
+      if (value !== undefined && value !== null) form.append(key, value)
+    }
+    xhr.send(form)
+  })
+}
+
 export function uploadFileWithProgress(
   url: string,
   file: File,

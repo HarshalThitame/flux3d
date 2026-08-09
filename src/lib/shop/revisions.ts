@@ -1,11 +1,14 @@
 import type { ProductForm } from '@/lib/shop/product-schema'
-import type { ShopSku, ShopVariantOption } from '@/lib/shop/admin-types'
+import type { ShopSku, ShopSkuImage, ShopVariantOption, ShopVariantOptionDimension, ShopVariantOptionImage } from '@/lib/shop/admin-types'
 
 export type ShopRevision = {
   timestamp: number
   product: ProductForm
   variants: ShopVariantOption[]
   skus: ShopSku[]
+  variant_dimensions?: ShopVariantOptionDimension[]
+  variant_option_images?: ShopVariantOptionImage[]
+  sku_images?: Record<string, ShopSkuImage[]>
 }
 
 const PREFIX = 'flux3d:shop-revision:'
@@ -61,10 +64,15 @@ export function deepStableStringify(value: unknown): string {
 }
 
 export function isSameState(a: ShopRevision, b: ShopRevision) {
-  return (
+  const sameBase =
     deepStableStringify(a.product) === deepStableStringify(b.product) &&
     deepStableStringify(a.variants) === deepStableStringify(b.variants) &&
     deepStableStringify(a.skus) === deepStableStringify(b.skus)
+  if (!sameBase) return false
+  return (
+    deepStableStringify(a.variant_dimensions ?? []) === deepStableStringify(b.variant_dimensions ?? []) &&
+    deepStableStringify(a.variant_option_images ?? []) === deepStableStringify(b.variant_option_images ?? []) &&
+    deepStableStringify(a.sku_images ?? []) === deepStableStringify(b.sku_images ?? [])
   )
 }
 
@@ -111,6 +119,15 @@ export function describeChanges(prev: ShopRevision, next: ShopRevision): string 
     changed.push(`${Math.abs(skuDelta)} SKU${Math.abs(skuDelta) === 1 ? '' : 's'} ${skuDelta > 0 ? 'added' : 'removed'}`)
   } else if (next.skus.some((sku, index) => deepStableStringify(sku) !== deepStableStringify(prev.skus[index]))) {
     changed.push('SKU values edited')
+  }
+  if (deepStableStringify(next.variant_dimensions ?? []) !== deepStableStringify(prev.variant_dimensions ?? [])) {
+    changed.push('Dimensions edited')
+  }
+  if (
+    deepStableStringify(next.variant_option_images ?? []) !== deepStableStringify(prev.variant_option_images ?? []) ||
+    deepStableStringify(next.sku_images ?? []) !== deepStableStringify(prev.sku_images ?? [])
+  ) {
+    changed.push('Variant images edited')
   }
   return changed.join(', ') || 'Minor changes'
 }

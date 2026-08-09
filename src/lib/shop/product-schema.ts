@@ -1,4 +1,15 @@
 import { z } from 'zod'
+import type { ProductDimensions } from '@/lib/shop/admin-types'
+
+export const productDimensionsSchema: z.ZodType<ProductDimensions> = z.object({
+  length_mm: z.number().min(0).nullable(),
+  width_mm: z.number().min(0).nullable(),
+  height_mm: z.number().min(0).nullable(),
+  weight_g: z.number().min(0).nullable(),
+  volume_cc: z.number().min(0).nullable(),
+  dimension_unit: z.enum(['mm', 'cm', 'inch']),
+  weight_unit: z.enum(['g', 'kg', 'oz', 'lb']),
+})
 
 export const productFormSchema = z.object({
   id: z.string().optional(),
@@ -20,6 +31,7 @@ export const productFormSchema = z.object({
   thumbnail_url: z.string(),
   image_urls: z.array(z.string()),
   image_alt: z.record(z.string(), z.string()),
+  default_dimensions: productDimensionsSchema.nullable(),
   model_url: z.string(),
   base_price: z.number().min(0, 'Price cannot be negative'),
   is_customizable: z.boolean(),

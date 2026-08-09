@@ -8,6 +8,7 @@ import { MediaGallerySection } from './product-editor/sections/MediaGallerySecti
 import { Model3DSection } from './product-editor/sections/Model3DSection'
 import { VariantOptionsSection } from './product-editor/sections/VariantOptionsSection'
 import { SkuManagerSection } from './product-editor/sections/SkuManagerSection'
+import { DimensionsSection } from './product-editor/sections/DimensionsSection'
 import { CustomizationSection } from './product-editor/sections/CustomizationSection'
 import { SeoVisibilitySection } from './product-editor/sections/SeoVisibilitySection'
 
@@ -28,6 +29,7 @@ function EditorShell() {
       <MediaGallerySection />
       <Model3DSection />
       <VariantOptionsSection />
+      <DimensionsSection />
       <SkuManagerSection />
       <CustomizationSection />
       <SeoVisibilitySection />
