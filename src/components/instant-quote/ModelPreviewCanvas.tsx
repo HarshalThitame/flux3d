@@ -217,7 +217,7 @@ export default function ModelPreviewCanvas({
       <color attach="background" args={['#070a12']} />
       
       {/* Studio Environment & Lighting */}
-      <Environment preset="city" />
+      <Environment files="/hdri/studio_small_03_1k.hdr" />
       <ambientLight intensity={0.65} />
       <directionalLight position={[120, 150, 80]} intensity={1.2} castShadow />
       <directionalLight position={[-100, -60, -80]} intensity={0.35} />
