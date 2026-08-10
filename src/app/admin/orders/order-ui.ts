@@ -132,3 +132,69 @@ export function discountPercent(total: number, discount: number) {
   if (total <= 0 || discount <= 0) return 0
   return (discount / total) * 100
 }
+
+const HOUR = 60 * 60 * 1000
+
+export function statusAgeMs(order: { status: OrderStatus; createdAt: string; statusTimestamps?: Partial<Record<OrderStatus, string>> | null }, now = Date.now()): number | null {
+  const currentTimestamp = order.statusTimestamps?.[order.status]
+  const startTimestamp = currentTimestamp ?? order.createdAt
+  const startTime = new Date(startTimestamp).getTime()
+  if (Number.isNaN(startTime)) return null
+  return Math.max(0, now - startTime)
+}
+
+export function ageSlaLevel(status: OrderStatus, ageMs: number | null): 'ok' | 'warn' | 'overdue' {
+  if (ageMs === null) return 'ok'
+  const hours = ageMs / HOUR
+  switch (status) {
+    case 'pending':
+    case 'confirmed':
+      if (hours >= 48) return 'overdue'
+      if (hours >= 24) return 'warn'
+      return 'ok'
+    case 'printing':
+      if (hours >= 72) return 'overdue'
+      if (hours >= 48) return 'warn'
+      return 'ok'
+    case 'shipped':
+      if (hours >= 120) return 'overdue'
+      if (hours >= 72) return 'warn'
+      return 'ok'
+    case 'delivered':
+    case 'completed':
+    case 'cancelled':
+      return 'ok'
+  }
+}
+
+export function ageSlaClass(level: 'ok' | 'warn' | 'overdue') {
+  switch (level) {
+    case 'ok':
+      return 'border-green-200 bg-green-50 text-green-700'
+    case 'warn':
+      return 'border-amber-200 bg-amber-50 text-amber-700'
+    case 'overdue':
+      return 'border-red-200 bg-red-50 text-red-700'
+  }
+}
+
+export function formatAge(ageMs: number | null) {
+  if (ageMs === null) return '—'
+  const minutes = Math.floor(ageMs / 60000)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  if (days >= 1) return `${days}d ${hours % 24}h`
+  if (hours >= 1) return `${hours}h ${minutes % 60}m`
+  return `${minutes}m`
+}
+
+export function ageRowLeftBorderClass(level: 'ok' | 'warn' | 'overdue') {
+  switch (level) {
+    case 'warn':
+      return 'border-l-amber-400'
+    case 'overdue':
+      return 'border-l-red-500'
+    default:
+      return 'border-l-transparent'
+  }
+}

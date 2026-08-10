@@ -1,5 +1,7 @@
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { logAdminAction } from '@/lib/admin/auditLog'
 import type { User } from '@supabase/supabase-js'
+import type { PostgrestFilterBuilder } from '@supabase/postgrest-js'
 import type {
   AdminFile,
   AdminCustomerFile,
@@ -37,7 +39,7 @@ const MATERIAL_COLORS = [
   '#6366f1',
   '#ec4899',
 ]
-const ADMIN_ORDER_SELECT =
+export const ADMIN_ORDER_SELECT =
   'id, user_id, group_id, order_number, file_url, material, color, infill, layer_height, quantity, price, price_per_unit, material_cost, machine_cost, subtotal, post_processing_charges, weight, difficulty_factor, total_price, final_price, grand_total, overhead_percent, overhead_amount, margin_percent, margin_amount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, coupon_code, coupon_id, discount_type, estimated_time, supports, post_processing_level, status, status_timestamps, cancel_requested, created_at, updated_at, notes, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, payment_provider, payment_status, provider_order_id, provider_payment_id, payment_method, payment_verified_at, payment_failed_at, payment_refund_status, payment_refund_amount_paise, payment_attempt_id, tracking_number, courier_name, tracking_url'
 
 export class AdminOrderStatusTransitionError extends Error {
@@ -71,7 +73,7 @@ type StorageListItem = {
   } | null
 }
 
-type OrderRow = {
+export type OrderRow = {
   id: string | number
   user_id?: string | null
   order_number: string | null
@@ -822,19 +824,152 @@ export async function getAdminDashboardData(days: DashboardRangeDays = 30) {
   }
 }
 
-export async function getAdminOrdersData(page = 1, limit = 100) {
+export type AdminOrdersFilter = {
+  query?: string
+  status?: string
+  paymentStatus?: string
+  dateFrom?: string
+  dateTo?: string
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyOrderFilters<T extends PostgrestFilterBuilder<any, any, any, any>>(
+  query: T,
+  filter: AdminOrdersFilter
+): T {
+  const { query: searchQuery, status, paymentStatus, dateFrom, dateTo } = filter
+
+  if (searchQuery) {
+    query = query.or(
+      `order_number.ilike.%${searchQuery}%,full_name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%,material.ilike.%${searchQuery}%`
+    ) as T
+  }
+
+  if (status && status !== 'all') {
+    query = query.eq('status', status) as T
+  }
+
+  if (paymentStatus && paymentStatus !== 'all') {
+    query = query.eq('payment_status', paymentStatus) as T
+  }
+
+  if (dateFrom) {
+    const fromDate = new Date(`${dateFrom}T00:00:00.000Z`).toISOString()
+    query = query.gte('created_at', fromDate) as T
+  }
+
+  if (dateTo) {
+    const toDate = new Date(`${dateTo}T23:59:59.999Z`).toISOString()
+    query = query.lte('created_at', toDate) as T
+  }
+
+  return query
+}
+
+export async function getAdminOrdersData(
+  page = 1,
+  limit = 100,
+  filter: AdminOrdersFilter = {}
+) {
   const supabase = createAdminSupabaseClient()
   const from = (page - 1) * limit
   const to = from + limit - 1
 
-  const { data, error, count } = await supabase
-    .from('orders')
-    .select(ADMIN_ORDER_SELECT, { count: 'exact', head: false })
+  const { data, error, count } = await applyOrderFilters(
+    supabase.from('orders').select(ADMIN_ORDER_SELECT, { count: 'exact', head: false }),
+    filter
+  )
     .order('created_at', { ascending: false })
     .range(from, to)
 
   if (error) throw new Error(error.message)
   return { orders: groupAdminOrders((data ?? []) as OrderRow[]), total: count ?? 0 }
+}
+
+export type AdminOrdersStats = {
+  totalOrders: number
+  revenue: number
+  pending: number
+  printing: number
+  confirmed: number
+  shipped: number
+  delivered: number
+  cancelled: number
+}
+
+export async function getAdminOrdersStats(filter: AdminOrdersFilter = {}): Promise<AdminOrdersStats> {
+  const supabase = createAdminSupabaseClient()
+
+  const selectFields = [
+    'id',
+    'group_id',
+    'order_number',
+    'status',
+    'grand_total',
+    'final_price',
+    'total_price',
+    'payment_status',
+    'payment_refund_amount_paise',
+    'delivery_charge',
+    'cancelled',
+  ].join(', ')
+
+  const { data, error } = await applyOrderFilters(
+    supabase.from('orders').select(selectFields),
+    filter
+  )
+
+  if (error) throw new Error(error.message)
+
+   const rows = (data ?? []) as unknown as Array<{
+     id: string
+     group_id: string | null
+     order_number: string | null
+     status: string
+     grand_total: number | string | null
+     final_price?: number | string | null
+     total_price?: number | string | null
+     payment_status?: string | null
+     payment_refund_amount_paise?: number | null
+     delivery_charge?: number | string | null
+     cancelled?: boolean | null
+   }>
+
+  const grouped = groupAdminOrders(rows as OrderRow[])
+
+  const stats: AdminOrdersStats = {
+    totalOrders: grouped.length,
+    revenue: 0,
+    pending: 0,
+    printing: 0,
+    confirmed: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+  }
+
+  for (const order of grouped) {
+    if (order.status === 'cancelled') {
+      stats.cancelled++
+      continue
+    }
+
+    const paymentState = order.paymentStatus ?? ''
+    if (!PAID_PAYMENT_STATES.includes(paymentState)) {
+      continue
+    }
+
+    if (order.status === 'pending') stats.pending++
+    else if (order.status === 'printing') stats.printing++
+    else if (order.status === 'confirmed') stats.confirmed++
+    else if (order.status === 'shipped') stats.shipped++
+    else if (order.status === 'delivered' || order.status === 'completed') stats.delivered++
+
+    const refundedAmount = Number(order.paymentRefundAmountPaise ?? 0) / 100
+    stats.revenue += order.grandTotal - refundedAmount
+  }
+
+  return stats
 }
 
 export async function updateAdminOrderStatus(groupId: string, status: AdminOrder['status'], cancellationReason?: string) {
@@ -895,6 +1030,50 @@ export async function updateAdminOrderStatus(groupId: string, status: AdminOrder
   if (error) throw new Error(error.message)
   const grouped = groupAdminOrders((data ?? []) as OrderRow[])
   return grouped[0]
+}
+
+export type BatchStatusResult = {
+  updates: Array<{ groupId: string; orderNumber: string; updated: boolean; error?: string }>
+  updatedCount: number
+  failedCount: number
+}
+
+export async function batchUpdateOrderStatuses(
+  updates: Array<{ groupId: string; status: AdminOrder['status']; cancellationReason?: string }>,
+  adminUserId: string
+): Promise<BatchStatusResult> {
+  const result: BatchStatusResult = {
+    updates: [],
+    updatedCount: 0,
+    failedCount: 0,
+  }
+
+  for (const { groupId, status, cancellationReason } of updates) {
+    try {
+      const order = await updateAdminOrderStatus(groupId, status, cancellationReason)
+      result.updates.push({ groupId, orderNumber: order.orderNumber, updated: true })
+      result.updatedCount++
+
+      await logAdminAction({
+        admin_id: adminUserId,
+        action: 'update_order_status',
+        target_type: 'order',
+        target_id: groupId,
+        old_value: null,
+        new_value: { status },
+      })
+    } catch (error) {
+      result.updates.push({
+        groupId,
+        orderNumber: '',
+        updated: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+      result.failedCount++
+    }
+  }
+
+  return result
 }
 
 export async function updateAdminOrderNotes(groupId: string, notes: string | null) {

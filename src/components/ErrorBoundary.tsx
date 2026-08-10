@@ -5,6 +5,9 @@ import { logError } from '@/lib/tracking/errorLogger'
 
 type Props = {
   children: React.ReactNode
+  fallback?: React.ReactNode
+  fallbackTitle?: string
+  fallbackMessage?: string
 }
 
 type State = {
@@ -30,10 +33,11 @@ export default class ErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      if (this.props.fallback) return this.props.fallback
       return (
         <div className="min-h-screen bg-white px-6 py-16 text-center text-gray-900">
-          <h1 className="text-2xl font-bold">Something went wrong</h1>
-          <p className="mt-2 text-sm text-gray-600">Please refresh the page or try again later.</p>
+          <h1 className="text-2xl font-bold">{this.props.fallbackTitle ?? 'Something went wrong'}</h1>
+          <p className="mt-2 text-sm text-gray-600">{this.props.fallbackMessage ?? 'Please refresh the page or try again later.'}</p>
         </div>
       )
     }

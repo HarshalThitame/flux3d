@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
+import { rateLimitResponse } from '@/lib/rate-limit'
 import {
   AdminOrderStatusTransitionError,
+  AdminOrdersFilter,
+  batchUpdateOrderStatuses,
   getAdminOrdersData,
+  getAdminOrdersStats,
   updateAdminOrderNotes,
   updateAdminOrderStatus,
   updateAdminOrderTracking,
@@ -19,16 +23,55 @@ async function getCustomerEmail(supabase: ReturnType<typeof createAdminSupabaseC
   return data?.email ?? ''
 }
 
+function parseFilterFromSearchParams(searchParams: URLSearchParams): AdminOrdersFilter {
+  const rawQuery = searchParams.get('query') ?? ''
+  const rawStatus = searchParams.get('status') ?? ''
+  const rawPaymentStatus = searchParams.get('paymentStatus') ?? ''
+  const dateFrom = searchParams.get('dateFrom') ?? undefined
+  const dateTo = searchParams.get('dateTo') ?? undefined
+
+  return {
+    query: rawQuery || undefined,
+    status: rawStatus && rawStatus !== 'all' ? rawStatus : undefined,
+    paymentStatus: rawPaymentStatus && rawPaymentStatus !== 'all' ? rawPaymentStatus : undefined,
+    dateFrom,
+    dateTo,
+  }
+}
+
 export async function GET(request: Request) {
   const auth = await requireAdminRequest()
   if ('response' in auth) return auth.response
 
+  const rateLimit = await rateLimitResponse(request, {
+    prefix: 'admin_orders_get',
+    windowSeconds: 60,
+    maxRequests: 120,
+    userId: auth.user.id,
+  })
+
+  if (!rateLimit.success) {
+    return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429 })
+  }
+
+  const { searchParams } = new URL(request.url)
+  const filter = parseFilterFromSearchParams(searchParams)
+  const statsParam = searchParams.get('stats')
+
+  if (statsParam === 'true') {
+    try {
+      const stats = await getAdminOrdersStats(filter)
+      return NextResponse.json(stats)
+    } catch (error) {
+      return getAdminApiErrorResponse(error)
+    }
+  }
+
   try {
-    const { searchParams } = new URL(request.url)
     const page = Math.max(1, Number(searchParams.get('page')) || 1)
     const limit = Math.min(500, Math.max(1, Number(searchParams.get('limit')) || 100))
-    const result = await getAdminOrdersData(page, limit)
-    return NextResponse.json({ orders: result.orders, total: result.total, page, limit })
+    const result = await getAdminOrdersData(page, limit, filter)
+    return NextResponse.json({ orders: result.orders, total: result.total, page, limit, filter })
   } catch (error) {
     return getAdminApiErrorResponse(error)
   }
@@ -38,8 +81,10 @@ export async function PATCH(request: Request) {
   const auth = await requireAdminRequest()
   if ('response' in auth) return auth.response
 
+  const cloned = request.clone()
+
   try {
-    const body = (await request.json()) as {
+    const body = (await cloned.json()) as {
       groupId?: string
       status?: OrderStatus
       notes?: string | null
@@ -47,6 +92,41 @@ export async function PATCH(request: Request) {
       tracking_number?: string | null
       courier_name?: string | null
       tracking_url?: string | null
+      batch?: boolean
+      groupIds?: string[]
+    }
+
+    const isBatch = body.batch && body.groupIds && body.status
+
+    const rateLimit = await rateLimitResponse(request, {
+      prefix: isBatch ? 'admin_orders_batch' : 'admin_orders_patch',
+      windowSeconds: 60,
+      maxRequests: isBatch ? 10 : 30,
+      userId: auth.user.id,
+    })
+
+    if (!rateLimit.success) {
+      return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429 })
+    }
+
+    // ── Batch status update ──
+    if (body.batch && body.groupIds && body.status) {
+      if (!orderStatuses.includes(body.status)) {
+        return NextResponse.json({ error: 'Invalid status.' }, { status: 400 })
+      }
+      if (body.groupIds.length === 0) {
+        return NextResponse.json({ error: 'No order IDs provided.' }, { status: 400 })
+      }
+
+      const updates = body.groupIds.map((groupId) => ({
+        groupId,
+        status: body.status!,
+        cancellationReason: body.cancellationReason,
+      }))
+
+      const result = await batchUpdateOrderStatuses(updates, auth.user.id)
+
+      return NextResponse.json({ result })
     }
 
     if (!body.groupId) {
