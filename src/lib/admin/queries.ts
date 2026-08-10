@@ -911,7 +911,6 @@ export async function getAdminOrdersStats(filter: AdminOrdersFilter = {}): Promi
     'payment_status',
     'payment_refund_amount_paise',
     'delivery_charge',
-    'cancelled',
   ].join(', ')
 
   const { data, error } = await applyOrderFilters(
@@ -932,7 +931,6 @@ export async function getAdminOrdersStats(filter: AdminOrdersFilter = {}): Promi
      payment_status?: string | null
      payment_refund_amount_paise?: number | null
      delivery_charge?: number | string | null
-     cancelled?: boolean | null
    }>
 
   const grouped = groupAdminOrders(rows as OrderRow[])
