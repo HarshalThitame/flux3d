@@ -859,7 +859,7 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
               </div>
 
               <div className="mt-5 hidden overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm md:block">
-                <div className="max-h-[75vh] overflow-auto">
+                <div data-lenis-prevent className="max-h-[75vh] overflow-auto overscroll-contain">
                   <table className="w-full min-w-[1120px] border-separate border-spacing-0 text-left text-sm">
                     <thead className="sticky top-0 z-20 bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
                       <tr>
