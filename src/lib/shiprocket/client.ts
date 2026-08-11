@@ -224,6 +224,7 @@ export type AssignAwbResult = {
   }
   awb_code?: string
   courier_name?: string
+  awb_assign_error?: string
 }
 
 export async function assignAwb(shipmentId: number | string): Promise<AssignAwbResult> {
