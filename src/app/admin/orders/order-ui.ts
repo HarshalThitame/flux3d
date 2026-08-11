@@ -37,6 +37,8 @@ export function statusPillClass(status: OrderStatus) {
   }
 }
 
+export const POST_PROCESSING_LEVELS = ['none', 'sanded', 'sanded-painted'] as const
+
 export function postProcessingLabel(value?: string | null) {
   const rawValue = value?.trim() ?? ''
   const normalized = rawValue.toLowerCase()
