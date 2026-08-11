@@ -565,6 +565,7 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
   })
   const [adminNotes, setAdminNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const [shippingToShiprocket, setShippingToShiprocket] = useState(false)
   const [showSnapshot, setShowSnapshot] = useState(false)
 
   const loadOrder = useCallback(async () => {
@@ -654,6 +655,36 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
       tracking_url: trackingForm.tracking_url || null,
       estimated_delivery: trackingForm.estimated_delivery || null,
     })
+  }
+
+  async function shipViaShiprocket() {
+    setShippingToShiprocket(true)
+    try {
+      const response = await fetch(`/api/3d-shop/admin/orders/${orderId}/shiprocket`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string
+        awb?: string
+        courier?: string
+        trackingUrl?: string
+        pickupScheduled?: boolean
+      }
+      if (!response.ok) throw new Error(data.error || 'Shiprocket shipment failed.')
+      setToast({
+        type: 'success',
+        message: `Shipped via Shiprocket: ${data.awb} (${data.courier ?? ''})${data.pickupScheduled === false ? ' — pickup NOT scheduled' : ''}`,
+      })
+      await loadOrder()
+    } catch (error) {
+      setToast({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Shiprocket shipment failed.',
+      })
+    } finally {
+      setShippingToShiprocket(false)
+    }
   }
 
   async function saveNotes() {
@@ -919,6 +950,24 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
                   className="mt-1 w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
                 />
               </label>
+              {!trackingForm.tracking_number &&
+                order.fulfilment_status !== 'delivered' &&
+                order.order_status !== 'cancelled' && (
+                  <div className="border-t border-dashed border-gray-200 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => void shipViaShiprocket()}
+                      disabled={shippingToShiprocket || saving}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                    >
+                      <Truck className="h-4 w-4" />
+                      {shippingToShiprocket ? 'Creating shipment…' : 'Ship via Shiprocket'}
+                    </button>
+                    <p className="mt-2 text-[11px] leading-relaxed text-[#6F7192]">
+                      Creates the shipment, assigns an AWB and schedules pickup automatically, then emails the customer.
+                    </p>
+                  </div>
+                )}
               <button type="button" onClick={() => void saveTracking()} disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
                 <Save className="h-4 w-4" />
                 Save Tracking Info

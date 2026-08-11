@@ -49,6 +49,13 @@ const envSchema = z.object({
   // Sentry
   SENTRY_DSN: z.string().optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
+
+  // Shiprocket fulfilment (all optional — integration is enabled only when
+  // email + password + pickup location are provided).
+  SHIPROCKET_EMAIL: z.string().optional(),
+  SHIPROCKET_PASSWORD: z.string().optional(),
+  SHIPROCKET_PICKUP_LOCATION: z.string().optional(),
+  SHIPROCKET_WEBHOOK_SECRET: z.string().optional(),
 })
 
 type EnvVars = z.infer<typeof envSchema>
