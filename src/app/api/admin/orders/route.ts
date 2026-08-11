@@ -34,6 +34,8 @@ function parseFilterFromSearchParams(searchParams: URLSearchParams): AdminOrders
     query: rawQuery || undefined,
     status: rawStatus && rawStatus !== 'all' ? rawStatus : undefined,
     paymentStatus: rawPaymentStatus && rawPaymentStatus !== 'all' ? rawPaymentStatus : undefined,
+    material: searchParams.get('material') || undefined,
+    postProcessing: searchParams.get('postProcessing') || undefined,
     dateFrom,
     dateTo,
   }
@@ -143,7 +145,7 @@ export async function PATCH(request: Request) {
     if (body.status) {
       const { data: oldRows } = await supabase
         .from('orders')
-        .select('id, group_id, status, status_timestamps, full_name, email, user_id, tracking_number, courier_name, tracking_url')
+        .select('id, group_id, status, status_timestamps, full_name, user_id, tracking_number, courier_name, tracking_url')
         .or(`group_id.eq.${body.groupId},id.eq.${body.groupId}`)
 
       const order = await updateAdminOrderStatus(body.groupId, body.status, body.cancellationReason)
@@ -271,7 +273,7 @@ export async function PATCH(request: Request) {
     ) {
       const { data: oldRows } = await supabase
         .from('orders')
-        .select('id, group_id, tracking_number, courier_name, tracking_url, status, full_name, email, user_id')
+        .select('id, group_id, tracking_number, courier_name, tracking_url, status, full_name, user_id')
         .or(`group_id.eq.${body.groupId},id.eq.${body.groupId}`)
 
       const order = await updateAdminOrderTracking(body.groupId, {

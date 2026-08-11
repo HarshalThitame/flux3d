@@ -7,6 +7,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Ban,
   Boxes,
   Check,
   ChevronDown,
@@ -37,6 +38,7 @@ import { logSearch } from '@/lib/tracking/searchLogger'
 import { useOrdersRealtime } from './useOrdersRealtime'
 import {
   ADMIN_ORDER_STATUSES,
+  POST_PROCESSING_LEVELS,
   STATUS_LABELS,
   ageRowLeftBorderClass,
   ageSlaClass,
@@ -54,7 +56,8 @@ import {
   statusPillClass,
 } from './order-ui'
 
-const PAGE_SIZE = 25
+const PAGE_SIZE_OPTIONS = [25, 50, 100] as const
+const DEFAULT_PAGE_SIZE = 25
 const SERVER_PAGE_SIZE = 100
 
 type Props = {
@@ -73,11 +76,12 @@ export default function OrdersListClient({ initialOrders, initialTotal, initialQ
     initialFilter.status ? (initialFilter.status as OrderStatus) : 'all'
   )
   const [paymentStatusFilter, setPaymentStatusFilter] = useState(initialFilter.paymentStatus ?? 'all')
-  const [materialFilter, setMaterialFilter] = useState('all')
-  const [postProcessingFilter, setPostProcessingFilter] = useState('all')
+  const [materialFilter, setMaterialFilter] = useState(initialFilter.material ?? 'all')
+  const [postProcessingFilter, setPostProcessingFilter] = useState(initialFilter.postProcessing ?? 'all')
   const [dateFrom, setDateFrom] = useState(initialFilter.dateFrom ?? '')
   const [dateTo, setDateTo] = useState(initialFilter.dateTo ?? '')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [totalCount, setTotalCount] = useState(initialTotal)
   const [fetchingPage, setFetchingPage] = useState(false)
   const [fetchingStats, setFetchingStats] = useState(false)
@@ -115,11 +119,6 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
   const materialOptions = useMemo(() => {
     return Array.from(new Set(allOrders.flatMap((order) => order.items.map((item) => item.material)).filter(Boolean)))
       .sort((left, right) => left.localeCompare(right))
-  }, [allOrders])
-
-  const postProcessingOptions = useMemo(() => {
-    return Array.from(new Set(allOrders.flatMap((order) => order.items.map((item) => item.postProcessingLevel ?? 'none'))))
-      .sort((left, right) => postProcessingLabel(left).localeCompare(postProcessingLabel(right)))
   }, [allOrders])
 
   function toggleSort(column: string) {
@@ -160,19 +159,12 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
   }
 
   const filteredOrders = useMemo(() => {
-    return sortOrders(allOrders.filter((order) => {
-      const matchesMaterial = materialFilter === 'all' || order.items.some((item) => item.material === materialFilter)
-      const matchesPostProcessing =
-        postProcessingFilter === 'all' ||
-        order.items.some((item) => (item.postProcessingLevel ?? 'none') === postProcessingFilter)
+    return sortOrders(allOrders)
+  }, [allOrders, sortColumn, sortDirection])
 
-      return matchesMaterial && matchesPostProcessing
-    }))
-  }, [allOrders, materialFilter, postProcessingFilter, sortColumn, sortDirection])
-
-  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize))
   const currentPage = Math.min(page, totalPages)
-  const paginatedOrders = filteredOrders.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  const paginatedOrders = filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize)
   const hasFilters = Boolean(
     search || dateFrom || dateTo || statusFilter !== 'all' || paymentStatusFilter !== 'all' || materialFilter !== 'all' || postProcessingFilter !== 'all'
   )
@@ -181,6 +173,8 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
     query: search.trim() || undefined,
     status: statusFilter !== 'all' ? statusFilter : undefined,
     paymentStatus: paymentStatusFilter !== 'all' ? paymentStatusFilter : undefined,
+    material: materialFilter !== 'all' ? materialFilter : undefined,
+    postProcessing: postProcessingFilter !== 'all' ? postProcessingFilter : undefined,
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
   }
@@ -192,12 +186,14 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
     if (currentFilter.query) params.set('query', currentFilter.query)
     if (currentFilter.status) params.set('status', currentFilter.status)
     if (currentFilter.paymentStatus) params.set('paymentStatus', currentFilter.paymentStatus)
+    if (currentFilter.material) params.set('material', currentFilter.material)
+    if (currentFilter.postProcessing) params.set('postProcessing', currentFilter.postProcessing)
     if (currentFilter.dateFrom) params.set('dateFrom', currentFilter.dateFrom)
     if (currentFilter.dateTo) params.set('dateTo', currentFilter.dateTo)
     return params
-  }, [currentFilter.query, currentFilter.status, currentFilter.paymentStatus, currentFilter.dateFrom, currentFilter.dateTo])
+  }, [currentFilter.query, currentFilter.status, currentFilter.paymentStatus, currentFilter.material, currentFilter.postProcessing, currentFilter.dateFrom, currentFilter.dateTo])
 
-  const currentFilterSignature = `${currentFilter.query ?? ''}|${currentFilter.status ?? ''}|${currentFilter.paymentStatus ?? ''}|${currentFilter.dateFrom ?? ''}|${currentFilter.dateTo ?? ''}`
+  const currentFilterSignature = `${currentFilter.query ?? ''}|${currentFilter.status ?? ''}|${currentFilter.paymentStatus ?? ''}|${currentFilter.material ?? ''}|${currentFilter.postProcessing ?? ''}|${currentFilter.dateFrom ?? ''}|${currentFilter.dateTo ?? ''}`
 
   async function refreshStats() {
     const params = buildServerParams(1)
@@ -306,7 +302,7 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
   }, [buildServerParams, currentFilterSignature])
 
   useEffect(() => {
-    const serverPagesPerClientPage = SERVER_PAGE_SIZE / PAGE_SIZE
+    const serverPagesPerClientPage = SERVER_PAGE_SIZE / pageSize
     const requiredServerPage = Math.ceil(page / serverPagesPerClientPage)
 
     if (requiredServerPage > loadedServerPage.current) {
@@ -336,7 +332,7 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
       return () => controller.abort()
     }
     return undefined
-  }, [page, buildServerParams])
+  }, [page, pageSize, buildServerParams])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -355,6 +351,16 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
     } else {
       params.delete('paymentStatus')
     }
+    if (materialFilter !== 'all') {
+      params.set('material', materialFilter)
+    } else {
+      params.delete('material')
+    }
+    if (postProcessingFilter !== 'all') {
+      params.set('postProcessing', postProcessingFilter)
+    } else {
+      params.delete('postProcessing')
+    }
     if (dateFrom) params.set('dateFrom', dateFrom)
     else params.delete('dateFrom')
     if (dateTo) params.set('dateTo', dateTo)
@@ -362,7 +368,7 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
 
     const newUrl = `${window.location.pathname}?${params.toString()}`
     window.history.replaceState(null, '', newUrl)
-  }, [search, statusFilter, paymentStatusFilter, dateFrom, dateTo])
+  }, [search, statusFilter, paymentStatusFilter, materialFilter, postProcessingFilter, dateFrom, dateTo])
 
   useEffect(() => {
     if (!hasFilters) return
@@ -448,6 +454,12 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
     setPostProcessingFilter('all')
     setDateFrom('')
     setDateTo('')
+    setPage(1)
+    loadedServerPage.current = 1
+  }
+
+  function changePageSize(nextSize: number) {
+    setPageSize(nextSize)
     setPage(1)
     loadedServerPage.current = 1
   }
@@ -564,7 +576,7 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
   return (
     <>
       <div className="w-full bg-gray-50 text-gray-900">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="w-full px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
@@ -676,17 +688,18 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
             </div>
           </div>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7">
             <StatCard icon={<Boxes className="h-4 w-4" />} label="Total Orders" value={stats.totalOrders.toLocaleString('en-IN')} loading={fetchingStats} />
             <StatCard icon={<IndianRupee className="h-4 w-4" />} label="Revenue" value={formatMoney(stats.revenue)} loading={fetchingStats} />
             <StatCard icon={<PackageOpen className="h-4 w-4" />} label="Pending" value={stats.pending.toLocaleString('en-IN')} />
             <StatCard icon={<Printer className="h-4 w-4" />} label="Printing" value={stats.printing.toLocaleString('en-IN')} />
             <StatCard icon={<Truck className="h-4 w-4" />} label="Shipped" value={stats.shipped.toLocaleString('en-IN')} />
             <StatCard icon={<Check className="h-4 w-4" />} label="Delivered" value={stats.delivered.toLocaleString('en-IN')} />
+            <StatCard icon={<Ban className="h-4 w-4" />} label="Cancelled" value={stats.cancelled.toLocaleString('en-IN')} />
           </div>
 
           <div className="mt-5 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-            <div className="grid gap-3 xl:grid-cols-[minmax(260px,1.6fr)_150px_160px_150px_150px_190px_auto]">
+            <div className="grid gap-3 xl:grid-cols-[minmax(220px,1.5fr)_140px_140px_150px_180px_150px_150px_auto]">
               <label className="relative block">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
@@ -695,7 +708,7 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
                     setSearch(event.target.value)
                     setPage(1)
                   }}
-                  placeholder="Search by order# / name / phone"
+                  placeholder="Search by order #, customer name, phone"
                   className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-600 focus:ring-2 focus:ring-violet-100"
                 />
               </label>
@@ -744,6 +757,21 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
                   </option>
                 ))}
               </FilterSelect>
+              <FilterSelect
+                label="Post-processing"
+                value={postProcessingFilter}
+                onChange={(value) => {
+                  setPostProcessingFilter(value)
+                  setPage(1)
+                }}
+              >
+                <option value="all">Post-processing</option>
+                {POST_PROCESSING_LEVELS.map((level) => (
+                  <option key={level} value={level}>
+                    {postProcessingLabel(level)}
+                  </option>
+                ))}
+              </FilterSelect>
               <DateInput
                 label="Date From"
                 value={dateFrom}
@@ -760,21 +788,6 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
                   setPage(1)
                 }}
               />
-              <FilterSelect
-                label="Post-processing"
-                value={postProcessingFilter}
-                onChange={(value) => {
-                  setPostProcessingFilter(value)
-                  setPage(1)
-                }}
-              >
-                <option value="all">Post-processing</option>
-                {postProcessingOptions.map((level) => (
-                  <option key={level} value={level}>
-                    {postProcessingLabel(level)}
-                  </option>
-                ))}
-              </FilterSelect>
               <button
                 type="button"
                 onClick={clearFilters}
@@ -846,7 +859,7 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
               </div>
 
               <div className="mt-5 hidden overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm md:block">
-                <div className="max-h-[68vh] overflow-auto">
+                <div className="max-h-[75vh] overflow-auto">
                   <table className="w-full min-w-[1120px] border-separate border-spacing-0 text-left text-sm">
                     <thead className="sticky top-0 z-20 bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
                       <tr>
@@ -866,7 +879,6 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
                         <Th sortable sortColumn={sortColumn} sortDirection={sortDirection} column="grandTotal" onSort={toggleSort}>Amount</Th>
                         <Th className="hidden xl:table-cell">Post-process</Th>
                         <Th sortable sortColumn={sortColumn} sortDirection={sortDirection} column="status" onSort={toggleSort}>Status</Th>
-                        <Th>SLA Age</Th>
                         <Th className="hidden xl:table-cell">Print Time</Th>
                         <Th sortable sortColumn={sortColumn} sortDirection={sortDirection} column="createdAt" onSort={toggleSort}>Date</Th>
                         <Th className="hidden xl:table-cell">Notes</Th>
@@ -906,6 +918,8 @@ function showToast(nextToast: NonNullable<AdminToastState>) {
             totalPages={totalPages}
             serverTotal={totalCount}
             fetching={fetchingPage}
+            pageSize={pageSize}
+            onPageSizeChange={changePageSize}
             setPage={setPage}
           />
         </div>
@@ -1363,6 +1377,8 @@ function Pagination({
   totalPages,
   serverTotal,
   fetching,
+  pageSize,
+  onPageSizeChange,
   setPage,
 }: {
   filteredCount: number
@@ -1370,19 +1386,35 @@ function Pagination({
   totalPages: number
   serverTotal?: number
   fetching?: boolean
+  pageSize: number
+  onPageSizeChange: (size: number) => void
   setPage: Dispatch<SetStateAction<number>>
 }) {
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3">
       <div className="text-sm text-gray-600">
-        Showing {filteredCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
+        Showing {filteredCount === 0 ? 0 : (currentPage - 1) * pageSize + 1}
         {' '}–{' '}
-        {Math.min(currentPage * PAGE_SIZE, filteredCount)} of {filteredCount.toLocaleString('en-IN')}
+        {Math.min(currentPage * pageSize, filteredCount)} of {filteredCount.toLocaleString('en-IN')}
         {serverTotal != null && serverTotal > filteredCount && (
           <span className="text-gray-400"> (filtered from {serverTotal.toLocaleString('en-IN')} total)</span>
         )}
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 text-sm text-gray-600">
+          <span className="whitespace-nowrap">Per page</span>
+          <select
+            value={pageSize}
+            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+            className="h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-900 outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-100"
+          >
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           type="button"
           onClick={() => setPage((current) => Math.max(1, current - 1))}

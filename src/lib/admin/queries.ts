@@ -828,6 +828,8 @@ export type AdminOrdersFilter = {
   query?: string
   status?: string
   paymentStatus?: string
+  material?: string
+  postProcessing?: string
   dateFrom?: string
   dateTo?: string
 }
@@ -837,7 +839,7 @@ function applyOrderFilters<T extends PostgrestFilterBuilder<any, any, any, any>>
   query: T,
   filter: AdminOrdersFilter
 ): T {
-  const { query: searchQuery, status, paymentStatus, dateFrom, dateTo } = filter
+  const { query: searchQuery, status, paymentStatus, material, postProcessing, dateFrom, dateTo } = filter
 
   if (searchQuery) {
     query = query.or(
@@ -851,6 +853,14 @@ function applyOrderFilters<T extends PostgrestFilterBuilder<any, any, any, any>>
 
   if (paymentStatus && paymentStatus !== 'all') {
     query = query.eq('payment_status', paymentStatus) as T
+  }
+
+  if (material && material !== 'all') {
+    query = query.eq('material', material) as T
+  }
+
+  if (postProcessing && postProcessing !== 'all') {
+    query = query.eq('post_processing_level', postProcessing) as T
   }
 
   if (dateFrom) {

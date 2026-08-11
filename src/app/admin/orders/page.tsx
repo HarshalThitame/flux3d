@@ -13,10 +13,12 @@ function buildFilter(params: Record<string, string | string[] | undefined>): Adm
   const query = typeof params.query === 'string' && params.query.trim() ? params.query.trim() : undefined
   const status = typeof params.status === 'string' && params.status !== 'all' ? params.status : undefined
   const paymentStatus = typeof params.paymentStatus === 'string' && params.paymentStatus !== 'all' ? params.paymentStatus : undefined
+  const material = typeof params.material === 'string' && params.material !== 'all' ? params.material : undefined
+  const postProcessing = typeof params.postProcessing === 'string' && params.postProcessing !== 'all' ? params.postProcessing : undefined
   const dateFrom = typeof params.dateFrom === 'string' && params.dateFrom ? params.dateFrom : undefined
   const dateTo = typeof params.dateTo === 'string' && params.dateTo ? params.dateTo : undefined
 
-  return { query, status, paymentStatus, dateFrom, dateTo }
+  return { query, status, paymentStatus, material, postProcessing, dateFrom, dateTo }
 }
 
 export default async function AdminOrdersPage({ searchParams }: PageProps) {

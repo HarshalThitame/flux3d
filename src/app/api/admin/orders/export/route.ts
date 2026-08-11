@@ -11,7 +11,7 @@ import {
 import { requireAdminRequest } from '@/lib/admin/request'
 import { rateLimitResponse } from '@/lib/rate-limit'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { STATUS_LABELS } from '@/app/admin/orders/order-ui'
+import { STATUS_LABELS, formatDate, formatMoney } from '@/app/admin/orders/order-ui'
 import type { AdminOrder } from '@/lib/admin/types'
 
 export const dynamic = 'force-dynamic'
@@ -158,38 +158,67 @@ async function generateExport(orders: AdminOrder[], format: 'csv' | 'xlsx' | 'pd
   doc.text(`Generated ${new Date().toLocaleString('en-IN')} · ${orders.length} orders`, { align: 'center' })
   doc.moveDown(1)
 
-  const columns = ['Order#', 'Customer', 'Status', 'Grand Total', 'Created At']
-  const widths = [65, 130, 70, 80, 90]
-  const drawHeader = () => {
-    doc.fillColor('#4C1D95')
-    let x = 40
-    columns.forEach((column, i) => {
-      doc.fontSize(9).text(column, x, doc.y, { width: widths[i], lineBreak: false })
-      x += widths[i]
-    })
-    doc.moveDown(0.5)
-  }
+  const tableLeft = 40
+  const cellPadding = 4
+  const columns = [
+    { label: 'Order#', width: 62 },
+    { label: 'Customer', width: 128 },
+    { label: 'Status', width: 68 },
+    { label: 'Grand Total', width: 84 },
+    { label: 'Created At', width: 133 },
+  ]
+  const rowHeight = 16
 
-  drawHeader()
-  for (const order of orders) {
-    if (doc.y > 780) {
-      doc.addPage()
-      drawHeader()
-    }
-    doc.fillColor('#111827')
-    let x = 40
+  function cellFor(order: AdminOrder, index: number) {
     const values = [
       order.orderNumber,
       order.fullName,
       STATUS_LABELS[order.status] ?? order.status,
-      String(order.grandTotal),
-      order.createdAt,
+      formatMoney(order.grandTotal),
+      formatDate(order.createdAt),
     ]
-    values.forEach((value, i) => {
-      doc.fontSize(8.5).text(String(value), x, doc.y, { width: widths[i], lineBreak: false })
-      x += widths[i]
+    return values[index]
+  }
+
+  function fitText(text: string, width: number, size: number) {
+    let candidate = text
+    doc.fontSize(size)
+    while (candidate.length > 1 && doc.widthOfString(candidate) > width - cellPadding * 2) {
+      candidate = candidate.slice(0, -1)
+    }
+    return candidate.length < text.length ? `${candidate}…` : candidate
+  }
+
+  const drawHeader = () => {
+    doc.fillColor('#4C1D95')
+    let x = tableLeft
+    const y = doc.y
+    columns.forEach((column) => {
+      doc.fontSize(9).text(column.label, x + cellPadding, y, { width: column.width - cellPadding * 2, lineBreak: false })
+      x += column.width
     })
-    doc.moveDown(0.4)
+    doc.moveDown(0.7)
+  }
+
+  const drawRow = (order: AdminOrder) => {
+    if (doc.y > 795 - rowHeight) {
+      doc.addPage()
+      drawHeader()
+    }
+    doc.fillColor('#111827')
+    const y = doc.y
+    let x = tableLeft
+    columns.forEach((column, i) => {
+      const value = fitText(cellFor(order, i), column.width, 8.5)
+      doc.fontSize(8.5).text(value, x + cellPadding, y, { width: column.width - cellPadding * 2, lineBreak: false })
+      x += column.width
+    })
+    doc.moveDown(rowHeight / 12)
+  }
+
+  drawHeader()
+  for (const order of orders) {
+    drawRow(order)
   }
 
   doc.end()
