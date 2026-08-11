@@ -1,6 +1,5 @@
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { logAdminAction } from '@/lib/admin/auditLog'
-import type { User } from '@supabase/supabase-js'
 import type { PostgrestFilterBuilder } from '@supabase/postgrest-js'
 import type {
   AdminFile,
@@ -482,45 +481,6 @@ function mapProfileRowToAdminUser(profile: ProfileRow): AdminUser {
     role: profile.is_admin ? 'admin' : 'customer-success',
     lastActive: profile.created_at ? new Date(profile.created_at).toLocaleString('en-IN') : 'Never',
   }
-}
-
-function getCustomerStatus(user: User): AdminCustomerStatus {
-  if (user.banned_until && new Date(user.banned_until).getTime() > Date.now()) {
-    return 'Suspended'
-  }
-
-  if (!user.email_confirmed_at) {
-    return 'Unverified'
-  }
-
-  return 'Active'
-}
-
-function getSignupMethod(user: User): AdminUser['signupMethod'] {
-  const provider = String(user.app_metadata.provider ?? '').toLowerCase()
-  if (provider === 'google') return 'Google'
-  if (provider === 'github') return 'GitHub'
-  return 'Email'
-}
-
-async function listAllAuthUsers() {
-  const supabase = createAdminSupabaseClient()
-  const users: User[] = []
-  let page = 1
-  let lastPage = 1
-
-  do {
-    const { data, error } = await supabase.auth.admin.listUsers({
-      page,
-      perPage: 1000,
-    })
-    if (error) throw new Error(error.message)
-    users.push(...(data.users ?? []))
-    lastPage = data.lastPage || page
-    page += 1
-  } while (page <= lastPage)
-
-  return users
 }
 
 function groupCustomerOrders(rows: CustomerOrderRow[]) {
@@ -1246,106 +1206,6 @@ export async function getAdminQuotesData() {
   return (data ?? []).map((quote) => mapQuoteRowToAdminQuote(quote as QuoteRow))
 }
 
-export async function getAdminUsersData() {
-  const supabase = createAdminSupabaseClient()
-  const users = await listAllAuthUsers()
-  const profiles = await supabase.from('profiles').select('id, name, full_name, email, is_admin, avatar_url, created_at')
-  if (profiles.error) throw new Error(profiles.error.message)
-
-  const { data: orderRows, error: ordersError } = await supabase
-    .from('orders')
-    .select('id, user_id, group_id, order_number, file_url, material, grand_total, final_price, total_price, status, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, created_at')
-    .order('created_at', { ascending: false })
-
-  if (ordersError) throw new Error(ordersError.message)
-
-  const { data: noteRows, error: notesError } = await supabase
-    .from('admin_customer_notes')
-    .select('user_id, note, created_at')
-    .order('created_at', { ascending: false })
-
-  if (notesError) throw new Error(notesError.message)
-
-  const profilesById = new Map((profiles.data ?? []).map((profile) => [profile.id, profile as ProfileRow]))
-  const ordersByUser = ((orderRows ?? []) as CustomerOrderRow[]).reduce<Map<string, CustomerOrderRow[]>>((acc, row) => {
-    if (!row.user_id) return acc
-    const existing = acc.get(row.user_id) ?? []
-    existing.push(row)
-    acc.set(row.user_id, existing)
-    return acc
-  }, new Map())
-  const notesByUser = (noteRows ?? []).reduce<Map<string, string[]>>((acc, row) => {
-    const userId = typeof row.user_id === 'string' ? row.user_id : ''
-    if (!userId) return acc
-    const existing = acc.get(userId) ?? []
-    if (typeof row.note === 'string') existing.push(row.note)
-    acc.set(userId, existing)
-    return acc
-  }, new Map())
-
-  return users.map((user) => {
-    const profile = profilesById.get(user.id)
-    const customerOrders = ordersByUser.get(user.id) ?? []
-    const groupedOrders = groupCustomerOrders(customerOrders)
-    const latestOrder = [...customerOrders].sort((left, right) =>
-      new Date(right.created_at ?? 0).getTime() - new Date(left.created_at ?? 0).getTime()
-    )[0]
-    const invoices = groupedOrders.map((order) => ({
-      id: order.id,
-      orderNumber: order.orderNumber,
-      createdAt: order.createdAt,
-      grandTotal: order.grandTotal,
-      downloadUrl: `/api/orders/${order.id}/invoice`,
-    })) satisfies AdminCustomerInvoice[]
-    const appMetadata = user.app_metadata as Record<string, unknown>
-    const userMetadata = user.user_metadata as Record<string, unknown>
-    const phone = typeof userMetadata.phone === 'string'
-      ? userMetadata.phone
-      : typeof userMetadata.whatsapp_number === 'string'
-        ? userMetadata.whatsapp_number
-        : latestOrder?.phone ?? undefined
-    const joinedDate = profile?.created_at ?? user.created_at ?? ''
-    const totalSpent = groupedOrders.reduce((sum, order) => sum + order.grandTotal, 0)
-
-    return {
-      id: user.id,
-      customerId: `CUS-${user.id.slice(0, 8).toUpperCase()}`,
-      name:
-        profile?.full_name ??
-        profile?.name ??
-        (typeof user.user_metadata.full_name === 'string'
-          ? user.user_metadata.full_name
-          : typeof user.user_metadata.name === 'string'
-            ? user.user_metadata.name
-            : user.email?.split('@')[0] ?? 'Flux3D User'),
-      email: profile?.email ?? user.email ?? '',
-      phone,
-      whatsappNumber: phone,
-      city: latestOrder?.city ?? undefined,
-      state: latestOrder?.state ?? undefined,
-      pincode: latestOrder?.pincode ?? undefined,
-      fullAddress: formatAddressFromOrder(latestOrder),
-      signupMethod: getSignupMethod(user),
-      role: profile?.is_admin ? 'admin' as const : 'customer-success' as const,
-      lastActive: user.last_sign_in_at ?? '',
-      lastSeenAt: user.last_sign_in_at ?? '',
-      totalOrders: groupedOrders.length,
-      totalSpent,
-      avgOrderValue: groupedOrders.length === 0 ? 0 : totalSpent / groupedOrders.length,
-      firstOrderDate: groupedOrders.at(-1)?.createdAt,
-      lastOrderDate: groupedOrders[0]?.createdAt,
-      filesUploaded: customerOrders.filter((order) => order.file_url).length,
-      joinedDate,
-      status: getCustomerStatus(user),
-      notes: notesByUser.get(user.id)?.join('\n\n') ?? (typeof appMetadata.admin_notes === 'string' ? appMetadata.admin_notes : ''),
-      manualCoupon: typeof appMetadata.manual_coupon === 'string' ? appMetadata.manual_coupon : '',
-      manualCredit: typeof appMetadata.manual_credit === 'number' ? appMetadata.manual_credit : 0,
-      orders: groupedOrders,
-      files: mapOrderRowsToFiles(customerOrders),
-      invoices,
-    }
-  })
-}
 
 export async function getAdminMaterialsData() {
   const supabase = createAdminSupabaseClient()
@@ -1356,6 +1216,286 @@ export async function getAdminMaterialsData() {
 
   if (error) throw new Error(error.message)
   return (data ?? []).map((material) => normalizeAdminMaterialRow(material))
+}
+
+// ============================================================
+// CUSTOMERS — scalable, server-paginated read model
+// ============================================================
+
+export const CUSTOMER_SORT_COLUMNS = [
+  'created_at',
+  'last_seen_at',
+  'total_orders',
+  'total_spent',
+  'last_order_date',
+  'name',
+] as const
+
+export type CustomerSortColumn = (typeof CUSTOMER_SORT_COLUMNS)[number]
+
+export type AdminCustomersFilter = {
+  query?: string
+  status?: AdminCustomerStatus
+  signupMethod?: string
+  sortBy?: CustomerSortColumn
+  sortDir?: 'asc' | 'desc'
+  dateFrom?: string
+  dateTo?: string
+}
+
+export type AdminCustomersStats = {
+  total: number
+  newThisMonth: number
+  active: number
+  suspended: number
+}
+
+const CUSTOMER_LIST_SELECT =
+  'id, name, full_name, email, phone, created_at, last_seen_at, status, suspended_at, is_admin, signup_method, manual_coupon, manual_credit, email_confirmed_at, total_orders, total_spent, last_order_date, first_order_date'
+
+type CustomerListRow = {
+  id: string
+  name: string | null
+  full_name: string | null
+  email: string | null
+  phone: string | null
+  created_at: string | null
+  last_seen_at: string | null
+  status: string | null
+  suspended_at: string | null
+  is_admin: boolean | null
+  signup_method: string | null
+  manual_coupon: string | null
+  manual_credit: number | null
+  email_confirmed_at: string | null
+  total_orders: number | null
+  total_spent: number | null
+  last_order_date: string | null
+  first_order_date: string | null
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyCustomerFilters<T extends PostgrestFilterBuilder<any, any, any, any>>(
+  query: T,
+  filter: AdminCustomersFilter
+): T {
+  const { query: searchQuery, status, signupMethod, dateFrom, dateTo } = filter
+
+  if (searchQuery) {
+    // Percent-encode the term so PostgREST's OR filter does not choke on
+    // commas, parens or other reserved characters in user input.
+    const term = encodeURIComponent(searchQuery).replace(/[()]/g, encodeURIComponent)
+    query = query.or(
+      `name.ilike.%${term}%,full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`
+    ) as T
+  }
+
+  // Mirrors the previous getCustomerStatus(): Suspended first, then
+  // Unverified (no email confirmation), otherwise Active.
+  if (status === 'Suspended') {
+    query = query.not('suspended_at', 'is', null) as T
+  } else if (status === 'Unverified') {
+    query = query.is('suspended_at', null).is('email_confirmed_at', null) as T
+  } else if (status === 'Active') {
+    query = query.is('suspended_at', null).not('email_confirmed_at', 'is', null) as T
+  }
+
+  if (signupMethod && signupMethod !== 'all') {
+    query = query.eq('signup_method', signupMethod) as T
+  }
+
+  if (dateFrom) {
+    query = query.gte('created_at', new Date(`${dateFrom}T00:00:00.000Z`).toISOString()) as T
+  }
+
+  if (dateTo) {
+    query = query.lte('created_at', new Date(`${dateTo}T23:59:59.999Z`).toISOString()) as T
+  }
+
+  return query
+}
+
+function getCustomerStatusFromRow(row: Pick<CustomerListRow, 'suspended_at' | 'email_confirmed_at'>): AdminCustomerStatus {
+  if (row.suspended_at) return 'Suspended'
+  if (!row.email_confirmed_at) return 'Unverified'
+  return 'Active'
+}
+
+function mapCustomerListRow(
+  row: CustomerListRow,
+  customerOrders: CustomerOrderRow[],
+  notes: string[]
+): AdminUser {
+  const groupedOrders = groupCustomerOrders(customerOrders)
+  const latestOrder = [...customerOrders].sort((left, right) =>
+    new Date(right.created_at ?? 0).getTime() - new Date(left.created_at ?? 0).getTime()
+  )[0]
+  const totalSpent = groupedOrders.reduce((sum, order) => sum + order.grandTotal, 0)
+  const signupMethod =
+    row.signup_method === 'Google' || row.signup_method === 'GitHub' ? row.signup_method : 'Email'
+
+  return {
+    id: row.id,
+    customerId: `CUS-${row.id.slice(0, 8).toUpperCase()}`,
+    name: row.full_name ?? row.name ?? (row.email?.split('@')[0] ?? 'Flux3D User'),
+    email: row.email ?? '',
+    phone: row.phone ?? undefined,
+    whatsappNumber: row.phone ?? undefined,
+    city: latestOrder?.city ?? undefined,
+    state: latestOrder?.state ?? undefined,
+    pincode: latestOrder?.pincode ?? undefined,
+    fullAddress: formatAddressFromOrder(latestOrder),
+    signupMethod,
+    role: row.is_admin ? 'admin' : 'customer-success',
+    lastActive: row.last_seen_at ?? '',
+    lastSeenAt: row.last_seen_at ?? '',
+    totalOrders: groupedOrders.length,
+    totalSpent,
+    avgOrderValue: groupedOrders.length === 0 ? 0 : totalSpent / groupedOrders.length,
+    firstOrderDate: groupedOrders.at(-1)?.createdAt,
+    lastOrderDate: groupedOrders[0]?.createdAt,
+    filesUploaded: customerOrders.filter((order) => order.file_url).length,
+    joinedDate: row.created_at ?? '',
+    status: getCustomerStatusFromRow(row),
+    notes: notes.join('\n\n'),
+    manualCoupon: row.manual_coupon ?? '',
+    manualCredit: Number(row.manual_credit ?? 0),
+    orders: groupedOrders,
+    files: mapOrderRowsToFiles(customerOrders),
+    invoices: groupedOrders.map((order) => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      createdAt: order.createdAt,
+      grandTotal: order.grandTotal,
+      downloadUrl: `/api/orders/${order.id}/invoice`,
+    })) satisfies AdminCustomerInvoice[],
+  }
+}
+
+export async function getAdminCustomersData(
+  page = 1,
+  limit = 50,
+  filter: AdminCustomersFilter = {}
+) {
+  const supabase = createAdminSupabaseClient()
+  const safePage = Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1
+  const safeLimit = Number.isFinite(limit) && limit >= 1 ? Math.floor(limit) : 50
+  const from = (safePage - 1) * safeLimit
+  const to = from + safeLimit - 1
+
+  const orderColumn: CustomerSortColumn = filter.sortBy ?? 'created_at'
+
+  const { data, error, count } = await applyCustomerFilters(
+    supabase.from('admin_customer_list').select(CUSTOMER_LIST_SELECT, { count: 'exact' }),
+    filter
+  )
+    .order(orderColumn, { ascending: filter.sortDir === 'asc', nullsFirst: false })
+    .range(from, to)
+
+  if (error) throw new Error(error.message)
+
+  const rows = (data ?? []) as CustomerListRow[]
+  const pageIds = rows.map((row) => row.id)
+
+  const { data: orderRows, error: ordersError } = pageIds.length > 0
+    ? await supabase
+        .from('orders')
+        .select('id, user_id, group_id, order_number, file_url, material, grand_total, final_price, total_price, status, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, created_at')
+        .in('user_id', pageIds)
+        .order('created_at', { ascending: false })
+    : { data: [], error: null }
+
+  if (ordersError) throw new Error(ordersError.message)
+
+  const { data: noteRows, error: notesError } = pageIds.length > 0
+    ? await supabase
+        .from('admin_customer_notes')
+        .select('user_id, note, created_at')
+        .in('user_id', pageIds)
+        .order('created_at', { ascending: false })
+    : { data: [], error: null }
+
+  if (notesError) throw new Error(notesError.message)
+
+  const ordersByUser = ((orderRows ?? []) as CustomerOrderRow[]).reduce<Map<string, CustomerOrderRow[]>>(
+    (acc, order) => {
+      if (!order.user_id) return acc
+      const existing = acc.get(order.user_id) ?? []
+      existing.push(order)
+      acc.set(order.user_id, existing)
+      return acc
+    },
+    new Map()
+  )
+
+  const notesByUser = (noteRows ?? []).reduce<Map<string, string[]>>((acc, note) => {
+    const userId = typeof note.user_id === 'string' ? note.user_id : ''
+    if (!userId || typeof note.note !== 'string') return acc
+    const existing = acc.get(userId) ?? []
+    existing.push(note.note)
+    acc.set(userId, existing)
+    return acc
+  }, new Map())
+
+  const customers = rows.map((row) =>
+    mapCustomerListRow(row, ordersByUser.get(row.id) ?? [], notesByUser.get(row.id) ?? [])
+  )
+
+  return { customers, total: count ?? 0 }
+}
+
+export async function getAdminCustomersStats(): Promise<AdminCustomersStats> {
+  const supabase = createAdminSupabaseClient()
+
+  const monthStart = new Date()
+  monthStart.setDate(1)
+  monthStart.setHours(0, 0, 0, 0)
+
+  const [total, newThisMonth, active, suspended] = await Promise.all([
+    supabase.from('admin_customer_list').select('id', { count: 'exact', head: true }),
+    supabase
+      .from('admin_customer_list')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', monthStart.toISOString()),
+    supabase
+      .from('admin_customer_list')
+      .select('id', { count: 'exact', head: true })
+      .is('suspended_at', null)
+      .not('email_confirmed_at', 'is', null),
+    supabase
+      .from('admin_customer_list')
+      .select('id', { count: 'exact', head: true })
+      .not('suspended_at', 'is', null),
+  ])
+
+  for (const result of [total, newThisMonth, active, suspended]) {
+    if (result.error) throw new Error(result.error.message)
+  }
+
+  return {
+    total: total.count ?? 0,
+    newThisMonth: newThisMonth.count ?? 0,
+    active: active.count ?? 0,
+    suspended: suspended.count ?? 0,
+  }
+}
+
+export async function setCustomerSuspended(userId: string, suspended: boolean) {
+  const supabase = createAdminSupabaseClient()
+
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({ suspended_at: suspended ? new Date().toISOString() : null })
+    .eq('id', userId)
+
+  if (profileError) throw new Error(profileError.message)
+
+  // Keep auth in sync so the customer's sessions are actually blocked.
+  const { error: authError } = await supabase.auth.admin.updateUserById(userId, {
+    ban_duration: suspended ? '87600h' : 'none',
+  })
+
+  if (authError) throw new Error(authError.message)
 }
 
 type AdminMaterialInput = {

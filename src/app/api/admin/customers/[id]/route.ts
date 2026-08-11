@@ -1,15 +1,31 @@
 import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { requireAdminRequest } from '@/lib/admin/request'
+import { requireAdminPermission } from '@/lib/admin/permissions'
 import { logAdminAction } from '@/lib/admin/auditLog'
+import { rateLimitResponse } from '@/lib/rate-limit'
+import { setCustomerSuspended } from '@/lib/admin/queries'
+import { customerPatchSchema, zodErrorResponse } from '@/lib/admin/schemas/customers'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdminRequest()
-  if ('response' in auth) return auth.response;
+  const auth = await requireAdminPermission('customers.view')
+  if ('response' in auth) return auth.response
+
+  const rateLimit = await rateLimitResponse(request, {
+    prefix: 'admin_customer_profile_get',
+    windowSeconds: 60,
+    maxRequests: 120,
+    userId: auth.user.id,
+  })
+
+  if (!rateLimit.success) {
+    return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429 })
+  }
 
   try {
     const params = await context.params
@@ -32,23 +48,28 @@ export async function GET(
         tags, notes, joined_date, last_seen_at
       `)
       .eq('id', userId)
-      .single()
+      .maybeSingle()
 
     if (profileError) throw new Error(profileError.message)
+    if (!profile) {
+      return NextResponse.json({ error: 'Customer not found.' }, { status: 404 })
+    }
 
     // Lightweight counts for the Overview quick stats
-    const { count: sessionsCount } = await supabase
+    const { count: sessionsCount, error: sessionsError } = await supabase
       .from('sessions')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
+    if (sessionsError) throw new Error(sessionsError.message)
 
-    const { count: quotesCount } = await supabase
+    const { count: quotesCount, error: quotesError } = await supabase
       .from('quotes')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
+    if (quotesError) throw new Error(quotesError.message)
 
     // Bounded page views (powers both the quick stat and the Pages Visited tab)
-    const { data: pageViews } = await supabase
+    const { data: pageViews, error: pageViewsError } = await supabase
       .from('page_views')
       .select(`
         *,
@@ -57,27 +78,34 @@ export async function GET(
       .eq('sessions.user_id', userId)
       .order('entered_at', { ascending: false })
       .limit(200)
+    if (pageViewsError) throw new Error(pageViewsError.message)
 
-    // Get orders
-    const { data: orders } = await supabase
+    // Scoped to the fields the profile page renders, bounded to avoid huge payloads.
+    const { data: orders, error: ordersError } = await supabase
       .from('orders')
-      .select('*')
+      .select('id, order_number, material, parts, weight_grams, grand_total, final_price, total_price, status, delivery_date, rating, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
+      .limit(500)
+    if (ordersError) throw new Error(ordersError.message)
 
     // Get wishlist
-    const { data: wishlist } = await supabase
+    const { data: wishlist, error: wishlistError } = await supabase
       .from('wishlist_items')
       .select('*')
       .eq('user_id', userId)
       .order('added_at', { ascending: false })
+    if (wishlistError) throw new Error(wishlistError.message)
 
     // Get files - filter by path that starts with user ID
-    const { data: files } = await supabase
+    const { data: files, error: filesError } = await supabase
       .from('storage.objects')
-      .select('*')
+      .select('name, metadata, created_at')
       .eq('bucket_id', 'quote-models')
       .like('name', `${userId}/%`)
+      .order('created_at', { ascending: false })
+      .limit(200)
+    if (filesError) throw new Error(filesError.message)
 
     return NextResponse.json({
       profile: profile ? {
@@ -162,11 +190,17 @@ export async function GET(
         ordered: w.ordered,
         orderId: w.order_id ? String(w.order_id) : null,
       })),
-      files: (files || []).map(f => ({
-        name: f.name,
-        size: f.metadata?.size,
-        uploadedAt: f.created_at,
-      })),
+      files: (files || []).map(f => {
+        const metadata =
+          f.metadata && typeof f.metadata === 'object' && !Array.isArray(f.metadata)
+            ? (f.metadata as Record<string, unknown>)
+            : null
+        return {
+          name: f.name,
+          size: typeof metadata?.size === 'number' ? metadata.size : undefined,
+          uploadedAt: f.created_at,
+        }
+      }),
     })
   } catch (error) {
     return getAdminApiErrorResponse(error)
@@ -177,45 +211,95 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdminRequest()
-  if ('response' in auth) return auth.response;
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 })
+  }
+
+  const parsed = customerPatchSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json(zodErrorResponse(parsed.error), { status: 400 })
+  }
+  const payload = parsed.data
+
+  // Financial/status overrides are admin-only; profile edits are order-manager level.
+  const requiresSuspendPermission =
+    payload.status !== undefined || payload.manualCoupon !== undefined || payload.manualCredit !== undefined
+  const permission = requiresSuspendPermission ? 'customers.suspend' : 'customers.update'
+
+  const auth = await requireAdminPermission(permission)
+  if ('response' in auth) return auth.response
+
+  const rateLimit = await rateLimitResponse(request, {
+    prefix: 'admin_customer_profile_patch',
+    windowSeconds: 60,
+    maxRequests: 30,
+    userId: auth.user.id,
+  })
+
+  if (!rateLimit.success) {
+    return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429 })
+  }
 
   try {
     const params = await context.params
     const userId = params.id
     const supabase = createAdminSupabaseClient()
 
-    const body = (await request.json().catch(() => ({}))) as {
-      notes?: string
-      tags?: string[]
-    }
-
-    const patch: { notes?: string; tags?: string[] } = {}
-    if (typeof body.notes === 'string') patch.notes = body.notes
-    if (Array.isArray(body.tags)) patch.tags = body.tags.filter((t) => typeof t === 'string')
-
-    if (Object.keys(patch).length === 0) {
-      return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 })
-    }
-
-    const { data: updated, error } = await supabase
+    const { data: oldProfile } = await supabase
       .from('profiles')
-      .update(patch)
+      .select('notes, tags, manual_coupon, manual_credit, suspended_at')
       .eq('id', userId)
-      .select('id, notes, tags')
-      .single()
+      .maybeSingle()
 
-    if (error) throw new Error(error.message)
+    // Translate status into profile + auth suspension.
+    if (payload.status !== undefined) {
+      await setCustomerSuspended(userId, payload.status === 'Suspended')
+    }
 
-    await logAdminAction({
-      admin_id: auth.user.id,
-      action: 'update_customer_notes',
-      target_type: 'user',
-      target_id: userId,
-      new_value: patch,
-    })
+    const writes: Record<string, unknown> = {}
+    if (payload.notes !== undefined) writes.notes = payload.notes
+    if (payload.tags !== undefined) writes.tags = payload.tags
+    if (payload.manualCoupon !== undefined) writes.manual_coupon = payload.manualCoupon
+    if (payload.manualCredit !== undefined) writes.manual_credit = payload.manualCredit
 
-    return NextResponse.json({ profile: updated })
+    if (Object.keys(writes).length > 0) {
+      // Keep a history trail for customer notes.
+      if (payload.notes !== undefined) {
+        const { error: noteError } = await supabase
+          .from('admin_customer_notes')
+          .insert({
+            user_id: userId,
+            admin_id: auth.user.id,
+            note: payload.notes,
+          })
+        if (noteError) throw new Error(noteError.message)
+      }
+
+      const { data: updated, error } = await supabase
+        .from('profiles')
+        .update(writes)
+        .eq('id', userId)
+        .select('id, notes, tags')
+        .single()
+
+      if (error) throw new Error(error.message)
+
+      await logAdminAction({
+        admin_id: auth.user.id,
+        action: 'update_customer_profile',
+        target_type: 'user',
+        target_id: userId,
+        old_value: oldProfile ?? null,
+        new_value: payload,
+      })
+
+      return NextResponse.json({ profile: updated })
+    }
+
+    return NextResponse.json({ profile: null })
   } catch (error) {
     return getAdminApiErrorResponse(error)
   }

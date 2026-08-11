@@ -19,6 +19,10 @@ export type AdminPermission =
   | 'manufacturing.manage'
   | 'admin.users'
   | 'audit.view'
+  | 'customers.view'
+  | 'customers.update'
+  | 'customers.suspend'
+  | 'customers.export'
 
 export type AdminPermissionCheck = {
   user: { id: string; email: string }
@@ -120,9 +124,14 @@ export async function hasPermission(check: AdminPermissionCheck, permission: Adm
     case 'orders.view':
     case 'payments.view':
     case 'audit.view':
+    case 'customers.view':
+    case 'customers.export':
       return true
     case 'orders.update':
+    case 'customers.update':
       return check.isOrderManager
+    case 'customers.suspend':
+      return check.isAdmin
     case 'payments.override':
     case 'refunds.create':
     case 'refunds.approve':
