@@ -12,7 +12,8 @@ ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS suspended_at timestamptz,
   ADD COLUMN IF NOT EXISTS signup_method text NOT NULL DEFAULT 'Email',
   ADD COLUMN IF NOT EXISTS manual_coupon text,
-  ADD COLUMN IF NOT EXISTS manual_credit numeric NOT NULL DEFAULT 0;
+  ADD COLUMN IF NOT EXISTS manual_credit numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS last_seen_at timestamptz;
 
 -- Backfill suspended_at from auth bans that are still active.
 UPDATE public.profiles p
