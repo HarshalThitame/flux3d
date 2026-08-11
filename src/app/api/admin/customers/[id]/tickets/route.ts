@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { requireAdminRequest } from '@/lib/admin/request'
+import { rateLimitResponse } from '@/lib/rate-limit'
 
 export async function GET(
   request: Request,
@@ -9,6 +10,17 @@ export async function GET(
 ) {
   const auth = await requireAdminRequest()
   if ('response' in auth) return auth.response;
+
+  const rateLimit = await rateLimitResponse(request, {
+    prefix: 'admin_customer_tickets_get',
+    windowSeconds: 60,
+    maxRequests: 120,
+    userId: auth.user.id,
+  })
+
+  if (!rateLimit.success) {
+    return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429 })
+  }
 
   try {
     const params = await context.params

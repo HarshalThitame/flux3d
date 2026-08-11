@@ -173,6 +173,7 @@ export default function CustomerProfilePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tabLoading, setTabLoading] = useState<Tab | null>(null)
+  const [tabError, setTabError] = useState<string | null>(null)
   const loadedTabs = useRef<Partial<Record<Tab, boolean>>>({})
 
   // Notes & tags editing state
@@ -232,9 +233,13 @@ export default function CustomerProfilePage() {
     if (loadedTabs.current[tab] || !customerId) return
     loadedTabs.current[tab] = true
     setTabLoading(tab)
+    setTabError(null)
     try {
       const res = await fetch(`/api/admin/customers/${customerId}/${tabEndpoint(tab)}`)
-      if (!res.ok) throw new Error(`Failed to load ${tab} data.`)
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(body.error ?? `Failed to load ${tab} data.`)
+      }
       const json = await res.json()
 
       if (tab === 'sessions') setSessions(json.sessions || [])
@@ -244,8 +249,9 @@ export default function CustomerProfilePage() {
       if (tab === 'tickets') setSupportTickets(json.tickets || [])
       if (tab === 'whatsapp') setWhatsappMessages(json.messages || [])
       if (tab === 'payments') setPayments(json.payments || [])
-    } catch {
+    } catch (loadError) {
       loadedTabs.current[tab] = false
+      setTabError(loadError instanceof Error ? loadError.message : `Failed to load ${tab} data.`)
     } finally {
       setTabLoading(null)
     }
@@ -266,6 +272,7 @@ export default function CustomerProfilePage() {
 
   function handleTabChange(tab: Tab) {
     setActiveTab(tab)
+    setTabError(null)
     void ensureLoaded(tab)
   }
 
@@ -368,6 +375,12 @@ export default function CustomerProfilePage() {
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
         >
+          {tabError && (
+            <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-600">
+              {tabError}
+            </div>
+          )}
+
           {/* Overview Tab */}
           {activeTab === 'overview' && profile && (
             <div className="grid gap-6 md:grid-cols-2">

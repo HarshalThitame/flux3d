@@ -35,14 +35,21 @@ import {
 } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import type { AdminCustomerStatus, AdminUser, OrderStatus } from '@/lib/admin/types'
-import { logSearch } from '@/lib/tracking/searchLogger'
 import { getCustomerActivity, type CustomerActivityData } from '../../../../actions/admin/getCustomerActivity'
+import { CUSTOMER_PAGE_SIZE, useAdminCustomers, type CustomerSort } from '@/hooks/useAdminCustomers'
 import type { FeatureUsageRow, Json, PageVisitRow, SearchLogRow, UserSessionRow } from '../../../../types/database'
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = CUSTOMER_PAGE_SIZE
 type SortKey = 'newest' | 'most-orders' | 'highest-spend' | 'last-active'
 type DrawerTab = 'profile' | 'orders' | 'files' | 'invoices' | 'notes' | 'activity'
 type ActivitySectionKey = 'sessions' | 'pageVisits' | 'featureUsage' | 'searchLogs'
+
+const SORT_TO_SERVER: Record<SortKey, CustomerSort> = {
+  newest: { sortBy: 'created_at', sortDir: 'desc' },
+  'most-orders': { sortBy: 'total_orders', sortDir: 'desc' },
+  'highest-spend': { sortBy: 'total_spent', sortDir: 'desc' },
+  'last-active': { sortBy: 'last_seen_at', sortDir: 'desc' },
+}
 
 function formatMoney(value?: number) {
   return new Intl.NumberFormat('en-IN', {
@@ -69,10 +76,6 @@ function initials(name: string, email: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join('') || 'CU'
-}
-
-function csvCell(value: string | number | null | undefined) {
-  return `"${String(value ?? '').replace(/"/g, '""')}"`
 }
 
 function statusClass(status?: string) {
@@ -104,16 +107,45 @@ function orderStatusClass(status: OrderStatus) {
   }
 }
 
-export default function CustomersClient({ initialCustomers }: { initialCustomers: AdminUser[] }) {
-  const [customers, setCustomers] = useState(initialCustomers)
-  const [query, setQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | AdminCustomerStatus>('all')
-  const [sortBy, setSortBy] = useState<SortKey>('newest')
-  const [page, setPage] = useState(1)
+export default function CustomersClient({
+  initialCustomers,
+  initialTotal,
+}: {
+  initialCustomers: AdminUser[]
+  initialTotal: number
+}) {
+  const [sortKey, setSortKey] = useState<SortKey>('newest')
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
   const [toast, setToast] = useState<AdminToastState>(null)
+  const [overrides, setOverrides] = useState<Record<string, Partial<AdminUser>>>({})
   const toastTimer = useRef<number | null>(null)
+  const syncedSortRef = useRef<SortKey>('newest')
+
+  const {
+    customers,
+    total,
+    loading,
+    error,
+    page,
+    query,
+    statusFilter,
+    stats,
+    statsLoading,
+    setQuery,
+    setStatusFilter,
+    setServerSort,
+    setPage,
+    refresh,
+  } = useAdminCustomers({ initialCustomers, initialTotal })
+
+  useEffect(() => {
+    if (syncedSortRef.current !== sortKey) {
+      syncedSortRef.current = sortKey
+      setServerSort(SORT_TO_SERVER[sortKey])
+    }
+  }, [setServerSort, sortKey])
 
   function showToast(nextToast: NonNullable<AdminToastState>) {
     setToast(nextToast)
@@ -123,99 +155,80 @@ export default function CustomersClient({ initialCustomers }: { initialCustomers
     toastTimer.current = window.setTimeout(() => setToast(null), 2600)
   }
 
-  const stats = useMemo(() => {
-    const monthStart = new Date()
-    monthStart.setDate(1)
-    monthStart.setHours(0, 0, 0, 0)
-    return {
-      total: customers.length,
-      newThisMonth: customers.filter((customer) => new Date(customer.joinedDate ?? 0) >= monthStart).length,
-      active: customers.filter((customer) => customer.status === 'Active').length,
-      suspended: customers.filter((customer) => customer.status === 'Suspended').length,
-    }
-  }, [customers])
+  const mergedCustomers = useMemo(
+    () => customers.map((customer) => ({ ...customer, ...overrides[customer.id] })),
+    [customers, overrides]
+  )
 
-  const filteredCustomers = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
-    return customers
-      .filter((customer) => {
-        const matchesQuery =
-          normalizedQuery.length === 0 ||
-          [customer.name, customer.email, customer.phone].some((value) => value?.toLowerCase().includes(normalizedQuery))
-        const matchesStatus = statusFilter === 'all' || customer.status === statusFilter
-        return matchesQuery && matchesStatus
-      })
-      .sort((left, right) => {
-        if (sortBy === 'most-orders') return (right.totalOrders ?? 0) - (left.totalOrders ?? 0)
-        if (sortBy === 'highest-spend') return (right.totalSpent ?? 0) - (left.totalSpent ?? 0)
-        if (sortBy === 'last-active') {
-          return new Date(right.lastSeenAt ?? 0).getTime() - new Date(left.lastSeenAt ?? 0).getTime()
-        }
-        return new Date(right.joinedDate ?? 0).getTime() - new Date(left.joinedDate ?? 0).getTime()
-      })
-  }, [customers, query, sortBy, statusFilter])
-
-  const totalPages = Math.max(1, Math.ceil(filteredCustomers.length / PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
-  const paginatedCustomers = filteredCustomers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
-  const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId) ?? null
+  const selectedCustomer = mergedCustomers.find((customer) => customer.id === selectedCustomerId) ?? null
 
-  useEffect(() => {
-    if (!query.trim() && statusFilter === 'all' && sortBy === 'newest') {
-      return
+  const displayStats = {
+    total: stats?.total ?? initialTotal,
+    newThisMonth: stats?.newThisMonth ?? 0,
+    active: stats?.active ?? 0,
+    suspended: stats?.suspended ?? 0,
+  }
+
+  async function exportCsv() {
+    setExporting(true)
+    try {
+      const trimmedQuery = query.trim().slice(0, 200)
+      const response = await fetch('/api/admin/customers/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          format: 'csv',
+          filter: {
+            query: trimmedQuery || undefined,
+            status: statusFilter === 'all' ? undefined : statusFilter,
+            sortBy: SORT_TO_SERVER[sortKey].sortBy,
+            sortDir: SORT_TO_SERVER[sortKey].sortDir,
+          },
+        }),
+      })
+      if (!response.ok) {
+        const body = (await response.json().catch(() => ({}))) as { error?: string }
+        throw new Error(body.error ?? 'Failed to export customers.')
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `flux3d-customers-${new Date().toISOString().slice(0, 10)}.csv`
+      link.click()
+      URL.revokeObjectURL(url)
+      showToast({ type: 'success', message: 'Customers exported as CSV.' })
+    } catch (error) {
+      showToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to export customers.' })
+    } finally {
+      setExporting(false)
     }
-
-    const timeout = window.setTimeout(() => {
-      void logSearch(null, query.trim() || null, {
-        area: 'admin_customers',
-        statusFilter,
-        sortBy,
-      }, filteredCustomers.length).catch(() => {})
-    }, 500)
-
-    return () => window.clearTimeout(timeout)
-  }, [filteredCustomers.length, query, sortBy, statusFilter])
-
-  function exportCsv() {
-    const rows = filteredCustomers.map((customer) => [
-      customer.customerId,
-      customer.name,
-      customer.email,
-      customer.phone ?? '',
-      customer.status ?? 'Active',
-      customer.totalOrders ?? 0,
-      customer.totalSpent ?? 0,
-      customer.joinedDate ?? '',
-      customer.lastOrderDate ?? '',
-    ])
-    const header = ['Customer ID', 'Name', 'Email', 'Phone', 'Status', 'Total Orders', 'Total Spend', 'Joined', 'Last Order']
-    const csv = [header, ...rows].map((row) => row.map(csvCell).join(',')).join('\n')
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `flux3d-customers-${new Date().toISOString().slice(0, 10)}.csv`
-    link.click()
-    URL.revokeObjectURL(url)
-    showToast({ type: 'success', message: 'Customers exported as CSV.' })
   }
 
   async function patchCustomer(customerId: string, payload: Record<string, unknown>) {
     setUpdatingId(customerId)
     try {
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch(`/api/admin/customers/${customerId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: customerId, ...payload }),
+        body: JSON.stringify(payload),
       })
       if (!response.ok) {
         const body = (await response.json().catch(() => ({}))) as { error?: string }
         throw new Error(body.error ?? 'Failed to update customer.')
       }
-      const json = (await response.json()) as { user?: AdminUser }
-      if (json.user) {
-        setCustomers((current) => current.map((customer) => (customer.id === customerId ? json.user! : customer)))
-      }
+
+      const nextPatch: Partial<AdminUser> = {}
+      if (payload.status === 'Suspended') nextPatch.status = 'Suspended'
+      if (payload.status === 'Active') nextPatch.status = 'Active'
+      if (typeof payload.notes === 'string') nextPatch.notes = payload.notes
+      if (typeof payload.manualCoupon === 'string') nextPatch.manualCoupon = payload.manualCoupon
+      if (typeof payload.manualCredit === 'number') nextPatch.manualCredit = payload.manualCredit
+      setOverrides((current) => ({ ...current, [customerId]: nextPatch }))
       showToast({ type: 'success', message: 'Customer updated.' })
+      refresh()
     } catch (error) {
       showToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to update customer.' })
     } finally {
@@ -234,19 +247,20 @@ export default function CustomersClient({ initialCustomers }: { initialCustomers
             </div>
             <button
               type="button"
-              onClick={exportCsv}
-              className="inline-flex h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+              onClick={() => void exportCsv()}
+              disabled={exporting}
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Download className="h-4 w-4" />
-              Export CSV
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {exporting ? 'Exporting…' : 'Export CSV'}
             </button>
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard icon={<Users className="h-5 w-5" />} label="Total Customers" value={stats.total.toLocaleString('en-IN')} />
-            <StatCard icon={<UserCheck className="h-5 w-5" />} label="New This Month" value={stats.newThisMonth.toLocaleString('en-IN')} />
-            <StatCard icon={<Package className="h-5 w-5" />} label="Active Customers" value={stats.active.toLocaleString('en-IN')} />
-            <StatCard icon={<ShieldAlert className="h-5 w-5" />} label="Suspended Accounts" value={stats.suspended.toLocaleString('en-IN')} />
+            <StatCard icon={<Users className="h-5 w-5" />} label="Total Customers" value={statsLoading && !stats ? '…' : displayStats.total.toLocaleString('en-IN')} />
+            <StatCard icon={<UserCheck className="h-5 w-5" />} label="New This Month" value={statsLoading && !stats ? '…' : displayStats.newThisMonth.toLocaleString('en-IN')} />
+            <StatCard icon={<Package className="h-5 w-5" />} label="Active Customers" value={statsLoading && !stats ? '…' : displayStats.active.toLocaleString('en-IN')} />
+            <StatCard icon={<ShieldAlert className="h-5 w-5" />} label="Suspended Accounts" value={statsLoading && !stats ? '…' : displayStats.suspended.toLocaleString('en-IN')} />
           </div>
 
           <div className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -255,20 +269,14 @@ export default function CustomersClient({ initialCustomers }: { initialCustomers
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                   value={query}
-                  onChange={(event) => {
-                    setQuery(event.target.value)
-                    setPage(1)
-                  }}
+                  onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search by name, email, or phone"
                   className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-600 focus:ring-2 focus:ring-violet-100"
                 />
               </label>
               <select
                 value={statusFilter}
-                onChange={(event) => {
-                  setStatusFilter(event.target.value as 'all' | AdminCustomerStatus)
-                  setPage(1)
-                }}
+                onChange={(event) => setStatusFilter(event.target.value as 'all' | AdminCustomerStatus)}
                 className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-100"
               >
                 <option value="all">All Status</option>
@@ -277,8 +285,8 @@ export default function CustomersClient({ initialCustomers }: { initialCustomers
                 <option value="Unverified">Unverified</option>
               </select>
               <select
-                value={sortBy}
-                onChange={(event) => setSortBy(event.target.value as SortKey)}
+                value={sortKey}
+                onChange={(event) => setSortKey(event.target.value as SortKey)}
                 className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-100"
               >
                 <option value="newest">Newest</option>
@@ -288,6 +296,12 @@ export default function CustomersClient({ initialCustomers }: { initialCustomers
               </select>
             </div>
           </div>
+
+          {error && (
+            <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              {error}
+            </div>
+          )}
 
           <div className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
@@ -305,14 +319,22 @@ export default function CustomersClient({ initialCustomers }: { initialCustomers
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedCustomers.length === 0 ? (
+                  {loading && mergedCustomers.length === 0 ? (
+                    Array.from({ length: PAGE_SIZE }).map((_, index) => (
+                      <tr key={index} className="border-t border-gray-100">
+                        <td colSpan={8} className="px-4 py-5">
+                          <div className="h-8 animate-pulse rounded-lg bg-gray-100" />
+                        </td>
+                      </tr>
+                    ))
+                  ) : mergedCustomers.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="px-4 py-16 text-center text-sm text-gray-500">
                         No customers found.
                       </td>
                     </tr>
                   ) : (
-                    paginatedCustomers.map((customer) => (
+                    mergedCustomers.map((customer) => (
                       <tr key={customer.id} className="border-t border-gray-100 transition hover:bg-gray-50">
                         <td className="px-4 py-4">
                           <div className="flex min-w-0 items-center gap-3">
@@ -363,9 +385,9 @@ export default function CustomersClient({ initialCustomers }: { initialCustomers
             </div>
             <div className="flex flex-col gap-3 border-t border-gray-200 px-4 py-3 text-sm text-gray-600 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                Showing {filteredCustomers.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
+                Showing {total === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
                 {' - '}
-                {Math.min(currentPage * PAGE_SIZE, filteredCustomers.length)} of {filteredCustomers.length.toLocaleString('en-IN')} customers
+                {Math.min(currentPage * PAGE_SIZE, total)} of {total.toLocaleString('en-IN')} customers
               </div>
               <div className="flex items-center gap-2">
                 <button
