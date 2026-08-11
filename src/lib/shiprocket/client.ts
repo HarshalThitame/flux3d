@@ -206,17 +206,21 @@ export async function createAdhocOrder(input: CreateAdhocOrderInput): Promise<Cr
 
 export type AssignAwbResult = {
   awb_assign_status?: number
+  message?: string
+  status_code?: number
   response?: {
     data?: {
       awb_code?: string
       courier_name?: string
       courier_company_id?: number
+      awb_assign_error?: string
     }
   }
   data?: {
     awb_code?: string
     courier_name?: string
     courier_company_id?: number
+    awb_assign_error?: string
   }
   awb_code?: string
   courier_name?: string
