@@ -66,8 +66,6 @@ export async function POST(_request: Request, context: { params: Promise<{ order
         { status: 400 }
       )
     }
-
-    // ── Customer / address ──
     const address = asRecord(order.shipping_address)
     const fullName = String(address.name ?? 'Customer').trim()
     const nameParts = fullName.split(/\s+/)
@@ -137,35 +135,52 @@ export async function POST(_request: Request, context: { params: Promise<{ order
     const weightKg = Math.max(Math.round((totalWeightG / 1000) * 100) / 100, 0.1)
     const now = istNow()
 
-    // ── 1. Create adhoc order in Shiprocket ──
-    const created = await createAdhocOrder({
-      order_id: String(order.order_number ?? orderId).slice(0, 50),
-      order_date: now.dateTime,
-      pickup_location: getShiprocketPickupLocation(),
-      billing_customer_name: firstName.slice(0, 50),
-      billing_last_name: lastName.slice(0, 50),
-      billing_address: addressLine1.slice(0, 100),
-      billing_address_2: addressLine2.slice(0, 100),
-      billing_city: city.slice(0, 50),
-      billing_state: state.slice(0, 50),
-      billing_pincode: Number(pincode) || 0,
-      billing_country: 'India',
-      billing_email: customerEmail ?? '',
-      billing_phone: Number(customerPhone) || 0,
-      shipping_is_billing: true,
-      order_items: orderItems,
-      payment_method: 'Prepaid',
-      sub_total: subTotal,
-      length: Math.max(Math.ceil(maxLengthCm), 1),
-      breadth: Math.max(Math.ceil(maxBreadthCm), 1),
-      height: Math.max(Math.ceil(maxHeightCm), 1),
-      weight: weightKg,
-    })
+    // ── 1. Create adhoc order in Shiprocket (or resume a previously created one) ──
+    let shiprocketOrderId: number | null = order.shiprocket_order_id ? Snumber(order.shiprocket_order_id) : null
+    let shipmentId: number | null = order.shipment_id ? Snumber(order.shipment_id) : null
 
-    const shiprocketOrderId = created.order_id ? Snumber(created.order_id) : null
-    const shipmentId = created.shipment_id ?? null
     if (!shipmentId) {
-      throw new Error('Shiprocket did not return a shipment_id for the created order.')
+      const created = await createAdhocOrder({
+        order_id: String(order.order_number ?? orderId).slice(0, 50),
+        order_date: now.dateTime,
+        pickup_location: getShiprocketPickupLocation(),
+        billing_customer_name: firstName.slice(0, 50),
+        billing_last_name: lastName.slice(0, 50),
+        billing_address: addressLine1.slice(0, 100),
+        billing_address_2: addressLine2.slice(0, 100),
+        billing_city: city.slice(0, 50),
+        billing_state: state.slice(0, 50),
+        billing_pincode: Number(pincode) || 0,
+        billing_country: 'India',
+        billing_email: customerEmail ?? '',
+        billing_phone: Number(customerPhone) || 0,
+        shipping_is_billing: true,
+        order_items: orderItems,
+        payment_method: 'Prepaid',
+        sub_total: subTotal,
+        length: Math.max(Math.ceil(maxLengthCm), 1),
+        breadth: Math.max(Math.ceil(maxBreadthCm), 1),
+        height: Math.max(Math.ceil(maxHeightCm), 1),
+        weight: weightKg,
+      })
+
+      shiprocketOrderId = created.order_id ? Snumber(created.order_id) : null
+      shipmentId = created.shipment_id ? Snumber(created.shipment_id) : null
+      if (!shipmentId) {
+        throw new Error('Shiprocket did not return a shipment_id for the created order.')
+      }
+
+      // Persist immediately so a later step can safely resume instead of
+      // creating duplicate Shiprocket orders on retry.
+      const { error: persistError } = await supabase
+        .from('shelf_orders')
+        .update({
+          shiprocket_order_id: shiprocketOrderId ?? null,
+          shipment_id: shipmentId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId)
+      if (persistError) throw new Error(persistError.message)
     }
 
     // ── 2. Assign AWB ──
@@ -177,7 +192,11 @@ export async function POST(_request: Request, context: { params: Promise<{ order
     const awbCode = String(awbData?.awb_code ?? '').trim()
     const courierName = String(awbData?.courier_name ?? 'Shiprocket').trim()
     if (!awbCode) {
-      throw new Error('Shiprocket did not return an AWB code for the shipment.')
+      const shiprocketMessage = String(awbData?.awb_assign_error ?? awbResult?.message ?? '').trim()
+      throw new Error(
+        shiprocketMessage ||
+        'Shiprocket did not return an AWB code for the shipment (courier not available for this pincode?).'
+      )
     }
 
     // ── 3. Schedule pickup ──
