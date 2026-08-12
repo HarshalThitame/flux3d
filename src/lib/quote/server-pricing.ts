@@ -23,6 +23,7 @@ export function toParsedModel(metadata: ModelMetadata): ParsedModel {
     volumeMm3: metadata.volumeMm3,
     triangleCount: metadata.triangleCount,
     suggestedMaterialId: metadata.suggestedMaterialId ?? '',
+    requiresReview: false,
   }
 }
 
