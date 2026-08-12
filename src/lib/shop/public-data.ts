@@ -62,7 +62,11 @@ type RawProduct = {
   skus?: (ShopSku & { images?: ShopSkuImage[] | null })[] | null
   variant_options?: ShopVariantOption[] | null
   default_dimensions?: unknown
-  variant_option_dimensions?: (Omit<ShopVariantOptionDimension, 'dimensions'> & { dimensions?: unknown })[] | null
+  box_dimensions?: unknown
+  variant_option_dimensions?: (Omit<ShopVariantOptionDimension, 'dimensions' | 'box_dimensions'> & {
+    dimensions?: unknown
+    box_dimensions?: unknown
+  })[] | null
   variant_option_images?: ShopVariantOptionImage[] | null
   reviews?: RawReview[] | null
 }
@@ -90,6 +94,7 @@ const PRODUCT_SELECT = `
   created_at,
   updated_at,
   default_dimensions,
+  box_dimensions,
   category:shelf_categories(id,name,slug),
   skus:shelf_skus(
     id,
@@ -132,6 +137,7 @@ const PRODUCT_SELECT = `
     option_name,
     option_value,
     dimensions,
+    box_dimensions,
     created_at,
     updated_at
   ),
@@ -185,7 +191,11 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
     .map((entry) => {
       const parsed = parseDimensionsJson(entry.dimensions)
       if (!parsed) return null
-      return { ...entry, dimensions: parsed }
+      return {
+        ...entry,
+        dimensions: parsed,
+        box_dimensions: parseDimensionsJson(entry.box_dimensions),
+      }
     })
     .filter(Boolean) as ShopVariantOptionDimension[]
   const variantOptionImages = (row.variant_option_images ?? []).sort(
@@ -246,6 +256,7 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
     skus,
     variant_options: (row.variant_options ?? []).sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
     default_dimensions: parseDimensionsJson(row.default_dimensions),
+    box_dimensions: parseDimensionsJson(row.box_dimensions),
     variant_option_dimensions: variantOptionDimensions,
     variant_option_images: variantOptionImages,
     sku_images: skuImages,

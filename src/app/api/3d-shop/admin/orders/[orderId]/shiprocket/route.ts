@@ -13,6 +13,7 @@ import {
   type ShiprocketOrderItem,
 } from '@/lib/shiprocket/client'
 import { sendOrderShipped } from '@/lib/email/triggers'
+import { hasAnyDimension, parseDimensionsJson } from '@/lib/shop/dimensions'
 import { notifyWhatsAppOrderShipped } from '@/lib/whatsapp/notifications'
 
 export const dynamic = 'force-dynamic'
@@ -101,7 +102,14 @@ export async function POST(_request: Request, context: { params: Promise<{ order
     let maxHeightCm = DEFAULT_SIZE_CM.height
 
     const { data: products } = productIds.length
-      ? await supabase.from('shelf_products').select('id, default_dimensions').in('id', productIds)
+      ? await supabase.from('shelf_products').select('id, default_dimensions, box_dimensions').in('id', productIds)
+      : { data: null }
+
+    const { data: variantDimensionRows } = productIds.length
+      ? await supabase
+          .from('shelf_variant_option_dimensions')
+          .select('product_id, option_name, option_value, box_dimensions')
+          .in('product_id', productIds)
       : { data: null }
 
     const orderItems: ShiprocketOrderItem[] = items.map((item) => {
@@ -111,7 +119,34 @@ export async function POST(_request: Request, context: { params: Promise<{ order
       const product = (products ?? []).find(
         (row) => String(row.id) === String(item.productId ?? item.product_id)
       )
-      const dims = (product?.default_dimensions ?? {}) as Dims
+
+      let box: ReturnType<typeof parseDimensionsJson> = null
+      const combination = asRecord(item.variantCombination ?? item.variant_combination ?? {})
+      for (const [optionName, optionValue] of Object.entries(combination)) {
+        if (typeof optionValue !== 'string') continue
+        const match = (variantDimensionRows ?? []).find(
+          (row) =>
+            String(row.product_id) === String(product?.id) &&
+            row.option_name === optionName &&
+            row.option_value === optionValue &&
+            row.box_dimensions
+        )
+        const parsed = match ? parseDimensionsJson(match.box_dimensions) : null
+        if (parsed && hasAnyDimension(parsed)) {
+          box = parsed
+          break
+        }
+      }
+      if (!box && product?.box_dimensions) {
+        const productBox = parseDimensionsJson(product.box_dimensions)
+        if (productBox && hasAnyDimension(productBox)) box = productBox
+      }
+      if (!box && product?.default_dimensions) {
+        const productDims = parseDimensionsJson(product.default_dimensions)
+        if (productDims && hasAnyDimension(productDims)) box = productDims
+      }
+
+      const dims = (box ?? {}) as Dims
 
       const weightG = Number(dims.weight_g ?? 0) > 0 ? Number(dims.weight_g) : DEFAULT_WEIGHT_G
       const lengthCm = Number(dims.length_mm ?? 0) > 0 ? Number(dims.length_mm) / 10 : DEFAULT_SIZE_CM.length
