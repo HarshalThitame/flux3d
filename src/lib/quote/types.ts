@@ -63,6 +63,7 @@ export type ParsedModel = {
   volumeMm3: number
   triangleCount: number
   suggestedMaterialId: string
+  requiresReview: boolean
 }
 
 export type QuoteConfig = {

@@ -230,7 +230,10 @@ function CartEnabledWorkspace({
   }, [toast])
 
   const priceBreakdown = useMemo(
-    () => calculateInstantQuote(selectedModel, config, materials, pricingSettings),
+    () =>
+      selectedModel?.requiresReview
+        ? null
+        : calculateInstantQuote(selectedModel, config, materials, pricingSettings),
     [selectedModel, config, materials, pricingSettings]
   )
 
@@ -366,7 +369,12 @@ function CartEnabledWorkspace({
       const parsedModel = await parseModelFile(file)
       setSelectedModel(parsedModel)
 
-      if (!hasUserSelectedMaterial) {
+      if (parsedModel.requiresReview) {
+        setToast({
+          type: 'info',
+          message: 'File accepted for manual review. Our team will calculate pricing and contact you.',
+        })
+      } else if (!hasUserSelectedMaterial) {
         const suggestedMaterial = getMaterialById(parsedModel.suggestedMaterialId, materials) ?? materials[0]
         if (!suggestedMaterial) {
           throw new Error('No printable material is available for this model.')
@@ -523,6 +531,10 @@ function CartEnabledWorkspace({
 
   const handleAddToCart = () => {
     if (!priceBreakdown || !selectedModel || !selectedMaterial || !initialQuoteId) {
+      if (selectedModel?.requiresReview) {
+        setToast({ type: 'error', message: 'Models requiring manual review cannot be auto-quoted. Please use the contact form for a custom quote.' })
+        return
+      }
       setToast({ type: 'error', message: 'Upload a model and generate a quote before adding to cart.' })
       return
     }
@@ -726,7 +738,7 @@ function CartEnabledWorkspace({
                       </div>
                       <div>
                         <h2 className="text-lg font-semibold text-[#070b1d]">1. Upload Your Model</h2>
-                        <p className="text-xs text-[#6F7192]">STL, OBJ, 3MF, STEP, DXF, or DWG files supported</p>
+                        <p className="text-xs text-[#6F7192]">STL, OBJ, 3MF, GLB, GLTF, FBX, PLY, DAE, AMF, STEP, IGES, BREP, DWG, DXF supported</p>
                       </div>
                     </div>
 
@@ -741,7 +753,7 @@ function CartEnabledWorkspace({
                     >
                       <input
                         type="file"
-                        accept=".stl,.step,.obj,.3mf,.dxf,.dwg"
+                        accept=".stl,.obj,.3mf,.glb,.gltf,.fbx,.ply,.dae,.amf,.step,.stp,.iges,.igs,.brep,.dwg,.dxf"
                         className="absolute inset-0 cursor-pointer opacity-0"
                         onChange={(e) => {
                           if (e.target.files?.[0]) handleFileSelect(e.target.files[0])
@@ -760,7 +772,7 @@ function CartEnabledWorkspace({
                         </div>
                         {!selectedFile && (
 <div className="mt-2 text-xs text-[#6F7192]">
-  STL · OBJ · 3MF · STEP · DXF · DWG supported
+  STL · OBJ · 3MF · GLB · GLTF · FBX · PLY · DAE · AMF · STEP · IGES · BREP · DWG · DXF
 </div>
                         )}
                         {selectedFile && (
@@ -1185,6 +1197,12 @@ function CartEnabledWorkspace({
 
                       {/* Actions */}
                       <div className="mt-5 space-y-2.5">
+                        {selectedModel?.requiresReview ? (
+                          <div className="quote-primary-action flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400/15 px-4 py-3 text-sm font-semibold text-amber-800">
+                            <AlertTriangle className="h-4 w-4" />
+                            Manual review required — contact for custom quote
+                          </div>
+                        ) : (
                         <button
                           type="button"
                           onClick={handleAddToCart}
@@ -1207,6 +1225,7 @@ function CartEnabledWorkspace({
                             </>
                           )}
                         </button>
+                        )}
 
                         {cartItemCheck && (
                           <Link

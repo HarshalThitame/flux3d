@@ -4,8 +4,11 @@ import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { getExtension, safeFileName } from '@/lib/storage/validate'
 import { rateLimitResponse } from '@/lib/rate-limit'
 
-const ALLOWED_EXTENSIONS = new Set(['stl', 'step', 'obj', '3mf', 'dxf', 'dwg'])
-const MAX_FILE_SIZE = 50 * 1024 * 1024
+const ALLOWED_EXTENSIONS = new Set([
+  'stl', 'obj', '3mf', 'step', 'iges', 'igs', 'brep',
+  'glb', 'gltf', 'fbx', 'ply', 'dae', 'amf', 'vrl', 'dxf', 'dwg',
+])
+const MAX_FILE_SIZE = 100 * 1024 * 1024
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -45,7 +48,7 @@ export async function POST(request: Request) {
     }
 
     if (typeof fileSize === 'number' && fileSize > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File is too large. Maximum allowed size is 50MB.' }, { status: 400 })
+      return NextResponse.json({ error: 'File is too large. Maximum allowed size is 100MB.' }, { status: 400 })
     }
 
     const safeName = safeFileName(fileName)

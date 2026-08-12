@@ -1,6 +1,9 @@
 import { fileTypeFromBuffer } from 'file-type'
 
-export const MODEL_EXTENSIONS = new Set(['stl', 'step', 'obj', '3mf', 'dxf', 'dwg'])
+export const MODEL_EXTENSIONS = new Set([
+  'stl', 'obj', '3mf', 'step', 'iges', 'igs', 'brep',
+  'glb', 'gltf', 'fbx', 'ply', 'dae', 'amf', 'vrl', 'dxf', 'dwg',
+])
 export const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp'])
 
 const MODEL_MIME_TYPES = new Set([
@@ -11,6 +14,18 @@ const MODEL_MIME_TYPES = new Set([
   'model/3mf',
   'image/vnd.dwg',
   'application/acad',
+  'model/gltf-binary',
+  'model/gltf+json',
+  'application/fbx',
+  'application/x-ply',
+  'application/xml',
+])
+
+// Extensions where the extension alone is sufficient validation (magic bytes
+// are unreliable, absent, or the format is complex to detect programmatically).
+const EXTENSION_TRUSTED_FORMATS = new Set([
+  'step', 'iges', 'igs', 'brep', 'dwg', 'dxf',
+  'glb', 'gltf', 'fbx', 'ply', 'dae', 'amf', 'vrl',
 ])
 
 const IMAGE_MIME_TYPES = new Set([
@@ -44,8 +59,14 @@ export async function validateModelFile(file: File): Promise<FileValidationResul
     return { valid: false, error: 'Unsupported model file format.', extension, mimeType: file.type }
   }
 
-  if (file.size > 50 * 1024 * 1024) {
-    return { valid: false, error: 'File is too large. Maximum allowed size is 50MB.', extension, mimeType: file.type }
+  if (file.size > 100 * 1024 * 1024) {
+    return { valid: false, error: 'File is too large. Maximum allowed size is 100MB.', extension, mimeType: file.type }
+  }
+
+  // For extension-trusted formats, accept based on extension + size alone
+  // (magic bytes are unreliable or absent for these formats)
+  if (EXTENSION_TRUSTED_FORMATS.has(extension)) {
+    return { valid: true, extension, mimeType: file.type }
   }
 
   const arrayBuffer = await file.arrayBuffer()
@@ -71,11 +92,6 @@ export async function validateModelFile(file: File): Promise<FileValidationResul
     // 3MF files are ZIP archives
     const text = new TextDecoder().decode(arrayBuffer.slice(0, 4))
     if (text === 'PK\x03\x04') return { valid: true, extension, mimeType }
-  }
-
-  // STEP and DWG are harder to validate by magic bytes; fall back to MIME
-  if (!MODEL_MIME_TYPES.has(mimeType) && extension !== 'step' && extension !== 'dwg' && extension !== 'dxf') {
-    return { valid: false, error: 'File type does not match the expected model format.', extension, mimeType }
   }
 
   return { valid: true, extension, mimeType }
