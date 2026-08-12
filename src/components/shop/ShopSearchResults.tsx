@@ -1,11 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import ProductCard from '@/components/shop/ProductCard'
 import type { ShopPublicProduct } from '@/lib/shop/public-types'
+import { trackMetaEvent } from '@/lib/meta/event-utils'
 
 export default function ShopSearchResults({
   query,
@@ -17,6 +18,11 @@ export default function ShopSearchResults({
   const router = useRouter()
   const [draft, setDraft] = useState(query)
   const visibleProducts = useMemo(() => products, [products])
+
+  useEffect(() => {
+    if (!query || query === 'all products') return
+    trackMetaEvent('Search', { search_string: query })
+  }, [query])
 
   return (
     <main className="px-4 pb-24 pt-6 md:px-8 lg:px-16 lg:pt-8">

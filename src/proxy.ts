@@ -5,7 +5,7 @@ function buildCsp(nonce: string) {
   const isDev = process.env.NODE_ENV === 'development'
   const directives = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://checkout.razorpay.com https://api.razorpay.com${isDev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
     [
       'img-src',
@@ -30,8 +30,12 @@ function buildCsp(nonce: string) {
       'https://connect.facebook.net',
       'https://graph.facebook.com',
       'https://api.razorpay.com',
+      'https://checkout.razorpay.com',
+      'https://lumberjack.razorpay.com',
+      'https://lumberjack-cx.razorpay.com',
+      'https://custom-analytics.razorpay.com',
     ].join(' '),
-    "frame-src 'self' https://checkout.razorpay.com",
+    "frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

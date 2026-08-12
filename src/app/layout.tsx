@@ -6,6 +6,7 @@ import { FALLBACK_SETTINGS } from '@/lib/settings-fallback'
 import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import DeferredTracking from '@/components/DeferredTracking'
+import MetaPixel from '@/components/MetaPixel'
 import DeferredGoogleAnalytics from '@/components/DeferredGoogleAnalytics'
 import ToastContainer from '@/components/Toast'
 import LoadingProvider from '@/components/providers/LoadingProvider'
@@ -36,6 +37,7 @@ const spaceGrotesk = Space_Grotesk({
 })
 
 const GOOGLE_ANALYTICS_ID = 'G-KCK2459TBQ'
+const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || ''
 
 const DNS_PREFETCH_ORIGINS = [
   '//www.googletagmanager.com',
@@ -175,6 +177,7 @@ export default async function RootLayout({
         `}</style>
       </head>
       <body suppressHydrationWarning>
+        {META_PIXEL_ID && <MetaPixel pixelId={META_PIXEL_ID} />}
         <script
           nonce={nonce}
           suppressHydrationWarning

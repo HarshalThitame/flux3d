@@ -250,6 +250,14 @@ export default function ShopCheckoutClient({
   async function handlePlaceOrder() {
     if (isPlacing || items.length === 0) return
 
+    trackMetaEvent('AddPaymentInfo', {
+      content_ids: items.map((i) => i.skuCode),
+      content_type: 'product',
+      contents: items.map((i) => ({ id: i.skuCode, quantity: i.quantity, item_price: i.price })),
+      value: totals.subtotal,
+      currency: 'INR',
+    })
+
     setToast('')
     setReviewBanner(false)
     setAffectedItemIds([])
