@@ -1,5 +1,5 @@
 import type { ShopSku, ShopSkuImage, ShopVariantOption } from '@/lib/shop/admin-types'
-import { resolveDimensionsForSelection } from '@/lib/shop/dimensions'
+import { resolveBoxDimensions, resolveDimensionsForSelection } from '@/lib/shop/dimensions'
 import type { ShopPublicProduct } from '@/lib/shop/public-types'
 
 export type ShopSelectedOptions = Record<string, string | boolean | null>
@@ -69,6 +69,15 @@ export function getShopDisplayDimensions(product: ShopPublicProduct, selected: S
     product.default_dimensions ?? null,
     selected,
     product.variant_options
+  )
+}
+
+export function getShopBoxDimensions(product: ShopPublicProduct, selected: ShopSelectedOptions) {
+  return resolveBoxDimensions(
+    product.variant_option_dimensions ?? [],
+    product.box_dimensions ?? null,
+    product.default_dimensions ?? null,
+    selected
   )
 }
 

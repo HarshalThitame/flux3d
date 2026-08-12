@@ -17,6 +17,7 @@ export type ShopVariantOptionDimension = {
   option_name: string
   option_value: string
   dimensions: ProductDimensions
+  box_dimensions: ProductDimensions | null
   created_at: string | null
   updated_at: string | null
 }
@@ -71,6 +72,7 @@ export type ShopProduct = {
   image_urls: string[] | null
   image_alt: Record<string, string> | null
   default_dimensions: ProductDimensions | null
+  box_dimensions: ProductDimensions | null
   model_url: string | null
   base_price: number
   is_customizable: boolean | null

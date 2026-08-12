@@ -187,4 +187,22 @@ export function resolveDimensionsForSelection(
   return null
 }
 
+export function resolveBoxDimensions(
+  optionDimensions: ShopVariantOptionDimension[],
+  productBoxDimensions: ProductDimensions | null,
+  productDefaultDimensions: ProductDimensions | null,
+  combination: Record<string, string | boolean | null | undefined>
+): ProductDimensions | null {
+  for (const [optionName, value] of Object.entries(combination)) {
+    if (typeof value !== 'string') continue
+    const match = optionDimensions.find(
+      (entry) => entry.option_name === optionName && entry.option_value === value
+    )
+    if (match?.box_dimensions && hasAnyDimension(match.box_dimensions)) return match.box_dimensions
+  }
+  if (productBoxDimensions && hasAnyDimension(productBoxDimensions)) return productBoxDimensions
+  if (productDefaultDimensions && hasAnyDimension(productDefaultDimensions)) return productDefaultDimensions
+  return null
+}
+
 export type ShopOption = Pick<ShopVariantOption, 'option_name' | 'option_type' | 'display_order' | 'is_required'>

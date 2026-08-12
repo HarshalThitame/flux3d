@@ -53,6 +53,7 @@ export type ShopPublicProduct = {
   skus: ShopSku[]
   variant_options: ShopVariantOption[]
   default_dimensions?: ProductDimensions | null
+  box_dimensions?: ProductDimensions | null
   variant_option_dimensions: ShopVariantOptionDimension[]
   variant_option_images: ShopVariantOptionImage[]
   sku_images: Record<string, ShopSkuImage[]>

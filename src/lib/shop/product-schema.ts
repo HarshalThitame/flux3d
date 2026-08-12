@@ -32,6 +32,7 @@ export const productFormSchema = z.object({
   image_urls: z.array(z.string()),
   image_alt: z.record(z.string(), z.string()),
   default_dimensions: productDimensionsSchema.nullable(),
+  box_dimensions: productDimensionsSchema.nullable(),
   model_url: z.string(),
   base_price: z.number().min(0, 'Price cannot be negative'),
   is_customizable: z.boolean(),
