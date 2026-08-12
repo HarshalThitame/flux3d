@@ -3,13 +3,14 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRef } from 'react'
-import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
+import { motion, cubicBezier, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import { ArrowRight, ArrowDown, MapPin, Clock, Sparkles } from 'lucide-react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { scrollToTarget } from '@/lib/scroll-to'
 import WordReveal from '@/components/ui/WordReveal'
 import MagneticButton from '@/components/ui/MagneticButton'
 import ShopFeaturedAd from './ShopFeaturedAd'
+import MobileShopFeaturedAd from '@/components/landing/MobileShopFeaturedAd'
 import type { ShopPublicProduct } from '@/lib/shop/public-types'
 
 function HeroFadeIn({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
@@ -64,7 +65,7 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
   const reduceMotion = useReducedMotion()
   const isFinePointer = useMediaQuery('(pointer: fine)')
   const enableHover = isFinePointer && !reduceMotion
-  const heroTransition = reduceMotion ? { duration: 0.3 } : { duration: 0.8, ease: "cubic-bezier(0.4, 0, 0.2, 1)" }
+  const heroTransition = reduceMotion ? { duration: 0.3 } : { duration: 0.8, ease: cubicBezier(0.4, 0, 0.2, 1) }
   const quickFade = reduceMotion ? { duration: 0.2 } : { duration: 0.6 }
   const sectionRef = useRef<HTMLElement>(null)
 
@@ -137,7 +138,7 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
             <motion.h1
               initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={reduceMotion ? { duration: 0.3 } : { duration: 0.7, delay: 0.15, ease: "cubic-bezier(0.4, 0, 0.2, 1)" }}
+              transition={reduceMotion ? { duration: 0.3 } : { duration: 0.7, delay: 0.15, ease: cubicBezier(0.4, 0, 0.2, 1) }}
               className="premium-hero-title text-[clamp(2.4rem,9vw,5rem)] font-black leading-[0.86] text-[#070b1d] sm:text-6xl md:text-7xl lg:text-8xl"
             >
               <span className="premium-title-line block">
@@ -220,7 +221,7 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
           <motion.div
             initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={reduceMotion ? { duration: 0.3 } : { duration: 0.8, delay: 0.4, ease: "cubic-bezier(0.4, 0, 0.2, 1)" }}
+            transition={reduceMotion ? { duration: 0.3 } : { duration: 0.8, delay: 0.4, ease: cubicBezier(0.4, 0, 0.2, 1) }}
             style={parallaxDisabled ? undefined : { y: panelY }}
             className="relative hidden lg:block"
           >
@@ -238,6 +239,11 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
             <CountStat key={stat.label} stat={stat} index={i} />
           ))}
         </motion.div>
+
+        {/* Enterprise-grade mobile shop ad - hidden on lg+ */}
+        {typeof window !== 'undefined' && !reduceMotion && (
+          <MobileShopFeaturedAd products={featuredProducts ?? []} />
+        )}
 
         <HeroFadeIn delay={0.8} className="mx-auto mt-5 flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#5b21b6]">
           <Clock className="h-3.5 w-3.5" />
