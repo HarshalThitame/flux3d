@@ -7,7 +7,7 @@ import { rateLimitResponse } from '@/lib/rate-limit'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024
+const MAX_FILE_SIZE = 100 * 1024 * 1024
 const BUCKET = 'quote-models'
 
 export async function POST(request: Request) {
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
 
     if (fileInfo && Number(fileInfo.metadata?.size ?? fileSize ?? 0) > MAX_FILE_SIZE) {
       await adminSupabase.storage.from(bucket).remove([safePath]).catch(() => {})
-      return NextResponse.json({ error: 'File exceeds the maximum allowed size of 50MB.' }, { status: 400 })
+      return NextResponse.json({ error: 'File exceeds the maximum allowed size of 100MB.' }, { status: 400 })
     }
 
     const { error: upsertError } = await adminSupabase.from('model_files').upsert(

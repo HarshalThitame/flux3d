@@ -33,10 +33,11 @@ const stats = [
 
 const heroBadges = [
   { label: 'Custom 3D printing', slug: 'custom-3d-printing' },
-  { label: 'Prototyping', slug: 'custom-3d-printing' },
+  { label: 'Prototyping', slug: 'prototyping' },
   { label: 'Model printing', slug: 'model-printing' },
   { label: 'Custom manufacturing', slug: 'business-and-bulk-orders' },
   { label: 'Ready-made products', slug: 'ready-made-products' },
+  { label: 'Express production', slug: 'express-production' },
 ]
 
 const atelierMetrics = [
@@ -52,7 +53,7 @@ function CountStat({ stat }: { stat: typeof stats[0]; index: number }) {
     <div className="stat-item premium-stat-item group relative">
       <span className="mx-auto mb-3 block h-1.5 w-1.5 rotate-45 rounded-sm bg-gradient-to-r from-violet-600 to-purple-500 opacity-80" />
       <div className="stat-number" suppressHydrationWarning>{display}</div>
-      <div className="mx-auto mt-3 h-0.5 w-16 origin-left rounded-full bg-gradient-to-r from-violet-600 to-purple-400 transition-transform duration-[1800ms] ease-out"
+      <div className="mx-auto mt-3 h-0.5 w-16 origin-left rounded-full bg-gradient-to-r from-violet-600 to-purple-400 transition-transform duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]"
         style={{ transform: 'scaleX(1)' }} />
       <div className="stat-label">{stat.label}</div>
     </div>
@@ -63,7 +64,7 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
   const reduceMotion = useReducedMotion()
   const isFinePointer = useMediaQuery('(pointer: fine)')
   const enableHover = isFinePointer && !reduceMotion
-  const heroTransition = reduceMotion ? { duration: 0.3 } : { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const }
+  const heroTransition = reduceMotion ? { duration: 0.3 } : { duration: 0.8, ease: "cubic-bezier(0.4, 0, 0.2, 1)" }
   const quickFade = reduceMotion ? { duration: 0.2 } : { duration: 0.6 }
   const sectionRef = useRef<HTMLElement>(null)
 
@@ -136,7 +137,7 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
             <motion.h1
               initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={reduceMotion ? { duration: 0.3 } : { duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] as const }}
+              transition={reduceMotion ? { duration: 0.3 } : { duration: 0.7, delay: 0.15, ease: "cubic-bezier(0.4, 0, 0.2, 1)" }}
               className="premium-hero-title text-[clamp(2.4rem,9vw,5rem)] font-black leading-[0.86] text-[#070b1d] sm:text-6xl md:text-7xl lg:text-8xl"
             >
               <span className="premium-title-line block">
@@ -157,18 +158,14 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
             </motion.p>
 
             <HeroFadeIn delay={0.45} className="mt-6 flex flex-wrap justify-center gap-2 lg:justify-start">
-              {heroBadges.map((badge) => (
-                <a
+              {heroBadges.map((badge, i) => (
+                <span
                   key={badge.label}
-                  href={`#${badge.slug}`}
-                  onClick={(event) => {
-                    event.preventDefault()
-                    scrollToTarget(badge.slug)
-                  }}
+                  style={{ animationDelay: `${0.45 + i * 0.08}s` }}
                   className="premium-chip premium-chip-link"
                 >
                   {badge.label}
-                </a>
+                </span>
               ))}
             </HeroFadeIn>
 
@@ -183,7 +180,7 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
               className="mt-8 flex flex-col justify-center gap-4 sm:flex-row lg:justify-start"
             >
               <MagneticButton>
-                <motion.div whileHover={enableHover ? { scale: 1.02 } : undefined} whileTap={enableHover ? { scale: 0.98 } : undefined}>
+                <motion.div whileHover={enableHover ? { scale: 1.02, boxShadow: '0 4px 20px rgba(109, 40, 217, 0.3)'} : undefined} whileTap={enableHover ? { scale: 0.98, boxShadow: '0 2px 10px rgba(109, 40, 217, 0.2)'} : undefined} className="focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-2">
                   <Link href="/instant-quote" prefetch={false}
                     className="premium-primary-cta group relative flex min-h-[56px] items-center justify-center gap-2 overflow-hidden rounded-full px-7 py-4 text-center text-sm font-bold text-white">
                     <span className="relative z-10">Request a Quote</span>
@@ -192,7 +189,7 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
                 </motion.div>
               </MagneticButton>
               <MagneticButton>
-                <motion.div whileHover={enableHover ? { scale: 1.02 } : undefined} whileTap={enableHover ? { scale: 0.98 } : undefined}>
+                <motion.div whileHover={enableHover ? { scale: 1.02, boxShadow: '0 4px 20px rgba(95, 34, 155, 0.3)'} : undefined} whileTap={enableHover ? { scale: 0.98, boxShadow: '0 2px 10px rgba(95, 34, 155, 0.2)'} : undefined} className="focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:ring-offset-2">
                   <a href="#services"
                     onClick={(event) => {
                       event.preventDefault()
@@ -223,7 +220,7 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
           <motion.div
             initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={reduceMotion ? { duration: 0.3 } : { duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] as const }}
+            transition={reduceMotion ? { duration: 0.3 } : { duration: 0.8, delay: 0.4, ease: "cubic-bezier(0.4, 0, 0.2, 1)" }}
             style={parallaxDisabled ? undefined : { y: panelY }}
             className="relative hidden lg:block"
           >

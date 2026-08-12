@@ -8,8 +8,11 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 import type { QuoteConfig, UploadState } from '@/lib/quote/types'
 
-const MAX_FILE_SIZE_MB = 50
-const ALLOWED_EXTENSIONS = ['stl', 'step', 'obj', '3mf', 'dxf', 'dwg']
+const MAX_FILE_SIZE_MB = 100
+const ALLOWED_EXTENSIONS = [
+  'stl', 'obj', '3mf', 'step', 'iges', 'igs', 'brep',
+  'glb', 'gltf', 'fbx', 'ply', 'dae', 'amf', 'vrl', 'dxf', 'dwg',
+]
 
 function getExtension(fileName: string) {
   return fileName.split('.').pop()?.toLowerCase() ?? ''
@@ -19,7 +22,7 @@ export function validateModelFile(file: File) {
   const extension = getExtension(file.name)
 
   if (!ALLOWED_EXTENSIONS.includes(extension)) {
-    return `Unsupported format ".${extension}". Please upload a 3D model file (STL, OBJ, 3MF, STEP, DXF, or DWG).`
+    return `Unsupported format ".${extension}". Please upload a 3D model file (STL, OBJ, 3MF, GLB, GLTF, FBX, PLY, DAE, AMF, STEP, IGES, BREP, DXF, or DWG).`
   }
 
   if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
