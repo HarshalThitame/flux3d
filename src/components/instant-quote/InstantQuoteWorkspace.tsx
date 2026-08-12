@@ -593,9 +593,10 @@ function CartEnabledWorkspace({
 
     addItem(cartItem)
     trackMetaEvent('AddToCart', {
-      content_ids: [initialQuoteId],
+      content_ids: ['custom_3d_print'],
       content_type: 'product',
-      contents: [{ id: initialQuoteId, quantity: config.quantity, item_price: priceBreakdown.finalPrice }],
+      content_name: selectedModel?.fileName,
+      contents: [{ id: 'custom_3d_print', quantity: config.quantity, item_price: priceBreakdown.finalPrice }],
       value: priceBreakdown.finalPrice,
       currency: 'INR',
     })
