@@ -41,7 +41,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     errorParam === 'auth_callback_failed'
       ? 'Authentication failed. Please try again.'
       : errorParam === 'missing_code'
-        ? 'Missing authentication code. Please retry the login flow.'
+        ? 'This link is invalid or has expired. Please request a new one.'
         : errorParam === 'session_required'
           ? 'Your session has expired. Please request a new password reset link.'
           : undefined
