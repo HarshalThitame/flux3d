@@ -176,10 +176,29 @@ describe('updatePasswordAction', () => {
     expect(updateUserMock).not.toHaveBeenCalled()
   })
 
+  it('requires the confirm password field', async () => {
+    const state = await updatePasswordAction({}, formData({ password: 'ValidPass123!' }))
+
+    expect(state.status).toBe('error')
+    expect(state.fieldErrors?.confirmPassword).toEqual(['Confirm your password.'])
+    expect(updateUserMock).not.toHaveBeenCalled()
+  })
+
+  it('rejects mismatched passwords', async () => {
+    const state = await updatePasswordAction(
+      {},
+      formData({ password: 'ValidPass123!', confirmPassword: 'DifferentPass456!' })
+    )
+
+    expect(state.status).toBe('error')
+    expect(state.fieldErrors?.confirmPassword).toEqual(['Passwords do not match.'])
+    expect(updateUserMock).not.toHaveBeenCalled()
+  })
+
   it('maps a missing session to a friendly message', async () => {
     updateUserMock.mockResolvedValue({ data: null, error: { message: 'Auth session missing!' } })
 
-    const state = await updatePasswordAction({}, formData({ password: 'ValidPass123!' }))
+    const state = await updatePasswordAction({}, formData({ password: 'ValidPass123!', confirmPassword: 'ValidPass123!' }))
 
     expect(state.status).toBe('error')
     expect(state.message).toContain('session has expired')
@@ -191,7 +210,7 @@ describe('updatePasswordAction', () => {
       error: { message: 'New password should be different from the old password.' },
     })
 
-    const state = await updatePasswordAction({}, formData({ password: 'ValidPass123!' }))
+    const state = await updatePasswordAction({}, formData({ password: 'ValidPass123!', confirmPassword: 'ValidPass123!' }))
 
     expect(state.status).toBe('error')
     expect(state.message).toContain('must be different')
@@ -200,7 +219,7 @@ describe('updatePasswordAction', () => {
   it('hides raw Supabase errors', async () => {
     updateUserMock.mockResolvedValue({ data: null, error: { message: 'something internal happened' } })
 
-    const state = await updatePasswordAction({}, formData({ password: 'ValidPass123!' }))
+    const state = await updatePasswordAction({}, formData({ password: 'ValidPass123!', confirmPassword: 'ValidPass123!' }))
 
     expect(state.status).toBe('error')
     expect(state.message).not.toContain('something internal happened')
@@ -208,7 +227,7 @@ describe('updatePasswordAction', () => {
 
   it('updates the password and redirects on success', async () => {
     await expect(
-      updatePasswordAction({}, formData({ password: 'ValidPass123!', next: '/profile' }))
+      updatePasswordAction({}, formData({ password: 'ValidPass123!', confirmPassword: 'ValidPass123!', next: '/profile' }))
     ).rejects.toThrow('NEXT_REDIRECT')
 
     expect(updateUserMock).toHaveBeenCalledWith({ password: 'ValidPass123!' })

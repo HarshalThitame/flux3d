@@ -21,6 +21,7 @@ type UpdatePasswordFormProps = {
 export default function UpdatePasswordForm({ nextPath }: UpdatePasswordFormProps) {
   const [state, action] = useActionState(updatePasswordAction, initialState)
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [touched, setTouched] = useState(false)
 
   const passwordErrors = useMemo(() => {
@@ -28,12 +29,21 @@ export default function UpdatePasswordForm({ nextPath }: UpdatePasswordFormProps
     return validatePassword(password)
   }, [password, touched])
 
-  const hasError = passwordErrors.length > 0
+  const confirmErrors = useMemo(() => {
+    if (!touched || !confirmPassword) return []
+    if (password !== confirmPassword) return ['Passwords do not match.']
+    return []
+  }, [password, confirmPassword, touched])
+
+  const hasPasswordError = passwordErrors.length > 0
+  const hasConfirmError = confirmErrors.length > 0
   const serverErrors = state.fieldErrors?.password
-  const displayErrors = touched ? passwordErrors : serverErrors ?? passwordErrors
+  const serverConfirmErrors = state.fieldErrors?.confirmPassword
+  const displayPasswordErrors = touched ? passwordErrors : serverErrors ?? passwordErrors
+  const displayConfirmErrors = touched ? confirmErrors : serverConfirmErrors ?? confirmErrors
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    if (!password) {
+    if (!password || !confirmPassword || password !== confirmPassword) {
       event.preventDefault()
       setTouched(true)
       return
@@ -75,13 +85,41 @@ export default function UpdatePasswordForm({ nextPath }: UpdatePasswordFormProps
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             onBlur={() => setTouched(true)}
-            aria-invalid={hasError || Boolean(serverErrors?.length)}
-            aria-describedby={displayErrors.length > 0 ? 'update-password-error' : undefined}
-            className={`${hasError || serverErrors?.length ? errorFieldClass : fieldClass}`}
+            aria-invalid={hasPasswordError || Boolean(serverErrors?.length)}
+            aria-describedby={displayPasswordErrors.length > 0 ? 'update-password-error' : undefined}
+            className={`${hasPasswordError || serverErrors?.length ? errorFieldClass : fieldClass}`}
           />
-          {displayErrors.length > 0 && (
+          {displayPasswordErrors.length > 0 && (
             <div id="update-password-error" className="space-y-1">
-              {displayErrors.map((error) => (
+              {displayPasswordErrors.map((error) => (
+                <p key={error} className="text-sm font-semibold text-red-500">
+                  {error}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="confirmPassword" className="text-sm font-bold text-[#475569]">
+            Confirm password
+          </label>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Re-enter your password"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            onBlur={() => setTouched(true)}
+            aria-invalid={hasConfirmError || Boolean(serverConfirmErrors?.length)}
+            aria-describedby={displayConfirmErrors.length > 0 ? 'update-password-confirm-error' : undefined}
+            className={`${hasConfirmError || serverConfirmErrors?.length ? errorFieldClass : fieldClass}`}
+          />
+          {displayConfirmErrors.length > 0 && (
+            <div id="update-password-confirm-error" className="space-y-1">
+              {displayConfirmErrors.map((error) => (
                 <p key={error} className="text-sm font-semibold text-red-500">
                   {error}
                 </p>
