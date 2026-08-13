@@ -20,6 +20,7 @@ const errorFieldClass =
 export type LoginFormProps = {
   nextPath: string
   errorMessage?: string
+  logoUrl?: string
 }
 
 function FieldError({ id, errors }: { id: string; errors?: string[] }) {
@@ -94,7 +95,7 @@ function GoogleIcon() {
   )
 }
 
-export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
+export default function LoginForm({ nextPath, errorMessage, logoUrl = '/logo.webp' }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [state, action] = useActionState(loginAction, {
@@ -159,7 +160,7 @@ export default function LoginForm({ nextPath, errorMessage }: LoginFormProps) {
       <div className="auth-login-brand mb-4 flex flex-wrap items-center gap-3">
         <span className="inline-flex min-h-11 items-center rounded-xl border border-gray-200 bg-white px-3 shadow-sm">
           <Image
-            src="/logo.webp"
+            src={logoUrl}
             alt="Flux3D"
             width={120}
             height={28}

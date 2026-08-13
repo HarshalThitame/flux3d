@@ -50,6 +50,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     redirect(nextPath)
   }
 
+  const settings = await getSettings()
+
   return (
     <main className="flex min-h-screen flex-col overflow-x-hidden bg-[#f9f7f4] md:grid md:grid-cols-[55fr_45fr]">
       <div className="md:col-span-full relative z-20">
@@ -140,7 +142,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
       </section>
 
       <section className="order-1 flex min-h-screen w-full min-w-0 items-center justify-start overflow-x-hidden bg-gray-50 px-6 py-10 md:order-2 md:justify-center md:px-10">
-        <SignupForm nextPath={nextPath} />
+        <SignupForm nextPath={nextPath} logoUrl={settings.logoUrl} />
       </section>
     </main>
   )

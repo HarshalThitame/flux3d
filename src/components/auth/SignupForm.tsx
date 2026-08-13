@@ -37,6 +37,7 @@ const passwordRules = [
 
 type SignupFormProps = {
   nextPath: string
+  logoUrl?: string
 }
 
 type RequiredField = 'name' | 'email' | 'password' | 'confirmPassword' | 'terms'
@@ -146,7 +147,7 @@ function getStrengthColor(score: number) {
   return 'bg-purple-600'
 }
 
-export default function SignupForm({ nextPath }: SignupFormProps) {
+export default function SignupForm({ nextPath, logoUrl = '/logo.webp' }: SignupFormProps) {
   const [state, action] = useActionState(signupAction, initialState)
   const [values, setValues] = useState<SignupValues>(initialValues)
   const [touched, setTouched] = useState<Record<RequiredField, boolean>>(initialTouched)
@@ -264,7 +265,7 @@ export default function SignupForm({ nextPath }: SignupFormProps) {
     <div className="w-full min-w-0 max-w-[342px] sm:max-w-[420px]">
       <div className="mb-8 flex items-center gap-3">
         <Image
-          src="/logo.webp"
+          src={logoUrl}
           alt="Flux3D"
           width={120}
           height={28}
