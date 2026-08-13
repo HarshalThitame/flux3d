@@ -32,7 +32,7 @@ const SKELETONS: Record<string, string> = {
   <a href="https://flux3d.in/upload" style="background-color:#FF5C1A;color:#fff;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;">Upload Your First Model</a>
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
-  Questions? Reach us at <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+  Questions? Reach us at <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>`,
 
   email_verification: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
@@ -43,7 +43,7 @@ const SKELETONS: Record<string, string> = {
   <a href="{{verification_url}}" style="background-color:#FF5C1A;color:#fff;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;">Verify Email Address</a>
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
-  If you didn't create an account, you can safely ignore this email. Questions? <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+  If you didn't create an account, you can safely ignore this email. Questions? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>`,
 
   password_reset: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
@@ -57,7 +57,7 @@ const SKELETONS: Record<string, string> = {
   <a href="{{reset_url}}" style="background-color:#FF5C1A;color:#fff;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;">Reset Password</a>
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
-  Didn't request this? Someone may have entered your email by mistake — your password has not been changed. If you're concerned, contact <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+  Didn't request this? Someone may have entered your email by mistake — your password has not been changed. If you're concerned, contact <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>`.replace(/\s+$/g, ''),
 
   password_changed: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
@@ -78,7 +78,7 @@ const SKELETONS: Record<string, string> = {
   For your security, we signed out all other logged-in sessions. The recovery link you used is now invalid.
 </p>
 <p style="font-size:14px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
-  <strong>Didn't change your password?</strong> Someone may have accessed your account. <a href="https://flux3d.in/forgot-password" style="color:#FF5C1A;font-weight:600;">Reset your password now</a> and contact <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a> immediately.
+  <strong>Didn't change your password?</strong> Someone may have accessed your account. <a href="https://flux3d.in/forgot-password" style="color:#FF5C1A;font-weight:600;">Reset your password now</a> and contact <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a> immediately.
 </p>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
   This is an automated security notification — you don't need to reply to this email.
@@ -92,7 +92,7 @@ const SKELETONS: Record<string, string> = {
   <a href="{{confirm_url}}" style="background-color:#FF5C1A;color:#fff;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;">Confirm Account Link</a>
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
-  If you didn't request this, you can safely ignore this email. Questions? <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+  If you didn't request this, you can safely ignore this email. Questions? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>`.replace(/\s+$/g, ''),
 
   order_placed_customer: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Thank you, {{customer_name}}!</p>
@@ -114,7 +114,7 @@ const SKELETONS: Record<string, string> = {
   <a href="{{order_url}}" style="background-color:#FF5C1A;color:#fff;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;">View Order Details</a>
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
-  Questions? <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+  Questions? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>`,
 
   order_placed_admin: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">New order received</p>
@@ -135,7 +135,7 @@ const SKELETONS: Record<string, string> = {
   <a href="{{admin_order_url}}" style="background-color:#FF5C1A;color:#fff;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;">Review in Admin</a>
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
-  Questions? <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+  Questions? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>`,
 
   model_validation_pass: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
@@ -146,7 +146,7 @@ const SKELETONS: Record<string, string> = {
   <p style="font-size:15px;font-weight:600;color:#22c55e;margin:0;text-align:center;">&#10003; Model Approved</p>
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
-  Questions? <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+  Questions? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>`,
 
   model_validation_fail: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
@@ -161,7 +161,7 @@ const SKELETONS: Record<string, string> = {
   <a href="{{admin_quote_url}}" style="background-color:#FF5C1A;color:#fff;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;">Upload Revised Model</a>
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
-  Questions? <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+  Questions? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>`,
 
   production_started: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
@@ -174,7 +174,7 @@ const SKELETONS: Record<string, string> = {
   </p>
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
-  Questions? <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+  Questions? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>`,
 
   order_shipped: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;line-height:1.3;" class="email-text">Your order is on the way, {{customer_name}}!</p>
@@ -199,7 +199,7 @@ const SKELETONS: Record<string, string> = {
 {{items_html}}
 <hr class="email-hr" style="border:none;border-top:1px solid #e5e7eb;margin:0 32px;">
 <p style="font-size:13px;line-height:1.5;color:#6b7280;text-align:center;margin:16px 32px 8px;" class="email-muted">
-  Need help with your delivery? <a href="mailto:support@flux3d.in" style="color:#39BDF8;text-decoration:underline;">Contact our support team</a> or reply to this email.
+  Need help with your delivery? <a href="mailto:{{support_email}}" style="color:#39BDF8;text-decoration:underline;">Contact our support team</a> or reply to this email.
 </p>
 <p style="font-size:13px;line-height:1.5;color:#6b7280;text-align:center;margin:0 32px 32px;" class="email-muted">Flux3D — Precision 3D Printing</p>`,
 
@@ -211,7 +211,7 @@ const SKELETONS: Record<string, string> = {
   <a href="{{review_url}}" style="background-color:#FF5C1A;color:#fff;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;">Leave a Review</a>
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
-  Questions or issues with your order? <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+  Questions or issues with your order? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>`,
 
   payment_receipt: `<p style="text-align:center;padding:0 32px 16px;">
@@ -247,7 +247,7 @@ const SKELETONS: Record<string, string> = {
 {{shipping_address_html}}
 <hr class="email-hr" style="border:none;border-top:1px solid #e5e7eb;margin:0 32px;">
 <p style="font-size:13px;line-height:1.5;color:#6b7280;text-align:center;margin:16px 32px 8px;" class="email-muted">
-  Questions about your order? <a href="mailto:support@flux3d.in" style="color:#39BDF8;text-decoration:underline;">Contact our support team</a> or reply to this email.
+  Questions about your order? <a href="mailto:{{support_email}}" style="color:#39BDF8;text-decoration:underline;">Contact our support team</a> or reply to this email.
 </p>
 <p style="font-size:13px;line-height:1.5;color:#6b7280;text-align:center;margin:0 32px 32px;" class="email-muted">Flux3D — Precision 3D Printing</p>`,
 
@@ -271,7 +271,7 @@ const SKELETONS: Record<string, string> = {
 </td></tr></table>
 <hr class="email-hr" style="border:none;border-top:1px solid #e5e7eb;margin:0 32px;">
 <p style="font-size:13px;line-height:1.5;color:#6b7280;text-align:center;margin:16px 32px 8px;" class="email-muted">
-  Need help? <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+  Need help? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>
 <p style="font-size:13px;line-height:1.5;color:#6b7280;text-align:center;margin:0 32px 32px;" class="email-muted">Flux3D — Precision 3D Printing</p>`,
 
@@ -285,7 +285,7 @@ const SKELETONS: Record<string, string> = {
   <p style="font-size:14px;color:#6b7280;margin:4px 0;" class="email-muted">Expected by: <strong style="color:#1a1a1a;" class="email-text">{{expected_date}}</strong></p>
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
-  Questions? <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+  Questions? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>`,
 
   contact_notification: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">New Contact Form Submission</p>

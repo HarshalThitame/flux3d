@@ -27,11 +27,13 @@ import {
 type DeliveryStepClientProps = {
   user: AppUserProfile
   savedAddresses: SavedAddress[]
+  supportEmail?: string
 }
 
 export default function DeliveryStepClient({
   user,
   savedAddresses,
+  supportEmail = 'support@flux3d.in',
 }: DeliveryStepClientProps) {
   const router = useRouter()
   const [draft] = useState<OrderDraft | null>(() => {
@@ -678,7 +680,7 @@ export default function DeliveryStepClient({
                 >
                   Try Again
                 </button>
-                <a href="mailto:support@flux3d.com" className="text-sm font-medium text-[#6b7280] transition hover:text-[#070b1d]">
+                <a href={`mailto:${supportEmail}`} className="text-sm font-medium text-[#6b7280] transition hover:text-[#070b1d]">
                   Contact Support
                 </a>
               </motion.div>

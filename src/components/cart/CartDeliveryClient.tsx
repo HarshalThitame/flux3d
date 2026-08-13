@@ -28,11 +28,13 @@ import {
 type CartDeliveryClientProps = {
   user: AppUserProfile
   savedAddresses: SavedAddress[]
+  supportEmail?: string
 }
 
 export default function CartDeliveryClient({
   user,
   savedAddresses,
+  supportEmail = 'support@flux3d.in',
 }: CartDeliveryClientProps) {
   const router = useRouter()
   const { items, summary, clearItems } = useCart()
@@ -630,7 +632,7 @@ export default function CartDeliveryClient({
               <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-2 text-sm leading-6 text-[#6b7280]">{paymentMessage || 'Your payment could not be processed.'}</motion.p>
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mt-6 flex flex-col gap-3">
                 <button type="button" onClick={() => setPaymentStatus('idle')} className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#6d28d9] px-6 text-sm font-bold text-white shadow-[0_8px_24px_rgba(109,40,217,0.3)] transition hover:bg-[#5b21b6]">Try Again</button>
-                <a href="mailto:support@flux3d.com" className="text-sm font-medium text-[#6b7280] transition hover:text-[#070b1d]">Contact Support</a>
+                <a href={`mailto:${supportEmail}`} className="text-sm font-medium text-[#6b7280] transition hover:text-[#070b1d]">Contact Support</a>
               </motion.div>
             </div>
           </motion.div>

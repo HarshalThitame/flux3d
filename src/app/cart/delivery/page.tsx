@@ -82,7 +82,7 @@ export default async function CartDeliveryPage() {
     <div className="min-h-screen bg-[#FFFFFF] text-[#070b1d]">
       <Navbar transparent />
       <CartProvider initialSettings={settings}>
-        <CartDeliveryClient user={auth.profile} savedAddresses={savedAddresses} />
+        <CartDeliveryClient user={auth.profile} savedAddresses={savedAddresses} supportEmail={settings.supportEmail} />
       </CartProvider>
     </div>
   )
