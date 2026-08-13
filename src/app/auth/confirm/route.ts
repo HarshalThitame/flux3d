@@ -51,7 +51,17 @@ export async function GET(request: NextRequest) {
     })
 
     if (error) {
-      return NextResponse.redirect(new URL(`/login?error=auth_callback_failed`, requestUrl.origin))
+      // The OTP is single-use and expires after 1 hour (enforced by GoTrue).
+      // A failure here means the link was already used or is expired — point
+      // recovery users back to the reset request flow.
+      return NextResponse.redirect(
+        new URL(
+          type === 'recovery'
+            ? '/login?error=session_required'
+            : '/login?error=auth_callback_failed',
+          requestUrl.origin
+        )
+      )
     }
 
     if (data.user) {

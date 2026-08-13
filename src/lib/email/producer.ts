@@ -128,6 +128,8 @@ function buildSubject(payload: EmailJobPayload): string {
       return 'Verify your email address'
     case 'password_reset':
       return 'Reset your Flux3D password'
+    case 'password_changed':
+      return 'Your Flux3D password was changed'
     case 'order_placed_customer':
       return `Order ${payload.orderNumber} confirmed — Flux3D`
     case 'order_placed_admin':

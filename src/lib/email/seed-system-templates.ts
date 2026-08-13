@@ -48,13 +48,40 @@ const SKELETONS: Record<string, string> = {
 
   password_reset: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
 <p style="font-size:15px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
-  We received a request to reset your Flux3D password. Click the button below to set a new one. This link is valid for 1 hour.
+  We received a request to reset your Flux3D password from <strong>{{device}}</strong> (IP: <strong>{{ip_address}}</strong>). Click the button below to set a new password.
+</p>
+<p style="font-size:14px;line-height:1.6;color:#6b7280;margin:0 0 4px;" class="email-muted">
+  <strong>Security:</strong> this link can be used <strong>once</strong> and expires in <strong>1 hour</strong>. After you set a new password, the link is permanently invalid and any other logged-in sessions are signed out.
 </p>
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding:24px 0;">
   <a href="{{reset_url}}" style="background-color:#FF5C1A;color:#fff;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;">Reset Password</a>
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
-  Didn't request this? You can safely ignore it. <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+  Didn't request this? Someone may have entered your email by mistake — your password has not been changed. If you're concerned, contact <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a>
+</p>`.replace(/\s+$/g, ''),
+
+  password_changed: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
+<p style="font-size:15px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
+  Your Flux3D password was successfully changed on <strong>{{changed_at}}</strong> from <strong>{{device}}</strong> (IP: <strong>{{ip_address}}</strong>).
+</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f9fafb;border-radius:10px;padding:20px;border:1px solid #e5e7eb;margin:16px 0;" class="email-card"><tr>
+  <td style="width:50%;vertical-align:top;">
+    <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 4px;text-transform:uppercase;" class="email-muted">Device</p>
+    <p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">{{device}}</p>
+  </td>
+  <td style="width:50%;vertical-align:top;">
+    <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 4px;text-transform:uppercase;" class="email-muted">IP Address</p>
+    <p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">{{ip_address}}</p>
+  </td>
+</tr></table>
+<p style="font-size:14px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
+  For your security, we signed out all other logged-in sessions. The recovery link you used is now invalid.
+</p>
+<p style="font-size:14px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
+  <strong>Didn't change your password?</strong> Someone may have accessed your account. <a href="https://flux3d.in/forgot-password" style="color:#FF5C1A;font-weight:600;">Reset your password now</a> and contact <a href="mailto:support@flux3d.in" style="color:#39BDF8;">support@flux3d.in</a> immediately.
+</p>
+<p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
+  This is an automated security notification — you don't need to reply to this email.
 </p>`.replace(/\s+$/g, ''),
 
   account_link_confirmation: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
@@ -308,7 +335,8 @@ const SKELETONS: Record<string, string> = {
 export const SAMPLE_DATA: Record<string, Record<string, string>> = {
   welcome: { customer_name: 'Rutik' },
   email_verification: { customer_name: 'Rutik', verification_url: `${SITE_URL}/verify?token=abc123` },
-  password_reset: { customer_name: 'Rutik', reset_url: `${SITE_URL}/reset?token=abc123` },
+  password_reset: { customer_name: 'Rutik', reset_url: `${SITE_URL}/auth/confirm?token_hash=abc123`, ip_address: '203.0.113.42', device: 'Chrome on Windows' },
+  password_changed: { customer_name: 'Rutik', changed_at: '13 Aug 2026, 09:45 pm', ip_address: '203.0.113.42', device: 'Chrome on Windows' },
   account_link_confirmation: { customer_name: 'Rutik', confirm_url: `${SITE_URL}/link/confirm?token=abc123`, order_count: '3' },
   order_placed_customer: {
     customer_name: 'Rutik',
@@ -500,6 +528,7 @@ export async function seedSystemTemplates() {
     { event_name: 'user_registered', template_id: templateMap.get('welcome')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
     { event_name: 'email_verification_requested', template_id: templateMap.get('email_verification')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
     { event_name: 'password_reset_requested', template_id: templateMap.get('password_reset')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
+    { event_name: 'password_changed', template_id: templateMap.get('password_changed')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
     { event_name: 'account_linking_requested', template_id: templateMap.get('account_link_confirmation')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
     { event_name: 'order_created', template_id: templateMap.get('order_placed_customer')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
     { event_name: 'order_created', template_id: templateMap.get('order_placed_admin')!, target_audience: 'admin', delay_minutes: 0, priority: 1 },

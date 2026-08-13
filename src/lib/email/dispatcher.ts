@@ -206,6 +206,14 @@ function payloadToVariables(
     case 'password_reset':
       vars.customer_name = payload.customerName
       vars.reset_url = payload.resetUrl
+      vars.ip_address = payload.ipAddress
+      vars.device = payload.device
+      break
+    case 'password_changed':
+      vars.customer_name = payload.customerName
+      vars.changed_at = payload.changedAt
+      vars.ip_address = payload.ipAddress
+      vars.device = payload.device
       break
     case 'account_link_confirmation':
       vars.customer_name = payload.customerName

@@ -30,6 +30,21 @@ export type PasswordResetPayload = BaseEmailPayload & {
   emailType: 'password_reset'
   customerName: string
   resetUrl: string
+  /** IP address of the device that requested the reset (for the "wasn't you" notice) */
+  ipAddress: string
+  /** Human-readable device label, e.g. "Chrome on Windows" */
+  device: string
+}
+
+export type PasswordChangedPayload = BaseEmailPayload & {
+  emailType: 'password_changed'
+  customerName: string
+  /** Localized timestamp of when the password was changed, e.g. "13 Aug 2026, 21:45" */
+  changedAt: string
+  /** IP address of the device that changed the password */
+  ipAddress: string
+  /** Human-readable device label, e.g. "Chrome on Windows" */
+  device: string
 }
 
 export type AccountLinkConfirmationPayload = BaseEmailPayload & {
@@ -200,6 +215,7 @@ export type EmailJobPayload =
   | WelcomeEmailPayload
   | EmailVerificationPayload
   | PasswordResetPayload
+  | PasswordChangedPayload
   | AccountLinkConfirmationPayload
   | OrderPlacedCustomerPayload
   | OrderPlacedAdminPayload

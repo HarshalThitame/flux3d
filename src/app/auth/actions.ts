@@ -16,10 +16,12 @@ import {
   sendWelcomeEmail,
   sendEmailVerification,
   sendPasswordReset,
+  sendPasswordChangedNotification,
 } from '@/lib/email/triggers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimitCheck } from '@/lib/rate-limit'
 import { buildOtpConfirmUrl } from '@/lib/auth/otp-link'
+import { getClientIp, getDeviceInfo, formatChangedAt } from '@/lib/auth/request-context'
 
 function readString(formData: FormData, key: string, options: { trim?: boolean } = {}) {
   const value = formData.get(key)
@@ -323,7 +325,7 @@ export async function forgotPasswordAction(
       .maybeSingle()
     const userId = profileData?.id ?? ''
     const userName = profileData?.full_name ?? 'User'
-    await sendPasswordReset(userId, email, userName, resetUrl)
+    await sendPasswordReset(userId, email, userName, resetUrl, await getClientIp(), await getDeviceInfo())
   } catch (err) {
     // generateLink throws "User not found" for unknown accounts — mapping this
     // to an error would hand attackers an account-existence oracle.
@@ -373,7 +375,7 @@ export async function updatePasswordAction(
   }
 
   const supabase = await createServerSupabaseClient()
-  const { error } = await supabase.auth.updateUser({
+  const { data: updateData, error } = await supabase.auth.updateUser({
     password,
   })
 
@@ -397,6 +399,35 @@ export async function updatePasswordAction(
       status: 'error',
       message: 'Unable to update your password right now. Please try again.',
     }
+  }
+
+  // Enterprise hardening: the recovery link is single-use and expires in 1
+  // hour (enforced by GoTrue). After a successful change we additionally
+  // revoke every other session and notify the account owner, so a leaked
+  // session dies with the old password.
+  try {
+    await supabase.auth.signOut({ scope: 'others' })
+  } catch (signOutError) {
+    console.error('[Auth] Failed to revoke other sessions after password change', signOutError)
+  }
+
+  try {
+    const user = updateData?.user ?? (await supabase.auth.getUser()).data.user
+    const email = user?.email ?? ''
+    if (email) {
+      const customerName = user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? 'there'
+      await sendPasswordChangedNotification(
+        user?.id ?? '',
+        email,
+        customerName,
+        formatChangedAt(),
+        await getClientIp(),
+        await getDeviceInfo()
+      )
+    }
+  } catch (notificationError) {
+    // Never fail the password update because a notification could not be sent.
+    console.error('[Auth] Failed to enqueue password-changed notification', notificationError)
   }
 
   redirect(nextPath)
