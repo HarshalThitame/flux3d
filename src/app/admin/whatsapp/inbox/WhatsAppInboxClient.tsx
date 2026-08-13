@@ -407,7 +407,7 @@ export default function WhatsAppInboxClient() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
+    <div data-lenis-prevent className="flex flex-col h-[calc(100vh-8rem)] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
       {/* Top Header Stats Banner */}
       {sessionStats && (
         <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50/80 px-6 py-2.5 text-xs text-[#6F7192]">
@@ -487,7 +487,7 @@ export default function WhatsAppInboxClient() {
           </div>
 
           {/* Conversation List Stream */}
-          <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+           <div data-lenis-prevent className="flex-1 overflow-y-auto divide-y divide-gray-100">
             {filteredConversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center text-gray-400">
                 <MessageCircle className="mb-2 h-10 w-10 stroke-1" />
@@ -606,7 +606,7 @@ export default function WhatsAppInboxClient() {
               </div>
 
               {/* Chat Message Stream */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div data-lenis-prevent className="flex-1 overflow-y-auto p-4 space-y-3">
                 {messagesLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <LoaderCircle className="h-6 w-6 animate-spin text-[#6d28d9]" />
@@ -785,7 +785,7 @@ export default function WhatsAppInboxClient() {
 
         {/* Column 3: Customer Context & Orders Drawer ("Orders on Chat") (Right) */}
         {activeSender && showDrawer && (
-          <div className="w-[320px] shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-y-auto">
+          <div data-lenis-prevent className="w-[320px] shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-y-auto">
             <div className="border-b border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500">Customer Context</h4>
@@ -866,7 +866,7 @@ export default function WhatsAppInboxClient() {
                 </button>
               </div>
 
-              <div className="space-y-2 overflow-y-auto max-h-48">
+                <div data-lenis-prevent className="space-y-2 overflow-y-auto max-h-48">
                 {notes.map((n) => (
                   <div key={n.id} className="rounded-lg bg-amber-50/70 border border-amber-200/60 p-2 text-[11px] text-amber-900">
                     <p className="leading-snug">{n.note_text}</p>
@@ -891,7 +891,7 @@ export default function WhatsAppInboxClient() {
                 </button>
               </div>
 
-              <div className="mt-4 max-h-80 overflow-y-auto space-y-2">
+              <div data-lenis-prevent className="mt-4 max-h-80 overflow-y-auto space-y-2">
                 {quickReplies.map((qr) => (
                   <div
                     key={qr.id}

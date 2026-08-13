@@ -1,14 +1,21 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { ReactLenis } from 'lenis/react'
 
 /**
  * Premium momentum (inertia) scrolling for the whole application.
  * Respects `prefers-reduced-motion` and never renders a wrapper div,
  * so page layout and `position: fixed` elements are unaffected.
+ *
+ * Lenis is disabled on /admin routes because the admin dashboard uses
+ * complex nested scroll containers (drawers, modals, fixed-height panes)
+ * where smooth-scrolling at the document level interferes with native
+ * scrolling and causes containers to become unresponsive.
  */
 export default function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
   const [reducedMotion, setReducedMotion] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
       return false
@@ -24,7 +31,7 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
     return () => media.removeEventListener('change', onChange)
   }, [])
 
-  if (reducedMotion) {
+  if (reducedMotion || pathname?.startsWith('/admin')) {
     return <>{children}</>
   }
 

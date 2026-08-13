@@ -265,7 +265,7 @@ export default function AdminQuotesPage() {
             ) : events.length === 0 ? (
               <div className="rounded-xl bg-gray-50 p-8 text-center text-sm text-[#6F7192]">No events recorded for this quote yet.</div>
             ) : (
-              <div className="max-h-[60vh] space-y-3 overflow-y-auto">
+              <div data-lenis-prevent className="max-h-[60vh] space-y-3 overflow-y-auto">
                 {events.map((event) => (
                   <div key={event.id} className="rounded-xl border border-gray-100 p-3 text-sm">
                     <div className="flex items-center justify-between gap-2">

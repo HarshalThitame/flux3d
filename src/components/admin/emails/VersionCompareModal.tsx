@@ -77,8 +77,8 @@ export default function VersionCompareModal({
   )
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="flex h-[90vh] w-full max-w-6xl flex-col rounded-2xl border border-gray-200 bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" data-lenis-prevent>
+        <div data-lenis-prevent className="flex h-[90vh] w-full max-w-6xl flex-col rounded-2xl border border-gray-200 bg-white shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <div>
@@ -120,7 +120,7 @@ export default function VersionCompareModal({
         </div>
 
         {/* Split view */}
-        <div className="flex flex-1 gap-4 overflow-hidden p-4">
+        <div data-lenis-prevent className="flex flex-1 gap-4 overflow-hidden p-4">
           {loading ? (
             <div className="flex flex-1 items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-[#6d28d9]" />
@@ -131,7 +131,7 @@ export default function VersionCompareModal({
                 <div className="text-xs font-semibold uppercase tracking-wider text-[#6F7192]">
                   v{version.version_number} — {version.subject ?? 'No subject'}
                 </div>
-                <div className="flex-1 overflow-auto rounded-xl bg-gray-100 p-4">
+                <div data-lenis-prevent className="flex-1 overflow-auto rounded-xl bg-gray-100 p-4">
                   <PreviewIframe html={leftHtml} />
                 </div>
               </div>
@@ -139,7 +139,7 @@ export default function VersionCompareModal({
                 <div className="text-xs font-semibold uppercase tracking-wider text-[#6F7192]">
                   Current — {currentSubject}
                 </div>
-                <div className="flex-1 overflow-auto rounded-xl bg-gray-100 p-4">
+                <div data-lenis-prevent className="flex-1 overflow-auto rounded-xl bg-gray-100 p-4">
                   <PreviewIframe html={rightHtml} />
                 </div>
               </div>

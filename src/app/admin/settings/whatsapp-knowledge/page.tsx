@@ -425,7 +425,7 @@ export default function WhatsAppKnowledgePage() {
         title={form.id ? 'Edit Knowledge Chunk' : 'Add Knowledge Chunk'}
         description="Keep entries short, factual, and specific so the assistant can retrieve them cleanly."
       >
-        <form onSubmit={saveChunk} className="max-h-[calc(100vh-180px)] space-y-4 overflow-y-auto pr-1">
+        <form data-lenis-prevent onSubmit={saveChunk} className="max-h-[calc(100vh-180px)] space-y-4 overflow-y-auto pr-1">
           <div className="grid gap-4 md:grid-cols-2">
             <InputField
               label="Source Key"

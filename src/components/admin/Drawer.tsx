@@ -46,7 +46,7 @@ export default function Drawer({
                 <X className="h-4 w-4" />
               </Dialog.Close>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+            <div data-lenis-prevent className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
               {children}
             </div>
           </motion.div>

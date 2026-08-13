@@ -71,7 +71,7 @@ export function RevisionHistoryModal({ open, onClose }: { open: boolean; onClose
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div data-lenis-prevent className="flex-1 overflow-y-auto p-6">
               {ordered.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center text-sm text-[#6F7192]">
                   No revisions saved yet. Snapshots are captured automatically every time the product is saved.

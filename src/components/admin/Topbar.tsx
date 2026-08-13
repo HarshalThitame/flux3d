@@ -167,7 +167,7 @@ export default function Topbar({
                   <div className="mt-1 text-sm text-[#6F7192]">Live operational signals, refreshed every 60s</div>
                 </div>
 
-                <div className="max-h-[320px] overflow-y-auto p-3">
+                <div data-lenis-prevent className="max-h-[320px] overflow-y-auto p-3">
                   {attention === null ? (
                     <div className="space-y-2 py-2">
                       {Array.from({ length: 3 }).map((_, index) => (

@@ -29,7 +29,7 @@ export default function VariableAutocomplete({
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
-      <div className="max-h-48 overflow-y-auto py-1">
+      <div data-lenis-prevent className="max-h-48 overflow-y-auto py-1">
         {filtered.length === 0 && (
           <div className="px-3 py-2 text-xs text-[#6F7192]">No variables found</div>
         )}

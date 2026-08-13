@@ -704,6 +704,7 @@ export default function AdminBlogPage() {
                 initial={{ scale: 0.98, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 className="flex h-[92vh] w-full max-w-[1500px] flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl"
+                data-lenis-prevent
               >
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-5 py-4">
                   <div>
@@ -774,7 +775,7 @@ export default function AdminBlogPage() {
                   }}
                   className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]"
                 >
-                  <div className="min-h-0 overflow-y-auto p-5">
+                  <div data-lenis-prevent className="min-h-0 overflow-y-auto p-5">
                     {activeTab === 'content' && (
                       <div className="space-y-5">
                         <div>
@@ -1377,7 +1378,7 @@ export default function AdminBlogPage() {
                   </div>
 
                   {seoPanelOpen && (
-                    <aside className="min-h-0 overflow-y-auto border-l border-gray-200 bg-gray-50 p-4">
+                    <aside data-lenis-prevent className="min-h-0 overflow-y-auto border-l border-gray-200 bg-gray-50 p-4">
                       <div className={`mb-4 rounded-lg border p-4 ${scoreClasses(seoAnalysis.color)}`}>
                         <p className="text-sm font-semibold">SEO Score: {seoAnalysis.score}/100 - {seoAnalysis.label}</p>
                         <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/80">
