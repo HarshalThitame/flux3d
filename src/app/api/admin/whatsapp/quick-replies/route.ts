@@ -58,6 +58,61 @@ export async function POST(request: Request) {
   }
 }
 
+export async function PUT(request: Request) {
+  const auth = await requireAdminRequest()
+  if ('response' in auth) return auth.response
+
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    if (!id) return NextResponse.json({ error: 'ID is required.' }, { status: 400 })
+
+    const body = (await request.json()) as { title?: string; shortcut?: string; content?: string; category?: string }
+    const updates: Record<string, unknown> = {}
+    if (body.title !== undefined) {
+      const title = body.title.trim()
+      if (!title) return NextResponse.json({ error: 'Title cannot be empty.' }, { status: 400 })
+      updates.title = title
+    }
+    if (body.shortcut !== undefined) {
+      let shortcut = body.shortcut.trim()
+      if (!shortcut) return NextResponse.json({ error: 'Shortcut cannot be empty.' }, { status: 400 })
+      if (!shortcut.startsWith('/')) shortcut = `/${shortcut}`
+      updates.shortcut = shortcut
+    }
+    if (body.content !== undefined) {
+      const content = body.content.trim()
+      if (!content) return NextResponse.json({ error: 'Content cannot be empty.' }, { status: 400 })
+      updates.content = content
+    }
+    if (body.category !== undefined) {
+      const category = body.category.trim() || 'general'
+      updates.category = category
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'No fields to update.' }, { status: 400 })
+    }
+
+    updates.updated_at = new Date().toISOString()
+
+    const supabase = createAdminSupabaseClient()
+    const { data: updated, error } = await supabase
+      .from('whatsapp_quick_replies')
+      .update(updates)
+      .eq('id', id)
+      .select('*')
+      .single()
+
+    if (error) throw new Error(error.message)
+    if (!updated) return NextResponse.json({ error: 'Quick reply not found.' }, { status: 404 })
+
+    return NextResponse.json({ success: true, quickReply: updated })
+  } catch (error) {
+    return getAdminApiErrorResponse(error)
+  }
+}
+
 export async function DELETE(request: Request) {
   const auth = await requireAdminRequest()
   if ('response' in auth) return auth.response

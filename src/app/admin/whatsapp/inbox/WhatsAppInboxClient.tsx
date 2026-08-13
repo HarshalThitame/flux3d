@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   AlertCircle,
   FileCheck,
+  Pencil,
 } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 
@@ -185,6 +186,40 @@ export default function WhatsAppInboxClient() {
       }
     } catch {}
   }, [])
+
+  const [editingQr, setEditingQr] = useState<QuickReply | null>(null)
+  const [editContent, setEditContent] = useState('')
+
+  async function saveQuickReply(id: string) {
+    if (!editContent.trim()) return
+    try {
+      const res = await fetch(`/api/admin/whatsapp/quick-replies?id=${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: editContent }),
+      })
+      if (!res.ok) throw new Error((await res.json().catch(() => ({})) as { error?: string })?.error || 'Update failed')
+      await loadQuickReplies()
+      setToast({ type: 'success', message: 'Instant reply updated.' })
+    } catch (err) {
+      setToast({ type: 'error', message: err instanceof Error ? err.message : 'Update failed.' })
+    } finally {
+      setEditingQr(null)
+      setEditContent('')
+    }
+  }
+
+  async function deleteQuickReply(id: string, shortcut: string) {
+    if (!confirm(`Delete instant reply "${shortcut}"?`)) return
+    try {
+      const res = await fetch(`/api/admin/whatsapp/quick-replies?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Delete failed')
+      await loadQuickReplies()
+      setToast({ type: 'success', message: 'Instant reply deleted.' })
+    } catch (err) {
+      setToast({ type: 'error', message: err instanceof Error ? err.message : 'Delete failed.' })
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -858,21 +893,71 @@ export default function WhatsAppInboxClient() {
 
               <div className="mt-4 max-h-80 overflow-y-auto space-y-2">
                 {quickReplies.map((qr) => (
-                  <button
+                  <div
                     key={qr.id}
-                    type="button"
-                    onClick={() => {
-                      setReplyText(qr.content)
-                      setShowQuickRepliesModal(false)
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (editingQr?.id !== qr.id) {
+                        setReplyText(qr.content)
+                        setShowQuickRepliesModal(false)
+                      }
                     }}
-                    className="w-full rounded-xl border border-gray-200 p-3 text-left hover:border-purple-300 hover:bg-purple-50/40 transition"
+                    className="rounded-xl border border-gray-200 p-3 cursor-pointer hover:border-purple-300 hover:bg-purple-50/40 transition"
                   >
                     <div className="flex items-center justify-between font-bold text-xs text-[#0F1B3D]">
                       <span>{qr.title}</span>
-                      <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[10px] text-purple-700">{qr.shortcut}</span>
+                      <div
+                        className="flex items-center gap-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[10px] text-purple-700">{qr.shortcut}</span>
+                        <button
+                          type="button"
+                          onClick={() => { setEditingQr(qr); setEditContent(qr.content) }}
+                          className="rounded p-0.5 text-gray-400 hover:text-[#6d28d9]"
+                          title="Edit"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteQuickReply(qr.id, qr.shortcut)}
+                          className="rounded p-0.5 text-gray-400 hover:text-red-600"
+                          title="Delete"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
                     </div>
                     <p className="mt-1 text-xs text-gray-500 line-clamp-2">{qr.content}</p>
-                  </button>
+
+                    {editingQr?.id === qr.id && (
+                      <div className="mt-2 space-y-2">
+                        <textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          rows={2}
+                          className="w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-xs text-[#0F1B3D] outline-none focus:border-[#6d28d9]/40 resize-none"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setEditingQr(null)}
+                            className="rounded-lg border border-gray-200 px-2.5 py-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-50"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => saveQuickReply(qr.id)}
+                            className="rounded-lg bg-[#6d28d9] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-purple-700"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </motion.div>
