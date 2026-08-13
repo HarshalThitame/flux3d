@@ -9,13 +9,15 @@ import { rateLimitCheck } from "@/lib/rate-limit";
 import { getCachedBusinessSettings } from "@/lib/settings";
 import { FALLBACK_SETTINGS } from "@/lib/settings-fallback";
 import { logWhatsAppRagAudit, type WhatsAppRagAuditRecord } from "@/lib/whatsapp-rag-audit";
-import { getWhatsAppRagContext, fetchStructuredData, type StructuredDataResult, type WhatsAppIntent } from "@/lib/whatsapp-rag";
+import { getWhatsAppRagContext, fetchStructuredData, type StructuredDataResult } from "@/lib/whatsapp-rag";
 import { extractSearchKeywords } from "@/lib/whatsapp-keywords";
 import { validatePricesInResponse, type ValidationResult } from "@/lib/whatsapp-price-validation";
 import { classifyIntent, type ClassifiedIntent } from "@/lib/whatsapp-intent-classifier";
 import { handleAccountLinkWhatsApp } from '@/lib/whatsapp/account-link-flow'
 import { handleOrderFlow, type OrderInteraction, ORDERING_ENABLED } from "@/lib/whatsapp/order-flow";
-import { parseWhatsAppMessage } from "@/lib/whatsapp/message-parser";
+import { parseWhatsAppMessage, type ParsedWhatsAppMessage } from "@/lib/whatsapp/message-parser";
+import { detectWhatsAppIntent } from "@/lib/whatsapp/intent";
+import { downloadAndStoreWhatsAppMedia, type MediaResult } from "@/lib/whatsapp/media";
 import { getOrderSession } from "@/lib/whatsapp/session";
 import { getQStashClient } from "@/lib/email/qstash";
 
@@ -153,20 +155,6 @@ export function trimReply(message: string) {
 
 export function formatBulletReply(lines: Array<string | false | null | undefined>) {
   return trimReply(lines.filter(Boolean).join("\n"))
-}
-
-export function detectWhatsAppIntent(messageText: string): WhatsAppIntent {
-  const text = messageText.toLowerCase()
-
-  if (/(price|pricing|quote|quotation|cost|estimate|amount)/i.test(text)) return 'pricing'
-  if (/(ship|shipping|delivery|courier|dispatch|tracking|pincode|pin code)/i.test(text)) return 'shipping'
-  if (/(order status|status of my order|where is my order|my order|order number|invoice)/i.test(text)) return 'order'
-  if (/(material|pla\+?|abs|petg|asa|tpu|resin|filament|finish|colour|color)/i.test(text)) return 'materials'
-  if (/(contact|call|phone|whatsapp number|support|hours|working hours)/i.test(text)) return 'contact'
-  if (/(link|connect|account|save to account|connect account)/i.test(text)) return 'link_account'
-  if (/(hello|hi|hey|good morning|good afternoon|good evening)/i.test(text)) return 'greeting'
-
-  return 'general'
 }
 
 export function buildGuidedFallbackReply(settings: AssistantSettings, messageText: string) {
@@ -368,6 +356,13 @@ async function logWhatsAppMessage(
     triggerEvent: string | null;
     responded: boolean;
     responseTimeMinutes: number | null;
+    mediaType?: string | null;
+    mediaUrl?: string | null;
+    mediaFilename?: string | null;
+    mediaMimeType?: string | null;
+    mediaSizeBytes?: number | null;
+    metaMessageId?: string | null;
+    status?: string | null;
   }
 ) {
   if (!supabase) return;
@@ -381,6 +376,13 @@ async function logWhatsAppMessage(
     trigger_event: entry.triggerEvent,
     responded: entry.responded,
     response_time_minutes: entry.responseTimeMinutes,
+    media_type: entry.mediaType ?? null,
+    media_url: entry.mediaUrl ?? null,
+    media_filename: entry.mediaFilename ?? null,
+    media_mime_type: entry.mediaMimeType ?? null,
+    media_size_bytes: entry.mediaSizeBytes ?? null,
+    meta_message_id: entry.metaMessageId ?? null,
+    status: entry.status ?? 'sent',
   });
 
   if (error) {
@@ -509,6 +511,33 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     }
   };
   _log("START text=" + text?.slice(0, 30));
+
+  // ── Inbound media enrichment (best-effort, bounded by download timeouts) ──
+  // Re-derives media metadata from the raw webhook payload (works for both the
+  // inline-processing and QStash worker paths) and stores the file to Supabase
+  // Storage so admins can preview/download customer attachments in the inbox.
+  let inboundMedia: MediaResult | null = null
+  let inboundMediaType: ParsedWhatsAppMessage['mediaType'] = null
+  let inboundMetaMessageId: string | null = null
+  if (supabase) {
+    try {
+      const rawPayloadMessage = (payload as {
+        entry?: Array<{ changes?: Array<{ value?: { messages?: Array<Record<string, unknown>> } }> }>
+      })?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]
+      const parsedMedia = parseWhatsAppMessage(rawPayloadMessage)
+      inboundMediaType = parsedMedia.mediaType ?? null
+      inboundMetaMessageId = parsedMedia.metaMessageId ?? null
+      if (parsedMedia.mediaId && parsedMedia.mediaType) {
+        inboundMedia = await downloadAndStoreWhatsAppMedia(
+          parsedMedia.mediaId,
+          parsedMedia.mediaMimeType ?? undefined,
+          parsedMedia.mediaFilename ?? undefined,
+        ).catch(() => null)
+      }
+    } catch (error) {
+      console.error("[whatsapp] Inbound media enrichment failed:", error)
+    }
+  }
 
   try {
     // Sender allow-list: only reply if sender phone exists in profiles
@@ -754,6 +783,12 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       triggerEvent: "incoming_whatsapp_message",
       responded: WHATSAPP_REPLY_TO_ALL || senderRecognized,
       responseTimeMinutes: null,
+      mediaType: inboundMedia?.mediaType ?? inboundMediaType,
+      mediaUrl: inboundMedia?.url,
+      mediaFilename: inboundMedia?.filename,
+      mediaMimeType: inboundMedia?.mimeType,
+      mediaSizeBytes: inboundMedia?.sizeBytes,
+      metaMessageId: inboundMetaMessageId,
     }).catch(() => {});
 
     _log("evaluate_model");
@@ -1030,6 +1065,31 @@ export default async function handler(
       const message = payload?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]
       const from = message?.from
       const msgType = message?.type
+
+      // Handle delivery/read status updates pushed by Meta (may arrive with or
+      // without a message in the same payload). Matches on the WhatsApp
+      // Message ID (wamid) stored as meta_message_id.
+      const statuses = payload?.entry?.[0]?.changes?.[0]?.value?.statuses as unknown as Array<Record<string, unknown>> | undefined
+      if (Array.isArray(statuses) && statuses.length > 0 && supabase) {
+        for (const st of statuses) {
+          const wamid = typeof st?.id === 'string' ? st.id : null
+          const sStatus = typeof st?.status === 'string' ? st.status : null
+          if (!wamid || !sStatus || !['sent', 'delivered', 'read', 'failed'].includes(sStatus)) continue
+          const update: Record<string, unknown> = { status: sStatus }
+          if (sStatus === 'failed') {
+            const errInfo = st?.errors as Array<Record<string, unknown>> | undefined
+            update.status_error = String(errInfo?.[0]?.title ?? 'delivery failed')
+          }
+          await supabase
+            .from('whatsapp_messages')
+            .update(update)
+            .eq('meta_message_id', wamid)
+            .catch((error: unknown) => console.error('[whatsapp] Failed to update message status:', error))
+        }
+        await insertWebhookEvent(supabase, payloadHash, payload, { sender: null, processed_at: new Date().toISOString() }).catch(() => {})
+        // Status-only events have no message body — nothing else to process
+        if (!message || !from) return res.status(200).json({ success: true })
+      }
 
       // Extract text/interaction from supported message types (shared with the retry cron)
       const { text: parsedText, mediaInfo: parsedMedia, interaction: parsedInteraction } = parseWhatsAppMessage(message)

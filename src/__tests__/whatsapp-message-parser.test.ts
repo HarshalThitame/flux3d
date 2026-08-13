@@ -128,3 +128,37 @@ describe('sendWhatsAppFlow — Graph API payload shape', () => {
     expect((interactive.body as Record<string, unknown>).text).toBe('Tap below to continue.')
   })
 })
+
+describe('parseWhatsAppMessage — media & message id', () => {
+  it('extracts image metadata and the Meta message id', () => {
+    const result = parseWhatsAppMessage({
+      id: 'wamid.IMAGE123',
+      type: 'image',
+      image: { id: 'media-abc', mime_type: 'image/png' },
+    })
+    expect(result.mediaType).toBe('image')
+    expect(result.mediaId).toBe('media-abc')
+    expect(result.mediaMimeType).toBe('image/png')
+    expect(result.metaMessageId).toBe('wamid.IMAGE123')
+  })
+
+  it('classifies 3D model documents as stl', () => {
+    const result = parseWhatsAppMessage({
+      id: 'wamid.DOC123',
+      type: 'document',
+      document: { id: 'media-doc', mime_type: 'model/stl', filename: 'part.stl' },
+    })
+    expect(result.mediaType).toBe('stl')
+    expect(result.mediaFilename).toBe('part.stl')
+  })
+
+  it('exposes the Meta message id for plain text messages', () => {
+    const result = parseWhatsAppMessage({
+      id: 'wamid.TEXT123',
+      type: 'text',
+      text: { body: 'hello' },
+    })
+    expect(result.metaMessageId).toBe('wamid.TEXT123')
+    expect(result.mediaType).toBeNull()
+  })
+})

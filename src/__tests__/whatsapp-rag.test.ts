@@ -53,7 +53,8 @@ describe('WhatsApp RAG policy', () => {
   })
 
   it('builds guided replies for pricing questions without guessing', async () => {
-    const { buildGuidedFallbackReply, detectWhatsAppIntent } = await import('@/pages/api/whatsapp')
+    const { buildGuidedFallbackReply } = await import('@/pages/api/whatsapp')
+    const { detectWhatsAppIntent } = await import('@/lib/whatsapp/intent')
     const reply = buildGuidedFallbackReply(FALLBACK_SETTINGS as never, 'how much does it cost?')
 
     expect(detectWhatsAppIntent('how much does it cost?')).toBe('pricing')
