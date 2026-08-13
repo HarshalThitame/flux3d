@@ -101,7 +101,7 @@ async function readRawBody(req: NextApiRequest): Promise<string> {
   });
 }
 
-async function sendWhatsAppMessage(to: string, message: string) {
+async function sendWhatsAppMessage(to: string, message: string): Promise<{ metaMessageId?: string } | void> {
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
   if (!phoneNumberId || !accessToken) {
@@ -140,6 +140,16 @@ async function sendWhatsAppMessage(to: string, message: string) {
       console.error("[whatsapp]", errorMsg);
       throw new Error(errorMsg);
     }
+
+    let metaMessageId: string | undefined;
+    try {
+      const result = await response.json().catch(() => null);
+      metaMessageId = result?.messages?.[0]?.id;
+    } catch {
+      // best-effort: don't fail the send just because we couldn't parse the ID
+    }
+
+    return { metaMessageId };
   } catch (fetchError: any) {
     clearTimeout(timeoutId);
     if (fetchError?.name === 'AbortError') {
@@ -563,6 +573,27 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     }
     _log("profile_done recognized=" + senderRecognized);
 
+    // ── Log incoming message BEFORE any early-return paths ──
+    // This ensures every customer message is stored in the whatsapp_messages
+    // table, even if it gets consumed by the account-link flow, order flow,
+    // out-of-scope handler, or unsupported-media handler below.
+    logWhatsAppMessage(supabase, {
+      userId,
+      sender: from,
+      direction: "incoming",
+      messageText: text,
+      automated: false,
+      triggerEvent: "incoming_whatsapp_message",
+      responded: WHATSAPP_REPLY_TO_ALL || senderRecognized,
+      responseTimeMinutes: null,
+      mediaType: inboundMedia?.mediaType ?? inboundMediaType,
+      mediaUrl: inboundMedia?.url,
+      mediaFilename: inboundMedia?.filename,
+      mediaMimeType: inboundMedia?.mimeType,
+      mediaSizeBytes: inboundMedia?.sizeBytes,
+      metaMessageId: inboundMetaMessageId,
+    }).catch(() => {});
+
     // ── WhatsApp account linking flow (Direction A) ──
     // Runs before the ordering state machine so a link flow never collides
     // with it. Returns true (and the webhook returns) only when the message
@@ -733,9 +764,34 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       }
       // Send out_of_scope reply and finish
       try {
-        await sendWhatsAppMessage(from, finalReply)
+        const sendResult = await sendWhatsAppMessage(from, finalReply)
         didSendReply = true
         auditRecord.response_metadata = { ...auditRecord.response_metadata, sendStatus: 'sent' }
+        // Log the outgoing bot reply so it appears in the admin inbox
+        if (sendResult?.metaMessageId) {
+          logWhatsAppMessage(supabase, {
+            userId,
+            sender: from,
+            direction: "outgoing",
+            messageText: finalReply,
+            automated: true,
+            triggerEvent: "out_of_scope_reply",
+            responded: true,
+            responseTimeMinutes: (Date.now() - requestStartedAt) / 60000,
+            metaMessageId: sendResult.metaMessageId,
+          }).catch(() => {})
+        } else {
+          logWhatsAppMessage(supabase, {
+            userId,
+            sender: from,
+            direction: "outgoing",
+            messageText: finalReply,
+            automated: true,
+            triggerEvent: "out_of_scope_reply",
+            responded: true,
+            responseTimeMinutes: (Date.now() - requestStartedAt) / 60000,
+          }).catch(() => {})
+        }
       } catch (error) {
         auditRecord.response_metadata = { ...auditRecord.response_metadata, sendStatus: 'failed' }
         console.error('[whatsapp] Failed to send out_of_scope reply:', error)
@@ -772,24 +828,6 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         return { materials: '', products: '', orderStatus: '', orderResults: [], totalMatches: 0, materialPrices: [], productPrices: [] };
       });
     }
-
-    // Log incoming message (fire-and-forget — don't block the pipeline)
-    logWhatsAppMessage(supabase, {
-      userId,
-      sender: from,
-      direction: "incoming",
-      messageText: text,
-      automated: false,
-      triggerEvent: "incoming_whatsapp_message",
-      responded: WHATSAPP_REPLY_TO_ALL || senderRecognized,
-      responseTimeMinutes: null,
-      mediaType: inboundMedia?.mediaType ?? inboundMediaType,
-      mediaUrl: inboundMedia?.url,
-      mediaFilename: inboundMedia?.filename,
-      mediaMimeType: inboundMedia?.mimeType,
-      mediaSizeBytes: inboundMedia?.sizeBytes,
-      metaMessageId: inboundMetaMessageId,
-    }).catch(() => {});
 
     _log("evaluate_model");
     // Use AI model when there's grounded data to work with:
@@ -884,7 +922,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     _log("before_send kind=" + finalReplyKind);
     try {
       _log("calling_send");
-      await sendWhatsAppMessage(from, finalReply);
+      const sendResult = await sendWhatsAppMessage(from, finalReply);
       _log("send_success");
       didSendReply = true
       auditRecord.response_metadata = {
@@ -902,6 +940,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         triggerEvent: "openai_reply",
         responded: true,
         responseTimeMinutes: (Date.now() - requestStartedAt) / 60000,
+        metaMessageId: sendResult?.metaMessageId ?? null,
       }).catch(() => {});
 
       saveSession(supabase, from, text, finalReply).catch(() => {});
@@ -1106,6 +1145,35 @@ export default async function handler(
       if (msgType && msgType !== 'text' && msgType !== 'image' && msgType !== 'document' && !text) {
         const mediaReply = `Thanks for your ${msgType}. I can only assist with text, images, and documents. Please describe what you need in text.`
         await insertWebhookEvent(supabase, payloadHash, payload, { sender: from, processed_at: new Date().toISOString() }).catch(() => {})
+        
+        // Look up profile for userId (best-effort, 2s timeout)
+        let mediaUserId: string | null = null
+        try {
+          const { data: mediaProfile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("phone_number", from)
+            .maybeSingle()
+          mediaUserId = mediaProfile?.id ?? null
+        } catch { /* ignore */ }
+
+        // Log the incoming media message so it appears in the admin inbox
+        const parsedMedia = parseWhatsAppMessage(message)
+        logWhatsAppMessage(supabase, {
+          userId: mediaUserId,
+          sender: from,
+          direction: "incoming",
+          messageText: `[${parsedMedia.mediaType ?? msgType}]`,
+          automated: false,
+          triggerEvent: "incoming_whatsapp_message",
+          responded: true,
+          responseTimeMinutes: null,
+          mediaType: parsedMedia.mediaType ?? msgType,
+          mediaFilename: parsedMedia.mediaFilename ?? null,
+          mediaMimeType: parsedMedia.mediaMimeType ?? null,
+          metaMessageId: parsedMedia.metaMessageId ?? null,
+        }).catch(() => {})
+
         try {
           const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
           const accessToken = process.env.WHATSAPP_ACCESS_TOKEN
@@ -1113,12 +1181,30 @@ export default async function handler(
             const apiVersion = process.env.WHATSAPP_API_VERSION || 'v22.0'
             const mediaController = new AbortController()
             const mediaTimeout = setTimeout(() => mediaController.abort(), 10000)
-            await fetch(`https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`, {
+            const mediaResponse = await fetch(`https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`, {
               method: 'POST',
               headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
               body: JSON.stringify({ messaging_product: 'whatsapp', to: from, type: 'text', text: { body: mediaReply } }),
               signal: mediaController.signal,
             }).finally(() => clearTimeout(mediaTimeout))
+            
+            // Log the outgoing reply so it appears in the admin inbox
+            let mediaReplyId: string | undefined
+            try {
+              const mediaResult = await mediaResponse.json().catch(() => null)
+              mediaReplyId = mediaResult?.messages?.[0]?.id
+            } catch { /* best-effort */ }
+            logWhatsAppMessage(supabase, {
+              userId: mediaUserId,
+              sender: from,
+              direction: "outgoing",
+              messageText: mediaReply,
+              automated: true,
+              triggerEvent: "unsupported_media_reply",
+              responded: true,
+              responseTimeMinutes: null,
+              metaMessageId: mediaReplyId ?? null,
+            }).catch(() => {})
           }
         } catch { /* best-effort */ }
         return res.status(200).json({ success: true })
@@ -1205,10 +1291,11 @@ export default async function handler(
       if (!interaction && queued) {
         const hasOrderSession = await getOrderSession(from ?? '').catch(() => null)
         if (!hasOrderSession) {
+          const ackReply = `👍 Got your message! Processing...`
           try {
             const ackController = new AbortController();
             const ackTimeout = setTimeout(() => ackController.abort(), 10000);
-            await fetch(`https://graph.facebook.com/${WHATSAPP_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+            const ackResponse = await fetch(`https://graph.facebook.com/${WHATSAPP_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
               method: 'POST',
               headers: {
                 Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
@@ -1218,11 +1305,29 @@ export default async function handler(
                 messaging_product: 'whatsapp',
                 to: from,
                 type: 'text',
-                text: { body: `👍 Got your message! Processing...` },
+                text: { body: ackReply },
               }),
               signal: ackController.signal,
             }).finally(() => clearTimeout(ackTimeout));
             console.log("[whatsapp] ACK sent to", from?.slice(-4));
+
+            // Log the ACK so it appears in the admin inbox alongside the customer's message
+            let ackMessageId: string | undefined
+            try {
+              const ackResult = await ackResponse.json().catch(() => null)
+              ackMessageId = ackResult?.messages?.[0]?.id
+            } catch { /* best-effort */ }
+            logWhatsAppMessage(supabase, {
+              userId: null,
+              sender: from,
+              direction: "outgoing",
+              messageText: ackReply,
+              automated: true,
+              triggerEvent: "whatsapp_ack",
+              responded: true,
+              responseTimeMinutes: null,
+              metaMessageId: ackMessageId ?? null,
+            }).catch(() => {})
           } catch (ackError) {
             console.error("[whatsapp] ACK failed:", ackError);
           }
