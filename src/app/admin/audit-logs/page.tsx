@@ -117,13 +117,13 @@ export default function AdminAuditLogsPage() {
                             {log.old_value != null && (
                               <div>
                                 <div className="mb-1 text-xs font-semibold text-[#6F7192]">Previous</div>
-                                <pre className="max-h-32 overflow-auto rounded-lg bg-white p-3 text-xs text-[#0F1B3D] border border-[#6d28d9]/10">{JSON.stringify(log.old_value, null, 2)}</pre>
+                                 <pre data-lenis-prevent className="max-h-32 overflow-auto rounded-lg bg-white p-3 text-xs text-[#0F1B3D] border border-[#6d28d9]/10">{JSON.stringify(log.old_value, null, 2)}</pre>
                               </div>
                             )}
                             {log.new_value != null && (
                               <div>
                                 <div className="mb-1 text-xs font-semibold text-[#6F7192]">New</div>
-                                <pre className="max-h-32 overflow-auto rounded-lg bg-white p-3 text-xs text-[#0F1B3D] border border-[#6d28d9]/10">{JSON.stringify(log.new_value, null, 2)}</pre>
+                                 <pre data-lenis-prevent className="max-h-32 overflow-auto rounded-lg bg-white p-3 text-xs text-[#0F1B3D] border border-[#6d28d9]/10">{JSON.stringify(log.new_value, null, 2)}</pre>
                               </div>
                             )}
                           </div>

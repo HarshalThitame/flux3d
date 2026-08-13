@@ -51,7 +51,7 @@ export function TemplatesModal({ open, onClose }: { open: boolean; onClose: () =
               </button>
             </div>
 
-            <div className="grid gap-4 overflow-y-auto p-6 sm:grid-cols-2">
+            <div data-lenis-prevent className="grid gap-4 overflow-y-auto p-6 sm:grid-cols-2">
               {productTemplates.map((template) => (
                 <button
                   key={template.id}

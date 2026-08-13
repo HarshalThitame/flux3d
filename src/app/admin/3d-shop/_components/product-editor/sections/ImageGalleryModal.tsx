@@ -74,7 +74,7 @@ export function ImageGalleryModal({
           </button>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5 md:flex-row">
+        <div data-lenis-prevent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5 md:flex-row">
           <div className="flex-1">
             <button
               type="button"

@@ -535,7 +535,7 @@ export default function EmailTemplatesClient({
       {/* Preview Modal */}
       {previewModalTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="flex h-[85vh] w-full max-w-4xl flex-col rounded-2xl border border-gray-200 bg-white shadow-xl">
+          <div data-lenis-prevent className="flex h-[85vh] w-full max-w-4xl flex-col rounded-2xl border border-gray-200 bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
               <div>
                 <h3 className="text-lg font-bold text-[#0F1B3D]">Preview: {previewModalTemplate.name}</h3>
@@ -552,7 +552,7 @@ export default function EmailTemplatesClient({
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-hidden p-4">
+            <div data-lenis-prevent className="flex-1 overflow-hidden p-4">
               {previewLoading ? (
                 <div className="flex h-full items-center justify-center">
                   <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#6d28d9] border-t-transparent" />

@@ -404,7 +404,7 @@ function PaymentInfoSection({
             {showSnapshot ? 'Hide raw payment data' : 'Show raw payment data'}
           </button>
           {showSnapshot && (
-            <pre className="mt-3 max-h-72 overflow-auto rounded-xl border border-gray-100 bg-gray-900 p-4 text-[11px] leading-relaxed text-gray-100">
+            <pre data-lenis-prevent className="mt-3 max-h-72 overflow-auto rounded-xl border border-gray-100 bg-gray-900 p-4 text-[11px] leading-relaxed text-gray-100">
               {JSON.stringify(snapshot, null, 2)}
             </pre>
           )}

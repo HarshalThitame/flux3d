@@ -116,7 +116,7 @@ export default function LivePreview({
       </div>
 
       {/* Preview Area */}
-      <div className="flex flex-1 items-start justify-center overflow-auto bg-gray-100 p-4">
+      <div data-lenis-prevent className="flex flex-1 items-start justify-center overflow-auto bg-gray-100 p-4">
         {loading ? (
           <div className="flex h-full items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#6d28d9] border-t-transparent" />

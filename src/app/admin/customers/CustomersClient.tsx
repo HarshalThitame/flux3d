@@ -303,7 +303,7 @@ export default function CustomersClient({
             </div>
           )}
 
-          <div className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div data-lenis-prevent className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1120px] text-left text-sm">
                 <thead className="bg-slate-100 text-xs uppercase tracking-wider text-gray-700">
@@ -521,6 +521,7 @@ function CustomerDrawer({
         exit={{ x: 520 }}
         transition={{ type: 'spring', damping: 28, stiffness: 240 }}
         className="absolute right-0 top-0 flex h-full w-full max-w-3xl flex-col overflow-hidden bg-white text-gray-900 shadow-2xl"
+        data-lenis-prevent
       >
         <div className="border-b border-gray-200 px-5 py-4">
           <div className="flex items-start justify-between gap-4">
@@ -557,7 +558,7 @@ function CustomerDrawer({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-5">
+        <div data-lenis-prevent className="flex-1 overflow-y-auto px-5 py-5">
           {activeTab === 'profile' && (
             <div className="space-y-5">
               <div className="grid gap-3 sm:grid-cols-2">
@@ -862,7 +863,7 @@ function ActivitySection({
             transition={{ duration: 0.18 }}
             className="overflow-hidden border-t border-gray-100"
           >
-            <div className="max-h-80 overflow-y-auto px-4 py-4">
+            <div data-lenis-prevent className="max-h-80 overflow-y-auto px-4 py-4">
               {children}
             </div>
           </motion.div>

@@ -82,7 +82,7 @@ export function ImportModal({ open, onClose, onImported }: { open: boolean; onCl
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div data-lenis-prevent className="flex-1 overflow-y-auto p-6">
               {!result && (
                 <>
                   <label className="flex min-h-[140px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[#6d28d9]/25 bg-[#6d28d9]/5 p-6 text-center transition hover:bg-[#6d28d9]/10">
@@ -128,7 +128,7 @@ export function ImportModal({ open, onClose, onImported }: { open: boolean; onCl
                     </div>
                   </div>
                   {result.errors.length > 0 && (
-                    <div className="max-h-48 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 p-3">
+                    <div data-lenis-prevent className="max-h-48 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 p-3">
                       <div className="text-xs font-semibold text-[#0F1B3D]">Errors ({result.errors.length})</div>
                       <ul className="mt-2 space-y-1">
                         {result.errors.slice(0, 20).map((err, index) => (

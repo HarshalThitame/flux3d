@@ -252,7 +252,7 @@ export default function TemplateEditor({
   }
 
   return (
-    <div className="flex h-[calc(100vh-140px)] flex-col gap-4">
+    <div data-lenis-prevent className="flex h-[calc(100vh-140px)] flex-col gap-4">
       {/* Header */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
@@ -310,11 +310,11 @@ export default function TemplateEditor({
       )}
 
       {/* Main editor area */}
-      <div className="flex flex-1 min-h-0 gap-4 overflow-hidden">
+      <div data-lenis-prevent className="flex flex-1 min-h-0 gap-4 overflow-hidden">
         {/* Left: Sidebar + Editor */}
         <div className="flex flex-1 min-w-0 gap-4 overflow-hidden">
           {/* Sidebar */}
-          <div className="hidden w-72 shrink-0 overflow-y-auto xl:block">
+          <div data-lenis-prevent className="hidden w-72 shrink-0 overflow-y-auto xl:block">
             <TemplateSidebar
               name={name}
               emailType={emailType}
@@ -336,7 +336,7 @@ export default function TemplateEditor({
           </div>
 
           {/* Editor */}
-          <div className="flex min-w-0 flex-1 flex-col gap-3 overflow-hidden">
+          <div data-lenis-prevent className="flex min-w-0 flex-1 flex-col gap-3 overflow-hidden">
             {/* Mobile metadata (shown only on small screens) */}
             <div className="xl:hidden space-y-3">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -419,7 +419,7 @@ export default function TemplateEditor({
 
       {testModalOpen && template && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-xl">
+          <div data-lenis-prevent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-[#0F1B3D]">Send Test Email</h3>
               <button

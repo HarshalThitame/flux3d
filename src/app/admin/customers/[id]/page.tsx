@@ -346,7 +346,7 @@ export default function CustomerProfilePage() {
       </motion.div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
+      <div data-lenis-prevent className="flex gap-2 overflow-x-auto pb-2">
         {tabs.map((tab) => {
           const Icon = tab.icon
           return (

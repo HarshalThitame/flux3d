@@ -332,6 +332,7 @@ export default function AdminMaterialsPage() {
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 className="mx-4 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6"
+                data-lenis-prevent
               >
                 <h2 className="mb-4 text-xl font-bold text-[#0F1B3D]">
                   {editingMaterial ? 'Edit Material' : 'Add New Material'}

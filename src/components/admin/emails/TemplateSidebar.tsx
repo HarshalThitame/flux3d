@@ -57,7 +57,7 @@ export default function TemplateSidebar({
   }
 
   return (
-    <div className="flex h-full flex-col gap-5 overflow-y-auto">
+    <div data-lenis-prevent className="flex h-full flex-col gap-5 overflow-y-auto">
       {/* Actions */}
       <div className="flex gap-2">
         <button

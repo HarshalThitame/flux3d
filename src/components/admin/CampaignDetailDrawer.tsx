@@ -108,6 +108,7 @@ export default function CampaignDetailDrawer({
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-xl overflow-y-auto bg-white shadow-2xl"
+            data-lenis-prevent
           >
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white/80 px-6 py-4 backdrop-blur">
               <h2 className="text-lg font-semibold text-[#0F1B3D]">Campaign Details</h2>
