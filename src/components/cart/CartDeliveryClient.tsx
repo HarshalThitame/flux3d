@@ -647,7 +647,7 @@ export default function CartDeliveryClient({
 function CartRedirect({ orderId }: { orderId: string }) {
   const router = useRouter()
   useEffect(() => {
-    const timer = setTimeout(() => router.replace(`/my-orders/${orderId}?payment=success`), 2000)
+    const timer = setTimeout(() => router.replace(`/my-orders/${orderId}?payment=success`), 5000)
     return () => clearTimeout(timer)
   }, [router, orderId])
   return null

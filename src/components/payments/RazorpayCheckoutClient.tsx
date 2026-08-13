@@ -187,7 +187,6 @@ export default function RazorpayCheckoutClient({
               customData: { value: amountPaise / 100, currency, content_ids: [internalOrderId], content_type: 'product' },
             })
             onSuccessAction?.()
-            router.replace(successHref)
             return
           }
 
@@ -312,7 +311,6 @@ export default function RazorpayCheckoutClient({
                 customData: { value: amountPaise / 100, currency, content_ids: [internalOrderId], content_type: 'product' },
               })
               onSuccessAction?.()
-              router.replace(successHref)
               return
             }
 
@@ -343,6 +341,12 @@ export default function RazorpayCheckoutClient({
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (status !== 'paid') return
+    const timer = window.setTimeout(() => router.replace(successHref), 5000)
+    return () => window.clearTimeout(timer)
+  }, [status, router, successHref])
 
   const showOverlay = status === 'paid' || status === 'failed'
 
