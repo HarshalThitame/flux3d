@@ -43,7 +43,10 @@ type DeliveryAddressRow = {
 }
 
 export default async function DeliveryPage() {
-  const auth = await requireUser('/instant-quote/delivery')
+  const [auth, settings] = await Promise.all([
+    requireUser('/instant-quote/delivery'),
+    getSettings(),
+  ])
   const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase
     .from('addresses')
@@ -77,7 +80,7 @@ export default async function DeliveryPage() {
   return (
     <div className="min-h-screen bg-[#FFFFFF] text-[#070b1d]">
       <Navbar transparent />
-      <DeliveryStepClient user={auth.profile} savedAddresses={savedAddresses} />
+      <DeliveryStepClient user={auth.profile} savedAddresses={savedAddresses} supportEmail={settings.supportEmail} />
     </div>
   )
 }

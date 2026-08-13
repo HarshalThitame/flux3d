@@ -12,6 +12,10 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { replaceVariables, extractMissingVariables } from './template-engine'
 import { getEmailBranding, wrapTemplate } from './template-wrapper'
+
+/** Last-resort support address when no branding/admin configuration exists */
+const FALLBACK_SUPPORT_EMAIL = 'support@flux3d.in'
+
 import type { EmailTemplateRow } from '../../../types/database'
 
 export async function getTemplateByType(
@@ -48,10 +52,14 @@ export async function renderDbTemplate(
   variables: Record<string, string | number | boolean | undefined | null>,
   branding?: Parameters<typeof wrapTemplate>[1]
 ): Promise<{ html: string; missingVariables: string[] }> {
-  const body = replaceVariables(template.html_body, variables)
-  const missingVariables = extractMissingVariables(template.html_body, variables)
-
   const brand = branding ?? (await getEmailBranding())
+  const vars = {
+    support_email: brand.support_email || FALLBACK_SUPPORT_EMAIL,
+    ...variables,
+  }
+  const body = replaceVariables(template.html_body, vars)
+  const missingVariables = extractMissingVariables(template.html_body, vars)
+
   const html = wrapTemplate(body, brand)
 
   return { html, missingVariables }
@@ -66,7 +74,11 @@ export async function renderHtmlPreview(
   variables: Record<string, string | number | boolean | undefined | null>,
   branding?: Parameters<typeof wrapTemplate>[1]
 ): Promise<string> {
-  const body = replaceVariables(htmlBody, variables)
   const brand = branding ?? (await getEmailBranding())
+  const vars = {
+    support_email: brand.support_email || FALLBACK_SUPPORT_EMAIL,
+    ...variables,
+  }
+  const body = replaceVariables(htmlBody, vars)
   return wrapTemplate(body, brand)
 }
