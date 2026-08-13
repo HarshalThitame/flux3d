@@ -42,6 +42,7 @@ export default async function ForgotPasswordPage({
   const nextPath = normalizeNextPath(
     typeof params.next === 'string' ? params.next : undefined
   )
+  const settings = await getSettings()
 
   return (
     <main className="flex min-h-screen flex-col overflow-x-hidden bg-[#f9f7f4] text-[#070b1d] md:grid md:grid-cols-[55fr_45fr]">
@@ -130,7 +131,7 @@ export default async function ForgotPasswordPage({
       </section>
 
       <section className="order-1 flex min-h-screen w-full min-w-0 items-center justify-start overflow-x-hidden bg-white px-6 py-10 md:order-2 md:justify-center md:px-10">
-        <ForgotPasswordForm nextPath={nextPath} />
+        <ForgotPasswordForm nextPath={nextPath} logoUrl={settings.logoUrl} />
       </section>
     </main>
   )

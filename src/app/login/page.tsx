@@ -35,6 +35,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     redirect(nextPath)
   }
 
+  const settings = await getSettings()
+
   const errorMessage =
     errorParam === 'auth_callback_failed'
       ? 'Authentication failed. Please try again.'
@@ -52,7 +54,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         title="Welcome back to your Flux3D workspace."
         description="Sign in to manage saved quotes, private uploads, checkout details, order tracking, and repeat builds from one production account."
       >
-        <LoginFormBoundary nextPath={nextPath} errorMessage={errorMessage} />
+        <LoginFormBoundary nextPath={nextPath} errorMessage={errorMessage} logoUrl={settings.logoUrl} />
       </AuthShell>
     </div>
   )

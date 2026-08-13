@@ -19,6 +19,7 @@ const errorFieldClass =
 
 type ForgotPasswordFormProps = {
   nextPath: string
+  logoUrl?: string
 }
 
 function FieldError({ id, error }: { id: string; error?: string }) {
@@ -103,7 +104,7 @@ function getEmailError(email: string) {
   return undefined
 }
 
-export default function ForgotPasswordForm({ nextPath }: ForgotPasswordFormProps) {
+export default function ForgotPasswordForm({ nextPath, logoUrl = '/logo.webp' }: ForgotPasswordFormProps) {
   const [state, action] = useActionState(forgotPasswordAction, initialState)
   const [email, setEmail] = useState('')
   const [pendingEmail, setPendingEmail] = useState('')
@@ -172,7 +173,7 @@ export default function ForgotPasswordForm({ nextPath }: ForgotPasswordFormProps
           <>
             <div className="mb-10 flex items-center gap-3">
               <Image
-                src="/logo.webp"
+                src={logoUrl}
                 alt="Flux3D"
                 width={120}
                 height={28}
