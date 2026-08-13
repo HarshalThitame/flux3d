@@ -341,6 +341,7 @@ export async function updatePasswordAction(
   formData: FormData
 ): Promise<AuthFormState> {
   const password = readString(formData, 'password', { trim: false })
+  const confirmPassword = readString(formData, 'confirmPassword', { trim: false })
   const nextPath = normalizeNextPath(readString(formData, 'next'), '/profile')
   const passwordErrors = validatePassword(password)
 
@@ -349,6 +350,24 @@ export async function updatePasswordAction(
       status: 'error',
       fieldErrors: {
         password: passwordErrors,
+      },
+    }
+  }
+
+  if (!confirmPassword) {
+    return {
+      status: 'error',
+      fieldErrors: {
+        confirmPassword: ['Confirm your password.'],
+      },
+    }
+  }
+
+  if (password !== confirmPassword) {
+    return {
+      status: 'error',
+      fieldErrors: {
+        confirmPassword: ['Passwords do not match.'],
       },
     }
   }
