@@ -5,6 +5,7 @@ const EMAIL_TYPE_TO_EVENT: Record<string, string> = {
   welcome: 'user_registered',
   email_verification: 'email_verification_requested',
   password_reset: 'password_reset_requested',
+  password_changed: 'password_changed',
   account_link_confirmation: 'account_linking_requested',
   order_placed_customer: 'order_created',
   order_placed_admin: 'order_created',

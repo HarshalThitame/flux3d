@@ -1,9 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-const { generateLinkMock, profileDataMock, updateUserMock } = vi.hoisted(() => ({
+const { generateLinkMock, profileDataMock, updateUserMock, signOutMock, getUserMock } = vi.hoisted(() => ({
   generateLinkMock: vi.fn(),
   profileDataMock: vi.fn(),
   updateUserMock: vi.fn(),
+  signOutMock: vi.fn(),
+  getUserMock: vi.fn(),
 }))
 
 const { ipMock } = vi.hoisted(() => ({
@@ -17,13 +19,19 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('next/headers', () => ({
-  headers: () => new Headers({ 'x-forwarded-for': ipMock.value }),
+  headers: () =>
+    new Headers({
+      'x-forwarded-for': ipMock.value,
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0',
+    }),
 }))
 
 vi.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: () => ({
     auth: {
       updateUser: updateUserMock,
+      signOut: signOutMock,
+      getUser: getUserMock,
     },
   }),
 }))
@@ -49,10 +57,11 @@ vi.mock('@/lib/email/triggers', () => ({
   sendWelcomeEmail: vi.fn(() => Promise.resolve()),
   sendEmailVerification: vi.fn(() => Promise.resolve()),
   sendPasswordReset: vi.fn(() => Promise.resolve()),
+  sendPasswordChangedNotification: vi.fn(() => Promise.resolve()),
 }))
 
 import { forgotPasswordAction, updatePasswordAction } from '@/app/auth/actions'
-import { sendPasswordReset } from '@/lib/email/triggers'
+import { sendPasswordReset, sendPasswordChangedNotification } from '@/lib/email/triggers'
 import { redirect } from 'next/navigation'
 import { validatePassword } from '@/lib/auth/validation'
 
@@ -109,7 +118,9 @@ describe('forgotPasswordAction', () => {
       'user-123',
       'user@example.com',
       'Rutik',
-      expect.stringContaining('/auth/confirm?token_hash=tokhash-123&type=recovery&next=%2Fauth%2Fupdate-password%3Fnext%3D%252Fprofile')
+      expect.stringContaining('/auth/confirm?token_hash=tokhash-123&type=recovery&next=%2Fauth%2Fupdate-password%3Fnext%3D%252Fprofile'),
+      ipMock.value,
+      'Chrome on Windows'
     )
   })
 
@@ -119,7 +130,7 @@ describe('forgotPasswordAction', () => {
     const state = await forgotPasswordAction({}, formData({ email: 'orphan@example.com' }))
 
     expect(state.status).toBe('success')
-    expect(sendPasswordReset).toHaveBeenCalledWith('', 'orphan@example.com', 'User', expect.any(String))
+    expect(sendPasswordReset).toHaveBeenCalledWith('', 'orphan@example.com', 'User', expect.any(String), expect.any(String), expect.any(String))
   })
 
   it('does not reveal account existence when the link data is empty', async () => {
@@ -164,7 +175,16 @@ describe('forgotPasswordAction', () => {
 describe('updatePasswordAction', () => {
   beforeEach(() => {
     updateUserMock.mockReset()
-    updateUserMock.mockResolvedValue({ data: { user: {} }, error: null })
+    signOutMock.mockReset()
+    getUserMock.mockReset()
+    vi.mocked(sendPasswordChangedNotification).mockReset()
+    updateUserMock.mockResolvedValue({
+      data: { user: { id: 'user-123', email: 'user@example.com' } },
+      error: null,
+    })
+    signOutMock.mockResolvedValue({ error: null })
+    getUserMock.mockResolvedValue({ data: { user: null }, error: null })
+    vi.mocked(sendPasswordChangedNotification).mockResolvedValue({ logId: 'log-2' })
     vi.mocked(redirect).mockClear()
   })
 
@@ -225,12 +245,32 @@ describe('updatePasswordAction', () => {
     expect(state.message).not.toContain('something internal happened')
   })
 
-  it('updates the password and redirects on success', async () => {
+  it('updates the password, revokes other sessions, and notifies the owner', async () => {
     await expect(
       updatePasswordAction({}, formData({ password: 'ValidPass123!', confirmPassword: 'ValidPass123!', next: '/profile' }))
     ).rejects.toThrow('NEXT_REDIRECT')
 
     expect(updateUserMock).toHaveBeenCalledWith({ password: 'ValidPass123!' })
+    expect(signOutMock).toHaveBeenCalledWith({ scope: 'others' })
+    expect(sendPasswordChangedNotification).toHaveBeenCalledWith(
+      'user-123',
+      'user@example.com',
+      expect.any(String),
+      expect.any(String),
+      ipMock.value,
+      'Chrome on Windows'
+    )
+    expect(redirect).toHaveBeenCalledWith('/profile')
+  })
+
+  it('still redirects when session revocation or notification fails', async () => {
+    signOutMock.mockRejectedValue(new Error('network'))
+    vi.mocked(sendPasswordChangedNotification).mockRejectedValue(new Error('queue down'))
+
+    await expect(
+      updatePasswordAction({}, formData({ password: 'ValidPass123!', confirmPassword: 'ValidPass123!', next: '/profile' }))
+    ).rejects.toThrow('NEXT_REDIRECT')
+
     expect(redirect).toHaveBeenCalledWith('/profile')
   })
 

@@ -4,6 +4,7 @@ import type {
   WelcomeEmailPayload,
   EmailVerificationPayload,
   PasswordResetPayload,
+  PasswordChangedPayload,
   AccountLinkConfirmationPayload,
   OrderPlacedCustomerPayload,
   OrderPlacedAdminPayload,
@@ -51,7 +52,9 @@ export async function sendPasswordReset(
   userId: string,
   email: string,
   customerName: string,
-  resetUrl: string
+  resetUrl: string,
+  ipAddress: string,
+  device: string
 ) {
   return enqueueEmail({
     emailType: 'password_reset',
@@ -59,7 +62,28 @@ export async function sendPasswordReset(
     recipient: email,
     customerName,
     resetUrl,
+    ipAddress,
+    device,
   } as PasswordResetPayload)
+}
+
+export async function sendPasswordChangedNotification(
+  userId: string,
+  email: string,
+  customerName: string,
+  changedAt: string,
+  ipAddress: string,
+  device: string
+) {
+  return enqueueEmail({
+    emailType: 'password_changed',
+    userId,
+    recipient: email,
+    customerName,
+    changedAt,
+    ipAddress,
+    device,
+  } as PasswordChangedPayload)
 }
 
 export async function sendAccountLinkConfirmation(

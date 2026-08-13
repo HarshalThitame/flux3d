@@ -16,6 +16,7 @@ export type EmailType =
   | 'welcome'
   | 'email_verification'
   | 'password_reset'
+  | 'password_changed'
   | 'account_link_confirmation'
   | 'order_placed_customer'
   | 'order_placed_admin'

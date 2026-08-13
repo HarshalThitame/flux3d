@@ -77,7 +77,7 @@ describe('GET /auth/confirm', () => {
     expect(res.headers.get('location')).toContain('/instant-quote')
   })
 
-  it('redirects to login when verification fails', async () => {
+  it('redirects recovery users to the reset flow when verification fails (used/expired link)', async () => {
     verifyOtpMock.mockResolvedValue({
       data: null,
       error: { message: 'Token has expired or is invalid' },
@@ -87,6 +87,20 @@ describe('GET /auth/confirm', () => {
       confirmRequest(
         '?token_hash=expired&type=recovery&next=%2Fauth%2Fupdate-password'
       )
+    )
+
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toContain('/login?error=session_required')
+  })
+
+  it('redirects to login when a non-recovery token fails', async () => {
+    verifyOtpMock.mockResolvedValue({
+      data: null,
+      error: { message: 'Token has expired or is invalid' },
+    })
+
+    const res = await GET(
+      confirmRequest('?token_hash=expired&type=signup&next=%2Finstant-quote')
     )
 
     expect(res.status).toBe(307)
