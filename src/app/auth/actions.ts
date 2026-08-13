@@ -1,5 +1,6 @@
 'use server'
 
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { getAuthCallbackUrl, normalizeNextPath } from '@/lib/auth/redirect'
@@ -17,6 +18,7 @@ import {
   sendPasswordReset,
 } from '@/lib/email/triggers'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { rateLimitCheck } from '@/lib/rate-limit'
 
 function readString(formData: FormData, key: string, options: { trim?: boolean } = {}) {
   const value = formData.get(key)
@@ -65,43 +67,6 @@ function formatLoginError(message?: string) {
   }
 
   return rawMessage
-}
-
-function formatForgotPasswordError(message?: string): AuthFormState {
-  const fallback = 'Unable to send a reset link right now. Please try again.'
-  const rawMessage = message || fallback
-  const normalizedMessage = rawMessage.toLowerCase()
-
-  if (
-    normalizedMessage.includes('user not found') ||
-    normalizedMessage.includes('user does not exist') ||
-    normalizedMessage.includes('not found') ||
-    normalizedMessage.includes('not exist')
-  ) {
-    return {
-      status: 'success',
-      message: 'If an account exists for that email, a secure reset link will arrive shortly.',
-    }
-  }
-
-  if (normalizedMessage.includes('rate') || normalizedMessage.includes('too many')) {
-    return {
-      status: 'error',
-      message: 'Too many reset requests. Please wait a moment and try again.',
-    }
-  }
-
-  if (normalizedMessage.includes('redirect') || normalizedMessage.includes('email')) {
-    return {
-      status: 'error',
-      message: 'Password reset email could not be sent. Please try again or contact support.',
-    }
-  }
-
-  return {
-    status: 'error',
-    message: rawMessage,
-  }
 }
 
 export async function signupAction(
@@ -284,21 +249,43 @@ export async function forgotPasswordAction(
     }
   }
 
-  const supabase = await createServerSupabaseClient()
+  // Server-side guards so direct requests cannot bypass the client countdown.
+  // Respond with the generic success message so they don't reveal account
+  // existence or the rate limit.
+  const cooldown = await rateLimitCheck(`forgot-password:cooldown:${email}`, 60, 1)
+  if (!cooldown.success) {
+    return {
+      status: 'success',
+      message: 'If an account exists for that email, a secure reset link will arrive shortly.',
+    }
+  }
+
+  const hourly = await rateLimitCheck(`forgot-password:${email}`, 3600, 5)
+  if (!hourly.success) {
+    return {
+      status: 'success',
+      message: 'If an account exists for that email, a secure reset link will arrive shortly.',
+    }
+  }
+
+  const forwarded = (await headers()).get('x-forwarded-for')
+  const ip = forwarded?.split(',')[0]?.trim() || 'unknown'
+  const ipHourly = await rateLimitCheck(`forgot-password:ip:${ip}`, 3600, 20)
+  if (!ipHourly.success) {
+    return {
+      status: 'success',
+      message: 'If an account exists for that email, a secure reset link will arrive shortly.',
+    }
+  }
+
   const callbackUrl = await getAuthCallbackUrl(
     `/auth/update-password?next=${encodeURIComponent(nextPath)}`
   )
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: callbackUrl,
-  })
 
-  if (error) {
-    return formatForgotPasswordError(error.message)
-  }
-
-  // Also generate a recovery link via the admin API and send through our EMS
-  // alongside Supabase's built-in reset email.
-  // To avoid duplicates, disable Supabase's email templates in the Auth dashboard.
+  // Generate a recovery OTP via the admin API and send the branded reset
+  // email through our EMS. This is the single delivery path — the Supabase
+  // built-in recovery email is never triggered, so users receive exactly one
+  // email and no dashboard template configuration is required.
   try {
     const adminClient = createAdminClient()
     const { data: linkData } = await adminClient.auth.admin.generateLink({
@@ -307,21 +294,29 @@ export async function forgotPasswordAction(
       options: { redirectTo: callbackUrl },
     })
     const resetUrl = linkData?.properties?.action_link
-    if (resetUrl) {
-      const { data: profileData } = await adminClient
-        .from('profiles')
-        .select('id, full_name')
-        .eq('email', email)
-        .maybeSingle()
-      const userId = profileData?.id ?? ''
-      const userName = profileData?.full_name ?? 'User'
-      if (userId) {
-        sendPasswordReset(userId, email, userName, resetUrl).catch((err) => {
-          console.error('[Auth] Failed to enqueue password reset email:', err)
-        })
+    if (!resetUrl) {
+      // Same generic response as every other failure: never reveal whether
+      // the account exists or whether the infrastructure misbehaved.
+      console.error('[Auth] Recovery link generated without an action_link')
+      return {
+        status: 'success',
+        message: 'If an account exists for that email, a secure reset link will arrive shortly.',
       }
     }
+
+    // Best-effort profile lookup for a personalized greeting. The email is
+    // sent regardless — a missing profile must never silently drop the link.
+    const { data: profileData } = await adminClient
+      .from('profiles')
+      .select('id, full_name')
+      .eq('email', email)
+      .maybeSingle()
+    const userId = profileData?.id ?? ''
+    const userName = profileData?.full_name ?? 'User'
+    await sendPasswordReset(userId, email, userName, resetUrl)
   } catch (err) {
+    // generateLink throws "User not found" for unknown accounts — mapping this
+    // to an error would hand attackers an account-existence oracle.
     console.error('[Auth] Failed to generate recovery link:', err)
   }
 
@@ -354,9 +349,24 @@ export async function updatePasswordAction(
   })
 
   if (error) {
+    const normalized = error.message.toLowerCase()
+    if (normalized.includes('session')) {
+      return {
+        status: 'error',
+        message: 'Your session has expired. Please request a new password reset link.',
+      }
+    }
+
+    if (normalized.includes('same as') || normalized.includes('different from')) {
+      return {
+        status: 'error',
+        message: 'The new password must be different from your current password.',
+      }
+    }
+
     return {
       status: 'error',
-      message: error.message,
+      message: 'Unable to update your password right now. Please try again.',
     }
   }
 

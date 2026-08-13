@@ -21,11 +21,11 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-const trustTags = ['Secure reset', 'Link expires in 15 min', 'No data lost']
+const trustTags = ['Secure reset', 'Link expires in 1 hour', 'No data lost']
 
 const protocolMetrics = [
   { icon: Mail, label: 'Method', value: 'Email link' },
-  { icon: Clock3, label: 'Expiry', value: '15 min' },
+  { icon: Clock3, label: 'Expiry', value: '1 hour' },
   { icon: ShieldCheck, label: 'Session', value: 'Preserved' },
 ]
 
