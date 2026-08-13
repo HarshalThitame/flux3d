@@ -5,6 +5,25 @@ import { createAdminSupabaseClient } from '@/lib/admin/server'
 
 export const dynamic = 'force-dynamic'
 
+type MetaRow = {
+  sender: string
+  tags: string[] | null
+  is_archived: boolean | null
+}
+
+async function safeMeta(supabase: ReturnType<typeof createAdminSupabaseClient>): Promise<MetaRow[]> {
+  try {
+    const { data, error } = await supabase
+      .from('whatsapp_conversation_meta')
+      .select('sender, tags, is_archived')
+    if (error) throw error
+    return (data ?? []) as MetaRow[]
+  } catch {
+    // Optional table — degrade gracefully so the inbox still loads messages.
+    return []
+  }
+}
+
 export async function GET() {
   const auth = await requireAdminRequest()
   if ('response' in auth) return auth.response
@@ -12,20 +31,15 @@ export async function GET() {
   try {
     const supabase = createAdminSupabaseClient()
 
-    // Fetch conversation metadata (tags, archived status)
-    const { data: metaRows } = await supabase
-      .from('whatsapp_conversation_meta')
-      .select('*')
-
+    const metaRows = await safeMeta(supabase)
     const metaMap = new Map<string, { tags: string[]; is_archived: boolean }>()
-    for (const m of (metaRows ?? [])) {
+    for (const m of metaRows) {
       metaMap.set(m.sender, {
         tags: m.tags || [],
         is_archived: m.is_archived || false,
       })
     }
 
-    // Get messages (bounded to the most recent rows to keep grouping cheap)
     const { data: conversations, error } = await supabase
       .from('whatsapp_messages')
       .select('sender, created_at, message_text, direction, automated, responded, media_type, media_filename')

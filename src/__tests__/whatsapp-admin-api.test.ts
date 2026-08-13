@@ -81,4 +81,58 @@ describe('WhatsApp admin APIs', () => {
       expect(response.status).toBe(200)
     })
   })
+
+  describe('quick replies admin API', () => {
+    it('updates a quick reply via PUT with content', async () => {
+      const updated = { id: 'qr-1', shortcut: '/quote', title: '3D File Quote Request', content: 'New content', category: 'pricing' }
+      const singleFn = vi.fn().mockResolvedValue({ data: updated, error: null })
+      const selectFn = vi.fn(() => ({ single: singleFn }))
+      const eqFn = vi.fn().mockReturnValue({ select: selectFn })
+      const updateFn = vi.fn(() => ({ eq: eqFn }))
+      const builder = makeChainableBuilder()
+      builder.update = updateFn
+      supabaseFromMock.mockReturnValue(builder)
+
+      const { PUT } = await import('@/app/api/admin/whatsapp/quick-replies/route')
+      const request = new Request('http://localhost/api/admin/whatsapp/quick-replies?id=qr-1', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ content: 'New content' }),
+      })
+      const response = await PUT(request) as Response
+      const body = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(body.success).toBe(true)
+      expect(body.quickReply.content).toBe('New content')
+      expect(updateFn).toHaveBeenCalledWith(expect.objectContaining({ content: 'New content' }))
+      expect(eqFn).toHaveBeenCalledWith('id', 'qr-1')
+    })
+
+    it('returns 400 when PUT has no id', async () => {
+      const { PUT } = await import('@/app/api/admin/whatsapp/quick-replies/route')
+      const request = new Request('http://localhost/api/admin/whatsapp/quick-replies', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ content: 'x' }),
+      })
+      const response = await PUT(request) as Response
+      expect(response.status).toBe(400)
+    })
+
+    it('deletes a quick reply via DELETE with id query param', async () => {
+      const eqFn = vi.fn().mockResolvedValue({ data: null, error: null })
+      const builder = makeChainableBuilder()
+      builder.delete = vi.fn(() => ({ eq: eqFn }))
+      supabaseFromMock.mockReturnValue(builder)
+
+      const { DELETE } = await import('@/app/api/admin/whatsapp/quick-replies/route')
+      const request = new Request('http://localhost/api/admin/whatsapp/quick-replies?id=qr-1', { method: 'DELETE' })
+      const response = await DELETE(request) as Response
+
+      expect(response.status).toBe(200)
+      expect(builder.delete).toHaveBeenCalled()
+      expect(eqFn).toHaveBeenCalledWith('id', 'qr-1')
+    })
+  })
 })
