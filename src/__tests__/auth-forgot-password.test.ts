@@ -75,7 +75,11 @@ describe('forgotPasswordAction', () => {
     vi.mocked(sendPasswordReset).mockReset()
     generateLinkMock.mockResolvedValue({
       data: {
-        properties: { action_link: 'https://project.supabase.co/auth/v1/verify?token=abc&type=recovery' },
+        properties: {
+          action_link: 'https://project.supabase.co/auth/v1/verify?token=abc&type=recovery',
+          hashed_token: 'tokhash-123',
+          email_otp: 'abc',
+        },
       },
       error: null,
     })
@@ -105,7 +109,7 @@ describe('forgotPasswordAction', () => {
       'user-123',
       'user@example.com',
       'Rutik',
-      expect.stringContaining('type=recovery')
+      expect.stringContaining('/auth/confirm?token_hash=tokhash-123&type=recovery&next=%2Fauth%2Fupdate-password%3Fnext%3D%252Fprofile')
     )
   })
 
@@ -118,7 +122,7 @@ describe('forgotPasswordAction', () => {
     expect(sendPasswordReset).toHaveBeenCalledWith('', 'orphan@example.com', 'User', expect.any(String))
   })
 
-  it('does not reveal account existence when the OTP cannot be generated', async () => {
+  it('does not reveal account existence when the link data is empty', async () => {
     generateLinkMock.mockResolvedValue({ data: { properties: null }, error: null })
 
     const state = await forgotPasswordAction({}, formData({ email: 'ghost@example.com' }))
