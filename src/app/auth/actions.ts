@@ -19,6 +19,7 @@ import {
 } from '@/lib/email/triggers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimitCheck } from '@/lib/rate-limit'
+import { buildOtpConfirmUrl } from '@/lib/auth/otp-link'
 
 function readString(formData: FormData, key: string, options: { trim?: boolean } = {}) {
   const value = formData.get(key)
@@ -156,9 +157,7 @@ export async function signupAction(
   }
 
   // No session — email confirmation is required.
-  // Generate a verification link via the admin API and send it through our EMS
-  // alongside Supabase's built-in confirmation email.
-  // To avoid duplicates, disable Supabase's email templates in the Auth dashboard.
+  // Generate a verification link via the admin API and send it through our EMS.
   try {
     const adminClient = createAdminClient()
     const { data: linkData } = await adminClient.auth.admin.generateLink({
@@ -167,8 +166,13 @@ export async function signupAction(
       password,
       options: { redirectTo: callbackUrl },
     })
-    const verificationUrl = linkData?.properties?.action_link
-    if (verificationUrl) {
+    const tokenHash = linkData?.properties?.hashed_token
+    if (tokenHash) {
+      const verificationUrl = buildOtpConfirmUrl({
+        tokenHash,
+        type: 'signup',
+        nextPath,
+      })
       sendEmailVerification(data.user.id, data.user.email ?? email, name, verificationUrl).catch((err) => {
         console.error('[Auth] Failed to enqueue verification email:', err)
       })
@@ -293,16 +297,22 @@ export async function forgotPasswordAction(
       email,
       options: { redirectTo: callbackUrl },
     })
-    const resetUrl = linkData?.properties?.action_link
-    if (!resetUrl) {
+    const tokenHash = linkData?.properties?.hashed_token
+    if (!tokenHash) {
       // Same generic response as every other failure: never reveal whether
       // the account exists or whether the infrastructure misbehaved.
-      console.error('[Auth] Recovery link generated without an action_link')
+      console.error('[Auth] Recovery link generated without a hashed token')
       return {
         status: 'success',
         message: 'If an account exists for that email, a secure reset link will arrive shortly.',
       }
     }
+
+    const resetUrl = buildOtpConfirmUrl({
+      tokenHash,
+      type: 'recovery',
+      nextPath,
+    })
 
     // Best-effort profile lookup for a personalized greeting. The email is
     // sent regardless — a missing profile must never silently drop the link.
