@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import AuthShell from '@/components/auth/AuthShell'
 import UpdatePasswordForm from '@/components/auth/UpdatePasswordForm'
 import { normalizeNextPath } from '@/lib/auth/redirect'
+import { getCurrentUserProfile } from '@/lib/auth/server'
 
 export const metadata: Metadata = {
   title: 'Update Password | Flux3D',
@@ -23,6 +25,15 @@ export default async function UpdatePasswordPage({
     typeof params.next === 'string' ? params.next : undefined,
     '/profile'
   )
+
+  const auth = await getCurrentUserProfile()
+
+  // Reaching this page requires a live (recovery) session — normally set by
+  // the auth callback after the user clicks the reset link. Direct visitors
+  // get bounced back to sign in instead of a broken form.
+  if (!auth) {
+    redirect('/login?error=session_required')
+  }
 
   return (
     <AuthShell

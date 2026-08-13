@@ -18,6 +18,8 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+> **Local auth note:** auth emails (password reset, verification) link back to `NEXT_PUBLIC_SITE_URL`. That URL must be whitelisted in Supabase Auth → URL Configuration → Redirect URLs, and it must be reachable by the device opening the link. The repo's `.env.local` points at `https://flux3d.in/`, so reset links resolve to production when testing locally — set `NEXT_PUBLIC_SITE_URL=http://localhost:3000` and add it to the allowlist if you want fully local flows.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
