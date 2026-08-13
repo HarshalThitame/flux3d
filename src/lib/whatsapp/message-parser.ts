@@ -3,6 +3,11 @@ import { parseOrderCartItems, type OrderInteraction } from './order-flow'
 export type ParsedWhatsAppMessage = {
   text: string | undefined
   mediaInfo: string | null
+  mediaId?: string | null
+  mediaMimeType?: string | null
+  mediaFilename?: string | null
+  mediaType?: 'image' | 'document' | 'audio' | 'video' | 'sticker' | 'stl' | null
+  metaMessageId?: string | null
   interaction: OrderInteraction | null
 }
 
@@ -17,21 +22,51 @@ function getNested(message: MetaMessage | null | undefined, path: string): unkno
 
 export function parseWhatsAppMessage(message: MetaMessage | undefined | null): ParsedWhatsAppMessage {
   const msgType = message?.type
+  const metaMessageId = (message?.id as string | undefined) ?? null
 
   let text: string | undefined
   let mediaInfo: string | null = null
+  let mediaId: string | null = null
+  let mediaMimeType: string | null = null
+  let mediaFilename: string | null = null
+  let mediaType: ParsedWhatsAppMessage['mediaType'] = null
   let interaction: OrderInteraction | null = null
 
   if (msgType === 'text') {
     text = (getNested(message, 'text.body') as string | undefined) ?? undefined
   } else if (msgType === 'image') {
     text = (getNested(message, 'image.caption') as string | undefined) ?? undefined
-    mediaInfo = `[Image ID: ${String(getNested(message, 'image.id') ?? 'unknown')}]`
+    mediaId = String(getNested(message, 'image.id') ?? '')
+    mediaMimeType = (getNested(message, 'image.mime_type') as string) || 'image/jpeg'
+    mediaType = 'image'
+    mediaInfo = `[Image ID: ${mediaId || 'unknown'}]`
   } else if (msgType === 'document') {
     text = (getNested(message, 'document.caption') as string | undefined) ?? undefined
-    mediaInfo = `[Document: ${String(getNested(message, 'document.filename') ?? 'unknown')}]`
-  } else if (msgType === 'audio' || msgType === 'video' || msgType === 'sticker') {
-    mediaInfo = `[${msgType}]`
+    mediaId = String(getNested(message, 'document.id') ?? '')
+    mediaFilename = (getNested(message, 'document.filename') as string) || 'document'
+    mediaMimeType = (getNested(message, 'document.mime_type') as string) || 'application/octet-stream'
+    
+    if (mediaFilename.toLowerCase().endsWith('.stl') || mediaFilename.toLowerCase().endsWith('.3mf') || mediaFilename.toLowerCase().endsWith('.obj')) {
+      mediaType = 'stl'
+    } else {
+      mediaType = 'document'
+    }
+    mediaInfo = `[Document: ${mediaFilename}]`
+  } else if (msgType === 'audio') {
+    mediaId = String(getNested(message, 'audio.id') ?? '')
+    mediaMimeType = (getNested(message, 'audio.mime_type') as string) || 'audio/ogg'
+    mediaType = 'audio'
+    mediaInfo = `[Audio]`
+  } else if (msgType === 'video') {
+    text = (getNested(message, 'video.caption') as string | undefined) ?? undefined
+    mediaId = String(getNested(message, 'video.id') ?? '')
+    mediaMimeType = (getNested(message, 'video.mime_type') as string) || 'video/mp4'
+    mediaType = 'video'
+    mediaInfo = `[Video]`
+  } else if (msgType === 'sticker') {
+    mediaId = String(getNested(message, 'sticker.id') ?? '')
+    mediaType = 'sticker'
+    mediaInfo = `[Sticker]`
   } else if (msgType === 'interactive') {
     const interactive = getNested(message, 'interactive') as Record<string, unknown> | undefined
     const interactiveType = interactive?.type
@@ -77,5 +112,5 @@ export function parseWhatsAppMessage(message: MetaMessage | undefined | null): P
     }
   }
 
-  return { text, mediaInfo, interaction }
+  return { text, mediaInfo, mediaId, mediaMimeType, mediaFilename, mediaType, metaMessageId, interaction }
 }

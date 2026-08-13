@@ -5,6 +5,7 @@ import { FALLBACK_SETTINGS } from '@/lib/settings-fallback'
 const chatCompletionsCreate = vi.fn()
 const rpcMock = vi.fn()
 const upsertMock = vi.fn()
+const updateMock = vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) }))
 
 const sessionData: { value: Record<string, unknown> | null } = { value: null }
 const profileData: { value: Record<string, unknown> | null } = { value: null }
@@ -38,7 +39,7 @@ function makeBuilder() {
     insert: vi.fn(() => ({
       select: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'test-event-id' }, error: null }) })),
     })),
-    update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+    update: updateMock,
   }
   return builder
 }
@@ -105,6 +106,23 @@ function createPayload(from: string, text: string) {
           metadata: { phone_number_id: 'test-phone-id', display_phone_number: '15550000000' },
           contacts: [{ profile: { name: 'Test User' }, wa_id: from }],
           messages: [{ from, id: `msg-${Date.now()}`, timestamp: Math.floor(Date.now() / 1000).toString(), text: { body: text }, type: 'text' }],
+        },
+        field: 'messages',
+      }],
+    }],
+  })
+}
+
+function createStatusPayload(wamid: string, status: string) {
+  return JSON.stringify({
+    object: 'whatsapp_business_account',
+    entry: [{
+      id: 'test-account-id',
+      changes: [{
+        value: {
+          messaging_product: 'whatsapp',
+          metadata: { phone_number_id: 'test-phone-id', display_phone_number: '15550000000' },
+          statuses: [{ id: wamid, status, timestamp: Math.floor(Date.now() / 1000).toString(), recipient_id: '919999999999' }],
         },
         field: 'messages',
       }],
@@ -237,6 +255,17 @@ describe('WhatsApp webhook handler', () => {
 
     // Should fall back — no OpenAI call (guided reply)
     expect(chatCompletionsCreate).not.toHaveBeenCalled()
+  })
+
+  it('records delivery/read status updates on the stored message', async () => {
+    const handlerMod = await import('@/pages/api/whatsapp')
+    const { default: handler } = handlerMod
+    const rawBody = createStatusPayload('wamid.DELIVERY1', 'delivered')
+    const { req, res } = createReqRes(rawBody)
+    await handler(req, res)
+
+    expect(res.status).toHaveBeenCalledWith(200)
+    expect(updateMock).toHaveBeenCalledWith({ status: 'delivered' })
   })
 
   it('processes greeting intent', async () => {
