@@ -99,6 +99,12 @@ export type ShopAdminOrder = ShopOrder & {
   customer: ShopOrderCustomer | null
 }
 
+export const SHOP_PAID_PAYMENT_STATUSES: ReadonlySet<string> = new Set(['captured', 'paid', 'succeeded'])
+
+export function isShopOrderPaid(status: string | null | undefined): boolean {
+  return SHOP_PAID_PAYMENT_STATUSES.has(String(status ?? '').toLowerCase())
+}
+
 export const SHOP_FULFILMENT_PROGRESS: ShopFulfilmentStatus[] = [
   'pending', 'processing', 'packing', 'packed', 'shipped', 'delivering', 'delivered',
 ]
@@ -205,7 +211,6 @@ export function getShopPaymentMethodLabel(method: string | null | undefined) {
     case 'netbanking': return 'Net Banking'
     case 'wallet': return 'Wallet'
     case 'emi': return 'EMI'
-    case 'cod': return 'Cash on Delivery'
     case 'bank_transfer': return 'Bank Transfer'
     case 'paylater': return 'Pay Later'
     case 'cardless_emi': return 'Cardless EMI'

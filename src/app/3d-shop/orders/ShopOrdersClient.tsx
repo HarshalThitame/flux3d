@@ -96,14 +96,6 @@ function getPaymentBadge(order: ShopOrder) {
       </span>
     )
   }
-  const method = order.payment_method?.trim().toLowerCase()
-  if (method === 'cod' || method === 'cash_on_delivery' || method === 'cash on delivery') {
-    return (
-      <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">
-        COD
-      </span>
-    )
-  }
   return (
     <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">
       Pending

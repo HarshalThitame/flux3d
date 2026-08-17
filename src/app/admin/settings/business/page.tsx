@@ -735,8 +735,10 @@ function InvoicingTab({ form, updateField, f, fn, fb, triggerFileInput, uploadin
       <SectionCard title="Invoice & Quotation Settings" description="Configure how invoices and quotations are generated.">
         <div className="grid gap-4 md:grid-cols-3">
           <InputField label="Invoice Prefix" value={f('invoicePrefix')} onChange={(v) => updateField('invoicePrefix', v)} placeholder="INV-" />
+          <InputField label="3D Shop Invoice Prefix" value={f('shopInvoicePrefix')} onChange={(v) => updateField('shopInvoicePrefix', v)} placeholder="SHP-" />
           <InputField label="Quotation Prefix" value={f('quotationPrefix')} onChange={(v) => updateField('quotationPrefix', v)} placeholder="QTN-" />
           <InputField label="Starting Invoice Number" type="number" value={String(fn('invoiceStartNumber'))} onChange={(v) => updateField('invoiceStartNumber', Number(v))} />
+          <InputField label="Starting 3D Shop Invoice Number" type="number" value={String(fn('shopInvoiceStartNumber'))} onChange={(v) => updateField('shopInvoiceStartNumber', Number(v))} />
           <InputField label="Starting Quotation Number" type="number" value={String(fn('quotationStartNumber'))} onChange={(v) => updateField('quotationStartNumber', Number(v))} />
           <SelectField label="Default Currency" options={CURRENCIES} value={f('currency')} onChange={(v) => updateField('currency', v)} />
           <SelectField label="Currency Symbol" options={CURRENCY_SYMBOLS} value={f('currencySymbol')} onChange={(v) => updateField('currencySymbol', v)} />
@@ -1115,7 +1117,6 @@ function LegalOpsTab({ updateField, f, fn, fb }: {
           <div className="md:col-span-2">
             <div className="grid gap-4 md:grid-cols-2">
               <ToggleField label="Pickup Available" description="Allow customers to pick up orders in person." checked={fb('pickupAvailable')} onChange={(v) => updateField('pickupAvailable', v)} />
-              <ToggleField label="COD Available" description="Allow Cash on Delivery as a payment method." checked={fb('codAvailable')} onChange={(v) => updateField('codAvailable', v)} />
             </div>
           </div>
         </div>

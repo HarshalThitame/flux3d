@@ -32,7 +32,6 @@ function formatMethod(method: string | null | undefined): string {
     wallet: 'Wallet',
     emi: 'EMI',
     paylater: 'Pay Later',
-    cod: 'Cash on Delivery',
     cardless_emi: 'Cardless EMI',
   }
   return map[method.toLowerCase()] ?? method

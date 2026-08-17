@@ -66,6 +66,8 @@ export type BusinessSettings = {
   quotationPrefix: string
   invoiceStartNumber: number
   quotationStartNumber: number
+  shopInvoicePrefix: string
+  shopInvoiceStartNumber: number
   currency: string
   currencySymbol: string
   taxPercentage: number
@@ -131,7 +133,6 @@ export type BusinessSettings = {
   minimumOrderValue: number
   gstInclusivePricing: boolean
   pickupAvailable: boolean
-  codAvailable: boolean
   paymentsEnabled: boolean
   razorpayEnabled: boolean
   razorpayKeyId: string
@@ -246,6 +247,8 @@ export type BusinessSettingsRow = {
   quotation_prefix: string | null
   invoice_start_number: number | null
   quotation_start_number: number | null
+  shop_invoice_prefix: string | null
+  shop_invoice_start_number: number | null
   currency: string | null
   currency_symbol: string | null
   tax_percentage: number | null
@@ -311,7 +314,6 @@ export type BusinessSettingsRow = {
   minimum_order_value: number | null
   gst_inclusive_pricing: boolean | null
   pickup_available: boolean | null
-  cod_available: boolean | null
   payments_enabled: boolean | null
   razorpay_enabled: boolean | null
   razorpay_key_id: string | null
@@ -447,6 +449,8 @@ export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettin
     quotationPrefix: n(row.quotation_prefix),
     invoiceStartNumber: num(row.invoice_start_number),
     quotationStartNumber: num(row.quotation_start_number),
+    shopInvoicePrefix: n(row.shop_invoice_prefix) || 'SHP-',
+    shopInvoiceStartNumber: num(row.shop_invoice_start_number) || 1001,
     currency: n(row.currency),
     currencySymbol: n(row.currency_symbol),
     taxPercentage: num(row.tax_percentage),
@@ -512,7 +516,6 @@ export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettin
     minimumOrderValue: num(row.minimum_order_value ?? 100),
     gstInclusivePricing: bool(row.gst_inclusive_pricing ?? true),
     pickupAvailable: bool(row.pickup_available),
-    codAvailable: bool(row.cod_available),
     paymentsEnabled: bool(row.payments_enabled ?? true),
     razorpayEnabled: bool(row.razorpay_enabled ?? true),
     razorpayKeyId: n(row.razorpay_key_id),
@@ -589,6 +592,8 @@ export function toSnakeCase(data: Partial<BusinessSettings>): Record<string, unk
     quotationPrefix: 'quotation_prefix',
     invoiceStartNumber: 'invoice_start_number',
     quotationStartNumber: 'quotation_start_number',
+    shopInvoicePrefix: 'shop_invoice_prefix',
+    shopInvoiceStartNumber: 'shop_invoice_start_number',
     currency: 'currency',
     currencySymbol: 'currency_symbol',
     taxPercentage: 'tax_percentage',
@@ -648,7 +653,6 @@ export function toSnakeCase(data: Partial<BusinessSettings>): Record<string, unk
     minimumOrderValue: 'minimum_order_value',
     gstInclusivePricing: 'gst_inclusive_pricing',
     pickupAvailable: 'pickup_available',
-    codAvailable: 'cod_available',
     paymentsEnabled: 'payments_enabled',
     razorpayEnabled: 'razorpay_enabled',
     razorpayKeyId: 'razorpay_key_id',

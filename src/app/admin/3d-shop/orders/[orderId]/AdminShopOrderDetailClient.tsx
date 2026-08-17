@@ -8,7 +8,6 @@ import { ArrowLeft, Banknote, ChevronDown, ChevronUp, Copy, ExternalLink, FileTe
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import { formatShopPrice } from '@/lib/shop/selection'
 import {
-  formatShopOrderDate,
   formatShopOrderDateTime,
   formatShopPriceFromPaise,
   getShopFulfilmentStatusClasses,
@@ -713,29 +712,8 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
   return (
     <div className="space-y-6">
       <AdminToast toast={toast} />
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .shop-invoice-print,
-          .shop-invoice-print * {
-            visibility: visible;
-          }
-          .shop-invoice-print {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            background: white;
-            padding: 24px;
-          }
-          .no-print {
-            display: none !important;
-          }
-        }
-      `}</style>
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="no-print flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <Link href="/admin/3d-shop/orders" className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[#6d28d9]">
             <ArrowLeft className="h-4 w-4" />
@@ -748,17 +726,18 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
           <h1 className="font-[var(--font-syne)] !text-2xl font-bold tracking-tight text-[#0F1B3D]">#{order.order_number}</h1>
           <p className="mt-2 text-sm text-[#6F7192]">Placed {formatShopOrderDateTime(order.placed_at)}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => window.print()}
+        <a
+          href={`/api/3d-shop/orders/${order.id}/invoice`}
+          target="_blank"
+          rel="noopener noreferrer"
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-3 text-sm font-semibold text-white shadow-sm"
         >
           <Printer className="h-4 w-4" />
-          Print Invoice
-        </button>
+          Download Invoice
+        </a>
       </motion.div>
 
-      <div className="no-print grid gap-6 xl:grid-cols-[1fr_380px]">
+      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
         <section className="space-y-6">
           <div className="rounded-2xl border border-gray-200 bg-white p-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -993,87 +972,6 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
           </div>
         </aside>
       </div>
-
-      <section className="shop-invoice-print hidden print:block">
-        <div className="mx-auto max-w-4xl bg-white text-[#0F1B3D]">
-          <div className="flex items-start justify-between border-b border-gray-200 pb-6">
-            <div>
-              <div className="font-[var(--font-syne)] text-3xl font-extrabold">Flux3D</div>
-              <div className="mt-1 text-sm font-semibold text-[#6d28d9]">3D Shop</div>
-            </div>
-            <div className="text-right text-sm text-[#6F7192]">
-              <div className="font-bold text-[#0F1B3D]">Invoice</div>
-              <div>Order #{order.order_number}</div>
-              <div>{formatShopOrderDate(order.placed_at)}</div>
-            </div>
-          </div>
-
-          <div className="grid gap-6 border-b border-gray-200 py-6 md:grid-cols-2">
-            <div>
-              <div className="text-xs font-bold uppercase tracking-[0.15em] text-[#6F7192]">Customer</div>
-              <div className="mt-2 font-bold">{order.shipping_address.name}</div>
-              <div className="text-sm text-[#6F7192]">
-                {order.shipping_address.phone ? (
-                  <a href={`tel:${order.shipping_address.phone.replace(/[^0-9+]/g, '')}`} className="underline-offset-2 hover:underline">{order.shipping_address.phone}</a>
-                ) : '—'}
-              </div>
-              <div className="mt-2 text-sm leading-6 text-[#6F7192]">
-                {order.shipping_address.line1}
-                {order.shipping_address.line2 ? `, ${order.shipping_address.line2}` : ''}
-                <br />
-                {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.pincode}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs font-bold uppercase tracking-[0.15em] text-[#6F7192]">Payment</div>
-              <div className="mt-2 text-sm font-bold">
-                {getShopPaymentProviderLabel(order.payment_provider)} · {getShopPaymentMethodLabel(order.payment_method ?? paymentAttempt?.payment_method ?? null)}
-              </div>
-              <div className="mt-1 text-xs text-[#6F7192]">
-                {getShopPaymentStatusLabel(order.payment_status)}
-                {order.provider_payment_id ? ` · ${order.provider_payment_id}` : ''}
-              </div>
-              {order.payment_verified_at && (
-                <div className="mt-1 text-xs text-[#6F7192]">Verified {formatShopOrderDateTime(order.payment_verified_at)}</div>
-              )}
-            </div>
-          </div>
-
-          <table className="mt-6 w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 text-left text-xs uppercase tracking-[0.15em] text-[#6F7192]">
-                <th className="py-3">Name</th>
-                <th className="py-3">Variant</th>
-                <th className="py-3 text-right">Qty</th>
-                <th className="py-3 text-right">Unit Price</th>
-                <th className="py-3 text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {order.items.map((item) => (
-                <tr key={`${item.skuId}-${item.customizationText ?? ''}`} className="border-b border-gray-100">
-                  <td className="py-3 font-semibold">{item.productName}</td>
-                  <td className="py-3 text-[#6F7192]">{item.variantLabel}</td>
-                  <td className="py-3 text-right">{item.quantity}</td>
-                  <td className="py-3 text-right">{formatShopPrice(item.unitPrice)}</td>
-                  <td className="py-3 text-right">{formatShopPrice(getShopOrderLineTotal(item))}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="ml-auto mt-6 w-full max-w-sm space-y-2 text-sm">
-            <div className="flex justify-between"><span>Subtotal</span><span>{formatShopPrice(order.subtotal)}</span></div>
-            <div className="flex justify-between"><span>Discount</span><span>-{formatShopPrice(order.discount_amount)}</span></div>
-            <div className="flex justify-between"><span>Shipping</span><span>{order.shipping_charge === 0 ? 'Free' : formatShopPrice(order.shipping_charge)}</span></div>
-            <div className="flex justify-between border-t border-gray-200 pt-3 text-lg font-bold"><span>Grand Total</span><span>{formatShopPrice(order.total_amount)}</span></div>
-          </div>
-
-          <div className="mt-10 border-t border-gray-200 pt-5 text-center text-sm text-[#6F7192]">
-            Thank you for your order!
-          </div>
-        </div>
-      </section>
     </div>
   )
 }
