@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import PDFDocument from 'pdfkit/js/pdfkit.standalone'
+import PDFDocument from 'pdfkit'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
@@ -11,6 +11,7 @@ import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 import { rateLimitResponse } from '@/lib/rate-limit'
 import { numberToWords } from '@/lib/invoice/number-to-words'
 import { formatMoney } from '@/lib/invoice/currency'
+import { loadInvoiceLogo } from '@/lib/invoice/logo'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -125,6 +126,8 @@ async function generatePdf(
     settings.country,
   ].filter(Boolean).join(', ')
 
+  const logoBuffer = invoiceLogo ? await loadInvoiceLogo(settings) : null
+
   const [regularFont, boldFont] = await Promise.all([
     readFile(INVOICE_FONT_REGULAR_PATH),
     readFile(INVOICE_FONT_BOLD_PATH),
@@ -167,6 +170,7 @@ async function generatePdf(
 
   let y = headerH + 16
   let inTable = false
+  let footerDrawn = false
 
   function drawBase() {
     doc.save()
@@ -174,22 +178,17 @@ async function generatePdf(
     doc.restore()
   }
 
-  async function drawHeader() {
+  function drawHeader(logo?: Buffer | null) {
     doc.save()
     doc.rect(0, 0, pageW, headerH).fill(brand.page)
 
     const logoY = 20
+    const leftW = 280
     let logoPlaced = false
-    if (invoiceLogo) {
+    if (logo) {
       try {
-        const baseUrl = (settings.websiteUrl || 'https://flux3d.in').replace(/\/+$/, '')
-        const logoUrl = invoiceLogo.startsWith('http') ? invoiceLogo : `${baseUrl}${invoiceLogo.startsWith('/') ? '' : '/'}${invoiceLogo}`
-        const resp = await fetch(logoUrl)
-        if (resp.ok) {
-          const arrayBuf = await resp.arrayBuffer()
-          doc.image(Buffer.from(arrayBuf), contentX, logoY, { height: 46, fit: [210, 46] })
-          logoPlaced = true
-        }
+        doc.image(logo, contentX, logoY, { fit: [210, 46] })
+        logoPlaced = true
       } catch {
         logoPlaced = false
       }
@@ -197,22 +196,31 @@ async function generatePdf(
 
     if (!logoPlaced) {
       doc.fillColor(brand.ink).font(INVOICE_FONT_BOLD).fontSize(22)
-      doc.text(companyName, contentX, logoY + 8)
+      doc.text(companyName, contentX, logoY + 6, { width: leftW, ellipsis: true })
     }
 
+    let infoY = logoPlaced ? 70 : 76
     doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(8.5)
-    doc.text(tagline, contentX, logoY + 52)
+    const taglineH = doc.heightOfString(tagline, { width: leftW })
+    doc.text(tagline, contentX, infoY, { width: leftW })
+    infoY += taglineH + 3
 
     doc.fillColor(brand.ink).font(INVOICE_FONT_BOLD).fontSize(9)
-    doc.text(companyName, contentX, 78)
+    const companyNameH = doc.heightOfString(companyName, { width: leftW })
+    doc.text(companyName, contentX, infoY, { width: leftW })
+    infoY += companyNameH + 3
+
     if (companyAddress) {
       doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(7.5)
-      doc.text(companyAddress, contentX, 92, { width: 330, lineGap: 1.5 })
+      const addressH = doc.heightOfString(companyAddress, { width: leftW, lineGap: 1.5 })
+      doc.text(companyAddress, contentX, infoY, { width: leftW, lineGap: 1.5 })
+      infoY += addressH + 3
     }
+
     const contactLine = [settings.primaryPhone, contactEmail, websiteValue.replace(/^https?:\/\//, '')].filter(Boolean).join('  |  ')
     if (contactLine) {
       doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(7.5)
-      doc.text(contactLine, contentX, 116, { width: 340, lineGap: 1.5 })
+      doc.text(contactLine, contentX, infoY, { width: leftW, lineGap: 1.5 })
     }
 
     const invoiceRight = pageW - contentRight
@@ -241,7 +249,9 @@ async function generatePdf(
   function startPage() {
     if (doc.page) {
       drawBase()
-      void drawHeader()
+      drawHeader(logoBuffer)
+      footerDrawn = false
+      drawFooter()
       y = headerH + 16
     }
   }
@@ -441,6 +451,8 @@ async function generatePdf(
   }
 
   function drawFooter() {
+    if (footerDrawn) return
+    footerDrawn = true
     const footerY = pageH - footerH
     doc.save()
     doc.rect(0, footerY, pageW, footerH).fill('#FFFFFF')
@@ -458,7 +470,8 @@ async function generatePdf(
   }
 
   drawBase()
-  await drawHeader()
+  drawHeader(logoBuffer)
+  drawFooter()
 
   const partyGap = 12
   const cardW = (contentW - partyGap * 2) / 3
