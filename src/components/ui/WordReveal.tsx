@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, useReducedMotion } from 'framer-motion'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 /**
  * Cinematic word-by-word text reveal. Each word rises and fades in
@@ -24,7 +24,10 @@ export default function WordReveal({
   blur?: boolean
   wordClassName?: string
 }) {
-  const reduceMotion = useReducedMotion()
+  const reduceMotionPref = useReducedMotion()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const reduceMotion = mounted ? reduceMotionPref : false
   const words = useMemo(() => text.split(' '), [text])
 
   if (reduceMotion) {
