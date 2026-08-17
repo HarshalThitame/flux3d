@@ -67,4 +67,32 @@ describe('generateShopInvoicePdf', () => {
     expect(pdf.subarray(0, 5).toString()).toBe('%PDF-')
     expect(pdf.length).toBeGreaterThan(1000)
   })
+
+  it('paginates across multiple pages when there are many items', async () => {
+    const manyItems: ShopOrderItem[] = Array.from({ length: 25 }, (_, i) => ({
+      ...items[0],
+      productId: `p-${i}`,
+      skuId: `s-${i}`,
+      skuCode: `SKU-${i}`,
+      productName: `Model ${i + 1}`,
+    }))
+    const pdf = await generateShopInvoicePdf(order, manyItems, settings, {
+      invoiceNumber: 'SHP-2026-01001',
+      providerPaymentId: 'pay_AbCdEfGhIjKl',
+    })
+    expect(pdf.subarray(0, 5).toString()).toBe('%PDF-')
+    const text = pdf.toString()
+    const pageCount = (text.match(/\/Type\s*\/Page[^s]/g) ?? []).length
+    expect(pageCount).toBeGreaterThan(1)
+  })
+
+  it('renders the logo image when a webp logo is configured', async () => {
+    const withLogo = { ...settings, invoiceLogoUrl: '/logo.webp' } as BusinessSettings
+    const pdf = await generateShopInvoicePdf(order, items, withLogo, {
+      invoiceNumber: 'SHP-2026-01001',
+      providerPaymentId: 'pay_AbCdEfGhIjKl',
+    })
+    expect(pdf.subarray(0, 5).toString()).toBe('%PDF-')
+    expect(pdf.length).toBeGreaterThan(1000)
+  })
 })

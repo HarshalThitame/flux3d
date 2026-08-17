@@ -21,8 +21,10 @@ export function DownloadInvoiceButton({ orderId }: { orderId: string }) {
       disabled={downloading}
       onClick={async () => {
         setDownloading(true)
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 90000)
         try {
-          const res = await fetch(`/api/3d-shop/orders/${orderId}/invoice`)
+          const res = await fetch(`/api/3d-shop/orders/${orderId}/invoice`, { signal: controller.signal })
           if (!res.ok) {
             const body = await res.json().catch(() => null)
             throw new Error(body?.error ?? `Server error (${res.status})`)
@@ -35,10 +37,11 @@ export function DownloadInvoiceButton({ orderId }: { orderId: string }) {
           document.body.appendChild(a)
           a.click()
           document.body.removeChild(a)
-          URL.revokeObjectURL(url)
+          setTimeout(() => URL.revokeObjectURL(url), 1000)
         } catch (e) {
           alert(e instanceof Error ? e.message : 'Download failed')
         } finally {
+          clearTimeout(timeout)
           setDownloading(false)
         }
       }}
