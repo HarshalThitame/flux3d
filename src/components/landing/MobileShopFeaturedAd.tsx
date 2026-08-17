@@ -97,7 +97,7 @@ export default function MobileShopFeaturedAd({ products }: { products: ShopPubli
 
   return (
     <div
-      className="enterprise-mobile-ad border-t border-[#6d28d9]/20 bg-[#0e1117]/80 backdrop-blur-sm border-b-[1px] border-[#6d28d9]/10"
+      className="enterprise-mobile-ad lg:hidden border-t border-[#6d28d9]/20 bg-[#0e1117]/80 backdrop-blur-sm border-b-[1px] border-[#6d28d9]/10"
       onMouseEnter={() => {}}
       onMouseLeave={() => {}}
       onFocus={() => {}}

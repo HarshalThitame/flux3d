@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, cubicBezier, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import { ArrowRight, ArrowDown, MapPin, Clock, Sparkles } from 'lucide-react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -14,7 +14,13 @@ import MobileShopFeaturedAd from '@/components/landing/MobileShopFeaturedAd'
 import type { ShopPublicProduct } from '@/lib/shop/public-types'
 
 function HeroFadeIn({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
-  if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  useEffect(() => {
+    setPrefersReducedMotion(
+      typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    )
+  }, [])
+  if (prefersReducedMotion) {
     return <div className={className}>{children}</div>
   }
   return (
@@ -62,7 +68,10 @@ function CountStat({ stat }: { stat: typeof stats[0]; index: number }) {
 }
 
 export default function HeroSection({ featuredProducts }: { featuredProducts?: ShopPublicProduct[] }) {
-  const reduceMotion = useReducedMotion()
+  const reduceMotionPref = useReducedMotion()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const reduceMotion = mounted ? reduceMotionPref : false
   const isFinePointer = useMediaQuery('(pointer: fine)')
   const enableHover = isFinePointer && !reduceMotion
   const heroTransition = reduceMotion ? { duration: 0.3 } : { duration: 0.8, ease: cubicBezier(0.4, 0, 0.2, 1) }
@@ -241,9 +250,7 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
         </motion.div>
 
         {/* Enterprise-grade mobile shop ad - hidden on lg+ */}
-        {typeof window !== 'undefined' && !reduceMotion && (
-          <MobileShopFeaturedAd products={featuredProducts ?? []} />
-        )}
+        <MobileShopFeaturedAd products={featuredProducts ?? []} />
 
         <HeroFadeIn delay={0.8} className="mx-auto mt-5 flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#5b21b6]">
           <Clock className="h-3.5 w-3.5" />
