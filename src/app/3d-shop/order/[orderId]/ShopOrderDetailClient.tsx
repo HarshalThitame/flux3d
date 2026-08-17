@@ -43,6 +43,7 @@ import {
   getShopOrderStatusLabel,
   getShopPaymentStatusClasses,
   getShopPaymentStatusLabel,
+  isShopOrderPaid,
   isShopOrderReturnable,
   SHOP_FULFILMENT_PROGRESS,
   type ShopOrder,
@@ -173,7 +174,6 @@ function getPaymentModeLabel(value: string | null) {
   if (!normalized) return 'Not set'
   if (normalized === 'razorpay') return 'Razorpay'
   if (normalized === 'payu') return 'PayU'
-  if (normalized === 'cod' || normalized === 'cash_on_delivery' || normalized === 'cash on delivery') return 'Cash on Delivery'
   if (normalized === 'upi') return 'UPI'
   if (normalized === 'card') return 'Credit / Debit Card'
   if (normalized === 'netbanking') return 'Net Banking'
@@ -805,7 +805,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                     </span>
                   </div>
                 </div>
-                {order.payment_status !== 'paid' && order.payment_method?.toLowerCase() !== 'cod' && (
+                {order.payment_status !== 'paid' && (
                   <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
                     <p className="font-bold">Payment is still pending or failed.</p>
                     <p className="mt-0.5">
@@ -926,7 +926,7 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                   Request Return
                 </button>
               )}
-              <DownloadInvoiceButton />
+              {isShopOrderPaid(order.payment_status) && <DownloadInvoiceButton orderId={order.id} />}
               <Link href="/3d-shop" className="inline-flex items-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-text-primary)] text-sm font-semibold text-white transition hover:bg-[var(--shop-text-secondary)] flex min-h-[40px] w-full items-center justify-center text-xs">
                 <span className="relative z-10">Continue Shopping</span>
               </Link>

@@ -1,121 +1,76 @@
-import { NextResponse } from 'next/server'
 import PDFDocument from 'pdfkit/js/pdfkit.standalone'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { formatAddressSummary } from '@/lib/orders'
-import { getSettings } from '@/lib/settings'
 import type { BusinessSettings } from '@/lib/admin/business-settings'
-import { createAdminSupabaseClient, isCurrentUserAdmin } from '@/lib/admin/server'
-import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
-import { rateLimitResponse } from '@/lib/rate-limit'
 import { numberToWords } from '@/lib/invoice/number-to-words'
-
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
+import type { ShopOrder, ShopOrderItem } from '@/lib/shop/orders'
+import { isShopOrderPaid } from '@/lib/shop/orders'
 
 const INVOICE_FONT_REGULAR = 'InvoiceSans'
 const INVOICE_FONT_BOLD = 'InvoiceSans-Bold'
 const INVOICE_FONT_REGULAR_PATH = path.join(process.cwd(), 'public/fonts/NotoSans-Regular.ttf')
 const INVOICE_FONT_BOLD_PATH = path.join(process.cwd(), 'public/fonts/NotoSans-Bold.ttf')
 
-type InvoiceRow = {
-  id: string
-  user_id: string | null
-  order_number: string | null
-  group_id: string | null
-  file_url: string
-  material: string
-  color: string
-  infill: number
-  layer_height: number
-  supports: boolean
-  quantity?: number
-  material_cost?: number | string | null
-  machine_cost?: number | string | null
-  post_processing_charges?: number | string | null
-  subtotal?: number | string | null
-  full_name: string
-  phone: string
-  address_line1: string
-  address_line2: string | null
-  city: string
-  state: string
-  pincode: string
-  landmark: string | null
-  delivery_charge: number
-  total_price: number
-  final_price: number | null
-  grand_total: number | null
-  price: number
-  price_per_unit: number | null
-  discount: number | null
-  cart_discount: number | null
-  cart_discount_percent: number | null
-  coupon_discount: number | null
-  offer_discount: number | null
-  offer_name: string | null
-  overhead_percent: number | null
-  overhead_amount: number | null
-  margin_percent: number | null
-  margin_amount: number | null
-  coupon_code: string | null
-  coupon_id: string | null
-  discount_type: string | null
-  estimated_time: number
-  status: string
-  payment_status: string | null
-  notes: string | null
-  invoice_number: string | null
-  created_at: string
+type ShopInvoiceOptions = {
+  invoiceNumber: string
+  providerPaymentId?: string | null
 }
 
-async function generatePdf(
-  order: InvoiceRow,
-  items: InvoiceRow[],
-  settings: BusinessSettings,
-  options: { isPaid: boolean; providerPaymentId?: string | null },
-): Promise<Buffer> {
-  const { isPaid, providerPaymentId } = options
-  const invoiceLabel = isPaid ? 'TAX INVOICE' : 'PROFORMA INVOICE'
-  const invoiceDateObj = new Date(order.created_at)
-  const invoiceDate = invoiceDateObj.toLocaleDateString('en-IN', {
+function normalizeMoney(value: number | null | undefined) {
+  const next = Number(value ?? 0)
+  return Number.isFinite(next) ? next : 0
+}
+
+function money(value: number, currencySymbol: string) {
+  return `${currencySymbol}${Math.round(value).toLocaleString('en-IN')}`
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return '—'
+  return new Date(value).toLocaleDateString('en-IN', {
     day: 'numeric', month: 'long', year: 'numeric',
   })
-  const subtotal = items.reduce((s, i) => s + Number(i.subtotal ?? i.price), 0)
-  const addressLines = formatAddressSummary({
-    addressLine1: order.address_line1,
-    addressLine2: order.address_line2 ?? '',
-    city: order.city,
-    state: order.state,
-    pincode: order.pincode,
-    landmark: order.landmark ?? '',
-  })
-  const companyName = settings.businessName || settings.brandName || 'Flux3D'
-  const invoiceLogo = settings.invoiceLogoUrl || settings.logoUrl || ''
-  const tagline = settings.tagline || 'Premium manufacturing solutions'
-  const websiteValue = settings.websiteUrl || settings.canonicalUrl || ''
-  const contactEmail = (settings.primaryEmail || '').replace(/hello@fux3d\.com/gi, 'hello@flux3d.com')
-  const totalPrice = items.reduce((sum, item) => sum + Number(item.total_price), 0)
-  const cartDiscountAmount = items.reduce((sum, item) => sum + Number(item.cart_discount ?? 0), 0)
-  const couponDiscountAmount = items.reduce((sum, item) => sum + Number(item.coupon_discount ?? 0), 0)
-  const offerDiscountAmount = items.reduce((sum, item) => sum + Number(item.offer_discount ?? 0), 0)
-  const overheadAmount = items.reduce((sum, item) => sum + Number(item.overhead_amount ?? 0), 0)
-  const marginAmount = items.reduce((sum, item) => sum + Number(item.margin_amount ?? 0), 0)
-  const postProcessingCharges = items.reduce((sum, item) => sum + Number(item.post_processing_charges ?? 0), 0)
-  const finalPrice = items.reduce((sum, item) => sum + Number(item.final_price ?? Number(item.total_price) - Number(item.discount ?? 0)), 0)
-  const deliveryCharge = items.reduce((sum, item) => sum + Number(item.delivery_charge), 0)
+}
+
+export async function generateShopInvoicePdf(
+  order: ShopOrder,
+  items: ShopOrderItem[],
+  settings: BusinessSettings,
+  options: ShopInvoiceOptions,
+): Promise<Buffer> {
+  const { invoiceNumber, providerPaymentId } = options
+  const isPaid = isShopOrderPaid(order.payment_status)
+  const invoiceLabel = isPaid ? 'TAX INVOICE' : 'PROFORMA INVOICE'
+  const invoiceDate = formatDate(order.placed_at)
+
+  const subtotal = items.reduce((sum, item) => sum + normalizeMoney(item.unitPrice) * normalizeMoney(item.quantity), 0)
+  const discountAmount = normalizeMoney(order.discount_amount)
+  const deliveryCharge = normalizeMoney(order.shipping_charge)
+  const finalPrice = Math.max(0, subtotal - discountAmount)
   const cgstPercent = settings.gstEnabled ? Number(settings.cgstPercent ?? 0) : 0
   const sgstPercent = settings.gstEnabled ? Number(settings.sgstPercent ?? 0) : 0
   const cgstAmount = (finalPrice * cgstPercent) / 100
   const sgstAmount = (finalPrice * sgstPercent) / 100
   const invoiceTotal = finalPrice + cgstAmount + sgstAmount + deliveryCharge
-  const separateDiscountAmount = cartDiscountAmount + couponDiscountAmount + offerDiscountAmount
-  const fallbackDiscountAmount = separateDiscountAmount > 0
-    ? 0
-    : items.reduce((sum, item) => sum + Number(item.discount ?? 0), 0)
-  const amountWords = numberToWords(invoiceTotal)
+
+  const companyName = settings.businessName || settings.brandName || 'Flux3D'
+  const invoiceLogo = settings.invoiceLogoUrl || settings.logoUrl || ''
+  const tagline = settings.tagline || 'Premium manufacturing solutions'
+  const websiteValue = settings.websiteUrl || settings.canonicalUrl || ''
+  const contactEmail = (settings.primaryEmail || '').replace(/hello@fux3d\.com/gi, 'hello@flux3d.com')
   const currencySym = settings.currencySymbol || '₹'
+  const amountWords = numberToWords(invoiceTotal)
+
+  const customerName = order.shipping_address.name || 'Customer'
+  const addressLines = [
+    order.shipping_address.line1,
+    order.shipping_address.line2,
+    order.shipping_address.city && order.shipping_address.state
+      ? `${order.shipping_address.city}, ${order.shipping_address.state} ${order.shipping_address.pincode}`.trim()
+      : '',
+    order.shipping_address.phone,
+  ].filter(Boolean) as string[]
+
   const [regularFont, boldFont] = await Promise.all([
     readFile(INVOICE_FONT_REGULAR_PATH),
     readFile(INVOICE_FONT_BOLD_PATH),
@@ -211,7 +166,9 @@ async function generatePdf(
     doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(36)
     doc.text(invoiceLabel, invoiceRight - 210, 20, { width: 210, align: 'right' })
     doc.fillColor(colors.accent).font(INVOICE_FONT_REGULAR).fontSize(9)
-    doc.text(`#${order.order_number ?? order.id}`, invoiceRight - 210, 63, { width: 210, align: 'right' })
+    doc.text(`#${order.order_number}`, invoiceRight - 210, 63, { width: 210, align: 'right' })
+    doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(10)
+    doc.text(invoiceNumber, invoiceRight - 210, 80, { width: 210, align: 'right' })
 
     const badgeW = 88
     const badgeH = 20
@@ -314,7 +271,7 @@ async function generatePdf(
     return tableY + 30
   }
 
-  function drawTableRow(rowY: number, item: InvoiceRow, index: number) {
+  function drawTableRow(rowY: number, item: ShopOrderItem, index: number) {
     const cols = [
       { x: 0, w: 18, align: 'center' as const },
       { x: 18, w: 328, align: 'left' as const },
@@ -327,14 +284,15 @@ async function generatePdf(
     doc.save()
     doc.rect(contentX, rowY, contentW, rowH).fill(fill)
     doc.restore()
-    const fileName = item.file_url ? (item.file_url.split('/').pop() ?? 'File') : 'File'
-    const displayAmount = `${currencySym}${Number(item.total_price).toLocaleString('en-IN')}`
+    const unitPrice = normalizeMoney(item.unitPrice)
+    const quantity = normalizeMoney(item.quantity)
+    const lineTotal = unitPrice * quantity
     const values = [
       String(index + 1),
-      fileName,
-      String(item.quantity ?? 1),
-      `${currencySym}${Number(item.price_per_unit ?? item.total_price / Math.max(1, item.quantity ?? 1)).toLocaleString('en-IN')}`,
-      displayAmount,
+      item.productName,
+      String(quantity),
+      money(unitPrice, currencySym),
+      money(lineTotal, currencySym),
     ]
 
     doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(7.5)
@@ -343,7 +301,10 @@ async function generatePdf(
     doc.fillColor(colors.text).font(INVOICE_FONT_BOLD).fontSize(8.5)
     doc.text(values[1], contentX + cols[1].x + 6, rowY + 6, { width: cols[1].w - 12, ellipsis: true })
     doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(7)
-    doc.text(`${item.material} · ${item.color}`, contentX + cols[1].x + 6, rowY + 17, { width: cols[1].w - 12, ellipsis: true })
+    const variantText = item.variantLabel
+      ? `${item.variantLabel}${item.customizationText ? ` · ${item.customizationText}` : ''}`
+      : item.customizationText || ''
+    doc.text(variantText, contentX + cols[1].x + 6, rowY + 17, { width: cols[1].w - 12, ellipsis: true })
 
     doc.fillColor(colors.text).font(INVOICE_FONT_REGULAR).fontSize(8.5)
     doc.text(values[2], contentX + cols[2].x, rowY + 10, { width: cols[2].w, align: cols[2].align })
@@ -360,19 +321,12 @@ async function generatePdf(
     const blockX = contentX + contentW - blockW
     const rowH = 20
     const rows = [
-      { label: 'Subtotal', value: `${currencySym}${subtotal.toLocaleString('en-IN')}` },
-      { label: 'Post-processing', value: `${currencySym}${postProcessingCharges.toLocaleString('en-IN')}` },
-      { label: 'Overhead', value: `${currencySym}${overheadAmount.toLocaleString('en-IN')}` },
-      { label: 'Margin', value: `${currencySym}${marginAmount.toLocaleString('en-IN')}` },
-      { label: 'Total price', value: `${currencySym}${totalPrice.toLocaleString('en-IN')}` },
-      ...(cartDiscountAmount > 0 ? [{ label: `Cart discount ${Number(order.cart_discount_percent ?? 0).toLocaleString('en-IN')}%`, value: `-${currencySym}${cartDiscountAmount.toLocaleString('en-IN')}` }] : []),
-      ...(couponDiscountAmount > 0 ? [{ label: `Coupon${order.coupon_code ? ` (${order.coupon_code})` : ''}`, value: `-${currencySym}${couponDiscountAmount.toLocaleString('en-IN')}` }] : []),
-      ...(offerDiscountAmount > 0 ? [{ label: `Offer${order.offer_name ? ` (${order.offer_name})` : ''}`, value: `-${currencySym}${offerDiscountAmount.toLocaleString('en-IN')}` }] : []),
-      ...(fallbackDiscountAmount > 0 ? [{ label: 'Discount', value: `-${currencySym}${fallbackDiscountAmount.toLocaleString('en-IN')}` }] : []),
-      { label: 'Final price', value: `${currencySym}${finalPrice.toLocaleString('en-IN')}` },
-      ...(cgstAmount > 0 ? [{ label: `CGST (${cgstPercent}%)`, value: `${currencySym}${cgstAmount.toLocaleString('en-IN')}` }] : []),
-      ...(sgstAmount > 0 ? [{ label: `SGST (${sgstPercent}%)`, value: `${currencySym}${sgstAmount.toLocaleString('en-IN')}` }] : []),
-      { label: 'Delivery', value: deliveryCharge === 0 ? 'FREE' : `${currencySym}${deliveryCharge.toLocaleString('en-IN')}` },
+      { label: 'Subtotal', value: money(subtotal, currencySym) },
+      ...(discountAmount > 0 ? [{ label: `Discount${order.coupon_code ? ` (${order.coupon_code})` : ''}`, value: `-${money(discountAmount, currencySym)}` }] : []),
+      { label: 'Final price', value: money(finalPrice, currencySym) },
+      ...(cgstAmount > 0 ? [{ label: `CGST (${cgstPercent}%)`, value: money(cgstAmount, currencySym) }] : []),
+      ...(sgstAmount > 0 ? [{ label: `SGST (${sgstPercent}%)`, value: money(sgstAmount, currencySym) }] : []),
+      { label: 'Delivery', value: deliveryCharge === 0 ? 'FREE' : money(deliveryCharge, currencySym) },
     ]
 
     rows.forEach((row, index) => {
@@ -389,9 +343,9 @@ async function generatePdf(
     doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(10)
     doc.text('TOTAL', blockX + 12, bandY + 11)
     doc.fillColor(colors.accent).font(INVOICE_FONT_BOLD).fontSize(13)
-    doc.text(`${currencySym}${invoiceTotal.toLocaleString('en-IN')}`, blockX + 12, bandY + 8, { width: blockW - 24, align: 'right' })
+    doc.text(money(invoiceTotal, currencySym), blockX + 12, bandY + 8, { width: blockW - 24, align: 'right' })
     doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(7.5)
-    doc.text(`${currencySym}${invoiceTotal.toLocaleString('en-IN')} (${amountWords})`, blockX, bandY + 42, { width: blockW, align: 'right' })
+    doc.text(`${money(invoiceTotal, currencySym)} (${amountWords})`, blockX, bandY + 42, { width: blockW, align: 'right' })
     return bandY + 58
   }
 
@@ -455,12 +409,10 @@ async function generatePdf(
   const cardY = y
   const addressBlock = [
     ...addressLines,
-    settings.gstNumber ? `GST: ${settings.gstNumber}` : null,
-    settings.panNumber ? `PAN: ${settings.panNumber}` : null,
-    settings.msmeNumber ? `MSME: ${settings.msmeNumber}` : null,
+    order.coupon_code ? `Coupon: ${order.coupon_code}` : null,
   ].filter(Boolean) as string[]
-  const billH = drawPartyCard(contentX, cardY, cardW, 'BILL TO', [order.full_name, ...addressBlock])
-  drawPartyCard(contentX + cardW + partyGap, cardY, cardW, 'SHIP TO', [order.full_name, ...addressBlock])
+  const billH = drawPartyCard(contentX, cardY, cardW, 'BILL TO', [customerName, ...addressBlock])
+  drawPartyCard(contentX + cardW + partyGap, cardY, cardW, 'SHIP TO', [customerName, ...addressBlock])
   drawMetaCard(contentX + (cardW + partyGap) * 2, cardY, cardW)
   y = cardY + Math.max(billH, 66) + 14
 
@@ -485,174 +437,4 @@ async function generatePdf(
 
   doc.end()
   return pdf
-}
-
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ orderId: string }> }
-) {
-  try {
-    const { orderId } = await params
-
-    let supabase
-    try {
-      supabase = await createServerSupabaseClient()
-    } catch {
-      return NextResponse.json({ error: 'Failed to create Supabase client' }, { status: 500 })
-    }
-
-    let user
-    try {
-      const { data, error: authError } = await supabase.auth.getUser()
-      if (authError) {
-        return NextResponse.json({ error: 'Auth error: ' + authError.message }, { status: 401 })
-      }
-      user = data.user
-    } catch (e) {
-      return NextResponse.json({ error: 'Auth exception: ' + (e instanceof Error ? e.message : String(e)) }, { status: 500 })
-    }
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized - no user session' }, { status: 401 })
-    }
-
-    const limit = await rateLimitResponse(_request, {
-      prefix: 'invoice',
-      windowSeconds: 60,
-      maxRequests: 10,
-      userId: user.id,
-    })
-    if (!limit.success) {
-      return NextResponse.json({ error: 'Too many invoice requests' }, { status: 429 })
-    }
-
-    const isAdmin = await isCurrentUserAdmin()
-    const orderSupabase = isAdmin ? createAdminSupabaseClient() : supabase
-
-    const selectColumns =
-      'id, user_id, order_number, group_id, file_url, material, color, infill, layer_height, supports, quantity, full_name, phone, address_line1, address_line2, city, state, pincode, landmark, delivery_charge, material_cost, machine_cost, post_processing_charges, subtotal, total_price, final_price, grand_total, price, price_per_unit, discount, cart_discount, cart_discount_percent, coupon_discount, offer_discount, offer_name, overhead_percent, overhead_amount, margin_percent, margin_amount, coupon_code, coupon_id, discount_type, estimated_time, status, payment_status, notes, invoice_number, created_at'
-
-    let order
-    let error
-    try {
-      let query = orderSupabase
-        .from('orders')
-        .select(selectColumns)
-        .eq('id', orderId)
-      if (!isAdmin) {
-        query = query.eq('user_id', user.id)
-      }
-      const result = await query.maybeSingle()
-      order = result.data
-      error = result.error
-    } catch (e) {
-      return NextResponse.json({ error: 'DB query exception: ' + (e instanceof Error ? e.message : String(e)) }, { status: 500 })
-    }
-
-    if (error) {
-      return NextResponse.json({ error: 'DB error: ' + error.message }, { status: 500 })
-    }
-
-    if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 })
-    }
-
-    const row = order as InvoiceRow
-
-    const settings = await getSettings()
-
-    const allowedPaymentStatuses = new Set(['captured', 'paid', 'succeeded'])
-    const isPaid = allowedPaymentStatuses.has(row.payment_status ?? '')
-
-    if (!isAdmin && !isPaid) {
-      return NextResponse.json(
-        { error: 'Invoice is only available after payment is confirmed.' },
-        { status: 403 }
-      )
-    }
-
-    // Fetch provider payment reference if paid
-    let providerPaymentId: string | null = null
-    if (isPaid) {
-      const { data: attempt } = await orderSupabase
-        .from('payment_attempts')
-        .select('provider_payment_id')
-        .eq('internal_order_id', orderId)
-        .in('status', ['captured', 'paid', 'succeeded'])
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      providerPaymentId = attempt?.provider_payment_id ?? null
-    }
-
-    // Generate and persist invoice number on first download
-    let invoiceNumber = row.invoice_number ?? ''
-    if (!invoiceNumber && isPaid) {
-      const year = new Date(row.created_at).getFullYear()
-      const { count } = await orderSupabase
-        .from('orders')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', `${year}-01-01T00:00:00.000Z`)
-        .lt('created_at', `${year + 1}-01-01T00:00:00.000Z`)
-      const serial = (settings.invoiceStartNumber || 1001) + (count ?? 0)
-      const prefix = settings.invoicePrefix || 'INV-'
-      invoiceNumber = `${prefix}${year}-${String(serial).padStart(5, '0')}`
-      await orderSupabase
-        .from('orders')
-        .update({
-          invoice_number: invoiceNumber,
-          invoice_generated_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', orderId)
-    }
-
-    let items: InvoiceRow[] = [row]
-    if (row.group_id) {
-      let groupQuery = orderSupabase
-        .from('orders')
-        .select(selectColumns)
-        .eq('group_id', row.group_id)
-      if (!isAdmin) {
-        groupQuery = groupQuery.eq('user_id', user.id)
-      }
-      const { data: groupData } = await groupQuery.order('created_at', { ascending: true })
-      if (groupData && groupData.length > 0) {
-        items = groupData as InvoiceRow[]
-      }
-    }
-
-    let pdf
-    try {
-      pdf = await generatePdf(
-        row,
-        items,
-        settings,
-        { isPaid, providerPaymentId },
-      )
-    } catch (e) {
-      return NextResponse.json({ error: 'PDF generation failed: ' + (e instanceof Error ? e.message : String(e)) }, { status: 500 })
-    }
-
-    const filename = invoiceNumber
-      ? `${invoiceNumber}.pdf`
-      : `${order.id}.pdf`
-
-    void trackFeatureUsage(row.user_id ?? user.id, 'invoice_downloaded', {
-      orderId: row.id,
-      orderNumber: row.order_number,
-      itemCount: items.length,
-    }).catch(() => {})
-
-    return new NextResponse(new Uint8Array(pdf), {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-        'Content-Length': String(pdf.length),
-      },
-    })
-  } catch (err) {
-    console.error('Invoice generation fatal error:', err)
-    return NextResponse.json({ error: 'Fatal error: ' + (err instanceof Error ? err.message : String(err)) }, { status: 500 })
-  }
 }
