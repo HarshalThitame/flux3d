@@ -10,6 +10,7 @@ import { createAdminSupabaseClient, isCurrentUserAdmin } from '@/lib/admin/serve
 import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
 import { rateLimitResponse } from '@/lib/rate-limit'
 import { numberToWords } from '@/lib/invoice/number-to-words'
+import { formatMoney } from '@/lib/invoice/currency'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -74,9 +75,9 @@ async function generatePdf(
   order: InvoiceRow,
   items: InvoiceRow[],
   settings: BusinessSettings,
-  options: { isPaid: boolean; providerPaymentId?: string | null },
+  options: { isPaid: boolean; providerPaymentId?: string | null; invoiceNumber: string },
 ): Promise<Buffer> {
-  const { isPaid, providerPaymentId } = options
+  const { isPaid, providerPaymentId, invoiceNumber } = options
   const invoiceLabel = isPaid ? 'TAX INVOICE' : 'PROFORMA INVOICE'
   const invoiceDateObj = new Date(order.created_at)
   const invoiceDate = invoiceDateObj.toLocaleDateString('en-IN', {
@@ -115,7 +116,15 @@ async function generatePdf(
     ? 0
     : items.reduce((sum, item) => sum + Number(item.discount ?? 0), 0)
   const amountWords = numberToWords(invoiceTotal)
-  const currencySym = settings.currencySymbol || '₹'
+  const money = (value: number) => formatMoney(value, settings)
+
+  const companyAddress = [
+    settings.addressLine1,
+    settings.addressLine2,
+    [settings.city, settings.state, settings.postalCode].filter(Boolean).join(', '),
+    settings.country,
+  ].filter(Boolean).join(', ')
+
   const [regularFont, boldFont] = await Promise.all([
     readFile(INVOICE_FONT_REGULAR_PATH),
     readFile(INVOICE_FONT_BOLD_PATH),
@@ -134,106 +143,106 @@ async function generatePdf(
 
   const pageW = doc.page.width
   const pageH = doc.page.height
-  const sidebarW = 6
-  const headerH = 130
-  const footerH = 32
-  const contentLeft = 24
-  const contentRight = 24
-  const contentX = sidebarW + contentLeft
-  const contentW = pageW - contentX - contentRight
-  const bottomLimit = pageH - footerH - 16
-  const colors = {
-    page: '#F8FAFD',
-    navy: '#0D1B2A',
-    accent: '#1E90FF',
-    accentDark: '#0A6EBD',
-    row: '#F4F7FB',
-    label: '#8A9BB0',
-    text: '#1A2B3C',
-    border: '#D6E4F0',
-    paid: '#00B67A',
-    contact: '#A8C8E8',
-    separator: '#1E3A52',
+  const headerH = 138
+  const footerH = 34
+  const contentLeft = 26
+  const contentRight = 26
+  const contentX = contentLeft
+  const contentW = pageW - contentLeft - contentRight
+  const bottomLimit = pageH - footerH - 18
+  const brand = {
+    primary: settings.primaryColor || '#FF5C1A',
+    secondary: settings.secondaryColor || '#39BDF8',
+    ink: '#111827',
+    muted: '#6B7280',
+    lightMuted: '#9CA3AF',
+    page: '#FFFFFF',
+    soft: '#FFF4EC',
+    border: '#F3D5C2',
+    rowAlt: '#FDF6F0',
+    paid: '#16A34A',
+    pending: '#9CA3AF',
+    navy: '#0F172A',
   }
 
-  let y = headerH + 14
+  let y = headerH + 16
   let inTable = false
 
   function drawBase() {
     doc.save()
-    doc.rect(0, 0, pageW, pageH).fill(colors.page)
-    doc.rect(0, 0, sidebarW, pageH).fill(colors.navy)
+    doc.rect(0, 0, pageW, pageH).fill(brand.page)
     doc.restore()
   }
 
   async function drawHeader() {
     doc.save()
-    doc.rect(sidebarW, 0, pageW - sidebarW, headerH).fill(colors.navy)
+    doc.rect(0, 0, pageW, headerH).fill(brand.page)
 
-    const sliceStart = sidebarW + (pageW - sidebarW) * 0.56
-    const sliceEnd = sidebarW + (pageW - sidebarW) * 0.74
-    doc.moveTo(sliceStart, 0)
-      .lineTo(sliceEnd, 0)
-      .lineTo(sliceEnd + 48, headerH)
-      .lineTo(sliceStart - 36, headerH)
-      .closePath()
-      .fill(colors.accentDark)
-
-    const logoY = 18
+    const logoY = 20
+    let logoPlaced = false
     if (invoiceLogo) {
       try {
         const baseUrl = (settings.websiteUrl || 'https://flux3d.in').replace(/\/+$/, '')
         const logoUrl = invoiceLogo.startsWith('http') ? invoiceLogo : `${baseUrl}${invoiceLogo.startsWith('/') ? '' : '/'}${invoiceLogo}`
         const resp = await fetch(logoUrl)
-        const arrayBuf = await resp.arrayBuffer()
-        doc.image(Buffer.from(arrayBuf), contentX, 14, { width: 120 })
+        if (resp.ok) {
+          const arrayBuf = await resp.arrayBuffer()
+          doc.image(Buffer.from(arrayBuf), contentX, logoY, { height: 46, fit: [210, 46] })
+          logoPlaced = true
+        }
       } catch {
-        doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(26)
-        doc.text(companyName, contentX, logoY)
+        logoPlaced = false
       }
-    } else {
-      doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(26)
-      doc.text(companyName, contentX, logoY)
     }
-    doc.fillColor(colors.accent).font(INVOICE_FONT_REGULAR).fontSize(9)
-    doc.text(tagline, contentX, logoY + 36)
-    doc.moveTo(contentX, 68).lineTo(contentX + 170, 68).strokeColor(colors.accent).lineWidth(0.8).stroke()
-    doc.fillColor(colors.contact).font(INVOICE_FONT_REGULAR).fontSize(8)
-    doc.text(`${websiteValue} | ${contactEmail || settings.businessName?.toLowerCase() || ''}`.trim(), contentX, 76)
-    doc.text(`${settings.primaryPhone || ''} | ${settings.city || ''}`.trim(), contentX, 88)
-    const ids = [settings.gstNumber ? `GST: ${settings.gstNumber}` : '', settings.panNumber ? `PAN: ${settings.panNumber}` : '', settings.msmeNumber ? `MSME: ${settings.msmeNumber}` : ''].filter(Boolean).join(' | ')
-    if (ids) {
-      doc.fillColor(colors.contact).font(INVOICE_FONT_REGULAR).fontSize(7)
-      doc.text(ids, contentX, 100)
+
+    if (!logoPlaced) {
+      doc.fillColor(brand.ink).font(INVOICE_FONT_BOLD).fontSize(22)
+      doc.text(companyName, contentX, logoY + 8)
+    }
+
+    doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(8.5)
+    doc.text(tagline, contentX, logoY + 52)
+
+    doc.fillColor(brand.ink).font(INVOICE_FONT_BOLD).fontSize(9)
+    doc.text(companyName, contentX, 78)
+    if (companyAddress) {
+      doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(7.5)
+      doc.text(companyAddress, contentX, 92, { width: 330, lineGap: 1.5 })
+    }
+    const contactLine = [settings.primaryPhone, contactEmail, websiteValue.replace(/^https?:\/\//, '')].filter(Boolean).join('  |  ')
+    if (contactLine) {
+      doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(7.5)
+      doc.text(contactLine, contentX, 116, { width: 340, lineGap: 1.5 })
     }
 
     const invoiceRight = pageW - contentRight
-    doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(36)
-    doc.text(invoiceLabel, invoiceRight - 210, 20, { width: 210, align: 'right' })
-    doc.fillColor(colors.accent).font(INVOICE_FONT_REGULAR).fontSize(9)
-    doc.text(`#${order.order_number ?? order.id}`, invoiceRight - 210, 63, { width: 210, align: 'right' })
+    doc.fillColor(brand.primary).font(INVOICE_FONT_BOLD).fontSize(30)
+    doc.text(invoiceLabel, invoiceRight - 250, 16, { width: 250, align: 'right' })
+    doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(8.5)
+    doc.text(`Order #${order.order_number ?? order.id}`, invoiceRight - 250, 58, { width: 250, align: 'right' })
+    doc.fillColor(brand.ink).font(INVOICE_FONT_BOLD).fontSize(11)
+    doc.text(invoiceNumber, invoiceRight - 250, 72, { width: 250, align: 'right' })
+    doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(8.5)
+    doc.text(`Invoice date: ${invoiceDate}`, invoiceRight - 250, 90, { width: 250, align: 'right' })
 
-    const badgeW = 88
-    const badgeH = 20
+    const badgeW = 96
+    const badgeH = 22
     const badgeX = invoiceRight - badgeW
-    const badgeY = headerH - badgeH - 10
-    if (isPaid) {
-      doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 5).fill(colors.paid)
-      doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(9)
-      doc.text('PAID', badgeX, badgeY + 5, { width: badgeW, align: 'center' })
-    } else {
-      doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 5).fill('#A0A0A0')
-      doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(9)
-      doc.text('UNPAID', badgeX, badgeY + 5, { width: badgeW, align: 'center' })
-    }
+    const badgeY = 112
+    const badgeFill = isPaid ? brand.paid : brand.pending
+    doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 11).fill(badgeFill)
+    doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(10)
+    doc.text(isPaid ? 'PAID' : 'UNPAID', badgeX, badgeY + 6, { width: badgeW, align: 'center' })
+
+    doc.moveTo(contentX, headerH - 6).lineTo(pageW - contentRight, headerH - 6).lineWidth(3).strokeColor(brand.primary).stroke()
     doc.restore()
   }
 
   function startPage() {
     if (doc.page) {
       drawBase()
-      drawHeader()
-      y = headerH + 14
+      void drawHeader()
+      y = headerH + 16
     }
   }
 
@@ -246,153 +255,154 @@ async function generatePdf(
     }
   }
 
-  function drawCard(x: number, cardY: number, w: number, h: number, fill: string, stroke: string) {
+  function drawCard(x: number, cardY: number, w: number, h: number) {
     doc.save()
-    doc.roundedRect(x, cardY, w, h, 5)
-    doc.fillColor(fill)
-    doc.strokeColor(stroke)
+    doc.roundedRect(x, cardY, w, h, 6)
+    doc.fillColor('#FFFFFF')
+    doc.strokeColor(brand.border)
     doc.lineWidth(1)
     doc.fillAndStroke()
     doc.restore()
   }
 
   function drawPartyCard(x: number, cardY: number, w: number, title: string, lines: string[]) {
-    const h = Math.max(90, doc.heightOfString(lines.join('\n'), { width: w - 20, lineGap: 2 }) + 38)
-    drawCard(x, cardY, w, h, '#FFFFFF', colors.border)
-    doc.fillColor(colors.accent).font(INVOICE_FONT_BOLD).fontSize(7)
-    doc.text(title, x + 16, cardY + 12)
-    doc.fillColor(colors.text).font(INVOICE_FONT_BOLD).fontSize(11)
-    doc.text(lines[0] ?? '', x + 16, cardY + 25, { width: w - 32 })
-    doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(8.5)
+    const h = Math.max(92, doc.heightOfString(lines.join('\n'), { width: w - 24, lineGap: 2 }) + 40)
+    drawCard(x, cardY, w, h)
+    doc.fillColor(brand.primary).font(INVOICE_FONT_BOLD).fontSize(7)
+    doc.text(title.toUpperCase(), x + 18, cardY + 14)
+    doc.fillColor(brand.ink).font(INVOICE_FONT_BOLD).fontSize(11)
+    doc.text(lines[0] ?? '', x + 18, cardY + 27, { width: w - 36 })
+    doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(8.5)
     const body = lines.slice(1).join('\n')
     if (body) {
-      doc.text(body, x + 16, cardY + 41, { width: w - 32, lineGap: 2 })
+      doc.text(body, x + 18, cardY + 45, { width: w - 36, lineGap: 2 })
     }
     return h
   }
 
   function drawMetaCard(x: number, cardY: number, w: number) {
-    const h = 66
-    drawCard(x, cardY, w, h, colors.navy, colors.navy)
+    const h = 92
+    drawCard(x, cardY, w, h)
+    doc.fillColor(brand.primary).font(INVOICE_FONT_BOLD).fontSize(7)
+    doc.text('PAYMENT'.toUpperCase(), x + 18, cardY + 14)
     const paymentLabel = isPaid
       ? `PAID${providerPaymentId ? ` (${providerPaymentId.slice(-8)})` : ''}`
       : 'PROFORMA'
     const rows = [
-      { label: 'Invoice Date', value: invoiceDate },
+      { label: 'Invoice date', value: invoiceDate },
       { label: 'Payment', value: paymentLabel },
     ]
-    const rowH = h / rows.length
+    const rowH = (h - 30) / rows.length
     rows.forEach((row, index) => {
-      const ry = cardY + index * rowH
-      if (index > 0) {
-        doc.moveTo(x + 14, ry).lineTo(x + w - 14, ry).strokeColor(colors.separator).lineWidth(0.6).stroke()
-      }
-      doc.fillColor('#7EA8CC').font(INVOICE_FONT_REGULAR).fontSize(7)
-      doc.text(row.label.toUpperCase(), x + 14, ry + 10, { width: w - 85 })
-      doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(9)
-      doc.text(row.value, x + 14, ry + 8, { width: w - 28, align: 'right' })
+      const ry = cardY + 30 + index * rowH
+      doc.fillColor(brand.lightMuted).font(INVOICE_FONT_REGULAR).fontSize(7)
+      doc.text(row.label.toUpperCase(), x + 18, ry + 4, { width: w - 90 })
+      doc.fillColor(brand.ink).font(INVOICE_FONT_BOLD).fontSize(9)
+      doc.text(row.value, x + 18, ry + 2, { width: w - 36, align: 'right' })
     })
   }
 
   function drawTableHeader(tableY: number) {
     const cols = [
-      { key: '#', x: 0, w: 18, align: 'center' as const },
-      { key: 'DESCRIPTION', x: 18, w: 328, align: 'left' as const },
-      { key: 'QTY', x: 346, w: 38, align: 'center' as const },
-      { key: 'UNIT PRICE', x: 384, w: 84, align: 'right' as const },
-      { key: 'AMOUNT', x: 468, w: 73, align: 'right' as const },
+      { key: '#', x: 0, w: 20, align: 'center' as const },
+      { key: 'DESCRIPTION', x: 20, w: 322, align: 'left' as const },
+      { key: 'QTY', x: 342, w: 40, align: 'center' as const },
+      { key: 'UNIT PRICE', x: 382, w: 88, align: 'right' as const },
+      { key: 'AMOUNT', x: 470, w: 72, align: 'right' as const },
     ]
     doc.save()
-    doc.roundedRect(contentX, tableY, contentW, 26, 5)
-    doc.fillColor(colors.navy)
+    doc.roundedRect(contentX, tableY, contentW, 28, 5)
+    doc.fillColor(brand.primary)
     doc.fill()
     doc.restore()
-    doc.fillColor(colors.accent).font(INVOICE_FONT_BOLD).fontSize(7.5)
+    doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(7.5)
     cols.forEach((col) => {
-      doc.text(col.key, contentX + col.x + 6, tableY + 8, { width: col.w - 12, align: col.align })
+      doc.text(col.key, contentX + col.x + 6, tableY + 9, { width: col.w - 12, align: col.align })
     })
-    return tableY + 30
+    return tableY + 32
   }
 
   function drawTableRow(rowY: number, item: InvoiceRow, index: number) {
     const cols = [
-      { x: 0, w: 18, align: 'center' as const },
-      { x: 18, w: 328, align: 'left' as const },
-      { x: 346, w: 38, align: 'center' as const },
-      { x: 384, w: 84, align: 'right' as const },
-      { x: 468, w: 73, align: 'right' as const },
+      { x: 0, w: 20, align: 'center' as const },
+      { x: 20, w: 322, align: 'left' as const },
+      { x: 342, w: 40, align: 'center' as const },
+      { x: 382, w: 88, align: 'right' as const },
+      { x: 470, w: 72, align: 'right' as const },
     ]
-    const rowH = 30
-    const fill = index % 2 === 0 ? '#FFFFFF' : colors.row
+    const rowH = 32
+    const fill = index % 2 === 0 ? '#FFFFFF' : brand.rowAlt
     doc.save()
     doc.rect(contentX, rowY, contentW, rowH).fill(fill)
     doc.restore()
     const fileName = item.file_url ? (item.file_url.split('/').pop() ?? 'File') : 'File'
-    const displayAmount = `${currencySym}${Number(item.total_price).toLocaleString('en-IN')}`
+    const quantity = item.quantity ?? 1
+    const unitPrice = item.price_per_unit ?? item.total_price / Math.max(1, quantity)
+    const lineTotal = item.total_price
     const values = [
       String(index + 1),
       fileName,
-      String(item.quantity ?? 1),
-      `${currencySym}${Number(item.price_per_unit ?? item.total_price / Math.max(1, item.quantity ?? 1)).toLocaleString('en-IN')}`,
-      displayAmount,
+      String(quantity),
+      money(unitPrice),
+      money(lineTotal),
     ]
 
-    doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(7.5)
-    doc.text(values[0], contentX + cols[0].x, rowY + 10, { width: cols[0].w, align: cols[0].align })
+    doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(8)
+    doc.text(values[0], contentX + cols[0].x, rowY + 11, { width: cols[0].w, align: cols[0].align })
 
-    doc.fillColor(colors.text).font(INVOICE_FONT_BOLD).fontSize(8.5)
+    doc.fillColor(brand.ink).font(INVOICE_FONT_BOLD).fontSize(9)
     doc.text(values[1], contentX + cols[1].x + 6, rowY + 6, { width: cols[1].w - 12, ellipsis: true })
-    doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(7)
-    doc.text(`${item.material} · ${item.color}`, contentX + cols[1].x + 6, rowY + 17, { width: cols[1].w - 12, ellipsis: true })
+    doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(7)
+    doc.text(`${item.material} · ${item.color}`, contentX + cols[1].x + 6, rowY + 18, { width: cols[1].w - 12, ellipsis: true })
 
-    doc.fillColor(colors.text).font(INVOICE_FONT_REGULAR).fontSize(8.5)
-    doc.text(values[2], contentX + cols[2].x, rowY + 10, { width: cols[2].w, align: cols[2].align })
-    doc.text(values[3], contentX + cols[3].x, rowY + 10, { width: cols[3].w - 6, align: cols[3].align })
-    doc.text(values[4], contentX + cols[4].x, rowY + 10, { width: cols[4].w - 6, align: cols[4].align })
+    doc.fillColor(brand.ink).font(INVOICE_FONT_REGULAR).fontSize(8.5)
+    doc.text(values[2], contentX + cols[2].x, rowY + 11, { width: cols[2].w, align: cols[2].align })
+    doc.text(values[3], contentX + cols[3].x, rowY + 11, { width: cols[3].w - 6, align: cols[3].align })
+    doc.text(values[4], contentX + cols[4].x, rowY + 11, { width: cols[4].w - 6, align: cols[4].align })
     doc.font(INVOICE_FONT_BOLD)
 
-    doc.moveTo(contentX, rowY + rowH).lineTo(contentX + contentW, rowY + rowH).strokeColor(colors.border).lineWidth(0.4).stroke()
+    doc.moveTo(contentX, rowY + rowH).lineTo(contentX + contentW, rowY + rowH).strokeColor(brand.border).lineWidth(0.5).stroke()
     return rowY + rowH
   }
 
   function drawTotalsBlock(blockY: number) {
-    const blockW = 230
+    const blockW = 236
     const blockX = contentX + contentW - blockW
     const rowH = 20
     const rows = [
-      { label: 'Subtotal', value: `${currencySym}${subtotal.toLocaleString('en-IN')}` },
-      { label: 'Post-processing', value: `${currencySym}${postProcessingCharges.toLocaleString('en-IN')}` },
-      { label: 'Overhead', value: `${currencySym}${overheadAmount.toLocaleString('en-IN')}` },
-      { label: 'Margin', value: `${currencySym}${marginAmount.toLocaleString('en-IN')}` },
-      { label: 'Total price', value: `${currencySym}${totalPrice.toLocaleString('en-IN')}` },
-      ...(cartDiscountAmount > 0 ? [{ label: `Cart discount ${Number(order.cart_discount_percent ?? 0).toLocaleString('en-IN')}%`, value: `-${currencySym}${cartDiscountAmount.toLocaleString('en-IN')}` }] : []),
-      ...(couponDiscountAmount > 0 ? [{ label: `Coupon${order.coupon_code ? ` (${order.coupon_code})` : ''}`, value: `-${currencySym}${couponDiscountAmount.toLocaleString('en-IN')}` }] : []),
-      ...(offerDiscountAmount > 0 ? [{ label: `Offer${order.offer_name ? ` (${order.offer_name})` : ''}`, value: `-${currencySym}${offerDiscountAmount.toLocaleString('en-IN')}` }] : []),
-      ...(fallbackDiscountAmount > 0 ? [{ label: 'Discount', value: `-${currencySym}${fallbackDiscountAmount.toLocaleString('en-IN')}` }] : []),
-      { label: 'Final price', value: `${currencySym}${finalPrice.toLocaleString('en-IN')}` },
-      ...(cgstAmount > 0 ? [{ label: `CGST (${cgstPercent}%)`, value: `${currencySym}${cgstAmount.toLocaleString('en-IN')}` }] : []),
-      ...(sgstAmount > 0 ? [{ label: `SGST (${sgstPercent}%)`, value: `${currencySym}${sgstAmount.toLocaleString('en-IN')}` }] : []),
-      { label: 'Delivery', value: deliveryCharge === 0 ? 'FREE' : `${currencySym}${deliveryCharge.toLocaleString('en-IN')}` },
+      { label: 'Subtotal', value: money(subtotal) },
+      { label: 'Post-processing', value: money(postProcessingCharges) },
+      { label: 'Overhead', value: money(overheadAmount) },
+      { label: 'Margin', value: money(marginAmount) },
+      { label: 'Total price', value: money(totalPrice) },
+      ...(cartDiscountAmount > 0 ? [{ label: `Cart discount ${Number(order.cart_discount_percent ?? 0).toLocaleString('en-IN')}%`, value: `-${money(cartDiscountAmount)}` }] : []),
+      ...(couponDiscountAmount > 0 ? [{ label: `Coupon${order.coupon_code ? ` (${order.coupon_code})` : ''}`, value: `-${money(couponDiscountAmount)}` }] : []),
+      ...(offerDiscountAmount > 0 ? [{ label: `Offer${order.offer_name ? ` (${order.offer_name})` : ''}`, value: `-${money(offerDiscountAmount)}` }] : []),
+      ...(fallbackDiscountAmount > 0 ? [{ label: 'Discount', value: `-${money(fallbackDiscountAmount)}` }] : []),
+      { label: 'Final price', value: money(finalPrice) },
+      ...(cgstAmount > 0 ? [{ label: `CGST (${cgstPercent}%)`, value: money(cgstAmount) }] : []),
+      ...(sgstAmount > 0 ? [{ label: `SGST (${sgstPercent}%)`, value: money(sgstAmount) }] : []),
+      { label: 'Delivery', value: deliveryCharge === 0 ? 'FREE' : money(deliveryCharge) },
     ]
 
     rows.forEach((row, index) => {
       const ry = blockY + index * rowH
-      doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(8.5)
+      doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(8.5)
       doc.text(row.label, blockX + 8, ry + 5, { width: blockW - 100, align: 'right' })
-      doc.fillColor(colors.text).font(INVOICE_FONT_REGULAR).fontSize(8.5)
+      doc.fillColor(brand.ink).font(INVOICE_FONT_REGULAR).fontSize(8.5)
       doc.text(row.value, blockX + 92, ry + 5, { width: blockW - 100, align: 'right' })
-      doc.moveTo(blockX + 8, ry + rowH - 1).lineTo(blockX + blockW - 8, ry + rowH - 1).strokeColor(colors.border).lineWidth(0.3).stroke()
+      doc.moveTo(blockX + 8, ry + rowH - 1).lineTo(blockX + blockW - 8, ry + rowH - 1).strokeColor(brand.border).lineWidth(0.3).stroke()
     })
 
-    const bandY = blockY + rows.length * rowH + 8
-    doc.roundedRect(blockX, bandY, blockW, 34, 5).fill(colors.navy)
+    const bandY = blockY + rows.length * rowH + 10
+    doc.roundedRect(blockX, bandY, blockW, 36, 5).fill(brand.navy)
     doc.fillColor('#FFFFFF').font(INVOICE_FONT_BOLD).fontSize(10)
-    doc.text('TOTAL', blockX + 12, bandY + 11)
-    doc.fillColor(colors.accent).font(INVOICE_FONT_BOLD).fontSize(13)
-    doc.text(`${currencySym}${invoiceTotal.toLocaleString('en-IN')}`, blockX + 12, bandY + 8, { width: blockW - 24, align: 'right' })
-    doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(7.5)
-    doc.text(`${currencySym}${invoiceTotal.toLocaleString('en-IN')} (${amountWords})`, blockX, bandY + 42, { width: blockW, align: 'right' })
-    return bandY + 58
+    doc.text('TOTAL', blockX + 14, bandY + 12)
+    doc.fillColor(brand.primary).font(INVOICE_FONT_BOLD).fontSize(14)
+    doc.text(money(invoiceTotal), blockX + 14, bandY + 9, { width: blockW - 28, align: 'right' })
+    doc.fillColor(brand.lightMuted).font(INVOICE_FONT_REGULAR).fontSize(7.5)
+    doc.text(`${amountWords}`, blockX, bandY + 46, { width: blockW, align: 'right' })
+    return bandY + 62
   }
 
   function drawNotesAndTerms(blockY: number) {
@@ -408,43 +418,43 @@ async function generatePdf(
       ...(settings.paymentTerms ? [settings.paymentTerms] : []),
       ...(bankInfo ? [bankInfo] : []),
     ]
-    const leftHeight = Math.max(90, bullets.length * 16 + 26)
-    drawCard(boxX, blockY, boxW, leftHeight, '#FFFFFF', colors.border)
-    doc.fillColor(colors.navy).font(INVOICE_FONT_BOLD).fontSize(7.5)
-    doc.text('NOTES & TERMS', boxX + 14, blockY + 12)
-    doc.moveTo(boxX + 14, blockY + 25).lineTo(boxX + 162, blockY + 25).strokeColor(colors.accent).lineWidth(1.2).stroke()
-    doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(7.5)
+    const leftHeight = Math.max(92, bullets.length * 15 + 26)
+    drawCard(boxX, blockY, boxW, leftHeight)
+    doc.fillColor(brand.ink).font(INVOICE_FONT_BOLD).fontSize(7.5)
+    doc.text('NOTES & TERMS', boxX + 16, blockY + 13)
+    doc.moveTo(boxX + 16, blockY + 26).lineTo(boxX + 150, blockY + 26).strokeColor(brand.primary).lineWidth(1.4).stroke()
+    doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(7.5)
     bullets.slice(0, 6).forEach((line, index) => {
-      doc.text(`• ${line}`, boxX + 14, blockY + 34 + index * 14, { width: boxW - 28, lineGap: 1.5 })
+      doc.text(`•  ${line}`, boxX + 16, blockY + 36 + index * 14, { width: boxW - 32, lineGap: 1.5 })
     })
     return blockY + leftHeight + 14
   }
 
   function drawSignatureArea(blockY: number) {
     const lineY = blockY + 12
-    doc.moveTo(contentX + contentW - 180, lineY).lineTo(contentX + contentW, lineY).strokeColor(colors.navy).lineWidth(0.7).stroke()
-    doc.fillColor(colors.label).font(INVOICE_FONT_REGULAR).fontSize(7.5)
-    doc.text('Authorised Signatory', contentX + contentW - 180, lineY + 6, { width: 180, align: 'right' })
-    doc.fillColor(colors.navy).font(INVOICE_FONT_BOLD).fontSize(8)
-    doc.text(companyName, contentX + contentW - 180, lineY + 18, { width: 180, align: 'right' })
+    doc.moveTo(contentX + contentW - 190, lineY).lineTo(contentX + contentW, lineY).strokeColor(brand.ink).lineWidth(0.7).stroke()
+    doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(7.5)
+    doc.text('Authorised Signatory', contentX + contentW - 190, lineY + 6, { width: 190, align: 'right' })
+    doc.fillColor(brand.ink).font(INVOICE_FONT_BOLD).fontSize(8)
+    doc.text(companyName, contentX + contentW - 190, lineY + 18, { width: 190, align: 'right' })
     return lineY + 30
   }
 
   function drawFooter() {
     const footerY = pageH - footerH
     doc.save()
-    doc.rect(sidebarW, footerY, pageW - sidebarW, footerH).fill(colors.navy)
-    doc.rect(sidebarW, footerY, pageW - sidebarW, 2).fill(colors.accent)
+    doc.rect(0, footerY, pageW, footerH).fill('#FFFFFF')
+    doc.rect(0, footerY, pageW, 2).fill(brand.primary)
     doc.restore()
-    doc.fillColor('#7EA8CC').font(INVOICE_FONT_REGULAR).fontSize(7)
+    doc.fillColor(brand.muted).font(INVOICE_FONT_REGULAR).fontSize(7)
     doc.text(
-      `${settings.gstNumber || 'GSTIN: —'} | ${settings.panNumber || 'PAN: —'} | ${settings.sacHsnCode ? `SAC: ${settings.sacHsnCode}` : ''} | ${settings.cinNumber || 'CIN: —'} | ${websiteValue.replace(/^https?:\/\//, '')}`,
-      sidebarW,
-      footerY + 8,
-      { width: pageW - sidebarW, align: 'center' }
+      `${settings.gstNumber ? `GSTIN: ${settings.gstNumber}` : ''} | ${settings.panNumber ? `PAN: ${settings.panNumber}` : ''} | ${settings.sacHsnCode ? `SAC: ${settings.sacHsnCode}` : ''} | ${settings.cinNumber ? `CIN: ${settings.cinNumber}` : ''} | ${settings.msmeNumber ? `MSME: ${settings.msmeNumber}` : ''} | ${websiteValue.replace(/^https?:\/\//, '')}`,
+      0,
+      footerY + 9,
+      { width: pageW, align: 'center' }
     )
-    doc.fillColor('#4A6A80').font(INVOICE_FONT_REGULAR).fontSize(6.5)
-    doc.text('computer-generated invoice', sidebarW, footerY + 18, { width: pageW - sidebarW, align: 'center' })
+    doc.fillColor(brand.lightMuted).font(INVOICE_FONT_REGULAR).fontSize(6.5)
+    doc.text('computer-generated invoice · Flux3D', 0, footerY + 21, { width: pageW, align: 'center' })
   }
 
   drawBase()
@@ -462,20 +472,20 @@ async function generatePdf(
   const billH = drawPartyCard(contentX, cardY, cardW, 'BILL TO', [order.full_name, ...addressBlock])
   drawPartyCard(contentX + cardW + partyGap, cardY, cardW, 'SHIP TO', [order.full_name, ...addressBlock])
   drawMetaCard(contentX + (cardW + partyGap) * 2, cardY, cardW)
-  y = cardY + Math.max(billH, 66) + 14
+  y = cardY + Math.max(billH, 92) + 14
 
   inTable = true
   y = drawTableHeader(y)
   items.forEach((item, index) => {
-    ensureSpace(30)
+    ensureSpace(32)
     y = drawTableRow(y, item, index)
   })
   inTable = false
   y += 10
-  ensureSpace(170)
+  ensureSpace(175)
   y = drawTotalsBlock(y)
 
-  ensureSpace(170)
+  ensureSpace(175)
   y = drawNotesAndTerms(y)
 
   ensureSpace(40)
@@ -628,7 +638,7 @@ export async function GET(
         row,
         items,
         settings,
-        { isPaid, providerPaymentId },
+        { isPaid, providerPaymentId, invoiceNumber },
       )
     } catch (e) {
       return NextResponse.json({ error: 'PDF generation failed: ' + (e instanceof Error ? e.message : String(e)) }, { status: 500 })
