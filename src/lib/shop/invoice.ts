@@ -149,48 +149,59 @@ export async function generateShopInvoicePdf(
       doc.text(companyName, contentX, logoY + 6, { width: leftW, ellipsis: true })
     }
 
+    const maxInfoBottom = headerH - 10
     let infoY = logoPlaced ? 70 : 76
-    doc.fillColor(brand.muted).font(FONT_REGULAR).fontSize(8.5)
-    const taglineH = doc.heightOfString(tagline, { width: leftW })
-    doc.text(tagline, contentX, infoY, { width: leftW })
-    infoY += taglineH + 3
 
-    doc.fillColor(brand.ink).font(FONT_BOLD).fontSize(9)
-    const companyNameH = doc.heightOfString(companyName, { width: leftW })
-    doc.text(companyName, contentX, infoY, { width: leftW })
-    infoY += companyNameH + 3
-
+    const infoFields: Array<{ text: string; font: string; size: number; color: string }> = [
+      { text: tagline, font: FONT_REGULAR, size: 8.5, color: brand.muted },
+      { text: companyName, font: FONT_BOLD, size: 9, color: brand.ink },
+    ]
     if (companyAddress) {
-      doc.fillColor(brand.muted).font(FONT_REGULAR).fontSize(7.5)
-      const addressH = doc.heightOfString(companyAddress, { width: leftW, lineGap: 1.5 })
-      doc.text(companyAddress, contentX, infoY, { width: leftW, lineGap: 1.5 })
-      infoY += addressH + 3
+      infoFields.push({ text: companyAddress, font: FONT_REGULAR, size: 7.5, color: brand.muted })
     }
-
     const contactLine = [settings.primaryPhone, contactEmail, websiteValue.replace(/^https?:\/\//, '')].filter(Boolean).join('  |  ')
     if (contactLine) {
-      doc.fillColor(brand.muted).font(FONT_REGULAR).fontSize(7.5)
-      doc.text(contactLine, contentX, infoY, { width: leftW, lineGap: 1.5 })
+      infoFields.push({ text: contactLine, font: FONT_REGULAR, size: 7.5, color: brand.muted })
+    }
+
+    for (const field of infoFields) {
+      const remaining = maxInfoBottom - infoY
+      if (remaining <= 0) break
+      doc.fillColor(field.color).font(field.font).fontSize(field.size)
+      const height = doc.heightOfString(field.text, { width: leftW, lineGap: 1.5 })
+      if (infoY + height > maxInfoBottom) {
+        if (doc.currentLineHeight() <= remaining) {
+          doc.text(field.text, contentX, infoY, { width: leftW, lineGap: 1.5, height: remaining, ellipsis: true })
+        }
+        break
+      }
+      doc.text(field.text, contentX, infoY, { width: leftW, lineGap: 1.5 })
+      infoY += height + 3
     }
 
     const invoiceRight = pageW - contentRight
-    doc.fillColor(brand.primary).font(FONT_BOLD).fontSize(30)
-    doc.text(invoiceLabel, invoiceRight - 250, 16, { width: 250, align: 'right' })
+    const labelW = 250
+    doc.fillColor(brand.primary).font(FONT_BOLD)
+    doc.fontSize(30)
+    if (doc.widthOfString(invoiceLabel) > 236) {
+      doc.fontSize(22)
+    }
+    doc.text(invoiceLabel, invoiceRight - labelW, 16, { width: labelW, align: 'right' })
     doc.fillColor(brand.muted).font(FONT_REGULAR).fontSize(8.5)
-    doc.text(`Order #${order.order_number}`, invoiceRight - 250, 58, { width: 250, align: 'right' })
+    doc.text(`Order #${order.order_number}`, invoiceRight - labelW, 58, { width: labelW, align: 'right' })
     doc.fillColor(brand.ink).font(FONT_BOLD).fontSize(11)
-    doc.text(invoiceNumber, invoiceRight - 250, 72, { width: 250, align: 'right' })
+    doc.text(invoiceNumber, invoiceRight - labelW, 72, { width: labelW, align: 'right' })
     doc.fillColor(brand.muted).font(FONT_REGULAR).fontSize(8.5)
-    doc.text(`Invoice date: ${invoiceDate}`, invoiceRight - 250, 90, { width: 250, align: 'right' })
+    doc.text(`Invoice date: ${invoiceDate}`, invoiceRight - labelW, 90, { width: labelW, align: 'right' })
 
     const badgeW = 96
     const badgeH = 22
     const badgeX = invoiceRight - badgeW
-    const badgeY = 112
+    const badgeY = 106
     const badgeFill = isPaid ? brand.paid : brand.pending
     doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 11).fill(badgeFill)
     doc.fillColor('#FFFFFF').font(FONT_BOLD).fontSize(10)
-    doc.text(isPaid ? 'PAID' : 'UNPAID', badgeX, badgeY + 6, { width: badgeW, align: 'center' })
+    doc.text(isPaid ? 'PAID' : 'UNPAID', badgeX, badgeY + 7, { width: badgeW, align: 'center' })
 
     doc.moveTo(contentX, headerH - 6).lineTo(pageW - contentRight, headerH - 6).lineWidth(3).strokeColor(brand.primary).stroke()
     doc.restore()
@@ -225,17 +236,33 @@ export async function generateShopInvoicePdf(
     doc.restore()
   }
 
+  function measurePartyCard(w: number, lines: string[]) {
+    const name = lines[0] ?? ''
+    const body = lines.slice(1).join('\n')
+    doc.font(FONT_BOLD).fontSize(11)
+    const nameH = doc.heightOfString(name, { width: w - 36 })
+    doc.font(FONT_REGULAR).fontSize(8.5)
+    const bodyH = body ? doc.heightOfString(body, { width: w - 36, lineGap: 2 }) : 0
+    return Math.max(92, 27 + nameH + 6 + bodyH + 14)
+  }
+
   function drawPartyCard(x: number, cardY: number, w: number, title: string, lines: string[]) {
-    const h = Math.max(92, doc.heightOfString(lines.join('\n'), { width: w - 24, lineGap: 2 }) + 40)
+    const name = lines[0] ?? ''
+    const body = lines.slice(1).join('\n')
+    const h = measurePartyCard(w, lines)
+    const nameH = (() => {
+      doc.font(FONT_BOLD).fontSize(11)
+      return doc.heightOfString(name, { width: w - 36 })
+    })()
+    const bodyY = cardY + 27 + nameH + 6
     drawCard(x, cardY, w, h)
     doc.fillColor(brand.primary).font(FONT_BOLD).fontSize(7)
     doc.text(title.toUpperCase(), x + 18, cardY + 14)
     doc.fillColor(brand.ink).font(FONT_BOLD).fontSize(11)
-    doc.text(lines[0] ?? '', x + 18, cardY + 27, { width: w - 36 })
+    doc.text(name, x + 18, cardY + 27, { width: w - 36 })
     doc.fillColor(brand.muted).font(FONT_REGULAR).fontSize(8.5)
-    const body = lines.slice(1).join('\n')
     if (body) {
-      doc.text(body, x + 18, cardY + 45, { width: w - 36, lineGap: 2 })
+      doc.text(body, x + 18, bodyY, { width: w - 36, lineGap: 2 })
     }
     return h
   }
@@ -329,7 +356,7 @@ export async function generateShopInvoicePdf(
     return rowY + rowH
   }
 
-  function drawTotalsBlock(blockY: number) {
+  function drawTotalsBlock(blockY: number, measure = false) {
     const blockW = 236
     const blockX = contentX + contentW - blockW
     const rowH = 20
@@ -341,17 +368,25 @@ export async function generateShopInvoicePdf(
       ...(sgstAmount > 0 ? [{ label: `SGST (${sgstPercent}%)`, value: money(sgstAmount) }] : []),
       { label: 'Delivery', value: deliveryCharge === 0 ? 'FREE' : money(deliveryCharge) },
     ]
+    const labelW = 140
+    const valueX = blockX + 156
+    const valueW = 72
+    const bandY = blockY + rows.length * rowH + 10
+
+    doc.font(FONT_REGULAR).fontSize(7.5)
+    const wordsH = doc.heightOfString(`${amountWords}`, { width: blockW })
+    const resultY = bandY + 46 + wordsH + 4
+    if (measure) return resultY
 
     rows.forEach((row, index) => {
       const ry = blockY + index * rowH
       doc.fillColor(brand.muted).font(FONT_REGULAR).fontSize(8.5)
-      doc.text(row.label, blockX + 8, ry + 5, { width: blockW - 100, align: 'right' })
+      doc.text(row.label, blockX + 8, ry + 5, { width: labelW, align: 'right', ellipsis: true, height: doc.currentLineHeight() })
       doc.fillColor(brand.ink).font(FONT_REGULAR).fontSize(8.5)
-      doc.text(row.value, blockX + 92, ry + 5, { width: blockW - 100, align: 'right' })
+      doc.text(row.value, valueX, ry + 5, { width: valueW, align: 'right', ellipsis: true, height: doc.currentLineHeight() })
       doc.moveTo(blockX + 8, ry + rowH - 1).lineTo(blockX + blockW - 8, ry + rowH - 1).strokeColor(brand.border).lineWidth(0.3).stroke()
     })
 
-    const bandY = blockY + rows.length * rowH + 10
     doc.roundedRect(blockX, bandY, blockW, 36, 5).fill(brand.ink)
     doc.fillColor('#FFFFFF').font(FONT_BOLD).fontSize(10)
     doc.text('TOTAL', blockX + 14, bandY + 12)
@@ -359,10 +394,10 @@ export async function generateShopInvoicePdf(
     doc.text(money(invoiceTotal), blockX + 14, bandY + 9, { width: blockW - 28, align: 'right' })
     doc.fillColor(brand.lightMuted).font(FONT_REGULAR).fontSize(7.5)
     doc.text(`${amountWords}`, blockX, bandY + 46, { width: blockW, align: 'right' })
-    return bandY + 62
+    return resultY
   }
 
-  function drawNotesAndTerms(blockY: number) {
+  function drawNotesAndTerms(blockY: number, measure = false) {
     const boxX = contentX
     const boxW = contentW
     const bankInfo = settings.bankAccountName && settings.bankName
@@ -374,17 +409,26 @@ export async function generateShopInvoicePdf(
       'Minor variations in finish or color may occur due to the 3D printing process.',
       ...(settings.paymentTerms ? [settings.paymentTerms] : []),
       ...(bankInfo ? [bankInfo] : []),
-    ]
-    const leftHeight = Math.max(92, bullets.length * 15 + 26)
+    ].slice(0, 6)
+
+    doc.font(FONT_REGULAR).fontSize(7.5)
+    const bulletHeights = bullets.map((line) => doc.heightOfString(`•  ${line}`, { width: boxW - 32, lineGap: 1.5 }))
+    const bulletTotal = bulletHeights.reduce((sum, h) => sum + h + 6, 0)
+    const leftHeight = Math.max(92, 26 + bulletTotal + 16)
+    const resultY = blockY + leftHeight + 14
+    if (measure) return resultY
+
     drawCard(boxX, blockY, boxW, leftHeight)
     doc.fillColor(brand.ink).font(FONT_BOLD).fontSize(7.5)
     doc.text('NOTES & TERMS', boxX + 16, blockY + 13)
     doc.moveTo(boxX + 16, blockY + 26).lineTo(boxX + 150, blockY + 26).strokeColor(brand.primary).lineWidth(1.4).stroke()
     doc.fillColor(brand.muted).font(FONT_REGULAR).fontSize(7.5)
-    bullets.slice(0, 6).forEach((line, index) => {
-      doc.text(`•  ${line}`, boxX + 16, blockY + 36 + index * 14, { width: boxW - 32, lineGap: 1.5 })
+    let bulletY = blockY + 36
+    bullets.forEach((line, index) => {
+      doc.text(`•  ${line}`, boxX + 16, bulletY, { width: boxW - 32, lineGap: 1.5 })
+      bulletY += bulletHeights[index] + 6
     })
-    return blockY + leftHeight + 14
+    return resultY
   }
 
   function drawSignatureArea(blockY: number) {
@@ -408,9 +452,9 @@ export async function generateShopInvoicePdf(
     doc.fillColor(brand.muted).font(FONT_REGULAR).fontSize(7)
     doc.text(
       `${settings.gstNumber ? `GSTIN: ${settings.gstNumber}` : ''} | ${settings.panNumber ? `PAN: ${settings.panNumber}` : ''} | ${settings.sacHsnCode ? `SAC: ${settings.sacHsnCode}` : ''} | ${settings.cinNumber ? `CIN: ${settings.cinNumber}` : ''} | ${settings.msmeNumber ? `MSME: ${settings.msmeNumber}` : ''} | ${websiteValue.replace(/^https?:\/\//, '')}`,
-      0,
+      20,
       footerY + 9,
-      { width: pageW, align: 'center' }
+      { width: pageW - 40, align: 'center', ellipsis: true, height: doc.currentLineHeight() }
     )
     doc.fillColor(brand.lightMuted).font(FONT_REGULAR).fontSize(6.5)
     doc.text('computer-generated invoice · Flux3D', 0, footerY + 21, { width: pageW, align: 'center' })
@@ -422,15 +466,17 @@ export async function generateShopInvoicePdf(
 
   const partyGap = 12
   const cardW = (contentW - partyGap * 2) / 3
-  const cardY = y
   const addressBlock = [
     ...addressLines,
     order.coupon_code ? `Coupon: ${order.coupon_code}` : null,
   ].filter(Boolean) as string[]
+  const cardH = Math.max(92, measurePartyCard(cardW, [customerName, ...addressBlock]))
+  ensureSpace(cardH + 14)
+  const cardY = y
   const billH = drawPartyCard(contentX, cardY, cardW, 'BILL TO', [customerName, ...addressBlock])
   drawPartyCard(contentX + cardW + partyGap, cardY, cardW, 'SHIP TO', [customerName, ...addressBlock])
   drawMetaCard(contentX + (cardW + partyGap) * 2, cardY, cardW)
-  y = cardY + Math.max(billH, 92) + 14
+  y = cardY + Math.max(billH, cardH) + 14
 
   inTable = true
   y = drawTableHeader(y)
@@ -440,10 +486,10 @@ export async function generateShopInvoicePdf(
   })
   inTable = false
   y += 10
-  ensureSpace(175)
+  ensureSpace(drawTotalsBlock(y, true) - y)
   y = drawTotalsBlock(y)
 
-  ensureSpace(175)
+  ensureSpace(drawNotesAndTerms(y, true) - y)
   y = drawNotesAndTerms(y)
 
   ensureSpace(40)
