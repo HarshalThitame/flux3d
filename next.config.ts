@@ -12,6 +12,12 @@ if (
 
 const nextConfig: NextConfig = {
   compress: true,
+  serverExternalPackages: ['pdfkit'],
+  outputFileTracingIncludes: {
+    '/api/orders/[orderId]/invoice': ['./node_modules/pdfkit/js/data/*.afm'],
+    '/api/3d-shop/orders/[orderId]/invoice': ['./node_modules/pdfkit/js/data/*.afm'],
+    '/api/admin/orders/export': ['./node_modules/pdfkit/js/data/*.afm'],
+  },
   // HTTP/2, Brotli, and 103 Early Hints are deployment-layer behavior.
   // Vercel handles them automatically; self-hosted Node/Docker deployments
   // should terminate HTTP/2 and emit Early Hints from the reverse proxy.
