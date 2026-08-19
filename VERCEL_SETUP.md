@@ -19,6 +19,12 @@ Go to your Vercel project settings → Environment Variables and add:
 4. **NEXT_PUBLIC_SITE_URL**
    - Value: `https://your-domain.vercel.app` (or your custom domain)
 
+### Required Variables — Security:
+
+5. **CSP_NONCE**
+   - Value: A long random string used for the Content-Security-Policy nonce and inline JSON-LD scripts
+   - ⚠️ **Rotate this per deployment.** A deterministic nonce (e.g., the public fallback `flux3d-csp-nonce-v1`) makes the CSP bypassable. Generate one with `openssl rand -base64 32`.
+
 ### Required Variables — WhatsApp AI:
 
 5. **OPENAI_API_KEY**

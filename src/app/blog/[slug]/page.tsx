@@ -16,6 +16,7 @@ import {
   uniqueStrings,
   type BlogSchemaData,
 } from '@/lib/blog/seo'
+import { CSP_NONCE } from '@/lib/csp'
 
 type BlogPostWithAuthor = BlogPost & {
   author?: BlogAuthor | null
@@ -296,9 +297,9 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
 
   return (
     <div className="public-shell bg-white">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(postSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(authorSchema) }} />
+      <script nonce={CSP_NONCE} type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(postSchema) }} />
+      <script nonce={CSP_NONCE} type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbSchema) }} />
+      <script nonce={CSP_NONCE} type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(authorSchema) }} />
       <ReadingProgress />
       <Navbar transparent />
 

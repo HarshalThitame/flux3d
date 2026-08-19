@@ -14,14 +14,14 @@ export const runtime = 'nodejs'
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
-) {
+): Promise<Response> {
   try {
     const { id: adSetId } = await params
 
     const auth = await requireMetaAdsAuth(request, {
       rateLimit: { prefix: 'meta-ads-ads-list', windowSeconds: 60, maxRequests: 60 },
     })
-    if ('response' in auth) return auth.response
+    if ('response' in auth) return auth.response as Response
 
     const ads = await listAds(adSetId)
     return NextResponse.json({ ads })

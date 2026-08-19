@@ -1,11 +1,10 @@
 'use client'
 
-import { motion, cubicBezier, useReducedMotion } from 'framer-motion'
+import { useRef } from 'react'
 import Image from 'next/image'
-import { Star, Box } from 'lucide-react'
+import { Star, Box, Sparkles } from 'lucide-react'
 import type { ShopPublicProduct } from '@/lib/shop/public-types'
-import HeroFadeIn from '@/components/ui/WordReveal'
-import { Sparkles } from 'lucide-react'
+import Reveal from '@/components/Reveal'
 
 const MOBILE_ITEM_WIDTH = 140
 
@@ -15,18 +14,7 @@ function MobileProductCard({ product }: {
   const image = product.image_urls?.[0] ?? product.thumbnail_url ?? null
 
   return (
-    <motion.div
-      key={product.id}
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 20, scale: 0.95 }}
-      transition={
-        useReducedMotion()
-          ? { duration: 0.2 }
-          : { duration: 0.4, ease: cubicBezier(0.4, 0, 0.2, 1) }
-      }
-      className="flex flex-col gap-3 min-w-[140px] max-w-[140px] flex-shrink-0"
-    >
+    <div className="relative flex flex-col gap-3 min-w-[140px] max-w-[140px] flex-shrink-0">
       <div className="relative rounded-2xl overflow-hidden border border-[#6d28d9]/15 bg-[#0e1117] shadow-[0_8px_24px_rgba(0,0,0,0.4)] group">
         {image ? (
           <Image
@@ -88,47 +76,39 @@ function MobileProductCard({ product }: {
           </span>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
 export default function MobileShopFeaturedAd({ products }: { products: ShopPublicProduct[] }) {
-  const reduceMotion = useReducedMotion()
+  const ref = useRef<HTMLElement>(null)
 
   return (
-    <div
-      className="enterprise-mobile-ad lg:hidden border-t border-[#6d28d9]/20 bg-[#0e1117]/80 backdrop-blur-sm border-b-[1px] border-[#6d28d9]/10"
-      onMouseEnter={() => {}}
-      onMouseLeave={() => {}}
-      onFocus={() => {}}
-      onBlur={() => {}}
-      aria-label="Featured 3D products"
-    >
+    <section ref={ref} className="enterprise-mobile-ad lg:hidden border-t border-[#6d28d9]/20 bg-[#0e1117]/80 backdrop-blur-sm border-b-[1px] border-[#6d28d9]/10" aria-label="Featured 3D products">
       <div className="max-w-[calc(100vw-4rem)] mx-auto px-3 sm:px-4">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-3 mb-4">
           <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6d28d9]">Featured</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {products.map((product) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={
-                reduceMotion
-                  ? { duration: 0.2 }
-                  : { duration: 0.4, ease: cubicBezier(0.4, 0, 0.2, 1) }
-              }
-              className="flex flex-col items-center"
-            >
-              <MobileProductCard product={product} />
-            </motion.div>
-          ))}
-        </div>
+        <Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {products.map((product, i) => (
+              <Reveal key={product.id} delay={i * 40}>
+                <div className="flex flex-col items-center">
+                  <MobileProductCard product={product} />
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </Reveal>
 
-        <HeroFadeIn delay={0.8} className="mx-auto mt-5 flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#5b21b6]" text="Production timelines shared before confirmation" />
+        <Reveal delay={products.length * 40 + 60}>
+          <div className="mx-auto mt-5 flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#5b21b6]">
+            <Sparkles className="w-3 h-3 text-[#6d28d9]" />
+            Production timelines shared before confirmation
+          </div>
+        </Reveal>
       </div>
-    </div>
+    </section>
   )
 }

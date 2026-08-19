@@ -331,58 +331,6 @@ body {
   box-shadow: 0 0 14px rgba(91, 33, 182, 0.42);
 }
 
-/* ── Floating orbs (position + refined shape) ── */
-.premium-orb {
-  position: fixed;
-  border-radius: 46% 54% 52% 48% / 58% 56% 44% 42%;
-  background: radial-gradient(circle at 30% 30%, rgba(124, 58, 237, 0.18), rgba(91, 33, 182, 0.06) 60%, transparent 70%);
-  box-shadow: 0 0 70px 16px rgba(91, 33, 182, 0.08);
-  animation: pmOrbFloat 26s ease-in-out infinite;
-  will-change: transform, opacity;
-  pointer-events: none;
-}
-
-.premium-orb-1 { inset: 14% auto auto 7%; width: 260px; height: 260px; animation-duration: 28s; animation-delay: 0s; }
-.premium-orb-2 { inset: 26% 9% auto auto; width: 220px; height: 220px; animation-duration: 32s; animation-delay: -5s; }
-.premium-orb-3 { inset: 64% 11% auto auto; width: 200px; height: 200px; animation-duration: 24s; animation-delay: -8s; }
-
-@keyframes pmOrbFloat {
-  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.62; }
-  24% { transform: translate(-12px, -24px) scale(1.06) rotate(3deg); opacity: 0.68; }
-  48% { transform: translate(20px, -8px) scale(0.94) rotate(-2deg); opacity: 0.62; }
-  72% { transform: translate(-6px, 18px) scale(1.03) rotate(1deg); opacity: 0.66; }
-}
-
-/* ── Pointer light / scroll meter / page chrome ── */
-.premium-pointer-light {
-  background: linear-gradient(180deg, transparent, rgba(124, 58, 237, 0.42), rgba(168, 85, 247, 0.18), transparent);
-  box-shadow:
-    0 0 56px 22px rgba(124, 58, 237, 0.09),
-    0 0 120px 54px rgba(91, 33, 182, 0.05);
-}
-
-.premium-scroll-meter {
-  background: rgba(91, 33, 182, 0.05);
-}
-
-.premium-scroll-meter span {
-  background: linear-gradient(90deg, #5b21b6, #7c3aed, #a78bfa);
-  box-shadow: 0 0 14px rgba(91, 33, 182, 0.42), 0 0 28px rgba(168, 85, 247, 0.28);
-}
-
-.premium-page-chrome span {
-  opacity: 0.14;
-  background: linear-gradient(180deg, transparent, rgba(76, 29, 149, 0.42), transparent);
-}
-
-.premium-page-chrome span:nth-child(2) {
-  background: linear-gradient(180deg, transparent, rgba(168, 85, 247, 0.42), transparent);
-}
-
-.premium-page-chrome span:nth-child(3) {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.24), transparent);
-}
-
 /* ── Wide links ── */
 .premium-wide-link {
   color: var(--pm-primary-800);
@@ -423,11 +371,6 @@ body {
 
 /* ── Respect reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
-  .premium-orb,
-  .premium-particle,
-  .premium-pointer-light,
-  .premium-page-chrome,
-  .premium-scroll-meter,
   .premium-hero-grid,
   .premium-hero-beams,
   .premium-hero::before,

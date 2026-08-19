@@ -12,14 +12,14 @@ export const runtime = 'nodejs'
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
-) {
+): Promise<Response> {
   try {
     const { id } = await params
 
     const auth = await requireMetaAdsAuth(request, {
       rateLimit: { prefix: 'meta-ads-job-status', windowSeconds: 60, maxRequests: 120 },
     })
-    if ('response' in auth) return auth.response
+    if ('response' in auth) return auth.response as Response
 
     const { supabase } = auth
 

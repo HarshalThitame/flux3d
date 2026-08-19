@@ -18,6 +18,38 @@ import type {
 } from '@/lib/shop/public-types'
 import { normalizeShopNumber } from '@/lib/shop/selection'
 
+const SHOP_DATA_TTL_MS = 120_000
+
+type Cached<T> = { data: T; expiry: number }
+
+let productsCache: Cached<ShopPublicProduct[]> | null = null
+let categoriesCache: Cached<ShopPublicCategory[]> | null = null
+
+async function withCache<T>(
+  key: 'products' | 'categories',
+  loader: () => Promise<T>
+): Promise<T> {
+  const cache = key === 'products' ? productsCache : categoriesCache
+  if (cache && Date.now() < cache.expiry) {
+    return cache.data as T
+  }
+
+  const data = await loader()
+
+  if (key === 'products') {
+    productsCache = { data: data as ShopPublicProduct[], expiry: Date.now() + SHOP_DATA_TTL_MS }
+  } else {
+    categoriesCache = { data: data as ShopPublicCategory[], expiry: Date.now() + SHOP_DATA_TTL_MS }
+  }
+
+  return data
+}
+
+export function invalidateShopDataCache() {
+  productsCache = null
+  categoriesCache = null
+}
+
 type RawCategory = Omit<ShopPublicCategory, 'children'> & {
   display_order?: number | null
 }
@@ -299,25 +331,27 @@ export function getShopCategoryDescendantIds(category: ShopPublicCategory) {
 }
 
 export async function getShopCategories() {
-  const supabase = await createServerSupabaseClient()
-  const { data, error } = await supabase
-    .from('shelf_categories')
-    .select('id,name,slug,description,icon_emoji,banner_image_url,parent_category_id,display_order')
-    .eq('is_active', true)
-    .order('display_order', { ascending: true })
-    .order('name', { ascending: true })
+  return withCache('categories', async () => {
+    const supabase = await createServerSupabaseClient()
+    const { data, error } = await supabase
+      .from('shelf_categories')
+      .select('id,name,slug,description,icon_emoji,banner_image_url,parent_category_id,display_order')
+      .eq('is_active', true)
+      .order('display_order', { ascending: true })
+      .order('name', { ascending: true })
 
-  if (error) throw new Error(error.message)
+    if (error) throw new Error(error.message)
 
-  return ((data ?? []) as RawCategory[]).map((category) => ({
-    id: category.id,
-    name: category.name,
-    slug: category.slug,
-    description: category.description ?? null,
-    icon_emoji: category.icon_emoji ?? null,
-    banner_image_url: category.banner_image_url ?? null,
-    parent_category_id: category.parent_category_id ?? null,
-  }))
+    return ((data ?? []) as RawCategory[]).map((category) => ({
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      description: category.description ?? null,
+      icon_emoji: category.icon_emoji ?? null,
+      banner_image_url: category.banner_image_url ?? null,
+      parent_category_id: category.parent_category_id ?? null,
+    }))
+  })
 }
 
 export async function getShopCategoryBySlug(slug: string) {
@@ -333,16 +367,19 @@ export async function getShopCategoryBySlug(slug: string) {
 }
 
 async function getAllShopProducts() {
-  const supabase = await createServerSupabaseClient()
-  const { data, error } = await supabase
-    .from('shelf_products')
-    .select(PRODUCT_SELECT)
-    .eq('is_active', true)
-    .eq('is_archived', false)
-    .order('created_at', { ascending: false })
+  const all = await withCache('products', async () => {
+    const supabase = await createServerSupabaseClient()
+    const { data, error } = await supabase
+      .from('shelf_products')
+      .select(PRODUCT_SELECT)
+      .eq('is_active', true)
+      .eq('is_archived', false)
+      .order('created_at', { ascending: false })
 
-  if (error) throw new Error(error.message)
-  return ((data ?? []) as unknown as RawProduct[]).map(mapProduct)
+    if (error) throw new Error(error.message)
+    return ((data ?? []) as unknown as RawProduct[]).map(mapProduct)
+  })
+  return all.slice()
 }
 
 export async function getShopProductsByIds(ids: string[]) {

@@ -7,6 +7,7 @@ import { getCurrentUserProfile } from '@/lib/auth/server'
 import { getShopProductBySlug, getShopProductReviews } from '@/lib/shop/public-data'
 import type { ShopPublicProduct } from '@/lib/shop/public-types'
 import { absoluteUrl } from '@/lib/site'
+import { CSP_NONCE } from '@/lib/csp'
 
 export const dynamic = 'force-dynamic'
 
@@ -136,10 +137,12 @@ export default async function ShopProductPage({ params }: { params: Promise<{ sl
   return (
     <ShopShell transparentNav>
       <script
+        nonce={CSP_NONCE}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: toJsonLd(makeProductSchema(product)) }}
       />
       <script
+        nonce={CSP_NONCE}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: toJsonLd(makeBreadcrumbSchema(product)) }}
       />

@@ -1,18 +1,40 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { ComponentType, useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { ReactLenis } from 'lenis/react'
+
+type ReactLenisProps = {
+  root?: boolean
+  options?: Record<string, unknown>
+  children: React.ReactNode
+}
+
+const MARKETING_ROUTES = new Set([
+  'services',
+  'materials',
+  'about',
+  'contact',
+  'features',
+  'pricing',
+  'gallery',
+  'blog',
+  'instagram-ad',
+])
+
+function isMarketingRoute(pathname: string | null | undefined) {
+  if (!pathname || pathname === '/') return true
+  const segment = pathname.split('/').filter(Boolean)[0] ?? ''
+  return MARKETING_ROUTES.has(segment)
+}
 
 /**
- * Premium momentum (inertia) scrolling for the whole application.
- * Respects `prefers-reduced-motion` and never renders a wrapper div,
- * so page layout and `position: fixed` elements are unaffected.
+ * Premium momentum (inertia) scrolling for the landing/marketing experience.
+ * Respects `prefers-reduced-motion` and never renders a wrapper div, so page
+ * layout and `position: fixed` elements are unaffected.
  *
- * Lenis is disabled on /admin routes because the admin dashboard uses
- * complex nested scroll containers (drawers, modals, fixed-height panes)
- * where smooth-scrolling at the document level interferes with native
- * scrolling and causes containers to become unresponsive.
+ * Lenis is lazy-loaded and only mounted on marketing routes. Shop, checkout,
+ * orders, admin, and other functional routes use native scrolling, which
+ * keeps the Lenis bundle and its always-on animation loop off those pages.
  */
 export default function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -22,6 +44,7 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
     }
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches
   })
+  const [ReactLenis, setReactLenis] = useState<ComponentType<ReactLenisProps> | null>(null)
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -31,7 +54,20 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
     return () => media.removeEventListener('change', onChange)
   }, [])
 
-  if (reducedMotion || pathname?.startsWith('/admin')) {
+  const enabled = !reducedMotion && !pathname?.startsWith('/admin') && isMarketingRoute(pathname)
+
+  useEffect(() => {
+    if (!enabled || ReactLenis) return
+    let cancelled = false
+    import('lenis/react').then(({ ReactLenis: LenisComponent }) => {
+      if (!cancelled) setReactLenis(() => LenisComponent)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [enabled, ReactLenis])
+
+  if (!enabled || !ReactLenis) {
     return <>{children}</>
   }
 
@@ -40,7 +76,7 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
       root
       options={{
         duration: 1.15,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         smoothWheel: true,
         autoRaf: true,
         anchors: true,

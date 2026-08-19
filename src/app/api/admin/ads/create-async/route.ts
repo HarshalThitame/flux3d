@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { CreateCampaignSchema } from '@/lib/admin/meta-ads-schemas'
 import { validateBody } from '@/lib/admin/meta-ads-route'
@@ -16,7 +16,7 @@ export const runtime = 'nodejs'
  *
  * Body: Same as /api/admin/ads/create (validated by CreateCampaignSchema)
  */
-export async function POST(request: NextRequest) {
+export async function POST(request: Request): Promise<Response> {
   try {
     // ─── Rate limit ───────────────────────────────────────────────────────
     const rl = await rateLimitResponse(request, {

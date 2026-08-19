@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { MetaCampaignInsight } from '@/lib/meta/marketing-api'
 
 function makeBuilder(terminal: { method: string; result: unknown; error?: unknown }) {
   const builder: Record<string, ReturnType<typeof vi.fn>> = {
@@ -114,7 +115,7 @@ describe('GET /api/cron/sync-meta-ads', () => {
     ]
     const { getCampaignInsights } = await import('@/lib/meta/marketing-api')
     vi.mocked(getCampaignInsights).mockResolvedValueOnce([
-      { campaign_id: 'camp-1', spend: '350' },
+      { campaign_id: 'camp-1', spend: '350' } as MetaCampaignInsight,
     ])
 
     const request = new Request('http://localhost/api/cron/sync-meta-ads', {

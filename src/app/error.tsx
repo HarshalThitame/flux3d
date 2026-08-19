@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { TriangleAlert } from 'lucide-react'
 import { logError } from '@/lib/tracking/errorLogger'
 
@@ -28,12 +27,7 @@ export default function Error({
       <div className="animate-orb-2 pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-[#d4af37]/10 blur-3xl" />
       <div className="animate-orb-3 pointer-events-none absolute right-1/4 top-1/3 h-72 w-72 rounded-full bg-[#a855f7]/10 blur-3xl" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="relative w-full max-w-md text-center"
-      >
+      <div className="animate-fadeUp relative w-full max-w-md text-center">
         <div className="liquid-morph-wordmark text-2xl font-bold tracking-[0.28em] sm:text-3xl">FLUX3D</div>
 
         <div className="mx-auto mt-10 grid h-20 w-20 place-items-center rounded-2xl border border-[#d4af37]/30 bg-gradient-to-br from-[#faf4df] to-white text-[#d4af37] shadow-[var(--shadow-gold-glow)]">
@@ -53,7 +47,7 @@ export default function Error({
             Go home
           </Link>
         </div>
-      </motion.div>
+      </div>
     </main>
   )
 }

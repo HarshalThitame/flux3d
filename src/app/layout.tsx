@@ -1,19 +1,18 @@
 import type { Metadata, Viewport } from 'next'
-import { headers } from 'next/headers'
 import { Playfair_Display, Space_Grotesk } from 'next/font/google'
 import { getSettings } from '@/lib/settings'
 import { FALLBACK_SETTINGS } from '@/lib/settings-fallback'
 import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data'
+import { CSP_NONCE } from '@/lib/csp'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import DeferredTracking from '@/components/DeferredTracking'
 import MetaPixel from '@/components/MetaPixel'
 import DeferredGoogleAnalytics from '@/components/DeferredGoogleAnalytics'
-import ToastContainer from '@/components/Toast'
 import LoadingProvider from '@/components/providers/LoadingProvider'
-import LiquidMorphLoader from '@/components/ui/LiquidMorphLoader'
 import ThemeProvider from '@/components/providers/ThemeProvider'
 import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider'
 import PageTransition from '@/components/providers/PageTransition'
+import ClientShellOverlays from '@/components/providers/ClientShellOverlays'
 import './globals.css'
 import './shop-luxury.css'
 import './landing-premium.css'
@@ -22,7 +21,7 @@ const playfair = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-playfair',
   display: 'swap',
-  weight: ['400', '500', '600', '700', '800', '900'],
+  weight: 'variable',
 })
 
 // Space Grotesk — a premium, geometric sans-serif used for body and
@@ -144,9 +143,6 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const headerStore = await headers()
-  const nonce = headerStore.get('x-nonce') ?? undefined
-
   const settings = await getSettings()
   const orgJsonLd = makeOrganizationJsonLd(settings)
   const webJsonLd = makeWebsiteJsonLd(settings)
@@ -179,13 +175,13 @@ export default async function RootLayout({
       <body suppressHydrationWarning>
         {META_PIXEL_ID && <MetaPixel pixelId={META_PIXEL_ID} />}
         <script
-          nonce={nonce}
+          nonce={CSP_NONCE}
           suppressHydrationWarning
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: toJsonLd(orgJsonLd) }}
         />
         <script
-          nonce={nonce}
+          nonce={CSP_NONCE}
           suppressHydrationWarning
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: toJsonLd(webJsonLd) }}
@@ -199,10 +195,9 @@ export default async function RootLayout({
                   {children}
                 </PageTransition>
               </LoadingProvider>
-            </ErrorBoundary>
-            <LiquidMorphLoader />
-            <ToastContainer />
-          </SmoothScrollProvider>
+             </ErrorBoundary>
+             <ClientShellOverlays />
+           </SmoothScrollProvider>
         </ThemeProvider>
         <DeferredGoogleAnalytics measurementId={GOOGLE_ANALYTICS_ID} />
       </body>

@@ -1,5 +1,6 @@
 import { updateSession } from '@/lib/supabase/proxy'
 import { NextRequest, NextResponse } from 'next/server'
+import { CSP_NONCE } from '@/lib/csp'
 
 function buildCsp(nonce: string) {
   const isDev = process.env.NODE_ENV === 'development'
@@ -48,7 +49,7 @@ function buildCsp(nonce: string) {
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  const nonce = CSP_NONCE
   const cspHeader = buildCsp(nonce)
 
   const requestHeaders = new Headers(request.headers)

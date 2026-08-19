@@ -1,8 +1,8 @@
 'use client'
 
-import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { memo, useRef, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import Reveal from '@/components/Reveal'
 
 const faqs = [
   {
@@ -44,50 +44,42 @@ const faqs = [
 ]
 
 function FAQItem({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index: number; isOpen: boolean; onToggle: () => void }) {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-50px' })
-  const reduceMotion = useReducedMotion()
+  const ref = useRef<HTMLDivElement | null>(null)
 
   return (
-    <motion.div
-      ref={ref}
-      initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={reduceMotion ? { duration: 0.2 } : { delay: index * 0.05 }}
-      className="border-b border-[rgba(109, 40, 217,0.5)] last:border-b-0"
-    >
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between py-5 px-2 text-left group hover:bg-[rgba(109, 40, 217,0.2)] rounded-lg transition-colors"
-      >
-        <span className="text-base font-medium text-[#070b1d] group-hover:text-[#6d28d9] transition-colors pr-4">
-          {faq.q}
-        </span>
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[rgba(109, 40, 217,0.4)] flex items-center justify-center group-hover:bg-[rgba(109, 40, 217,0.1)] transition-colors">
-          {isOpen ? (
-            <ChevronUp className="w-5 h-5 text-[#6d28d9]" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-[#6F7192]" />
-          )}
-        </div>
-      </button>
+    <Reveal delay={index * 30} className="border-b border-[rgba(109, 40, 217,0.5)] last:border-b-0">
+      <div ref={ref}>
+        <button
+          onClick={onToggle}
+          className="w-full flex items-center justify-between py-5 px-2 text-left group hover:bg-[rgba(109, 40, 217,0.2)] rounded-lg transition-colors"
+        >
+          <span className="text-base font-medium text-[#070b1d] group-hover:text-[#6d28d9] transition-colors pr-4">
+            {faq.q}
+          </span>
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[rgba(109, 40, 217,0.4)] flex items-center justify-center group-hover:bg-[rgba(109, 40, 217,0.1)] transition-colors">
+            {isOpen ? (
+              <ChevronUp className="w-5 h-5 text-[#6d28d9]" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-[#6F7192]" />
+            )}
+          </div>
+        </button>
 
-      <div
-        className="overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out"
-        style={{ maxHeight: isOpen ? '500px' : '0px', opacity: isOpen ? 1 : 0 }}
-      >
-        <p className="text-sm text-[#6F7192] leading-[1.7] pb-5 px-2">
-          {faq.a}
-        </p>
+        <div
+          className="overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out"
+          style={{ maxHeight: isOpen ? '500px' : '0px', opacity: isOpen ? 1 : 0 }}
+        >
+          <p className="text-sm text-[#6F7192] leading-[1.7] pb-5 px-2">
+            {faq.a}
+          </p>
+        </div>
       </div>
-    </motion.div>
+    </Reveal>
   )
 }
 
 function FAQSection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-100px' })
-  const reduceMotion = useReducedMotion()
+  const ref = useRef<HTMLElement>(null)
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   return (
@@ -95,35 +87,29 @@ function FAQSection() {
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(109, 40, 217,0.02)] to-transparent pointer-events-none" />
 
       <div className="mx-auto relative z-10 max-w-[800px]">
-        <motion.div
-          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={reduceMotion ? { duration: 0.3 } : undefined}
-          className="mb-8 md:mb-12 text-center"
-        >
-          <p className="mb-4 text-sm font-medium uppercase tracking-normal text-[#6d28d9]">FAQ</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold leading-[1.1] tracking-normal text-[#070b1d]">
-            Questions? We&apos;ve Got{' '}
-            <span className="text-[#6F7192]">Clear Answers.</span>
-          </h2>
-        </motion.div>
+        <Reveal>
+          <div className="mb-8 md:mb-12 text-center">
+            <p className="mb-4 text-sm font-medium uppercase tracking-normal text-[#6d28d9]">FAQ</p>
+            <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold leading-[1.1] tracking-normal text-[#070b1d]">
+              Questions? We&apos;ve Got{' '}
+              <span className="text-[#6F7192]">Clear Answers.</span>
+            </h2>
+          </div>
+        </Reveal>
 
-        <motion.div
-          initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={reduceMotion ? { duration: 0.2 } : { delay: 0.3 }}
-          className="rounded-2xl border border-[rgba(109, 40, 217,0.5)] bg-[#faf9f7] px-6"
-        >
-          {faqs.map((faq, i) => (
-            <FAQItem
-              key={faq.q}
-              faq={faq}
-              index={i}
-              isOpen={openIndex === i}
-              onToggle={() => setOpenIndex(openIndex === i ? null : i)}
-            />
-          ))}
-        </motion.div>
+        <Reveal delay={80}>
+          <div className="rounded-2xl border border-[rgba(109, 40, 217,0.5)] bg-[#faf9f7] px-6">
+            {faqs.map((faq, i) => (
+              <FAQItem
+                key={faq.q}
+                faq={faq}
+                index={i}
+                isOpen={openIndex === i}
+                onToggle={() => setOpenIndex(openIndex === i ? null : i)}
+              />
+            ))}
+          </div>
+        </Reveal>
       </div>
     </section>
   )

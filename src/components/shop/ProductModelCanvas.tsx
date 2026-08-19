@@ -96,7 +96,7 @@ export default function ProductModelCanvas({ object, autoRotate = true }: Produc
       <directionalLight position={[-5, 4, -5]} intensity={0.35} color="#C9A962" />
       <pointLight position={[0, 4, 0]} intensity={0.25} color="#FFFFFF" />
 
-      <Environment files="/hdri/studio_small_03_1k.hdr" />
+      <Environment files="/hdri/studio_small_03_1k.hdr" resolution={128} />
 
       <Bounds fit clip observe margin={1.2}>
         <primitive object={object} />

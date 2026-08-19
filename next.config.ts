@@ -185,11 +185,27 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG || 'flux3d',
-  project: process.env.SENTRY_PROJECT || 'javascript-nextjs',
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  silent: !process.env.SENTRY_DSN,
-  widenClientFileUpload: true,
-  tunnelRoute: '/monitoring',
-})
+// Env-gated bundle analyzer. Run `ANALYZE=true npm run build` to emit
+// .next/analyze/*.html (and client/server JSON) for a definitive chunk
+// breakdown. Disabled by default so normal builds are unaffected.
+const withBundleAnalyzer = (config: NextConfig): NextConfig => {
+  if (process.env.ANALYZE !== 'true') return config
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const analyzer = require('@next/bundle-analyzer')({
+    enabled: true,
+    openAnalyzer: false,
+    analyzerMode: 'static',
+  })
+  return analyzer(config)
+}
+
+export default withBundleAnalyzer(
+  withSentryConfig(nextConfig, {
+    org: process.env.SENTRY_ORG || 'flux3d',
+    project: process.env.SENTRY_PROJECT || 'javascript-nextjs',
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+    silent: !process.env.SENTRY_DSN,
+    widenClientFileUpload: true,
+    tunnelRoute: '/monitoring',
+  }),
+)

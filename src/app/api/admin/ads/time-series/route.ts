@@ -12,12 +12,12 @@ export const runtime = 'nodejs'
  * (spend, impressions, clicks) over the last 7 days.
  * Used to power the InsightsChart with actual data instead of mocked averages.
  */
-export async function GET(request: Request) {
+export async function GET(request: Request): Promise<Response> {
   try {
     const auth = await requireMetaAdsAuth(request, {
       rateLimit: { prefix: 'meta-ads-time-series', windowSeconds: 60, maxRequests: 60 },
     })
-    if ('response' in auth) return auth.response
+    if ('response' in auth) return auth.response as Response
 
     // ─── Fetch time-series insights ────────────────────────────────────────
     const insights = await getAdAccountInsightsTimeSeries(7)

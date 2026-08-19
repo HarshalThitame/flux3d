@@ -11,12 +11,12 @@ export const runtime = 'nodejs'
  * Returns aggregate account-level insights for the stats header cards
  * and charts (spend, impressions, clicks, CTR, conversions).
  */
-export async function GET(request: Request) {
+export async function GET(request: Request): Promise<Response> {
   try {
     const auth = await requireMetaAdsAuth(request, {
       rateLimit: { prefix: 'meta-ads-insights', windowSeconds: 60, maxRequests: 60 },
     })
-    if ('response' in auth) return auth.response
+    if ('response' in auth) return auth.response as Response
 
     // ─── Fetch insights ──────────────────────────────────────────────────
     const todayInsights = await getAdAccountInsights('today')

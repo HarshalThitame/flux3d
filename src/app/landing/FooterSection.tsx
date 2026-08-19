@@ -1,10 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { Mail, Phone, MapPin, Clock, Camera, Users, Globe, Send } from 'lucide-react'
 import { useBusinessSettings } from '@/lib/settings-context'
-import { fadeUp, viewportOnce } from '@/lib/animation-variants'
+import Reveal from '@/components/Reveal'
 
 export default function FooterSection() {
   const { settings } = useBusinessSettings()
@@ -35,13 +34,7 @@ export default function FooterSection() {
     <footer className="footer footer-light">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[#6d28d9]/20" />
 
-      <motion.div
-        variants={fadeUp}
-        initial="hidden"
-        whileInView="show"
-        viewport={viewportOnce}
-        className="relative z-10 mx-auto max-w-[1200px] px-6"
-      >
+      <Reveal className="relative z-10 mx-auto max-w-[1200px] px-6">
         <div className="mb-12 grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <div className="footer-brand">
@@ -181,7 +174,7 @@ export default function FooterSection() {
         <p className="mt-8 text-center text-[10px] leading-[1.6] text-[#7c74b3]">
           {settings.brandName || settings.businessName} provides custom 3D printing and manufacturing services. Ready-made products are shipped after order confirmation where applicable.
         </p>
-      </motion.div>
+      </Reveal>
     </footer>
   )
 }

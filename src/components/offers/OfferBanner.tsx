@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
 import { X, Gift, ChevronRight, Percent } from 'lucide-react'
 import Link from 'next/link'
 import CountdownTimer from './CountdownTimer'
+import Reveal from '@/components/Reveal'
 
 type Offer = {
   id: string
@@ -39,13 +39,8 @@ export function AnnouncementBar() {
   if (!offer || dismissed) return null
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ height: 0, opacity: 0 }}
-        animate={{ height: 'auto', opacity: 1 }}
-        exit={{ height: 0, opacity: 0 }}
-        className="relative bg-gradient-to-r from-[#4A32B0] via-[#5B3FD6] to-[#4c1d95] overflow-hidden"
-      >
+    <Reveal>
+      <div className="relative bg-gradient-to-r from-[#4A32B0] via-[#5B3FD6] to-[#4c1d95] overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_100%_at_50%_0%,rgba(255,255,255,0.08),transparent_60%)]" />
         <div className="relative max-w-[1400px] mx-auto px-3 py-2.5 flex items-center justify-center gap-2 flex-wrap text-white text-sm sm:px-4 sm:gap-3 sm:flex-nowrap">
           <Gift className="w-4 h-4 flex-shrink-0 hidden sm:block" />
@@ -68,6 +63,7 @@ export function AnnouncementBar() {
             Grab Deal
             <ChevronRight className="w-3 h-3" />
           </Link>
+
           <button
             onClick={() => setDismissed(true)}
             aria-label="Dismiss offer banner"
@@ -76,8 +72,8 @@ export function AnnouncementBar() {
             <X className="w-4 h-4" />
           </button>
         </div>
-      </motion.div>
-    </AnimatePresence>
+      </div>
+    </Reveal>
   )
 }
 

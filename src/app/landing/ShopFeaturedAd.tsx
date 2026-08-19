@@ -1,13 +1,10 @@
 'use client'
 
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import Image from 'next/image'
-import Link from 'next/link'
 import { ArrowRight, Box, ChevronLeft, ChevronRight, Star } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ShopPublicProduct } from '@/lib/shop/public-types'
 import { formatShopPrice, getShopProductImages } from '@/lib/shop/selection'
-import MagneticButton from '@/components/ui/MagneticButton'
 
 const ROTATION_MS = 6000
 
@@ -36,15 +33,13 @@ function ShopFallback() {
             Ready-made products, desk objects, and curated prints — shipped across India.
           </p>
         </div>
-        <MagneticButton>
-          <Link
-            href="/3d-shop"
-            className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#5b21b6] to-[#7c3aed] px-6 text-sm font-bold text-white shadow-[0_12px_30px_rgba(109,40,217,0.35)] transition hover:from-[#4c1d95] hover:to-[#6d28d9]"
-          >
-            Explore Shop
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        </MagneticButton>
+        <a
+          href="/3d-shop"
+          className="mt-1 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#5b21b6] to-[#7c3aed] px-6 text-sm font-bold text-white shadow-[0_12px_30px_rgba(109,40,217,0.35)] transition hover:from-[#4c1d95] hover:to-[#6d28d9]"
+        >
+          Explore Shop
+          <ArrowRight className="h-4 w-4" />
+        </a>
       </div>
     </div>
   )
@@ -58,13 +53,9 @@ function Slide({ product, index, count, onNav }: { product: ShopPublicProduct; i
   const hasRating = product.review_count > 0 && product.avg_rating > 0
 
   return (
-    <motion.div
+    <div
       key={product.id}
-      initial={{ opacity: 0, scale: 0.985, filter: 'blur(6px)' }}
-      animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-      exit={{ opacity: 0, scale: 0.985, filter: 'blur(4px)' }}
-      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-      className="flex flex-col gap-3"
+      className="relative fade-in-carousel-item flex flex-col gap-3"
     >
       <div className="group relative overflow-hidden rounded-2xl border border-[#6d28d9]/10 bg-[#f5f3ff] shadow-[0_18px_50px_rgba(17,24,39,0.10)]">
         <div className="relative aspect-[4/3] overflow-hidden">
@@ -162,34 +153,40 @@ function Slide({ product, index, count, onNav }: { product: ShopPublicProduct; i
         {product.description || 'Ready-to-ship 3D printed product from the Flux3D shop.'}
       </p>
 
-      <MagneticButton className="mt-1">
-        <Link
-          href={`/3d-shop/product/${product.slug}`}
-          className="group inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#5b21b6] to-[#7c3aed] px-6 text-sm font-bold text-white shadow-[0_12px_30px_rgba(109,40,217,0.35)] transition hover:from-[#4c1d95] hover:to-[#6d28d9]"
-        >
-          View in Shop
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-        </Link>
-      </MagneticButton>
-    </motion.div>
+        <a
+        href={`/3d-shop/product/${product.slug}`}
+        className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#5b21b6] to-[#7c3aed] px-6 py-3 text-sm font-bold text-white shadow-[0_12px_30px_rgba(109,40,217,0.35)] transition hover:from-[#4c1d95] hover:to-[#6d28d9]"
+      >
+        View in Shop
+        <ArrowRight className="h-4 w-4" />
+      </a>
+    </div>
   )
 }
 
 export default function ShopFeaturedAd({ products }: { products: ShopPublicProduct[] }) {
-  const reduceMotion = useReducedMotion()
   const count = products.length
   const [activeIndex, setActiveIndex] = useState(0)
   const [paused, setPaused] = useState(false)
+  const intervalRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (count <= 1 || paused || reduceMotion) return
-    const id = window.setInterval(() => {
-      if (document.visibilityState !== 'hidden') {
-        setActiveIndex((current) => (current + 1) % count)
+    if (count <= 1) return
+
+    if (!paused) {
+      intervalRef.current = window.setInterval(() => {
+        if (document.visibilityState !== 'hidden') {
+          setActiveIndex((current) => (current + 1) % count)
+        }
+      }, ROTATION_MS)
+    }
+    return () => {
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
-    }, ROTATION_MS)
-    return () => window.clearInterval(id)
-  }, [count, paused, reduceMotion])
+    }
+  }, [count, paused])
 
   if (count === 0) {
     return (
@@ -217,15 +214,26 @@ export default function ShopFeaturedAd({ products }: { products: ShopPublicProdu
         </span>
       </div>
 
-      <AnimatePresence mode="wait" initial={false}>
-        <Slide
-          key={product.id}
-          product={product}
-          index={activeIndex}
-          count={count}
-          onNav={(next) => setActiveIndex(next)}
-        />
-      </AnimatePresence>
+      <div className="relative fade-carousel">
+        {products.map((p, i) => {
+          const show = i === activeIndex
+          return (
+            <div
+              key={p.id}
+              aria-hidden={!show}
+              className={`absolute inset-0 transition-opacity duration-500 ${show ? 'relative opacity-100' : 'opacity-0'}`}
+              style={show ? undefined : { visibility: 'hidden' }}
+            >
+              <Slide
+                product={p}
+                index={i}
+                count={count}
+                onNav={(nextIdx) => setActiveIndex(nextIdx)}
+              />
+            </div>
+          )
+        })}
+      </div>
 
       <div className="mt-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-1.5" aria-label="Featured products">

@@ -5,6 +5,7 @@ import ShopCategoryBrowser from '@/components/shop/ShopCategoryBrowser'
 import { getShopCategoryBySlug, getShopProducts } from '@/lib/shop/public-data'
 import type { ShopPublicCategory } from '@/lib/shop/public-types'
 import { absoluteUrl } from '@/lib/site'
+import { CSP_NONCE } from '@/lib/csp'
 
 export const dynamic = 'force-dynamic'
 
@@ -62,6 +63,7 @@ export default async function ShopCategoryPage({ params }: { params: Promise<{ s
   return (
     <ShopShell transparentNav>
       <script
+        nonce={CSP_NONCE}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: toJsonLd(makeBreadcrumbSchema(category)) }}
       />

@@ -1,9 +1,8 @@
 'use client'
 
-import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 import { Printer, Camera, Shield, Zap, MessageCircle, Truck, RefreshCw } from 'lucide-react'
-import { staggerContainer, cardItem, fadeUp, viewportOnce, viewportHeader } from '@/lib/animation-variants'
+import Reveal from '@/components/Reveal'
 
 const trustPoints = [
   { icon: Printer, title: 'Bambu Lab P2S Fleet', body: 'We run India\'s most advanced consumer-grade professional 3D printers. Automatic calibration, AI monitoring, multi-color AMS.' },
@@ -16,46 +15,39 @@ const trustPoints = [
 ]
 
 export default function TrustSection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, viewportHeader)
+  const ref = useRef<HTMLElement>(null)
 
   return (
     <section ref={ref} className="relative py-24 px-6 overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_30%_50%,rgba(91,33,182,0.05)_0%,transparent_70%)] pointer-events-none" />
       <div className="max-w-[1200px] mx-auto relative z-10">
-        <motion.div variants={fadeUp} initial="hidden" animate={isInView ? "show" : "hidden"} className="text-center mb-16">
-          <p className="text-sm font-medium text-[#5b21b6] uppercase tracking-normal mb-4">Why Trust Us</p>
-          <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#4c1d95] tracking-normal leading-[1.1]">
-            Quality You Can{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5b21b6] to-[#a855f7]">
-              See and Touch.
-            </span>
-          </h2>
-        </motion.div>
+        <Reveal>
+          <div className="text-center mb-16">
+            <p className="text-sm font-medium text-[#5b21b6] uppercase tracking-normal mb-4">Why Trust Us</p>
+            <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#4c1d95] tracking-normal leading-[1.1]">
+              Quality You Can{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5b21b6] to-[#a855f7]">
+                See and Touch.
+              </span>
+            </h2>
+          </div>
+        </Reveal>
 
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="show"
-          viewport={viewportOnce}
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {trustPoints.map((point, i) => (
-            <motion.div
-              key={i}
-              variants={cardItem}
-              className="group bg-[#faf9f7] border border-[rgba(91,33,182,0.10)] rounded-2xl p-6 hover:border-[rgba(91,33,182,0.18)] hover:-translate-y-1 transition-all duration-200"
-            >
-              <div className="w-12 h-12 rounded-xl bg-[rgba(91,33,182,0.08)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <point.icon className="w-6 h-6 text-[#5b21b6]" />
+            <Reveal key={i} delay={(i + 1) * 50}>
+              <div className="group bg-[#faf9f7] border border-[rgba(91,33,182,0.10)] rounded-2xl p-6 hover:border-[rgba(91,33,182,0.18)] hover:-translate-y-1 transition-all duration-200">
+                <div className="w-12 h-12 rounded-xl bg-[rgba(91,33,182,0.08)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <point.icon className="w-6 h-6 text-[#5b21b6]" />
+                </div>
+                <h3 className="font-[var(--font-syne)] text-base font-bold text-[#4c1d95] mb-2 group-hover:text-[#5b21b6] transition-colors">
+                  {point.title}
+                </h3>
+                <p className="text-sm text-[#5b21b6] leading-[1.6]">{point.body}</p>
               </div>
-              <h3 className="font-[var(--font-syne)] text-base font-bold text-[#4c1d95] mb-2 group-hover:text-[#5b21b6] transition-colors">
-                {point.title}
-              </h3>
-              <p className="text-sm text-[#5b21b6] leading-[1.6]">{point.body}</p>
-            </motion.div>
+            </Reveal>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   )

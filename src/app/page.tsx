@@ -4,6 +4,7 @@ import { getSettings } from '@/lib/settings'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
 import { faqPageJsonLd, makeLocalBusinessJsonLd } from '@/lib/structured-data'
 import { getShopHomeData } from '@/lib/shop/public-data'
+import { CSP_NONCE } from '@/lib/csp'
 import HeroSection from './landing/HeroSection'
 import LandingPageBoundary from './landing/LandingPageBoundary'
 import Navbar from '@/components/Navbar'
@@ -59,13 +60,17 @@ export default async function Home() {
     ],
   }
 
+  // The hero uses next/image with `priority`, which already emits an
+  // optimized <link rel="preload"> in the head — no manual preload needed.
   return (
     <div className="public-shell">
       <script
+        nonce={CSP_NONCE}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: toJsonLd(structuredData) }}
       />
       <script
+        nonce={CSP_NONCE}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: toJsonLd(faqPageJsonLd) }}
       />

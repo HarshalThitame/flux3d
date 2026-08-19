@@ -11,12 +11,12 @@ export const runtime = 'nodejs'
  * Returns Meta campaigns for this ad account, enriched with any
  * locally persisted records from meta_ad_campaigns.
  */
-export async function GET(request: Request) {
+export async function GET(request: Request): Promise<Response> {
   try {
     const auth = await requireMetaAdsAuth(request, {
       rateLimit: { prefix: 'meta-ads-list', windowSeconds: 60, maxRequests: 60 },
     })
-    if ('response' in auth) return auth.response
+    if ('response' in auth) return auth.response as Response
 
     const { supabase } = auth
 

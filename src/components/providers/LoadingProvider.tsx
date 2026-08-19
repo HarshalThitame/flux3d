@@ -5,8 +5,8 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { useLoadingStore } from '@/stores/loadingStore'
 
 const GRACE_MS = 250
-const MIN_DISPLAY_MS = 600
-const MAX_DISPLAY_MS = 8000
+const MIN_DISPLAY_MS = 250
+const MAX_DISPLAY_MS = 3000
 
 function normalizePath(value: string) {
   return value.replace(window.location.origin, '').replace(/\/+$/, '') || '/'
@@ -145,7 +145,7 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
     }
   }, [pathname, resolveNavigation])
 
-  return (
+return (
     <>
       <Suspense fallback={null}>
         <SearchParamsWatcher onRouteResolved={resolveNavigation} />
