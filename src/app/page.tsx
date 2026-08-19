@@ -7,16 +7,17 @@ import { getShopHomeData } from '@/lib/shop/public-data'
 import { CSP_NONCE } from '@/lib/csp'
 import HeroSection from './landing/HeroSection'
 import LandingPageBoundary from './landing/LandingPageBoundary'
+import LandingShopSection from './landing/LandingShopSection'
 import Navbar from '@/components/Navbar'
 
 export const revalidate = 300
 
 export const metadata: Metadata = {
   title: {
-    absolute: 'Flux3D — Custom 3D Printing and Manufacturing Services in India',
+    absolute: 'Flux3D — 3D Shop and Custom 3D Printing Services in India',
   },
   description:
-    'Flux3D provides custom 3D printing, prototyping, model printing, ready-made products, and related manufacturing services in India.',
+    'Shop ready-made 3D printed products with live 3D previews, or order custom 3D printing, prototyping, and manufacturing services in India.',
   alternates: {
     canonical: 'https://flux3d.in',
   },
@@ -77,6 +78,7 @@ export default async function Home() {
       <Navbar transparent />
       <main>
         <HeroSection featuredProducts={featuredProducts} />
+        <LandingShopSection data={shopData} />
         <LandingPageBoundary />
       </main>
     </div>

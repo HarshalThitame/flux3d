@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { ArrowRight, ArrowDown, MapPin, Clock, Sparkles } from 'lucide-react'
 import { scrollToTarget } from '@/lib/scroll-to'
 import type { ShopPublicProduct } from '@/lib/shop/public-types'
-import MobileShopFeaturedAd from '@/components/landing/MobileShopFeaturedAd'
+import ShopFeaturedAd from './ShopFeaturedAd'
 
 function HeroFadeIn({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const [prefersReducedMotion] = useState(
@@ -97,6 +97,7 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
 
       <div className="relative z-10 mx-auto flex min-h-0 w-full max-w-7xl flex-col justify-center gap-8 py-4 md:min-h-[calc(88svh-7rem)] md:gap-10 md:py-6">
         <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,1fr)_420px] xl:grid-cols-[minmax(0,1fr)_470px]">
+          <div className="min-w-0">
           <HeroFadeIn delay={0.2} className="max-w-5xl text-center lg:text-left">
             <div className="premium-hero-badge">
               <span className="premium-live-dot" />
@@ -162,6 +163,11 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
               </div>
             ))}
           </HeroFadeIn>
+          </div>
+
+          <HeroFadeIn delay={0.35} className="hidden lg:block">
+            <ShopFeaturedAd products={featuredProducts ?? []} />
+          </HeroFadeIn>
         </div>
 
         <HeroFadeIn delay={0.3} className="stats-row premium-stats-row">
@@ -169,9 +175,6 @@ export default function HeroSection({ featuredProducts }: { featuredProducts?: S
             <CountStat key={stat.label} stat={stat} />
           ))}
         </HeroFadeIn>
-
-        {/* Enterprise-grade mobile shop ad - hidden on lg+ */}
-        <MobileShopFeaturedAd products={featuredProducts ?? []} />
 
         <HeroFadeIn delay={0.85} className="mx-auto mt-5 flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#5b21b6]">
           <Clock className="h-3.5 w-3.5" />
