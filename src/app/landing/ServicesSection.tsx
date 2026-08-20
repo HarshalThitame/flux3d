@@ -91,47 +91,45 @@ function ServiceCard({ service, highlighted }: { service: typeof services[0]; hi
   return (
     <div
       id={service.slug}
-      className={`group relative scroll-mt-24 bg-[#faf9f7] border border-[rgba(109,40,217,0.5)] rounded-2xl overflow-hidden transition-all duration-300 hover:border-[rgba(109,40,217,0.3)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.08)] hover:-translate-y-1.5 flex flex-col ${
+      className={`group relative scroll-mt-24 bg-[var(--shop-bg-elevated,#FFFFFF)] border border-[var(--shop-border-light,#E7E5E0)] rounded-[var(--shop-radius-lg,24px)] overflow-hidden transition-all duration-300 hover:border-[var(--shop-gold,#C9A962)] hover:shadow-[var(--shop-shadow-md)] hover:-translate-y-1.5 flex flex-col ${
         service.span ? 'md:col-span-2' : ''
-      } ${highlighted ? 'ring-2 ring-[#a855f7] ring-offset-2 ring-offset-[#f9f7f4] shadow-[0_0_0_1px_rgba(168,85,247,0.35),0_8px_40px_rgba(168,85,247,0.22)]' : ''}`}
+      } ${highlighted ? 'ring-2 ring-[var(--shop-gold,#C9A962)] ring-offset-2 ring-offset-[#FDFCF8] shadow-[var(--shop-shadow-lg)]' : ''}`}
     >
-      <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-5 transition-opacity duration-500" />
-      <div className="relative z-10 p-5 sm:p-6 md:p-8 flex flex-col flex-1">
+      <div className="bento-card-shimmer" />
+      <div className="relative z-10 p-6 md:p-8 flex flex-col flex-1">
         <div className="flex items-center gap-2 mb-4">
-          <div className={`inline-flex items-center bg-gradient-to-r ${service.color} text-white text-xs font-semibold px-3 py-1 rounded-full`}>
+          <div className="inline-flex items-center bg-[var(--shop-gold-faint,#FAF6EB)] text-[var(--shop-gold,#C9A962)] border border-[var(--shop-border-gold)] text-[11px] font-bold uppercase tracking-[0.14em] px-3 py-1 rounded-full">
             {service.tag}
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 flex-1">
-          <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br ${service.color} p-0.5 flex-shrink-0`}>
-            <div className="w-full h-full rounded-xl bg-[#faf9f7] flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <service.icon className="w-7 h-7 text-[#4c1d95]" />
-            </div>
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[var(--shop-gold-faint,#FAF6EB)] border border-[var(--shop-border-gold)] p-0.5 flex-shrink-0 flex items-center justify-center">
+            <service.icon className="w-6 h-6 text-[var(--shop-gold,#C9A962)] group-hover:scale-110 transition-transform duration-300" />
           </div>
 
           <div className="flex-1 flex flex-col">
-            <h3 className="font-[var(--font-syne)] text-lg sm:text-xl font-bold text-[#4c1d95] mb-2 group-hover:text-[#5b21b6] transition-colors duration-300">
+            <h3 className="font-[var(--shop-font-heading)] text-xl font-semibold text-[var(--shop-text-primary,#1C1917)] mb-2 group-hover:text-[var(--shop-gold,#C9A962)] transition-colors duration-300">
               {service.title}
             </h3>
-            <p className="text-sm text-[#5b21b6] leading-[1.6] mb-3 sm:mb-4 flex-1">
+            <p className="text-sm text-[var(--shop-text-secondary,#44403C)] leading-[1.6] mb-4 flex-1">
               {service.description}
             </p>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+            <div className="flex flex-wrap gap-2 mb-4">
               {service.pills.map((pill, j) => (
                 <span
                   key={j}
-                  className="text-[11px] sm:text-xs bg-[rgba(91,33,182,0.08)] text-[#4c1d95] px-3 py-1 rounded-full border border-[rgba(91,33,182,0.14)]"
+                  className="text-xs bg-[var(--shop-bg-muted,#F2F0EA)] text-[var(--shop-text-muted,#78716C)] px-3 py-1 rounded-full border border-[var(--shop-border-light,#E7E5E0)] font-medium"
                 >
                   {pill}
                 </span>
               ))}
             </div>
-            <div className="flex items-center justify-between pt-2 border-t border-[rgba(91,33,182,0.10)]">
-              <span className="text-sm text-[#5b21b6] font-semibold">{service.price}</span>
+            <div className="flex items-center justify-between pt-3 border-t border-[var(--shop-border-light,#E7E5E0)]">
+              <span className="text-sm text-[var(--shop-gold,#C9A962)] font-semibold">{service.price}</span>
               <a
                 href={service.link || '/instant-quote'}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#4c1d95] hover:text-[#5b21b6] transition-colors group/link min-h-[44px]"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--shop-text-primary,#1C1917)] hover:text-[var(--shop-gold,#C9A962)] transition-colors group/link min-h-[44px]"
               >
                 {service.cta}
                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover/link:translate-x-1" />
@@ -140,8 +138,6 @@ function ServiceCard({ service, highlighted }: { service: typeof services[0]; hi
           </div>
         </div>
       </div>
-
-      <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl ${service.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500 rounded-bl-full`} />
     </div>
   )
 }
@@ -178,21 +174,18 @@ function ServicesSection() {
 
   return (
     <section id="services" ref={highlightRef} className="relative scroll-mt-20 overflow-hidden px-6 py-12 md:py-16 lg:py-24">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_30%,rgba(91,33,182,0.05)_0%,transparent_70%)] pointer-events-none" />
-
       <div className="max-w-[1200px] mx-auto relative z-10">
         <Reveal>
           <div className="text-center mb-8 md:mb-12 lg:mb-16 relative z-10">
-            <span className="premium-section-number">01</span>
-            <p className="text-sm font-medium text-[#5b21b6] uppercase tracking-normal mb-4">What We Print</p>
-            <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#4c1d95] tracking-normal leading-[1.1]">
+            <p className="text-xs font-bold text-[var(--shop-gold,#C9A962)] uppercase tracking-[0.14em] mb-3">What We Print</p>
+            <h2 className="font-[var(--shop-font-heading)] text-[clamp(2rem,4vw,3.2rem)] font-semibold text-[var(--shop-text-primary,#1C1917)] leading-[1.1]">
               One Service.{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5b21b6] to-[#a855f7]">
+              <span className="text-[var(--shop-gold,#C9A962)]">
                 Every Industry.
               </span>
             </h2>
-            <p className="text-[#6F7192] mt-4 max-w-[600px] mx-auto">
-              Flux 3D handles one-off custom parts, small batch production and ready-made products using a review-and-confirm workflow.
+            <p className="text-[var(--shop-text-muted,#78716C)] mt-4 max-w-[600px] mx-auto text-base">
+              Flux3D handles one-off custom parts, small batch production and ready-made products using a review-and-confirm workflow.
             </p>
           </div>
         </Reveal>
@@ -206,12 +199,12 @@ function ServicesSection() {
         </div>
 
         <Reveal delay={services.length * 60 + 60}>
-          <div className="text-center bg-[#faf9f7] border border-[rgba(91,33,182,0.12)] rounded-2xl p-8 hover:border-[rgba(91,33,182,0.20)] transition-colors duration-300">
-            <p className="text-lg text-[#4c1d95] mb-2">Don&apos;t see your requirement above?</p>
-            <p className="text-sm text-[#5b21b6] mb-6">Share your file or product requirement and we&apos;ll review it before confirming the order.</p>
+          <div className="text-center bg-[var(--shop-bg-elevated,#FFFFFF)] border border-[var(--shop-border-gold)] rounded-[var(--shop-radius-xl,32px)] p-8 shadow-[var(--shop-shadow-sm)]">
+            <p className="font-[var(--shop-font-heading)] text-xl font-semibold text-[var(--shop-text-primary,#1C1917)] mb-2">Don&apos;t see your requirement above?</p>
+            <p className="text-sm text-[var(--shop-text-muted,#78716C)] mb-6">Share your file or product requirement and we&apos;ll review it before confirming the order.</p>
             <a
               href="/contact"
-              className="inline-flex items-center gap-2 bg-[#5b21b6] text-white px-6 py-3 rounded-xl text-sm font-medium hover:shadow-[0_0_30px_rgba(91,33,182,0.3)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+              className="inline-flex items-center gap-2 bg-[var(--shop-text-primary,#1C1917)] text-white px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-[var(--shop-gold,#C9A962)] transition-colors duration-300"
             >
               Contact Sales
               <ArrowRight className="w-4 h-4" />

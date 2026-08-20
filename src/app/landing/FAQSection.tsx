@@ -47,20 +47,20 @@ function FAQItem({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index:
   const ref = useRef<HTMLDivElement | null>(null)
 
   return (
-    <Reveal delay={index * 30} className="border-b border-[rgba(109, 40, 217,0.5)] last:border-b-0">
+    <Reveal delay={index * 30} className="border-b border-[var(--shop-border-light,#E7E5E0)] last:border-b-0">
       <div ref={ref}>
         <button
           onClick={onToggle}
-          className="w-full flex items-center justify-between py-5 px-2 text-left group hover:bg-[rgba(109, 40, 217,0.2)] rounded-lg transition-colors"
+          className="w-full flex items-center justify-between py-5 px-2 text-left group hover:bg-[var(--shop-gold-faint,#FAF6EB)] rounded-lg transition-colors"
         >
-          <span className="text-base font-medium text-[#070b1d] group-hover:text-[#6d28d9] transition-colors pr-4">
+          <span className="font-[var(--shop-font-heading)] text-base font-semibold text-[var(--shop-text-primary,#1C1917)] group-hover:text-[var(--shop-gold,#C9A962)] transition-colors pr-4">
             {faq.q}
           </span>
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[rgba(109, 40, 217,0.4)] flex items-center justify-center group-hover:bg-[rgba(109, 40, 217,0.1)] transition-colors">
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--shop-bg-muted,#F2F0EA)] flex items-center justify-center group-hover:bg-[var(--shop-gold-soft)] transition-colors">
             {isOpen ? (
-              <ChevronUp className="w-5 h-5 text-[#6d28d9]" />
+              <ChevronUp className="w-5 h-5 text-[var(--shop-gold,#C9A962)]" />
             ) : (
-              <ChevronDown className="w-5 h-5 text-[#6F7192]" />
+              <ChevronDown className="w-5 h-5 text-[var(--shop-text-muted,#78716C)]" />
             )}
           </div>
         </button>
@@ -69,7 +69,7 @@ function FAQItem({ faq, index, isOpen, onToggle }: { faq: typeof faqs[0]; index:
           className="overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out"
           style={{ maxHeight: isOpen ? '500px' : '0px', opacity: isOpen ? 1 : 0 }}
         >
-          <p className="text-sm text-[#6F7192] leading-[1.7] pb-5 px-2">
+          <p className="text-sm text-[var(--shop-text-secondary,#44403C)] leading-[1.7] pb-5 px-2">
             {faq.a}
           </p>
         </div>
@@ -84,21 +84,19 @@ function FAQSection() {
 
   return (
     <section ref={ref} className="relative py-12 px-6 md:py-16 lg:py-24 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(109, 40, 217,0.02)] to-transparent pointer-events-none" />
-
       <div className="mx-auto relative z-10 max-w-[800px]">
         <Reveal>
           <div className="mb-8 md:mb-12 text-center">
-            <p className="mb-4 text-sm font-medium uppercase tracking-normal text-[#6d28d9]">FAQ</p>
-            <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,2.5rem)] font-extrabold leading-[1.1] tracking-normal text-[#070b1d]">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-[var(--shop-gold,#C9A962)]">FAQ</p>
+            <h2 className="font-[var(--shop-font-heading)] text-[clamp(2rem,4vw,3rem)] font-semibold text-[var(--shop-text-primary,#1C1917)]">
               Questions? We&apos;ve Got{' '}
-              <span className="text-[#6F7192]">Clear Answers.</span>
+              <span className="text-[var(--shop-gold,#C9A962)]">Clear Answers.</span>
             </h2>
           </div>
         </Reveal>
 
         <Reveal delay={80}>
-          <div className="rounded-2xl border border-[rgba(109, 40, 217,0.5)] bg-[#faf9f7] px-6">
+          <div className="rounded-[var(--shop-radius-xl,32px)] border border-[var(--shop-border-light,#E7E5E0)] bg-[var(--shop-bg-elevated,#FFFFFF)] px-6 shadow-[var(--shop-shadow-sm)]">
             {faqs.map((faq, i) => (
               <FAQItem
                 key={faq.q}

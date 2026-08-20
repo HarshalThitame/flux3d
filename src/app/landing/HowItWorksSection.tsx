@@ -37,14 +37,6 @@ const steps = [
   },
 ]
 
-const gradients = [
-  'from-[#6d28d9] to-[#7c3aed]',
-  'from-[#7c3aed] to-[#8b5cf6]',
-  'from-[#8b5cf6] to-[#a855f7]',
-  'from-[#a855f7] to-[#c084fc]',
-  'from-[#c084fc] to-[#6d28d9]',
-]
-
 function HowItWorksSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -60,23 +52,13 @@ function HowItWorksSection() {
 
   return (
     <section className="relative py-12 px-6 md:py-16 lg:py-24 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(91, 33, 182,0.04)] to-transparent pointer-events-none" />
-
-      <div className="absolute inset-0 md:hidden pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[60%] bg-gradient-to-r from-[#5b21b6]/12 via-[#a855f7]/18 to-[#5b21b6]/12 blur-3xl" />
-      </div>
-
-      <div className="hidden md:block absolute inset-0 pointer-events-none opacity-[0.04]"
-        style={{ backgroundImage: 'radial-gradient(circle, #5b21b6 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
-
       <div className="max-w-[1200px] mx-auto relative z-10">
         <Reveal>
           <div className="text-center mb-8 md:mb-12 lg:mb-16 relative">
-            <span className="premium-section-number">02</span>
-            <p className="text-sm font-medium text-[#5b21b6] uppercase tracking-normal mb-4 relative z-10">The Process</p>
-            <h2 className="font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3rem)] font-extrabold text-[#4c1d95] tracking-normal leading-[1.1] relative z-10">
+            <p className="text-xs font-bold text-[var(--shop-gold,#C9A962)] uppercase tracking-[0.14em] mb-3">The Process</p>
+            <h2 className="font-[var(--shop-font-heading)] text-[clamp(2rem,4vw,3.2rem)] font-semibold text-[var(--shop-text-primary,#1C1917)] leading-[1.1]">
               From Requirement to Dispatch{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5b21b6] to-[#a855f7]">
+              <span className="text-[var(--shop-gold,#C9A962)]">
                 in 5 Steps.
               </span>
             </h2>
@@ -93,37 +75,31 @@ function HowItWorksSection() {
               <div key={i} className="snap-center shrink-0 w-[85vw]">
                 <Reveal delay={i * 0.08}>
                   <div className="relative group">
-                    <div className={`absolute -inset-[2px] rounded-2xl bg-gradient-to-r ${gradients[i]} opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm`} />
-                    <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl p-6 border border-[rgba(91, 33, 182,0.12)] shadow-[0_8px_32px_rgba(91, 33, 182,0.10)]">
-                      <div className={`absolute -top-4 -right-2 text-[120px] font-black text-transparent bg-clip-text bg-gradient-to-b ${gradients[i]} opacity-[0.06] select-none pointer-events-none leading-none`}>
-                        {step.step}
-                      </div>
-
+                    <div className="relative bg-[var(--shop-bg-elevated,#FFFFFF)] rounded-[var(--shop-radius-lg,24px)] p-6 border border-[var(--shop-border-light,#E7E5E0)] shadow-[var(--shop-shadow-sm)]">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className={`relative w-14 h-14 rounded-xl bg-gradient-to-br ${gradients[i]} flex items-center justify-center shadow-lg shadow-[#5b21b6]/20 transition-transform duration-300 group-hover:scale-110`}>
-                          <step.icon className="w-7 h-7 text-white" />
-                          <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${gradients[i]} opacity-50 blur-md`} />
+                        <div className="relative w-12 h-12 rounded-xl bg-[var(--shop-gold-faint,#FAF6EB)] border border-[var(--shop-border-gold)] flex items-center justify-center">
+                          <step.icon className="w-6 h-6 text-[var(--shop-gold,#C9A962)]" />
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={`text-xs font-bold uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r ${gradients[i]}`}>
+                          <span className="text-xs font-bold uppercase tracking-wider text-[var(--shop-gold,#C9A962)]">
                             Step {step.step}
                           </span>
-                          <ChevronRight className="w-4 h-4 text-[#5b21b6]/40" />
+                          <ChevronRight className="w-4 h-4 text-[var(--shop-text-subtle)]" />
                         </div>
                       </div>
 
-                      <h3 className="font-[var(--font-syne)] text-xl font-bold text-[#4c1d95] mb-3">
+                      <h3 className="font-[var(--shop-font-heading)] text-xl font-semibold text-[var(--shop-text-primary,#1C1917)] mb-2">
                         {step.title}
                       </h3>
-                      <p className="text-sm text-[#5b21b6] leading-[1.7]">
+                      <p className="text-sm text-[var(--shop-text-secondary,#44403C)] leading-[1.7]">
                         {step.description}
                       </p>
-                      <div className={`mt-4 h-0.5 w-12 rounded-full bg-gradient-to-r ${gradients[i]}`} />
+                      <div className="mt-4 h-0.5 w-12 rounded-full bg-[var(--shop-gold,#C9A962)]" />
+                    </div>
                   </div>
-                </div>
-              </Reveal>
-            </div>
-          ))}
+                </Reveal>
+              </div>
+            ))}
           </div>
 
           <div className="flex justify-center items-center gap-2 mt-2">
@@ -142,8 +118,8 @@ function HowItWorksSection() {
                   }}
                   className={`transition-all duration-300 rounded-full ${
                     isActive
-                      ? 'w-8 h-2 bg-gradient-to-r from-[#6d28d9] to-[#a855f7]'
-                      : 'w-2 h-2 bg-[#d1d5db] hover:bg-[#9ca3af]'
+                      ? 'w-8 h-2 bg-[var(--shop-gold,#C9A962)]'
+                      : 'w-2 h-2 bg-[var(--shop-border-medium)]'
                   }`}
                   aria-label={`Go to step ${i + 1}`}
                 />
@@ -152,12 +128,11 @@ function HowItWorksSection() {
           </div>
         </div>
 
-        {/* Desktop: Alternating Timeline */}
+        {/* Desktop: Timeline */}
         <div className="hidden md:block relative">
-          <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[rgba(91,33,182,0.15)] to-transparent" />
-          <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-gradient-to-b from-[#5b21b6] via-[#a855f7] to-[#5b21b6]" />
+          <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-[var(--shop-border-gold)]" />
 
-          <div className="relative space-y-12 lg:space-y-16">
+          <div className="relative space-y-10 lg:space-y-12">
             {steps.map((step, i) => {
               const isLeft = i % 2 === 0
               const isHovered = hoveredIndex === i
@@ -175,52 +150,44 @@ function HowItWorksSection() {
                       className={`w-full lg:w-[calc(50%-40px)] ${isLeft ? 'lg:pr-8' : 'lg:pl-8'}`}
                     >
                       <div
-                        className={`relative overflow-hidden rounded-2xl border transition-all duration-500 ${
+                        className={`relative overflow-hidden rounded-[var(--shop-radius-lg,24px)] border transition-all duration-300 ${
                           isHovered
-                            ? 'border-[rgba(91,33,182,0.22)] shadow-[0_8px_40px_rgba(91,33,182,0.12)]'
-                            : 'border-[rgba(91,33,182,0.10)] shadow-[0_4px_24px_rgba(91,33,182,0.06)]'
-                        } bg-white/80 backdrop-blur-xl p-6 lg:p-8`}
+                            ? 'border-[var(--shop-gold,#C9A962)] shadow-[var(--shop-shadow-md)]'
+                            : 'border-[var(--shop-border-light,#E7E5E0)] shadow-[var(--shop-shadow-sm)]'
+                        } bg-[var(--shop-bg-elevated,#FFFFFF)] p-6 lg:p-8`}
                       >
-                        <div className={`absolute -inset-[1px] rounded-2xl bg-gradient-to-r ${gradients[i]} opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-[2px] -z-10`} />
-
-                        <div className={`absolute -bottom-6 -right-4 text-[140px] font-black text-transparent bg-clip-text bg-gradient-to-t ${gradients[i]} opacity-[0.04] select-none pointer-events-none leading-none`}>
-                          {step.step}
-                        </div>
-
-                        <div className="flex items-center gap-4 mb-5">
-                          <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${gradients[i]} flex items-center justify-center shadow-lg shadow-[#5b21b6]/20 transition-transform duration-300 ${isDimmed ? 'opacity-55' : ''} group-hover:scale-110`}
-                            style={{ rotate: hoveredIndex === i ? '5deg' : '0deg' }}>
-                            <step.icon className="w-8 h-8 text-white relative z-10" />
-                            <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${gradients[i]} opacity-40 blur-lg`} />
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className={`relative w-14 h-14 rounded-2xl bg-[var(--shop-gold-faint,#FAF6EB)] border border-[var(--shop-border-gold)] flex items-center justify-center transition-transform duration-300 ${isDimmed ? 'opacity-55' : ''} group-hover:scale-105`}>
+                            <step.icon className="w-7 h-7 text-[var(--shop-gold,#C9A962)]" />
                           </div>
                           <div>
-                            <span className={`text-xs font-bold uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r ${gradients[i]}`}>
+                            <span className="text-xs font-bold uppercase tracking-wider text-[var(--shop-gold,#C9A962)]">
                               Step {step.step}
                             </span>
-                            <ChevronRight className="w-4 h-4 text-[#5b21b6]/30 mt-0.5" />
+                            <ChevronRight className="w-4 h-4 text-[var(--shop-text-subtle)] mt-0.5" />
                           </div>
                         </div>
 
-                        <h3 className="font-[var(--font-syne)] text-xl lg:text-2xl font-bold text-[#4c1d95] mb-3">
+                        <h3 className="font-[var(--shop-font-heading)] text-xl font-semibold text-[var(--shop-text-primary,#1C1917)] mb-2">
                           {step.title}
                         </h3>
-                        <p className="text-sm text-[#5b21b6] leading-[1.7] max-w-md">
+                        <p className="text-sm text-[var(--shop-text-secondary,#44403C)] leading-[1.7] max-w-md">
                           {step.description}
                         </p>
-                        <div className={`mt-5 h-0.5 w-16 rounded-full bg-gradient-to-r ${gradients[i]} transition-all duration-500 group-hover:w-24`} />
+                        <div className="mt-4 h-0.5 w-12 rounded-full bg-[var(--shop-gold,#C9A962)] transition-all duration-300 group-hover:w-20" />
                       </div>
                     </div>
                   </Reveal>
 
                   <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center z-20">
                     <div
-                      className={`relative w-12 h-12 rounded-full bg-white border-2 flex items-center justify-center shadow-lg transition-all duration-500 ${
+                      className={`relative w-10 h-10 rounded-full bg-[var(--shop-bg-elevated,#FFFFFF)] border-2 flex items-center justify-center shadow-md transition-all duration-300 ${
                         isHovered
-                          ? 'border-[#5b21b6] shadow-[0_0_24px_rgba(91,33,182,0.3)] scale-110'
-                          : 'border-[rgba(91,33,182,0.20)]'
+                          ? 'border-[var(--shop-gold,#C9A962)] scale-110'
+                          : 'border-[var(--shop-border-medium)]'
                       } ${isDimmed ? 'opacity-55' : ''}`}
                     >
-                      <span className={`text-sm font-black text-transparent bg-clip-text bg-gradient-to-r ${gradients[i]}`}>
+                      <span className="text-xs font-bold text-[var(--shop-gold,#C9A962)]">
                         {step.step}
                       </span>
                     </div>
@@ -235,23 +202,23 @@ function HowItWorksSection() {
 
         {/* CTA */}
         <Reveal>
-          <div className="text-center mt-8 md:mt-12 lg:mt-16">
-            <p className="text-lg text-[#4c1d95] mb-4">Ready to start?</p>
-            <a href="/contact" className="premium-wide-link group">
+          <div className="text-center mt-10 md:mt-14">
+            <p className="font-[var(--shop-font-heading)] text-xl font-semibold text-[var(--shop-text-primary,#1C1917)] mb-4">Ready to start?</p>
+            <a href="/contact" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-[var(--shop-text-primary,#1C1917)] px-8 text-sm font-semibold text-white shadow-[var(--shop-shadow-sm)] transition hover:bg-[var(--shop-gold,#C9A962)]">
               Request a Quote
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </a>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-xs uppercase tracking-[0.16em] text-[#5b21b6]">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#e4dff5] bg-white px-3 py-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#5b21b6]" />
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs uppercase tracking-[0.14em] text-[var(--shop-text-muted,#78716C)]">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--shop-border-light,#E7E5E0)] bg-[var(--shop-bg-elevated,#FFFFFF)] px-3 py-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--shop-gold,#C9A962)]" />
                 Timeline shared before confirmation
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#e4dff5] bg-white px-3 py-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#a855f7]" />
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--shop-border-light,#E7E5E0)] bg-[var(--shop-bg-elevated,#FFFFFF)] px-3 py-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--shop-gold,#C9A962)]" />
                 Quality checked before dispatch
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#e4dff5] bg-white px-3 py-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#c084fc]" />
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--shop-border-light,#E7E5E0)] bg-[var(--shop-bg-elevated,#FFFFFF)] px-3 py-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--shop-gold,#C9A962)]" />
                 Support via email &amp; phone
               </span>
             </div>
@@ -264,4 +231,4 @@ function HowItWorksSection() {
 
 export default memo(HowItWorksSection)
 
-export const _exports = { steps, gradients }
+export const _exports = { steps }

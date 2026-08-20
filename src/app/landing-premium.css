@@ -17,16 +17,16 @@
   --pm-slate: #78716C;             /* luxury muted copy */
   --pm-hint: #A8A29E;              /* placeholder / hint */
   --pm-paper: #FDFCF8;             /* luxury ivory paper base */
-  --pm-surface: #FAF9F5;           /* elevated cream surface */
+  --pm-surface: #FFFFFF;           /* elevated surface */
   --pm-line: rgba(28, 25, 23, 0.06);
-  --pm-border: rgba(201, 169, 98, 0.16);
-  --pm-border-strong: rgba(201, 169, 98, 0.28);
-  --pm-primary-900: #3730A3;
-  --pm-primary-800: #4338CA;
-  --pm-primary-700: #4338CA;
-  --pm-primary-600: #6366F1;
-  --pm-primary-500: #6366F1;
-  --pm-primary-300: #C7D2FE;
+  --pm-border: rgba(201, 169, 98, 0.25);
+  --pm-border-strong: rgba(201, 169, 98, 0.45);
+  --pm-primary-900: #1C1917;
+  --pm-primary-800: #292524;
+  --pm-primary-700: #44403C;
+  --pm-primary-600: #C9A962;
+  --pm-primary-500: #D4B978;
+  --pm-primary-300: #F5ECD3;
   --pm-gold: #C9A962;             /* 3D shop signature gold */
   --pm-gold-light: #D4B978;
   --pm-gold-soft: #F5ECD3;
@@ -38,26 +38,27 @@
   --pm-gradient-primary: linear-gradient(135deg, #1C1917 0%, #292524 100%);
   --pm-gradient-primary-hover: linear-gradient(135deg, #44403C 0%, #1C1917 100%);
   --pm-gradient-surface: linear-gradient(160deg, #FDFCF8 0%, #FAF9F5 100%);
-  --pm-ease: cubic-bezier(0.16, 1, 0.3, 1);               /* emphasized standard */
-  --pm-ease-decel: cubic-bezier(0.0, 0, 0.2, 1);          /* emphasized decelerate */
+  --pm-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --pm-ease-decel: cubic-bezier(0.0, 0, 0.2, 1);
 }
 
 /* ── Landing-wide typography refinement ── */
 .landing-premium :is(h1, h2, h3, h4),
 .public-shell :is(h1, h2, h3, h4) {
   color: var(--pm-ink);
+  font-family: var(--shop-font-heading), var(--font-playfair), Georgia, serif;
   text-wrap: balance;
 }
 
 .landing-premium h1,
 .public-shell h1 {
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.025em;
 }
 
 .landing-premium h2,
 .public-shell h2 {
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.018em;
 }
 
@@ -71,14 +72,14 @@
   letter-spacing: -0.005em;
 }
 
-/* Elegant serif wordmarks (logo, footer brand, hero brand) */
+/* Elegant serif wordmarks */
 .landing-premium .logo,
 .public-shell .logo,
 .landing-premium .footer-brand,
 .public-shell .footer-brand,
 .landing-premium .footer-watermark,
 .public-shell .footer-watermark {
-  font-family: var(--font-display);
+  font-family: var(--shop-font-heading), var(--font-playfair), Georgia, serif;
 }
 
 /* ── Page surface ── */
@@ -93,54 +94,36 @@ body {
 
 /* ── Hero: refined premium surface ── */
 .premium-hero {
-  background:
-    radial-gradient(ellipse 80% 60% at 76% 30%, rgba(91, 33, 182, 0.045) 0%, transparent 60%),
-    linear-gradient(165deg, #faf9f7 0%, #f5f3ff 52%, #faf9f7 100%);
+  background: var(--pm-paper);
   color: var(--pm-ink);
 }
 
-.premium-hero::before {
-  background: radial-gradient(ellipse 50% 55% at 76% 34%, rgba(91, 33, 182, 0.05) 0%, transparent 62%);
-  filter: blur(22px);
-  opacity: 0.8;
-}
-
-.premium-hero-poster,
-.premium-hero-video {
-  opacity: 0.07;
-  filter: saturate(0.95) contrast(1.05) brightness(1.02);
-}
-
 .premium-hero-surface {
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(250, 248, 255, 0.82) 52%, rgba(255, 255, 255, 0.9) 100%),
-    linear-gradient(135deg, rgba(91, 33, 182, 0.06) 0%, transparent 30%, rgba(168, 85, 247, 0.04) 60%, transparent 78%);
+  background: radial-gradient(circle at 80% 20%, rgba(201, 169, 98, 0.08) 0%, transparent 60%);
 }
 
 .premium-hero-grid {
   background-image:
-    linear-gradient(rgba(91, 33, 182, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(91, 33, 182, 0.07) 1px, transparent 1px);
+    linear-gradient(rgba(201, 169, 98, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201, 169, 98, 0.05) 1px, transparent 1px);
   background-size: 80px 80px;
-  opacity: 0.28;
+  opacity: 0.25;
 }
 
-/* ── Hero badge / chips / eyebrow (frosted glass pills) ── */
+/* ── Hero badge / chips / eyebrow ── */
 .premium-hero-badge,
 .premium-chip,
 .premium-eyebrow {
   border-radius: 999px;
   padding: 8px 16px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  border: 1px solid rgba(76, 29, 149, 0.16);
-  background: rgba(255, 255, 255, 0.62);
-  color: var(--pm-primary-700);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(201, 169, 98, 0.35);
+  background: #FAF6EB;
+  color: #C9A962;
+  box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04);
 }
 
 .premium-hero-badge {
@@ -505,14 +488,15 @@ body {
 .hero-carousel-shade {
   position: absolute;
   inset: 0;
+  pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(250, 249, 247, 0.55) 0%, rgba(250, 249, 247, 0.22) 32%, rgba(250, 249, 247, 0) 62%),
-    linear-gradient(0deg, rgba(250, 249, 247, 0.18) 0%, transparent 40%);
+    linear-gradient(90deg, rgba(253, 252, 248, 0.85) 0%, rgba(253, 252, 248, 0.4) 30%, transparent 65%),
+    linear-gradient(0deg, rgba(253, 252, 248, 0.3) 0%, transparent 35%);
 }
 
 @media (max-width: 767px) {
   .hero-carousel-shade {
-    background: linear-gradient(180deg, rgba(250, 249, 247, 0.06) 0%, rgba(250, 249, 247, 0.3) 55%, rgba(250, 249, 247, 0.88) 100%);
+    background: linear-gradient(180deg, transparent 0%, rgba(253, 252, 248, 0.5) 45%, rgba(253, 252, 248, 0.95) 100%);
   }
 }
 
@@ -522,6 +506,7 @@ body {
   display: flex;
   align-items: center;
   padding: 5.5rem 1.25rem 5rem;
+  z-index: 10;
 }
 
 @media (min-width: 640px) {
@@ -537,14 +522,12 @@ body {
 }
 
 .hero-carousel-panel {
-  width: min(100%, 600px);
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  background: rgba(255, 255, 255, 0.68);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: 0 18px 48px rgba(91, 33, 182, 0.12);
-  padding: 1.5rem 1.75rem;
+  width: min(100%, 560px);
+  border-radius: 24px;
+  border: 1px solid rgba(201, 169, 98, 0.35);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 20px 50px rgba(28, 25, 23, 0.10);
+  padding: 1.75rem 2rem;
 }
 
 @media (max-width: 767px) {
