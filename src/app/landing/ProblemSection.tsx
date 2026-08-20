@@ -11,7 +11,7 @@ const painPoints = [
     metric: 'Weeks',
     problem: 'Traditional manufacturing stalls while you wait for suppliers.',
     solution: 'Quote in minutes. Express queue when the deadline is real.',
-    accent: 'from-[#6d28d9] to-[#a855f7]',
+    accent: 'from-[#C9A962] to-[#D4B978]',
   },
   {
     id: 2,
@@ -19,7 +19,7 @@ const painPoints = [
     metric: 'MOQ',
     problem: 'Factories push high minimums before the part is even proven.',
     solution: 'Print one fit-check part, then scale to a batch when it works.',
-    accent: 'from-[#7c3aed] to-[#6d28d9]',
+    accent: 'from-[#D4B978] to-[#C9A962]',
   },
   {
     id: 3,
@@ -27,7 +27,7 @@ const painPoints = [
     metric: 'Rework',
     problem: 'Every design change turns into another round of delay.',
     solution: 'Iterate overnight with material guidance and clean revision notes.',
-    accent: 'from-[#a855f7] to-[#c084fc]',
+    accent: 'from-[#B89A50] to-[#C9A962]',
   },
 ]
 
@@ -41,28 +41,28 @@ function ProblemSection() {
   const ref = useRef<HTMLElement>(null)
 
   return (
-    <section ref={ref} className="premium-problem relative z-10 w-full overflow-hidden px-4 py-12 md:px-8 md:py-16 lg:px-16 lg:py-24">
+    <section ref={ref} className="lux-section lux-band-cream lux-section-padding">
       <div className="mx-auto grid max-w-7xl items-start gap-8 md:gap-12 lg:grid-cols-[0.9fr_1.1fr]">
         <Reveal className="lg:sticky lg:top-28">
           <div>
-            <span className="premium-eyebrow">Why Flux3D</span>
+            <div className="lux-eyebrow mb-4">Why Flux3D</div>
 
-            <h2 className="mt-4 text-[clamp(2rem,6vw,4rem)] font-black leading-[0.98] tracking-normal text-[var(--pm-ink)] md:mt-5 md:text-5xl lg:text-6xl">
+            <h2 className="lux-heading-1 mt-4 md:mt-5">
               The faster way to make real parts.
             </h2>
 
-            <p className="mt-4 max-w-xl text-base leading-7 text-[var(--pm-slate)] md:mt-6 md:text-lg lg:leading-8">
+            <p className="mt-4 max-w-xl text-base leading-7 text-[var(--lux-text-muted)] md:mt-6 md:text-lg lg:leading-8">
               Flux3D gives you a compact production workflow: upload the file, choose the right material, approve the quote, and receive a finished part without factory friction.
             </p>
 
             <div className="mt-6 space-y-3 md:mt-8">
               {productionLoop.map((item, index) => (
                 <Reveal key={item.label} delay={(index + 1) * 40}>
-                  <div className="premium-loop-row">
-                    <item.icon className="h-5 w-5 text-[var(--pm-gold)]" />
+                  <div className="flex items-center gap-3 rounded-xl border border-[var(--lux-border-light)] bg-[var(--lux-bg-elevated)] p-3 shadow-[var(--lux-shadow-sm)]">
+                    <item.icon className="h-5 w-5 text-[var(--lux-gold)]" />
                     <div>
-                      <p className="text-sm font-bold text-[var(--pm-ink)]">{item.label}</p>
-                      <p className="text-xs leading-5 text-[var(--pm-slate)]">{item.value}</p>
+                      <p className="text-sm font-bold text-[var(--lux-text-primary)]">{item.label}</p>
+                      <p className="text-xs leading-5 text-[var(--lux-text-muted)]">{item.value}</p>
                     </div>
                   </div>
                 </Reveal>
@@ -77,23 +77,22 @@ function ProblemSection() {
             return (
               <Reveal key={point.id} delay={(index + 1) * 50}>
                 <div
-                  className="premium-problem-card bento-card-shimmer-shell group relative overflow-hidden rounded-2xl border border-[var(--pm-border)] bg-[var(--pm-surface)] p-6 md:p-7 shadow-[var(--pm-shadow-sm)] hover:shadow-[var(--pm-shadow-md)] hover:-translate-y-1 transition-all duration-300"
+                  className="lux-card lux-card-gold-accent lux-shimmer-shell group relative overflow-hidden rounded-2xl p-6 md:p-7"
                 >
-                  <div className="bento-card-shimmer" />
-                  <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--pm-gold)] to-[var(--pm-gold-light)]`} />
+                  <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${point.accent}`} />
                   <div className="grid gap-5 md:grid-cols-[120px_1fr] md:items-center">
-                    <div className="premium-metric-tile">
-                      <Icon className="h-6 w-6 text-[var(--pm-gold)]" />
-                      <span className="text-[var(--pm-ink)]">{point.metric}</span>
+                    <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-[var(--lux-border-light)] bg-[var(--lux-bg-muted)] p-4">
+                      <Icon className="h-6 w-6 text-[var(--lux-gold)]" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-[var(--lux-text-primary)]">{point.metric}</span>
                     </div>
 
                     <div>
-                      <h3 className="text-2xl font-black text-[var(--pm-ink)]">
+                      <h3 className="font-[var(--lux-font-display)] text-2xl font-semibold text-[var(--lux-text-primary)]">
                         {point.problem}
                       </h3>
-                      <div className="mt-4 flex items-start gap-3 rounded-xl border border-[var(--pm-border)] bg-[var(--pm-gold-faint)] p-4">
-                        <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-[var(--pm-gold)]" />
-                        <p className="text-sm leading-6 text-[var(--pm-slate)]">
+                      <div className="mt-4 flex items-start gap-3 rounded-xl border border-[var(--lux-border-light)] bg-[var(--lux-gold-faint)] p-4">
+                        <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-[var(--lux-gold)]" />
+                        <p className="text-sm leading-6 text-[var(--lux-text-muted)]">
                           {point.solution}
                         </p>
                       </div>
@@ -107,7 +106,7 @@ function ProblemSection() {
           <Reveal delay={(painPoints.length + 1) * 50}>
             <a
               href="/instant-quote"
-              className="premium-wide-link group"
+              className="lux-btn-ghost group"
             >
               Start with one file
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

@@ -521,14 +521,14 @@ export default function NavbarClient({
             {/* Header bar */}
             <div className="sticky top-0 z-10 flex items-center justify-between border-b px-6 pb-4 pt-[calc(1rem+env(safe-area-inset-top))]">
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-gradient-to-r from-orange-400 to-purple-600" />
+                <span className="h-2 w-2 rounded-full bg-gradient-to-r from-[#C9A962] to-[#D4B978]" />
                 <p className="font-mono text-xs uppercase tracking-widest">Navigation</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
                 aria-label="Close menu"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-purple-50 text-purple-500 transition-all duration-200 hover:bg-purple-100 hover:text-purple-900"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--lux-gold-faint)] text-[var(--lux-gold)] transition-all duration-200 hover:bg-[var(--lux-gold-soft)] hover:text-[var(--lux-charcoal)]"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -536,9 +536,9 @@ export default function NavbarClient({
 
             <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-6">
               {currentUser && (
-                <div className="flex items-center gap-3 rounded-2xl bg-purple-50/60 p-3.5">
+                <div className="flex items-center gap-3 rounded-2xl bg-[var(--lux-gold-faint)] p-3.5">
                   {currentUser.avatarUrl ? (
-                    <span className="relative h-11 w-11 overflow-hidden rounded-full ring-2 ring-purple-400/20">
+                    <span className="relative h-11 w-11 overflow-hidden rounded-full ring-2 ring-[var(--lux-gold)]/30">
                       <Image
                         src={currentUser.avatarUrl}
                         alt={currentUser.name}
@@ -548,13 +548,13 @@ export default function NavbarClient({
                       />
                     </span>
                   ) : (
-                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-tr from-purple-600 to-orange-400 text-sm font-bold text-white shadow-sm">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-tr from-[var(--lux-charcoal)] to-[var(--lux-gold)] text-sm font-bold text-white shadow-sm">
                       {getInitials(currentUser.name)}
                     </span>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-purple-900">{currentUser.name}</p>
-                    <p className="truncate text-xs text-purple-500/70">{currentUser.email}</p>
+                    <p className="truncate text-sm font-semibold text-[var(--lux-text-primary)]">{currentUser.name}</p>
+                    <p className="truncate text-xs text-[var(--lux-text-muted)]">{currentUser.email}</p>
                   </div>
                 </div>
               )}
@@ -575,12 +575,12 @@ export default function NavbarClient({
                             setIsProfileOpen(false)
                             setIsMoreOpen(false)
                           }}
-                          className={`navbar-mobile-link flex min-h-[52px] items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
-                            active ? 'navbar-mobile-link-active' : ''
+                          className={`flex min-h-[52px] items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
+                            active ? 'bg-[var(--lux-gold-faint)] text-[var(--lux-text-primary)] font-semibold' : 'text-[var(--lux-text-secondary)] hover:bg-[var(--lux-bg-muted)]'
                           }`}
                         >
                           <span>{link.label}</span>
-                          {active && <span className="h-1.5 w-1.5 rounded-full bg-orange-400 shadow-sm" />}
+                          {active && <span className="h-1.5 w-1.5 rounded-full bg-[var(--lux-gold)] shadow-sm" />}
                         </Link>
                       </li>
                     )
@@ -604,12 +604,12 @@ export default function NavbarClient({
                             setIsProfileOpen(false)
                             setIsMoreOpen(false)
                           }}
-                          className={`navbar-mobile-link flex min-h-[52px] items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
-                            active ? 'navbar-mobile-link-active' : ''
+                          className={`flex min-h-[52px] items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
+                            active ? 'bg-[var(--lux-gold-faint)] text-[var(--lux-text-primary)] font-semibold' : 'text-[var(--lux-text-secondary)] hover:bg-[var(--lux-bg-muted)]'
                           }`}
                         >
                           <span>{link.label}</span>
-                          {active && <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />}
+                          {active && <span className="h-1.5 w-1.5 rounded-full bg-[var(--lux-gold)]" />}
                         </Link>
                       </li>
                     )
@@ -673,7 +673,7 @@ export default function NavbarClient({
                         href="/admin"
                         prefetch={false}
                         onClick={() => setIsOpen(false)}
-                        className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-orange-50 py-2.5 text-center text-sm font-semibold text-orange-600 transition hover:bg-orange-100"
+                        className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-[var(--lux-gold-faint)] py-2.5 text-center text-sm font-semibold text-[var(--lux-gold)] transition hover:bg-[var(--lux-gold-soft)]"
                       >
                         Admin Dashboard
                       </Link>

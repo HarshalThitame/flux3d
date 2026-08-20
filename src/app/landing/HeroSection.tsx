@@ -1,12 +1,26 @@
 'use client'
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, Box, ChevronLeft, ChevronRight, ShieldCheck, ShoppingBag, Sparkles, Star, Truck } from 'lucide-react'
+import {
+  ArrowRight,
+  Box,
+  ChevronLeft,
+  ChevronRight,
+  ShoppingBag,
+  Sparkles,
+  Star,
+  ShieldCheck,
+} from 'lucide-react'
 import { addToast } from '@/lib/toast/store'
-import { formatShopPrice, formatVariantLabel, getShopProductBadge, getShopProductImages } from '@/lib/shop/selection'
+import {
+  formatShopPrice,
+  formatVariantLabel,
+  getShopProductBadge,
+  getShopProductImages,
+} from '@/lib/shop/selection'
 import { useShopCartStore } from '@/stores/shopCartStore'
 import type { ShopHomeData } from '@/lib/shop/public-types'
 import { trackMetaEvent } from '@/lib/meta/event-utils'
@@ -14,7 +28,7 @@ import QuickAddModal from '@/components/shop/QuickAddModal'
 import ProductModelModal from '@/components/shop/ProductModelModal'
 import CategoryFilterDropdown from './CategoryFilterDropdown'
 
-const ROTATION_MS = 5500
+const ROTATION_MS = 6000
 
 export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
   const [activeIndex, setActiveIndex] = useState(0)
@@ -24,8 +38,14 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
   const [modelOpen, setModelOpen] = useState(false)
   const [added, setAdded] = useState(false)
   const [category, setCategory] = useState('all')
+  const [progress, setProgress] = useState(0)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
   const addItem = useShopCartStore((state) => state.addItem)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const progressRef = useRef<number>(0)
+  const rafRef = useRef<number>(0)
+  const lastTimeRef = useRef<number>(0)
 
   const allProducts = useMemo(() => {
     const seen = new Set<string>()
@@ -44,16 +64,41 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
   const index = visibleProducts.length > 0 ? Math.min(activeIndex, visibleProducts.length - 1) : 0
   const rotationPaused = hoverPaused || quickAddOpen || modelOpen || filterOpen
 
+  // Auto-rotate + progress bar
   useEffect(() => {
     if (visibleProducts.length <= 1 || rotationPaused) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const id = window.setInterval(() => {
-      if (document.visibilityState !== 'hidden') {
-        setActiveIndex((current) => (current + 1) % visibleProducts.length)
+
+    lastTimeRef.current = performance.now()
+    progressRef.current = 0
+
+    const tick = (now: number) => {
+      const delta = now - lastTimeRef.current
+      lastTimeRef.current = now
+      progressRef.current += delta
+
+      const pct = Math.min((progressRef.current / ROTATION_MS) * 100, 100)
+      setProgress(pct)
+
+      if (progressRef.current >= ROTATION_MS) {
+        progressRef.current = 0
+        if (document.visibilityState !== 'hidden') {
+          setActiveIndex((current) => (current + 1) % visibleProducts.length)
+        }
       }
-    }, ROTATION_MS)
-    return () => window.clearInterval(id)
-  }, [visibleProducts.length, rotationPaused])
+
+      rafRef.current = requestAnimationFrame(tick)
+    }
+
+    rafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [visibleProducts.length, rotationPaused, activeIndex])
+
+  // Reset progress on slide change
+  useEffect(() => {
+    progressRef.current = 0
+    setProgress(0)
+  }, [activeIndex])
 
   function goToSlide(nextIndex: number) {
     setActiveIndex(((nextIndex % visibleProducts.length) + visibleProducts.length) % visibleProducts.length)
@@ -111,250 +156,271 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
     addToast({
       type: 'success',
       title: 'Added to cart',
-      description: `${product.name} — ${formatShopPrice(directSku.price)}`,
+      description: `${product.name} \u2014 ${formatShopPrice(directSku.price)}`,
     })
     window.setTimeout(() => setAdded(false), 1500)
   }
 
+  // Touch/swipe handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX)
+  }, [])
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStart === null) return
+    const diff = touchStart - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) goToSlide(index + 1)
+      else goToSlide(index - 1)
+    }
+    setTouchStart(null)
+  }, [touchStart, index])
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') goToSlide(index - 1)
+      if (e.key === 'ArrowRight') goToSlide(index + 1)
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [index, visibleProducts.length])
+
   return (
-    <section className="shop-luxury relative overflow-hidden bg-[var(--shop-bg-base,#FDFCF8)] px-4 pb-16 pt-24 sm:px-6 md:px-10 lg:px-12 lg:pb-24 lg:pt-28">
-      {/* Top Boutique Bar */}
-      <div className="mx-auto mb-8 flex max-w-[1280px] items-center justify-between gap-4 border-b border-[var(--shop-border-light,#E7E5E0)] pb-6">
+    <section
+      className="lux-hero"
+      onMouseEnter={() => setHoverPaused(true)}
+      onMouseLeave={() => setHoverPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Top bar: Brand + Category filter */}
+      <div className="absolute inset-x-0 top-0 z-40 flex items-center justify-between gap-4 px-6 pt-6 sm:px-8 sm:pt-7">
         <Link href="/" aria-label="Flux3D home" className="group">
-          <div className="font-[var(--shop-font-heading)] text-2xl font-semibold tracking-tight text-[var(--shop-text-primary,#1C1917)]">
-            Flux3D <span className="text-[var(--shop-gold,#C9A962)] font-serif italic">Boutique</span>
+          <div className="font-[var(--lux-font-display)] text-xl font-semibold tracking-tight text-[var(--lux-text-primary)] sm:text-2xl">
+            Flux3D <span className="italic text-[var(--lux-gold)]">Boutique</span>
           </div>
         </Link>
 
-        <div className="flex items-center gap-3">
-          <CategoryFilterDropdown
-            categories={shopData.categories}
-            value={category}
-            onOpenChange={setFilterOpen}
-            onChange={selectCategory}
-          />
-        </div>
+        <CategoryFilterDropdown
+          categories={shopData.categories}
+          value={category}
+          onOpenChange={setFilterOpen}
+          onChange={selectCategory}
+        />
       </div>
 
-      {/* Main Studio Showcase Grid */}
-      <div
-        className="mx-auto grid max-w-[1280px] items-center gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14"
-        onMouseEnter={() => setHoverPaused(true)}
-        onMouseLeave={() => setHoverPaused(false)}
-      >
-        {/* Left Column: Product Information & Interactive Controls */}
-        <div className="min-w-0">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint,#FAF6EB)] px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-gold,#C9A962)]">
-            <Sparkles className="h-3.5 w-3.5" />
-            Curated 3D Printed Collection
-          </div>
+      {/* Carousel track */}
+      <div className="relative h-full w-full overflow-hidden">
+        <div
+          ref={trackRef}
+          className="lux-carousel-track"
+          style={{ transform: `translateX(-${index * 100}%)` }}
+        >
+          {visibleProducts.map((p, i) => {
+            const pImages = getShopProductImages(p)
+            const pImage = pImages[0] ?? null
+            const pBadge = getShopProductBadge(p)
 
-          {product ? (
-            <>
-              <div className="mt-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--shop-text-muted,#78716C)]">
-                <span>{product.category_name || 'Boutique Collection'}</span>
-                {product.review_count > 0 && (
-                  <>
-                    <span>•</span>
-                    <div className="flex items-center gap-1 text-[var(--shop-text-primary,#1C1917)]">
-                      <Star className="h-3.5 w-3.5 fill-[var(--shop-gold,#C9A962)] text-[var(--shop-gold,#C9A962)]" />
-                      <span>{product.avg_rating.toFixed(1)}</span>
-                      <span className="text-[var(--shop-text-muted,#78716C)]">({product.review_count})</span>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <h1 className="font-[var(--shop-font-heading)] mt-3 text-[clamp(2.4rem,5.5vw,4.2rem)] font-semibold leading-[1.08] tracking-[-0.02em] text-[var(--shop-text-primary,#1C1917)]">
-                {product.name}
-              </h1>
-
-              <p className="mt-4 line-clamp-3 max-w-xl text-base leading-7 text-[var(--shop-text-secondary,#44403C)] sm:text-lg">
-                {product.description || 'Premium 3D printed piece crafted with clean layer finishes, precision tolerances, and ready-to-ship presentation.'}
-              </p>
-
-              <div className="mt-6 flex items-baseline gap-3">
-                <span className="font-[var(--shop-font-heading)] text-3xl font-semibold text-[var(--shop-text-primary,#1C1917)] sm:text-4xl">
-                  {formatShopPrice(product.display_price)}
-                </span>
-                {product.compare_at_price && onSale && (
-                  <span className="text-lg text-[var(--shop-text-subtle,#A8A29E)] line-through">
-                    {formatShopPrice(product.compare_at_price)}
-                  </span>
-                )}
-                {saveAmount !== null && (
-                  <span className="rounded-full bg-rose-50 border border-rose-200 px-3 py-1 text-xs font-bold text-rose-600">
-                    Save {formatShopPrice(saveAmount)}
-                  </span>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  disabled={product.variant_options.length === 0 && !canDirectAdd}
-                  onClick={handleAdd}
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--shop-text-primary,#1C1917)] px-7 text-sm font-semibold text-white shadow-[var(--shop-shadow-sm)] transition hover:bg-[var(--shop-gold,#C9A962)] hover:shadow-[var(--shop-shadow-md)] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <ShoppingBag className="h-4 w-4" />
-                  {added ? 'Added to Cart' : 'Add to Cart'}
-                </button>
-
-                {hasModel && (
-                  <button
-                    type="button"
-                    onClick={() => setModelOpen(true)}
-                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint,#FAF6EB)] px-6 text-sm font-semibold text-[var(--shop-gold,#C9A962)] transition hover:border-[var(--shop-gold)] hover:bg-[var(--shop-gold-soft)]"
-                  >
-                    <Box className="h-4 w-4" />
-                    Live 3D Preview
-                  </button>
+            return (
+              <div key={p.id} className="lux-hero-slide">
+                {/* Full-bleed product image */}
+                {pImage ? (
+                  <Image
+                    src={pImage}
+                    alt={p.name}
+                    fill
+                    priority={i === 0}
+                    sizes="100vw"
+                    className="lux-hero-image"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-[var(--lux-bg-muted)]">
+                    <Box className="h-16 w-16 text-[var(--lux-taupe)]" />
+                  </div>
                 )}
 
-                <Link
-                  href={`/3d-shop/product/${product.slug}`}
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[var(--shop-border-medium,#D7D3CB)] bg-white px-6 text-sm font-semibold text-[var(--shop-text-primary,#1C1917)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
-                >
-                  View Details
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
+                {/* Gradient shade for text readability */}
+                <div className="lux-hero-shade" />
 
-              {/* Product Thumbnail Selector Strip */}
-              {visibleProducts.length > 1 && (
-                <div className="mt-10 border-t border-[var(--shop-border-light,#E7E5E0)] pt-6">
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-text-muted,#78716C)]">
-                      Boutique Items ({index + 1} of {visibleProducts.length})
+                {/* Floating badges - top right */}
+                <div className="absolute right-6 top-24 z-20 flex flex-col items-end gap-2 sm:right-8 sm:top-28">
+                  {pBadge && (
+                    <span className="lux-badge lux-badge-gold shadow-sm">
+                      <Sparkles className="h-3 w-3" />
+                      {pBadge}
                     </span>
-                    <div className="flex items-center gap-2">
+                  )}
+                  <span className="lux-badge lux-badge-outline shadow-sm">
+                    <ShieldCheck className="h-3 w-3 text-[var(--lux-gold)]" />
+                    QA Passed
+                  </span>
+                </div>
+
+                {/* Content overlay */}
+                <div className="lux-hero-content">
+                  <div className="lux-hero-panel lux-glass">
+                    {/* Eyebrow */}
+                    <div className="lux-eyebrow mb-4">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Exclusive 3D Collection
+                    </div>
+
+                    {/* Category + rating */}
+                    <div className="mb-3 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--lux-text-muted)]">
+                      <span>{p.category_name || 'Curated Store'}</span>
+                      {p.review_count > 0 && (
+                        <>
+                          <span className="text-[var(--lux-taupe)]">\u2022</span>
+                          <div className="flex items-center gap-1 text-[var(--lux-text-primary)]">
+                            <Star className="h-3.5 w-3.5 fill-[var(--lux-gold)] text-[var(--lux-gold)]" />
+                            <span className="font-bold">{p.avg_rating.toFixed(1)}</span>
+                            <span className="text-[var(--lux-text-muted)]">({p.review_count} reviews)</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Product name */}
+                    <h1 className="lux-heading-1 mb-3">
+                      {p.name}
+                    </h1>
+
+                    {/* Description */}
+                    <p className="lux-body mb-5 line-clamp-2 max-w-md">
+                      {p.description || 'Handcrafted 3D printed luxury object built with high precision tolerances, studio finishing, and ready-to-ship packaging.'}
+                    </p>
+
+                    {/* Price */}
+                    <div className="mb-6 flex items-baseline gap-4">
+                      <span className="lux-price">{formatShopPrice(p.display_price)}</span>
+                      {p.compare_at_price && onSale && (
+                        <span className="lux-price-was">{formatShopPrice(p.compare_at_price)}</span>
+                      )}
+                      {saveAmount !== null && (
+                        <span className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-bold text-red-600">
+                          Save {formatShopPrice(saveAmount)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* CTAs */}
+                    <div className="flex flex-wrap items-center gap-3">
                       <button
                         type="button"
-                        onClick={() => goToSlide(index - 1)}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--shop-border-light,#E7E5E0)] bg-white text-[var(--shop-text-primary,#1C1917)] shadow-sm transition hover:border-[var(--shop-gold,#C9A962)] hover:text-[var(--shop-gold,#C9A962)]"
-                        aria-label="Previous product"
+                        disabled={p.variant_options.length === 0 && !canDirectAdd}
+                        onClick={handleAdd}
+                        className="lux-btn-primary"
                       >
-                        <ChevronLeft className="h-4 w-4" />
+                        <ShoppingBag className="h-4 w-4" />
+                        {added ? 'Added to Cart' : 'Add to Cart'}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => goToSlide(index + 1)}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--shop-border-light,#E7E5E0)] bg-white text-[var(--shop-text-primary,#1C1917)] shadow-sm transition hover:border-[var(--shop-gold,#C9A962)] hover:text-[var(--shop-gold,#C9A962)]"
-                        aria-label="Next product"
+
+                      {hasModel && (
+                        <button
+                          type="button"
+                          onClick={() => setModelOpen(true)}
+                          className="lux-btn-secondary"
+                        >
+                          <Box className="h-4 w-4" />
+                          View in 3D
+                        </button>
+                      )}
+
+                      <Link
+                        href={`/3d-shop/product/${p.slug}`}
+                        className="lux-btn-ghost"
                       >
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
+                        Explore Details
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
                     </div>
                   </div>
-
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                    {visibleProducts.map((p, i) => {
-                      const thumb = getShopProductImages(p)[0]
-                      const isActive = i === index
-                      return (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => goToSlide(i)}
-                          className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition-all ${
-                            isActive
-                              ? 'border-[var(--shop-gold,#C9A962)] shadow-[var(--shop-shadow-gold)] scale-105'
-                              : 'border-[var(--shop-border-light,#E7E5E0)] opacity-70 hover:opacity-100'
-                          }`}
-                        >
-                          {thumb ? (
-                            <Image src={thumb} alt={p.name} fill sizes="64px" className="object-cover" />
-                          ) : (
-                            <div className="grid h-full place-items-center bg-[var(--shop-bg-muted,#F2F0EA)]">
-                              <Box className="h-4 w-4 text-[var(--shop-text-subtle,#A8A29E)]" />
-                            </div>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
                 </div>
-              )}
-            </>
-          ) : (
-            <div className="py-12">
-              <h2 className="font-[var(--shop-font-heading)] text-2xl font-semibold text-[var(--shop-text-primary,#1C1917)]">
-                Collection restock in progress
-              </h2>
-              <p className="mt-2 text-sm text-[var(--shop-text-muted,#78716C)]">
-                Select another category or explore all ready-to-ship products in the boutique.
-              </p>
-              <Link href="/3d-shop" className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-[var(--shop-text-primary,#1C1917)] px-6 text-sm font-semibold text-white">
-                Visit Full Store <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* Right Column: Studio Showcase Canvas */}
-        <div className="relative">
-          <div className="relative aspect-square overflow-hidden rounded-[var(--shop-radius-xl,32px)] border border-[var(--shop-border-gold)] bg-white p-4 shadow-[var(--shop-shadow-lg)]">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(201,169,98,0.08)_0%,transparent_70%)] pointer-events-none" />
-
-            {/* Badges Overlay */}
-            <div className="absolute left-6 top-6 z-10 flex flex-wrap gap-2">
-              {badge && (
-                <span className="rounded-full border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint,#FAF6EB)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--shop-gold,#C9A962)] shadow-sm">
-                  {badge}
-                </span>
-              )}
-              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--shop-border-light,#E7E5E0)] bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--shop-text-muted,#78716C)] shadow-sm">
-                <ShieldCheck className="h-3 w-3 text-[var(--shop-gold,#C9A962)]" />
-                QA Checked
-              </span>
-            </div>
-
-            {hasModel && (
-              <div className="absolute right-6 top-6 z-10">
-                <span className="inline-flex items-center gap-1 rounded-full border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint,#FAF6EB)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--shop-gold,#C9A962)] shadow-sm">
-                  <Box className="h-3 w-3" />
-                  Interactive 3D
-                </span>
               </div>
-            )}
-
-            {/* Main Crisp Product Image */}
-            <div className="relative h-full w-full overflow-hidden rounded-[var(--shop-radius-lg,24px)] bg-[var(--shop-bg-soft,#FAF9F5)]">
-              {image ? (
-                <Image
-                  key={product?.id}
-                  src={image}
-                  alt={product?.name || 'Flux3D product'}
-                  fill
-                  priority
-                  sizes="(min-width: 1024px) 560px, 100vw"
-                  className="object-cover transition duration-700 hover:scale-105"
-                />
-              ) : (
-                <div className="grid h-full place-items-center text-center p-8">
-                  <div>
-                    <Box className="mx-auto h-12 w-12 text-[var(--shop-gold,#C9A962)] mb-3" />
-                    <p className="font-[var(--shop-font-heading)] text-lg font-semibold text-[var(--shop-text-primary,#1C1917)]">Flux3D Boutique</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Floating Specs Bar */}
-            <div className="absolute bottom-6 inset-x-6 z-10 flex items-center justify-between gap-3 rounded-2xl border border-[var(--shop-border-light,#E7E5E0)] bg-white/95 p-3.5 shadow-md backdrop-blur-md">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[var(--shop-text-primary,#1C1917)]">
-                <Truck className="h-4 w-4 text-[var(--shop-gold,#C9A962)]" />
-                <span>Dispatch: 2–4 Days</span>
-              </div>
-              <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--shop-text-muted,#78716C)]">
-                ±0.2mm Precision
-              </div>
-            </div>
-          </div>
+            )
+          })}
         </div>
       </div>
 
+      {/* Progress bar */}
+      <div className="lux-carousel-progress" style={{ width: `${progress}%` }} />
+
+      {/* Thumbnail strip */}
+      {visibleProducts.length > 1 && (
+        <div className="lux-thumbnail-strip hidden sm:flex">
+          {visibleProducts.map((p, i) => {
+            const thumb = getShopProductImages(p)[0]
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => goToSlide(i)}
+                className={`lux-thumbnail ${i === index ? 'lux-thumbnail-active' : ''}`}
+                aria-label={`Go to ${p.name}`}
+              >
+                {thumb ? (
+                  <Image src={thumb} alt={p.name} fill sizes="48px" className="object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-[var(--lux-bg-muted)]">
+                    <Box className="h-4 w-4 text-[var(--lux-taupe)]" />
+                  </div>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Controls: dots + arrows */}
+      {visibleProducts.length > 1 && (
+        <div className="lux-carousel-controls">
+          <div className="lux-carousel-dots hidden md:flex">
+            {visibleProducts.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => goToSlide(i)}
+                className={`lux-carousel-dot ${i === index ? 'lux-carousel-dot-active' : ''}`}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => goToSlide(index - 1)}
+            className="lux-carousel-arrow"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => goToSlide(index + 1)}
+            className="lux-carousel-arrow"
+            aria-label="Next slide"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {visibleProducts.length === 0 && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[var(--lux-bg-base)] px-6">
+          <Box className="mb-4 h-16 w-16 text-[var(--lux-taupe)]" />
+          <h2 className="lux-heading-2 mb-2 text-center">Category Restocking Soon</h2>
+          <p className="lux-body mb-6 text-center text-[var(--lux-text-muted)]">
+            Explore our full boutique catalog for ready-to-ship 3D objects.
+          </p>
+          <Link href="/3d-shop" className="lux-btn-primary">
+            Visit Store <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      )}
+
+      {/* Modals */}
       {mounted && product && createPortal(
         <QuickAddModal product={product} open={quickAddOpen} onOpenChangeAction={setQuickAddOpen} />,
         document.body

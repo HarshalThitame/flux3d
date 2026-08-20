@@ -1,0 +1,791 @@
+/* ============================================================
+   Flux3D — Unified Ultra-Premium Luxury Design System
+   ------------------------------------------------------------
+   A single source of truth for the entire landing experience.
+   Built on top of shop-luxury.css. Light theme only.
+   Color palette: Ivory, Warm Charcoal, Signature Gold.
+   ============================================================ */
+
+:root {
+  /* ── Core Luxury Palette ── */
+  --lux-ivory: #FDFCF8;
+  --lux-cream: #FAF9F5;
+  --lux-warm: #F5F3EE;
+  --lux-sand: #EBE7E0;
+  --lux-taupe: #D7D3CB;
+  --lux-stone: #A8A29E;
+  --lux-slate: #78716C;
+  --lux-charcoal: #44403C;
+  --lux-ink: #1C1917;
+  --lux-gold: #C9A962;
+  --lux-gold-light: #D4B978;
+  --lux-gold-soft: #F5ECD3;
+  --lux-gold-faint: #FAF6EB;
+
+  /* ── Functional Tokens ── */
+  --lux-bg-base: var(--lux-ivory);
+  --lux-bg-soft: var(--lux-cream);
+  --lux-bg-muted: var(--lux-warm);
+  --lux-bg-elevated: #FFFFFF;
+  --lux-text-primary: var(--lux-ink);
+  --lux-text-secondary: var(--lux-charcoal);
+  --lux-text-muted: var(--lux-slate);
+  --lux-text-subtle: var(--lux-stone);
+  --lux-border-light: var(--lux-sand);
+  --lux-border-medium: var(--lux-taupe);
+  --lux-border-gold: rgba(201, 169, 98, 0.35);
+  --lux-border-gold-strong: rgba(201, 169, 98, 0.55);
+
+  /* ── Shadows (warm, subtle, paper-like) ── */
+  --lux-shadow-xs: 0 1px 2px rgba(28, 25, 23, 0.03);
+  --lux-shadow-sm: 0 2px 8px rgba(28, 25, 23, 0.04), 0 1px 3px rgba(28, 25, 23, 0.02);
+  --lux-shadow-md: 0 8px 24px rgba(28, 25, 23, 0.05), 0 2px 8px rgba(28, 25, 23, 0.03);
+  --lux-shadow-lg: 0 18px 48px rgba(28, 25, 23, 0.07), 0 6px 16px rgba(28, 25, 23, 0.04);
+  --lux-shadow-xl: 0 28px 72px rgba(28, 25, 23, 0.09), 0 10px 28px rgba(28, 25, 23, 0.05);
+  --lux-shadow-gold: 0 12px 32px rgba(201, 169, 98, 0.14);
+  --lux-shadow-gold-lg: 0 20px 50px rgba(201, 169, 98, 0.18);
+
+  /* ── Radii ── */
+  --lux-radius-sm: 12px;
+  --lux-radius-md: 16px;
+  --lux-radius-lg: 24px;
+  --lux-radius-xl: 32px;
+  --lux-radius-full: 9999px;
+
+  /* ── Gradients ── */
+  --lux-gradient-gold: linear-gradient(135deg, var(--lux-gold) 0%, var(--lux-gold-light) 100%);
+  --lux-gradient-hero: linear-gradient(180deg, var(--lux-ivory) 0%, var(--lux-cream) 100%);
+  --lux-gradient-surface: linear-gradient(145deg, #FFFFFF 0%, var(--lux-cream) 100%);
+  --lux-gradient-dark: linear-gradient(135deg, var(--lux-ink) 0%, var(--lux-charcoal) 100%);
+  --lux-gradient-image-overlay: linear-gradient(90deg, rgba(253, 252, 248, 0.92) 0%, rgba(253, 252, 248, 0.5) 35%, transparent 65%);
+  --lux-gradient-image-overlay-mobile: linear-gradient(180deg, transparent 0%, rgba(253, 252, 248, 0.6) 45%, rgba(253, 252, 248, 0.96) 100%);
+
+  /* ── Easing ── */
+  --lux-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --lux-ease-decel: cubic-bezier(0.0, 0, 0.2, 1);
+  --lux-ease-carousel: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ── Typography scale ── */
+  --lux-text-display: clamp(2.8rem, 6.5vw, 5.5rem);
+  --lux-text-h1: clamp(2.2rem, 5vw, 4rem);
+  --lux-text-h2: clamp(1.8rem, 3.5vw, 3rem);
+  --lux-text-h3: clamp(1.3rem, 2.5vw, 1.8rem);
+  --lux-text-body: 15px;
+  --lux-text-sm: 13px;
+  --lux-text-xs: 11px;
+
+  /* ── Font families (reference existing loaded fonts) ── */
+  --lux-font-display: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  --lux-font-body: var(--font-space), 'Space Grotesk', system-ui, -apple-system, sans-serif;
+}
+
+/* ── Global overrides for public shell ── */
+.public-shell {
+  background: var(--lux-bg-base);
+  color: var(--lux-text-primary);
+}
+
+body {
+  background-color: var(--lux-bg-base);
+  color: var(--lux-text-primary);
+}
+
+/* ── Typography utilities ── */
+.lux-heading-display {
+  font-family: var(--lux-font-display);
+  font-size: var(--lux-text-display);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  color: var(--lux-text-primary);
+}
+
+.lux-heading-1 {
+  font-family: var(--lux-font-display);
+  font-size: var(--lux-text-h1);
+  font-weight: 700;
+  letter-spacing: -0.022em;
+  line-height: 1.08;
+  color: var(--lux-text-primary);
+}
+
+.lux-heading-2 {
+  font-family: var(--lux-font-display);
+  font-size: var(--lux-text-h2);
+  font-weight: 600;
+  letter-spacing: -0.018em;
+  line-height: 1.12;
+  color: var(--lux-text-primary);
+}
+
+.lux-heading-3 {
+  font-family: var(--lux-font-display);
+  font-size: var(--lux-text-h3);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  color: var(--lux-text-primary);
+}
+
+.lux-body {
+  font-family: var(--lux-font-body);
+  font-size: var(--lux-text-body);
+  line-height: 1.7;
+  letter-spacing: -0.005em;
+  color: var(--lux-text-secondary);
+}
+
+.lux-text-muted { color: var(--lux-text-muted); }
+.lux-text-subtle { color: var(--lux-text-subtle); }
+.lux-text-gold { color: var(--lux-gold); }
+
+/* ── Eyebrow / Label ── */
+.lux-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--lux-font-body);
+  font-size: var(--lux-text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--lux-gold);
+}
+
+.lux-eyebrow::before {
+  content: '';
+  width: 24px;
+  height: 1.5px;
+  background: var(--lux-gradient-gold);
+  border-radius: 999px;
+}
+
+/* ── Buttons ── */
+.lux-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 28px;
+  border-radius: var(--lux-radius-full);
+  background: var(--lux-text-primary);
+  color: #fff;
+  font-family: var(--lux-font-body);
+  font-size: var(--lux-text-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 28px rgba(28, 25, 23, 0.18);
+  transition: background 0.3s var(--lux-ease), box-shadow 0.3s var(--lux-ease), transform 0.25s var(--lux-ease);
+  cursor: pointer;
+  border: none;
+}
+
+.lux-btn-primary:hover {
+  background: var(--lux-charcoal);
+  box-shadow: 0 14px 36px rgba(28, 25, 23, 0.22);
+  transform: translateY(-2px);
+}
+
+.lux-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 24px;
+  border-radius: var(--lux-radius-full);
+  border: 1px solid var(--lux-border-gold-strong);
+  background: var(--lux-gold-faint);
+  color: var(--lux-ink);
+  font-family: var(--lux-font-body);
+  font-size: var(--lux-text-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 8px 24px rgba(201, 169, 98, 0.12);
+  transition: background 0.3s var(--lux-ease), border-color 0.3s var(--lux-ease), box-shadow 0.3s var(--lux-ease), transform 0.25s var(--lux-ease);
+  cursor: pointer;
+}
+
+.lux-btn-secondary:hover {
+  background: var(--lux-gold-soft);
+  border-color: var(--lux-gold);
+  box-shadow: 0 12px 32px rgba(201, 169, 98, 0.18);
+  transform: translateY(-2px);
+}
+
+.lux-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 4px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--lux-border-gold);
+  color: var(--lux-text-primary);
+  font-family: var(--lux-font-body);
+  font-size: var(--lux-text-sm);
+  font-weight: 700;
+  transition: border-color 0.25s var(--lux-ease), color 0.25s var(--lux-ease), gap 0.25s var(--lux-ease);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.lux-btn-ghost:hover {
+  border-color: var(--lux-gold);
+  color: var(--lux-gold);
+  gap: 10px;
+}
+
+/* ── Cards ── */
+.lux-card {
+  background: var(--lux-bg-elevated);
+  border: 1px solid var(--lux-border-light);
+  border-radius: var(--lux-radius-lg);
+  padding: 28px;
+  box-shadow: var(--lux-shadow-sm);
+  transition: border-color 0.3s var(--lux-ease), box-shadow 0.3s var(--lux-ease), transform 0.3s var(--lux-ease);
+}
+
+.lux-card:hover {
+  border-color: var(--lux-border-gold);
+  box-shadow: var(--lux-shadow-md);
+  transform: translateY(-3px);
+}
+
+.lux-card-gold-accent {
+  position: relative;
+  overflow: hidden;
+}
+
+.lux-card-gold-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--lux-gradient-gold);
+  border-radius: var(--lux-radius-lg) var(--lux-radius-lg) 0 0;
+}
+
+/* ── Category filter dropdown overrides ── */
+.hero-filter-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.05rem;
+  border-radius: var(--lux-radius-full);
+  border: 1px solid var(--lux-border-gold);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(14px);
+  color: var(--lux-text-primary);
+  font-family: var(--lux-font-body);
+  font-size: var(--lux-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.25s var(--lux-ease), box-shadow 0.25s var(--lux-ease);
+  box-shadow: var(--lux-shadow-sm);
+}
+
+.hero-filter-trigger:hover {
+  border-color: var(--lux-border-gold-strong);
+  box-shadow: var(--lux-shadow-md);
+}
+
+.hero-filter-chevron {
+  color: var(--lux-gold);
+  transition: transform 0.3s var(--lux-ease);
+}
+
+.hero-filter[data-open='true'] .hero-filter-chevron {
+  transform: rotate(180deg);
+}
+
+.hero-filter-list {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  right: 0;
+  z-index: 60;
+  width: 250px;
+  max-height: 320px;
+  overflow-y: auto;
+  border-radius: var(--lux-radius-lg);
+  border: 1px solid var(--lux-border-light);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--lux-shadow-lg);
+  padding: 0.5rem;
+  transform-origin: top right;
+  animation: heroFilterIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes heroFilterIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.hero-filter-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.6rem;
+  border-radius: var(--lux-radius-md);
+  padding: 0.62rem 0.75rem;
+  text-align: left;
+  color: var(--lux-text-primary);
+  font-family: var(--lux-font-body);
+  font-size: var(--lux-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s var(--lux-ease), color 0.2s var(--lux-ease);
+  border: none;
+  background: transparent;
+}
+
+.hero-filter-item:hover {
+  background: var(--lux-gold-faint);
+  color: var(--lux-charcoal);
+}
+
+.hero-filter-item[data-active='true'] {
+  background: linear-gradient(90deg, var(--lux-gold-faint), var(--lux-gold-soft));
+  color: var(--lux-text-primary);
+  box-shadow: inset 0 0 0 1px var(--lux-border-gold);
+}
+
+/* ── Glass / Frosted ── */
+.lux-glass {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 20px rgba(28, 25, 23, 0.04);
+}
+
+.lux-glass-dark {
+  background: rgba(28, 25, 23, 0.65);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ── Section bands ── */
+.lux-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.lux-band-ivory { background: var(--lux-bg-base); }
+.lux-band-cream { background: var(--lux-bg-soft); }
+.lux-band-warm { background: var(--lux-bg-muted); }
+.lux-band-white { background: var(--lux-bg-elevated); }
+.lux-band-dark {
+  background: var(--lux-text-primary);
+  color: #fff;
+}
+
+.lux-band-dark .lux-heading-2,
+.lux-band-dark .lux-heading-3 {
+  color: #fff;
+}
+
+/* ── Hero Editorial ── */
+.lux-hero {
+  position: relative;
+  width: 100%;
+  min-height: 100svh;
+  overflow: hidden;
+  background: var(--lux-bg-base);
+}
+
+.lux-hero-slide {
+  position: relative;
+  min-width: 100%;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.lux-hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lux-hero-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--lux-gradient-image-overlay);
+}
+
+@media (max-width: 767px) {
+  .lux-hero-shade {
+    background: var(--lux-gradient-image-overlay-mobile);
+  }
+}
+
+.lux-hero-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 6rem 1.5rem 5rem;
+  z-index: 10;
+}
+
+@media (min-width: 640px) {
+  .lux-hero-content {
+    padding: 6rem 2.5rem 5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lux-hero-content {
+    padding: 7rem clamp(2.5rem, 6vw, 5rem) 5rem;
+  }
+}
+
+.lux-hero-panel {
+  width: min(100%, 520px);
+  border-radius: var(--lux-radius-lg);
+  padding: 2rem 2.25rem;
+}
+
+@media (max-width: 767px) {
+  .lux-hero-content {
+    align-items: flex-end;
+  }
+  .lux-hero-panel {
+    width: 100%;
+    padding: 1.25rem 1.25rem 1.5rem;
+  }
+}
+
+/* ── Carousel system ── */
+.lux-carousel-track {
+  display: flex;
+  height: 100%;
+  transition: transform 850ms var(--lux-ease-carousel);
+  will-change: transform;
+}
+
+.lux-carousel-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--lux-gradient-gold);
+  z-index: 30;
+  transition: width 100ms linear;
+}
+
+.lux-carousel-controls {
+  position: absolute;
+  bottom: 1.5rem;
+  right: clamp(1.5rem, 4vw, 3rem);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lux-carousel-arrow {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: var(--lux-radius-full);
+  border: 1px solid var(--lux-border-light);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  color: var(--lux-text-primary);
+  box-shadow: var(--lux-shadow-sm);
+  cursor: pointer;
+  transition: background 0.25s var(--lux-ease), box-shadow 0.25s var(--lux-ease), transform 0.25s var(--lux-ease), border-color 0.25s var(--lux-ease);
+}
+
+.lux-carousel-arrow:hover {
+  background: #fff;
+  border-color: var(--lux-border-gold);
+  box-shadow: var(--lux-shadow-md);
+  transform: translateY(-2px);
+}
+
+.lux-carousel-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lux-carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--lux-radius-full);
+  background: var(--lux-taupe);
+  cursor: pointer;
+  transition: width 0.3s var(--lux-ease), background 0.3s var(--lux-ease);
+}
+
+.lux-carousel-dot-active {
+  width: 28px;
+  background: var(--lux-gold);
+}
+
+/* ── Thumbnail strip ── */
+.lux-thumbnail-strip {
+  position: absolute;
+  bottom: 1.5rem;
+  left: clamp(1.5rem, 4vw, 3rem);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.lux-thumbnail {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--lux-radius-md);
+  border: 2px solid transparent;
+  overflow: hidden;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.25s var(--lux-ease), border-color 0.25s var(--lux-ease), transform 0.25s var(--lux-ease);
+}
+
+.lux-thumbnail:hover {
+  opacity: 0.8;
+}
+
+.lux-thumbnail-active {
+  opacity: 1;
+  border-color: var(--lux-gold);
+  box-shadow: 0 0 16px rgba(201, 169, 98, 0.3);
+  transform: scale(1.08);
+}
+
+.lux-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Badges / Chips ── */
+.lux-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--lux-radius-full);
+  font-family: var(--lux-font-body);
+  font-size: var(--lux-text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.lux-badge-gold {
+  background: var(--lux-gold-faint);
+  border: 1px solid var(--lux-border-gold);
+  color: var(--lux-gold);
+}
+
+.lux-badge-dark {
+  background: rgba(28, 25, 23, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  backdrop-filter: blur(8px);
+}
+
+.lux-badge-outline {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--lux-border-light);
+  color: var(--lux-text-primary);
+  backdrop-filter: blur(8px);
+}
+
+/* ── Price display ── */
+.lux-price {
+  font-family: var(--lux-font-display);
+  font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--lux-text-primary);
+}
+
+.lux-price-was {
+  font-family: var(--lux-font-body);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--lux-text-subtle);
+  text-decoration: line-through;
+}
+
+/* ── Section spacing ── */
+.lux-section-padding {
+  padding: 3rem 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .lux-section-padding {
+    padding: 4rem 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lux-section-padding {
+    padding: 5rem 3rem;
+  }
+}
+
+/* ── Trust bar ── */
+.lux-trustbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  border-block: 1px solid var(--lux-border-light);
+  background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(250,249,245,0.4)), var(--lux-bg-soft);
+  padding: 1rem 1.5rem;
+}
+
+.lux-trustbar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--lux-font-body);
+  font-size: var(--lux-text-sm);
+  font-weight: 500;
+  color: var(--lux-text-muted);
+}
+
+/* ── Product row (horizontal scroll) ── */
+.lux-product-row {
+  display: grid;
+  grid-auto-columns: 78%;
+  grid-auto-flow: column;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: 1rem;
+}
+
+.lux-product-row::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .lux-product-row {
+    grid-auto-columns: 45%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lux-product-row {
+    grid-auto-columns: 24%;
+  }
+}
+
+.lux-product-row > * {
+  scroll-snap-align: start;
+}
+
+/* ── Marquee ── */
+.lux-marquee-track {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  width: max-content;
+  animation: luxMarquee 30s linear infinite;
+}
+
+@keyframes luxMarquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ── Animations ── */
+@keyframes luxFadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes luxFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.lux-animate-fade-up {
+  animation: luxFadeUp 0.7s var(--lux-ease) both;
+}
+
+.lux-animate-fade-in {
+  animation: luxFadeIn 0.5s ease-out both;
+}
+
+/* ── Gold shimmer for cards ── */
+@keyframes luxGoldShimmer {
+  0% { transform: translateX(-140%) rotate(22deg); }
+  100% { transform: translateX(220%) rotate(22deg); }
+}
+
+.lux-shimmer-shell {
+  position: relative;
+  overflow: hidden;
+}
+
+.lux-shimmer-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  overflow: hidden;
+  transition: opacity 0.3s ease;
+  background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.15) 40%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.15) 60%, transparent 100%);
+  transform: translateX(-140%) rotate(22deg);
+}
+
+.lux-shimmer-shell:hover::after {
+  opacity: 1;
+  animation: luxGoldShimmer 900ms ease-out forwards;
+}
+
+/* ── Dark CTA band ── */
+.lux-dark-band {
+  background: var(--lux-text-primary);
+  color: #fff;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .lux-carousel-track {
+    transition: none;
+  }
+  .lux-marquee-track {
+    animation: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+  .lux-animate-fade-up,
+  .lux-animate-fade-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .lux-shimmer-shell::after {
+    animation: none;
+    opacity: 0;
+  }
+}

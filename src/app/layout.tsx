@@ -130,7 +130,7 @@ export async function generateViewport(): Promise<Viewport> {
     initialScale: 1,
     maximumScale: 5,
     userScalable: true,
-    themeColor: settings?.primaryColor || '#6d28d9',
+    themeColor: settings?.primaryColor || '#C9A962',
   }
 }
 

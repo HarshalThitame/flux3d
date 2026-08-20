@@ -32,21 +32,21 @@ function SectionHeading({
   linkLabel?: string
 }) {
   return (
-    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-gold)]">
+        <div className="lux-eyebrow mb-3">
           <Icon className="h-4 w-4" />
           {eyebrow}
         </div>
-        <h2 className="font-[var(--shop-font-heading)] mt-3 text-[clamp(2rem,5vw,3rem)] font-semibold leading-tight text-[var(--shop-text-primary)]">
-          {title}
-        </h2>
-        {subtitle && <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--shop-text-muted)]">{subtitle}</p>}
+        <h2 className="lux-heading-2">{title}</h2>
+        {subtitle && (
+          <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--lux-text-muted)]">{subtitle}</p>
+        )}
       </div>
       {href && (
         <Link
           href={href}
-          className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-[var(--shop-gold)] transition hover:text-[var(--shop-text-primary)]"
+          className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-[var(--lux-gold)] transition hover:text-[var(--lux-text-primary)]"
         >
           {linkLabel}
           <ArrowRight className="h-4 w-4" />
@@ -58,9 +58,9 @@ function SectionHeading({
 
 function ProductRow({ products }: { products: ShopPublicProduct[] }) {
   return (
-    <div className="grid auto-cols-[74%] grid-flow-col gap-4 overflow-x-auto pb-2 scrollbar-hide [-webkit-overflow-scrolling:touch] snap-x snap-mandatory scroll-padding-left-4 sm:auto-cols-[42%] lg:auto-cols-[24%]">
+    <div className="lux-product-row">
       {products.map((product, index) => (
-        <ProductCard key={product.id} product={product} index={index} className="h-full snap-start" />
+        <ProductCard key={product.id} product={product} index={index} className="h-full" />
       ))}
     </div>
   )
@@ -68,23 +68,23 @@ function ProductRow({ products }: { products: ShopPublicProduct[] }) {
 
 export default function LandingShopSection({ data }: { data: ShopHomeData }) {
   return (
-    <section id="shop" className="premium-shop-section premium-band premium-band-panel scroll-mt-20" aria-label="3D Shop">
+    <section id="shop" className="lux-section lux-band-ivory" aria-label="3D Shop">
       {/* Trust bar */}
-      <div className="premium-shop-trustbar">
+      <div className="lux-trustbar">
         {[
           { icon: ShieldCheck, label: 'QA checked' },
           { icon: Truck, label: 'Ready to ship' },
           { icon: Box, label: '3D preview' },
           { icon: ShoppingBag, label: 'Secure cart' },
         ].map((item) => (
-          <div key={item.label} className="flex items-center gap-2 text-sm font-medium text-[var(--shop-text-muted)]">
-            <item.icon className="h-4 w-4 text-[var(--shop-gold)]" />
+          <div key={item.label} className="lux-trustbar-item">
+            <item.icon className="h-4 w-4 text-[var(--lux-gold)]" />
             {item.label}
           </div>
         ))}
       </div>
 
-      <div className="premium-shop-inner">
+      <div className="mx-auto w-full max-w-[1280px] px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-20">
         <SectionHeading
           eyebrow="Flux3D Boutique"
           icon={Sparkles}
@@ -97,7 +97,7 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
 
         {/* Featured */}
         {data.featured_products.length > 0 && (
-          <section className="premium-shop-block">
+          <section className="py-8 sm:py-10">
             <SectionHeading
               eyebrow="Featured"
               icon={BadgeCheck}
@@ -110,7 +110,7 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
 
         {/* Occasion collections */}
         {data.occasion_collections.slice(0, 3).map((collection) => (
-          <section key={collection.tag} className="premium-shop-block">
+          <section key={collection.tag} className="py-8 sm:py-10">
             <SectionHeading
               eyebrow="Collection"
               icon={Zap}
@@ -124,12 +124,12 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
 
         {/* New arrivals */}
         {data.new_arrivals.length > 0 && (
-          <section className="premium-shop-block">
+          <section className="py-8 sm:py-10">
             <SectionHeading
               eyebrow="New arrivals"
               icon={PackageCheck}
               title="Fresh from the print queue"
-              subtitle="New products added as they pass QA — quality-checked and ready to ship."
+              subtitle="New products added as they pass QA \u2014 quality-checked and ready to ship."
               href="/3d-shop/search?sort=newest"
             />
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
@@ -141,19 +141,21 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
         )}
 
         {/* CTA band */}
-        <div className="premium-shop-cta">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#4c1d95] to-[#7c3aed] text-white shadow-[0_16px_40px_rgba(109,40,217,0.35)]">
+        <div className="mt-10 flex flex-col items-start gap-5 rounded-[var(--lux-radius-xl)] border border-[var(--lux-border-light)] bg-[var(--lux-bg-elevated)] p-6 shadow-[var(--lux-shadow-sm)] sm:flex-row sm:items-center sm:p-8">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--lux-text-primary)] text-white shadow-[var(--lux-shadow-md)]">
             <Layers3 className="h-6 w-6" />
           </div>
-          <div className="min-w-0">
-            <h3 className="text-xl font-black leading-tight text-[#070b1d]">Explore the full 3D Shop</h3>
-            <p className="mt-1 text-sm leading-6 text-[#4B5563]">
-              Every product in the boutique — browse by category, filter by price, and view live 3D models before you buy.
+          <div className="min-w-0 flex-1">
+            <h3 className="font-[var(--lux-font-display)] text-xl font-semibold leading-tight text-[var(--lux-text-primary)]">
+              Explore the full 3D Shop
+            </h3>
+            <p className="mt-1 text-sm leading-6 text-[var(--lux-text-muted)]">
+              Every product in the boutique \u2014 browse by category, filter by price, and view live 3D models before you buy.
             </p>
           </div>
           <Link
             href="/3d-shop"
-            className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#5b21b6] to-[#7c3aed] px-6 text-sm font-bold text-white shadow-[0_12px_30px_rgba(109,40,217,0.35)] transition hover:from-[#4c1d95] hover:to-[#6d28d9]"
+            className="lux-btn-primary shrink-0"
           >
             Visit Shop
             <ArrowRight className="h-4 w-4" />
