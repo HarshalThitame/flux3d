@@ -10,31 +10,34 @@
    rule here layers cleanly over the existing premium classes.
    ============================================================ */
 
-/* ── Refined premium color system ── */
+/* ── Refined premium color system aligned with 3D Shop Luxury Boutique ── */
 :root {
-  --pm-ink: #070b1d;               /* deep navy primary copy */
-  --pm-ink-2: #1e293b;             /* secondary copy */
-  --pm-slate: #5b6277;             /* muted copy */
-  --pm-hint: #7b879c;             /* placeholder / hint */
-  --pm-paper: #faf9f7;            /* warm paper base */
-  --pm-surface: #ffffff;          /* elevated surface */
-  --pm-line: rgba(15, 27, 61, 0.06);
-  --pm-border: rgba(76, 29, 149, 0.10);
-  --pm-border-strong: rgba(76, 29, 149, 0.16);
-  --pm-primary-900: #3b0764;
-  --pm-primary-800: #4c1d95;
-  --pm-primary-700: #5b21b6;
-  --pm-primary-600: #6d28d9;
-  --pm-primary-500: #7c3aed;
-  --pm-primary-300: #a78bfa;
-  --pm-gold: #d4a373;             /* muted luxury gold */
-  --pm-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --pm-shadow-sm: 0 2px 10px rgba(91, 33, 182, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
-  --pm-shadow-md: 0 12px 36px rgba(91, 33, 182, 0.08), 0 4px 14px rgba(15, 23, 42, 0.04);
-  --pm-shadow-lg: 0 24px 64px rgba(91, 33, 182, 0.10), 0 8px 28px rgba(15, 23, 42, 0.05);
-  --pm-gradient-primary: linear-gradient(135deg, #4c1d95 0%, #5b21b6 35%, #7c3aed 70%, #a855f7 100%);
-  --pm-gradient-primary-hover: linear-gradient(135deg, #3b0764 0%, #4c1d95 40%, #5b21b6 100%);
-  --pm-gradient-surface: linear-gradient(160deg, #ffffff 0%, #faf9f7 100%);
+  --pm-ink: #1C1917;               /* warm charcoal primary copy */
+  --pm-ink-2: #44403C;             /* warm stone secondary copy */
+  --pm-slate: #78716C;             /* luxury muted copy */
+  --pm-hint: #A8A29E;              /* placeholder / hint */
+  --pm-paper: #FDFCF8;             /* luxury ivory paper base */
+  --pm-surface: #FAF9F5;           /* elevated cream surface */
+  --pm-line: rgba(28, 25, 23, 0.06);
+  --pm-border: rgba(201, 169, 98, 0.16);
+  --pm-border-strong: rgba(201, 169, 98, 0.28);
+  --pm-primary-900: #3730A3;
+  --pm-primary-800: #4338CA;
+  --pm-primary-700: #4338CA;
+  --pm-primary-600: #6366F1;
+  --pm-primary-500: #6366F1;
+  --pm-primary-300: #C7D2FE;
+  --pm-gold: #C9A962;             /* 3D shop signature gold */
+  --pm-gold-light: #D4B978;
+  --pm-gold-soft: #F5ECD3;
+  --pm-gold-faint: #FAF6EB;
+  --pm-shadow-xs: 0 1px 2px rgba(28, 25, 23, 0.04);
+  --pm-shadow-sm: 0 2px 10px rgba(201, 169, 98, 0.08), 0 1px 3px rgba(28, 25, 23, 0.04);
+  --pm-shadow-md: 0 12px 36px rgba(201, 169, 98, 0.12), 0 4px 14px rgba(28, 25, 23, 0.04);
+  --pm-shadow-lg: 0 24px 64px rgba(201, 169, 98, 0.16), 0 8px 28px rgba(28, 25, 23, 0.05);
+  --pm-gradient-primary: linear-gradient(135deg, #1C1917 0%, #292524 100%);
+  --pm-gradient-primary-hover: linear-gradient(135deg, #44403C 0%, #1C1917 100%);
+  --pm-gradient-surface: linear-gradient(160deg, #FDFCF8 0%, #FAF9F5 100%);
   --pm-ease: cubic-bezier(0.16, 1, 0.3, 1);               /* emphasized standard */
   --pm-ease-decel: cubic-bezier(0.0, 0, 0.2, 1);          /* emphasized decelerate */
 }

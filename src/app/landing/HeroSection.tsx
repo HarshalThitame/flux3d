@@ -1,91 +1,20 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, Box, ChevronDown, ChevronLeft, ChevronRight, ShoppingBag, Star } from 'lucide-react'
+import { ArrowRight, Box, ChevronLeft, ChevronRight, ShoppingBag, Star } from 'lucide-react'
 import { addToast } from '@/lib/toast/store'
 import { formatShopPrice, formatVariantLabel, getShopProductBadge, getShopProductImages } from '@/lib/shop/selection'
 import { useShopCartStore } from '@/stores/shopCartStore'
-import type { ShopHomeData, ShopPublicCategory } from '@/lib/shop/public-types'
+import type { ShopHomeData } from '@/lib/shop/public-types'
 import { trackMetaEvent } from '@/lib/meta/event-utils'
 import QuickAddModal from '@/components/shop/QuickAddModal'
 import ProductModelModal from '@/components/shop/ProductModelModal'
+import CategoryFilterDropdown from './CategoryFilterDropdown'
 
 const ROTATION_MS = 5500
-
-function CategoryFilterDropdown({
-  categories,
-  value,
-  open,
-  onOpenChange,
-  onChange,
-}: {
-  categories: ShopPublicCategory[]
-  value: string
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onChange: (slug: string) => void
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const onPointerDown = (event: MouseEvent | TouchEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) onOpenChange(false)
-    }
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onOpenChange(false)
-    }
-    document.addEventListener('mousedown', onPointerDown)
-    document.addEventListener('touchstart', onPointerDown)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown)
-      document.removeEventListener('touchstart', onPointerDown)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open, onOpenChange])
-
-  const selected = value === 'all' ? null : categories.find((category) => category.slug === value)
-
-  return (
-    <div ref={ref} className="hero-filter" data-open={open}>
-      <button
-        type="button"
-        className="hero-filter-trigger"
-        onClick={() => onOpenChange(!open)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        <span>{selected ? `${selected.icon_emoji ?? ''} ${selected.name}` : 'All Categories'}</span>
-        <ChevronDown className="hero-filter-chevron h-4 w-4" />
-      </button>
-      {open && (
-        <div className="hero-filter-list scrollbar-hide" role="listbox" aria-label="Filter by category">
-          <button type="button" className="hero-filter-item" data-active={value === 'all'} onClick={() => onChange('all')}>
-            All Categories
-          </button>
-          {categories.map((category) => (
-            <button
-              type="button"
-              key={category.id}
-              className="hero-filter-item"
-              data-active={value === category.slug}
-              onClick={() => onChange(category.slug)}
-            >
-              {category.icon_emoji && (
-                <span aria-hidden="true">{category.icon_emoji}</span>
-              )}
-              {category.name}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
 
 export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
   const [activeIndex, setActiveIndex] = useState(0)
@@ -154,7 +83,6 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
         <CategoryFilterDropdown
           categories={shopData.categories}
           value={category}
-          open={filterOpen}
           onOpenChange={setFilterOpen}
           onChange={selectCategory}
         />
