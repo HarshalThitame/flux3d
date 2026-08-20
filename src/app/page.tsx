@@ -31,10 +31,6 @@ export default async function Home() {
   const settings = await getSettings()
   const profile = buildPublicBusinessProfile(settings)
   const shopData = await getShopHomeData()
-  const featuredProducts =
-    shopData.featured_products.length > 0
-      ? shopData.featured_products.slice(0, 3)
-      : shopData.new_arrivals.slice(0, 3)
   const structuredData = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -77,7 +73,7 @@ export default async function Home() {
       />
       <Navbar transparent />
       <main>
-        <HeroSection featuredProducts={featuredProducts} />
+        <HeroSection shopData={shopData} />
         <LandingShopSection data={shopData} />
         <LandingPageBoundary />
       </main>

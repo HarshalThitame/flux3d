@@ -68,7 +68,7 @@ function ProductRow({ products }: { products: ShopPublicProduct[] }) {
 
 export default function LandingShopSection({ data }: { data: ShopHomeData }) {
   return (
-    <section className="premium-shop-section premium-band premium-band-panel" aria-label="3D Shop">
+    <section id="shop" className="premium-shop-section premium-band premium-band-panel scroll-mt-20" aria-label="3D Shop">
       {/* Trust bar */}
       <div className="premium-shop-trustbar">
         {[

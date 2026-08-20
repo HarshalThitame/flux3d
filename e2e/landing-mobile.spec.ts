@@ -12,8 +12,8 @@ test.describe('Landing page — mobile', () => {
   test('hero section renders all key elements', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('h1')).toContainText('Flux3D')
-    await expect(page.locator('text=Request a Quote').first()).toBeVisible()
-    await expect(page.locator('text=Explore Services').first()).toBeVisible()
+    await expect(page.locator('text=Shop the Collection').first()).toBeVisible()
+    await expect(page.locator('text=Add to Cart').first()).toBeVisible()
   })
 
   test('navbar mobile menu opens and closes', async ({ page }) => {

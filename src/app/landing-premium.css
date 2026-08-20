@@ -209,6 +209,23 @@ body {
   text-transform: uppercase;
 }
 
+/* ── Hero title: shop-first sub-line ── */
+.premium-title-shop {
+  margin-top: 12px;
+  color: var(--pm-ink);
+  font-size: clamp(1.3rem, 4vw, 2.5rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+
+.premium-title-shop-accent {
+  background: linear-gradient(100deg, #a16207 0%, #d4af37 45%, #b45309 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 /* ── Premium CTAs ── */
 .premium-primary-cta {
   background: var(--pm-gradient-primary);
@@ -329,6 +346,85 @@ body {
 .premium-marquee-mark {
   background: var(--pm-primary-600);
   box-shadow: 0 0 14px rgba(91, 33, 182, 0.42);
+}
+
+.premium-marquee-track {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  width: max-content;
+  padding: 0.75rem 1rem;
+  animation: premiumMarquee 28s linear infinite;
+}
+
+@keyframes premiumMarquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ── Hero product spotlight ── */
+.hero-spotlight {
+  position: relative;
+}
+
+.hero-spotlight-card {
+  padding: 16px;
+}
+
+.hero-dot {
+  height: 6px;
+  width: 6px;
+  border-radius: 999px;
+  background: #d1c4e0;
+  cursor: pointer;
+  transition: width 0.3s var(--pm-ease), background 0.3s var(--pm-ease);
+}
+
+.hero-dot-active {
+  width: 24px;
+  background: var(--pm-primary-600);
+}
+
+.hero-floating-chips {
+  position: absolute;
+  top: 42%;
+  right: -14px;
+  z-index: 2;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+@media (min-width: 640px) {
+  .hero-floating-chips {
+    display: flex;
+  }
+}
+
+.hero-floating-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(76, 29, 149, 0.16);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(91, 33, 182, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4c1d95;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-marquee-track {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    animation: none;
+  }
 }
 
 /* ── Wide links ── */
