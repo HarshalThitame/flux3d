@@ -4,9 +4,9 @@ import { Suspense, useCallback, useEffect, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useLoadingStore } from '@/stores/loadingStore'
 
-const GRACE_MS = 250
-const MIN_DISPLAY_MS = 250
-const MAX_DISPLAY_MS = 3000
+const GRACE_MS = 120
+const MIN_DISPLAY_MS = 120
+const MAX_DISPLAY_MS = 2000
 
 function normalizePath(value: string) {
   return value.replace(window.location.origin, '').replace(/\/+$/, '') || '/'
@@ -37,6 +37,7 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
   const maxTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const loadingActive = useRef(false)
   const shownAt = useRef(0)
+  const isPopstate = useRef(false)
 
   const clearGrace = useCallback(() => {
     if (graceTimer.current) {
@@ -72,15 +73,18 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
       return
     }
 
+    // Popstate: hide immediately, no minimum display
+    if (isPopstate.current) {
+      isPopstate.current = false
+      hideLoader()
+      return
+    }
+
     const elapsed = Date.now() - shownAt.current
     const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed)
 
-    if (minTimer.current) {
-      clearTimeout(minTimer.current)
-    }
-    if (maxTimer.current) {
-      clearTimeout(maxTimer.current)
-    }
+    if (minTimer.current) clearTimeout(minTimer.current)
+    if (maxTimer.current) clearTimeout(maxTimer.current)
 
     minTimer.current = setTimeout(hideLoader, remaining)
     maxTimer.current = setTimeout(hideLoader, Math.max(0, MAX_DISPLAY_MS - elapsed))
@@ -88,7 +92,6 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
 
   const beginGrace = useCallback(() => {
     clearGrace()
-
     graceTimer.current = setTimeout(() => {
       if (!loadingActive.current) {
         loadingActive.current = true
@@ -98,23 +101,18 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
     }, GRACE_MS)
   }, [clearGrace, start])
 
-  // Detect slow navigation via internal link clicks (grace period)
+  // Detect slow navigation via internal link clicks
   useEffect(() => {
     function handleClick(event: MouseEvent) {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
         return
       }
       const anchor = (event.target as HTMLElement).closest?.('a[href]') as HTMLAnchorElement | null
-      if (!anchor) {
-        return
-      }
+      if (!anchor) return
       const href = anchor.getAttribute('href') ?? ''
-      if (!isInternalHref(href)) {
-        return
-      }
-      if (normalizePath(href) === normalizePath(window.location.pathname)) {
-        return
-      }
+      if (!isInternalHref(href)) return
+      if (normalizePath(href) === normalizePath(window.location.pathname)) return
+      isPopstate.current = false
       beginGrace()
     }
 
@@ -125,19 +123,21 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
     }
   }, [beginGrace, clearTimers])
 
-  // Back / forward navigation always starts a grace period
+  // Back / forward navigation — start immediately, resolve fast
   useEffect(() => {
     function handlePopstate() {
-      beginGrace()
+      isPopstate.current = true
+      if (!loadingActive.current) {
+        loadingActive.current = true
+        shownAt.current = Date.now()
+        start('Loading…')
+      }
     }
-
     window.addEventListener('popstate', handlePopstate)
-    return () => {
-      window.removeEventListener('popstate', handlePopstate)
-    }
-  }, [beginGrace])
+    return () => window.removeEventListener('popstate', handlePopstate)
+  }, [start])
 
-  // Resolve grace once the actual route (pathname or search) has changed
+  // Resolve once the actual route has changed
   useEffect(() => {
     if (prevPath.current !== pathname) {
       prevPath.current = pathname
@@ -145,7 +145,7 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
     }
   }, [pathname, resolveNavigation])
 
-return (
+  return (
     <>
       <Suspense fallback={null}>
         <SearchParamsWatcher onRouteResolved={resolveNavigation} />

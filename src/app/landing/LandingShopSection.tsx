@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -9,11 +12,10 @@ import {
   ShoppingBag,
   Sparkles,
   Truck,
-  Zap,
   type LucideIcon,
 } from 'lucide-react'
 import ProductCard from '@/components/shop/ProductCard'
-import ShopCategoryGrid from '@/components/shop/ShopCategoryGrid'
+import ProductFilterBar from '@/components/shop/ProductFilterBar'
 import type { ShopHomeData, ShopPublicProduct } from '@/lib/shop/public-types'
 
 function SectionHeading({
@@ -67,6 +69,36 @@ function ProductRow({ products }: { products: ShopPublicProduct[] }) {
 }
 
 export default function LandingShopSection({ data }: { data: ShopHomeData }) {
+  const [filteredProducts, setFilteredProducts] = useState<ShopPublicProduct[]>([
+    ...data.featured_products,
+    ...data.new_arrivals,
+  ])
+
+  // Deduplicate all products for the unified grid
+  const allProducts = (() => {
+    const seen = new Set<string>()
+    const result: ShopPublicProduct[] = []
+    for (const p of [...data.featured_products, ...data.new_arrivals]) {
+      if (!seen.has(p.id)) {
+        seen.add(p.id)
+        result.push(p)
+      }
+    }
+    // Add occasion collection products too
+    for (const col of data.occasion_collections) {
+      for (const p of col.products) {
+        if (!seen.has(p.id)) {
+          seen.add(p.id)
+          result.push(p)
+        }
+      }
+    }
+    return result
+  })()
+
+  const featuredFiltered = filteredProducts.filter((p) => p.is_featured).slice(0, 8)
+  const newFiltered = filteredProducts.filter((p) => !p.is_featured).slice(0, 8)
+
   return (
     <section id="shop" className="lux-section lux-band-ivory" aria-label="3D Shop">
       {/* Trust bar */}
@@ -92,52 +124,53 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
           subtitle="Handpicked Flux3D objects with clean finishes and ready-to-ship presentation for desks, creators, gifting, and everyday setups."
         />
 
-        {/* Categories */}
-        <ShopCategoryGrid categories={data.categories} />
+        {/* Premium Filter Bar */}
+        <div className="mb-10 rounded-[var(--lux-radius-lg)] border border-[var(--lux-border-light)] bg-white p-4 shadow-[var(--lux-shadow-sm)] sm:p-5">
+          <ProductFilterBar
+            products={allProducts}
+            categories={data.categories}
+            onFilteredChange={setFilteredProducts}
+          />
+        </div>
 
-        {/* Featured */}
-        {data.featured_products.length > 0 && (
-          <section className="py-8 sm:py-10">
+        {/* Featured (from filtered) */}
+        {featuredFiltered.length > 0 && (
+          <section className="py-6 sm:py-8">
             <SectionHeading
               eyebrow="Featured"
               icon={BadgeCheck}
               title="Premium picks"
               href="/3d-shop/search?featured=true"
             />
-            <ProductRow products={data.featured_products} />
+            <ProductRow products={featuredFiltered} />
           </section>
         )}
 
-        {/* Occasion collections */}
-        {data.occasion_collections.slice(0, 3).map((collection) => (
-          <section key={collection.tag} className="py-8 sm:py-10">
-            <SectionHeading
-              eyebrow="Collection"
-              icon={Zap}
-              title={collection.tag}
-              href={`/3d-shop/search?q=${encodeURIComponent(collection.tag)}`}
-              linkLabel="Browse collection"
-            />
-            <ProductRow products={collection.products} />
-          </section>
-        ))}
-
-        {/* New arrivals */}
-        {data.new_arrivals.length > 0 && (
-          <section className="py-8 sm:py-10">
+        {/* New arrivals (from filtered) */}
+        {newFiltered.length > 0 && (
+          <section className="py-6 sm:py-8">
             <SectionHeading
               eyebrow="New arrivals"
               icon={PackageCheck}
               title="Fresh from the print queue"
-              subtitle="New products added as they pass QA \u2014 quality-checked and ready to ship."
+              subtitle="New products added as they pass QA — quality-checked and ready to ship."
               href="/3d-shop/search?sort=newest"
             />
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {data.new_arrivals.map((product, index) => (
+              {newFiltered.map((product, index) => (
                 <ProductCard key={product.id} product={product} index={index} />
               ))}
             </div>
           </section>
+        )}
+
+        {/* Empty state */}
+        {filteredProducts.length === 0 && (
+          <div className="py-16 text-center">
+            <Box className="mx-auto mb-4 h-12 w-12 text-[var(--lux-taupe)]" />
+            <h3 className="lux-heading-3 mb-2">No products match your filters</h3>
+            <p className="text-sm text-[var(--lux-text-muted)]">Try adjusting your category or price selection.</p>
+          </div>
         )}
 
         {/* CTA band */}
@@ -150,7 +183,7 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
               Explore the full 3D Shop
             </h3>
             <p className="mt-1 text-sm leading-6 text-[var(--lux-text-muted)]">
-              Every product in the boutique \u2014 browse by category, filter by price, and view live 3D models before you buy.
+              Every product in the boutique — browse by category, filter by price, and view live 3D models before you buy.
             </p>
           </div>
           <Link

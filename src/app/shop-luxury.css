@@ -34,6 +34,30 @@
 }
 
 :root {
+  /* Lux aliases for shared components */
+  --lux-text-primary: var(--luxury-charcoal);
+  --lux-text-secondary: var(--luxury-stone);
+  --lux-text-muted: var(--luxury-muted);
+  --lux-text-subtle: var(--luxury-subtle);
+  --lux-bg-base: var(--luxury-ivory);
+  --lux-bg-soft: var(--luxury-cream);
+  --lux-bg-muted: var(--luxury-warm-gray);
+  --lux-bg-elevated: #FFFFFF;
+  --lux-border-light: var(--luxury-taupe);
+  --lux-border-medium: var(--luxury-sand);
+  --lux-border-gold: rgba(201, 169, 98, 0.35);
+  --lux-gold: var(--luxury-gold);
+  --lux-gold-light: var(--luxury-gold-light);
+  --lux-gold-soft: var(--luxury-gold-soft);
+  --lux-gold-faint: var(--luxury-gold-faint);
+  --lux-radius-sm: 12px;
+  --lux-radius-md: 18px;
+  --lux-radius-lg: 24px;
+  --lux-radius-xl: 32px;
+  --lux-shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.04), 0 1px 3px rgba(28, 25, 23, 0.02);
+  --lux-shadow-md: 0 8px 24px rgba(28, 25, 23, 0.06), 0 2px 8px rgba(28, 25, 23, 0.03);
+  --lux-shadow-lg: 0 18px 48px rgba(28, 25, 23, 0.08), 0 6px 16px rgba(28, 25, 23, 0.04);
+
   /* Luxury color palette */
   --luxury-ivory: #FDFCF8;
   --luxury-cream: #FAF9F5;
@@ -116,4 +140,78 @@
 .shop-luxury ::selection {
   background: rgba(201, 169, 98, 0.22);
   color: var(--shop-text-primary);
+}
+
+/* ── Ultra-premium product card enhancements ── */
+.shop-luxury .group:hover {
+  border-color: var(--shop-border-gold);
+}
+
+/* Premium filter bar surface */
+.shop-filter-surface {
+  background: linear-gradient(145deg, #FFFFFF 0%, var(--luxury-cream) 100%);
+  border: 1px solid var(--luxury-taupe);
+  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.04);
+}
+
+/* Editorial hero dark accent */
+.shop-editorial-hero {
+  background: linear-gradient(135deg, var(--luxury-charcoal) 0%, #292524 100%);
+}
+
+/* Refined product grid spacing */
+.shop-product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .shop-product-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shop-product-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+/* Gold accent underline animation for headings */
+.shop-heading-accent {
+  position: relative;
+  display: inline-block;
+}
+
+.shop-heading-accent::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: var(--shop-gradient-gold);
+  border-radius: 999px;
+}
+
+/* Premium stat card hover lift */
+.shop-stat-card {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shop-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shop-shadow-md);
+}
+
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

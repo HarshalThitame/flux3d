@@ -424,7 +424,7 @@ body {
 
 @media (max-width: 767px) {
   .lux-hero-shade {
-    background: var(--lux-gradient-image-overlay-mobile);
+    background: linear-gradient(180deg, transparent 0%, rgba(253, 252, 248, 0.25) 35%, rgba(253, 252, 248, 0.88) 100%);
   }
 }
 
@@ -458,10 +458,60 @@ body {
 @media (max-width: 767px) {
   .lux-hero-content {
     align-items: flex-end;
+    padding: 5rem 1rem 3.5rem;
   }
   .lux-hero-panel {
     width: 100%;
-    padding: 1.25rem 1.25rem 1.5rem;
+    padding: 0.875rem 1rem 1rem;
+    border-radius: var(--lux-radius-md);
+  }
+  .lux-hero-panel .lux-heading-1 {
+    font-size: clamp(1.15rem, 4.2vw, 1.6rem);
+    line-height: 1.15;
+    margin-bottom: 0.5rem;
+  }
+  .lux-hero-panel .lux-body {
+    display: none;
+  }
+  .lux-hero-panel .lux-price {
+    font-size: clamp(1.2rem, 3.5vw, 1.5rem);
+  }
+  .lux-hero-panel .lux-eyebrow {
+    font-size: 9px;
+    margin-bottom: 0.5rem;
+  }
+  .lux-hero-panel .lux-eyebrow::before {
+    width: 16px;
+  }
+  .lux-hero-panel .flex.flex-wrap.items-center.gap-3 {
+    gap: 0.5rem;
+  }
+  .lux-hero-panel .lux-btn-primary {
+    min-height: 40px;
+    padding: 0 16px;
+    font-size: 12px;
+  }
+  .lux-hero-panel .lux-btn-secondary {
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 12px;
+  }
+  .lux-hero-panel .lux-btn-ghost {
+    min-height: 36px;
+    font-size: 12px;
+  }
+  .lux-hero-panel .mb-3.flex.items-center.gap-3 {
+    font-size: 10px;
+    gap: 0.4rem;
+    margin-bottom: 0.4rem;
+  }
+  .lux-hero-panel .mb-6.flex.items-baseline.gap-4 {
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .lux-hero-panel .rounded-full.border.border-red-200 {
+    font-size: 9px;
+    padding: 2px 8px;
   }
 }
 
@@ -765,6 +815,49 @@ body {
 .lux-dark-band {
   background: var(--lux-text-primary);
   color: #fff;
+}
+
+/* ── Premium filter bar surface ── */
+.lux-filter-surface {
+  background: linear-gradient(145deg, #FFFFFF 0%, var(--lux-cream) 100%);
+  border: 1px solid var(--lux-border-light);
+  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.04);
+}
+
+/* ── Product grid premium hover ── */
+.lux-product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .lux-product-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lux-product-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+/* ── Editorial dark band ── */
+.lux-editorial-dark {
+  background: linear-gradient(135deg, var(--lux-ink) 0%, var(--lux-charcoal) 100%);
+  color: #fff;
+}
+
+/* ── Refined scrollbar hide ── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 /* ── Reduced motion ── */
