@@ -26,18 +26,15 @@ import type { ShopHomeData } from '@/lib/shop/public-types'
 import { trackMetaEvent } from '@/lib/meta/event-utils'
 import QuickAddModal from '@/components/shop/QuickAddModal'
 import ProductModelModal from '@/components/shop/ProductModelModal'
-import CategoryFilterDropdown from './CategoryFilterDropdown'
 
 const ROTATION_MS = 6000
 
 export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [hoverPaused, setHoverPaused] = useState(false)
-  const [filterOpen, setFilterOpen] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [modelOpen, setModelOpen] = useState(false)
   const [added, setAdded] = useState(false)
-  const [category, setCategory] = useState('all')
   const [progress, setProgress] = useState(0)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
@@ -56,13 +53,10 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
     })
   }, [shopData])
 
-  const visibleProducts = useMemo(
-    () => (category === 'all' ? allProducts : allProducts.filter((product) => product.category_slug === category)),
-    [category, allProducts]
-  )
+  const visibleProducts = allProducts
 
   const index = visibleProducts.length > 0 ? Math.min(activeIndex, visibleProducts.length - 1) : 0
-  const rotationPaused = hoverPaused || quickAddOpen || modelOpen || filterOpen
+  const rotationPaused = hoverPaused || quickAddOpen || modelOpen
 
   // Auto-rotate + progress bar
   useEffect(() => {
@@ -102,12 +96,6 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
 
   function goToSlide(nextIndex: number) {
     setActiveIndex(((nextIndex % visibleProducts.length) + visibleProducts.length) % visibleProducts.length)
-  }
-
-  function selectCategory(slug: string) {
-    setCategory(slug)
-    setActiveIndex(0)
-    setFilterOpen(false)
   }
 
   const product = visibleProducts[index]
@@ -194,20 +182,13 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Top bar: Brand + Category filter */}
-      <div className="absolute inset-x-0 top-0 z-40 flex items-center justify-between gap-4 px-6 pt-6 sm:px-8 sm:pt-7">
+      {/* Top bar: Brand only — no category dropdown */}
+      <div className="absolute inset-x-0 top-0 z-40 flex items-center px-6 pt-6 sm:px-8 sm:pt-7">
         <Link href="/" aria-label="Flux3D home" className="group">
           <div className="font-[var(--lux-font-display)] text-xl font-semibold tracking-tight text-[var(--lux-text-primary)] sm:text-2xl">
-            Flux3D <span className="italic text-[var(--lux-gold)]">Boutique</span>
+            Flux3D <span className="italic text-[var(--lux-gold)]">Store</span>
           </div>
         </Link>
-
-        <CategoryFilterDropdown
-          categories={shopData.categories}
-          value={category}
-          onOpenChange={setFilterOpen}
-          onChange={selectCategory}
-        />
       </div>
 
       {/* Carousel track */}
@@ -346,9 +327,9 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
       {/* Progress bar */}
       <div className="lux-carousel-progress" style={{ width: `${progress}%` }} />
 
-      {/* Thumbnail strip */}
+      {/* Thumbnail strip — desktop only, positioned above controls */}
       {visibleProducts.length > 1 && (
-        <div className="lux-thumbnail-strip hidden sm:flex">
+        <div className="lux-thumbnail-strip">
           {visibleProducts.map((p, i) => {
             const thumb = getShopProductImages(p)[0]
             return (
@@ -410,9 +391,9 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
       {visibleProducts.length === 0 && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[var(--lux-bg-base)] px-6">
           <Box className="mb-4 h-16 w-16 text-[var(--lux-taupe)]" />
-          <h2 className="lux-heading-2 mb-2 text-center">Category Restocking Soon</h2>
+          <h2 className="lux-heading-2 mb-2 text-center">Restocking Soon</h2>
           <p className="lux-body mb-6 text-center text-[var(--lux-text-muted)]">
-            Explore our full boutique catalog for ready-to-ship 3D objects.
+            Explore our full catalog for ready-to-ship 3D objects.
           </p>
           <Link href="/3d-shop" className="lux-btn-primary">
             Visit Store <ArrowRight className="h-4 w-4" />

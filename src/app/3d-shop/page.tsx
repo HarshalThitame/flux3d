@@ -74,7 +74,7 @@ export default async function ShopHomePage() {
 
               <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-gold)]">
                 <Sparkles className="h-3.5 w-3.5" />
-                Flux3D Boutique
+                Flux3D Store
               </div>
 
               <h1 className="font-[var(--shop-font-heading)] mt-6 max-w-[calc(100vw-2rem)] text-[clamp(2.4rem,7vw,4.8rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-[var(--shop-text-primary)] sm:max-w-3xl">

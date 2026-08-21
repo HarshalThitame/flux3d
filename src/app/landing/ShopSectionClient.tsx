@@ -100,7 +100,7 @@ export default function ShopSectionClient({ data }: { data: ShopHomeData }) {
             Categories
           </div>
           <h3 className="font-[var(--shop-font-heading)] mt-2 text-[clamp(1.1rem,2.4vw,1.5rem)] font-semibold leading-snug text-[var(--shop-text-primary)]">
-            Filter the boutique by category
+            Filter the store by category
           </h3>
         </div>
         <CategoryFilterDropdown categories={data.categories} value={category} onChange={selectCategory} />

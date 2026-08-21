@@ -118,7 +118,7 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
 
       <div className="mx-auto w-full max-w-[1280px] px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-20">
         <SectionHeading
-          eyebrow="Flux3D Boutique"
+          eyebrow="Flux3D Store"
           icon={Sparkles}
           title="Shop ready-made 3D printed products"
           subtitle="Handpicked Flux3D objects with clean finishes and ready-to-ship presentation for desks, creators, gifting, and everyday setups."
@@ -183,7 +183,7 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
               Explore the full 3D Shop
             </h3>
             <p className="mt-1 text-sm leading-6 text-[var(--lux-text-muted)]">
-              Every product in the boutique — browse by category, filter by price, and view live 3D models before you buy.
+              Every product in the store — browse by category, filter by price, and view live 3D models before you buy.
             </p>
           </div>
           <Link

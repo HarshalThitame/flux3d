@@ -51,12 +51,12 @@ function HowItWorksSection() {
   }, [hoveredIndex])
 
   return (
-    <section className="relative py-12 px-6 md:py-16 lg:py-24 overflow-hidden">
+    <section className="relative py-16 px-4 md:py-20 lg:py-28 overflow-hidden">
       <div className="max-w-[1200px] mx-auto relative z-10">
         <Reveal>
-          <div className="text-center mb-8 md:mb-12 lg:mb-16 relative">
+          <div className="text-center mb-10 md:mb-14 lg:mb-18 relative">
             <p className="text-xs font-bold text-[var(--shop-gold,#C9A962)] uppercase tracking-[0.14em] mb-3">The Process</p>
-            <h2 className="font-[var(--shop-font-heading)] text-[clamp(2rem,4vw,3.2rem)] font-semibold text-[var(--shop-text-primary,#1C1917)] leading-[1.1]">
+            <h2 className="font-[var(--shop-font-heading)] text-[clamp(1.8rem,4vw,3rem)] font-semibold text-[var(--shop-text-primary,#1C1917)] leading-[1.15]">
               From Requirement to Dispatch{' '}
               <span className="text-[var(--shop-gold,#C9A962)]">
                 in 5 Steps.
@@ -67,34 +67,34 @@ function HowItWorksSection() {
 
         {/* Mobile: Horizontal Carousel */}
         <div className="md:hidden">
-          <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 scrollbar-hide"
+          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 scrollbar-hide"
             ref={scrollRef}
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {steps.map((step, i) => (
-              <div key={i} className="snap-center shrink-0 w-[85vw]">
+              <div key={i} className="snap-center shrink-0 w-[88vw] max-w-[380px]">
                 <Reveal delay={i * 0.08}>
-                  <div className="relative group">
-                    <div className="relative bg-[var(--shop-bg-elevated,#FFFFFF)] rounded-[var(--shop-radius-lg,24px)] p-6 border border-[var(--shop-border-light,#E7E5E0)] shadow-[var(--shop-shadow-sm)]">
+                  <div className="relative group h-full">
+                    <div className="relative bg-[var(--shop-bg-elevated,#FFFFFF)] rounded-[var(--shop-radius-lg,20px)] p-5 border border-[var(--shop-border-light,#E7E5E0)] shadow-[var(--shop-shadow-sm)] h-full flex flex-col">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="relative w-12 h-12 rounded-xl bg-[var(--shop-gold-faint,#FAF6EB)] border border-[var(--shop-border-gold)] flex items-center justify-center">
-                          <step.icon className="w-6 h-6 text-[var(--shop-gold,#C9A962)]" />
+                        <div className="relative w-11 h-11 rounded-xl bg-[var(--shop-gold-faint,#FAF6EB)] border border-[var(--shop-border-gold)] flex items-center justify-center shrink-0">
+                          <step.icon className="w-5 h-5 text-[var(--shop-gold,#C9A962)]" />
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold uppercase tracking-wider text-[var(--shop-gold,#C9A962)]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--shop-gold,#C9A962)]">
                             Step {step.step}
                           </span>
-                          <ChevronRight className="w-4 h-4 text-[var(--shop-text-subtle)]" />
+                          <ChevronRight className="w-3.5 h-3.5 text-[var(--shop-text-subtle)]" />
                         </div>
                       </div>
 
-                      <h3 className="font-[var(--shop-font-heading)] text-xl font-semibold text-[var(--shop-text-primary,#1C1917)] mb-2">
+                      <h3 className="font-[var(--shop-font-heading)] text-lg font-semibold text-[var(--shop-text-primary,#1C1917)] mb-2 leading-snug">
                         {step.title}
                       </h3>
-                      <p className="text-sm text-[var(--shop-text-secondary,#44403C)] leading-[1.7]">
+                      <p className="text-sm text-[var(--shop-text-secondary,#44403C)] leading-[1.7] flex-1">
                         {step.description}
                       </p>
-                      <div className="mt-4 h-0.5 w-12 rounded-full bg-[var(--shop-gold,#C9A962)]" />
+                      <div className="mt-4 h-0.5 w-10 rounded-full bg-[var(--shop-gold,#C9A962)]" />
                     </div>
                   </div>
                 </Reveal>
@@ -102,7 +102,7 @@ function HowItWorksSection() {
             ))}
           </div>
 
-          <div className="flex justify-center items-center gap-2 mt-2">
+          <div className="flex justify-center items-center gap-2 mt-4">
             {steps.map((_, i) => {
               const isActive = i === activeIndex
               return (
@@ -111,8 +111,10 @@ function HowItWorksSection() {
                   onClick={() => {
                     const container = scrollRef.current
                     if (container) {
-                      const cardWidth = container.offsetWidth * 0.85
-                      container.scrollTo({ left: cardWidth * i, behavior: 'smooth' })
+                      const card = container.children[i] as HTMLElement
+                      if (card) {
+                        container.scrollTo({ left: card.offsetLeft - 16, behavior: 'smooth' })
+                      }
                     }
                     setActiveIndex(i)
                   }}
@@ -132,7 +134,7 @@ function HowItWorksSection() {
         <div className="hidden md:block relative">
           <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-[var(--shop-border-gold)]" />
 
-          <div className="relative space-y-10 lg:space-y-12">
+          <div className="relative space-y-12 lg:space-y-16">
             {steps.map((step, i) => {
               const isLeft = i % 2 === 0
               const isHovered = hoveredIndex === i
@@ -147,7 +149,7 @@ function HowItWorksSection() {
                 >
                   <Reveal delay={0.15 + i * 0.1}>
                     <div
-                      className={`w-full lg:w-[calc(50%-40px)] ${isLeft ? 'lg:pr-8' : 'lg:pl-8'}`}
+                      className={`w-full lg:w-[calc(50%-48px)] ${isLeft ? 'lg:pr-8' : 'lg:pl-8'}`}
                     >
                       <div
                         className={`relative overflow-hidden rounded-[var(--shop-radius-lg,24px)] border transition-all duration-300 ${
@@ -157,7 +159,7 @@ function HowItWorksSection() {
                         } bg-[var(--shop-bg-elevated,#FFFFFF)] p-6 lg:p-8`}
                       >
                         <div className="flex items-center gap-4 mb-4">
-                          <div className={`relative w-14 h-14 rounded-2xl bg-[var(--shop-gold-faint,#FAF6EB)] border border-[var(--shop-border-gold)] flex items-center justify-center transition-transform duration-300 ${isDimmed ? 'opacity-55' : ''} group-hover:scale-105`}>
+                          <div className={`relative w-14 h-14 rounded-2xl bg-[var(--shop-gold-faint,#FAF6EB)] border border-[var(--shop-border-gold)] flex items-center justify-center transition-transform duration-300 ${isDimmed ? 'opacity-55' : ''} group-hover:scale-105 shrink-0`}>
                             <step.icon className="w-7 h-7 text-[var(--shop-gold,#C9A962)]" />
                           </div>
                           <div>
@@ -168,13 +170,13 @@ function HowItWorksSection() {
                           </div>
                         </div>
 
-                        <h3 className="font-[var(--shop-font-heading)] text-xl font-semibold text-[var(--shop-text-primary,#1C1917)] mb-2">
+                        <h3 className="font-[var(--shop-font-heading)] text-xl lg:text-2xl font-semibold text-[var(--shop-text-primary,#1C1917)] mb-3 leading-snug">
                           {step.title}
                         </h3>
-                        <p className="text-sm text-[var(--shop-text-secondary,#44403C)] leading-[1.7] max-w-md">
+                        <p className="text-sm lg:text-[15px] text-[var(--shop-text-secondary,#44403C)] leading-[1.7] max-w-md">
                           {step.description}
                         </p>
-                        <div className="mt-4 h-0.5 w-12 rounded-full bg-[var(--shop-gold,#C9A962)] transition-all duration-300 group-hover:w-20" />
+                        <div className="mt-5 h-0.5 w-12 rounded-full bg-[var(--shop-gold,#C9A962)] transition-all duration-300 group-hover:w-20" />
                       </div>
                     </div>
                   </Reveal>
@@ -193,7 +195,7 @@ function HowItWorksSection() {
                     </div>
                   </div>
 
-                  <div className="hidden lg:block w-[calc(50%-40px)]" />
+                  <div className="hidden lg:block w-[calc(50%-48px)]" />
                 </div>
               )
             })}
@@ -202,13 +204,13 @@ function HowItWorksSection() {
 
         {/* CTA */}
         <Reveal>
-          <div className="text-center mt-10 md:mt-14">
-            <p className="font-[var(--shop-font-heading)] text-xl font-semibold text-[var(--shop-text-primary,#1C1917)] mb-4">Ready to start?</p>
+          <div className="text-center mt-12 md:mt-16">
+            <p className="font-[var(--shop-font-heading)] text-xl lg:text-2xl font-semibold text-[var(--shop-text-primary,#1C1917)] mb-5">Ready to start?</p>
             <a href="/contact" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-[var(--shop-text-primary,#1C1917)] px-8 text-sm font-semibold text-white shadow-[var(--shop-shadow-sm)] transition hover:bg-[var(--shop-gold,#C9A962)]">
               Request a Quote
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </a>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs uppercase tracking-[0.14em] text-[var(--shop-text-muted,#78716C)]">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-xs uppercase tracking-[0.14em] text-[var(--shop-text-muted,#78716C)]">
               <span className="inline-flex items-center gap-2 rounded-full border border-[var(--shop-border-light,#E7E5E0)] bg-[var(--shop-bg-elevated,#FFFFFF)] px-3 py-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--shop-gold,#C9A962)]" />
                 Timeline shared before confirmation

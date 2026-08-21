@@ -7,6 +7,7 @@ import { useLoadingStore } from '@/stores/loadingStore'
 const GRACE_MS = 120
 const MIN_DISPLAY_MS = 120
 const MAX_DISPLAY_MS = 2000
+const POPSTATE_MAX_MS = 400
 
 function normalizePath(value: string) {
   return value.replace(window.location.origin, '').replace(/\/+$/, '') || '/'
@@ -35,9 +36,9 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
   const graceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const minTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const maxTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const popstateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const loadingActive = useRef(false)
   const shownAt = useRef(0)
-  const isPopstate = useRef(false)
 
   const clearGrace = useCallback(() => {
     if (graceTimer.current) {
@@ -56,6 +57,10 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
       clearTimeout(maxTimer.current)
       maxTimer.current = null
     }
+    if (popstateTimer.current) {
+      clearTimeout(popstateTimer.current)
+      popstateTimer.current = null
+    }
   }, [clearGrace])
 
   const hideLoader = useCallback(() => {
@@ -70,13 +75,6 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
     clearGrace()
 
     if (!loadingActive.current) {
-      return
-    }
-
-    // Popstate: hide immediately, no minimum display
-    if (isPopstate.current) {
-      isPopstate.current = false
-      hideLoader()
       return
     }
 
@@ -112,7 +110,6 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
       const href = anchor.getAttribute('href') ?? ''
       if (!isInternalHref(href)) return
       if (normalizePath(href) === normalizePath(window.location.pathname)) return
-      isPopstate.current = false
       beginGrace()
     }
 
@@ -123,19 +120,39 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
     }
   }, [beginGrace, clearTimers])
 
-  // Back / forward navigation — start immediately, resolve fast
+  // Back / forward navigation — minimal loader with hard timeout
   useEffect(() => {
     function handlePopstate() {
-      isPopstate.current = true
+      // Clear any existing popstate timer
+      if (popstateTimer.current) {
+        clearTimeout(popstateTimer.current)
+        popstateTimer.current = null
+      }
+
+      // Show loader only if not already showing
       if (!loadingActive.current) {
         loadingActive.current = true
         shownAt.current = Date.now()
         start('Loading…')
       }
+
+      // ALWAYS hide after a short max duration for back/forward
+      // This is a safety net — the pathname watcher below will usually
+      // resolve it sooner, but bfcache or same-path navigation may not
+      // trigger a pathname change.
+      popstateTimer.current = setTimeout(() => {
+        if (loadingActive.current) {
+          hideLoader()
+        }
+      }, POPSTATE_MAX_MS)
     }
+
     window.addEventListener('popstate', handlePopstate)
-    return () => window.removeEventListener('popstate', handlePopstate)
-  }, [start])
+    return () => {
+      window.removeEventListener('popstate', handlePopstate)
+      if (popstateTimer.current) clearTimeout(popstateTimer.current)
+    }
+  }, [start, hideLoader])
 
   // Resolve once the actual route has changed
   useEffect(() => {

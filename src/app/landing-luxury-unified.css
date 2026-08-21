@@ -424,7 +424,7 @@ body {
 
 @media (max-width: 767px) {
   .lux-hero-shade {
-    background: linear-gradient(180deg, transparent 0%, rgba(253, 252, 248, 0.25) 35%, rgba(253, 252, 248, 0.88) 100%);
+    background: linear-gradient(180deg, transparent 0%, transparent 55%, rgba(253, 252, 248, 0.7) 100%);
   }
 }
 
@@ -458,60 +458,63 @@ body {
 @media (max-width: 767px) {
   .lux-hero-content {
     align-items: flex-end;
-    padding: 5rem 1rem 3.5rem;
+    padding: 4.5rem 0.75rem 5.5rem;
   }
   .lux-hero-panel {
     width: 100%;
-    padding: 0.875rem 1rem 1rem;
+    padding: 0.75rem 0.875rem 0.875rem;
     border-radius: var(--lux-radius-md);
   }
   .lux-hero-panel .lux-heading-1 {
-    font-size: clamp(1.15rem, 4.2vw, 1.6rem);
-    line-height: 1.15;
-    margin-bottom: 0.5rem;
+    font-size: clamp(1.05rem, 3.8vw, 1.4rem);
+    line-height: 1.2;
+    margin-bottom: 0.35rem;
+    letter-spacing: -0.01em;
   }
   .lux-hero-panel .lux-body {
     display: none;
   }
   .lux-hero-panel .lux-price {
-    font-size: clamp(1.2rem, 3.5vw, 1.5rem);
+    font-size: clamp(1.1rem, 3.2vw, 1.35rem);
   }
   .lux-hero-panel .lux-eyebrow {
-    font-size: 9px;
-    margin-bottom: 0.5rem;
+    font-size: 8px;
+    margin-bottom: 0.35rem;
+    letter-spacing: 0.1em;
   }
   .lux-hero-panel .lux-eyebrow::before {
-    width: 16px;
+    width: 12px;
   }
   .lux-hero-panel .flex.flex-wrap.items-center.gap-3 {
-    gap: 0.5rem;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
   }
   .lux-hero-panel .lux-btn-primary {
-    min-height: 40px;
-    padding: 0 16px;
-    font-size: 12px;
+    min-height: 36px;
+    padding: 0 14px;
+    font-size: 11px;
   }
   .lux-hero-panel .lux-btn-secondary {
-    min-height: 40px;
-    padding: 0 14px;
-    font-size: 12px;
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 11px;
   }
   .lux-hero-panel .lux-btn-ghost {
-    min-height: 36px;
-    font-size: 12px;
+    min-height: 32px;
+    font-size: 11px;
   }
   .lux-hero-panel .mb-3.flex.items-center.gap-3 {
-    font-size: 10px;
-    gap: 0.4rem;
-    margin-bottom: 0.4rem;
+    font-size: 9px;
+    gap: 0.3rem;
+    margin-bottom: 0.3rem;
   }
   .lux-hero-panel .mb-6.flex.items-baseline.gap-4 {
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
   }
   .lux-hero-panel .rounded-full.border.border-red-200 {
-    font-size: 9px;
-    padding: 2px 8px;
+    font-size: 8px;
+    padding: 1px 6px;
   }
 }
 
@@ -588,23 +591,31 @@ body {
 /* ── Thumbnail strip ── */
 .lux-thumbnail-strip {
   position: absolute;
-  bottom: 1.5rem;
+  bottom: 5rem;
   left: clamp(1.5rem, 4vw, 3rem);
   z-index: 20;
-  display: flex;
+  display: none;
   align-items: center;
   gap: 0.6rem;
 }
 
+@media (min-width: 768px) {
+  .lux-thumbnail-strip {
+    display: flex;
+  }
+}
+
 .lux-thumbnail {
-  width: 48px;
-  height: 48px;
+  position: relative;
+  width: 44px;
+  height: 44px;
   border-radius: var(--lux-radius-md);
   border: 2px solid transparent;
   overflow: hidden;
   cursor: pointer;
   opacity: 0.5;
   transition: opacity 0.25s var(--lux-ease), border-color 0.25s var(--lux-ease), transform 0.25s var(--lux-ease);
+  flex-shrink: 0;
 }
 
 .lux-thumbnail:hover {
