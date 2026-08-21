@@ -7,6 +7,7 @@ type LoadingState = {
   message: string | null
   start: (message?: string) => void
   stop: () => void
+  reset: () => void
   setMessage: (message: string) => void
 }
 
@@ -28,6 +29,10 @@ export const useLoadingStore = create<LoadingState>((set, get) => ({
       isLoading: loadingCount > 0,
       message: loadingCount > 0 ? get().message : null,
     })
+  },
+  reset: () => {
+    loadingCount = 0
+    set({ isLoading: false, message: null })
   },
   setMessage: (message) => set({ message }),
 }))

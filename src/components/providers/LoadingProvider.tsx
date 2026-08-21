@@ -7,11 +7,7 @@ import { useLoadingStore } from '@/stores/loadingStore'
 const GRACE_MS = 120
 const MIN_DISPLAY_MS = 120
 const MAX_DISPLAY_MS = 2000
-const POPSTATE_MAX_MS = 400
-
-function normalizePath(value: string) {
-  return value.replace(window.location.origin, '').replace(/\/+$/, '') || '/'
-}
+const SAFETY_TIMEOUT_MS = 500
 
 function isInternalHref(href: string) {
   if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) {
@@ -31,14 +27,23 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
   const pathname = usePathname()
   const start = useLoadingStore((state) => state.start)
   const stop = useLoadingStore((state) => state.stop)
+  const reset = useLoadingStore((state) => state.reset)
 
   const prevPath = useRef(pathname)
   const graceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const minTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const maxTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const popstateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const loadingActive = useRef(false)
   const shownAt = useRef(0)
+
+  // Reset any stuck loader on mount.
+  // Fixes bfcache: previous page started loader, navigated away,
+  // store still has isLoading=true because stop() never ran.
+  useEffect(() => {
+    reset()
+    loadingActive.current = false
+    shownAt.current = 0
+  }, [reset])
 
   const clearGrace = useCallback(() => {
     if (graceTimer.current) {
@@ -49,18 +54,8 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
 
   const clearTimers = useCallback(() => {
     clearGrace()
-    if (minTimer.current) {
-      clearTimeout(minTimer.current)
-      minTimer.current = null
-    }
-    if (maxTimer.current) {
-      clearTimeout(maxTimer.current)
-      maxTimer.current = null
-    }
-    if (popstateTimer.current) {
-      clearTimeout(popstateTimer.current)
-      popstateTimer.current = null
-    }
+    if (minTimer.current) { clearTimeout(minTimer.current); minTimer.current = null }
+    if (maxTimer.current) { clearTimeout(maxTimer.current); maxTimer.current = null }
   }, [clearGrace])
 
   const hideLoader = useCallback(() => {
@@ -73,10 +68,7 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
 
   const resolveNavigation = useCallback(() => {
     clearGrace()
-
-    if (!loadingActive.current) {
-      return
-    }
+    if (!loadingActive.current) return
 
     const elapsed = Date.now() - shownAt.current
     const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed)
@@ -99,17 +91,15 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
     }, GRACE_MS)
   }, [clearGrace, start])
 
-  // Detect slow navigation via internal link clicks
+  // Click handler
   useEffect(() => {
     function handleClick(event: MouseEvent) {
-      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
-        return
-      }
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
       const anchor = (event.target as HTMLElement).closest?.('a[href]') as HTMLAnchorElement | null
       if (!anchor) return
       const href = anchor.getAttribute('href') ?? ''
       if (!isInternalHref(href)) return
-      if (normalizePath(href) === normalizePath(window.location.pathname)) return
+      if (href.replace(/\/+$/, '') === window.location.pathname.replace(/\/+$/, '')) return
       beginGrace()
     }
 
@@ -120,47 +110,52 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
     }
   }, [beginGrace, clearTimers])
 
-  // Back / forward navigation — minimal loader with hard timeout
-  useEffect(() => {
-    function handlePopstate() {
-      // Clear any existing popstate timer
-      if (popstateTimer.current) {
-        clearTimeout(popstateTimer.current)
-        popstateTimer.current = null
-      }
-
-      // Show loader only if not already showing
-      if (!loadingActive.current) {
-        loadingActive.current = true
-        shownAt.current = Date.now()
-        start('Loading…')
-      }
-
-      // ALWAYS hide after a short max duration for back/forward
-      // This is a safety net — the pathname watcher below will usually
-      // resolve it sooner, but bfcache or same-path navigation may not
-      // trigger a pathname change.
-      popstateTimer.current = setTimeout(() => {
-        if (loadingActive.current) {
-          hideLoader()
-        }
-      }, POPSTATE_MAX_MS)
-    }
-
-    window.addEventListener('popstate', handlePopstate)
-    return () => {
-      window.removeEventListener('popstate', handlePopstate)
-      if (popstateTimer.current) clearTimeout(popstateTimer.current)
-    }
-  }, [start, hideLoader])
-
-  // Resolve once the actual route has changed
+  // Pathname change resolver
   useEffect(() => {
     if (prevPath.current !== pathname) {
       prevPath.current = pathname
       resolveNavigation()
     }
   }, [pathname, resolveNavigation])
+
+  // Popstate + bfcache handler
+  useEffect(() => {
+    function handlePopstate() {
+      if (loadingActive.current) {
+        armSafety()
+        return
+      }
+      loadingActive.current = true
+      shownAt.current = Date.now()
+      start('Loading…')
+      armSafety()
+    }
+
+    function armSafety() {
+      // NOT stored in a ref so it survives unmount/remount.
+      setTimeout(() => {
+        if (loadingActive.current) {
+          loadingActive.current = false
+          stop()
+        }
+      }, SAFETY_TIMEOUT_MS)
+    }
+
+    function handlePageshow(event: PageTransitionEvent) {
+      if (event.persisted) {
+        reset()
+        loadingActive.current = false
+      }
+    }
+
+    window.addEventListener('popstate', handlePopstate)
+    window.addEventListener('pageshow', handlePageshow)
+
+    return () => {
+      window.removeEventListener('popstate', handlePopstate)
+      window.removeEventListener('pageshow', handlePageshow)
+    }
+  }, [start, stop, reset])
 
   return (
     <>
