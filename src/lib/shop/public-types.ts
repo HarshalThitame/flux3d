@@ -53,7 +53,6 @@ export type ShopPublicProduct = {
   skus: ShopSku[]
   variant_options: ShopVariantOption[]
   default_dimensions?: ProductDimensions | null
-  box_dimensions?: ProductDimensions | null
   variant_option_dimensions: ShopVariantOptionDimension[]
   variant_option_images: ShopVariantOptionImage[]
   sku_images: Record<string, ShopSkuImage[]>
@@ -87,8 +86,14 @@ export type ShopPublicReview = {
   body: string | null
   image_urls: string[]
   is_verified_purchase: boolean
+  admin_reply: string | null
+  admin_replied_at: string | null
   created_at: string | null
+  updated_at: string | null
   reviewer_name: string
+  helpful_count: number
+  not_helpful_count: number
+  user_vote: boolean | null
 }
 
 export type ShopReviewsResult = {

@@ -38,7 +38,10 @@ export async function GET(request: Request) {
         image_urls,
         is_verified_purchase,
         is_approved,
+        admin_reply,
+        admin_replied_at,
         created_at,
+        updated_at,
         product:shelf_products(id,name,slug,thumbnail_url),
         order:shelf_orders(id,order_number)
       `, { count: 'exact' })

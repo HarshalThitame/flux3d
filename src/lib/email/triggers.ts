@@ -235,6 +235,25 @@ export async function sendDeliveryConfirmation(
   } as DeliveryConfirmationPayload)
 }
 
+export async function sendReviewReminder(
+  userId: string,
+  email: string,
+  orderNumber: string,
+  customerName: string,
+  itemsHtml: string,
+  reviewUrl: string
+) {
+  return enqueueEmail({
+    emailType: 'review_reminder',
+    userId,
+    recipient: email,
+    orderNumber,
+    customerName,
+    itemsHtml,
+    reviewUrl,
+  } as import('./types').ReviewReminderPayload)
+}
+
 // ============================================================================
 // Billing Lifecycle Triggers
 // ============================================================================

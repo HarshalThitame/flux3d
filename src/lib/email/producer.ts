@@ -144,6 +144,8 @@ function buildSubject(payload: EmailJobPayload): string {
       return `Your order ${payload.orderNumber} has shipped 🚚`
     case 'delivery_confirmation':
       return `Order ${payload.orderNumber} delivered — how did we do?`
+    case 'review_reminder':
+      return `How is your order ${payload.orderNumber}? Leave a review`
     case 'payment_receipt':
       return `Payment receipt for order ${payload.orderNumber}`
     case 'payment_failed':

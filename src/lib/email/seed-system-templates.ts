@@ -214,6 +214,21 @@ const SKELETONS: Record<string, string> = {
   Questions or issues with your order? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>`,
 
+  review_reminder: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
+<p style="font-size:15px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
+  How is your order <strong>{{order_number}}</strong> holding up? We'd love to hear your thoughts — your review helps other makers find the right 3D-printed products.
+</p>
+<p style="font-size:15px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
+  Products waiting for your review:
+</p>
+{{items_html}}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding:24px 0;">
+  <a href="{{review_url}}" style="background-color:#FF5C1A;color:#fff;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;">Write a Review</a>
+</td></tr></table>
+<p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
+  Questions? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
+</p>`,
+
   payment_receipt: `<p style="text-align:center;padding:0 32px 16px;">
   <span style="display:inline-block;background-color:#dcfce7;color:#166534;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1;padding:6px 14px;border-radius:20px;margin:0;">Payment Confirmed</span>
 </p>

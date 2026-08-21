@@ -9,10 +9,14 @@ import {
   Box,
   ChevronLeft,
   ChevronRight,
+  MessageCircle,
+  Pencil,
   RefreshCcw,
   ShieldCheck,
   ShoppingBag,
   Star,
+  ThumbsDown,
+  ThumbsUp,
   Truck,
 } from 'lucide-react'
 import { addToast } from '@/lib/toast/store'
@@ -211,8 +215,10 @@ export default function ShopProductDetailClient({
   const [checkingPincode, setCheckingPincode] = useState(false)
   const [reviews, setReviews] = useState(initialReviews)
   const [reviewPage, setReviewPage] = useState(1)
+  const [reviewSort, setReviewSort] = useState<'newest' | 'highest' | 'lowest' | 'helpful'>('newest')
   const [loadingReviews, setLoadingReviews] = useState(false)
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  const [editingReview, setEditingReview] = useState<ShopPublicReview | null>(null)
   const [reviewEligibility, setReviewEligibility] = useState<ReviewEligibility | null>(null)
   const [reviewStatus, setReviewStatus] = useState<'loading' | 'eligible' | 'not_purchased' | 'reviewed' | 'guest'>(
     currentUser ? 'loading' : 'guest'
@@ -374,16 +380,46 @@ export default function ShopProductDetailClient({
     }
   }
 
-  async function loadMoreReviews() {
+  async function loadReviews(page: number, sort: typeof reviewSort, append = false) {
     setLoadingReviews(true)
     try {
-      const nextPage = reviewPage + 1
-      const response = await fetch(`/api/3d-shop/products/${product.slug}/reviews?page=${nextPage}&limit=10`)
-      const data = (await response.json()) as { reviews?: ShopPublicReview[] }
-      setReviews((current) => [...current, ...(data.reviews ?? [])])
-      setReviewPage(nextPage)
+      const response = await fetch(`/api/3d-shop/products/${product.slug}/reviews?page=${page}&limit=10&sort=${sort}`)
+      const data = (await response.json()) as { reviews?: ShopPublicReview[]; total?: number }
+      setReviews((current) => (append ? [...current, ...(data.reviews ?? [])] : (data.reviews ?? [])))
+      setReviewPage(page)
     } finally {
       setLoadingReviews(false)
+    }
+  }
+
+  async function loadMoreReviews() {
+    await loadReviews(reviewPage + 1, reviewSort, true)
+  }
+
+  async function changeSort(newSort: typeof reviewSort) {
+    setReviewSort(newSort)
+    await loadReviews(1, newSort, false)
+  }
+
+  async function voteReview(reviewId: string, isHelpful: boolean) {
+    if (!currentUser) return
+    try {
+      const response = await fetch(`/api/3d-shop/reviews/${reviewId}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isHelpful }),
+      })
+      const data = (await response.json().catch(() => ({}))) as { helpful?: number; notHelpful?: number; userVote?: boolean; error?: string }
+      if (!response.ok) throw new Error(data.error || 'Vote failed.')
+      setReviews((current) =>
+        current.map((review) =>
+          review.id === reviewId
+            ? { ...review, helpful_count: data.helpful ?? review.helpful_count, not_helpful_count: data.notHelpful ?? review.not_helpful_count, user_vote: data.userVote ?? null }
+            : review
+        )
+      )
+    } catch (voteError) {
+      addToast({ type: 'error', title: 'Vote failed', description: voteError instanceof Error ? voteError.message : 'Could not record your vote.' })
     }
   }
 
@@ -779,7 +815,21 @@ export default function ShopProductDetailClient({
                 {totalReviews > 0 ? `Based on ${totalReviews} review${totalReviews === 1 ? '' : 's'}` : 'No reviews yet.'}
               </p>
             </div>
-            {renderReviewAction()}
+            <div className="flex flex-wrap items-center gap-3">
+              {totalReviews > 0 && (
+                <select
+                  value={reviewSort}
+                  onChange={(e) => void changeSort(e.target.value as typeof reviewSort)}
+                  className="min-h-[44px] rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] px-3 text-sm font-semibold text-[var(--shop-text-secondary)] outline-none focus:border-[var(--shop-gold)]"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="highest">Highest Rated</option>
+                  <option value="lowest">Lowest Rated</option>
+                  <option value="helpful">Most Helpful</option>
+                </select>
+              )}
+              {renderReviewAction()}
+            </div>
           </div>
 
           {totalReviews > 0 ? (
@@ -812,11 +862,29 @@ export default function ShopProductDetailClient({
                         <div className="flex items-center gap-2">
                           <Stars value={review.rating} />
                           {review.is_verified_purchase && <span className="rounded-full bg-[var(--shop-gold-faint)] px-2 py-0.5 text-[10px] font-bold text-[var(--shop-gold)]">Verified Purchase</span>}
+                          {review.updated_at && review.updated_at !== review.created_at && (
+                            <span className="text-[10px] font-bold text-[var(--shop-text-muted)]">Edited</span>
+                          )}
                         </div>
                         <h3 className="mt-2 font-semibold text-[var(--shop-text-primary)]">{review.title || 'Review'}</h3>
                       </div>
-                      <div className="text-xs text-[var(--shop-text-muted)]">
-                        {review.created_at ? new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(review.created_at)) : ''}
+                      <div className="flex items-center gap-2">
+                        {currentUser?.id === review.user_id && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingReview(review)
+                              setReviewModalOpen(true)
+                            }}
+                            className="inline-flex items-center gap-1 rounded-lg border border-[var(--shop-border-light)] bg-white px-2 py-1 text-xs font-semibold text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
+                          >
+                            <Pencil className="h-3 w-3" />
+                            Edit
+                          </button>
+                        )}
+                        <div className="text-xs text-[var(--shop-text-muted)]">
+                          {review.created_at ? new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(review.created_at)) : ''}
+                        </div>
                       </div>
                     </div>
                     {review.body && <p className="mt-3 text-sm leading-7 text-[var(--shop-text-secondary)]">{review.body}</p>}
@@ -834,7 +902,49 @@ export default function ShopProductDetailClient({
                         ))}
                       </div>
                     )}
-                    <p className="mt-3 text-xs font-semibold text-[var(--shop-text-muted)]">{review.reviewer_name}</p>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-xs font-semibold text-[var(--shop-text-muted)]">{review.reviewer_name}</p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void voteReview(review.id, true)}
+                          className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-semibold transition ${
+                            review.user_vote === true
+                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                              : 'border-[var(--shop-border-light)] bg-white text-[var(--shop-text-muted)] hover:text-[var(--shop-text-primary)]'
+                          }`}
+                        >
+                          <ThumbsUp className="h-3 w-3" />
+                          {review.helpful_count > 0 ? review.helpful_count : 'Helpful'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void voteReview(review.id, false)}
+                          className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-semibold transition ${
+                            review.user_vote === false
+                              ? 'border-rose-200 bg-rose-50 text-rose-700'
+                              : 'border-[var(--shop-border-light)] bg-white text-[var(--shop-text-muted)] hover:text-[var(--shop-text-primary)]'
+                          }`}
+                        >
+                          <ThumbsDown className="h-3 w-3" />
+                          {review.not_helpful_count > 0 ? review.not_helpful_count : 'Not Helpful'}
+                        </button>
+                      </div>
+                    </div>
+                    {review.admin_reply && (
+                      <div className="mt-3 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-3">
+                        <div className="flex items-center gap-2 text-xs font-bold text-[var(--shop-gold)]">
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          Flux3D Team
+                          {review.admin_replied_at && (
+                            <span className="font-normal text-[var(--shop-text-muted)]">
+                              {new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(review.admin_replied_at))}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1 text-sm leading-6 text-[var(--shop-text-secondary)]">{review.admin_reply}</p>
+                      </div>
+                    )}
                   </article>
                 ))}
                 {reviews.length < totalReviews && (
@@ -866,11 +976,21 @@ export default function ShopProductDetailClient({
         open={reviewModalOpen}
         product={product}
         eligibility={reviewEligibility}
-        onOpenChangeAction={setReviewModalOpen}
+        existingReview={editingReview}
+        onOpenChangeAction={(open) => {
+          setReviewModalOpen(open)
+          if (!open) setEditingReview(null)
+        }}
         onSubmittedAction={(message) => {
-          setReviewStatus('reviewed')
-          setReviewEligibility(null)
-          setToast(message || "Review submitted! It'll appear after approval.")
+          if (editingReview) {
+            setEditingReview(null)
+            setToast(message || 'Review updated.')
+            void loadReviews(1, reviewSort, false)
+          } else {
+            setReviewStatus('reviewed')
+            setReviewEligibility(null)
+            setToast(message || "Review submitted! It'll appear after approval.")
+          }
         }}
       />
       {product.model_url && (

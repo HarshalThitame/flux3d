@@ -18,7 +18,10 @@ type AdminReview = {
   image_urls: string[]
   is_verified_purchase: boolean
   is_approved: boolean
+  admin_reply: string | null
+  admin_replied_at: string | null
   created_at: string | null
+  updated_at: string | null
   product?: { id: string; name: string; slug: string; thumbnail_url: string | null } | null
   order?: { id: string; order_number: string } | null
   reviewer?: { name: string; email: string | null }
@@ -45,28 +48,37 @@ function Rating({ value }: { value: number }) {
   )
 }
 
+const PAGE_SIZE = 20
+
 export default function AdminShopReviewsClient() {
   const [tab, setTab] = useState<ReviewTab>('pending')
   const [reviews, setReviews] = useState<AdminReview[]>([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [replying, setReplying] = useState<Record<string, boolean>>({})
+  const [replyText, setReplyText] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<AdminToastState>(null)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
 
   const queryString = useMemo(() => {
-    const params = new URLSearchParams({ limit: '100' })
+    const params = new URLSearchParams({ limit: String(PAGE_SIZE), page: String(page) })
     if (tab === 'pending') params.set('is_approved', 'false')
     if (tab === 'approved') params.set('is_approved', 'true')
     return params.toString()
-  }, [tab])
+  }, [tab, page])
 
   const loadReviews = useCallback(async () => {
     setLoading(true)
     try {
       const response = await fetch(`/api/3d-shop/admin/reviews?${queryString}`)
-      const data = await response.json().catch(() => ({})) as { reviews?: AdminReview[]; error?: string }
+      const data = await response.json().catch(() => ({})) as { reviews?: AdminReview[]; total?: number; error?: string }
       if (!response.ok) throw new Error(data.error || 'Failed to load reviews.')
       setReviews(data.reviews ?? [])
+      setTotal(data.total ?? 0)
       setExpanded({})
+      setReplying({})
+      setReplyText({})
     } catch (error) {
       setToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to load reviews.' })
     } finally {
@@ -103,6 +115,24 @@ export default function AdminShopReviewsClient() {
     }
   }
 
+  async function submitReply(reviewId: string) {
+    const text = replyText[reviewId]?.trim() ?? ''
+    try {
+      const response = await fetch(`/api/3d-shop/admin/reviews/${reviewId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin_reply: text }),
+      })
+      const data = await response.json().catch(() => ({})) as { error?: string }
+      if (!response.ok) throw new Error(data.error || 'Failed to submit reply.')
+      setToast({ type: 'success', message: text ? 'Reply posted.' : 'Reply removed.' })
+      setReplying((current) => ({ ...current, [reviewId]: false }))
+      await loadReviews()
+    } catch (error) {
+      setToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to submit reply.' })
+    }
+  }
+
   async function deleteReview(reviewId: string) {
     if (!window.confirm('Delete this review?')) return
     try {
@@ -135,7 +165,7 @@ export default function AdminShopReviewsClient() {
           <button
             key={item.key}
             type="button"
-            onClick={() => setTab(item.key)}
+            onClick={() => { setPage(1); setTab(item.key) }}
             className={`min-h-[42px] shrink-0 rounded-xl px-4 text-sm font-semibold ${
               tab === item.key ? 'bg-[#6d28d9] text-white' : 'text-[#6F7192] hover:bg-gray-50'
             }`}
@@ -194,12 +224,20 @@ export default function AdminShopReviewsClient() {
                             Approve
                           </button>
                         )}
+                        {review.is_approved && (
+                          <button type="button" onClick={() => void updateReview(review.id, false)} className="rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white">
+                            Unapprove
+                          </button>
+                        )}
                         <button type="button" onClick={() => void deleteReview(review.id)} className="rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white">
-                          Reject/Delete
+                          Delete
                         </button>
                         <button type="button" onClick={() => setExpanded((current) => ({ ...current, [review.id]: !current[review.id] }))} className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-[#6F7192]">
                           <Eye className="h-3.5 w-3.5" />
                           View
+                        </button>
+                        <button type="button" onClick={() => setReplying((current) => ({ ...current, [review.id]: !current[review.id] }))} className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-[#6F7192]">
+                          Reply
                         </button>
                       </div>
                       {expanded[review.id] && (
@@ -214,6 +252,31 @@ export default function AdminShopReviewsClient() {
                               ))}
                             </div>
                           )}
+                          {review.admin_reply && (
+                            <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50 p-2.5 text-sm text-indigo-900">
+                              <div className="mb-1 text-xs font-bold text-indigo-700">Flux3D Team</div>
+                              {review.admin_reply}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {replying[review.id] && (
+                        <div className="mt-3 max-w-xl space-y-2">
+                          <textarea
+                            value={replyText[review.id] ?? review.admin_reply ?? ''}
+                            onChange={(e) => setReplyText((current) => ({ ...current, [review.id]: e.target.value }))}
+                            placeholder="Write a reply..."
+                            className="w-full rounded-lg border border-gray-200 bg-white p-2.5 text-sm leading-6 text-[#0F1B3D] outline-none focus:border-[#6d28d9]"
+                            rows={3}
+                          />
+                          <div className="flex gap-2">
+                            <button type="button" onClick={() => void submitReply(review.id)} className="rounded-lg bg-[#6d28d9] px-3 py-2 text-xs font-semibold text-white">
+                              Save Reply
+                            </button>
+                            <button type="button" onClick={() => setReplying((current) => ({ ...current, [review.id]: false }))} className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-[#6F7192]">
+                              Cancel
+                            </button>
+                          </div>
                         </div>
                       )}
                     </td>
@@ -223,6 +286,31 @@ export default function AdminShopReviewsClient() {
             </tbody>
           </table>
         </div>
+        {total > PAGE_SIZE && (
+          <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3">
+            <div className="text-sm text-[#6F7192]">
+              Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, total)} of {total}
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="min-h-[36px] rounded-lg border border-gray-200 px-3 text-sm font-semibold text-[#6F7192] disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                disabled={page * PAGE_SIZE >= total}
+                onClick={() => setPage((p) => p + 1)}
+                className="min-h-[36px] rounded-lg border border-gray-200 px-3 text-sm font-semibold text-[#6F7192] disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

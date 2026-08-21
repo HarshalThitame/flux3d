@@ -113,6 +113,14 @@ export type DeliveryConfirmationPayload = BaseEmailPayload & {
   reviewUrl?: string
 }
 
+export type ReviewReminderPayload = BaseEmailPayload & {
+  emailType: 'review_reminder'
+  orderNumber: string
+  customerName: string
+  itemsHtml: string
+  reviewUrl: string
+}
+
 export type PaymentReceiptPayload = BaseEmailPayload & {
   emailType: 'payment_receipt'
   orderNumber: string
@@ -223,6 +231,7 @@ export type EmailJobPayload =
   | ProductionStartedPayload
   | OrderShippedPayload
   | DeliveryConfirmationPayload
+  | ReviewReminderPayload
   | PaymentReceiptPayload
   | PaymentFailedPayload
   | RefundIssuedPayload

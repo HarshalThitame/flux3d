@@ -130,7 +130,7 @@ export default function EmailSettingsForm({
           />
           <InputField
             label="Sender Email"
-            placeholder="noreply@updates.flux3d.in"
+            placeholder="updates@flux3d.in"
             type="email"
             value={form.sender_email ?? ''}
             onChange={(v) => update('sender_email', v)}

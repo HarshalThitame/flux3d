@@ -16,7 +16,9 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
 
     const page = Number(searchParams.get('page') ?? 1)
     const limit = Number(searchParams.get('limit') ?? 10)
-    return NextResponse.json(await getShopProductReviews(product.id, page, limit), { headers: PUBLIC_CACHE_HEADERS })
+    const sort = searchParams.get('sort') as 'newest' | 'highest' | 'lowest' | 'helpful' | null
+    const validSort = sort && ['newest', 'highest', 'lowest', 'helpful'].includes(sort) ? sort : 'newest'
+    return NextResponse.json(await getShopProductReviews(product.id, page, limit, validSort), { headers: PUBLIC_CACHE_HEADERS })
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to load reviews.' },

@@ -159,6 +159,7 @@ function mapRow(row: BusinessSettingsRow): BusinessSettings {
     resendSenderName: n(row.resend_sender_name) || FALLBACK.resendSenderName,
     resendSenderEmail: n(row.resend_sender_email) || FALLBACK.resendSenderEmail,
     resendWebhookSecret: n(row.resend_webhook_secret),
+    complaintsEmail: n(row.complaints_email) || FALLBACK.complaintsEmail,
     privacyPolicyUrl: n(row.privacy_policy_url),
     termsUrl: n(row.terms_url),
     refundPolicyUrl: n(row.refund_policy_url),

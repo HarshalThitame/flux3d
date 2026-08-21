@@ -9,7 +9,6 @@ type DimensionEntry = {
   option_name: string
   option_value: string
   dimensions: ProductDimensions
-  box_dimensions?: ProductDimensions | null
 }
 
 function normalizeEntry(entry: Partial<DimensionEntry> & { id?: string }) {
@@ -18,17 +17,12 @@ function normalizeEntry(entry: Partial<DimensionEntry> & { id?: string }) {
   if (!optionName || !optionValue) throw new Error('option_name and option_value are required.')
   const parsed = parseDimensionsJson(entry.dimensions)
   if (!parsed) throw new Error(`Invalid dimensions for "${optionName}: ${optionValue}".`)
-  const normalized = {
+  return {
     option_name: optionName,
     option_value: optionValue,
     dimensions: withComputedVolume(parsed),
     ...(typeof entry.id === 'string' && entry.id ? { id: entry.id } : {}),
   }
-  if (Object.prototype.hasOwnProperty.call(entry, 'box_dimensions')) {
-    const parsedBox = parseDimensionsJson(entry.box_dimensions)
-    return { ...normalized, box_dimensions: parsedBox ? withComputedVolume(parsedBox) : null }
-  }
-  return normalized
 }
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
@@ -73,7 +67,6 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
             option_name: normalized.option_name,
             option_value: normalized.option_value,
             dimensions: normalized.dimensions,
-            ...('box_dimensions' in normalized ? { box_dimensions: normalized.box_dimensions } : {}),
           },
           { onConflict: 'product_id,option_name,option_value' }
         )

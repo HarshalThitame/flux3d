@@ -25,12 +25,14 @@ export type EmailType =
   | 'production_started'
   | 'order_shipped'
   | 'delivery_confirmation'
+  | 'review_reminder'
   | 'payment_receipt'
   | 'payment_failed'
   | 'refund_issued'
   | 'contact_notification'
   | 'stock_alert'
   | 'back_in_stock'
+  | 'ticket_acknowledgment'
 
 export type EmailLogStatus =
   | 'queued'
@@ -419,6 +421,134 @@ export type StockAlertRow = {
 // ============================================================================
 // Database registry (Supabase shape)
 // ============================================================================
+export type ShelfCategoryRow = {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  icon_emoji: string | null
+  banner_image_url: string | null
+  parent_category_id: string | null
+  display_order: number | null
+  is_active: boolean | null
+  created_at: string | null
+}
+
+export type ShelfProductRow = {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  long_description: string | null
+  category_id: string | null
+  tags: string[] | null
+  occasion_tags: string[] | null
+  thumbnail_url: string | null
+  image_urls: string[] | null
+  model_url: string | null
+  base_price: number | null
+  is_customizable: boolean | null
+  customization_label: string | null
+  is_featured: boolean | null
+  is_active: boolean | null
+  is_archived: boolean | null
+  meta_title: string | null
+  meta_description: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+export type ShelfSkuRow = {
+  id: string
+  product_id: string
+  sku_code: string
+  variant_combination: Json
+  price: number
+  compare_at_price: number | null
+  stock_quantity: number
+  low_stock_threshold: number | null
+  weight_grams: number | null
+  variant_image_url: string | null
+  is_available: boolean | null
+  pre_order_eta: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+export type ShelfOrderRow = {
+  id: string
+  order_number: string
+  user_id: string
+  items: Json
+  subtotal: number
+  discount_amount: number | null
+  coupon_code: string | null
+  shipping_charge: number | null
+  total_amount: number
+  shipping_address: Json
+  payment_method: string | null
+  payment_status: 'pending' | 'paid' | 'failed' | 'refunded'
+  payment_id: string | null
+  order_status: 'placed' | 'confirmed' | 'packed' | 'shipped' | 'delivered' | 'cancelled' | 'return_requested' | 'returned'
+  tracking_number: string | null
+  courier_name: string | null
+  tracking_url: string | null
+  estimated_delivery: string | null
+  order_source: string
+  admin_notes: string | null
+  cancellation_reason: string | null
+  placed_at: string | null
+  updated_at: string | null
+  delivered_at: string | null
+}
+
+export type ShelfReviewReminderRow = {
+  id: string
+  order_id: string
+  user_id: string
+  reminder_number: number
+  sent_at: string | null
+}
+
+export type ShelfReviewRow = {
+  id: string
+  product_id: string
+  user_id: string
+  order_id: string
+  rating: number
+  title: string | null
+  body: string | null
+  image_urls: string[] | null
+  is_verified_purchase: boolean | null
+  is_approved: boolean | null
+  admin_reply: string | null
+  admin_replied_at: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+export type ShelfReviewVoteRow = {
+  id: string
+  review_id: string
+  user_id: string
+  is_helpful: boolean
+  created_at: string | null
+}
+
+export type ShelfCouponRow = {
+  id: string
+  code: string
+  discount_type: 'flat' | 'percent'
+  discount_value: number
+  min_order_value: number | null
+  max_uses: number | null
+  used_count: number | null
+  valid_from: string
+  valid_until: string
+  is_active: boolean | null
+  created_at: string | null
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -531,6 +661,46 @@ export type Database = {
         Row: StockAlertRow
         Insert: Omit<Partial<StockAlertRow>, 'id'> & Pick<StockAlertRow, 'sku_id' | 'product_id' | 'alert_type' | 'message'>
         Update: Partial<StockAlertRow>
+      }
+      shelf_categories: {
+        Row: ShelfCategoryRow
+        Insert: Omit<Partial<ShelfCategoryRow>, 'id'> & Pick<ShelfCategoryRow, 'name' | 'slug'>
+        Update: Partial<ShelfCategoryRow>
+      }
+      shelf_products: {
+        Row: ShelfProductRow
+        Insert: Omit<Partial<ShelfProductRow>, 'id'> & Pick<ShelfProductRow, 'name' | 'slug' | 'base_price'>
+        Update: Partial<ShelfProductRow>
+      }
+      shelf_skus: {
+        Row: ShelfSkuRow
+        Insert: Omit<Partial<ShelfSkuRow>, 'id'> & Pick<ShelfSkuRow, 'product_id' | 'sku_code' | 'price'>
+        Update: Partial<ShelfSkuRow>
+      }
+      shelf_orders: {
+        Row: ShelfOrderRow
+        Insert: Omit<Partial<ShelfOrderRow>, 'id'> & Pick<ShelfOrderRow, 'order_number' | 'user_id' | 'items' | 'subtotal' | 'total_amount' | 'shipping_address' | 'payment_status' | 'order_status'>
+        Update: Partial<ShelfOrderRow>
+      }
+      shelf_reviews: {
+        Row: ShelfReviewRow
+        Insert: Omit<Partial<ShelfReviewRow>, 'id'> & Pick<ShelfReviewRow, 'product_id' | 'user_id' | 'order_id' | 'rating'>
+        Update: Partial<ShelfReviewRow>
+      }
+      shelf_coupons: {
+        Row: ShelfCouponRow
+        Insert: Omit<Partial<ShelfCouponRow>, 'id'> & Pick<ShelfCouponRow, 'code' | 'discount_type' | 'discount_value' | 'valid_from' | 'valid_until'>
+        Update: Partial<ShelfCouponRow>
+      }
+      shelf_review_votes: {
+        Row: ShelfReviewVoteRow
+        Insert: Omit<Partial<ShelfReviewVoteRow>, 'id'> & Pick<ShelfReviewVoteRow, 'review_id' | 'user_id' | 'is_helpful'>
+        Update: Partial<ShelfReviewVoteRow>
+      }
+      shelf_review_reminders: {
+        Row: ShelfReviewReminderRow
+        Insert: Omit<Partial<ShelfReviewReminderRow>, 'id'> & Pick<ShelfReviewReminderRow, 'order_id' | 'user_id' | 'reminder_number'>
+        Update: Partial<ShelfReviewReminderRow>
       }
     }
   }

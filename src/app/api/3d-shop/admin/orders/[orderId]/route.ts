@@ -5,6 +5,7 @@ import { requireAdminPermission } from '@/lib/admin/permissions'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { sendOrderShipped, sendDeliveryConfirmation } from '@/lib/email/triggers'
 import { notifyWhatsAppOrderShipped, notifyWhatsAppOrderDelivered } from '@/lib/whatsapp/notifications'
+import { absoluteUrl } from '@/lib/site'
 import {
   assertFulfilmentStatusTransition,
   assertShopStatusTransition,
@@ -277,6 +278,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ order
             customerEmail,
             orderNumber,
             customerName,
+            absoluteUrl('/3d-shop/orders'),
           ).catch((err) => {
             console.error('[3d-shop/admin/orders] Failed to enqueue DeliveryConfirmation email:', err)
           })

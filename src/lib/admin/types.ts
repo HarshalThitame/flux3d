@@ -276,20 +276,46 @@ export type PrinterStatus = {
 
 export type SupportTicket = {
   id: string
-  ticketId: string
+  ticketNumber: string
   customer: string
   customerEmail?: string
   customerPhone?: string
   subject: string
-  category: 'Print Quality' | 'Order Issue' | 'Billing' | 'Shipping' | 'Other'
+  category: 'Print Quality' | 'Order Issue' | 'Billing' | 'Shipping' | 'Product Inquiry' | 'Other'
   priority: 'Urgent' | 'High' | 'Normal' | 'Low'
   status: 'Open' | 'In Progress' | 'Resolved' | 'Closed'
   assignedTo?: string
+  source: 'email' | 'whatsapp' | 'manual' | 'contact_form'
+  messageCount: number
+  lastMessageAt: string
   created: string
   lastUpdated: string
-  description?: string
-  attachments?: string[]
-  relatedOrder?: string
+}
+
+export type SupportTicketMessage = {
+  id: string
+  ticket_id: string
+  sender_type: 'customer' | 'admin' | 'system'
+  sender_email: string | null
+  sender_name: string | null
+  body: string | null
+  html_body: string | null
+  resend_email_id: string | null
+  message_id: string | null
+  in_reply_to: string | null
+  is_internal: boolean
+  created_at: string
+}
+
+export type SupportTicketAttachment = {
+  id: string
+  message_id: string
+  filename: string
+  content_type: string | null
+  size: number | null
+  storage_path: string | null
+  url: string | null
+  created_at: string
 }
 
 export type PaymentData = {

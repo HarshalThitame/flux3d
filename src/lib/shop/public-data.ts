@@ -65,7 +65,10 @@ type RawReview = {
   image_urls?: string[] | null
   is_verified_purchase?: boolean | null
   is_approved?: boolean | null
+  admin_reply?: string | null
+  admin_replied_at?: string | null
   created_at?: string | null
+  updated_at?: string | null
 }
 
 type RawProduct = {
@@ -94,10 +97,8 @@ type RawProduct = {
   skus?: (ShopSku & { images?: ShopSkuImage[] | null })[] | null
   variant_options?: ShopVariantOption[] | null
   default_dimensions?: unknown
-  box_dimensions?: unknown
-  variant_option_dimensions?: (Omit<ShopVariantOptionDimension, 'dimensions' | 'box_dimensions'> & {
+  variant_option_dimensions?: (Omit<ShopVariantOptionDimension, 'dimensions'> & {
     dimensions?: unknown
-    box_dimensions?: unknown
   })[] | null
   variant_option_images?: ShopVariantOptionImage[] | null
   reviews?: RawReview[] | null
@@ -126,7 +127,6 @@ const PRODUCT_SELECT = `
   created_at,
   updated_at,
   default_dimensions,
-  box_dimensions,
   category:shelf_categories(id,name,slug),
   skus:shelf_skus(
     id,
@@ -169,7 +169,6 @@ const PRODUCT_SELECT = `
     option_name,
     option_value,
     dimensions,
-    box_dimensions,
     created_at,
     updated_at
   ),
@@ -226,7 +225,6 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
       return {
         ...entry,
         dimensions: parsed,
-        box_dimensions: parseDimensionsJson(entry.box_dimensions),
       }
     })
     .filter(Boolean) as ShopVariantOptionDimension[]
@@ -288,7 +286,6 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
     skus,
     variant_options: (row.variant_options ?? []).sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
     default_dimensions: parseDimensionsJson(row.default_dimensions),
-    box_dimensions: parseDimensionsJson(row.box_dimensions),
     variant_option_dimensions: variantOptionDimensions,
     variant_option_images: variantOptionImages,
     sku_images: skuImages,
@@ -544,7 +541,8 @@ export async function getShopRecommendations({
 export async function getShopProductReviews(
   productId: string,
   page = 1,
-  limit = 10
+  limit = 10,
+  sort: 'newest' | 'highest' | 'lowest' | 'helpful' = 'newest'
 ): Promise<ShopReviewsResult> {
   const supabase = await createServerSupabaseClient()
   const normalizedPage = Math.max(1, page)
@@ -552,12 +550,17 @@ export async function getShopProductReviews(
   const from = (normalizedPage - 1) * normalizedLimit
   const to = from + normalizedLimit - 1
 
+  let orderColumn = 'created_at'
+  let ascending = false
+  if (sort === 'highest') { orderColumn = 'rating'; ascending = false }
+  else if (sort === 'lowest') { orderColumn = 'rating'; ascending = true }
+
   const { data, count, error } = await supabase
     .from('shelf_reviews')
-    .select('id,product_id,user_id,order_id,rating,title,body,image_urls,is_verified_purchase,created_at', { count: 'exact' })
+    .select('id,product_id,user_id,order_id,rating,title,body,image_urls,is_verified_purchase,admin_reply,admin_replied_at,created_at,updated_at', { count: 'exact' })
     .eq('product_id', productId)
     .eq('is_approved', true)
-    .order('created_at', { ascending: false })
+    .order(orderColumn, { ascending })
     .range(from, to)
 
   if (error) throw new Error(error.message)
@@ -576,19 +579,55 @@ export async function getShopProductReviews(
     })
   }
 
-  const reviews: ShopPublicReview[] = rows.map((review) => ({
-    id: review.id ?? '',
-    product_id: review.product_id ?? productId,
-    user_id: review.user_id ?? '',
-    order_id: review.order_id ?? '',
-    rating: normalizeShopNumber(review.rating),
-    title: review.title ?? null,
-    body: review.body ?? null,
-    image_urls: review.image_urls ?? [],
-    is_verified_purchase: review.is_verified_purchase !== false,
-    created_at: review.created_at ?? null,
-    reviewer_name: namesById.get(review.user_id ?? '') ?? 'Verified customer',
-  }))
+  const reviewIds = rows.map((review) => review.id).filter(Boolean) as string[]
+  const helpfulCounts = new Map<string, { helpful: number; notHelpful: number }>()
+  const userVotes = new Map<string, boolean>()
+
+  if (reviewIds.length > 0) {
+    const { data: votes } = await supabase
+      .from('shelf_review_votes')
+      .select('review_id, user_id, is_helpful')
+      .in('review_id', reviewIds)
+
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+
+    ;(votes ?? []).forEach((vote: { review_id: string; user_id: string; is_helpful: boolean }) => {
+      const current = helpfulCounts.get(vote.review_id) ?? { helpful: 0, notHelpful: 0 }
+      if (vote.is_helpful) current.helpful += 1
+      else current.notHelpful += 1
+      helpfulCounts.set(vote.review_id, current)
+      if (currentUser && vote.user_id === currentUser.id) {
+        userVotes.set(vote.review_id, vote.is_helpful)
+      }
+    })
+  }
+
+  let reviews: ShopPublicReview[] = rows.map((review) => {
+    const counts = helpfulCounts.get(review.id ?? '') ?? { helpful: 0, notHelpful: 0 }
+    return {
+      id: review.id ?? '',
+      product_id: review.product_id ?? productId,
+      user_id: review.user_id ?? '',
+      order_id: review.order_id ?? '',
+      rating: normalizeShopNumber(review.rating),
+      title: review.title ?? null,
+      body: review.body ?? null,
+      image_urls: review.image_urls ?? [],
+      is_verified_purchase: review.is_verified_purchase !== false,
+      admin_reply: review.admin_reply ?? null,
+      admin_replied_at: review.admin_replied_at ?? null,
+      created_at: review.created_at ?? null,
+      updated_at: review.updated_at ?? null,
+      reviewer_name: namesById.get(review.user_id ?? '') ?? 'Verified customer',
+      helpful_count: counts.helpful,
+      not_helpful_count: counts.notHelpful,
+      user_vote: userVotes.get(review.id ?? '') ?? null,
+    }
+  })
+
+  if (sort === 'helpful') {
+    reviews = reviews.sort((a, b) => b.helpful_count - a.helpful_count || b.created_at?.localeCompare(a.created_at ?? '') || 0)
+  }
 
   return {
     reviews,

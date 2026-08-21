@@ -110,6 +110,7 @@ export type BusinessSettings = {
   resendSenderName: string
   resendSenderEmail: string
   resendWebhookSecret: string
+  complaintsEmail: string
 
   privacyPolicyUrl: string
   termsUrl: string
@@ -291,6 +292,7 @@ export type BusinessSettingsRow = {
   resend_sender_name: string | null
   resend_sender_email: string | null
   resend_webhook_secret: string | null
+  complaints_email: string | null
 
   privacy_policy_url: string | null
   terms_url: string | null
@@ -493,6 +495,7 @@ export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettin
     resendSenderName: n(row.resend_sender_name),
     resendSenderEmail: n(row.resend_sender_email),
     resendWebhookSecret: n(row.resend_webhook_secret),
+    complaintsEmail: n(row.complaints_email),
 
     privacyPolicyUrl: n(row.privacy_policy_url),
     termsUrl: n(row.terms_url),
@@ -632,6 +635,7 @@ export function toSnakeCase(data: Partial<BusinessSettings>): Record<string, unk
     resendSenderName: 'resend_sender_name',
     resendSenderEmail: 'resend_sender_email',
     resendWebhookSecret: 'resend_webhook_secret',
+    complaintsEmail: 'complaints_email',
     privacyPolicyUrl: 'privacy_policy_url',
     termsUrl: 'terms_url',
     refundPolicyUrl: 'refund_policy_url',

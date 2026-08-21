@@ -87,7 +87,7 @@ export async function getSenderAddress(): Promise<{ name: string; email: string 
     emailSettings?.sender_email ||
     businessSettings?.resendSenderEmail ||
     businessSettings?.smtpSenderEmail ||
-    'noreply@updates.flux3d.in'
+    'updates@flux3d.in'
 
   return { name, email }
 }

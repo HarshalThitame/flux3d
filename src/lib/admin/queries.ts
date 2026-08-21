@@ -1802,19 +1802,38 @@ export async function getAdminInventoryData() {
   }))
 }
 
-export async function getAdminTicketsData() {
+export type AdminTicketsFilter = {
+  status?: string
+  source?: string
+  sort?: string
+}
+
+export async function getAdminTicketsData(filter: AdminTicketsFilter = {}) {
   const supabase = createAdminSupabaseClient()
-  const { data, error } = await supabase
+
+  let query = supabase
     .from('support_tickets')
-    .select('id, ticket_id, customer, customer_email, customer_phone, subject, category, priority, status, assigned_to, created_at, last_updated, description')
-    .order('created_at', { ascending: false })
+    .select('*, support_ticket_messages(count)')
+
+  if (filter.status && filter.status !== 'all') {
+    query = query.eq('status', filter.status)
+  }
+
+  if (filter.source && filter.source !== 'all') {
+    query = query.eq('source', filter.source)
+  }
+
+  const sortColumn = filter.sort === 'created_at' ? 'created_at' : 'last_message_at'
+  query = query.order(sortColumn, { ascending: false })
+
+  const { data, error } = await query
 
   if (error) throw new Error(error.message)
 
   return (data ?? []).map((t) => ({
     id: String(t.id),
-    ticketId: t.ticket_id ?? String(t.id),
-    customer: t.customer ?? 'Unknown',
+    ticketNumber: t.ticket_number ?? String(t.id),
+    customer: t.customer_name ?? 'Unknown',
     customerEmail: t.customer_email,
     customerPhone: t.customer_phone,
     subject: t.subject ?? '',
@@ -1822,10 +1841,63 @@ export async function getAdminTicketsData() {
     priority: t.priority ?? 'Normal',
     status: t.status ?? 'Open',
     assignedTo: t.assigned_to,
+    source: t.source ?? 'manual',
+    messageCount: (t as Record<string, unknown>).support_ticket_messages ?? 0,
+    lastMessageAt: t.last_message_at ?? t.created_at ?? '',
     created: t.created_at ?? '',
-    lastUpdated: t.last_updated ?? t.created_at ?? '',
-    description: t.description,
+    lastUpdated: t.updated_at ?? t.created_at ?? '',
   }))
+}
+
+export async function getAdminTicketById(id: string) {
+  const supabase = createAdminSupabaseClient()
+
+  const { data: ticket, error: ticketError } = await supabase
+    .from('support_tickets')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (ticketError) throw new Error(ticketError.message)
+  if (!ticket) return null
+
+  const { data: messages, error: messagesError } = await supabase
+    .from('support_ticket_messages')
+    .select('*')
+    .eq('ticket_id', id)
+    .order('created_at', { ascending: true })
+
+  if (messagesError) throw new Error(messagesError.message)
+
+  const messageIds = (messages || []).map((m) => m.id)
+  let attachments: Array<Record<string, unknown>> = []
+  if (messageIds.length > 0) {
+    const { data: atts } = await supabase
+      .from('support_ticket_attachments')
+      .select('*')
+      .in('message_id', messageIds)
+      .order('created_at', { ascending: true })
+    attachments = atts || []
+  }
+
+  let assignedToName = null
+  if (ticket.assigned_to) {
+    const { data: admin } = await supabase
+      .from('profiles')
+      .select('full_name, name')
+      .eq('id', ticket.assigned_to)
+      .maybeSingle()
+    assignedToName = admin?.full_name || admin?.name || null
+  }
+
+  return {
+    ticket: {
+      ...ticket,
+      assignedToName,
+    },
+    messages: messages || [],
+    attachments: attachments || [],
+  }
 }
 
 export async function getAdminPrintersData() {

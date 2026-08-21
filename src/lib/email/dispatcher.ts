@@ -271,6 +271,12 @@ function payloadToVariables(
       vars.customer_name = payload.customerName
       if (payload.reviewUrl) vars.review_url = payload.reviewUrl
       break
+    case 'review_reminder':
+      vars.order_number = payload.orderNumber
+      vars.customer_name = payload.customerName
+      if (payload.itemsHtml) vars.items_html = payload.itemsHtml
+      if (payload.reviewUrl) vars.review_url = payload.reviewUrl
+      break
     case 'payment_receipt':
       vars.order_number = payload.orderNumber
       vars.customer_name = payload.customerName

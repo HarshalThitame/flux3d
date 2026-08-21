@@ -105,7 +105,6 @@ type ProductEditorContextValue = {
   deleteSku: (skuId: string) => Promise<void>
 
   updateVariantDimension: (optionName: string, optionValue: string, dimensions: ProductDimensions) => void
-  updateVariantBoxDimension: (optionName: string, optionValue: string, boxDimensions: ProductDimensions) => void
   deleteVariantDimension: (dimensionId: string) => Promise<void>
   applyDefaultDimensionsToUnset: () => void
   addVariantOptionImage: (optionName: string, optionValue: string, file: File) => Promise<void>
@@ -362,7 +361,6 @@ export function ProductEditorProvider({
       option_name: entry.option_name,
       option_value: entry.option_value,
       dimensions: entry.dimensions,
-      box_dimensions: entry.box_dimensions ?? null,
     }))
     if (entries.length === 0) return
 
@@ -694,7 +692,6 @@ export function ProductEditorProvider({
         option_name: entry.option_name,
         option_value: entry.option_value,
         dimensions: entry.dimensions,
-        box_dimensions: entry.box_dimensions ?? null,
       }))
       if (variantDimensionsPayload.length > 0) {
         const res = await fetch(`/api/3d-shop/admin/products/${newId}/variant-dimensions`, {
@@ -1187,40 +1184,6 @@ export function ProductEditorProvider({
             option_name: optionName,
             option_value: optionValue,
             dimensions,
-            box_dimensions: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ]
-      })
-      form.setDirty(true)
-    },
-    [form]
-  )
-
-  const updateVariantBoxDimension = useCallback(
-    (optionName: string, optionValue: string, boxDimensions: ProductDimensions) => {
-      form.pushUndoPoint()
-      setVariantDimensions((current) => {
-        const existing = current.find(
-          (entry) => entry.option_name === optionName && entry.option_value === optionValue
-        )
-        if (existing) {
-          return current.map((entry) =>
-            entry.id === existing.id
-              ? { ...entry, box_dimensions: boxDimensions, updated_at: new Date().toISOString() }
-              : entry
-          )
-        }
-        return [
-          ...current,
-          {
-            id: `draft-${Date.now()}`,
-            product_id: form.productRef.current.id ?? '',
-            option_name: optionName,
-            option_value: optionValue,
-            dimensions: emptyDimensions(boxDimensions.dimension_unit, boxDimensions.weight_unit),
-            box_dimensions: boxDimensions,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           },
@@ -1260,58 +1223,36 @@ export function ProductEditorProvider({
       setToast({ type: 'error', message: 'Set default dimensions on the product first.' })
       return
     }
-    const boxDefaults = form.productRef.current.box_dimensions ?? defaults
     const variants = variantsRef.current
     const current = variantDimensionsRef.current
     const existing = new Map<string, ShopVariantOptionDimension>(
       current.map((entry) => [`${entry.option_name}\u0000${entry.option_value}`, entry])
     )
     const additions: ShopVariantOptionDimension[] = []
-    let boxFilled = 0
     for (const variant of variants) {
       for (const value of variant.values ?? []) {
         const key = `${variant.option_name}\u0000${value}`
-        const entry = existing.get(key)
-        if (entry) {
-          if (!entry.box_dimensions) boxFilled += 1
-          continue
-        }
+        if (existing.has(key)) continue
         additions.push({
           id: `draft-${Date.now()}-${additions.length}`,
           product_id: form.productRef.current.id ?? '',
           option_name: variant.option_name,
           option_value: value,
           dimensions: { ...defaults },
-          box_dimensions: { ...boxDefaults },
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
       }
     }
-    if (additions.length === 0 && boxFilled === 0) {
+    if (additions.length === 0) {
       setToast({ type: 'info', message: 'All option values already have dimensions.' })
       return
     }
-    setVariantDimensions((currentRows) =>
-      [
-        ...(boxFilled > 0
-          ? currentRows.map((entry) =>
-              entry.box_dimensions
-                ? entry
-                : { ...entry, box_dimensions: { ...boxDefaults }, updated_at: new Date().toISOString() }
-            )
-          : currentRows),
-        ...additions,
-      ] as ShopVariantOptionDimension[]
-    )
+    setVariantDimensions((currentRows) => [...currentRows, ...additions])
     form.setDirty(true)
-    const applied = additions.length
     setToast({
       type: 'success',
-      message:
-        applied > 0
-          ? `Applied defaults to ${applied} value${applied === 1 ? '' : 's'}${boxFilled > 0 ? ` and box dims to ${boxFilled}` : ''}.`
-          : `Filled box dims for ${boxFilled} value${boxFilled === 1 ? '' : 's'}.`,
+      message: `Applied defaults to ${additions.length} value${additions.length === 1 ? '' : 's'}.`,
     })
   }, [form])
 
@@ -1577,7 +1518,6 @@ export function ProductEditorProvider({
     saveAllSkus: saveAllSkusWithToast,
     deleteSku,
     updateVariantDimension,
-    updateVariantBoxDimension,
     deleteVariantDimension,
     applyDefaultDimensionsToUnset,
     addVariantOptionImage,

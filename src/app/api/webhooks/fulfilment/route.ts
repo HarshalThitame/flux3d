@@ -3,6 +3,7 @@ import { getEnv } from '@/lib/env'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { sendDeliveryConfirmation } from '@/lib/email/triggers'
 import { notifyWhatsAppOrderDelivered } from '@/lib/whatsapp/notifications'
+import { absoluteUrl } from '@/lib/site'
 import type { ShopFulfilmentStatus } from '@/lib/shop/orders'
 
 export const dynamic = 'force-dynamic'
@@ -172,6 +173,7 @@ export async function POST(request: Request) {
           email,
           orderNumber,
           customerName,
+          absoluteUrl('/3d-shop/orders'),
         ).catch((err) => {
           console.error('[webhooks/fulfilment] Failed to enqueue DeliveryConfirmation email:', err)
         })

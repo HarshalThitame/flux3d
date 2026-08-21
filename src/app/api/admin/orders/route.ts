@@ -13,6 +13,7 @@ import {
 } from '@/lib/admin/queries'
 import { orderStatuses, type OrderStatus } from '@/lib/orders'
 import { requireAdminRequest } from '@/lib/admin/request'
+import { absoluteUrl } from '@/lib/site'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { logAdminAction } from '@/lib/admin/auditLog'
 import { sendOrderShipped } from '@/lib/email/triggers'
@@ -238,6 +239,7 @@ export async function PATCH(request: Request) {
             customerEmail,
             order.orderNumber,
             customerName,
+            absoluteUrl('/3d-shop/orders'),
           ).catch((err) => {
             console.error('[api/admin/orders] Failed to enqueue DeliveryConfirmation email:', err)
           })

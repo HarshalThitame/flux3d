@@ -16,7 +16,6 @@ type ProductPayload = {
   image_urls?: string[] | null
   image_alt?: Record<string, string> | null
   default_dimensions?: Record<string, unknown> | null
-  box_dimensions?: Record<string, unknown> | null
   model_url?: string | null
   base_price?: number
   is_customizable?: boolean
@@ -69,10 +68,6 @@ function normalizeProductPayload(body: ProductPayload, partial = false) {
     default_dimensions:
       body.default_dimensions && typeof body.default_dimensions === 'object'
         ? body.default_dimensions
-        : null,
-    box_dimensions:
-      body.box_dimensions && typeof body.box_dimensions === 'object'
-        ? body.box_dimensions
         : null,
     model_url: typeof body.model_url === 'string' ? body.model_url.trim() || null : body.model_url ?? null,
     base_price: Number.isFinite(Number(body.base_price)) ? Number(body.base_price) : 0,

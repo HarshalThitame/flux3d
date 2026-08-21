@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ImagePlus, Loader2, Star, X } from 'lucide-react'
-import type { ShopPublicProduct } from '@/lib/shop/public-types'
+import type { ShopPublicProduct, ShopPublicReview } from '@/lib/shop/public-types'
 import { getShopProductImages } from '@/lib/shop/selection'
 
 function useScrollLock(locked: boolean) {
@@ -61,15 +61,18 @@ export default function ReviewModal({
   open,
   product,
   eligibility,
+  existingReview,
   onOpenChangeAction,
   onSubmittedAction,
 }: {
   open: boolean
   product: ShopPublicProduct
   eligibility: ReviewEligibility | null
+  existingReview?: ShopPublicReview | null
   onOpenChangeAction: (open: boolean) => void
   onSubmittedAction: (message: string) => void
 }) {
+  const isEditMode = Boolean(existingReview)
   const images = getShopProductImages(product)
   const thumbnail = eligibility?.productThumbnail || product.thumbnail_url || images[0] || ''
   const [rating, setRating] = useState(0)
@@ -86,13 +89,28 @@ export default function ReviewModal({
   useFocusTrap(panelRef, open)
 
   const activeRating = hoverRating || rating
-  const canSubmit = useMemo(() => Boolean(eligibility && rating >= 1 && rating <= 5 && !submitting), [eligibility, rating, submitting])
+  const canSubmit = useMemo(
+    () => Boolean((isEditMode || eligibility) && rating >= 1 && rating <= 5 && !submitting),
+    [isEditMode, eligibility, rating, submitting]
+  )
 
   useEffect(() => {
     if (!open) return
+    if (existingReview) {
+      setRating(existingReview.rating)
+      setTitle(existingReview.title ?? '')
+      setBody(existingReview.body ?? '')
+      setImageUrls(existingReview.image_urls)
+    } else {
+      setRating(0)
+      setHoverRating(0)
+      setTitle('')
+      setBody('')
+      setImageUrls([])
+    }
     const timer = window.setTimeout(() => setError(''), 0)
     return () => window.clearTimeout(timer)
-  }, [open])
+  }, [open, existingReview])
 
   async function uploadReviewImage(file: File) {
     if (imageUrls.length >= 3) return
@@ -117,35 +135,51 @@ export default function ReviewModal({
   }
 
   async function submitReview() {
-    if (!eligibility) return
+    if (!isEditMode && !eligibility) return
     setSubmitting(true)
     setError('')
 
     try {
-      const response = await fetch('/api/3d-shop/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: product.id,
-          orderId: eligibility.orderId,
-          rating,
-          title,
-          body,
-          imageUrls,
-        }),
-      })
+      let response: Response
+      if (isEditMode && existingReview) {
+        response = await fetch(`/api/3d-shop/reviews/${existingReview.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rating,
+            title,
+            body,
+            imageUrls,
+          }),
+        })
+      } else {
+        response = await fetch('/api/3d-shop/reviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productId: product.id,
+            orderId: eligibility!.orderId,
+            rating,
+            title,
+            body,
+            imageUrls,
+          }),
+        })
+      }
       const data = await response.json().catch(() => ({})) as { message?: string; error?: string }
-      if (!response.ok) throw new Error(data.error || 'Review submission failed.')
+      if (!response.ok) throw new Error(data.error || (isEditMode ? 'Review update failed.' : 'Review submission failed.'))
 
-      setRating(0)
-      setHoverRating(0)
-      setTitle('')
-      setBody('')
-      setImageUrls([])
+      if (!isEditMode) {
+        setRating(0)
+        setHoverRating(0)
+        setTitle('')
+        setBody('')
+        setImageUrls([])
+      }
       onOpenChangeAction(false)
-      onSubmittedAction(data.message || "Review submitted! It'll appear after approval.")
+      onSubmittedAction(data.message || (isEditMode ? 'Review updated successfully.' : "Review submitted! It'll appear after approval."))
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Review submission failed.')
+      setError(submitError instanceof Error ? submitError.message : (isEditMode ? 'Review update failed.' : 'Review submission failed.'))
     } finally {
       setSubmitting(false)
     }
@@ -272,7 +306,7 @@ export default function ReviewModal({
                 className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[var(--shop-radius-lg)] bg-[var(--shop-gold)] px-6 text-base font-semibold text-[var(--luxury-charcoal)] shadow-[var(--shop-shadow-gold)] transition hover:bg-[var(--shop-gold-light)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                Submit Review
+                {isEditMode ? 'Update Review' : 'Submit Review'}
               </button>
             </div>
           </motion.div>
