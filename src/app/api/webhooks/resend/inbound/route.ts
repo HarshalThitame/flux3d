@@ -3,9 +3,13 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getBusinessSettings } from '@/lib/admin/business-settings'
 import { verifyResendWebhookSignature } from '@/lib/email/webhook-verification'
 import { getResendClient } from '@/lib/email/resend-client'
+import { uploadSupportAttachment, downloadAttachmentBytes } from '@/lib/support/attachments'
+import { logTicketEvent } from '@/lib/support/ticket-events'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+
+const COMPLAINTS_EMAIL = 'complaints@flux3d.in'
 
 interface ResendInboundPayload {
   type: string
@@ -20,6 +24,7 @@ interface ResendInboundPayload {
       filename: string
       content_type: string
       size: number
+      url?: string
     }>
   }
   id: string
@@ -39,19 +44,18 @@ interface ResendEmailDetail {
     filename: string
     content_type: string
     size: number
+    url?: string
   }>
 }
 
 /**
- * GET diagnostic endpoint — verify the webhook is reachable
+ * GET diagnostic endpoint
  */
 export async function GET() {
   const checks: Record<string, string> = {}
 
-  // 1. Check env var
   checks.env_webhook_secret = process.env.RESEND_WEBHOOK_SECRET ? 'configured' : 'missing'
 
-  // 2. Check DB settings
   try {
     const settings = await getBusinessSettings().catch(() => null)
     checks.db_webhook_secret = settings?.resendWebhookSecret ? 'configured' : 'missing'
@@ -61,7 +65,6 @@ export async function GET() {
     checks.db_settings = 'error'
   }
 
-  // 3. Check Supabase connection
   try {
     const supabase = createAdminClient()
     const { data } = await supabase.from('support_tickets').select('id').limit(1)
@@ -70,10 +73,8 @@ export async function GET() {
     checks.supabase = 'error'
   }
 
-  // 4. Check Resend API key
   try {
-    const resend = await getResendClient()
-    // Just verify the client initializes
+    await getResendClient()
     checks.resend_api = 'key_valid'
   } catch {
     checks.resend_api = 'key_invalid_or_missing'
@@ -94,7 +95,6 @@ export async function POST(req: Request) {
   const timestampHeader = req.headers.get('svix-timestamp')
   const svixIdHeader = req.headers.get('svix-id')
 
-  // Log every incoming request for debugging
   console.log('[webhooks/resend/inbound] Received webhook', {
     svixId: svixIdHeader,
     timestamp: timestampHeader,
@@ -123,11 +123,7 @@ export async function POST(req: Request) {
     )
 
     if (!signatureValid) {
-      console.warn('[webhooks/resend/inbound] Invalid signature', {
-        svixId: svixIdHeader,
-        timestamp: timestampHeader,
-        signaturePrefix: signatureHeader?.slice(0, 20),
-      })
+      console.warn('[webhooks/resend/inbound] Invalid signature')
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 
@@ -152,35 +148,40 @@ export async function POST(req: Request) {
     const messageId = eventData.message_id
     const headers = eventData.headers || []
 
-    // DEBUG: Log raw payload
-    console.log('[webhooks/resend/inbound] RAW PAYLOAD:', {
-      fromRaw,
-      toAddresses,
-      subject,
-      messageId,
-      headersCount: headers.length,
-    })
+    // ── 1. Recipient filter: only process emails TO complaints@flux3d.in ──
+    const primaryRecipient = toAddresses[0]?.toLowerCase() || ''
+    const isComplaints = primaryRecipient.includes('complaints') || primaryRecipient === COMPLAINTS_EMAIL
+    if (!isComplaints) {
+      console.log('[webhooks/resend/inbound] Ignored: recipient is not complaints inbox:', primaryRecipient)
+      return NextResponse.json({ received: true, note: 'ignored_non_complaints_recipient' })
+    }
 
-    // Parse from address: "Name <email@domain.com>" or just "email@domain.com"
-    // Try multiple patterns for robustness
+    // ── 2. Idempotency: check if this email was already processed ──
+    const supabase = createAdminClient()
+    const { data: existingMsg } = await supabase
+      .from('support_ticket_messages')
+      .select('id')
+      .eq('resend_email_id', emailId)
+      .maybeSingle()
+
+    if (existingMsg) {
+      console.log('[webhooks/resend/inbound] Duplicate webhook ignored:', emailId)
+      return NextResponse.json({ received: true, note: 'duplicate_ignored' })
+    }
+
+    // Parse from address
     let fromEmail = fromRaw.trim()
     let fromName = ''
-
-    // Pattern 1: "Name" <email> or Name <email>
     const bracketMatch = fromRaw.match(/^(?:"?([^"<>]+)"?\s*)?<([^<>\s]+@[^<>\s]+)>$/)
     if (bracketMatch) {
       fromName = (bracketMatch[1] || '').trim().replace(/^"|"$/g, '')
       fromEmail = bracketMatch[2].trim()
     } else {
-      // Pattern 2: Just email (no brackets)
       const emailMatch = fromRaw.match(/^([^<>\s]+@[^<>\s]+)$/)
       if (emailMatch) {
         fromEmail = emailMatch[1].trim()
-        fromName = ''
       }
     }
-
-    console.log('[webhooks/resend/inbound] PARSED FROM:', { fromName, fromEmail, original: fromRaw })
 
     // Extract threading headers
     const inReplyTo = headers.find((h) => h.name?.toLowerCase() === 'in-reply-to')?.value || ''
@@ -188,17 +189,13 @@ export async function POST(req: Request) {
 
     // Fetch full email content from Resend
     const fullEmail = await fetchResendEmail(emailId)
-
     const htmlBody = fullEmail?.html || ''
     const textBody = fullEmail?.text || ''
     const emailMessageId = fullEmail?.message_id || messageId || ''
 
-    const supabase = createAdminClient()
-
-    // Try to find existing ticket by threading
+    // ── 3. Find existing ticket ──
     let ticketId: string | null = null
 
-    // 1. Match by In-Reply-To message ID
     if (inReplyTo) {
       const cleanInReplyTo = inReplyTo.trim().replace(/^<|>$/g, '')
       const { data: msg } = await supabase
@@ -206,12 +203,9 @@ export async function POST(req: Request) {
         .select('ticket_id')
         .eq('message_id', cleanInReplyTo)
         .maybeSingle()
-      if (msg?.ticket_id) {
-        ticketId = msg.ticket_id
-      }
+      if (msg?.ticket_id) ticketId = msg.ticket_id
     }
 
-    // 2. Match by References header
     if (!ticketId && references) {
       const refIds = references.split(/\s+/).filter(Boolean).map((r) => r.trim().replace(/^<|>$/g, ''))
       for (const refId of refIds) {
@@ -227,7 +221,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // 3. Match by open ticket from same customer within last 7 days with similar subject
     if (!ticketId) {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
       const { data: tickets } = await supabase
@@ -245,13 +238,11 @@ export async function POST(req: Request) {
           const ticketSubject = (t.subject || '').replace(/^Re:\s*/i, '').trim().toLowerCase()
           return ticketSubject === baseSubject || baseSubject.includes(ticketSubject) || ticketSubject.includes(baseSubject)
         })
-        if (match) {
-          ticketId = match.id
-        }
+        if (match) ticketId = match.id
       }
     }
 
-    // 4. Find user by email
+    // ── 4. Find user profile ──
     const { data: profile } = await supabase
       .from('profiles')
       .select('id, full_name, phone_number')
@@ -262,20 +253,26 @@ export async function POST(req: Request) {
     const customerName = fromName || profile?.full_name || fromEmail.split('@')[0]
     const customerPhone = profile?.phone_number || null
 
-    // Determine category based on recipient address
-    const receivingAddress = toAddresses[0]?.toLowerCase() || ''
-    let category = 'Other'
-    if (receivingAddress.includes('complaints')) {
-      category = 'Order Issue'
-    } else if (receivingAddress.includes('support')) {
-      category = 'Product Inquiry'
+    // ── 5. Try to extract order number from subject/body ──
+    let linkedOrderId: string | null = null
+    const orderNumberMatch =
+      subject.match(/\b(ORD-\d+|FLX-\d+|SHP-\d+)\b/) ||
+      textBody.match(/\b(ORD-\d+|FLX-\d+|SHP-\d+)\b/)
+    if (orderNumberMatch) {
+      const orderNumber = orderNumberMatch[1]
+      const { data: orderRow } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('order_number', orderNumber)
+        .maybeSingle()
+      if (orderRow?.id) linkedOrderId = orderRow.id
     }
 
     const now = new Date().toISOString()
 
     if (ticketId) {
-      // Append to existing ticket
-      const { data: message } = await supabase
+      // ── Append to existing ticket ──
+      const { data: message, error: msgError } = await supabase
         .from('support_ticket_messages')
         .insert({
           ticket_id: ticketId,
@@ -287,28 +284,39 @@ export async function POST(req: Request) {
           resend_email_id: emailId,
           message_id: emailMessageId,
           in_reply_to: inReplyTo || null,
+          direction: 'inbound',
           created_at: now,
         })
         .select()
         .single()
 
+      if (msgError) {
+        // If unique constraint violation on resend_email_id, it's a race-condition duplicate
+        if (msgError.code === '23505') {
+          console.log('[webhooks/resend/inbound] Race-condition duplicate ignored:', emailId)
+          return NextResponse.json({ received: true, note: 'duplicate_ignored' })
+        }
+        throw msgError
+      }
+
       if (message) {
-        await saveAttachments(supabase, message.id, fullEmail?.attachments || [], emailId)
+        const ticketRow = await supabase.from('support_tickets').select('ticket_number').eq('id', ticketId).single()
+        await saveAttachments(supabase, message.id, fullEmail?.attachments || [], emailId, ticketRow.data?.ticket_number)
       }
 
       await supabase
         .from('support_tickets')
-        .update({
-          last_message_at: now,
-          updated_at: now,
-          status: 'In Progress',
-        })
+        .update({ last_message_at: now, updated_at: now, status: 'In Progress' })
         .eq('id', ticketId)
+
+      await logTicketEvent(ticketId, 'customer.replied', {
+        metadata: { from_email: fromEmail, subject: subject.slice(0, 200) },
+      })
 
       console.log('[webhooks/resend/inbound] Appended to ticket:', ticketId)
     } else {
-      // Create new ticket
-      const { data: ticket } = await supabase
+      // ── Create new ticket ──
+      const { data: ticket, error: ticketError } = await supabase
         .from('support_tickets')
         .insert({
           user_id: userId,
@@ -316,13 +324,14 @@ export async function POST(req: Request) {
           customer_name: customerName,
           customer_phone: customerPhone,
           subject: subject.replace(/^Re:\s*/i, '').trim(),
-          category,
+          category: 'Other',
           priority: 'Normal',
           status: 'Open',
           source: 'email',
           resend_email_id: emailId,
           message_id: emailMessageId,
           in_reply_to: inReplyTo || null,
+          order_id: linkedOrderId,
           last_message_at: now,
           created_at: now,
           updated_at: now,
@@ -330,14 +339,14 @@ export async function POST(req: Request) {
         .select()
         .single()
 
-      if (!ticket) {
-        console.error('[webhooks/resend/inbound] Failed to create ticket')
+      if (ticketError || !ticket) {
+        console.error('[webhooks/resend/inbound] Failed to create ticket:', ticketError)
         return NextResponse.json({ error: 'Failed to create ticket' }, { status: 500 })
       }
 
       ticketId = ticket.id
 
-      const { data: message } = await supabase
+      const { data: message, error: msgError } = await supabase
         .from('support_ticket_messages')
         .insert({
           ticket_id: ticketId,
@@ -349,16 +358,31 @@ export async function POST(req: Request) {
           resend_email_id: emailId,
           message_id: emailMessageId,
           in_reply_to: inReplyTo || null,
+          direction: 'inbound',
           created_at: now,
         })
         .select()
         .single()
 
-      if (message) {
-        await saveAttachments(supabase, message.id, fullEmail?.attachments || [], emailId)
+      if (msgError) {
+        if (msgError.code === '23505') {
+          console.log('[webhooks/resend/inbound] Race-condition duplicate ignored:', emailId)
+          return NextResponse.json({ received: true, note: 'duplicate_ignored' })
+        }
+        throw msgError
       }
 
-      // Send auto-acknowledgment
+      if (message) {
+        await saveAttachments(supabase, message.id, fullEmail?.attachments || [], emailId, ticket.ticket_number)
+      }
+
+      if (ticketId) {
+        await logTicketEvent(ticketId, 'ticket.created', {
+          metadata: { from_email: fromEmail, subject: subject.slice(0, 200), source: 'email' },
+        })
+      }
+
+      // Send auto-acknowledgment FROM complaints@flux3d.in
       await sendTicketAcknowledgment(ticket.ticket_number, fromEmail, customerName, subject)
       console.log('[webhooks/resend/inbound] Created ticket:', ticket.ticket_number, 'for:', fromEmail)
     }
@@ -387,20 +411,47 @@ async function fetchResendEmail(emailId: string): Promise<ResendEmailDetail | nu
 async function saveAttachments(
   supabase: ReturnType<typeof createAdminClient>,
   messageId: string,
-  attachments: Array<{ filename: string; content_type: string; size: number }>,
-  emailId: string
+  attachments: Array<{ filename: string; content_type: string; size: number; url?: string }>,
+  emailId: string,
+  ticketNumber?: string
 ) {
   if (!attachments || attachments.length === 0) return
 
   for (const att of attachments) {
-    await supabase.from('support_ticket_attachments').insert({
+    let storagePath: string | null = null
+    let publicUrl: string | null = null
+
+    // Eager download: if a download URL is available, fetch bytes and upload to Storage
+    if (att.url && ticketNumber) {
+      const buffer = await downloadAttachmentBytes(att.url)
+      if (buffer) {
+        try {
+          const result = await uploadSupportAttachment(buffer, att.filename, ticketNumber, att.content_type)
+          storagePath = result.path
+          publicUrl = result.url
+        } catch (uploadErr) {
+          console.warn('[webhooks/resend/inbound] Attachment upload failed:', uploadErr)
+        }
+      }
+    }
+
+    // Fallback: store reference if download/upload failed
+    if (!storagePath) {
+      storagePath = `resend-pending:${emailId}:${att.filename}`
+    }
+
+    const { error } = await supabase.from('support_ticket_attachments').insert({
       message_id: messageId,
       filename: att.filename,
       content_type: att.content_type,
       size: att.size,
-      storage_path: `resend-ref:${emailId}:${att.filename}`,
-      url: null,
+      storage_path: storagePath,
+      url: publicUrl,
     })
+
+    if (error) {
+      console.error('[webhooks/resend/inbound] Failed to save attachment record:', error.message)
+    }
   }
 }
 
@@ -412,8 +463,8 @@ async function sendTicketAcknowledgment(
 ) {
   try {
     const businessSettings = await getBusinessSettings().catch(() => null)
-    const fromEmail = businessSettings?.resendSenderEmail || 'updates@flux3d.in'
-    const fromName = businessSettings?.resendSenderName || 'Flux3D'
+    const complaintsEmail = businessSettings?.complaintsEmail || 'complaints@flux3d.in'
+    const fromName = businessSettings?.resendSenderName || 'Flux3D Support'
 
     const subject = `We received your request — ${ticketNumber}`
     const html = `
@@ -422,25 +473,26 @@ async function sendTicketAcknowledgment(
         <p>We have received your support request and created ticket <strong>${ticketNumber}</strong>.</p>
         <p><strong>Subject:</strong> ${originalSubject}</p>
         <p>Our team will review your request and get back to you shortly.</p>
+        <p>You can simply reply to this email to continue the conversation.</p>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-        <p style="color: #6b7280; font-size: 14px;">Regards,<br />${fromName} Support</p>
+        <p style="color: #6b7280; font-size: 14px;">Regards,<br />${fromName}</p>
       </div>
     `
 
     const resend = await getResendClient()
     const sendResult = await resend.emails.send({
-      from: `${fromName} <${fromEmail}>`,
+      from: `${fromName} <${complaintsEmail}>`,
       to: customerEmail,
       subject,
       html,
-      replyTo: 'complaints@flux3d.in',
+      replyTo: complaintsEmail,
     })
 
     if (sendResult?.error) {
       console.error(
         '[webhooks/resend/inbound] Resend error sending acknowledgment:',
         sendResult.error.message,
-        '| from:', fromEmail,
+        '| from:', complaintsEmail,
         '| to:', customerEmail
       )
     } else {

@@ -19,8 +19,13 @@ export default function Sidebar({
   const secondaryItems = adminNavItems.filter(item => item.section === 'secondary')
   const isActive = (href: string) => pathname === href || (href !== '/admin' && pathname.startsWith(`${href}/`))
   const [pendingReviewCount, setPendingReviewCount] = useState(0)
+  const [openTicketCount, setOpenTicketCount] = useState(0)
   const [printerStats, setPrinterStats] = useState<{ total: number; active: number } | null>(null)
-  const getBadge = (href: string) => href === '/admin/3d-shop/reviews' ? pendingReviewCount : 0
+  const getBadge = (href: string) => {
+    if (href === '/admin/3d-shop/reviews') return pendingReviewCount
+    if (href === '/admin/tickets') return openTicketCount
+    return 0
+  }
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollUp, setCanScrollUp] = useState(false)
@@ -89,6 +94,16 @@ export default function Sidebar({
       }
     }
 
+    async function loadOpenTickets() {
+      try {
+        const response = await fetch('/api/admin/tickets?status=Open&limit=1')
+        const data = await response.json().catch(() => ({})) as { total?: number }
+        if (active && response.ok) setOpenTicketCount(data.total ?? 0)
+      } catch {
+        if (active) setOpenTicketCount(0)
+      }
+    }
+
     async function loadPrinterStats() {
       try {
         const response = await fetch('/api/admin/printers')
@@ -105,6 +120,7 @@ export default function Sidebar({
     }
 
     void loadPendingReviews()
+    void loadOpenTickets()
     void loadPrinterStats()
     return () => {
       active = false
@@ -235,6 +251,7 @@ export default function Sidebar({
             {secondaryItems.map((item) => {
               const Icon = item.icon
               const active = isActive(item.href)
+              const badge = getBadge(item.href)
               return (
                 <Link
                   key={item.href}
@@ -248,6 +265,7 @@ export default function Sidebar({
                   }`}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
+                  {badge > 0 && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-rose-600" />}
                 </Link>
               )
             })}
@@ -261,6 +279,7 @@ export default function Sidebar({
               {secondaryItems.map((item) => {
                 const Icon = item.icon
                 const active = isActive(item.href)
+                const badge = getBadge(item.href)
                 return (
                   <Link
                     key={item.href}
@@ -275,6 +294,11 @@ export default function Sidebar({
                   >
                     <Icon className="h-5 w-5 shrink-0" />
                     <span>{item.label}</span>
+                    {badge > 0 && (
+                      <span className="ml-auto rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                        {badge > 99 ? '99+' : badge}
+                      </span>
+                    )}
                   </Link>
                 )
               })}

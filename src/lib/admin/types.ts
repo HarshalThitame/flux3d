@@ -286,6 +286,7 @@ export type SupportTicket = {
   status: 'Open' | 'In Progress' | 'Resolved' | 'Closed'
   assignedTo?: string
   source: 'email' | 'whatsapp' | 'manual' | 'contact_form'
+  orderId?: string | null
   messageCount: number
   lastMessageAt: string
   created: string

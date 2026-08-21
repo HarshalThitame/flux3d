@@ -54,6 +54,42 @@ export async function GET(
       assignedToName = admin?.full_name || admin?.name || null
     }
 
+    // Fetch linked order if any
+    let order = null
+    if (ticket.order_id) {
+      const { data: orderRow } = await supabase
+        .from('orders')
+        .select('id, order_number, status, grand_total, created_at')
+        .eq('id', ticket.order_id)
+        .maybeSingle()
+      if (orderRow) order = orderRow
+    }
+
+    // Fetch ticket events (audit trail)
+    const { data: events } = await supabase
+      .from('support_ticket_events')
+      .select('*')
+      .eq('ticket_id', id)
+      .order('created_at', { ascending: true })
+
+    // Fetch admin names for events
+    const performerIds = [...new Set((events || []).map((e) => e.performed_by).filter(Boolean))]
+    const performerNames: Record<string, string> = {}
+    if (performerIds.length > 0) {
+      const { data: performers } = await supabase
+        .from('profiles')
+        .select('id, full_name, name')
+        .in('id', performerIds)
+      performers?.forEach((p) => {
+        performerNames[p.id] = p.full_name || p.name || 'System'
+      })
+    }
+
+    const eventsWithNames = (events || []).map((e) => ({
+      ...e,
+      performedByName: e.performed_by ? (performerNames[e.performed_by] || 'System') : 'System',
+    }))
+
     return NextResponse.json({
       ticket: {
         ...ticket,
@@ -61,6 +97,8 @@ export async function GET(
       },
       messages: messages || [],
       attachments: attachments || [],
+      order,
+      events: eventsWithNames,
     })
   } catch (error) {
     return getAdminApiErrorResponse(error)
@@ -85,9 +123,10 @@ export async function PATCH(
 
     if (body.status) updates.status = body.status
     if (body.priority) updates.priority = body.priority
-    if (body.assigned_to) updates.assigned_to = body.assigned_to
+    if (body.assigned_to !== undefined) updates.assigned_to = body.assigned_to || null
     if (body.category) updates.category = body.category
     if (body.subject) updates.subject = body.subject
+    if (body.order_id !== undefined) updates.order_id = body.order_id || null
 
     const { data: ticket, error } = await supabase
       .from('support_tickets')

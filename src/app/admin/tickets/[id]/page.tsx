@@ -1,11 +1,10 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft,
-  Send,
   Clock,
   Mail,
   User,
@@ -13,16 +12,31 @@ import {
   Paperclip,
   CheckCircle2,
   AlertCircle,
-  Loader2,
+  Package,
+  ExternalLink,
 } from 'lucide-react'
 import Link from 'next/link'
 import type { SupportTicket, SupportTicketMessage, SupportTicketAttachment } from '@/lib/admin/types'
 import SkeletonBlock from '@/components/admin/SkeletonBlock'
+import ReplyComposer from '../components/ReplyComposer'
+import TicketEventLog from '../components/TicketEventLog'
+import { useTicketsRealtime } from '../useTicketsRealtime'
+
+interface TicketEvent {
+  id: string
+  event_type: string
+  old_value: Record<string, unknown> | null
+  new_value: Record<string, unknown> | null
+  performedByName: string
+  created_at: string
+}
 
 interface TicketDetail {
   ticket: SupportTicket & { assignedToName?: string | null }
   messages: SupportTicketMessage[]
   attachments: SupportTicketAttachment[]
+  order: { id: string; order_number: string; status: string; grand_total: number; created_at: string } | null
+  events: TicketEvent[]
 }
 
 export default function TicketDetailPage() {
@@ -30,14 +44,12 @@ export default function TicketDetailPage() {
   const id = (params?.id as string) ?? ''
   const [data, setData] = useState<TicketDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [replyText, setReplyText] = useState('')
-  const [sending, setSending] = useState(false)
   const [updating, setUpdating] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [admins, setAdmins] = useState<Array<{ id: string; name: string }>>([])
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
-
     async function load() {
       try {
         const response = await fetch(`/api/admin/tickets/${id}`, { signal: controller.signal })
@@ -52,44 +64,32 @@ export default function TicketDetailPage() {
         setError(loadError instanceof Error ? loadError.message : 'Failed to load ticket.')
       }
     }
-
     void load()
     return () => controller.abort()
-  }, [id])
+  }, [id, refreshKey])
 
+  // Load admin list for assignment
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [data?.messages.length])
-
-  async function sendReply() {
-    if (!replyText.trim() || sending) return
-    setSending(true)
-
-    try {
-      const response = await fetch(`/api/admin/tickets/${id}/reply`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: replyText.trim() }),
-      })
-
-      if (!response.ok) {
-        const body = (await response.json().catch(() => ({}))) as { error?: string }
-        throw new Error(body.error ?? 'Failed to send reply.')
+    async function loadAdmins() {
+      try {
+        const res = await fetch('/api/admin/users')
+        if (res.ok) {
+          const json = (await res.json()) as { users?: Array<{ id: string; name: string; full_name?: string | null }> }
+          const list = (json.users || [])
+            .filter((u) => u.id)
+            .map((u) => ({ id: u.id, name: u.full_name || u.name || 'Admin' }))
+          setAdmins(list)
+        }
+      } catch {
+        // ignore
       }
-
-      setReplyText('')
-      // Refresh ticket data
-      const refresh = await fetch(`/api/admin/tickets/${id}`)
-      if (refresh.ok) {
-        const json = (await refresh.json()) as TicketDetail
-        setData(json)
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send reply.')
-    } finally {
-      setSending(false)
     }
-  }
+    void loadAdmins()
+  }, [])
+
+  useTicketsRealtime(() => {
+    setRefreshKey((k) => k + 1)
+  }, { enabled: !!id })
 
   async function updateTicket(updates: Partial<SupportTicket>) {
     setUpdating(true)
@@ -105,16 +105,52 @@ export default function TicketDetailPage() {
         throw new Error(body.error ?? 'Failed to update ticket.')
       }
 
-      const refresh = await fetch(`/api/admin/tickets/${id}`)
-      if (refresh.ok) {
-        const json = (await refresh.json()) as TicketDetail
-        setData(json)
-      }
+      setRefreshKey((k) => k + 1)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update ticket.')
     } finally {
       setUpdating(false)
     }
+  }
+
+  async function handleAssign(assignedTo: string | null) {
+    setUpdating(true)
+    try {
+      const res = await fetch(`/api/admin/tickets/${id}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assigned_to: assignedTo }),
+      })
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(body.error ?? 'Failed to assign ticket.')
+      }
+      setRefreshKey((k) => k + 1)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to assign ticket.')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  async function handleReply(data: { message: string; html?: string; isInternal: boolean; files: File[] }) {
+    const formData = new FormData()
+    formData.append('message', data.message)
+    if (data.html) formData.append('html', data.html)
+    formData.append('is_internal', String(data.isInternal))
+    data.files.forEach((file) => formData.append('attachments', file))
+
+    const response = await fetch(`/api/admin/tickets/${id}/reply`, {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const body = (await response.json().catch(() => ({}))) as { error?: string }
+      throw new Error(body.error ?? 'Failed to send reply.')
+    }
+
+    setRefreshKey((k) => k + 1)
   }
 
   if (error) {
@@ -141,7 +177,7 @@ export default function TicketDetailPage() {
     )
   }
 
-  const { ticket, messages, attachments } = data
+  const { ticket, messages, attachments, order, events } = data
   const attachmentsByMessage = attachments.reduce<Record<string, SupportTicketAttachment[]>>((acc, att) => {
     if (!acc[att.message_id]) acc[att.message_id] = []
     acc[att.message_id].push(att)
@@ -216,9 +252,51 @@ export default function TicketDetailPage() {
               <option value="Normal">Normal</option>
               <option value="Low">Low</option>
             </select>
+
+            <select
+              value={ticket.assignedTo ?? ''}
+              onChange={(e) => handleAssign(e.target.value || null)}
+              disabled={updating}
+              className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30 focus:ring-1 focus:ring-[#6d28d9]/20"
+            >
+              <option value="">Unassigned</option>
+              {admins.map((admin) => (
+                <option key={admin.id} value={admin.id}>{admin.name}</option>
+              ))}
+            </select>
           </div>
         </div>
       </motion.div>
+
+      {/* Order context */}
+      {order && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.03 }}
+          className="rounded-2xl border border-gray-200 bg-white p-5"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#6d28d9]/10">
+                <Package className="h-5 w-5 text-[#6d28d9]" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-[#0F1B3D]">Linked Order</div>
+                <div className="text-xs text-[#6F7192]">
+                  {order.order_number} · {order.status} · ₹{order.grand_total}
+                </div>
+              </div>
+            </div>
+            <Link
+              href={`/admin/orders/${order.id}`}
+              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-[#6F7192] transition hover:bg-gray-50"
+            >
+              View Order <ExternalLink className="h-3 w-3" />
+            </Link>
+          </div>
+        </motion.div>
+      )}
 
       {/* Conversation */}
       <motion.div
@@ -239,26 +317,32 @@ export default function TicketDetailPage() {
           {messages.map((message) => {
             const isCustomer = message.sender_type === 'customer'
             const isAdmin = message.sender_type === 'admin'
+            const isInternal = message.is_internal
             const msgAttachments = attachmentsByMessage[message.id] || []
 
             return (
               <div
                 key={message.id}
-                className={`flex gap-3 ${isAdmin ? 'flex-row-reverse' : ''}`}
+                className={`flex gap-3 ${isAdmin && !isInternal ? 'flex-row-reverse' : ''}`}
               >
                 <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
-                  isCustomer ? 'bg-[#6d28d9]' : isAdmin ? 'bg-emerald-500' : 'bg-gray-400'
+                  isCustomer ? 'bg-[#6d28d9]' : isInternal ? 'bg-amber-500' : isAdmin ? 'bg-emerald-500' : 'bg-gray-400'
                 }`}>
-                  {isCustomer ? <User className="h-4 w-4" /> : isAdmin ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                  {isCustomer ? <User className="h-4 w-4" /> : isInternal ? <AlertCircle className="h-4 w-4" /> : isAdmin ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
                 </div>
 
                 <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
-                  isAdmin
+                  isInternal
+                    ? 'bg-amber-50 text-[#0F1B3D] border border-amber-200'
+                    : isAdmin
                     ? 'bg-[#6d28d9] text-white'
                     : 'bg-gray-50 text-[#0F1B3D]'
                 }`}>
-                  <div className={`mb-1 flex items-center gap-2 text-[11px] ${isAdmin ? 'text-white/70' : 'text-[#6F7192]'}`}>
-                    <span className="font-semibold">{message.sender_name || message.sender_email || 'Unknown'}</span>
+                  <div className={`mb-1 flex items-center gap-2 text-[11px] ${isAdmin && !isInternal ? 'text-white/70' : 'text-[#6F7192]'}`}>
+                    <span className="font-semibold">
+                      {message.sender_name || message.sender_email || 'Unknown'}
+                      {isInternal && ' (Internal)'}
+                    </span>
                     <span>{formatDate(message.created_at)}</span>
                   </div>
 
@@ -274,16 +358,21 @@ export default function TicketDetailPage() {
                   {msgAttachments.length > 0 && (
                     <div className="mt-2 space-y-1">
                       {msgAttachments.map((att) => (
-                        <div
+                        <a
                           key={att.id}
-                          className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs ${
-                            isAdmin ? 'bg-white/10 text-white' : 'bg-white text-[#6F7192]'
+                          href={att.url || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition ${
+                            isAdmin && !isInternal
+                              ? 'bg-white/10 text-white hover:bg-white/20'
+                              : 'bg-white text-[#6F7192] hover:bg-gray-100'
                           }`}
                         >
                           <Paperclip className="h-3 w-3" />
                           <span className="truncate">{att.filename}</span>
                           {att.size && <span className="opacity-70">({(att.size / 1024).toFixed(1)} KB)</span>}
-                        </div>
+                        </a>
                       ))}
                     </div>
                   )}
@@ -291,7 +380,6 @@ export default function TicketDetailPage() {
               </div>
             )
           })}
-          <div ref={messagesEndRef} />
         </div>
       </motion.div>
 
@@ -301,29 +389,19 @@ export default function TicketDetailPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-gray-200 bg-white p-5"
         >
-          <h3 className="mb-3 text-sm font-semibold text-[#0F1B3D]">Reply to Customer</h3>
-          <textarea
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            placeholder="Write your response..."
-            rows={4}
-            className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-[#0F1B3D] placeholder:text-gray-400 outline-none focus:border-[#6d28d9]/30 focus:ring-1 focus:ring-[#6d28d9]/20"
-          />
-          <div className="mt-3 flex items-center justify-between">
-            <span className="text-xs text-[#6F7192]">
-              Will be sent from complaints@flux3d.in
-            </span>
-            <button
-              onClick={sendReply}
-              disabled={!replyText.trim() || sending}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#5b21b6] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {sending ? 'Sending...' : 'Send Reply'}
-            </button>
-          </div>
+          <ReplyComposer onSend={handleReply} disabled={updating} />
+        </motion.div>
+      )}
+
+      {/* Activity log */}
+      {events.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+        >
+          <TicketEventLog events={events} />
         </motion.div>
       )}
     </div>
