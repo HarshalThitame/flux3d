@@ -26,7 +26,6 @@ function isInternalHref(href: string) {
 export default function LoadingProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const start = useLoadingStore((state) => state.start)
-  const stop = useLoadingStore((state) => state.stop)
   const reset = useLoadingStore((state) => state.reset)
 
   const prevPath = useRef(pathname)
@@ -61,10 +60,10 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
   const hideLoader = useCallback(() => {
     if (loadingActive.current) {
       loadingActive.current = false
-      stop()
+      reset()
     }
     clearTimers()
-  }, [clearTimers, stop])
+  }, [clearTimers, reset])
 
   const resolveNavigation = useCallback(() => {
     clearGrace()
@@ -121,10 +120,8 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
   // Popstate + bfcache handler
   useEffect(() => {
     function handlePopstate() {
-      if (loadingActive.current) {
-        armSafety()
-        return
-      }
+      // Always reset first to clear any stuck accumulated count
+      reset()
       loadingActive.current = true
       shownAt.current = Date.now()
       start('Loading…')
@@ -136,7 +133,7 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
       setTimeout(() => {
         if (loadingActive.current) {
           loadingActive.current = false
-          stop()
+          reset()
         }
       }, SAFETY_TIMEOUT_MS)
     }
@@ -155,7 +152,7 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
       window.removeEventListener('popstate', handlePopstate)
       window.removeEventListener('pageshow', handlePageshow)
     }
-  }, [start, stop, reset])
+  }, [start, reset])
 
   return (
     <>
