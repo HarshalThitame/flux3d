@@ -152,10 +152,35 @@ export async function POST(req: Request) {
     const messageId = eventData.message_id
     const headers = eventData.headers || []
 
+    // DEBUG: Log raw payload
+    console.log('[webhooks/resend/inbound] RAW PAYLOAD:', {
+      fromRaw,
+      toAddresses,
+      subject,
+      messageId,
+      headersCount: headers.length,
+    })
+
     // Parse from address: "Name <email@domain.com>" or just "email@domain.com"
-    const fromMatch = fromRaw.match(/^(?:"?([^"<>]+)"?\s*)?<?([^<>@\s]+@[^<>\s]+)>?$/)
-    const fromEmail = fromMatch?.[2]?.trim() || fromRaw.trim()
-    const fromName = (fromMatch?.[1]?.trim() || '').replace(/^"|"$/g, '')
+    // Try multiple patterns for robustness
+    let fromEmail = fromRaw.trim()
+    let fromName = ''
+
+    // Pattern 1: "Name" <email> or Name <email>
+    const bracketMatch = fromRaw.match(/^(?:"?([^"<>]+)"?\s*)?<([^<>\s]+@[^<>\s]+)>$/)
+    if (bracketMatch) {
+      fromName = (bracketMatch[1] || '').trim().replace(/^"|"$/g, '')
+      fromEmail = bracketMatch[2].trim()
+    } else {
+      // Pattern 2: Just email (no brackets)
+      const emailMatch = fromRaw.match(/^([^<>\s]+@[^<>\s]+)$/)
+      if (emailMatch) {
+        fromEmail = emailMatch[1].trim()
+        fromName = ''
+      }
+    }
+
+    console.log('[webhooks/resend/inbound] PARSED FROM:', { fromName, fromEmail, original: fromRaw })
 
     // Extract threading headers
     const inReplyTo = headers.find((h) => h.name?.toLowerCase() === 'in-reply-to')?.value || ''
@@ -403,14 +428,24 @@ async function sendTicketAcknowledgment(
     `
 
     const resend = await getResendClient()
-    await resend.emails.send({
+    const sendResult = await resend.emails.send({
       from: `${fromName} <${fromEmail}>`,
       to: customerEmail,
       subject,
       html,
       replyTo: 'complaints@flux3d.in',
     })
-    console.log('[webhooks/resend/inbound] Acknowledgment sent to:', customerEmail, 'ticket:', ticketNumber)
+
+    if (sendResult?.error) {
+      console.error(
+        '[webhooks/resend/inbound] Resend error sending acknowledgment:',
+        sendResult.error.message,
+        '| from:', fromEmail,
+        '| to:', customerEmail
+      )
+    } else {
+      console.log('[webhooks/resend/inbound] Acknowledgment sent to:', customerEmail, 'ticket:', ticketNumber, 'id:', sendResult?.data?.id)
+    }
   } catch (err) {
     console.warn('[webhooks/resend/inbound] Failed to send acknowledgment:', err)
   }

@@ -59,6 +59,14 @@ export async function POST(
       text: body.message,
     })
 
+    if (emailResult?.error) {
+      console.error('[admin/ticket/reply] Resend send error:', emailResult.error.message, '| from:', fromEmail, '| to:', ticket.customer_email)
+      return NextResponse.json(
+        { error: `Email failed: ${emailResult.error.message}` },
+        { status: 502 }
+      )
+    }
+
     // Store admin message
     const { data: message } = await supabase
       .from('support_ticket_messages')

@@ -401,10 +401,46 @@ body {
 }
 
 .lux-hero-slide {
-  position: relative;
-  min-width: 100%;
+  position: absolute;
+  inset: 0;
   height: 100svh;
   overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(1.045);
+  transition:
+    opacity 1100ms var(--lux-ease-carousel),
+    transform 1400ms var(--lux-ease-carousel),
+    visibility 0s linear 1100ms;
+  will-change: opacity, transform;
+}
+
+.lux-hero[data-dir='next'] .lux-hero-slide {
+  transform: translateX(2.25%) scale(1.045);
+}
+
+.lux-hero[data-dir='prev'] .lux-hero-slide {
+  transform: translateX(-2.25%) scale(1.045);
+}
+
+.lux-hero-slide-active {
+  opacity: 1;
+  visibility: visible;
+  z-index: 1;
+  transform: translateX(0) scale(1);
+  transition:
+    opacity 1100ms var(--lux-ease-carousel),
+    transform 1400ms var(--lux-ease-carousel),
+    visibility 0s;
+}
+
+@keyframes luxKenBurns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
 }
 
 .lux-hero-image {
@@ -413,6 +449,21 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.lux-hero-slide-active .lux-hero-image {
+  animation: luxKenBurns 7600ms var(--lux-ease-decel) forwards;
+  will-change: transform;
+}
+
+/* ── Film grain ── */
+.lux-hero-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0.032;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .lux-hero-shade {
@@ -519,13 +570,6 @@ body {
 }
 
 /* ── Carousel system ── */
-.lux-carousel-track {
-  display: flex;
-  height: 100%;
-  transition: transform 850ms var(--lux-ease-carousel);
-  will-change: transform;
-}
-
 .lux-carousel-progress {
   position: absolute;
   bottom: 0;
@@ -543,7 +587,7 @@ body {
   z-index: 20;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1.25rem;
 }
 
 .lux-carousel-arrow {
@@ -558,34 +602,97 @@ body {
   color: var(--lux-text-primary);
   box-shadow: var(--lux-shadow-sm);
   cursor: pointer;
-  transition: background 0.25s var(--lux-ease), box-shadow 0.25s var(--lux-ease), transform 0.25s var(--lux-ease), border-color 0.25s var(--lux-ease);
+  transition: background 0.35s var(--lux-ease), box-shadow 0.35s var(--lux-ease), transform 0.35s var(--lux-ease), border-color 0.35s var(--lux-ease), color 0.35s var(--lux-ease);
 }
 
 .lux-carousel-arrow:hover {
-  background: #fff;
-  border-color: var(--lux-border-gold);
+  background: var(--lux-ink);
+  border-color: var(--lux-ink);
+  color: var(--lux-gold-light);
   box-shadow: var(--lux-shadow-md);
   transform: translateY(-2px);
 }
 
-.lux-carousel-dots {
+.lux-carousel-arrow:active {
+  transform: translateY(0);
+}
+
+/* ── Editorial index (01 — 04) ── */
+.lux-carousel-index {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
-.lux-carousel-dot {
-  width: 8px;
-  height: 8px;
+.lux-carousel-count {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-family: var(--lux-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--lux-text-primary);
+}
+
+.lux-carousel-count-current {
+  display: inline-block;
+  min-width: 2ch;
+  font-size: 15px;
+  color: var(--lux-ink);
+}
+
+.lux-carousel-count-sep {
+  color: var(--lux-stone);
+  letter-spacing: 0;
+}
+
+.lux-carousel-count-total {
+  color: var(--lux-text-subtle);
+}
+
+/* ── Progress lines ── */
+.lux-carousel-lines {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lux-carousel-line {
+  position: relative;
+  width: 34px;
+  height: 2px;
+  padding: 0;
+  border: none;
   border-radius: var(--lux-radius-full);
-  background: var(--lux-taupe);
+  background: rgba(28, 25, 23, 0.16);
+  overflow: hidden;
   cursor: pointer;
-  transition: width 0.3s var(--lux-ease), background 0.3s var(--lux-ease);
+  transition: background 0.3s var(--lux-ease), transform 0.3s var(--lux-ease);
 }
 
-.lux-carousel-dot-active {
-  width: 28px;
-  background: var(--lux-gold);
+.lux-carousel-line::after {
+  content: '';
+  position: absolute;
+  inset: -11px -6px;
+}
+
+.lux-carousel-line:hover {
+  background: rgba(28, 25, 23, 0.28);
+}
+
+.lux-carousel-line-active {
+  background: rgba(28, 25, 23, 0.16);
+}
+
+.lux-carousel-line-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  display: block;
+  border-radius: var(--lux-radius-full);
+  background: var(--lux-gradient-gold);
 }
 
 /* ── Thumbnail strip ── */
@@ -760,39 +867,6 @@ body {
   scroll-snap-align: start;
 }
 
-/* ── Marquee ── */
-.lux-marquee-track {
-  display: flex;
-  align-items: center;
-  gap: 2.5rem;
-  width: max-content;
-  animation: luxMarquee 30s linear infinite;
-}
-
-@keyframes luxMarquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
-/* ── Animations ── */
-@keyframes luxFadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes luxFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.lux-animate-fade-up {
-  animation: luxFadeUp 0.7s var(--lux-ease) both;
-}
-
-.lux-animate-fade-in {
-  animation: luxFadeIn 0.5s ease-out both;
-}
-
 /* ── Gold shimmer for cards ── */
 @keyframes luxGoldShimmer {
   0% { transform: translateX(-140%) rotate(22deg); }
@@ -822,46 +896,6 @@ body {
   animation: luxGoldShimmer 900ms ease-out forwards;
 }
 
-/* ── Dark CTA band ── */
-.lux-dark-band {
-  background: var(--lux-text-primary);
-  color: #fff;
-}
-
-/* ── Premium filter bar surface ── */
-.lux-filter-surface {
-  background: linear-gradient(145deg, #FFFFFF 0%, var(--lux-cream) 100%);
-  border: 1px solid var(--lux-border-light);
-  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.04);
-}
-
-/* ── Product grid premium hover ── */
-.lux-product-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.25rem;
-}
-
-@media (min-width: 768px) {
-  .lux-product-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .lux-product-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.5rem;
-  }
-}
-
-/* ── Editorial dark band ── */
-.lux-editorial-dark {
-  background: linear-gradient(135deg, var(--lux-ink) 0%, var(--lux-charcoal) 100%);
-  color: #fff;
-}
-
 /* ── Refined scrollbar hide ── */
 .scrollbar-hide {
   -ms-overflow-style: none;
@@ -873,20 +907,16 @@ body {
 
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
-  .lux-carousel-track {
-    transition: none;
-  }
-  .lux-marquee-track {
-    animation: none;
-    flex-wrap: wrap;
-    justify-content: center;
-    width: 100%;
-  }
-  .lux-animate-fade-up,
-  .lux-animate-fade-in {
-    animation: none;
-    opacity: 1;
+  .lux-hero-slide,
+  .lux-hero-slide-active {
+    transition: opacity 0.2s linear, visibility 0s;
     transform: none;
+  }
+  .lux-hero-slide-active .lux-hero-image {
+    animation: none;
+  }
+  .lux-hero-grain {
+    display: none;
   }
   .lux-shimmer-shell::after {
     animation: none;

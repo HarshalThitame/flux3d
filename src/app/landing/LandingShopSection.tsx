@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { motion, type Variants } from 'framer-motion'
 import {
   ArrowRight,
   BadgeCheck,
@@ -17,6 +18,17 @@ import {
 import ProductCard from '@/components/shop/ProductCard'
 import ProductFilterBar from '@/components/shop/ProductFilterBar'
 import type { ShopHomeData, ShopPublicProduct } from '@/lib/shop/public-types'
+
+const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1]
+
+const revealVariants: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (delay: number = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.7, ease: EASE_OUT_EXPO, delay },
+  }),
+}
 
 function SectionHeading({
   eyebrow,
@@ -34,27 +46,34 @@ function SectionHeading({
   linkLabel?: string
 }) {
   return (
-    <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <motion.div
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: '-60px' }}
+      className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+    >
       <div className="min-w-0">
-        <div className="lux-eyebrow mb-3">
+        <motion.div variants={revealVariants} custom={0} className="lux-eyebrow mb-3">
           <Icon className="h-4 w-4" />
           {eyebrow}
-        </div>
-        <h2 className="lux-heading-2">{title}</h2>
+        </motion.div>
+        <motion.h2 variants={revealVariants} custom={0.08} className="lux-heading-2">{title}</motion.h2>
         {subtitle && (
-          <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--lux-text-muted)]">{subtitle}</p>
+          <motion.p variants={revealVariants} custom={0.16} className="mt-2 max-w-xl text-sm leading-6 text-[var(--lux-text-muted)]">{subtitle}</motion.p>
         )}
       </div>
       {href && (
-        <Link
-          href={href}
-          className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-[var(--lux-gold)] transition hover:text-[var(--lux-text-primary)]"
-        >
-          {linkLabel}
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+        <motion.div variants={revealVariants} custom={0.2}>
+          <Link
+            href={href}
+            className="group inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-[var(--lux-gold)] transition hover:text-[var(--lux-text-primary)]"
+          >
+            {linkLabel}
+            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </Link>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   )
 }
 
@@ -102,19 +121,29 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
   return (
     <section id="shop" className="lux-section lux-band-ivory" aria-label="3D Shop">
       {/* Trust bar */}
-      <div className="lux-trustbar">
+      <motion.div
+        className="lux-trustbar"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+      >
         {[
           { icon: ShieldCheck, label: 'QA checked' },
           { icon: Truck, label: 'Ready to ship' },
           { icon: Box, label: '3D preview' },
           { icon: ShoppingBag, label: 'Secure cart' },
-        ].map((item) => (
-          <div key={item.label} className="lux-trustbar-item">
+        ].map((item, i) => (
+          <motion.div
+            key={item.label}
+            variants={revealVariants}
+            custom={i * 0.08}
+            className="lux-trustbar-item"
+          >
             <item.icon className="h-4 w-4 text-[var(--lux-gold)]" />
             {item.label}
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       <div className="mx-auto w-full max-w-[1280px] px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-20">
         <SectionHeading
@@ -125,13 +154,19 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
         />
 
         {/* Premium Filter Bar */}
-        <div className="mb-10 rounded-[var(--lux-radius-lg)] border border-[var(--lux-border-light)] bg-white p-4 shadow-[var(--lux-shadow-sm)] sm:p-5">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.7, ease: EASE_OUT_EXPO, delay: 0.1 }}
+          className="mb-10 rounded-[var(--lux-radius-lg)] border border-[var(--lux-border-light)] bg-white p-4 shadow-[var(--lux-shadow-sm)] sm:p-5"
+        >
           <ProductFilterBar
             products={allProducts}
             categories={data.categories}
             onFilteredChange={setFilteredProducts}
           />
-        </div>
+        </motion.div>
 
         {/* Featured (from filtered) */}
         {featuredFiltered.length > 0 && (
@@ -174,7 +209,13 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
         )}
 
         {/* CTA band */}
-        <div className="mt-10 flex flex-col items-start gap-5 rounded-[var(--lux-radius-xl)] border border-[var(--lux-border-light)] bg-[var(--lux-bg-elevated)] p-6 shadow-[var(--lux-shadow-sm)] sm:flex-row sm:items-center sm:p-8">
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.8, ease: EASE_OUT_EXPO }}
+          className="mt-10 flex flex-col items-start gap-5 rounded-[var(--lux-radius-xl)] border border-[var(--lux-border-light)] bg-[var(--lux-bg-elevated)] p-6 shadow-[var(--lux-shadow-sm)] sm:flex-row sm:items-center sm:p-8"
+        >
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--lux-text-primary)] text-white shadow-[var(--lux-shadow-md)]">
             <Layers3 className="h-6 w-6" />
           </div>
@@ -193,7 +234,7 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
             Visit Shop
             <ArrowRight className="h-4 w-4" />
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   )

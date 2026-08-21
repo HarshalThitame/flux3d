@@ -27,7 +27,7 @@ function FloatingWhatsAppButton() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with Flux 3D on WhatsApp"
-      className="floating-whatsapp-button fixed z-50 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-[#25D366] text-white shadow-[0_18px_44px_rgba(37,211,102,0.34)] transition-all duration-200 hover:scale-105 hover:shadow-[0_20px_54px_rgba(37,211,102,0.42)] md:h-14 md:w-14"
+      className="floating-whatsapp-button fixed z-50 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--lux-border-gold,rgba(201,169,98,0.35))] bg-[var(--lux-ink,#1C1917)] text-[var(--lux-gold-light,#D4B978)] shadow-[0_18px_44px_rgba(28,25,23,0.28)] transition-all duration-300 hover:scale-105 hover:bg-[var(--lux-gold,#C9A962)] hover:text-white hover:shadow-[0_20px_54px_rgba(201,169,98,0.35)] md:h-14 md:w-14"
     >
       <MessageCircle className="h-5 w-5 md:h-6 md:w-6" />
     </a>

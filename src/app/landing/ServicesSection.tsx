@@ -15,7 +15,6 @@ const services = [
     pills: ['3D models', 'Prototypes', 'Functional parts', 'Custom finishes'],
     price: 'Quoted per order',
     cta: 'Request Quote →',
-    color: 'from-[#6d28d9] to-[#a855f7]',
     span: true,
   },
   {
@@ -27,7 +26,6 @@ const services = [
     pills: ['Architecture', 'Display models', 'Mockups', 'Submission pieces'],
     price: 'Quoted per model',
     cta: 'Share Your File →',
-    color: 'from-[#a855f7] to-[#a855f7]',
   },
   {
     slug: 'ready-made-products',
@@ -39,7 +37,6 @@ const services = [
     price: 'As listed',
     cta: 'Browse Catalogue →',
     link: '/3d-shop',
-    color: 'from-[#6d28d9] to-[#6d28d9]',
   },
   {
     slug: 'finishing',
@@ -50,7 +47,6 @@ const services = [
     pills: ['Sanding', 'Assembly', 'Cleaning', 'Finishing'],
     price: 'By quote',
     cta: 'Discuss Finish →',
-    color: 'from-[#a855f7] to-[#a855f7]',
   },
   {
     slug: 'business-and-bulk-orders',
@@ -61,7 +57,6 @@ const services = [
     pills: ['Batches', 'Branding', 'Repeat orders', 'Bulk pricing'],
     price: 'Custom quote',
     cta: 'Request Bulk Quote →',
-    color: 'from-[#fb7185] to-[#6d28d9]',
   },
   {
     slug: 'design-review',
@@ -72,7 +67,6 @@ const services = [
     pills: ['File review', 'Dimension check', 'Revision notes', 'Order hold'],
     price: 'Included in quote',
     cta: 'Ask for Review →',
-    color: 'from-[#a855f7] to-[#6d28d9]',
   },
   {
     slug: 'dispatch-delivery',
@@ -83,7 +77,6 @@ const services = [
     pills: ['Tracked shipping', 'India delivery', 'Courier handoff', 'Delivery support'],
     price: 'Shipping quoted separately',
     cta: 'Read Delivery Policy →',
-    color: 'from-[#0f766e] to-[#14b8a6]',
   },
 ]
 

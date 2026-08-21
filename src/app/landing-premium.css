@@ -256,13 +256,13 @@ body {
 }
 
 .premium-band::after {
-  background: linear-gradient(90deg, transparent, rgba(76, 29, 149, 0.07), rgba(168, 85, 247, 0.04), transparent);
+  background: linear-gradient(90deg, transparent, rgba(201, 169, 98, 0.07), rgba(212, 185, 120, 0.04), transparent);
   animation: premiumTrace 14s ease-in-out infinite;
 }
 
 .premium-band-panel {
   background:
-    linear-gradient(180deg, #faf9f7 0%, #f5f3ff 42%, #faf9f7 100%),
+    linear-gradient(180deg, #faf9f7 0%, #f5f3ee 42%, #faf9f7 100%),
     #faf9f7;
 }
 
