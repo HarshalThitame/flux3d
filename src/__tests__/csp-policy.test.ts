@@ -42,6 +42,16 @@ describe('buildCsp', () => {
     expect(directive(csp, 'connect-src')).toContain('https://www.facebook.com')
   })
 
+  it('allows the Pixel form-post and iframe transports exactly once', () => {
+    const csp = buildCsp(NONCE)
+    expect(directive(csp, 'form-action')).toContain('https://www.facebook.com')
+    expect(directive(csp, 'frame-src')).toContain('https://www.facebook.com')
+    // No duplicate directives (browsers only honour the first occurrence).
+    for (const name of ['form-action', 'frame-src', 'script-src']) {
+      expect(csp.split('; ').filter((d) => d.startsWith(`${name} `))).toHaveLength(1)
+    }
+  })
+
   it('includes the Meta CAPI Gateway relay hosts in connect-src', () => {
     const connectSrc = directive(buildCsp(NONCE), 'connect-src')
     expect(connectSrc).toContain(
@@ -60,11 +70,11 @@ describe('buildCsp', () => {
     expect(directive(buildCsp(NONCE), 'script-src')).toContain("'unsafe-eval'")
   })
 
-  it('locks down object, base-uri, form-action and frame-ancestors', () => {
+  it('locks down object-src, base-uri and frame-ancestors', () => {
     const csp = buildCsp(NONCE)
     expect(directive(csp, 'object-src')).toEqual(["'none'"])
     expect(directive(csp, 'base-uri')).toEqual(["'self'"])
-    expect(directive(csp, 'form-action')).toEqual(["'self'"])
     expect(directive(csp, 'frame-ancestors')).toEqual(["'self'"])
+    expect(directive(csp, 'form-action')[0]).toBe("'self'")
   })
 })

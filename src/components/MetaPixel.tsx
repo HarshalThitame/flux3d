@@ -2,6 +2,7 @@
 
 import Script from 'next/script'
 import { hasConsent } from '@/lib/consent'
+import { useMounted } from '@/lib/use-mounted'
 
 declare global {
   interface Window {
@@ -32,7 +33,12 @@ declare global {
  * after this script has initialised it.
  */
 export default function MetaPixel({ pixelId, nonce }: { pixelId: string; nonce?: string }) {
-  if (!pixelId) return null
+  // Consent is only readable after mount (localStorage is unavailable during
+  // SSR and hydration), so gate rendering on a mounted flag to keep the
+  // server and first client render identical (avoids React error #418).
+  const mounted = useMounted()
+
+  if (!mounted || !pixelId) return null
   if (!hasConsent('marketing')) return null
 
   return (

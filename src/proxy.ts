@@ -62,10 +62,12 @@ export function buildCsp(nonce: string) {
       'https://lumberjack-cx.razorpay.com',
       'https://custom-analytics.razorpay.com',
     ].join(' '),
-    "frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com",
+    // fbevents.js submits large event payloads to /tr via a hidden form and
+    // renders measurement iframes on www.facebook.com.
+    `form-action 'self' https://www.facebook.com`,
+    `frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com https://www.facebook.com`,
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'",
     "frame-ancestors 'self'",
     'upgrade-insecure-requests',
   ]

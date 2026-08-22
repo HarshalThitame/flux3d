@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useMemo, useSyncExternalStore } from 'react'
 
 export type ConsentCategories = {
   essential: boolean
@@ -58,34 +58,69 @@ export function hasConsent(category: 'analytics' | 'marketing'): boolean {
 /**
  * React hook that reflects the current consent state and fires a
  * window event so analytics/pixel components re-evaluate on change.
+ *
+ * Implemented with useSyncExternalStore so localStorage is read only after
+ * hydration (the server snapshot is always `null`): reading it during SSR or
+ * the first client render would produce differing markup and trigger React
+ * hydration error #418.
  */
-export function useConsent() {
-  const [consent, setConsent] = useState<ConsentCategories | null>(() => getStoredConsent())
+const consentListeners = new Set<() => void>()
 
-  useEffect(() => {
-    const handler = () => {
-      setConsent(getStoredConsent())
+function subscribeToConsent(listener: () => void): () => void {
+  consentListeners.add(listener)
+  return () => {
+    consentListeners.delete(listener)
+  }
+}
+
+function getConsentSnapshot(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return window.localStorage.getItem(CONSENT_KEY)
+  } catch {
+    return null
+  }
+}
+
+function getServerSnapshot(): null {
+  return null
+}
+
+function notifyConsentChanged(): void {
+  for (const listener of consentListeners) listener()
+  window.dispatchEvent(new Event('flux3d:consent'))
+}
+
+export function useConsent() {
+  const raw = useSyncExternalStore(subscribeToConsent, getConsentSnapshot, getServerSnapshot)
+
+  const consent = useMemo<ConsentCategories | null>(() => {
+    if (!raw) return null
+    try {
+      const parsed = JSON.parse(raw) as Partial<ConsentCategories>
+      return {
+        essential: true,
+        analytics: Boolean(parsed.analytics),
+        marketing: Boolean(parsed.marketing),
+      }
+    } catch {
+      return null
     }
-    window.addEventListener('flux3d:consent', handler)
-    return () => window.removeEventListener('flux3d:consent', handler)
-  }, [])
+  }, [raw])
 
   const acceptAll = useCallback(() => {
     storeConsent({ essential: true, analytics: true, marketing: true })
-    setConsent({ essential: true, analytics: true, marketing: true })
-    window.dispatchEvent(new Event('flux3d:consent'))
+    notifyConsentChanged()
   }, [])
 
   const acceptEssential = useCallback(() => {
     storeConsent(DEFAULT_CONSENT)
-    setConsent(DEFAULT_CONSENT)
-    window.dispatchEvent(new Event('flux3d:consent'))
+    notifyConsentChanged()
   }, [])
 
   const updateCategories = useCallback((next: ConsentCategories) => {
     storeConsent({ essential: true, analytics: next.analytics, marketing: next.marketing })
-    setConsent({ essential: true, analytics: next.analytics, marketing: next.marketing })
-    window.dispatchEvent(new Event('flux3d:consent'))
+    notifyConsentChanged()
   }, [])
 
   return { consent, acceptAll, acceptEssential, updateCategories }
