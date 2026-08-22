@@ -189,6 +189,7 @@ export default function ViewerSection({
                 type="button"
                 onClick={() => setIsFullScreen(true)}
                 title="Full Screen Inspection"
+                aria-label="Enter fullscreen inspection"
                 className="rounded-xl border border-[#6d28d9]/10 bg-white p-1.5 text-[#6F7192] hover:bg-gray-50 hover:text-[#070b1d]"
               >
                 <Maximize2 className="h-4 w-4" />
@@ -314,6 +315,7 @@ export default function ViewerSection({
             <button
               type="button"
               onClick={() => setIsFullScreen(false)}
+              aria-label="Exit fullscreen inspection"
               className="rounded-xl border border-white/10 bg-white/5 p-2 text-white hover:bg-white/10"
             >
               <X className="h-5 w-5" />

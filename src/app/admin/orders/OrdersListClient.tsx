@@ -1058,6 +1058,8 @@ function OrderRow({
         <button
           type="button"
           onClick={onToggleSelect}
+          aria-label={selected ? 'Deselect order' : 'Select order'}
+          aria-pressed={selected}
           className="grid h-5 w-5 place-items-center rounded border border-gray-300 bg-white transition hover:border-violet-400"
         >
           {selected && <Check className="h-3 w-3 text-violet-600" />}
@@ -1207,6 +1209,8 @@ function MobileOrderCard({
           <button
             type="button"
             onClick={(event) => { event.stopPropagation(); onToggleSelect?.() }}
+            aria-label={selected ? 'Deselect order' : 'Select order'}
+            aria-pressed={selected}
             className="grid h-5 w-5 shrink-0 place-items-center rounded border border-gray-300 bg-white transition hover:border-violet-400"
           >
             {selected && <Check className="h-3 w-3 text-violet-600" />}

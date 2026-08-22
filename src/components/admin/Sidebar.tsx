@@ -145,6 +145,8 @@ export default function Sidebar({
           <button
             type="button"
             onClick={onToggleAction}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={!collapsed}
             className="rounded-xl border border-gray-200 bg-gray-100 p-2 text-[#6F7192] transition hover:bg-gray-200"
           >
             <ChevronLeft className={`h-4 w-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
@@ -160,7 +162,7 @@ export default function Sidebar({
             aria-label="Admin navigation"
             onScroll={updateScrollIndicators}
             onKeyDown={handleNavKeyDown}
-            className="admin-sidebar-scroll h-full overflow-y-auto overscroll-contain px-4 pb-4 [-webkit-overflow-scrolling:touch]"
+            className="admin-sidebar-scroll h-full overflow-y-auto overscroll-contain px-4 pb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6d28d9]/40 [-webkit-overflow-scrolling:touch]"
           >
           <nav className="mt-8 space-y-2">
           {mainItems.map((item) => {

@@ -50,6 +50,7 @@ export function EditorHeader() {
             onClick={undo}
             disabled={!canUndo}
             title="Undo (Ctrl+Z)"
+            aria-label="Undo"
             className="rounded-xl border border-gray-200 p-2.5 text-[#6F7192] hover:bg-gray-50 disabled:opacity-40"
           >
             <Undo2 className="h-4 w-4" />
@@ -59,6 +60,7 @@ export function EditorHeader() {
             onClick={redo}
             disabled={!canRedo}
             title="Redo (Ctrl+Shift+Z)"
+            aria-label="Redo"
             className="rounded-xl border border-gray-200 p-2.5 text-[#6F7192] hover:bg-gray-50 disabled:opacity-40"
           >
             <Redo2 className="h-4 w-4" />

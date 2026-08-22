@@ -25,7 +25,7 @@ export default function VariableAutocomplete({
           placeholder="Search variables..."
           className="flex-1 bg-transparent text-sm text-[#0F1B3D] outline-none"
         />
-        <button type="button" onClick={onClose} className="rounded p-0.5 text-[#6F7192] hover:bg-gray-100">
+        <button type="button" onClick={onClose} aria-label="Close variable autocomplete" className="rounded p-0.5 text-[#6F7192] hover:bg-gray-100">
           <X className="h-3.5 w-3.5" />
         </button>
       </div>

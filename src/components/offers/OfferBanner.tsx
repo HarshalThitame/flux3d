@@ -146,6 +146,8 @@ export function OfferBanner() {
             <button
               key={i}
               onClick={() => setCurrent(i)}
+              aria-label={`Go to offer ${i + 1}`}
+              aria-current={i === current ? 'true' : undefined}
               className={`w-2 h-2 rounded-full transition-all ${
                 i === current ? 'w-6 bg-[var(--brand-primary)]' : 'bg-[var(--border-medium)] hover:bg-[var(--brand-light)]/50'
               }`}

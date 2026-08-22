@@ -117,6 +117,7 @@ export default function ToastContainer() {
             <button
               type="button"
               onClick={() => dismiss(entry.toast.id)}
+              aria-label="Dismiss notification"
               className={`mt-0.5 shrink-0 rounded-lg p-1 transition hover:opacity-70 ${c.icon}`}
             >
               <X className="h-4 w-4" />

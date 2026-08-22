@@ -109,6 +109,7 @@ export default function CampaignEditModal({ campaign, onClose, onSave }: Campaig
                 </h2>
                 <button
                   onClick={onClose}
+                  aria-label="Close edit campaign modal"
                   className="rounded-lg p-2 text-[#6F7192] hover:bg-gray-100 transition-colors"
                 >
                   <X className="w-5 h-5" />

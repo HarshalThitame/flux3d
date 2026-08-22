@@ -85,12 +85,13 @@ export default function RetentionSettingsPage() {
 
       <div className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5">
         <div>
-          <label className="text-xs font-semibold text-[#6F7192]">Retention period (days)</label>
+          <label htmlFor="retention-days" className="text-xs font-semibold text-[#6F7192]">Retention period (days)</label>
           <div className="mt-1 flex items-center gap-3">
             <input
+              id="retention-days"
               type="number" min={30} max={365} value={days}
               onChange={(e) => setDays(Number(e.target.value))}
-              className="w-24 rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none"
+              className="w-24 rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/40"
             />
             <button
               type="button" disabled={purging} onClick={() => void handlePurge()}

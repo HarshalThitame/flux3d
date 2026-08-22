@@ -179,6 +179,7 @@ function Pagination({
         type="button"
         onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
         disabled={currentPage === 1}
+        aria-label="Previous page"
         className="rounded-lg border border-gray-700 bg-[#0B1220] p-2 text-gray-400 transition hover:enabled:bg-gray-800 disabled:opacity-30"
       >
         <ChevronLeft size={14} />
@@ -199,6 +200,7 @@ function Pagination({
         type="button"
         onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
         disabled={currentPage === totalPages}
+        aria-label="Next page"
         className="rounded-lg border border-gray-700 bg-[#0B1220] p-2 text-gray-400 transition hover:enabled:bg-gray-800 disabled:opacity-30"
       >
         <ChevronRight size={14} />
@@ -397,6 +399,7 @@ export default function DataTable<T>({
               value={query}
               onChange={(event) => handleSearchChange(event.target.value)}
               placeholder={searchPlaceholder ?? 'Search...'}
+              aria-label={searchPlaceholder ?? 'Search'}
               className="w-full rounded-lg border border-gray-800 bg-[#0B1220] py-2 pl-9 pr-3 text-sm text-gray-200 outline-none transition focus:border-indigo-500"
             />
           </div>
@@ -465,6 +468,7 @@ export default function DataTable<T>({
                       type="checkbox"
                       checked={allVisibleSelected}
                       onChange={toggleAllVisible}
+                      aria-label="Select all rows"
                       className="h-4 w-4 accent-indigo-500"
                     />
                   </th>
@@ -507,6 +511,7 @@ export default function DataTable<T>({
                             event.stopPropagation()
                             toggleRow(rowId)
                           }}
+                          aria-label={`Select row ${rowId}`}
                           className="h-4 w-4 accent-indigo-500"
                         />
                       </td>
@@ -542,6 +547,7 @@ export default function DataTable<T>({
                       event.stopPropagation()
                       toggleRow(getRowId(row))
                     }}
+                    aria-label={`Select row ${getRowId(row)}`}
                     className="h-4 w-4 accent-indigo-500"
                   />
                 </div>

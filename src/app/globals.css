@@ -9089,6 +9089,84 @@ body:has(.premium-auth-shell) {
 }
 
 /* ===================================================
+   TOP PROGRESS BAR — slim route-navigation loader
+   =================================================== */
+@keyframes topProgressIndeterminate {
+  0% {
+    transform: translate3d(-100%, 0, 0);
+  }
+  100% {
+    transform: translate3d(400%, 0, 0);
+  }
+}
+
+@keyframes topProgressFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes topProgressFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.top-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  pointer-events: none;
+  animation: topProgressFadeIn 240ms ease-out forwards;
+}
+
+.top-progress-bar-exit {
+  animation: topProgressFadeOut 320ms ease-in forwards;
+}
+
+.top-progress-bar-track {
+  position: relative;
+  height: 3px;
+  width: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+.top-progress-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 40%;
+  border-radius: 0 9999px 9999px 0;
+  background: var(--gradient-brand-gold, linear-gradient(135deg, #5b21b6 0%, #7c3aed 40%, #a855f7 65%, #d4af37 100%));
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.55);
+  animation: topProgressIndeterminate 1.1s var(--ease-premium) infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .top-progress-bar,
+  .top-progress-bar-exit {
+    animation-duration: 1ms;
+  }
+
+  .top-progress-bar-fill {
+    animation: none;
+    transform: translate3d(0, 0, 0);
+    width: 100%;
+  }
+}
+
+/* ===================================================
    PRICING CARDS — unified premium hover (light theme)
    =================================================== */
 .pricing-driver-card,

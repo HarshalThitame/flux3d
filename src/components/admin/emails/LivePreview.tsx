@@ -83,6 +83,8 @@ export default function LivePreview({
             onClick={() => setDevice('desktop')}
             className={`rounded-md p-1.5 transition ${device === 'desktop' ? 'bg-white text-[#6d28d9] shadow-sm' : 'text-[#6F7192]'}`}
             title="Desktop"
+            aria-label="Preview on desktop"
+            aria-pressed={device === 'desktop'}
           >
             <Monitor className="h-4 w-4" />
           </button>
@@ -91,6 +93,8 @@ export default function LivePreview({
             onClick={() => setDevice('mobile')}
             className={`rounded-md p-1.5 transition ${device === 'mobile' ? 'bg-white text-[#6d28d9] shadow-sm' : 'text-[#6F7192]'}`}
             title="Mobile"
+            aria-label="Preview on mobile"
+            aria-pressed={device === 'mobile'}
           >
             <Smartphone className="h-4 w-4" />
           </button>
@@ -101,6 +105,8 @@ export default function LivePreview({
             onClick={() => setMode('light')}
             className={`rounded-md p-1.5 transition ${mode === 'light' ? 'bg-white text-[#6d28d9] shadow-sm' : 'text-[#6F7192]'}`}
             title="Light"
+            aria-label="Light mode preview"
+            aria-pressed={mode === 'light'}
           >
             <Sun className="h-4 w-4" />
           </button>
@@ -109,6 +115,8 @@ export default function LivePreview({
             onClick={() => setMode('dark')}
             className={`rounded-md p-1.5 transition ${mode === 'dark' ? 'bg-white text-[#6d28d9] shadow-sm' : 'text-[#6F7192]'}`}
             title="Dark"
+            aria-label="Dark mode preview"
+            aria-pressed={mode === 'dark'}
           >
             <Moon className="h-4 w-4" />
           </button>

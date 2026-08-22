@@ -501,7 +501,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                     label="Group ID"
                     value={order.groupId}
                     action={
-                      <button type="button" onClick={() => copyToClipboard('Group ID', order.groupId)} className="text-violet-600 hover:text-violet-700">
+                      <button type="button" onClick={() => copyToClipboard('Group ID', order.groupId)} aria-label="Copy Group ID" className="text-violet-600 hover:text-violet-700">
                         <Copy className="h-3.5 w-3.5" />
                       </button>
                     }
@@ -524,7 +524,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                         label="Razorpay Order ID"
                         value={order.providerOrderId}
                         action={
-                          <button type="button" onClick={() => copyToClipboard('Razorpay Order ID', order.providerOrderId ?? '')} className="text-violet-600 hover:text-violet-700">
+                          <button type="button" onClick={() => copyToClipboard('Razorpay Order ID', order.providerOrderId ?? '')} aria-label="Copy Razorpay Order ID" className="text-violet-600 hover:text-violet-700">
                             <Copy className="h-3.5 w-3.5" />
                           </button>
                         }
@@ -535,7 +535,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                         label="Razorpay Payment ID"
                         value={order.providerPaymentId}
                         action={
-                          <button type="button" onClick={() => copyToClipboard('Razorpay Payment ID', order.providerPaymentId ?? '')} className="text-violet-600 hover:text-violet-700">
+                          <button type="button" onClick={() => copyToClipboard('Razorpay Payment ID', order.providerPaymentId ?? '')} aria-label="Copy Razorpay Payment ID" className="text-violet-600 hover:text-violet-700">
                             <Copy className="h-3.5 w-3.5" />
                           </button>
                         }
@@ -734,6 +734,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
               <button
                 type="button"
                 onClick={() => { setShowCancelDialog(false); setCancelReason('') }}
+                aria-label="Close cancel order dialog"
                 className="grid h-8 w-8 place-items-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               >
                 <X className="h-4 w-4" />

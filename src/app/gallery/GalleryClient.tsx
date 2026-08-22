@@ -534,7 +534,7 @@ export default function GalleryClient() {
                   whileHover={reduceMotion ? undefined : { y: -7 }}
                   transition={{ duration: 0.38, delay: index * 0.03, ease: [0.16, 1, 0.3, 1] }}
                   onClick={() => setSelectedProject(project)}
-                  className="gallery-project-card group text-left"
+                  className="gallery-project-card group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6d28d9]/40"
                   style={visualStyle(project)}
                 >
                   <ProjectVisual project={project} />

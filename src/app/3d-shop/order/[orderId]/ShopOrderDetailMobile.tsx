@@ -225,6 +225,7 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
               <button
                 type="button"
                 onClick={() => { setDialogType(null); setReason('') }}
+                aria-label="Close dialog"
                 className="grid h-8 w-8 place-items-center rounded-lg border border-[var(--shop-border-light)] bg-white text-[var(--shop-text-muted)]"
               >
                 <X className="h-3.5 w-3.5" />
@@ -261,7 +262,7 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
         {/* Hero Section */}
         <section className="overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/82 p-4 shadow-sm backdrop-blur-xl">
           <div className="flex items-center gap-2">
-            <Link href="/3d-shop/orders" className="inline-flex min-h-[32px] items-center gap-1.5 rounded-lg border border-[var(--shop-border-light)] bg-white px-2 text-xs font-semibold text-[var(--shop-text-secondary)] shadow-sm transition hover:border-[var(--shop-border-gold)] hover:text-[var(--shop-gold)]">
+            <Link href="/3d-shop/orders" aria-label="Back to my orders" className="inline-flex min-h-[32px] items-center gap-1.5 rounded-lg border border-[var(--shop-border-light)] bg-white px-2 text-xs font-semibold text-[var(--shop-text-secondary)] shadow-sm transition hover:border-[var(--shop-border-gold)] hover:text-[var(--shop-gold)]">
               <ArrowLeft className="h-3.5 w-3.5" />
             </Link>
             <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--shop-gold)]">

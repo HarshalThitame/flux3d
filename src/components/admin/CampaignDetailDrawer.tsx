@@ -114,6 +114,7 @@ export default function CampaignDetailDrawer({
               <h2 className="text-lg font-semibold text-[#0F1B3D]">Campaign Details</h2>
               <button
                 onClick={onClose}
+                aria-label="Close campaign details"
                 className="rounded-lg p-2 text-[#6F7192] hover:bg-gray-100 transition-colors"
               >
                 <X className="w-5 h-5" />

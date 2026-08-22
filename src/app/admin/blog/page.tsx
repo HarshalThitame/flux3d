@@ -1511,6 +1511,7 @@ export default function AdminBlogPage() {
                       <Link
                         href={`/blog/${post.slug}`}
                         target="_blank"
+                        aria-label={`View post ${post.slug} in new tab`}
                         className="rounded-lg border border-gray-200 p-2 text-[#6F7192] hover:bg-gray-50 hover:text-[#0F1B3D]"
                       >
                         <Eye className="h-4 w-4" />

@@ -66,7 +66,7 @@ export function RevisionHistoryModal({ open, onClose }: { open: boolean; onClose
                   Autosaved snapshots of this product. Restore any version below.
                 </p>
               </div>
-              <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-[#6F7192] hover:bg-gray-50">
+              <button type="button" onClick={onClose} aria-label="Close revision history" className="rounded-lg p-1.5 text-[#6F7192] hover:bg-gray-50">
                 <X className="h-5 w-5" />
               </button>
             </div>

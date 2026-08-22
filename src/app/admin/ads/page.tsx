@@ -743,6 +743,7 @@ export default function AdminAdsPage() {
                     href={`https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${adAccountId}&selected_campaign_ids=${row.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label="Open in Facebook Ads Manager"
                     className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#6d28d9] bg-[rgba(109,40,217,0.08)] border border-[rgba(109,40,217,0.15)] hover:bg-[rgba(109,40,217,0.12)] transition-all"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />

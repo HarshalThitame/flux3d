@@ -223,6 +223,7 @@ export default function TestEmailSender({
                   <button
                     type="button"
                     onClick={() => setPreviewHtml(null)}
+                    aria-label="Close preview"
                     className="rounded-lg p-1 text-[#6F7192] hover:bg-gray-100"
                   >
                     <X className="h-4 w-4" />

@@ -97,6 +97,8 @@ export default function VersionCompareModal({
                 onClick={() => setDevice('desktop')}
                 className={`rounded-md p-1.5 transition ${device === 'desktop' ? 'bg-white text-[#6d28d9] shadow-sm' : 'text-[#6F7192]'}`}
                 title="Desktop"
+                aria-label="Compare on desktop"
+                aria-pressed={device === 'desktop'}
               >
                 <Monitor className="h-4 w-4" />
               </button>
@@ -105,6 +107,8 @@ export default function VersionCompareModal({
                 onClick={() => setDevice('mobile')}
                 className={`rounded-md p-1.5 transition ${device === 'mobile' ? 'bg-white text-[#6d28d9] shadow-sm' : 'text-[#6F7192]'}`}
                 title="Mobile"
+                aria-label="Compare on mobile"
+                aria-pressed={device === 'mobile'}
               >
                 <Smartphone className="h-4 w-4" />
               </button>
@@ -112,6 +116,7 @@ export default function VersionCompareModal({
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close version comparison"
               className="rounded-lg p-1 text-[#6F7192] hover:bg-gray-100"
             >
               <X className="h-5 w-5" />

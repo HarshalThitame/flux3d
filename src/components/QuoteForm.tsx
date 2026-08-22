@@ -57,10 +57,22 @@ export default function QuoteForm() {
 
     return (
         <form onSubmit={handleSubmit}>
-            <input name="name" placeholder="Your Name" required/>
-            <input name="email" type="email" placeholder="Email" required/>
-            <input name="phone" placeholder="WhatsApp Number"/>
-            <textarea name="message" placeholder="Describe your project"/>
+            <label htmlFor="quote-name">
+                Name
+                <input id="quote-name" name="name" placeholder="Your Name" required/>
+            </label>
+            <label htmlFor="quote-email">
+                Email
+                <input id="quote-email" name="email" type="email" placeholder="Email" required/>
+            </label>
+            <label htmlFor="quote-phone">
+                WhatsApp Number
+                <input id="quote-phone" name="phone" placeholder="WhatsApp Number"/>
+            </label>
+            <label htmlFor="quote-message">
+                Message
+                <textarea id="quote-message" name="message" placeholder="Describe your project"/>
+            </label>
             <button type="submit" disabled={loading}>
                 {loading ? 'Sending...' : 'Get Quote'}
             </button>

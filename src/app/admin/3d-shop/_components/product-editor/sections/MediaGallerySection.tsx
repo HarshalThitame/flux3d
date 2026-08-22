@@ -169,7 +169,7 @@ function ImageTile({
             <Star className={`h-3.5 w-3.5 ${isThumbnail ? 'fill-yellow-400 text-yellow-400' : ''}`} />
             Thumbnail
           </button>
-          <button type="button" onClick={onRemove} className="rounded-lg border border-rose-200 p-1.5 text-rose-600 hover:bg-rose-50">
+          <button type="button" onClick={onRemove} aria-label="Remove image" className="rounded-lg border border-rose-200 p-1.5 text-rose-600 hover:bg-rose-50">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>

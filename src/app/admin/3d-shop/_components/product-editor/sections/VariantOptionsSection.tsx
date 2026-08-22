@@ -182,6 +182,7 @@ export function VariantOptionsSection() {
                   <button
                     type="button"
                     onClick={() => void deleteVariant(variant)}
+                    aria-label={`Delete variant ${variant.option_name}`}
                     className="mt-6 rounded-xl border border-rose-200 p-2.5 text-rose-600 hover:bg-rose-50"
                   >
                     <Trash2 className="h-4 w-4" />

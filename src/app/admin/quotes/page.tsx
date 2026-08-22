@@ -253,7 +253,7 @@ export default function AdminQuotesPage() {
                 <h2 className="text-lg font-bold text-[#0F1B3D]">Quote Event History</h2>
                 <p className="mt-1 text-xs text-[#6F7192]">{historyFor}</p>
               </div>
-              <button type="button" onClick={() => setHistoryFor(null)} className="rounded-lg p-1 text-[#6F7192] hover:bg-gray-100">
+              <button type="button" onClick={() => setHistoryFor(null)} aria-label="Close quote history" className="rounded-lg p-1 text-[#6F7192] hover:bg-gray-100">
                 <X className="h-4 w-4" />
               </button>
             </div>

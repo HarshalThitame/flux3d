@@ -24,6 +24,7 @@ export default function QuantityStepper({
         type="button"
         disabled={value <= min}
         onClick={() => onChangeAction(Math.max(min, value - 1))}
+        aria-label="Decrease quantity"
         className={`${size} grid place-items-center text-[var(--shop-text-secondary)] transition hover:bg-[var(--shop-bg-soft)] disabled:opacity-40`}
       >
         <Minus className="h-4 w-4" />
@@ -35,6 +36,7 @@ export default function QuantityStepper({
         type="button"
         disabled={value >= clampedMax}
         onClick={() => onChangeAction(Math.min(clampedMax, value + 1))}
+        aria-label="Increase quantity"
         className={`${size} grid place-items-center text-[var(--shop-text-secondary)] transition hover:bg-[var(--shop-bg-soft)] disabled:opacity-40`}
       >
         <Plus className="h-4 w-4" />

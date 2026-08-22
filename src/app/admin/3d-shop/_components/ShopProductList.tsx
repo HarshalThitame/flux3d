@@ -316,13 +316,13 @@ export default function ShopProductList() {
                     <td className="px-4 py-3 text-sm text-[#6F7192]">{product.is_archived ? 'Archived' : product.is_active ? 'Active' : 'Draft'}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <Link href={`/admin/3d-shop/products/${product.id}/edit`} className="rounded-lg border border-gray-200 p-2 text-[#6F7192] hover:bg-gray-50 hover:text-[#0F1B3D]">
+                        <Link href={`/admin/3d-shop/products/${product.id}/edit`} aria-label={`Edit ${product.name}`} className="rounded-lg border border-gray-200 p-2 text-[#6F7192] hover:bg-gray-50 hover:text-[#0F1B3D]">
                           <Edit3 className="h-4 w-4" />
                         </Link>
-                        <button type="button" onClick={() => void duplicateProduct(product)} className="rounded-lg border border-gray-200 p-2 text-[#6F7192] hover:bg-gray-50 hover:text-[#0F1B3D]">
+                        <button type="button" onClick={() => void duplicateProduct(product)} aria-label={`Duplicate ${product.name}`} className="rounded-lg border border-gray-200 p-2 text-[#6F7192] hover:bg-gray-50 hover:text-[#0F1B3D]">
                           <Copy className="h-4 w-4" />
                         </button>
-                        <button type="button" onClick={() => void archiveProduct(product)} className="rounded-lg border border-rose-200 p-2 text-rose-600 hover:bg-rose-50">
+                        <button type="button" onClick={() => void archiveProduct(product)} aria-label={`Archive ${product.name}`} className="rounded-lg border border-rose-200 p-2 text-rose-600 hover:bg-rose-50">
                           <Archive className="h-4 w-4" />
                         </button>
                       </div>

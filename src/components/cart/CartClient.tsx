@@ -431,6 +431,7 @@ export default function CartClient({ user }: CartClientProps) {
                 <button
                   type="button"
                   onClick={() => setShowClearConfirm(false)}
+                  aria-label="Close clear cart dialog"
                   className="absolute right-4 top-4 rounded-lg border border-[#6d28d9]/10 bg-white/[0.03] p-1.5 text-[#6F7192] transition-colors hover:bg-white/[0.07] hover:text-[#070b1d]"
                 >
                   <X className="h-4 w-4" />

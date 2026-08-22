@@ -179,6 +179,7 @@ export default function AttachmentManager({
                       onClick={() => onDelete(f.name)}
                       className="inline-flex items-center gap-1 rounded-lg p-1.5 text-red-600 transition hover:bg-red-50"
                       title="Delete"
+                      aria-label={`Delete attachment ${f.name}`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>

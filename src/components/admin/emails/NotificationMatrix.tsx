@@ -66,15 +66,18 @@ export default function NotificationMatrix({
     checked,
     onChange,
     disabled,
+    label,
   }: {
     checked: boolean
     onChange: () => void
     disabled?: boolean
+    label?: string
   }) => (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-label={label}
       onClick={onChange}
       disabled={disabled}
       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#6d28d9] focus:ring-offset-2 ${
@@ -122,6 +125,7 @@ export default function NotificationMatrix({
                           onChange={() =>
                             toggle(row.event_name, 'customer', row.customer!.enabled)
                           }
+                          label={`${row.label} - customer notification`}
                         />
                       )}
                     </div>
@@ -140,6 +144,7 @@ export default function NotificationMatrix({
                           onChange={() =>
                             toggle(row.event_name, 'admin', row.admin!.enabled)
                           }
+                          label={`${row.label} - admin notification`}
                         />
                       )}
                     </div>

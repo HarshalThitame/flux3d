@@ -46,7 +46,7 @@ export function TemplatesModal({ open, onClose }: { open: boolean; onClose: () =
                   Start from a pre-configured product with variants, copy, and customization baked in.
                 </p>
               </div>
-              <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-[#6F7192] hover:bg-gray-50">
+              <button type="button" onClick={onClose} aria-label="Close templates modal" className="rounded-lg p-1.5 text-[#6F7192] hover:bg-gray-50">
                 <X className="h-5 w-5" />
               </button>
             </div>

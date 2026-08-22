@@ -399,6 +399,7 @@ export default function EmailTemplatesClient({
                         disabled={duplicatingId === t.id}
                         className="rounded-lg p-1.5 text-[#6F7192] transition hover:bg-gray-100 hover:text-[#0F1B3D] disabled:opacity-50"
                         title="Duplicate"
+                        aria-label={`Duplicate template ${t.name}`}
                       >
                         <Copy className="h-4 w-4" />
                       </button>
@@ -407,6 +408,7 @@ export default function EmailTemplatesClient({
                         onClick={() => setTestModalTemplate(t)}
                         className="rounded-lg p-1.5 text-[#6F7192] transition hover:bg-gray-100 hover:text-[#0F1B3D]"
                         title="Test"
+                        aria-label={`Send test email for ${t.name}`}
                       >
                         <Send className="h-4 w-4" />
                       </button>
@@ -415,6 +417,7 @@ export default function EmailTemplatesClient({
                         onClick={() => openPreview(t)}
                         className="rounded-lg p-1.5 text-[#6F7192] transition hover:bg-gray-100 hover:text-[#0F1B3D]"
                         title="Preview"
+                        aria-label={`Preview template ${t.name}`}
                       >
                         <Eye className="h-4 w-4" />
                       </button>
@@ -456,6 +459,7 @@ export default function EmailTemplatesClient({
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1 || loading}
+              aria-label="Previous page"
               className="rounded-lg border border-gray-300 bg-white p-1.5 text-[#6F7192] hover:bg-gray-50 disabled:opacity-40"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -467,6 +471,7 @@ export default function EmailTemplatesClient({
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages || loading}
+              aria-label="Next page"
               className="rounded-lg border border-gray-300 bg-white p-1.5 text-[#6F7192] hover:bg-gray-50 disabled:opacity-40"
             >
               <ChevronRight className="h-4 w-4" />
@@ -487,6 +492,7 @@ export default function EmailTemplatesClient({
                   setTestModalTemplate(null)
                   setTestRecipient('')
                 }}
+                aria-label="Close test email modal"
                 className="rounded-lg p-1 text-[#6F7192] hover:bg-gray-100"
               >
                 <X className="h-5 w-5" />
@@ -547,6 +553,7 @@ export default function EmailTemplatesClient({
                   setPreviewModalTemplate(null)
                   setPreviewHtml('')
                 }}
+                aria-label="Close preview modal"
                 className="rounded-lg p-1 text-[#6F7192] hover:bg-gray-100"
               >
                 <X className="h-5 w-5" />

@@ -246,7 +246,7 @@ export default function AdminShopReviewsClient() {
                           {review.image_urls.length > 0 && (
                             <div className="mt-3 flex gap-2">
                               {review.image_urls.map((url) => (
-                                <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="relative h-14 w-14 overflow-hidden rounded-lg border border-gray-200 bg-white">
+                                <a key={url} href={url} target="_blank" rel="noopener noreferrer" aria-label="Open review image in new tab" className="relative h-14 w-14 overflow-hidden rounded-lg border border-gray-200 bg-white">
                                   <Image src={url} alt="Review image" fill sizes="56px" className="object-cover" />
                                 </a>
                               ))}

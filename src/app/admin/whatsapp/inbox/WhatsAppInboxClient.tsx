@@ -559,6 +559,7 @@ export default function WhatsAppInboxClient() {
                   <button
                     type="button"
                     onClick={() => setActiveSender(null)}
+                    aria-label="Back to conversations"
                     className="grid h-8 w-8 place-items-center rounded-lg text-gray-400 hover:bg-gray-100 md:hidden"
                   >
                     <ArrowLeft className="h-4 w-4" />
@@ -651,6 +652,7 @@ export default function WhatsAppInboxClient() {
                                       target="_blank"
                                       rel="noreferrer"
                                       download
+                                      aria-label={`Download ${msg.media_filename || 'media file'}`}
                                       className={`rounded-lg p-1.5 transition ${isOutgoing ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-white text-[#6d28d9] hover:bg-purple-100'}`}
                                     >
                                       <Download className="h-4 w-4" />
@@ -672,6 +674,7 @@ export default function WhatsAppInboxClient() {
                                       target="_blank"
                                       rel="noreferrer"
                                       download
+                                      aria-label={`Download ${msg.media_filename || 'document'}`}
                                       className={`rounded-lg p-1.5 transition ${isOutgoing ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-white text-gray-700 hover:bg-gray-200'}`}
                                     >
                                       <Download className="h-4 w-4" />
@@ -711,7 +714,7 @@ export default function WhatsAppInboxClient() {
                     <span className="font-bold">{selectedFile.filename}</span>
                     <span className="text-[10px] text-gray-500">({formatBytes(selectedFile.size)})</span>
                   </div>
-                  <button type="button" onClick={() => setSelectedFile(null)} className="text-gray-400 hover:text-gray-700">
+                  <button type="button" onClick={() => setSelectedFile(null)} aria-label="Remove selected file" className="text-gray-400 hover:text-gray-700">
                     <X className="h-4 w-4" />
                   </button>
                 </div>
@@ -789,7 +792,7 @@ export default function WhatsAppInboxClient() {
             <div className="border-b border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500">Customer Context</h4>
-                <button type="button" onClick={() => setShowDrawer(false)} className="text-gray-400 hover:text-gray-600">
+                <button type="button" onClick={() => setShowDrawer(false)} aria-label="Close customer context" className="text-gray-400 hover:text-gray-600">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -916,6 +919,7 @@ export default function WhatsAppInboxClient() {
                           onClick={() => { setEditingQr(qr); setEditContent(qr.content) }}
                           className="rounded p-0.5 text-gray-400 hover:text-[#6d28d9]"
                           title="Edit"
+                          aria-label={`Edit quick reply ${qr.shortcut}`}
                         >
                           <Pencil className="h-3 w-3" />
                         </button>
@@ -924,6 +928,7 @@ export default function WhatsAppInboxClient() {
                           onClick={() => deleteQuickReply(qr.id, qr.shortcut)}
                           className="rounded p-0.5 text-gray-400 hover:text-red-600"
                           title="Delete"
+                          aria-label={`Delete quick reply ${qr.shortcut}`}
                         >
                           <X className="h-3 w-3" />
                         </button>

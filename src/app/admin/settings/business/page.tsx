@@ -695,20 +695,20 @@ function BrandingTab({ updateField, f, triggerFileInput, uploading }: {
             <div className="mb-1.5 text-xs font-medium text-[#aeb8d8]">Primary Color</div>
             <div className="flex gap-3">
               <input type="color" value={f('primaryColor') || '#6d28d9'} onChange={(e) => updateField('primaryColor', e.target.value)}
-                className="h-10 w-10 cursor-pointer rounded-lg border border-gray-200 bg-transparent" />
+                className="h-10 w-10 cursor-pointer rounded-lg border border-gray-200 bg-transparent" aria-label="Primary color picker" />
               <input type="text" value={f('primaryColor')} onChange={(e) => updateField('primaryColor', e.target.value)}
                 className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition focus:border-[#6d28d9]/30"
-                placeholder="#6d28d9" />
+                placeholder="#6d28d9" aria-label="Primary color hex value" />
             </div>
           </div>
           <div>
             <div className="mb-1.5 text-xs font-medium text-[#aeb8d8]">Secondary Color</div>
             <div className="flex gap-3">
               <input type="color" value={f('secondaryColor') || '#a855f7'} onChange={(e) => updateField('secondaryColor', e.target.value)}
-                className="h-10 w-10 cursor-pointer rounded-lg border border-gray-200 bg-transparent" />
+                className="h-10 w-10 cursor-pointer rounded-lg border border-gray-200 bg-transparent" aria-label="Secondary color picker" />
               <input type="text" value={f('secondaryColor')} onChange={(e) => updateField('secondaryColor', e.target.value)}
                 className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none transition focus:border-[#6d28d9]/30"
-                placeholder="#a855f7" />
+                placeholder="#a855f7" aria-label="Secondary color hex value" />
             </div>
           </div>
         </div>

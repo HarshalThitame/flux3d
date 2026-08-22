@@ -352,6 +352,7 @@ export default function WhatsAppOrdersClient() {
                               onClick={() => copyToClipboard(order.customer?.phone ?? order.shipping_address.phone, 'Phone number')}
                               className="text-gray-400 hover:text-[#0F1B3D]"
                               title="Copy Phone"
+                              aria-label="Copy phone number"
                             >
                               <Copy className="h-3 w-3" />
                             </button>
@@ -361,6 +362,7 @@ export default function WhatsAppOrdersClient() {
                               rel="noopener noreferrer"
                               className="text-emerald-600 hover:text-emerald-700"
                               title="Open Chat"
+                              aria-label="Open WhatsApp chat"
                             >
                               <ExternalLink className="h-3 w-3" />
                             </a>

@@ -161,6 +161,7 @@ export default function AutomationRuleBuilder({
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close automation rule builder"
             className="rounded-lg p-1 text-[#6F7192] hover:bg-gray-100"
           >
             <X className="h-5 w-5" />

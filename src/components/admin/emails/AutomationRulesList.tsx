@@ -158,6 +158,7 @@ export default function AutomationRulesList({
                         onClick={() => onEdit(rule)}
                         className="rounded-lg p-1.5 text-[#6F7192] transition hover:bg-gray-100 hover:text-[#0F1B3D]"
                         title="Edit rule"
+                        aria-label={`Edit rule for ${template?.name ?? 'template'}`}
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>

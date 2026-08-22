@@ -544,6 +544,7 @@ export default function EmailLogsTable({ initialData, initialTotal }: Props) {
             type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1 || loading}
+            aria-label="Previous page"
             className="rounded-lg border border-gray-300 bg-white p-1.5 text-[#6F7192] hover:bg-gray-50 disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -555,6 +556,7 @@ export default function EmailLogsTable({ initialData, initialTotal }: Props) {
             type="button"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages || loading}
+            aria-label="Next page"
             className="rounded-lg border border-gray-300 bg-white p-1.5 text-[#6F7192] hover:bg-gray-50 disabled:opacity-40"
           >
             <ChevronRight className="h-4 w-4" />

@@ -245,7 +245,7 @@ export default function PaymentDetailClient({ paymentId }: { paymentId: string }
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-[#0F1B3D]">Override Payment Status</h2>
-              <button type="button" onClick={() => setOverrideOpen(false)} className="rounded-lg p-1 text-[#6F7192] hover:bg-gray-100">
+              <button type="button" onClick={() => setOverrideOpen(false)} aria-label="Close payment override" className="rounded-lg p-1 text-[#6F7192] hover:bg-gray-100">
                 <X className="h-4 w-4" />
               </button>
             </div>

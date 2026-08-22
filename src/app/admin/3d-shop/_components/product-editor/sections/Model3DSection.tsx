@@ -62,7 +62,7 @@ export function Model3DSection() {
                     }}
                   />
                 </label>
-                <button type="button" onClick={removeModel} className="rounded-xl border border-rose-200 p-2 text-rose-600 hover:bg-rose-50">
+                <button type="button" onClick={removeModel} aria-label="Remove 3D model" className="rounded-xl border border-rose-200 p-2 text-rose-600 hover:bg-rose-50">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>

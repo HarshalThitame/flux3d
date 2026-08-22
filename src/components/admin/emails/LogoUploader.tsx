@@ -67,6 +67,7 @@ export default function LogoUploader({
         <button
           type="button"
           onClick={() => onChange('')}
+          aria-label="Remove logo"
           className="rounded-lg p-1 text-red-500 hover:bg-red-50"
         >
           <X className="h-4 w-4" />

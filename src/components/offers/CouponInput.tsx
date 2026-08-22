@@ -77,6 +77,7 @@ export default function CouponInput({ orderAmount, userId, onApply, appliedCoupo
           </div>
           <button
             onClick={onRemove}
+            aria-label="Remove coupon"
             className="p-1.5 rounded-lg hover:bg-[rgba(239,68,68,0.1)] text-[#6F7192] hover:text-[#EF4444] transition-colors"
           >
             <X className="w-4 h-4" />

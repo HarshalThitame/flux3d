@@ -118,6 +118,7 @@ export default function Topbar({
         <button
           type="button"
           onClick={onOpenMobileNav}
+          aria-label="Open navigation menu"
           className="rounded-xl border border-gray-200 bg-gray-100 p-2 text-[#0F1B3D] md:hidden"
         >
           <Menu className="h-5 w-5" />

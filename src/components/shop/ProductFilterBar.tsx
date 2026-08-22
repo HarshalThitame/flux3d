@@ -150,6 +150,9 @@ export default function ProductFilterBar({
             <button
               type="button"
               onClick={() => setSortOpen(!sortOpen)}
+              aria-label={`Sort by ${SORT_OPTIONS.find((o) => o.value === sort)?.label ?? 'Relevance'}`}
+              aria-expanded={sortOpen}
+              aria-haspopup="listbox"
               className="flex items-center gap-2 rounded-full border border-[var(--lux-border-light)] bg-white px-4 py-2 text-[12px] font-semibold text-[var(--lux-text-secondary)] transition hover:border-[var(--lux-border-gold)] hover:text-[var(--lux-text-primary)]"
             >
               <ArrowDownUp className="h-3.5 w-3.5" />
@@ -161,6 +164,8 @@ export default function ProductFilterBar({
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setSortOpen(false)} />
                   <motion.div
+                    role="listbox"
+                    aria-label="Sort options"
                     initial={{ opacity: 0, y: -6, scale: 0.97 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -6, scale: 0.97 }}
@@ -171,6 +176,8 @@ export default function ProductFilterBar({
                       <button
                         key={option.value}
                         type="button"
+                        role="option"
+                        aria-selected={sort === option.value}
                         onClick={() => { setSort(option.value); setSortOpen(false) }}
                         className={`flex w-full items-center gap-2 px-4 py-2.5 text-[13px] font-semibold transition hover:bg-[var(--lux-bg-muted)] ${
                           sort === option.value ? 'text-[var(--lux-text-primary)]' : 'text-[var(--lux-text-muted)]'
@@ -238,7 +245,7 @@ export default function ProductFilterBar({
                   className="inline-flex items-center gap-1.5 rounded-full border border-[var(--lux-border-gold)] bg-[var(--lux-gold-faint)] px-3 py-1 text-[11px] font-semibold text-[var(--lux-gold)]"
                 >
                   {filter.label}
-                  <button type="button" onClick={filter.onRemove} className="ml-0.5 inline-flex hover:text-[var(--lux-text-primary)]">
+                  <button type="button" onClick={filter.onRemove} aria-label={`Remove ${filter.label} filter`} className="ml-0.5 inline-flex hover:text-[var(--lux-text-primary)]">
                     <X className="h-3 w-3" />
                   </button>
                 </motion.span>
