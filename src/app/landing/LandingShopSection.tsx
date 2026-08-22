@@ -88,10 +88,14 @@ function ProductRow({ products }: { products: ShopPublicProduct[] }) {
 }
 
 export default function LandingShopSection({ data }: { data: ShopHomeData }) {
-  const [filteredProducts, setFilteredProducts] = useState<ShopPublicProduct[]>([
-    ...data.featured_products,
-    ...data.new_arrivals,
-  ])
+  const [filteredProducts, setFilteredProducts] = useState<ShopPublicProduct[]>(() => {
+    const seen = new Set<string>()
+    return [...data.featured_products, ...data.new_arrivals].filter((p) => {
+      if (seen.has(p.id)) return false
+      seen.add(p.id)
+      return true
+    })
+  })
 
   // Deduplicate all products for the unified grid
   const allProducts = (() => {

@@ -65,11 +65,13 @@ export default async function Home() {
       <script
         nonce={CSP_NONCE}
         type="application/ld+json"
+        suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: toJsonLd(structuredData) }}
       />
       <script
         nonce={CSP_NONCE}
         type="application/ld+json"
+        suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: toJsonLd(faqPageJsonLd) }}
       />
       <Navbar transparent />

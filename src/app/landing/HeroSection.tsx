@@ -77,7 +77,6 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [modelOpen, setModelOpen] = useState(false)
   const [added, setAdded] = useState(false)
-  const [progress, setProgress] = useState(0)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
   const reduceMotion = useReducedMotion()
@@ -85,6 +84,23 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
   const progressRef = useRef<number>(0)
   const rafRef = useRef<number>(0)
   const lastTimeRef = useRef<number>(0)
+  const progressBarRef = useRef<HTMLDivElement | null>(null)
+  const lineFillRef = useRef<HTMLSpanElement | null>(null)
+
+  // Progress is written straight to the DOM (no per-frame setState) so the
+  // carousel never floods React with urgent renders — otherwise transition
+  // updates elsewhere on the page get starved and never commit.
+  const paintProgress = useCallback(() => {
+    const pct = `${Math.min((progressRef.current / ROTATION_MS) * 100, 100)}%`
+    if (progressBarRef.current) progressBarRef.current.style.width = pct
+    if (lineFillRef.current) lineFillRef.current.style.width = pct
+  }, [])
+
+  const resetProgress = useCallback(() => {
+    progressRef.current = 0
+    if (progressBarRef.current) progressBarRef.current.style.width = '0%'
+    if (lineFillRef.current) lineFillRef.current.style.width = '0%'
+  }, [])
 
   const allProducts = useMemo(() => {
     const seen = new Set<string>()
@@ -113,14 +129,12 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
       lastTimeRef.current = now
       progressRef.current += delta
 
-      const pct = Math.min((progressRef.current / ROTATION_MS) * 100, 100)
-      setProgress(pct)
+      paintProgress()
 
       if (progressRef.current >= ROTATION_MS) {
         progressRef.current = 0
         if (document.visibilityState !== 'hidden') {
           setDirection(1)
-          setProgress(0)
           setActiveIndex((current) => (current + 1) % visibleProducts.length)
         }
       }
@@ -130,7 +144,7 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
 
     rafRef.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafRef.current)
-  }, [visibleProducts.length, rotationPaused, activeIndex])
+  }, [visibleProducts.length, rotationPaused, activeIndex, paintProgress])
 
   function goToSlide(rawNextIndex: number) {
     const total = visibleProducts.length
@@ -138,8 +152,7 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
     const nextIndex = ((rawNextIndex % total) + total) % total
     if (nextIndex === index) return
     setDirection(rawNextIndex > activeIndex ? 1 : -1)
-    progressRef.current = 0
-    setProgress(0)
+    resetProgress()
     setActiveIndex(nextIndex)
   }
 
@@ -320,7 +333,7 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
                   )}
                 </motion.div>
 
-                <motion.h1 variants={itemVariants} custom={direction} className="lux-heading-1 mb-3">
+                <motion.h1 variants={itemVariants} custom={direction} className="lux-heading-1 mb-3 line-clamp-2 sm:line-clamp-3">
                   {product.name}
                 </motion.h1>
 
@@ -377,7 +390,11 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
       </div>
 
       {/* Mobile progress bar */}
-      <div className="lux-carousel-progress md:hidden" style={{ width: `${progress}%` }} />
+      <div
+        ref={progressBarRef}
+        className="lux-carousel-progress md:hidden"
+        style={{ width: '0%' }}
+      />
 
       {/* Thumbnail strip — desktop only */}
       {visibleProducts.length > 1 && (
@@ -436,8 +453,9 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
                   aria-label={`Go to ${p.name}`}
                 >
                   <span
+                    ref={i === index ? lineFillRef : undefined}
                     className="lux-carousel-line-fill"
-                    style={{ width: i === index ? `${progress}%` : i < index ? '100%' : '0%' }}
+                    style={{ width: i < index ? '100%' : '0%' }}
                   />
                 </button>
               ))}
