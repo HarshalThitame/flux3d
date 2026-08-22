@@ -31,8 +31,10 @@ function onFirstIntent(callback: () => void) {
 
 export default function DeferredGoogleAnalytics({
   measurementId,
+  nonce,
 }: {
   measurementId: string
+  nonce?: string
 }) {
   useEffect(() => {
     if (!measurementId || window.__flux3dGaLoaded) return
@@ -53,10 +55,11 @@ export default function DeferredGoogleAnalytics({
 
       const script = document.createElement('script')
       script.async = true
+      if (nonce) script.nonce = nonce
       script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`
       document.head.appendChild(script)
     })
-  }, [measurementId])
+  }, [measurementId, nonce])
 
   return null
 }

@@ -27,7 +27,7 @@ declare global {
  * trackMetaEvent() from @/lib/meta/event-utils, which calls window.fbq()
  * after this script has initialised it.
  */
-export default function MetaPixel({ pixelId }: { pixelId: string }) {
+export default function MetaPixel({ pixelId, nonce }: { pixelId: string; nonce?: string }) {
   if (!pixelId) return null
 
   return (
@@ -35,6 +35,7 @@ export default function MetaPixel({ pixelId }: { pixelId: string }) {
       <Script
         id="meta-pixel"
         strategy="afterInteractive"
+        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: `
             !function(f,b,e,v,n,t,s)

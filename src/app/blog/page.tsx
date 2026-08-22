@@ -1,8 +1,6 @@
 import type { Metadata } from 'next'
 import { getSettings } from '@/lib/settings'
 
-export const revalidate = 3600
-
 import { absoluteUrl, siteConfig } from '@/lib/site'
 import Navbar from '@/components/Navbar'
 import { createAdminSupabaseClient } from '@/lib/admin/server'

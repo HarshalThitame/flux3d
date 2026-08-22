@@ -12,6 +12,7 @@ import AddressForm from '@/components/instant-quote/AddressForm'
 import Toast, { type ToastState } from '@/components/quote/Toast'
 import type { AppUserProfile } from '@/lib/auth/server'
 import { normalizeOwnedStoragePath } from '@/lib/quote/storage-path'
+import { getClientCspNonce } from '@/lib/csp-client'
 import {
   addressesEqual,
   formatAddressSummary,
@@ -117,6 +118,8 @@ export default function DeliveryStepClient({
       const existing = document.querySelector<HTMLScriptElement>('script[data-razorpay="checkout"]')
       if (existing) { existing.addEventListener('load', () => resolve(true), { once: true }); existing.addEventListener('error', () => resolve(false), { once: true }); return }
       const script = document.createElement('script')
+      const nonce = getClientCspNonce()
+      if (nonce) script.nonce = nonce
       script.src = 'https://checkout.razorpay.com/v1/checkout.js'
       script.async = true; script.defer = true; script.dataset.razorpay = 'checkout'
       script.onload = () => resolve(true); script.onerror = () => resolve(false)

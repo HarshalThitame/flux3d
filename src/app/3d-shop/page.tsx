@@ -22,8 +22,6 @@ import { buildShopCategoryTree, getShopHomeData, getShopProducts } from '@/lib/s
 import { formatShopPrice } from '@/lib/shop/selection'
 import { absoluteUrl } from '@/lib/site'
 
-export const revalidate = 300
-
 export const metadata: Metadata = {
   title: '3D Shop — Flux3D',
   description: 'Handpicked, ready-to-ship 3D printed products from Flux3D.',

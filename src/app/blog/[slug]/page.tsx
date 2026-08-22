@@ -16,7 +16,7 @@ import {
   uniqueStrings,
   type BlogSchemaData,
 } from '@/lib/blog/seo'
-import { CSP_NONCE } from '@/lib/csp'
+import { getCspNonce } from '@/lib/csp'
 
 type BlogPostWithAuthor = BlogPost & {
   author?: BlogAuthor | null
@@ -259,6 +259,7 @@ function makeAuthorSchema(post: BlogPostWithAuthor) {
 
 export default async function BlogPostPage({ params, searchParams }: PageProps) {
   const { slug } = await params
+  const nonce = await getCspNonce()
   const query = searchParams ? await searchParams : {}
   const previewRequested = (Array.isArray(query.preview) ? query.preview[0] : query.preview) === '1'
   const preview = previewRequested && await canPreview()
@@ -297,9 +298,9 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
 
   return (
     <div className="public-shell bg-white">
-      <script nonce={CSP_NONCE} type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(postSchema) }} />
-      <script nonce={CSP_NONCE} type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbSchema) }} />
-      <script nonce={CSP_NONCE} type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(authorSchema) }} />
+      <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(postSchema) }} />
+      <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbSchema) }} />
+      <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(authorSchema) }} />
       <ReadingProgress />
       <Navbar transparent />
 

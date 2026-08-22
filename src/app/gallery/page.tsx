@@ -1,7 +1,5 @@
 import type { Metadata } from 'next'
 
-export const dynamic = 'force-static'
-
 import Navbar from '@/components/Navbar'
 import GalleryClientBoundary from './GalleryClientBoundary'
 

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import Confetti from '@/components/Confetti'
 import { trackPixelEvent, generateEventId } from '@/lib/meta/event-utils'
+import { getClientCspNonce } from '@/lib/csp-client'
 
 type RazorpayWindow = Window & {
   Razorpay?: new (options: Record<string, unknown>) => {
@@ -31,6 +32,8 @@ function loadRazorpayScript() {
     }
 
     const script = document.createElement('script')
+    const nonce = getClientCspNonce()
+    if (nonce) script.nonce = nonce
     script.src = 'https://checkout.razorpay.com/v1/checkout.js'
     script.async = true
     script.defer = true

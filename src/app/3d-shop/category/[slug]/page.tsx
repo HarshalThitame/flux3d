@@ -5,7 +5,7 @@ import ShopCategoryBrowser from '@/components/shop/ShopCategoryBrowser'
 import { getShopCategoryBySlug, getShopProducts } from '@/lib/shop/public-data'
 import type { ShopPublicCategory } from '@/lib/shop/public-types'
 import { absoluteUrl } from '@/lib/site'
-import { CSP_NONCE } from '@/lib/csp'
+import { getCspNonce } from '@/lib/csp'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,6 +55,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ShopCategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
+  const nonce = await getCspNonce()
   const { category } = await getShopCategoryBySlug(slug)
   if (!category) notFound()
 
@@ -63,7 +64,7 @@ export default async function ShopCategoryPage({ params }: { params: Promise<{ s
   return (
     <ShopShell transparentNav>
       <script
-        nonce={CSP_NONCE}
+        nonce={nonce}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: toJsonLd(makeBreadcrumbSchema(category)) }}
       />

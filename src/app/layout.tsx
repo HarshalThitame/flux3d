@@ -3,7 +3,7 @@ import { Playfair_Display, Space_Grotesk } from 'next/font/google'
 import { getSettings } from '@/lib/settings'
 import { FALLBACK_SETTINGS } from '@/lib/settings-fallback'
 import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data'
-import { CSP_NONCE } from '@/lib/csp'
+import { getCspNonce } from '@/lib/csp'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import DeferredTracking from '@/components/DeferredTracking'
 import MetaPixel from '@/components/MetaPixel'
@@ -143,6 +143,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const nonce = await getCspNonce()
   const settings = await getSettings()
   const orgJsonLd = makeOrganizationJsonLd(settings)
   const webJsonLd = makeWebsiteJsonLd(settings)
@@ -173,15 +174,15 @@ export default async function RootLayout({
         `}</style>
       </head>
       <body suppressHydrationWarning>
-        {META_PIXEL_ID && <MetaPixel pixelId={META_PIXEL_ID} />}
+        {META_PIXEL_ID && <MetaPixel pixelId={META_PIXEL_ID} nonce={nonce} />}
         <script
-          nonce={CSP_NONCE}
+          nonce={nonce}
           suppressHydrationWarning
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: toJsonLd(orgJsonLd) }}
         />
         <script
-          nonce={CSP_NONCE}
+          nonce={nonce}
           suppressHydrationWarning
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: toJsonLd(webJsonLd) }}
@@ -199,7 +200,7 @@ export default async function RootLayout({
              <ClientShellOverlays />
            </SmoothScrollProvider>
         </ThemeProvider>
-        <DeferredGoogleAnalytics measurementId={GOOGLE_ANALYTICS_ID} />
+        <DeferredGoogleAnalytics measurementId={GOOGLE_ANALYTICS_ID} nonce={nonce} />
       </body>
     </html>
   )

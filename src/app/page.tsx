@@ -4,14 +4,12 @@ import { getSettings } from '@/lib/settings'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
 import { faqPageJsonLd, makeLocalBusinessJsonLd } from '@/lib/structured-data'
 import { getShopHomeData } from '@/lib/shop/public-data'
-import { CSP_NONCE } from '@/lib/csp'
+import { getCspNonce } from '@/lib/csp'
 import './landing-luxury-unified.css'
 import HeroSection from './landing/HeroSection'
 import LandingPageBoundary from './landing/LandingPageBoundary'
 import LandingShopSection from './landing/LandingShopSection'
 import Navbar from '@/components/Navbar'
-
-export const revalidate = 300
 
 export const metadata: Metadata = {
   title: {
@@ -29,6 +27,7 @@ function toJsonLd(value: unknown) {
 }
 
 export default async function Home() {
+  const nonce = await getCspNonce()
   const settings = await getSettings()
   const profile = buildPublicBusinessProfile(settings)
   const shopData = await getShopHomeData()
@@ -63,13 +62,13 @@ export default async function Home() {
   return (
     <div className="public-shell">
       <script
-        nonce={CSP_NONCE}
+        nonce={nonce}
         type="application/ld+json"
         suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: toJsonLd(structuredData) }}
       />
       <script
-        nonce={CSP_NONCE}
+        nonce={nonce}
         type="application/ld+json"
         suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: toJsonLd(faqPageJsonLd) }}

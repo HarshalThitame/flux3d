@@ -2,8 +2,6 @@ import type { Metadata } from 'next'
 import { getSettings } from '@/lib/settings'
 import { buildPublicBusinessProfile, validatePublicBusinessProfile } from '@/lib/public-business'
 
-export const dynamic = 'force-static'
-
 import Navbar from '@/components/Navbar'
 import FooterSection from '@/app/landing/FooterSection'
 import AboutContent from './AboutContent'
