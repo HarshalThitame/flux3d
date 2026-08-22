@@ -29,6 +29,7 @@ describe('buildCsp', () => {
       "'self'",
       'https://checkout.razorpay.com',
       'https://api.razorpay.com',
+      'https://cdn.razorpay.com',
       'https://connect.facebook.net',
       'https://www.googletagmanager.com',
     ]) {

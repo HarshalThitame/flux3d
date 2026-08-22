@@ -20,7 +20,7 @@ export function buildCsp(nonce: string) {
       'script-src',
       "'self'",
       `'nonce-${nonce}'`,
-      'https://checkout.razorpay.com https://api.razorpay.com',
+      'https://checkout.razorpay.com https://api.razorpay.com https://cdn.razorpay.com',
       // fbevents.js loaded by the Meta Pixel.
       'https://connect.facebook.net',
       // gtag.js loaded by DeferredGoogleAnalytics.
