@@ -1,8 +1,15 @@
-import 'dotenv/config'
-import dotenv from 'dotenv'
 import readline from 'node:readline/promises'
 
-dotenv.config({ path: '.env.local' })
+// Optional local-env loader. In CI, secrets arrive as real environment
+// variables; dotenv stays a devDependency so it is loaded dynamically and
+// silently skipped when unavailable.
+try {
+  const dotenv = await import('dotenv')
+  dotenv.config({ path: '.env.local' })
+} catch {
+  // dotenv not installed — proceed with process.env only
+}
+
 
 const token = process.env.WHATSAPP_ACCESS_TOKEN?.trim() || process.env.META_SYSTEM_USER_TOKEN?.trim()
 const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim()

@@ -1,11 +1,17 @@
-import 'dotenv/config'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import dotenv from 'dotenv'
 
-dotenv.config({ path: '.env.local' })
-dotenv.config({ path: '.env' })
+// Optional local-env loader. In CI, secrets arrive as real environment
+// variables; dotenv stays a devDependency so it is loaded dynamically and
+// silently skipped when unavailable.
+try {
+  const dotenv = await import('dotenv')
+  dotenv.config({ path: '.env.local' })
+} catch {
+  // dotenv not installed — proceed with process.env only
+}
+
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
