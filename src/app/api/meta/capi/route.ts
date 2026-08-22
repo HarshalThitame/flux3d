@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getMetaApiHeaders, getMetaPixelId, getMetaGraphBase } from '@/lib/meta/config'
+import { normalizeCapiValue } from '@/lib/meta/conversions-api'
 import type { MetaCapiRequest, MetaCapiEvent, MetaCapiResponse } from '@/lib/meta/types'
 import { rateLimitCheck } from '@/lib/rate-limit'
 
@@ -26,7 +27,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No events provided' }, { status: 400 })
   }
 
-  const events: MetaCapiEvent[] = body.data.map((event) => ({
+  // Enforce Meta's custom_data.value contract (numeric > 0). Events with an
+  // invalid value are dropped here so they never reach (or get flagged by) Meta.
+  const validEvents: MetaCapiEvent[] = []
+  for (const event of body.data) {
+    const raw = event.custom_data as Record<string, unknown> | undefined
+    if (!raw || !('value' in raw)) {
+      validEvents.push(event)
+      continue
+    }
+    const value = normalizeCapiValue(raw.value)
+    if (value == null) {
+      console.warn('[Meta CAPI] Dropped event with invalid custom_data.value:', event.event_name, event.event_id, JSON.stringify(raw.value))
+      continue
+    }
+    validEvents.push({ ...event, custom_data: { ...raw, value } } as MetaCapiEvent)
+  }
+
+  if (!validEvents.length) {
+    return NextResponse.json({ error: 'No events with a valid value provided' }, { status: 400 })
+  }
+
+  const events: MetaCapiEvent[] = validEvents.map((event) => ({
     ...event,
     event_time: event.event_time ?? Math.floor(Date.now() / 1000),
     user_data: {
@@ -55,8 +77,7 @@ export async function POST(request: Request) {
     const result = await response.json() as MetaCapiResponse & { error?: { message: string } }
 
     if (!response.ok) {
-      const logPayload = { status: response.status, ...result }
-      console.error('[Meta CAPI] API error:', JSON.stringify(logPayload, null, 2))
+      console.error('[Meta CAPI] API error:', response.status, 'trace:', result.fbtrace_id, '| message:', result.error?.message)
       return NextResponse.json(
         { error: result.error?.message || 'Meta API error', fbtrace_id: result.fbtrace_id },
         { status: response.status },

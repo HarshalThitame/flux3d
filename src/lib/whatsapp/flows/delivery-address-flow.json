@@ -23,7 +23,7 @@
           },
           {
             "type": "TextInput",
-            "label": "House no / Street / Area",
+            "label": "House, Street, Area",
             "name": "line1",
             "required": true,
             "input-type": "text",
@@ -31,7 +31,7 @@
           },
           {
             "type": "TextInput",
-            "label": "Apartment / Floor / Landmark (optional)",
+            "label": "Landmark (optional)",
             "name": "line2",
             "required": false,
             "input-type": "text",

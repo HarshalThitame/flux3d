@@ -349,11 +349,15 @@ export default function DeliveryStepClient({
               razorpaySignature: response.razorpay_signature,
             })
 
-            trackPixelEvent({
-              eventName: 'Purchase',
-              eventId: generateEventId(),
-              customData: { value: orderResult.grandTotal ?? draft.grandTotal ?? 0, currency: 'INR', content_ids: [orderResult.id], content_type: 'product' },
-            })
+            // Meta requires custom_data.value > 0; skip tracking when no valid total exists.
+            const purchaseValue = orderResult.grandTotal ?? draft.grandTotal ?? 0
+            if (purchaseValue > 0) {
+              trackPixelEvent({
+                eventName: 'Purchase',
+                eventId: generateEventId(),
+                customData: { value: purchaseValue, currency: 'INR', content_ids: [orderResult.id], content_type: 'product' },
+              })
+            }
 
             setPaymentStatus('paid')
             setPaymentResult({

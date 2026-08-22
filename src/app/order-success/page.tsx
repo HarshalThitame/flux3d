@@ -37,10 +37,13 @@ export default function OrderSuccessPage() {
       router.replace('/')
       return
     }
+    // Meta requires custom_data.value > 0; skip tracking when no valid total exists.
+    const purchaseValue = orderData.totalPrice ?? 0
+    if (purchaseValue <= 0) return
     trackPixelEvent({
       eventName: 'Purchase',
       eventId: generateEventId(),
-      customData: { value: orderData.totalPrice ?? 0, currency: 'INR', content_ids: [orderData.orderId], content_type: 'product' },
+      customData: { value: purchaseValue, currency: 'INR', content_ids: [orderData.orderId], content_type: 'product' },
     })
   }, [orderData, router])
 

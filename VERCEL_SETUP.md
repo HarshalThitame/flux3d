@@ -60,12 +60,53 @@ Go to your Vercel project settings → Environment Variables and add:
 | `WHATSAPP_SESSION_TURNS` | `4` | Conversation turns to remember |
 | `WHATSAPP_STRUCTURED_DATA_ENABLED` | `true` | Enable live DB price queries |
 
+### WhatsApp HSM Templates (requires Meta business verification)
+
+After your WhatsApp Business Account is verified, create these templates in **WhatsApp Manager → Message Templates** and add their exact names to Vercel env vars:
+
+| Env Var | Template Body | Variables |
+|---|---|---|
+| `WHATSAPP_TEMPLATE_ORDER_SHIPPED` | `Your order {{1}} has been shipped via {{2}}. Tracking: {{3}}` | order #, courier, tracking # |
+| `WHATSAPP_TEMPLATE_ORDER_DELIVERED` | `Your order {{1}} has been delivered. Thank you for choosing Flux3D.` | order # |
+| `WHATSAPP_TEMPLATE_ORDER_CONFIRMATION` | `Order {{1}} confirmed. Total amount: {{2}}` | order #, total amount |
+| `WHATSAPP_TEMPLATE_PAYMENT_LINK` | `Please complete payment for order {{1}}: {{2}}` | order #, payment URL |
+| `WHATSAPP_TEMPLATE_CONNECTED` | `Hi {{1}}, your WhatsApp number has been linked to your Flux3D account. You now have {{2}} order(s) available to track.` | name, order count |
+
+**Authentication template (optional, for WhatsApp OTP account linking):**
+- Name: set in `WHATSAPP_AUTH_TEMPLATE_NAME`
+- Category: Authentication
+- Body: `{{1}} is your Flux3D verification code. For your security, do not share it.`
+
+### WhatsApp Address Flow
+
+1. Ensure a **Privacy Policy URL** is configured on BOTH:
+   - Your Facebook App (App Dashboard → Settings → Basic → Privacy Policy URL)
+   - Your WhatsApp Business Account (Meta Business Suite → Settings → Business info → Privacy policy URL)
+   - URL must be live HTTPS (e.g., `https://flux3d.in/privacy-policy`)
+2. Run: `npm run whatsapp:create-flow`
+3. The script outputs a `WHATSAPP_ADDRESS_FLOW_ID` — add it to Vercel env vars.
+
+> If publishing fails with `Integrity requirements not met` (139000/4233020), the
+> account likely lacks WhatsApp Flows access yet. Verify with `npm run whatsapp:diagnose`
+> and contact Meta support. See `docs/runbooks/whatsapp-ops.md`.
+
 ### Optional — Rate Limiting (falls back to in-memory):
 
 | Variable | Description |
 |---|---|
 | `UPSTASH_REDIS_REST_URL` | Upstash Redis URL for distributed rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis token |
+
+### Shiprocket Fulfilment
+
+| Variable | Description |
+|---|---|
+| `SHIPROCKET_EMAIL` | Shiprocket login email |
+| `SHIPROCKET_PASSWORD` | Shiprocket login password |
+| `SHIPROCKET_PICKUP_LOCATION` | Pickup location code from Shiprocket panel |
+| `SHIPROCKET_WEBHOOK_SECRET` | Secret for validating Shiprocket webhook signatures |
+
+Set all four to enable automatic order fulfilment via Shiprocket.
 
 ### How to Find Supabase Values:
 
@@ -127,4 +168,15 @@ Run all migration files in `supabase/migrations/` in order using the Supabase SQ
 ### Still having issues?
 ```bash
 curl https://your-domain.vercel.app/api/admin/whatsapp-test
+```
+
+## Maintenance & Operations
+
+See `docs/runbooks/whatsapp-ops.md` for the full runbook. Quick commands:
+
+```bash
+npm run whatsapp:diagnose       # Full WhatsApp infra health check
+npm run whatsapp:templates      # Reconcile message templates (idempotent)
+npm run whatsapp:create-flow    # Create + publish the address Flow
+npm run whatsapp:verify-phone   # Re-verify phone (fixes EXPIRED status)
 ```

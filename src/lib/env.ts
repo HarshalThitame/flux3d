@@ -18,6 +18,18 @@ const envSchema = z.object({
   WHATSAPP_WEBHOOK_SECRET: z.string().optional(),
   WHATSAPP_AUTH_TEMPLATE_NAME: z.string().optional(),
 
+  // WhatsApp HSM templates (Meta-approved template names for notifications)
+  WHATSAPP_TEMPLATE_ORDER_SHIPPED: z.string().optional(),
+  WHATSAPP_TEMPLATE_ORDER_DELIVERED: z.string().optional(),
+  WHATSAPP_TEMPLATE_ORDER_CONFIRMATION: z.string().optional(),
+  WHATSAPP_TEMPLATE_PAYMENT_LINK: z.string().optional(),
+  WHATSAPP_TEMPLATE_CONNECTED: z.string().optional(),
+  WHATSAPP_TEMPLATE_LANGUAGE: z.string().default('en_IN'),
+
+  // WhatsApp Flows
+  WHATSAPP_ADDRESS_FLOW_ID: z.string().optional(),
+  WHATSAPP_WABA_ID: z.string().optional(),
+
   // WhatsApp ordering
   WHATSAPP_ORDERING_ENABLED: z.enum(['true', 'false']).default('true'),
   WHATSAPP_ORDER_EXPIRY_MINUTES: z.coerce.number().int().positive().default(60),
