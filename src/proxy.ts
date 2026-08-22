@@ -3,12 +3,30 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateCspNonce } from '@/lib/csp-nonce'
 import { getMetaCapiGatewayOrigins } from '@/lib/csp-allowlist'
 
-function buildCsp(nonce: string) {
+export function buildCsp(nonce: string) {
   const isDev = process.env.NODE_ENV === 'development'
   const capiGatewayOrigins = getMetaCapiGatewayOrigins()
+  // NOTE: 'strict-dynamic' is intentionally NOT used. It disables host-based
+  // allowlisting entirely and only propagates trust through nonces, which
+  // breaks framework-rendered route chunks that ship without a nonce
+  // attribute (<script async> emitted during SSR). Instead we use the hybrid
+  // model: inline scripts are gated by the per-request nonce, external
+  // scripts by an explicit host allowlist covering every runtime injector in
+  // the codebase (RazorpayCheckoutClient, CartDeliveryClient,
+  // DeliveryStepClient, DeferredGoogleAnalytics, MetaPixel).
   const directives = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://checkout.razorpay.com https://api.razorpay.com${isDev ? " 'unsafe-eval'" : ''}`,
+    [
+      'script-src',
+      "'self'",
+      `'nonce-${nonce}'`,
+      'https://checkout.razorpay.com https://api.razorpay.com',
+      // fbevents.js loaded by the Meta Pixel.
+      'https://connect.facebook.net',
+      // gtag.js loaded by DeferredGoogleAnalytics.
+      'https://www.googletagmanager.com',
+      ...(isDev ? ["'unsafe-eval'"] : []),
+    ].join(' '),
     "style-src 'self' 'unsafe-inline'",
     [
       'img-src',
