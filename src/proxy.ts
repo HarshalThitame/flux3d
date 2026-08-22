@@ -1,9 +1,11 @@
 import { updateSession } from '@/lib/supabase/proxy'
 import { NextRequest, NextResponse } from 'next/server'
 import { generateCspNonce } from '@/lib/csp-nonce'
+import { getMetaCapiGatewayOrigins } from '@/lib/csp-allowlist'
 
 function buildCsp(nonce: string) {
   const isDev = process.env.NODE_ENV === 'development'
+  const capiGatewayOrigins = getMetaCapiGatewayOrigins()
   const directives = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://checkout.razorpay.com https://api.razorpay.com${isDev ? " 'unsafe-eval'" : ''}`,
@@ -16,6 +18,8 @@ function buildCsp(nonce: string) {
       'https://jqgaebdtuasenyojvbsi.supabase.co',
       'https://lh3.googleusercontent.com',
       'https://avatars.githubusercontent.com',
+      // Facebook Pixel image beacon (noscript + fallback transport).
+      'https://www.facebook.com',
     ].join(' '),
     "font-src 'self' data:",
     [
@@ -30,6 +34,10 @@ function buildCsp(nonce: string) {
       'https://vitals.vercel-insights.com',
       'https://connect.facebook.net',
       'https://graph.facebook.com',
+      // Facebook Pixel fetch/sendBeacon transport for /tr event calls.
+      'https://www.facebook.com',
+      // Meta Conversions API Gateway relay hosts (browser pixel events).
+      ...capiGatewayOrigins,
       'https://api.razorpay.com',
       'https://checkout.razorpay.com',
       'https://lumberjack.razorpay.com',
