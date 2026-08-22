@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS offers (
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_offers_active_dates ON offers (is_active, starts_at, ends_at);
-CREATE INDEX idx_offers_coupon_code ON offers (coupon_code) WHERE coupon_code IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_offers_active_dates ON offers (is_active, starts_at, ends_at);
+CREATE INDEX IF NOT EXISTS idx_offers_coupon_code ON offers (coupon_code) WHERE coupon_code IS NOT NULL;
 
 -- ============================================================
 -- COUPONS TABLE
@@ -61,8 +61,8 @@ CREATE TABLE IF NOT EXISTS coupons (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_coupons_code ON coupons (code);
-CREATE INDEX idx_coupons_active_dates ON coupons (is_active, starts_at, expires_at);
+CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons (code);
+CREATE INDEX IF NOT EXISTS idx_coupons_active_dates ON coupons (is_active, starts_at, expires_at);
 
 -- ============================================================
 -- OFFER / COUPON REDEMPTIONS TABLE
@@ -80,9 +80,9 @@ CREATE TABLE IF NOT EXISTS redemptions (
   redeemed_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_redemptions_user ON redemptions (user_id);
-CREATE INDEX idx_redemptions_offer ON redemptions (offer_id);
-CREATE INDEX idx_redemptions_coupon ON redemptions (coupon_id);
+CREATE INDEX IF NOT EXISTS idx_redemptions_user ON redemptions (user_id);
+CREATE INDEX IF NOT EXISTS idx_redemptions_offer ON redemptions (offer_id);
+CREATE INDEX IF NOT EXISTS idx_redemptions_coupon ON redemptions (coupon_id);
 
 -- ============================================================
 -- ENABLE ROW LEVEL SECURITY

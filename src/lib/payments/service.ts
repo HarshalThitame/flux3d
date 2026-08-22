@@ -5,6 +5,7 @@ import { notifyPaymentCaptured, notifyPaymentFailed, notifyRefundProcessed } fro
 import { notifyWhatsAppPaymentCaptured } from '@/lib/whatsapp/notifications'
 import { sendCapiEvents, buildPurchaseEvent } from '@/lib/meta/conversions-api'
 import { generateEventId } from '@/lib/meta/event-utils'
+import { safeFireAndForget, reportError } from '@/lib/error-handling'
 import {
   fetchInternalOrder,
   fetchPaymentAttemptById,
@@ -273,7 +274,7 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
 }) : Promise<CreateCheckoutResult> {
   const order = await fetchInternalOrder(params)
   if (!order) {
-    throw new Error('Order not found.')
+    throw new Error(`Order not found (type: ${params.type}, id: ${params.id}).`)
   }
 
   if (params.type === 'shop_order') {
@@ -505,7 +506,7 @@ export async function verifyCheckoutPayment(params: {
 }) : Promise<VerifyCheckoutResult> {
   const attempt = await fetchPaymentAttemptByProviderOrderId(params.razorpayOrderId)
   if (!attempt || attempt.internal_order_type !== params.internalOrderType || attempt.internal_order_id !== params.internalOrderId) {
-    throw new Error('Payment attempt not found.')
+    throw new Error(`Payment attempt not found (provider_order_id: ${params.razorpayOrderId}).`)
   }
 
   if (attempt.customer_id !== params.customerId) {
@@ -517,7 +518,7 @@ export async function verifyCheckoutPayment(params: {
     id: params.internalOrderId,
     customerId: params.customerId,
   })
-  if (!order) throw new Error('Order not found.')
+  if (!order) throw new Error(`Order not found (type: ${params.internalOrderType}, id: ${params.internalOrderId}).`)
 
   const orderSnapshot = buildOrderSnapshot(order, params.internalOrderType)
 
@@ -549,18 +550,18 @@ export async function verifyCheckoutPayment(params: {
       },
       reason: systemReason(params.customerId, 'Checkout signature validation failed'),
     })
-    throw new Error('Payment verification failed.')
+    throw new Error(`Payment verification failed (invalid signature, provider_order_id: ${params.razorpayOrderId}).`)
   }
 
   const providerOrder = await fetchRazorpayOrder(params.razorpayOrderId)
   const providerPayment = await fetchRazorpayPayment(params.razorpayPaymentId)
 
   if (providerPayment.order_id !== params.razorpayOrderId || providerOrder.id !== params.razorpayOrderId) {
-    throw new Error('Payment verification failed.')
+    throw new Error(`Payment verification failed (order mismatch, provider_order_id: ${params.razorpayOrderId}).`)
   }
 
   if (Number(providerOrder.amount) !== orderSnapshot.amountPaise || providerOrder.currency !== orderSnapshot.currency) {
-    throw new Error('Payment amount mismatch.')
+    throw new Error(`Payment amount mismatch (expected ₹${orderSnapshot.amountPaise / 100} ${orderSnapshot.currency}, provider: ₹${Number(providerOrder.amount) / 100} ${providerOrder.currency}).`)
   }
 
   const captured = providerPayment.status === 'captured' || providerPayment.captured === true || providerOrder.status === 'paid'
@@ -616,9 +617,9 @@ export async function verifyCheckoutPayment(params: {
       const adminSupabase = createAdminSupabaseClient()
       try {
         const { error: convError } = await adminSupabase.rpc('convert_inventory_reservations', { p_order_id: params.internalOrderId })
-        if (convError) console.error('[payment] Failed to convert reservations:', convError)
-      } catch {
-        console.error('[payment] Failed to convert reservations')
+        if (convError) reportError(convError, 'Failed to convert inventory reservations', { module: 'payments', tags: { flow: 'checkout_verify', orderId: params.internalOrderId } })
+      } catch (error) {
+        reportError(error, 'Failed to convert inventory reservations', { module: 'payments', tags: { flow: 'checkout_verify', orderId: params.internalOrderId } })
       }
     }
 
@@ -634,7 +635,7 @@ export async function verifyCheckoutPayment(params: {
 
     // Send payment confirmation email immediately (webhook handler will also try,
     // but deduplication in the email trigger prevents duplicates).
-    notifyPaymentCaptured(attempt).catch(() => {})
+    notifyPaymentCaptured(attempt).catch((error) => reportError(error, 'Payment captured notification failed', { module: 'payments', level: 'warn', tags: { flow: 'checkout_verify_email', attemptId: attempt.id } }))
 
     // Send WhatsApp payment confirmation (session text within 24h window).
     if (attempt.internal_order_type === 'shop_order' && attempt.internal_order_id) {
@@ -796,7 +797,7 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
       reason: systemReason(attempt.customer_id, `Webhook ${eventName}`),
     })
 
-    notifyPaymentFailed(attempt).catch(() => {})
+    notifyPaymentFailed(attempt).catch((error) => reportError(error, 'Payment failed notification error', { module: 'payments', level: 'warn', tags: { flow: 'payment_failed', attemptId: attempt.id } }))
 
     return { handled: true, processingStatus: 'processed' as const }
   }
@@ -881,13 +882,13 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
       try {
         const adminSupabase = createAdminSupabaseClient()
         await adminSupabase.rpc('convert_inventory_reservations', { p_order_id: attempt.internal_order_id })
-      } catch {
-        console.error('[webhook] Failed to convert reservations')
+      } catch (error) {
+        reportError(error, 'Webhook failed to convert inventory reservations', { module: 'payments', tags: { flow: 'webhook_capture', orderId: attempt.internal_order_id } })
       }
     }
 
     if (captured) {
-      notifyPaymentCaptured(attempt).catch(() => {})
+      notifyPaymentCaptured(attempt).catch((error) => reportError(error, 'Payment captured notification failed', { module: 'payments', level: 'warn', tags: { flow: 'webhook_capture', attemptId: attempt.id } }))
 
       // Send WhatsApp payment confirmation (session text within 24h window).
       if (attempt.internal_order_type === 'shop_order' && attempt.internal_order_id) {
@@ -968,8 +969,14 @@ async function processRefundEvent(eventName: string, payload: Record<string, unk
         },
         reason: systemReason(attempt.customer_id, `Webhook ${eventName}`),
       })
-    } catch {
-      // Status transition might fail if already in a terminal state — that's OK
+    } catch (error) {
+      // Expected when the attempt is already in a terminal state — but never
+      // silent. Log for visibility in case a legitimate transition fails.
+      reportError(error, 'Refund status transition failed', {
+        module: 'payments',
+        level: 'warn',
+        tags: { flow: 'refund_processed', refundId: localRefund.id, attemptId: attempt.id },
+      })
     }
 
     await insertPaymentAuditLog({
@@ -980,7 +987,7 @@ async function processRefundEvent(eventName: string, payload: Record<string, unk
       new_state: { status: nextStatus, total_refunded_paise: totalRefunded, fully_refunded: isFullyRefunded },
     })
 
-    notifyRefundProcessed(attempt, localRefund.amount_paise).catch(() => {})
+    notifyRefundProcessed(attempt, localRefund.amount_paise).catch((error) => reportError(error, 'Refund processed notification failed', { module: 'payments', level: 'warn', tags: { flow: 'refund_processed', refundId: localRefund.id } }))
   }
 
   if (nextStatus === 'failed') {
@@ -1166,7 +1173,7 @@ export async function initiateRefund(params: {
   initiatedByAdminId: string
 }) {
   const attempt = await fetchPaymentAttemptById(params.paymentAttemptId)
-  if (!attempt) throw new Error('Payment attempt not found.')
+  if (!attempt) throw new Error(`Payment attempt not found (id: ${params.paymentAttemptId}).`)
   if (!['paid', 'captured', 'partially_refunded'].includes(attempt.status)) {
     throw new Error('Only captured payments can be refunded.')
   }
@@ -1273,7 +1280,7 @@ export async function initiateRefund(params: {
 
 export async function getPaymentStatusForOrder(params: InternalOrderLookup) {
   const order = await fetchInternalOrder(params)
-  if (!order) throw new Error('Order not found.')
+  if (!order) throw new Error(`Order not found (type: ${params.type}, id: ${params.id}).`)
 
   const paymentAttempt = await lookupPaymentAttemptByInternalOrder({
     internalOrderType: params.type,
@@ -1289,7 +1296,7 @@ export async function getPaymentStatusForOrder(params: InternalOrderLookup) {
 
 export async function getPaymentAttemptDetail(paymentAttemptId: string) {
   const attempt = await fetchPaymentAttemptById(paymentAttemptId)
-  if (!attempt) throw new Error('Payment attempt not found.')
+  if (!attempt) throw new Error(`Payment attempt not found (id: ${paymentAttemptId}).`)
 
   const [refunds, events, auditLogs] = await Promise.all([
     listPaymentRefunds(200),
@@ -1322,7 +1329,7 @@ export async function getPaymentAttemptDetail(paymentAttemptId: string) {
 export async function refreshPaymentAttemptFromProvider(attemptId: string) {
   const attempt = await fetchPaymentAttemptById(attemptId)
   if (!attempt || !attempt.provider_order_id) {
-    throw new Error('Payment attempt not found.')
+    throw new Error(`Payment attempt not found or missing provider order (id: ${attemptId}).`)
   }
 
   const providerOrder = await fetchRazorpayOrder(attempt.provider_order_id)

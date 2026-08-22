@@ -49,6 +49,7 @@ import {
 } from '@/lib/payments/repository'
 import { updatePaymentAttemptStatus } from '@/lib/payments/state'
 import { notifyPaymentCaptured } from '@/lib/payments/email-triggers'
+import { reportError } from '@/lib/error-handling'
 import { getSettings } from '@/lib/settings'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
 
@@ -337,7 +338,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
     material: insertedOrder.material,
     quantity: insertedOrder.quantity,
     grandTotal: Number(insertedOrder.grand_total ?? breakdown.grandTotal),
-  }).catch(() => {})
+  }).catch((error) => reportError(error, 'Instant-quote feature tracking failed', { module: 'tracking', level: 'warn', tags: { flow: 'instant_quote' } }))
 
   const itemsEmail = [{
     name: input.fileUrl.split('/').pop() ?? 'Model',
@@ -348,8 +349,8 @@ export async function createOrderAction(input: CreateOrderInput): Promise<OrderC
   }]
   const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/my-orders/${insertedOrder.id}`
   const adminOrderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders/${insertedOrder.id}`
-  sendOrderPlacedCustomer(auth.user.id, auth.profile.email, orderNumber, auth.profile.name, String(Number(insertedOrder.grand_total ?? breakdown.grandTotal)), itemsEmail, orderUrl).catch(() => {})
-  sendOrderPlacedAdmin('', orderNumber, auth.profile.email, auth.profile.name, String(Number(insertedOrder.grand_total ?? breakdown.grandTotal)), adminOrderUrl).catch(() => {})
+  sendOrderPlacedCustomer(auth.user.id, auth.profile.email, orderNumber, auth.profile.name, String(Number(insertedOrder.grand_total ?? breakdown.grandTotal)), itemsEmail, orderUrl).catch((error) => reportError(error, 'Instant-quote customer email failed', { module: 'email', level: 'warn', tags: { flow: 'instant_quote', orderId: insertedOrder.id } }))
+  sendOrderPlacedAdmin('', orderNumber, auth.profile.email, auth.profile.name, String(Number(insertedOrder.grand_total ?? breakdown.grandTotal)), adminOrderUrl).catch((error) => reportError(error, 'Instant-quote admin email failed', { module: 'email', level: 'warn', tags: { flow: 'instant_quote', orderId: insertedOrder.id } }))
 
   revalidatePath('/my-orders')
   revalidatePath(`/my-orders/${insertedOrder.id}`)
@@ -800,7 +801,7 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
     amount_paise: capture.amountPaise,
     payment_method: razorpayPayment.method ?? null,
     provider_payment_id: params.razorpayPaymentId,
-  }).catch(() => {})
+  }).catch((error) => reportError(error, 'Payment captured notification failed', { module: 'email', level: 'warn', tags: { flow: 'quote_payment', orderId: insertedOrder.id } }))
 
   const itemsEmail = [{
     name: (draftData.fileUrl as string)?.split('/').pop() ?? 'Model',
@@ -811,8 +812,8 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
   }]
   const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/my-orders/${insertedOrder.id}`
   const adminOrderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders/${insertedOrder.id}`
-  sendOrderPlacedCustomer(auth.user.id, auth.profile.email, orderNumber, auth.profile.name, String(Number(pricingData.grandTotal ?? 0)), itemsEmail, orderUrl).catch(() => {})
-  sendOrderPlacedAdmin('', orderNumber, auth.profile.email, auth.profile.name, String(Number(pricingData.grandTotal ?? 0)), adminOrderUrl).catch(() => {})
+  sendOrderPlacedCustomer(auth.user.id, auth.profile.email, orderNumber, auth.profile.name, String(Number(pricingData.grandTotal ?? 0)), itemsEmail, orderUrl).catch((error) => reportError(error, 'Quote customer email failed', { module: 'email', level: 'warn', tags: { flow: 'quote_payment', orderId: insertedOrder.id } }))
+  sendOrderPlacedAdmin('', orderNumber, auth.profile.email, auth.profile.name, String(Number(pricingData.grandTotal ?? 0)), adminOrderUrl).catch((error) => reportError(error, 'Quote admin email failed', { module: 'email', level: 'warn', tags: { flow: 'quote_payment', orderId: insertedOrder.id } }))
 
   const fileName = (draftData.fileUrl as string)?.split('/').pop() || 'model.stl'
   await adminSupabase.from('model_files').upsert(
@@ -866,7 +867,7 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
     material: insertedOrder.material,
     quantity: insertedOrder.quantity,
     grandTotal: Number(insertedOrder.grand_total ?? 0),
-  }).catch(() => {})
+  }).catch((error) => reportError(error, 'Instant-quote feature tracking failed', { module: 'tracking', level: 'warn', tags: { flow: 'quote_payment', orderId: insertedOrder.id } }))
 
   const { data: profilePhone } = await adminSupabase
     .from('profiles')

@@ -8,11 +8,13 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import DeferredTracking from '@/components/DeferredTracking'
 import MetaPixel from '@/components/MetaPixel'
 import DeferredGoogleAnalytics from '@/components/DeferredGoogleAnalytics'
+import CookieConsentBanner from '@/components/CookieConsentBanner'
 import LoadingProvider from '@/components/providers/LoadingProvider'
 import ThemeProvider from '@/components/providers/ThemeProvider'
 import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider'
 import PageTransition from '@/components/providers/PageTransition'
 import ClientShellOverlays from '@/components/providers/ClientShellOverlays'
+import { Analytics } from '@vercel/analytics/react'
 import './globals.css'
 import './shop-luxury.css'
 import './landing-premium.css'
@@ -200,7 +202,9 @@ export default async function RootLayout({
              <ClientShellOverlays />
            </SmoothScrollProvider>
         </ThemeProvider>
+        <CookieConsentBanner />
         <DeferredGoogleAnalytics measurementId={GOOGLE_ANALYTICS_ID} nonce={nonce} />
+        <Analytics />
       </body>
     </html>
   )

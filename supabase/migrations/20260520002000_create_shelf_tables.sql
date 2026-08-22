@@ -125,46 +125,46 @@ CREATE TABLE public.shelf_coupons (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_shelf_categories_parent_category_id
+CREATE INDEX IF NOT EXISTS idx_shelf_categories_parent_category_id
   ON public.shelf_categories(parent_category_id);
 
-CREATE INDEX idx_shelf_products_category_id
+CREATE INDEX IF NOT EXISTS idx_shelf_products_category_id
   ON public.shelf_products(category_id);
 
-CREATE INDEX idx_shelf_products_is_active
+CREATE INDEX IF NOT EXISTS idx_shelf_products_is_active
   ON public.shelf_products(is_active);
 
-CREATE INDEX idx_shelf_products_is_featured
+CREATE INDEX IF NOT EXISTS idx_shelf_products_is_featured
   ON public.shelf_products(is_featured);
 
-CREATE INDEX idx_shelf_variant_options_product_id
+CREATE INDEX IF NOT EXISTS idx_shelf_variant_options_product_id
   ON public.shelf_variant_options(product_id);
 
-CREATE INDEX idx_shelf_skus_product_id
+CREATE INDEX IF NOT EXISTS idx_shelf_skus_product_id
   ON public.shelf_skus(product_id);
 
-CREATE INDEX idx_shelf_skus_is_available
+CREATE INDEX IF NOT EXISTS idx_shelf_skus_is_available
   ON public.shelf_skus(is_available);
 
-CREATE INDEX idx_shelf_orders_user_id
+CREATE INDEX IF NOT EXISTS idx_shelf_orders_user_id
   ON public.shelf_orders(user_id);
 
-CREATE INDEX idx_shelf_orders_order_status
+CREATE INDEX IF NOT EXISTS idx_shelf_orders_order_status
   ON public.shelf_orders(order_status);
 
-CREATE INDEX idx_shelf_orders_placed_at
+CREATE INDEX IF NOT EXISTS idx_shelf_orders_placed_at
   ON public.shelf_orders(placed_at);
 
-CREATE INDEX idx_shelf_reviews_product_id
+CREATE INDEX IF NOT EXISTS idx_shelf_reviews_product_id
   ON public.shelf_reviews(product_id);
 
-CREATE INDEX idx_shelf_reviews_user_id
+CREATE INDEX IF NOT EXISTS idx_shelf_reviews_user_id
   ON public.shelf_reviews(user_id);
 
-CREATE INDEX idx_shelf_reviews_order_id
+CREATE INDEX IF NOT EXISTS idx_shelf_reviews_order_id
   ON public.shelf_reviews(order_id);
 
-CREATE INDEX idx_shelf_reviews_is_approved
+CREATE INDEX IF NOT EXISTS idx_shelf_reviews_is_approved
   ON public.shelf_reviews(is_approved);
 
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()

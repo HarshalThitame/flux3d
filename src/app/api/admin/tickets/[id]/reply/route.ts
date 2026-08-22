@@ -108,7 +108,7 @@ export async function POST(
       })
 
       if (emailResult?.error) {
-        console.error('[admin/ticket/reply] Resend send error:', emailResult.error.message, '| from:', fromEmail, '| to:', ticket.customer_email)
+        console.error('[admin/ticket/reply] Resend send error:', emailResult.error.message, '| ticket:', id)
         return NextResponse.json(
           { error: `Email failed: ${emailResult.error.message}` },
           { status: 502 }

@@ -108,7 +108,8 @@ CREATE OR REPLACE FUNCTION public.create_shelf_order_atomic(
   p_coupon_code TEXT,
   p_shipping_charge_paise BIGINT,
   p_total_amount_paise BIGINT,
-  p_shipping_address JSONB
+  p_shipping_address JSONB,
+  p_payment_method TEXT DEFAULT 'razorpay'
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -128,6 +129,18 @@ BEGIN
   END IF;
 
   PERFORM set_config('flux.stock_reason', 'order_placed', true);
+
+  -- Acquire row locks in deterministic (skuId) order before mutating any stock.
+  -- Without this, two concurrent carts containing the same SKUs in different
+  -- array orders can deadlock inside the UPDATE loop below.
+  FOR v_item IN (
+    SELECT * FROM jsonb_array_elements(p_items)
+    ORDER BY (v_item->>'skuId')::UUID
+  )
+  LOOP
+    v_sku_id := (v_item->>'skuId')::UUID;
+    PERFORM 1 FROM public.shelf_skus WHERE id = v_sku_id FOR UPDATE;
+  END LOOP;
 
   -- Decrement stock and reserve
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
@@ -163,7 +176,7 @@ BEGIN
     p_subtotal_paise / 100.0, p_discount_amount_paise / 100.0,
     NULLIF(UPPER(TRIM(COALESCE(p_coupon_code, ''))), ''),
     p_shipping_charge_paise / 100.0, p_total_amount_paise / 100.0,
-    p_shipping_address, 'cod', 'pending', 'placed', 'pending', 'shop', NOW(),
+    p_shipping_address, p_payment_method, 'pending', 'placed', 'pending', 'shop', NOW(),
     p_subtotal_paise, p_discount_amount_paise, p_shipping_charge_paise, p_total_amount_paise
   )
   RETURNING id INTO v_order_id;
@@ -335,12 +348,13 @@ SET search_path = public
 AS $$
 DECLARE
   v_rec RECORD;
+  v_order_id UUID;
 BEGIN
-  -- NOTE: This function restores stock in its own loop below AND then calls
-  -- cancel_shelf_order, which restores stock a second time from order items
-  -- (pre-existing behavior). The audit ledger faithfully records both restores
-  -- ('reservation_expired' then 'order_cancelled'). Preserved as-is for
-  -- compatibility; revisit with a coordinated stock-handling refactor.
+  -- Mark every expired active reservation as 'expired'. Stock restoration is
+  -- handled exactly once per order by cancel_shelf_order() below, which reads
+  -- the authoritative order.items snapshot. (Previously this function also
+  -- restored stock directly AND then called cancel_shelf_order, which restored
+  -- it a second time — a double-restore that inflated stock levels.)
   FOR v_rec IN
     SELECT ir.id, ir.sku_id, ir.order_id, ir.quantity
     FROM public.inventory_reservations ir
@@ -348,21 +362,9 @@ BEGIN
       AND ir.expires_at < NOW()
     FOR UPDATE SKIP LOCKED
   LOOP
-    PERFORM set_config('flux.stock_reason', 'reservation_expired', true);
-
-    -- Restore stock
-    UPDATE public.shelf_skus
-    SET stock_quantity = stock_quantity + v_rec.quantity,
-        reserved_quantity = GREATEST(0, reserved_quantity - v_rec.quantity)
-    WHERE id = v_rec.sku_id;
-
-    -- Mark reservation as expired
     UPDATE public.inventory_reservations
     SET status = 'expired'
     WHERE id = v_rec.id;
-
-    -- Cancel the order
-    PERFORM public.cancel_shelf_order(v_rec.order_id, 'Stock reservation expired.');
 
     reservation_id := v_rec.id;
     order_id := v_rec.order_id;
@@ -371,7 +373,21 @@ BEGIN
     RETURN NEXT;
   END LOOP;
 
-  PERFORM set_config('flux.stock_reason', '', true);
+  -- Cancel each affected order exactly once (this restores stock and cancels
+  -- any remaining active reservations). Deduplicate by order_id so a multi-SKU
+  -- order is never cancelled twice.
+  FOR v_order_id IN
+    SELECT DISTINCT order_id
+    FROM public.inventory_reservations
+    WHERE status = 'expired'
+  LOOP
+    BEGIN
+      PERFORM public.cancel_shelf_order(v_order_id, 'Stock reservation expired.');
+    EXCEPTION WHEN OTHERS THEN
+      -- Order may already be cancelled or concurrently processed elsewhere.
+      -- stock was already restored for it, so skip without failing the batch.
+    END;
+  END LOOP;
 END;
 $$;
 

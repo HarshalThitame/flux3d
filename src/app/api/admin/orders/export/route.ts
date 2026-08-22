@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import PDFDocument from 'pdfkit/js/pdfkit.standalone'
 import {
   ADMIN_ORDER_SELECT,
@@ -121,12 +121,16 @@ async function generateExport(orders: AdminOrder[], format: 'csv' | 'xlsx' | 'pd
   const rows = orders.map(buildRow)
 
   if (format === 'xlsx') {
-    const worksheet = XLSX.utils.json_to_sheet(rows)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Orders')
-    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+    const workbook = new ExcelJS.Workbook()
+    workbook.creator = 'Flux3D'
+    const worksheet = workbook.addWorksheet('Orders')
+    worksheet.columns = Object.keys(rows[0]).map((key) => ({ header: key, key }))
+    for (const row of rows) {
+      worksheet.addRow(row)
+    }
+    const buffer = await workbook.xlsx.writeBuffer()
     return {
-      buffer: new Uint8Array(buffer),
+      buffer: new Uint8Array(buffer as ArrayBuffer),
       contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       extension: 'xlsx',
     }

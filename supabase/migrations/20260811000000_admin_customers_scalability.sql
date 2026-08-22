@@ -50,7 +50,10 @@ WHERE p.id = u.id
   );
 
 -- Read-model view: per-user order aggregates used for server-side sorting.
-CREATE OR REPLACE VIEW public.admin_customer_order_stats AS
+-- SECURITY: runs as the invoking user (security_invoker) so RLS on the
+-- underlying tables still applies, and is only granted to service_role.
+CREATE OR REPLACE VIEW public.admin_customer_order_stats
+WITH (security_invoker = true) AS
 SELECT
   o.user_id,
   COUNT(*)::bigint AS total_orders,
@@ -64,7 +67,10 @@ GROUP BY o.user_id;
 -- Read-model view: paged list source for the admin customers table.
 -- signup_method and email_confirmed_at are computed live from auth.users so
 -- the list stays accurate for new signups without a sync trigger.
-CREATE OR REPLACE VIEW public.admin_customer_list AS
+-- SECURITY: security_invoker + service_role-only grants — anon/authenticated
+-- must never be able to read auth.users data through this view.
+CREATE OR REPLACE VIEW public.admin_customer_list
+WITH (security_invoker = true) AS
 SELECT
   p.id,
   p.name,
@@ -92,6 +98,10 @@ FROM public.profiles p
 LEFT JOIN auth.users u ON u.id = p.id
 LEFT JOIN public.admin_customer_order_stats s ON s.user_id = p.id;
 
+-- Revoke any accidental broad grants (default PUBLIC grants) and re-grant
+-- only to the service role.
+REVOKE ALL ON public.admin_customer_list FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON public.admin_customer_order_stats FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.admin_customer_list TO service_role;
 GRANT SELECT ON public.admin_customer_order_stats TO service_role;
 

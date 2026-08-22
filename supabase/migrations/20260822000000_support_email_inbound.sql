@@ -11,16 +11,19 @@
 -- ============================================================================
 
 -- ============================================================================
--- 1. Clean slate: drop old support ticket data and dependent objects
+-- 1. Preserve any pre-existing support ticket data instead of destroying it.
+--    Rename old tables (if present) to a `_deprecated_*` suffix so the fresh
+--    tables below can be created without data loss. A follow-up cleanup
+--    migration can drop the deprecated tables once data migration is confirmed.
 -- ============================================================================
-DROP TABLE IF EXISTS public.support_ticket_attachments CASCADE;
-DROP TABLE IF EXISTS public.support_ticket_messages CASCADE;
-DROP TABLE IF EXISTS public.support_tickets CASCADE;
+ALTER TABLE IF EXISTS public.support_ticket_attachments RENAME TO support_ticket_attachments_deprecated_20260822;
+ALTER TABLE IF EXISTS public.support_ticket_messages RENAME TO support_ticket_messages_deprecated_20260822;
+ALTER TABLE IF EXISTS public.support_tickets RENAME TO support_tickets_deprecated_20260822;
 
 -- ============================================================================
--- 2. Ticket number sequence
+-- 2. Ticket number sequence (preserve existing sequence by renaming it)
 -- ============================================================================
-DROP SEQUENCE IF EXISTS public.support_ticket_number_seq;
+ALTER SEQUENCE IF EXISTS public.support_ticket_number_seq RENAME TO support_ticket_number_seq_deprecated_20260822;
 CREATE SEQUENCE public.support_ticket_number_seq START WITH 1;
 
 -- ============================================================================

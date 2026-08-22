@@ -375,6 +375,7 @@ async function getAllShopProducts() {
       .eq('is_active', true)
       .eq('is_archived', false)
       .order('created_at', { ascending: false })
+      .limit(1000)
 
     if (error) throw new Error(error.message)
     return ((data ?? []) as unknown as RawProduct[]).map(mapProduct)

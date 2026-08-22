@@ -45,7 +45,7 @@ export async function GET() {
       .select('sender, created_at, message_text, direction, automated, responded, media_type, media_filename')
       .not('sender', 'is', null)
       .order('created_at', { ascending: false })
-      .limit(5000)
+      .limit(1000)
 
     if (error) throw new Error(error.message)
 

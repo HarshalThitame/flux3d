@@ -206,7 +206,7 @@ export async function upsertPaymentAttempt(record: Omit<PaymentAttemptRecord, 'i
     .maybeSingle()
 
   if (error) throw new Error(error.message)
-  if (!data) throw new Error('Failed to persist payment attempt.')
+  if (!data) throw new Error(`Failed to persist payment attempt (idempotency_key: ${String((record as Record<string, unknown>).idempotency_key ?? 'unknown')}).`)
   return mapPaymentAttemptRow(asRecord(data))
 }
 
@@ -233,7 +233,7 @@ export async function insertPaymentEvent(record: Record<string, unknown>) {
     .maybeSingle()
 
   if (error) throw new Error(error.message)
-  if (!data) throw new Error('Failed to persist payment event.')
+  if (!data) throw new Error(`Failed to persist payment event (provider_event_id: ${String((record as Record<string, unknown>).provider_event_id ?? 'unknown')}).`)
   return mapPaymentEventRow(asRecord(data))
 }
 
@@ -309,7 +309,7 @@ export async function insertPaymentRefund(record: Record<string, unknown>) {
     .maybeSingle()
 
   if (error) throw new Error(error.message)
-  if (!data) throw new Error('Failed to persist refund.')
+  if (!data) throw new Error(`Failed to persist refund (payment_attempt_id: ${String((record as Record<string, unknown>).payment_attempt_id ?? 'unknown')}).`)
   return mapPaymentRefundRow(asRecord(data))
 }
 

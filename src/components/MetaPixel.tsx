@@ -1,6 +1,7 @@
 'use client'
 
 import Script from 'next/script'
+import { hasConsent } from '@/lib/consent'
 
 declare global {
   interface Window {
@@ -23,12 +24,16 @@ declare global {
  * is rendered in the root layout so every page gets PageView tracking
  * automatically.
  *
+ * The pixel only loads after the user has given marketing-consent
+ * (India DPDP 2023). Without consent the pixel is never injected.
+ *
  * Individual in-app events (AddToCart, Purchase, etc.) are fired via
  * trackMetaEvent() from @/lib/meta/event-utils, which calls window.fbq()
  * after this script has initialised it.
  */
 export default function MetaPixel({ pixelId, nonce }: { pixelId: string; nonce?: string }) {
   if (!pixelId) return null
+  if (!hasConsent('marketing')) return null
 
   return (
     <>

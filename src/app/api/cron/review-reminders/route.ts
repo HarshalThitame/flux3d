@@ -107,6 +107,20 @@ export async function GET(request: Request) {
       continue
     }
 
+    // Batch-load profiles for all orders in this window (avoids an N+1
+    // profile query per order).
+    const orderUserIds = Array.from(new Set((orders ?? []).map((o) => o.user_id).filter(Boolean)))
+    const profileMap = new Map<string, { email?: string | null; full_name?: string | null; name?: string | null }>()
+    if (orderUserIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, email, full_name, name')
+        .in('id', orderUserIds)
+      for (const profile of profiles ?? []) {
+        profileMap.set(profile.id, profile)
+      }
+    }
+
     for (const order of orders ?? []) {
       try {
         // Skip if reminder already sent for this order + reminder number
@@ -143,13 +157,8 @@ export async function GET(request: Request) {
 
         if (unreviewedItems.length === 0) continue
 
-        // Get user email and name
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('email, full_name, name')
-          .eq('id', order.user_id)
-          .single()
-
+        // Get user email and name (batch-loaded above)
+        const profile = profileMap.get(order.user_id)
         const email = profile?.email
         const customerName = String(profile?.full_name || profile?.name || 'Customer')
         if (!email) {

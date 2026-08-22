@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { reportError } from '@/lib/error-handling'
 import type { DeviceType } from '../../../types/database'
 
 export type StartSessionParams = {
@@ -59,9 +60,11 @@ export async function persistSessionStart(params: StartSessionParams) {
 
     if (error) throw error
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[tracking] Failed to start session:', error)
-    }
+    reportError(error, 'Failed to start session', {
+      module: 'tracking',
+      level: 'warn',
+      tags: { sessionId: params.session_id?.slice(0, 40) ?? 'unknown' },
+    })
   }
 }
 
@@ -91,8 +94,10 @@ export async function persistSessionEnd(sessionId: string) {
 
     if (updateError) throw updateError
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[tracking] Failed to end session:', error)
-    }
+    reportError(error, 'Failed to end session', {
+      module: 'tracking',
+      level: 'warn',
+      tags: { sessionId: sessionId?.slice(0, 40) ?? 'unknown' },
+    })
   }
 }

@@ -43,3 +43,23 @@ jobs:
       - name: npm audit
         run: npm audit --audit-level=high
         continue-on-error: true
+
+  secret-leak-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for committed secrets
+        run: |
+          if git log --all --oneline -- docs/secret.md | grep -q .; then
+            echo "::error::docs/secret.md exists in git history. Run git filter-repo to purge it."
+            exit 1
+          fi
+          if find . -name '.env.local' -not -path './node_modules/*' | grep -q .; then
+            echo "::error::Found .env.local in the repository tree."
+            exit 1
+          fi
+          if grep -rn "Bearer aded32727\|Bearer 30f52afd" supabase/ --include="*.sql" 2>/dev/null | grep -q .; then
+            echo "::error::Hardcoded webhook secret found in a SQL migration."
+            exit 1
+          fi
+          echo "No committed secrets detected."

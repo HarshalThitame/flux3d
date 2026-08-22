@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { reportError } from '@/lib/error-handling'
 import type { Json } from '../../../types/database'
 
 function normalizeJson(value: unknown): Json {
@@ -32,8 +33,10 @@ export async function logSearch(
 
     if (error) throw error
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[tracking] Failed to record search log:', error)
-    }
+    reportError(error, 'Failed to record search log', {
+      module: 'tracking',
+      level: 'warn',
+      tags: { searchTerm: search_term?.slice(0, 100) ?? 'null' },
+    })
   }
 }

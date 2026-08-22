@@ -22,12 +22,10 @@ export function logError(params: LogErrorParams) {
     body: JSON.stringify(payload),
     keepalive: true,
   }).then((response) => {
-    if (!response.ok && process.env.NODE_ENV === 'development') {
+    if (!response.ok) {
       console.error('[tracking] Failed to submit error log:', response.status)
     }
   }).catch((error) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[tracking] Failed to submit error log:', error)
-    }
+    console.error('[tracking] Failed to submit error log:', error)
   })
 }

@@ -1,5 +1,6 @@
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { sendPaymentReceipt, sendPaymentFailed, sendRefundIssued, sendOrderPlacedCustomer, sendOrderPlacedAdmin } from '@/lib/email/triggers'
+import { reportError } from '@/lib/error-handling'
 
 /**
  * Payment lifecycle email triggers.
@@ -209,8 +210,8 @@ async function sendShopOrderReceipt(
     price: `₹${(Number(it.unitPrice ?? 0) * Number(it.quantity ?? 1)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
   }))
 
-  sendOrderPlacedCustomer(userId, profile.email, orderNumber, String(shippingAddress.name ?? profile.name), formatMoney(attempt.amount_paise), orderPlacedItems, `${siteUrl}/3d-shop/order/${orderId}`).catch(() => {})
-  sendOrderPlacedAdmin('', orderNumber, profile.email, profile.name, formatMoney(attempt.amount_paise), `${siteUrl}/admin/orders/${orderId}`).catch(() => {})
+  sendOrderPlacedCustomer(userId, profile.email, orderNumber, String(shippingAddress.name ?? profile.name), formatMoney(attempt.amount_paise), orderPlacedItems, `${siteUrl}/3d-shop/order/${orderId}`).catch((error) => reportError(error, 'Shop order-placed customer email failed', { module: 'email', level: 'warn', tags: { flow: 'payment_captured', orderId } }))
+  sendOrderPlacedAdmin('', orderNumber, profile.email, profile.name, formatMoney(attempt.amount_paise), `${siteUrl}/admin/orders/${orderId}`).catch((error) => reportError(error, 'Shop order-placed admin email failed', { module: 'email', level: 'warn', tags: { flow: 'payment_captured', orderId } }))
 }
 
 // ============================================================================
@@ -366,8 +367,8 @@ async function sendCustomQuoteReceipt(
     price: `₹${(Number(row.total_price ?? row.final_price ?? 0) * Number(row.quantity ?? 1)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
   }))
 
-  sendOrderPlacedCustomer(userId, profile.email, orderNumber, String(first.full_name ?? profile.name), formatMoney(attempt.amount_paise), orderPlacedItems, `${siteUrl}/my-orders`).catch(() => {})
-  sendOrderPlacedAdmin('', orderNumber, profile.email, profile.name, formatMoney(attempt.amount_paise), `${siteUrl}/admin/orders/${firstOrderId}`).catch(() => {})
+  sendOrderPlacedCustomer(userId, profile.email, orderNumber, String(first.full_name ?? profile.name), formatMoney(attempt.amount_paise), orderPlacedItems, `${siteUrl}/my-orders`).catch((error) => reportError(error, 'Custom quote order-placed customer email failed', { module: 'email', level: 'warn', tags: { flow: 'payment_captured', orderId: firstOrderId } }))
+  sendOrderPlacedAdmin('', orderNumber, profile.email, profile.name, formatMoney(attempt.amount_paise), `${siteUrl}/admin/orders/${firstOrderId}`).catch((error) => reportError(error, 'Custom quote order-placed admin email failed', { module: 'email', level: 'warn', tags: { flow: 'payment_captured', orderId: firstOrderId } }))
 }
 
 // ============================================================================

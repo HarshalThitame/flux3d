@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import { getAdminCustomersData, type AdminCustomersFilter } from '@/lib/admin/queries'
 import { requireAdminPermission } from '@/lib/admin/permissions'
 import { rateLimitResponse } from '@/lib/rate-limit'
@@ -52,10 +52,14 @@ export async function POST(request: Request) {
     let buffer: Buffer
     let contentType: string
     if (format === 'xlsx') {
-      const worksheet = XLSX.utils.json_to_sheet(rows)
-      const workbook = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Customers')
-      buffer = Buffer.from(XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }) as ArrayBuffer)
+      const workbook = new ExcelJS.Workbook()
+      workbook.creator = 'Flux3D'
+      const worksheet = workbook.addWorksheet('Customers')
+      worksheet.columns = Object.keys(rows[0]).map((key) => ({ header: key, key }))
+      for (const row of rows) {
+        worksheet.addRow(row)
+      }
+      buffer = Buffer.from(await workbook.xlsx.writeBuffer() as ArrayBuffer)
       contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     } else {
       const header = Object.keys(rows[0])

@@ -21,9 +21,9 @@ CREATE TABLE public.meta_ad_campaigns (
 COMMENT ON TABLE public.meta_ad_campaigns IS
   'Local mirror of Meta ad campaigns created via the Flux3D admin dashboard. Stores IDs for reconciliation and audit.';
 
-CREATE INDEX idx_meta_ad_campaigns_campaign_id ON public.meta_ad_campaigns(campaign_id);
-CREATE INDEX idx_meta_ad_campaigns_created_by ON public.meta_ad_campaigns(created_by);
-CREATE INDEX idx_meta_ad_campaigns_status ON public.meta_ad_campaigns(status);
+CREATE INDEX IF NOT EXISTS idx_meta_ad_campaigns_campaign_id ON public.meta_ad_campaigns(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_meta_ad_campaigns_created_by ON public.meta_ad_campaigns(created_by);
+CREATE INDEX IF NOT EXISTS idx_meta_ad_campaigns_status ON public.meta_ad_campaigns(status);
 
 ALTER TABLE public.meta_ad_campaigns ENABLE ROW LEVEL SECURITY;
 

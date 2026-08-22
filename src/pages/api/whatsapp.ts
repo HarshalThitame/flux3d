@@ -1101,6 +1101,15 @@ export default async function handler(
       try { payload = JSON.parse(rawBody) }
       catch { return res.status(200).json({ success: true }) }
 
+      // Template lifecycle events (message_template_status_update subscription):
+      // log approval/rejection/pause so ops can see them in Vercel logs. The raw
+      // event is still persisted to whatsapp_webhook_events by the generic path below.
+      const webhookField = payload?.entry?.[0]?.changes?.[0]?.field
+      if (webhookField === 'message_template_status_update') {
+        const tv = payload?.entry?.[0]?.changes?.[0]?.value ?? {}
+        console.log('[whatsapp] template status update:', tv.message_template_name, '->', tv.event, tv.reason ? `(${tv.reason})` : '')
+      }
+
       const message = payload?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]
       const from = message?.from
       const msgType = message?.type

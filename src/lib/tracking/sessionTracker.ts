@@ -45,9 +45,7 @@ function postSessionEvent(url: string, payload: unknown, keepalive = false) {
     body,
     keepalive,
   }).catch((error) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[tracking] Failed to submit session event:', error)
-    }
+    console.error('[tracking] Failed to submit session event:', error)
   })
 }
 

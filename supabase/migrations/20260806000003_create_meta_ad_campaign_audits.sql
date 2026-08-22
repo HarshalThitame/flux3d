@@ -15,9 +15,9 @@ CREATE TABLE public.meta_ad_campaign_audits (
 COMMENT ON TABLE public.meta_ad_campaign_audits IS
   'Immutable audit log for every mutating action on Meta ad campaigns. Used for compliance, debugging, and accountability.';
 
-CREATE INDEX idx_meta_ad_campaign_audits_campaign_id ON public.meta_ad_campaign_audits(campaign_id);
-CREATE INDEX idx_meta_ad_campaign_audits_performed_by ON public.meta_ad_campaign_audits(performed_by);
-CREATE INDEX idx_meta_ad_campaign_audits_created_at ON public.meta_ad_campaign_audits(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_meta_ad_campaign_audits_campaign_id ON public.meta_ad_campaign_audits(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_meta_ad_campaign_audits_performed_by ON public.meta_ad_campaign_audits(performed_by);
+CREATE INDEX IF NOT EXISTS idx_meta_ad_campaign_audits_created_at ON public.meta_ad_campaign_audits(created_at DESC);
 
 ALTER TABLE public.meta_ad_campaign_audits ENABLE ROW LEVEL SECURITY;
 

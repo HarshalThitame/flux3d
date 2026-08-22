@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { reportError } from '@/lib/error-handling'
 
 type TrackPageVisitParams = {
   user_id?: string | null
@@ -25,8 +26,10 @@ export async function trackPageVisit(params: TrackPageVisitParams) {
 
     if (error) throw error
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[tracking] Failed to record page visit:', error)
-    }
+    reportError(error, 'Failed to record page visit', {
+      module: 'tracking',
+      level: 'warn',
+      tags: { page: params.page_url?.slice(0, 100) ?? 'unknown' },
+    })
   }
 }

@@ -26,6 +26,7 @@ import { logQuoteEvent } from '@/lib/quote/audit'
 import { redactSensitiveValues } from '@/lib/security/redact'
 import { verifyModelVolume } from '@/lib/storage/verify-metadata'
 import { sendOrderPlacedCustomer, sendOrderPlacedAdmin } from '@/lib/email/triggers'
+import { reportError } from '@/lib/error-handling'
 import {
   createQuoteCapture,
   getQuoteCapture,
@@ -732,7 +733,7 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
     couponCode,
     offerId,
     grandTotal: groupWaterfall.grandTotal,
-  }).catch(() => {})
+  }).catch((error) => reportError(error, 'Cart order feature tracking failed', { module: 'tracking', level: 'warn', tags: { flow: 'cart_order', orderId: insertedOrders[0].id } }))
 
   const orderItemsEmail = input.items.map(item => ({
     name: item.fileName,
@@ -743,8 +744,8 @@ export async function createCartOrderAction(input: CreateCartOrderInput): Promis
   }))
   const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/my-orders/${insertedOrders[0].id}`
   const adminOrderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders/${insertedOrders[0].id}`
-  sendOrderPlacedCustomer(auth.user.id, auth.profile.email, formatOrderNumber(insertedOrders[0].serial_number, insertedOrders[0].created_at), auth.profile.name, String(groupWaterfall.grandTotal ?? 0), orderItemsEmail, orderUrl).catch(() => {})
-  sendOrderPlacedAdmin('', formatOrderNumber(insertedOrders[0].serial_number, insertedOrders[0].created_at), auth.profile.email, auth.profile.name, String(groupWaterfall.grandTotal ?? 0), adminOrderUrl).catch(() => {})
+  sendOrderPlacedCustomer(auth.user.id, auth.profile.email, formatOrderNumber(insertedOrders[0].serial_number, insertedOrders[0].created_at), auth.profile.name, String(groupWaterfall.grandTotal ?? 0), orderItemsEmail, orderUrl).catch((error) => reportError(error, 'Cart order customer email failed', { module: 'email', level: 'warn', tags: { flow: 'cart_order', orderId: insertedOrders[0].id } }))
+  sendOrderPlacedAdmin('', formatOrderNumber(insertedOrders[0].serial_number, insertedOrders[0].created_at), auth.profile.email, auth.profile.name, String(groupWaterfall.grandTotal ?? 0), adminOrderUrl).catch((error) => reportError(error, 'Cart order admin email failed', { module: 'email', level: 'warn', tags: { flow: 'cart_order', orderId: insertedOrders[0].id } }))
 
   revalidatePath('/my-orders')
   revalidatePath('/cart')
@@ -1284,7 +1285,7 @@ export async function verifyCartPaymentAndCreateOrder(params: {
     amount_paise: capture.amountPaise,
     payment_method: razorpayPayment.method ?? null,
     provider_payment_id: params.razorpayPaymentId,
-  }).catch(() => {})
+  }).catch((error) => reportError(error, 'Payment captured notification failed', { module: 'email', level: 'warn', tags: { flow: 'cart_payment', orderId: firstOrder.id } }))
 
   const orderItemsEmail = itemsData.map((item: Record<string, unknown>) => ({
     name: String(item.fileName ?? ''),
@@ -1295,8 +1296,8 @@ export async function verifyCartPaymentAndCreateOrder(params: {
   }))
   const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/my-orders/${firstOrder.id}`
   const adminOrderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders/${firstOrder.id}`
-  sendOrderPlacedCustomer(auth.user.id, auth.profile.email, firstOrderNumber, auth.profile.name, String(capture.amountPaise / 100), orderItemsEmail, orderUrl).catch(() => {})
-  sendOrderPlacedAdmin('', firstOrderNumber, auth.profile.email, auth.profile.name, String(capture.amountPaise / 100), adminOrderUrl).catch(() => {})
+  sendOrderPlacedCustomer(auth.user.id, auth.profile.email, firstOrderNumber, auth.profile.name, String(capture.amountPaise / 100), orderItemsEmail, orderUrl).catch((error) => reportError(error, 'Cart payment customer email failed', { module: 'email', level: 'warn', tags: { flow: 'cart_payment', orderId: firstOrder.id } }))
+  sendOrderPlacedAdmin('', firstOrderNumber, auth.profile.email, auth.profile.name, String(capture.amountPaise / 100), adminOrderUrl).catch((error) => reportError(error, 'Cart payment admin email failed', { module: 'email', level: 'warn', tags: { flow: 'cart_payment', orderId: firstOrder.id } }))
 
   void trackFeatureUsage(auth.user.id, 'order_placed', {
     source: 'cart', groupId, orderId: firstOrder.id,
@@ -1304,7 +1305,7 @@ export async function verifyCartPaymentAndCreateOrder(params: {
     unitCount: itemsData.reduce((sum, item) => sum + Math.max(1, Math.floor(Number(item.quantity ?? 1))), 0),
     couponCode: pricingData.couponCode as string | null,
     offerId, grandTotal: capture.amountPaise / 100,
-  }).catch(() => {})
+  }).catch((error) => reportError(error, 'Cart payment feature tracking failed', { module: 'tracking', level: 'warn', tags: { flow: 'cart_payment', orderId: firstOrder.id } }))
 
   const { data: profilePhone } = await adminSupabase
     .from('profiles')

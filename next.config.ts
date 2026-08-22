@@ -13,6 +13,7 @@ if (
 const nextConfig: NextConfig = {
   compress: true,
   serverExternalPackages: ['pdfkit'],
+  staticPageGenerationTimeout: 120,
   outputFileTracingIncludes: {
     '/api/orders/[orderId]/invoice': ['./node_modules/pdfkit/js/data/*.afm'],
     '/api/3d-shop/orders/[orderId]/invoice': ['./node_modules/pdfkit/js/data/*.afm'],

@@ -3,6 +3,7 @@ import { getResendClient, getSenderAddress } from './resend-client'
 import { getTemplateByType, renderDbTemplate } from './db-templates'
 import { getEmailSettings, isMaintenanceModeBlocking } from './settings-cache'
 import { logEmailEvent } from './logEmailEvent'
+import { reportError } from '@/lib/error-handling'
 import {
   renderOrderItemsHtml,
   renderShippedItemsHtml,
@@ -167,7 +168,7 @@ export async function dispatchEmail(
     if (log?.id) {
       await supabase.from('email_logs').update(update).eq('id', log.id)
       // Log sent event for the audit trail
-      await logEmailEvent(log.id, 'sent', data.id, { email_type: payload.emailType }).catch(() => {})
+      await logEmailEvent(log.id, 'sent', data.id, { email_type: payload.emailType }).catch((error) => reportError(error, 'Email sent audit-log update failed', { module: 'email', level: 'warn', tags: { emailLogId: log.id } }))
     }
 
     return { ok: true, messageId: data.id, resendId: data.id }
@@ -345,7 +346,7 @@ async function markFailed(
     })
     .eq('id', logId)
 
-  await logEmailEvent(logId, 'failed', null, { error: errorMessage }).catch(() => {})
+  await logEmailEvent(logId, 'failed', null, { error: errorMessage }).catch((error) => reportError(error, 'Email failed audit-log update error', { module: 'email', level: 'warn', tags: { emailLogId: logId } }))
 }
 
 function buildSubject(payload: EmailJobPayload): string {

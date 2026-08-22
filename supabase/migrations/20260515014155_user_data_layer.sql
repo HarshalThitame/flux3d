@@ -217,7 +217,7 @@ CREATE TRIGGER single_default_address
 CREATE TABLE IF NOT EXISTS public.admin_customer_notes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  admin_id UUID NOT NULL REFERENCES public.profiles(id),
+  admin_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   note TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -302,7 +302,7 @@ CREATE INDEX IF NOT EXISTS idx_error_logs_occurred_at ON public.error_logs(occur
 
 CREATE TABLE IF NOT EXISTS public.admin_audit_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  admin_id UUID NOT NULL REFERENCES public.profiles(id),
+  admin_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   action TEXT NOT NULL,
   target_type TEXT NOT NULL CHECK (target_type IN ('order', 'user', 'material', 'coupon', 'setting')),
   target_id TEXT NOT NULL,

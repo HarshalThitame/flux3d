@@ -384,7 +384,7 @@ export async function POST(req: Request) {
 
       // Send auto-acknowledgment FROM complaints@flux3d.in
       await sendTicketAcknowledgment(ticket.ticket_number, fromEmail, customerName, subject)
-      console.log('[webhooks/resend/inbound] Created ticket:', ticket.ticket_number, 'for:', fromEmail)
+      console.log('[webhooks/resend/inbound] Created ticket:', ticket.ticket_number)
     }
 
     return NextResponse.json({ received: true, ticket_id: ticketId })

@@ -457,6 +457,7 @@ export async function placeShopOrder(input: PlaceOrderInput): Promise<PlaceOrder
       p_shipping_charge_paise: shippingChargePaise,
       p_total_amount_paise: toPaise(totalAmount),
       p_shipping_address: shippingAddress,
+      p_payment_method: paymentProvider,
     })
 
     if (!error) {

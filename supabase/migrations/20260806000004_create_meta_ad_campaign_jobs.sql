@@ -16,9 +16,9 @@ CREATE TABLE public.meta_ad_campaign_jobs (
 COMMENT ON TABLE public.meta_ad_campaign_jobs IS
   'Queue for asynchronous Meta ad campaign creation jobs. Processed by QStash workers.';
 
-CREATE INDEX idx_meta_ad_campaign_jobs_status ON public.meta_ad_campaign_jobs(status);
-CREATE INDEX idx_meta_ad_campaign_jobs_created_by ON public.meta_ad_campaign_jobs(created_by);
-CREATE INDEX idx_meta_ad_campaign_jobs_created_at ON public.meta_ad_campaign_jobs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_meta_ad_campaign_jobs_status ON public.meta_ad_campaign_jobs(status);
+CREATE INDEX IF NOT EXISTS idx_meta_ad_campaign_jobs_created_by ON public.meta_ad_campaign_jobs(created_by);
+CREATE INDEX IF NOT EXISTS idx_meta_ad_campaign_jobs_created_at ON public.meta_ad_campaign_jobs(created_at DESC);
 
 ALTER TABLE public.meta_ad_campaign_jobs ENABLE ROW LEVEL SECURITY;
 

@@ -6,10 +6,10 @@ CREATE TABLE public.shelf_wishlists (
   UNIQUE(user_id, product_id)
 );
 
-CREATE INDEX idx_shelf_wishlists_user_id
+CREATE INDEX IF NOT EXISTS idx_shelf_wishlists_user_id
   ON public.shelf_wishlists(user_id);
 
-CREATE INDEX idx_shelf_wishlists_product_id
+CREATE INDEX IF NOT EXISTS idx_shelf_wishlists_product_id
   ON public.shelf_wishlists(product_id);
 
 ALTER TABLE public.shelf_wishlists ENABLE ROW LEVEL SECURITY;
@@ -50,13 +50,13 @@ CREATE TABLE public.shelf_notify_me (
   UNIQUE(email, sku_id)
 );
 
-CREATE INDEX idx_shelf_notify_me_product_id
+CREATE INDEX IF NOT EXISTS idx_shelf_notify_me_product_id
   ON public.shelf_notify_me(product_id);
 
-CREATE INDEX idx_shelf_notify_me_sku_id
+CREATE INDEX IF NOT EXISTS idx_shelf_notify_me_sku_id
   ON public.shelf_notify_me(sku_id);
 
-CREATE INDEX idx_shelf_notify_me_is_notified
+CREATE INDEX IF NOT EXISTS idx_shelf_notify_me_is_notified
   ON public.shelf_notify_me(is_notified);
 
 ALTER TABLE public.shelf_notify_me ENABLE ROW LEVEL SECURITY;

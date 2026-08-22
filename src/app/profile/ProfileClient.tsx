@@ -10,6 +10,7 @@ import {
   MessageCircle,
   PackageCheck,
   RotateCcw,
+  Shield,
   Trash2,
   Truck,
   Upload,
@@ -329,7 +330,7 @@ export default function ProfileClient({
   const [profile, setProfile] = useState(initialProfile)
   const [files, setFiles] = useState(initialFiles)
   const [toast, setToast] = useState<Toast>(null)
-  const [activeModal, setActiveModal] = useState<null | 'name' | 'phone' | 'address' | 'gst'>(null)
+  const [activeModal, setActiveModal] = useState<null | 'name' | 'phone' | 'address' | 'gst' | 'data'>(null)
   const [nameDraft, setNameDraft] = useState(initialProfile.name)
   const [phoneDraft, setPhoneDraft] = useState(initialProfile.phone)
   const [addressDraft, setAddressDraft] = useState(initialProfile.address)
@@ -521,6 +522,50 @@ export default function ProfileClient({
     }
   }
 
+  async function handleExportData() {
+    setSaving(true)
+    try {
+      const response = await fetch('/api/me/export', { method: 'POST' })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        showToast({ type: 'error', message: body?.error ?? 'Export failed. Please try again.' })
+        return
+      }
+      const blob = new Blob([JSON.stringify(body, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `flux3d-data-${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      showToast({ type: 'success', message: 'Your data export has been downloaded.' })
+    } catch {
+      showToast({ type: 'error', message: 'Export failed. Please try again.' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleRequestDelete() {
+    setSaving(true)
+    try {
+      const response = await fetch('/api/me/delete', { method: 'POST' })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        showToast({ type: 'error', message: body?.error ?? 'Deletion request failed. Please try again.' })
+        return
+      }
+      setActiveModal(null)
+      showToast({ type: 'success', message: 'Confirmation email sent. Check your inbox to complete deletion.' })
+    } catch {
+      showToast({ type: 'error', message: 'Deletion request failed. Please try again.' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file) return
@@ -618,7 +663,7 @@ export default function ProfileClient({
         </p>
       </div>
 
-      <QuickActionsBar />
+      <QuickActionsBar onManageData={() => setActiveModal('data')} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
@@ -787,6 +832,42 @@ export default function ProfileClient({
         </Modal>
       )}
 
+      {activeModal === 'data' && (
+        <Modal title="Data & Privacy" onClose={() => setActiveModal(null)}>
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-sm font-semibold text-[#070b1d]">Export my data</h3>
+              <p className="mt-1 text-sm leading-6 text-[#4b4b4b]">
+                Download a copy of your profile, addresses, orders, and payment records (JSON).
+              </p>
+              <button
+                type="button"
+                onClick={handleExportData}
+                disabled={saving}
+                className="mt-3 rounded-xl bg-[#0F1B3D] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1a2a52] disabled:opacity-60"
+              >
+                {saving ? 'Preparing…' : 'Download my data'}
+              </button>
+            </div>
+            <div className="border-t border-[#e8e4df] pt-5">
+              <h3 className="text-sm font-semibold text-rose-600">Delete my account</h3>
+              <p className="mt-1 text-sm leading-6 text-[#4b4b4b]">
+                This permanently removes your personal data. Order history is anonymized for legal
+                and tax compliance. We&apos;ll email you a confirmation link before anything is deleted.
+              </p>
+              <button
+                type="button"
+                onClick={handleRequestDelete}
+                disabled={saving}
+                className="mt-3 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:opacity-60"
+              >
+                Request account deletion
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {toast && (
         <div className={`fixed bottom-6 right-6 z-[130] rounded-xl px-4 py-3 text-sm font-semibold shadow-lg ${
           toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
@@ -873,7 +954,7 @@ function ProfileField({
   )
 }
 
-function QuickActionsBar() {
+function QuickActionsBar({ onManageData }: { onManageData: () => void }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row">
       <Link
@@ -890,6 +971,14 @@ function QuickActionsBar() {
         <Truck className="h-4 w-4" />
         Track Active Order
       </Link>
+      <button
+        type="button"
+        onClick={onManageData}
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#e8e4df] px-5 text-sm font-semibold text-[#4b4b4b] transition hover:border-[#ded7ff] hover:bg-[#f3f0ff] hover:text-[#6d28d9]"
+      >
+        <Shield className="h-4 w-4" />
+        Data &amp; Privacy
+      </button>
       <a
         href="https://wa.me/919623023480"
         target="_blank"

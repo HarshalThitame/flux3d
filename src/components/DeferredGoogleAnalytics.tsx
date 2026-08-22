@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { hasConsent } from '@/lib/consent'
 
 declare global {
   interface Window {
@@ -38,6 +39,8 @@ export default function DeferredGoogleAnalytics({
 }) {
   useEffect(() => {
     if (!measurementId || window.__flux3dGaLoaded) return
+    // Only load analytics after the user opts in (India DPDP 2023).
+    if (!hasConsent('analytics')) return
 
     return onFirstIntent(() => {
       if (window.__flux3dGaLoaded) return

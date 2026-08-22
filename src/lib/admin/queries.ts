@@ -1201,6 +1201,7 @@ export async function getAdminQuotesData() {
     .from('quotes')
     .select('id, quote_id, name, email, config, estimate, created_at, user_id')
     .order('created_at', { ascending: false })
+    .limit(500)
 
   if (error) throw new Error(error.message)
   return (data ?? []).map((quote) => mapQuoteRowToAdminQuote(quote as QuoteRow))
@@ -1213,6 +1214,7 @@ export async function getAdminMaterialsData() {
     .from('materials')
     .select('*')
     .order('created_at', { ascending: false })
+    .limit(300)
 
   if (error) throw new Error(error.message)
   return (data ?? []).map((material) => normalizeAdminMaterialRow(material))
