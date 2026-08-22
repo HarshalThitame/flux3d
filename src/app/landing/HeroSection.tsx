@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowRight, Box, MousePointer2, Sparkles } from 'lucide-react'
-import ArcImageCarouselBoundary from '@/components/shop/ArcImageCarouselBoundary'
+import DepthBlurCarouselBoundary from '@/components/shop/DepthBlurCarouselBoundary'
 import ProductModelModal from '@/components/shop/ProductModelModal'
 import { getShopProductImages } from '@/lib/shop/selection'
 import type { ShopHomeData, ShopPublicProduct } from '@/lib/shop/public-types'
@@ -80,7 +80,7 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
 
       <div className="relative h-full w-full">
         {products.length > 0 && (
-          <ArcImageCarouselBoundary
+          <DepthBlurCarouselBoundary
             items={items}
             onSelectItemAction={handleSelect}
             onActiveIndexChangeAction={handleActiveChange}

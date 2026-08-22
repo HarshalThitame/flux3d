@@ -1,9 +1,9 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import type { ArcImageCarouselProps } from './ArcImageCarousel'
+import type { DepthBlurCarouselProps } from './DepthBlurCarousel'
 
-const ArcImageCarousel = dynamic(() => import('./ArcImageCarousel'), {
+const DepthBlurCarousel = dynamic(() => import('./DepthBlurCarousel'), {
   ssr: false,
   loading: () => (
     <div
@@ -15,6 +15,6 @@ const ArcImageCarousel = dynamic(() => import('./ArcImageCarousel'), {
   ),
 })
 
-export default function ArcImageCarouselBoundary(props: ArcImageCarouselProps) {
-  return <ArcImageCarousel {...props} />
+export default function DepthBlurCarouselBoundary(props: DepthBlurCarouselProps) {
+  return <DepthBlurCarousel {...props} />
 }
