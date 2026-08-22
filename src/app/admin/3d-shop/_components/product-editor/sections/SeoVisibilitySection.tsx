@@ -20,7 +20,7 @@ export function SeoVisibilitySection() {
   const title = product.meta_title.trim() || product.name || 'Product title'
   const description = product.meta_description.trim() || product.description.trim() || 'Product description goes here…'
   const productUrl = product.slug ? `/3d-shop/product/${product.slug}` : '/3d-shop/product/{slug}'
-  const previewImage = product.thumbnail_url || undefined
+  const previewImage = product.landscape_image_url || product.thumbnail_url || undefined
   const scheduledLocal = isoToLocalInput(product.published_at)
 
   function onScheduleChange(value: string) {

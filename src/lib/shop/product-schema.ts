@@ -29,6 +29,7 @@ export const productFormSchema = z.object({
   tags: z.array(z.string()),
   occasion_tags: z.array(z.string()),
   thumbnail_url: z.string(),
+  landscape_image_url: z.string(),
   image_urls: z.array(z.string()),
   image_alt: z.record(z.string(), z.string()),
   default_dimensions: productDimensionsSchema.nullable(),

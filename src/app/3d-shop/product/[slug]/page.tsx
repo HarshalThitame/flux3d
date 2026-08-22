@@ -106,7 +106,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: product.meta_title || `${product.name} — 3D Shop`,
       description: product.meta_description || product.description || `Shop ${product.name} on 3D Shop by Flux3D.`,
       url: absoluteUrl(`/3d-shop/product/${product.slug}`),
-      images: product.thumbnail_url ? [{ url: product.thumbnail_url }] : undefined,
+      images: product.landscape_image_url || product.thumbnail_url
+        ? [{ url: product.landscape_image_url || product.thumbnail_url as string }]
+        : undefined,
     },
   }
 }

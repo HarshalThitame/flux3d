@@ -92,6 +92,10 @@ type ProductEditorContextValue = {
   removeImage: (url: string) => void
   handleImageDrop: (url: string) => void
   setImageAlt: (url: string, alt: string) => void
+  uploadLandscapeImage: (file: File) => Promise<void>
+  removeLandscapeImage: () => void
+  aiPrompt: string
+  setAiPrompt: (value: string) => void
 
   addVariant: () => Promise<void>
   updateVariant: <K extends keyof ShopVariantOption>(variantId: string, key: K, value: ShopVariantOption[K]) => void
@@ -151,6 +155,7 @@ export function ProductEditorProvider({
   const [toast, setToast] = useState<AdminToastState>(null)
   const [aiTone, setAiTone] = useState<AiTone>('professional')
   const [aiBusy, setAiBusy] = useState<Partial<Record<AiGenerationKind, boolean>>>({})
+  const [aiPrompt, setAiPrompt] = useState('')
   const [revisions, setRevisions] = useState<ShopRevision[]>([])
   const skuSectionRef = useRef<HTMLDivElement | null>(null)
 
@@ -551,7 +556,27 @@ export function ProductEditorProvider({
             tags: current.tags,
             occasion_tags: current.occasion_tags,
             tone: aiTone,
+            prompt: aiPrompt.trim() || undefined,
             existing: kind === 'long_description' ? current.long_description : undefined,
+            variants: variantsRef.current.map((variant) => ({
+              option_name: variant.option_name,
+              option_type: variant.option_type,
+              values: variant.values ?? [],
+            })),
+            variant_dimensions: variantDimensionsRef.current.map((entry) => ({
+              option_name: entry.option_name,
+              option_value: entry.option_value,
+              dimensions: entry.dimensions,
+            })),
+            default_dimensions: current.default_dimensions ?? undefined,
+            base_price: current.base_price,
+            skus: skusRef.current
+              .filter((sku) => sku.is_available !== false)
+              .map((sku) => ({
+                variant_combination: sku.variant_combination,
+                price: Number(sku.price),
+                compare_at_price: sku.compare_at_price === null ? null : Number(sku.compare_at_price),
+              })),
           }),
         })
         const data = (await response.json().catch(() => ({}))) as { result?: AiGenerateResult; error?: string }
@@ -564,7 +589,7 @@ export function ProductEditorProvider({
         setAiBusy((prev) => ({ ...prev, [kind]: false }))
       }
     },
-    [aiTone, applyAiResult, categories, form]
+    [aiPrompt, aiTone, applyAiResult, categories, form]
   )
 
   const applyTemplate = useCallback(
@@ -915,6 +940,41 @@ export function ProductEditorProvider({
   const removeModel = useCallback(() => {
     updateProduct('model_url', '')
   }, [updateProduct])
+
+  const uploadLandscapeImage = useCallback(
+    async (file: File) => {
+      const id = await ensureProductId()
+      const tempKey = `landscape-${file.name}-${Date.now()}`
+      setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress: 0 } }))
+      try {
+        const { publicUrl } = await uploadFileWithProgress('/api/3d-shop/admin/upload', file, id, (progress) => {
+          setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress } }))
+        })
+        setUploadState((current) => ({ ...current, [tempKey]: { status: 'done', progress: 100 } }))
+        form.patchLocal({ landscape_image_url: publicUrl })
+
+        const productResponse = await fetch('/api/3d-shop/admin/products', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...buildProductPayload({ ...form.productRef.current, landscape_image_url: publicUrl }, undefined),
+            id,
+          }),
+        }).catch(() => null)
+        if (!productResponse?.ok) {
+          throw new Error('Upload succeeded but failed to attach landscape image to product. It will be saved by autosave.')
+        }
+      } catch (error) {
+        setUploadState((current) => ({ ...current, [tempKey]: { status: 'error', progress: 0 } }))
+        throw error
+      }
+    },
+    [ensureProductId, form]
+  )
+
+  const removeLandscapeImage = useCallback(() => {
+    form.update('landscape_image_url', '')
+  }, [form])
 
   const setThumbnail = useCallback(
     (url: string) => {
@@ -1508,6 +1568,10 @@ export function ProductEditorProvider({
     removeImage,
     handleImageDrop,
     setImageAlt,
+    uploadLandscapeImage,
+    removeLandscapeImage,
+    aiPrompt,
+    setAiPrompt,
     addVariant,
     updateVariant,
     deleteVariant,

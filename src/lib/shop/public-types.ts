@@ -36,6 +36,7 @@ export type ShopPublicProduct = {
   tags: string[]
   occasion_tags: string[]
   thumbnail_url: string | null
+  landscape_image_url: string | null
   image_urls: string[]
   model_url: string | null
   base_price: number

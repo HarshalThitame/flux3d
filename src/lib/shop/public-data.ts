@@ -81,6 +81,7 @@ type RawProduct = {
   tags?: string[] | null
   occasion_tags?: string[] | null
   thumbnail_url?: string | null
+  landscape_image_url?: string | null
   image_urls?: string[] | null
   model_url?: string | null
   base_price?: number | string | null
@@ -114,6 +115,7 @@ const PRODUCT_SELECT = `
   tags,
   occasion_tags,
   thumbnail_url,
+  landscape_image_url,
   image_urls,
   model_url,
   base_price,
@@ -269,6 +271,7 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
     tags: row.tags ?? [],
     occasion_tags: row.occasion_tags ?? [],
     thumbnail_url: row.thumbnail_url ?? null,
+    landscape_image_url: row.landscape_image_url ?? null,
     image_urls: row.image_urls ?? [],
     model_url: row.model_url ?? null,
     base_price: normalizeShopNumber(row.base_price),

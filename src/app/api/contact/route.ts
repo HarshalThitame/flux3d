@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { getSettings } from '@/lib/settings'
 import { sendContactNotification } from '@/lib/email/triggers'
 import { getBusinessSettings } from '@/lib/admin/business-settings'
 
@@ -73,20 +72,21 @@ export async function POST(request: Request) {
     }
 
     const supabase = createAdminSupabaseClient()
-    const ticketId = `CT-${Date.now().toString(36).toUpperCase()}`
-    const { error } = await supabase.from('support_tickets').insert({
-      ticket_id: ticketId,
-      customer: name,
+    const now = new Date().toISOString()
+
+    const { data: ticket, error } = await supabase.from('support_tickets').insert({
+      customer_name: name,
       customer_email: email,
       customer_phone: phone || null,
       subject,
-      category: 'General',
+      category: 'Other',
       priority: 'Normal',
       status: 'Open',
-      assigned_to: null,
-      description: message,
-      last_updated: new Date().toISOString(),
-    })
+      source: 'contact_form',
+      last_message_at: now,
+      created_at: now,
+      updated_at: now,
+    }).select().single()
 
     if (error) {
       return NextResponse.json(
@@ -94,6 +94,16 @@ export async function POST(request: Request) {
         { status: 503 }
       )
     }
+
+    await supabase.from('support_ticket_messages').insert({
+      ticket_id: ticket.id,
+      sender_type: 'customer',
+      sender_email: email,
+      sender_name: name,
+      body: message,
+      direction: 'inbound',
+      created_at: now,
+    })
 
     recentSubmissions.set(clientKey, Date.now())
 

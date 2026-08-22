@@ -90,9 +90,26 @@ export async function GET(
       performedByName: e.performed_by ? (performerNames[e.performed_by] || 'System') : 'System',
     }))
 
+    const ticketNumber = ticket.ticket_number ?? String(ticket.id)
+
     return NextResponse.json({
       ticket: {
-        ...ticket,
+        id: String(ticket.id),
+        ticketNumber,
+        customer: ticket.customer_name ?? 'Unknown',
+        customerEmail: ticket.customer_email,
+        customerPhone: ticket.customer_phone,
+        subject: ticket.subject ?? '',
+        category: ticket.category ?? 'Other',
+        priority: ticket.priority ?? 'Normal',
+        status: ticket.status ?? 'Open',
+        assignedTo: ticket.assigned_to,
+        source: ticket.source ?? 'manual',
+        orderId: ticket.order_id,
+        messageCount: 0,
+        lastMessageAt: ticket.last_message_at ?? ticket.created_at ?? '',
+        created: ticket.created_at ?? '',
+        lastUpdated: ticket.updated_at ?? ticket.created_at ?? '',
         assignedToName,
       },
       messages: messages || [],

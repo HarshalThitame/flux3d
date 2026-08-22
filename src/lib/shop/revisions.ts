@@ -92,6 +92,7 @@ const FIELD_LABELS: Record<string, string> = {
   tags: 'Tags',
   occasion_tags: 'Occasion tags',
   thumbnail_url: 'Thumbnail',
+  landscape_image_url: 'Landscape image',
   image_urls: 'Images',
   image_alt: 'Image alt text',
   model_url: '3D model',

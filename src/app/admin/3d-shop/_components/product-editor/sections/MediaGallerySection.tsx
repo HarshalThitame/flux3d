@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { GripVertical, Loader2, Star, Trash2, Upload } from 'lucide-react'
+import { GripVertical, Loader2, Star, Trash2, Upload, ImageIcon } from 'lucide-react'
 import { useProductEditor } from '../editor-context'
 import { Section } from '../ui'
 import { imageList } from '../types'
@@ -17,6 +17,8 @@ export function MediaGallerySection() {
     handleImageDrop,
     setDragImage,
     setImageAlt,
+    uploadLandscapeImage,
+    removeLandscapeImage,
     setToast,
   } = useProductEditor()
 
@@ -68,6 +70,14 @@ export function MediaGallerySection() {
           ))}
         </div>
       )}
+
+      <LandscapeImageUpload
+        url={product.landscape_image_url}
+        uploading={Object.entries(uploadState).some(([key, state]) => key.startsWith('landscape-') && state.status === 'uploading')}
+        onUpload={uploadLandscapeImage}
+        onRemove={removeLandscapeImage}
+        onError={(message) => setToast({ type: 'error', message })}
+      />
 
       {allImages.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -164,6 +174,151 @@ function ImageTile({
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+function LandscapeImageUpload({
+  url,
+  uploading,
+  onUpload,
+  onRemove,
+  onError,
+}: {
+  url: string
+  uploading: boolean
+  onUpload: (file: File) => Promise<void>
+  onRemove: () => void
+  onError: (message: string) => void
+}) {
+  const [dragOver, setDragOver] = useState(false)
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <ImageIcon className="h-4 w-4 text-[#6d28d9]" />
+          <div>
+            <div className="text-sm font-semibold text-[#0F1B3D]">Landscape Image</div>
+            <div className="mt-0.5 text-xs text-[#6F7192]">
+              Wide image used for social share previews and the landing page carousel.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {url ? (
+        <div
+          className={`relative overflow-hidden rounded-2xl border bg-white transition ${
+            dragOver ? 'border-[#6d28d9] ring-2 ring-[#6d28d9]/30' : 'border-gray-200'
+          }`}
+          onDragOver={(event) => {
+            event.preventDefault()
+            setDragOver(true)
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(event) => {
+            event.preventDefault()
+            setDragOver(false)
+            const file = event.dataTransfer.files?.[0]
+            if (file) {
+              void onUpload(file).catch((error: unknown) =>
+                onError(error instanceof Error ? error.message : 'Landscape image upload failed.')
+              )
+            }
+          }}
+        >
+          <div className="relative aspect-[16/9] bg-gray-100">
+            <Image src={url} alt="Landscape image for social share preview" fill sizes="600px" className="object-cover" />
+            {dragOver && (
+              <span className="absolute inset-x-2 bottom-2 rounded-lg bg-[#6d28d9] px-2 py-1 text-center text-xs font-semibold text-white">
+                Drop to replace
+              </span>
+            )}
+          </div>
+          <div className="flex items-center justify-between gap-2 p-2.5">
+            <span className="truncate text-xs text-[#6F7192]">Ready for social cards & carousel</span>
+            <div className="flex shrink-0 items-center gap-2">
+              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#6d28d9]/20 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#6d28d9] transition hover:bg-[#6d28d9]/5">
+                <Upload className="h-3.5 w-3.5" />
+                Replace
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0]
+                    if (file) {
+                      void onUpload(file).catch((error: unknown) =>
+                        onError(error instanceof Error ? error.message : 'Landscape image upload failed.')
+                      )
+                    }
+                    event.target.value = ''
+                  }}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={onRemove}
+                disabled={uploading}
+                className="rounded-lg border border-rose-200 p-1.5 text-rose-600 hover:bg-rose-50"
+                aria-label="Remove landscape image"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <label
+          className={`flex min-h-[120px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed p-6 text-center transition ${
+            dragOver ? 'border-[#6d28d9] bg-[#6d28d9]/10' : 'border-[#6d28d9]/25 bg-[#6d28d9]/5 hover:bg-[#6d28d9]/10'
+          }`}
+          onDragOver={(event) => {
+            event.preventDefault()
+            setDragOver(true)
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(event) => {
+            event.preventDefault()
+            setDragOver(false)
+            const file = event.dataTransfer.files?.[0]
+            if (file) {
+              void onUpload(file).catch((error: unknown) =>
+                onError(error instanceof Error ? error.message : 'Landscape image upload failed.')
+              )
+            }
+          }}
+        >
+          {uploading ? (
+            <Loader2 className="h-6 w-6 animate-spin text-[#6d28d9]" />
+          ) : (
+            <ImageIcon className="h-6 w-6 text-[#6d28d9]" />
+          )}
+          <span className="mt-2 text-sm font-semibold text-[#0F1B3D]">
+            {uploading ? 'Uploading landscape image...' : 'Upload landscape image'}
+          </span>
+          <span className="mt-1 max-w-sm text-xs text-[#6F7192]">
+            Recommended landscape orientation (e.g. 16:9). Used in social share cards, Open Graph previews, and the landing carousel.
+          </span>
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={uploading}
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              if (file) {
+                void onUpload(file).catch((error: unknown) =>
+                  onError(error instanceof Error ? error.message : 'Landscape image upload failed.')
+                )
+              }
+              event.target.value = ''
+            }}
+          />
+        </label>
+      )}
     </div>
   )
 }

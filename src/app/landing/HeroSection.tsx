@@ -252,7 +252,7 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
       <div className="relative h-full w-full overflow-hidden">
         {visibleProducts.map((p, i) => {
           const pImages = getShopProductImages(p)
-          const pImage = pImages[0] ?? null
+          const pImage = p.landscape_image_url || (pImages[0] ?? null)
           const pBadge = getShopProductBadge(p)
           const isActive = i === index
 

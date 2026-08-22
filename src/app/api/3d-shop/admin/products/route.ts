@@ -13,6 +13,7 @@ type ProductPayload = {
   tags?: string[]
   occasion_tags?: string[]
   thumbnail_url?: string | null
+  landscape_image_url?: string | null
   image_urls?: string[] | null
   image_alt?: Record<string, string> | null
   default_dimensions?: Record<string, unknown> | null
@@ -55,6 +56,8 @@ function normalizeProductPayload(body: ProductPayload, partial = false) {
     tags: normalizeStringArray(body.tags),
     occasion_tags: normalizeStringArray(body.occasion_tags),
     thumbnail_url: typeof body.thumbnail_url === 'string' ? body.thumbnail_url.trim() || null : body.thumbnail_url ?? null,
+    landscape_image_url:
+      typeof body.landscape_image_url === 'string' ? body.landscape_image_url.trim() || null : body.landscape_image_url ?? null,
     image_urls: normalizeStringArray(body.image_urls),
     image_alt:
       body.image_alt && typeof body.image_alt === 'object'

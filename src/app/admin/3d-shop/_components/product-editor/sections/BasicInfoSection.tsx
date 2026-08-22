@@ -14,8 +14,23 @@ const RichTextEditor = dynamic(() => import('@/components/RichTextEditor'), {
 })
 
 export function BasicInfoSection() {
-  const { product, errors, updateProduct, markTouched, slugStatus, markSlugTouched, categories } = useProductEditor()
+  const {
+    product,
+    errors,
+    updateProduct,
+    markTouched,
+    slugStatus,
+    markSlugTouched,
+    categories,
+    aiPrompt,
+    setAiPrompt,
+    variantDimensions,
+    variants,
+    skus,
+  } = useProductEditor()
   const [shortDescriptionFocused, setShortDescriptionFocused] = useState(false)
+
+  const hasRichContext = variants.length > 0 || variantDimensions.length > 0 || skus.length > 0
 
   return (
     <Section title="Basic Info" description="Core product details, copy, tags, and categorization.">
@@ -24,13 +39,32 @@ export function BasicInfoSection() {
           <div>
             <div className="text-sm font-semibold text-[#0F1B3D]">AI Writing Assist</div>
             <div className="mt-0.5 text-xs text-[#6F7192]">
-              Generate descriptions, SEO copy, and tags from your product name and category.
+              {hasRichContext
+                ? 'Generates copy using your product name, variants, colors, dimensions, and SKU pricing.'
+                : 'Generate descriptions, SEO copy, and tags from your product name and category.'}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <AiToneSelector />
             <AiGenerateAllButton />
           </div>
+        </div>
+
+        <div className="mt-3">
+          <label htmlFor="ai-prompt" className="mb-1.5 block text-xs font-medium text-[#6F7192]">
+            AI Instructions (optional)
+          </label>
+          <textarea
+            id="ai-prompt"
+            value={aiPrompt}
+            onChange={(event) => setAiPrompt(event.target.value)}
+            rows={2}
+            placeholder="Tell the AI exactly what you want, e.g. Focus on sustainability and hand-finished quality, target interior designers, emphasise the matte finish and exact dimensions."
+            className="w-full resize-none rounded-xl border border-[#6d28d9]/15 bg-white/80 px-3 py-2 text-xs text-[#0F1B3D] outline-none transition placeholder:text-[#a1a3c0] focus:border-[#6d28d9]/40"
+          />
+          <p className="mt-1 text-[11px] leading-4 text-[#6F7192]">
+            Applied to every AI button below. Leave empty to use the smart default — copy is always generated from real variant and dimension data.
+          </p>
         </div>
       </div>
 

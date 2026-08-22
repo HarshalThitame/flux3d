@@ -68,6 +68,7 @@ export type ShopProduct = {
   tags: string[] | null
   occasion_tags: string[] | null
   thumbnail_url: string | null
+  landscape_image_url: string | null
   image_urls: string[] | null
   image_alt: Record<string, string> | null
   default_dimensions: ProductDimensions | null

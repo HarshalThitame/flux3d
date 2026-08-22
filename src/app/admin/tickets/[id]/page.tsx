@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
@@ -323,7 +324,7 @@ export default function TicketDetailPage() {
             return (
               <div
                 key={message.id}
-                className={`flex gap-3 ${isAdmin && !isInternal ? 'flex-row-reverse' : ''}`}
+                className={`flex gap-3 ${isAdmin && !isInternal ? 'flex-row-reverse justify-end' : ''}`}
               >
                 <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
                   isCustomer ? 'bg-[#6d28d9]' : isInternal ? 'bg-amber-500' : isAdmin ? 'bg-emerald-500' : 'bg-gray-400'
@@ -346,14 +347,7 @@ export default function TicketDetailPage() {
                     <span>{formatDate(message.created_at)}</span>
                   </div>
 
-                  {message.html_body ? (
-                    <div
-                      className="prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: message.html_body }}
-                    />
-                  ) : (
-                    <div className="whitespace-pre-wrap">{message.body}</div>
-                  )}
+                  {renderMessageBody(message)}
 
                   {msgAttachments.length > 0 && (
                     <div className="mt-2 space-y-1">
@@ -428,6 +422,7 @@ function StatusBadge({ status }: { status: string }) {
 function formatDate(dateString: string): string {
   if (!dateString) return '-'
   const date = new Date(dateString)
+  if (Number.isNaN(date.getTime())) return '-'
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
   const diffMins = Math.floor(diffMs / 60000)
@@ -439,4 +434,55 @@ function formatDate(dateString: string): string {
   if (diffHours < 24) return `${diffHours}h ago`
   if (diffDays < 7) return `${diffDays}d ago`
   return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
+
+function sanitizeEmailHtml(html: string): string {
+  if (!html) return ''
+  if (typeof document === 'undefined') return html
+
+  const template = document.createElement('template')
+  template.innerHTML = html
+
+  template.content.querySelectorAll('script, style, link, meta, noscript, iframe, object, embed, form, input, button').forEach((node) => node.remove())
+
+  template.content.querySelectorAll('*').forEach((node) => {
+    if (!(node instanceof HTMLElement)) return
+    const attrs = Array.from(node.attributes)
+    for (const attr of attrs) {
+      const name = attr.name.toLowerCase()
+      if (name === 'style' || name.startsWith('on')) {
+        node.removeAttribute(attr.name)
+      }
+    }
+    node.style.color = ''
+    node.style.background = ''
+    node.style.backgroundColor = ''
+    node.style.backgroundImage = ''
+    node.style.display = ''
+    node.style.opacity = ''
+    node.style.visibility = ''
+  })
+
+  return template.innerHTML.trim()
+}
+
+function renderMessageBody(message: SupportTicketMessage): ReactNode {
+  if (message.html_body) {
+    const sanitized = sanitizeEmailHtml(message.html_body)
+    const hasVisibleText = sanitized.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0
+    if (hasVisibleText) {
+      return (
+        <div
+          className="prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_a]:break-all"
+          dangerouslySetInnerHTML={{ __html: sanitized }}
+        />
+      )
+    }
+  }
+
+  if (message.body) {
+    return <div className="whitespace-pre-wrap">{message.body}</div>
+  }
+
+  return <div className="italic text-[#6F7192]">(No message content)</div>
 }
