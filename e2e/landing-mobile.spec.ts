@@ -12,8 +12,11 @@ test.describe('Landing page — mobile', () => {
   test('hero section renders all key elements', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('h1')).toContainText('Flux3D')
-    await expect(page.locator('text=Shop the Collection').first()).toBeVisible()
-    await expect(page.locator('text=Add to Cart').first()).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Previous product' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Next product' })).toBeVisible()
+    await expect(page.locator('text=Drag to explore').first()).toBeVisible({
+      timeout: 15_000,
+    })
   })
 
   test('navbar mobile menu opens and closes', async ({ page }) => {
