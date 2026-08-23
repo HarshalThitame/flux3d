@@ -1505,14 +1505,6 @@ samp {
   to { transform: translateX(0); }
 }
 
-.navbar-mobile-overlay {
-  animation: fade-in 0.2s ease-out forwards;
-}
-
-.navbar-mobile-panel {
-  animation: drawerSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
 @keyframes loadingNozzle {
   0%, 100% { transform: translate3d(-54px, 0, 0); }
   50% { transform: translate3d(54px, 0, 0); }
@@ -7846,26 +7838,16 @@ body:has(.premium-auth-shell) {
   }
 }
 
-/* Mobile panel open state */
+/* Mobile panel entrance — the panel is fully visible by default; the animation
+   only slides it in. If the animation is skipped or interrupted, the menu
+   still renders in place instead of staying off-screen. */
 .navbar-mobile-panel {
-  opacity: 0;
-  transform: translateY(-8px);
-  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: none;
-}
-
-.navbar-mobile-overlay .navbar-mobile-panel {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
+  animation: drawerSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .navbar-mobile-panel {
-    opacity: 1;
-    transform: none;
-    transition: none;
-    pointer-events: auto;
+    animation: none;
   }
 
   .navbar::before,

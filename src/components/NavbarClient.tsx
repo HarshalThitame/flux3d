@@ -191,13 +191,14 @@ export default function NavbarClient({
 
   useEffect(() => {
     if (isOpen) {
+      const previousOverflow = document.body.style.overflow
       document.body.style.overflow = 'hidden'
       const handleKeyDown = (event: KeyboardEvent) => {
         if (event.key === 'Escape') setIsOpen(false)
       }
       document.addEventListener('keydown', handleKeyDown)
       return () => {
-        document.body.style.overflow = ''
+        document.body.style.overflow = previousOverflow
         document.removeEventListener('keydown', handleKeyDown)
       }
     }
