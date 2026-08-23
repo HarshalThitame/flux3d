@@ -290,28 +290,15 @@ export default function DepthBlurCarousel({
 
   const pointerIdRef = useRef<number | null>(null)
   const isDraggingRef = useRef(false)
+  const didDragRef = useRef(false)
   const startXRef = useRef(0)
   const startScrollRef = useRef(0)
   const lastXRef = useRef(0)
   const lastTRef = useRef(0)
   const velocityXRef = useRef(0)
 
-  const onPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    if (totalItems <= 1) return
-    pointerIdRef.current = event.pointerId
-    isDraggingRef.current = true
-    startXRef.current = event.clientX
-    lastXRef.current = event.clientX
-    lastTRef.current = performance.now()
-    velocityXRef.current = 0
-    startScrollRef.current = scrollTarget.current
-    try {
-      event.currentTarget.setPointerCapture(event.pointerId)
-    } catch {}
-  }, [totalItems])
-
-  const onPointerMove = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
+  const onWindowPointerMove = useCallback(
+    (event: PointerEvent) => {
       if (!isDraggingRef.current || pointerIdRef.current !== event.pointerId) return
       const now = performance.now()
       const dt = now - lastTRef.current
@@ -321,28 +308,58 @@ export default function DepthBlurCarousel({
       lastXRef.current = event.clientX
       lastTRef.current = now
       const dx = event.clientX - startXRef.current
+      if (Math.abs(dx) > 8) didDragRef.current = true
       scrollTarget.current = startScrollRef.current - dx * 0.005
       rawScroll.set(scrollTarget.current)
     },
     [rawScroll]
   )
 
+  const endDragRef = useRef<(event: PointerEvent) => void>(() => {})
+
   const endDrag = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      if (pointerIdRef.current !== event.pointerId) return
+    (event: PointerEvent) => {
+      if (!isDraggingRef.current || pointerIdRef.current !== event.pointerId) return
       isDraggingRef.current = false
       pointerIdRef.current = null
-      try {
-        event.currentTarget.releasePointerCapture(event.pointerId)
-      } catch {}
+      window.removeEventListener('pointermove', onWindowPointerMove)
+      window.removeEventListener('pointerup', endDragRef.current)
+      window.removeEventListener('pointercancel', endDragRef.current)
       scrollTarget.current += -velocityXRef.current * 0.0015
       commitSnap()
     },
-    [commitSnap]
+    [onWindowPointerMove, commitSnap]
+  )
+
+  useEffect(() => {
+    endDragRef.current = endDrag
+  }, [endDrag])
+
+  const onPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (totalItems <= 1) return
+      if (event.pointerType === 'mouse' && event.button !== 0) return
+      pointerIdRef.current = event.pointerId
+      isDraggingRef.current = true
+      didDragRef.current = false
+      startXRef.current = event.clientX
+      lastXRef.current = event.clientX
+      lastTRef.current = performance.now()
+      velocityXRef.current = 0
+      startScrollRef.current = scrollTarget.current
+      window.addEventListener('pointermove', onWindowPointerMove)
+      window.addEventListener('pointerup', endDragRef.current)
+      window.addEventListener('pointercancel', endDragRef.current)
+    },
+    [totalItems, onWindowPointerMove]
   )
 
   const handleSelect = useCallback(
     (originalIndex: number, cardIndex: number) => {
+      if (didDragRef.current) {
+        didDragRef.current = false
+        return
+      }
       const isCentered =
         Math.abs(wrapOffset(cardIndex - smoothScroll.get(), totalItems)) < 0.45
       if (!isCentered) {
@@ -388,6 +405,7 @@ export default function DepthBlurCarousel({
       aria-label={ariaLabel}
       tabIndex={0}
       onKeyDown={handleKeyDown}
+      onPointerDown={onPointerDown}
       style={{
         position: 'relative',
         width: '100%',
@@ -398,6 +416,8 @@ export default function DepthBlurCarousel({
         perspective,
         overflow: 'hidden',
         outline: 'none',
+        cursor: 'grab',
+        touchAction: 'pan-y',
       }}
     >
       <div style={{ position: 'relative', width: 0, height: 0, transformStyle: 'preserve-3d' }}>
@@ -417,22 +437,6 @@ export default function DepthBlurCarousel({
           />
         ))}
       </div>
-
-      <div
-        aria-hidden
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-        onLostPointerCapture={endDrag}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 9999,
-          cursor: 'grab',
-          touchAction: 'pan-y',
-        }}
-      />
 
       <div
         aria-hidden
