@@ -156,7 +156,7 @@ export async function recordPaymentStatusHistory(params: {
     payment_attempt_id: params.paymentAttemptId,
     old_status: params.oldStatus,
     new_status: params.newStatus,
-    actor_id: params.actorId,
+    actor_id: params.actorId || null,
     actor_role: params.actorRole,
     reason: params.reason.slice(0, 500),
     approved_by_admin_id: params.approvedByAdminId ?? null,

@@ -49,7 +49,7 @@ export type ShopShippingAddress = {
 export type ShopOrder = {
   id: string
   order_number: string
-  user_id: string
+  user_id: string | null
   items: ShopOrderItem[]
   subtotal: number
   discount_amount: number
@@ -358,7 +358,7 @@ export function mapShopOrderRow(row: Record<string, unknown>): ShopOrder {
   return {
     id: String(row.id),
     order_number: String(row.order_number),
-    user_id: String(row.user_id),
+    user_id: row.user_id ? String(row.user_id) : null,
     items: Array.isArray(row.items) ? row.items as ShopOrderItem[] : [],
     subtotal: normalizeShopOrderMoney(row.subtotal),
     discount_amount: normalizeShopOrderMoney(row.discount_amount),

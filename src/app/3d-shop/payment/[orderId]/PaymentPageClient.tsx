@@ -34,6 +34,7 @@ export default function PaymentPageClient({
   orderSummary,
   themeColor,
   theme,
+  authHeaders,
 }: {
   orderId: string
   createOrderEndpoint: string
@@ -51,6 +52,8 @@ export default function PaymentPageClient({
   orderSummary: ReactNode
   themeColor?: string
   theme?: Partial<PaymentTheme>
+  /** Extra headers (e.g. guest order access token) forwarded to the payment APIs. */
+  authHeaders?: Record<string, string>
 }) {
   const clearCart = useShopCartStore((state) => state.clearCart)
 
@@ -74,6 +77,7 @@ export default function PaymentPageClient({
       onSuccessAction={clearCart}
       themeColor={themeColor}
       theme={theme}
+      authHeaders={authHeaders}
     />
   )
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { getPaymentStatusForOrder } from '@/lib/payments/service'
+import { verifyGuestOrderAccess } from '@/lib/shop/guest-access'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -11,13 +12,15 @@ function normalizeText(value: string | string[] | undefined) {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ internalOrderType: string; orderId: string }> }
 ) {
   const supabase = await createServerSupabaseClient()
   const { data: authData, error: authError } = await supabase.auth.getUser()
-  if (authError || !authData.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  let userId: string | null = null
+  if (!authError && authData.user) {
+    userId = authData.user.id
   }
 
   try {
@@ -29,10 +32,27 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid order.' }, { status: 400 })
     }
 
+    // Guest polling: token comes as ?token= (EventSource-friendly) or header.
+    let guestToken = request.headers.get('x-guest-order-token')?.trim() || ''
+    if (!guestToken) {
+      const url = new URL(request.url)
+      guestToken = url.searchParams.get('token')?.trim() || ''
+    }
+
+    if (!userId) {
+      if (internalOrderType !== 'shop_order' || !guestToken) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      const access = await verifyGuestOrderAccess(orderId, guestToken)
+      if (!access) {
+        return NextResponse.json({ error: 'Order not found.' }, { status: 404 })
+      }
+    }
+
     const result = await getPaymentStatusForOrder({
       type: internalOrderType,
       id: orderId,
-      customerId: authData.user.id,
+      ...(userId ? { customerId: userId } : {}),
     })
 
     return NextResponse.json({
@@ -52,4 +72,3 @@ export async function GET(
     )
   }
 }
-

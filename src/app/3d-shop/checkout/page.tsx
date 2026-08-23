@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
 import ShopShell from '@/components/shop/ShopShell'
 import { getCurrentUserProfile } from '@/lib/auth/server'
 import { getSettings } from '@/lib/settings'
@@ -16,12 +15,14 @@ export const metadata: Metadata = {
 
 export default async function ShopCheckoutPage() {
   const auth = await getCurrentUserProfile()
-  if (!auth) redirect('/login?next=%2F3d-shop%2Fcheckout')
+  // Guest checkout is allowed: no login wall. Authenticated users keep their
+  // saved-address flow; guests provide contact email + consent instead.
   const settings = await getSettings()
 
   return (
     <ShopShell transparentNav>
       <ShopCheckoutClient
+        isAuthenticated={Boolean(auth)}
         deliveryChargeThreshold={settings.deliveryChargeThreshold}
         defaultDeliveryCharge={settings.defaultDeliveryCharge}
       />

@@ -8,6 +8,7 @@ import {
   ORDERS_TABLE_UNAVAILABLE_MESSAGE,
 } from '@/lib/quote/supabase-errors'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { claimGuestOrdersForUser } from '@/lib/shop/claim-guest-orders'
 import OrdersListClient from './OrdersListClient'
 
 type OrderRow = {
@@ -89,6 +90,9 @@ export const metadata: Metadata = {
 
 export default async function MyOrdersPage() {
   const auth = await requireUser('/my-orders')
+  // Lazy safety net: attach any guest orders flagged for this account (e.g.
+  // placed via guest checkout before this login). Fire-and-forget, never blocks.
+  claimGuestOrdersForUser(auth.user.id).catch(() => undefined)
   const supabase = await createServerSupabaseClient()
   const { data: orders, error } = await supabase
     .from('orders')

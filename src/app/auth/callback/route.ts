@@ -6,6 +6,7 @@ import { upsertProfileForUser } from '@/lib/auth/profile'
 import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/config'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { retireSyntheticWhatsappUser } from '@/lib/account-linking/merge'
+import { claimGuestOrdersForUser } from '@/lib/shop/claim-guest-orders'
 
 function isGoogleSignIn(user: { identities?: Array<{ provider?: string }> }): boolean {
   return user.identities?.some((id) => id.provider === 'google') ?? false
@@ -129,6 +130,17 @@ export async function GET(request: NextRequest) {
         await upsertProfileForUser(supabase, user)
       } catch {
         // Do not block login if profile sync fails; downstream code can recover.
+      }
+
+      // Claim any guest orders awaiting this account (silent email match at
+      // checkout set claim_candidate_user_id). Authenticated now = inbox proven.
+      try {
+        const claimed = await claimGuestOrdersForUser(user.id)
+        if (claimed > 0) {
+          console.log(`[guest-claim] attached ${claimed} guest order(s) to user ${user.id}`)
+        }
+      } catch {
+        // Do not block login if claiming fails; it can be retried lazily.
       }
 
       if (isGoogleSignIn(user)) {

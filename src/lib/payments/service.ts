@@ -1,6 +1,7 @@
 import { getSettings } from '@/lib/settings'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
+import { verifyGuestOrderAccess } from '@/lib/shop/guest-access'
 import { notifyPaymentCaptured, notifyPaymentFailed, notifyRefundProcessed } from './email-triggers'
 import { notifyWhatsAppPaymentCaptured } from '@/lib/whatsapp/notifications'
 import { sendCapiEvents, buildPurchaseEvent } from '@/lib/meta/conversions-api'
@@ -97,18 +98,32 @@ async function sendPurchaseCapiEvent(attempt: PaymentAttemptRecord) {
       contents = [{ id: attempt.id, quantity: 1, item_price: attempt.amount_paise / 100 }]
     }
 
-    const { data: profile } = await adminSupabase
-      .from('profiles')
-      .select('email, phone_number')
-      .eq('id', attempt.customer_id)
-      .maybeSingle()
+    // Guest orders have no profile row — fall back to the checkout snapshot.
+    const snapshotCustomer = isRecord(attempt.metadata?.customer)
+      ? asRecord(attempt.metadata.customer)
+      : {}
+
+    let customerEmail: string | undefined
+    let customerPhone: string | undefined
+    if (attempt.customer_id) {
+      const { data: profile } = await adminSupabase
+        .from('profiles')
+        .select('email, phone_number')
+        .eq('id', attempt.customer_id)
+        .maybeSingle()
+      customerEmail = profile?.email
+      customerPhone = profile?.phone_number
+    } else {
+      customerEmail = normalizeText(snapshotCustomer.email) || undefined
+      customerPhone = normalizeText(snapshotCustomer.contact) || undefined
+    }
 
     const event = buildPurchaseEvent({
       eventId: generateEventId(),
       eventSourceUrl,
-      customerEmail: profile?.email,
-      customerPhone: profile?.phone_number,
-      customerId: attempt.customer_id,
+      customerEmail,
+      customerPhone,
+      customerId: attempt.customer_id ?? undefined,
       contentIds,
       contents,
       value: attempt.amount_paise / 100,
@@ -144,12 +159,12 @@ function getPaymentPurposeForOrder(type: InternalOrderType) {
   return type === 'shop_order' ? 'shop_order' : 'custom_quote_full_payment'
 }
 
-function systemReason(actorId: string, reason = 'Gateway event'): PaymentStatusUpdateReason {
-  return { actorId, actorRole: 'system', reason }
+function systemReason(actorId: string | null | undefined, reason = 'Gateway event'): PaymentStatusUpdateReason {
+  return { actorId: actorId ?? '', actorRole: 'system', reason }
 }
 
-function customerReason(actorId: string, reason: string): PaymentStatusUpdateReason {
-  return { actorId, actorRole: 'customer', reason }
+function customerReason(actorId: string | null | undefined, reason: string): PaymentStatusUpdateReason {
+  return { actorId: actorId ?? '', actorRole: 'customer', reason }
 }
 
 function financeReason(actorId: string, reason: string): PaymentStatusUpdateReason {
@@ -302,6 +317,7 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
   }
 
   const paymentPurpose = params.paymentPurpose ?? getPaymentPurposeForOrder(params.type)
+  const orderUserId = order.user_id ? String(order.user_id) : null
   const existing = await fetchActivePaymentAttempt({
     internalOrderType: params.type,
     internalOrderId: params.id,
@@ -348,7 +364,7 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
         failure_code: 'amount_changed',
         failure_description: 'A newer payment attempt was created after the order changed.',
       },
-      systemReason(String(order.user_id), 'Amount changed before new attempt')
+      systemReason(orderUserId, 'Amount changed before new attempt')
     )
   }
 
@@ -367,7 +383,7 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
   const paymentAttempt = await upsertPaymentAttempt({
     internal_order_type: params.type,
     internal_order_id: params.id,
-    customer_id: String(order.user_id),
+    customer_id: orderUserId,
     provider: 'razorpay',
     payment_purpose: paymentPurpose,
     provider_order_id: null,
@@ -418,7 +434,7 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
         razorpay: providerOrder,
       },
     },
-    customerReason(String(order.user_id), 'Payment attempt created')
+    customerReason(orderUserId, 'Payment attempt created')
   )
 
   const currentOrderStatus: import('./types').PaymentStatus =
@@ -444,11 +460,11 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
       payment_refund_status: 'none',
       payment_refund_amount_paise: 0,
     },
-    reason: customerReason(String(order.user_id), 'Payment attempt created'),
+    reason: customerReason(orderUserId, 'Payment attempt created'),
   })
 
   await insertPaymentAuditLog({
-    actor_id: String(order.user_id),
+    actor_id: orderUserId,
     actor_role: 'customer',
     action: 'payment_attempt_created',
     entity_type: params.type,
@@ -499,7 +515,10 @@ export type VerifyCheckoutResult = {
 export async function verifyCheckoutPayment(params: {
   internalOrderType: InternalOrderType
   internalOrderId: string
-  customerId: string
+  /** auth.users id of the caller — required for logged-in orders. */
+  customerId?: string | null
+  /** Guest order access token — required instead of customerId for guest orders. */
+  guestAccessToken?: string | null
   razorpayOrderId: string
   razorpayPaymentId: string
   razorpaySignature: string
@@ -509,14 +528,22 @@ export async function verifyCheckoutPayment(params: {
     throw new Error(`Payment attempt not found (provider_order_id: ${params.razorpayOrderId}).`)
   }
 
-  if (attempt.customer_id !== params.customerId) {
-    throw new Error('You are not allowed to verify this payment.')
+  // Ownership check: logged-in orders require the authenticated owner; guest
+  // orders (customer_id IS NULL) require a valid guest access token. Both
+  // failure paths return the same message.
+  const notAllowed = new Error('You are not allowed to verify this payment.')
+  if (attempt.customer_id) {
+    if (attempt.customer_id !== params.customerId) {
+      throw notAllowed
+    }
+  } else if (!params.guestAccessToken || !(await verifyGuestOrderAccess(params.internalOrderId, params.guestAccessToken))) {
+    throw notAllowed
   }
 
   const order = await fetchInternalOrder({
     type: params.internalOrderType,
     id: params.internalOrderId,
-    customerId: params.customerId,
+    ...(attempt.customer_id ? { customerId: attempt.customer_id } : {}),
   })
   if (!order) throw new Error(`Order not found (type: ${params.internalOrderType}, id: ${params.internalOrderId}).`)
 
@@ -537,7 +564,7 @@ export async function verifyCheckoutPayment(params: {
         failure_code: 'invalid_signature',
         failure_description: 'Checkout signature validation failed.',
       },
-      systemReason(params.customerId, 'Checkout signature validation failed')
+      systemReason(params.customerId ?? '', 'Checkout signature validation failed')
     )
     await updateOrderPaymentStatus({
       type: params.internalOrderType,
@@ -548,7 +575,7 @@ export async function verifyCheckoutPayment(params: {
         provider_payment_id: params.razorpayPaymentId,
         payment_failed_at: new Date().toISOString(),
       },
-      reason: systemReason(params.customerId, 'Checkout signature validation failed'),
+      reason: systemReason(params.customerId ?? '', 'Checkout signature validation failed'),
     })
     throw new Error(`Payment verification failed (invalid signature, provider_order_id: ${params.razorpayOrderId}).`)
   }
@@ -592,7 +619,7 @@ export async function verifyCheckoutPayment(params: {
         },
       },
     },
-    customerReason(params.customerId, 'Checkout payment verified')
+    customerReason(params.customerId ?? '', 'Checkout payment verified')
   )
 
   await updateOrderPaymentStatus({
@@ -608,7 +635,7 @@ export async function verifyCheckoutPayment(params: {
       payment_verified_at: captured ? new Date().toISOString() : null,
       payment_failed_at: providerPayment.status === 'failed' ? new Date().toISOString() : null,
     },
-    reason: customerReason(params.customerId, captured ? 'Payment captured' : `Payment ${nextStatus}`),
+    reason: customerReason(params.customerId ?? '', captured ? 'Payment captured' : `Payment ${nextStatus}`),
   })
 
   if (captured) {
@@ -624,7 +651,7 @@ export async function verifyCheckoutPayment(params: {
     }
 
     await insertPaymentAuditLog({
-      actor_id: params.customerId,
+      actor_id: params.customerId ?? null,
       actor_role: 'customer',
       action: 'payment_attempt_verified',
       entity_type: params.internalOrderType,
@@ -1310,7 +1337,7 @@ export async function getPaymentAttemptDetail(paymentAttemptId: string) {
   const internalOrder = await fetchInternalOrder({
     type: attempt.internal_order_type,
     id: attempt.internal_order_id,
-    customerId: attempt.customer_id,
+    customerId: attempt.customer_id ?? undefined,
   })
 
   return {

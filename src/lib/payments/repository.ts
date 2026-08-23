@@ -74,7 +74,7 @@ export function mapPaymentAttemptRow(row: Record<string, unknown>): PaymentAttem
     id: String(row.id),
     internal_order_type: String(row.internal_order_type) as InternalOrderType,
     internal_order_id: String(row.internal_order_id),
-    customer_id: String(row.customer_id),
+    customer_id: row.customer_id ? String(row.customer_id) : null,
     provider: String(row.provider) as PaymentProvider,
     payment_purpose: String(row.payment_purpose) as PaymentPurpose,
     provider_order_id: row.provider_order_id ? String(row.provider_order_id) : null,

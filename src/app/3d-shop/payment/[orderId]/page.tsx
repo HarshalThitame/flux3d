@@ -12,11 +12,13 @@ import { buildPublicBusinessProfile } from '@/lib/public-business'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { formatShopPrice } from '@/lib/shop/selection'
 import { mapShopOrderRow, type ShopOrder } from '@/lib/shop/orders'
+import { verifyGuestOrderAccess } from '@/lib/shop/guest-access'
 
 export const dynamic = 'force-dynamic'
 
 type PaymentPageProps = {
   params: Promise<{ orderId: string }>
+  searchParams: Promise<{ token?: string }>
 }
 
 export async function generateMetadata({ params }: PaymentPageProps): Promise<Metadata> {
@@ -32,13 +34,12 @@ export async function generateMetadata({ params }: PaymentPageProps): Promise<Me
   }
 }
 
-async function getOrder(orderId: string, userId: string) {
+async function getOrder(orderId: string) {
   const supabase = createAdminSupabaseClient()
   const { data, error } = await supabase
     .from('shelf_orders')
     .select('*')
     .eq('id', orderId)
-    .eq('user_id', userId)
     .maybeSingle()
 
   if (error) throw new Error(error.message)
@@ -66,15 +67,38 @@ const SHOP_GOLD_THEME = {
   containerRadius: 'var(--shop-radius-xl)',
 }
 
-export default async function RazorpayShopPaymentPage({ params }: PaymentPageProps) {
+export default async function RazorpayShopPaymentPage({ params, searchParams }: PaymentPageProps) {
   const { orderId } = await params
+  const { token: guestToken } = await searchParams
   const auth = await getCurrentUserProfile()
-  if (!auth) redirect(`/login?next=/3d-shop/payment/${encodeURIComponent(orderId)}`)
-  const order = await getOrder(orderId, auth.profile.id)
+  const order = await getOrder(orderId)
   if (!order) notFound()
 
+  // Authorization: logged-in orders require the owner; guest orders (no
+  // user_id) require the guest access token issued at checkout.
+  let customerEmail = auth?.profile.email ?? ''
+  if (order.user_id) {
+    if (!auth || auth.profile.id !== order.user_id) {
+      redirect(`/login?next=/3d-shop/payment/${encodeURIComponent(orderId)}`)
+    }
+  } else {
+    const access = await verifyGuestOrderAccess(order.id, guestToken ?? '')
+    if (!access) notFound()
+    customerEmail =
+      (order.payment_snapshot && typeof order.payment_snapshot === 'object'
+        ? String((order.payment_snapshot as Record<string, unknown>).guestEmail ?? '')
+        : '') ||
+      order.shipping_address.phone
+  }
+
+  const isGuestOrder = !order.user_id
+
   if (order.payment_status === 'paid') {
-    redirect(`/3d-shop/order/${order.id}`)
+    redirect(
+      isGuestOrder
+        ? `/3d-shop/track/${order.id}?token=${encodeURIComponent(guestToken ?? '')}`
+        : `/3d-shop/order/${order.id}`
+    )
   }
 
   const settings = await getSettings()
@@ -209,7 +233,11 @@ export default async function RazorpayShopPaymentPage({ params }: PaymentPagePro
                 createOrderEndpoint="/api/payments/razorpay/create-order"
                 verifyEndpoint="/api/payments/razorpay/verify"
                 statusEndpoint={`/api/payments/status/shop_order/${order.id}`}
-                successHref={`/3d-shop/order/${order.id}?payment=success`}
+                successHref={
+                  isGuestOrder
+                    ? `/3d-shop/track/${order.id}?token=${encodeURIComponent(guestToken ?? '')}`
+                    : `/3d-shop/order/${order.id}?payment=success`
+                }
                 orderNumber={order.order_number}
                 amountPaise={Math.round(Number(order.total_amount) * 100)}
                 currency="INR"
@@ -217,9 +245,10 @@ export default async function RazorpayShopPaymentPage({ params }: PaymentPagePro
                 subtitle="Verify the order once, then complete checkout in a trusted payment modal."
                 supportEmail={profile.supportEmail}
                 supportPhone={profile.supportPhone}
+                authHeaders={isGuestOrder ? { 'x-guest-order-token': guestToken ?? '' } : undefined}
                 customer={{
                   name: order.shipping_address.name,
-                  email: auth.profile.email,
+                  email: customerEmail,
                   contact: order.shipping_address.phone,
                 }}
                 orderSummary={(

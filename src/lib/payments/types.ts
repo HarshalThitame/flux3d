@@ -28,7 +28,8 @@ export type PaymentAttemptRecord = {
   id: string
   internal_order_type: InternalOrderType
   internal_order_id: string
-  customer_id: string
+  /** auth.users id, or null for guest (unauthenticated) checkout orders. */
+  customer_id: string | null
   provider: PaymentProvider
   payment_purpose: PaymentPurpose
   provider_order_id: string | null

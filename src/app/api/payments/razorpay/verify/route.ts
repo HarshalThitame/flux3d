@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { verifyCheckoutPayment } from '@/lib/payments/service'
-import { rateLimitResponse } from '@/lib/rate-limit'
+import { rateLimitResponse, buildRateLimitKey, rateLimitCheck } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -22,18 +22,11 @@ export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient()
   const { data: authData, error: authError } = await supabase.auth.getUser()
 
-  if (authError || !authData.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const guestToken = request.headers.get('x-guest-order-token')?.trim() || ''
+  let userId: string | null = null
 
-  const rateLimit = await rateLimitResponse(request, {
-    prefix: 'razorpay_verify',
-    windowSeconds: 60,
-    maxRequests: 20,
-    userId: authData.user.id,
-  })
-  if (!rateLimit.success) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  if (!authError && authData.user) {
+    userId = authData.user.id
   }
 
   try {
@@ -48,10 +41,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing verification details.' }, { status: 400 })
     }
 
+    // Guest orders are authorized inside verifyCheckoutPayment via the token;
+    // here we only require *some* credential before doing any work.
+    if (!userId && !guestToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const rateLimitOptions = {
+      prefix: 'razorpay_verify',
+      windowSeconds: 60,
+      maxRequests: 20,
+      ...(userId ? { userId } : {}),
+    }
+    const rateLimit = userId
+      ? await rateLimitResponse(request, rateLimitOptions)
+      : await rateLimitCheck(buildRateLimitKey(request, `razorpay_verify:${internalOrderId}`), 60, 20)
+    if (!rateLimit.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    }
+
     const result = await verifyCheckoutPayment({
       internalOrderType,
       internalOrderId,
-      customerId: authData.user.id,
+      customerId: userId,
+      guestAccessToken: guestToken || null,
       razorpayOrderId,
       razorpayPaymentId,
       razorpaySignature,
@@ -72,4 +85,3 @@ export async function POST(request: Request) {
     )
   }
 }
-

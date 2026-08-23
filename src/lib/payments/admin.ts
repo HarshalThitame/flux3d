@@ -15,7 +15,7 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
 }
 
-export function mapPaymentData(attempt: PaymentAttemptRecord, customerName = 'Unknown', customerEmail: string | null = null): PaymentData & { metadata: Record<string, unknown>; customerId: string } {
+export function mapPaymentData(attempt: PaymentAttemptRecord, customerName = 'Unknown', customerEmail: string | null = null): PaymentData & { metadata: Record<string, unknown>; customerId: string | null } {
   const metadata = asRecord(attempt.metadata)
   return {
     id: attempt.id,

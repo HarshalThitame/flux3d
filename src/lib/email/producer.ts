@@ -34,7 +34,7 @@ export async function enqueueEmail(
     const { data: blockedLog } = await supabase
       .from('email_logs')
       .insert({
-        user_id: payload.userId ?? null,
+        user_id: payload.userId || null,
         recipient: payload.recipient,
         email_type: payload.emailType,
         subject: payload.subject ?? buildSubject(payload),
@@ -61,7 +61,7 @@ export async function enqueueEmail(
       const { data: blockedLog } = await supabase
         .from('email_logs')
         .insert({
-          user_id: payload.userId ?? null,
+          user_id: payload.userId || null,
           recipient: payload.recipient,
           email_type: payload.emailType,
           subject: payload.subject ?? buildSubject(payload),
@@ -82,7 +82,7 @@ export async function enqueueEmail(
 
   // Step 1: Insert audit log
   const logInsert: Partial<EmailLogRow> = {
-    user_id: payload.userId ?? null,
+    user_id: payload.userId || null,
     recipient: payload.recipient,
     email_type: payload.emailType,
     subject: payload.subject ?? buildSubject(payload),

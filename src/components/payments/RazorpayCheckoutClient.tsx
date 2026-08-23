@@ -110,6 +110,8 @@ type Props = {
   orderSummary: ReactNode
   themeColor?: string
   theme?: Partial<PaymentTheme>
+  /** Extra headers (e.g. guest order access token) sent with every payment API call. */
+  authHeaders?: Record<string, string>
   onSuccessAction?: () => void
 }
 
@@ -132,6 +134,7 @@ export default function RazorpayCheckoutClient({
   orderSummary,
   themeColor = '#0f172a',
   theme: themeOverrides,
+  authHeaders,
   onSuccessAction,
 }: Props) {
   const theme = { ...DEFAULT_THEME, ...themeOverrides }
@@ -176,7 +179,7 @@ export default function RazorpayCheckoutClient({
       while (!cancelled && attempts < 24) {
         attempts += 1
         try {
-          const response = await fetch(statusEndpoint, { credentials: 'include' })
+          const response = await fetch(statusEndpoint, { credentials: 'include', headers: authHeaders })
           const data = await response.json().catch(() => ({})) as { paymentStatus?: string; error?: string }
           if (!response.ok) {
             throw new Error(data.error || 'Could not confirm payment.')
@@ -228,7 +231,7 @@ export default function RazorpayCheckoutClient({
     try {
       const response = await fetch(createOrderEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         credentials: 'include',
         body: JSON.stringify({
           internalOrderType,
@@ -290,7 +293,7 @@ export default function RazorpayCheckoutClient({
           try {
             const verifyResponse = await fetch(verifyEndpoint, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', ...authHeaders },
               credentials: 'include',
               body: JSON.stringify({
                 internalOrderType,

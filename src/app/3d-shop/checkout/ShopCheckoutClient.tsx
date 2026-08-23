@@ -27,6 +27,7 @@ type AddressFormState = {
 type PincodeState = 'idle' | 'checking' | 'serviceable' | 'error'
 
 type ShopCheckoutClientProps = {
+  isAuthenticated: boolean
   deliveryChargeThreshold: number
   defaultDeliveryCharge: number
 }
@@ -85,7 +86,23 @@ function getSkuWeight(item: ShopCartItem, weightsBySkuId: Record<string, number>
   return weightsBySkuId[item.skuId] ?? 0
 }
 
+const GUEST_SESSION_STORAGE_KEY = 'flux3d_guest_session_id'
+
+function getOrCreateGuestSessionId(): string {
+  if (typeof window === 'undefined') return ''
+  try {
+    const existing = window.localStorage.getItem(GUEST_SESSION_STORAGE_KEY)
+    if (existing) return existing
+    const next = crypto.randomUUID()
+    window.localStorage.setItem(GUEST_SESSION_STORAGE_KEY, next)
+    return next
+  } catch {
+    return crypto.randomUUID()
+  }
+}
+
 export default function ShopCheckoutClient({
+  isAuthenticated,
   deliveryChargeThreshold,
   defaultDeliveryCharge,
 }: ShopCheckoutClientProps) {
@@ -97,7 +114,6 @@ export default function ShopCheckoutClient({
   const discountAmount = useShopCartStore((state) => state.discountAmount)
   const appliedCoupon = useShopCartStore((state) => state.appliedCoupon)
   const autoApplyOffer = useShopCartStore((state) => state.autoApplyOffer)
-  const clearCart = useShopCartStore((state) => state.clearCart)
   const priceChangedItemIds = useShopCartStore((state) => state.priceChangedItemIds)
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
   const [useNewAddress, setUseNewAddress] = useState(false)
@@ -112,6 +128,9 @@ export default function ShopCheckoutClient({
   const [reviewBanner, setReviewBanner] = useState(false)
   const [affectedItemIds, setAffectedItemIds] = useState<string[]>([])
   const [completedOrderId, setCompletedOrderId] = useState<string | null>(null)
+  const [guestToken, setGuestToken] = useState<string | null>(null)
+  const [guestEmail, setGuestEmail] = useState('')
+  const [guestConsent, setGuestConsent] = useState(false)
   const { withLoading } = useGlobalLoading()
 
   const totals = useMemo(
@@ -141,7 +160,9 @@ export default function ShopCheckoutClient({
     () => addresses.find((address) => address.id === selectedAddressId) ?? null,
     [addresses, selectedAddressId]
   )
-  const showAddressForm = useNewAddress || addresses.length === 0
+  const isGuest = !isAuthenticated
+  // Guests always fill in the manual address form (no saved addresses).
+  const showAddressForm = isGuest || useNewAddress || addresses.length === 0
 
   useEffect(() => {
     if (items.length === 0 && !orderCompletionRef.current) router.replace('/3d-shop/cart')
@@ -166,9 +187,10 @@ export default function ShopCheckoutClient({
   useEffect(() => {
     if (!completedOrderId) return
 
-    router.push(`/3d-shop/payment/${encodeURIComponent(completedOrderId)}`)
+    const suffix = guestToken ? `?token=${encodeURIComponent(guestToken)}` : ''
+    router.push(`/3d-shop/payment/${encodeURIComponent(completedOrderId)}${suffix}`)
     window.setTimeout(() => setCompletedOrderId(null), 0)
-  }, [completedOrderId, router])
+  }, [completedOrderId, guestToken, router])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -294,10 +316,21 @@ export default function ShopCheckoutClient({
       return
     }
 
+    if (isGuest) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())) {
+        setToast('Enter your email for order updates.')
+        return
+      }
+      if (!guestConsent) {
+        setToast('Please accept the data processing consent to continue.')
+        return
+      }
+    }
+
     setIsPlacing(true)
     try {
       await withLoading(async () => {
-        if (showAddressForm && saveAddress) {
+        if (showAddressForm && saveAddress && !isGuest) {
           await addAddress({
             full_name: shippingAddress.name,
             phone: shippingAddress.phone,
@@ -333,6 +366,15 @@ export default function ShopCheckoutClient({
           shippingCharge,
           totalAmount: payableTotal,
           shippingAddress,
+          ...(isGuest
+            ? {
+                guest: {
+                  sessionId: getOrCreateGuestSessionId(),
+                  email: guestEmail.trim().toLowerCase(),
+                },
+                consentDataProcessing: true,
+              }
+            : {}),
         }
 
         const response = await fetch('/api/3d-shop/orders/create', {
@@ -340,7 +382,7 @@ export default function ShopCheckoutClient({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         })
-        const data = await response.json().catch(() => ({})) as { success?: boolean; orderId?: string; error?: string }
+        const data = await response.json().catch(() => ({})) as { success?: boolean; orderId?: string; guestToken?: string; error?: string }
         if (!response.ok || !data.success || !data.orderId) {
           const message = data.error || 'Failed to place order.'
           setToast(message)
@@ -355,6 +397,7 @@ export default function ShopCheckoutClient({
         }
 
         orderCompletionRef.current = true
+        setGuestToken(data.guestToken ?? null)
         setCompletedOrderId(data.orderId)
       }, 'Placing your order…')
     } catch (error) {
@@ -390,6 +433,36 @@ export default function ShopCheckoutClient({
                 </span>
                 <h2 className="font-[var(--shop-font-heading)] text-2xl font-semibold text-[var(--shop-text-primary)]">Delivery Address</h2>
               </div>
+
+              {isGuest && (
+                <div className="mt-5 rounded-2xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] p-4">
+                  <label className="block">
+                    <span className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--shop-text-muted)]">Email for order updates</span>
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      value={guestEmail}
+                      onChange={(event) => setGuestEmail(event.target.value)}
+                      placeholder="you@example.com"
+                      className="mt-2 min-h-[48px] w-full rounded-xl border border-[var(--shop-border-light)] bg-white px-3 text-sm text-[var(--shop-text-primary)] outline-none transition focus:border-[var(--shop-gold)]"
+                    />
+                  </label>
+                  <p className="mt-2 text-xs leading-5 text-[var(--shop-text-secondary)]">
+                    Checkout as guest — no account needed. Your receipt and order-tracking link will be emailed here after payment.
+                  </p>
+                  <label className="mt-3 flex items-start gap-2.5 text-xs leading-5 font-semibold text-[var(--shop-text-secondary)]">
+                    <input
+                      type="checkbox"
+                      checked={guestConsent}
+                      onChange={(event) => setGuestConsent(event.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0"
+                    />
+                    I consent to Flux3D processing my name, contact details and address solely to fulfil this
+                    order, as required by the DPDP Act 2023. This is separate from the{' '}
+                    <a href="/terms" target="_blank" rel="noreferrer" className="underline underline-offset-4">Terms &amp; Conditions</a>.
+                  </label>
+                </div>
+              )}
 
               {addressesLoading ? (
                 <div className="mt-5 rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-4 text-sm text-[var(--shop-text-secondary)]">
@@ -493,15 +566,17 @@ export default function ShopCheckoutClient({
                       {pincodeMessage}
                     </div>
                   )}
-                  <label className="sm:col-span-2 flex items-center gap-3 text-sm font-semibold text-[var(--shop-text-secondary)]">
-                    <input
-                      type="checkbox"
-                      checked={saveAddress}
-                      onChange={(event) => setSaveAddress(event.target.checked)}
-                      className="h-4 w-4"
-                    />
-                    Save this address
-                  </label>
+                  {!isGuest && (
+                    <label className="sm:col-span-2 flex items-center gap-3 text-sm font-semibold text-[var(--shop-text-secondary)]">
+                      <input
+                        type="checkbox"
+                        checked={saveAddress}
+                        onChange={(event) => setSaveAddress(event.target.checked)}
+                        className="h-4 w-4"
+                      />
+                      Save this address
+                    </label>
+                  )}
                 </div>
               )}
             </div>

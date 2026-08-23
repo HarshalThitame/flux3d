@@ -1,6 +1,7 @@
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { sendPaymentReceipt, sendPaymentFailed, sendRefundIssued, sendOrderPlacedCustomer, sendOrderPlacedAdmin } from '@/lib/email/triggers'
 import { reportError } from '@/lib/error-handling'
+import { ensureFreshGuestTrackingToken } from '@/lib/shop/guest-access'
 
 /**
  * Payment lifecycle email triggers.
@@ -67,6 +68,8 @@ async function fetchCustomerProfile(
   supabase: ReturnType<typeof createAdminSupabaseClient>,
   userId: string
 ): Promise<{ email: string; name: string } | null> {
+  if (!userId) return null
+
   const { data, error } = await supabase
     .from('profiles')
     .select('email, full_name')
@@ -97,7 +100,7 @@ async function sendShopOrderReceipt(
   supabase: ReturnType<typeof createAdminSupabaseClient>,
   attempt: {
     id: string
-    customer_id: string
+    customer_id: string | null
     internal_order_id: string
     amount_paise: number
     payment_method: string | null
@@ -107,7 +110,7 @@ async function sendShopOrderReceipt(
   const { data: order } = await supabase
     .from('shelf_orders')
     .select(
-      'id, order_number, user_id, items, shipping_address, payment_snapshot, provider_payment_id, payment_method, payment_verified_at, placed_at'
+      'id, order_number, user_id, items, shipping_address, payment_snapshot, provider_payment_id, payment_method, payment_verified_at, placed_at, guest_contact'
     )
     .eq('id', attempt.internal_order_id)
     .maybeSingle()
@@ -118,15 +121,46 @@ async function sendShopOrderReceipt(
   }
 
   const row = order as Record<string, unknown>
-  const userId = String(row.user_id ?? attempt.customer_id)
+  const userId = row.user_id ? String(row.user_id) : String(attempt.customer_id ?? '')
   const orderNumber = String(row.order_number ?? attempt.internal_order_id)
   const orderId = String(row.id ?? attempt.internal_order_id)
 
-  // Fetch email + name from profiles (order tables don't have these columns)
-  const profile = await fetchCustomerProfile(supabase, userId)
-  if (!profile) {
-    console.warn('[payments/email] No profile email for shop order', orderNumber, 'user', userId)
-    return
+  // Guest orders: email comes from guest_contact (no profile row exists), and
+  // the "order link" is a fresh token-gated tracking URL instead of an
+  // account page. Rotating the token here invalidates earlier links safely.
+  const guestContact =
+    typeof row.guest_contact === 'object' && row.guest_contact !== null
+      ? (row.guest_contact as Record<string, unknown>)
+      : {}
+  const isGuestOrder = !row.user_id
+
+  let customerEmail: string
+  let customerName: string
+  let orderUrl: string
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'
+
+  if (isGuestOrder) {
+    customerEmail = typeof guestContact.email === 'string' ? guestContact.email.trim() : ''
+    customerName = 'Customer'
+    const rawToken = await ensureFreshGuestTrackingToken(orderId)
+    orderUrl = rawToken
+      ? `${siteUrl}/3d-shop/track/${orderId}?token=${encodeURIComponent(rawToken)}`
+      : `${siteUrl}/3d-shop/track/${orderId}`
+    if (!customerEmail) {
+      console.warn('[payments/email] Guest shop order has no contact email:', orderNumber)
+      return
+    }
+  } else {
+    // Fetch email + name from profiles (order tables don't have these columns)
+    const profile = await fetchCustomerProfile(supabase, userId)
+    if (!profile) {
+      console.warn('[payments/email] No profile email for shop order', orderNumber, 'user', userId)
+      return
+    }
+    customerEmail = profile.email
+    customerName = profile.name
+    orderUrl = `${siteUrl}/3d-shop/order/${orderId}`
   }
 
   // Deduplication: skip if already sent
@@ -164,15 +198,13 @@ async function sendShopOrderReceipt(
   const paymentMethod = formatMethod(String(row.payment_method ?? attempt.payment_method))
   const verifiedAt = String(row.payment_verified_at ?? new Date().toISOString())
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'
-
   await sendPaymentReceipt(
-    userId,
-    profile.email,
+    userId || '',
+    customerEmail,
     orderNumber,
-    String(shippingAddress.name ?? profile.name),
+    String(shippingAddress.name ?? customerName),
     formatDate(String(row.placed_at)),
-    `${siteUrl}/3d-shop/order/${orderId}`,
+    orderUrl,
     items,
     {
       subtotal: `₹${subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
@@ -192,7 +224,7 @@ async function sendShopOrderReceipt(
       status: 'Paid',
     },
     {
-      name: String(shippingAddress.name ?? profile.name),
+      name: String(shippingAddress.name ?? customerName),
       phone: String(shippingAddress.phone ?? ''),
       line1: String(shippingAddress.line1 ?? ''),
       line2: String(shippingAddress.line2 ?? '') || null,
@@ -210,8 +242,8 @@ async function sendShopOrderReceipt(
     price: `₹${(Number(it.unitPrice ?? 0) * Number(it.quantity ?? 1)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
   }))
 
-  sendOrderPlacedCustomer(userId, profile.email, orderNumber, String(shippingAddress.name ?? profile.name), formatMoney(attempt.amount_paise), orderPlacedItems, `${siteUrl}/3d-shop/order/${orderId}`).catch((error) => reportError(error, 'Shop order-placed customer email failed', { module: 'email', level: 'warn', tags: { flow: 'payment_captured', orderId } }))
-  sendOrderPlacedAdmin('', orderNumber, profile.email, profile.name, formatMoney(attempt.amount_paise), `${siteUrl}/admin/orders/${orderId}`).catch((error) => reportError(error, 'Shop order-placed admin email failed', { module: 'email', level: 'warn', tags: { flow: 'payment_captured', orderId } }))
+  sendOrderPlacedCustomer(userId || '', customerEmail, orderNumber, String(shippingAddress.name ?? customerName), formatMoney(attempt.amount_paise), orderPlacedItems, orderUrl).catch((error) => reportError(error, 'Shop order-placed customer email failed', { module: 'email', level: 'warn', tags: { flow: 'payment_captured', orderId } }))
+  sendOrderPlacedAdmin('', orderNumber, customerEmail, customerName, formatMoney(attempt.amount_paise), `${siteUrl}/admin/orders/${orderId}`).catch((error) => reportError(error, 'Shop order-placed admin email failed', { module: 'email', level: 'warn', tags: { flow: 'payment_captured', orderId } }))
 }
 
 // ============================================================================
@@ -378,7 +410,7 @@ async function sendCustomQuoteReceipt(
 export async function notifyPaymentCaptured(
   attempt: {
     id: string
-    customer_id: string
+    customer_id: string | null
     internal_order_type: 'shop_order' | 'custom_quote'
     internal_order_id: string
     amount_paise: number
@@ -402,7 +434,7 @@ export async function notifyPaymentCaptured(
 export async function notifyPaymentFailed(
   attempt: {
     id: string
-    customer_id: string
+    customer_id: string | null
     internal_order_type: 'shop_order' | 'custom_quote'
     internal_order_id: string
     amount_paise: number
@@ -413,7 +445,7 @@ export async function notifyPaymentFailed(
     const table = attempt.internal_order_type === 'shop_order' ? 'shelf_orders' : 'orders'
     const { data: order } = await supabase
       .from(table)
-      .select('order_number, user_id')
+      .select('id, order_number, user_id, guest_contact')
       .eq('id', attempt.internal_order_id)
       .maybeSingle()
 
@@ -423,19 +455,38 @@ export async function notifyPaymentFailed(
     }
 
     const row = order as Record<string, unknown>
-    const userId = String(row.user_id ?? attempt.customer_id)
+    const userId = row.user_id ? String(row.user_id) : String(attempt.customer_id ?? '')
     const orderNumber = String(row.order_number ?? attempt.internal_order_id)
 
-    const profile = await fetchCustomerProfile(supabase, userId)
-    if (!profile) {
-      console.warn('[payments/email] No profile email for failed payment order', orderNumber)
-      return
+    let email: string
+    let name: string
+    let retryUrl: string
+
+    if (!row.user_id && typeof row.guest_contact === 'object' && row.guest_contact !== null) {
+      // Guest shop order — retry link points at the token-gated tracking page.
+      const guestContact = row.guest_contact as Record<string, unknown>
+      email = typeof guestContact.email === 'string' ? guestContact.email.trim() : ''
+      name = 'Customer'
+      if (!email) return
+      const orderIdForUrl = String(order.id ?? attempt.internal_order_id)
+      const rawToken = await ensureFreshGuestTrackingToken(orderIdForUrl)
+      retryUrl = rawToken
+        ? `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'}/3d-shop/track/${orderIdForUrl}?token=${encodeURIComponent(rawToken)}`
+        : `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'}/3d-shop/track/${orderIdForUrl}`
+    } else {
+      const profile = await fetchCustomerProfile(supabase, userId)
+      if (!profile) {
+        console.warn('[payments/email] No profile email for failed payment order', orderNumber)
+        return
+      }
+      email = profile.email
+      name = profile.name
+      retryUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'}/orders/${attempt.internal_order_id}/retry`
     }
 
     const amount = formatMoney(attempt.amount_paise)
-    const retryUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'}/orders/${attempt.internal_order_id}/retry`
 
-    await sendPaymentFailed(userId, profile.email, orderNumber, profile.name, amount, retryUrl)
+    await sendPaymentFailed(userId, email, orderNumber, name, amount, retryUrl)
   } catch (err) {
     console.error('[payments/email] notifyPaymentFailed failed:', err)
   }
@@ -444,7 +495,7 @@ export async function notifyPaymentFailed(
 export async function notifyRefundProcessed(
   attempt: {
     id: string
-    customer_id: string
+    customer_id: string | null
     internal_order_type: 'shop_order' | 'custom_quote'
     internal_order_id: string
   },
@@ -455,7 +506,7 @@ export async function notifyRefundProcessed(
     const table = attempt.internal_order_type === 'shop_order' ? 'shelf_orders' : 'orders'
     const { data: order } = await supabase
       .from(table)
-      .select('order_number, user_id')
+      .select('order_number, user_id, guest_contact')
       .eq('id', attempt.internal_order_id)
       .maybeSingle()
 
@@ -465,21 +516,33 @@ export async function notifyRefundProcessed(
     }
 
     const row = order as Record<string, unknown>
-    const userId = String(row.user_id ?? attempt.customer_id)
+    const userId = row.user_id ? String(row.user_id) : String(attempt.customer_id ?? '')
     const orderNumber = String(row.order_number ?? attempt.internal_order_id)
     const refundAmount = formatMoney(refundAmountPaise)
 
-    const profile = await fetchCustomerProfile(supabase, userId)
-    if (!profile) {
-      console.warn('[payments/email] No profile email for refund order', orderNumber)
-      return
+    let email: string
+    let name: string
+
+    if (!row.user_id && typeof row.guest_contact === 'object' && row.guest_contact !== null) {
+      const guestContact = row.guest_contact as Record<string, unknown>
+      email = typeof guestContact.email === 'string' ? guestContact.email.trim() : ''
+      name = 'Customer'
+      if (!email) return
+    } else {
+      const profile = await fetchCustomerProfile(supabase, userId)
+      if (!profile) {
+        console.warn('[payments/email] No profile email for refund order', orderNumber)
+        return
+      }
+      email = profile.email
+      name = profile.name
     }
 
     await sendRefundIssued(
       userId,
-      profile.email,
+      email,
       orderNumber,
-      profile.name,
+      name,
       refundAmount,
       'Razorpay (original payment method)',
       '5-7 business days',
