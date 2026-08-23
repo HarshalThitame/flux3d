@@ -1,15 +1,13 @@
 'use client'
 
-import { useCallback, useMemo, useState, useSyncExternalStore } from 'react'
-import { createPortal } from 'react-dom'
+import { useCallback, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowRight, Box, MousePointer2, Sparkles } from 'lucide-react'
+import { ArrowRight, Box, MousePointer2 } from 'lucide-react'
 import DepthBlurCarouselBoundary from '@/components/shop/DepthBlurCarouselBoundary'
-import ProductModelModal from '@/components/shop/ProductModelModal'
 import { getShopProductImages } from '@/lib/shop/selection'
-import type { ShopHomeData, ShopPublicProduct } from '@/lib/shop/public-types'
+import type { ShopHomeData } from '@/lib/shop/public-types'
 
 const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1]
 const MAX_ARC_ITEMS = 12
@@ -17,12 +15,6 @@ const MAX_ARC_ITEMS = 12
 export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
   const router = useRouter()
   const [activeIndex, setActiveIndex] = useState(0)
-  const [modelProduct, setModelProduct] = useState<ShopPublicProduct | null>(null)
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  )
 
   const products = useMemo(() => {
     const seen = new Set<string>()
@@ -41,10 +33,6 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
     (index: number) => {
       const selected = products[index]
       if (!selected) return
-      if (selected.model_url) {
-        setModelProduct(selected)
-        return
-      }
       router.push(`/3d-shop/product/${selected.slug}`)
     },
     [products, router]
@@ -94,28 +82,13 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
       {products.length > 0 && (
         <>
           <motion.div
-            initial={{ opacity: 0, y: -14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: EASE_OUT_EXPO, delay: 0.15 }}
-            className="pointer-events-none absolute inset-x-0 top-20 z-20 flex flex-col items-center gap-2 px-6 text-center sm:top-24"
-          >
-            <p className="lux-eyebrow">
-              <Sparkles className="h-3 w-3" />
-              Exclusive 3D Collection
-            </p>
-            <h1 className="font-[var(--lux-font-display)] text-3xl font-semibold tracking-tight text-[var(--lux-text-primary)] sm:text-4xl lg:text-5xl">
-              Flux3D <span className="italic text-[var(--lux-gold)]">Signature</span> Pieces
-            </h1>
-          </motion.div>
-
-          <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: EASE_OUT_EXPO, delay: 1 }}
             className="pointer-events-none absolute bottom-28 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[var(--lux-line,#e5ddcb)] bg-white/70 px-4 py-2 text-center text-xs font-medium tracking-wide text-[var(--lux-text-secondary,#4a4438)] shadow-sm backdrop-blur-sm sm:bottom-24"
           >
             <MousePointer2 className="h-3.5 w-3.5 text-[var(--lux-gold)]" />
-            Drag to explore — click a piece to preview in 3D
+            Drag to explore — click a piece to view details
           </motion.div>
 
           <p className="sr-only" aria-live="polite">
@@ -136,18 +109,6 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
           </Link>
         </div>
       )}
-
-      {mounted &&
-        modelProduct?.model_url &&
-        createPortal(
-          <ProductModelModal
-            open
-            modelUrl={modelProduct.model_url}
-            productName={modelProduct.name}
-            onClose={() => setModelProduct(null)}
-          />,
-          document.body
-        )}
     </section>
   )
 }
