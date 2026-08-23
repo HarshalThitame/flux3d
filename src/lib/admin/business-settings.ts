@@ -124,6 +124,7 @@ export type BusinessSettings = {
   orderProcessingTime: string
   deliveryChargeThreshold: number
   defaultDeliveryCharge: number
+  shopMinimumOrderValue: number
   overheadPercentage: number
   marginPercentage: number
   materialMarkupPercent: number
@@ -306,6 +307,7 @@ export type BusinessSettingsRow = {
   order_processing_time: string | null
   delivery_charge_threshold: number | null
   default_delivery_charge: number | null
+  shop_min_order_value: number | null
   overhead_percent: number | null
   margin_percentage: number | null
   material_markup_percent: number | null
@@ -509,6 +511,7 @@ export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettin
     orderProcessingTime: n(row.order_processing_time),
     deliveryChargeThreshold: num(row.delivery_charge_threshold),
     defaultDeliveryCharge: num(row.default_delivery_charge),
+    shopMinimumOrderValue: num(row.shop_min_order_value),
     overheadPercentage: row.overhead_percent ?? 15,
     marginPercentage: row.margin_percentage ?? 30,
     materialMarkupPercent: row.material_markup_percent ?? 15,
@@ -647,6 +650,7 @@ export function toSnakeCase(data: Partial<BusinessSettings>): Record<string, unk
     orderProcessingTime: 'order_processing_time',
     deliveryChargeThreshold: 'delivery_charge_threshold',
     defaultDeliveryCharge: 'default_delivery_charge',
+    shopMinimumOrderValue: 'shop_min_order_value',
     overheadPercentage: 'overhead_percent',
     marginPercentage: 'margin_percentage',
     materialMarkupPercent: 'material_markup_percent',

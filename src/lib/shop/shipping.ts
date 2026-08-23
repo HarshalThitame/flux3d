@@ -27,11 +27,20 @@ export async function calculateShippingFromRules(params: {
   state: string
   subtotal: number
   weightGrams?: number
-  settings?: Pick<BusinessSettings, 'deliveryChargeThreshold' | 'defaultDeliveryCharge'>
+  settings?: Pick<BusinessSettings, 'deliveryChargeThreshold' | 'defaultDeliveryCharge' | 'shopMinimumOrderValue'>
 }): Promise<{ chargePaise: number; available: boolean; reason?: string }> {
   const threshold = Number(params.settings?.deliveryChargeThreshold ?? 499)
   const charge = Number(params.settings?.defaultDeliveryCharge ?? 50)
+  const globalMinOrderValue = Math.max(0, Number(params.settings?.shopMinimumOrderValue ?? 0))
   const defaultChargePaise = params.subtotal >= threshold ? 0 : Math.round(charge * 100)
+
+  function belowGlobalMinimum(): { chargePaise: number; available: false; reason: string } {
+    return {
+      chargePaise: 0,
+      available: false,
+      reason: `This pincode requires a minimum order value of ₹${globalMinOrderValue.toFixed(0)}.`,
+    }
+  }
 
   try {
     const pincode = String(params.pincode ?? '').trim()
@@ -48,6 +57,7 @@ export async function calculateShippingFromRules(params: {
     }
 
     if (!rules || rules.length === 0) {
+      if (globalMinOrderValue > 0 && params.subtotal < globalMinOrderValue) return belowGlobalMinimum()
       return { chargePaise: defaultChargePaise, available: true }
     }
 
@@ -71,14 +81,16 @@ export async function calculateShippingFromRules(params: {
         return { chargePaise: 0, available: false, reason: 'Sorry, this order exceeds our delivery weight limit.' }
       }
       const minOrderValue = Number(best.minimum_order_value ?? 0)
-      if (minOrderValue > 0 && params.subtotal < minOrderValue) {
-        return { chargePaise: 0, available: false, reason: `This pincode requires a minimum order value of ₹${minOrderValue.toFixed(0)}.` }
+      const effectiveMinOrderValue = minOrderValue > 0 ? minOrderValue : globalMinOrderValue
+      if (effectiveMinOrderValue > 0 && params.subtotal < effectiveMinOrderValue) {
+        return { chargePaise: 0, available: false, reason: `This pincode requires a minimum order value of ₹${effectiveMinOrderValue.toFixed(0)}.` }
       }
       if (!isGenericRule(best) && best.charge != null) {
         return { chargePaise: Math.round(Number(best.charge) * 100), available: true }
       }
     }
 
+    if (globalMinOrderValue > 0 && params.subtotal < globalMinOrderValue) return belowGlobalMinimum()
     return { chargePaise: defaultChargePaise, available: true }
   } catch (error) {
     console.error('[shipping] Shipping rule check failed, falling back to defaults:', error)

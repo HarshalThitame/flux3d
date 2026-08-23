@@ -77,6 +77,7 @@ export type AdminAuditTargetType =
   | 'admin_user'
   | 'whatsapp_knowledge'
   | 'link_request'
+  | 'shipping_rule'
 
 // ============================================================================
 // Profile (added email bounce flags)

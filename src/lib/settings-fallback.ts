@@ -106,6 +106,7 @@ export const FALLBACK_SETTINGS: BusinessSettings = {
   orderProcessingTime: '2-3 business days',
   deliveryChargeThreshold: 349,
   defaultDeliveryCharge: 50,
+  shopMinimumOrderValue: 0,
   overheadPercentage: 10,
   // Database migration 015/020/021 and pricing-waterfall.ts use this as the application fallback.
   marginPercentage: 20,

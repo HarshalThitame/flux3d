@@ -1113,6 +1113,7 @@ function LegalOpsTab({ updateField, f, fn, fb }: {
           <InputField label="Emergency Contact" type="tel" value={f('emergencyContact')} onChange={(v) => updateField('emergencyContact', v)} placeholder="+91 98765 43210" />
           <InputField label="Order Processing Time" value={f('orderProcessingTime')} onChange={(v) => updateField('orderProcessingTime', v)} placeholder="2-3 business days" />
           <InputField label="Delivery Charge Threshold (₹)" type="number" value={String(fn('deliveryChargeThreshold'))} onChange={(v) => updateField('deliveryChargeThreshold', Number(v))} />
+          <InputField label="Shop Minimum Order Value (₹)" type="number" value={String(fn('shopMinimumOrderValue'))} onChange={(v) => updateField('shopMinimumOrderValue', Number(v))} />
           <InputField label="Default Delivery Charge (₹)" type="number" value={String(fn('defaultDeliveryCharge'))} onChange={(v) => updateField('defaultDeliveryCharge', Number(v))} />
           <div className="md:col-span-2">
             <div className="grid gap-4 md:grid-cols-2">

@@ -7,10 +7,12 @@ import Link from 'next/link'
 import { Settings, Save } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import { InputField } from '@/components/admin/FormField'
+import ShippingRulesManager from '@/components/admin/ShippingRulesManager'
 
 type PricingSettingsForm = {
   deliveryChargeThreshold: string
   defaultDeliveryCharge: string
+  shopMinimumOrderValue: string
 }
 
 export default function AdminSettingsPage() {
@@ -19,6 +21,7 @@ export default function AdminSettingsPage() {
   const [pricingSettings, setPricingSettings] = useState<PricingSettingsForm>({
     deliveryChargeThreshold: '349',
     defaultDeliveryCharge: '50',
+    shopMinimumOrderValue: '0',
   })
   const [pricingSaving, setPricingSaving] = useState(false)
   const [pricingError, setPricingError] = useState<string | null>(null)
@@ -52,12 +55,14 @@ export default function AdminSettingsPage() {
           settings: {
             deliveryChargeThreshold?: number | null
             defaultDeliveryCharge?: number | null
+            shopMinimumOrderValue?: number | null
           } | null
         }
 
         setPricingSettings({
           deliveryChargeThreshold: String(json.settings?.deliveryChargeThreshold ?? 349),
           defaultDeliveryCharge: String(json.settings?.defaultDeliveryCharge ?? 50),
+          shopMinimumOrderValue: String(json.settings?.shopMinimumOrderValue ?? 0),
         })
         setPricingHydrated(true)
       } catch (loadError) {
@@ -80,6 +85,7 @@ export default function AdminSettingsPage() {
     try {
       const deliveryChargeThreshold = Number(pricingSettings.deliveryChargeThreshold)
       const defaultDeliveryCharge = Number(pricingSettings.defaultDeliveryCharge)
+      const shopMinimumOrderValue = Number(pricingSettings.shopMinimumOrderValue || '0')
 
       if (!Number.isFinite(deliveryChargeThreshold) || deliveryChargeThreshold < 0) {
         throw new Error('Enter a valid delivery threshold.')
@@ -89,12 +95,17 @@ export default function AdminSettingsPage() {
         throw new Error('Enter a valid delivery charge.')
       }
 
+      if (!Number.isFinite(shopMinimumOrderValue) || shopMinimumOrderValue < 0) {
+        throw new Error('Enter a valid minimum order value.')
+      }
+
       const response = await fetch('/api/admin/settings/business', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           deliveryChargeThreshold,
           defaultDeliveryCharge,
+          shopMinimumOrderValue,
         }),
       })
 
@@ -150,7 +161,7 @@ export default function AdminSettingsPage() {
                   Loading saved delivery settings...
                 </div>
               )}
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-3">
                 <InputField
                   label="Delivery Charge Threshold (₹)"
                   type="number"
@@ -165,7 +176,18 @@ export default function AdminSettingsPage() {
                   onChange={(value) => setPricingSettings((current) => ({ ...current, defaultDeliveryCharge: value }))}
                   placeholder="50"
                 />
+                <InputField
+                  label="Shop Minimum Order Value (₹)"
+                  type="number"
+                  value={pricingSettings.shopMinimumOrderValue}
+                  onChange={(value) => setPricingSettings((current) => ({ ...current, shopMinimumOrderValue: value }))}
+                  placeholder="0"
+                />
               </div>
+              <p className="text-xs text-[#6F7192]">
+                Orders below the Shop Minimum Order Value cannot be delivered (set 0 to disable). Pincode-specific
+                rules below can override this with their own minimum.
+              </p>
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
@@ -184,6 +206,10 @@ export default function AdminSettingsPage() {
                 </Link>
               </div>
             </div>
+          </SectionCard>
+
+          <SectionCard title="Shipping Rules">
+            <ShippingRulesManager />
           </SectionCard>
         </motion.div>
       </div>

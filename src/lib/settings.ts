@@ -171,6 +171,7 @@ function mapRow(row: BusinessSettingsRow): BusinessSettings {
     orderProcessingTime: n(row.order_processing_time) || FALLBACK.orderProcessingTime,
     deliveryChargeThreshold: row.delivery_charge_threshold ?? FALLBACK.deliveryChargeThreshold,
     defaultDeliveryCharge: row.default_delivery_charge ?? FALLBACK.defaultDeliveryCharge,
+    shopMinimumOrderValue: row.shop_min_order_value ?? FALLBACK.shopMinimumOrderValue,
     overheadPercentage: row.overhead_percent ?? FALLBACK.overheadPercentage,
     marginPercentage: row.margin_percentage ?? FALLBACK.marginPercentage,
     materialMarkupPercent: row.material_markup_percent ?? FALLBACK.materialMarkupPercent,
