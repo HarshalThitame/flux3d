@@ -6,6 +6,7 @@ import type { AppUserProfile } from '@/lib/auth/server'
 import ShopCartNavButton from '@/components/shop/ShopCartNavButton'
 import { useShopCartStore } from '@/stores/shopCartStore'
 import { useShopWishlistStore } from '@/stores/shopWishlistStore'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
 const ShopCartDrawer = dynamic(() => import('@/components/shop/ShopCartDrawer'), { ssr: false })
 
@@ -27,7 +28,14 @@ export default function ShopNavControls({
     let active = true
 
     async function loadWishlist() {
-      if (!currentUser || !currentPath.startsWith('/3d-shop')) {
+      if (!currentPath.startsWith('/3d-shop')) {
+        setWishlist([])
+        return
+      }
+
+      // Defense in depth: never fire the request for guests (the API 401s).
+      const { data } = await getSupabaseBrowserClient().auth.getUser()
+      if (!data?.user) {
         setWishlist([])
         return
       }

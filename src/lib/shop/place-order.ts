@@ -1,6 +1,5 @@
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { getSettings } from '@/lib/settings'
-import { hashGuestAccessToken } from '@/lib/shop/guest-access'
 import {
   buildShopPricingSnapshot,
   calculateCouponDiscount,
@@ -520,7 +519,9 @@ export async function placeShopOrder(input: PlaceOrderInput): Promise<PlaceOrder
               ? {
                   guest_session_id: guest.sessionId,
                   guest_contact: { email: guest.email.trim().toLowerCase() },
-                  guest_access_token_hash: hashGuestAccessToken(guest.accessTokenHash),
+                  // Already a SHA-256 hash of the raw token (hashed once in the
+                  // API route) — store verbatim, do NOT hash again.
+                  guest_access_token_hash: guest.accessTokenHash,
                   claim_candidate_user_id: claimCandidateUserId,
                 }
               : {}),

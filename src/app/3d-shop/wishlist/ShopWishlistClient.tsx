@@ -6,6 +6,7 @@ import { Heart } from 'lucide-react'
 import ProductCard from '@/components/shop/ProductCard'
 import type { ShopPublicProduct } from '@/lib/shop/public-types'
 import { useShopWishlistStore } from '@/stores/shopWishlistStore'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
 export default function ShopWishlistClient() {
   const [products, setProducts] = useState<ShopPublicProduct[]>([])
@@ -22,6 +23,16 @@ export default function ShopWishlistClient() {
       setLoading(true)
       setError('')
       try {
+        // Guests have no wishlist — skip the API call entirely (avoids 401s).
+        const { data: userData } = await getSupabaseBrowserClient().auth.getUser()
+        if (!userData?.user) {
+          if (active) {
+            setProducts([])
+            setWishlist([])
+          }
+          return
+        }
+
         const response = await fetch('/api/3d-shop/wishlist')
         const data = await response.json().catch(() => ({})) as {
           products?: ShopPublicProduct[]

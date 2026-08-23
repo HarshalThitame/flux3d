@@ -25,6 +25,7 @@ export function hashGuestAccessToken(token: string): string {
 
 /** Timing-safe comparison of two token hashes (equal-length hex digests). */
 export function safeHashEqual(a: string, b: string): boolean {
+  if (!a || !b) return false
   try {
     return crypto.timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'))
   } catch {
