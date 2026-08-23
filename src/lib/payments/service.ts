@@ -662,8 +662,13 @@ export async function verifyCheckoutPayment(params: {
     })
 
     // Send payment confirmation email immediately (webhook handler will also try,
-    // but deduplication in the email trigger prevents duplicates).
-    notifyPaymentCaptured(attempt).catch((error) => reportError(error, 'Payment captured notification failed', { module: 'payments', level: 'warn', tags: { flow: 'checkout_verify_email', attemptId: attempt.id } }))
+    // but deduplication in the email trigger prevents duplicates). Awaited —
+    // serverless functions can freeze after the response, killing un-awaited work.
+    try {
+      await notifyPaymentCaptured(attempt)
+    } catch (error) {
+      reportError(error, 'Payment captured notification failed', { module: 'payments', level: 'warn', tags: { flow: 'checkout_verify_email', attemptId: attempt.id } })
+    }
 
     // Send WhatsApp payment confirmation (session text within 24h window).
     if (attempt.internal_order_type === 'shop_order' && attempt.internal_order_id) {
@@ -825,7 +830,11 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
       reason: systemReason(attempt.customer_id, `Webhook ${eventName}`),
     })
 
-    notifyPaymentFailed(attempt).catch((error) => reportError(error, 'Payment failed notification error', { module: 'payments', level: 'warn', tags: { flow: 'payment_failed', attemptId: attempt.id } }))
+    try {
+      await notifyPaymentFailed(attempt)
+    } catch (error) {
+      reportError(error, 'Payment failed notification error', { module: 'payments', level: 'warn', tags: { flow: 'payment_failed', attemptId: attempt.id } })
+    }
 
     return { handled: true, processingStatus: 'processed' as const }
   }
@@ -916,7 +925,11 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
     }
 
     if (captured) {
-      notifyPaymentCaptured(attempt).catch((error) => reportError(error, 'Payment captured notification failed', { module: 'payments', level: 'warn', tags: { flow: 'webhook_capture', attemptId: attempt.id } }))
+      try {
+        await notifyPaymentCaptured(attempt)
+      } catch (error) {
+        reportError(error, 'Payment captured notification failed', { module: 'payments', level: 'warn', tags: { flow: 'webhook_capture', attemptId: attempt.id } })
+      }
 
       // Send WhatsApp payment confirmation (session text within 24h window).
       if (attempt.internal_order_type === 'shop_order' && attempt.internal_order_id) {

@@ -14,6 +14,35 @@ import { ensureFreshGuestTrackingToken } from '@/lib/shop/guest-access'
 // Helpers
 // ============================================================================
 
+/**
+ * Persist a payment-email failure into payment_audit_logs so missed
+ * notifications are admin-queryable instead of console-only. Never throws —
+ * the auditor must not mask (or add to) the original failure.
+ */
+async function auditEmailFailure(
+  action: string,
+  attempt: { id: string; internal_order_id: string },
+  error: unknown
+) {
+  try {
+    const supabase = createAdminSupabaseClient()
+    await supabase.from('payment_audit_logs').insert({
+      actor_id: null,
+      actor_role: 'system',
+      action: action.slice(0, 128),
+      entity_type: 'email_notification',
+      entity_id: attempt.id,
+      new_state: {
+        internal_order_id: attempt.internal_order_id,
+        error: error instanceof Error ? error.message.slice(0, 500) : String(error).slice(0, 500),
+        failed_at: new Date().toISOString(),
+      },
+    })
+  } catch (auditError) {
+    console.error('[payments/email] Failed to audit email failure:', auditError)
+  }
+}
+
 function formatMoney(paise: number): string {
   return `₹${(paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
 }
@@ -428,6 +457,9 @@ export async function notifyPaymentCaptured(
     }
   } catch (err) {
     console.error('[payments/email] notifyPaymentCaptured failed:', err)
+    // Silent no-op incidents are how guests ended up with no receipts — make
+    // every failure queryable in payment_audit_logs.
+    await auditEmailFailure('receipt_send_failed', attempt, err)
   }
 }
 
@@ -489,6 +521,7 @@ export async function notifyPaymentFailed(
     await sendPaymentFailed(userId, email, orderNumber, name, amount, retryUrl)
   } catch (err) {
     console.error('[payments/email] notifyPaymentFailed failed:', err)
+    await auditEmailFailure('payment_failed_email_send_failed', attempt, err)
   }
 }
 
@@ -549,5 +582,6 @@ export async function notifyRefundProcessed(
     )
   } catch (err) {
     console.error('[payments/email] notifyRefundProcessed failed:', err)
+    await auditEmailFailure('refund_email_send_failed', attempt, err)
   }
 }

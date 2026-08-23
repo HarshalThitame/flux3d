@@ -1128,11 +1128,17 @@ export default async function handler(
             const errInfo = st?.errors as Array<Record<string, unknown>> | undefined
             update.status_error = String(errInfo?.[0]?.title ?? 'delivery failed')
           }
-          await supabase
-            .from('whatsapp_messages')
-            .update(update)
-            .eq('meta_message_id', wamid)
-            .catch((error: unknown) => console.error('[whatsapp] Failed to update message status:', error))
+          // NOTE: postgrest-js 2.x builders implement .then but NOT .catch —
+          // chaining .catch() directly on the builder throws TypeError.
+          // Await inside try/catch instead.
+          try {
+            await supabase
+              .from('whatsapp_messages')
+              .update(update)
+              .eq('meta_message_id', wamid)
+          } catch (error) {
+            console.error('[whatsapp] Failed to update message status:', error)
+          }
         }
         await insertWebhookEvent(supabase, payloadHash, payload, { sender: null, processed_at: new Date().toISOString() }).catch(() => {})
         // Status-only events have no message body — nothing else to process
