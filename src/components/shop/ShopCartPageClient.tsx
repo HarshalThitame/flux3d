@@ -1,9 +1,9 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingBag, Trash2 } from 'lucide-react'
+import { AlertTriangle, ShoppingBag, Trash2 } from 'lucide-react'
 import QuantityStepper from '@/components/shop/QuantityStepper'
 import {
   ShopAppliedOffer,
@@ -13,6 +13,7 @@ import {
 import { formatShopPrice } from '@/lib/shop/selection'
 import { getShopCartTotals, useShopCartStore } from '@/stores/shopCartStore'
 import { getCartFromStorage, getCartStorageKey } from '@/lib/cart/utils'
+import { refreshShopCartFromServer } from '@/lib/cart/shop-cart-sync'
 import CartSwitcher from '@/components/cart/CartSwitcher'
 
 function getQuoteCartCount(): number {
@@ -34,7 +35,12 @@ export default function ShopCartPageClient() {
   const removeItem = useShopCartStore((state) => state.removeItem)
   const updateQuantity = useShopCartStore((state) => state.updateQuantity)
   const clearCart = useShopCartStore((state) => state.clearCart)
+  const priceChangedItemIds = useShopCartStore((state) => state.priceChangedItemIds)
   const [quoteCartCount] = useState(getQuoteCartCount)
+
+  useEffect(() => {
+    void refreshShopCartFromServer()
+  }, [])
 
   const totals = useMemo(
     () =>
@@ -90,10 +96,26 @@ export default function ShopCartPageClient() {
           <CartSwitcher variant="shop" quoteCartCount={quoteCartCount} />
         </div>
 
+        {priceChangedItemIds.length > 0 && (
+          <div className="mb-6 rounded-[var(--shop-radius-lg)] border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
+            <div className="flex gap-2">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              Prices for some items in your cart have changed since you added them. Your totals below reflect the latest prices.
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
           <section className="space-y-4">
             {items.map((item) => (
-              <article key={item.cartItemId} className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-4 shadow-[var(--shop-shadow-sm)]">
+              <article
+                key={item.cartItemId}
+                className={`rounded-[var(--shop-radius-xl)] border p-4 shadow-[var(--shop-shadow-sm)] ${
+                  priceChangedItemIds.includes(item.cartItemId)
+                    ? 'border-amber-300 bg-amber-50/60'
+                    : 'border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)]'
+                }`}
+              >
                 <div className="grid gap-4 sm:grid-cols-[96px_1fr_auto]">
                   <div className="relative aspect-square overflow-hidden rounded-[var(--shop-radius-lg)] bg-[var(--shop-bg-muted)]">
                     {item.thumbnail ? (

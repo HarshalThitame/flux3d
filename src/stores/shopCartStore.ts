@@ -5,6 +5,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { AppliedCoupon, AppliedOffer } from '@/lib/cart/types'
 import { calculatePricingWaterfall } from '@/lib/quote/pricing-waterfall'
+import { initShopCartSync, mirrorShopAdd, mirrorShopClear, mirrorShopQuantity, mirrorShopRemove } from '@/lib/cart/shop-cart-sync'
 
 export type ShopCartItem = {
   cartItemId: string
@@ -24,6 +25,9 @@ export type ShopCartItem = {
   compareAtPrice: number | null
   quantity: number
   maxStock: number
+  weightGrams?: number
+  available?: boolean
+  localOnly?: boolean
 }
 
 export type ShopCartAddItem = Omit<ShopCartItem, 'cartItemId'>
@@ -38,6 +42,8 @@ type ShopCartState = ShopCartPersistedState & {
   isCartOpen: boolean
   appliedCoupon: AppliedCoupon | null
   autoApplyOffer: AppliedOffer | null
+  isSyncing: boolean
+  priceChangedItemIds: string[]
   addItem: (item: ShopCartAddItem) => void
   removeItem: (cartItemId: string) => void
   updateQuantity: (cartItemId: string, newQty: number) => void
@@ -267,52 +273,65 @@ export const useShopCartStore = create<ShopCartState>()(
       appliedCoupon: null,
       autoApplyOffer: null,
       isCartOpen: false,
-      addItem: (item) =>
+      isSyncing: false,
+      priceChangedItemIds: [],
+      addItem: (item) => {
+        let mirrored: ShopCartItem | null = null
         set((state) => {
           const existing = state.items.find((cartItem) => sameShopCartEntry(cartItem, item))
           if (existing) {
+            mirrored = {
+              ...existing,
+              quantity: clampQuantity(existing.quantity + item.quantity, item.maxStock),
+              maxStock: item.maxStock,
+            }
             return {
               items: state.items.map((cartItem) =>
                 cartItem.cartItemId === existing.cartItemId
-                  ? {
-                      ...cartItem,
-                      quantity: clampQuantity(cartItem.quantity + item.quantity, item.maxStock),
-                      maxStock: item.maxStock,
-                    }
+                  ? mirrored!
                   : cartItem
               ),
             }
           }
 
-          return {
-            items: [
-              ...state.items,
-              {
-                ...item,
-                customizationText: item.customizationText.trim(),
-                quantity: clampQuantity(item.quantity, item.maxStock),
-                cartItemId: nanoid(),
-              },
-            ],
+          mirrored = {
+            ...item,
+            customizationText: item.customizationText.trim(),
+            quantity: clampQuantity(item.quantity, item.maxStock),
+            cartItemId: nanoid(),
+            localOnly: true,
           }
-        }),
-      removeItem: (cartItemId) =>
+          return { items: [...state.items, mirrored] }
+        })
+        if (mirrored) mirrorShopAdd(mirrored)
+      },
+      removeItem: (cartItemId) => {
         set((state) => {
           const items = state.items.filter((item) => item.cartItemId !== cartItemId)
           return {
             items,
             ...(items.length === 0 ? { couponCode: null, appliedCoupon: null, discountAmount: 0 } : {}),
           }
-        }),
-      updateQuantity: (cartItemId, newQty) =>
+        })
+        mirrorShopRemove(cartItemId)
+      },
+      updateQuantity: (cartItemId, newQty) => {
         set((state) => ({
           items: state.items.map((item) =>
             item.cartItemId === cartItemId
               ? { ...item, quantity: clampQuantity(newQty, item.maxStock) }
               : item
           ),
-        })),
-      clearCart: () => set({ items: [], couponCode: null, appliedCoupon: null, discountAmount: 0 }),
+        }))
+        const updated = useShopCartStore.getState().items.find((item) => item.cartItemId === cartItemId)
+        if (updated && !updated.localOnly) {
+          mirrorShopQuantity(cartItemId, updated.quantity, updated.price)
+        }
+      },
+      clearCart: () => {
+        set({ items: [], couponCode: null, appliedCoupon: null, discountAmount: 0, priceChangedItemIds: [] })
+        mirrorShopClear()
+      },
       applyCoupon: (coupon) => {
         if (typeof coupon === 'string') {
           set({ couponCode: coupon.trim().toUpperCase(), appliedCoupon: null, discountAmount: 0 })
@@ -340,3 +359,7 @@ export const useShopCartStore = create<ShopCartState>()(
     }
   )
 )
+
+if (typeof window !== 'undefined') {
+  initShopCartSync()
+}

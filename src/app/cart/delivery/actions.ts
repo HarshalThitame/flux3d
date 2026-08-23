@@ -1276,6 +1276,17 @@ export async function verifyCartPaymentAndCreateOrder(params: {
     orderId: firstOrder.id,
   })
 
+  const { error: cartConvertError } = await adminSupabase
+    .from('cart_items')
+    .update({ status: 'converted', converted_to_order_id: firstOrder.id })
+    .eq('user_id', auth.user.id)
+    .eq('cart_type', 'quote')
+    .eq('status', 'active')
+
+  if (cartConvertError) {
+    reportError(cartConvertError, 'Failed to mark quote cart converted', { module: 'cart', level: 'warn' })
+  }
+
   // Send payment confirmation email immediately
   notifyPaymentCaptured({
     id: paymentAttemptId,

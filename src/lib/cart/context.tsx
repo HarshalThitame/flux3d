@@ -12,6 +12,14 @@ import {
   saveCartToStorage,
   updateCartItem,
 } from '@/lib/cart/utils'
+import {
+  clearServerCart,
+  deleteServerCartLine,
+  insertServerCartLine,
+  loadServerCart,
+  updateServerCartLine,
+  type ServerCartLine,
+} from '@/lib/cart/server-cart'
 import type { BusinessSettings } from '@/lib/admin/business-settings'
 import type { AppliedCoupon, AppliedOffer, CartDiscountTier, CartItem, CartSummary } from '@/lib/cart/types'
 
@@ -87,6 +95,40 @@ type CartContextType = {
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
+
+function quoteItemKey(item: Pick<CartItem, 'quoteId' | 'fileName' | 'material' | 'color'>) {
+  return item.quoteId ?? [item.fileName ?? '', item.material ?? '', item.color ?? ''].join('|')
+}
+
+function lineToCartItem(line: ServerCartLine): CartItem {
+  const payloadItem = { ...((line.payload ?? {}) as Partial<CartItem>) } as CartItem
+  return {
+    ...payloadItem,
+    id: payloadItem.id || line.id,
+    addedAt: payloadItem.addedAt ?? line.created_at,
+    serverLineId: line.id,
+    quantity: Math.max(1, Math.floor(Number(line.quantity ?? payloadItem.quantity ?? 1))),
+  }
+}
+
+function quoteItemToServerLine(userId: string, item: CartItem): Parameters<typeof insertServerCartLine>[0] {
+  const { serverLineId: _serverLineId, ...payloadItem } = item
+  void _serverLineId
+  return {
+    user_id: userId,
+    cart_type: 'quote',
+    quantity: Math.max(1, Math.floor(Number(item.quantity ?? 1))),
+    material: item.material || null,
+    weight_grams: item.weight != null ? Number(item.weight) : null,
+    estimated_cost: Number(Number(item.finalPrice ?? item.totalPrice ?? item.price ?? 0).toFixed(2)),
+    express_delivery: false,
+    gift_packaging: false,
+    payload: {
+      ...payloadItem,
+      dedupeKey: quoteItemKey(item),
+    },
+  }
+}
 
 type CartProviderSettings = Pick<
   BusinessSettings,
@@ -202,6 +244,19 @@ export function CartProvider({
   useEffect(() => {
     let active = true
     let authListener: { subscription: { unsubscribe: () => void } } | null = null
+    let activeUserId: string | null = null
+
+    async function reloadServerQuoteCart(userId: string) {
+      try {
+        const lines = await loadServerCart(userId, 'quote')
+        if (!active || activeUserId !== userId) return
+        const nextItems = lines.map(lineToCartItem)
+        setItems(nextItems)
+        saveCartToStorage(nextItems, getCartStorageKey(userId))
+      } catch (error) {
+        console.warn('[cart] Server cart refresh failed', error)
+      }
+    }
 
     async function syncCartForUser(userId: string | null) {
       const shouldSkipAnonymousRestore =
@@ -223,17 +278,62 @@ export function CartProvider({
         return
       }
 
-      const nextStorageKey = getCartStorageKey(userId)
-      const nextItems = getCartFromStorage(nextStorageKey)
+      activeUserId = userId
 
-      if (!active) {
+      if (!userId) {
+        const anonymousItems = getCartFromStorage(getCartStorageKey(null))
+
+        if (!active) {
+          return
+        }
+
+        setStorageKey(getCartStorageKey(null))
+        setCurrentUserId(null)
+        setItems(anonymousItems)
+        setIsLoading(false)
         return
       }
 
-      setStorageKey(nextStorageKey)
-      setCurrentUserId(userId)
-      setItems(nextItems)
-      setIsLoading(false)
+      const userStorageKey = getCartStorageKey(userId)
+      const guestItems = getCartFromStorage(getCartStorageKey(null))
+
+      try {
+        let lines = await loadServerCart(userId, 'quote')
+
+        const existingKeys = new Set(lines.map((line) => String(line.payload?.dedupeKey ?? '')))
+        let merged = false
+        for (const guestItem of guestItems) {
+          if (existingKeys.has(quoteItemKey(guestItem))) continue
+          const inserted = await insertServerCartLine(quoteItemToServerLine(userId, guestItem))
+          lines = [...lines, inserted]
+          merged = true
+        }
+        if (merged && guestItems.length > 0) {
+          clearCart(getCartStorageKey(null))
+        }
+
+        if (!active || activeUserId !== userId) {
+          return
+        }
+
+        const serverItems = lines.map(lineToCartItem)
+        saveCartToStorage(serverItems, userStorageKey)
+        setStorageKey(userStorageKey)
+        setCurrentUserId(userId)
+        setItems(serverItems)
+      } catch (error) {
+        console.warn('[cart] Server cart load failed, using local cache', error)
+
+        if (!active) {
+          return
+        }
+
+        setStorageKey(userStorageKey)
+        setCurrentUserId(userId)
+        setItems(getCartFromStorage(userStorageKey))
+      } finally {
+        if (active) setIsLoading(false)
+      }
     }
 
     async function bootstrap() {
@@ -242,6 +342,12 @@ export function CartProvider({
         const supabase = getSupabaseBrowserClient()
         const { data } = await supabase.auth.getUser()
         await syncCartForUser(data.user?.id ?? null)
+
+        const handleWindowFocus = () => {
+          if (!active || !activeUserId) return
+          void reloadServerQuoteCart(activeUserId)
+        }
+        window.addEventListener('focus', handleWindowFocus)
 
         const { data: nextAuthListener } = supabase.auth.onAuthStateChange(
           (event: AuthChangeEvent, session: Session | null) => {
@@ -254,13 +360,17 @@ export function CartProvider({
               return
             }
 
-            setStorageKey(getCartStorageKey(null))
-            setCurrentUserId(null)
-            setItems([])
-            setIsLoading(false)
+            void syncCartForUser(null)
           }
         )
-        authListener = nextAuthListener
+        authListener = {
+          subscription: {
+            unsubscribe: () => {
+              nextAuthListener.subscription.unsubscribe()
+              window.removeEventListener('focus', handleWindowFocus)
+            },
+          },
+        }
       } catch {
         await syncCartForUser(null)
       }
@@ -290,6 +400,16 @@ export function CartProvider({
   const addItem = useCallback((item: CartItem) => {
     const newItems = addToCart(item, storageKey)
     setItems(newItems)
+
+    if (currentUserId) {
+      void insertServerCartLine(quoteItemToServerLine(currentUserId, item))
+        .then((line) => {
+          const withLineId = updateCartItem(item.addedAt ?? item.id, { serverLineId: line.id }, storageKey)
+          setItems(withLineId)
+        })
+        .catch((error) => console.warn('[cart] Quote cart add sync failed', error))
+    }
+
     void import('@/lib/tracking/featureTracker')
       .then(({ trackFeatureUsage }) => trackFeatureUsage(currentUserId, 'item_added_to_cart', {
         quoteId: item.quoteId,
@@ -301,20 +421,47 @@ export function CartProvider({
   }, [currentUserId, storageKey])
 
   const removeItem = useCallback((addedAt: string) => {
+    const target = getCartFromStorage(storageKey).find((item) => item.addedAt === addedAt)
     const newItems = removeFromCart(addedAt, storageKey)
     setItems(newItems)
-  }, [storageKey])
+
+    if (currentUserId && target?.serverLineId) {
+      void deleteServerCartLine(target.serverLineId)
+        .catch((error) => console.warn('[cart] Quote cart remove sync failed', error))
+    }
+  }, [currentUserId, storageKey])
 
   const updateItem = useCallback((addedAt: string, updates: Partial<CartItem>) => {
     const newItems = updateCartItem(addedAt, updates, storageKey)
     setItems(newItems)
-  }, [storageKey])
+
+    if (!currentUserId) return
+    const updated = newItems.find((item) => item.addedAt === addedAt)
+    if (!updated?.serverLineId) return
+
+    const { serverLineId: _serverLineId, ...payloadItem } = updated
+    void _serverLineId
+    void updateServerCartLine(updated.serverLineId, {
+      quantity: Math.max(1, Math.floor(Number(updated.quantity ?? 1))),
+      estimated_cost: Number(Number(updated.finalPrice ?? updated.totalPrice ?? updated.price ?? 0).toFixed(2)),
+      weight_grams: updated.weight != null ? Number(updated.weight) : null,
+      payload: {
+        ...payloadItem,
+        dedupeKey: quoteItemKey(updated),
+      },
+    }).catch((error) => console.warn('[cart] Quote cart update sync failed', error))
+  }, [currentUserId, storageKey])
 
   const clearItems = useCallback(() => {
     clearCart(storageKey)
     setItems([])
     setUserCoupon(null)
-  }, [storageKey])
+
+    if (currentUserId) {
+      void clearServerCart('quote')
+        .catch((error) => console.warn('[cart] Quote cart clear sync failed', error))
+    }
+  }, [currentUserId, storageKey])
 
   const resetCartState = useCallback(() => {
     if (typeof window !== 'undefined') {

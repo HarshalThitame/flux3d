@@ -490,6 +490,17 @@ export async function placeShopOrder(input: PlaceOrderInput): Promise<PlaceOrder
         if (sourceError) {
           console.error('[shop] Failed to update order source', sourceError)
         }
+
+        const { error: cartConvertError } = await supabase
+          .from('cart_items')
+          .update({ status: 'converted', converted_to_order_id: orderId })
+          .eq('user_id', userId)
+          .eq('cart_type', 'shop')
+          .eq('status', 'active')
+
+        if (cartConvertError) {
+          console.error('[shop] Failed to mark shop cart converted', cartConvertError)
+        }
       }
 
       return {

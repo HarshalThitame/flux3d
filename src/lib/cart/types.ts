@@ -44,6 +44,7 @@ export type CartItem = {
   };
   config?: QuoteConfig;
   addedAt?: string;
+  serverLineId?: string;
 }
 
 export type CartOrderItem = {

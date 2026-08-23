@@ -10,6 +10,7 @@ import { useGlobalLoading } from '@/hooks/useGlobalLoading'
 import { calculateDeliveryChargeFromSettings } from '@/lib/quote/pricing-waterfall'
 import { formatShopPrice } from '@/lib/shop/selection'
 import { getShopCartTotals, type ShopCartItem, useShopCartStore } from '@/stores/shopCartStore'
+import { refreshShopCartFromServer } from '@/lib/cart/shop-cart-sync'
 import type { AddressRow } from '../../../../types/database'
 import { trackMetaEvent } from '@/lib/meta/event-utils'
 
@@ -97,6 +98,7 @@ export default function ShopCheckoutClient({
   const appliedCoupon = useShopCartStore((state) => state.appliedCoupon)
   const autoApplyOffer = useShopCartStore((state) => state.autoApplyOffer)
   const clearCart = useShopCartStore((state) => state.clearCart)
+  const priceChangedItemIds = useShopCartStore((state) => state.priceChangedItemIds)
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
   const [useNewAddress, setUseNewAddress] = useState(false)
   const [saveAddress, setSaveAddress] = useState(false)
@@ -144,6 +146,10 @@ export default function ShopCheckoutClient({
   useEffect(() => {
     if (items.length === 0 && !orderCompletionRef.current) router.replace('/3d-shop/cart')
   }, [items.length, router])
+
+  useEffect(() => {
+    void refreshShopCartFromServer()
+  }, [])
 
   useEffect(() => {
     if (items.length === 0) return
@@ -537,12 +543,21 @@ export default function ShopCheckoutClient({
               </div>
             )}
 
+            {!reviewBanner && priceChangedItemIds.length > 0 && (
+              <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
+                <div className="flex gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  Prices for some items have been updated to the latest amounts. Please review before placing order.
+                </div>
+              </div>
+            )}
+
             <div className="mt-5 space-y-4">
               {items.map((item) => (
                 <div
                   key={item.cartItemId}
                   className={`rounded-2xl border p-3 ${
-                    affectedItemIds.includes(item.cartItemId)
+                    affectedItemIds.includes(item.cartItemId) || priceChangedItemIds.includes(item.cartItemId)
                       ? 'border-amber-300 bg-amber-50'
                       : 'border-[var(--shop-border-light)] bg-white'
                   }`}
