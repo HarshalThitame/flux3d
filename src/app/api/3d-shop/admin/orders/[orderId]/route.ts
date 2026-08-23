@@ -9,6 +9,7 @@ import { absoluteUrl } from '@/lib/site'
 import {
   assertFulfilmentStatusTransition,
   assertShopStatusTransition,
+  getGuestContact,
   mapShopAdminOrder,
   mapShopPaymentAttempt,
   shopFulfilmentStatuses,
@@ -50,21 +51,25 @@ async function getCustomer(
   supabase: ReturnType<typeof createAdminSupabaseClient>,
   row: Record<string, unknown>
 ): Promise<ShopOrderCustomer> {
-  const { data } = await supabase
-    .from('profiles')
-    .select('id, email, full_name, phone_number')
-    .eq('id', String(row.user_id))
-    .maybeSingle()
+  // Guest orders (user_id IS NULL) have no profile — fall back to the
+  // guest_contact email snapshot collected at checkout.
+  const profile = row.user_id
+    ? (await supabase
+        .from('profiles')
+        .select('id, email, full_name, phone_number')
+        .eq('id', String(row.user_id))
+        .maybeSingle()).data as ProfileRow | null
+    : null
 
-  const profile = data as ProfileRow | null
   const address = row.shipping_address && typeof row.shipping_address === 'object'
     ? row.shipping_address as Record<string, unknown>
     : {}
+  const guestContact = getGuestContact(row)
 
   return {
-    id: String(row.user_id),
+    id: row.user_id ? String(row.user_id) : null,
     name: profile?.full_name ?? (address.name ? String(address.name) : null),
-    email: profile?.email ?? null,
+    email: profile?.email ?? guestContact.email,
     phone: profile?.phone_number ?? (address.phone ? String(address.phone) : null),
   }
 }
@@ -237,7 +242,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ order
 
         if (trackingNumber && courierName && customerEmail) {
           sendOrderShipped(
-            String(current.user_id),
+            String(current.user_id ?? ''),
             customerEmail,
             orderNumber,
             customerName,
@@ -274,7 +279,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ order
 
         if (customerEmail) {
           sendDeliveryConfirmation(
-            String(current.user_id),
+            String(current.user_id ?? ''),
             customerEmail,
             orderNumber,
             customerName,

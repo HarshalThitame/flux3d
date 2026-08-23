@@ -12,9 +12,10 @@ function getCustomerContext(order: Record<string, unknown> | null, attemptMetada
   const metadataCustomer = asRecord(attemptMetadata.customer)
   const orderCustomer = order ? asRecord(order.customer) : {}
   const shippingAddress = order ? asRecord(order.shipping_address) : {}
+  const guestContact = order ? asRecord(order.guest_contact) : {}
   return {
     name: String(metadataCustomer.name ?? orderCustomer.name ?? shippingAddress.name ?? order?.full_name ?? order?.name ?? 'Unknown'),
-    email: String(metadataCustomer.email ?? orderCustomer.email ?? order?.email ?? ''),
+    email: String(metadataCustomer.email ?? orderCustomer.email ?? guestContact.email ?? order?.email ?? ''),
   }
 }
 

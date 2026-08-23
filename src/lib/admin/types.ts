@@ -340,6 +340,10 @@ export type PaymentData = {
   createdAt: string
   capturedAt?: string | null
   failedAt?: string | null
+  /** auth.users id of the payer — null for guest (unauthenticated) payments. */
+  customerId?: string | null
+  /** True when the payment belongs to a guest (unauthenticated) order. */
+  isGuest?: boolean
 }
 
 export type PaymentAuditLogData = {

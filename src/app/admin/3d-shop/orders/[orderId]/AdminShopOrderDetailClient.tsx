@@ -743,11 +743,16 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
                 <h2 className="!text-base font-bold text-[#0F1B3D]">Order Details</h2>
-                <p className="mt-1 text-sm text-[#6F7192]">
-                  {order.customer?.name ?? order.shipping_address.name}
-                  {order.customer?.email ? (
-                    <> · <a href={`mailto:${order.customer.email}`} className="text-violet-600 underline-offset-2 hover:underline">{order.customer.email}</a></>
-                  ) : ' · No email'}
+                <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[#6F7192]">
+                  {order.user_id === null && (
+                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Guest</span>
+                  )}
+                  <span>
+                    {order.customer?.name ?? order.shipping_address.name}
+                    {order.customer?.email ? (
+                      <> · <a href={`mailto:${order.customer.email}`} className="text-violet-600 underline-offset-2 hover:underline">{order.customer.email}</a></>
+                    ) : ' · No email'}
+                  </span>
                 </p>
               </div>
               <span className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${

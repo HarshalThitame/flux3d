@@ -24,7 +24,7 @@ export async function claimGuestOrdersForUser(userId: string): Promise<number> {
   if (userError || !user?.user?.email) return 0
   const email = user.user.email.trim().toLowerCase()
 
-  const { data, error } = await supabase
+  const { data: claimedRows } = await supabase
     .from('shelf_orders')
     .update({
       user_id: userId,
@@ -37,12 +37,24 @@ export async function claimGuestOrdersForUser(userId: string): Promise<number> {
     .or(`claim_candidate_user_id.eq.${userId},guest_contact->>email.eq.${email}`)
     .select('id')
 
-  if (error) {
-    console.error('[guest-claim] Failed to claim guest orders:', error.message)
-    return 0
+  const claimedIds = (claimedRows ?? []).map((row) => String(row.id))
+
+  // Backfill the payment ledger too, so the customer's Payments tab and refund
+  // context include their guest-era payments.
+  if (claimedIds.length > 0) {
+    const { error: attemptError } = await supabase
+      .from('payment_attempts')
+      .update({ customer_id: userId })
+      .eq('internal_order_type', 'shop_order')
+      .in('internal_order_id', claimedIds)
+      .filter('customer_id', 'is', null)
+
+    if (attemptError) {
+      console.error('[guest-claim] Failed to backfill payment_attempts.customer_id:', attemptError.message)
+    }
   }
 
-  const claimed = data?.length ?? 0
+  const claimed = claimedIds.length
 
   if (claimed > 0) {
     await recordConsent({

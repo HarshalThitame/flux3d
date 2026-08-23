@@ -56,6 +56,7 @@ export default function AdminShopOrdersClient() {
   const [source, setSource] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [guestOnly, setGuestOnly] = useState(false)
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const [toast, setToast] = useState<AdminToastState>(null)
@@ -71,6 +72,7 @@ export default function AdminShopOrdersClient() {
       if (source) params.set('source', source)
       if (dateFrom) params.set('date_from', dateFrom)
       if (dateTo) params.set('date_to', dateTo)
+      if (guestOnly) params.set('guest', 'true')
       if (search.trim()) params.set('search', search.trim())
       params.set('limit', '100')
 
@@ -84,7 +86,7 @@ export default function AdminShopOrdersClient() {
     } finally {
       setLoading(false)
     }
-  }, [dateFrom, dateTo, paymentStatus, search, source, status])
+  }, [dateFrom, dateTo, guestOnly, paymentStatus, search, source, status])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -169,11 +171,20 @@ export default function AdminShopOrdersClient() {
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search order, customer, phone"
+              placeholder="Search order, customer, phone, email"
               className="w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 py-2.5 pl-10 pr-3 text-sm text-[#0F1B3D] outline-none"
             />
           </div>
         </div>
+        <label className="mt-3 flex w-fit cursor-pointer items-center gap-2 text-sm font-semibold text-[#6F7192]">
+          <input
+            type="checkbox"
+            checked={guestOnly}
+            onChange={(event) => setGuestOnly(event.target.checked)}
+            className="h-4 w-4"
+          />
+          Guest orders only (unclaimed — search by guest email)
+        </label>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">

@@ -89,7 +89,8 @@ export type ShopOrder = {
 }
 
 export type ShopOrderCustomer = {
-  id: string
+  /** auth.users id, or null for guest (unauthenticated) orders. */
+  id: string | null
   name: string | null
   email: string | null
   phone: string | null
@@ -417,6 +418,18 @@ export function mapShopAdminOrder(row: Record<string, unknown>, customer: ShopOr
     ...mapShopOrderRow(row),
     customer,
   }
+}
+
+/**
+ * Safely read the guest contact snapshot from a shelf_orders row.
+ * Returns { email } (lowercased) or { email: null } for logged-in orders.
+ */
+export function getGuestContact(row: Record<string, unknown>): { email: string | null } {
+  const contact = row.guest_contact && typeof row.guest_contact === 'object'
+    ? row.guest_contact as Record<string, unknown>
+    : {}
+  const email = typeof contact.email === 'string' ? contact.email.trim().toLowerCase() : ''
+  return { email: email || null }
 }
 
 export function mapShopPaymentAttempt(row: Record<string, unknown> | null): ShopPaymentAttempt | null {

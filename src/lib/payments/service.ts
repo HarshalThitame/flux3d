@@ -180,9 +180,10 @@ async function assertQuoteApprovedForPayment(order: Record<string, unknown>, typ
 function getContactFields(order: Record<string, unknown>, type: InternalOrderType) {
   if (type === 'shop_order') {
     const address = asRecord(order.shipping_address)
+    const guestContact = asRecord(order.guest_contact)
     return {
       name: normalizeText(address.name) || normalizeText(order.full_name) || 'Flux3D customer',
-      email: normalizeText(order.customer_email) || normalizeText(order.email) || '',
+      email: normalizeText(order.customer_email) || normalizeText(order.email) || normalizeText(guestContact.email),
       contact: normalizeText(address.phone) || normalizeText(order.phone) || '',
       shippingAddress: address,
     }

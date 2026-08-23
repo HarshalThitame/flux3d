@@ -479,7 +479,8 @@ export type ShelfSkuRow = {
 export type ShelfOrderRow = {
   id: string
   order_number: string
-  user_id: string
+  /** auth.users id — null for guest (unauthenticated) checkout orders. */
+  user_id: string | null
   items: Json
   subtotal: number
   discount_amount: number | null
@@ -501,6 +502,11 @@ export type ShelfOrderRow = {
   placed_at: string | null
   updated_at: string | null
   delivered_at: string | null
+  guest_session_id: string | null
+  claim_candidate_user_id: string | null
+  guest_access_token_hash: string | null
+  guest_contact: Json | null
+  guest_data_anonymized_at: string | null
 }
 
 export type ShelfReviewReminderRow = {
@@ -680,7 +686,7 @@ export type Database = {
       }
       shelf_orders: {
         Row: ShelfOrderRow
-        Insert: Omit<Partial<ShelfOrderRow>, 'id'> & Pick<ShelfOrderRow, 'order_number' | 'user_id' | 'items' | 'subtotal' | 'total_amount' | 'shipping_address' | 'payment_status' | 'order_status'>
+        Insert: Omit<Partial<ShelfOrderRow>, 'id'> & Pick<ShelfOrderRow, 'order_number' | 'items' | 'subtotal' | 'total_amount' | 'shipping_address' | 'payment_status' | 'order_status'>
         Update: Partial<ShelfOrderRow>
       }
       shelf_reviews: {

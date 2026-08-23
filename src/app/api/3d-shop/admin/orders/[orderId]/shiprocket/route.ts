@@ -79,13 +79,20 @@ export async function POST(_request: Request, context: { params: Promise<{ order
     const pincode = String(address.pincode ?? '').replace(/\D/g, '')
     const phone = String(address.phone ?? '').replace(/\D/g, '')
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('email, full_name, phone_number')
-      .eq('id', String(order.user_id))
-      .maybeSingle()
+    // Guest orders (user_id IS NULL) have no profile — fall back to the
+    // guest_contact email snapshot so Shiprocket gets a real billing_email.
+    const guestContact = asRecord(order.guest_contact)
+    const guestEmail = typeof guestContact.email === 'string' ? guestContact.email.trim() : ''
 
-    const customerEmail = profile?.email ?? null
+    const profile = order.user_id
+      ? (await supabase
+          .from('profiles')
+          .select('email, full_name, phone_number')
+          .eq('id', String(order.user_id))
+          .maybeSingle()).data as { email: string | null; full_name: string | null; phone_number: string | null } | null
+      : null
+
+    const customerEmail = profile?.email ?? guestEmail ?? null
     const customerPhone = profile?.phone_number
       ? String(profile.phone_number).replace(/\D/g, '')
       : phone
@@ -269,7 +276,7 @@ export async function POST(_request: Request, context: { params: Promise<{ order
 
     if (customerEmail) {
       sendOrderShipped(
-        String(order.user_id),
+        String(order.user_id ?? ''),
         customerEmail,
         String(order.order_number ?? ''),
         customerName,

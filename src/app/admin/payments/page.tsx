@@ -161,7 +161,7 @@ export default function PaymentsPage() {
           description="Ledger rows from the provider-aware payment attempts table."
           data={payments ?? []}
           searchPlaceholder="Search by order number, payment ID, customer..."
-          searchKeys={['orderNumber', 'providerOrderId', 'providerPaymentId', 'internalOrderId']}
+          searchKeys={['orderNumber', 'providerOrderId', 'providerPaymentId', 'internalOrderId', 'customer', 'customerEmail']}
           exportFilename="payment-ledger.csv"
           columns={[
             {
@@ -174,6 +174,17 @@ export default function PaymentsPage() {
               ),
             },
             { key: 'amountPaise', label: 'Amount', sortable: true, exportValue: (row: PaymentData) => (row.amountPaise / 100).toFixed(2), render: (row: PaymentData) => <span className="font-medium text-[#0F1B3D]">₹{Math.round(row.amountPaise / 100).toLocaleString('en-IN')}</span> },
+            {
+              key: 'customer', label: 'Customer', sortable: true,
+              exportValue: (row: PaymentData) => row.customerEmail ? `${row.customer} <${row.customerEmail}>` : row.customer,
+              render: (row: PaymentData) => (
+                <div>
+                  <div className="font-medium text-[#0F1B3D]">{row.customer}</div>
+                  {row.customerEmail && <div className="mt-0.5 text-xs text-[#6F7192] break-all">{row.customerEmail}</div>}
+                  {!row.customerEmail && !row.customerId && <span className="mt-0.5 inline-block rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">Guest</span>}
+                </div>
+              ),
+            },
             { key: 'provider', label: 'Provider', sortable: true, exportValue: (row: PaymentData) => getProviderLabel(row.provider), render: (row: PaymentData) => <span className="text-[#6F7192]">{getProviderLabel(row.provider)}</span> },
             { key: 'providerOrderId', label: 'Provider Order', sortable: true, exportValue: (row: PaymentData) => row.providerOrderId ?? '', render: (row: PaymentData) => <span className="text-[#6F7192] break-all">{row.providerOrderId ?? '—'}</span> },
             { key: 'providerPaymentId', label: 'Payment ID', sortable: true, exportValue: (row: PaymentData) => row.providerPaymentId ?? '', render: (row: PaymentData) => <span className="text-[#6F7192] break-all">{row.providerPaymentId ?? '—'}</span> },

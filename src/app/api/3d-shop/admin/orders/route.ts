@@ -3,6 +3,7 @@ import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminRequest } from '@/lib/admin/request'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import {
+  getGuestContact,
   mapShopAdminOrder,
   shopOrderStatuses,
   shopFulfilmentStatuses,
@@ -43,7 +44,7 @@ async function attachCustomers(
   supabase: ReturnType<typeof createAdminSupabaseClient>,
   rows: Record<string, unknown>[]
 ) {
-  const userIds = Array.from(new Set(rows.map((row) => String(row.user_id)).filter(Boolean)))
+  const userIds = Array.from(new Set(rows.map((row) => row.user_id ? String(row.user_id) : '').filter(Boolean)))
   const profiles = new Map<string, ProfileRow>()
 
   if (userIds.length > 0) {
@@ -57,12 +58,15 @@ async function attachCustomers(
   }
 
   return rows.map((row) => {
-    const profile = profiles.get(String(row.user_id))
+    // Guest orders (user_id IS NULL) have no profile — fall back to the
+    // guest_contact email snapshot collected at checkout.
+    const profile = row.user_id ? profiles.get(String(row.user_id)) : undefined
     const addressCustomer = getAddressCustomer(row)
+    const guestContact = getGuestContact(row)
     const customer: ShopOrderCustomer = {
-      id: String(row.user_id),
+      id: row.user_id ? String(row.user_id) : null,
       name: profile?.full_name ?? addressCustomer.name,
-      email: profile?.email ?? null,
+      email: profile?.email ?? guestContact.email,
       phone: profile?.phone_number ?? addressCustomer.phone,
     }
 
@@ -94,6 +98,7 @@ export async function GET(request: Request) {
     const dateFrom = searchParams.get('date_from')
     const dateTo = searchParams.get('date_to')
     const search = searchParams.get('search')?.trim() ?? ''
+    const guestOnly = searchParams.get('guest') === 'true'
     const page = parsePositiveInteger(searchParams.get('page'), 1)
     const limit = parsePositiveInteger(searchParams.get('limit'), 20, 100)
     const supabase = createAdminSupabaseClient()
@@ -115,6 +120,8 @@ export async function GET(request: Request) {
       query = query.eq('payment_status', paymentStatus)
     }
     if (source) query = query.eq('order_source', source)
+    // Support lookup: unclaimed guest orders (user_id IS NULL) only.
+    if (guestOnly) query = query.is('user_id', null)
     if (dateFrom) query = query.gte('placed_at', `${dateFrom}T00:00:00.000Z`)
     if (dateTo) query = query.lte('placed_at', `${dateTo}T23:59:59.999Z`)
 
