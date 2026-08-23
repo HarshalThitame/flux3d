@@ -228,6 +228,13 @@ export type OutForDeliveryPayload = BaseEmailPayload & {
   trackingUrl?: string
 }
 
+export type MagicLinkLoginPayload = BaseEmailPayload & {
+  emailType: 'magic_link_login'
+  loginUrl: string
+  /** Minutes until the link expires — shown in the email body. */
+  expiresInMinutes: number
+}
+
 export type EmailJobPayload =
   | WelcomeEmailPayload
   | EmailVerificationPayload
@@ -248,6 +255,7 @@ export type EmailJobPayload =
   | StockAlertDigestPayload
   | BackInStockPayload
   | OutForDeliveryPayload
+  | MagicLinkLoginPayload
 
 // ============================================================================
 // Dispatcher result shape

@@ -64,9 +64,14 @@ describe('guest access tokens', () => {
   describe('verifyGuestOrderAccess', () => {
     it('grants access for a guest order whose stored hash matches hash(rawToken)', async () => {
       const raw = generateGuestAccessToken()
-      fakeOrderRow.data = { id: 'order-1', user_id: null, guest_access_token_hash: hashGuestAccessToken(raw) }
+      fakeOrderRow.data = {
+        id: 'order-1',
+        user_id: null,
+        guest_access_token_hash: hashGuestAccessToken(raw),
+        guest_contact: { email: 'guest@example.com' },
+      }
       const access = await verifyGuestOrderAccess('order-1', raw)
-      expect(access).toEqual({ orderId: 'order-1', isGuest: true })
+      expect(access).toEqual({ orderId: 'order-1', isGuest: true, guestEmail: 'guest@example.com' })
     })
 
     it('denies access when the stored value is a DOUBLE hash (regression)', async () => {

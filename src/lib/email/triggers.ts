@@ -13,6 +13,7 @@ import type {
   OrderShippedPayload,
   DeliveryConfirmationPayload,
   OutForDeliveryPayload,
+  MagicLinkLoginPayload,
   PaymentReceiptPayload,
   PaymentFailedPayload,
   RefundIssuedPayload,
@@ -253,6 +254,25 @@ export async function sendOutForDelivery(
     courierName: tracking?.courierName,
     trackingUrl: tracking?.url,
   } as OutForDeliveryPayload)
+}
+
+/**
+ * Magic-link login email (guest account claiming).
+ *
+ * `loginUrl` is a Supabase-generated action link — treat it like a password
+ * reset secret: never log it, single-use, short expiry.
+ */
+export async function sendMagicLinkLogin(
+  email: string,
+  loginUrl: string,
+  expiresInMinutes = 60
+) {
+  return enqueueEmail({
+    emailType: 'magic_link_login',
+    recipient: email,
+    loginUrl,
+    expiresInMinutes,
+  } as MagicLinkLoginPayload)
 }
 
 export async function sendReviewReminder(

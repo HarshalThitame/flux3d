@@ -279,6 +279,11 @@ function payloadToVariables(
       if (payload.courierName) vars.courier_name = payload.courierName
       if (payload.trackingUrl) vars.tracking_url = payload.trackingUrl
       break
+    case 'magic_link_login':
+      // loginUrl must pass through unescaped — it is a secret link, never log it.
+      vars.login_url = payload.loginUrl
+      vars.expires_in_minutes = String(payload.expiresInMinutes)
+      break
     case 'review_reminder':
       vars.order_number = payload.orderNumber
       vars.customer_name = payload.customerName
@@ -382,6 +387,8 @@ function buildSubject(payload: EmailJobPayload): string {
       return `Order ${payload.orderNumber} delivered — how did we do?`
     case 'out_for_delivery':
       return `Your order ${payload.orderNumber} is out for delivery 🛵`
+    case 'magic_link_login':
+      return 'Your Flux3D login link'
     case 'payment_receipt':
       return `Payment receipt for order ${payload.orderNumber}`
     case 'payment_failed':

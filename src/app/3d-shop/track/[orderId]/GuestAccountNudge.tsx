@@ -1,21 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle2, MailCheck, Send } from 'lucide-react'
-import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { MailCheck, Send } from 'lucide-react'
 
 type GuestAccountNudgeProps = {
   orderId: string
   emailHint: string
+  /** Current tracking path incl. token query — validated server-side. */
   trackingUrl: string
 }
 
 /**
  * Post-purchase account nudge (optional, never blocking).
- * Sends a Supabase magic link to the supplied email; once the guest signs in,
- * the auth callback claims this (and any other pending) guest orders onto
- * their account — same "prove inbox ownership, then link" model used for
- * WhatsApp identity linking.
+ *
+ * Asks our server for a one-time magic link (Supabase-generated, delivered
+ * via the Resend pipeline). Clicking it logs the guest in and claims their
+ * guest order(s) onto the account — "prove inbox ownership, then link".
  */
 export default function GuestAccountNudge({ orderId, trackingUrl }: GuestAccountNudgeProps) {
   const [open, setOpen] = useState(false)
@@ -33,16 +33,18 @@ export default function GuestAccountNudge({ orderId, trackingUrl }: GuestAccount
 
     setState('sending')
     try {
-      const supabase = getSupabaseBrowserClient()
-      const siteUrl = window.location.origin
-      const { error } = await supabase.auth.signInWithOtp({
-        email: normalized,
-        options: {
-          emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(trackingUrl)}&claim_order=${encodeURIComponent(orderId)}`,
-        },
+      // Uniform response by design — we can't tell (and won't reveal) whether
+      // this email actually matched the order.
+      const response = await fetch('/api/account/send-magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          email: normalized,
+          trackingPath: trackingUrl,
+        }),
       })
-
-      if (error) throw error
+      if (!response.ok) throw new Error('Could not send the login link.')
       setState('sent')
     } catch (err) {
       setState('error')
@@ -74,8 +76,9 @@ export default function GuestAccountNudge({ orderId, trackingUrl }: GuestAccount
           <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
           <div className="text-sm leading-6 text-[var(--shop-text-secondary)]">
             <span className="font-bold text-[var(--shop-text-primary)]">Check your inbox.</span>{' '}
-            We sent a one-time login link. Opening it will attach order{' '}
-            <span className="font-semibold">{orderId.slice(0, 8).toUpperCase()}</span> and any other pending orders to your account.
+            We sent a one-time login link. Opening it will log you in and save order{' '}
+            <span className="font-semibold">{orderId.slice(0, 8).toUpperCase()}</span> — plus any other pending orders — to your account.
+            The link expires in 60 minutes.
           </div>
         </div>
       ) : (
@@ -91,9 +94,9 @@ export default function GuestAccountNudge({ orderId, trackingUrl }: GuestAccount
               value={email}
               onChange={(event) => {
                 setEmail(event.target.value)
-                setState('idle')
+                if (state === 'error') setState('idle')
               }}
-              placeholder="you@example.com"
+              placeholder="The email you used at checkout"
               className="min-h-[48px] flex-1 rounded-xl border border-[var(--shop-border-light)] bg-white px-3 text-sm text-[var(--shop-text-primary)] outline-none focus:border-[var(--shop-gold)]"
             />
             <button
@@ -113,9 +116,8 @@ export default function GuestAccountNudge({ orderId, trackingUrl }: GuestAccount
             </button>
           </div>
           {state === 'error' && <p className="mt-2 text-xs font-semibold text-rose-600">{message}</p>}
-          <p className="mt-3 flex items-start gap-1.5 text-xs leading-5 text-[var(--shop-text-muted)]">
-            <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
-            We only link orders after you open the link from that inbox — your order is safe even if someone else types this email.
+          <p className="mt-3 text-xs leading-5 text-[var(--shop-text-muted)]">
+            We only link orders after you open the link from that inbox — your order is safe even if someone else types your email here.
           </p>
         </div>
       )}

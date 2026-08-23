@@ -36,6 +36,8 @@ export function safeHashEqual(a: string, b: string): boolean {
 export type GuestOrderAccess = {
   orderId: string
   isGuest: boolean
+  /** Lowercased email snapshot from guest_contact (null if absent). */
+  guestEmail: string | null
 }
 
 /**
@@ -48,16 +50,21 @@ export async function verifyGuestOrderAccess(orderId: string, rawToken: string):
   const supabase = createAdminSupabaseClient()
   const { data, error } = await supabase
     .from('shelf_orders')
-    .select('id, user_id, guest_access_token_hash')
+    .select('id, user_id, guest_access_token_hash, guest_contact')
     .eq('id', orderId)
     .maybeSingle()
 
   if (error || !data) return null
 
   const storedHash = typeof data.guest_access_token_hash === 'string' ? data.guest_access_token_hash : ''
+  const contact = data.guest_contact && typeof data.guest_contact === 'object'
+    ? (data.guest_contact as Record<string, unknown>)
+    : {}
+  const guestEmail = typeof contact.email === 'string' ? contact.email.trim().toLowerCase() : null
+
   if (!data.user_id && storedHash) {
     if (safeHashEqual(hashGuestAccessToken(rawToken), storedHash)) {
-      return { orderId: String(data.id), isGuest: true }
+      return { orderId: String(data.id), isGuest: true, guestEmail }
     }
   }
   return null

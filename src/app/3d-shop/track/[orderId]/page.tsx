@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { BadgeCheck, CheckCircle2, Clock, MapPin, Package, PackageCheck, Truck, XCircle } from 'lucide-react'
 import ShopShell from '@/components/shop/ShopShell'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { getCurrentUserProfile } from '@/lib/auth/server'
 import { mapShopOrderRow, type ShopOrder } from '@/lib/shop/orders'
 import { verifyGuestOrderAccess } from '@/lib/shop/guest-access'
 import { getSettings } from '@/lib/settings'
@@ -14,7 +15,7 @@ export const dynamic = 'force-dynamic'
 
 type TrackPageProps = {
   params: Promise<{ orderId: string }>
-  searchParams: Promise<{ token?: string }>
+  searchParams: Promise<{ token?: string; claimed?: string }>
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -81,7 +82,7 @@ function StatusTimeline({ order }: { order: ShopOrder }) {
 
 export default async function TrackOrderPage({ params, searchParams }: TrackPageProps) {
   const { orderId } = await params
-  const { token } = await searchParams
+  const { token, claimed } = await searchParams
 
   // Token-gated access: no valid token, no order data. Unknown tokens and
   // unknown order ids are indistinguishable (both 404).
@@ -99,8 +100,45 @@ export default async function TrackOrderPage({ params, searchParams }: TrackPage
 
   const order = mapShopOrderRow(data)
 
-  // If the guest has since claimed this order into an account, send them to it.
+  // If the guest has since claimed this order into an account, celebrate (or
+  // ask them to log in to see it).
   if (order.user_id) {
+    const auth = await getCurrentUserProfile()
+
+    if (auth) {
+      // Just came back from the magic link — success state.
+      return (
+        <ShopShell transparentNav>
+          <main className="px-4 pb-20 pt-10 md:px-8 lg:px-16">
+            <div className="mx-auto max-w-2xl rounded-[var(--shop-radius-xl)] border border-emerald-200 bg-emerald-50 p-8 text-center shadow-[var(--shop-shadow-sm)]">
+              <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" />
+              <h1 className="mt-4 text-2xl font-bold text-[var(--shop-text-primary)]">
+                {claimed === '1' ? 'Order saved to your account!' : 'You are logged in'}
+              </h1>
+              <p className="mt-2 text-sm text-[var(--shop-text-secondary)]">
+                {order.order_number} and any other guest orders with this email now live in your account —
+                with live status, invoices and returns.
+              </p>
+              <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                <Link
+                  href="/my-orders"
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-[var(--shop-text-primary)] px-6 text-sm font-semibold text-white"
+                >
+                  Go to my orders
+                </Link>
+                <Link
+                  href={`/3d-shop/order/${order.id}`}
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-[var(--shop-border-light)] bg-white px-6 text-sm font-semibold text-[var(--shop-text-primary)]"
+                >
+                  View this order
+                </Link>
+              </div>
+            </div>
+          </main>
+        </ShopShell>
+      )
+    }
+
     return (
       <ShopShell transparentNav>
         <main className="px-4 pb-20 pt-10 md:px-8 lg:px-16">

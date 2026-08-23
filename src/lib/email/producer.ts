@@ -146,6 +146,8 @@ function buildSubject(payload: EmailJobPayload): string {
       return `Order ${payload.orderNumber} delivered — how did we do?`
     case 'out_for_delivery':
       return `Your order ${payload.orderNumber} is out for delivery 🛵`
+    case 'magic_link_login':
+      return 'Your Flux3D login link'
     case 'review_reminder':
       return `How is your order ${payload.orderNumber}? Leave a review`
     case 'payment_receipt':

@@ -33,6 +33,7 @@ export type EmailType =
   | 'stock_alert'
   | 'back_in_stock'
   | 'out_for_delivery'
+  | 'magic_link_login'
   | 'ticket_acknowledgment'
 
 export type EmailLogStatus =
