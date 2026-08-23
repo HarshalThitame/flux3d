@@ -1,11 +1,32 @@
 import { NextResponse } from 'next/server'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import crypto from 'node:crypto'
+import { Receiver } from '@upstash/qstash'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
 
 const DEFAULT_RETENTION_DAYS = 7
+
+const qstashReceiver = new Receiver({
+  currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY ?? '',
+  nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY ?? '',
+})
+
+async function verifyQStash(request: Request): Promise<boolean> {
+  const signature = request.headers.get('upstash-signature') ?? ''
+  if (!signature) return false
+  const body = await request.clone().text().catch(() => '')
+  try {
+    return await qstashReceiver.verify({
+      body,
+      signature,
+      url: request.url,
+    })
+  } catch {
+    return false
+  }
+}
 
 async function verifyCronAuth(request: Request): Promise<boolean> {
   const cronSecret = process.env.CRON_SECRET
@@ -49,7 +70,8 @@ async function getRetentionDays(supabase: SupabaseClient): Promise<number> {
 }
 
 export async function GET(request: Request) {
-  if (!await verifyCronAuth(request)) {
+  const isAuthorized = (await verifyQStash(request)) || (await verifyCronAuth(request))
+  if (!isAuthorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
