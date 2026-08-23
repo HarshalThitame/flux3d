@@ -1,16 +1,16 @@
 /**
  * Guest order access tokens.
  *
- * Model: a random 256-bit token is generated once per guest order. Only its
- * SHA-256 hash is persisted (`shelf_orders.guest_access_token_hash`); the raw
- * token travels to the checkout client exactly once (order-create response)
- * and in tracking/resend emails. Verification is a timing-safe compare, so a
- * DB dump or timing attack cannot recover valid links.
+ * Two independent secrets per guest order:
+ *   - checkout/payment token (`guest_access_token_hash`): issued once at
+ *     checkout, never rotated until the order is claimed/anonymized. Used by
+ *     payment create-order/verify/status APIs.
+ *   - email-link token (`guest_email_token_hash`): rotated every time a
+ *     receipt/resend email needs a tracking link, invalidating earlier
+ *     emailed links. Tracking pages accept either token.
  *
- * A new raw token can be minted at any time (`ensureFreshGuestTrackingToken`)
- * — e.g. before emailing a tracking link — which invalidates earlier links.
- * This is deliberate: it lets post-payment webhook flows email a working link
- * without ever persisting the raw value.
+ * Only SHA-256 hashes are persisted; raw tokens travel to the client once
+ * (checkout response) or inside emails. Verification is timing-safe.
  */
 import crypto from 'node:crypto'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
@@ -42,7 +42,12 @@ export type GuestOrderAccess = {
 
 /**
  * Verify that a raw guest token authorizes access to an order.
- * Returns false for logged-in orders (no token stored) or unknown orders.
+ *
+ * Accepts EITHER token:
+ *   - the stable checkout/payment token (guest_access_token_hash), or
+ *   - the rotated email-link token (guest_email_token_hash) from receipt /
+ *     resend emails.
+ * Returns false for logged-in orders (no tokens stored) or unknown orders.
  */
 export async function verifyGuestOrderAccess(orderId: string, rawToken: string): Promise<GuestOrderAccess | null> {
   if (!orderId || !rawToken) return null
@@ -50,29 +55,40 @@ export async function verifyGuestOrderAccess(orderId: string, rawToken: string):
   const supabase = createAdminSupabaseClient()
   const { data, error } = await supabase
     .from('shelf_orders')
-    .select('id, user_id, guest_access_token_hash, guest_contact')
+    .select('id, user_id, guest_access_token_hash, guest_email_token_hash, guest_contact')
     .eq('id', orderId)
     .maybeSingle()
 
   if (error || !data) return null
 
-  const storedHash = typeof data.guest_access_token_hash === 'string' ? data.guest_access_token_hash : ''
   const contact = data.guest_contact && typeof data.guest_contact === 'object'
     ? (data.guest_contact as Record<string, unknown>)
     : {}
   const guestEmail = typeof contact.email === 'string' ? contact.email.trim().toLowerCase() : null
 
-  if (!data.user_id && storedHash) {
-    if (safeHashEqual(hashGuestAccessToken(rawToken), storedHash)) {
-      return { orderId: String(data.id), isGuest: true, guestEmail }
-    }
+  if (data.user_id) return null
+
+  const candidate = hashGuestAccessToken(rawToken)
+  const checkoutHash = typeof data.guest_access_token_hash === 'string' ? data.guest_access_token_hash : ''
+  const emailHash = typeof data.guest_email_token_hash === 'string' ? data.guest_email_token_hash : ''
+
+  if (
+    (checkoutHash && safeHashEqual(candidate, checkoutHash)) ||
+    (emailHash && safeHashEqual(candidate, emailHash))
+  ) {
+    return { orderId: String(data.id), isGuest: true, guestEmail }
   }
   return null
 }
 
 /**
- * Mint (or rotate) the raw tracking token for a guest order and persist only
- * its hash. Returns null for non-guest orders.
+ * Mint (or rotate) the EMAIL-link tracking token for a guest order and
+ * persist only its hash.
+ *
+ * IMPORTANT: this rotates `guest_email_token_hash` — never the checkout
+ * token (`guest_access_token_hash`). Rotating the checkout token raced with
+ * in-flight payment verification and locked guests out of the verify call.
+ * Tracking surfaces accept either token; payment APIs accept only checkout.
  */
 export async function ensureFreshGuestTrackingToken(orderId: string): Promise<string | null> {
   const supabase = createAdminSupabaseClient()
@@ -88,7 +104,7 @@ export async function ensureFreshGuestTrackingToken(orderId: string): Promise<st
   const raw = generateGuestAccessToken()
   const { error } = await supabase
     .from('shelf_orders')
-    .update({ guest_access_token_hash: hashGuestAccessToken(raw) })
+    .update({ guest_email_token_hash: hashGuestAccessToken(raw) })
     .eq('id', orderId)
 
   if (error) {

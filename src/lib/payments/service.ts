@@ -529,16 +529,32 @@ export async function verifyCheckoutPayment(params: {
     throw new Error(`Payment attempt not found (provider_order_id: ${params.razorpayOrderId}).`)
   }
 
-  // Ownership check: logged-in orders require the authenticated owner; guest
-  // orders (customer_id IS NULL) require a valid guest access token. Both
-  // failure paths return the same message.
+  // Signature is checked up-front: it is cryptographic proof from Razorpay
+  // that THIS browser completed THIS payment, and for guest orders it doubles
+  // as authorization (the guest access token can be rotated by the receipt
+  // path mid-checkout, which must never break an in-flight verification).
+  const signatureValid = verifyRazorpayCheckoutSignature({
+    orderId: params.razorpayOrderId,
+    paymentId: params.razorpayPaymentId,
+    signature: params.razorpaySignature,
+  })
+
+  // Ownership check: logged-in orders require the authenticated owner. Guest
+  // orders (customer_id IS NULL) accept a valid guest access token OR a valid
+  // Razorpay checkout signature. Both failure paths return the same message.
   const notAllowed = new Error('You are not allowed to verify this payment.')
   if (attempt.customer_id) {
     if (attempt.customer_id !== params.customerId) {
       throw notAllowed
     }
-  } else if (!params.guestAccessToken || !(await verifyGuestOrderAccess(params.internalOrderId, params.guestAccessToken))) {
-    throw notAllowed
+  } else {
+    let tokenValid = false
+    if (params.guestAccessToken) {
+      tokenValid = Boolean(await verifyGuestOrderAccess(params.internalOrderId, params.guestAccessToken))
+    }
+    if (!tokenValid && !signatureValid) {
+      throw notAllowed
+    }
   }
 
   const order = await fetchInternalOrder({
@@ -550,11 +566,7 @@ export async function verifyCheckoutPayment(params: {
 
   const orderSnapshot = buildOrderSnapshot(order, params.internalOrderType)
 
-  if (!verifyRazorpayCheckoutSignature({
-    orderId: params.razorpayOrderId,
-    paymentId: params.razorpayPaymentId,
-    signature: params.razorpaySignature,
-  })) {
+  if (!signatureValid) {
     await updatePaymentAttemptStatus(
       attempt.id,
       attempt.status,

@@ -93,6 +93,25 @@ describe('guest access tokens', () => {
       expect(await verifyGuestOrderAccess('order-1', generateGuestAccessToken())).toBeNull()
     })
 
+    it('accepts the rotated EMAIL token as well as the checkout token', async () => {
+      const checkoutToken = generateGuestAccessToken()
+      const emailToken = generateGuestAccessToken() // rotated by receipt path
+      fakeOrderRow.data = {
+        id: 'order-1',
+        user_id: null,
+        guest_access_token_hash: hashGuestAccessToken(checkoutToken),
+        guest_email_token_hash: hashGuestAccessToken(emailToken),
+      }
+      // Both must verify: email-token rotation must never break in-flight
+      // payment verification or an already-issued tracking link.
+      expect(await verifyGuestOrderAccess('order-1', checkoutToken)).toEqual({
+        orderId: 'order-1', isGuest: true, guestEmail: null,
+      })
+      expect(await verifyGuestOrderAccess('order-1', emailToken)).toEqual({
+        orderId: 'order-1', isGuest: true, guestEmail: null,
+      })
+    })
+
     it('denies access to logged-in orders even with a matching-looking row', async () => {
       const raw = generateGuestAccessToken()
       fakeOrderRow.data = {

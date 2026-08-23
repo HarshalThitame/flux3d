@@ -31,6 +31,7 @@ export async function claimGuestOrdersForUser(userId: string): Promise<number> {
       claim_candidate_user_id: null,
       guest_session_id: null,
       guest_access_token_hash: null,
+      guest_email_token_hash: null,
       guest_contact: null,
     })
     .filter('user_id', 'is', null)
