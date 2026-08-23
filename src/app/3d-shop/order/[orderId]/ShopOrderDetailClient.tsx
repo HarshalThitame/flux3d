@@ -855,6 +855,27 @@ export default function ShopOrderDetailClient({ orderId }: { orderId: string }) 
                     Expected by {formatShopOrderDate(order.estimated_delivery)}
                   </div>
                 )}
+                {order.tracking_events && order.tracking_events.length > 0 && (
+                  <div className="mt-3 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-3">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">Journey</div>
+                    <ol className="mt-2 space-y-2.5">
+                      {[...order.tracking_events].reverse().slice(0, 10).map((event, index) => (
+                        <li key={`${event.date}-${index}`} className="flex gap-2.5 text-xs">
+                          <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${index === 0 ? 'bg-[var(--shop-gold)]' : 'bg-[var(--shop-border-medium)]'}`} />
+                          <div className="min-w-0">
+                            <div className={`font-bold ${index === 0 ? 'text-[var(--shop-text-primary)]' : 'text-[var(--shop-text-secondary)]'}`}>
+                              {event.activity || event.label || event.status}
+                            </div>
+                            <div className="mt-0.5 text-[11px] font-semibold text-[var(--shop-text-muted)]">
+                              {event.date}
+                              {event.location ? ` · ${event.location}` : ''}
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
               </motion.section>
             )}
           </section>

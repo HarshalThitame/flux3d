@@ -46,6 +46,14 @@ export type ShopShippingAddress = {
   pincode: string
 }
 
+export type ShopTrackingEvent = {
+  date: string
+  status: string
+  activity: string
+  location: string
+  label: string
+}
+
 export type ShopOrder = {
   id: string
   order_number: string
@@ -81,6 +89,8 @@ export type ShopOrder = {
   courier_name: string | null
   tracking_url: string | null
   estimated_delivery: string | null
+  tracking_events?: ShopTrackingEvent[]
+  pickup_scheduled_at?: string | null
   order_source: string | null
   admin_notes?: string | null
   cancellation_reason: string | null
@@ -405,6 +415,20 @@ export function mapShopOrderRow(row: Record<string, unknown>): ShopOrder {
     courier_name: row.courier_name ? String(row.courier_name) : null,
     tracking_url: row.tracking_url ? String(row.tracking_url) : null,
     estimated_delivery: row.estimated_delivery ? String(row.estimated_delivery) : null,
+    tracking_events: Array.isArray(row.tracking_events)
+      ? (row.tracking_events as unknown[]).flatMap((event) => {
+          if (!event || typeof event !== 'object') return []
+          const record = event as Record<string, unknown>
+          return [{
+            date: String(record.date ?? ''),
+            status: String(record.status ?? ''),
+            activity: String(record.activity ?? record.status ?? ''),
+            location: String(record.location ?? ''),
+            label: String(record.label ?? record.status ?? ''),
+          }]
+        })
+      : undefined,
+    pickup_scheduled_at: row.pickup_scheduled_at ? String(row.pickup_scheduled_at) : null,
     order_source: row.order_source ? String(row.order_source) : null,
     admin_notes: row.admin_notes ? String(row.admin_notes) : null,
     cancellation_reason: row.cancellation_reason ? String(row.cancellation_reason) : null,

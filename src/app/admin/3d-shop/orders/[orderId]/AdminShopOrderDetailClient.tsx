@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Banknote, ChevronDown, ChevronUp, Copy, ExternalLink, FileText, PackageCheck, Printer, RotateCcw, Save, ShieldCheck, Truck } from 'lucide-react'
+import { ArrowLeft, Banknote, ChevronDown, ChevronUp, Copy, ExternalLink, FileText, PackageCheck, Printer, RotateCcw, Save, ShieldCheck, Truck, X } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import { formatShopPrice } from '@/lib/shop/selection'
 import {
@@ -566,6 +566,11 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
   const [saving, setSaving] = useState(false)
   const [shippingToShiprocket, setShippingToShiprocket] = useState(false)
   const [showSnapshot, setShowSnapshot] = useState(false)
+  const [showShipModal, setShowShipModal] = useState(false)
+  const [loadingPackage, setLoadingPackage] = useState(false)
+  const [packageForm, setPackageForm] = useState({ weight_kg: '', length_cm: '', breadth_cm: '', height_cm: '' })
+  const [estimatedDelivery, setEstimatedDelivery] = useState('')
+  const [retryingPickup, setRetryingPickup] = useState(false)
 
   const loadOrder = useCallback(async () => {
     setLoading(true)
@@ -656,12 +661,49 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
     })
   }
 
-  async function shipViaShiprocket() {
+  async function openShipModal() {
+    setShowShipModal(true)
+    setLoadingPackage(true)
+    try {
+      const response = await fetch(`/api/3d-shop/admin/orders/${orderId}/shiprocket`)
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string
+        shippable?: boolean
+        reason?: string
+        suggested?: { weight_kg?: number; length_cm?: number; breadth_cm?: number; height_cm?: number } | null
+        estimated_delivery?: string
+      }
+      if (!response.ok) throw new Error(data.error || 'Failed to load package suggestion.')
+      if (!data.suggested) throw new Error('This order can no longer be shipped via Shiprocket.')
+      setPackageForm({
+        weight_kg: String(data.suggested.weight_kg ?? ''),
+        length_cm: String(data.suggested.length_cm ?? ''),
+        breadth_cm: String(data.suggested.breadth_cm ?? ''),
+        height_cm: String(data.suggested.height_cm ?? ''),
+      })
+      setEstimatedDelivery(data.estimated_delivery ?? '')
+    } catch (error) {
+      setShowShipModal(false)
+      setToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to load package suggestion.' })
+    } finally {
+      setLoadingPackage(false)
+    }
+  }
+
+  async function confirmShip() {
     setShippingToShiprocket(true)
     try {
       const response = await fetch(`/api/3d-shop/admin/orders/${orderId}/shiprocket`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          package: {
+            weight_kg: Number(packageForm.weight_kg) || undefined,
+            length_cm: Number(packageForm.length_cm) || undefined,
+            breadth_cm: Number(packageForm.breadth_cm) || undefined,
+            height_cm: Number(packageForm.height_cm) || undefined,
+          },
+        }),
       })
       const data = (await response.json().catch(() => ({}))) as {
         error?: string
@@ -671,6 +713,7 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
         pickupScheduled?: boolean
       }
       if (!response.ok) throw new Error(data.error || 'Shiprocket shipment failed.')
+      setShowShipModal(false)
       setToast({
         type: 'success',
         message: `Shipped via Shiprocket: ${data.awb} (${data.courier ?? ''})${data.pickupScheduled === false ? ' — pickup NOT scheduled' : ''}`,
@@ -683,6 +726,28 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
       })
     } finally {
       setShippingToShiprocket(false)
+    }
+  }
+
+  async function retryPickup() {
+    setRetryingPickup(true)
+    try {
+      const response = await fetch(`/api/3d-shop/admin/orders/${orderId}/shiprocket/pickup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = (await response.json().catch(() => ({}))) as { ok?: boolean; pickupScheduled?: boolean; message?: string; error?: string }
+      if (!response.ok) throw new Error(data.error || data.message || 'Pickup scheduling failed.')
+      if (!data.pickupScheduled) throw new Error(data.message || 'Shiprocket did not confirm a pickup slot. Try again later.')
+      setToast({ type: 'success', message: 'Pickup scheduled successfully.' })
+      await loadOrder()
+    } catch (error) {
+      setToast({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Pickup scheduling failed.',
+      })
+    } finally {
+      setRetryingPickup(false)
     }
   }
 
@@ -712,6 +777,105 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
   return (
     <div className="space-y-6">
       <AdminToast toast={toast} />
+
+      {showShipModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="!text-lg font-bold text-[#0F1B3D]">Final Package Details</h2>
+                <p className="mt-1 text-sm text-[#6F7192]">Enter the courier-ready weight and dimensions for #{order.order_number}.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowShipModal(false)}
+                disabled={shippingToShiprocket}
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-gray-200 text-[#6F7192] transition hover:border-[#6d28d9]/30 hover:text-[#6d28d9]"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {loadingPackage ? (
+              <div className="py-10 text-center text-sm text-[#6F7192]">Loading suggested package…</div>
+            ) : (
+              <>
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="text-xs font-medium uppercase tracking-[0.15em] text-[#6F7192]">Weight (kg)</span>
+                    <input
+                      type="number"
+                      min="0.05"
+                      max="30"
+                      step="0.05"
+                      value={packageForm.weight_kg}
+                      onChange={(event) => setPackageForm((current) => ({ ...current, weight_kg: event.target.value }))}
+                      className="mt-1 w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium uppercase tracking-[0.15em] text-[#6F7192]">Length (cm)</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="120"
+                      step="0.5"
+                      value={packageForm.length_cm}
+                      onChange={(event) => setPackageForm((current) => ({ ...current, length_cm: event.target.value }))}
+                      className="mt-1 w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium uppercase tracking-[0.15em] text-[#6F7192]">Breadth (cm)</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="120"
+                      step="0.5"
+                      value={packageForm.breadth_cm}
+                      onChange={(event) => setPackageForm((current) => ({ ...current, breadth_cm: event.target.value }))}
+                      className="mt-1 w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium uppercase tracking-[0.15em] text-[#6F7192]">Height (cm)</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="120"
+                      step="0.5"
+                      value={packageForm.height_cm}
+                      onChange={(event) => setPackageForm((current) => ({ ...current, height_cm: event.target.value }))}
+                      className="mt-1 w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none"
+                    />
+                  </label>
+                </div>
+
+                {estimatedDelivery && (
+                  <div className="mt-4 flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-sm">
+                    <span className="font-semibold text-[#6F7192]">Estimated delivery</span>
+                    <span className="font-semibold text-[#0F1B3D]">{estimatedDelivery} (auto · +7 days)</span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => void confirmShip()}
+                  disabled={shippingToShiprocket}
+                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                >
+                  <Truck className="h-4 w-4" />
+                  {shippingToShiprocket ? 'Creating shipment…' : 'Confirm & Ship'}
+                </button>
+                <p className="mt-2 text-center text-[11px] leading-relaxed text-[#6F7192]">
+                  Creates the shipment, assigns an AWB, schedules pickup, then emails and WhatsApps the customer.
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
@@ -940,17 +1104,31 @@ export default function AdminShopOrderDetailClient({ orderId }: { orderId: strin
                   <div className="border-t border-dashed border-gray-200 pt-3">
                     <button
                       type="button"
-                      onClick={() => void shipViaShiprocket()}
+                      onClick={() => void openShipModal()}
                       disabled={shippingToShiprocket || saving}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
                     >
                       <Truck className="h-4 w-4" />
-                      {shippingToShiprocket ? 'Creating shipment…' : 'Ship via Shiprocket'}
+                      Ship via Shiprocket
                     </button>
                     <p className="mt-2 text-[11px] leading-relaxed text-[#6F7192]">
-                      Creates the shipment, assigns an AWB and schedules pickup automatically, then emails the customer.
+                      Confirm the final package weight and dimensions, then we create the shipment, assign an AWB and schedule pickup automatically.
                     </p>
                   </div>
+                )}
+              {order.tracking_number &&
+                !order.pickup_scheduled_at &&
+                order.fulfilment_status !== 'delivered' &&
+                order.order_status !== 'cancelled' && (
+                  <button
+                    type="button"
+                    onClick={() => void retryPickup()}
+                    disabled={retryingPickup || saving}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100 disabled:opacity-60"
+                  >
+                    <Truck className="h-4 w-4" />
+                    {retryingPickup ? 'Scheduling pickup…' : 'Retry Pickup'}
+                  </button>
                 )}
               <button type="button" onClick={() => void saveTracking()} disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
                 <Save className="h-4 w-4" />

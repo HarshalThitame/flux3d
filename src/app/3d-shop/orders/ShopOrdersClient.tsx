@@ -566,6 +566,25 @@ export default function ShopOrdersClient() {
                       </div>
                     )}
 
+                    {order.tracking_number && (
+                      <div className="mx-4 mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-gold-faint)] px-4 py-3 text-sm md:mx-5">
+                        <Truck className="h-4 w-4 shrink-0 text-[var(--shop-gold)]" />
+                        <span className="font-black text-[var(--shop-text-primary)]">{order.courier_name ?? 'Shipped'}</span>
+                        <span className="break-all font-mono text-xs font-bold text-[var(--shop-text-muted)]">AWB {order.tracking_number}</span>
+                        {order.tracking_url && (
+                          <a
+                            href={order.tracking_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="ml-auto inline-flex shrink-0 items-center gap-1 text-xs font-black text-[var(--shop-gold)] underline-offset-2 hover:underline"
+                          >
+                            Track Package
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    )}
+
                     <div className="mx-4 mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:mx-5 md:mt-5">
                       <div className="flex items-center gap-2 text-sm font-bold text-[var(--shop-text-secondary)]">
                         <Clock3 className="h-4 w-4 text-[var(--shop-gold)]" />

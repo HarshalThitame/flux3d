@@ -13,28 +13,66 @@ import {
   type ShiprocketOrderItem,
 } from '@/lib/shiprocket/client'
 import { sendOrderShipped } from '@/lib/email/triggers'
-import { hasAnyDimension, parseDimensionsJson } from '@/lib/shop/dimensions'
+import {
+  applyPackageOverrides,
+  clampPackageOverrides,
+  computeSuggestedPackage,
+  ESTIMATED_DELIVERY_DAYS,
+  istDatePlusDays,
+} from '@/lib/shop/package-dimensions'
 import { notifyWhatsAppOrderShipped } from '@/lib/whatsapp/notifications'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 const BLOCKED_FULFILMENT = new Set(['delivered', 'cancelled'])
-const DEFAULT_WEIGHT_G = 500
-const DEFAULT_SIZE_CM = { length: 15, breadth: 10, height: 10 }
-
-type Dims = {
-  length_mm?: number
-  width_mm?: number
-  height_mm?: number
-  weight_g?: number
-}
 
 function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
 }
 
-export async function POST(_request: Request, context: { params: Promise<{ orderId: string }> }) {
+function Snumber(value: unknown): number | null {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+}
+
+async function loadOrder(supabase: ReturnType<typeof createAdminSupabaseClient>, orderId: string) {
+  const { data: order, error: loadError } = await supabase
+    .from('shelf_orders')
+    .select('*')
+    .eq('id', orderId)
+    .maybeSingle()
+  if (loadError) throw new Error(loadError.message)
+  return order
+}
+
+async function loadPackageInputs(supabase: ReturnType<typeof createAdminSupabaseClient>, items: Array<Record<string, unknown>>) {
+  const productIds = [...new Set(
+    items
+      .map((item) => String(item.productId ?? item.product_id ?? ''))
+      .filter(Boolean)
+  )]
+
+  const { data: products } = productIds.length
+    ? await supabase.from('shelf_products').select('id, default_dimensions').in('id', productIds)
+    : { data: null }
+
+  const { data: variantDimensionRows } = productIds.length
+    ? await supabase
+        .from('shelf_variant_option_dimensions')
+        .select('product_id, option_name, option_value, dimensions')
+        .in('product_id', productIds)
+    : { data: null }
+
+  return {
+    products: (products ?? []) as Array<Record<string, unknown>>,
+    variantDimensionRows: (variantDimensionRows ?? []) as Array<Record<string, unknown>>,
+  }
+}
+
+export async function GET(_request: Request, context: { params: Promise<{ orderId: string }> }) {
   const auth = await requireAdminPermission('orders.update')
   if ('response' in auth) return auth.response
 
@@ -49,12 +87,50 @@ export async function POST(_request: Request, context: { params: Promise<{ order
     const { orderId } = await context.params
     const supabase = createAdminSupabaseClient()
 
-    const { data: order, error: loadError } = await supabase
-      .from('shelf_orders')
-      .select('*')
-      .eq('id', orderId)
-      .maybeSingle()
-    if (loadError) throw new Error(loadError.message)
+    const order = await loadOrder(supabase, orderId)
+    if (!order) return NextResponse.json({ error: 'Order not found.' }, { status: 404 })
+
+    if (BLOCKED_FULFILMENT.has(String(order.fulfilment_status ?? '')) || order.tracking_number) {
+      return NextResponse.json({
+        suggested: null,
+        estimated_delivery: istDatePlusDays(ESTIMATED_DELIVERY_DAYS),
+        shippable: false,
+        reason: order.tracking_number ? 'already_shipped' : 'blocked_fulfilment',
+      })
+    }
+
+    const items = Array.isArray(order.items) ? (order.items as unknown[]).map(asRecord) : []
+    const { products, variantDimensionRows } = await loadPackageInputs(supabase, items)
+
+    return NextResponse.json({
+      suggested: computeSuggestedPackage(items, products, variantDimensionRows),
+      estimated_delivery: istDatePlusDays(ESTIMATED_DELIVERY_DAYS),
+      shippable: true,
+    })
+  } catch (error) {
+    return getAdminApiErrorResponse(error)
+  }
+}
+
+export async function POST(request: Request, context: { params: Promise<{ orderId: string }> }) {
+  const auth = await requireAdminPermission('orders.update')
+  if ('response' in auth) return auth.response
+
+  if (!isShiprocketConfigured()) {
+    return NextResponse.json(
+      { error: 'Shiprocket is not configured. Set SHIPROCKET_EMAIL, SHIPROCKET_PASSWORD and SHIPROCKET_PICKUP_LOCATION.' },
+      { status: 400 }
+    )
+  }
+
+  try {
+    const { orderId } = await context.params
+    const supabase = createAdminSupabaseClient()
+
+    const body = await request.json().catch(() => ({}))
+    const overrides = clampPackageOverrides(asRecord(body).package)
+
+    const order = await loadOrder(supabase, orderId)
     if (!order) return NextResponse.json({ error: 'Order not found.' }, { status: 404 })
 
     const fulfilment = String(order.fulfilment_status ?? '')
@@ -67,6 +143,7 @@ export async function POST(_request: Request, context: { params: Promise<{ order
         { status: 400 }
       )
     }
+
     const address = asRecord(order.shipping_address)
     const fullName = String(address.name ?? 'Customer').trim()
     const nameParts = fullName.split(/\s+/)
@@ -97,70 +174,11 @@ export async function POST(_request: Request, context: { params: Promise<{ order
       ? String(profile.phone_number).replace(/\D/g, '')
       : phone
 
-    // ── Items + package dimensions ──
-    const items = Array.isArray(order.items) ? (order.items as Record<string, unknown>[]) : []
-    const productIds = items
-      .map((item) => String(item.productId ?? item.product_id ?? ''))
-      .filter(Boolean)
-
-    let totalWeightG = 0
-    let maxLengthCm = DEFAULT_SIZE_CM.length
-    let maxBreadthCm = DEFAULT_SIZE_CM.breadth
-    let maxHeightCm = DEFAULT_SIZE_CM.height
-
-    const { data: products } = productIds.length
-      ? await supabase.from('shelf_products').select('id, default_dimensions').in('id', productIds)
-      : { data: null }
-
-    const { data: variantDimensionRows } = productIds.length
-      ? await supabase
-          .from('shelf_variant_option_dimensions')
-          .select('product_id, option_name, option_value, dimensions')
-          .in('product_id', productIds)
-      : { data: null }
+    const items = Array.isArray(order.items) ? (order.items as unknown[]).map(asRecord) : []
 
     const orderItems: ShiprocketOrderItem[] = items.map((item) => {
-      const qty = Math.max(Number(item.quantity ?? item.units ?? 1) || 1, 1)
+      const qty = Math.max(Math.floor(Number(item.quantity ?? item.units ?? 1)) || 1, 1)
       const unitPrice = Math.round(Number(item.unitPrice ?? 0) * 100) / 100
-
-      const product = (products ?? []).find(
-        (row) => String(row.id) === String(item.productId ?? item.product_id)
-      )
-
-      let dimsRecord: ReturnType<typeof parseDimensionsJson> = null
-      const combination = asRecord(item.variantCombination ?? item.variant_combination ?? {})
-      for (const [optionName, optionValue] of Object.entries(combination)) {
-        if (typeof optionValue !== 'string') continue
-        const match = (variantDimensionRows ?? []).find(
-          (row) =>
-            String(row.product_id) === String(product?.id) &&
-            row.option_name === optionName &&
-            row.option_value === optionValue &&
-            row.dimensions
-        )
-        const parsed = match ? parseDimensionsJson(match.dimensions) : null
-        if (parsed && hasAnyDimension(parsed)) {
-          dimsRecord = parsed
-          break
-        }
-      }
-      if (!dimsRecord && product?.default_dimensions) {
-        const productDims = parseDimensionsJson(product.default_dimensions)
-        if (productDims && hasAnyDimension(productDims)) dimsRecord = productDims
-      }
-
-      const dims = (dimsRecord ?? {}) as Dims
-
-      const weightG = Number(dims.weight_g ?? 0) > 0 ? Number(dims.weight_g) : DEFAULT_WEIGHT_G
-      const lengthCm = Number(dims.length_mm ?? 0) > 0 ? Number(dims.length_mm) / 10 : DEFAULT_SIZE_CM.length
-      const breadthCm = Number(dims.width_mm ?? 0) > 0 ? Number(dims.width_mm) / 10 : DEFAULT_SIZE_CM.breadth
-      const heightCm = Number(dims.height_mm ?? 0) > 0 ? Number(dims.height_mm) / 10 : DEFAULT_SIZE_CM.height
-
-      totalWeightG += weightG * qty
-      maxLengthCm = Math.max(maxLengthCm, lengthCm)
-      maxBreadthCm = Math.max(maxBreadthCm, breadthCm)
-      maxHeightCm = Math.max(maxHeightCm, heightCm)
-
       return {
         name: String(item.productName ?? item.name ?? 'Product').slice(0, 100) || 'Product',
         sku: String(item.skuCode ?? item.sku_code ?? item.skuId ?? 'SKU').slice(0, 50) || 'SKU',
@@ -170,8 +188,12 @@ export async function POST(_request: Request, context: { params: Promise<{ order
     })
 
     const subTotal = Math.round(orderItems.reduce((sum, item) => sum + item.units * item.selling_price, 0) * 100) / 100
-    const weightKg = Math.max(Math.round((totalWeightG / 1000) * 100) / 100, 0.1)
     const now = istNow()
+    const { products, variantDimensionRows } = await loadPackageInputs(supabase, items)
+    const pkg = applyPackageOverrides(
+      computeSuggestedPackage(items, products, variantDimensionRows),
+      overrides
+    )
 
     // ── 1. Create adhoc order in Shiprocket (or resume a previously created one) ──
     let shiprocketOrderId: number | null = order.shiprocket_order_id ? Snumber(order.shiprocket_order_id) : null
@@ -196,10 +218,10 @@ export async function POST(_request: Request, context: { params: Promise<{ order
         order_items: orderItems,
         payment_method: 'Prepaid',
         sub_total: subTotal,
-        length: Math.max(Math.ceil(maxLengthCm), 1),
-        breadth: Math.max(Math.ceil(maxBreadthCm), 1),
-        height: Math.max(Math.ceil(maxHeightCm), 1),
-        weight: weightKg,
+        length: Math.max(Math.ceil(pkg.length_cm), 1),
+        breadth: Math.max(Math.ceil(pkg.breadth_cm), 1),
+        height: Math.max(Math.ceil(pkg.height_cm), 1),
+        weight: pkg.weight_kg,
       })
 
       shiprocketOrderId = created.order_id ? Snumber(created.order_id) : null
@@ -244,14 +266,19 @@ export async function POST(_request: Request, context: { params: Promise<{ order
     const trackingUrl = `https://shiprocket.co/tracking/${awbCode}`
 
     // ── 4. Persist tracking + mark as shipped ──
-    const updates = {
+    const notificationsAlreadySent = Boolean(order.shipped_notifications_sent_at)
+    const updates: Record<string, unknown> = {
       tracking_number: awbCode,
       courier_name: courierName,
       tracking_url: trackingUrl,
       shiprocket_order_id: shiprocketOrderId ?? null,
       shipment_id: shipmentId,
       fulfilment_status: 'shipped',
+      estimated_delivery: istDatePlusDays(ESTIMATED_DELIVERY_DAYS),
       updated_at: new Date().toISOString(),
+    }
+    if (!notificationsAlreadySent) {
+      updates.shipped_notifications_sent_at = new Date().toISOString()
     }
 
     const { error: updateError } = await supabase.from('shelf_orders').update(updates).eq('id', orderId)
@@ -262,7 +289,7 @@ export async function POST(_request: Request, context: { params: Promise<{ order
       action: 'shop_order_shipped_shiprocket',
       target_type: 'order',
       target_id: orderId,
-      new_value: updates,
+      new_value: { ...updates, package: pkg },
     }).catch(() => {})
 
     // ── Emails / WhatsApp (mirrors manual "shipped" handoff) ──
@@ -274,31 +301,33 @@ export async function POST(_request: Request, context: { params: Promise<{ order
       quantity: Number(item.quantity ?? 1),
     }))
 
-    if (customerEmail) {
-      sendOrderShipped(
-        String(order.user_id ?? ''),
-        customerEmail,
-        String(order.order_number ?? ''),
-        customerName,
-        itemsForEmail,
-        awbCode,
-        courierName,
-        trackingUrl,
-      ).catch((err) => {
-        console.error('[shiprocket/ship] Failed to enqueue OrderShipped email:', err)
-      })
-    }
+    if (!notificationsAlreadySent) {
+      if (customerEmail) {
+        sendOrderShipped(
+          String(order.user_id ?? ''),
+          customerEmail,
+          String(order.order_number ?? ''),
+          customerName,
+          itemsForEmail,
+          awbCode,
+          courierName,
+          trackingUrl,
+        ).catch((err) => {
+          console.error('[shiprocket/ship] Failed to enqueue OrderShipped email:', err)
+        })
+      }
 
-    if (customerPhone) {
-      notifyWhatsAppOrderShipped({
-        phone: customerPhone,
-        orderNumber: String(order.order_number ?? ''),
-        courierName,
-        trackingNumber: awbCode,
-        trackingUrl,
-      }).catch((err) => {
-        console.error('[shiprocket/ship] Failed to send OrderShipped WhatsApp:', err)
-      })
+      if (customerPhone) {
+        notifyWhatsAppOrderShipped({
+          phone: customerPhone,
+          orderNumber: String(order.order_number ?? ''),
+          courierName,
+          trackingNumber: awbCode,
+          trackingUrl,
+        }).catch((err) => {
+          console.error('[shiprocket/ship] Failed to send OrderShipped WhatsApp:', err)
+        })
+      }
     }
 
     return NextResponse.json({
@@ -312,9 +341,4 @@ export async function POST(_request: Request, context: { params: Promise<{ order
   } catch (error) {
     return getAdminApiErrorResponse(error)
   }
-}
-
-function Snumber(value: unknown): number | null {
-  const parsed = Number(value)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
 }

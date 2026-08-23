@@ -1,35 +1,13 @@
 import { NextResponse } from 'next/server'
+import crypto from 'node:crypto'
 import { getEnv } from '@/lib/env'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { sendDeliveryConfirmation, sendOutForDelivery } from '@/lib/email/triggers'
-import { notifyWhatsAppOrderDelivered } from '@/lib/whatsapp/notifications'
-import { absoluteUrl } from '@/lib/site'
-import { getGuestContact, type ShopFulfilmentStatus } from '@/lib/shop/orders'
+import { syncOrderTracking, type TrackingActivity, type ShiprocketWebhookPayloadLike } from '@/lib/shiprocket/tracking-sync'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-type ShipmentActivity = {
-  date?: unknown
-  status?: unknown
-  activity?: unknown
-  location?: unknown
-  'sr-status-label'?: unknown
-}
-
-type ShiprocketWebhookPayload = {
-  awb?: unknown
-  current_status?: unknown
-  current_status_updated_at?: unknown
-  shipment_track_activities?: ShipmentActivity[]
-  data?: Record<string, unknown>
-}
-
-type ProfileRow = {
-  email: string | null
-  full_name: string | null
-  phone_number: string | null
-}
+type ShiprocketWebhookPayload = ShiprocketWebhookPayloadLike
 
 function upper(value: unknown): string {
   return String(value ?? '')
@@ -37,47 +15,20 @@ function upper(value: unknown): string {
     .toUpperCase()
 }
 
-export function mapShiprocketStatus(label: string): {
-  fulfilmentStatus: ShopFulfilmentStatus | null
-  isDelivered: boolean
-  isRto: boolean
-} {
-  const normalized = upper(label)
-
-  if (normalized.includes('DELIVERED')) {
-    return { fulfilmentStatus: 'delivered', isDelivered: true, isRto: normalized.includes('RTO') }
+function isAuthorized(request: Request): boolean {
+  const secret = getEnv().SHIPROCKET_WEBHOOK_SECRET
+  if (!secret) return false
+  const apiKey = request.headers.get('x-api-key')?.trim() || ''
+  if (!apiKey) return false
+  try {
+    return crypto.timingSafeEqual(Buffer.from(apiKey), Buffer.from(secret))
+  } catch {
+    return false
   }
-  if (normalized.includes('OUT FOR DELIVERY') || normalized.includes('OUT_FOR_DELIVERY')) {
-    return { fulfilmentStatus: 'delivering', isDelivered: false, isRto: false }
-  }
-  if (normalized.includes('TRANSIT') || normalized.includes('IN TRANSIT')) {
-    return { fulfilmentStatus: 'shipped', isDelivered: false, isRto: false }
-  }
-  if (normalized.includes('PICKED UP') || normalized.includes('PICKUP')) {
-    return { fulfilmentStatus: 'shipped', isDelivered: false, isRto: false }
-  }
-  if (normalized.includes('UNDELIVERED')) {
-    return { fulfilmentStatus: 'shipped', isDelivered: false, isRto: false }
-  }
-  if (normalized.includes('RTO')) {
-    return { fulfilmentStatus: 'shipped', isDelivered: false, isRto: true }
-  }
-
-  return { fulfilmentStatus: null, isDelivered: false, isRto: false }
-}
-
-function eventKey(activity: ShipmentActivity): string {
-  return `${upper(activity.date)}|${upper(activity.status)}|${upper(activity.activity)}|${upper(activity.location)}`
 }
 
 export async function POST(request: Request) {
-  const secret = getEnv().SHIPROCKET_WEBHOOK_SECRET
-  if (!secret) {
-    return NextResponse.json({ error: 'Shiprocket webhook is not configured.' }, { status: 503 })
-  }
-
-  const apiKey = request.headers.get('x-api-key')?.trim() || ''
-  if (!apiKey || apiKey !== secret) {
+  if (!isAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -110,111 +61,20 @@ export async function POST(request: Request) {
     const activities = Array.isArray(payload.shipment_track_activities)
       ? payload.shipment_track_activities
       : []
-    const latestActivity = activities[activities.length - 1] ?? {}
+    const latestActivity = (activities[activities.length - 1] ?? {}) as TrackingActivity
 
-    const existing = Array.isArray(order.tracking_events) ? (order.tracking_events as unknown[]) : []
-    const mapping = mapShiprocketStatus(
-      String(latestActivity['sr-status-label'] ?? payload.current_status ?? '')
+    const result = await syncOrderTracking(
+      order,
+      latestActivity,
+      payload,
+      awb
     )
 
-    const nextEvent = {
-      date: upper(latestActivity.date || payload.current_status_updated_at) || new Date().toISOString(),
-      status: String(latestActivity.status ?? payload.current_status ?? ''),
-      activity: String(latestActivity.activity ?? latestActivity.status ?? payload.current_status ?? ''),
-      location: String(latestActivity.location ?? ''),
-      label: String(latestActivity['sr-status-label'] ?? payload.current_status ?? ''),
-      raw_payload: payload as unknown,
-    }
-
-    const alreadyLogged = existing.some(
-      (entry) =>
-        typeof entry === 'object' &&
-        entry !== null &&
-        eventKey((entry as ShipmentActivity)) === eventKey(latestActivity) &&
-        (entry as { raw_payload?: unknown }).raw_payload !== undefined
-    )
-
-    if (alreadyLogged) {
+    if (result.duplicate) {
       return NextResponse.json({ ok: true, acknowledged: true, duplicate: true })
     }
 
-    const updates: Record<string, unknown> = {
-      tracking_events: [...existing, nextEvent],
-      updated_at: new Date().toISOString(),
-    }
-
-    const wasDelivered = order.fulfilment_status === 'delivered'
-    const previousFulfilment = String(order.fulfilment_status ?? '')
-
-    if (mapping.fulfilmentStatus && previousFulfilment !== mapping.fulfilmentStatus) {
-      updates.fulfilment_status = mapping.fulfilmentStatus
-    }
-
-    const { error: updateError } = await supabase.from('shelf_orders').update(updates).eq('id', order.id)
-    if (updateError) throw new Error(updateError.message)
-
-    // Resolve recipient once — guests have no profile, so fall back to the
-    // guest_contact email snapshot collected at checkout.
-    const address =
-      order.shipping_address && typeof order.shipping_address === 'object'
-        ? (order.shipping_address as Record<string, unknown>)
-        : {}
-    const guestContact = getGuestContact(order)
-    const profile = order.user_id
-      ? (await supabase
-          .from('profiles')
-          .select('email, full_name, phone_number')
-          .eq('id', String(order.user_id))
-          .maybeSingle()).data as ProfileRow | null
-      : null
-    const customerEmail = profile?.email ?? guestContact.email
-    const customerName =
-      profile?.full_name ?? (address.name ? String(address.name) : 'Customer')
-    const customerPhone = (profile?.phone_number ?? address.phone)
-      ? String(profile?.phone_number ?? address.phone ?? '').replace(/\D/g, '')
-      : ''
-    const trackingUrl = `https://shiprocket.co/tracking/${awb}`
-    const courierLabel = upper(latestActivity.location ?? '') || 'Courier'
-    const orderNumber = String(order.order_number ?? '')
-
-    if (
-      mapping.fulfilmentStatus === 'delivering' &&
-      previousFulfilment !== 'delivering' &&
-      customerEmail
-    ) {
-      // Out for delivery — one-shot transition email.
-      sendOutForDelivery(
-        String(order.user_id ?? ''),
-        customerEmail,
-        orderNumber,
-        customerName,
-        { number: awb, courierName: courierLabel, url: trackingUrl }
-      ).catch((err) => {
-        console.error('[webhooks/fulfilment] Failed to enqueue OutForDelivery email:', err)
-      })
-    }
-
-    if (mapping.fulfilmentStatus === 'delivered' && !wasDelivered) {
-      if (customerEmail) {
-        sendDeliveryConfirmation(
-          String(order.user_id ?? ''),
-          customerEmail,
-          orderNumber,
-          customerName,
-          absoluteUrl('/3d-shop/orders'),
-        ).catch((err) => {
-          console.error('[webhooks/fulfilment] Failed to enqueue DeliveryConfirmation email:', err)
-        })
-      }
-
-      if (customerPhone) {
-        notifyWhatsAppOrderDelivered({ phone: customerPhone, orderNumber }).catch((err) => {
-          console.error('[webhooks/fulfilment] Failed to send OrderDelivered WhatsApp:', err)
-        })
-      }
-    }
-
-    return NextResponse.json({ ok: true, awb, fulfilmentStatus: mapping.fulfilmentStatus })
+    return NextResponse.json({ ok: true, awb, fulfilmentStatus: result.fulfilmentStatus })
   } catch (error) {
     console.error('[webhooks/fulfilment] Processing failed:', error)
     return NextResponse.json(
