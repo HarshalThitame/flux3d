@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       .select('id, items')
       .eq('id', orderId)
       .eq('user_id', authData.user.id)
-      .eq('order_status', 'delivered')
+      .eq('fulfilment_status', 'delivered')
       .maybeSingle()
 
     if (orderError) throw new Error(orderError.message)

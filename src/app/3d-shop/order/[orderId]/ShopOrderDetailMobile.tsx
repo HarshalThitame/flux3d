@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import {
   ArrowLeft,
   Banknote,
@@ -18,6 +19,7 @@ import {
   Settings,
   ShieldCheck,
   ShoppingBag,
+  Star,
   Truck,
   X,
   XCircle,
@@ -41,6 +43,14 @@ import {
 } from '@/lib/shop/orders'
 
 type DialogType = 'cancel' | 'return'
+
+type EligibleReviewProduct = {
+  productId: string
+  productName: string
+  productThumbnail: string | null
+  orderId: string
+  orderNumber: string
+}
 
 function getProgressStepIcon(status: string) {
   switch (status) {
@@ -118,6 +128,7 @@ function LoadingState() {
 }
 
 export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) {
+  const searchParams = useSearchParams()
   const [order, setOrder] = useState<ShopOrder | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -125,6 +136,7 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
   const [reason, setReason] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
   const [toast, setToast] = useState('')
+  const [eligibleReviews, setEligibleReviews] = useState<EligibleReviewProduct[]>([])
 
   const loadOrder = useCallback(async () => {
     setLoading(true)
@@ -134,6 +146,15 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
       const data = await response.json().catch(() => ({})) as { order?: ShopOrder; error?: string }
       if (!response.ok || !data.order) throw new Error(data.error || 'Order not found.')
       setOrder(data.order)
+      try {
+        const eligibleResponse = await fetch('/api/3d-shop/reviews/eligible')
+        const eligibleData = await eligibleResponse.json().catch(() => []) as EligibleReviewProduct[]
+        setEligibleReviews(eligibleResponse.ok && Array.isArray(eligibleData)
+          ? eligibleData.filter((item) => item.orderId === data.order?.id)
+          : [])
+      } catch {
+        setEligibleReviews([])
+      }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Order not found.')
     } finally {
@@ -151,6 +172,13 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
   const currentProgressIndex = order ? SHOP_FULFILMENT_PROGRESS.indexOf(order.fulfilment_status) : -1
   const itemCount = order ? getOrderItemCount(order) : 0
   const exceptionStatus = order?.order_status === 'cancelled' || order?.order_status === 'return_requested' || order?.order_status === 'returned'
+
+  useEffect(() => {
+    if (loading || !searchParams?.get('reviews')) return
+    if (eligibleReviews.length > 0) {
+      document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [loading, eligibleReviews, searchParams])
 
   useEffect(() => {
     if (!toast) return
@@ -441,6 +469,49 @@ export default function ShopOrderDetailMobile({ orderId }: { orderId: string }) 
             ))}
           </div>
         </section>
+
+        {/* Reviews */}
+        {eligibleReviews.length > 0 && (
+          <section
+            id="reviews"
+            className="rounded-2xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] p-4 shadow-sm"
+          >
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 fill-[var(--shop-gold)] text-[var(--shop-gold)]" />
+              <h2 className="text-sm font-bold text-yellow-900">Review your items</h2>
+            </div>
+            <div className="mt-3 space-y-2.5">
+              {eligibleReviews.map((eligible) => {
+                const orderItem = order.items.find((item) => item.productId === eligible.productId)
+                return (
+                  <div key={`${eligible.orderId}-${eligible.productId}`} className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-yellow-200 bg-white p-2.5">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[var(--shop-bg-muted)]">
+                        {(eligible.productThumbnail || orderItem?.productThumbnail) ? (
+                          <Image src={eligible.productThumbnail || orderItem?.productThumbnail || ''} alt={eligible.productName} fill sizes="40px" className="object-cover" />
+                        ) : (
+                          <div className="grid h-full place-items-center">
+                            <Star className="h-4 w-4 text-[var(--shop-gold)]" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-bold text-[var(--shop-text-primary)]">{eligible.productName}</div>
+                        {orderItem?.variantLabel && <div className="text-xs text-[var(--shop-text-muted)]">{orderItem.variantLabel}</div>}
+                      </div>
+                    </div>
+                    <Link
+                      href={orderItem?.productSlug ? `/3d-shop/product/${orderItem.productSlug}#reviews` : '/3d-shop'}
+                      className="inline-flex min-h-[36px] items-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-text-primary)] px-3 text-xs font-semibold text-white transition hover:bg-[var(--shop-text-secondary)]"
+                    >
+                      Write Review
+                    </Link>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Address & Payment */}
         <div className="grid items-stretch gap-3">

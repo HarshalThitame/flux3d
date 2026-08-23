@@ -95,7 +95,7 @@
             "label": "Pincode",
             "name": "pincode",
             "required": true,
-            "input-type": "passcode",
+            "input-type": "number",
             "max-chars": 6,
             "helper-text": "6-digit Indian pincode"
           },

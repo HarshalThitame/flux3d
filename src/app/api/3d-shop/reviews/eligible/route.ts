@@ -42,7 +42,7 @@ export async function GET(request: Request) {
       .from('shelf_orders')
       .select('id, order_number, items')
       .eq('user_id', authData.user.id)
-      .eq('order_status', 'delivered')
+      .eq('fulfilment_status', 'delivered')
       .order('placed_at', { ascending: false })
 
     if (ordersError) throw new Error(ordersError.message)

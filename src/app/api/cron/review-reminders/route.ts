@@ -95,7 +95,7 @@ export async function GET(request: Request) {
     const { data: orders, error: ordersError } = await supabase
       .from('shelf_orders')
       .select('id, user_id, order_number, items, delivered_at')
-      .eq('order_status', 'delivered')
+      .eq('fulfilment_status', 'delivered')
       .gte('delivered_at', windowStart)
       .lt('delivered_at', windowEnd)
       .order('delivered_at', { ascending: false })
