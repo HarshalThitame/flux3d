@@ -974,7 +974,7 @@ export default function ShopProductDetailClient({
 
       <ReviewModal
         open={reviewModalOpen}
-        product={product}
+        product={{ id: product.id, name: product.name, thumbnailUrl: product.thumbnail_url }}
         eligibility={reviewEligibility}
         existingReview={editingReview}
         onOpenChangeAction={(open) => {

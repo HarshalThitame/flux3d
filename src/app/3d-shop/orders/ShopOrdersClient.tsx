@@ -21,6 +21,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { formatShopPrice } from '@/lib/shop/selection'
+import ReviewModal, { type ReviewEligibility } from '@/components/shop/ReviewModal'
 import {
   formatShopOrderDate,
   getShopFulfilmentStatusClasses,
@@ -180,6 +181,14 @@ export default function ShopOrdersClient() {
   const [filter, setFilter] = useState<FilterKey>('all')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [eligibleByOrder, setEligibleByOrder] = useState<Record<string, EligibleReviewProduct[]>>({})
+  const [reviewTarget, setReviewTarget] = useState<EligibleReviewProduct | null>(null)
+  const [reviewToast, setReviewToast] = useState('')
+
+  useEffect(() => {
+    if (!reviewToast) return
+    const timer = setTimeout(() => setReviewToast(''), 4000)
+    return () => clearTimeout(timer)
+  }, [reviewToast])
 
   useEffect(() => {
     let active = true
@@ -572,16 +581,39 @@ export default function ShopOrdersClient() {
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mx-4 mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-4 py-3 md:mx-5 md:mt-4"
+                        className="mx-4 mt-3 rounded-2xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-4 py-3 md:mx-5 md:mt-4"
                       >
                           <div className="flex items-center gap-2 text-sm font-black text-[var(--shop-gold)]">
                           <Star className="h-4 w-4 fill-[var(--shop-gold)] text-[var(--shop-gold)]" />
                           {reviewItems.length} review{reviewItems.length === 1 ? '' : 's'} waiting
                         </div>
-                        <Link href={`/3d-shop/order/${order.id}?reviews=1`} className="inline-flex items-center gap-2 text-sm font-black text-[var(--shop-gold)]">
-                          Write Review
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
+                        <div className="mt-2.5 flex flex-wrap gap-2">
+                          {reviewItems.map((reviewItem) => {
+                            const orderItem = order.items.find((item) => item.productId === reviewItem.productId)
+                            return (
+                              <div key={`${reviewItem.orderId}-${reviewItem.productId}`} className="flex min-w-0 flex-1 items-center justify-between gap-2.5 rounded-xl border border-yellow-200 bg-white px-3 py-2 sm:min-w-[240px] sm:flex-none">
+                                <div className="flex min-w-0 items-center gap-2">
+                                  <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-[var(--shop-bg-muted)]">
+                                    {(reviewItem.productThumbnail || orderItem?.productThumbnail) ? (
+                                      <Image src={reviewItem.productThumbnail || orderItem?.productThumbnail || ''} alt={reviewItem.productName} fill sizes="32px" className="object-cover" />
+                                    ) : (
+                                      <span className="grid h-full place-items-center text-xs">★</span>
+                                    )}
+                                  </div>
+                                  <span className="truncate text-xs font-bold text-[var(--shop-text-primary)]">{reviewItem.productName}</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setReviewTarget(reviewItem)}
+                                  className="inline-flex shrink-0 items-center gap-1 text-xs font-black text-[var(--shop-gold)]"
+                                >
+                                  Write Review
+                                  <ArrowRight className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            )
+                          })}
+                        </div>
                       </motion.div>
                     )}
                   </motion.article>
@@ -591,6 +623,37 @@ export default function ShopOrdersClient() {
           </motion.div>
         )}
       </div>
+
+      {reviewToast && (
+        <div className="fixed bottom-5 right-5 z-[120] max-w-sm rounded-2xl border border-[var(--shop-border-light)] bg-white px-4 py-3 text-sm font-semibold text-[var(--shop-text-primary)] shadow-xl">
+          {reviewToast}
+        </div>
+      )}
+
+      <ReviewModal
+        open={Boolean(reviewTarget)}
+        product={reviewTarget ? { id: reviewTarget.productId, name: reviewTarget.productName, thumbnailUrl: reviewTarget.productThumbnail } : { id: '', name: '' }}
+        eligibility={reviewTarget ? ({ ...reviewTarget } satisfies ReviewEligibility) : null}
+        onOpenChangeAction={(open) => {
+          if (!open) setReviewTarget(null)
+        }}
+        onSubmittedAction={(message) => {
+          if (reviewTarget) {
+            const target = reviewTarget
+            setEligibleByOrder((current) => {
+              const remaining = (current[target.orderId] ?? []).filter(
+                (item) => item.productId !== target.productId
+              )
+              const next = { ...current }
+              if (remaining.length > 0) next[target.orderId] = remaining
+              else delete next[target.orderId]
+              return next
+            })
+          }
+          setReviewTarget(null)
+          setReviewToast(message || "Review submitted! It'll appear after approval.")
+        }}
+      />
     </main>
   )
 }

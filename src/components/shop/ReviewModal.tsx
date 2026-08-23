@@ -4,8 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ImagePlus, Loader2, Star, X } from 'lucide-react'
-import type { ShopPublicProduct, ShopPublicReview } from '@/lib/shop/public-types'
-import { getShopProductImages } from '@/lib/shop/selection'
+import type { ShopPublicReview } from '@/lib/shop/public-types'
 
 function useScrollLock(locked: boolean) {
   useEffect(() => {
@@ -57,6 +56,12 @@ export type ReviewEligibility = {
   orderNumber: string
 }
 
+export type ReviewModalProduct = {
+  id: string
+  name: string
+  thumbnailUrl?: string | null
+}
+
 export default function ReviewModal({
   open,
   product,
@@ -66,18 +71,16 @@ export default function ReviewModal({
   onSubmittedAction,
 }: {
   open: boolean
-  product: ShopPublicProduct
+  product: ReviewModalProduct
   eligibility: ReviewEligibility | null
   existingReview?: ShopPublicReview | null
   onOpenChangeAction: (open: boolean) => void
   onSubmittedAction: (message: string) => void
 }) {
   const isEditMode = Boolean(existingReview)
-  const images = getShopProductImages(product)
-  const thumbnail = eligibility?.productThumbnail || product.thumbnail_url || images[0] || ''
+  const thumbnail = eligibility?.productThumbnail || product.thumbnailUrl || ''
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
-  const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [imageUrls, setImageUrls] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
@@ -94,23 +97,24 @@ export default function ReviewModal({
     [isEditMode, eligibility, rating, submitting]
   )
 
-  useEffect(() => {
-    if (!open) return
-    if (existingReview) {
-      setRating(existingReview.rating)
-      setTitle(existingReview.title ?? '')
-      setBody(existingReview.body ?? '')
-      setImageUrls(existingReview.image_urls)
-    } else {
-      setRating(0)
-      setHoverRating(0)
-      setTitle('')
-      setBody('')
-      setImageUrls([])
+  const initKey = `${open}:${existingReview?.id ?? 'new'}`
+  const [lastInitKey, setLastInitKey] = useState(initKey)
+  if (initKey !== lastInitKey) {
+    setLastInitKey(initKey)
+    setError('')
+    if (open) {
+      if (existingReview) {
+        setRating(existingReview.rating)
+        setBody(existingReview.body ?? '')
+        setImageUrls(existingReview.image_urls)
+      } else {
+        setRating(0)
+        setHoverRating(0)
+        setBody('')
+        setImageUrls([])
+      }
     }
-    const timer = window.setTimeout(() => setError(''), 0)
-    return () => window.clearTimeout(timer)
-  }, [open, existingReview])
+  }
 
   async function uploadReviewImage(file: File) {
     if (imageUrls.length >= 3) return
@@ -147,7 +151,6 @@ export default function ReviewModal({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             rating,
-            title,
             body,
             imageUrls,
           }),
@@ -160,7 +163,6 @@ export default function ReviewModal({
             productId: product.id,
             orderId: eligibility!.orderId,
             rating,
-            title,
             body,
             imageUrls,
           }),
@@ -172,7 +174,6 @@ export default function ReviewModal({
       if (!isEditMode) {
         setRating(0)
         setHoverRating(0)
-        setTitle('')
         setBody('')
         setImageUrls([])
       }
@@ -245,17 +246,6 @@ export default function ReviewModal({
                   })}
                 </div>
               </div>
-
-              <label className="block">
-                <span className="mb-1.5 block text-sm font-bold text-[var(--shop-text-primary)]">Title</span>
-                <input
-                  value={title}
-                  maxLength={100}
-                  onChange={(event) => setTitle(event.target.value)}
-                  className="min-h-[44px] w-full rounded-xl border border-[var(--shop-border-light)] bg-white px-3 text-sm outline-none focus:border-[var(--shop-border-gold)]"
-                  placeholder="What stood out?"
-                />
-              </label>
 
               <label className="block">
                 <span className="mb-1.5 block text-sm font-bold text-[var(--shop-text-primary)]">Review</span>

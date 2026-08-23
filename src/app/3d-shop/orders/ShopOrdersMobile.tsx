@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { formatShopPrice } from '@/lib/shop/selection'
+import ReviewModal from '@/components/shop/ReviewModal'
 import {
   formatShopOrderDate,
   getShopFulfilmentStatusClasses,
@@ -12,9 +14,17 @@ import {
   type ShopOrder,
   type ShopFulfilmentStatus,
 } from '@/lib/shop/orders'
-import { AlertCircle, ShoppingBag } from 'lucide-react'
+import { AlertCircle, ShoppingBag, Star } from 'lucide-react'
 
 type FilterKey = 'all' | 'active' | 'delivered' | 'cancelled' | 'returns'
+
+type EligibleReviewProduct = {
+  productId: string
+  productName: string
+  productThumbnail: string | null
+  orderId: string
+  orderNumber: string
+}
 
 const filters: Array<{ key: FilterKey; label: string }> = [
   { key: 'all', label: 'All Orders' },
@@ -122,6 +132,15 @@ export default function ShopOrdersMobile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState<FilterKey>('all')
+  const [eligibleByOrder, setEligibleByOrder] = useState<Record<string, EligibleReviewProduct[]>>({})
+  const [reviewTarget, setReviewTarget] = useState<EligibleReviewProduct | null>(null)
+  const [reviewToast, setReviewToast] = useState('')
+
+  useEffect(() => {
+    if (!reviewToast) return
+    const timer = setTimeout(() => setReviewToast(''), 4000)
+    return () => clearTimeout(timer)
+  }, [reviewToast])
 
   useEffect(() => {
     let active = true
@@ -133,7 +152,19 @@ export default function ShopOrdersMobile() {
         const response = await fetch('/api/3d-shop/orders?limit=50')
         const data = await response.json().catch(() => ({})) as { orders?: ShopOrder[]; error?: string }
         if (!response.ok) throw new Error(data.error || 'Failed to load orders.')
-        if (active) setOrders(data.orders ?? [])
+        if (active) {
+          setOrders(data.orders ?? [])
+
+          const eligibleResponse = await fetch('/api/3d-shop/reviews/eligible')
+          const eligibleData = await eligibleResponse.json().catch(() => []) as EligibleReviewProduct[] | { error?: string }
+          if (eligibleResponse.ok && Array.isArray(eligibleData)) {
+            const grouped = eligibleData.reduce<Record<string, EligibleReviewProduct[]>>((acc, item) => {
+              acc[item.orderId] = [...(acc[item.orderId] ?? []), item]
+              return acc
+            }, {})
+            setEligibleByOrder(grouped)
+          }
+        }
       } catch (loadError) {
         if (active) setError(loadError instanceof Error ? loadError.message : 'Failed to load orders.')
       } finally {
@@ -215,10 +246,12 @@ export default function ShopOrdersMobile() {
             const itemCount = getOrderItemCount(order)
             const hasException = order.order_status === 'cancelled' || order.order_status === 'return_requested' || order.order_status === 'returned'
             const statusDotColor = hasException ? 'bg-orange-500' : getStatusDotColor(order.fulfilment_status)
+            const reviewItems = eligibleByOrder[order.id] ?? []
+            const hasReviewPrompt = order.fulfilment_status === 'delivered' && reviewItems.length > 0
 
             return (
+              <div key={order.id} className="space-y-2">
               <Link
-                key={order.id}
                 href={`/3d-shop/order/${order.id}`}
                 className="group block animate-slide-in-up overflow-hidden rounded-2xl border border-[var(--shop-border-light)] bg-white/88 shadow-[var(--shop-shadow-sm)] backdrop-blur-xl transition hover:shadow-[var(--shop-shadow-md)]"
               >
@@ -278,10 +311,77 @@ export default function ShopOrdersMobile() {
                   </div>
                 </div>
               </Link>
+
+              {hasReviewPrompt && (
+                <div className="rounded-2xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-3 py-2.5">
+                  <div className="flex items-center gap-1.5 text-xs font-black text-[var(--shop-gold)]">
+                    <Star className="h-3.5 w-3.5 fill-[var(--shop-gold)] text-[var(--shop-gold)]" />
+                    {reviewItems.length} review{reviewItems.length === 1 ? '' : 's'} waiting
+                  </div>
+                  <div className="mt-2 space-y-2">
+                    {reviewItems.map((reviewItem) => {
+                      const orderItem = order.items.find((item) => item.productId === reviewItem.productId)
+                      return (
+                        <div key={`${reviewItem.orderId}-${reviewItem.productId}`} className="flex items-center justify-between gap-2 rounded-xl border border-yellow-200 bg-white px-2.5 py-2">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-[var(--shop-bg-muted)]">
+                              {(reviewItem.productThumbnail || orderItem?.productThumbnail) ? (
+                                <Image src={reviewItem.productThumbnail || orderItem?.productThumbnail || ''} alt={reviewItem.productName} fill sizes="32px" className="object-cover" />
+                              ) : (
+                                <span className="grid h-full place-items-center text-xs">★</span>
+                              )}
+                            </div>
+                            <span className="truncate text-xs font-bold text-[var(--shop-text-primary)]">{reviewItem.productName}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setReviewTarget(reviewItem)}
+                            className="shrink-0 rounded-lg border border-[var(--shop-gold)] bg-white px-2.5 py-1 text-xs font-black text-[var(--shop-gold)]"
+                          >
+                            Write Review
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              </div>
             )
           })}
         </div>
       )}
+
+      {reviewToast && (
+        <div className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] left-4 right-4 z-[120] rounded-2xl border border-[var(--shop-border-light)] bg-white px-4 py-3 text-sm font-semibold text-[var(--shop-text-primary)] shadow-xl sm:left-auto sm:right-5 sm:max-w-sm">
+          {reviewToast}
+        </div>
+      )}
+
+      <ReviewModal
+        open={Boolean(reviewTarget)}
+        product={reviewTarget ? { id: reviewTarget.productId, name: reviewTarget.productName, thumbnailUrl: reviewTarget.productThumbnail } : { id: '', name: '' }}
+        eligibility={reviewTarget}
+        onOpenChangeAction={(open) => {
+          if (!open) setReviewTarget(null)
+        }}
+        onSubmittedAction={(message) => {
+          if (reviewTarget) {
+            const target = reviewTarget
+            setEligibleByOrder((current) => {
+              const remaining = (current[target.orderId] ?? []).filter(
+                (item) => item.productId !== target.productId
+              )
+              const next = { ...current }
+              if (remaining.length > 0) next[target.orderId] = remaining
+              else delete next[target.orderId]
+              return next
+            })
+          }
+          setReviewTarget(null)
+          setReviewToast(message || "Review submitted! It'll appear after approval.")
+        }}
+      />
     </div>
   )
 }
