@@ -219,6 +219,15 @@ export type BackInStockPayload = BaseEmailPayload & {
   productUrl: string
 }
 
+export type OutForDeliveryPayload = BaseEmailPayload & {
+  emailType: 'out_for_delivery'
+  orderNumber: string
+  customerName: string
+  trackingNumber?: string
+  courierName?: string
+  trackingUrl?: string
+}
+
 export type EmailJobPayload =
   | WelcomeEmailPayload
   | EmailVerificationPayload
@@ -238,6 +247,7 @@ export type EmailJobPayload =
   | ContactNotificationPayload
   | StockAlertDigestPayload
   | BackInStockPayload
+  | OutForDeliveryPayload
 
 // ============================================================================
 // Dispatcher result shape

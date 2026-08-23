@@ -32,6 +32,7 @@ export type EmailType =
   | 'contact_notification'
   | 'stock_alert'
   | 'back_in_stock'
+  | 'out_for_delivery'
   | 'ticket_acknowledgment'
 
 export type EmailLogStatus =

@@ -55,7 +55,7 @@ export async function enqueueEmail(
   // Step 0b: Evaluate automation rules
   const template = await getTemplateByType(payload.emailType).catch(() => null)
   if (template) {
-    const ruleCheck = await evaluateAutomationRule(payload.emailType, template.id).catch(() => ({ allowed: true } as any))
+    const ruleCheck = await evaluateAutomationRule(payload.emailType, template.id).catch(() => ({ allowed: true as const, reason: null }))
     if (!ruleCheck.allowed) {
       console.warn(`[email] Blocked by automation rule for ${payload.emailType}: ${ruleCheck.reason}`)
       const { data: blockedLog } = await supabase
@@ -144,6 +144,8 @@ function buildSubject(payload: EmailJobPayload): string {
       return `Your order ${payload.orderNumber} has shipped 🚚`
     case 'delivery_confirmation':
       return `Order ${payload.orderNumber} delivered — how did we do?`
+    case 'out_for_delivery':
+      return `Your order ${payload.orderNumber} is out for delivery 🛵`
     case 'review_reminder':
       return `How is your order ${payload.orderNumber}? Leave a review`
     case 'payment_receipt':

@@ -12,6 +12,7 @@ import type {
   ProductionStartedPayload,
   OrderShippedPayload,
   DeliveryConfirmationPayload,
+  OutForDeliveryPayload,
   PaymentReceiptPayload,
   PaymentFailedPayload,
   RefundIssuedPayload,
@@ -233,6 +234,25 @@ export async function sendDeliveryConfirmation(
     customerName,
     reviewUrl,
   } as DeliveryConfirmationPayload)
+}
+
+export async function sendOutForDelivery(
+  userId: string,
+  email: string,
+  orderNumber: string,
+  customerName: string,
+  tracking?: { number?: string; courierName?: string; url?: string }
+) {
+  return enqueueEmail({
+    emailType: 'out_for_delivery',
+    userId,
+    recipient: email,
+    orderNumber,
+    customerName,
+    trackingNumber: tracking?.number,
+    courierName: tracking?.courierName,
+    trackingUrl: tracking?.url,
+  } as OutForDeliveryPayload)
 }
 
 export async function sendReviewReminder(

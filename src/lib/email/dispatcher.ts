@@ -272,6 +272,13 @@ function payloadToVariables(
       vars.customer_name = payload.customerName
       if (payload.reviewUrl) vars.review_url = payload.reviewUrl
       break
+    case 'out_for_delivery':
+      vars.order_number = payload.orderNumber
+      vars.customer_name = payload.customerName
+      if (payload.trackingNumber) vars.tracking_number = payload.trackingNumber
+      if (payload.courierName) vars.courier_name = payload.courierName
+      if (payload.trackingUrl) vars.tracking_url = payload.trackingUrl
+      break
     case 'review_reminder':
       vars.order_number = payload.orderNumber
       vars.customer_name = payload.customerName
@@ -373,6 +380,8 @@ function buildSubject(payload: EmailJobPayload): string {
       return `Your order ${payload.orderNumber} has shipped 🚚`
     case 'delivery_confirmation':
       return `Order ${payload.orderNumber} delivered — how did we do?`
+    case 'out_for_delivery':
+      return `Your order ${payload.orderNumber} is out for delivery 🛵`
     case 'payment_receipt':
       return `Payment receipt for order ${payload.orderNumber}`
     case 'payment_failed':

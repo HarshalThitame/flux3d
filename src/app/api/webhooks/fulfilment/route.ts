@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { getEnv } from '@/lib/env'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { sendDeliveryConfirmation } from '@/lib/email/triggers'
+import { sendDeliveryConfirmation, sendOutForDelivery } from '@/lib/email/triggers'
 import { notifyWhatsAppOrderDelivered } from '@/lib/whatsapp/notifications'
 import { absoluteUrl } from '@/lib/site'
-import type { ShopFulfilmentStatus } from '@/lib/shop/orders'
+import { getGuestContact, type ShopFulfilmentStatus } from '@/lib/shop/orders'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -144,33 +144,61 @@ export async function POST(request: Request) {
     }
 
     const wasDelivered = order.fulfilment_status === 'delivered'
-    if (mapping.fulfilmentStatus && order.fulfilment_status !== mapping.fulfilmentStatus) {
+    const previousFulfilment = String(order.fulfilment_status ?? '')
+
+    if (mapping.fulfilmentStatus && previousFulfilment !== mapping.fulfilmentStatus) {
       updates.fulfilment_status = mapping.fulfilmentStatus
     }
 
     const { error: updateError } = await supabase.from('shelf_orders').update(updates).eq('id', order.id)
     if (updateError) throw new Error(updateError.message)
 
+    // Resolve recipient once — guests have no profile, so fall back to the
+    // guest_contact email snapshot collected at checkout.
+    const address =
+      order.shipping_address && typeof order.shipping_address === 'object'
+        ? (order.shipping_address as Record<string, unknown>)
+        : {}
+    const guestContact = getGuestContact(order)
+    const profile = order.user_id
+      ? (await supabase
+          .from('profiles')
+          .select('email, full_name, phone_number')
+          .eq('id', String(order.user_id))
+          .maybeSingle()).data as ProfileRow | null
+      : null
+    const customerEmail = profile?.email ?? guestContact.email
+    const customerName =
+      profile?.full_name ?? (address.name ? String(address.name) : 'Customer')
+    const customerPhone = (profile?.phone_number ?? address.phone)
+      ? String(profile?.phone_number ?? address.phone ?? '').replace(/\D/g, '')
+      : ''
+    const trackingUrl = `https://shiprocket.co/tracking/${awb}`
+    const courierLabel = upper(latestActivity.location ?? '') || 'Courier'
+    const orderNumber = String(order.order_number ?? '')
+
+    if (
+      mapping.fulfilmentStatus === 'delivering' &&
+      previousFulfilment !== 'delivering' &&
+      customerEmail
+    ) {
+      // Out for delivery — one-shot transition email.
+      sendOutForDelivery(
+        String(order.user_id ?? ''),
+        customerEmail,
+        orderNumber,
+        customerName,
+        { number: awb, courierName: courierLabel, url: trackingUrl }
+      ).catch((err) => {
+        console.error('[webhooks/fulfilment] Failed to enqueue OutForDelivery email:', err)
+      })
+    }
+
     if (mapping.fulfilmentStatus === 'delivered' && !wasDelivered) {
-      const address =
-        order.shipping_address && typeof order.shipping_address === 'object'
-          ? (order.shipping_address as Record<string, unknown>)
-          : {}
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('email, full_name, phone_number')
-        .eq('id', order.user_id)
-        .maybeSingle()
-
-      const customer = profile as ProfileRow | null
-      const email = customer?.email ?? null
-      const customerName = customer?.full_name ?? (address.name ? String(address.name) : 'Customer')
-      const orderNumber = String(order.order_number ?? '')
-
-      if (email) {
+      if (customerEmail) {
         sendDeliveryConfirmation(
-          String(order.user_id),
-          email,
+          String(order.user_id ?? ''),
+          customerEmail,
           orderNumber,
           customerName,
           absoluteUrl('/3d-shop/orders'),
@@ -179,9 +207,6 @@ export async function POST(request: Request) {
         })
       }
 
-      const customerPhone = (customer?.phone_number ?? address.phone)
-        ? String(customer?.phone_number ?? address.phone ?? '').replace(/\D/g, '')
-        : ''
       if (customerPhone) {
         notifyWhatsAppOrderDelivered({ phone: customerPhone, orderNumber }).catch((err) => {
           console.error('[webhooks/fulfilment] Failed to send OrderDelivered WhatsApp:', err)

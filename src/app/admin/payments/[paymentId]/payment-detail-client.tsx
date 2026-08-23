@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, ExternalLink, RefreshCcw, ShieldCheck, Wallet, ReceiptText, PenLine, X } from 'lucide-react'
+import { ArrowLeft, ExternalLink, RefreshCcw, ShieldCheck, Wallet, ReceiptText, Receipt, PenLine, X } from 'lucide-react'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import SkeletonBlock from '@/components/admin/SkeletonBlock'
 import type { PaymentAuditLogData, PaymentData, PaymentEventData, PaymentRefundData } from '@/lib/admin/types'
@@ -133,6 +133,20 @@ export default function PaymentDetailClient({ paymentId }: { paymentId: string }
     }
   }
 
+  async function resendReceipt() {
+    setSaving(true)
+    try {
+      const response = await fetch(`/api/admin/payments/${paymentId}/resend-receipt`, { method: 'POST' })
+      const body = await response.json().catch(() => ({})) as { ok?: boolean; error?: string }
+      if (!response.ok || !body.ok) throw new Error(body.error || 'Resend failed.')
+      setToast({ type: 'success', message: 'Receipt emails re-sent (dedupe-safe).' })
+    } catch (error) {
+      setToast({ type: 'error', message: error instanceof Error ? error.message : 'Resend failed.' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function overridePayment() {
     if (!overrideReason.trim()) {
       setToast({ type: 'error', message: 'A reason is required for the override.' })
@@ -219,6 +233,16 @@ export default function PaymentDetailClient({ paymentId }: { paymentId: string }
           >
             <RefreshCcw className="h-4 w-4" />
             Refresh status
+          </button>
+          <button
+            type="button"
+            onClick={resendReceipt}
+            disabled={saving}
+            title="Re-send the payment receipt and order-placed emails (dedupe-safe)"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#6d28d9]/10 bg-white px-4 py-2.5 text-sm font-semibold text-[#0F1B3D] disabled:opacity-60"
+          >
+            <Receipt className="h-4 w-4" />
+            Resend receipt
           </button>
           <button
             type="button"
