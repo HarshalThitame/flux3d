@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { AlertTriangle, Banknote, CheckCircle2, MapPin, PackageCheck, Plus, ShieldCheck } from 'lucide-react'
+import { AlertTriangle, Banknote, CheckCircle2, LogIn, MapPin, PackageCheck, Plus, ShieldCheck } from 'lucide-react'
 import { useAddresses } from '@/hooks/useAddresses'
 import { useGlobalLoading } from '@/hooks/useGlobalLoading'
 import { calculateDeliveryChargeFromSettings } from '@/lib/quote/pricing-waterfall'
@@ -426,6 +426,31 @@ export default function ShopCheckoutClient({
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
           <section className="space-y-6">
+            {isGuest && (
+              <div className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] p-4 sm:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white text-[var(--shop-gold)] shadow-[var(--shop-shadow-sm)]">
+                      <LogIn className="h-5 w-5" />
+                    </span>
+                    <p className="text-sm font-semibold text-[var(--shop-text-primary)]">
+                      Have an account? Log in for faster checkout with saved addresses.
+                    </p>
+                  </div>
+                  <Link
+                    href="/login?next=%2F3d-shop%2Fcheckout"
+                    prefetch={false}
+                    className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold)] px-5 text-sm font-semibold text-white transition hover:opacity-90"
+                  >
+                    Log In
+                  </Link>
+                </div>
+                <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-[var(--shop-text-secondary)]">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--shop-gold)]" />
+                  No spam, no promotional emails — you will only receive mandatory order updates and your receipt.
+                </p>
+              </div>
+            )}
             <div className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white p-5 shadow-[var(--shop-shadow-sm)]">
               <div className="flex items-center gap-3">
                 <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--shop-gold-faint)] text-[var(--shop-gold)]">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { AuthChangeEvent } from '@supabase/supabase-js'
 import type { AppUserProfile } from '@/lib/auth/server'
 import type { ProfileRow } from '../../types/database'
 
@@ -147,7 +148,27 @@ export function useProfile(
       void loadProfile()
     }, 0)
 
-    return () => window.clearTimeout(timeoutId)
+    // Re-fetch the profile as soon as the auth state flips so UI consumers
+    // (e.g. the mobile bottom bar's Login/Profile tab) reflect the change
+    // immediately after sign-in instead of waiting for a full page reload.
+    let unsubscribe: (() => void) | undefined
+    let cancelled = false
+    void (async () => {
+      const { getSupabaseBrowserClient } = await import('@/lib/supabase/client')
+      if (cancelled) return
+      const { data } = getSupabaseBrowserClient().auth.onAuthStateChange((event: AuthChangeEvent) => {
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+          void loadProfile()
+        }
+      })
+      unsubscribe = () => data.subscription.unsubscribe()
+    })()
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timeoutId)
+      unsubscribe?.()
+    }
   }, [enabled, loadProfile])
 
   return { profile, loading, error, refetch: loadProfile }

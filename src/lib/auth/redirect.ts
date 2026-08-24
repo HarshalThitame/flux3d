@@ -1,6 +1,6 @@
 import { siteUrl } from '@/lib/site'
 
-export function normalizeNextPath(value: string | null | undefined, fallback = '/instant-quote') {
+export function normalizeNextPath(value: string | null | undefined, fallback = '/') {
   if (!value) {
     return fallback
   }

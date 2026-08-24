@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useConsent } from '@/lib/consent'
 
 /**
@@ -14,8 +14,13 @@ import { useConsent } from '@/lib/consent'
 export default function CookieConsentBanner() {
   const { consent, acceptAll, acceptEssential, updateCategories } = useConsent()
   const [showPreferences, setShowPreferences] = useState(false)
+  // Mount-gate: the server snapshot for consent is always null, so rendering
+  // during SSR/hydration would briefly show the banner even when the user has
+  // already accepted. Wait until after mount, when localStorage is readable.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
-  if (consent !== null) {
+  if (!mounted || consent !== null) {
     return null
   }
 
