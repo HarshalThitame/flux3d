@@ -47,12 +47,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           : undefined
 
   return (
-    <div className="auth-page-with-navbar">
+    <div className="luxe-page">
       <Navbar />
       <AuthShell
         eyebrow="Secure Login"
-        title="Welcome back to your Flux3D workspace."
-        description="Sign in to manage saved quotes, private uploads, checkout details, order tracking, and repeat builds from one production account."
+        title="Welcome back."
+        description="Your quotes, private files, and orders — exactly where you left them."
       >
         <LoginFormBoundary nextPath={nextPath} errorMessage={errorMessage} logoUrl={settings.logoUrl} />
       </AuthShell>

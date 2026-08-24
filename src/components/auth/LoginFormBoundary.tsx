@@ -6,20 +6,23 @@ import type { LoginFormProps } from '@/components/auth/LoginForm'
 const LoginForm = dynamic(() => import('@/components/auth/LoginForm'), {
   ssr: false,
   loading: () => (
-    <div className="auth-login-panel flex min-h-[470px] w-full min-w-0 flex-col gap-5" aria-hidden="true">
-      <div className="premium-console-header">
-        <span>Secure login</span>
-        <strong>LIVE</strong>
+    <div className="w-full min-w-0" aria-hidden="true">
+      <div className="mb-7 flex items-center justify-between">
+        <div className="h-6 w-24 rounded bg-gray-100" />
+        <div className="h-4 w-14 rounded bg-gray-100" />
       </div>
-      <div className="space-y-3">
-        <div className="h-9 w-40 rounded-full border border-gray-200 bg-gray-100" />
-        <div className="h-10 w-64 max-w-full rounded-2xl bg-gray-100" />
-        <div className="h-16 rounded-2xl bg-gray-100" />
-      </div>
-      <div className="space-y-4">
-        <div className="h-14 rounded-2xl border border-gray-200 bg-gray-50" />
-        <div className="h-14 rounded-2xl border border-gray-200 bg-gray-50" />
-        <div className="h-14 rounded-full bg-purple-100" />
+      <div className="h-7 w-40 rounded bg-gray-100" />
+      <div className="mt-2 h-4 w-52 max-w-full rounded bg-gray-100" />
+      <div className="mt-7 grid gap-[18px]">
+        <div>
+          <div className="mb-[7px] h-4 w-12 rounded bg-gray-100" />
+          <div className="h-12 w-full rounded-xl border border-gray-100 bg-gray-50" />
+        </div>
+        <div>
+          <div className="mb-[7px] h-4 w-16 rounded bg-gray-100" />
+          <div className="h-12 w-full rounded-xl border border-gray-100 bg-gray-50" />
+        </div>
+        <div className="luxe-cta opacity-60" aria-hidden="true" />
       </div>
     </div>
   ),

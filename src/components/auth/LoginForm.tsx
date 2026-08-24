@@ -4,18 +4,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useActionState, useState } from 'react'
 import { useFormStatus } from 'react-dom'
-import { ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, Mail } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { loginAction } from '@/app/auth/actions'
 import GoogleIdentityButton from '@/components/auth/GoogleIdentityButton'
 import type { AuthFormState } from '@/lib/auth/validation'
 
 const initialState: AuthFormState = {}
-
-const fieldClass =
-  'h-11 w-full rounded-xl border bg-white px-4 text-sm font-semibold text-[#070b1d] shadow-sm outline-none transition placeholder:text-gray-400 focus:border-purple-400 focus:ring-4 focus:ring-purple-100'
-
-const errorFieldClass =
-  'h-11 w-full rounded-xl border bg-white px-4 text-sm font-semibold text-[#070b1d] shadow-sm outline-none transition placeholder:text-gray-400 border-red-400 ring-1 ring-red-400/30 focus:border-red-500 focus:ring-red-200'
 
 export type LoginFormProps = {
   nextPath: string
@@ -29,7 +23,7 @@ function FieldError({ id, errors }: { id: string; errors?: string[] }) {
   return (
     <div id={id} className="space-y-1">
       {errors.map((error) => (
-        <p key={error} className="text-sm font-semibold !text-red-500">
+        <p key={error} className="luxe-error">
           {error}
         </p>
       ))}
@@ -41,11 +35,9 @@ function LoginMessage({ state }: { state: AuthFormState }) {
   if (!state.message) return null
 
   const tone =
-    state.status === 'success'
-      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-      : 'border-red-200 bg-red-50 text-red-700'
+    state.status === 'success' ? 'luxe-note--success' : 'luxe-note--error'
 
-  return <div className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${tone}`}>{state.message}</div>
+  return <div className={`luxe-note ${tone}`}>{state.message}</div>
 }
 
 function SubmitButton() {
@@ -55,18 +47,15 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="premium-primary-cta relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-xl px-4 text-sm font-black text-white transition-opacity duration-150 hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+      className="luxe-cta inline-flex w-full items-center justify-center gap-2"
     >
       {pending ? (
         <>
-          <span className="relative z-10">Signing in</span>
-          <Loader2 className="relative z-10 h-4 w-4 animate-spin" aria-hidden="true" />
+          <span>Signing in</span>
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
         </>
       ) : (
-        <>
-          <span className="relative z-10">Sign In</span>
-          <ArrowRight className="relative z-10 h-4 w-4" aria-hidden="true" />
-        </>
+        <span>Sign In</span>
       )}
     </button>
   )
@@ -81,84 +70,60 @@ export default function LoginForm({ nextPath, errorMessage, logoUrl = '/logo.web
   })
 
   return (
-    <div className="auth-login-panel w-full min-w-0">
-      <div className="premium-console-header mb-4">
-        <span>Secure Login</span>
-        <strong>READY</strong>
+    <div className="w-full min-w-0">
+      <div className="luxe-brand-row">
+        <Image
+          src={logoUrl}
+          alt="Flux3D"
+          width={120}
+          height={28}
+          sizes="120px"
+          priority
+          className="object-contain"
+          style={{ width: 'auto', height: '24px' }}
+        />
+        <span className="luxe-kicker">Members</span>
       </div>
 
-      <div className="auth-login-brand mb-4 flex flex-wrap items-center gap-3">
-        <span className="inline-flex min-h-11 items-center rounded-xl border border-gray-200 bg-white px-3 shadow-sm">
-          <Image
-            src={logoUrl}
-            alt="Flux3D"
-            width={120}
-            height={28}
-            sizes="120px"
-            className="object-contain"
-            style={{ width: 'auto', height: '25px' }}
-          />
-        </span>
-        <div className="min-w-0">
-          <h2 className="!text-[30px] font-black leading-[1.02] !text-[#070b1d]">Welcome back.</h2>
-          <p className="mt-1 text-sm leading-6 text-gray-500">
-            Continue to your production workspace.
-          </p>
-        </div>
-      </div>
+      <h2 className="luxe-form-title">Welcome back.</h2>
+      <p className="luxe-form-sub">Sign in to continue to Flux3D.</p>
 
-      <div className="mb-3 rounded-xl border border-purple-100 bg-purple-50 px-3 py-2">
-        <p className="text-xs font-semibold leading-5 text-purple-800">
-          Saved quotes, private files, checkout details, and order tracking are ready after sign in.
-        </p>
-      </div>
-
-      <form action={action} className="space-y-3">
+      <form action={action} className="mt-7 grid gap-[18px]">
         <input type="hidden" name="next" value={nextPath} />
 
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-bold text-gray-700">
-            Email address
+        <div>
+          <label htmlFor="email" className="luxe-label">
+            Email
           </label>
-          <div className="relative">
-            <Mail
-              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-              aria-hidden="true"
-            />
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              maxLength={254}
-              placeholder="yourname@email.com"
-              aria-invalid={Boolean(state.fieldErrors?.email)}
-              aria-describedby={state.fieldErrors?.email ? 'login-email-error' : undefined}
-              className={`${state.fieldErrors?.email ? errorFieldClass : fieldClass} pl-11`}
-            />
-          </div>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            maxLength={254}
+            placeholder="yourname@email.com"
+            aria-invalid={Boolean(state.fieldErrors?.email)}
+            aria-describedby={state.fieldErrors?.email ? 'login-email-error' : undefined}
+            className={`luxe-input ${state.fieldErrors?.email ? 'luxe-input--error' : ''}`}
+          />
           <FieldError id="login-email-error" errors={state.fieldErrors?.email} />
         </div>
 
-        <div className="space-y-2">
-          <div className="auth-login-password-row flex flex-wrap items-center justify-between gap-3">
-            <label htmlFor="password" className="text-sm font-bold text-gray-700">
+        <div>
+          <div className="mb-[7px] flex items-center justify-between gap-3">
+            <label htmlFor="password" className="luxe-label !mb-0">
               Password
             </label>
             <Link
               href={`/forgot-password?next=${encodeURIComponent(nextPath)}`}
               prefetch={false}
-              className="text-sm font-bold text-purple-600 transition-opacity duration-150 hover:opacity-80"
+              className="text-[13px] font-medium text-[rgba(7,11,29,0.45)] transition-colors duration-150 hover:text-[#a8803c]"
             >
               Forgot password?
             </Link>
           </div>
           <div className="relative">
-            <LockKeyhole
-              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-              aria-hidden="true"
-            />
             <input
               id="password"
               name="password"
@@ -169,13 +134,13 @@ export default function LoginForm({ nextPath, errorMessage, logoUrl = '/logo.web
               placeholder="Enter your password"
               aria-invalid={Boolean(state.fieldErrors?.password)}
               aria-describedby={state.fieldErrors?.password ? 'login-password-error' : undefined}
-              className={`${state.fieldErrors?.password ? errorFieldClass : fieldClass} pl-11 pr-12`}
+              className={`luxe-input pr-14 ${state.fieldErrors?.password ? 'luxe-input--error' : ''}`}
             />
             <button
               type="button"
               onClick={() => setShowPassword((value) => !value)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-gray-400 transition-opacity duration-150 hover:opacity-80"
+              className="luxe-eye"
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" aria-hidden="true" />
@@ -191,20 +156,16 @@ export default function LoginForm({ nextPath, errorMessage, logoUrl = '/logo.web
         <SubmitButton />
       </form>
 
-      <div className="my-3 flex items-center gap-3 text-xs font-black uppercase tracking-[0.16em] text-gray-400">
-        <div className="h-px flex-1 bg-gray-200" />
-        or continue with
-        <div className="h-px flex-1 bg-gray-200" />
-      </div>
+      <div className="luxe-divider">or continue with</div>
 
       <GoogleIdentityButton nextPath={nextPath} />
 
-      <p className="mt-3 text-center text-sm !text-gray-500">
-        Don&apos;t have an account?{' '}
+      <p className="luxe-alt">
+        New to Flux3D?{' '}
         <Link
           href={`/signup?next=${encodeURIComponent(nextPath)}`}
           prefetch={false}
-          className="font-bold text-purple-600 transition-opacity duration-150 hover:opacity-80"
+          className="luxe-link"
         >
           Create account
         </Link>

@@ -4,29 +4,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useActionState, useMemo, useState, type FormEvent } from 'react'
 import { useFormStatus } from 'react-dom'
-import {
-  ArrowRight,
-  Check,
-  Eye,
-  EyeOff,
-  Loader2,
-  LockKeyhole,
-  Mail,
-  Phone,
-  UserRound,
-} from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { signupAction } from '@/app/auth/actions'
 import GoogleIdentityButton from '@/components/auth/GoogleIdentityButton'
 import type { AuthFormState } from '@/lib/auth/validation'
 import { validateEmail, validateName, validatePassword } from '@/lib/auth/validation'
 
 const initialState: AuthFormState = {}
-
-const fieldClass =
-  'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-[#070b1d] outline-none transition-[border-color] duration-150 placeholder:text-gray-400 focus:border-purple-400'
-
-const errorFieldClass =
-  'h-11 w-full rounded-lg border bg-white px-3 text-sm font-medium text-[#070b1d] outline-none transition-[border-color] duration-150 placeholder:text-gray-400 border-red-400 ring-1 ring-red-400/30 focus:border-red-500'
 
 const passwordRules = [
   (value: string) => value.length >= 8,
@@ -74,7 +58,7 @@ function FieldError({ id, errors }: { id: string; errors?: string[] }) {
   return (
     <div id={id} className="space-y-1">
       {errors.map((error) => (
-        <p key={error} className="text-sm font-medium !text-red-500">
+        <p key={error} className="luxe-error">
           {error}
         </p>
       ))}
@@ -87,11 +71,9 @@ function SignupMessage({ state, oauthError }: { state: AuthFormState; oauthError
   if (!message) return null
 
   const tone =
-    state.status === 'success' && !oauthError
-      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-      : 'border-red-200 bg-red-50 text-red-700'
+    state.status === 'success' && !oauthError ? 'luxe-note--success' : 'luxe-note--error'
 
-  return <div className={`rounded-lg border px-3 py-2.5 text-sm ${tone}`}>{message}</div>
+  return <div className={`luxe-note ${tone}`}>{message}</div>
 }
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
@@ -101,27 +83,24 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
     <button
       type="submit"
       disabled={pending || disabled}
-      className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+      className="luxe-cta inline-flex w-full items-center justify-center gap-2"
     >
       {pending ? (
         <>
-          Creating account
+          <span>Creating account</span>
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
         </>
       ) : (
-        <>
-          Create Account
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </>
+        <span>Create Account</span>
       )}
     </button>
   )
 }
 
-function getStrengthColor(score: number) {
-  if (score <= 1) return 'bg-red-500'
-  if (score < 4) return 'bg-amber-400'
-  return 'bg-purple-600'
+function getStrengthLevel(score: number) {
+  if (score <= 1) return 'weak'
+  if (score < 4) return 'fair'
+  return 'strong'
 }
 
 export default function SignupForm({ nextPath, logoUrl = '/logo.webp' }: SignupFormProps) {
@@ -162,8 +141,7 @@ export default function SignupForm({ nextPath, logoUrl = '/logo.webp' }: SignupF
     (score, rule) => score + (rule(values.password) ? 1 : 0),
     0
   )
-  const strengthColor = getStrengthColor(passwordStrength)
-  const passwordsMatch = Boolean(values.password && values.confirmPassword && values.password === values.confirmPassword)
+  const strengthLevel = getStrengthLevel(passwordStrength)
   const isFormValid = Object.keys(validationErrors).length === 0
 
   const getFieldErrors = (field: RequiredField) => {
@@ -190,117 +168,93 @@ export default function SignupForm({ nextPath, logoUrl = '/logo.webp' }: SignupF
   }
 
   return (
-    <div className="w-full min-w-0 max-w-[342px] sm:max-w-[420px]">
-      <div className="mb-8 flex items-center gap-3">
+    <div className="w-full min-w-0">
+      <div className="luxe-brand-row">
         <Image
           src={logoUrl}
           alt="Flux3D"
           width={120}
           height={28}
           sizes="120px"
-          className="h-7 w-auto object-contain"
+          priority
+          className="object-contain"
+          style={{ width: 'auto', height: '24px' }}
         />
-        <span className="text-sm font-medium text-gray-500">Create your account</span>
+        <span className="luxe-kicker">Free to join</span>
       </div>
 
-      <div className="mb-6">
-        <h2 className="text-[28px] font-medium leading-tight text-[#070b1d]">Join Flux3D.</h2>
-        <p className="mt-2 text-[15px] leading-6 text-gray-500">
-          Your production workspace, ready in seconds.
-        </p>
-      </div>
+      <h2 className="luxe-form-title">Create your account.</h2>
+      <p className="luxe-form-sub">Your studio, ready in seconds.</p>
 
-      <form action={action} onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form action={action} onSubmit={handleSubmit} className="mt-7 grid gap-[18px]" noValidate>
         <input type="hidden" name="next" value={nextPath} />
 
-        <div className="space-y-2">
-          <label htmlFor="name" className="text-sm font-medium text-gray-700">
+        <div>
+          <label htmlFor="name" className="luxe-label">
             Full name
           </label>
-          <div className="relative">
-            <UserRound
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-              aria-hidden="true"
-            />
-            <input
-              id="name"
-              name="name"
-              autoComplete="name"
-              required
-              minLength={2}
-              maxLength={80}
-              placeholder="e.g. Rahul Sharma"
-              value={values.name}
-              onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))}
-              onBlur={() => touchField('name')}
-              aria-invalid={hasFieldError('name')}
-              aria-describedby={getFieldErrors('name') ? 'signup-name-error' : undefined}
-              className={`${hasFieldError('name') ? errorFieldClass : fieldClass} pl-10`}
-            />
-          </div>
+          <input
+            id="name"
+            name="name"
+            autoComplete="name"
+            required
+            minLength={2}
+            maxLength={80}
+            placeholder="e.g. Rahul Sharma"
+            value={values.name}
+            onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))}
+            onBlur={() => touchField('name')}
+            aria-invalid={hasFieldError('name')}
+            aria-describedby={getFieldErrors('name') ? 'signup-name-error' : undefined}
+            className={`luxe-input ${hasFieldError('name') ? 'luxe-input--error' : ''}`}
+          />
           <FieldError id="signup-name-error" errors={getFieldErrors('name')} />
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium text-gray-700">
-            Email address
+        <div>
+          <label htmlFor="email" className="luxe-label">
+            Email
           </label>
-          <div className="relative">
-            <Mail
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-              aria-hidden="true"
-            />
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              maxLength={254}
-              placeholder="yourname@email.com"
-              value={values.email}
-              onChange={(event) => setValues((current) => ({ ...current, email: event.target.value }))}
-              onBlur={() => touchField('email')}
-              aria-invalid={hasFieldError('email')}
-              aria-describedby={getFieldErrors('email') ? 'signup-email-error' : undefined}
-              className={`${hasFieldError('email') ? errorFieldClass : fieldClass} pl-10`}
-            />
-          </div>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            maxLength={254}
+            placeholder="yourname@email.com"
+            value={values.email}
+            onChange={(event) => setValues((current) => ({ ...current, email: event.target.value }))}
+            onBlur={() => touchField('email')}
+            aria-invalid={hasFieldError('email')}
+            aria-describedby={getFieldErrors('email') ? 'signup-email-error' : undefined}
+            className={`luxe-input ${hasFieldError('email') ? 'luxe-input--error' : ''}`}
+          />
           <FieldError id="signup-email-error" errors={getFieldErrors('email')} />
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="phone" className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            Phone number <span className="text-xs font-medium text-gray-400">(optional)</span>
+        <div>
+          <label htmlFor="phone" className="luxe-label">
+            Phone <span className="font-normal text-[rgba(7,11,29,0.35)]">(optional)</span>
           </label>
-          <div className="relative">
-            <Phone
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-              aria-hidden="true"
-            />
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              autoComplete="tel"
-              maxLength={24}
-              placeholder="+91 98765 43210"
-              value={values.phone}
-              onChange={(event) => setValues((current) => ({ ...current, phone: event.target.value }))}
-              className={`${fieldClass} pl-10`}
-            />
-          </div>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+            maxLength={24}
+            placeholder="+91 98765 43210"
+            value={values.phone}
+            onChange={(event) => setValues((current) => ({ ...current, phone: event.target.value }))}
+            className="luxe-input"
+          />
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium text-gray-700">
+        <div>
+          <label htmlFor="password" className="luxe-label">
             Password
           </label>
           <div className="relative">
-            <LockKeyhole
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-              aria-hidden="true"
-            />
             <input
               id="password"
               name="password"
@@ -314,14 +268,18 @@ export default function SignupForm({ nextPath, logoUrl = '/logo.webp' }: SignupF
               onChange={(event) => setValues((current) => ({ ...current, password: event.target.value }))}
               onBlur={() => touchField('password')}
               aria-invalid={hasFieldError('password')}
-              aria-describedby={getFieldErrors('password') ? 'signup-password-error' : undefined}
-              className={`${hasFieldError('password') ? errorFieldClass : fieldClass} pl-10 pr-10`}
+              aria-describedby={
+                getFieldErrors('password')
+                  ? 'signup-password-error signup-password-meter'
+                  : 'signup-password-meter'
+              }
+              className={`luxe-input pr-14 ${hasFieldError('password') ? 'luxe-input--error' : ''}`}
             />
             <button
               type="button"
               onClick={() => setShowPassword((value) => !value)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition-opacity duration-150 hover:opacity-80"
+              className="luxe-eye"
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" aria-hidden="true" />
@@ -331,29 +289,25 @@ export default function SignupForm({ nextPath, logoUrl = '/logo.webp' }: SignupF
             </button>
           </div>
 
-          <div className="grid grid-cols-4 gap-1" aria-hidden="true">
-            {[0, 1, 2, 3].map((segment) => (
-              <span key={segment} className="h-1 overflow-hidden rounded-full bg-gray-200">
-                <span
-                  className={`block h-full rounded-full transition-[width,background-color] duration-200 ${strengthColor}`}
-                  style={{ width: passwordStrength > segment ? '100%' : '0%' }}
-                />
-              </span>
-            ))}
-          </div>
+          {values.password ? (
+            <div
+              id="signup-password-meter"
+              className="luxe-meter mt-[10px]"
+              role="status"
+              aria-label={`Password strength: ${strengthLevel}`}
+            >
+              <span data-strength={strengthLevel} style={{ width: `${passwordStrength * 25}%` }} />
+            </div>
+          ) : null}
 
           <FieldError id="signup-password-error" errors={getFieldErrors('password')} />
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+        <div>
+          <label htmlFor="confirmPassword" className="luxe-label">
             Confirm password
           </label>
           <div className="relative">
-            <LockKeyhole
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-              aria-hidden="true"
-            />
             <input
               id="confirmPassword"
               name="confirmPassword"
@@ -363,25 +317,19 @@ export default function SignupForm({ nextPath, logoUrl = '/logo.webp' }: SignupF
               maxLength={128}
               placeholder="Re-enter password"
               value={values.confirmPassword}
-              onChange={(event) => setValues((current) => ({ ...current, confirmPassword: event.target.value }))}
+              onChange={(event) =>
+                setValues((current) => ({ ...current, confirmPassword: event.target.value }))
+              }
               onBlur={() => touchField('confirmPassword')}
               aria-invalid={hasFieldError('confirmPassword')}
-              aria-describedby={
-                getFieldErrors('confirmPassword') ? 'signup-confirm-password-error' : undefined
-              }
-              className={`${hasFieldError('confirmPassword') ? errorFieldClass : fieldClass} pl-10 pr-20`}
+              aria-describedby={getFieldErrors('confirmPassword') ? 'signup-confirm-password-error' : undefined}
+              className={`luxe-input pr-14 ${hasFieldError('confirmPassword') ? 'luxe-input--error' : ''}`}
             />
-            {passwordsMatch ? (
-              <Check
-                className="pointer-events-none absolute right-10 top-1/2 h-4 w-4 -translate-y-1/2 text-purple-500"
-                aria-hidden="true"
-              />
-            ) : null}
             <button
               type="button"
               onClick={() => setShowConfirmPassword((value) => !value)}
               aria-label={showConfirmPassword ? 'Hide password confirmation' : 'Show password confirmation'}
-              className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition-opacity duration-150 hover:opacity-80"
+              className="luxe-eye"
             >
               {showConfirmPassword ? (
                 <EyeOff className="h-4 w-4" aria-hidden="true" />
@@ -393,8 +341,8 @@ export default function SignupForm({ nextPath, logoUrl = '/logo.webp' }: SignupF
           <FieldError id="signup-confirm-password-error" errors={getFieldErrors('confirmPassword')} />
         </div>
 
-        <div className="space-y-2">
-          <label className="flex items-start gap-3 text-[13px] leading-6 text-gray-500" htmlFor="terms">
+        <div>
+          <label className="flex items-start gap-3 text-[13px] leading-6 text-[rgba(7,11,29,0.55)]" htmlFor="terms">
             <input
               id="terms"
               name="terms"
@@ -407,23 +355,15 @@ export default function SignupForm({ nextPath, logoUrl = '/logo.webp' }: SignupF
               }}
               aria-invalid={Boolean(getFieldErrors('terms'))}
               aria-describedby={getFieldErrors('terms') ? 'signup-terms-error' : undefined}
-              className="mt-1 h-4 w-4 rounded border-gray-300 bg-white accent-purple-600"
+              className="luxe-check mt-[5px]"
             />
             <span>
               I agree to the{' '}
-              <Link
-                href="/terms-and-conditions"
-                prefetch={false}
-                className="font-medium text-purple-600 transition-opacity duration-150 hover:opacity-80"
-              >
+              <Link href="/terms-and-conditions" prefetch={false} className="luxe-link">
                 Terms &amp; Conditions
               </Link>{' '}
               and{' '}
-              <Link
-                href="/privacy-policy"
-                prefetch={false}
-                className="font-medium text-purple-600 transition-opacity duration-150 hover:opacity-80"
-              >
+              <Link href="/privacy-policy" prefetch={false} className="luxe-link">
                 Privacy Policy
               </Link>
             </span>
@@ -435,21 +375,13 @@ export default function SignupForm({ nextPath, logoUrl = '/logo.webp' }: SignupF
         <SubmitButton disabled={!isFormValid} />
       </form>
 
-      <div className="my-6 flex items-center gap-3 text-xs font-medium uppercase tracking-[0.16em] text-gray-400">
-        <div className="h-px flex-1 bg-gray-200" />
-        or sign up with
-        <div className="h-px flex-1 bg-gray-200" />
-      </div>
+      <div className="luxe-divider">or sign up with</div>
 
       <GoogleIdentityButton nextPath={nextPath} />
 
-      <p className="mt-8 text-center text-sm text-gray-500">
+      <p className="luxe-alt">
         Already have an account?{' '}
-        <Link
-          href={`/login?next=${encodeURIComponent(nextPath)}`}
-          prefetch={false}
-          className="font-medium text-purple-600 transition-opacity duration-150 hover:opacity-80"
-        >
+        <Link href={`/login?next=${encodeURIComponent(nextPath)}`} prefetch={false} className="luxe-link">
           Sign in
         </Link>
       </p>
