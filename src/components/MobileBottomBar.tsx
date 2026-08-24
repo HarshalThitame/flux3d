@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Heart, LogIn, Package, ShoppingCart, Store } from 'lucide-react'
+import { LogIn, Package, ShoppingCart, Store, UserCircle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useProfile } from '@/hooks/useProfile'
 import { getShopCartTotals, useShopCartStore } from '@/stores/shopCartStore'
@@ -16,8 +16,8 @@ type BarItem = {
 
 const BAR_ITEMS: BarItem[] = [
   { href: '/3d-shop', label: 'Shop', icon: Store, match: ['/3d-shop'] },
-  { href: '/cart', label: 'Cart', icon: ShoppingCart, match: ['/cart'] },
-  { href: '/my-orders', label: 'Orders', icon: Package, match: ['/my-orders', '/orders'] },
+  { href: '/3d-shop/cart', label: 'Cart', icon: ShoppingCart, match: ['/3d-shop/cart'] },
+  { href: '/3d-shop/orders', label: 'Orders', icon: Package, match: ['/3d-shop/orders'] },
 ]
 
 export default function MobileBottomBar() {
@@ -37,7 +37,7 @@ export default function MobileBottomBar() {
   const isActive = (item: BarItem) => item.match.some((prefix) => pathname.startsWith(prefix))
 
   const accountItem: BarItem = profile
-    ? { href: '/3d-shop/wishlist', label: 'Wishlist', icon: Heart, match: ['/3d-shop/wishlist'] }
+    ? { href: '/profile', label: 'Profile', icon: UserCircle, match: ['/profile'] }
     : { href: '/login', label: 'Login', icon: LogIn, match: ['/login'] }
 
   return (
