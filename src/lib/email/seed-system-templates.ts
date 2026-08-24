@@ -228,6 +228,18 @@ const SKELETONS: Record<string, string> = {
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
   Questions? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>`,
+  review_thank_you: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Thank you, {{customer_name}}! 💜</p>
+<p style="font-size:15px;line-height:1.6;color:#6b7280;margin:0 0 16px;" class="email-muted">
+  Your review for <strong>{{product_name}}</strong> has been received. It will appear on the product page once our team approves it.
+</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f9fafb;border-radius:10px;padding:20px;border:1px solid #e5e7eb;margin:16px 0;" class="email-card"><tr>
+  <td style="text-align:center;">
+    <a href="{{product_url}}" style="display:inline-block;background-color:#0F1B3D;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;" class="email-button">View the product</a>
+  </td>
+</tr></table>
+<p style="font-size:13px;line-height:1.6;color:#9ca3af;margin:16px 0 0;" class="email-muted">
+  Reviews like yours help other makers choose with confidence.
+</p>`,
 
   payment_receipt: `<p style="text-align:center;padding:0 32px 16px;">
   <span style="display:inline-block;background-color:#dcfce7;color:#166534;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1;padding:6px 14px;border-radius:20px;margin:0;">Payment Confirmed</span>
