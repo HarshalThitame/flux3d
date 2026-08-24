@@ -110,11 +110,11 @@ export default function DotGridBackground({
     }
 
     function resize() {
-      const rect = host.getBoundingClientRect()
+      const rect = host!.getBoundingClientRect()
       W = rect.width
       H = rect.height
-      canvas.width = W * dpr
-      canvas.height = H * dpr
+      canvas!.width = W * dpr
+      canvas!.height = H * dpr
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0)
       buildDots()
     }
