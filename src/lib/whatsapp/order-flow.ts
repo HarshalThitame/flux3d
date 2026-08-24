@@ -564,7 +564,7 @@ export async function handleOrderFlow(params: {
 
     case 'address_name': {
       if (!incomingText) {
-        await sendAndLog('text', "First up — who's the lucky human receiving this? 😄\n(Full name, please!)")
+        await sendAndLog('text', addressOpeningPrompt)
         return { handled: true }
       }
       await handleAddressName(phone, state, incomingText, sendAndLog)
@@ -581,15 +581,7 @@ export async function handleOrderFlow(params: {
       const line1 = incomingText.slice(0, 160).trim()
       state.address = { ...(state.address ?? {}), line1 }
       await saveOrderSession(phone, 'address_line2', state)
-      await sendAndLog('text', [
-        'Got it, logged! 📝',
-        '',
-        '🗺️ Any landmark nearby? Think "Near ZP School" or "Opposite Blue Gate"',
-        '',
-        'Why: our delivery riders LOVE landmarks — it\u2019s basically their GPS backup plan 😅',
-        '',
-        '(or type *skip*, no worries!)',
-      ].join('\n'))
+      await sendAndLog('text', addressStepPrompt.landmark)
       return { handled: true }
     }
 
@@ -599,11 +591,7 @@ export async function handleOrderFlow(params: {
         state.address = { ...(state.address ?? {}), line2: incomingText.slice(0, 160) }
       }
       await saveOrderSession(phone, 'address_city', state)
-      await sendAndLog('text', [
-        'Almost building your full address map 🧩',
-        '',
-        '🏙️ Which city are we delivering to?',
-      ].join('\n'))
+      await sendAndLog('text', addressStepPrompt.city)
       return { handled: true }
     }
 
@@ -617,14 +605,7 @@ export async function handleOrderFlow(params: {
       const city = incomingText.slice(0, 60).trim()
       state.address = { ...(state.address ?? {}), city }
       await saveOrderSession(phone, 'address_state', state)
-      await sendAndLog('text', [
-        'Nice! One more location piece 🌏',
-        '',
-        '📍 Your state? Full name or short code works —',
-        'e.g. Maharashtra or MH',
-        '',
-        'Why it helps: we pick the fastest courier route + correct tax invoice 🧾',
-      ].join('\n'))
+      await sendAndLog('text', addressStepPrompt.state)
       return { handled: true }
     }
 
@@ -638,12 +619,7 @@ export async function handleOrderFlow(params: {
       const stateName = incomingText.slice(0, 60).trim()
       state.address = { ...(state.address ?? {}), state: stateName }
       await saveOrderSession(phone, 'address_pincode', state)
-      await sendAndLog('text', [
-        'Home stretch! 🏁',
-        '',
-        '🔢 Your 6-digit pincode please —',
-        'it\u2019s the secret code that tells our delivery partner EXACTLY which route to zoom down 🛵💨',
-      ].join('\n'))
+      await sendAndLog('text', addressStepPrompt.pincode)
       return { handled: true }
     }
 
@@ -782,6 +758,49 @@ async function handleTrackOrder(
   lines.push('', `View full details: /3d-shop/order/${order.id}`)
 
   await sendAndLog('text', lines.join('\n'))
+}
+
+// ── Text-mode address collection copy ──
+// Sorted & simple: WHY first, then one short question at a time with an
+// Indian-format example and a progress counter on every step.
+
+export const addressOpeningPrompt = [
+  '📦 *Delivery Address* — step 1 of 6',
+  '',
+  'We need this to ship your order safely to your doorstep. It goes only on the shipping label.',
+  '',
+  '*Your full name?*',
+  'e.g. Rahul Sharma',
+].join('\n')
+
+const addressStepPrompt = {
+  house: [
+    '🏠 *House / Flat & Street* — step 2 of 6',
+    '',
+    'e.g. B-204, Sunshine Apartments, FC Road',
+  ].join('\n'),
+  landmark: [
+    '📍 *Nearby landmark?* — step 3 of 6',
+    '',
+    'e.g. Near City Mall, opposite SBI Bank',
+    '',
+    '(or type *skip*)',
+  ].join('\n'),
+  city: [
+    '🏙️ *Your city* — step 4 of 6',
+    '',
+    'e.g. Pune',
+  ].join('\n'),
+  state: [
+    '🗺️ *Your state* — step 5 of 6',
+    '',
+    'e.g. Maharashtra',
+  ].join('\n'),
+  pincode: [
+    '📮 *6-digit PIN code* — last step!',
+    '',
+    'e.g. 411001',
+  ].join('\n'),
 }
 
 async function checkPincodeAvailability(state: OrderState): Promise<{ available: boolean; reason: string }> {
@@ -1063,14 +1082,9 @@ async function handleAddressName(
   state.address = { ...(state.address ?? {}), name }
   await saveOrderSession(phone, 'address_line1', state)
   await sendAndLog('text', [
-    `Nice to meet you, ${name.slice(0, 40)}! ✅😎`,
+    `Thanks, ${name.split(/\s+/)[0]}! ✅`,
     '',
-    '📦 Now, where should your goodies call home?',
-    'Drop your house/flat no., street & area below.',
-    '',
-    'Why we ask: this is exactly what goes on the shipping label — precision here = no lost packages! 🎯',
-    '',
-    'e.g. "80, Sawargaon, Tal. Chandanapuri Road"',
+    addressStepPrompt.house,
   ].join('\n'))
 }
 
@@ -1084,7 +1098,7 @@ export async function sendAddressFlow(
 ) {
   const flowId = process.env.WHATSAPP_ADDRESS_FLOW_ID?.trim() || ''
   if (!flowId) {
-    await sendAndLog('text', "First up — who's the lucky human receiving this? 😄\n(Full name, please!)")
+    await sendAndLog('text', addressOpeningPrompt)
     return
   }
   const result = await sendWhatsAppFlow(phone, {
@@ -1094,7 +1108,7 @@ export async function sendAddressFlow(
     body: 'Tap below to fill in your delivery address.',
   })
   if (!result.ok) {
-    await sendAndLog('text', "First up — who's the lucky human receiving this? 😄\n(Full name, please!)")
+    await sendAndLog('text', addressOpeningPrompt)
   }
 }
 
