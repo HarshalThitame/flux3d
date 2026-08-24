@@ -3,7 +3,7 @@ import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { buildPublicBusinessProfile } from '@/lib/public-business'
 import { verifyGuestOrderAccess } from '@/lib/shop/guest-access'
 import { notifyPaymentCaptured, notifyPaymentFailed, notifyRefundProcessed } from './email-triggers'
-import { notifyWhatsAppPaymentCaptured } from '@/lib/whatsapp/notifications'
+import { notifyWhatsAppOrderConfirmed } from '@/lib/whatsapp/notifications'
 import { sendCapiEvents, buildPurchaseEvent } from '@/lib/meta/conversions-api'
 import { generateEventId } from '@/lib/meta/event-utils'
 import { safeFireAndForget, reportError } from '@/lib/error-handling'
@@ -682,14 +682,15 @@ export async function verifyCheckoutPayment(params: {
       reportError(error, 'Payment captured notification failed', { module: 'payments', level: 'warn', tags: { flow: 'checkout_verify_email', attemptId: attempt.id } })
     }
 
-    // Send WhatsApp payment confirmation (session text within 24h window).
+    // Send WhatsApp order-confirmation template (fires on paid; deduped per
+    // order, delivered via the outbox so it survives serverless freezes).
     if (attempt.internal_order_type === 'shop_order' && attempt.internal_order_id) {
-      notifyWhatsAppPaymentCaptured({
+      notifyWhatsAppOrderConfirmed({
         orderId: attempt.internal_order_id,
         orderNumber: orderSnapshot.orderNumber,
         amountPaise: attempt.amount_paise,
       }).catch((err) => {
-        console.error('[payments] WhatsApp payment captured notify failed:', err)
+        console.error('[payments] WhatsApp order confirmed notify failed:', err)
       })
     }
 
@@ -943,17 +944,18 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
         reportError(error, 'Payment captured notification failed', { module: 'payments', level: 'warn', tags: { flow: 'webhook_capture', attemptId: attempt.id } })
       }
 
-      // Send WhatsApp payment confirmation (session text within 24h window).
+      // Send WhatsApp order-confirmation template (fires on paid; deduped per
+      // order, delivered via the outbox so it survives serverless freezes).
       if (attempt.internal_order_type === 'shop_order' && attempt.internal_order_id) {
         const orderNumberFromMeta =
           (attempt.metadata as Record<string, unknown> | null)?.order_number ??
           (attempt.metadata as Record<string, unknown> | null)?.orderNumber
-        notifyWhatsAppPaymentCaptured({
+        notifyWhatsAppOrderConfirmed({
           orderId: attempt.internal_order_id,
           orderNumber: normalizeText(orderNumberFromMeta) || attempt.internal_order_id,
           amountPaise: attempt.amount_paise,
         }).catch((err) => {
-          console.error('[payments] WhatsApp payment captured notify failed:', err)
+          console.error('[payments] WhatsApp order confirmed notify failed:', err)
         })
       }
 

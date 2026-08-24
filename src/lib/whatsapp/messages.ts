@@ -4,6 +4,8 @@ export type WhatsAppSendResult = {
   ok: boolean
   status?: number
   error?: string
+  /** Meta wamid — lets the webhook attach sent/delivered/read/failed ticks. */
+  messageId?: string
 }
 
 function getWhatsAppCredentials() {
@@ -41,7 +43,9 @@ async function sendRaw(to: string, payload: Record<string, unknown>): Promise<Wh
       const text = await response.text().catch(() => 'Unknown error')
       return { ok: false, status: response.status, error: text.slice(0, 300) }
     }
-    return { ok: true, status: response.status }
+    const data = await response.json().catch(() => ({})) as { messages?: Array<{ id?: string }> }
+    const messageId = data.messages?.[0]?.id
+    return { ok: true, status: response.status, ...(messageId ? { messageId } : {}) }
   } catch (fetchError) {
     return { ok: false, error: fetchError instanceof Error ? fetchError.message : 'Unknown error' }
   } finally {

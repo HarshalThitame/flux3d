@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireAdminRequest } from '@/lib/admin/request'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { createWhatsappPaymentLink } from '@/lib/whatsapp/payment'
+import { notifyWhatsAppPaymentLink } from '@/lib/whatsapp/notifications'
 import { sendWhatsAppPaymentLink } from '@/lib/whatsapp/messages'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 
@@ -55,17 +56,29 @@ export async function POST(
     const cleanPhone = phone.replace(/\D/g, '')
     const phoneForWhatsApp = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone
 
-    // Send via WhatsApp
-    const sent = await sendWhatsAppPaymentLink(
-      phoneForWhatsApp,
-      paymentLinkResult.shortUrl,
-      `🔗 *Payment link for order ${order.order_number}*`
-    )
+    // Send via WhatsApp — approved PAYMENT_LINK template primary (deliverable
+    // outside the 24h window); session text as in-window fallback.
+    const templateSent = await notifyWhatsAppPaymentLink({
+      phone,
+      orderNumber: order.order_number,
+      paymentLink: paymentLinkResult.shortUrl,
+      userId: order.user_id,
+    })
+
+    let whatsappSent = templateSent
+    if (!whatsappSent) {
+      const sent = await sendWhatsAppPaymentLink(
+        phoneForWhatsApp,
+        paymentLinkResult.shortUrl,
+        `🔗 *Payment link for order ${order.order_number}*`
+      )
+      whatsappSent = sent.ok
+    }
 
     return NextResponse.json({
       success: true,
       shortUrl: paymentLinkResult.shortUrl,
-      whatsappSent: sent.ok,
+      whatsappSent,
     })
   } catch (error) {
     return getAdminApiErrorResponse(error)

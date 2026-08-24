@@ -17,7 +17,9 @@
     "whatsapp:diagnose": "node scripts/whatsapp-diagnostics.mjs",
     "whatsapp:verify-phone": "node scripts/verify-phone.mjs",
     "whatsapp:templates": "node scripts/create-whatsapp-templates.mjs",
-    "whatsapp:create-flow": "node scripts/create-address-flow.mjs"
+    "whatsapp:create-flow": "node scripts/create-address-flow.mjs",
+    "whatsapp:audit": "node scripts/whatsapp-sends-audit.mjs",
+    "whatsapp:test-templates": "node scripts/test-templates.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

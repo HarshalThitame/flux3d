@@ -36,6 +36,39 @@ All scripts read credentials from `.env.local` (gitignored). Set these once:
 | `npm run whatsapp:create-flow` | Create + publish the delivery address Flow |
 | `npm run whatsapp:verify-phone` | Re-verify the phone number (fixes EXPIRED) |
 | `npm run whatsapp:rag:sync` | Re-sync RAG knowledge base |
+| `npm run whatsapp:audit` | Template usage audit — flags approved-but-silent templates |
+| `npm run whatsapp:test-templates` | Live-send all 5 HSM templates to `TEST_PHONE` |
+
+---
+
+## 2a. Template notification architecture (outbox)
+
+All customer-facing HSM notifications flow through a durable outbox:
+
+```
+lifecycle event (payment captured / shipped / delivered / linked)
+  └─ src/lib/whatsapp/notifications.ts  sendTemplateReliably()
+      ├─ dedupe gate     whatsapp_template_outbox.idempotency_key UNIQUE
+      ├─ QStash enqueue  {outboxId} → POST /api/whatsapp/notify (3 retries)
+      └─ inline fallback direct Cloud API send when outbox/QStash unavailable
+            └─ consumer: send via Cloud API → mark row sent/failed
+                         → mirror into whatsapp_messages (meta_message_id
+                           links webhook sent/delivered/read/failed ticks)
+```
+
+Semantics:
+- **Deduped lifecycle keys**: `order_shipped:{orderNumber}`, `order_delivered:{orderNumber}`,
+  `order_confirmed:{orderId}` — re-firing an event never double-messages a customer.
+- **No dedupe**: `payment_link` (admin re-sends are legitimate), `account_connected`.
+- **Order confirmation fires on payment capture** (`payments/service.ts`, both capture
+  paths), not on order placement — "confirmed" means paid.
+- Payment links are **template-primary** (`flux3d_payment_link`, deliverable outside
+  the 24h window) with session-text fallback for in-window delivery.
+- If the outbox table is missing/unreachable the wrapper degrades to inline sends,
+  so messaging never hard-depends on infra health.
+
+Consumer: `src/app/api/whatsapp/notify` (QStash-signed; non-2xx triggers retry).
+Table: `whatsapp_template_outbox` (migration `20260824000000`).
 
 ---
 

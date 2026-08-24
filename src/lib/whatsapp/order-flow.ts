@@ -23,6 +23,7 @@ import {
   mapCatalogItemToSku,
 } from '@/lib/whatsapp/messages'
 import { createWhatsappPaymentLink } from '@/lib/whatsapp/payment'
+import { notifyWhatsAppPaymentLink } from '@/lib/whatsapp/notifications'
 import {
   validateName,
   validateLine1,
@@ -1230,15 +1231,29 @@ async function placeOrderAndSendPaymentLink(
     })
 
     if (paymentLink) {
-      const sent = await withRetry(() =>
-        sendWhatsAppPaymentLink(
-          phone,
-          paymentLink.shortUrl,
-          `🔗 *Tap here to pay for order ${result.orderNumber} securely*`
-        ),
-      )
-      if (!sent.ok) {
-        await sendAndLog('text', `Pay here for order ${result.orderNumber}: ${paymentLink.shortUrl}`)
+      // Approved PAYMENT_LINK template primary (works outside the 24h window);
+      // session-text fallback for in-window delivery if the template cannot send.
+      const templateSent = await notifyWhatsAppPaymentLink({
+        phone,
+        orderNumber: result.orderNumber,
+        paymentLink: paymentLink.shortUrl,
+        userId: effectiveUserId,
+      }).catch((err) => {
+        console.error('[whatsapp] Payment link template failed:', err)
+        return false
+      })
+
+      if (!templateSent) {
+        const sent = await withRetry(() =>
+          sendWhatsAppPaymentLink(
+            phone,
+            paymentLink.shortUrl,
+            `🔗 *Tap here to pay for order ${result.orderNumber} securely*`
+          ),
+        )
+        if (!sent.ok) {
+          await sendAndLog('text', `Pay here for order ${result.orderNumber}: ${paymentLink.shortUrl}`)
+        }
       }
     } else {
       await sendAndLog('text', 'Our payment link service is temporarily unavailable. We will send your payment link shortly.')
