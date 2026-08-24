@@ -78,7 +78,6 @@ export default function LoginForm({ nextPath, errorMessage, logoUrl = '/logo.web
           width={120}
           height={28}
           sizes="120px"
-          priority
           className="object-contain"
           style={{ width: 'auto', height: '24px' }}
         />

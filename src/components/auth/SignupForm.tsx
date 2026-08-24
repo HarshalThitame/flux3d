@@ -176,7 +176,6 @@ export default function SignupForm({ nextPath, logoUrl = '/logo.webp' }: SignupF
           width={120}
           height={28}
           sizes="120px"
-          priority
           className="object-contain"
           style={{ width: 'auto', height: '24px' }}
         />

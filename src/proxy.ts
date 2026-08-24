@@ -29,7 +29,8 @@ export function buildCsp(nonce: string) {
       'https://accounts.google.com',
       ...(isDev ? ["'unsafe-eval'"] : []),
     ].join(' '),
-    "style-src 'self' 'unsafe-inline'",
+    // Google Identity Services injects its own stylesheet (accounts.google.com/gsi/style).
+    "style-src 'self' 'unsafe-inline' https://accounts.google.com",
     [
       'img-src',
       "'self'",
@@ -53,6 +54,8 @@ export function buildCsp(nonce: string) {
       'https://region1.google-analytics.com',
       'https://vitals.vercel-insights.com',
       'https://connect.facebook.net',
+      // Google Identity Services credential-status check (accounts.google.com/gsi/status).
+      'https://accounts.google.com',
       'https://graph.facebook.com',
       // Facebook Pixel fetch/sendBeacon transport for /tr event calls.
       'https://www.facebook.com',

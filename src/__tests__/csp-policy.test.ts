@@ -43,6 +43,14 @@ describe('buildCsp', () => {
     expect(directive(csp, 'connect-src')).toContain('https://www.facebook.com')
   })
 
+  it('allows Google Identity Services styles and credential-status fetches', () => {
+    const csp = buildCsp(NONCE)
+    expect(directive(csp, 'style-src')).toContain('https://accounts.google.com')
+    expect(directive(csp, 'connect-src')).toContain('https://accounts.google.com')
+    expect(directive(csp, 'script-src')).toContain('https://accounts.google.com')
+    expect(directive(csp, 'frame-src')).toContain('https://accounts.google.com')
+  })
+
   it('allows the Pixel form-post and iframe transports exactly once', () => {
     const csp = buildCsp(NONCE)
     expect(directive(csp, 'form-action')).toContain('https://www.facebook.com')

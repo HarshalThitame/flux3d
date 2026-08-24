@@ -183,6 +183,10 @@ export default function GoogleIdentityButton({ nextPath, className = '' }: Googl
 
         if (cancelled || !buttonRef.current) return
 
+        // GIS only accepts an integer pixel width ("100%" logs an error and is
+        // ignored), so measure the container instead.
+        const containerWidth = Math.floor(buttonRef.current.clientWidth)
+
         window.google.accounts.id.renderButton(buttonRef.current, {
           type: 'standard',
           theme: 'outline',
@@ -190,7 +194,7 @@ export default function GoogleIdentityButton({ nextPath, className = '' }: Googl
           text: 'continue_with',
           shape: 'rectangular',
           logo_alignment: 'left',
-          width: '100%',
+          ...(containerWidth > 0 ? { width: containerWidth } : {}),
           locale: 'en',
         })
 
