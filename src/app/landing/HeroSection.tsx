@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowRight, Box, MousePointer2 } from 'lucide-react'
 import DepthBlurCarouselBoundary from '@/components/shop/DepthBlurCarouselBoundary'
+import DotGridBackground from '@/components/landing/DotGridBackground'
 import { getShopProductImages } from '@/lib/shop/selection'
 import type { ShopHomeData } from '@/lib/shop/public-types'
 
@@ -65,6 +66,11 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
           </div>
         </Link>
       </div>
+
+      <DotGridBackground
+        className="pointer-events-none absolute inset-0 z-0"
+        dotColor="#6d28d9"
+      />
 
       <div className="relative h-full w-full">
         {products.length > 0 && (
