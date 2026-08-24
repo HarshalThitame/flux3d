@@ -9059,9 +9059,27 @@ body:has(.premium-auth-shell) {
   }
 }
 
+/* NOTE: no `will-change` here — it would make this element the containing
+   block for all `position: fixed` descendants (mobile menu, floating
+   buttons), breaking their viewport anchoring while scrolling. */
 .page-transition {
   animation: pageEnter 0.55s var(--ease-premium) backwards;
-  will-change: transform, opacity;
+}
+
+/* ===================================================
+   MOBILE BOTTOM BAR — quick nav (Shop/Cart/Orders/Account)
+   Rendered outside .page-transition in the root layout so it is
+   always anchored to the viewport. Reserve layout space below
+   content on mobile so the bar never covers the footer.
+   =================================================== */
+.mobile-bottom-bar {
+  box-shadow: 0 -8px 30px rgba(28, 25, 23, 0.08);
+}
+
+@media (max-width: 1023px) {
+  body {
+    padding-bottom: calc(56px + var(--safe-area-bottom, 0px));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

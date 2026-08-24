@@ -5,13 +5,13 @@ import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ImagePlus, Loader2, Star, X } from 'lucide-react'
 import type { ShopPublicReview } from '@/lib/shop/public-types'
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scroll-lock'
 
 function useScrollLock(locked: boolean) {
   useEffect(() => {
     if (!locked) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+    lockBodyScroll()
+    return () => { unlockBodyScroll() }
   }, [locked])
 }
 

@@ -4,14 +4,14 @@ import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import ProductModelViewer from './ProductModelViewer'
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scroll-lock'
 
 function useScrollLock(locked: boolean) {
   useEffect(() => {
     if (!locked) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    lockBodyScroll()
     return () => {
-      document.body.style.overflow = prev
+      unlockBodyScroll()
     }
   }, [locked])
 }

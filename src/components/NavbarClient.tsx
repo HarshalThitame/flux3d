@@ -1,6 +1,7 @@
 'use client'
 
 import { type CSSProperties, type PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import dynamic from 'next/dynamic'
 import { ChevronDown, Menu, MoreVertical, ShoppingCart, X, MessageCircle, ArrowUpRight } from 'lucide-react'
 import Image from 'next/image'
@@ -8,6 +9,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import type { AppUserProfile } from '@/lib/auth/server'
 import { useProfile } from '@/hooks/useProfile'
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scroll-lock'
 
 const ShopNavControls = dynamic(() => import('@/components/shop/ShopNavControls'), { ssr: false })
 const CART_SKIP_RESTORE_FLAG = 'flux3d-cart-skip-restore'
@@ -189,14 +191,13 @@ export default function NavbarClient({
 
   useEffect(() => {
     if (isOpen) {
-      const previousOverflow = document.body.style.overflow
-      document.body.style.overflow = 'hidden'
+      lockBodyScroll()
       const handleKeyDown = (event: KeyboardEvent) => {
         if (event.key === 'Escape') setIsOpen(false)
       }
       document.addEventListener('keydown', handleKeyDown)
       return () => {
-        document.body.style.overflow = previousOverflow
+        unlockBodyScroll()
         document.removeEventListener('keydown', handleKeyDown)
       }
     }
@@ -499,14 +500,16 @@ export default function NavbarClient({
         </button>
       </nav>
 
-      {/* Mobile Navigation Drawer Sheet */}
-      {isOpen && (
-        <div
-          className="navbar-mobile-overlay fixed inset-0 z-[90] lg:hidden"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Navigation menu"
-        >
+      {/* Mobile Navigation Drawer Sheet — portaled to <body> so ancestor
+          transforms/filters/will-change can never break its fixed positioning */}
+      {isOpen && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              className="navbar-mobile-overlay fixed inset-0 z-[110] lg:hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navigation menu"
+            >
           {/* Backdrop Overlay */}
           <button
             type="button"
@@ -699,8 +702,10 @@ export default function NavbarClient({
               </div>
             </div>
           </div>
-        </div>
-      )}
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   )
 }

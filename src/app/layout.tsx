@@ -9,6 +9,7 @@ import DeferredTracking from '@/components/DeferredTracking'
 import MetaPixel from '@/components/MetaPixel'
 import DeferredGoogleAnalytics from '@/components/DeferredGoogleAnalytics'
 import CookieConsentBanner from '@/components/CookieConsentBanner'
+import MobileBottomBar from '@/components/MobileBottomBar'
 import LoadingProvider from '@/components/providers/LoadingProvider'
 import ThemeProvider from '@/components/providers/ThemeProvider'
 import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider'
@@ -199,6 +200,7 @@ export default async function RootLayout({
                 </PageTransition>
               </LoadingProvider>
              </ErrorBoundary>
+             <MobileBottomBar />
              <ClientShellOverlays />
            </SmoothScrollProvider>
         </ThemeProvider>

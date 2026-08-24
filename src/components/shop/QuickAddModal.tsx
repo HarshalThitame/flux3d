@@ -18,13 +18,13 @@ import ShopVariantControls from '@/components/shop/ShopVariantControls'
 import QuantityStepper from '@/components/shop/QuantityStepper'
 import { useShopCartStore } from '@/stores/shopCartStore'
 import { trackMetaEvent } from '@/lib/meta/event-utils'
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scroll-lock'
 
 function useScrollLock(locked: boolean) {
   useEffect(() => {
     if (!locked) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+    lockBodyScroll()
+    return () => { unlockBodyScroll() }
   }, [locked])
 }
 

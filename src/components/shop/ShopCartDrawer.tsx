@@ -14,6 +14,7 @@ import {
 } from '@/components/shop/ShopCartPromotions'
 import { formatShopPrice } from '@/lib/shop/selection'
 import { getShopCartTotals, useShopCartStore } from '@/stores/shopCartStore'
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scroll-lock'
 
 export function ShopCartNavButton({ mobile = false, onOpenAction }: { mobile?: boolean; onOpenAction?: () => void }) {
   const itemCount = useShopCartStore((state) => getShopCartTotals(state).itemCount)
@@ -81,9 +82,8 @@ export default function ShopCartDrawer({
 
   useEffect(() => {
     if (!isCartOpen) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+    lockBodyScroll()
+    return () => { unlockBodyScroll() }
   }, [isCartOpen])
 
   useEffect(() => {
