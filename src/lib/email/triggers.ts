@@ -5,6 +5,7 @@ import type {
   EmailVerificationPayload,
   PasswordResetPayload,
   PasswordChangedPayload,
+  ReviewThankYouPayload,
   AccountLinkConfirmationPayload,
   OrderPlacedCustomerPayload,
   OrderPlacedAdminPayload,
@@ -292,6 +293,23 @@ export async function sendReviewReminder(
     itemsHtml,
     reviewUrl,
   } as import('./types').ReviewReminderPayload)
+}
+
+export async function sendReviewThankYou(
+  userId: string,
+  email: string,
+  customerName: string,
+  productName: string,
+  productUrl: string
+) {
+  return enqueueEmail({
+    emailType: 'review_thank_you',
+    userId,
+    recipient: email,
+    customerName,
+    productName,
+    productUrl,
+  } as import('./types').ReviewThankYouPayload)
 }
 
 // ============================================================================

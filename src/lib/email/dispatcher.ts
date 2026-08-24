@@ -216,6 +216,11 @@ function payloadToVariables(
       vars.ip_address = payload.ipAddress
       vars.device = payload.device
       break
+    case 'review_thank_you':
+      vars.customer_name = payload.customerName
+      vars.product_name = payload.productName
+      vars.product_url = payload.productUrl
+      break
     case 'account_link_confirmation':
       vars.customer_name = payload.customerName
       vars.confirm_url = payload.confirmUrl
@@ -389,6 +394,8 @@ function buildSubject(payload: EmailJobPayload): string {
       return `Your order ${payload.orderNumber} is out for delivery 🛵`
     case 'magic_link_login':
       return 'Your Flux3D login link'
+    case 'review_thank_you':
+      return `Thanks for your review, ${payload.customerName}! 💜`
     case 'payment_receipt':
       return `Payment receipt for order ${payload.orderNumber}`
     case 'payment_failed':

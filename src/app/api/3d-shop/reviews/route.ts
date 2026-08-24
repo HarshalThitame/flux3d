@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { sendReviewThankYou } from '@/lib/email/triggers'
+import { reportError } from '@/lib/error-handling'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { rateLimitResponse } from '@/lib/rate-limit'
@@ -127,6 +129,26 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'You have already reviewed this product for this order.' }, { status: 400 })
       }
       throw new Error(insertError.message)
+    }
+
+    // Thank-you email — fire-and-forget; skipped for synthetic WhatsApp-guest addresses.
+    const customerEmail = authData.user.email ?? ''
+    if (customerEmail && !customerEmail.toLowerCase().startsWith('wa+')) {
+      try {
+        const [{ data: prodRow }, { data: profile }] = await Promise.all([
+          supabase.from('shelf_products').select('name, slug').eq('id', productId).maybeSingle(),
+          supabase.from('profiles').select('full_name, name').eq('id', authData.user.id).maybeSingle(),
+        ])
+        await sendReviewThankYou(
+          authData.user.id,
+          customerEmail,
+          String(profile?.full_name || profile?.name || 'Customer'),
+          String(prodRow?.name ?? 'your Flux3D product'),
+          `${process.env.NEXT_PUBLIC_SITE_URL}/3d-shop/product/${prodRow?.slug ?? ''}`
+        )
+      } catch (ackError) {
+        reportError(ackError, 'Review thank-you email failed', { module: 'email', level: 'warn', tags: { flow: 'review_submit' } })
+      }
     }
 
     return NextResponse.json({

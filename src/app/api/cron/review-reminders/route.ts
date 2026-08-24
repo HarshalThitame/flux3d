@@ -108,16 +108,40 @@ export async function GET(request: Request) {
     }
 
     // Batch-load profiles for all orders in this window (avoids an N+1
-    // profile query per order).
+    // profile query per order). WhatsApp-originated guests carry synthetic
+    // non-receivable addresses (wa+<phone>@…) — excluding them here protects
+    // sender reputation instead of firing dead-letter reminders.
     const orderUserIds = Array.from(new Set((orders ?? []).map((o) => o.user_id).filter(Boolean)))
     const profileMap = new Map<string, { email?: string | null; full_name?: string | null; name?: string | null }>()
+    let skippedSynthetic = 0
     if (orderUserIds.length > 0) {
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, email, full_name, name')
         .in('id', orderUserIds)
+        .not('email', 'ilike', 'wa+%@%')
       for (const profile of profiles ?? []) {
         profileMap.set(profile.id, profile)
+      }
+      skippedSynthetic = orderUserIds.filter((id) => !profileMap.has(id)).length
+      if (skippedSynthetic > 0) {
+        console.log(`[cron/review-reminders] Reminder ${schedule.number}: skipped ${skippedSynthetic} WhatsApp-guest profile(s) with synthetic emails`)
+      }
+    }
+
+    // Batch-load product slugs so every reminder item deep-links to its
+    // product page instead of a generic orders list.
+    const windowProductIds = Array.from(new Set(
+      (orders ?? []).flatMap((o) => (Array.isArray(o.items) ? o.items : []).map(getItemProductId)).filter(Boolean)
+    ))
+    const slugMap = new Map<string, string>()
+    if (windowProductIds.length > 0) {
+      const { data: products } = await supabase
+        .from('shelf_products')
+        .select('id, slug')
+        .in('id', windowProductIds)
+      for (const prod of products ?? []) {
+        if (prod?.id && prod.slug) slugMap.set(String(prod.id), String(prod.slug))
       }
     }
 
@@ -166,11 +190,16 @@ export async function GET(request: Request) {
           continue
         }
 
-        // Build items HTML for email
+        // Build items HTML for email — each item deep-links to its product page
         const itemsHtml = `<ul style="padding:0 32px 16px;margin:0;list-style:none;">\n${unreviewedItems.map((item) => {
           const name = getItemProductName(item)
           const thumbnail = isRecord(item) ? String(item.productThumbnail ?? item.product_thumbnail ?? '') : ''
-          return `  <li style="padding:12px 0;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:12px;">\n    ${thumbnail ? `<img src="${thumbnail}" alt="" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;" />` : ''}\n    <span style="font-size:15px;font-weight:600;color:#1a1a1a;">${name}</span>\n  </li>`
+          const pid = getItemProductId(item)
+          const slug = pid ? slugMap.get(pid) : undefined
+          const nameHtml = slug
+            ? `<a href="${absoluteUrl(`/3d-shop/product/${slug}`)}" style="color:#1a1a1a;text-decoration:none;border-bottom:1px solid #d1d5db;">${name}</a>`
+            : name
+          return `  <li style="padding:12px 0;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:12px;">\n    ${thumbnail ? `<img src="${thumbnail}" alt="" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;" />` : ''}\n    <span style="font-size:15px;font-weight:600;color:#1a1a1a;">${nameHtml}</span>\n  </li>`
         }).join('\n')}\n</ul>`
 
         // Send reminder email

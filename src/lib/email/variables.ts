@@ -94,6 +94,11 @@ export const KNOWN_VARIABLES: Record<string, EmailVariableMeta[]> = {
     { name: 'items_html', description: 'Pre-rendered HTML list of products awaiting review', example: '<ul><li>Phone Stand</li></ul>' },
     { name: 'review_url', description: 'Link to orders page where user can write reviews', example: 'https://flux3d.in/3d-shop/orders' },
   ],
+  review_thank_you: [
+    { name: 'customer_name', description: 'Customer name', example: 'Rutik' },
+    { name: 'product_name', description: 'Name of the reviewed product', example: 'RGB Lotus Flower Lamp' },
+    { name: 'product_url', description: 'Link to the reviewed product page', example: 'https://flux3d.in/3d-shop/product/rgb-lotus-lamp' },
+  ],
   payment_receipt: [
     { name: 'customer_name', description: 'Customer name', example: 'Rutik' },
     { name: 'order_number', description: 'Order number', example: 'F3D-2026-001234' },
@@ -152,6 +157,7 @@ export const EMAIL_TYPE_META: Record<string, { category: string; description: st
   order_shipped: { category: 'transactional', description: 'Order dispatched with tracking', subject: 'Your order {{order_number}} has shipped' },
   delivery_confirmation: { category: 'transactional', description: 'Order delivered confirmation', subject: 'Order {{order_number}} delivered — how did we do?' },
   review_reminder: { category: 'transactional', description: 'Reminder to review delivered products', subject: 'How is your order {{order_number}}? Leave a review' },
+  review_thank_you: { category: 'transactional', description: 'Thank-you note after a customer submits a product review', subject: 'Thanks for your review, {{customer_name}}! 💜' },
   payment_receipt: { category: 'transactional', description: 'Payment confirmation with receipt', subject: 'Payment receipt for order {{order_number}}' },
   payment_failed: { category: 'transactional', description: 'Payment failure with retry link', subject: 'Payment failed for order {{order_number}}' },
   refund_issued: { category: 'transactional', description: 'Refund processed notification', subject: 'Refund issued for order {{order_number}}' },

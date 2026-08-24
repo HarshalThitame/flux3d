@@ -26,6 +26,7 @@ export type EmailType =
   | 'order_shipped'
   | 'delivery_confirmation'
   | 'review_reminder'
+  | 'review_thank_you'
   | 'payment_receipt'
   | 'payment_failed'
   | 'refund_issued'
