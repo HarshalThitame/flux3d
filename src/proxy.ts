@@ -25,6 +25,8 @@ export function buildCsp(nonce: string) {
       'https://connect.facebook.net',
       // gtag.js loaded by DeferredGoogleAnalytics.
       'https://www.googletagmanager.com',
+      // Google Identity Services (Sign-In with Google).
+      'https://accounts.google.com',
       ...(isDev ? ["'unsafe-eval'"] : []),
     ].join(' '),
     "style-src 'self' 'unsafe-inline'",
@@ -65,7 +67,7 @@ export function buildCsp(nonce: string) {
     // fbevents.js submits large event payloads to /tr via a hidden form and
     // renders measurement iframes on www.facebook.com.
     `form-action 'self' https://www.facebook.com`,
-    `frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com https://www.facebook.com`,
+    `frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com https://www.facebook.com https://accounts.google.com`,
     "object-src 'none'",
     "base-uri 'self'",
     "frame-ancestors 'self'",

@@ -51,6 +51,7 @@ const DNS_PREFETCH_ORIGINS = [
   '//lh3.googleusercontent.com',
   '//avatars.githubusercontent.com',
   '//wa.me',
+  '//accounts.google.com',
 ]
 
 const PRECONNECT_ORIGINS = [
