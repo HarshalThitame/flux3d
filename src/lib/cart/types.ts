@@ -143,10 +143,13 @@ export const CART_STORAGE_KEY = 'flux3d-cart';
 export function getAnonymousCartKey(): string {
   if (typeof window === 'undefined') return `${CART_STORAGE_KEY}_anon`;
   const SESSION_KEY = 'flux3d-anon-session-id';
-  let sessionId = window.sessionStorage.getItem(SESSION_KEY);
+  let sessionId = window.localStorage.getItem(SESSION_KEY);
   if (!sessionId) {
-    sessionId = crypto.randomUUID?.() ?? Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
-    window.sessionStorage.setItem(SESSION_KEY, sessionId);
+    sessionId =
+      window.sessionStorage.getItem(SESSION_KEY) ??
+      crypto.randomUUID?.() ??
+      Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+    window.localStorage.setItem(SESSION_KEY, sessionId);
   }
   return `${CART_STORAGE_KEY}_anon_${sessionId}`;
 }

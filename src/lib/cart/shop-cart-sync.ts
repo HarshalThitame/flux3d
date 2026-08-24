@@ -211,7 +211,9 @@ export function mirrorShopAdd(item: ShopCartItem) {
 }
 
 export function mirrorShopRemove(cartItemId: string) {
-  void deleteServerCartLine(cartItemId).catch(() => {})
+  void deleteServerCartLine(cartItemId).catch((error) =>
+    console.warn('[shop-cart] Remove sync failed', error)
+  )
 }
 
 export function mirrorShopQuantity(cartItemId: string, quantity: number, unitPrice: number) {
@@ -248,8 +250,13 @@ function bootstrap() {
       return
     }
 
+    if (event === 'SIGNED_OUT') {
+      useShopCartStore.setState((state) => ({
+        items: state.items.filter((item) => item.localOnly),
+        priceChangedItemIds: [],
+      }))
+    }
     lastHydratedUserId = null
-    useShopCartStore.setState({ items: [], priceChangedItemIds: [] })
   })
 
   let refreshTimer: number | null = null

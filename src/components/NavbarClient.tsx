@@ -98,8 +98,6 @@ export default function NavbarClient({
       }
       const { useShopWishlistStore } = await import('@/stores/shopWishlistStore')
       useShopWishlistStore.getState().setWishlist([])
-      const { useShopCartStore } = await import('@/stores/shopCartStore')
-      useShopCartStore.getState().clearCart()
       setIsOpen(false)
       setIsProfileOpen(false)
       setIsMoreOpen(false)
