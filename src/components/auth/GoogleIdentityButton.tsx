@@ -22,6 +22,7 @@ declare global {
             use_fedcm_for_prompt?: boolean
             auto_select?: boolean
             cancel_on_tap_outside?: boolean
+            itp_support?: boolean
             context?: 'signin' | 'signup' | 'use'
             ux_mode?: 'popup' | 'redirect'
           }) => void
@@ -41,9 +42,12 @@ declare global {
           prompt: (momentListener?: (notification: {
             isNotDisplayed: () => boolean
             isSkippedMoment: () => boolean
+            isDismissedMoment: () => boolean
             getNotDisplayedReason: () => string
             getSkippedReason: () => string
+            getDismissedReason: () => string
           }) => void) => void
+          cancel: () => void
         }
       }
     }
@@ -143,6 +147,8 @@ export default function GoogleIdentityButton({ nextPath, className = '' }: Googl
           },
           nonce: hashedNonce,
           use_fedcm_for_prompt: true,
+          auto_select: true,
+          itp_support: true,
           cancel_on_tap_outside: false,
           context: 'signin',
           ux_mode: 'popup',
@@ -161,6 +167,28 @@ export default function GoogleIdentityButton({ nextPath, className = '' }: Googl
           locale: 'en',
         })
 
+        // Trigger One Tap prompt for returning users.
+        // This shows a subtle "Sign in as [Name]" popup in the top-right
+        // corner when the user has previously signed in with Google.
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed()) {
+            const reason = notification.getNotDisplayedReason()
+            // Common reasons: 'opt_out_or_no_session', 'browser_not_supported',
+            // 'invalid_client', 'missing_client_id', 'suppressed_by_user',
+            // 'unregistered_origin', 'unknown_reason'
+            if (process.env.NODE_ENV === 'development') {
+              // eslint-disable-next-line no-console
+              console.log('[GIS] One Tap not displayed:', reason)
+            }
+          } else if (notification.isSkippedMoment()) {
+            const reason = notification.getSkippedReason()
+            if (process.env.NODE_ENV === 'development') {
+              // eslint-disable-next-line no-console
+              console.log('[GIS] One Tap skipped:', reason)
+            }
+          }
+        })
+
         setGisReady(true)
       } catch (err) {
         if (cancelled) return
@@ -174,6 +202,15 @@ export default function GoogleIdentityButton({ nextPath, className = '' }: Googl
 
     return () => {
       cancelled = true
+      // Cancel any active One Tap prompt when the component unmounts
+      // to prevent callbacks from firing on a removed component.
+      if (window.google?.accounts?.id) {
+        try {
+          window.google.accounts.id.cancel()
+        } catch {
+          // cancel() may throw if no prompt is active — safe to ignore.
+        }
+      }
       if (script && document.head.contains(script)) {
         document.head.removeChild(script)
       }
