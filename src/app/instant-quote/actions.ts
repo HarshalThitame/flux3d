@@ -24,6 +24,7 @@ import { logQuoteEvent } from '@/lib/quote/audit'
 import { redactSensitiveValues } from '@/lib/security/redact'
 import { rateLimitCheck } from '@/lib/rate-limit'
 import { verifyModelVolume } from '@/lib/storage/verify-metadata'
+import { notifyWhatsAppOrderConfirmed } from '@/lib/whatsapp/notifications'
 import { sendOrderPlacedCustomer, sendOrderPlacedAdmin } from '@/lib/email/triggers'
 import { sendCapiEvents, buildPurchaseEvent } from '@/lib/meta/conversions-api'
 import { generateEventId } from '@/lib/meta/event-utils'
@@ -814,6 +815,15 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
   const adminOrderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders/${insertedOrder.id}`
   sendOrderPlacedCustomer(auth.user.id, auth.profile.email, orderNumber, auth.profile.name, String(Number(pricingData.grandTotal ?? 0)), itemsEmail, orderUrl).catch((error) => reportError(error, 'Quote customer email failed', { module: 'email', level: 'warn', tags: { flow: 'quote_payment', orderId: insertedOrder.id } }))
   sendOrderPlacedAdmin('', orderNumber, auth.profile.email, auth.profile.name, String(Number(pricingData.grandTotal ?? 0)), adminOrderUrl).catch((error) => reportError(error, 'Quote admin email failed', { module: 'email', level: 'warn', tags: { flow: 'quote_payment', orderId: insertedOrder.id } }))
+
+  // WhatsApp order-confirmation template (fires on paid; deduped per order).
+  notifyWhatsAppOrderConfirmed({
+    orderId: insertedOrder.id,
+    orderNumber,
+    amountPaise: capture.amountPaise,
+    orderTable: 'orders',
+    userId: auth.user.id,
+  }).catch((error) => reportError(error, 'Quote WhatsApp confirmation failed', { module: 'whatsapp', level: 'warn', tags: { flow: 'quote_payment', orderId: insertedOrder.id } }))
 
   const fileName = (draftData.fileUrl as string)?.split('/').pop() || 'model.stl'
   await adminSupabase.from('model_files').upsert(

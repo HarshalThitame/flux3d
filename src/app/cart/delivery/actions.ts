@@ -26,6 +26,7 @@ import { logQuoteEvent } from '@/lib/quote/audit'
 import { redactSensitiveValues } from '@/lib/security/redact'
 import { verifyModelVolume } from '@/lib/storage/verify-metadata'
 import { sendOrderPlacedCustomer, sendOrderPlacedAdmin } from '@/lib/email/triggers'
+import { notifyWhatsAppOrderConfirmed } from '@/lib/whatsapp/notifications'
 import { reportError } from '@/lib/error-handling'
 import {
   createQuoteCapture,
@@ -1309,6 +1310,17 @@ export async function verifyCartPaymentAndCreateOrder(params: {
   const adminOrderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders/${firstOrder.id}`
   sendOrderPlacedCustomer(auth.user.id, auth.profile.email, firstOrderNumber, auth.profile.name, String(capture.amountPaise / 100), orderItemsEmail, orderUrl).catch((error) => reportError(error, 'Cart payment customer email failed', { module: 'email', level: 'warn', tags: { flow: 'cart_payment', orderId: firstOrder.id } }))
   sendOrderPlacedAdmin('', firstOrderNumber, auth.profile.email, auth.profile.name, String(capture.amountPaise / 100), adminOrderUrl).catch((error) => reportError(error, 'Cart payment admin email failed', { module: 'email', level: 'warn', tags: { flow: 'cart_payment', orderId: firstOrder.id } }))
+
+  // WhatsApp order-confirmation template (fires on paid; deduped per order).
+  // Group payments cover multiple orders — the confirmation carries the group
+  // total against the lead order number.
+  notifyWhatsAppOrderConfirmed({
+    orderId: firstOrder.id,
+    orderNumber: firstOrderNumber,
+    amountPaise: capture.amountPaise,
+    orderTable: 'orders',
+    userId: auth.user.id,
+  }).catch((error) => reportError(error, 'Cart WhatsApp confirmation failed', { module: 'whatsapp', level: 'warn', tags: { flow: 'cart_payment', orderId: firstOrder.id } }))
 
   void trackFeatureUsage(auth.user.id, 'order_placed', {
     source: 'cart', groupId, orderId: firstOrder.id,

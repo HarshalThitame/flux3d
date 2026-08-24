@@ -27,7 +27,7 @@ function supabaseWithOrderPhone(phone: string | null) {
     select: () => builder,
     eq: () => builder,
     maybeSingle: async () => ({
-      data: phone != null ? { shipping_address: { phone } } : null,
+      data: phone != null ? { phone } : null,
     }),
     insert: () => builder,
     update: () => builder,
@@ -72,7 +72,7 @@ describe('notifyWhatsAppOrderShipped', () => {
     expect(ok).toBe(true)
     expect(enqueueTemplateSend).toHaveBeenCalledWith(
       expect.objectContaining({
-        idempotencyKey: 'order_shipped:ORD-1',
+        idempotencyKey: 'order_shipped:ORD-1:TRK9',
         templateName: 'flux3d_order_shipped',
         phone: '919623023477',
         triggerEvent: 'order_shipped',

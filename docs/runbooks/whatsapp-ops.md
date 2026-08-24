@@ -57,15 +57,22 @@ lifecycle event (payment captured / shipped / delivered / linked)
 ```
 
 Semantics:
-- **Deduped lifecycle keys**: `order_shipped:{orderNumber}`, `order_delivered:{orderNumber}`,
-  `order_confirmed:{orderId}` — re-firing an event never double-messages a customer.
+- **Deduped lifecycle keys**: `order_shipped:{orderNumber}:{trackingNumber}`,
+  `order_delivered:{orderNumber}`, `order_confirmed:{orderId}` — re-firing an
+  event never double-messages a customer. Shipped keys include the tracking
+  number so a returned-then-reshipped order (new tracking) legitimately
+  re-notifies, while webhook replays stay deduped.
 - **No dedupe**: `payment_link` (admin re-sends are legitimate), `account_connected`.
-- **Order confirmation fires on payment capture** (`payments/service.ts`, both capture
-  paths), not on order placement — "confirmed" means paid.
+- **Order confirmation fires on payment capture** — for ALL order types:
+  shop orders via `payments/service.ts` (both capture paths), and instant-quote /
+  cart-quote orders at their server-action capture sites (`internal_order_type`
+  `custom_quote`, resolved against the `orders` table).
 - Payment links are **template-primary** (`flux3d_payment_link`, deliverable outside
   the 24h window) with session-text fallback for in-window delivery.
 - If the outbox table is missing/unreachable the wrapper degrades to inline sends,
   so messaging never hard-depends on infra health.
+- Failed sends are reported to Sentry (`reportError`, module `whatsapp`) in
+  addition to the outbox row + inbox mirror.
 
 Consumer: `src/app/api/whatsapp/notify` (QStash-signed; non-2xx triggers retry).
 Table: `whatsapp_template_outbox` (migration `20260824000000`).

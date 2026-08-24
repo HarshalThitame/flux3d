@@ -75,14 +75,18 @@ async function main() {
   }
 
   let flagged = 0
+  let failing = 0
   console.log('Template usage (last 24h):')
   for (const t of approved) {
     if (t.name === 'hello_world') continue
     const ev = eventByTemplate[t.name]
     if (!ev) continue
     const stats = byEvent[ev] || { total: 0, failed: 0 }
-    const marker = stats.total === 0 ? '⚠️  ZERO SENDS' : stats.failed > 0 ? `⚠️  ${stats.failed} FAILED` : '✅'
-    if (stats.total === 0 || stats.failed > 0) flagged++
+    // Zero sends on quiet days is normal — warn but don't fail. Failed
+    // deliveries are always a real problem.
+    const marker = stats.failed > 0 ? `❌ ${stats.failed} FAILED` : stats.total === 0 ? '⚠️  ZERO SENDS' : '✅'
+    if (stats.failed > 0) failing++
+    else if (stats.total === 0) flagged++
     console.log(`  ${t.name.padEnd(28)} sent=${String(stats.total).padStart(4)}  ${marker}`)
   }
 
@@ -97,8 +101,8 @@ async function main() {
   }
   if (!other) console.log('  (none)')
 
-  console.log(`\nRESULT: ${flagged === 0 ? 'ALL WIRED TEMPLATES ACTIVE' : `${flagged} template(s) need attention`}`)
-  if (flagged > 0) process.exitCode = 1
+  console.log(`\nRESULT: ${failing > 0 ? `${failing} template(s) with FAILED deliveries` : flagged > 0 ? `OK (${flagged} template(s) had no traffic in the last 24h)` : 'ALL WIRED TEMPLATES ACTIVE'}`)
+  if (failing > 0) process.exitCode = 1
 }
 
 main().catch((err) => {

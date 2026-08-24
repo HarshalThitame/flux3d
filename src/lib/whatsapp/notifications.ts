@@ -1,4 +1,5 @@
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { reportError } from '@/lib/error-handling'
 import {
   sendWhatsAppTemplate,
   sendWhatsAppText,
@@ -107,6 +108,12 @@ async function sendTemplateReliably(p: ReliableSendParams): Promise<boolean> {
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err)
     console.error(`[whatsapp] ${p.templateKey} template failed after retries:`, error)
+    reportError(new Error(error), `WhatsApp template send failed: ${p.templateKey}`, {
+      level: 'warn',
+      module: 'whatsapp',
+      tags: { triggerEvent: p.triggerEvent },
+      metadata: { phone: to, orderNumber: p.logText.slice(0, 120) },
+    })
     if (row) await completeOutboxSend(row, { ok: false, error }).catch(() => {})
     else await logInlineSend(p, to, { ok: false, error })
     return false
@@ -165,7 +172,9 @@ export async function notifyWhatsAppOrderShipped(params: {
     logText: `Order #${params.orderNumber} shipped via ${params.courierName}, tracking ${params.trackingNumber}`,
     triggerEvent: 'order_shipped',
     userId: params.userId ?? null,
-    idempotencyKey: `order_shipped:${params.orderNumber}`,
+    // Tracking number in the key: a returned-then-reshipped order with new
+    // tracking legitimately re-notifies, while webhook replays stay deduped.
+    idempotencyKey: `order_shipped:${params.orderNumber}:${params.trackingNumber}`,
   })
 }
 
@@ -195,13 +204,16 @@ export async function notifyWhatsAppOrderDelivered(params: {
 // Fires once per order when the payment lands. Primary channel is the approved
 // UTILITY template (works outside the 24h window); the playful session text is a
 // best-effort secondary inside the window when the template cannot be sent.
+// `orderTable` selects where to resolve the customer phone from: shop orders
+// live in shelf_orders; instant-quote / cart-quote orders live in orders.
 export async function notifyWhatsAppOrderConfirmed(params: {
   orderId: string
   orderNumber: string
   amountPaise: number
+  orderTable?: 'shelf_orders' | 'orders'
   userId?: string | null
 }): Promise<boolean> {
-  const phone = await lookupOrderPhone(params.orderId)
+  const phone = await lookupOrderPhone(params.orderId, params.orderTable ?? 'shelf_orders')
 
   const templateSent = await sendTemplateReliably({
     templateKey: 'ORDER_CONFIRMATION',
@@ -242,17 +254,16 @@ export async function notifyWhatsAppOrderConfirmed(params: {
 }
 
 /** Reads the shipping-address phone for an order (null when absent/unavailable). */
-async function lookupOrderPhone(orderId: string): Promise<string | null> {
+async function lookupOrderPhone(orderId: string, orderTable: 'shelf_orders' | 'orders' = 'shelf_orders'): Promise<string | null> {
   try {
     const supabase = createAdminSupabaseClient()
     if (!supabase) return null
     const { data: order } = await supabase
-      .from('shelf_orders')
-      .select('shipping_address')
+      .from(orderTable)
+      .select('phone')
       .eq('id', orderId)
       .maybeSingle()
-    const address = (order?.shipping_address ?? {}) as Record<string, unknown>
-    const phoneRaw = String(address.phone ?? '').replace(/\D/g, '')
+    const phoneRaw = String(order?.phone ?? '').replace(/\D/g, '')
     if (!phoneRaw) {
       console.warn('[whatsapp] No phone on order — WhatsApp confirm skipped:', orderId)
       return null
