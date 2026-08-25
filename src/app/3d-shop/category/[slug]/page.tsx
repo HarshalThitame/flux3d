@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import ShopShell from '@/components/shop/ShopShell'
 import ShopCategoryBrowser from '@/components/shop/ShopCategoryBrowser'
 import { getShopCategoryBySlug, getShopProducts } from '@/lib/shop/public-data'
-import type { ShopPublicCategory } from '@/lib/shop/public-types'
+import type { ShopPublicCategory, ShopPublicProduct } from '@/lib/shop/public-types'
 import { absoluteUrl } from '@/lib/site'
 import { getCspNonce } from '@/lib/csp'
 
@@ -32,6 +32,21 @@ function makeBreadcrumbSchema(category: ShopPublicCategory) {
       position: item.position,
       name: item.name,
       item: item.item,
+    })),
+  }
+}
+
+function makeItemListSchema(category: ShopPublicCategory, products: ShopPublicProduct[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: category.name,
+    numberOfItems: products.length,
+    itemListElement: products.map((product, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: absoluteUrl(`/3d-shop/product/${product.slug}`),
+      name: product.name,
     })),
   }
 }
@@ -67,6 +82,11 @@ export default async function ShopCategoryPage({ params }: { params: Promise<{ s
         nonce={nonce}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: toJsonLd(makeBreadcrumbSchema(category)) }}
+      />
+      <script
+        nonce={nonce}
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: toJsonLd(makeItemListSchema(category, result.products)) }}
       />
       <ShopCategoryBrowser category={category} products={result.products} />
     </ShopShell>

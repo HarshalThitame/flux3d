@@ -9,13 +9,13 @@ import type { StoredCatalogHashes } from './catalog'
  * OUTDATED/NO_REVIEW, hiding the catalog from customers. We persist the
  * per-SKU payload hashes between runs and skip items whose hash is unchanged.
  *
- * State is stored as a single row in `error_logs` (source =
- * 'meta_catalog_sync_state'). That table is service-role writable, has a JSONB
- * `metadata` column, and is not subject to any retention purge — making it a
- * zero-migration key-value store that works on the current schema.
+ * State lives in the dedicated `meta_sync_state` table (one row, id =
+ * 'default'), which is NOT subject to any retention purge — the earlier
+ * `error_logs` storage was wiped by purge_old_records(90) after ~90 days,
+ * causing a full catalog re-push and WhatsApp review churn.
  */
 
-const STATE_SOURCE = 'meta_catalog_sync_state'
+const STATE_ROW_ID = 'default'
 
 let cachedClient: SupabaseClient | null = null
 
@@ -43,15 +43,13 @@ export async function getStoredCatalogHashes(): Promise<StoredCatalogHashes> {
   if (!supabase) return {}
 
   const { data, error } = await supabase
-    .from('error_logs')
-    .select('id, metadata')
-    .eq('source', STATE_SOURCE)
-    .order('created_at', { ascending: false })
-    .limit(1)
+    .from('meta_sync_state')
+    .select('hashes')
+    .eq('id', STATE_ROW_ID)
     .maybeSingle()
 
-  if (error || !data?.metadata) return {}
-  const hashes = data.metadata as Record<string, unknown>
+  if (error || !data?.hashes) return {}
+  const hashes = data.hashes as Record<string, unknown>
   const result: StoredCatalogHashes = {}
   for (const [key, value] of Object.entries(hashes)) {
     if (typeof value === 'string') result[key] = value
@@ -59,29 +57,102 @@ export async function getStoredCatalogHashes(): Promise<StoredCatalogHashes> {
   return result
 }
 
+/**
+ * Atomically MERGE hashes into the stored map (server-side `hashes || new`).
+ *
+ * Use this from the real-time webhook handler: it avoids the lost-update race
+ * where the webhook read-modify-write cycle overwrote hashes persisted by a
+ * concurrently running cron (or vice versa). Entries already in the store are
+ * only overwritten when present in the incoming map; nothing is deleted.
+ */
+export async function mergeStoredCatalogHashes(newHashes: StoredCatalogHashes): Promise<void> {
+  if (Object.keys(newHashes).length === 0) return
+  const supabase = getClient()
+  if (!supabase) return
+
+  const { error } = await supabase.rpc('merge_meta_sync_hashes', {
+    p_id: STATE_ROW_ID,
+    p_hashes: newHashes,
+  })
+  if (error) throw new Error(`merge_meta_sync_hashes failed: ${error.message}`)
+}
+
+/**
+ * REPLACE the whole stored hash map. Use only from the full-sync cron: its
+ * result map is derived from the complete stored set plus this run's outcome,
+ * so wholesale replacement also prunes entries for SKUs that no longer exist.
+ */
 export async function saveStoredCatalogHashes(hashes: StoredCatalogHashes): Promise<void> {
   const supabase = getClient()
   if (!supabase) return
 
-  const { data: existing } = await supabase
-    .from('error_logs')
-    .select('id')
-    .eq('source', STATE_SOURCE)
-    .order('created_at', { ascending: false })
-    .limit(1)
+  const { error } = await supabase
+    .from('meta_sync_state')
+    .upsert(
+      { id: STATE_ROW_ID, hashes, updated_at: new Date().toISOString() },
+      { onConflict: 'id' },
+    )
+  if (error) throw new Error(`meta_sync_state upsert failed: ${error.message}`)
+}
+
+// ── Pending catalog deletions ───────────────────────────────────────────────
+// Failed Meta catalog DELETEs (throttles, transient Graph errors) are queued
+// here and retried by the full-sync cron — which otherwise only upserts and
+// would never re-attempt a deletion, leaving stale items visible in the
+// WhatsApp catalog. Stored as a second meta_sync_state row:
+// retailer_id -> ISO timestamp of when the delete was queued.
+
+const DELETES_ROW_ID = 'delete-queue'
+
+export async function getPendingCatalogDeletes(): Promise<string[]> {
+  const supabase = getClient()
+  if (!supabase) return []
+
+  const { data, error } = await supabase
+    .from('meta_sync_state')
+    .select('hashes')
+    .eq('id', DELETES_ROW_ID)
     .maybeSingle()
 
-  const payload = {
-    source: STATE_SOURCE,
-    severity: 'info',
-    message: `Meta catalog sync state: ${Object.keys(hashes).length} SKU hashes`,
-    error_message: `Meta catalog sync state: ${Object.keys(hashes).length} SKU hashes`,
-    metadata: hashes,
-  }
+  if (error || !data?.hashes) return []
+  return Object.keys(data.hashes as Record<string, unknown>)
+}
 
-  if (existing?.id) {
-    await supabase.from('error_logs').update(payload).eq('id', existing.id)
-  } else {
-    await supabase.from('error_logs').insert(payload)
+/** Atomically append retailer_ids to the pending-delete queue (never throws). */
+export async function queueCatalogDeletes(retailerIds: string[]): Promise<void> {
+  const ids = [...new Set(retailerIds.filter(Boolean))]
+  if (ids.length === 0) return
+  const supabase = getClient()
+  if (!supabase) return
+
+  const now = new Date().toISOString()
+  const entries = Object.fromEntries(ids.map((id) => [id, now]))
+  try {
+    await supabase.rpc('merge_meta_sync_hashes', { p_id: DELETES_ROW_ID, p_hashes: entries })
+  } catch (e) {
+    console.error('[meta/sync-state] Failed to queue catalog deletes:', e)
+  }
+}
+
+/** Remove successfully deleted retailer_ids from the queue (best-effort). */
+export async function clearCatalogDeletes(retailerIds: string[]): Promise<void> {
+  if (retailerIds.length === 0) return
+  const supabase = getClient()
+  if (!supabase) return
+
+  try {
+    const pending = await getPendingCatalogDeletes()
+    const cleared = new Set(retailerIds)
+    const remaining = Object.fromEntries(
+      pending.filter((id) => !cleared.has(id)).map((id) => [id, new Date(0).toISOString()]),
+    )
+    await supabase
+      .from('meta_sync_state')
+      .upsert(
+        { id: DELETES_ROW_ID, hashes: remaining, updated_at: new Date().toISOString() },
+        { onConflict: 'id' },
+      )
+  } catch (e) {
+    console.error('[meta/sync-state] Failed to clear catalog deletes:', e)
   }
 }

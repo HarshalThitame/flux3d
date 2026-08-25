@@ -4,6 +4,7 @@ import { getSettings } from '@/lib/settings'
 import { FALLBACK_SETTINGS } from '@/lib/settings-fallback'
 import { makeOrganizationJsonLd, makeWebsiteJsonLd } from '@/lib/structured-data'
 import { getCspNonce } from '@/lib/csp'
+import { siteUrl } from '@/lib/site'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import DeferredTracking from '@/components/DeferredTracking'
 import MetaPixel from '@/components/MetaPixel'
@@ -64,14 +65,18 @@ export async function generateMetadata(): Promise<Metadata> {
   const name = settings?.brandName || settings?.businessName || 'Flux3D'
   const description = settings?.businessDescription || 'Flux3D provides custom 3D printing, prototyping, model printing, ready-made products, and related manufacturing services in India.'
   const url = settings?.websiteUrl || 'https://flux3d.in'
-  const ogImage = settings?.ogImageUrl || '/opengraph-image.png'
-  const twitterImage = settings?.twitterImageUrl || '/twitter-image.png'
+  // Fallbacks point at the dynamic OG routes (src/app/opengraph-image.tsx /
+  // twitter-image.tsx). Note: those routes serve /opengraph-image (no .png).
+  const ogImage = settings?.ogImageUrl || '/opengraph-image'
+  const twitterImage = settings?.twitterImageUrl || '/twitter-image'
   const keywords = settings?.metaKeywords ? settings.metaKeywords.split(',').map(k => k.trim()) : FALLBACK_SETTINGS.metaKeywords.split(',').map(k => k.trim())
   const canonicalUrl = settings?.canonicalUrl || url
   const robotsIndex = settings?.robotsIndex ?? true
 
   return {
-    metadataBase: new URL('https://flux3d.in'),
+    // Centralized so preview/staging deployments emit their own origin
+    // (falls back to https://flux3d.in in production).
+    metadataBase: new URL(siteUrl),
     title: {
       default: settings?.metaTitle || `${name} — Custom 3D Printing and Manufacturing Services in India`,
       template: `%s | ${name}`,
@@ -118,11 +123,15 @@ export async function generateMetadata(): Promise<Metadata> {
   manifest: '/manifest.json',
   icons: {
     icon: settings?.faviconUrl || '/favicon.ico',
-    apple: '/apple-touch-icon.png',
+    // Served by src/app/apple-icon.tsx (file convention)
+    apple: '/apple-icon',
   },
   other: {
     'facebook-domain-verification': '2so08kooblq8716z4823mqn6etbbg6',
   },
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
   category: 'technology',
   }
 }

@@ -2,6 +2,22 @@ import { createHash } from 'node:crypto'
 import { getMetaApiHeaders, getMetaCatalogId, getMetaGraphBase } from './config'
 import type { MetaBatchRequestEntry, MetaCatalogItemData, ProductSyncAction, ProductSyncResult } from './types'
 
+/**
+ * Meta's items_batch `id` / `retailer_id` field has a hard 100-character limit.
+ * Some SKU codes (e.g. RGB Lotus lamp) exceed this and were silently dropped by
+ * Meta, so those products never appeared in the WhatsApp catalog. We shorten
+ * over-length ids deterministically (stable across syncs) while preserving the
+ * full sku_code in `custom_label_4` for reverse lookups.
+ */
+export const CATALOG_ID_MAX = 100
+
+export function toCatalogRetailerId(id: string): string {
+  if (!id) return id
+  if (id.length <= CATALOG_ID_MAX) return id
+  const hash = createHash('sha256').update(id).digest('hex').slice(0, 12)
+  return `${id.slice(0, CATALOG_ID_MAX - hash.length - 1)}-${hash}`
+}
+
 type ProductSkuInput = {
   id: string
   sku_code: string
@@ -32,6 +48,10 @@ function buildCatalogItem(product: ProductInput, sku: ProductSkuInput): MetaCata
   const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://flux3d.in').replace(/\/+$/, '')
   const productUrl = `${baseUrl}/3d-shop/product/${product.slug}${sku.sku_code ? `?sku=${sku.sku_code}` : ''}`
   const image = sku.variant_image_url || product.thumbnail_url || product.image_urls?.[0] || undefined
+  // Meta limits `id`/`retailer_id` to 100 chars. Always send the shortened form,
+  // and keep the full sku_code in custom_label_4 so catalog taps can be resolved
+  // back to the DB sku (see mapCatalogItemToSku).
+  const retailerId = toCatalogRetailerId(sku.sku_code)
 
   const availability: MetaCatalogItemData['availability'] =
     !product.is_active || product.is_archived
@@ -43,7 +63,7 @@ function buildCatalogItem(product: ProductInput, sku: ProductSkuInput): MetaCata
           : 'out of stock'
 
   const item: MetaCatalogItemData = {
-    id: sku.sku_code,
+    id: retailerId,
     title: variantLabel ? `${product.name} — ${variantLabel}` : product.name,
     description: product.description?.slice(0, 9999) || undefined,
     availability,
@@ -102,6 +122,78 @@ export function computeCatalogItemHash(item: MetaCatalogItemData): string {
   return createHash('sha256').update(JSON.stringify(cleaned)).digest('hex')
 }
 
+// ── Graph API transport with throttle handling ──────────────────────────────
+// Meta rate-limits items_batch (HTTP 429, or HTTP 200-body error codes 4/613,
+// or error code 130429). Without backoff a throttle storm burns through the
+// whole catalog logging per-SKU failures without ever pausing.
+
+export const META_MAX_REQUESTS_PER_BATCH = 1000
+
+const THROTTLE_RETRY_ATTEMPTS = 3
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+type ItemsBatchResult = {
+  handles?: string[]
+  validation_status?: { handles: Array<{ handle: string; errors?: Array<{ message: string }> }> }
+}
+
+type PostResult =
+  | { ok: true; result: ItemsBatchResult }
+  | { ok: false; status?: number; error: string }
+
+async function postItemsBatch(
+  catalogId: string,
+  headers: HeadersInit,
+  requests: MetaBatchRequestEntry[],
+): Promise<PostResult> {
+  let attempt = 0
+  for (;;) {
+    attempt += 1
+    let response: Response
+    try {
+      response = await fetch(`${getMetaGraphBase()}/${catalogId}/items_batch`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ allow_upsert: true, item_type: 'PRODUCT_ITEM', requests }),
+      })
+    } catch (err) {
+      // Network errors: retry transiently like throttles
+      if (attempt <= THROTTLE_RETRY_ATTEMPTS) {
+        await sleep(Math.min(1000 * 2 ** (attempt - 1), 15_000))
+        continue
+      }
+      return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    }
+
+    if (response.ok) {
+      const result = (await response.json().catch(() => ({}))) as ItemsBatchResult
+      return { ok: true, result }
+    }
+
+    const errBody = await response.text().catch(() => '')
+    const throttled =
+      response.status === 429 ||
+      /"code"\s*:\s*(4|613|130429|80004)\b/.test(errBody) ||
+      /request limit/i.test(errBody)
+
+    if (throttled && attempt <= THROTTLE_RETRY_ATTEMPTS) {
+      const retryAfterHeader = Number(response.headers.get('retry-after'))
+      const delayMs =
+        Number.isFinite(retryAfterHeader) && retryAfterHeader > 0
+          ? Math.min(retryAfterHeader * 1000, 30_000)
+          : Math.min(1000 * 2 ** (attempt - 1), 15_000)
+      console.warn(`[meta/catalog] Graph API throttle (${response.status}); backing off ${delayMs}ms`)
+      await sleep(delayMs)
+      continue
+    }
+
+    return { ok: false, status: response.status, error: `${response.status}: ${errBody}` }
+  }
+}
+
 export type CatalogEntry = {
   retailerId: string
   data: MetaCatalogItemData
@@ -110,6 +202,7 @@ export type CatalogEntry = {
 
 export function buildCatalogEntries(product: ProductInput): CatalogEntry[] {
   if (!product.skus?.length) {
+    const retailerId = toCatalogRetailerId(product.slug)
     const data = buildCatalogItem(product, {
       id: product.id,
       sku_code: product.slug,
@@ -119,12 +212,12 @@ export function buildCatalogEntries(product: ProductInput): CatalogEntry[] {
       variant_combination: {},
       variant_image_url: null,
     })
-    return [{ retailerId: product.slug, data, hash: computeCatalogItemHash(data) }]
+    return [{ retailerId, data, hash: computeCatalogItemHash(data) }]
   }
 
   return product.skus.map((sku) => {
     const data = buildCatalogItem(product, sku)
-    return { retailerId: sku.sku_code, data, hash: computeCatalogItemHash(data) }
+    return { retailerId: toCatalogRetailerId(sku.sku_code), data, hash: computeCatalogItemHash(data) }
   })
 }
 
@@ -138,31 +231,29 @@ export async function upsertMetaCatalogItem(product: ProductInput): Promise<Prod
     data: entry.data,
   }))
 
-  try {
-    const response = await fetch(`${getMetaGraphBase()}/${catalogId}/items_batch`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ allow_upsert: true, item_type: 'PRODUCT_ITEM', requests: entries }),
-    })
+  // Meta caps items_batch at ~1000 requests per call; chunk defensively so a
+  // SKU-heavy product cannot silently exceed the limit.
+  for (let offset = 0; offset < entries.length; offset += META_MAX_REQUESTS_PER_BATCH) {
+    const chunk = entries.slice(offset, offset + META_MAX_REQUESTS_PER_BATCH)
+    const postResult = await postItemsBatch(catalogId, headers, chunk)
 
-    if (!response.ok) {
-      const errBody = await response.text().catch(() => '')
-      entries.forEach((entry) => {
+    if (!postResult.ok) {
+      chunk.forEach((entry) => {
         actions.push({
           productId: product.id,
           skuCode: entry.retailer_id,
           action: 'upsert',
           success: false,
-          error: `Meta API error ${response.status}: ${errBody}`,
+          error: `Meta API error ${postResult.error}`,
         })
       })
-      return actions
+      continue
     }
 
-    const result = await response.json() as { handles?: string[]; validation_status?: { handles: Array<{ handle: string; errors?: Array<{ message: string }> }> } }
+    const result = postResult.result
     const validationHandles = result.validation_status?.handles ?? []
 
-    entries.forEach((entry, index) => {
+    chunk.forEach((entry, index) => {
       const handle = result.handles?.[index]
       const error = validationHandles[index]?.errors?.[0]?.message as string | undefined
       actions.push({
@@ -172,16 +263,6 @@ export async function upsertMetaCatalogItem(product: ProductInput): Promise<Prod
         success: !error,
         error,
         metaHandle: handle,
-      })
-    })
-  } catch (err) {
-    entries.forEach((entry) => {
-      actions.push({
-        productId: product.id,
-        skuCode: entry.retailer_id,
-        action: 'upsert',
-        success: false,
-        error: err instanceof Error ? err.message : String(err),
       })
     })
   }
@@ -199,43 +280,28 @@ export async function deleteMetaCatalogItem(retailerId: string): Promise<Product
     data: { id: retailerId },
   }
 
-  try {
-    const response = await fetch(`${getMetaGraphBase()}/${catalogId}/items_batch`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ item_type: 'PRODUCT_ITEM', requests: [entry] }),
-    })
+  const postResult = await postItemsBatch(catalogId, headers, [entry])
 
-    if (!response.ok) {
-      const errBody = await response.text().catch(() => '')
-      return {
-        productId: retailerId,
-        skuCode: retailerId,
-        action: 'delete',
-        success: false,
-        error: `Meta API error ${response.status}: ${errBody}`,
-      }
-    }
-
-    const result = await response.json() as { handles?: string[]; validation_status?: { handles: Array<{ handle: string; errors?: Array<{ message: string }> }> } }
-    const error = result.validation_status?.handles?.[0]?.errors?.[0]?.message
-
-    return {
-      productId: retailerId,
-      skuCode: retailerId,
-      action: 'delete',
-      success: !error,
-      error,
-      metaHandle: result.handles?.[0],
-    }
-  } catch (err) {
+  if (!postResult.ok) {
     return {
       productId: retailerId,
       skuCode: retailerId,
       action: 'delete',
       success: false,
-      error: err instanceof Error ? err.message : String(err),
+      error: `Meta API error ${postResult.error}`,
     }
+  }
+
+  const result = postResult.result
+  const error = result.validation_status?.handles?.[0]?.errors?.[0]?.message
+
+  return {
+    productId: retailerId,
+    skuCode: retailerId,
+    action: 'delete',
+    success: !error,
+    error,
+    metaHandle: result.handles?.[0],
   }
 }
 
@@ -271,16 +337,29 @@ export async function syncFullCatalogToMeta(
     for (const entry of entries) {
       if (storedHashes[entry.retailerId] === entry.hash) {
         skipped += 1
+        // Preserve the hash for unchanged items so the persisted map stays whole.
+        hashes[entry.retailerId] = entry.hash
       } else {
         changed.push(entry)
       }
-      hashes[entry.retailerId] = entry.hash
     }
 
     if (changed.length === 0) continue
 
     const actions = await upsertMetaCatalogItem(product)
     allActions.push(...actions)
+
+    // Persist the hash ONLY for items that actually synced successfully.
+    // Previously the hash was recorded for every changed entry regardless of
+    // outcome, so a Meta rejection (e.g. a retailer_id over 100 chars) was
+    // silently "skipped" on every future run and never retried — permanently
+    // hiding the product from the WhatsApp catalog.
+    const succeededSkus = new Set(actions.filter((a) => a.success).map((a) => a.skuCode))
+    for (const entry of changed) {
+      if (succeededSkus.has(entry.retailerId)) {
+        hashes[entry.retailerId] = entry.hash
+      }
+    }
   }
 
   return {

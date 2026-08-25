@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminRequest } from '@/lib/admin/request'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { sendWhatsAppMediaMessage } from '@/lib/whatsapp/media'
+import { sendWhatsAppMediaMessage, extractWhatsAppMediaStoragePath } from '@/lib/whatsapp/media'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -93,7 +93,9 @@ export async function POST(
       trigger_event: 'admin_reply',
       responded: true,
       media_type: storedMediaType,
-      media_url: mediaUrl || null,
+      // Store the canonical storage path (not the signed URL) — the inbox API
+      // mints fresh signed URLs at read time.
+      media_url: (mediaUrl && extractWhatsAppMediaStoragePath(mediaUrl)) || null,
       media_filename: mediaFilename || null,
       media_mime_type: mediaMimeType || null,
       media_size_bytes: mediaSizeBytes || null,

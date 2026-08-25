@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminRequest } from '@/lib/admin/request'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { invalidateShopDataCache } from '@/lib/shop/public-data'
 import { stableStringify } from '@/lib/shop/admin-types'
 
 type SkuPayload = {
@@ -131,6 +132,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       const { error } = await supabase.from('shelf_skus').insert(rows)
       if (error) throw new Error(error.message)
       await updateProductBasePrice(id)
+      invalidateShopDataCache()
     }
 
     const { data: skus, error: skusError } = await supabase
@@ -166,6 +168,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
     if (error) throw new Error(error.message)
     await updateProductBasePrice(id)
+    invalidateShopDataCache()
     return NextResponse.json({ sku: data })
   } catch (error) {
     return getAdminApiErrorResponse(error)
@@ -200,6 +203,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     const { error } = await supabase.from('shelf_skus').delete().eq('product_id', id).eq('id', skuId)
     if (error) throw new Error(error.message)
     await updateProductBasePrice(id)
+    invalidateShopDataCache()
     return NextResponse.json({ ok: true })
   } catch (error) {
     return getAdminApiErrorResponse(error)

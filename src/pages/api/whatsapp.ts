@@ -92,6 +92,17 @@ function verifyMetaSignature(
   }
 }
 
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) {
+    // Burn comparable time before rejecting so length isn't a timing oracle.
+    crypto.timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 async function readRawBody(req: NextApiRequest): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -446,7 +457,7 @@ async function insertWebhookEvent(
   payloadHash: string,
   payload: Record<string, unknown>,
   overrides: Record<string, unknown> = {},
-): Promise<{ id: string } | null> {
+): Promise<{ id: string } | { duplicate: true } | null> {
   if (!supabase) return null;
   const { data, error } = await supabase.from("whatsapp_webhook_events").insert({
     payload_hash: payloadHash,
@@ -456,7 +467,16 @@ async function insertWebhookEvent(
     received_at: new Date().toISOString(),
     ...overrides,
   }).select("id").maybeSingle();
-  if (error) console.error("[whatsapp] DB insert error:", error);
+  if (error) {
+    // Unique violation on payload_hash: a concurrent Meta retry already
+    // inserted this exact payload. Report it so the caller does NOT fall back
+    // to inline processing — the winning request is already handling it.
+    if ((error as { code?: string }).code === '23505') {
+      console.log("[whatsapp] Concurrent duplicate webhook payload, skipping");
+      return { duplicate: true };
+    }
+    console.error("[whatsapp] DB insert error:", error);
+  }
   return data ?? null;
 }
 
@@ -715,6 +735,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
 
     // Declare state variables early (used by both out_of_scope and normal flow)
     let didSendReply = false
+    let replySendFailed = false
     let finalReply = "";
     let finalReplyKind: 'model' | 'fallback' | 'error' = 'fallback';
     let fallbackReason: string | null = null;
@@ -799,14 +820,22 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         auditRecord.latency_ms = Date.now() - requestStartedAt
         await logWhatsAppRagAudit(auditRecord).catch(() => {})
       }
-      // Mark event as processed (no structured data to attach)
+      // Mark event as processed (no structured data to attach). If the send
+      // failed, leave unprocessed and register for the retry cron instead.
       if (supabase && eventRecord?.id) {
         try {
-          await supabase.from('whatsapp_webhook_events').update({
-            processed_at: new Date().toISOString(),
-            reply_sent: didSendReply,
-            payload: { ...payload, classifiedIntent: 'out_of_scope' },
-          }).eq('id', eventRecord.id)
+          if (!didSendReply) {
+            await supabase.rpc('increment_webhook_retry', {
+              p_event_id: eventRecord.id,
+              p_error: 'out_of_scope reply send failed (transient) — queued for retry',
+            })
+          } else {
+            await supabase.from('whatsapp_webhook_events').update({
+              processed_at: new Date().toISOString(),
+              reply_sent: true,
+              payload: { ...payload, classifiedIntent: 'out_of_scope' },
+            }).eq('id', eventRecord.id)
+          }
         } catch {
           // Best-effort: event stays unprocessed but WhatsApp won't retry (200 already sent)
         }
@@ -969,6 +998,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         ...auditRecord.response_metadata,
         sendStatus: 'failed',
       }
+      replySendFailed = true;
       // Save session even on send failure so context isn't lost
       saveSession(supabase, from, text, finalReply).catch(() => {});
       console.error('[whatsapp] Failed to send outbound WhatsApp message:', error);
@@ -981,25 +1011,35 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
 
     _log("END replied=" + didSendReply + " kind=" + finalReplyKind);
 
-    // Mark as processed (fire-and-forget to avoid blocking)
+    // Mark as processed (fire-and-forget to avoid blocking). If the reply send
+    // failed, leave the event UNPROCESSED and register it for the retry cron —
+    // otherwise the customer never gets an answer and nothing retries it.
     if (supabase && eventRecord?.id) {
-      supabase
-        .from("whatsapp_webhook_events")
-        .update({
-          processed_at: new Date().toISOString(),
-          reply_sent: didSendReply,
-          payload: {
-            ...payload,
-            rag: buildRagPayload({
-              mode: ragMode,
-              confidence: ragConfidence,
-              sources: ragSources.map(({ sourceKey, title, score }) => ({ sourceKey, title, score })),
-            }),
-          },
-        })
-        .eq("id", eventRecord.id)
-        .then()
-        .catch((e: any) => console.error("[whatsapp] Failed to mark processed:", e));
+      if (replySendFailed && !didSendReply) {
+        supabase.rpc('increment_webhook_retry', {
+          p_event_id: eventRecord.id,
+          p_error: 'reply send failed (transient) — queued for retry',
+        }).then()
+          .catch((e: unknown) => console.error("[whatsapp] Failed to record retry info:", e));
+      } else {
+        supabase
+          .from("whatsapp_webhook_events")
+          .update({
+            processed_at: new Date().toISOString(),
+            reply_sent: didSendReply,
+            payload: {
+              ...payload,
+              rag: buildRagPayload({
+                mode: ragMode,
+                confidence: ragConfidence,
+                sources: ragSources.map(({ sourceKey, title, score }) => ({ sourceKey, title, score })),
+              }),
+            },
+          })
+          .eq("id", eventRecord.id)
+          .then()
+          .catch((e: any) => console.error("[whatsapp] Failed to mark processed:", e));
+      }
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -1048,7 +1088,7 @@ export default async function handler(
     const token = first(req.query["hub.verify_token"]);
     const challenge = first(req.query["hub.challenge"]);
 
-    if (mode === "subscribe" && token === verifyToken) {
+    if (mode === "subscribe" && timingSafeStringEqual(token ?? "", verifyToken)) {
       return res.status(200).send(challenge ?? "");
     }
 
@@ -1245,6 +1285,13 @@ export default async function handler(
 
       // Write the event record immediately (worker will use this ID)
       const eventRecord = await insertWebhookEvent(supabase, payloadHash, payload, { sender: from }).catch(() => null)
+
+      // A concurrent Meta retry already claimed this exact payload — the winner
+      // is processing (or has processed) it. Short-circuit here instead of
+      // falling through to inline processing, which would double-reply.
+      if (eventRecord && 'duplicate' in eventRecord) {
+        return res.status(200).json({ success: true, duplicate: true })
+      }
 
       // Enqueue processing to the QStash queue BEFORE responding, so the job
       // is durable even if the function is terminated right after the 200.

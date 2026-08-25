@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'node:crypto'
-import { upsertMetaCatalogItem, deleteMetaCatalogItem, buildCatalogEntries } from '@/lib/meta/catalog'
-import { getStoredCatalogHashes, saveStoredCatalogHashes } from '@/lib/meta/sync-state'
+import { upsertMetaCatalogItem, deleteMetaCatalogItem, buildCatalogEntries, toCatalogRetailerId } from '@/lib/meta/catalog'
+import { mergeStoredCatalogHashes, queueCatalogDeletes } from '@/lib/meta/sync-state'
 import { rateLimitCheck } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -150,7 +150,9 @@ export async function POST(request: Request) {
       }).eq('id', productId)
 
       // Persist the current payload hashes so the change-aware cron skips these
-      // items on its next run instead of re-triggering WhatsApp review.
+      // items on its next run instead of re-triggering WhatsApp review. Only
+      // successful SKUs are recorded — a failed push (e.g. retailer_id over
+      // Meta's 100-char limit) must be retried, not skipped forever.
       const entries = buildCatalogEntries({
         id: product.id,
         name: product.name,
@@ -165,11 +167,16 @@ export async function POST(request: Request) {
         skus: product.skus,
       })
       try {
-        const hashes = await getStoredCatalogHashes()
+        // Atomic server-side merge — no read-modify-write, so this cannot clobber
+        // hash updates persisted by a concurrently running full-sync cron.
+        const succeededHashes: Record<string, string> = {}
+        const succeededSkus = new Set(result.filter((a) => a.success).map((a) => a.skuCode))
         for (const entry of entries) {
-          hashes[entry.retailerId] = entry.hash
+          if (succeededSkus.has(entry.retailerId)) {
+            succeededHashes[entry.retailerId] = entry.hash
+          }
         }
-        await saveStoredCatalogHashes(hashes)
+        await mergeStoredCatalogHashes(succeededHashes)
       } catch (e) {
         console.error('[meta/catalog-sync] Failed to persist payload hashes:', e)
       }
@@ -193,11 +200,15 @@ export async function POST(request: Request) {
               meta_synced_at: new Date().toISOString(),
               meta_sync_error: null,
             }).eq('slug', slug)
+          } else {
+            // Queue for the cron's delete-retry pass — otherwise a transient
+            // failure leaves the stale item visible in the catalog forever.
+            await queueCatalogDeletes([toCatalogRetailerId(slug)])
           }
 
           await logSync(
             result.success ? 'info' : 'error',
-            result.success ? `Deleted ${slug} from Meta catalog` : `Failed to delete ${slug} from Meta catalog`,
+            result.success ? `Deleted ${slug} from Meta catalog` : `Failed to delete ${slug} from Meta catalog (queued for retry)`,
             { action: 'delete', table, slug, result },
           )
           return
@@ -208,12 +219,33 @@ export async function POST(request: Request) {
           if (!skuCode) return
 
           const result = await deleteMetaCatalogItem(skuCode)
+          if (!result.success) {
+            await queueCatalogDeletes([toCatalogRetailerId(skuCode)])
+          }
           await logSync(
             result.success ? 'info' : 'error',
-            result.success ? `Deleted SKU ${skuCode} from Meta catalog` : `Failed to delete SKU ${skuCode} from Meta catalog`,
+            result.success ? `Deleted SKU ${skuCode} from Meta catalog` : `Failed to delete SKU ${skuCode} from Meta catalog (queued for retry)`,
             { action: 'delete', table, skuCode, result },
           )
           return
+        }
+      }
+
+      // SKU rename: the OLD retailer_id would stay orphaned in the catalog
+      // (only hard DELETE events clean up). Delete the old id explicitly.
+      if (table === 'shelf_skus' && eventType === 'UPDATE' && record && oldRecord) {
+        const newSku = typeof record.sku_code === 'string' ? record.sku_code : ''
+        const oldSku = typeof oldRecord.sku_code === 'string' ? oldRecord.sku_code : ''
+        if (newSku && oldSku && newSku !== oldSku) {
+          const result = await deleteMetaCatalogItem(oldSku)
+          if (!result.success) {
+            await queueCatalogDeletes([toCatalogRetailerId(oldSku)])
+          }
+          await logSync(
+            result.success ? 'info' : 'warning',
+            `SKU renamed ${oldSku} -> ${newSku}; old catalog item ${result.success ? 'deleted' : 'delete queued for retry'}`,
+            { action: 'rename', table, oldSku, newSku },
+          )
         }
       }
 

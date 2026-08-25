@@ -46,6 +46,75 @@ export type MediaResult = {
 }
 
 /**
+ * Extract the storage object path (relative to the whatsapp-media bucket) from
+ * any of the URL forms stored in `whatsapp_messages.media_url`:
+ *   - bare path:            "inbound/123_file.png"
+ *   - legacy public URL:    ".../storage/v1/object/public/whatsapp-media/inbound/..."
+ *   - signed URL:           ".../storage/v1/object/sign/whatsapp-media/inbound/...?token=..."
+ * Returns null when the URL does not point into this bucket.
+ */
+export function extractWhatsAppMediaStoragePath(mediaUrl: string | null | undefined): string | null {
+  if (!mediaUrl) return null
+  if (!/^https?:\/\//i.test(mediaUrl)) {
+    // Bare storage path — strip any leading slashes
+    const path = mediaUrl.replace(/^\/+/, '')
+    return path.includes('/') ? path : null
+  }
+  try {
+    const parsed = new URL(mediaUrl)
+    for (const marker of [
+      '/object/public/whatsapp-media/',
+      '/object/sign/whatsapp-media/',
+      '/object/authenticated/whatsapp-media/',
+    ]) {
+      const idx = parsed.pathname.indexOf(marker)
+      if (idx !== -1) {
+        const path = decodeURIComponent(parsed.pathname.slice(idx + marker.length))
+        return path || null
+      }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+type SignedUrlCapableClient = {
+  storage: {
+    from: (bucket: string) => {
+      createSignedUrl: (
+        path: string,
+        expiresInSeconds: number,
+      ) => Promise<{ data: { signedUrl?: string } | null; error: { message: string } | null }>
+    }
+  }
+}
+
+/**
+ * Mint a short-lived signed URL for a stored WhatsApp media object. Accepts a
+ * bare storage path or any previously-stored URL form (see
+ * extractWhatsAppMediaStoragePath). Returns null when the value is not a
+ * bucket object or signing fails.
+ */
+export async function createSignedWhatsAppMediaUrl(
+  supabase: SignedUrlCapableClient,
+  mediaUrl: string | null | undefined,
+  expiresInSeconds = 3600,
+): Promise<string | null> {
+  const path = extractWhatsAppMediaStoragePath(mediaUrl)
+  if (!path) return null
+  try {
+    const { data, error } = await supabase.storage
+      .from(WHATSAPP_MEDIA_BUCKET)
+      .createSignedUrl(path, expiresInSeconds)
+    if (error || !data?.signedUrl) return null
+    return data.signedUrl
+  } catch {
+    return null
+  }
+}
+
+/**
  * Downloads media from Meta Graph API and uploads to Supabase Storage.
  */
 export async function downloadAndStoreWhatsAppMedia(mediaId: string, mimeTypeHint?: string, filenameHint?: string): Promise<MediaResult | null> {
@@ -113,10 +182,11 @@ export async function downloadAndStoreWhatsAppMedia(mediaId: string, mimeTypeHin
       return null
     }
 
-    const { data: publicUrlData } = supabase.storage.from(WHATSAPP_MEDIA_BUCKET).getPublicUrl(storagePath)
-
+    // The bucket is PRIVATE: store the bare storage path in the DB. Admin inbox
+    // reads mint short-lived signed URLs at view time (see
+    // createSignedWhatsAppMediaUrl) — public URLs no longer exist.
     return {
-      url: publicUrlData.publicUrl,
+      url: storagePath,
       filename,
       mimeType,
       sizeBytes: buffer.length || sizeBytes,

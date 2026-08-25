@@ -21,6 +21,8 @@ import ShopProductFilterClient from './ShopProductFilterClient'
 import { buildShopCategoryTree, getShopHomeData, getShopProducts } from '@/lib/shop/public-data'
 import { formatShopPrice } from '@/lib/shop/selection'
 import { absoluteUrl } from '@/lib/site'
+import { getCspNonce } from '@/lib/csp'
+import type { ShopPublicProduct } from '@/lib/shop/public-types'
 
 export const metadata: Metadata = {
   title: '3D Shop — Flux3D',
@@ -34,7 +36,25 @@ export const metadata: Metadata = {
   },
 }
 
+function toJsonLd(value: unknown) {
+  return JSON.stringify(value).replace(/</g, '\\u003c')
+}
+
+function makeItemListSchema(products: ShopPublicProduct[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: products.map((product, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: absoluteUrl(`/3d-shop/product/${product.slug}`),
+      name: product.name,
+    })),
+  }
+}
+
 export default async function ShopHomePage() {
+  const nonce = await getCspNonce()
   const data = await getShopHomeData()
   const allProductsResult = await getShopProducts({ limit: 96, sort: 'newest' })
   const allProducts = allProductsResult.products
@@ -53,6 +73,11 @@ export default async function ShopHomePage() {
 
   return (
     <ShopShell transparentNav>
+      <script
+        nonce={nonce}
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: toJsonLd(makeItemListSchema(allProducts)) }}
+      />
       <main className="flex-1">
         {/* Hero — Editorial style like The Collective */}
         <section className="relative overflow-hidden">

@@ -52,13 +52,22 @@ export async function POST(request: Request) {
       throw new Error(`Failed to upload media to storage: ${uploadErr.message}`)
     }
 
-    const { data: publicUrlData } = supabase.storage
+    // The bucket is private, so there is no public URL. Meta needs a fetchable
+    // link to deliver the media: mint the maximum-length signed URL (7 days).
+    // The reply endpoint stores the bare storage path in the DB and the inbox
+    // re-signs at read time.
+    const { data: signedData, error: signErr } = await supabase.storage
       .from(WHATSAPP_MEDIA_BUCKET)
-      .getPublicUrl(storagePath)
+      .createSignedUrl(storagePath, 604800)
+
+    if (signErr || !signedData?.signedUrl) {
+      throw new Error(`Failed to sign media URL: ${signErr?.message ?? 'unknown error'}`)
+    }
 
     return NextResponse.json({
       success: true,
-      mediaUrl: publicUrlData.publicUrl,
+      mediaUrl: signedData.signedUrl,
+      storagePath,
       mediaType,
       mediaFilename: filename,
       mediaMimeType: mimeType,

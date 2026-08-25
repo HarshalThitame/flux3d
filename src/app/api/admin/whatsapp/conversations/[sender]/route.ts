@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminRequest } from '@/lib/admin/request'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { createSignedWhatsAppMediaUrl } from '@/lib/whatsapp/media'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +29,17 @@ export async function GET(
     if (error) throw new Error(error.message)
 
     if (messages) messages.reverse()
+
+    // The whatsapp-media bucket is private: replace stored media references
+    // (bare storage paths or legacy public/signed URLs) with fresh 1-hour
+    // signed URLs so only authenticated admin views can access attachments.
+    await Promise.all(
+      (messages ?? []).map(async (msg) => {
+        if (!msg.media_url || !msg.media_type) return
+        const signed = await createSignedWhatsAppMediaUrl(supabase, msg.media_url, 3600)
+        if (signed) msg.media_url = signed
+      }),
+    )
 
     // Mark unread incoming messages as responded/read when admin views conversation
     await supabase

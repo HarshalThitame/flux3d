@@ -23,12 +23,21 @@ export function makeWebsiteJsonLd(settings: BusinessSettings) {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
+    '@id': `${publicUrl}/#website`,
     name: settings.businessName || fallback.businessName,
     url: publicUrl,
     description: settings.businessDescription || fallback.businessDescription,
     publisher: {
       '@type': 'Organization',
       name: settings.legalBusinessName || settings.businessName || fallback.businessName,
+    },
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: absoluteUrl('/3d-shop/search') + '?q={search_term_string}',
+      },
+      'query-input': 'required name=search_term_string',
     },
   }
 }
@@ -85,10 +94,6 @@ export function makeLocalBusinessJsonLd(settings: BusinessSettings) {
     ].filter(Boolean),
   }
 }
-
-export const organizationJsonLd = makeOrganizationJsonLd(FALLBACK_SETTINGS)
-export const websiteJsonLd = makeWebsiteJsonLd(FALLBACK_SETTINGS)
-export const localBusinessJsonLd = makeLocalBusinessJsonLd(FALLBACK_SETTINGS)
 
 export const faqPageJsonLd = {
   '@context': 'https://schema.org',

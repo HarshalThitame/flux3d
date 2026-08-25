@@ -79,7 +79,7 @@ export const FALLBACK_SETTINGS: BusinessSettings = {
   metaTitle: 'Flux3D | Custom 3D Printing and Manufacturing Services in India',
   metaDescription: 'Flux3D provides custom 3D printing, prototyping, model printing and related manufacturing services across India.',
   metaKeywords: 'custom 3D printing India,3D printing service India,rapid prototyping India,custom manufacturing,ready-made 3D products,Flux3D',
-  ogImageUrl: '/opengraph-image.png',
+  ogImageUrl: '/opengraph-image',
   twitterImageUrl: '',
   canonicalUrl: '',
   robotsIndex: true,

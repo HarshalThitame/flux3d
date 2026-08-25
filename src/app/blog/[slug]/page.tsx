@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { after } from 'next/server'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft, Calendar, Tag } from 'lucide-react'
@@ -268,15 +269,19 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
   if (!post) notFound()
 
   if (!preview) {
-    try {
-      const supabase = createAdminSupabaseClient()
-      await supabase
-        .from('blog_posts')
-        .update({ views: (post.views || 0) + 1 })
-        .eq('id', post.id)
-    } catch {
-      // View tracking should not block page rendering.
-    }
+    // View tracking must not block (or add latency to) the rendered response —
+    // crawlers pay this cost on every fetch. Runs after the response is sent.
+    after(async () => {
+      try {
+        const supabase = createAdminSupabaseClient()
+        await supabase
+          .from('blog_posts')
+          .update({ views: (post.views || 0) + 1 })
+          .eq('id', post.id)
+      } catch {
+        // View tracking should not block page rendering.
+      }
+    })
   }
 
   const safeContent = sanitizeBlogHtml(post.content || '')

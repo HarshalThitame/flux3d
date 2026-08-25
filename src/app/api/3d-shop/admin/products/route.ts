@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminRequest } from '@/lib/admin/request'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { invalidateShopDataCache } from '@/lib/shop/public-data'
 
 type ProductPayload = {
   id?: string
@@ -189,6 +190,7 @@ export async function POST(request: Request) {
       .single()
 
     if (error) throw new Error(error.message)
+    invalidateShopDataCache()
     return NextResponse.json({ product: data }, { status: 201 })
   } catch (error) {
     return getAdminApiErrorResponse(error)
@@ -212,6 +214,7 @@ export async function PATCH(request: Request) {
       .single()
 
     if (error) throw new Error(error.message)
+    invalidateShopDataCache()
     return NextResponse.json({ product: data })
   } catch (error) {
     return getAdminApiErrorResponse(error)
@@ -234,6 +237,7 @@ export async function DELETE(request: Request) {
       .eq('id', id)
 
     if (error) throw new Error(error.message)
+    invalidateShopDataCache()
     return NextResponse.json({ ok: true })
   } catch (error) {
     return getAdminApiErrorResponse(error)

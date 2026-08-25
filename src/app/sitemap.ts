@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getShopCategories, listAllShopProducts } from '@/lib/shop/public-data'
 
 type BlogSitemapRow = {
   slug: string
@@ -7,6 +8,39 @@ type BlogSitemapRow = {
   last_modified_at?: string | null
   published_at?: string | null
   created_at?: string | null
+}
+
+async function getShopRoutes(): Promise<MetadataRoute.Sitemap> {
+  try {
+    const [categories, products] = await Promise.all([
+      getShopCategories(),
+      listAllShopProducts(),
+    ])
+
+    const categoryRoutes: MetadataRoute.Sitemap = categories
+      .filter((category) => category.slug)
+      .map((category) => ({
+        url: `https://flux3d.in/3d-shop/category/${category.slug}`,
+        // No reliable per-category update timestamp — omit lastMod rather
+        // than emitting a fake one.
+        changeFrequency: 'weekly',
+        priority: 0.8,
+      }))
+
+    const productRoutes: MetadataRoute.Sitemap = products
+      .filter((product) => product.slug && product.stock_status !== 'unavailable')
+      .map((product) => ({
+        url: `https://flux3d.in/3d-shop/product/${product.slug}`,
+        lastModified: new Date(product.updated_at || product.created_at || Date.now()),
+        changeFrequency: 'weekly',
+        priority: 0.9,
+      }))
+
+    return [...categoryRoutes, ...productRoutes]
+  } catch (error) {
+    console.error('[sitemap] Failed to load shop data:', error)
+    return []
+  }
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -20,22 +54,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('[sitemap] Failed to load blog posts:', error)
   }
 
+  // Static routes: omit lastModified — a constant "now" is worse than no
+  // signal (it tells crawlers everything changed on every fetch).
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: 'https://flux3d.in', lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
-    { url: 'https://flux3d.in/about', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
-    { url: 'https://flux3d.in/contact', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
-    { url: 'https://flux3d.in/features', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
-    { url: 'https://flux3d.in/services', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
-    { url: 'https://flux3d.in/materials', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
-    { url: 'https://flux3d.in/gallery', lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-    { url: 'https://flux3d.in/pricing', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
-    { url: 'https://flux3d.in/instant-quote', lastModified: new Date(), changeFrequency: 'monthly', priority: 1 },
-    { url: 'https://flux3d.in/privacy-policy', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.6 },
-    { url: 'https://flux3d.in/terms-and-conditions', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.6 },
-    { url: 'https://flux3d.in/refund-policy', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.6 },
-    { url: 'https://flux3d.in/service-delivery-policy', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.6 },
-    { url: 'https://flux3d.in/security', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.5 },
-    { url: 'https://flux3d.in/blog', lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: 'https://flux3d.in', changeFrequency: 'weekly', priority: 1 },
+    { url: 'https://flux3d.in/about', changeFrequency: 'monthly', priority: 0.8 },
+    { url: 'https://flux3d.in/contact', changeFrequency: 'monthly', priority: 0.8 },
+    { url: 'https://flux3d.in/features', changeFrequency: 'monthly', priority: 0.9 },
+    { url: 'https://flux3d.in/services', changeFrequency: 'monthly', priority: 0.9 },
+    { url: 'https://flux3d.in/materials', changeFrequency: 'monthly', priority: 0.8 },
+    { url: 'https://flux3d.in/gallery', changeFrequency: 'weekly', priority: 0.8 },
+    { url: 'https://flux3d.in/pricing', changeFrequency: 'monthly', priority: 0.9 },
+    { url: 'https://flux3d.in/instant-quote', changeFrequency: 'monthly', priority: 1 },
+    { url: 'https://flux3d.in/privacy-policy', changeFrequency: 'yearly', priority: 0.6 },
+    { url: 'https://flux3d.in/terms-and-conditions', changeFrequency: 'yearly', priority: 0.6 },
+    { url: 'https://flux3d.in/refund-policy', changeFrequency: 'yearly', priority: 0.6 },
+    { url: 'https://flux3d.in/service-delivery-policy', changeFrequency: 'yearly', priority: 0.6 },
+    { url: 'https://flux3d.in/security', changeFrequency: 'yearly', priority: 0.5 },
+    { url: 'https://flux3d.in/blog', changeFrequency: 'weekly', priority: 0.7 },
   ]
 
   const blogRoutes: MetadataRoute.Sitemap = ((blogPosts ?? []) as BlogSitemapRow[])
@@ -47,5 +83,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }))
 
-  return [...staticRoutes, ...blogRoutes]
+  const shopRoutes = await getShopRoutes()
+
+  return [...staticRoutes, ...blogRoutes, ...shopRoutes]
 }

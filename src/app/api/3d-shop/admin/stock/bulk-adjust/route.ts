@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminRequest } from '@/lib/admin/request'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { invalidateShopDataCache } from '@/lib/shop/public-data'
 
 export const dynamic = 'force-dynamic'
 
@@ -103,6 +104,7 @@ export async function POST(request: Request) {
     }
 
     const failed = results.filter((result) => !result.ok)
+    if (applied > 0) invalidateShopDataCache()
 
     if (failed.length > 0 && applied === 0) {
       return NextResponse.json(

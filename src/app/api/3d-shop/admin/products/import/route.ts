@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminRequest } from '@/lib/admin/request'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { invalidateShopDataCache } from '@/lib/shop/public-data'
 import {
   csvToRecords,
   parseCsv,
@@ -60,6 +61,7 @@ export async function POST(request: Request) {
     }
 
     const outcome = await importProducts(records, errors)
+    if (outcome.imported > 0) invalidateShopDataCache()
     return NextResponse.json({ ...outcome, format }, { status: outcome.imported > 0 ? 201 : 200 })
   } catch (error) {
     return getAdminApiErrorResponse(error)

@@ -35,18 +35,9 @@ export default async function Home() {
     '@context': 'https://schema.org',
     '@graph': [
       makeLocalBusinessJsonLd(settings),
-      {
-        '@type': 'WebSite',
-        '@id': 'https://flux3d.in/#website',
-        url: 'https://flux3d.in',
-        name: profile.brandName,
-        description: profile.businessDescription,
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: 'https://flux3d.in/gallery?q={search_term_string}',
-          'query-input': 'required name=search_term_string',
-        },
-      },
+      // NOTE: no WebSite entity here — the root layout already emits one
+      // (with SearchAction) on every page; duplicating it creates two
+      // WebSite entities in Google's understanding of the site.
       {
         '@type': 'Service',
         name: 'Custom 3D Printing',

@@ -2,8 +2,13 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'node:crypto'
 import { Receiver } from '@upstash/qstash'
-import { syncFullCatalogToMeta } from '@/lib/meta/catalog'
-import { getStoredCatalogHashes, saveStoredCatalogHashes } from '@/lib/meta/sync-state'
+import { syncFullCatalogToMeta, deleteMetaCatalogItem } from '@/lib/meta/catalog'
+import {
+  getStoredCatalogHashes,
+  saveStoredCatalogHashes,
+  getPendingCatalogDeletes,
+  clearCatalogDeletes,
+} from '@/lib/meta/sync-state'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -57,18 +62,56 @@ export async function GET(request: Request) {
 
   const supabase = createClient(supabaseUrl, serviceKey)
 
-  const { data: products, error } = await supabase
-    .from('shelf_products')
-    .select(`
-      id, name, slug, description, thumbnail_url, image_urls,
-      is_active, is_archived, base_price,
-      category:category_id(name),
-      skus:shelf_skus(id, sku_code, price, stock_quantity, is_available, variant_combination, variant_image_url)
-    `)
-    .order('created_at', { ascending: false })
+  // Bounded pagination — an unbounded select grows with the catalog and risks
+  // blowing the function's maxDuration mid-run.
+  const PRODUCTS_PAGE_SIZE = 500
+  const MAX_PRODUCT_PAGES = 20
+  const productSelect = `
+    id, name, slug, description, thumbnail_url, image_urls,
+    is_active, is_archived, base_price,
+    category:category_id(name),
+    skus:shelf_skus(id, sku_code, price, stock_quantity, is_available, variant_combination, variant_image_url)
+  `
+  const products: Array<Record<string, unknown>> = []
+  for (let page = 0; page < MAX_PRODUCT_PAGES; page++) {
+    const { data: rows, error } = await supabase
+      .from('shelf_products')
+      .select(productSelect)
+      .order('created_at', { ascending: false })
+      .range(page * PRODUCTS_PAGE_SIZE, (page + 1) * PRODUCTS_PAGE_SIZE - 1)
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    if (!rows || rows.length === 0) break
+    products.push(...rows)
+    if (rows.length < PRODUCTS_PAGE_SIZE) break
+  }
+
+  // Retry catalog deletions that previously failed (throttles/transient Graph
+  // errors). Without this pass a failed delete is never retried and the stale
+  // item stays visible in the WhatsApp catalog forever.
+  let deletesRetried = 0
+  let deletesSucceeded = 0
+  try {
+    const pendingDeletes = await getPendingCatalogDeletes()
+    if (pendingDeletes.length > 0) {
+      const cleared: string[] = []
+      for (const retailerId of pendingDeletes) {
+        deletesRetried += 1
+        const result = await deleteMetaCatalogItem(retailerId)
+        if (result.success) {
+          deletesSucceeded += 1
+          cleared.push(retailerId)
+        } else if (/^Meta API error 404/.test(result.error ?? '') || /does not exist|not found/i.test(result.error ?? '')) {
+          // Item already gone from Meta — stop retrying.
+          cleared.push(retailerId)
+        }
+      }
+      await clearCatalogDeletes(cleared)
+    }
+  } catch (e) {
+    console.error('[sync-meta-catalog] Delete-queue drain failed:', e)
   }
 
   // Load previously stored payload hashes so unchanged items are skipped.
@@ -79,7 +122,7 @@ export async function GET(request: Request) {
     return {}
   })
 
-  const result = await syncFullCatalogToMeta(products ?? [], storedHashes)
+  const result = await syncFullCatalogToMeta(products as Parameters<typeof syncFullCatalogToMeta>[0], storedHashes)
 
   // Persist the current hashes so the next cron run skips unchanged items.
   if (result.hashes) {
@@ -94,7 +137,7 @@ export async function GET(request: Request) {
       severity: result.failed > 0 ? 'warning' : 'info',
       message: `Catalog sync: ${result.succeeded} ok, ${result.failed} failed, ${result.skipped} skipped (${result.total} total changed)`,
       error_message: `Catalog sync: ${result.succeeded} ok, ${result.failed} failed, ${result.skipped} skipped (${result.total} total changed)`,
-      metadata: { total: result.total, succeeded: result.succeeded, failed: result.failed, skipped: result.skipped, durationMs: result.durationMs },
+      metadata: { total: result.total, succeeded: result.succeeded, failed: result.failed, skipped: result.skipped, durationMs: result.durationMs, deletesRetried, deletesSucceeded },
     })
   } catch (e) {
     console.error('[sync-meta-catalog] Log write failed:', e)
@@ -107,5 +150,7 @@ export async function GET(request: Request) {
     failed: result.failed,
     skipped: result.skipped,
     durationMs: result.durationMs,
+    deletesRetried,
+    deletesSucceeded,
   })
 }

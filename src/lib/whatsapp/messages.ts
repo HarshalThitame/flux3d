@@ -200,6 +200,8 @@ export async function sendWhatsAppPaymentLink(
 const catalogItemIdCache = new Map<string, string>()
 
 // Resolve a Meta catalog item id (from a tapped product message) to retailer_id (sku_code).
+// Long sku_codes (>100 chars, Meta's retailer_id limit) are shortened in the
+// catalog, so the full sku_code is carried in custom_label_4 and preferred.
 export async function mapCatalogItemToSku(catalogItemId: string): Promise<string | null> {
   if (catalogItemIdCache.has(catalogItemId)) {
     return catalogItemIdCache.get(catalogItemId) ?? null
@@ -212,15 +214,21 @@ export async function mapCatalogItemToSku(catalogItemId: string): Promise<string
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 8000)
     const response = await fetch(
-      `https://graph.facebook.com/${API_VERSION}/${catalogItemId}?fields=retailer_id`,
+      `https://graph.facebook.com/${API_VERSION}/${catalogItemId}?fields=retailer_id,custom_label_4`,
       { headers: { Authorization: `Bearer ${accessToken}` }, signal: controller.signal }
     ).finally(() => clearTimeout(timeoutId))
 
     if (!response.ok) return null
     const data = await response.json() as Record<string, unknown>
+
+    // custom_label_4 stores the full original sku_code (never shortened).
+    const fullSku = typeof data.custom_label_4 === 'string'
+      ? data.custom_label_4.replace(/^SKU:/i, '').trim()
+      : ''
     const retailerId = typeof data.retailer_id === 'string' ? data.retailer_id : null
-    if (retailerId) catalogItemIdCache.set(catalogItemId, retailerId)
-    return retailerId
+    const resolved = fullSku || retailerId
+    if (resolved) catalogItemIdCache.set(catalogItemId, resolved)
+    return resolved
   } catch {
     return null
   }

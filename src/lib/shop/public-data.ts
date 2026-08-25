@@ -1,3 +1,5 @@
+import { unstable_cache, revalidateTag } from 'next/cache'
+import { createClient as createSessionlessClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type {
   ShopSku,
@@ -18,36 +20,92 @@ import type {
 } from '@/lib/shop/public-types'
 import { normalizeShopNumber } from '@/lib/shop/selection'
 
-const SHOP_DATA_TTL_MS = 120_000
+/**
+ * Public shop data is served through Next.js's data cache (unstable_cache):
+ * it survives across requests AND serverless instances (unlike a process-local
+ * memo), so product/category pages stop hitting Supabase on every render.
+ *
+ * The cached loaders MUST NOT touch cookies/headers, hence the sessionless
+ * client — public catalog reads are anonymous RLS reads anyway.
+ */
+const SHOP_REVALIDATE_SECONDS = 300
+const TAG_SHOP_PRODUCTS = 'shop-products'
+const TAG_SHOP_CATEGORIES = 'shop-categories'
 
-type Cached<T> = { data: T; expiry: number }
-
-let productsCache: Cached<ShopPublicProduct[]> | null = null
-let categoriesCache: Cached<ShopPublicCategory[]> | null = null
-
-async function withCache<T>(
-  key: 'products' | 'categories',
-  loader: () => Promise<T>
-): Promise<T> {
-  const cache = key === 'products' ? productsCache : categoriesCache
-  if (cache && Date.now() < cache.expiry) {
-    return cache.data as T
-  }
-
-  const data = await loader()
-
-  if (key === 'products') {
-    productsCache = { data: data as ShopPublicProduct[], expiry: Date.now() + SHOP_DATA_TTL_MS }
-  } else {
-    categoriesCache = { data: data as ShopPublicCategory[], expiry: Date.now() + SHOP_DATA_TTL_MS }
-  }
-
-  return data
+function getPublicSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return null
+  return createSessionlessClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
 }
 
+async function loadAllShopCategories(): Promise<ShopPublicCategory[]> {
+  const supabase = getPublicSupabaseClient()
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('shelf_categories')
+    .select('id,name,slug,description,icon_emoji,banner_image_url,parent_category_id,display_order')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true })
+    .order('name', { ascending: true })
+
+  if (error) throw new Error(error.message)
+
+  return ((data ?? []) as RawCategory[]).map((category) => ({
+    id: category.id,
+    name: category.name,
+    slug: category.slug,
+    description: category.description ?? null,
+    icon_emoji: category.icon_emoji ?? null,
+    banner_image_url: category.banner_image_url ?? null,
+    parent_category_id: category.parent_category_id ?? null,
+  }))
+}
+
+async function loadAllShopProducts(): Promise<ShopPublicProduct[]> {
+  const supabase = getPublicSupabaseClient()
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('shelf_products')
+    .select(PRODUCT_SELECT)
+    .eq('is_active', true)
+    .eq('is_archived', false)
+    .order('created_at', { ascending: false })
+    .limit(1000)
+
+  if (error) throw new Error(error.message)
+  return ((data ?? []) as unknown as RawProduct[]).map(mapProduct)
+}
+
+const getCachedShopCategories = unstable_cache(loadAllShopCategories, ['shop-categories'], {
+  tags: [TAG_SHOP_CATEGORIES],
+  revalidate: SHOP_REVALIDATE_SECONDS,
+})
+
+const getCachedShopProducts = unstable_cache(loadAllShopProducts, ['shop-products'], {
+  tags: [TAG_SHOP_PRODUCTS],
+  revalidate: SHOP_REVALIDATE_SECONDS,
+})
+
+/**
+ * Invalidate the cached public catalog. Call from admin mutation paths.
+ * Safe outside request scope: revalidateTag throws there and is swallowed.
+ */
 export function invalidateShopDataCache() {
-  productsCache = null
-  categoriesCache = null
+  for (const tag of [TAG_SHOP_PRODUCTS, TAG_SHOP_CATEGORIES]) {
+    try {
+      // 'max' = stale-while-revalidate: stale content is served while the
+      // fresh catalog is fetched in the background on next visit.
+      revalidateTag(tag, 'max')
+    } catch {
+      // Not in a request scope — cache will expire via revalidate TTL instead.
+    }
+  }
 }
 
 type RawCategory = Omit<ShopPublicCategory, 'children'> & {
@@ -331,27 +389,7 @@ export function getShopCategoryDescendantIds(category: ShopPublicCategory) {
 }
 
 export async function getShopCategories() {
-  return withCache('categories', async () => {
-    const supabase = await createServerSupabaseClient()
-    const { data, error } = await supabase
-      .from('shelf_categories')
-      .select('id,name,slug,description,icon_emoji,banner_image_url,parent_category_id,display_order')
-      .eq('is_active', true)
-      .order('display_order', { ascending: true })
-      .order('name', { ascending: true })
-
-    if (error) throw new Error(error.message)
-
-    return ((data ?? []) as RawCategory[]).map((category) => ({
-      id: category.id,
-      name: category.name,
-      slug: category.slug,
-      description: category.description ?? null,
-      icon_emoji: category.icon_emoji ?? null,
-      banner_image_url: category.banner_image_url ?? null,
-      parent_category_id: category.parent_category_id ?? null,
-    }))
-  })
+  return getCachedShopCategories()
 }
 
 export async function getShopCategoryBySlug(slug: string) {
@@ -367,20 +405,11 @@ export async function getShopCategoryBySlug(slug: string) {
 }
 
 async function getAllShopProducts() {
-  const all = await withCache('products', async () => {
-    const supabase = await createServerSupabaseClient()
-    const { data, error } = await supabase
-      .from('shelf_products')
-      .select(PRODUCT_SELECT)
-      .eq('is_active', true)
-      .eq('is_archived', false)
-      .order('created_at', { ascending: false })
-      .limit(1000)
+  return (await getCachedShopProducts()).slice()
+}
 
-    if (error) throw new Error(error.message)
-    return ((data ?? []) as unknown as RawProduct[]).map(mapProduct)
-  })
-  return all.slice()
+export async function listAllShopProducts(): Promise<ShopPublicProduct[]> {
+  return getAllShopProducts()
 }
 
 export async function getShopProductsByIds(ids: string[]) {
