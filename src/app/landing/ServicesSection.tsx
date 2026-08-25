@@ -4,83 +4,20 @@ import { memo, useEffect, useRef, useState } from 'react'
 import { Settings as Gear, Building2, GraduationCap, ShoppingBag, Heart, Clapperboard, Gift, ArrowRight } from 'lucide-react'
 import Reveal from '@/components/Reveal'
 import { getScrollTargetEventName } from '@/lib/scroll-to'
+import { landingOfferings } from '@/lib/services-content'
 
-const services = [
-  {
-    slug: 'custom-3d-printing',
-    icon: Gear,
-    tag: 'Custom Printing',
-    title: 'Custom 3D Printing',
-    description: 'Upload a model or share your requirements and we review the file, material, colour, quantity and finish before confirming the order.',
-    pills: ['3D models', 'Prototypes', 'Functional parts', 'Custom finishes'],
-    price: 'Quoted per order',
-    cta: 'Request Quote →',
-    span: true,
-  },
-  {
-    slug: 'model-printing',
-    icon: Building2,
-    tag: 'Model Printing',
-    title: 'Architectural and Presentation Models',
-    description: 'Useful for product mockups, architecture models, classroom submissions and presentation pieces that need a physical form.',
-    pills: ['Architecture', 'Display models', 'Mockups', 'Submission pieces'],
-    price: 'Quoted per model',
-    cta: 'Share Your File →',
-  },
-  {
-    slug: 'ready-made-products',
-    icon: GraduationCap,
-    tag: 'Ready-made',
-    title: 'Ready-Made Products',
-    description: 'Pre-designed, pre-printed products available for direct purchase where the catalogue lists them.',
-    pills: ['Direct purchase', 'Gift items', 'Desk accessories', 'Home items'],
-    price: 'As listed',
-    cta: 'Browse Catalogue →',
-    link: '/3d-shop',
-  },
-  {
-    slug: 'finishing',
-    icon: ShoppingBag,
-    tag: 'Finishing',
-    title: 'Finishing and Post-Processing',
-    description: 'Support for sanding, cleaning, assembly and other finishing steps when selected and approved for the order.',
-    pills: ['Sanding', 'Assembly', 'Cleaning', 'Finishing'],
-    price: 'By quote',
-    cta: 'Discuss Finish →',
-  },
-  {
-    slug: 'business-and-bulk-orders',
-    icon: Heart,
-    tag: 'Business',
-    title: 'Business and Bulk Orders',
-    description: 'Suitable for organizations that need repeated parts, branded pieces or multi-quantity print runs with quotation-based pricing.',
-    pills: ['Batches', 'Branding', 'Repeat orders', 'Bulk pricing'],
-    price: 'Custom quote',
-    cta: 'Request Bulk Quote →',
-  },
-  {
-    slug: 'design-review',
-    icon: Clapperboard,
-    tag: 'Support',
-    title: 'Design Review and File Checks',
-    description: 'If a design looks unsuitable for printing, we can review the file, suggest changes, place the order on hold, or decline it when needed.',
-    pills: ['File review', 'Dimension check', 'Revision notes', 'Order hold'],
-    price: 'Included in quote',
-    cta: 'Ask for Review →',
-  },
-  {
-    slug: 'dispatch-delivery',
-    icon: Gift,
-    tag: 'Delivery',
-    title: 'Dispatch and Delivery',
-    description: 'Orders are shipped after production and quality checks, with tracking shared when the courier provides it.',
-    pills: ['Tracked shipping', 'India delivery', 'Courier handoff', 'Delivery support'],
-    price: 'Shipping quoted separately',
-    cta: 'Read Delivery Policy →',
-  },
-]
+const iconBySlug: Record<string, typeof Gear> = {
+  'custom-3d-printing': Gear,
+  'model-printing': Building2,
+  'ready-made-products': GraduationCap,
+  finishing: ShoppingBag,
+  'business-and-bulk-orders': Heart,
+  'design-review': Clapperboard,
+  'dispatch-delivery': Gift,
+}
 
-function ServiceCard({ service, highlighted }: { service: typeof services[0]; highlighted: boolean }) {
+function ServiceCard({ service, highlighted }: { service: (typeof landingOfferings)[0]; highlighted: boolean }) {
+  const Icon = iconBySlug[service.slug] ?? Gear
   return (
     <div
       id={service.slug}
@@ -98,7 +35,7 @@ function ServiceCard({ service, highlighted }: { service: typeof services[0]; hi
 
         <div className="flex flex-col sm:flex-row gap-4 flex-1">
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[var(--shop-gold-faint,#FAF6EB)] border border-[var(--shop-border-gold)] p-0.5 flex-shrink-0 flex items-center justify-center">
-            <service.icon className="w-6 h-6 text-[var(--shop-gold,#C9A962)] group-hover:scale-110 transition-transform duration-300" />
+            <Icon className="w-6 h-6 text-[var(--shop-gold,#C9A962)] group-hover:scale-110 transition-transform duration-300" />
           </div>
 
           <div className="flex-1 flex flex-col">
@@ -142,7 +79,7 @@ function ServicesSection() {
 
   useEffect(() => {
     const flash = (id: string) => {
-      if (!services.some((service) => service.slug === id)) return
+      if (!landingOfferings.some((service) => service.slug === id)) return
       setHighlighted(id)
       if (timer) window.clearTimeout(timer)
       const t = window.setTimeout(() => setHighlighted(null), 2000)
@@ -184,14 +121,14 @@ function ServicesSection() {
         </Reveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
-          {services.map((service, i) => (
+          {landingOfferings.map((service, i) => (
             <Reveal key={i} delay={i * 60}>
               <ServiceCard service={service} highlighted={highlighted === service.slug} />
             </Reveal>
           ))}
         </div>
 
-        <Reveal delay={services.length * 60 + 60}>
+        <Reveal delay={landingOfferings.length * 60 + 60}>
           <div className="text-center bg-[var(--shop-bg-elevated,#FFFFFF)] border border-[var(--shop-border-gold)] rounded-[var(--shop-radius-xl,32px)] p-8 shadow-[var(--shop-shadow-sm)]">
             <p className="font-[var(--shop-font-heading)] text-xl font-semibold text-[var(--shop-text-primary,#1C1917)] mb-2">Don&apos;t see your requirement above?</p>
             <p className="text-sm text-[var(--shop-text-muted,#78716C)] mb-6">Share your file or product requirement and we&apos;ll review it before confirming the order.</p>

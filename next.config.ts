@@ -182,6 +182,11 @@ const nextConfig: NextConfig = {
         destination: '/admin/emails/logs',
         permanent: true,
       },
+      {
+        source: '/features',
+        destination: '/services',
+        permanent: true,
+      },
     ]
   },
 }
