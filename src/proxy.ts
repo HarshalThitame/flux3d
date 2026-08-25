@@ -41,6 +41,8 @@ export function buildCsp(nonce: string) {
       'https://avatars.githubusercontent.com',
       // Facebook Pixel image beacon (noscript + fallback transport).
       'https://www.facebook.com',
+      // Google Tag Manager pixel transport beacons (/a?id=... GIF requests).
+      'https://www.googletagmanager.com',
     ].join(' '),
     "font-src 'self' data:",
     [

@@ -43,6 +43,13 @@ describe('buildCsp', () => {
     expect(directive(csp, 'connect-src')).toContain('https://www.facebook.com')
   })
 
+  it('allows Google Tag Manager pixel transport beacons', () => {
+    const csp = buildCsp(NONCE)
+    expect(directive(csp, 'img-src')).toContain('https://www.googletagmanager.com')
+    expect(directive(csp, 'script-src')).toContain('https://www.googletagmanager.com')
+    expect(directive(csp, 'connect-src')).toContain('https://www.googletagmanager.com')
+  })
+
   it('allows Google Identity Services styles and credential-status fetches', () => {
     const csp = buildCsp(NONCE)
     expect(directive(csp, 'style-src')).toContain('https://accounts.google.com')
