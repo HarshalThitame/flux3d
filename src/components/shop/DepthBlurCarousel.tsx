@@ -178,6 +178,7 @@ function DepthCard(props: CardProps) {
             alt={alt}
             fill
             draggable={false}
+            priority={index === 0}
             sizes="(max-width: 480px) 80vw, (max-width: 1024px) 55vw, 520px"
             style={{ objectFit: 'cover' }}
           />

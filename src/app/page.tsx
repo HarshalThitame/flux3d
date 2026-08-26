@@ -48,8 +48,9 @@ export default async function Home() {
     ],
   }
 
-  // The hero uses next/image with `priority`, which already emits an
-  // optimized <link rel="preload"> in the head — no manual preload needed.
+  // The hero carousel is server-rendered and its centered card uses
+  // next/image with `priority`, which emits an optimized
+  // <link rel="preload"> in the head — no manual preload needed.
   return (
     <div className="public-shell">
       <script
