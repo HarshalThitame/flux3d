@@ -1,6 +1,7 @@
-import type { Metadata } from 'next'
-import Image from 'next/image'
-import Link from 'next/link'
+import type { Metadata } from "next";
+export const revalidate = 300;
+import Image from "next/image";
+import Link from "next/link";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -14,69 +15,88 @@ import {
   Sparkles,
   Star,
   Truck,
-} from 'lucide-react'
-import RecentlyViewedDynamic from '@/components/shop/RecentlyViewedDynamic'
-import ShopShell from '@/components/shop/ShopShell'
-import ShopProductFilterClient from './ShopProductFilterClient'
-import { buildShopCategoryTree, getShopHomeData, getShopProducts } from '@/lib/shop/public-data'
-import { formatShopPrice } from '@/lib/shop/selection'
-import { absoluteUrl } from '@/lib/site'
-import { getCspNonce } from '@/lib/csp'
-import type { ShopPublicProduct } from '@/lib/shop/public-types'
+} from "lucide-react";
+import RecentlyViewedDynamic from "@/components/shop/RecentlyViewedDynamic";
+import ShopShell from "@/components/shop/ShopShell";
+import ShopProductFilterClient from "./ShopProductFilterClient";
+import {
+  buildShopCategoryTree,
+  getShopHomeData,
+  getShopProducts,
+} from "@/lib/shop/public-data";
+import { formatShopPrice } from "@/lib/shop/selection";
+import { absoluteUrl } from "@/lib/site";
+import { getCspNonce } from "@/lib/csp";
+import type { ShopPublicProduct } from "@/lib/shop/public-types";
 
 export const metadata: Metadata = {
-  title: '3D Shop — Flux3D',
-  description: 'Handpicked, ready-to-ship 3D printed products from Flux3D.',
-  alternates: { canonical: '/3d-shop' },
+  title: "3D Shop — Flux3D",
+  description: "Handpicked, ready-to-ship 3D printed products from Flux3D.",
+  alternates: { canonical: "/3d-shop" },
   openGraph: {
-    title: '3D Shop — Flux3D',
-    description: 'Handpicked, ready-to-ship 3D printed products from Flux3D.',
-    url: absoluteUrl('/3d-shop'),
-    type: 'website',
+    title: "3D Shop — Flux3D",
+    description: "Handpicked, ready-to-ship 3D printed products from Flux3D.",
+    url: absoluteUrl("/3d-shop"),
+    type: "website",
   },
-}
+};
 
 function toJsonLd(value: unknown) {
-  return JSON.stringify(value).replace(/</g, '\\u003c')
+  return JSON.stringify(value).replace(/</g, "\\u003c");
 }
 
 function makeItemListSchema(products: ShopPublicProduct[]) {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
+    "@context": "https://schema.org",
+    "@type": "ItemList",
     itemListElement: products.map((product, index) => ({
-      '@type': 'ListItem',
+      "@type": "ListItem",
       position: index + 1,
       url: absoluteUrl(`/3d-shop/product/${product.slug}`),
       name: product.name,
     })),
-  }
+  };
 }
 
 export default async function ShopHomePage() {
-  const nonce = await getCspNonce()
-  const data = await getShopHomeData()
-  const allProductsResult = await getShopProducts({ limit: 96, sort: 'newest' })
-  const allProducts = allProductsResult.products
-  const categoryTree = buildShopCategoryTree(data.categories)
-  const heroProduct = data.featured_products[0] ?? data.new_arrivals[0] ?? null
-  const heroImage = heroProduct?.thumbnail_url || heroProduct?.image_urls?.[0] || categoryTree[0]?.banner_image_url || '/pot.webp'
-  const productCount = allProducts.length
-  const heroPrice = heroProduct ? formatShopPrice(heroProduct.display_price) : 'Browse store'
+  const nonce = await getCspNonce();
+  const data = await getShopHomeData();
+  const allProductsResult = await getShopProducts({
+    limit: 96,
+    sort: "newest",
+  });
+  const allProducts = allProductsResult.products;
+  const categoryTree = buildShopCategoryTree(data.categories);
+  const heroProduct = data.featured_products[0] ?? data.new_arrivals[0] ?? null;
+  const heroImage =
+    heroProduct?.thumbnail_url ||
+    heroProduct?.image_urls?.[0] ||
+    categoryTree[0]?.banner_image_url ||
+    "/pot.webp";
+  const productCount = allProducts.length;
+  const heroPrice = heroProduct
+    ? formatShopPrice(heroProduct.display_price)
+    : "Browse store";
 
   const heroStats = [
-    { label: 'Categories', value: `${categoryTree.length}`, icon: Layers3 },
-    { label: 'Products', value: `${productCount}`, icon: PackageCheck },
-    { label: 'Featured', value: `${data.featured_products.length}`, icon: Star },
-    { label: 'Ready to ship', value: 'Fast', icon: Truck },
-  ]
+    { label: "Categories", value: `${categoryTree.length}`, icon: Layers3 },
+    { label: "Products", value: `${productCount}`, icon: PackageCheck },
+    {
+      label: "Featured",
+      value: `${data.featured_products.length}`,
+      icon: Star,
+    },
+    { label: "Ready to ship", value: "Fast", icon: Truck },
+  ];
 
   return (
     <ShopShell transparentNav>
       <script
         nonce={nonce}
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: toJsonLd(makeItemListSchema(allProducts)) }}
+        dangerouslySetInnerHTML={{
+          __html: toJsonLd(makeItemListSchema(allProducts)),
+        }}
       />
       <main className="flex-1">
         {/* Hero — Editorial style like The Collective */}
@@ -90,7 +110,12 @@ export default async function ShopHomePage() {
             {/* Left: Editorial copy */}
             <div className="flex flex-col justify-center min-w-0">
               <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-[var(--shop-text-muted)]">
-                <Link href="/" className="transition hover:text-[var(--shop-text-primary)]">Home</Link>
+                <Link
+                  href="/"
+                  className="transition hover:text-[var(--shop-text-primary)]"
+                >
+                  Home
+                </Link>
                 <span className="text-[var(--shop-text-subtle)]">/</span>
                 <span className="text-[var(--shop-text-primary)]">3D Shop</span>
               </nav>
@@ -101,11 +126,14 @@ export default async function ShopHomePage() {
               </div>
 
               <h1 className="font-[var(--shop-font-heading)] mt-6 max-w-[calc(100vw-2rem)] text-[clamp(2.4rem,7vw,4.8rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-[var(--shop-text-primary)] sm:max-w-3xl">
-                Premium 3D printed pieces, <span className="text-[var(--shop-gold)]">ready to own.</span>
+                Premium 3D printed pieces,{" "}
+                <span className="text-[var(--shop-gold)]">ready to own.</span>
               </h1>
 
               <p className="mt-5 max-w-[calc(100vw-2rem)] text-base leading-7 text-[var(--shop-text-secondary)] sm:max-w-lg sm:text-lg sm:leading-8">
-                Shop curated Flux3D objects with clean finishes, useful forms, and ready-to-ship presentation for desks, creators, gifting, and everyday setups.
+                Shop curated Flux3D objects with clean finishes, useful forms,
+                and ready-to-ship presentation for desks, creators, gifting, and
+                everyday setups.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -127,7 +155,7 @@ export default async function ShopHomePage() {
 
               <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {heroStats.map((stat) => {
-                  const Icon = stat.icon
+                  const Icon = stat.icon;
                   return (
                     <div
                       key={stat.label}
@@ -141,7 +169,7 @@ export default async function ShopHomePage() {
                         {stat.label}
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -150,20 +178,28 @@ export default async function ShopHomePage() {
             <aside className="relative min-w-0">
               <div className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-4 shadow-[var(--shop-shadow-lg)] sm:p-5">
                 <div className="mb-3 flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-text-muted)]">Featured pick</span>
+                  <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-text-muted)]">
+                    Featured pick
+                  </span>
                   <span className="inline-flex items-center gap-1 rounded-full bg-[var(--shop-gold-faint)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--shop-gold)]">
                     <span className="h-1.5 w-1.5 rounded-full bg-[var(--shop-gold)]" />
                     In stock
                   </span>
                 </div>
                 <Link
-                  href={heroProduct ? `/3d-shop/product/${heroProduct.slug}` : '#shop-products'}
+                  href={
+                    heroProduct
+                      ? `/3d-shop/product/${heroProduct.slug}`
+                      : "#shop-products"
+                  }
                   className="group grid gap-3"
                 >
                   <div className="relative aspect-[4/3] overflow-hidden rounded-[var(--shop-radius-lg)] bg-[var(--shop-bg-muted)]">
                     <Image
                       src={heroImage}
-                      alt={heroProduct?.name || 'Flux3D 3D Shop product showcase'}
+                      alt={
+                        heroProduct?.name || "Flux3D 3D Shop product showcase"
+                      }
                       fill
                       priority
                       sizes="(min-width: 1024px) 440px, 100vw"
@@ -172,13 +208,14 @@ export default async function ShopHomePage() {
                   </div>
                   <div>
                     <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-gold)]">
-                      {heroProduct?.category_name || 'Curated shop'}
+                      {heroProduct?.category_name || "Curated shop"}
                     </div>
                     <h2 className="font-[var(--shop-font-heading)] mt-1.5 line-clamp-2 text-lg font-semibold leading-tight text-[var(--shop-text-primary)] sm:text-xl">
-                      {heroProduct?.name || 'Browse Flux3D picks'}
+                      {heroProduct?.name || "Browse Flux3D picks"}
                     </h2>
                     <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-[var(--shop-text-muted)]">
-                      {heroProduct?.description || 'A premium shelf of ready-to-ship 3D printed products and useful desk objects.'}
+                      {heroProduct?.description ||
+                        "A premium shelf of ready-to-ship 3D printed products and useful desk objects."}
                     </p>
                     <span className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--shop-gold)]">
                       {heroPrice}
@@ -195,12 +232,15 @@ export default async function ShopHomePage() {
         <section className="border-y border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)]">
           <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-center gap-6 px-4 py-4 sm:px-6 md:px-10 lg:px-12">
             {[
-              { icon: ShieldCheck, label: 'QA checked' },
-              { icon: Truck, label: 'Ready to ship' },
-              { icon: Box, label: '3D preview' },
-              { icon: ShoppingBag, label: 'Secure cart' },
+              { icon: ShieldCheck, label: "QA checked" },
+              { icon: Truck, label: "Ready to ship" },
+              { icon: Box, label: "3D preview" },
+              { icon: ShoppingBag, label: "Secure cart" },
             ].map((item) => (
-              <div key={item.label} className="flex items-center gap-2 text-sm font-medium text-[var(--shop-text-muted)]">
+              <div
+                key={item.label}
+                className="flex items-center gap-2 text-sm font-medium text-[var(--shop-text-muted)]"
+              >
                 <item.icon className="h-4 w-4 text-[var(--shop-gold)]" />
                 {item.label}
               </div>
@@ -209,7 +249,10 @@ export default async function ShopHomePage() {
         </section>
 
         {/* Products section with filters */}
-        <section id="shop-products" className="px-4 py-16 sm:px-6 md:px-10 lg:px-12 lg:py-24">
+        <section
+          id="shop-products"
+          className="px-4 py-16 sm:px-6 md:px-10 lg:px-12 lg:py-24"
+        >
           <div className="mx-auto w-full max-w-[1280px]">
             <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
@@ -248,7 +291,8 @@ export default async function ShopHomePage() {
               Ready to elevate your space?
             </h2>
             <p className="mt-4 text-[var(--shop-sand)]">
-              Explore the full collection of premium 3D printed pieces crafted for creators, desks, and thoughtful gifting.
+              Explore the full collection of premium 3D printed pieces crafted
+              for creators, desks, and thoughtful gifting.
             </p>
             <Link
               href="/3d-shop/search"
@@ -261,5 +305,5 @@ export default async function ShopHomePage() {
         </section>
       </main>
     </ShopShell>
-  )
+  );
 }
