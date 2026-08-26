@@ -1,5 +1,24 @@
 export type UploadProgressHandler = (percent: number) => void
 
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+const MAX_IMAGE_SIZE = 8 * 1024 * 1024
+
+/** Client-side image pre-validation — rejects before any network transfer. */
+export function validateImageFile(file: File): string | null {
+  const name = file.name.toLowerCase()
+  const hasImageExtension = IMAGE_EXTENSIONS.some((ext) => name.endsWith(ext))
+  if (!hasImageExtension && !file.type.startsWith('image/')) {
+    return 'Only JPG, PNG, WebP, and GIF images are allowed.'
+  }
+  if (name.endsWith('.svg') || file.type === 'image/svg+xml') {
+    return 'SVG files are not supported for product imagery.'
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    return 'Images must be smaller than 8MB.'
+  }
+  return null
+}
+
 export function uploadFormFileWithProgress(
   url: string,
   file: File,

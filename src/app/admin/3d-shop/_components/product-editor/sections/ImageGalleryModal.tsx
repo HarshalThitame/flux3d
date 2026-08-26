@@ -1,9 +1,10 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { ArrowDown, ArrowUp, ImagePlus, Loader2, Star, Trash2, X } from 'lucide-react'
+import { AlertCircle, ArrowDown, ArrowUp, ImagePlus, Loader2, Star, Trash2, X } from 'lucide-react'
 import type { ShopSkuImage, ShopVariantOptionImage } from '@/lib/shop/admin-types'
+import { validateImageFile } from '@/lib/shop/upload'
 
 type GalleryImage = Pick<ShopVariantOptionImage | ShopSkuImage, 'id' | 'image_url' | 'alt_text' | 'is_primary' | 'display_order'>
 
@@ -30,18 +31,49 @@ export function ImageGalleryModal({
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
+  const [validationError, setValidationError] = useState<string | null>(null)
+  const [altDraft, setAltDraft] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-
-  if (!open) return null
+  const altDebounceRef = useRef<number | null>(null)
 
   const sorted = [...images].sort((a, b) => a.display_order - b.display_order)
   const selected = sorted.find((image) => image.id === selectedId) ?? null
   const uploading = Object.values(uploadState).some((state) => state.status === 'uploading')
 
-  function handleAdd(files: FileList | null) {
-    const fileList = Array.from(files ?? []).filter((file) => file.type.startsWith('image/'))
+  // Keep the alt draft in sync when switching between images (adjust state
+  // during render — no effect needed).
+  const [prevSelectedId, setPrevSelectedId] = useState(selectedId)
+  if (prevSelectedId !== selectedId) {
+    setPrevSelectedId(selectedId)
+    setAltDraft(sorted.find((image) => image.id === selectedId)?.alt_text ?? '')
+  }
+
+  useEffect(() => () => {
+    if (altDebounceRef.current) window.clearTimeout(altDebounceRef.current)
+  }, [])
+
+  if (!open) return null
+
+  function handleAdd(files: FileList | File[] | null) {
+    const rejected: string[] = []
+    const fileList = Array.from(files ?? []).filter((file) => {
+      const error = validateImageFile(file)
+      if (error) rejected.push(`${file.name}: ${error}`)
+      return !error
+    })
+    if (rejected.length > 0) setValidationError(rejected.join(' · '))
+    else setValidationError(null)
     if (fileList.length > 0) onAddFiles(fileList)
     if (inputRef.current) inputRef.current.value = ''
+  }
+
+  function handleAltChange(value: string) {
+    setAltDraft(value)
+    if (altDebounceRef.current) window.clearTimeout(altDebounceRef.current)
+    altDebounceRef.current = window.setTimeout(() => {
+      if (selectedId) void onUpdate(selectedId, { alt_text: value })
+    }, 300)
   }
 
   async function move(imageId: string, dir: 1 | -1) {
@@ -54,6 +86,23 @@ export function ImageGalleryModal({
       const [item] = reordered.splice(index, 1)
       reordered.splice(target, 0, item)
       await onReorder(reordered.map((image) => image.id))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // Primary = shown to customers first: flip is_primary and move to the
+  // front of the display order in one action.
+  async function handleSetPrimary() {
+    if (!selected || busy) return
+    setBusy(true)
+    try {
+      await onUpdate(selected.id, { is_primary: true })
+      const orderedIds = [
+        selected.id,
+        ...sorted.filter((image) => image.id !== selected.id).map((image) => image.id),
+      ]
+      await onReorder(orderedIds)
     } finally {
       setBusy(false)
     }
@@ -80,12 +129,32 @@ export function ImageGalleryModal({
               type="button"
               disabled={uploading}
               onClick={() => inputRef.current?.click()}
-              className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#6d28d9]/20 bg-[#6d28d9]/5 px-4 py-6 text-sm font-semibold text-[#6d28d9] transition hover:border-[#6d28d9]/40 disabled:opacity-60"
+              onDragOver={(event) => {
+                event.preventDefault()
+                setDragOver(true)
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(event) => {
+                event.preventDefault()
+                setDragOver(false)
+                handleAdd(event.dataTransfer.files)
+              }}
+              className={`flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-4 py-6 text-sm font-semibold text-[#6d28d9] transition disabled:opacity-60 ${
+                dragOver ? 'border-[#6d28d9] bg-[#6d28d9]/10' : 'border-[#6d28d9]/20 bg-[#6d28d9]/5 hover:border-[#6d28d9]/40'
+              }`}
             >
               {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
-              {uploading ? 'Uploading...' : 'Upload images'}
-              <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={(event) => handleAdd(event.target.files)} />
+              {uploading ? 'Uploading...' : 'Drop images here or click to browse'}
+              <span className="text-xs font-normal text-[#6F7192]">JPG, PNG, WebP, or GIF · up to 8 MB each</span>
+              <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple className="hidden" onChange={(event) => handleAdd(event.target.files)} />
             </button>
+
+            {validationError && (
+              <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-rose-50 p-2 text-xs text-rose-600">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                {validationError}
+              </p>
+            )}
 
             <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
               {sorted.map((image) => (
@@ -99,13 +168,8 @@ export function ImageGalleryModal({
                 >
                   <Image src={image.image_url} alt={image.alt_text ?? ''} fill sizes="160px" className="object-cover" />
                   {image.is_primary && (
-                    <span className="absolute left-1.5 top-1.5 rounded-full bg-[#6d28d9] p-1 text-white" title="Primary image">
+                    <span className="absolute left-1.5 top-1.5 rounded-full bg-[#6d28d9] p-1 text-white" title="Primary image — shown first to customers">
                       <Star className="h-3 w-3 fill-current" />
-                    </span>
-                  )}
-                  {image.display_order === 0 && (
-                    <span className="absolute bottom-1.5 right-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
-                      Cover
                     </span>
                   )}
                 </button>
@@ -122,16 +186,17 @@ export function ImageGalleryModal({
                 <label className="mt-3 block">
                   <span className="mb-1 block text-xs text-[#6F7192]">Alt text</span>
                   <input
-                    value={selected.alt_text ?? ''}
+                    value={altDraft}
                     maxLength={120}
-                    onChange={(event) => void onUpdate(selected.id, { alt_text: event.target.value })}
+                    onChange={(event) => handleAltChange(event.target.value)}
                     className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#6d28d9]/40"
                   />
                 </label>
                 <button
                   type="button"
-                  disabled={selected.is_primary}
-                  onClick={() => void onUpdate(selected.id, { is_primary: true })}
+                  disabled={selected.is_primary || busy}
+                  onClick={() => void handleSetPrimary()}
+                  title="The primary image is moved to the front of this gallery"
                   className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#6d28d9]/20 py-2 text-xs font-semibold text-[#6d28d9] disabled:opacity-40"
                 >
                   <Star className="h-3.5 w-3.5" />
@@ -168,7 +233,7 @@ export function ImageGalleryModal({
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-gray-200 p-4 text-center text-xs text-[#6F7192]">
-                Select an image to edit alt text, ordering, or primary.
+                Select an image to edit alt text or ordering. “Set as primary” moves it to the front of the gallery.
               </div>
             )}
           </div>

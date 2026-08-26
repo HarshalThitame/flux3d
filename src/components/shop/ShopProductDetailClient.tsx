@@ -245,7 +245,9 @@ export default function ShopProductDetailClient({
   const productDimensions = useMemo(() => getShopDisplayDimensions(product, selected), [product, selected])
   const activeModelUrl = resolvedSku?.model_url || product.model_url || null
   const tintColor = useMemo(() => getSelectedSwatchColor(product.variant_options, selected), [product.variant_options, selected])
-  const visibleImage = resolvedSku?.variant_image_url || selectedImage || images[0] || baseImages[0] || ''
+  // Hero follows the thumbnail strip exactly — no separate variant override,
+  // so the main image and the strip can never disagree.
+  const visibleImage = selectedImage || images[0] || baseImages[0] || ''
 
   const gallerySignature = `${gallery.source}|${images.join(',')}`
   const [seenGallery, setSeenGallery] = useState(gallerySignature)

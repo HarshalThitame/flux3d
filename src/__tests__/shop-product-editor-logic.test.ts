@@ -11,7 +11,10 @@ const validProduct = {
   base_price: 1299,
   thumbnail_url: 'https://example.com/lamp.png',
   image_urls: ['https://example.com/gallery.png'],
-  image_alt: { 'https://example.com/gallery.png': 'Lamp shown from the side' },
+  image_alt: {
+    'https://example.com/lamp.png': 'LED desk lamp on a wooden desk',
+    'https://example.com/gallery.png': 'Lamp shown from the side',
+  },
 }
 
 describe('productFormSchema', () => {

@@ -91,9 +91,10 @@ export function getPublishBlockers(product: ProductForm): string[] {
   }
   if (product.base_price <= 0) blockers.push('Set a base price greater than zero')
   if (!product.thumbnail_url && product.image_urls.length === 0) blockers.push('Add at least one product image')
-  const missingAlt = product.image_urls.filter((url) => !(product.image_alt[url] ?? '').trim())
+  const missingAlt = [product.thumbnail_url, ...product.image_urls]
+    .filter((url) => url && !(product.image_alt[url] ?? '').trim())
   if (missingAlt.length > 0) {
-    blockers.push(`Add alt text to ${missingAlt.length} gallery image${missingAlt.length === 1 ? '' : 's'} for SEO & accessibility`)
+    blockers.push(`Add alt text to ${missingAlt.length} image${missingAlt.length === 1 ? '' : 's'} for SEO & accessibility`)
   }
   return blockers
 }

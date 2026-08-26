@@ -240,6 +240,14 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     if (!imageId) return NextResponse.json({ error: 'image id is required.' }, { status: 400 })
 
     const supabase = createAdminSupabaseClient()
+    // Capture the storage URL before the row is gone.
+    const { data: existing } = await supabase
+      .from('shelf_variant_option_images')
+      .select('image_url')
+      .eq('product_id', id)
+      .eq('id', imageId)
+      .maybeSingle()
+
     const { error } = await supabase
       .from('shelf_variant_option_images')
       .delete()
@@ -247,6 +255,11 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       .eq('id', imageId)
 
     if (error) throw new Error(error.message)
+
+    if (existing?.image_url) {
+      const { deleteShopImageAsset } = await import('@/lib/shop/storage-cleanup')
+      await deleteShopImageAsset(existing.image_url)
+    }
     return NextResponse.json({ ok: true })
   } catch (error) {
     return getAdminApiErrorResponse(error)

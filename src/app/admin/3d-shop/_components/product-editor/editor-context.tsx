@@ -17,7 +17,7 @@ import { emptyDimensions } from '@/lib/shop/dimensions'
 import type { ProductForm, ProductFormErrors } from '@/lib/shop/product-schema'
 import { getPublishBlockers } from '@/lib/shop/product-schema'
 import type { AiGenerationKind, AiGenerateResult, AiTone } from '@/lib/shop/ai'
-import { uploadFileWithProgress, uploadFormFileWithProgress, uploadModelFileWithProgress, type ModelUploadKind } from '@/lib/shop/upload'
+import { uploadFileWithProgress, uploadFormFileWithProgress, uploadModelFileWithProgress, validateImageFile, type ModelUploadKind } from '@/lib/shop/upload'
 import type { ProductTemplate } from '@/lib/shop/templates'
 import { templateLongDescription } from '@/lib/shop/templates'
 import { addRevision, clearRevisions, loadRevisions, type ShopRevision } from '@/lib/shop/revisions'
@@ -35,6 +35,7 @@ import {
 } from './types'
 
 const AUTOSAVE_DELAY = 2000
+const MAX_GALLERY_IMAGES = 20
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken'
 
@@ -85,7 +86,12 @@ type ProductEditorContextValue = {
   restoreRevision: (timestamp: number) => Promise<void>
   clearRevisionHistory: () => void
 
-  uploadImage: (file: File, target?: 'gallery' | 'variant', skuId?: string) => Promise<void>
+  uploadImage: (
+    file: File,
+    target?: 'gallery' | 'variant',
+    skuId?: string,
+    onProgress?: (progress: number) => void
+  ) => Promise<string | void>
   uploadModel: (file: File) => Promise<void>
   removeModel: () => void
   uploadProductAsset: (
@@ -99,8 +105,9 @@ type ProductEditorContextValue = {
   removeImage: (url: string) => void
   handleImageDrop: (url: string) => void
   setImageAlt: (url: string, alt: string) => void
-  uploadLandscapeImage: (file: File) => Promise<void>
+  uploadLandscapeImage: (file: File, onProgress?: (progress: number) => void) => Promise<string | void>
   removeLandscapeImage: () => void
+  attachLibraryImage: (url: string) => void
   aiPrompt: string
   setAiPrompt: (value: string) => void
 
@@ -315,27 +322,45 @@ export function ProductEditorProvider({
     }
   }, [form.product.slug, form.product.id, checkSlug])
 
+  const productIdPromiseRef = useRef<Promise<string> | null>(null)
+
   const ensureProductId = useCallback(async () => {
     const current = form.productRef.current
-    if (current.id) return current.id
-    if (!current.name.trim()) throw new Error('Add a product name before saving.')
-    if (!current.slug.trim()) throw new Error('Add a product slug before saving.')
-
-    const response = await fetch('/api/3d-shop/admin/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(buildProductPayload(current, 'draft')),
-    })
-    const data = (await response.json()) as { product?: ShopProduct; error?: string }
-    if (!response.ok || !data.product) throw new Error(data.error || 'Failed to create product.')
-
-    form.markSaved(toProductForm(data.product))
-    slugTouchedRef.current = true
-    setRevisions(loadRevisions(data.product.id))
-    if (typeof window !== 'undefined') {
-      window.history.replaceState(null, '', `/admin/3d-shop/products/${data.product.id}/edit`)
+    if (current.id) {
+      productIdPromiseRef.current = null
+      return current.id
     }
-    return data.product.id
+    // Memoize creation so N parallel uploads share ONE draft POST
+    // instead of creating N duplicate draft products.
+    if (!productIdPromiseRef.current) {
+      productIdPromiseRef.current = (async () => {
+        const snapshot = form.productRef.current
+        if (!snapshot.name.trim()) throw new Error('Add a product name before saving.')
+        if (!snapshot.slug.trim()) throw new Error('Add a product slug before saving.')
+
+        const response = await fetch('/api/3d-shop/admin/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildProductPayload(snapshot, 'draft')),
+        })
+        const data = (await response.json()) as { product?: ShopProduct; error?: string }
+        if (!response.ok || !data.product) throw new Error(data.error || 'Failed to create product.')
+
+        // Merge the generated id into CURRENT local state (not the server
+        // echo) so edits made while the request was in flight survive.
+        form.markSaved({ ...form.productRef.current, id: data.product.id })
+        slugTouchedRef.current = true
+        setRevisions(loadRevisions(data.product.id))
+        if (typeof window !== 'undefined') {
+          window.history.replaceState(null, '', `/admin/3d-shop/products/${data.product.id}/edit`)
+        }
+        return data.product.id
+      })().catch((error) => {
+        productIdPromiseRef.current = null
+        throw error
+      })
+    }
+    return productIdPromiseRef.current
   }, [form])
 
   const saveAllVariants = useCallback(async () => {
@@ -463,7 +488,8 @@ export function ProductEditorProvider({
         const data = (await response.json()) as { product?: ShopProduct; error?: string }
         if (!response.ok || !data.product) throw new Error(data.error || 'Failed to save product.')
 
-        form.markSaved(toProductForm(data.product))
+        // Do NOT replace local state with the server echo here — local state
+        // may contain newer edits made while the PATCH was in flight.
         form.setDirty(true)
         await saveAllVariants()
         await saveAllVariantDimensions()
@@ -882,45 +908,69 @@ export function ProductEditorProvider({
     return () => window.removeEventListener('keydown', handler)
   }, [form, saveProduct])
 
+  const deleteStorageAsset = useCallback((url: string) => {
+    if (!url) return
+    // Best-effort orphan cleanup — removal from the product must not depend
+    // on storage deletion succeeding.
+    void fetch('/api/3d-shop/admin/storage/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    }).catch(() => {})
+  }, [])
+
   const uploadImage = useCallback(
-    async (file: File, target: 'gallery' | 'variant' = 'gallery', skuId?: string) => {
+    async (
+      file: File,
+      target: 'gallery' | 'variant' = 'gallery',
+      skuId?: string,
+      onProgress?: (progress: number) => void
+    ) => {
+      const validationError = validateImageFile(file)
+      if (validationError) throw new Error(validationError)
+
       const id = await ensureProductId()
-      const tempKey = `${file.name}-${Date.now()}`
-      setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress: 0 } }))
-      try {
-        const { publicUrl } = await uploadFileWithProgress('/api/3d-shop/admin/upload', file, id, (progress) => {
-          setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress } }))
+      const report = onProgress ?? ((progress: number) => {
+        setUploadState((current) => {
+          const entries = Object.entries(current).filter(([, state]) => state.status !== 'done')
+          const key = `gallery-${file.name}-${entries.length}`
+          return { ...current, [key]: { status: progress >= 100 ? 'done' : 'uploading', progress } }
         })
-        setUploadState((current) => ({ ...current, [tempKey]: { status: 'done', progress: 100 } }))
+      })
 
-        if (target === 'variant' && skuId) {
-          form.pushUndoPoint()
-          setSkus((current) =>
-            current.map((sku) => (sku.id === skuId ? { ...sku, variant_image_url: publicUrl, dirty: true } : sku))
-          )
-          form.setDirty(true)
-          return
-        }
+      report(5)
+      const { publicUrl } = await uploadFileWithProgress('/api/3d-shop/admin/upload', file, id, (progress) => {
+        report(Math.min(99, progress))
+      })
+      report(100)
 
-        const current = form.productRef.current
-        const hasThumbnail = Boolean(current.thumbnail_url)
-        const partial = hasThumbnail
-          ? { image_urls: [...current.image_urls, publicUrl] }
-          : { thumbnail_url: publicUrl }
-        form.patchLocal(partial)
-
-        const productResponse = await fetch('/api/3d-shop/admin/products', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...buildProductPayload({ ...current, ...partial }, undefined), id }),
-        }).catch(() => null)
-        if (!productResponse?.ok) {
-          throw new Error('Upload succeeded but failed to attach image to product. It will be saved by autosave.')
-        }
-      } catch (error) {
-        setUploadState((current) => ({ ...current, [tempKey]: { status: 'error', progress: 0 } }))
-        throw error
+      if (target === 'variant' && skuId) {
+        form.pushUndoPoint()
+        setSkus((current) =>
+          current.map((sku) => (sku.id === skuId ? { ...sku, variant_image_url: publicUrl, dirty: true } : sku))
+        )
+        form.setDirty(true)
+        return publicUrl
       }
+
+      const current = form.productRef.current
+      const hasThumbnail = Boolean(current.thumbnail_url)
+      if (!hasThumbnail) {
+        // First image becomes the cover photo (position 1). The gallery grid
+        // renders [cover, ...gallery] as one ordered list.
+        form.updateMany({ thumbnail_url: publicUrl })
+      } else {
+        if (current.image_urls.length + 1 > MAX_GALLERY_IMAGES) {
+          throw new Error(`Gallery is limited to ${MAX_GALLERY_IMAGES} images.`)
+        }
+        form.pushUndoPoint()
+        form.patchLocal({ image_urls: [...current.image_urls, publicUrl] })
+      }
+
+      // Persistence goes through the single debounced autosave path — no
+      // ad-hoc full-row PATCH here (it raced autosave and could clobber
+      // concurrent edits with stale snapshots).
+      return publicUrl
     },
     [ensureProductId, form]
   )
@@ -945,8 +995,9 @@ export function ProductEditorProvider({
   )
 
   const removeModel = useCallback(() => {
+    deleteStorageAsset(form.productRef.current.model_url)
     updateProduct('model_url', '')
-  }, [updateProduct])
+  }, [deleteStorageAsset, form, updateProduct])
 
   const uploadProductAsset = useCallback(
     async (file: File, kind: ModelUploadKind, field: 'model_url' | 'usdz_url' | 'hero_video_url') => {
@@ -969,45 +1020,62 @@ export function ProductEditorProvider({
 
   const removeProductAsset = useCallback(
     (field: 'model_url' | 'usdz_url' | 'hero_video_url') => {
+      deleteStorageAsset(form.productRef.current[field])
       updateProduct(field, '')
     },
-    [updateProduct]
+    [deleteStorageAsset, form, updateProduct]
   )
 
   const uploadLandscapeImage = useCallback(
-    async (file: File) => {
-      const id = await ensureProductId()
-      const tempKey = `landscape-${file.name}-${Date.now()}`
-      setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress: 0 } }))
-      try {
-        const { publicUrl } = await uploadFileWithProgress('/api/3d-shop/admin/upload', file, id, (progress) => {
-          setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress } }))
-        })
-        setUploadState((current) => ({ ...current, [tempKey]: { status: 'done', progress: 100 } }))
-        form.patchLocal({ landscape_image_url: publicUrl })
+    async (file: File, onProgress?: (progress: number) => void) => {
+      const validationError = validateImageFile(file)
+      if (validationError) throw new Error(validationError)
 
-        const productResponse = await fetch('/api/3d-shop/admin/products', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...buildProductPayload({ ...form.productRef.current, landscape_image_url: publicUrl }, undefined),
-            id,
-          }),
-        }).catch(() => null)
-        if (!productResponse?.ok) {
-          throw new Error('Upload succeeded but failed to attach landscape image to product. It will be saved by autosave.')
-        }
-      } catch (error) {
-        setUploadState((current) => ({ ...current, [tempKey]: { status: 'error', progress: 0 } }))
-        throw error
-      }
+      const id = await ensureProductId()
+      const report = onProgress ?? ((progress: number) => {
+        setUploadState((current) => {
+          const entries = Object.entries(current).filter(([key]) => key.startsWith('landscape-'))
+          const key = `landscape-${entries.length}`
+          return { ...current, [key]: { status: progress >= 100 ? 'done' : 'uploading', progress } }
+        })
+      })
+
+      report(5)
+      const { publicUrl } = await uploadFileWithProgress('/api/3d-shop/admin/upload', file, id, (progress) => {
+        report(Math.min(99, progress))
+      })
+      report(100)
+      form.patchLocal({ landscape_image_url: publicUrl })
+      return publicUrl
     },
     [ensureProductId, form]
   )
 
   const removeLandscapeImage = useCallback(() => {
+    deleteStorageAsset(form.productRef.current.landscape_image_url)
     form.update('landscape_image_url', '')
-  }, [form])
+  }, [deleteStorageAsset, form])
+
+  const attachLibraryImage = useCallback(
+    (url: string) => {
+      const current = form.productRef.current
+      if (current.thumbnail_url === url || current.image_urls.includes(url)) {
+        setToast({ type: 'error', message: 'This image is already in the gallery.' })
+        return
+      }
+      if (!current.thumbnail_url) {
+        form.updateMany({ thumbnail_url: url })
+        return
+      }
+      if (current.image_urls.length >= MAX_GALLERY_IMAGES) {
+        setToast({ type: 'error', message: `Gallery is limited to ${MAX_GALLERY_IMAGES} images.` })
+        return
+      }
+      form.pushUndoPoint()
+      form.patchLocal({ image_urls: [...current.image_urls, url] })
+    },
+    [form]
+  )
 
   const setThumbnail = useCallback(
     (url: string) => {
@@ -1032,8 +1100,9 @@ export function ProductEditorProvider({
         image_urls: images.slice(1),
         image_alt: imageAlt,
       })
+      deleteStorageAsset(url)
     },
-    [form]
+    [deleteStorageAsset, form]
   )
 
   const setImageAlt = useCallback(
@@ -1619,6 +1688,7 @@ export function ProductEditorProvider({
     uploadProductAsset,
     removeProductAsset,
     uploadSkuModel,
+    attachLibraryImage,
     setThumbnail,
     removeImage,
     handleImageDrop,

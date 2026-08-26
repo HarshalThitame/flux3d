@@ -53,11 +53,17 @@ export function getShopGalleryImages(
 
   const resolvedSku = resolveShopSku(product.skus, product.variant_options, selected)
   const skuImages = getShopSkuImages(product, resolvedSku)
+  const variantImage = resolvedSku?.variant_image_url
   if (skuImages.length > 0) {
-    return { images: skuImages.map((image) => image.image_url), source: 'sku' }
+    // Merge the SKU's single variant image into its gallery (front, deduped)
+    // so the hero image and thumbnail strip always agree.
+    const images = variantImage
+      ? [variantImage, ...skuImages.map((image) => image.image_url).filter((url) => url !== variantImage)]
+      : skuImages.map((image) => image.image_url)
+    return { images, source: 'sku' }
   }
-  if (resolvedSku?.variant_image_url) {
-    return { images: [resolvedSku.variant_image_url], source: 'sku' }
+  if (variantImage) {
+    return { images: [variantImage], source: 'sku' }
   }
 
   return { images: getShopProductImages(product), source: 'product' }
