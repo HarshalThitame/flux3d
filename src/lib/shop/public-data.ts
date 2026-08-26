@@ -77,7 +77,7 @@ async function loadAllShopProducts(): Promise<ShopPublicProduct[]> {
     .eq('is_active', true)
     .eq('is_archived', false)
     .order('created_at', { ascending: false })
-    .limit(1000)
+    .limit(250)
 
   if (error) throw new Error(error.message)
   return ((data ?? []) as unknown as RawProduct[]).map(mapProduct)
@@ -540,9 +540,24 @@ export async function getShopProducts(query: ShopProductQuery = {}): Promise<Sho
   }
 }
 
+async function queryShopProductBySlugDirect(slug: string): Promise<ShopPublicProduct | null> {
+  const supabase = getPublicSupabaseClient()
+  if (!supabase) return null
+  const { data, error } = await supabase
+    .from('shelf_products')
+    .select(PRODUCT_SELECT)
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .eq('is_archived', false)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  if (!data) return null
+  return mapProduct(data as unknown as RawProduct)
+}
+
 export async function getShopProductBySlug(slug: string) {
-  const products = await getAllShopProducts()
-  return products.find((product) => product.slug === slug) ?? null
+  return queryShopProductBySlugDirect(slug)
 }
 
 export async function getShopRecommendations({

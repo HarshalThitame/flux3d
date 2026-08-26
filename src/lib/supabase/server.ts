@@ -14,7 +14,8 @@ export const createServerSupabaseClient = cache(async () => {
         path: '/',
         maxAge: 400 * 24 * 60 * 60,
         sameSite: 'lax',
-        httpOnly: false,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
       },
       cookies: {
         getAll() {

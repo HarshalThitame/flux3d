@@ -70,11 +70,7 @@ export async function getOrCreateWhatsappCustomer(
 function cryptoRandomPassword(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   const bytes = new Uint8Array(24)
-  if (typeof crypto !== 'undefined' && 'getRandomValues' in crypto) {
-    crypto.getRandomValues(bytes)
-  } else {
-    for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256)
-  }
+  crypto.getRandomValues(bytes)
   return Array.from(bytes)
     .map((byte) => chars[byte % chars.length])
     .join('')

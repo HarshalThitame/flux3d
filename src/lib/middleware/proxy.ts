@@ -2,6 +2,7 @@ import { updateSession } from '@/lib/supabase/proxy'
 import { NextRequest, NextResponse } from 'next/server'
 import { generateCspNonce } from '@/lib/csp-nonce'
 import { getMetaCapiGatewayOrigins } from '@/lib/csp-allowlist'
+import { getCorsHeaders } from '@/lib/api/cors'
 
 export function buildCsp(nonce: string) {
   const isDev = process.env.NODE_ENV === 'development'
@@ -123,29 +124,19 @@ export async function proxy(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains')
 
-  return response
-}
+  // Add CORS headers to public API routes (not admin, not webhooks)
+  const isPublicApi =
+    pathname.startsWith('/api/') &&
+    !pathname.startsWith('/api/admin/') &&
+    !pathname.startsWith('/api/3d-shop/admin/') &&
+    !pathname.startsWith('/api/webhooks/') &&
+    !pathname.startsWith('/api/cron/')
+  if (isPublicApi) {
+    const corsHeaders = getCorsHeaders(request)
+    for (const [key, value] of Object.entries(corsHeaders)) {
+      response.headers.set(key, value)
+    }
+  }
 
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    {
-      source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
-      missing: [
-        { type: 'header', key: 'next-router-prefetch' },
-        { type: 'header', key: 'purpose', value: 'prefetch' },
-      ],
-    },
-    /* Keep the Supabase session refresh running on admin pages and
-     * admin APIs (including prefetches), as before. */
-    '/admin/:path*',
-    '/api/admin/:path*',
-    '/api/3d-shop/admin/:path*',
-  ],
+  return response
 }

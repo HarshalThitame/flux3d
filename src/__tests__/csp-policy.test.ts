@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { buildCsp } from '@/proxy'
+import { buildCsp } from '@/lib/middleware/proxy'
 
 const NONCE = 'dGVzdC1ub25jZQ=='
 

@@ -376,6 +376,18 @@ export async function listPaymentRefunds(limit = 50) {
   return (data ?? []).map((row) => mapPaymentRefundRow(asRecord(row)))
 }
 
+export async function fetchPaymentRefundByProviderRefundId(providerRefundId: string) {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('payment_refunds')
+    .select('*')
+    .eq('provider_refund_id', providerRefundId)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return data ? mapPaymentRefundRow(asRecord(data)) : null
+}
+
 export async function listPaymentEvents(limit = 50) {
   const supabase = createAdminSupabaseClient()
   const { data, error } = await supabase
@@ -395,6 +407,54 @@ export async function listPaymentAuditLogs(limit = 100) {
     .select('*')
     .order('created_at', { ascending: false })
     .limit(limit)
+
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((row) => asRecord(row))
+}
+
+export async function listPaymentRefundsByAttemptId(attemptId: string) {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('payment_refunds')
+    .select('*')
+    .eq('payment_attempt_id', attemptId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((row) => mapPaymentRefundRow(asRecord(row)))
+}
+
+export async function listPaymentEventsByOrderOrPaymentId(
+  providerOrderId?: string | null,
+  providerPaymentId?: string | null
+) {
+  const supabase = createAdminSupabaseClient()
+  let query = supabase.from('payment_events').select('*')
+
+  if (providerOrderId && providerPaymentId) {
+    query = query.or(`provider_order_id.eq.${providerOrderId},provider_payment_id.eq.${providerPaymentId}`)
+  } else if (providerOrderId) {
+    query = query.eq('provider_order_id', providerOrderId)
+  } else if (providerPaymentId) {
+    query = query.eq('provider_payment_id', providerPaymentId)
+  } else {
+    return []
+  }
+
+  const { data, error } = await query.order('received_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((row) => mapPaymentEventRow(asRecord(row)))
+}
+
+export async function listPaymentAuditLogsByEntity(entityType: string, entityId: string) {
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from('payment_audit_logs')
+    .select('*')
+    .eq('entity_type', entityType)
+    .eq('entity_id', entityId)
+    .order('created_at', { ascending: false })
 
   if (error) throw new Error(error.message)
   return (data ?? []).map((row) => asRecord(row))

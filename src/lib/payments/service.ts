@@ -6,7 +6,7 @@ import { notifyPaymentCaptured, notifyPaymentFailed, notifyRefundProcessed } fro
 import { notifyWhatsAppOrderConfirmed } from '@/lib/whatsapp/notifications'
 import { sendCapiEvents, buildPurchaseEvent } from '@/lib/meta/conversions-api'
 import { generateEventId } from '@/lib/meta/event-utils'
-import { safeFireAndForget, reportError } from '@/lib/error-handling'
+import { reportError } from '@/lib/error-handling'
 import {
   fetchInternalOrder,
   fetchPaymentAttemptById,
@@ -22,7 +22,10 @@ import {
   insertPaymentRefund,
   listPaymentRefunds,
   listPaymentEvents,
-  listPaymentAuditLogs,
+  listPaymentRefundsByAttemptId,
+  listPaymentEventsByOrderOrPaymentId,
+  listPaymentAuditLogsByEntity,
+  fetchPaymentRefundByProviderRefundId,
   listPaymentAttemptsByProvider,
   listReconciliationRuns,
   insertReconciliationRun,
@@ -974,8 +977,7 @@ async function processRefundEvent(eventName: string, payload: Record<string, unk
   const providerRefundId = normalizeText(refundEntity.id)
   if (!providerRefundId) return { handled: false, processingStatus: 'ignored' as const }
 
-  const supabaseRefunds = await listPaymentRefunds(200)
-  const localRefund = supabaseRefunds.find((refund) => refund.provider_refund_id === providerRefundId)
+  const localRefund = await fetchPaymentRefundByProviderRefundId(providerRefundId)
   if (!localRefund) return { handled: false, processingStatus: 'ignored' as const }
 
   const nextStatus = eventName === 'refund.failed'
@@ -1000,9 +1002,9 @@ async function processRefundEvent(eventName: string, payload: Record<string, unk
   if (!attempt) return { handled: true, processingStatus: 'processed' as const }
 
   if (nextStatus === 'processed') {
-    const attemptRefunds = await listPaymentRefunds(200)
+    const attemptRefunds = await listPaymentRefundsByAttemptId(attempt.id)
     const totalRefunded = attemptRefunds
-      .filter((r) => r.payment_attempt_id === attempt.id && ['pending', 'processed'].includes(r.status))
+      .filter((r) => ['pending', 'processed'].includes(r.status))
       .reduce((sum, r) => sum + Number(r.amount_paise), 0)
     const isFullyRefunded = totalRefunded >= attempt.amount_paise
 
@@ -1233,9 +1235,9 @@ export async function initiateRefund(params: {
     throw new Error('Only captured payments can be refunded.')
   }
 
-  const existingRefunds = await listPaymentRefunds(200)
+  const existingRefunds = await listPaymentRefundsByAttemptId(attempt.id)
   const refundedAmount = existingRefunds
-    .filter((refund) => refund.payment_attempt_id === attempt.id && ['pending', 'processed'].includes(refund.status))
+    .filter((refund) => ['pending', 'processed'].includes(refund.status))
     .reduce((sum, refund) => sum + Number(refund.amount_paise ?? 0), 0)
   const refundable = calculateRefundableBalance(attempt.amount_paise, [refundedAmount])
   if (params.amountPaise <= 0 || params.amountPaise > refundable) {
@@ -1354,14 +1356,10 @@ export async function getPaymentAttemptDetail(paymentAttemptId: string) {
   if (!attempt) throw new Error(`Payment attempt not found (id: ${paymentAttemptId}).`)
 
   const [refunds, events, auditLogs] = await Promise.all([
-    listPaymentRefunds(200),
-    listPaymentEvents(100),
-    listPaymentAuditLogs(100),
+    listPaymentRefundsByAttemptId(attempt.id),
+    listPaymentEventsByOrderOrPaymentId(attempt.provider_order_id, attempt.provider_payment_id),
+    listPaymentAuditLogsByEntity(attempt.internal_order_type, attempt.internal_order_id),
   ])
-
-  const relatedRefunds = refunds.filter((refund) => refund.payment_attempt_id === attempt.id)
-  const relatedEvents = events.filter((event) => event.provider_order_id === attempt.provider_order_id || event.provider_payment_id === attempt.provider_payment_id)
-  const relatedAuditLogs = auditLogs.filter((log) => String(log.entity_id ?? '') === attempt.internal_order_id)
   const internalOrder = await fetchInternalOrder({
     type: attempt.internal_order_type,
     id: attempt.internal_order_id,
@@ -1371,9 +1369,9 @@ export async function getPaymentAttemptDetail(paymentAttemptId: string) {
   return {
     attempt,
     internalOrder: internalOrder ? asRecord(internalOrder) : null,
-    refunds: relatedRefunds,
-    events: relatedEvents,
-    auditLogs: relatedAuditLogs,
+    refunds,
+    events,
+    auditLogs,
     providerDashboard: {
       paymentUrl: attempt.provider_payment_id ? `https://dashboard.razorpay.com/app/payments/${attempt.provider_payment_id}` : null,
       orderUrl: attempt.provider_order_id ? `https://dashboard.razorpay.com/app/orders/${attempt.provider_order_id}` : null,
