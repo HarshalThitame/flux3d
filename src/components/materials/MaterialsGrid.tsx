@@ -1,200 +1,214 @@
-'use client'
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import MaterialCard from '@/components/materials/MaterialCard'
-import MaterialPopup from '@/components/materials/MaterialPopup'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import MaterialCard from "@/components/materials/MaterialCard";
+import MaterialPopup from "@/components/materials/MaterialPopup";
 
 type MaterialSpec = {
-  id: string
-  name: string
-  tag: string
-  icon: string
-  description: string
-  color?: string
-  gradient?: string
+  id: string;
+  name: string;
+  tag: string;
+  icon: string;
+  description: string;
+  color?: string;
+  gradient?: string;
   properties: {
-    strength: string
-    flexibility: string
-    tempResistance: string
-    difficulty: string
-  }
-  useCases: string[]
-  pros: string[]
-  cons: string[]
+    strength: string;
+    flexibility: string;
+    tempResistance: string;
+    difficulty: string;
+  };
+  useCases: string[];
+  pros: string[];
+  cons: string[];
   settings?: {
-    nozzle: string
-    bed: string
-    speed: string
-  }
-}
+    nozzle: string;
+    bed: string;
+    speed: string;
+  };
+};
 
 type AnchorRect = {
-  left: number
-  top: number
-  right: number
-  bottom: number
-  width: number
-  height: number
-}
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+  width: number;
+  height: number;
+};
 
 type PopupPosition = {
-  left: number
-  top: number
-  width: number
-}
+  left: number;
+  top: number;
+  width: number;
+};
 
 type ApiMaterial = {
-  id: string
-  name: string
-  icon?: string
-  summary?: string
-  colors?: Array<string | { hex?: string }>
-  properties?: MaterialSpec['properties']
-  recommendedFor?: string
-  pricePerGram?: number
-  density?: number
-}
+  id: string;
+  name: string;
+  icon?: string;
+  summary?: string;
+  colors?: Array<string | { hex?: string }>;
+  properties?: MaterialSpec["properties"];
+  recommendedFor?: string;
+  pricePerGram?: number;
+  density?: number;
+};
 
-function getPopupPosition(anchor: AnchorRect, isMobile: boolean): PopupPosition {
-  const viewportWidth = window.innerWidth
-  const viewportHeight = window.innerHeight
-  const gap = 16
+function getPopupPosition(
+  anchor: AnchorRect,
+  isMobile: boolean,
+): PopupPosition {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const gap = 16;
 
   if (isMobile) {
-    const width = Math.min(viewportWidth - 24, 420)
+    const width = Math.min(viewportWidth - 24, 420);
 
     return {
       width,
       left: Math.max((viewportWidth - width) / 2, 12),
       top: Math.max(viewportHeight - 560, 16),
-    }
+    };
   }
 
-  const width = Math.min(380, viewportWidth - 32)
-  const estimatedHeight = 520
-  const roomRight = viewportWidth - anchor.right
-  const roomLeft = anchor.left
-  const canOpenRight = roomRight >= width + gap
-  const canOpenLeft = roomLeft >= width + gap
+  const width = Math.min(380, viewportWidth - 32);
+  const estimatedHeight = 520;
+  const roomRight = viewportWidth - anchor.right;
+  const roomLeft = anchor.left;
+  const canOpenRight = roomRight >= width + gap;
+  const canOpenLeft = roomLeft >= width + gap;
 
-  let left = anchor.right + gap
+  let left = anchor.right + gap;
   if (!canOpenRight && canOpenLeft) {
-    left = anchor.left - width - gap
+    left = anchor.left - width - gap;
   } else if (!canOpenRight) {
-    left = Math.max(Math.min(anchor.left + anchor.width / 2 - width / 2, viewportWidth - width - 16), 16)
+    left = Math.max(
+      Math.min(
+        anchor.left + anchor.width / 2 - width / 2,
+        viewportWidth - width - 16,
+      ),
+      16,
+    );
   }
 
-  const roomBelow = viewportHeight - anchor.bottom
-  const roomAbove = anchor.top
+  const roomBelow = viewportHeight - anchor.bottom;
+  const roomAbove = anchor.top;
 
-  let top = anchor.top - 18
+  let top = anchor.top - 18;
   if (roomBelow < estimatedHeight && roomAbove > estimatedHeight) {
-    top = anchor.bottom - estimatedHeight + 18
+    top = anchor.bottom - estimatedHeight + 18;
   }
 
-  top = Math.max(Math.min(top, viewportHeight - estimatedHeight - 16), 16)
+  top = Math.max(Math.min(top, viewportHeight - estimatedHeight - 16), 16);
 
-  return { left, top, width }
+  return { left, top, width };
 }
 
 function mapApiMaterialToSpec(m: ApiMaterial): MaterialSpec {
-  const firstColor = m.colors?.[0]
+  const firstColor = m.colors?.[0];
 
   return {
     id: m.id,
     name: m.name,
-    tag: 'Admin Catalog',
-    icon: m.icon || '🧩',
-    description: m.summary || `${m.name} is available in the live admin catalog for custom 3D printing jobs.`,
-    color: typeof firstColor === 'string' ? firstColor : firstColor?.hex,
+    tag: "Admin Catalog",
+    icon: m.icon || "🧩",
+    description:
+      m.summary ||
+      `${m.name} is available in the live admin catalog for custom 3D printing jobs.`,
+    color: typeof firstColor === "string" ? firstColor : firstColor?.hex,
     properties: m.properties || {
-      strength: 'Medium',
-      flexibility: 'Medium',
-      tempResistance: 'Medium',
-      difficulty: 'Medium',
+      strength: "Medium",
+      flexibility: "Medium",
+      tempResistance: "Medium",
+      difficulty: "Medium",
     },
-    useCases: m.recommendedFor ? m.recommendedFor.split(',').map((s: string) => s.trim()) : ['Custom printing'],
+    useCases: m.recommendedFor
+      ? m.recommendedFor.split(",").map((s: string) => s.trim())
+      : ["Custom printing"],
     pros: [
       `Priced at ₹${m.pricePerGram}/g`,
       `Density ${m.density} g/cm³`,
-      'Available in live catalog',
+      "Available in live catalog",
     ],
-    cons: [
-      'Lead time depends on part geometry',
-    ],
+    cons: ["Lead time depends on part geometry"],
     settings: {
-      nozzle: '200-230°C',
-      bed: '50-80°C',
-      speed: '40-100 mm/s',
+      nozzle: "200-230°C",
+      bed: "50-80°C",
+      speed: "40-100 mm/s",
     },
-  }
+  };
 }
 
 export default function MaterialsGrid() {
-  const [materials, setMaterials] = useState<MaterialSpec[]>([])
-  const [loading, setLoading] = useState(true)
-  const [activeId, setActiveId] = useState<string | null>(null)
-  const [isMobile, setIsMobile] = useState(false)
-  const activeElementRef = useRef<HTMLButtonElement | null>(null)
-  const rootRef = useRef<HTMLDivElement | null>(null)
+  const [materials, setMaterials] = useState<MaterialSpec[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const activeElementRef = useRef<HTMLButtonElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     async function loadMaterials() {
       try {
-        const res = await fetch('/api/materials')
-        const json = await res.json()
+        const res = await fetch("/api/materials");
+        const json = await res.json();
         if (json.materials && json.materials.length > 0) {
-          setMaterials(json.materials.map(mapApiMaterialToSpec))
+          setMaterials(json.materials.map(mapApiMaterialToSpec));
         }
       } catch (error) {
-        console.error('Failed to load materials:', error)
+        console.error("Failed to load materials:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    loadMaterials()
-  }, [])
+    loadMaterials();
+  }, []);
 
   useEffect(() => {
-    const media = window.matchMedia('(hover: none), (pointer: coarse)')
-    const update = () => setIsMobile(media.matches)
+    const media = window.matchMedia("(hover: none), (pointer: coarse)");
+    const update = () => setIsMobile(media.matches);
 
-    update()
-    media.addEventListener('change', update)
+    update();
+    media.addEventListener("change", update);
 
-    return () => media.removeEventListener('change', update)
-  }, [])
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     if (!isMobile || !activeId) {
-      return
+      return;
     }
 
     const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target as Node
+      const target = event.target as Node;
       if (rootRef.current?.contains(target)) {
-        return
+        return;
       }
-      setActiveId(null)
-      activeElementRef.current = null
-    }
+      setActiveId(null);
+      activeElementRef.current = null;
+    };
 
-    document.addEventListener('pointerdown', handlePointerDown)
-    return () => document.removeEventListener('pointerdown', handlePointerDown)
-  }, [activeId, isMobile])
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [activeId, isMobile]);
 
   const activeMaterial = useMemo(
     () => materials.find((material) => material.id === activeId) ?? null,
-    [activeId, materials]
-  )
+    [activeId, materials],
+  );
 
-  const position = useMemo(() => {
-    const el = activeElementRef.current
+  const [position, setPosition] = useState<ReturnType<
+    typeof getPopupPosition
+  > | null>(null);
+  useLayoutEffect(() => {
+    const el = activeElementRef.current;
     if (!el) {
-      return null
+      setPosition(null);
+      return;
     }
-
-    const rect = el.getBoundingClientRect()
+    const rect = el.getBoundingClientRect();
     const anchor: AnchorRect = {
       left: rect.left,
       top: rect.top,
@@ -202,35 +216,38 @@ export default function MaterialsGrid() {
       bottom: rect.bottom,
       width: rect.width,
       height: rect.height,
-    }
-    return getPopupPosition(anchor, isMobile)
-  }, [activeId, isMobile])
+    };
+    setPosition(getPopupPosition(anchor, isMobile));
+  }, [activeId, isMobile]);
 
   const closePopup = () => {
-    setActiveId(null)
-    activeElementRef.current = null
-  }
+    setActiveId(null);
+    activeElementRef.current = null;
+  };
 
   const openMaterial = (material: MaterialSpec, element: HTMLButtonElement) => {
     if (activeId === material.id) {
-      closePopup()
-      return
+      closePopup();
+      return;
     }
 
-    activeElementRef.current = element
-    setActiveId(material.id)
-  }
+    activeElementRef.current = element;
+    setActiveId(material.id);
+  };
 
   if (loading) {
     return (
       <div ref={rootRef} className="relative">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="animate-pulse rounded-[24px] bg-gray-100 h-48" />
+            <div
+              key={i}
+              className="animate-pulse rounded-[24px] bg-gray-100 h-48"
+            />
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   if (materials.length === 0) {
@@ -238,7 +255,7 @@ export default function MaterialsGrid() {
       <div ref={rootRef} className="relative text-center py-12">
         <p className="text-[#4B5563]">No materials available at the moment.</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -262,5 +279,5 @@ export default function MaterialsGrid() {
         onClose={closePopup}
       />
     </div>
-  )
+  );
 }

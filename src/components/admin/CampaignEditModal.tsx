@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   Loader2,
@@ -9,74 +9,87 @@ import {
   Pencil,
   IndianRupee,
   CheckCircle2,
-} from 'lucide-react'
+} from "lucide-react";
 
 type CampaignEditModalProps = {
   campaign: {
-    id: string
-    name: string
-    daily_budget?: string
-  } | null
-  onClose: () => void
-  onSave: () => void
-}
+    id: string;
+    name: string;
+    daily_budget?: string;
+  } | null;
+  onClose: () => void;
+  onSave: () => void;
+};
 
-export default function CampaignEditModal({ campaign, onClose, onSave }: CampaignEditModalProps) {
-  const [name, setName] = useState(campaign?.name ?? '')
+export default function CampaignEditModal({
+  campaign,
+  onClose,
+  onSave,
+}: CampaignEditModalProps) {
+  const [name, setName] = useState(campaign?.name ?? "");
   const [budget, setBudget] = useState(
     campaign?.daily_budget ? Number(campaign.daily_budget) / 100 : 150,
-  )
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   // Reset state when campaign changes
   useEffect(() => {
-    setName(campaign?.name ?? '')
-    setBudget(campaign?.daily_budget ? Number(campaign.daily_budget) / 100 : 150)
-    setError(null)
-    setSuccess(false)
-  }, [campaign?.id])
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Synchronize form fields when campaign prop changes
+    setName(campaign?.name ?? "");
+    setBudget(
+      campaign?.daily_budget ? Number(campaign.daily_budget) / 100 : 150,
+    );
+    setError(null);
+    setSuccess(false);
+  }, [campaign?.id]);
 
   async function handleSave() {
-    if (!campaign) return
-    setSaving(true)
-    setError(null)
-    setSuccess(false)
+    if (!campaign) return;
+    setSaving(true);
+    setError(null);
+    setSuccess(false);
 
     try {
-      const body: Record<string, unknown> = {}
-      if (name !== campaign.name) body.name = name
-      const originalBudget = campaign.daily_budget ? Number(campaign.daily_budget) / 100 : 150
+      const body: Record<string, unknown> = {};
+      if (name !== campaign.name) body.name = name;
+      const originalBudget = campaign.daily_budget
+        ? Number(campaign.daily_budget) / 100
+        : 150;
       if (budget !== originalBudget) {
-        if (budget < 50) throw new Error('Minimum daily budget is ₹50')
-        if (budget > 100000) throw new Error('Maximum daily budget is ₹1,00,000')
-        body.dailyBudgetPaise = Math.round(budget * 100)
+        if (budget < 50) throw new Error("Minimum daily budget is ₹50");
+        if (budget > 100000)
+          throw new Error("Maximum daily budget is ₹1,00,000");
+        body.dailyBudgetPaise = Math.round(budget * 100);
       }
 
       if (Object.keys(body).length === 0) {
-        onClose()
-        return
+        onClose();
+        return;
       }
 
       const res = await fetch(`/api/admin/ads/campaigns/${campaign.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
-      })
+      });
 
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string; issues?: unknown[] }
-        throw new Error(data.error ?? 'Update failed')
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          issues?: unknown[];
+        };
+        throw new Error(data.error ?? "Update failed");
       }
 
-      setSuccess(true)
-      onSave()
-      setTimeout(() => onClose(), 1200)
+      setSuccess(true);
+      onSave();
+      setTimeout(() => onClose(), 1200);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Update failed')
+      setError(err instanceof Error ? err.message : "Update failed");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
   }
 
@@ -98,7 +111,7 @@ export default function CampaignEditModal({ campaign, onClose, onSave }: Campaig
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2"
           >
             <div className="rounded-2xl border border-[rgba(109,40,217,0.15)] bg-white p-6 shadow-2xl">
@@ -118,7 +131,9 @@ export default function CampaignEditModal({ campaign, onClose, onSave }: Campaig
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-[#6F7192] mb-1.5">Campaign Name</label>
+                  <label className="block text-xs font-medium text-[#6F7192] mb-1.5">
+                    Campaign Name
+                  </label>
                   <input
                     type="text"
                     value={name}
@@ -128,7 +143,9 @@ export default function CampaignEditModal({ campaign, onClose, onSave }: Campaig
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-[#6F7192] mb-1.5">Daily Budget (₹)</label>
+                  <label className="block text-xs font-medium text-[#6F7192] mb-1.5">
+                    Daily Budget (₹)
+                  </label>
                   <div className="relative">
                     <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6F7192]" />
                     <input
@@ -175,7 +192,7 @@ export default function CampaignEditModal({ campaign, onClose, onSave }: Campaig
                       Saving…
                     </>
                   ) : (
-                    'Save Changes'
+                    "Save Changes"
                   )}
                 </button>
               </div>
@@ -184,5 +201,5 @@ export default function CampaignEditModal({ campaign, onClose, onSave }: Campaig
         </>
       )}
     </AnimatePresence>
-  )
+  );
 }

@@ -1,107 +1,121 @@
-'use client'
+"use client";
 
-import { useState, useCallback, useEffect } from 'react'
-import { Send, Eye, X, AlertCircle, Loader2 } from 'lucide-react'
-import type { EmailTemplateRow } from 'types/database'
+import { useState, useCallback, useEffect } from "react";
+import { Send, Eye, X, AlertCircle, Loader2 } from "lucide-react";
+import type { EmailTemplateRow } from "types/database";
 
 export default function TestEmailSender({
   templates,
   preselectedTemplateId,
 }: {
-  templates: EmailTemplateRow[]
-  preselectedTemplateId?: string
+  templates: EmailTemplateRow[];
+  preselectedTemplateId?: string;
 }) {
-  const [selectedTemplateId, setSelectedTemplateId] = useState(preselectedTemplateId ?? '')
-  const [recipient, setRecipient] = useState('')
-  const [variables, setVariables] = useState<Record<string, string>>({})
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null)
-  const [previewLoading, setPreviewLoading] = useState(false)
-  const [sending, setSending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
+  const [selectedTemplateId, setSelectedTemplateId] = useState(
+    preselectedTemplateId ?? "",
+  );
+  const [recipient, setRecipient] = useState("");
+  const [variables, setVariables] = useState<Record<string, string>>({});
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  const selectedTemplate = templates.find((t) => t.id === selectedTemplateId)
+  const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
 
   // Reset variables when template changes
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- Reset preview state when template selection changes */
     if (!selectedTemplate) {
-      setVariables({})
-      setPreviewHtml(null)
-      return
+      setVariables({});
+      setPreviewHtml(null);
+      return;
     }
-    const vars: Record<string, string> = {}
-    const rawVars = selectedTemplate.variables
-    const varNames = Array.isArray(rawVars) ? (rawVars as string[]) : []
+    /* eslint-enable react-hooks/set-state-in-effect */
+    const vars: Record<string, string> = {};
+    const rawVars = selectedTemplate.variables;
+    const varNames = Array.isArray(rawVars) ? (rawVars as string[]) : [];
     for (const name of varNames) {
-      vars[name] = ''
+      vars[name] = "";
     }
-    setVariables(vars)
-    setPreviewHtml(null)
-    setError(null)
-    setSuccess(null)
-  }, [selectedTemplateId])
+    setVariables(vars);
+    setPreviewHtml(null);
+    setError(null);
+    setSuccess(null);
+  }, [selectedTemplateId]);
 
   const updateVariable = useCallback((name: string, value: string) => {
-    setVariables((prev) => ({ ...prev, [name]: value }))
-    setPreviewHtml(null)
-  }, [])
+    setVariables((prev) => ({ ...prev, [name]: value }));
+    setPreviewHtml(null);
+  }, []);
 
   const handlePreview = async () => {
-    if (!selectedTemplateId) return
-    setPreviewLoading(true)
-    setError(null)
+    if (!selectedTemplateId) return;
+    setPreviewLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/admin/email-templates/${selectedTemplateId}/preview`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ variables }),
-      })
-      const json = await res.json()
+      const res = await fetch(
+        `/api/admin/email-templates/${selectedTemplateId}/preview`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ variables }),
+        },
+      );
+      const json = await res.json();
       if (res.ok) {
-        setPreviewHtml(json.html)
+        setPreviewHtml(json.html);
         if (json.missingVariables?.length > 0) {
-          setError(`Missing variables: ${json.missingVariables.join(', ')}`)
+          setError(`Missing variables: ${json.missingVariables.join(", ")}`);
         }
       } else {
-        setError(json.error ?? 'Preview failed')
+        setError(json.error ?? "Preview failed");
       }
     } catch {
-      setError('Network error while generating preview')
+      setError("Network error while generating preview");
     } finally {
-      setPreviewLoading(false)
+      setPreviewLoading(false);
     }
-  }
+  };
 
   const handleSend = async () => {
-    if (!selectedTemplateId || !recipient.trim()) return
-    setSending(true)
-    setError(null)
-    setSuccess(null)
+    if (!selectedTemplateId || !recipient.trim()) return;
+    setSending(true);
+    setError(null);
+    setSuccess(null);
     try {
-      const res = await fetch(`/api/admin/email-templates/${selectedTemplateId}/test`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipient: recipient.trim(), variables }),
-      })
-      const json = await res.json()
+      const res = await fetch(
+        `/api/admin/email-templates/${selectedTemplateId}/test`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recipient: recipient.trim(), variables }),
+        },
+      );
+      const json = await res.json();
       if (res.ok) {
-        setSuccess(`Test email sent! Message ID: ${json.messageId ?? json.logId}`)
+        setSuccess(
+          `Test email sent! Message ID: ${json.messageId ?? json.logId}`,
+        );
         if (json.missingVariables?.length > 0) {
-          setError(`Warning — missing variables used: ${json.missingVariables.join(', ')}`)
+          setError(
+            `Warning — missing variables used: ${json.missingVariables.join(", ")}`,
+          );
         }
       } else {
-        setError(json.error ?? 'Failed to send test email')
+        setError(json.error ?? "Failed to send test email");
       }
     } catch {
-      setError('Network error while sending test email')
+      setError("Network error while sending test email");
     } finally {
-      setSending(false)
+      setSending(false);
     }
-  }
+  };
 
   const inputClass =
-    'w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none transition focus:border-[#6d28d9]/30'
-  const labelClass = 'block text-sm font-medium text-[#0F1B3D] mb-1.5'
+    "w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3 py-2.5 text-sm text-[#0F1B3D] outline-none transition focus:border-[#6d28d9]/30";
+  const labelClass = "block text-sm font-medium text-[#0F1B3D] mb-1.5";
 
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_1.2fr]">
@@ -164,7 +178,7 @@ export default function TestEmailSender({
                 {Object.entries(variables).map(([name, value]) => (
                   <div key={name}>
                     <label className="block text-xs font-medium text-[#6F7192] mb-1">
-                      {'{{' + name + '}}'}
+                      {"{{" + name + "}}"}
                     </label>
                     <input
                       type="text"
@@ -180,7 +194,9 @@ export default function TestEmailSender({
           )}
 
           {selectedTemplate && Object.keys(variables).length === 0 && (
-            <p className="text-xs text-[#6F7192]">This template has no variables.</p>
+            <p className="text-xs text-[#6F7192]">
+              This template has no variables.
+            </p>
           )}
 
           {/* Actions */}
@@ -191,8 +207,12 @@ export default function TestEmailSender({
               disabled={previewLoading || !selectedTemplateId}
               className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-[#0F1B3D] transition hover:bg-gray-50 disabled:opacity-50"
             >
-              {previewLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
-              {previewLoading ? 'Rendering…' : 'Preview'}
+              {previewLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+              {previewLoading ? "Rendering…" : "Preview"}
             </button>
             <button
               type="button"
@@ -200,8 +220,12 @@ export default function TestEmailSender({
               disabled={sending || !selectedTemplateId || !recipient.trim()}
               className="inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#4c1d95] disabled:opacity-50"
             >
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {sending ? 'Sending…' : 'Send Test'}
+              {sending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              {sending ? "Sending…" : "Send Test"}
             </button>
           </div>
         </div>
@@ -232,7 +256,7 @@ export default function TestEmailSender({
                 <iframe
                   srcDoc={previewHtml}
                   className="w-full rounded-xl border border-gray-200"
-                  style={{ height: '600px' }}
+                  style={{ height: "600px" }}
                   sandbox="allow-same-origin"
                   title="Email Preview"
                   suppressHydrationWarning
@@ -250,5 +274,5 @@ export default function TestEmailSender({
         </div>
       </div>
     </div>
-  )
+  );
 }

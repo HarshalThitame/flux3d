@@ -1,0 +1,10 @@
+[
+  {
+    "path": ".next/static/chunks/**/*.js",
+    "limit": "300 KB"
+  },
+  {
+    "path": ".next/static/css/**/*.css",
+    "limit": "100 KB"
+  }
+]

@@ -1,18 +1,29 @@
-'use client'
+"use client";
 
-import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import dynamic from 'next/dynamic'
-import { useReducedMotion } from 'framer-motion'
-import { Box3, Vector3 } from 'three'
-import { loadShopModel, applyVariantTint, type LoadedShopModel } from '@/lib/shop/model-loader'
-import type { ShopProductHotspot } from '@/lib/shop/admin-types'
-import { Box, Maximize2, Minimize2, Move3D, RotateCcw } from 'lucide-react'
+import {
+  Component,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import dynamic from "next/dynamic";
+import { useReducedMotion } from "framer-motion";
+import { Box3, Vector3 } from "three";
+import {
+  loadShopModel,
+  applyVariantTint,
+  type LoadedShopModel,
+} from "@/lib/shop/model-loader";
+import type { ShopProductHotspot } from "@/lib/shop/admin-types";
+import { Box, Maximize2, Minimize2, Move3D, RotateCcw } from "lucide-react";
 
 // Lazy load the heavy 3D canvas so it only ships when a model is present
-const ProductModelCanvas = dynamic(() => import('./ProductModelCanvas'), {
+const ProductModelCanvas = dynamic(() => import("./ProductModelCanvas"), {
   ssr: false,
   loading: () => <ModelSkeleton />,
-})
+});
 
 function ModelSkeleton() {
   return (
@@ -20,23 +31,33 @@ function ModelSkeleton() {
       <div
         className="h-12 w-12 animate-spin rounded-full"
         style={{
-          background: 'conic-gradient(from 0deg, transparent, var(--shop-gold))',
-          mask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))',
-          WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))',
+          background:
+            "conic-gradient(from 0deg, transparent, var(--shop-gold))",
+          mask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))",
+          WebkitMask:
+            "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))",
         }}
       />
       <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--shop-text-muted)]">
         Preparing preview
       </p>
     </div>
-  )
+  );
 }
 
-function ModelError({ message, onRetry }: { message: string; onRetry?: () => void }) {
+function ModelError({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry?: () => void;
+}) {
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-3 rounded-[inherit] bg-[var(--shop-bg-muted)] p-6 text-center">
       <Move3D className="h-8 w-8 text-[var(--shop-text-subtle)]" />
-      <p className="max-w-[240px] text-sm text-[var(--shop-text-secondary)]">{message}</p>
+      <p className="max-w-[240px] text-sm text-[var(--shop-text-secondary)]">
+        {message}
+      </p>
       {onRetry && (
         <button
           type="button"
@@ -48,96 +69,113 @@ function ModelError({ message, onRetry }: { message: string; onRetry?: () => voi
         </button>
       )}
     </div>
-  )
+  );
 }
 
 type ProductModelViewerProps = {
-  modelUrl: string
-  productName?: string
-  className?: string
-  hotspots?: ShopProductHotspot[]
-  tintColor?: string | null
-}
+  modelUrl: string;
+  productName?: string;
+  className?: string;
+  hotspots?: ShopProductHotspot[];
+  tintColor?: string | null;
+};
 
 type ModelCanvasBoundaryProps = {
-  children: ReactNode
-  onReset?: () => void
-}
+  children: ReactNode;
+  onReset?: () => void;
+};
 
 type ModelCanvasBoundaryState = {
-  hasError: boolean
-}
+  hasError: boolean;
+};
 
-class ModelCanvasBoundary extends Component<ModelCanvasBoundaryProps, ModelCanvasBoundaryState> {
-  state: ModelCanvasBoundaryState = { hasError: false }
+class ModelCanvasBoundary extends Component<
+  ModelCanvasBoundaryProps,
+  ModelCanvasBoundaryState
+> {
+  state: ModelCanvasBoundaryState = { hasError: false };
 
   static getDerivedStateFromError(): ModelCanvasBoundaryState {
-    return { hasError: true }
+    return { hasError: true };
   }
 
   componentDidCatch(error: Error) {
-    console.error('3D model render error:', error)
+    console.error("3D model render error:", error);
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false })
-    this.props.onReset?.()
-  }
+    this.setState({ hasError: false });
+    this.props.onReset?.();
+  };
 
   render() {
     if (this.state.hasError) {
-      return <ModelError message="Could not render the 3D model." onRetry={this.handleRetry} />
+      return (
+        <ModelError
+          message="Could not render the 3D model."
+          onRetry={this.handleRetry}
+        />
+      );
     }
-    return this.props.children
+    return this.props.children;
   }
 }
 
-export default function ProductModelViewer({ modelUrl, productName, className = '', hotspots, tintColor }: ProductModelViewerProps) {
-  const [model, setModel] = useState<LoadedShopModel | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const [autoRotate, setAutoRotate] = useState(true)
-  const [reloadKey, setReloadKey] = useState(0)
-  const reduceMotion = useReducedMotion()
-  const containerRef = useRef<HTMLDivElement>(null)
+export default function ProductModelViewer({
+  modelUrl,
+  productName,
+  className = "",
+  hotspots,
+  tintColor,
+}: ProductModelViewerProps) {
+  const [model, setModel] = useState<LoadedShopModel | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [autoRotate, setAutoRotate] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
+  const reduceMotion = useReducedMotion();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let active = true
-    setLoading(true)
-    setError(null)
-    setModel(null)
+    let active = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset loading state before async model fetch
+    setLoading(true);
+    setError(null);
+    setModel(null);
 
     loadShopModel(modelUrl)
       .then((loaded) => {
-        if (!active) return
-        setModel(loaded)
-        setLoading(false)
+        if (!active) return;
+        setModel(loaded);
+        setLoading(false);
       })
       .catch((err) => {
-        if (!active) return
-        setError(err instanceof Error ? err.message : 'Could not load 3D model.')
-        setLoading(false)
-      })
+        if (!active) return;
+        setError(
+          err instanceof Error ? err.message : "Could not load 3D model.",
+        );
+        setLoading(false);
+      });
 
     return () => {
-      active = false
-    }
-  }, [modelUrl, reloadKey])
+      active = false;
+    };
+  }, [modelUrl, reloadKey]);
 
   useEffect(() => {
-    if (model) applyVariantTint(model.object, tintColor)
-  }, [model, tintColor])
+    if (model) applyVariantTint(model.object, tintColor);
+  }, [model, tintColor]);
 
   function retryLoad() {
-    setError(null)
-    setReloadKey((key) => key + 1)
+    setError(null);
+    setReloadKey((key) => key + 1);
   }
 
   const largestDimension = useMemo(() => {
-    if (!model) return 0
-    return Math.max(model.dimensions.x, model.dimensions.y, model.dimensions.z)
-  }, [model])
+    if (!model) return 0;
+    return Math.max(model.dimensions.x, model.dimensions.y, model.dimensions.z);
+  }, [model]);
 
   const viewer = (
     <div
@@ -168,15 +206,21 @@ export default function ProductModelViewer({ modelUrl, productName, className = 
               onClick={() => setAutoRotate((current) => !current)}
               className="pointer-events-auto flex min-h-[40px] items-center gap-1.5 rounded-lg border border-[var(--shop-border-light)] bg-white/95 px-3 text-xs font-semibold text-[var(--shop-text-secondary)] shadow-[var(--shop-shadow-sm)] backdrop-blur-sm transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)] active:scale-95"
             >
-              {autoRotate ? 'Pause rotation' : 'Auto-rotate'}
+              {autoRotate ? "Pause rotation" : "Auto-rotate"}
             </button>
             <button
               type="button"
               onClick={() => setIsFullscreen((current) => !current)}
               className="pointer-events-auto grid h-11 w-11 place-items-center rounded-lg border border-[var(--shop-border-light)] bg-white/95 text-[var(--shop-text-secondary)] shadow-[var(--shop-shadow-sm)] backdrop-blur-sm transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)] active:scale-95"
-              aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen 3D view'}
+              aria-label={
+                isFullscreen ? "Exit fullscreen" : "Fullscreen 3D view"
+              }
             >
-              {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+              {isFullscreen ? (
+                <Minimize2 className="h-5 w-5" />
+              ) : (
+                <Maximize2 className="h-5 w-5" />
+              )}
             </button>
           </div>
           {largestDimension > 0 && (
@@ -187,20 +231,20 @@ export default function ProductModelViewer({ modelUrl, productName, className = 
         </>
       )}
     </div>
-  )
+  );
 
-  if (!isFullscreen) return viewer
+  if (!isFullscreen) return viewer;
 
   return (
     <div
       className="fixed inset-0 z-[150] flex flex-col bg-[var(--shop-bg-base)] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:p-6 sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:pt-[calc(1.5rem+env(safe-area-inset-top))]"
       onClick={(event) => {
-        if (event.target === event.currentTarget) setIsFullscreen(false)
+        if (event.target === event.currentTarget) setIsFullscreen(false);
       }}
     >
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-[var(--shop-font-heading)] text-xl font-semibold text-[var(--shop-text-primary)]">
-          {productName || '3D Preview'}
+          {productName || "3D Preview"}
         </h3>
         <button
           type="button"
@@ -225,5 +269,5 @@ export default function ProductModelViewer({ modelUrl, productName, className = 
         {error && <ModelError message={error} onRetry={retryLoad} />}
       </div>
     </div>
-  )
+  );
 }

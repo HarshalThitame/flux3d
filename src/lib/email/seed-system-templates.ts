@@ -10,14 +10,11 @@
 // Or:  node --loader ts-node/esm src/lib/email/seed-system-templates.ts
 // ============================================================================
 
-import { createAdminClient } from '@/lib/supabase/admin'
-import {
-  getVariableNames,
-  EMAIL_TYPE_META,
-} from './variables'
-import type { EmailTemplateRow } from '../../../types/database'
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getVariableNames, EMAIL_TYPE_META } from "./variables";
+import type { EmailTemplateRow } from "../../../types/database";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://flux3d.in'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://flux3d.in";
 
 // ---------------------------------------------------------------------------
 // Template skeletons — each matches the React Email component pixel-for-pixel
@@ -46,7 +43,8 @@ const SKELETONS: Record<string, string> = {
   If you didn't create an account, you can safely ignore this email. Questions? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
 </p>`,
 
-  password_reset: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
+  password_reset:
+    `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
 <p style="font-size:15px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
   We received a request to reset your Flux3D password from <strong>{{device}}</strong> (IP: <strong>{{ip_address}}</strong>). Click the button below to set a new password.
 </p>
@@ -58,9 +56,10 @@ const SKELETONS: Record<string, string> = {
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
   Didn't request this? Someone may have entered your email by mistake — your password has not been changed. If you're concerned, contact <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
-</p>`.replace(/\s+$/g, ''),
+</p>`.replace(/\s+$/g, ""),
 
-  password_changed: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
+  password_changed:
+    `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
 <p style="font-size:15px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
   Your Flux3D password was successfully changed on <strong>{{changed_at}}</strong> from <strong>{{device}}</strong> (IP: <strong>{{ip_address}}</strong>).
 </p>
@@ -82,9 +81,10 @@ const SKELETONS: Record<string, string> = {
 </p>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
   This is an automated security notification — you don't need to reply to this email.
-</p>`.replace(/\s+$/g, ''),
+</p>`.replace(/\s+$/g, ""),
 
-  account_link_confirmation: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
+  account_link_confirmation:
+    `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Hi {{customer_name}},</p>
 <p style="font-size:15px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
   We received a request to link your WhatsApp number to your Flux3D account. This will import {{order_count}} past guest order(s) placed via WhatsApp. This link is valid for 15 minutes.
 </p>
@@ -93,7 +93,7 @@ const SKELETONS: Record<string, string> = {
 </td></tr></table>
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
   If you didn't request this, you can safely ignore this email. Questions? <a href="mailto:{{support_email}}" style="color:#39BDF8;">{{support_email}}</a>
-</p>`.replace(/\s+$/g, ''),
+</p>`.replace(/\s+$/g, ""),
 
   order_placed_customer: `<p style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px;" class="email-text">Thank you, {{customer_name}}!</p>
 <p style="font-size:15px;line-height:1.6;color:#6b7280;margin:0 0 12px;" class="email-muted">
@@ -353,66 +353,83 @@ const SKELETONS: Record<string, string> = {
 <p style="font-size:13px;color:#6b7280;text-align:center;margin:0;" class="email-muted">
   Stock moves fast — grab yours while it lasts.
 </p>`,
-}
+};
 
 // ---------------------------------------------------------------------------
 // Sample data for each email type (used by seed script only)
 // ---------------------------------------------------------------------------
 
 export const SAMPLE_DATA: Record<string, Record<string, string>> = {
-  welcome: { customer_name: 'Rutik' },
-  email_verification: { customer_name: 'Rutik', verification_url: `${SITE_URL}/verify?token=abc123` },
-  password_reset: { customer_name: 'Rutik', reset_url: `${SITE_URL}/auth/confirm?token_hash=abc123`, ip_address: '203.0.113.42', device: 'Chrome on Windows' },
-  password_changed: { customer_name: 'Rutik', changed_at: '13 Aug 2026, 09:45 pm', ip_address: '203.0.113.42', device: 'Chrome on Windows' },
-  account_link_confirmation: { customer_name: 'Rutik', confirm_url: `${SITE_URL}/link/confirm?token=abc123`, order_count: '3' },
+  welcome: { customer_name: "Rutik" },
+  email_verification: {
+    customer_name: "Rutik",
+    verification_url: `${SITE_URL}/verify?token=abc123`,
+  },
+  password_reset: {
+    customer_name: "Rutik",
+    reset_url: `${SITE_URL}/auth/confirm?token_hash=abc123`,
+    ip_address: "203.0.113.42",
+    device: "Chrome on Windows",
+  },
+  password_changed: {
+    customer_name: "Rutik",
+    changed_at: "13 Aug 2026, 09:45 pm",
+    ip_address: "203.0.113.42",
+    device: "Chrome on Windows",
+  },
+  account_link_confirmation: {
+    customer_name: "Rutik",
+    confirm_url: `${SITE_URL}/link/confirm?token=abc123`,
+    order_count: "3",
+  },
   order_placed_customer: {
-    customer_name: 'Rutik',
-    order_number: 'F3D-2026-001234',
-    order_total: '₹2,499.00',
+    customer_name: "Rutik",
+    order_number: "F3D-2026-001234",
+    order_total: "₹2,499.00",
     order_url: `${SITE_URL}/orders/abc123`,
     items_html: `<p style="font-size:14px;color:#6b7280;margin:4px 0;" class="email-muted">ABS Black Enclosure &middot; Qty 2</p>`,
   },
   order_placed_admin: {
-    customer_name: 'Rutik',
-    customer_email: 'rutik@example.com',
-    order_number: 'F3D-2026-001234',
-    order_total: '₹2,499.00',
+    customer_name: "Rutik",
+    customer_email: "rutik@example.com",
+    order_number: "F3D-2026-001234",
+    order_total: "₹2,499.00",
     admin_order_url: `${SITE_URL}/admin/orders/abc123`,
   },
   model_validation_pass: {
-    customer_name: 'Rutik',
-    order_number: 'F3D-2026-001234',
+    customer_name: "Rutik",
+    order_number: "F3D-2026-001234",
   },
   model_validation_fail: {
-    customer_name: 'Rutik',
-    order_number: 'F3D-2026-001234',
+    customer_name: "Rutik",
+    order_number: "F3D-2026-001234",
     issues_html: `<p style="font-size:14px;color:#6b7280;margin:4px 0;" class="email-muted">&bull; Non-manifold edges detected</p><p style="font-size:14px;color:#6b7280;margin:4px 0;" class="email-muted">&bull; Wall thickness below 1.2mm</p>`,
     admin_quote_url: `${SITE_URL}/admin/quotes/abc123`,
   },
   production_started: {
-    customer_name: 'Rutik',
-    order_number: 'F3D-2026-001234',
-    print_bed_name: ' on Bed-A (Prusa XL)',
-    estimated_completion_date: '15 Aug 2026',
+    customer_name: "Rutik",
+    order_number: "F3D-2026-001234",
+    print_bed_name: " on Bed-A (Prusa XL)",
+    estimated_completion_date: "15 Aug 2026",
   },
   order_shipped: {
-    customer_name: 'Rutik',
-    order_number: 'F3D-2026-001234',
-    courier_name: 'Delhivery',
-    tracking_number: 'AWB123456789',
-    tracking_url: 'https://delhivery.com/track/AWB123',
+    customer_name: "Rutik",
+    order_number: "F3D-2026-001234",
+    courier_name: "Delhivery",
+    tracking_number: "AWB123456789",
+    tracking_url: "https://delhivery.com/track/AWB123",
     estimated_delivery: `<tr><td style="width:50%;vertical-align:top;"><p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5;color:#6b7280;margin:0 0 4px;" class="email-muted">Estimated Delivery</p><p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">18 Aug 2026</p></td></tr>`,
     items_html: `<tr style="margin-bottom:12px;"><td style="width:80%;vertical-align:middle;"><p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0 0 4px;" class="email-text">ABS Black Enclosure</p><p style="font-size:13px;color:#6b7280;margin:0;" class="email-muted">ABS &middot; Black &middot; Qty: 2</p></td></tr>`,
   },
   delivery_confirmation: {
-    customer_name: 'Rutik',
-    order_number: 'F3D-2026-001234',
+    customer_name: "Rutik",
+    order_number: "F3D-2026-001234",
     review_url: `${SITE_URL}/review/abc123`,
   },
   payment_receipt: {
-    customer_name: 'Rutik',
-    order_number: 'F3D-2026-001234',
-    order_date: '10 Aug 2026',
+    customer_name: "Rutik",
+    order_number: "F3D-2026-001234",
+    order_date: "10 Aug 2026",
     order_url: `${SITE_URL}/orders/abc123`,
     items_html: `<tr style="margin-bottom:12px;border-bottom:1px solid #e5e7eb;padding-bottom:12px;"><td style="width:75%;vertical-align:middle;"><p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0 0 4px;" class="email-text">ABS Black Enclosure</p><p style="font-size:13px;color:#6b7280;margin:0;" class="email-muted">&middot; Qty: 2</p></td><td style="width:25%;text-align:right;vertical-align:middle;"><p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">₹2,000.00</p></td></tr>`,
     pricing_html: `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="padding:16px;background-color:#f9fafb;border-radius:10px;border:1px solid #e5e7eb;" class="email-card"><tr style="margin-bottom:8px;"><td><p style="font-size:14px;color:#6b7280;margin:0;" class="email-muted">Subtotal</p></td><td style="text-align:right;"><p style="font-size:14px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">₹2,000.00</p></td></tr><tr style="margin-bottom:8px;"><td><p style="font-size:14px;color:#6b7280;margin:0;" class="email-muted">Discount</p></td><td style="text-align:right;"><p style="font-size:14px;font-weight:600;color:#16a34a;margin:0;">-₹0.00</p></td></tr><tr style="margin-bottom:8px;"><td><p style="font-size:14px;color:#6b7280;margin:0;" class="email-muted">Shipping</p></td><td style="text-align:right;"><p style="font-size:14px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">Free</p></td></tr><tr style="margin-bottom:8px;"><td><p style="font-size:14px;color:#6b7280;margin:0;" class="email-muted">Tax (GST)</p></td><td style="text-align:right;"><p style="font-size:14px;font-weight:600;color:#1a1a1a;margin:0;" class="email-text">₹0.00</p></td></tr><tr><td colspan="2"><hr style="border:none;border-top:1px solid #e5e7eb;margin:12px 0;"></td></tr><tr><td><p style="font-size:14px;font-weight:700;color:#1a1a1a;margin:0;" class="email-text">Grand Total</p></td><td style="text-align:right;"><p style="font-size:14px;font-weight:700;color:#FF5C1A;margin:0;">₹2,000.00</p></td></tr></table>`,
@@ -420,91 +437,94 @@ export const SAMPLE_DATA: Record<string, Record<string, string>> = {
     shipping_address_html: `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 32px 24px;padding:20px;background-color:#f9fafb;border-radius:10px;border:1px solid #e5e7eb;" class="email-card"><tr><td><p style="font-size:15px;font-weight:600;color:#1a1a1a;margin:0 0 4px;" class="email-text">Rutik Thitame</p><p style="font-size:14px;color:#6b7280;margin:0 0 2px;" class="email-muted">+91 98765 43210</p><p style="font-size:14px;color:#6b7280;margin:0 0 2px;" class="email-muted">123 Main Street</p><p style="font-size:14px;color:#6b7280;margin:0;" class="email-muted">Mumbai, Maharashtra — 400001</p></td></tr></table>`,
   },
   payment_failed: {
-    customer_name: 'Rutik',
-    order_number: 'F3D-2026-001234',
-    amount: '₹2,499.00',
+    customer_name: "Rutik",
+    order_number: "F3D-2026-001234",
+    amount: "₹2,499.00",
     retry_url: `${SITE_URL}/orders/abc123/retry`,
   },
   refund_issued: {
-    customer_name: 'Rutik',
-    order_number: 'F3D-2026-001234',
-    refund_amount: '₹2,499.00',
-    refund_method: 'Razorpay (original payment method)',
-    expected_date: '5-7 business days',
+    customer_name: "Rutik",
+    order_number: "F3D-2026-001234",
+    refund_amount: "₹2,499.00",
+    refund_method: "Razorpay (original payment method)",
+    expected_date: "5-7 business days",
   },
   contact_notification: {
-    sender_name: 'Rutik',
-    sender_email: 'rutik@example.com',
-    sender_phone: '+91 98765 43210',
-    message: 'Hello, I have a question about my recent order.',
+    sender_name: "Rutik",
+    sender_email: "rutik@example.com",
+    sender_phone: "+91 98765 43210",
+    message: "Hello, I have a question about my recent order.",
   },
   stock_alert: {
-    alert_count: '4',
-    low_stock_count: '3',
-    out_of_stock_count: '1',
+    alert_count: "4",
+    low_stock_count: "3",
+    out_of_stock_count: "1",
     items_html: `<p style="font-size:14px;color:#6b7280;margin:4px 0;" class="email-muted">Phone Stand Deluxe (SHOP-ABC-001) &middot; Low · 3 left</p><p style="font-size:14px;color:#6b7280;margin:4px 0;" class="email-muted">Desk Organizer Black (SHOP-ABC-002) &middot; Out of stock</p>`,
   },
   back_in_stock: {
-    customer_name: 'Rutik',
-    product_name: 'Phone Stand Deluxe',
-    variant_label: 'Color: Black · Size: Large',
+    customer_name: "Rutik",
+    product_name: "Phone Stand Deluxe",
+    variant_label: "Color: Black · Size: Large",
     product_url: `${SITE_URL}/3d-shop/phone-stand-deluxe`,
   },
-}
+};
 
 // ---------------------------------------------------------------------------
 // Seed function
 // ---------------------------------------------------------------------------
 
 export async function seedSystemTemplates() {
-  const supabase = createAdminClient()
+  const supabase = createAdminClient();
 
-  const types = Object.keys(SKELETONS)
-  let inserted = 0
-  let updated = 0
-  let skipped = 0
+  const types = Object.keys(SKELETONS);
+  let inserted = 0;
+  let updated = 0;
+  const skipped = 0;
 
   for (const emailType of types) {
     // Check if system template already exists
     const { data: existing } = await supabase
-      .from('email_templates')
-      .select('id')
-      .eq('email_type', emailType)
-      .eq('is_system', true)
-      .maybeSingle()
+      .from("email_templates")
+      .select("id")
+      .eq("email_type", emailType)
+      .eq("is_system", true)
+      .maybeSingle();
 
     if (existing) {
       // Update existing system template with latest skeleton
-      const meta = EMAIL_TYPE_META[emailType]
-      const variables = getVariableNames(emailType)
+      const meta = EMAIL_TYPE_META[emailType];
+      const variables = getVariableNames(emailType);
       const { error: updateError } = await supabase
-        .from('email_templates')
+        .from("email_templates")
         .update({
           html_body: SKELETONS[emailType],
           subject: meta.subject,
           variables,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', existing.id)
+        .eq("id", existing.id);
 
       if (updateError) {
-        console.error(`[seed] Failed to update ${emailType}:`, updateError.message)
+        console.error(
+          `[seed] Failed to update ${emailType}:`,
+          updateError.message,
+        );
       } else {
-        console.log(`[seed] Updated ${emailType}`)
-        updated++
+        console.log(`[seed] Updated ${emailType}`);
+        updated++;
       }
-      continue
+      continue;
     }
 
-    const meta = EMAIL_TYPE_META[emailType]
-    const variables = getVariableNames(emailType)
+    const meta = EMAIL_TYPE_META[emailType];
+    const variables = getVariableNames(emailType);
 
     const { data, error } = await supabase
-      .from('email_templates')
+      .from("email_templates")
       .insert({
-        name: meta.subject.replace(/\{\{\w+\}\}/g, 'Sample'),
+        name: meta.subject.replace(/\{\{\w+\}\}/g, "Sample"),
         email_type: emailType,
-        category: meta.category as any,
+        category: meta.category as string,
         subject: meta.subject,
         html_body: SKELETONS[emailType],
         plain_text: null,
@@ -514,93 +534,199 @@ export async function seedSystemTemplates() {
         description: meta.description,
       })
       .select()
-      .single()
+      .single();
 
     if (error) {
-      console.error(`[seed] Failed to insert ${emailType}:`, error.message)
-      continue
+      console.error(`[seed] Failed to insert ${emailType}:`, error.message);
+      continue;
     }
 
     // Insert initial version row
-    await supabase.from('email_template_versions').insert({
+    await supabase.from("email_template_versions").insert({
       template_id: (data as EmailTemplateRow).id,
       version_number: 1,
       subject: meta.subject,
       html_body: SKELETONS[emailType],
       plain_text: null,
       variables,
-    })
+    });
 
-    console.log(`[seed] Inserted ${emailType}`)
-    inserted++
+    console.log(`[seed] Inserted ${emailType}`);
+    inserted++;
   }
 
   // Seed default automation rules for transactional types
   const { data: templates } = await supabase
-    .from('email_templates')
-    .select('id, email_type')
-    .eq('is_system', true)
+    .from("email_templates")
+    .select("id, email_type")
+    .eq("is_system", true);
 
   const templateMap = new Map(
-    (templates ?? []).map((t: any) => [t.email_type, t.id])
-  )
+    (templates ?? []).map((t: Record<string, unknown>) => [
+      t.email_type,
+      String(t.id),
+    ]),
+  );
 
   const defaultRules: Array<{
-    event_name: string
-    template_id: string
-    target_audience: string
-    delay_minutes: number
-    priority: number
+    event_name: string;
+    template_id: string;
+    target_audience: string;
+    delay_minutes: number;
+    priority: number;
   }> = [
-    { event_name: 'user_registered', template_id: templateMap.get('welcome')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
-    { event_name: 'email_verification_requested', template_id: templateMap.get('email_verification')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
-    { event_name: 'password_reset_requested', template_id: templateMap.get('password_reset')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
-    { event_name: 'password_changed', template_id: templateMap.get('password_changed')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
-    { event_name: 'account_linking_requested', template_id: templateMap.get('account_link_confirmation')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
-    { event_name: 'order_created', template_id: templateMap.get('order_placed_customer')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
-    { event_name: 'order_created', template_id: templateMap.get('order_placed_admin')!, target_audience: 'admin', delay_minutes: 0, priority: 1 },
-    { event_name: 'model_validation_passed', template_id: templateMap.get('model_validation_pass')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
-    { event_name: 'model_validation_failed', template_id: templateMap.get('model_validation_fail')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
-    { event_name: 'production_started', template_id: templateMap.get('production_started')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
-    { event_name: 'order_shipped', template_id: templateMap.get('order_shipped')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
-    { event_name: 'order_delivered', template_id: templateMap.get('delivery_confirmation')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
-    { event_name: 'payment_captured', template_id: templateMap.get('payment_receipt')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
-    { event_name: 'payment_failed', template_id: templateMap.get('payment_failed')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
-    { event_name: 'refund_processed', template_id: templateMap.get('refund_issued')!, target_audience: 'customer', delay_minutes: 0, priority: 0 },
-    { event_name: 'contact_form_submitted', template_id: templateMap.get('contact_notification')!, target_audience: 'admin', delay_minutes: 0, priority: 0 },
-  ].filter((r) => r.template_id)
+    {
+      event_name: "user_registered",
+      template_id: templateMap.get("welcome")!,
+      target_audience: "customer",
+      delay_minutes: 0,
+      priority: 0,
+    },
+    {
+      event_name: "email_verification_requested",
+      template_id: templateMap.get("email_verification")!,
+      target_audience: "customer",
+      delay_minutes: 0,
+      priority: 0,
+    },
+    {
+      event_name: "password_reset_requested",
+      template_id: templateMap.get("password_reset")!,
+      target_audience: "customer",
+      delay_minutes: 0,
+      priority: 0,
+    },
+    {
+      event_name: "password_changed",
+      template_id: templateMap.get("password_changed")!,
+      target_audience: "customer",
+      delay_minutes: 0,
+      priority: 0,
+    },
+    {
+      event_name: "account_linking_requested",
+      template_id: templateMap.get("account_link_confirmation")!,
+      target_audience: "customer",
+      delay_minutes: 0,
+      priority: 0,
+    },
+    {
+      event_name: "order_created",
+      template_id: templateMap.get("order_placed_customer")!,
+      target_audience: "customer",
+      delay_minutes: 0,
+      priority: 0,
+    },
+    {
+      event_name: "order_created",
+      template_id: templateMap.get("order_placed_admin")!,
+      target_audience: "admin",
+      delay_minutes: 0,
+      priority: 1,
+    },
+    {
+      event_name: "model_validation_passed",
+      template_id: templateMap.get("model_validation_pass")!,
+      target_audience: "customer",
+      delay_minutes: 0,
+      priority: 0,
+    },
+    {
+      event_name: "model_validation_failed",
+      template_id: templateMap.get("model_validation_fail")!,
+      target_audience: "customer",
+      delay_minutes: 0,
+      priority: 0,
+    },
+    {
+      event_name: "production_started",
+      template_id: templateMap.get("production_started")!,
+      target_audience: "customer",
+      delay_minutes: 0,
+      priority: 0,
+    },
+    {
+      event_name: "order_shipped",
+      template_id: templateMap.get("order_shipped")!,
+      target_audience: "customer",
+      delay_minutes: 0,
+      priority: 0,
+    },
+    {
+      event_name: "order_delivered",
+      template_id: templateMap.get("delivery_confirmation")!,
+      target_audience: "customer",
+      delay_minutes: 0,
+      priority: 0,
+    },
+    {
+      event_name: "payment_captured",
+      template_id: templateMap.get("payment_receipt")!,
+      target_audience: "customer",
+      delay_minutes: 0,
+      priority: 0,
+    },
+    {
+      event_name: "payment_failed",
+      template_id: templateMap.get("payment_failed")!,
+      target_audience: "customer",
+      delay_minutes: 0,
+      priority: 0,
+    },
+    {
+      event_name: "refund_processed",
+      template_id: templateMap.get("refund_issued")!,
+      target_audience: "customer",
+      delay_minutes: 0,
+      priority: 0,
+    },
+    {
+      event_name: "contact_form_submitted",
+      template_id: templateMap.get("contact_notification")!,
+      target_audience: "admin",
+      delay_minutes: 0,
+      priority: 0,
+    },
+  ].filter((r) => r.template_id);
 
   for (const rule of defaultRules) {
     const { data: existing } = await supabase
-      .from('email_automation_rules')
-      .select('id')
-      .eq('event_name', rule.event_name)
-      .eq('template_id', rule.template_id)
-      .maybeSingle()
+      .from("email_automation_rules")
+      .select("id")
+      .eq("event_name", rule.event_name)
+      .eq("template_id", rule.template_id)
+      .maybeSingle();
 
     if (!existing) {
-      const { error } = await supabase.from('email_automation_rules').insert(rule)
+      const { error } = await supabase
+        .from("email_automation_rules")
+        .insert(rule);
       if (error) {
-        console.error(`[seed] Failed to insert rule ${rule.event_name}:`, error.message)
+        console.error(
+          `[seed] Failed to insert rule ${rule.event_name}:`,
+          error.message,
+        );
       } else {
-        console.log(`[seed] Inserted rule ${rule.event_name}`)
+        console.log(`[seed] Inserted rule ${rule.event_name}`);
       }
     }
   }
 
-  console.log(`\n[seed] Done: ${inserted} templates inserted, ${updated} updated, ${skipped} skipped`)
+  console.log(
+    `\n[seed] Done: ${inserted} templates inserted, ${updated} updated, ${skipped} skipped`,
+  );
 }
 
 // CLI entrypoint (ESM-safe check)
-const runningDirectly = process.argv[1] && (
-  process.argv[1].endsWith('/seed-system-templates.ts') ||
-  process.argv[1].endsWith('/seed-system-templates.js')
-)
+const runningDirectly =
+  process.argv[1] &&
+  (process.argv[1].endsWith("/seed-system-templates.ts") ||
+    process.argv[1].endsWith("/seed-system-templates.js"));
 if (runningDirectly) {
   seedSystemTemplates()
     .then(() => process.exit(0))
     .catch((err) => {
-      console.error('[seed] Fatal error:', err)
-      process.exit(1)
-    })
+      console.error("[seed] Fatal error:", err);
+      process.exit(1);
+    });
 }

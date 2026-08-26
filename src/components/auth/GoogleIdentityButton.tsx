@@ -1,14 +1,14 @@
-'use client'
+"use client";
 
-import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { AlertCircle, Loader2 } from 'lucide-react'
-import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type GoogleIdentityButtonProps = {
-  nextPath: string
-  className?: string
-}
+  nextPath: string;
+  className?: string;
+};
 
 // Google Identity Services global types
 declare global {
@@ -17,55 +17,64 @@ declare global {
       accounts: {
         id: {
           initialize: (config: {
-            client_id: string
-            callback: (response: { credential?: string; error?: string }) => void
-            nonce?: string
-            use_fedcm_for_prompt?: boolean
-            auto_select?: boolean
-            cancel_on_tap_outside?: boolean
-            itp_support?: boolean
-            context?: 'signin' | 'signup' | 'use'
-            ux_mode?: 'popup' | 'redirect'
-          }) => void
+            client_id: string;
+            callback: (response: {
+              credential?: string;
+              error?: string;
+            }) => void;
+            nonce?: string;
+            use_fedcm_for_prompt?: boolean;
+            auto_select?: boolean;
+            cancel_on_tap_outside?: boolean;
+            itp_support?: boolean;
+            context?: "signin" | "signup" | "use";
+            ux_mode?: "popup" | "redirect";
+          }) => void;
           renderButton: (
             parent: HTMLElement,
             options: {
-              type?: 'standard' | 'icon'
-              theme?: 'outline' | 'filled_blue' | 'filled_black'
-              size?: 'large' | 'medium' | 'small'
-              text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin'
-              shape?: 'rectangular' | 'pill' | 'circle' | 'square'
-              logo_alignment?: 'left' | 'center'
-              width?: string | number
-              locale?: string
-            }
-          ) => void
-          prompt: (momentListener?: (notification: {
-            isNotDisplayed: () => boolean
-            isSkippedMoment: () => boolean
-            isDismissedMoment: () => boolean
-            getNotDisplayedReason: () => string
-            getSkippedReason: () => string
-            getDismissedReason: () => string
-          }) => void) => void
-          cancel: () => void
-        }
-      }
-    }
+              type?: "standard" | "icon";
+              theme?: "outline" | "filled_blue" | "filled_black";
+              size?: "large" | "medium" | "small";
+              text?: "signin_with" | "signup_with" | "continue_with" | "signin";
+              shape?: "rectangular" | "pill" | "circle" | "square";
+              logo_alignment?: "left" | "center";
+              width?: string | number;
+              locale?: string;
+            },
+          ) => void;
+          prompt: (
+            momentListener?: (notification: {
+              isNotDisplayed: () => boolean;
+              isSkippedMoment: () => boolean;
+              isDismissedMoment: () => boolean;
+              getNotDisplayedReason: () => string;
+              getSkippedReason: () => string;
+              getDismissedReason: () => string;
+            }) => void,
+          ) => void;
+          cancel: () => void;
+        };
+      };
+    };
   }
 }
 
 async function generateNonce(): Promise<[string, string]> {
-  const nonce = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))))
-  const encoder = new TextEncoder()
-  const encodedNonce = encoder.encode(nonce)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', encodedNonce)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  const hashedNonce = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
-  return [nonce, hashedNonce]
+  const nonce = btoa(
+    String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))),
+  );
+  const encoder = new TextEncoder();
+  const encodedNonce = encoder.encode(nonce);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encodedNonce);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashedNonce = hashArray
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return [nonce, hashedNonce];
 }
 
-function GoogleGIcon({ className = 'h-5 w-5' }: { className?: string }) {
+function GoogleGIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (
     <svg aria-hidden="true" className={className} viewBox="0 0 24 24">
       <path
@@ -85,91 +94,101 @@ function GoogleGIcon({ className = 'h-5 w-5' }: { className?: string }) {
         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06L5.84 9.9C6.71 7.31 9.14 5.38 12 5.38z"
       />
     </svg>
-  )
+  );
 }
 
-export default function GoogleIdentityButton({ nextPath, className = '' }: GoogleIdentityButtonProps) {
-  const router = useRouter()
-  const buttonRef = useRef<HTMLDivElement>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [gisReady, setGisReady] = useState(false)
-  const [gisInitializing, setGisInitializing] = useState(true)
-  const nonceRef = useRef<string>('')
+export default function GoogleIdentityButton({
+  nextPath,
+  className = "",
+}: GoogleIdentityButtonProps) {
+  const router = useRouter();
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [gisReady, setGisReady] = useState(false);
+  const [gisInitializing, setGisInitializing] = useState(true);
+  const nonceRef = useRef<string>("");
 
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
-    if (!clientId || !buttonRef.current) return
+    if (!clientId || !buttonRef.current) return;
 
-    let script: HTMLScriptElement | null = null
-    let cancelled = false
+    let script: HTMLScriptElement | null = null;
+    let cancelled = false;
 
     const init = async () => {
       try {
-        setGisInitializing(true)
+        setGisInitializing(true);
 
         // Load Google Identity Services script if not already present
-        if (!document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
-          script = document.createElement('script')
-          script.src = 'https://accounts.google.com/gsi/client'
-          script.async = true
-          script.defer = true
-          document.head.appendChild(script)
+        if (
+          !document.querySelector(
+            'script[src="https://accounts.google.com/gsi/client"]',
+          )
+        ) {
+          script = document.createElement("script");
+          script.src = "https://accounts.google.com/gsi/client";
+          script.async = true;
+          script.defer = true;
+          document.head.appendChild(script);
 
           await new Promise<void>((resolve, reject) => {
-            script!.onload = () => resolve()
-            script!.onerror = () => reject(new Error('Failed to load Google Identity Services'))
-          })
+            script!.onload = () => resolve();
+            script!.onerror = () =>
+              reject(new Error("Failed to load Google Identity Services"));
+          });
         }
 
-        if (cancelled) return
+        if (cancelled) return;
 
         if (!window.google?.accounts?.id) {
-          throw new Error('Google Identity Services not available')
+          throw new Error("Google Identity Services not available");
         }
 
-        const [nonce, hashedNonce] = await generateNonce()
-        nonceRef.current = nonce
+        const [nonce, hashedNonce] = await generateNonce();
+        nonceRef.current = nonce;
 
         window.google.accounts.id.initialize({
           client_id: clientId,
           callback: async (response) => {
             if (response.error) {
-              setError('Google sign-in was cancelled or failed.')
-              setLoading(false)
-              return
+              setError("Google sign-in was cancelled or failed.");
+              setLoading(false);
+              return;
             }
             if (!response.credential) {
-              setError('No credential returned from Google.')
-              setLoading(false)
-              return
+              setError("No credential returned from Google.");
+              setLoading(false);
+              return;
             }
 
-            setLoading(true)
-            setError(null)
+            setLoading(true);
+            setError(null);
 
             try {
-              const supabase = getSupabaseBrowserClient()
-              const { data, error: signInError } = await supabase.auth.signInWithIdToken({
-                provider: 'google',
-                token: response.credential,
-                nonce: nonceRef.current,
-              })
+              const supabase = getSupabaseBrowserClient();
+              const { data, error: signInError } =
+                await supabase.auth.signInWithIdToken({
+                  provider: "google",
+                  token: response.credential,
+                  nonce: nonceRef.current,
+                });
 
               if (signInError) {
-                throw signInError
+                throw signInError;
               }
 
               if (data.session) {
-                router.push(nextPath)
+                router.push(nextPath);
               } else {
-                throw new Error('No session created.')
+                throw new Error("No session created.");
               }
             } catch (err) {
-              const message = err instanceof Error ? err.message : 'Sign-in failed.'
-              setError(message)
-              setLoading(false)
+              const message =
+                err instanceof Error ? err.message : "Sign-in failed.";
+              setError(message);
+              setLoading(false);
             }
           },
           nonce: hashedNonce,
@@ -177,120 +196,119 @@ export default function GoogleIdentityButton({ nextPath, className = '' }: Googl
           auto_select: true,
           itp_support: true,
           cancel_on_tap_outside: false,
-          context: 'signin',
-          ux_mode: 'popup',
-        })
+          context: "signin",
+          ux_mode: "popup",
+        });
 
-        if (cancelled || !buttonRef.current) return
+        if (cancelled || !buttonRef.current) return;
 
         // GIS only accepts an integer pixel width ("100%" logs an error and is
         // ignored), so measure the container instead.
-        const containerWidth = Math.floor(buttonRef.current.clientWidth)
+        const containerWidth = Math.floor(buttonRef.current.clientWidth);
 
         window.google.accounts.id.renderButton(buttonRef.current, {
-          type: 'standard',
-          theme: 'outline',
-          size: 'large',
-          text: 'continue_with',
-          shape: 'rectangular',
-          logo_alignment: 'left',
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          text: "continue_with",
+          shape: "rectangular",
+          logo_alignment: "left",
           ...(containerWidth > 0 ? { width: containerWidth } : {}),
-          locale: 'en',
-        })
+          locale: "en",
+        });
 
         // Trigger One Tap prompt for returning users.
         window.google.accounts.id.prompt((notification) => {
           if (notification.isNotDisplayed()) {
-            const reason = notification.getNotDisplayedReason()
-            if (process.env.NODE_ENV === 'development') {
-              // eslint-disable-next-line no-console
-              console.log('[GIS] One Tap not displayed:', reason)
+            const reason = notification.getNotDisplayedReason();
+            if (process.env.NODE_ENV === "development") {
+              console.log("[GIS] One Tap not displayed:", reason);
             }
           } else if (notification.isSkippedMoment()) {
-            const reason = notification.getSkippedReason()
-            if (process.env.NODE_ENV === 'development') {
-              // eslint-disable-next-line no-console
-              console.log('[GIS] One Tap skipped:', reason)
+            const reason = notification.getSkippedReason();
+            if (process.env.NODE_ENV === "development") {
+              console.log("[GIS] One Tap skipped:", reason);
             }
           }
-        })
+        });
 
-        setGisReady(true)
-        setGisInitializing(false)
+        setGisReady(true);
+        setGisInitializing(false);
       } catch (err) {
-        if (cancelled) return
-        const message = err instanceof Error ? err.message : 'Google sign-in unavailable.'
-        setError(message)
-        setGisReady(false)
-        setGisInitializing(false)
+        if (cancelled) return;
+        const message =
+          err instanceof Error ? err.message : "Google sign-in unavailable.";
+        setError(message);
+        setGisReady(false);
+        setGisInitializing(false);
       }
-    }
+    };
 
-    init()
+    init();
 
     return () => {
-      cancelled = true
+      cancelled = true;
       if (window.google?.accounts?.id) {
         try {
-          window.google.accounts.id.cancel()
+          window.google.accounts.id.cancel();
         } catch {
           // cancel() may throw if no prompt is active — safe to ignore.
         }
       }
       if (script && document.head.contains(script)) {
-        document.head.removeChild(script)
+        document.head.removeChild(script);
       }
-    }
-  }, [clientId, nextPath, router])
+    };
+  }, [clientId, nextPath, router]);
 
   const handleFallbackLogin = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
-      const supabase = getSupabaseBrowserClient()
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
+      const supabase = getSupabaseBrowserClient();
+      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
 
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
           redirectTo,
           queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
+            access_type: "offline",
+            prompt: "consent",
           },
         },
-      })
+      });
 
       if (oauthError) {
-        throw oauthError
+        throw oauthError;
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Redirect failed.'
-      setError(message)
-      setLoading(false)
+      const message = err instanceof Error ? err.message : "Redirect failed.";
+      setError(message);
+      setLoading(false);
     }
-  }
+  };
 
   const handleRetry = () => {
-    setError(null)
-    setGisInitializing(true)
-    setGisReady(false)
+    setError(null);
+    setGisInitializing(true);
+    setGisReady(false);
     // Force re-mount by briefly clearing the ref content
     if (buttonRef.current) {
-      buttonRef.current.innerHTML = ''
+      buttonRef.current.innerHTML = "";
     }
     // The useEffect will re-run because we change a state that doesn't affect deps,
     // but we need a better approach. Let's just reload the page for simplicity.
-    window.location.reload()
-  }
+    window.location.reload();
+  };
 
   if (!clientId) {
     return (
       <div className="rounded-2xl border border-red-200/60 bg-red-50/80 px-4 py-3 text-sm text-red-700">
         Google sign-in is not configured.
       </div>
-    )
+    );
   }
 
   return (
@@ -303,14 +321,16 @@ export default function GoogleIdentityButton({ nextPath, className = '' }: Googl
       <div
         className="group relative overflow-hidden rounded-2xl border border-[rgba(91,33,182,0.12)] bg-white/60 p-1 transition-all duration-300 ease-out hover:border-[rgba(91,33,182,0.22)] hover:shadow-[0_4px_20px_rgba(91,33,182,0.10)] hover:-translate-y-px"
         style={{
-          boxShadow: '0 2px 12px rgba(91, 33, 182, 0.06), inset 0 1px 0 rgba(255,255,255,0.8)',
+          boxShadow:
+            "0 2px 12px rgba(91, 33, 182, 0.06), inset 0 1px 0 rgba(255,255,255,0.8)",
         }}
       >
         {/* Subtle gradient overlay on hover */}
         <div
           className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           style={{
-            background: 'linear-gradient(135deg, rgba(124,58,237,0.03) 0%, rgba(168,85,247,0.02) 100%)',
+            background:
+              "linear-gradient(135deg, rgba(124,58,237,0.03) 0%, rgba(168,85,247,0.02) 100%)",
           }}
         />
 
@@ -319,7 +339,7 @@ export default function GoogleIdentityButton({ nextPath, className = '' }: Googl
           {/* Google renders its branded button into this div */}
           <div
             ref={buttonRef}
-            className={`w-full ${!gisReady && gisInitializing ? 'min-h-[44px]' : ''}`}
+            className={`w-full ${!gisReady && gisInitializing ? "min-h-[44px]" : ""}`}
             aria-label="Sign in with Google"
           />
 
@@ -356,9 +376,10 @@ export default function GoogleIdentityButton({ nextPath, className = '' }: Googl
           <span
             className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
             style={{
-              background: 'linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.18) 38%, rgba(255,255,255,0.30) 50%, rgba(255,255,255,0.18) 62%, transparent 100%)',
-              transform: 'translateX(-130%)',
-              transition: 'transform 700ms ease',
+              background:
+                "linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.18) 38%, rgba(255,255,255,0.30) 50%, rgba(255,255,255,0.18) 62%, transparent 100%)",
+              transform: "translateX(-130%)",
+              transition: "transform 700ms ease",
             }}
           />
           <GoogleGIcon className="h-5 w-5" />
@@ -369,8 +390,13 @@ export default function GoogleIdentityButton({ nextPath, className = '' }: Googl
       {/* Premium loading state */}
       {loading && (
         <div className="flex items-center justify-center gap-2 rounded-2xl border border-[rgba(91,33,182,0.10)] bg-[rgba(91,33,182,0.02)] px-4 py-3">
-          <Loader2 className="h-4 w-4 animate-spin text-[#6d28d9]" aria-hidden="true" />
-          <span className="text-sm font-semibold text-[#6d28d9]">Establishing secure session...</span>
+          <Loader2
+            className="h-4 w-4 animate-spin text-[#6d28d9]"
+            aria-hidden="true"
+          />
+          <span className="text-sm font-semibold text-[#6d28d9]">
+            Establishing secure session...
+          </span>
         </div>
       )}
 
@@ -378,7 +404,10 @@ export default function GoogleIdentityButton({ nextPath, className = '' }: Googl
       {error && (
         <div className="overflow-hidden rounded-2xl border border-red-200/60 bg-red-50/80 shadow-[0_2px_8px_rgba(220,38,38,0.06)]">
           <div className="flex items-start gap-3 px-4 py-3">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" aria-hidden="true" />
+            <AlertCircle
+              className="mt-0.5 h-4 w-4 shrink-0 text-red-500"
+              aria-hidden="true"
+            />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-red-700">{error}</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -393,8 +422,8 @@ export default function GoogleIdentityButton({ nextPath, className = '' }: Googl
                 <button
                   type="button"
                   onClick={() => {
-                    const emailInput = document.getElementById('email')
-                    emailInput?.focus()
+                    const emailInput = document.getElementById("email");
+                    emailInput?.focus();
                   }}
                   className="text-xs font-bold text-red-600 underline decoration-red-300 underline-offset-2 transition hover:text-red-800"
                 >
@@ -406,5 +435,5 @@ export default function GoogleIdentityButton({ nextPath, className = '' }: Googl
         </div>
       )}
     </div>
-  )
+  );
 }

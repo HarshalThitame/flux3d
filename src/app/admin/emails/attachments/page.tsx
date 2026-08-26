@@ -1,59 +1,65 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useCallback } from 'react'
-import AttachmentManager, { type AttachmentFile } from '@/components/admin/emails/AttachmentManager'
+import { useState, useEffect, useCallback } from "react";
+import AttachmentManager, {
+  type AttachmentFile,
+} from "@/components/admin/emails/AttachmentManager";
 
 export default function EmailAttachmentsPage() {
-  const [files, setFiles] = useState<AttachmentFile[]>([])
-  const [loading, setLoading] = useState(true)
+  const [files, setFiles] = useState<AttachmentFile[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const res = await fetch('/api/admin/email-attachments')
+      const res = await fetch("/api/admin/email-attachments");
       if (res.ok) {
-        const json = await res.json()
-        setFiles(json.data ?? [])
+        const json = await res.json();
+        setFiles(json.data ?? []);
       } else {
-        console.error('[attachments] Failed to load:', await res.text())
+        console.error("[attachments] Failed to load:", await res.text());
       }
     } catch {
-      console.error('[attachments] Network error')
+      console.error("[attachments] Network error");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    void refresh()
-  }, [refresh])
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Data fetch on mount via wrapped action
+    void refresh();
+  }, [refresh]);
 
   const handleUpload = async (file: File) => {
-    const formData = new FormData()
-    formData.append('file', file)
-    const res = await fetch('/api/admin/email-attachments', {
-      method: 'POST',
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/admin/email-attachments", {
+      method: "POST",
       body: formData,
-    })
+    });
     if (!res.ok) {
-      const json = await res.json().catch(() => ({}))
-      throw new Error(json.error ?? 'Upload failed')
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error ?? "Upload failed");
     }
-    await refresh()
-  }
+    await refresh();
+  };
 
   const handleDelete = async (name: string) => {
-    if (!confirm(`Delete "${name}"?`)) return
-    const res = await fetch(`/api/admin/email-attachments/${encodeURIComponent(name)}`, {
-      method: 'DELETE',
-    })
+    if (!confirm(`Delete "${name}"?`)) return;
+    const res = await fetch(
+      `/api/admin/email-attachments/${encodeURIComponent(name)}`,
+      {
+        method: "DELETE",
+      },
+    );
     if (!res.ok) {
-      const json = await res.json().catch(() => ({}))
-      alert(json.error ?? 'Delete failed')
-      return
+      const json = await res.json().catch(() => ({}));
+      alert(json.error ?? "Delete failed");
+      return;
     }
-    await refresh()
-  }
+    await refresh();
+  };
 
   return (
     <AttachmentManager
@@ -62,5 +68,5 @@ export default function EmailAttachmentsPage() {
       onUpload={handleUpload}
       loading={loading}
     />
-  )
+  );
 }

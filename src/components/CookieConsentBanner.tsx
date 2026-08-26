@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useConsent } from '@/lib/consent'
+import { useEffect, useState } from "react";
+import { useConsent } from "@/lib/consent";
 
 /**
  * Cookie consent banner for India (DPDP Act 2023). Shows once until the
@@ -12,19 +12,21 @@ import { useConsent } from '@/lib/consent'
  * marketing (Meta Pixel) load only after the user opts in.
  */
 export default function CookieConsentBanner() {
-  const { consent, acceptAll, acceptEssential, updateCategories } = useConsent()
-  const [showPreferences, setShowPreferences] = useState(false)
+  const { consent, acceptAll, acceptEssential, updateCategories } =
+    useConsent();
+  const [showPreferences, setShowPreferences] = useState(false);
   // Mount-gate: the server snapshot for consent is always null, so rendering
   // during SSR/hydration would briefly show the banner even when the user has
   // already accepted. Wait until after mount, when localStorage is readable.
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration guard: localStorage is only readable after mount
+  useEffect(() => setMounted(true), []);
 
   if (!mounted || consent !== null) {
-    return null
+    return null;
   }
 
-  const prefs = { essential: true, analytics: false, marketing: false }
+  const prefs = { essential: true, analytics: false, marketing: false };
 
   return (
     <div
@@ -35,11 +37,13 @@ export default function CookieConsentBanner() {
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center">
         <div className="flex-1">
-          <p className="text-sm font-semibold text-[#0F1B3D]">We value your privacy</p>
+          <p className="text-sm font-semibold text-[#0F1B3D]">
+            We value your privacy
+          </p>
           <p className="mt-1 text-xs leading-relaxed text-[#6F7192]">
-            We use cookies to improve your browsing experience and to understand how our
-            site is used. Essential cookies are always on. Analytics and marketing cookies
-            are only enabled with your consent.
+            We use cookies to improve your browsing experience and to understand
+            how our site is used. Essential cookies are always on. Analytics and
+            marketing cookies are only enabled with your consent.
           </p>
         </div>
 
@@ -50,7 +54,9 @@ export default function CookieConsentBanner() {
               <input
                 type="checkbox"
                 checked={prefs.analytics}
-                onChange={(e) => updateCategories({ ...prefs, analytics: e.target.checked })}
+                onChange={(e) =>
+                  updateCategories({ ...prefs, analytics: e.target.checked })
+                }
                 className="h-4 w-4 accent-[#6d28d9]"
               />
             </label>
@@ -59,7 +65,9 @@ export default function CookieConsentBanner() {
               <input
                 type="checkbox"
                 checked={prefs.marketing}
-                onChange={(e) => updateCategories({ ...prefs, marketing: e.target.checked })}
+                onChange={(e) =>
+                  updateCategories({ ...prefs, marketing: e.target.checked })
+                }
                 className="h-4 w-4 accent-[#6d28d9]"
               />
             </label>
@@ -98,5 +106,5 @@ export default function CookieConsentBanner() {
         )}
       </div>
     </div>
-  )
+  );
 }

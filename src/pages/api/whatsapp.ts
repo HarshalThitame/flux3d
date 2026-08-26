@@ -3,26 +3,50 @@ import crypto from "node:crypto";
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { createClient } from "@supabase/supabase-js";
-import * as Sentry from '@sentry/nextjs';
-import { getEnv } from '@/lib/env';
+import * as Sentry from "@sentry/nextjs";
+import { getEnv } from "@/lib/env";
 import { rateLimitCheck } from "@/lib/rate-limit";
 import { getCachedBusinessSettings } from "@/lib/settings";
 import { FALLBACK_SETTINGS } from "@/lib/settings-fallback";
-import { logWhatsAppRagAudit, type WhatsAppRagAuditRecord } from "@/lib/whatsapp-rag-audit";
-import { getWhatsAppRagContext, fetchStructuredData, type StructuredDataResult } from "@/lib/whatsapp-rag";
+import {
+  logWhatsAppRagAudit,
+  type WhatsAppRagAuditRecord,
+} from "@/lib/whatsapp-rag-audit";
+import {
+  getWhatsAppRagContext,
+  fetchStructuredData,
+  type StructuredDataResult,
+} from "@/lib/whatsapp-rag";
 import { extractSearchKeywords } from "@/lib/whatsapp-keywords";
-import { validatePricesInResponse, type ValidationResult } from "@/lib/whatsapp-price-validation";
-import { classifyIntent, type ClassifiedIntent } from "@/lib/whatsapp-intent-classifier";
-import { handleAccountLinkWhatsApp } from '@/lib/whatsapp/account-link-flow'
-import { handleOrderFlow, type OrderInteraction, ORDERING_ENABLED } from "@/lib/whatsapp/order-flow";
-import { parseWhatsAppMessage, type ParsedWhatsAppMessage } from "@/lib/whatsapp/message-parser";
+import {
+  validatePricesInResponse,
+  type ValidationResult,
+} from "@/lib/whatsapp-price-validation";
+import {
+  classifyIntent,
+  type ClassifiedIntent,
+} from "@/lib/whatsapp-intent-classifier";
+import { handleAccountLinkWhatsApp } from "@/lib/whatsapp/account-link-flow";
+import {
+  handleOrderFlow,
+  type OrderInteraction,
+  ORDERING_ENABLED,
+} from "@/lib/whatsapp/order-flow";
+import {
+  parseWhatsAppMessage,
+  type ParsedWhatsAppMessage,
+} from "@/lib/whatsapp/message-parser";
 import { detectWhatsAppIntent } from "@/lib/whatsapp/intent";
-import { downloadAndStoreWhatsAppMedia, type MediaResult } from "@/lib/whatsapp/media";
+import {
+  downloadAndStoreWhatsAppMedia,
+  type MediaResult,
+} from "@/lib/whatsapp/media";
 import { getOrderSession } from "@/lib/whatsapp/session";
 import { classifyGraphError } from "@/lib/whatsapp/graph-errors";
 import { sendOpsAlert } from "@/lib/alerts";
 import { getQStashClient } from "@/lib/email/qstash";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let cachedServiceClient: any = null;
 function getServiceClient() {
   if (cachedServiceClient) return cachedServiceClient;
@@ -34,8 +58,9 @@ function getServiceClient() {
       fetch: (url: RequestInfo | URL, options?: RequestInit) => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 8000);
-        return fetch(url, { ...options, signal: controller.signal })
-          .finally(() => clearTimeout(timeout));
+        return fetch(url, { ...options, signal: controller.signal }).finally(
+          () => clearTimeout(timeout),
+        );
       },
     },
   });
@@ -48,14 +73,24 @@ function getOpenAI() {
   return new OpenAI({ apiKey: key });
 }
 
-const WHATSAPP_OPENAI_MODEL = process.env.WHATSAPP_OPENAI_MODEL?.trim() || "gpt-4.1-mini";
-const WHATSAPP_API_VERSION = process.env.WHATSAPP_API_VERSION?.trim() || "v22.0";
-const WHATSAPP_REPLY_TO_ALL = (process.env.WHATSAPP_REPLY_TO_ALL?.trim() || "true") !== "false";
-const WHATSAPP_AI_ASSISTANT_ENABLED = (process.env.WHATSAPP_AI_ASSISTANT_ENABLED?.trim() || "true") !== "false";
-const WHATSAPP_RAG_ENABLED = (process.env.WHATSAPP_RAG_ENABLED?.trim() || "true") !== "false";
-const WHATSAPP_RAG_CONFIDENCE_THRESHOLD = Number(process.env.WHATSAPP_RAG_CONFIDENCE_THRESHOLD ?? 0.55) || 0.55;
-const WHATSAPP_SESSION_TURNS = Math.max(1, Number(process.env.WHATSAPP_SESSION_TURNS ?? 4) || 4);
-const WHATSAPP_STRUCTURED_DATA_ENABLED = (process.env.WHATSAPP_STRUCTURED_DATA_ENABLED?.trim() || "true") !== "false";
+const WHATSAPP_OPENAI_MODEL =
+  process.env.WHATSAPP_OPENAI_MODEL?.trim() || "gpt-4.1-mini";
+const WHATSAPP_API_VERSION =
+  process.env.WHATSAPP_API_VERSION?.trim() || "v22.0";
+const WHATSAPP_REPLY_TO_ALL =
+  (process.env.WHATSAPP_REPLY_TO_ALL?.trim() || "true") !== "false";
+const WHATSAPP_AI_ASSISTANT_ENABLED =
+  (process.env.WHATSAPP_AI_ASSISTANT_ENABLED?.trim() || "true") !== "false";
+const WHATSAPP_RAG_ENABLED =
+  (process.env.WHATSAPP_RAG_ENABLED?.trim() || "true") !== "false";
+const WHATSAPP_RAG_CONFIDENCE_THRESHOLD =
+  Number(process.env.WHATSAPP_RAG_CONFIDENCE_THRESHOLD ?? 0.55) || 0.55;
+const WHATSAPP_SESSION_TURNS = Math.max(
+  1,
+  Number(process.env.WHATSAPP_SESSION_TURNS ?? 4) || 4,
+);
+const WHATSAPP_STRUCTURED_DATA_ENABLED =
+  (process.env.WHATSAPP_STRUCTURED_DATA_ENABLED?.trim() || "true") !== "false";
 const WHATSAPP_PROMPT_VERSION = "whatsapp-rag-v2";
 const MAX_REPLY_CHARS = 1200;
 const MAX_INPUT_CHARS = 3000;
@@ -81,14 +116,18 @@ function getClientIp(req: NextApiRequest): string {
 function verifyMetaSignature(
   body: string,
   signature: string | undefined,
-  secret: string | undefined
+  secret: string | undefined,
 ): boolean {
   if (!secret) return false;
   if (!signature) return false;
   const expected =
-    "sha256=" + crypto.createHmac("sha256", secret).update(body, "utf8").digest("hex");
+    "sha256=" +
+    crypto.createHmac("sha256", secret).update(body, "utf8").digest("hex");
   try {
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expected),
+    );
   } catch {
     return false;
   }
@@ -114,7 +153,10 @@ async function readRawBody(req: NextApiRequest): Promise<string> {
   });
 }
 
-async function sendWhatsAppMessage(to: string, message: string): Promise<{ metaMessageId?: string } | void> {
+async function sendWhatsAppMessage(
+  to: string,
+  message: string,
+): Promise<{ metaMessageId?: string } | void> {
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
   if (!phoneNumberId || !accessToken) {
@@ -154,8 +196,8 @@ async function sendWhatsAppMessage(to: string, message: string): Promise<{ metaM
       });
     } catch (fetchError: unknown) {
       clearTimeout(timeoutId);
-      if ((fetchError as { name?: string })?.name === 'AbortError') {
-        throw new Error('WhatsApp API timeout (15s)');
+      if ((fetchError as { name?: string })?.name === "AbortError") {
+        throw new Error("WhatsApp API timeout (15s)");
       }
       if (attempt < MAX_ATTEMPTS) {
         await new Promise((r) => setTimeout(r, 1000 * attempt));
@@ -169,12 +211,12 @@ async function sendWhatsAppMessage(to: string, message: string): Promise<{ metaM
       const text = await response.text().catch(() => "");
       const classified = classifyGraphError(response.status, text);
 
-      if (classified.kind === 'auth') {
+      if (classified.kind === "auth") {
         void sendOpsAlert({
-          key: 'whatsapp_token_auth',
-          severity: 'critical',
-          source: 'whatsapp_send',
-          subject: 'WhatsApp access token expired or invalid',
+          key: "whatsapp_token_auth",
+          severity: "critical",
+          source: "whatsapp_send",
+          subject: "WhatsApp access token expired or invalid",
           body:
             `Outbound WhatsApp sends are failing with an auth error (${response.status}).\n` +
             `All automated customer replies will fail until the Meta system-user token is rotated.\n\n` +
@@ -184,7 +226,9 @@ async function sendWhatsAppMessage(to: string, message: string): Promise<{ metaM
       }
 
       if (classified.retryable && attempt < MAX_ATTEMPTS) {
-        console.warn(`[whatsapp] Throttled (${response.status}), retrying once...`);
+        console.warn(
+          `[whatsapp] Throttled (${response.status}), retrying once...`,
+        );
         await new Promise((r) => setTimeout(r, 1500));
         continue;
       }
@@ -207,110 +251,160 @@ async function sendWhatsAppMessage(to: string, message: string): Promise<{ metaM
 }
 
 export function trimReply(message: string) {
-  return message.replace(/\s+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, MAX_REPLY_CHARS);
+  return message
+    .replace(/\s+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, MAX_REPLY_CHARS);
 }
 
-export function formatBulletReply(lines: Array<string | false | null | undefined>) {
-  return trimReply(lines.filter(Boolean).join("\n"))
+export function formatBulletReply(
+  lines: Array<string | false | null | undefined>,
+) {
+  return trimReply(lines.filter(Boolean).join("\n"));
 }
 
-export function buildGuidedFallbackReply(settings: AssistantSettings, messageText: string) {
-  const businessName = settings.businessName?.trim() || FALLBACK_SETTINGS.businessName;
-  const businessHours = settings.businessHours?.trim() || settings.workingHours?.trim() || FALLBACK_SETTINGS.businessHours;
-  const supportPhone = settings.whatsappSupportNumber?.trim() || settings.primaryPhone?.trim() || FALLBACK_SETTINGS.whatsappSupportNumber;
-  const orderPhone = settings.whatsappOrderNumber?.trim() || settings.whatsappNumber?.trim() || FALLBACK_SETTINGS.whatsappOrderNumber;
+export function buildGuidedFallbackReply(
+  settings: AssistantSettings,
+  messageText: string,
+) {
+  const businessName =
+    settings.businessName?.trim() || FALLBACK_SETTINGS.businessName;
+  const businessHours =
+    settings.businessHours?.trim() ||
+    settings.workingHours?.trim() ||
+    FALLBACK_SETTINGS.businessHours;
+  const supportPhone =
+    settings.whatsappSupportNumber?.trim() ||
+    settings.primaryPhone?.trim() ||
+    FALLBACK_SETTINGS.whatsappSupportNumber;
+  const orderPhone =
+    settings.whatsappOrderNumber?.trim() ||
+    settings.whatsappNumber?.trim() ||
+    FALLBACK_SETTINGS.whatsappOrderNumber;
 
   switch (detectWhatsAppIntent(messageText)) {
-    case 'pricing':
+    case "pricing":
       return formatBulletReply([
         `Hi, thanks for reaching out to ${businessName}.`,
-        '- For a confirmed quote, please share the file, material, quantity, and deadline.',
-        '- If you have a reference image or sketch, send that too.',
-        '- I’ll guide you with the next step once I have those details.',
-      ])
-    case 'shipping':
+        "- For a confirmed quote, please share the file, material, quantity, and deadline.",
+        "- If you have a reference image or sketch, send that too.",
+        "- I’ll guide you with the next step once I have those details.",
+      ]);
+    case "shipping":
       return formatBulletReply([
         `Hi, thanks for reaching out to ${businessName}.`,
-        '- For delivery checks, please share the pincode and city.',
-        '- If you want a shipping estimate, I can help once I have the destination details.',
-      ])
-    case 'order':
+        "- For delivery checks, please share the pincode and city.",
+        "- If you want a shipping estimate, I can help once I have the destination details.",
+      ]);
+    case "order":
       return formatBulletReply([
         `Hi, thanks for reaching out to ${businessName}.`,
-        '- Please share your order number and the registered phone number.',
-        '- I’ll use that to help confirm the latest update.',
+        "- Please share your order number and the registered phone number.",
+        "- I’ll use that to help confirm the latest update.",
         `- If needed, support is also available at ${supportPhone}.`,
-      ])
-    case 'materials':
+      ]);
+    case "materials":
       return formatBulletReply([
         `Hi, thanks for reaching out to ${businessName}.`,
-        '- Please share the use case, required strength, flexibility, and finish you want.',
-        '- If you already know the material, send it and I’ll confirm the best next step.',
-      ])
-    case 'contact':
+        "- Please share the use case, required strength, flexibility, and finish you want.",
+        "- If you already know the material, send it and I’ll confirm the best next step.",
+      ]);
+    case "contact":
       return formatBulletReply([
         `Hi, thanks for reaching out to ${businessName}.`,
         `- Support number: ${supportPhone}.`,
         `- Order updates: ${orderPhone}.`,
         `- Business hours: ${businessHours}.`,
-      ])
-    case 'greeting':
+      ]);
+    case "greeting":
       return formatBulletReply([
         `Hi, thanks for reaching out to ${businessName}.`,
-        '- I can help with quotes, materials, delivery, and support.',
-        '- Please share what you need, and I’ll give you the next step.',
-      ])
+        "- I can help with quotes, materials, delivery, and support.",
+        "- Please share what you need, and I’ll give you the next step.",
+      ]);
     default:
       return formatBulletReply([
         `Hi, thanks for reaching out to ${businessName}.`,
-        '- I can help with quotes, materials, delivery, and support.',
-        '- Please share the file or the exact question so I can give you a confirmed answer.',
-      ])
+        "- I can help with quotes, materials, delivery, and support.",
+        "- Please share the file or the exact question so I can give you a confirmed answer.",
+      ]);
   }
 }
 
-type AssistantSettings = NonNullable<Awaited<ReturnType<typeof getCachedBusinessSettings>>>;
+type AssistantSettings = NonNullable<
+  Awaited<ReturnType<typeof getCachedBusinessSettings>>
+>;
 
 function buildWhatsAppAssistantPrompt(
   settings: AssistantSettings,
   knowledgeContext: string,
-  liveData: StructuredDataResult = { materials: '', products: '', orderStatus: '', orderResults: [], totalMatches: 0, materialPrices: [], productPrices: [] },
+  liveData: StructuredDataResult = {
+    materials: "",
+    products: "",
+    orderStatus: "",
+    orderResults: [],
+    totalMatches: 0,
+    materialPrices: [],
+    productPrices: [],
+  },
 ) {
-  const businessName = settings.businessName?.trim() || FALLBACK_SETTINGS.businessName;
-  const businessDescription = settings.businessDescription?.trim() || FALLBACK_SETTINGS.businessDescription;
-  const businessHours = settings.businessHours?.trim() || settings.workingHours?.trim() || FALLBACK_SETTINGS.businessHours;
-  const supportAvailability = settings.supportAvailabilityMessage?.trim() || FALLBACK_SETTINGS.supportAvailabilityMessage;
-  const autoReply = settings.autoReplyMessage?.trim() || FALLBACK_SETTINGS.autoReplyMessage;
-  const supportPhone = settings.whatsappSupportNumber?.trim() || settings.primaryPhone?.trim() || FALLBACK_SETTINGS.whatsappSupportNumber;
-  const orderPhone = settings.whatsappOrderNumber?.trim() || settings.whatsappNumber?.trim() || FALLBACK_SETTINGS.whatsappOrderNumber;
+  const businessName =
+    settings.businessName?.trim() || FALLBACK_SETTINGS.businessName;
+  const businessDescription =
+    settings.businessDescription?.trim() ||
+    FALLBACK_SETTINGS.businessDescription;
+  const businessHours =
+    settings.businessHours?.trim() ||
+    settings.workingHours?.trim() ||
+    FALLBACK_SETTINGS.businessHours;
+  const supportAvailability =
+    settings.supportAvailabilityMessage?.trim() ||
+    FALLBACK_SETTINGS.supportAvailabilityMessage;
+  const autoReply =
+    settings.autoReplyMessage?.trim() || FALLBACK_SETTINGS.autoReplyMessage;
+  const supportPhone =
+    settings.whatsappSupportNumber?.trim() ||
+    settings.primaryPhone?.trim() ||
+    FALLBACK_SETTINGS.whatsappSupportNumber;
+  const orderPhone =
+    settings.whatsappOrderNumber?.trim() ||
+    settings.whatsappNumber?.trim() ||
+    FALLBACK_SETTINGS.whatsappOrderNumber;
 
-  const liveDataSection: string[] = []
+  const liveDataSection: string[] = [];
 
   if (liveData.materials) {
-    liveDataSection.push('[MATERIAL PRICING FROM DATABASE]')
-    liveDataSection.push(liveData.materials)
-    liveDataSection.push('')
+    liveDataSection.push("[MATERIAL PRICING FROM DATABASE]");
+    liveDataSection.push(liveData.materials);
+    liveDataSection.push("");
   }
 
   if (liveData.products) {
-    liveDataSection.push('[PRODUCT PRICING FROM DATABASE]')
-    liveDataSection.push(liveData.products)
-    liveDataSection.push('')
+    liveDataSection.push("[PRODUCT PRICING FROM DATABASE]");
+    liveDataSection.push(liveData.products);
+    liveDataSection.push("");
   }
 
   if (liveData.orderStatus) {
-    liveDataSection.push('[ORDER STATUS FROM DATABASE]')
-    liveDataSection.push(liveData.orderStatus)
-    liveDataSection.push('')
+    liveDataSection.push("[ORDER STATUS FROM DATABASE]");
+    liveDataSection.push(liveData.orderStatus);
+    liveDataSection.push("");
   }
 
   if (liveData.orderStatus) {
-    liveDataSection.push('For order status, ONLY report what is shown in [ORDER STATUS FROM DATABASE]. Never guess or invent order status or IDs.')
+    liveDataSection.push(
+      "For order status, ONLY report what is shown in [ORDER STATUS FROM DATABASE]. Never guess or invent order status or IDs.",
+    );
   }
 
   if (liveDataSection.length > 0) {
-    liveDataSection.push('STRICT RULE: For prices, materials, and stock status — ONLY use the values above.')
-    liveDataSection.push('If the database returned no matching data, say "Let me check and confirm" — never invent prices.')
+    liveDataSection.push(
+      "STRICT RULE: For prices, materials, and stock status — ONLY use the values above.",
+    );
+    liveDataSection.push(
+      'If the database returned no matching data, say "Let me check and confirm" — never invent prices.',
+    );
   }
 
   return [
@@ -328,7 +422,9 @@ function buildWhatsAppAssistantPrompt(
     autoReply ? `Opening tone or default auto-reply: ${autoReply}.` : "",
     `Order notification number: ${orderPhone}.`,
     ...liveDataSection,
-    knowledgeContext ? `Relevant Flux3D knowledge base:\n${knowledgeContext}` : "",
+    knowledgeContext
+      ? `Relevant Flux3D knowledge base:\n${knowledgeContext}`
+      : "",
     knowledgeContext
       ? "Use the knowledge base as the primary source for Flux3D-specific answers. If the knowledge base does not cover the question, ask one concise follow-up or explain that a human will confirm."
       : "",
@@ -347,28 +443,47 @@ type GeneratedWhatsAppReply = {
   completionTokens: number | null;
   totalTokens: number | null;
   finishReason: string | null;
-}
+};
 
 export async function generateWhatsAppReply(
   messageText: string,
   settings: AssistantSettings,
   knowledgeContext: string,
   history: Array<ChatCompletionMessageParam> = [],
-  liveData: StructuredDataResult = { materials: '', products: '', orderStatus: '', orderResults: [], totalMatches: 0, materialPrices: [], productPrices: [] },
+  liveData: StructuredDataResult = {
+    materials: "",
+    products: "",
+    orderStatus: "",
+    orderResults: [],
+    totalMatches: 0,
+    materialPrices: [],
+    productPrices: [],
+  },
 ): Promise<GeneratedWhatsAppReply> {
-  const client = getOpenAI()
+  const client = getOpenAI();
   if (!client) {
     throw new Error("Missing OpenAI API key.");
   }
 
-  const systemPrompt = buildWhatsAppAssistantPrompt(settings, knowledgeContext, liveData);
+  const systemPrompt = buildWhatsAppAssistantPrompt(
+    settings,
+    knowledgeContext,
+    liveData,
+  );
   const customerMessage = messageText.slice(0, MAX_INPUT_CHARS);
 
   // Estimate prompt token count (rough: 4 chars ≈ 1 token) and cap max_tokens
-  const promptText = [systemPrompt, ...history.map((m) => m.content ?? ''), customerMessage].join(' ');
+  const promptText = [
+    systemPrompt,
+    ...history.map((m) => m.content ?? ""),
+    customerMessage,
+  ].join(" ");
   const estimatedPromptTokens = Math.ceil(promptText.length / 4);
   const modelContextLimit = 128000; // gpt-4.1-mini context window
-  const maxTokens = Math.min(180, Math.max(50, modelContextLimit - estimatedPromptTokens - 50));
+  const maxTokens = Math.min(
+    180,
+    Math.max(50, modelContextLimit - estimatedPromptTokens - 50),
+  );
 
   const completion = await client.chat.completions.create({
     model: WHATSAPP_OPENAI_MODEL,
@@ -399,7 +514,7 @@ export async function generateWhatsAppReply(
     completionTokens: completion.usage?.completion_tokens ?? null,
     totalTokens: completion.usage?.total_tokens ?? null,
     finishReason: completion.choices[0]?.finish_reason ?? null,
-  }
+  };
 }
 
 async function logWhatsAppMessage(
@@ -420,7 +535,7 @@ async function logWhatsAppMessage(
     mediaSizeBytes?: number | null;
     metaMessageId?: string | null;
     status?: string | null;
-  }
+  },
 ) {
   if (!supabase) return;
 
@@ -439,7 +554,7 @@ async function logWhatsAppMessage(
     media_mime_type: entry.mediaMimeType ?? null,
     media_size_bytes: entry.mediaSizeBytes ?? null,
     meta_message_id: entry.metaMessageId ?? null,
-    status: entry.status ?? 'sent',
+    status: entry.status ?? "sent",
   });
 
   if (error) {
@@ -447,13 +562,17 @@ async function logWhatsAppMessage(
   }
 }
 
-function buildRagPayload(rag: { mode: string; confidence: number; sources: Array<{ sourceKey: string; title: string; score: number }> }) {
+function buildRagPayload(rag: {
+  mode: string;
+  confidence: number;
+  sources: Array<{ sourceKey: string; title: string; score: number }>;
+}) {
   return {
     enabled: WHATSAPP_RAG_ENABLED,
     mode: rag.mode,
     confidence: rag.confidence,
     sources: rag.sources,
-  }
+  };
 }
 
 export async function saveSession(
@@ -464,7 +583,7 @@ export async function saveSession(
 ) {
   if (!supabase || !from) return;
   try {
-    const { error } = await supabase.rpc('save_whatsapp_session', {
+    const { error } = await supabase.rpc("save_whatsapp_session", {
       p_phone: from,
       p_user_message: userMessage.slice(0, MAX_INPUT_CHARS),
       p_assistant_reply: assistantReply,
@@ -480,12 +599,19 @@ export async function saveSession(
 
 const MAX_PAYLOAD_BYTES = 102_400; // 100KB
 
-function truncatePayload(payload: Record<string, unknown>): Record<string, unknown> {
+function truncatePayload(
+  payload: Record<string, unknown>,
+): Record<string, unknown> {
   const serialized = JSON.stringify(payload);
   if (serialized.length <= MAX_PAYLOAD_BYTES) return payload;
   // Truncate to 100KB by cutting the string and ensuring valid JSON
-  const truncated = serialized.slice(0, MAX_PAYLOAD_BYTES - 50) + ',"_truncated":true}';
-  try { return JSON.parse(truncated); } catch { return { _truncated: true }; }
+  const truncated =
+    serialized.slice(0, MAX_PAYLOAD_BYTES - 50) + ',"_truncated":true}';
+  try {
+    return JSON.parse(truncated);
+  } catch {
+    return { _truncated: true };
+  }
 }
 
 async function insertWebhookEvent(
@@ -495,19 +621,23 @@ async function insertWebhookEvent(
   overrides: Record<string, unknown> = {},
 ): Promise<{ id: string } | { duplicate: true } | null> {
   if (!supabase) return null;
-  const { data, error } = await supabase.from("whatsapp_webhook_events").insert({
-    payload_hash: payloadHash,
-    sender: null,
-    payload: truncatePayload(payload),
-    signature_verified: true,
-    received_at: new Date().toISOString(),
-    ...overrides,
-  }).select("id").maybeSingle();
+  const { data, error } = await supabase
+    .from("whatsapp_webhook_events")
+    .insert({
+      payload_hash: payloadHash,
+      sender: null,
+      payload: truncatePayload(payload),
+      signature_verified: true,
+      received_at: new Date().toISOString(),
+      ...overrides,
+    })
+    .select("id")
+    .maybeSingle();
   if (error) {
     // Unique violation on payload_hash: a concurrent Meta retry already
     // inserted this exact payload. Report it so the caller does NOT fall back
     // to inline processing — the winning request is already handling it.
-    if ((error as { code?: string }).code === '23505') {
+    if ((error as { code?: string }).code === "23505") {
       console.log("[whatsapp] Concurrent duplicate webhook payload, skipping");
       return { duplicate: true };
     }
@@ -525,44 +655,65 @@ async function insertWebhookEvent(
  *
  * Returns true if the job was queued. Never throws.
  */
-async function enqueueWhatsAppProcessing(eventId: string | null): Promise<boolean> {
-  if (!eventId) return false
+async function enqueueWhatsAppProcessing(
+  eventId: string | null,
+): Promise<boolean> {
+  if (!eventId) return false;
   try {
-    const qstash = getQStashClient()
-    const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://flux3d.in').replace(/\/+$/, '')
+    const qstash = getQStashClient();
+    const baseUrl = (
+      process.env.NEXT_PUBLIC_SITE_URL || "https://flux3d.in"
+    ).replace(/\/+$/, "");
     await Promise.race([
       qstash.publishJSON({
         url: `${baseUrl}/api/whatsapp/process`,
         body: { eventId },
         retries: 5,
         timeout: 120,
-        headers: { 'X-WhatsApp-Event': eventId },
+        headers: { "X-WhatsApp-Event": eventId },
       }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('QStash enqueue timeout (4s)')), 4000)),
-    ])
-    return true
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error("QStash enqueue timeout (4s)")),
+          4000,
+        ),
+      ),
+    ]);
+    return true;
   } catch (error) {
-    console.error("[whatsapp] QStash enqueue failed, falling back to inline processing:", error)
-    return false
+    console.error(
+      "[whatsapp] QStash enqueue failed, falling back to inline processing:",
+      error,
+    );
+    return false;
   }
 }
 
 type IncomingMessageParams = {
-  supabase: ReturnType<typeof getServiceClient>
-  payloadHash: string
-  payload: Record<string, unknown>
-  from: string
-  text: string
-  interaction?: OrderInteraction | null
-  eventRecord: { id: string } | null
-  requestStartedAt: number
-}
+  supabase: ReturnType<typeof getServiceClient>;
+  payloadHash: string;
+  payload: Record<string, unknown>;
+  from: string;
+  text: string;
+  interaction?: OrderInteraction | null;
+  eventRecord: { id: string } | null;
+  requestStartedAt: number;
+};
 
 export async function processIncomingMessage(params: IncomingMessageParams) {
-  const { supabase, payloadHash, payload, from, text, interaction = null, eventRecord, requestStartedAt } = params
+  const {
+    supabase,
+    payloadHash,
+    payload,
+    from,
+    text,
+    interaction = null,
+    eventRecord,
+    requestStartedAt,
+  } = params;
 
   const processingSpan = Sentry.startInactiveSpan({
-    op: 'whatsapp.process',
+    op: "whatsapp.process",
     name: `msg from ${from?.slice(-4)}`,
   });
 
@@ -571,9 +722,14 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     // Write progress to DB (non-blocking, won't hang the pipeline)
     if (eventRecord?.id && supabase) {
       Promise.race([
-        supabase.from('whatsapp_webhook_events').update({ error: step.slice(0, 200) }).eq('id', eventRecord.id),
-        new Promise(resolve => setTimeout(resolve, 3000)),
-      ]).catch(() => {}).then(() => {});
+        supabase
+          .from("whatsapp_webhook_events")
+          .update({ error: step.slice(0, 200) })
+          .eq("id", eventRecord.id),
+        new Promise((resolve) => setTimeout(resolve, 3000)),
+      ])
+        .catch(() => {})
+        .then(() => {});
     }
   };
   _log("START text=" + text?.slice(0, 30));
@@ -582,26 +738,32 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
   // Re-derives media metadata from the raw webhook payload (works for both the
   // inline-processing and QStash worker paths) and stores the file to Supabase
   // Storage so admins can preview/download customer attachments in the inbox.
-  let inboundMedia: MediaResult | null = null
-  let inboundMediaType: ParsedWhatsAppMessage['mediaType'] = null
-  let inboundMetaMessageId: string | null = null
+  let inboundMedia: MediaResult | null = null;
+  let inboundMediaType: ParsedWhatsAppMessage["mediaType"] = null;
+  let inboundMetaMessageId: string | null = null;
   if (supabase) {
     try {
-      const rawPayloadMessage = (payload as {
-        entry?: Array<{ changes?: Array<{ value?: { messages?: Array<Record<string, unknown>> } }> }>
-      })?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]
-      const parsedMedia = parseWhatsAppMessage(rawPayloadMessage)
-      inboundMediaType = parsedMedia.mediaType ?? null
-      inboundMetaMessageId = parsedMedia.metaMessageId ?? null
+      const rawPayloadMessage = (
+        payload as {
+          entry?: Array<{
+            changes?: Array<{
+              value?: { messages?: Array<Record<string, unknown>> };
+            }>;
+          }>;
+        }
+      )?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+      const parsedMedia = parseWhatsAppMessage(rawPayloadMessage);
+      inboundMediaType = parsedMedia.mediaType ?? null;
+      inboundMetaMessageId = parsedMedia.metaMessageId ?? null;
       if (parsedMedia.mediaId && parsedMedia.mediaType) {
         inboundMedia = await downloadAndStoreWhatsAppMedia(
           parsedMedia.mediaId,
           parsedMedia.mediaMimeType ?? undefined,
           parsedMedia.mediaFilename ?? undefined,
-        ).catch(() => null)
+        ).catch(() => null);
       }
     } catch (error) {
-      console.error("[whatsapp] Inbound media enrichment failed:", error)
+      console.error("[whatsapp] Inbound media enrichment failed:", error);
     }
   }
 
@@ -618,11 +780,14 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
           .eq("phone_number", from)
           .maybeSingle();
         const profileTimeout = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Profile lookup timeout')), 5000)
+          setTimeout(() => reject(new Error("Profile lookup timeout")), 5000),
         );
-        const { data: profile } = await Promise.race([profilePromise, profileTimeout]) as any;
+        const { data: profile } = (await Promise.race([
+          profilePromise,
+          profileTimeout,
+        ])) as { data: Record<string, unknown> | null };
         senderRecognized = !!profile;
-        userId = profile?.id ?? null;
+        userId = (profile?.id as string | undefined) ?? null;
       } catch (error) {
         console.error("[whatsapp] Failed to lookup profile:", error);
       }
@@ -655,24 +820,32 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     // with it. Returns true (and the webhook returns) only when the message
     // was consumed by the linking flow — i.e. an explicit link intent, or a
     // reply while a WhatsApp-initiated link request is pending for this phone.
-    let linkHandled = false
+    let linkHandled = false;
     try {
-      linkHandled = await handleAccountLinkWhatsApp({ from, text, supabase, userId })
+      linkHandled = await handleAccountLinkWhatsApp({
+        from,
+        text,
+        supabase,
+        userId,
+      });
     } catch (error) {
-      console.error('[whatsapp] Account link flow error:', error)
+      console.error("[whatsapp] Account link flow error:", error);
     }
     if (linkHandled) {
       if (supabase && eventRecord?.id) {
         try {
-          await supabase.from('whatsapp_webhook_events').update({
-            processed_at: new Date().toISOString(),
-            reply_sent: true,
-          }).eq('id', eventRecord.id)
+          await supabase
+            .from("whatsapp_webhook_events")
+            .update({
+              processed_at: new Date().toISOString(),
+              reply_sent: true,
+            })
+            .eq("id", eventRecord.id);
         } catch {
           // best-effort marking
         }
       }
-      return
+      return;
     }
 
     // ── WhatsApp ordering flow (runs before the AI assistant) ──
@@ -693,10 +866,13 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
           _log("order_flow_handled");
           if (supabase && eventRecord?.id) {
             try {
-              await supabase.from("whatsapp_webhook_events").update({
-                processed_at: new Date().toISOString(),
-                reply_sent: true,
-              }).eq("id", eventRecord.id)
+              await supabase
+                .from("whatsapp_webhook_events")
+                .update({
+                  processed_at: new Date().toISOString(),
+                  reply_sent: true,
+                })
+                .eq("id", eventRecord.id);
             } catch {
               // best-effort marking
             }
@@ -704,7 +880,10 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
           return;
         }
       } catch (error) {
-        console.error("[whatsapp] Order flow failed, falling back to assistant:", error);
+        console.error(
+          "[whatsapp] Order flow failed, falling back to assistant:",
+          error,
+        );
       }
     }
 
@@ -718,39 +897,64 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
           .eq("phone_number", from)
           .maybeSingle();
         const sessionTimeout = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Session load timeout')), 5000)
+          setTimeout(() => reject(new Error("Session load timeout")), 5000),
         );
-        const { data: session } = await Promise.race([sessionPromise, sessionTimeout]) as any;
+        const { data: session } = (await Promise.race([
+          sessionPromise,
+          sessionTimeout,
+        ])) as { data: Record<string, unknown> | null };
         if (session?.messages && Array.isArray(session.messages)) {
           sessionHistory = (session.messages as Array<Record<string, unknown>>)
-            .filter((m) =>
-              typeof m === 'object' &&
-              m !== null &&
-              typeof m.role === 'string' &&
-              (m.role === 'user' || m.role === 'assistant') &&
-              typeof m.content === 'string'
+            .filter(
+              (m) =>
+                typeof m === "object" &&
+                m !== null &&
+                typeof m.role === "string" &&
+                (m.role === "user" || m.role === "assistant") &&
+                typeof m.content === "string",
             )
-            .slice(-(WHATSAPP_SESSION_TURNS * 2)) as unknown as Array<ChatCompletionMessageParam>;
+            .slice(
+              -(WHATSAPP_SESSION_TURNS * 2),
+            ) as unknown as Array<ChatCompletionMessageParam>;
         }
       } catch (error) {
-        console.error("[whatsapp] Failed to load session, continuing with empty history:", error);
+        console.error(
+          "[whatsapp] Failed to load session, continuing with empty history:",
+          error,
+        );
       }
     }
 
     _log("session_done");
-    const businessSettings = (await getCachedBusinessSettings()) || FALLBACK_SETTINGS;
+    const businessSettings =
+      (await getCachedBusinessSettings()) || FALLBACK_SETTINGS;
     _log("settings_done");
     let knowledgeContext = "";
-    let ragMode: 'database' | 'seed' | 'none' = 'none';
+    let ragMode: "database" | "seed" | "none" = "none";
     let ragConfidence = 0;
-    let ragSources: Array<{ sourceKey: string; title: string; score: number; content: string }> = [];
+    let ragSources: Array<{
+      sourceKey: string;
+      title: string;
+      score: number;
+      content: string;
+    }> = [];
     let retrievalLatencyMs: number | null = null;
     _log("rag_start");
     if (WHATSAPP_AI_ASSISTANT_ENABLED && WHATSAPP_RAG_ENABLED) {
       const retrievalStartedAt = Date.now();
       const rag = await getWhatsAppRagContext(text).catch((error) => {
         console.error("[whatsapp] RAG lookup error:", error);
-        return { context: "", sources: [] as Array<{ sourceKey: string; title: string; score: number; content: string }>, mode: 'none' as const, confidence: 0 };
+        return {
+          context: "",
+          sources: [] as Array<{
+            sourceKey: string;
+            title: string;
+            score: number;
+            content: string;
+          }>,
+          mode: "none" as const,
+          confidence: 0,
+        };
       });
       retrievalLatencyMs = Date.now() - retrievalStartedAt;
       knowledgeContext = rag.context;
@@ -762,42 +966,56 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
 
     // Intent classification: use regex for unambiguous intents (saves GPT call)
     const regexIntent = detectWhatsAppIntent(text);
-    const skipGptClassifier = !WHATSAPP_AI_ASSISTANT_ENABLED || regexIntent === 'greeting' || regexIntent === 'contact';
+    const skipGptClassifier =
+      !WHATSAPP_AI_ASSISTANT_ENABLED ||
+      regexIntent === "greeting" ||
+      regexIntent === "contact";
     const [classified] = skipGptClassifier
       ? [{ intent: regexIntent, keywords: [] as string[] }]
       : await Promise.all([
-          classifyIntent(text).catch(() => ({ intent: 'general' as const, keywords: [] as string[] })),
+          classifyIntent(text).catch(() => ({
+            intent: "general" as const,
+            keywords: [] as string[],
+          })),
         ]);
 
     // Declare state variables early (used by both out_of_scope and normal flow)
-    let didSendReply = false
-    let replySendFailed = false
+    let didSendReply = false;
+    let replySendFailed = false;
     let finalReply = "";
-    let finalReplyKind: 'model' | 'fallback' | 'error' = 'fallback';
+    let finalReplyKind: "model" | "fallback" | "error" = "fallback";
     let fallbackReason: string | null = null;
     let generatedReply: GeneratedWhatsAppReply | null = null;
     let generationLatencyMs: number | null = null;
     let auditRecord: WhatsAppRagAuditRecord | null = null;
-    let structuredData: StructuredDataResult = { materials: '', products: '', orderStatus: '', orderResults: [], totalMatches: 0, materialPrices: [], productPrices: [] };
+    let structuredData: StructuredDataResult = {
+      materials: "",
+      products: "",
+      orderStatus: "",
+      orderResults: [],
+      totalMatches: 0,
+      materialPrices: [],
+      productPrices: [],
+    };
 
     // Handle out-of-scope messages immediately — no RAG, no GPT, no structured data
-    if (classified.intent === 'out_of_scope') {
+    if (classified.intent === "out_of_scope") {
       finalReply = formatBulletReply([
         `Hi, thanks for reaching out.`,
         `I can only assist with 3D printing and custom manufacturing questions.`,
         `Please let me know if you have a 3D printing-related query.`,
-      ])
-      finalReplyKind = 'fallback'
-      fallbackReason = 'out_of_scope'
+      ]);
+      finalReplyKind = "fallback";
+      fallbackReason = "out_of_scope";
       auditRecord = {
         webhook_event_id: eventRecord?.id ?? null,
         sender: from,
         user_id: userId,
         question_text: text,
-        retrieval_mode: 'none',
+        retrieval_mode: "none",
         retrieval_confidence: 0,
         retrieval_sources: [],
-        response_kind: 'fallback',
+        response_kind: "fallback",
         response_text: finalReply,
         response_metadata: {
           model: WHATSAPP_OPENAI_MODEL,
@@ -807,10 +1025,10 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
           finishReason: null,
           replyToAll: WHATSAPP_REPLY_TO_ALL,
           senderRecognized,
-          sendStatus: 'pending',
-          classifiedIntent: 'out_of_scope',
+          sendStatus: "pending",
+          classifiedIntent: "out_of_scope",
         },
-        fallback_reason: 'out_of_scope',
+        fallback_reason: "out_of_scope",
         model_name: null,
         prompt_version: WHATSAPP_PROMPT_VERSION,
         latency_ms: null,
@@ -818,12 +1036,15 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         generation_latency_ms: null,
         session_history_length: sessionHistory.length,
         structured_data_matches: 0,
-      }
+      };
       // Send out_of_scope reply and finish
       try {
-        const sendResult = await sendWhatsAppMessage(from, finalReply)
-        didSendReply = true
-        auditRecord.response_metadata = { ...auditRecord.response_metadata, sendStatus: 'sent' }
+        const sendResult = await sendWhatsAppMessage(from, finalReply);
+        didSendReply = true;
+        auditRecord.response_metadata = {
+          ...auditRecord.response_metadata,
+          sendStatus: "sent",
+        };
         // Log the outgoing bot reply so it appears in the admin inbox
         if (sendResult?.metaMessageId) {
           logWhatsAppMessage(supabase, {
@@ -836,7 +1057,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
             responded: true,
             responseTimeMinutes: (Date.now() - requestStartedAt) / 60000,
             metaMessageId: sendResult.metaMessageId,
-          }).catch(() => {})
+          }).catch(() => {});
         } else {
           logWhatsAppMessage(supabase, {
             userId,
@@ -847,68 +1068,108 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
             triggerEvent: "out_of_scope_reply",
             responded: true,
             responseTimeMinutes: (Date.now() - requestStartedAt) / 60000,
-          }).catch(() => {})
+          }).catch(() => {});
         }
       } catch (error) {
-        auditRecord.response_metadata = { ...auditRecord.response_metadata, sendStatus: 'failed' }
-        console.error('[whatsapp] Failed to send out_of_scope reply:', error)
+        auditRecord.response_metadata = {
+          ...auditRecord.response_metadata,
+          sendStatus: "failed",
+        };
+        console.error("[whatsapp] Failed to send out_of_scope reply:", error);
       } finally {
-        auditRecord.latency_ms = Date.now() - requestStartedAt
-        await logWhatsAppRagAudit(auditRecord).catch(() => {})
+        auditRecord.latency_ms = Date.now() - requestStartedAt;
+        await logWhatsAppRagAudit(auditRecord).catch(() => {});
       }
       // Mark event as processed (no structured data to attach). If the send
       // failed, leave unprocessed and register for the retry cron instead.
       if (supabase && eventRecord?.id) {
         try {
           if (!didSendReply) {
-            await supabase.rpc('increment_webhook_retry', {
+            await supabase.rpc("increment_webhook_retry", {
               p_event_id: eventRecord.id,
-              p_error: 'out_of_scope reply send failed (transient) — queued for retry',
-            })
+              p_error:
+                "out_of_scope reply send failed (transient) — queued for retry",
+            });
           } else {
-            await supabase.from('whatsapp_webhook_events').update({
-              processed_at: new Date().toISOString(),
-              reply_sent: true,
-              payload: { ...payload, classifiedIntent: 'out_of_scope' },
-            }).eq('id', eventRecord.id)
+            await supabase
+              .from("whatsapp_webhook_events")
+              .update({
+                processed_at: new Date().toISOString(),
+                reply_sent: true,
+                payload: { ...payload, classifiedIntent: "out_of_scope" },
+              })
+              .eq("id", eventRecord.id);
           }
         } catch {
           // Best-effort: event stays unprocessed but WhatsApp won't retry (200 already sent)
         }
       }
-      return
+      return;
     }
 
     _log("intent=" + classified.intent);
 
     // Merge GPT keywords with regex-extracted keywords (deduped)
-    const gptKeywords = classified.keywords
-    const regexKeywords = extractSearchKeywords(text)
-    const combinedKeywords = [...new Set([...gptKeywords, ...regexKeywords])]
+    const gptKeywords = classified.keywords;
+    const regexKeywords = extractSearchKeywords(text);
+    const combinedKeywords = [...new Set([...gptKeywords, ...regexKeywords])];
 
     // Query live database for structured data using combined keywords
-    if (WHATSAPP_AI_ASSISTANT_ENABLED && WHATSAPP_STRUCTURED_DATA_ENABLED && supabase && combinedKeywords.length > 0) {
-      structuredData = await fetchStructuredData(combinedKeywords, classified.intent, from).catch((error) => {
+    if (
+      WHATSAPP_AI_ASSISTANT_ENABLED &&
+      WHATSAPP_STRUCTURED_DATA_ENABLED &&
+      supabase &&
+      combinedKeywords.length > 0
+    ) {
+      structuredData = await fetchStructuredData(
+        combinedKeywords,
+        classified.intent,
+        from,
+      ).catch((error) => {
         console.error("[whatsapp] Structured data query failed:", error);
-        return { materials: '', products: '', orderStatus: '', orderResults: [], totalMatches: 0, materialPrices: [], productPrices: [] };
+        return {
+          materials: "",
+          products: "",
+          orderStatus: "",
+          orderResults: [],
+          totalMatches: 0,
+          materialPrices: [],
+          productPrices: [],
+        };
       });
     }
 
     _log("evaluate_model");
     // Use AI model when there's grounded data to work with:
     // RAG context above threshold, OR live structured data from DB
-    const hasGroundedRag = Boolean(knowledgeContext) && ragConfidence >= WHATSAPP_RAG_CONFIDENCE_THRESHOLD;
+    const hasGroundedRag =
+      Boolean(knowledgeContext) &&
+      ragConfidence >= WHATSAPP_RAG_CONFIDENCE_THRESHOLD;
     const hasLiveData = structuredData.totalMatches > 0;
-    const shouldUseModel = WHATSAPP_AI_ASSISTANT_ENABLED
-      && (WHATSAPP_REPLY_TO_ALL || senderRecognized)
-      && (hasGroundedRag || hasLiveData);
-    _log("use_model=" + shouldUseModel + " rag=" + hasGroundedRag + " live=" + hasLiveData);
+    const shouldUseModel =
+      WHATSAPP_AI_ASSISTANT_ENABLED &&
+      (WHATSAPP_REPLY_TO_ALL || senderRecognized) &&
+      (hasGroundedRag || hasLiveData);
+    _log(
+      "use_model=" +
+        shouldUseModel +
+        " rag=" +
+        hasGroundedRag +
+        " live=" +
+        hasLiveData,
+    );
 
     if (shouldUseModel) {
       const generationStartedAt = Date.now();
-      generatedReply = await generateWhatsAppReply(text, businessSettings, knowledgeContext, sessionHistory, structuredData).catch((error) => {
+      generatedReply = await generateWhatsAppReply(
+        text,
+        businessSettings,
+        knowledgeContext,
+        sessionHistory,
+        structuredData,
+      ).catch((error) => {
         console.error("[whatsapp] OpenAI reply error:", error);
-        fallbackReason = 'openai_error';
+        fallbackReason = "openai_error";
         return null;
       });
       generationLatencyMs = Date.now() - generationStartedAt;
@@ -916,11 +1177,17 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
 
     if (generatedReply) {
       finalReply = generatedReply.reply;
-      finalReplyKind = 'model';
+      finalReplyKind = "model";
     } else {
       finalReply = buildGuidedFallbackReply(businessSettings, text);
-      finalReplyKind = 'fallback';
-      fallbackReason = fallbackReason ?? (WHATSAPP_RAG_ENABLED ? (shouldUseModel ? 'model_generation_failed' : 'low_confidence') : 'rag_disabled');
+      finalReplyKind = "fallback";
+      fallbackReason =
+        fallbackReason ??
+        (WHATSAPP_RAG_ENABLED
+          ? shouldUseModel
+            ? "model_generation_failed"
+            : "low_confidence"
+          : "rag_disabled");
     }
 
     auditRecord = {
@@ -941,10 +1208,12 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         finishReason: generatedReply?.finishReason ?? null,
         replyToAll: WHATSAPP_REPLY_TO_ALL,
         senderRecognized,
-        sendStatus: 'pending',
+        sendStatus: "pending",
       },
       fallback_reason: fallbackReason,
-      model_name: generatedReply?.model ?? (shouldUseModel ? WHATSAPP_OPENAI_MODEL : null),
+      model_name:
+        generatedReply?.model ??
+        (shouldUseModel ? WHATSAPP_OPENAI_MODEL : null),
       prompt_version: WHATSAPP_PROMPT_VERSION,
       latency_ms: null,
       retrieval_latency_ms: retrievalLatencyMs,
@@ -954,32 +1223,35 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     };
 
     // Validate prices in GPT response against live DB data
-    let validationResult: ValidationResult | null = null
-    if (finalReplyKind === 'model' && structuredData.totalMatches > 0) {
+    let validationResult: ValidationResult | null = null;
+    if (finalReplyKind === "model" && structuredData.totalMatches > 0) {
       const knownPrices = [
         ...structuredData.materialPrices,
         ...structuredData.productPrices,
-      ]
+      ];
       if (knownPrices.length > 0) {
-        validationResult = await validatePricesInResponse(finalReply, knownPrices)
+        validationResult = await validatePricesInResponse(
+          finalReply,
+          knownPrices,
+        );
         if (!validationResult.valid) {
-          const originalReply = finalReply
-          finalReply = validationResult.safeResponse
-          auditRecord.response_text = finalReply
-          auditRecord.fallback_reason = 'price_hallucination'
+          const originalReply = finalReply;
+          finalReply = validationResult.safeResponse;
+          auditRecord.response_text = finalReply;
+          auditRecord.fallback_reason = "price_hallucination";
           auditRecord.response_metadata = {
             ...auditRecord.response_metadata,
             validationValid: false,
             mentionedPrices: validationResult.mentionedPrices,
             hallucinatedPrices: validationResult.hallucinatedPrices,
             originalResponseText: originalReply,
-          }
+          };
         } else {
           auditRecord.response_metadata = {
             ...auditRecord.response_metadata,
             validationValid: true,
             mentionedPrices: validationResult.mentionedPrices,
-          }
+          };
         }
       }
     }
@@ -989,11 +1261,11 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       _log("calling_send");
       const sendResult = await sendWhatsAppMessage(from, finalReply);
       _log("send_success");
-      didSendReply = true
+      didSendReply = true;
       auditRecord.response_metadata = {
         ...auditRecord.response_metadata,
-        sendStatus: 'sent',
-      }
+        sendStatus: "sent",
+      };
 
       // Non-blocking post-send operations (don't delay the reply)
       logWhatsAppMessage(supabase, {
@@ -1016,28 +1288,39 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
           .select("whatsapp_messages_sent")
           .eq("id", userId)
           .maybeSingle()
-          .then(({ data: profileRow }: any) => {
-            const nextCount = Number(profileRow?.whatsapp_messages_sent ?? 0) + 1;
-            supabase
-              .from("profiles")
-              .update({ whatsapp_messages_sent: nextCount })
-              .eq("id", userId)
-              .then()
-              .catch(() => {});
-          })
+          .then(
+            ({
+              data: profileRow,
+            }: {
+              data: Record<string, unknown> | null;
+            }) => {
+              const nextCount =
+                Number(profileRow?.whatsapp_messages_sent ?? 0) + 1;
+              supabase
+                .from("profiles")
+                .update({ whatsapp_messages_sent: nextCount })
+                .eq("id", userId)
+                .then()
+                .catch(() => {});
+            },
+          )
           .catch(() => {});
       }
     } catch (error) {
-      auditRecord.response_kind = 'error';
-      auditRecord.fallback_reason = auditRecord.fallback_reason ?? 'send_failed';
+      auditRecord.response_kind = "error";
+      auditRecord.fallback_reason =
+        auditRecord.fallback_reason ?? "send_failed";
       auditRecord.response_metadata = {
         ...auditRecord.response_metadata,
-        sendStatus: 'failed',
-      }
+        sendStatus: "failed",
+      };
       replySendFailed = true;
       // Save session even on send failure so context isn't lost
       saveSession(supabase, from, text, finalReply).catch(() => {});
-      console.error('[whatsapp] Failed to send outbound WhatsApp message:', error);
+      console.error(
+        "[whatsapp] Failed to send outbound WhatsApp message:",
+        error,
+      );
     } finally {
       auditRecord.latency_ms = Date.now() - requestStartedAt;
       logWhatsAppRagAudit(auditRecord).catch((error) => {
@@ -1052,11 +1335,15 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     // otherwise the customer never gets an answer and nothing retries it.
     if (supabase && eventRecord?.id) {
       if (replySendFailed && !didSendReply) {
-        supabase.rpc('increment_webhook_retry', {
-          p_event_id: eventRecord.id,
-          p_error: 'reply send failed (transient) — queued for retry',
-        }).then()
-          .catch((e: unknown) => console.error("[whatsapp] Failed to record retry info:", e));
+        supabase
+          .rpc("increment_webhook_retry", {
+            p_event_id: eventRecord.id,
+            p_error: "reply send failed (transient) — queued for retry",
+          })
+          .then()
+          .catch((e: unknown) =>
+            console.error("[whatsapp] Failed to record retry info:", e),
+          );
       } else {
         supabase
           .from("whatsapp_webhook_events")
@@ -1068,13 +1355,19 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
               rag: buildRagPayload({
                 mode: ragMode,
                 confidence: ragConfidence,
-                sources: ragSources.map(({ sourceKey, title, score }) => ({ sourceKey, title, score })),
+                sources: ragSources.map(({ sourceKey, title, score }) => ({
+                  sourceKey,
+                  title,
+                  score,
+                })),
               }),
             },
           })
           .eq("id", eventRecord.id)
           .then()
-          .catch((e: any) => console.error("[whatsapp] Failed to mark processed:", e));
+          .catch((e: unknown) =>
+            console.error("[whatsapp] Failed to mark processed:", e),
+          );
       }
     }
   } catch (error) {
@@ -1082,24 +1375,27 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     console.error("[whatsapp] Async processing error:", errorMessage);
 
     Sentry.withScope((scope) => {
-      scope.setTag('handler', 'processIncomingMessage');
-      scope.setExtra('sender', from);
-      scope.setExtra('eventId', eventRecord?.id);
-      scope.setExtra('text', text?.slice(0, 200));
+      scope.setTag("handler", "processIncomingMessage");
+      scope.setExtra("sender", from);
+      scope.setExtra("eventId", eventRecord?.id);
+      scope.setExtra("text", text?.slice(0, 200));
       Sentry.captureException(error);
     });
 
     // Record failure for retry queue
     if (supabase && eventRecord?.id) {
       try {
-        await supabase.rpc('increment_webhook_retry', {
+        await supabase.rpc("increment_webhook_retry", {
           p_event_id: eventRecord.id,
           p_error: errorMessage.slice(0, 1000),
         });
         // Also write to the visible 'error' column for easy debugging
-        await supabase.from('whatsapp_webhook_events').update({
-          error: errorMessage.slice(0, 2000),
-        }).eq('id', eventRecord.id);
+        await supabase
+          .from("whatsapp_webhook_events")
+          .update({
+            error: errorMessage.slice(0, 2000),
+          })
+          .eq("id", eventRecord.id);
       } catch (dbError) {
         console.error("[whatsapp] Failed to record retry info:", dbError);
       }
@@ -1111,7 +1407,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   // WEBHOOK VERIFICATION
   if (req.method === "GET") {
@@ -1124,7 +1420,10 @@ export default async function handler(
     const token = first(req.query["hub.verify_token"]);
     const challenge = first(req.query["hub.challenge"]);
 
-    if (mode === "subscribe" && timingSafeStringEqual(token ?? "", verifyToken)) {
+    if (
+      mode === "subscribe" &&
+      timingSafeStringEqual(token ?? "", verifyToken)
+    ) {
       return res.status(200).send(challenge ?? "");
     }
 
@@ -1134,13 +1433,20 @@ export default async function handler(
   // WHATSAPP MESSAGE RECEIVED
   if (req.method === "POST") {
     // Validate all environment variables at runtime — fails fast on misconfiguration
-    try { getEnv(); } catch (e) {
-      return res.status(500).json({ success: false, error: e instanceof Error ? e.message : 'Configuration error' });
+    try {
+      getEnv();
+    } catch (e) {
+      return res
+        .status(500)
+        .json({
+          success: false,
+          error: e instanceof Error ? e.message : "Configuration error",
+        });
     }
 
     const webhookSpan = Sentry.startInactiveSpan({
-      op: 'whatsapp.webhook',
-      name: 'POST /api/whatsapp',
+      op: "whatsapp.webhook",
+      name: "POST /api/whatsapp",
     });
 
     try {
@@ -1152,12 +1458,21 @@ export default async function handler(
         return res.status(403).send("Invalid signature");
       }
 
-      const ipLimit = await rateLimitCheck(`whatsapp:${getClientIp(req)}`, 60, 20);
+      const ipLimit = await rateLimitCheck(
+        `whatsapp:${getClientIp(req)}`,
+        60,
+        20,
+      );
       if (!ipLimit.success) {
-        return res.status(429).json({ success: false, error: "Too many requests" });
+        return res
+          .status(429)
+          .json({ success: false, error: "Too many requests" });
       }
 
-      const payloadHash = crypto.createHash("sha256").update(rawBody, "utf8").digest("hex");
+      const payloadHash = crypto
+        .createHash("sha256")
+        .update(rawBody, "utf8")
+        .digest("hex");
       const supabase = getServiceClient();
 
       // Idempotency: skip if we already processed this exact payload
@@ -1173,83 +1488,123 @@ export default async function handler(
         }
       }
 
-      let payload: any
-      try { payload = JSON.parse(rawBody) }
-      catch { return res.status(200).json({ success: true }) }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let payload: any;
+      try {
+        payload = JSON.parse(rawBody);
+      } catch {
+        return res.status(200).json({ success: true });
+      }
 
       // Template lifecycle events (message_template_status_update subscription):
       // log approval/rejection/pause so ops can see them in Vercel logs. The raw
       // event is still persisted to whatsapp_webhook_events by the generic path below.
-      const webhookField = payload?.entry?.[0]?.changes?.[0]?.field
-      if (webhookField === 'message_template_status_update') {
-        const tv = payload?.entry?.[0]?.changes?.[0]?.value ?? {}
-        console.log('[whatsapp] template status update:', tv.message_template_name, '->', tv.event, tv.reason ? `(${tv.reason})` : '')
+      const webhookField = payload?.entry?.[0]?.changes?.[0]?.field;
+      if (webhookField === "message_template_status_update") {
+        const tv = payload?.entry?.[0]?.changes?.[0]?.value ?? {};
+        console.log(
+          "[whatsapp] template status update:",
+          tv.message_template_name,
+          "->",
+          tv.event,
+          tv.reason ? `(${tv.reason})` : "",
+        );
       }
 
-      const message = payload?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]
-      const from = message?.from
-      const msgType = message?.type
+      const message = payload?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+      const from = message?.from;
+      const msgType = message?.type;
 
       // Handle delivery/read status updates pushed by Meta (may arrive with or
       // without a message in the same payload). Matches on the WhatsApp
       // Message ID (wamid) stored as meta_message_id.
-      const statuses = payload?.entry?.[0]?.changes?.[0]?.value?.statuses as unknown as Array<Record<string, unknown>> | undefined
+      const statuses = payload?.entry?.[0]?.changes?.[0]?.value
+        ?.statuses as unknown as Array<Record<string, unknown>> | undefined;
       if (Array.isArray(statuses) && statuses.length > 0 && supabase) {
         for (const st of statuses) {
-          const wamid = typeof st?.id === 'string' ? st.id : null
-          const sStatus = typeof st?.status === 'string' ? st.status : null
-          if (!wamid || !sStatus || !['sent', 'delivered', 'read', 'failed'].includes(sStatus)) continue
-          const update: Record<string, unknown> = { status: sStatus }
-          if (sStatus === 'failed') {
-            const errInfo = st?.errors as Array<Record<string, unknown>> | undefined
-            update.status_error = String(errInfo?.[0]?.title ?? 'delivery failed')
+          const wamid = typeof st?.id === "string" ? st.id : null;
+          const sStatus = typeof st?.status === "string" ? st.status : null;
+          if (
+            !wamid ||
+            !sStatus ||
+            !["sent", "delivered", "read", "failed"].includes(sStatus)
+          )
+            continue;
+          const update: Record<string, unknown> = { status: sStatus };
+          if (sStatus === "failed") {
+            const errInfo = st?.errors as
+              Array<Record<string, unknown>> | undefined;
+            update.status_error = String(
+              errInfo?.[0]?.title ?? "delivery failed",
+            );
           }
           // NOTE: postgrest-js 2.x builders implement .then but NOT .catch —
           // chaining .catch() directly on the builder throws TypeError.
           // Await inside try/catch instead.
           try {
             await supabase
-              .from('whatsapp_messages')
+              .from("whatsapp_messages")
               .update(update)
-              .eq('meta_message_id', wamid)
+              .eq("meta_message_id", wamid);
           } catch (error) {
-            console.error('[whatsapp] Failed to update message status:', error)
+            console.error("[whatsapp] Failed to update message status:", error);
           }
         }
-        await insertWebhookEvent(supabase, payloadHash, payload, { sender: null, processed_at: new Date().toISOString() }).catch(() => {})
+        await insertWebhookEvent(supabase, payloadHash, payload, {
+          sender: null,
+          processed_at: new Date().toISOString(),
+        }).catch(() => {});
         // Status-only events have no message body — nothing else to process
-        if (!message || !from) return res.status(200).json({ success: true })
+        if (!message || !from) return res.status(200).json({ success: true });
       }
 
       // Extract text/interaction from supported message types (shared with the retry cron)
-      const { text: parsedText, mediaInfo: parsedMedia, interaction: parsedInteraction } = parseWhatsAppMessage(message)
-      let text: string | undefined = parsedText
-      const mediaInfo: string | null = parsedMedia
-      const interaction: OrderInteraction | null = parsedInteraction
+      const {
+        text: parsedText,
+        mediaInfo: parsedMedia,
+        interaction: parsedInteraction,
+      } = parseWhatsAppMessage(message);
+      let text: string | undefined = parsedText;
+      const mediaInfo: string | null = parsedMedia;
+      const interaction: OrderInteraction | null = parsedInteraction;
 
       if (!message || !from) {
-        await insertWebhookEvent(supabase, payloadHash, payload, { sender: from ?? null, processed_at: new Date().toISOString() }).catch(() => {})
-        return res.status(200).json({ success: true })
+        await insertWebhookEvent(supabase, payloadHash, payload, {
+          sender: from ?? null,
+          processed_at: new Date().toISOString(),
+        }).catch(() => {});
+        return res.status(200).json({ success: true });
       }
 
       // Handle unsupported media types (audio, video, sticker) with a direct reply
-      if (msgType && msgType !== 'text' && msgType !== 'image' && msgType !== 'document' && !text) {
-        const mediaReply = `Thanks for your ${msgType}. I can only assist with text, images, and documents. Please describe what you need in text.`
-        await insertWebhookEvent(supabase, payloadHash, payload, { sender: from, processed_at: new Date().toISOString() }).catch(() => {})
-        
+      if (
+        msgType &&
+        msgType !== "text" &&
+        msgType !== "image" &&
+        msgType !== "document" &&
+        !text
+      ) {
+        const mediaReply = `Thanks for your ${msgType}. I can only assist with text, images, and documents. Please describe what you need in text.`;
+        await insertWebhookEvent(supabase, payloadHash, payload, {
+          sender: from,
+          processed_at: new Date().toISOString(),
+        }).catch(() => {});
+
         // Look up profile for userId (best-effort, 2s timeout)
-        let mediaUserId: string | null = null
+        let mediaUserId: string | null = null;
         try {
           const { data: mediaProfile } = await supabase
             .from("profiles")
             .select("id")
             .eq("phone_number", from)
-            .maybeSingle()
-          mediaUserId = mediaProfile?.id ?? null
-        } catch { /* ignore */ }
+            .maybeSingle();
+          mediaUserId = mediaProfile?.id ?? null;
+        } catch {
+          /* ignore */
+        }
 
         // Log the incoming media message so it appears in the admin inbox
-        const parsedMedia = parseWhatsAppMessage(message)
+        const parsedMedia = parseWhatsAppMessage(message);
         logWhatsAppMessage(supabase, {
           userId: mediaUserId,
           sender: from,
@@ -1263,28 +1618,44 @@ export default async function handler(
           mediaFilename: parsedMedia.mediaFilename ?? null,
           mediaMimeType: parsedMedia.mediaMimeType ?? null,
           metaMessageId: parsedMedia.metaMessageId ?? null,
-        }).catch(() => {})
+        }).catch(() => {});
 
         try {
-          const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
-          const accessToken = process.env.WHATSAPP_ACCESS_TOKEN
+          const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+          const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
           if (phoneNumberId && accessToken) {
-            const apiVersion = process.env.WHATSAPP_API_VERSION || 'v22.0'
-            const mediaController = new AbortController()
-            const mediaTimeout = setTimeout(() => mediaController.abort(), 10000)
-            const mediaResponse = await fetch(`https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`, {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ messaging_product: 'whatsapp', to: from, type: 'text', text: { body: mediaReply } }),
-              signal: mediaController.signal,
-            }).finally(() => clearTimeout(mediaTimeout))
-            
+            const apiVersion = process.env.WHATSAPP_API_VERSION || "v22.0";
+            const mediaController = new AbortController();
+            const mediaTimeout = setTimeout(
+              () => mediaController.abort(),
+              10000,
+            );
+            const mediaResponse = await fetch(
+              `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  messaging_product: "whatsapp",
+                  to: from,
+                  type: "text",
+                  text: { body: mediaReply },
+                }),
+                signal: mediaController.signal,
+              },
+            ).finally(() => clearTimeout(mediaTimeout));
+
             // Log the outgoing reply so it appears in the admin inbox
-            let mediaReplyId: string | undefined
+            let mediaReplyId: string | undefined;
             try {
-              const mediaResult = await mediaResponse.json().catch(() => null)
-              mediaReplyId = mediaResult?.messages?.[0]?.id
-            } catch { /* best-effort */ }
+              const mediaResult = await mediaResponse.json().catch(() => null);
+              mediaReplyId = mediaResult?.messages?.[0]?.id;
+            } catch {
+              /* best-effort */
+            }
             logWhatsAppMessage(supabase, {
               userId: mediaUserId,
               sender: from,
@@ -1295,43 +1666,58 @@ export default async function handler(
               responded: true,
               responseTimeMinutes: null,
               metaMessageId: mediaReplyId ?? null,
-            }).catch(() => {})
+            }).catch(() => {});
           }
-        } catch { /* best-effort */ }
-        return res.status(200).json({ success: true })
+        } catch {
+          /* best-effort */
+        }
+        return res.status(200).json({ success: true });
       }
 
       // Media without caption — use guided fallback
       if (mediaInfo && !text) {
         // Store the event with media info, then process as a guided reply
-        text = mediaInfo
+        text = mediaInfo;
       }
 
       // Fallback if no text or interaction could be extracted (shouldn't reach here)
       if ((!text || typeof text !== "string") && !interaction) {
-        await insertWebhookEvent(supabase, payloadHash, payload, { sender: from, processed_at: new Date().toISOString() }).catch(() => {})
-        return res.status(200).json({ success: true })
+        await insertWebhookEvent(supabase, payloadHash, payload, {
+          sender: from,
+          processed_at: new Date().toISOString(),
+        }).catch(() => {});
+        return res.status(200).json({ success: true });
       }
 
       // Phone-based rate limit
-      const phoneLimit = await rateLimitCheck(`whatsapp_phone:${from}`, 60, 10)
+      const phoneLimit = await rateLimitCheck(`whatsapp_phone:${from}`, 60, 10);
       if (!phoneLimit.success) {
-        return res.status(429).json({ success: false, error: "Too many messages. Please wait before sending another." })
+        return res
+          .status(429)
+          .json({
+            success: false,
+            error: "Too many messages. Please wait before sending another.",
+          });
       }
 
       // Write the event record immediately (worker will use this ID)
-      const eventRecord = await insertWebhookEvent(supabase, payloadHash, payload, { sender: from }).catch(() => null)
+      const eventRecord = await insertWebhookEvent(
+        supabase,
+        payloadHash,
+        payload,
+        { sender: from },
+      ).catch(() => null);
 
       // A concurrent Meta retry already claimed this exact payload — the winner
       // is processing (or has processed) it. Short-circuit here instead of
       // falling through to inline processing, which would double-reply.
-      if (eventRecord && 'duplicate' in eventRecord) {
-        return res.status(200).json({ success: true, duplicate: true })
+      if (eventRecord && "duplicate" in eventRecord) {
+        return res.status(200).json({ success: true, duplicate: true });
       }
 
       // Enqueue processing to the QStash queue BEFORE responding, so the job
       // is durable even if the function is terminated right after the 200.
-      const queued = await enqueueWhatsAppProcessing(eventRecord?.id ?? null)
+      const queued = await enqueueWhatsAppProcessing(eventRecord?.id ?? null);
 
       // If QStash was unreachable, process inline BEFORE returning 200.
       // Background work after the 200 is killed seconds later on Hobby plans,
@@ -1339,40 +1725,60 @@ export default async function handler(
       // order/guided-fallback paths are fast (<~3s) and fit within the
       // function duration limit. The queue remains the primary path.
       if (!queued && eventRecord?.id) {
-        const requestStartedAt = Date.now()
+        const requestStartedAt = Date.now();
         const workKey = `webhook-${payloadHash.slice(0, 12)}`;
-        const workPromise = processIncomingMessage({ supabase, payloadHash, payload, from, text: text!, interaction, eventRecord, requestStartedAt }).catch((error) => {
-          console.error("[whatsapp] Async processing failed:", error)
-          Sentry.captureException(error, {
-            tags: { handler: 'webhook_async' },
-            extra: { sender: from },
+        const workPromise = processIncomingMessage({
+          supabase,
+          payloadHash,
+          payload,
+          from,
+          text: text!,
+          interaction,
+          eventRecord,
+          requestStartedAt,
+        })
+          .catch((error) => {
+            console.error("[whatsapp] Async processing failed:", error);
+            Sentry.captureException(error, {
+              tags: { handler: "webhook_async" },
+              extra: { sender: from },
+            });
+          })
+          .finally(() => {
+            pendingWorkMap.delete(workKey);
           });
-        }).finally(() => {
-          pendingWorkMap.delete(workKey);
-        });
         pendingWorkMap.set(workKey, workPromise);
 
         // WhatsApp allows ~20s for the 200 ack; our Hobby cap is 10s, so bound
         // the inline fallback well under that.
         const PROCESSING_TIMEOUT_MS = 6_000;
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Processing timeout (6s)')), PROCESSING_TIMEOUT_MS)
+          setTimeout(
+            () => reject(new Error("Processing timeout (6s)")),
+            PROCESSING_TIMEOUT_MS,
+          ),
         );
         try {
           await Promise.race([workPromise, timeoutPromise]);
         } catch (processingError) {
-          const errMsg = processingError instanceof Error ? processingError.message : String(processingError);
+          const errMsg =
+            processingError instanceof Error
+              ? processingError.message
+              : String(processingError);
           console.error("[whatsapp] Processing timed out or failed:", errMsg);
           Sentry.captureException(processingError, {
-            tags: { handler: 'processing_timeout' },
+            tags: { handler: "processing_timeout" },
             extra: { sender: from },
           });
           // Mark event as failed so it's visible in the database
           if (supabase && eventRecord?.id) {
             try {
-              await supabase.from('whatsapp_webhook_events').update({
-                error: errMsg.slice(0, 500),
-              }).eq('id', eventRecord.id)
+              await supabase
+                .from("whatsapp_webhook_events")
+                .update({
+                  error: errMsg.slice(0, 500),
+                })
+                .eq("id", eventRecord.id);
             } catch {
               // best-effort marking
             }
@@ -1387,34 +1793,41 @@ export default async function handler(
       // on serverless, making the old after-response placement best-effort at
       // best. Bounded to 4s so Meta's ~20s ack window is never at risk.
       if (!interaction && queued) {
-        const hasOrderSession = await getOrderSession(from ?? '').catch(() => null)
+        const hasOrderSession = await getOrderSession(from ?? "").catch(
+          () => null,
+        );
         if (!hasOrderSession) {
-          const ackReply = `👍 Got your message! Processing...`
+          const ackReply = `👍 Got your message! Processing...`;
           try {
             const ackController = new AbortController();
             const ackTimeout = setTimeout(() => ackController.abort(), 4000);
-            const ackResponse = await fetch(`https://graph.facebook.com/${WHATSAPP_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-                'Content-Type': 'application/json',
+            const ackResponse = await fetch(
+              `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  messaging_product: "whatsapp",
+                  to: from,
+                  type: "text",
+                  text: { body: ackReply },
+                }),
+                signal: ackController.signal,
               },
-              body: JSON.stringify({
-                messaging_product: 'whatsapp',
-                to: from,
-                type: 'text',
-                text: { body: ackReply },
-              }),
-              signal: ackController.signal,
-            }).finally(() => clearTimeout(ackTimeout));
+            ).finally(() => clearTimeout(ackTimeout));
             console.log("[whatsapp] ACK sent to", from?.slice(-4));
 
             // Log the ACK so it appears in the admin inbox alongside the customer's message
-            let ackMessageId: string | undefined
+            let ackMessageId: string | undefined;
             try {
-              const ackResult = await ackResponse.json().catch(() => null)
-              ackMessageId = ackResult?.messages?.[0]?.id
-            } catch { /* best-effort */ }
+              const ackResult = await ackResponse.json().catch(() => null);
+              ackMessageId = ackResult?.messages?.[0]?.id;
+            } catch {
+              /* best-effort */
+            }
             logWhatsAppMessage(supabase, {
               userId: null,
               sender: from,
@@ -1425,7 +1838,7 @@ export default async function handler(
               responded: true,
               responseTimeMinutes: null,
               metaMessageId: ackMessageId ?? null,
-            }).catch(() => {})
+            }).catch(() => {});
           } catch (ackError) {
             console.error("[whatsapp] ACK failed:", ackError);
           }
@@ -1433,15 +1846,18 @@ export default async function handler(
       }
 
       // === RETURN 200 IMMEDIATELY; the queue (or the inline fallback above) handles processing ===
-      res.status(200).json({ success: true, queued })
+      res.status(200).json({ success: true, queued });
     } catch (pre200Error) {
       // Catch any error that occurs BEFORE res.status(200).json() is called.
       // Log it, but ALWAYS return 200 to stop Meta from retrying.
       // The retry queue will handle reprocessing if needed.
-      console.error("[whatsapp] Pre-200 error (will still ack 200):", pre200Error);
+      console.error(
+        "[whatsapp] Pre-200 error (will still ack 200):",
+        pre200Error,
+      );
       Sentry.captureException(pre200Error, {
-        tags: { handler: 'webhook_pre200' },
-        extra: { method: req.method, path: '/api/whatsapp' },
+        tags: { handler: "webhook_pre200" },
+        extra: { method: req.method, path: "/api/whatsapp" },
       });
       // Ensure at least some response is sent to Meta
       if (!res.headersSent) {

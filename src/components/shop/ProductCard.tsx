@@ -1,60 +1,71 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
-import dynamic from 'next/dynamic'
-import Image from 'next/image'
-import Link from 'next/link'
-import { Box, ShoppingBag, Star } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { addToast } from '@/lib/toast/store'
-import type { ShopPublicProduct } from '@/lib/shop/public-types'
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+import Link from "next/link";
+import { Box, ShoppingBag, Star } from "lucide-react";
+import { motion } from "framer-motion";
+import { addToast } from "@/lib/toast/store";
+import type { ShopPublicProduct } from "@/lib/shop/public-types";
 import {
   formatShopPrice,
   formatVariantLabel,
   getShopProductBadge,
   getShopProductImages,
-} from '@/lib/shop/selection'
-import { useShopCartStore } from '@/stores/shopCartStore'
-import QuickAddModal from '@/components/shop/QuickAddModal'
-import { trackMetaEvent } from '@/lib/meta/event-utils'
-import WishlistButton from '@/components/shop/WishlistButton'
+} from "@/lib/shop/selection";
+import { useShopCartStore } from "@/stores/shopCartStore";
+import QuickAddModal from "@/components/shop/QuickAddModal";
+import { trackMetaEvent } from "@/lib/meta/event-utils";
+import WishlistButton from "@/components/shop/WishlistButton";
 
-const ProductModelModal = dynamic(() => import('@/components/shop/ProductModelModal'), {
-  ssr: false,
-})
+const ProductModelModal = dynamic(
+  () => import("@/components/shop/ProductModelModal"),
+  {
+    ssr: false,
+  },
+);
 
 export default function ProductCard({
   product,
-  actionLabel = 'Add',
+  actionLabel = "Add",
   index = 0,
-  className = '',
+  className = "",
 }: {
-  product: ShopPublicProduct
-  actionLabel?: string
-  index?: number
-  className?: string
+  product: ShopPublicProduct;
+  actionLabel?: string;
+  index?: number;
+  className?: string;
 }) {
-  const [quickAddOpen, setQuickAddOpen] = useState(false)
-  const [modelOpen, setModelOpen] = useState(false)
-  const [modelRequested, setModelRequested] = useState(false)
-  const [added, setAdded] = useState(false)
-  const [mounted, setMounted] = useState(false)
-  const addItem = useShopCartStore((state) => state.addItem)
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [modelOpen, setModelOpen] = useState(false);
+  const [modelRequested, setModelRequested] = useState(false);
+  const [added, setAdded] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const addItem = useShopCartStore((state) => state.addItem);
 
-  useEffect(() => { setMounted(true) }, [])
-  const images = getShopProductImages(product)
-  const badge = getShopProductBadge(product)
-  const directSku = product.variant_options.length === 0 ? product.skus.find((sku) => sku.is_available !== false) ?? null : null
-  const canDirectAdd = Boolean(directSku && (directSku.stock_quantity > 0 || directSku.pre_order_eta))
-  const hasModel = Boolean(product.model_url)
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration guard
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const images = getShopProductImages(product);
+  const badge = getShopProductBadge(product);
+  const directSku =
+    product.variant_options.length === 0
+      ? (product.skus.find((sku) => sku.is_available !== false) ?? null)
+      : null;
+  const canDirectAdd = Boolean(
+    directSku && (directSku.stock_quantity > 0 || directSku.pre_order_eta),
+  );
+  const hasModel = Boolean(product.model_url);
 
   function handleAdd() {
     if (!directSku) {
-      setQuickAddOpen(true)
-      return
+      setQuickAddOpen(true);
+      return;
     }
-    if (!canDirectAdd) return
+    if (!canDirectAdd) return;
     addItem({
       productId: product.id,
       productSlug: product.slug,
@@ -62,31 +73,34 @@ export default function ProductCard({
       categoryId: product.category_id,
       categoryName: product.category_name,
       categorySlug: product.category_slug,
-      thumbnail: directSku.variant_image_url || product.thumbnail_url || images[0] || '',
+      thumbnail:
+        directSku.variant_image_url || product.thumbnail_url || images[0] || "",
       skuId: directSku.id,
       skuCode: directSku.sku_code,
       variantCombination: directSku.variant_combination,
       variantLabel: formatVariantLabel(directSku.variant_combination),
-      customizationText: '',
+      customizationText: "",
       price: directSku.price,
       compareAtPrice: directSku.compare_at_price,
       quantity: 1,
       maxStock: directSku.pre_order_eta ? 10 : directSku.stock_quantity,
-    })
-    setAdded(true)
-    trackMetaEvent('AddToCart', {
+    });
+    setAdded(true);
+    trackMetaEvent("AddToCart", {
       content_ids: [directSku.sku_code],
-      content_type: 'product',
-      contents: [{ id: directSku.sku_code, quantity: 1, item_price: directSku.price }],
+      content_type: "product",
+      contents: [
+        { id: directSku.sku_code, quantity: 1, item_price: directSku.price },
+      ],
       value: directSku.price,
-      currency: 'INR',
-    })
+      currency: "INR",
+    });
     addToast({
-      type: 'success',
-      title: 'Added to cart',
+      type: "success",
+      title: "Added to cart",
       description: `${product.name} — ${formatShopPrice(directSku.price)}`,
-    })
-    window.setTimeout(() => setAdded(false), 1500)
+    });
+    window.setTimeout(() => setAdded(false), 1500);
   }
 
   return (
@@ -94,12 +108,22 @@ export default function ProductCard({
       <motion.article
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-40px' }}
-        transition={{ duration: 0.5, delay: index * 0.06, ease: [0.16, 1, 0.3, 1] }}
+        viewport={{ once: true, margin: "-40px" }}
+        transition={{
+          duration: 0.5,
+          delay: index * 0.06,
+          ease: [0.16, 1, 0.3, 1],
+        }}
         className={`group relative flex h-full flex-col overflow-hidden rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] shadow-[var(--shop-shadow-sm)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--shop-border-gold)] hover:shadow-[var(--shop-shadow-md)] ${className}`}
       >
-        <WishlistButton productId={product.id} className="absolute right-3 top-3 z-10" />
-        <Link href={`/3d-shop/product/${product.slug}`} className="relative block">
+        <WishlistButton
+          productId={product.id}
+          className="absolute right-3 top-3 z-10"
+        />
+        <Link
+          href={`/3d-shop/product/${product.slug}`}
+          className="relative block"
+        >
           <div className="relative aspect-square overflow-hidden bg-[var(--shop-bg-muted)]">
             {images[0] ? (
               <Image
@@ -139,14 +163,20 @@ export default function ProductCard({
             {product.review_count > 0 && (
               <div className="flex items-center gap-1.5 text-xs text-[var(--shop-text-muted)]">
                 <Star className="h-3.5 w-3.5 fill-[var(--shop-gold)] text-[var(--shop-gold)]" />
-                <span className="font-semibold text-[var(--shop-text-primary)]">{product.avg_rating.toFixed(1)}</span>
+                <span className="font-semibold text-[var(--shop-text-primary)]">
+                  {product.avg_rating.toFixed(1)}
+                </span>
                 <span>({product.review_count})</span>
               </div>
             )}
             <div className="flex items-baseline gap-2">
-              <span className="font-semibold text-[var(--shop-text-primary)]">{formatShopPrice(product.display_price)}</span>
+              <span className="font-semibold text-[var(--shop-text-primary)]">
+                {formatShopPrice(product.display_price)}
+              </span>
               {product.has_sale && product.compare_at_price ? (
-                <span className="text-sm text-[var(--shop-text-subtle)] line-through">{formatShopPrice(product.compare_at_price)}</span>
+                <span className="text-sm text-[var(--shop-text-subtle)] line-through">
+                  {formatShopPrice(product.compare_at_price)}
+                </span>
               ) : null}
             </div>
           </div>
@@ -160,17 +190,17 @@ export default function ProductCard({
               className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--shop-text-primary)] px-3 text-sm font-semibold text-white shadow-[var(--shop-shadow-sm)] transition hover:bg-[var(--shop-text-secondary)] hover:shadow-[var(--shop-shadow-md)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <ShoppingBag className="h-4 w-4" />
-              {added ? 'Added' : actionLabel}
+              {added ? "Added" : actionLabel}
             </button>
             {hasModel && (
               <button
                 type="button"
                 onClick={() => {
-                  setModelRequested(true)
-                  setModelOpen(true)
+                  setModelRequested(true);
+                  setModelOpen(true);
                 }}
                 onPointerEnter={() => {
-                  void import('@/components/shop/ProductModelModal')
+                  void import("@/components/shop/ProductModelModal");
                 }}
                 aria-label="View 3D preview"
                 className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-3 text-sm font-semibold text-[var(--shop-gold)] transition hover:border-[var(--shop-gold)] hover:bg-[var(--shop-gold-soft)]"
@@ -182,19 +212,28 @@ export default function ProductCard({
           </div>
         </div>
       </motion.article>
-      {mounted && createPortal(
-        <QuickAddModal product={product} open={quickAddOpen} onOpenChangeAction={setQuickAddOpen} />,
-        document.body
-      )}
-      {mounted && hasModel && modelRequested && product.model_url && createPortal(
-        <ProductModelModal
-          open={modelOpen}
-          modelUrl={product.model_url}
-          productName={product.name}
-          onClose={() => setModelOpen(false)}
-        />,
-        document.body
-      )}
+      {mounted &&
+        createPortal(
+          <QuickAddModal
+            product={product}
+            open={quickAddOpen}
+            onOpenChangeAction={setQuickAddOpen}
+          />,
+          document.body,
+        )}
+      {mounted &&
+        hasModel &&
+        modelRequested &&
+        product.model_url &&
+        createPortal(
+          <ProductModelModal
+            open={modelOpen}
+            modelUrl={product.model_url}
+            productName={product.name}
+            onClose={() => setModelOpen(false)}
+          />,
+          document.body,
+        )}
     </>
-  )
+  );
 }
