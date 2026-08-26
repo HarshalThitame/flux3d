@@ -5,7 +5,17 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { AppliedCoupon, AppliedOffer } from '@/lib/cart/types'
 import { calculatePricingWaterfall } from '@/lib/quote/pricing-waterfall'
-import { initShopCartSync, mirrorShopAdd, mirrorShopClear, mirrorShopQuantity, mirrorShopRemove } from '@/lib/cart/shop-cart-sync'
+
+type ShopCartSyncModule = typeof import('@/lib/cart/shop-cart-sync')
+
+let shopCartSyncModulePromise: Promise<ShopCartSyncModule> | null = null
+
+function loadShopCartSync() {
+  if (!shopCartSyncModulePromise) {
+    shopCartSyncModulePromise = import('@/lib/cart/shop-cart-sync')
+  }
+  return shopCartSyncModulePromise
+}
 
 export type ShopCartItem = {
   cartItemId: string
@@ -303,7 +313,10 @@ export const useShopCartStore = create<ShopCartState>()(
           }
           return { items: [...state.items, mirrored] }
         })
-        if (mirrored) mirrorShopAdd(mirrored)
+        if (mirrored) {
+          const itemToMirror = mirrored
+          void loadShopCartSync().then((sync) => sync.mirrorShopAdd(itemToMirror))
+        }
       },
       removeItem: (cartItemId) => {
         set((state) => {
@@ -313,7 +326,7 @@ export const useShopCartStore = create<ShopCartState>()(
             ...(items.length === 0 ? { couponCode: null, appliedCoupon: null, discountAmount: 0 } : {}),
           }
         })
-        mirrorShopRemove(cartItemId)
+        void loadShopCartSync().then((sync) => sync.mirrorShopRemove(cartItemId))
       },
       updateQuantity: (cartItemId, newQty) => {
         set((state) => ({
@@ -325,12 +338,14 @@ export const useShopCartStore = create<ShopCartState>()(
         }))
         const updated = useShopCartStore.getState().items.find((item) => item.cartItemId === cartItemId)
         if (updated && !updated.localOnly) {
-          mirrorShopQuantity(cartItemId, updated.quantity, updated.price)
+          void loadShopCartSync().then((sync) =>
+            sync.mirrorShopQuantity(cartItemId, updated.quantity, updated.price)
+          )
         }
       },
       clearCart: () => {
         set({ items: [], couponCode: null, appliedCoupon: null, discountAmount: 0, priceChangedItemIds: [] })
-        mirrorShopClear()
+        void loadShopCartSync().then((sync) => sync.mirrorShopClear())
       },
       applyCoupon: (coupon) => {
         if (typeof coupon === 'string') {
@@ -361,5 +376,5 @@ export const useShopCartStore = create<ShopCartState>()(
 )
 
 if (typeof window !== 'undefined') {
-  initShopCartSync()
+  void loadShopCartSync().then((sync) => sync.initShopCartSync())
 }

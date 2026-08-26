@@ -6,7 +6,6 @@ import { Heart } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useShopWishlistStore } from '@/stores/shopWishlistStore'
 import { addToast } from '@/lib/toast/store'
-import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { trackMetaEvent } from '@/lib/meta/event-utils'
 
 export default function WishlistButton({
@@ -30,6 +29,7 @@ export default function WishlistButton({
 
     // Wishlist requires an account — prompt login instead of firing a
     // request that will 401 and revert.
+    const { getSupabaseBrowserClient } = await import('@/lib/supabase/client')
     const { data } = await getSupabaseBrowserClient().auth.getUser()
     if (!data?.user) {
       addToast({ type: 'info', title: 'Log in to save items', description: 'Your wishlist is saved to your account.' })

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Box, ShoppingBag, Star } from 'lucide-react'
@@ -18,7 +19,10 @@ import { useShopCartStore } from '@/stores/shopCartStore'
 import QuickAddModal from '@/components/shop/QuickAddModal'
 import { trackMetaEvent } from '@/lib/meta/event-utils'
 import WishlistButton from '@/components/shop/WishlistButton'
-import ProductModelModal from '@/components/shop/ProductModelModal'
+
+const ProductModelModal = dynamic(() => import('@/components/shop/ProductModelModal'), {
+  ssr: false,
+})
 
 export default function ProductCard({
   product,
@@ -33,6 +37,7 @@ export default function ProductCard({
 }) {
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [modelOpen, setModelOpen] = useState(false)
+  const [modelRequested, setModelRequested] = useState(false)
   const [added, setAdded] = useState(false)
   const [mounted, setMounted] = useState(false)
   const addItem = useShopCartStore((state) => state.addItem)
@@ -160,7 +165,13 @@ export default function ProductCard({
             {hasModel && (
               <button
                 type="button"
-                onClick={() => setModelOpen(true)}
+                onClick={() => {
+                  setModelRequested(true)
+                  setModelOpen(true)
+                }}
+                onPointerEnter={() => {
+                  void import('@/components/shop/ProductModelModal')
+                }}
                 aria-label="View 3D preview"
                 className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-3 text-sm font-semibold text-[var(--shop-gold)] transition hover:border-[var(--shop-gold)] hover:bg-[var(--shop-gold-soft)]"
               >
@@ -175,7 +186,7 @@ export default function ProductCard({
         <QuickAddModal product={product} open={quickAddOpen} onOpenChangeAction={setQuickAddOpen} />,
         document.body
       )}
-      {mounted && hasModel && product.model_url && createPortal(
+      {mounted && hasModel && modelRequested && product.model_url && createPortal(
         <ProductModelModal
           open={modelOpen}
           modelUrl={product.model_url}
