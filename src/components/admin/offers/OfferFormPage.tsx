@@ -9,6 +9,7 @@ type OfferForm = {
   title: string;
   description: string;
   banner_url: string;
+  banner_image_mobile_url: string;
   offer_type: "percentage" | "fixed_amount" | "free_shipping" | "buy_x_get_y";
   discount_value: number;
   max_discount: number;
@@ -33,6 +34,7 @@ const emptyForm: OfferForm = {
   title: "",
   description: "",
   banner_url: "",
+  banner_image_mobile_url: "",
   offer_type: "percentage",
   discount_value: 0,
   max_discount: 0,
@@ -71,6 +73,7 @@ export default function OfferFormPage({ offerId }: { offerId: string }) {
           title: o.title ?? "",
           description: o.description ?? "",
           banner_url: o.banner_url ?? "",
+          banner_image_mobile_url: o.banner_image_mobile_url ?? "",
           offer_type: o.offer_type ?? "percentage",
           discount_value: o.discount_value ?? 0,
           max_discount: o.max_discount ?? 0,
@@ -106,7 +109,10 @@ export default function OfferFormPage({ offerId }: { offerId: string }) {
     [],
   );
 
-  async function uploadBanner(file: File) {
+  async function uploadBanner(
+    file: File,
+    field: "banner_url" | "banner_image_mobile_url",
+  ) {
     setUploadingBanner(true);
     try {
       const body = new FormData();
@@ -118,7 +124,7 @@ export default function OfferFormPage({ offerId }: { offerId: string }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
-      update("banner_url", data.publicUrl);
+      update(field, data.publicUrl);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Banner upload failed");
     } finally {
@@ -135,6 +141,7 @@ export default function OfferFormPage({ offerId }: { offerId: string }) {
       usage_per_user: form.usage_per_user || null,
       coupon_code: form.coupon_code || null,
       banner_url: form.banner_url || null,
+      banner_image_mobile_url: form.banner_image_mobile_url || null,
       badge_text: form.badge_text || null,
       sale_label: form.sale_label || null,
       starts_at: new Date(form.starts_at).toISOString(),
@@ -336,46 +343,89 @@ export default function OfferFormPage({ offerId }: { offerId: string }) {
                 />
               </div>
             </div>
-            <div>
-              <label className={labelClass}>Banner Image</label>
-              {form.banner_url && (
-                <Image
-                  src={form.banner_url}
-                  alt="Banner preview"
-                  width={640}
-                  height={120}
-                  className="mb-3 h-24 w-full rounded-lg object-cover"
-                />
-              )}
-              <div className="flex items-center gap-3">
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[rgba(109,40,217,0.2)] bg-white px-3 py-2 text-sm text-[#6d28d9] hover:bg-[#6d28d9]/5 transition-colors">
-                  <ImagePlus className="h-4 w-4" />
-                  {uploadingBanner ? "Uploading..." : "Upload Banner"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={uploadingBanner}
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      if (!file) return;
-                      void uploadBanner(file);
-                    }}
+            <div className={rowClass}>
+              <div>
+                <label className={labelClass}>Desktop Banner</label>
+                {form.banner_url && (
+                  <Image
+                    src={form.banner_url}
+                    alt="Desktop banner preview"
+                    width={640}
+                    height={120}
+                    className="mb-3 h-24 w-full rounded-lg object-cover"
                   />
-                </label>
-                <span className="text-xs text-[#6F7192]">or</span>
-                <input
-                  type="text"
-                  value={form.banner_url}
-                  onChange={(e) => update("banner_url", e.target.value)}
-                  className={inputClass}
-                  placeholder="Paste image URL..."
-                />
+                )}
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[rgba(109,40,217,0.2)] bg-white px-3 py-2 text-sm text-[#6d28d9] hover:bg-[#6d28d9]/5 transition-colors">
+                    <ImagePlus className="h-4 w-4" />
+                    {uploadingBanner ? "Uploading..." : "Upload"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingBanner}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (!file) return;
+                        void uploadBanner(file, "banner_url");
+                      }}
+                    />
+                  </label>
+                  <span className="text-xs text-[#6F7192]">or</span>
+                  <input
+                    type="text"
+                    value={form.banner_url}
+                    onChange={(e) => update("banner_url", e.target.value)}
+                    className={inputClass}
+                    placeholder="Paste image URL..."
+                  />
+                </div>
+                <p className="mt-1.5 text-[10px] text-[#6F7192]">
+                  Recommended: 1920 × 360 px. Max 8MB.
+                </p>
               </div>
-              <p className="mt-1.5 text-[10px] text-[#6F7192]">
-                Recommended: 1920 × 360 px (desktop), 768 × 360 px (mobile). Max
-                8MB.
-              </p>
+              <div>
+                <label className={labelClass}>Mobile Banner</label>
+                {form.banner_image_mobile_url && (
+                  <Image
+                    src={form.banner_image_mobile_url}
+                    alt="Mobile banner preview"
+                    width={320}
+                    height={180}
+                    className="mb-3 h-24 w-full rounded-lg object-cover"
+                  />
+                )}
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[rgba(109,40,217,0.2)] bg-white px-3 py-2 text-sm text-[#6d28d9] hover:bg-[#6d28d9]/5 transition-colors">
+                    <ImagePlus className="h-4 w-4" />
+                    {uploadingBanner ? "Uploading..." : "Upload"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingBanner}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (!file) return;
+                        void uploadBanner(file, "banner_image_mobile_url");
+                      }}
+                    />
+                  </label>
+                  <span className="text-xs text-[#6F7192]">or</span>
+                  <input
+                    type="text"
+                    value={form.banner_image_mobile_url}
+                    onChange={(e) =>
+                      update("banner_image_mobile_url", e.target.value)
+                    }
+                    className={inputClass}
+                    placeholder="Paste image URL..."
+                  />
+                </div>
+                <p className="mt-1.5 text-[10px] text-[#6F7192]">
+                  Recommended: 768 × 420 px. Max 8MB.
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 text-sm text-[#0F1B3D] cursor-pointer">

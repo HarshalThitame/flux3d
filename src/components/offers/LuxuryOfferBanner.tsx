@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { X, Sparkles, ArrowRight } from "lucide-react";
@@ -12,6 +12,7 @@ type Offer = {
   title: string;
   description: string | null;
   banner_url: string | null;
+  banner_image_mobile_url: string | null;
   offer_type: string;
   discount_value: number;
   badge_text: string | null;
@@ -26,7 +27,7 @@ type Offer = {
 const DISMISS_KEY = "luxury-banner-dismissed";
 const DISMISS_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
-function getDismissedState() {
+function isDismissed(): boolean {
   if (typeof window === "undefined") return false;
   const raw = localStorage.getItem(DISMISS_KEY);
   if (!raw) return false;
@@ -38,10 +39,6 @@ function getDismissedState() {
   }
 }
 
-function subscribeDismissed(_callback: () => void) {
-  return () => {};
-}
-
 function dismiss() {
   if (typeof window === "undefined") return;
   localStorage.setItem(DISMISS_KEY, String(Date.now()));
@@ -49,12 +46,10 @@ function dismiss() {
 
 export default function LuxuryOfferBanner() {
   const [offer, setOffer] = useState<Offer | null>(null);
-  const dismissed = useSyncExternalStore(
-    subscribeDismissed,
-    getDismissedState,
-    () => false,
+  const [clientDismissed, setClientDismissed] = useState(() =>
+    typeof window !== "undefined" ? isDismissed() : false,
   );
-  const [clientDismissed, setClientDismissed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     fetch("/api/offers/active")
@@ -65,9 +60,14 @@ export default function LuxuryOfferBanner() {
         if (featured) setOffer(featured);
       })
       .catch(() => {});
+
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  if (!offer || dismissed || clientDismissed) return null;
+  if (!offer || clientDismissed) return null;
 
   const handleDismiss = () => {
     dismiss();
@@ -75,6 +75,10 @@ export default function LuxuryOfferBanner() {
   };
 
   const ctaUrl = "/3d-shop";
+  const bgImage =
+    isMobile && offer.banner_image_mobile_url
+      ? offer.banner_image_mobile_url
+      : offer.banner_url;
 
   return (
     <AnimatePresence>
@@ -89,6 +93,7 @@ export default function LuxuryOfferBanner() {
             "linear-gradient(135deg, #1C1917 0%, #292524 40%, #44403C 100%)",
           borderTop: "1px solid rgba(201, 169, 98, 0.35)",
           borderBottom: "1px solid rgba(201, 169, 98, 0.35)",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.15)",
         }}
       >
         {/* Subtle gold radial glow behind */}
@@ -108,21 +113,22 @@ export default function LuxuryOfferBanner() {
         />
 
         {/* Background banner image if provided */}
-        {offer.banner_url && (
+        {bgImage && (
           <div className="pointer-events-none absolute inset-0">
             <Image
-              src={offer.banner_url}
+              src={bgImage}
               alt=""
               fill
               priority
               sizes="100vw"
-              className="object-cover opacity-[0.12]"
+              className="object-cover"
+              style={{ opacity: 0.8 }}
             />
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(90deg, rgba(28,25,23,0.85) 0%, rgba(28,25,23,0.4) 50%, rgba(28,25,23,0.85) 100%)",
+                  "linear-gradient(90deg, rgba(28,25,23,0.75) 0%, rgba(28,25,23,0.35) 50%, rgba(28,25,23,0.75) 100%)",
               }}
             />
           </div>

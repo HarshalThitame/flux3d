@@ -52,25 +52,25 @@ export default function CountdownTimer({
   const labelClasses =
     size === "sm" ? "text-[8px]" : size === "lg" ? "text-xs" : "text-[10px]";
 
-  const colorMap = {
+  const colorStyles = {
     default: {
-      num: "text-[#6d28d9]",
-      label: "text-[#6F7192]",
-      sep: "text-[#6d28d9]",
+      num: { color: "#6d28d9" },
+      label: { color: "#6F7192" },
+      sep: { color: "#6d28d9" },
     },
     light: {
-      num: "text-white",
-      label: "text-white/70",
-      sep: "text-white",
+      num: { color: "#ffffff" },
+      label: { color: "rgba(255,255,255,0.7)" },
+      sep: { color: "#ffffff" },
     },
     luxury: {
-      num: "text-[#C9A962]",
-      label: "text-[#C9A962]/60",
-      sep: "text-[#C9A962]/70",
+      num: { color: "#C9A962" },
+      label: { color: "rgba(201, 169, 98, 0.6)" },
+      sep: { color: "rgba(201, 169, 98, 0.7)" },
     },
   };
 
-  const colors = colorMap[effectiveVariant];
+  const colors = colorStyles[effectiveVariant];
 
   return (
     <div className={`inline-flex items-center ${sizeClasses} ${className}`}>
@@ -83,19 +83,22 @@ export default function CountdownTimer({
         <div key={unit.label} className="flex items-center">
           <div className="flex flex-col items-center">
             <span
-              className={`font-bold ${numClasses} tabular-nums ${colors.num}`}
+              className={`font-bold ${numClasses} tabular-nums`}
+              style={colors.num}
             >
               {String(unit.value).padStart(2, "0")}
             </span>
             <span
-              className={`uppercase tracking-wider ${labelClasses} ${colors.label}`}
+              className={`uppercase tracking-wider ${labelClasses}`}
+              style={colors.label}
             >
               {unit.label}
             </span>
           </div>
           {i < 3 && (
             <span
-              className={`font-bold ${numClasses} ${colors.sep} mx-1 sm:mx-1.5`}
+              className={`font-bold ${numClasses} mx-1 sm:mx-1.5`}
+              style={colors.sep}
             >
               :
             </span>
