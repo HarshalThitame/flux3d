@@ -1,12 +1,12 @@
-import { updateSession } from '@/lib/supabase/proxy'
-import { NextRequest, NextResponse } from 'next/server'
-import { generateCspNonce } from '@/lib/csp-nonce'
-import { getMetaCapiGatewayOrigins } from '@/lib/csp-allowlist'
-import { getCorsHeaders } from '@/lib/api/cors'
+import { updateSession } from "@/lib/supabase/proxy";
+import { NextRequest, NextResponse } from "next/server";
+import { generateCspNonce } from "@/lib/csp-nonce";
+import { getMetaCapiGatewayOrigins } from "@/lib/csp-allowlist";
+import { getCorsHeaders } from "@/lib/api/cors";
 
 export function buildCsp(nonce: string) {
-  const isDev = process.env.NODE_ENV === 'development'
-  const capiGatewayOrigins = getMetaCapiGatewayOrigins()
+  const isDev = process.env.NODE_ENV === "development";
+  const capiGatewayOrigins = getMetaCapiGatewayOrigins();
   // NOTE: 'strict-dynamic' is intentionally NOT used. It disables host-based
   // allowlisting entirely and only propagates trust through nonces, which
   // breaks framework-rendered route chunks that ship without a nonce
@@ -18,60 +18,60 @@ export function buildCsp(nonce: string) {
   const directives = [
     "default-src 'self'",
     [
-      'script-src',
+      "script-src",
       "'self'",
       `'nonce-${nonce}'`,
-      'https://checkout.razorpay.com https://api.razorpay.com https://cdn.razorpay.com',
+      "https://checkout.razorpay.com https://api.razorpay.com https://cdn.razorpay.com",
       // fbevents.js loaded by the Meta Pixel.
-      'https://connect.facebook.net',
+      "https://connect.facebook.net",
       // gtag.js loaded by DeferredGoogleAnalytics.
-      'https://www.googletagmanager.com',
+      "https://www.googletagmanager.com",
       // Google Identity Services (Sign-In with Google).
-      'https://accounts.google.com',
+      "https://accounts.google.com",
       ...(isDev ? ["'unsafe-eval'"] : []),
-    ].join(' '),
+    ].join(" "),
     // Google Identity Services injects its own stylesheet (accounts.google.com/gsi/style).
     "style-src 'self' 'unsafe-inline' https://accounts.google.com",
     [
-      'img-src',
+      "img-src",
       "'self'",
-      'blob:',
-      'data:',
-      'https://jqgaebdtuasenyojvbsi.supabase.co',
-      'https://lh3.googleusercontent.com',
-      'https://avatars.githubusercontent.com',
+      "blob:",
+      "data:",
+      "https://jqgaebdtuasenyojvbsi.supabase.co",
+      "https://lh3.googleusercontent.com",
+      "https://avatars.githubusercontent.com",
       // Facebook Pixel image beacon (noscript + fallback transport).
-      'https://www.facebook.com',
+      "https://www.facebook.com",
       // Google Tag Manager pixel transport beacons (/a?id=... GIF requests).
-      'https://www.googletagmanager.com',
-    ].join(' '),
+      "https://www.googletagmanager.com",
+    ].join(" "),
     "font-src 'self' data:",
     // Product hero videos (<video>) stream from Supabase Storage.
     "media-src 'self' https://jqgaebdtuasenyojvbsi.supabase.co",
     [
-      'connect-src',
+      "connect-src",
       "'self'",
-      'https://jqgaebdtuasenyojvbsi.supabase.co',
-      'wss://jqgaebdtuasenyojvbsi.supabase.co',
-      'https://www.googletagmanager.com',
-      'https://www.google-analytics.com',
-      'https://analytics.google.com',
-      'https://region1.google-analytics.com',
-      'https://vitals.vercel-insights.com',
-      'https://connect.facebook.net',
+      "https://jqgaebdtuasenyojvbsi.supabase.co",
+      "wss://jqgaebdtuasenyojvbsi.supabase.co",
+      "https://www.googletagmanager.com",
+      "https://www.google-analytics.com",
+      "https://analytics.google.com",
+      "https://region1.google-analytics.com",
+      "https://vitals.vercel-insights.com",
+      "https://connect.facebook.net",
       // Google Identity Services credential-status check (accounts.google.com/gsi/status).
-      'https://accounts.google.com',
-      'https://graph.facebook.com',
+      "https://accounts.google.com",
+      "https://graph.facebook.com",
       // Facebook Pixel fetch/sendBeacon transport for /tr event calls.
-      'https://www.facebook.com',
+      "https://www.facebook.com",
       // Meta Conversions API Gateway relay hosts (browser pixel events).
       ...capiGatewayOrigins,
-      'https://api.razorpay.com',
-      'https://checkout.razorpay.com',
-      'https://lumberjack.razorpay.com',
-      'https://lumberjack-cx.razorpay.com',
-      'https://custom-analytics.razorpay.com',
-    ].join(' '),
+      "https://api.razorpay.com",
+      "https://checkout.razorpay.com",
+      "https://lumberjack.razorpay.com",
+      "https://lumberjack-cx.razorpay.com",
+      "https://custom-analytics.razorpay.com",
+    ].join(" "),
     // fbevents.js submits large event payloads to /tr via a hidden form and
     // renders measurement iframes on www.facebook.com.
     `form-action 'self' https://www.facebook.com`,
@@ -79,64 +79,87 @@ export function buildCsp(nonce: string) {
     "object-src 'none'",
     "base-uri 'self'",
     "frame-ancestors 'self'",
-    'upgrade-insecure-requests',
-  ]
-  return directives.join('; ')
+    "upgrade-insecure-requests",
+  ];
+  return directives.join("; ");
 }
 
 export async function proxy(request: NextRequest) {
-  const pathname = request.nextUrl.pathname
+  const pathname = request.nextUrl.pathname;
 
-  const nonce = generateCspNonce()
-  const cspHeader = buildCsp(nonce)
+  // CSP is irrelevant for API routes (JSON responses) and static assets.
+  // Skip nonce generation to reduce middleware CPU and avoid forcing
+  // dynamic rendering on public pages unnecessarily.
+  const isApiPath = pathname.startsWith("/api/");
 
-  const requestHeaders = new Headers(request.headers)
-  requestHeaders.set('x-nonce', nonce)
-  requestHeaders.set('Content-Security-Policy', cspHeader)
+  const nonce = isApiPath ? "" : generateCspNonce();
+  const cspHeader = isApiPath ? "" : buildCsp(nonce);
+
+  const requestHeaders = new Headers(request.headers);
+  if (!isApiPath) {
+    requestHeaders.set("x-nonce", nonce);
+    requestHeaders.set("Content-Security-Policy", cspHeader);
+  }
 
   const response = NextResponse.next({
     request: {
       headers: requestHeaders,
     },
-  })
+  });
 
   const isAdminPath =
-    pathname === '/admin' ||
-    pathname.startsWith('/admin/') ||
-    pathname === '/api/admin' ||
-    pathname.startsWith('/api/admin/') ||
-    pathname === '/api/3d-shop/admin' ||
-    pathname.startsWith('/api/3d-shop/admin/')
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname === "/api/admin" ||
+    pathname.startsWith("/api/admin/") ||
+    pathname === "/api/3d-shop/admin" ||
+    pathname.startsWith("/api/3d-shop/admin/");
   if (isAdminPath) {
-    const nonceRequest = new NextRequest(request, { headers: requestHeaders })
-    const updateResponse = await updateSession(nonceRequest)
-    updateResponse.headers.set('Content-Security-Policy', cspHeader)
-    updateResponse.headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
-    updateResponse.headers.set('X-Frame-Options', 'SAMEORIGIN')
-    updateResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-    updateResponse.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains')
-    return updateResponse
+    const nonceRequest = new NextRequest(request, { headers: requestHeaders });
+    const updateResponse = await updateSession(nonceRequest);
+    if (cspHeader)
+      updateResponse.headers.set("Content-Security-Policy", cspHeader);
+    updateResponse.headers.set(
+      "Cross-Origin-Opener-Policy",
+      "same-origin-allow-popups",
+    );
+    updateResponse.headers.set("X-Frame-Options", "SAMEORIGIN");
+    updateResponse.headers.set(
+      "Referrer-Policy",
+      "strict-origin-when-cross-origin",
+    );
+    updateResponse.headers.set(
+      "Strict-Transport-Security",
+      "max-age=63072000; includeSubDomains",
+    );
+    return updateResponse;
   }
 
-  response.headers.set('Content-Security-Policy', cspHeader)
-  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
-  response.headers.set('X-Frame-Options', 'SAMEORIGIN')
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains')
+  if (cspHeader) response.headers.set("Content-Security-Policy", cspHeader);
+  response.headers.set(
+    "Cross-Origin-Opener-Policy",
+    "same-origin-allow-popups",
+  );
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=63072000; includeSubDomains",
+  );
 
   // Add CORS headers to public API routes (not admin, not webhooks)
   const isPublicApi =
-    pathname.startsWith('/api/') &&
-    !pathname.startsWith('/api/admin/') &&
-    !pathname.startsWith('/api/3d-shop/admin/') &&
-    !pathname.startsWith('/api/webhooks/') &&
-    !pathname.startsWith('/api/cron/')
+    pathname.startsWith("/api/") &&
+    !pathname.startsWith("/api/admin/") &&
+    !pathname.startsWith("/api/3d-shop/admin/") &&
+    !pathname.startsWith("/api/webhooks/") &&
+    !pathname.startsWith("/api/cron/");
   if (isPublicApi) {
-    const corsHeaders = getCorsHeaders(request)
+    const corsHeaders = getCorsHeaders(request);
     for (const [key, value] of Object.entries(corsHeaders)) {
-      response.headers.set(key, value)
+      response.headers.set(key, value);
     }
   }
 
-  return response
+  return response;
 }
