@@ -45,8 +45,8 @@ export default function ProductCard({
   const [mounted, setMounted] = useState(false);
   const addItem = useShopCartStore((state) => state.addItem);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration guard
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration guard
     setMounted(true);
   }, []);
   const images = getShopProductImages(product);
@@ -123,6 +123,7 @@ export default function ProductCard({
         <Link
           href={`/3d-shop/product/${product.slug}`}
           className="relative block"
+          data-testid="product-card-link"
         >
           <div className="relative aspect-square overflow-hidden bg-[var(--shop-bg-muted)]">
             {images[0] ? (

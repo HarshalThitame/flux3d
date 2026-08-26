@@ -1,24 +1,24 @@
-'use client'
+"use client";
 
-import Image from 'next/image'
-import Link from 'next/link'
-import { useActionState, useState } from 'react'
-import { useFormStatus } from 'react-dom'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
-import { loginAction } from '@/app/auth/actions'
-import GoogleIdentityButton from '@/components/auth/GoogleIdentityButton'
-import type { AuthFormState } from '@/lib/auth/validation'
+import Image from "next/image";
+import Link from "next/link";
+import { useActionState, useState } from "react";
+import { useFormStatus } from "react-dom";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { loginAction } from "@/app/auth/actions";
+import GoogleIdentityButton from "@/components/auth/GoogleIdentityButton";
+import type { AuthFormState } from "@/lib/auth/validation";
 
-const initialState: AuthFormState = {}
+const initialState: AuthFormState = {};
 
 export type LoginFormProps = {
-  nextPath: string
-  errorMessage?: string
-  logoUrl?: string
-}
+  nextPath: string;
+  errorMessage?: string;
+  logoUrl?: string;
+};
 
 function FieldError({ id, errors }: { id: string; errors?: string[] }) {
-  if (!errors?.length) return null
+  if (!errors?.length) return null;
 
   return (
     <div id={id} className="space-y-1">
@@ -28,26 +28,27 @@ function FieldError({ id, errors }: { id: string; errors?: string[] }) {
         </p>
       ))}
     </div>
-  )
+  );
 }
 
 function LoginMessage({ state }: { state: AuthFormState }) {
-  if (!state.message) return null
+  if (!state.message) return null;
 
   const tone =
-    state.status === 'success' ? 'luxe-note--success' : 'luxe-note--error'
+    state.status === "success" ? "luxe-note--success" : "luxe-note--error";
 
-  return <div className={`luxe-note ${tone}`}>{state.message}</div>
+  return <div className={`luxe-note ${tone}`}>{state.message}</div>;
 }
 
 function SubmitButton() {
-  const { pending } = useFormStatus()
+  const { pending } = useFormStatus();
 
   return (
     <button
       type="submit"
       disabled={pending}
       className="luxe-cta inline-flex w-full items-center justify-center gap-2"
+      data-testid="login-submit"
     >
       {pending ? (
         <>
@@ -58,16 +59,20 @@ function SubmitButton() {
         <span>Sign In</span>
       )}
     </button>
-  )
+  );
 }
 
-export default function LoginForm({ nextPath, errorMessage, logoUrl = '/logo.webp' }: LoginFormProps) {
-  const [showPassword, setShowPassword] = useState(false)
+export default function LoginForm({
+  nextPath,
+  errorMessage,
+  logoUrl = "/logo.webp",
+}: LoginFormProps) {
+  const [showPassword, setShowPassword] = useState(false);
   const [state, action] = useActionState(loginAction, {
     ...initialState,
     message: errorMessage,
-    status: errorMessage ? 'error' : undefined,
-  })
+    status: errorMessage ? "error" : undefined,
+  });
 
   return (
     <div className="w-full min-w-0">
@@ -79,7 +84,7 @@ export default function LoginForm({ nextPath, errorMessage, logoUrl = '/logo.web
           height={28}
           sizes="120px"
           className="object-contain"
-          style={{ width: 'auto', height: '24px' }}
+          style={{ width: "auto", height: "24px" }}
         />
         <span className="luxe-kicker">Members</span>
       </div>
@@ -87,7 +92,11 @@ export default function LoginForm({ nextPath, errorMessage, logoUrl = '/logo.web
       <h2 className="luxe-form-title">Welcome back.</h2>
       <p className="luxe-form-sub">Sign in to continue to Flux3D.</p>
 
-      <form action={action} className="mt-7 grid gap-[18px]">
+      <form
+        action={action}
+        className="mt-7 grid gap-[18px]"
+        data-testid="login-form"
+      >
         <input type="hidden" name="next" value={nextPath} />
 
         <div>
@@ -103,10 +112,16 @@ export default function LoginForm({ nextPath, errorMessage, logoUrl = '/logo.web
             maxLength={254}
             placeholder="yourname@email.com"
             aria-invalid={Boolean(state.fieldErrors?.email)}
-            aria-describedby={state.fieldErrors?.email ? 'login-email-error' : undefined}
-            className={`luxe-input ${state.fieldErrors?.email ? 'luxe-input--error' : ''}`}
+            aria-describedby={
+              state.fieldErrors?.email ? "login-email-error" : undefined
+            }
+            className={`luxe-input ${state.fieldErrors?.email ? "luxe-input--error" : ""}`}
+            data-testid="login-email"
           />
-          <FieldError id="login-email-error" errors={state.fieldErrors?.email} />
+          <FieldError
+            id="login-email-error"
+            errors={state.fieldErrors?.email}
+          />
         </div>
 
         <div>
@@ -126,19 +141,22 @@ export default function LoginForm({ nextPath, errorMessage, logoUrl = '/logo.web
             <input
               id="password"
               name="password"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
+              data-testid="login-password"
               autoComplete="current-password"
               required
               maxLength={128}
               placeholder="Enter your password"
               aria-invalid={Boolean(state.fieldErrors?.password)}
-              aria-describedby={state.fieldErrors?.password ? 'login-password-error' : undefined}
-              className={`luxe-input pr-14 ${state.fieldErrors?.password ? 'luxe-input--error' : ''}`}
+              aria-describedby={
+                state.fieldErrors?.password ? "login-password-error" : undefined
+              }
+              className={`luxe-input pr-14 ${state.fieldErrors?.password ? "luxe-input--error" : ""}`}
             />
             <button
               type="button"
               onClick={() => setShowPassword((value) => !value)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               className="luxe-eye"
             >
               {showPassword ? (
@@ -148,7 +166,10 @@ export default function LoginForm({ nextPath, errorMessage, logoUrl = '/logo.web
               )}
             </button>
           </div>
-          <FieldError id="login-password-error" errors={state.fieldErrors?.password} />
+          <FieldError
+            id="login-password-error"
+            errors={state.fieldErrors?.password}
+          />
         </div>
 
         <LoginMessage state={state} />
@@ -160,7 +181,7 @@ export default function LoginForm({ nextPath, errorMessage, logoUrl = '/logo.web
       <GoogleIdentityButton nextPath={nextPath} />
 
       <p className="luxe-alt">
-        New to Flux3D?{' '}
+        New to Flux3D?{" "}
         <Link
           href={`/signup?next=${encodeURIComponent(nextPath)}`}
           prefetch={false}
@@ -170,5 +191,5 @@ export default function LoginForm({ nextPath, errorMessage, logoUrl = '/logo.web
         </Link>
       </p>
     </div>
-  )
+  );
 }
