@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import RecentlyViewedDynamic from "@/components/shop/RecentlyViewedDynamic";
 import ShopShell from "@/components/shop/ShopShell";
+import LuxuryOfferBanner from "@/components/offers/LuxuryOfferBanner";
 import ShopProductFilterClient from "./ShopProductFilterClient";
 import {
   buildShopCategoryTree,
@@ -98,6 +99,7 @@ export default async function ShopHomePage() {
           __html: toJsonLd(makeItemListSchema(allProducts)),
         }}
       />
+      <LuxuryOfferBanner />
       <main className="flex-1">
         {/* Hero — Editorial style like The Collective */}
         <section className="relative overflow-hidden">
