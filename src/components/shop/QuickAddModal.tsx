@@ -9,6 +9,7 @@ import type { ShopPublicProduct } from '@/lib/shop/public-types'
 import {
   formatShopPrice,
   formatVariantLabel,
+  getDefaultShopSelection,
   getShopProductImages,
   getShopStockLabel,
   resolveShopSku,
@@ -71,7 +72,8 @@ export default function QuickAddModal({
   onOpenChangeAction: (open: boolean) => void
 }) {
   const addItem = useShopCartStore((state) => state.addItem)
-  const [selected, setSelected] = useState<ShopSelectedOptions>({})
+  // Match the PDP: pre-select the cheapest purchasable variant.
+  const [selected, setSelected] = useState<ShopSelectedOptions>(() => getDefaultShopSelection(product))
   const panelRef = useRef<HTMLDivElement | null>(null)
   useScrollLock(open)
   useEscape(() => onOpenChangeAction(false), open)

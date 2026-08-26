@@ -12,6 +12,7 @@ import {
   Link2,
   MessageCircle,
   Pencil,
+  Play,
   RefreshCcw,
   Share2,
   ShieldCheck,
@@ -37,6 +38,7 @@ import { convertWeight, displayDimensions } from '@/lib/shop/dimensions'
 import {
   formatShopPrice,
   formatVariantLabel,
+  getDefaultShopSelection,
   getShopDisplayDimensions,
   getShopGalleryImages,
   getShopProductImages,
@@ -210,13 +212,25 @@ export default function ShopProductDetailClient({
   const addItem = useShopCartStore((state) => state.addItem)
   const openCart = useShopCartStore((state) => state.openCart)
   const baseImages = useMemo(() => getShopProductImages(product), [product])
-  const [selectedImage, setSelectedImage] = useState(baseImages[0] ?? '')
-  const [imageIndex, setImageIndex] = useState(0)
   const [slideDir, setSlideDir] = useState<1 | -1>(1)
   const draggingRef = useRef(false)
-  const [selected, setSelected] = useState<ShopSelectedOptions>({})
+  // Pre-select the cheapest purchasable variant on load — enterprise PDPs
+  // never show an ambiguous "From ₹X" / "Select options" first paint.
+  const [selected, setSelected] = useState<ShopSelectedOptions>(() => getDefaultShopSelection(product))
   const gallery = useMemo(() => getShopGalleryImages(product, selected), [product, selected])
   const images = gallery.images
+  // Unified gallery media: images plus the hero video inserted right after
+  // the cover shot so the video sits in the natural browsing flow.
+  const mediaItems = useMemo<{ type: 'video' | 'image'; src: string }[]>(() => {
+    const items: { type: 'video' | 'image'; src: string }[] = images.map((src) => ({ type: 'image', src }))
+    if (product.hero_video_url) {
+      items.splice(Math.min(1, items.length), 0, { type: 'video', src: product.hero_video_url })
+    }
+    return items
+  }, [images, product.hero_video_url])
+  const [mediaPos, setMediaPos] = useState(0)
+  const safeMediaPos = Math.min(mediaPos, Math.max(0, mediaItems.length - 1))
+  const activeMedia = mediaItems[safeMediaPos] ?? null
   const [customizationText, setCustomizationText] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [pincode, setPincode] = useState('')
@@ -245,25 +259,23 @@ export default function ShopProductDetailClient({
   const productDimensions = useMemo(() => getShopDisplayDimensions(product, selected), [product, selected])
   const activeModelUrl = resolvedSku?.model_url || product.model_url || null
   const tintColor = useMemo(() => getSelectedSwatchColor(product.variant_options, selected), [product.variant_options, selected])
-  // Hero follows the thumbnail strip exactly — no separate variant override,
-  // so the main image and the strip can never disagree.
-  const visibleImage = selectedImage || images[0] || baseImages[0] || ''
+  // Hero follows the gallery media sequence exactly — the main stage and
+  // thumbnail strip can never disagree.
+  const visibleImage = activeMedia?.type === 'image' ? activeMedia.src : baseImages[0] || ''
 
   const gallerySignature = `${gallery.source}|${images.join(',')}`
   const [seenGallery, setSeenGallery] = useState(gallerySignature)
   if (seenGallery !== gallerySignature) {
     setSeenGallery(gallerySignature)
-    setSelectedImage(images[0] ?? baseImages[0] ?? '')
-    setImageIndex(0)
+    setMediaPos(0)
   }
 
   function goImage(dir: 1 | -1) {
-    if (images.length < 2) return
-    const next = Math.min(Math.max(imageIndex + dir, 0), images.length - 1)
-    if (next === imageIndex) return
+    if (mediaItems.length < 2) return
+    const next = Math.min(Math.max(safeMediaPos + dir, 0), mediaItems.length - 1)
+    if (next === safeMediaPos) return
     setSlideDir(dir)
-    setImageIndex(next)
-    setSelectedImage(images[next])
+    setMediaPos(next)
   }
 
   function goLightboxImage(dir: 1 | -1) {
@@ -573,20 +585,6 @@ export default function ShopProductDetailClient({
 
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_520px]">
           <section className="min-w-0">
-            {product.hero_video_url && (
-              <div className="mb-4 overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-black shadow-[var(--shop-shadow-sm)]">
-                <video
-                  src={product.hero_video_url}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  aria-label={`${product.name} showcase video`}
-                  className="aspect-square w-full object-cover"
-                />
-              </div>
-            )}
             <motion.div
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
@@ -598,70 +596,110 @@ export default function ShopProductDetailClient({
                 else if (info.offset.x > 42) goImage(-1)
                 window.setTimeout(() => { draggingRef.current = false }, 80)
               }}
-              className="cursor-grab touch-pan-y select-none active:cursor-grabbing"
+              className={`touch-pan-y select-none ${activeMedia?.type === 'image' ? 'cursor-grab active:cursor-grabbing' : ''}`}
             >
-              <button
-                type="button"
-                onClick={() => { if (!draggingRef.current && visibleImage) setLightboxImage(visibleImage) }}
-                onMouseEnter={() => { if (canHoverZoom()) setZoomEnabled(true) }}
-                onMouseMove={(event) => {
-                  if (!zoomEnabled || draggingRef.current) return
-                  const rect = event.currentTarget.getBoundingClientRect()
-                  setZoomOrigin(`${(((event.clientX - rect.left) / rect.width) * 100).toFixed(1)}% ${(((event.clientY - rect.top) / rect.height) * 100).toFixed(1)}%`)
-                }}
-                onMouseLeave={() => setZoomEnabled(false)}
-                className="relative aspect-square w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)] transition hover:shadow-[var(--shop-shadow-md)]"
-              >
-                {visibleImage ? (
-                  <AnimatePresence initial={false} mode="wait">
-                    <motion.div
-                      key={visibleImage}
-                      initial={{ opacity: 0, x: 24 * slideDir }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -24 * slideDir }}
-                      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute inset-0"
-                    >
-                      <div
-                        className="absolute inset-0 transition-transform duration-200 ease-out"
-                        style={{ transform: zoomEnabled ? 'scale(1.7)' : 'scale(1)', transformOrigin: zoomOrigin }}
+              {activeMedia?.type === 'video' ? (
+                // Inline player with controls — sound-on playback, Nike/Samsung style.
+                <div className="relative aspect-square w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-black shadow-[var(--shop-shadow-sm)]">
+                  <video
+                    key={activeMedia.src}
+                    src={activeMedia.src}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    poster={baseImages[0] || undefined}
+                    aria-label={`${product.name} showcase video`}
+                    className="absolute inset-0 h-full w-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-label="View larger image"
+                  onClick={() => { if (!draggingRef.current && visibleImage) setLightboxImage(visibleImage) }}
+                  onKeyDown={(event) => {
+                    if ((event.key === 'Enter' || event.key === ' ') && !draggingRef.current && visibleImage) {
+                      event.preventDefault()
+                      setLightboxImage(visibleImage)
+                    }
+                  }}
+                  onMouseEnter={() => { if (canHoverZoom()) setZoomEnabled(true) }}
+                  onMouseMove={(event) => {
+                    if (!zoomEnabled || draggingRef.current) return
+                    const rect = event.currentTarget.getBoundingClientRect()
+                    setZoomOrigin(`${(((event.clientX - rect.left) / rect.width) * 100).toFixed(1)}% ${(((event.clientY - rect.top) / rect.height) * 100).toFixed(1)}%`)
+                  }}
+                  onMouseLeave={() => setZoomEnabled(false)}
+                  className="relative aspect-square w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)] transition hover:shadow-[var(--shop-shadow-md)]"
+                >
+                  {visibleImage ? (
+                    <AnimatePresence initial={false} mode="wait">
+                      <motion.div
+                        key={visibleImage}
+                        initial={{ opacity: 0, x: 24 * slideDir }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -24 * slideDir }}
+                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                        className="absolute inset-0"
                       >
-                        <Image src={visibleImage} alt={product.name} fill priority sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover" />
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
-                ) : (
-                  <div className="grid h-full place-items-center text-6xl text-[var(--shop-text-subtle)]">🧩</div>
-                )}
-              </button>
+                        <div
+                          className="absolute inset-0 transition-transform duration-200 ease-out"
+                          style={{ transform: zoomEnabled ? 'scale(1.7)' : 'scale(1)', transformOrigin: zoomOrigin }}
+                        >
+                          <Image src={visibleImage} alt={gallery.caption ? `${product.name} — ${gallery.caption}` : product.name} fill priority sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover" />
+                        </div>
+                      </motion.div>
+                    </AnimatePresence>
+                  ) : (
+                    <div className="grid h-full place-items-center text-6xl text-[var(--shop-text-subtle)]">🧩</div>
+                  )}
+                </div>
+              )}
             </motion.div>
-            {images.length > 1 && (
+            {mediaItems.length > 1 && (
               <div className="mt-4 flex items-center justify-center gap-1.5 lg:hidden">
-                {images.map((image, index) => (
+                {mediaItems.map((item, index) => (
                   <button
-                    key={image}
+                    key={`${item.type}-${item.src}`}
                     type="button"
-                    aria-label={`Go to image ${index + 1}`}
-                    onClick={() => { setImageIndex(index); setSelectedImage(image) }}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${index === imageIndex ? 'w-5 bg-[var(--shop-gold)]' : 'w-1.5 bg-[var(--shop-border-medium)]'}`}
+                    aria-label={`Go to ${item.type === 'video' ? 'video' : `image ${index + 1}`}`}
+                    onClick={() => setMediaPos(index)}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${index === safeMediaPos ? 'w-5 bg-[var(--shop-gold)]' : 'w-1.5 bg-[var(--shop-border-medium)]'}`}
                   />
                 ))}
               </div>
             )}
-            {images.length > 1 && (
+            {mediaItems.length > 1 && (
               <div className="mt-4 flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 scroll-padding-x-1 scrollbar-hide [scrollbar-width:none] [-webkit-overflow-scrolling:touch]">
-                {images.map((image, index) => (
+                {mediaItems.map((item, index) => (
                   <button
-                    key={image}
+                    key={`${item.type}-${item.src}`}
                     type="button"
-                    onClick={() => { setImageIndex(index); setSelectedImage(image) }}
-                    aria-label={`View product image ${index + 1}`}
-                    className={`relative aspect-square w-[72px] shrink-0 snap-start overflow-hidden rounded-2xl border bg-white transition hover:border-[var(--shop-border-gold)] active:scale-95 ${visibleImage === image ? 'border-[var(--shop-gold)] ring-2 ring-[var(--shop-gold)]/25' : 'border-[var(--shop-border-light)]'}`}
+                    onClick={() => setMediaPos(index)}
+                    aria-label={item.type === 'video' ? `Play product video` : `View product image ${index + 1}`}
+                    className={`relative aspect-square w-[72px] shrink-0 snap-start overflow-hidden rounded-2xl border bg-white transition hover:border-[var(--shop-border-gold)] active:scale-95 ${safeMediaPos === index ? 'border-[var(--shop-gold)] ring-2 ring-[var(--shop-gold)]/25' : 'border-[var(--shop-border-light)]'}`}
                   >
-                    <Image src={image} alt={product.name} fill sizes="72px" className="object-cover" />
+                    {item.type === 'video' ? (
+                      <>
+                        <span className="absolute inset-0 grid place-items-center bg-black">
+                          <Play className="h-6 w-6 fill-white text-white" />
+                        </span>
+                        <span className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white">
+                          Video
+                        </span>
+                      </>
+                    ) : (
+                      <Image src={item.src} alt={product.name} fill sizes="72px" className="object-cover" />
+                    )}
                   </button>
                 ))}
               </div>
+            )}
+            {gallery.caption && mediaItems.length > 1 && (
+              <p className="mt-3 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">
+                Showing: {gallery.caption}
+              </p>
             )}
             {activeModelUrl && (
               <button

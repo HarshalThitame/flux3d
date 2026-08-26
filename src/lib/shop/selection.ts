@@ -34,6 +34,21 @@ export function getShopSkuImages(product: ShopPublicProduct, sku: ShopSku | null
 
 export type ShopGallerySource = 'option' | 'sku' | 'product'
 
+/** Merge variant-specific shots ahead of the general product shots (deduped)
+ *  so selecting a variant jumps to its images while every photo stays
+ *  reachable by swiping — standard enterprise PDP behavior. */
+function mergeGalleryWithProductImages(variantImages: string[], product: ShopPublicProduct) {
+  const seen = new Set(variantImages)
+  const merged = [...variantImages]
+  for (const url of getShopProductImages(product)) {
+    if (!seen.has(url)) {
+      seen.add(url)
+      merged.push(url)
+    }
+  }
+  return merged
+}
+
 export function getShopGalleryImages(
   product: ShopPublicProduct,
   selected: ShopSelectedOptions
@@ -44,7 +59,10 @@ export function getShopGalleryImages(
     const optionImages = getShopVariantOptionImages(product, option.option_name, value)
     if (optionImages.length > 0) {
       return {
-        images: optionImages.map((image) => image.image_url),
+        images: mergeGalleryWithProductImages(
+          optionImages.map((image) => image.image_url),
+          product
+        ),
         caption: `${option.option_name}: ${value}`,
         source: 'option',
       }
@@ -54,19 +72,52 @@ export function getShopGalleryImages(
   const resolvedSku = resolveShopSku(product.skus, product.variant_options, selected)
   const skuImages = getShopSkuImages(product, resolvedSku)
   const variantImage = resolvedSku?.variant_image_url
+  let variantSpecific: string[] | null = null
   if (skuImages.length > 0) {
-    // Merge the SKU's single variant image into its gallery (front, deduped)
-    // so the hero image and thumbnail strip always agree.
-    const images = variantImage
+    variantSpecific = variantImage
       ? [variantImage, ...skuImages.map((image) => image.image_url).filter((url) => url !== variantImage)]
       : skuImages.map((image) => image.image_url)
-    return { images, source: 'sku' }
+  } else if (variantImage) {
+    variantSpecific = [variantImage]
   }
-  if (variantImage) {
-    return { images: [variantImage], source: 'sku' }
+
+  if (variantSpecific && variantSpecific.length > 0) {
+    return { images: mergeGalleryWithProductImages(variantSpecific, product), source: 'sku' }
   }
 
   return { images: getShopProductImages(product), source: 'product' }
+}
+
+/**
+ * Default pre-selected options: the cheapest purchasable SKU's combination.
+ * Preference order: in-stock → available (pre-order etc.) → any. Falls back
+ * to an empty selection when no SKU exists.
+ */
+export function getDefaultShopSelection(
+  product: Pick<ShopPublicProduct, 'skus' | 'variant_options'>
+): ShopSelectedOptions {
+  const relevantOptions = getSkuRelevantOptions(product.variant_options)
+  if (relevantOptions.length === 0 || product.skus.length === 0) return {}
+
+  const rank = (sku: ShopSku) => {
+    if (sku.is_available === false) return 3
+    if (sku.stock_quantity > 0) return 0
+    if (sku.pre_order_eta) return 1
+    return 2
+  }
+  const candidates = [...product.skus].sort(
+    (a, b) => rank(a) - rank(b) || a.price - b.price
+  )
+  const best = candidates[0]
+
+  const selected: ShopSelectedOptions = {}
+  for (const option of relevantOptions) {
+    const value = best.variant_combination?.[option.option_name]
+    if (typeof value === 'string' && value) selected[option.option_name] = value
+  }
+  // Only return a selection when it resolves to a real SKU (avoids landing
+  // on an invalid partial combination).
+  return Object.keys(selected).length > 0 ? selected : {}
 }
 
 export function getShopDisplayDimensions(product: ShopPublicProduct, selected: ShopSelectedOptions) {
