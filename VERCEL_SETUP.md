@@ -47,32 +47,33 @@ Go to your Vercel project settings → Environment Variables and add:
 
 ### Optional WhatsApp Variables (defaults shown):
 
-| Variable | Default | Description |
-|---|---|---|
-| `WHATSAPP_REPLY_TO_ALL` | `true` | Reply to unrecognized senders |
-| `WHATSAPP_RAG_ENABLED` | `true` | Enable knowledge base search |
-| `WHATSAPP_RAG_CONFIDENCE_THRESHOLD` | `0.55` | Min confidence to use GPT |
-| `WHATSAPP_OPENAI_MODEL` | `gpt-4.1-mini` | GPT model for replies |
-| `WHATSAPP_CLASSIFIER_MODEL` | `gpt-4o-mini` | GPT model for intent classification |
-| `WHATSAPP_EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model |
-| `WHATSAPP_RAG_TOP_K` | `4` | Number of RAG chunks to retrieve |
-| `WHATSAPP_RAG_MIN_SCORE` | `0.3` | Minimum similarity score |
-| `WHATSAPP_SESSION_TURNS` | `4` | Conversation turns to remember |
-| `WHATSAPP_STRUCTURED_DATA_ENABLED` | `true` | Enable live DB price queries |
+| Variable                            | Default                  | Description                         |
+| ----------------------------------- | ------------------------ | ----------------------------------- |
+| `WHATSAPP_REPLY_TO_ALL`             | `true`                   | Reply to unrecognized senders       |
+| `WHATSAPP_RAG_ENABLED`              | `true`                   | Enable knowledge base search        |
+| `WHATSAPP_RAG_CONFIDENCE_THRESHOLD` | `0.55`                   | Min confidence to use GPT           |
+| `WHATSAPP_OPENAI_MODEL`             | `gpt-4.1-mini`           | GPT model for replies               |
+| `WHATSAPP_CLASSIFIER_MODEL`         | `gpt-4o-mini`            | GPT model for intent classification |
+| `WHATSAPP_EMBEDDING_MODEL`          | `text-embedding-3-small` | Embedding model                     |
+| `WHATSAPP_RAG_TOP_K`                | `4`                      | Number of RAG chunks to retrieve    |
+| `WHATSAPP_RAG_MIN_SCORE`            | `0.3`                    | Minimum similarity score            |
+| `WHATSAPP_SESSION_TURNS`            | `4`                      | Conversation turns to remember      |
+| `WHATSAPP_STRUCTURED_DATA_ENABLED`  | `true`                   | Enable live DB price queries        |
 
 ### WhatsApp HSM Templates (requires Meta business verification)
 
 After your WhatsApp Business Account is verified, create these templates in **WhatsApp Manager → Message Templates** and add their exact names to Vercel env vars:
 
-| Env Var | Template Body | Variables |
-|---|---|---|
-| `WHATSAPP_TEMPLATE_ORDER_SHIPPED` | `Your order {{1}} has been shipped via {{2}}. Tracking: {{3}}` | order #, courier, tracking # |
-| `WHATSAPP_TEMPLATE_ORDER_DELIVERED` | `Your order {{1}} has been delivered. Thank you for choosing Flux3D.` | order # |
-| `WHATSAPP_TEMPLATE_ORDER_CONFIRMATION` | `Order {{1}} confirmed. Total amount: {{2}}` | order #, total amount |
-| `WHATSAPP_TEMPLATE_PAYMENT_LINK` | `Please complete payment for order {{1}}: {{2}}` | order #, payment URL |
-| `WHATSAPP_TEMPLATE_CONNECTED` | `Hi {{1}}, your WhatsApp number has been linked to your Flux3D account. You now have {{2}} order(s) available to track.` | name, order count |
+| Env Var                                | Template Body                                                                                                            | Variables                    |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------- |
+| `WHATSAPP_TEMPLATE_ORDER_SHIPPED`      | `Your order {{1}} has been shipped via {{2}}. Tracking: {{3}}`                                                           | order #, courier, tracking # |
+| `WHATSAPP_TEMPLATE_ORDER_DELIVERED`    | `Your order {{1}} has been delivered. Thank you for choosing Flux3D.`                                                    | order #                      |
+| `WHATSAPP_TEMPLATE_ORDER_CONFIRMATION` | `Order {{1}} confirmed. Total amount: {{2}}`                                                                             | order #, total amount        |
+| `WHATSAPP_TEMPLATE_PAYMENT_LINK`       | `Please complete payment for order {{1}}: {{2}}`                                                                         | order #, payment URL         |
+| `WHATSAPP_TEMPLATE_CONNECTED`          | `Hi {{1}}, your WhatsApp number has been linked to your Flux3D account. You now have {{2}} order(s) available to track.` | name, order count            |
 
 **Authentication template (optional, for WhatsApp OTP account linking):**
+
 - Name: set in `WHATSAPP_AUTH_TEMPLATE_NAME`
 - Category: Authentication
 - Body: `{{1}} is your Flux3D verification code. For your security, do not share it.`
@@ -92,19 +93,19 @@ After your WhatsApp Business Account is verified, create these templates in **Wh
 
 ### Optional — Rate Limiting (falls back to in-memory):
 
-| Variable | Description |
-|---|---|
-| `UPSTASH_REDIS_REST_URL` | Upstash Redis URL for distributed rate limiting |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis token |
+| Variable                   | Description                                     |
+| -------------------------- | ----------------------------------------------- |
+| `UPSTASH_REDIS_REST_URL`   | Upstash Redis URL for distributed rate limiting |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis token                             |
 
 ### Shiprocket Fulfilment
 
-| Variable | Description |
-|---|---|
-| `SHIPROCKET_EMAIL` | Shiprocket login email |
-| `SHIPROCKET_PASSWORD` | Shiprocket login password |
-| `SHIPROCKET_PICKUP_LOCATION` | Pickup location code from Shiprocket panel |
-| `SHIPROCKET_WEBHOOK_SECRET` | Secret for validating Shiprocket webhook signatures |
+| Variable                     | Description                                         |
+| ---------------------------- | --------------------------------------------------- |
+| `SHIPROCKET_EMAIL`           | Shiprocket login email                              |
+| `SHIPROCKET_PASSWORD`        | Shiprocket login password                           |
+| `SHIPROCKET_PICKUP_LOCATION` | Pickup location code from Shiprocket panel          |
+| `SHIPROCKET_WEBHOOK_SECRET`  | Secret for validating Shiprocket webhook signatures |
 
 Set all four to enable automatic order fulfilment via Shiprocket.
 
@@ -153,22 +154,45 @@ Run all migration files in `supabase/migrations/` in order using the Supabase SQ
 ## Troubleshooting:
 
 ### "Missing SUPABASE_SERVICE_ROLE_KEY"
+
 - Make sure you added the variable in Vercel project settings
 - Redeploy after adding variables (they don't apply to ongoing builds)
 - Check that the variable name is exactly: `SUPABASE_SERVICE_ROLE_KEY`
 
 ### WhatsApp webhook returns 403
+
 - Verify `WHATSAPP_VERIFY_TOKEN` matches the token in Meta Developer Portal
 - Check `META_APP_SECRET` or `WHATSAPP_WEBHOOK_SECRET` is correctly set
 
 ### GPT replies not working
+
 - Verify `OPENAI_API_KEY` is set and has credits
 - Check `/admin/whatsapp-test` for all green checks
 
 ### Still having issues?
+
 ```bash
 curl https://your-domain.vercel.app/api/admin/whatsapp-test
 ```
+
+## Uptime Monitoring
+
+Set up an external monitor to poll `/api/health` every 5 minutes:
+
+1. **UptimeRobot** (free): Add a monitor pointing to `https://your-domain.vercel.app/api/health`
+   - Expected status: `200 OK`
+   - Alert channel: Email or Slack webhook
+
+2. **Better Uptime** (free tier): Same setup — monitor `GET /api/health`
+
+3. **Vercel Integrations**: You can also enable Vercel's built-in monitoring in the dashboard.
+
+The `/api/health` endpoint checks:
+
+- Database connectivity
+- OpenAI API status
+- WhatsApp Graph API status
+- Supabase RAG vector search
 
 ## Maintenance & Operations
 

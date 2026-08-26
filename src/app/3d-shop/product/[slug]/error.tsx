@@ -1,12 +1,26 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { RotateCcw } from 'lucide-react'
+import { useEffect } from "react";
+import { RotateCcw } from "lucide-react";
+import { reportError } from "@/lib/error-handling";
 
-export default function ProductError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ProductError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   useEffect(() => {
-    console.error('Product page error:', error)
-  }, [error])
+    reportError(error, "Product page error", {
+      module: "shop",
+      tags: { component: "ProductErrorBoundary" },
+      metadata: {
+        slug:
+          typeof window !== "undefined" ? window.location.pathname : undefined,
+      },
+    });
+  }, [error]);
 
   return (
     <main className="px-4 pb-24 pt-6 md:px-8 lg:px-16 lg:pt-8">
@@ -16,7 +30,8 @@ export default function ProductError({ error, reset }: { error: Error & { digest
             Something went wrong
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-[var(--shop-text-secondary)]">
-            We couldn&apos;t load this product right now. Please try again — the piece is still here.
+            We couldn&apos;t load this product right now. Please try again — the
+            piece is still here.
           </p>
           <button
             type="button"
@@ -29,5 +44,5 @@ export default function ProductError({ error, reset }: { error: Error & { digest
         </div>
       </div>
     </main>
-  )
+  );
 }
