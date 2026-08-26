@@ -86,6 +86,12 @@ describe('buildCsp', () => {
     expect(directive(buildCsp(NONCE), 'script-src')).toContain("'unsafe-eval'")
   })
 
+  it('allows product hero videos from Supabase Storage via media-src', () => {
+    const mediaSrc = directive(buildCsp(NONCE), 'media-src')
+    expect(mediaSrc).toContain("'self'")
+    expect(mediaSrc).toContain('https://jqgaebdtuasenyojvbsi.supabase.co')
+  })
+
   it('locks down object-src, base-uri and frame-ancestors', () => {
     const csp = buildCsp(NONCE)
     expect(directive(csp, 'object-src')).toEqual(["'none'"])

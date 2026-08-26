@@ -45,6 +45,8 @@ export function buildCsp(nonce: string) {
       'https://www.googletagmanager.com',
     ].join(' '),
     "font-src 'self' data:",
+    // Product hero videos (<video>) stream from Supabase Storage.
+    "media-src 'self' https://jqgaebdtuasenyojvbsi.supabase.co",
     [
       'connect-src',
       "'self'",
