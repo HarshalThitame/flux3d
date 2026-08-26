@@ -9,7 +9,10 @@ import { getSettings } from '@/lib/settings'
 import { absoluteUrl } from '@/lib/site'
 import { getCspNonce } from '@/lib/csp'
 
-export const dynamic = 'force-dynamic'
+// NOTE: no `dynamic = 'force-dynamic'` here. force-dynamic streams the shell
+// immediately, which locks the response into HTTP 200 before notFound() can
+// run (soft-404). The page is still per-request dynamic because it reads
+// cookies (user profile) and headers (CSP nonce).
 
 function toJsonLd(value: unknown) {
   return JSON.stringify(value).replace(/</g, '\\u003c')

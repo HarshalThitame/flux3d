@@ -3,8 +3,9 @@
 import dynamic from 'next/dynamic'
 import type { DepthBlurCarouselProps } from './DepthBlurCarousel'
 
+// SSR is intentionally enabled: the first card's Image uses `priority`, and
+// it can only emit a preload link when server-rendered into the initial HTML.
 const DepthBlurCarousel = dynamic(() => import('./DepthBlurCarousel'), {
-  ssr: false,
   loading: () => (
     <div
       aria-hidden="true"

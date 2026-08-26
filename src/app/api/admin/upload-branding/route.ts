@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import sharp from 'sharp'
 import { getAdminApiErrorResponse } from '@/lib/admin/api'
 import { requireAdminRequest } from '@/lib/admin/request'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
@@ -38,12 +39,25 @@ export async function POST(request: Request) {
     const filePath = `business/${fileName}`
 
     const buffer = Buffer.from(await file.arrayBuffer())
+
+    // Favicons are fetched on every page load — downscale rasters to a small
+    // PNG before storing so the DB never ends up pointing at a huge image.
+    let uploadBuffer = buffer
+    let contentType = file.type
+    if (field === 'faviconUrl' && file.type !== 'image/svg+xml' && file.type !== 'image/gif') {
+      uploadBuffer = await sharp(buffer)
+        .resize(64, 64, { fit: 'inside', withoutEnlargement: true })
+        .png({ compressionLevel: 9 })
+        .toBuffer()
+      contentType = 'image/png'
+    }
+
     const supabase = createAdminSupabaseClient()
 
     const { error: uploadError } = await supabase.storage
       .from(BRANDING_BUCKET)
-      .upload(filePath, buffer, {
-        contentType: file.type,
+      .upload(filePath, uploadBuffer, {
+        contentType,
         upsert: true,
         cacheControl: '31536000',
       })
@@ -58,8 +72,8 @@ export async function POST(request: Request) {
 
         const { error: retryError } = await supabase.storage
           .from(BRANDING_BUCKET)
-          .upload(filePath, buffer, {
-            contentType: file.type,
+          .upload(filePath, uploadBuffer, {
+            contentType,
             upsert: true,
             cacheControl: '31536000',
           })

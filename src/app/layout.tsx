@@ -63,7 +63,7 @@ const PRECONNECT_ORIGINS = [
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings().catch(() => null)
   const name = settings?.brandName || settings?.businessName || 'Flux3D'
-  const description = settings?.businessDescription || 'Flux3D provides custom 3D printing, prototyping, model printing, ready-made products, and related manufacturing services in India.'
+  const description = settings?.metaDescription || settings?.businessDescription || 'Flux3D provides custom 3D printing, prototyping, model printing, ready-made products, and related manufacturing services in India.'
   const url = settings?.websiteUrl || 'https://flux3d.in'
   // Fallbacks point at the dynamic OG routes (src/app/opengraph-image.tsx /
   // twitter-image.tsx). Note: those routes serve /opengraph-image (no .png).
@@ -122,7 +122,12 @@ export async function generateMetadata(): Promise<Metadata> {
   },
   manifest: '/manifest.json',
   icons: {
-    icon: settings?.faviconUrl || '/favicon.ico',
+    // Branding uploads may store oversized images (a 1.4MB PNG was live at
+    // one point) — route through the built-in optimizer so the icon ships
+    // as a few KB regardless of what's in the DB.
+    icon: settings?.faviconUrl
+      ? `/_next/image?url=${encodeURIComponent(settings.faviconUrl)}&w=48&q=75`
+      : '/favicon.ico',
     // Served by src/app/apple-icon.tsx (file convention)
     apple: '/apple-icon',
   },

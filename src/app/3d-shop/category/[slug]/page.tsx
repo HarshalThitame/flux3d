@@ -7,7 +7,8 @@ import type { ShopPublicCategory, ShopPublicProduct } from '@/lib/shop/public-ty
 import { absoluteUrl } from '@/lib/site'
 import { getCspNonce } from '@/lib/csp'
 
-export const dynamic = 'force-dynamic'
+// NOTE: no `dynamic = 'force-dynamic'` — see product/[slug]/page.tsx.
+// force-dynamic streams the shell before notFound() runs, producing soft 404s.
 
 function toJsonLd(value: unknown) {
   return JSON.stringify(value).replace(/</g, '\\u003c')

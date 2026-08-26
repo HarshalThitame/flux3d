@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
   compress: true,
   serverExternalPackages: ['pdfkit'],
   staticPageGenerationTimeout: 120,
+  // Per-request CSP nonces force dynamic rendering, which makes Next stream
+  // metadata into <body> for browser UAs (breaking head-based crawlers and
+  // Lighthouse's meta description audit). Treating every UA as HTML-limited
+  // blocks metadata resolution back into <head>.
+  htmlLimitedBots: /.*/,
   outputFileTracingIncludes: {
     '/api/orders/[orderId]/invoice': ['./node_modules/pdfkit/js/data/*.afm'],
     '/api/3d-shop/orders/[orderId]/invoice': ['./node_modules/pdfkit/js/data/*.afm'],
