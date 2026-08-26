@@ -54,7 +54,9 @@ function makeItemListSchema(category: ShopPublicCategory, products: ShopPublicPr
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const { category } = await getShopCategoryBySlug(slug)
-  if (!category) return { title: 'Category — 3D Shop' }
+  // Thrown here so unknown slugs reliably return HTTP 404 (metadata resolves
+  // before the response starts streaming).
+  if (!category) notFound()
   return {
     title: `${category.name} — 3D Shop`,
     description: category.description ?? `Shop ${category.name} products on 3D Shop by Flux3D.`,

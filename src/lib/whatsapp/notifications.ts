@@ -6,6 +6,7 @@ import {
   type WhatsAppTemplateComponent,
 } from '@/lib/whatsapp/messages'
 import { enqueueTemplateSend, completeOutboxSend, loadOutboxRow, type OutboxRow } from '@/lib/whatsapp/outbox'
+import { classifyGraphError } from '@/lib/whatsapp/graph-errors'
 
 // Mirrors WHATSAPP_ORDERING_ENABLED without importing order-flow.ts — importing
 // it here would create a circular dependency (order-flow imports notifications).
@@ -30,6 +31,13 @@ const TEMPLATE_LANGUAGE = process.env.WHATSAPP_TEMPLATE_LANGUAGE?.trim() || 'en_
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
+class NonRetryableError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'NonRetryableError'
+  }
+}
+
 async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
   let lastError: unknown
   for (let attempt = 0; attempt < attempts; attempt++) {
@@ -37,6 +45,9 @@ async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
       return await fn()
     } catch (err) {
       lastError = err
+      // Permanent failures (auth, re-engagement, template, recipient) will
+      // never succeed on retry — fail fast instead of burning 3 attempts.
+      if (err instanceof NonRetryableError) throw err
       if (attempt < attempts - 1) await sleep(750 * Math.pow(2, attempt))
     }
   }
@@ -98,8 +109,17 @@ async function sendTemplateReliably(p: ReliableSendParams): Promise<boolean> {
       const r = await sendWhatsAppTemplate(to, { name, language: TEMPLATE_LANGUAGE, components: p.components })
       // Non-ok API responses (4xx/5xx) must count as failures so they are
       // retried here and trigger caller-side fallbacks instead of being
-      // silently reported as delivered.
-      if (!r.ok) throw new Error(r.error ?? `HTTP ${r.status ?? '?'}`)
+      // silently reported as delivered. Auth/re-engagement/template errors
+      // are permanent and skip the retry loop entirely.
+      if (!r.ok) {
+        const classified = classifyGraphError(r.status ?? 0, r.error ?? '')
+        if (!classified.retryable && classified.kind !== 'unknown') {
+          throw new NonRetryableError(
+            `${classified.kind} (code ${classified.code}): ${classified.message.slice(0, 200)}`,
+          )
+        }
+        throw new Error(r.error ?? `HTTP ${r.status ?? '?'}`)
+      }
       return r
     })
     if (row) await completeOutboxSend(row, { ok: true, messageId: result.messageId }).catch(() => {})

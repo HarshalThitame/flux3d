@@ -1,14 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import crypto from 'node:crypto'
 import { Receiver } from '@upstash/qstash'
 import { syncFullCatalogToMeta, deleteMetaCatalogItem } from '@/lib/meta/catalog'
-import {
-  getStoredCatalogHashes,
-  saveStoredCatalogHashes,
-  getPendingCatalogDeletes,
-  clearCatalogDeletes,
-} from '@/lib/meta/sync-state'
+import { getStoredCatalogHashes, saveStoredCatalogHashes, getPendingCatalogDeletes, clearCatalogDeletes } from '@/lib/meta/sync-state'
+import { sendOpsAlert } from '@/lib/alerts'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -18,6 +13,9 @@ const qstashReceiver = new Receiver({
   nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY ?? '',
 })
 
+// Auth is QStash-signature ONLY. The previous dual-auth (QStash OR
+// CRON_SECRET Bearer) meant a leaked CRON_SECRET fully bypassed signature
+// verification. The schedule is created via scripts/setup-meta-catalog-schedule.ts.
 async function verifyQStash(request: Request): Promise<boolean> {
   const signature = request.headers.get('upstash-signature') ?? ''
   if (!signature) return false
@@ -33,24 +31,8 @@ async function verifyQStash(request: Request): Promise<boolean> {
   }
 }
 
-async function verifyCronAuth(request: Request): Promise<boolean> {
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret) return false
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return false
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(authHeader.slice(7)),
-      Buffer.from(cronSecret),
-    )
-  } catch {
-    return false
-  }
-}
-
 export async function GET(request: Request) {
-  const isAuthorized = (await verifyQStash(request)) || (await verifyCronAuth(request))
-  if (!isAuthorized) {
+  if (!(await verifyQStash(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -128,6 +110,32 @@ export async function GET(request: Request) {
   if (result.hashes) {
     await saveStoredCatalogHashes(result.hashes).catch((e) => {
       console.error('[sync-meta-catalog] Failed to persist payload hashes:', e)
+    })
+  }
+
+  // Ops alert on partial/total sync failure (rate-limited per key — max 2
+  // emails/hour; every occurrence still lands in error_logs).
+  if (result.failed > 0 || deletesRetried > deletesSucceeded) {
+    void sendOpsAlert({
+      key: 'meta_catalog_sync_failures',
+      severity: result.failed > result.succeeded ? 'critical' : 'warning',
+      source: 'meta_catalog_cron',
+      subject: `Meta catalog sync: ${result.failed} failed, ${result.succeeded} succeeded`,
+      body:
+        `The 6-hourly Meta catalog sync completed with failures.\n` +
+        `Changed items: ${result.total} (${result.succeeded} ok, ${result.failed} failed, ${result.skipped} skipped)\n` +
+        `Delete retries: ${deletesSucceeded}/${deletesRetried} cleared\n` +
+        `Duration: ${Math.round(result.durationMs / 1000)}s\n\n` +
+        `Failed SKUs are retried automatically on the next run. Check error_logs (source=meta_catalog_cron) for per-SKU errors.`,
+      metadata: {
+        total: result.total,
+        succeeded: result.succeeded,
+        failed: result.failed,
+        skipped: result.skipped,
+        deletesRetried,
+        deletesSucceeded,
+        failures: result.actions.filter((a) => !a.success).slice(0, 10),
+      },
     })
   }
 

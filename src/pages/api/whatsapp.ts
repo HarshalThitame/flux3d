@@ -19,6 +19,8 @@ import { parseWhatsAppMessage, type ParsedWhatsAppMessage } from "@/lib/whatsapp
 import { detectWhatsAppIntent } from "@/lib/whatsapp/intent";
 import { downloadAndStoreWhatsAppMedia, type MediaResult } from "@/lib/whatsapp/media";
 import { getOrderSession } from "@/lib/whatsapp/session";
+import { classifyGraphError } from "@/lib/whatsapp/graph-errors";
+import { sendOpsAlert } from "@/lib/alerts";
 import { getQStashClient } from "@/lib/email/qstash";
 
 let cachedServiceClient: any = null;
@@ -121,33 +123,73 @@ async function sendWhatsAppMessage(to: string, message: string): Promise<{ metaM
 
   const url = `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${phoneNumberId}/messages`;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  // Error-code-aware: throttles (429/130429) are retried once with a short
+  // backoff; auth failures (190/401) page ops because every subsequent send
+  // would silently fail until the system-user token is rotated.
+  const MAX_ATTEMPTS = 2;
 
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to,
-        type: "text",
-        text: {
-          preview_url: false,
-          body: message,
+  for (let attempt = 1; ; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
         },
-      }),
-      signal: controller.signal,
-    });
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to,
+          type: "text",
+          text: {
+            preview_url: false,
+            body: message,
+          },
+        }),
+        signal: controller.signal,
+      });
+    } catch (fetchError: unknown) {
+      clearTimeout(timeoutId);
+      if ((fetchError as { name?: string })?.name === 'AbortError') {
+        throw new Error('WhatsApp API timeout (15s)');
+      }
+      if (attempt < MAX_ATTEMPTS) {
+        await new Promise((r) => setTimeout(r, 1000 * attempt));
+        continue;
+      }
+      throw fetchError;
+    }
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const text = await response.text().catch(() => "Unknown error");
-      const errorMsg = `WhatsApp send failed: ${response.status} ${text.slice(0, 300)}`;
+      const text = await response.text().catch(() => "");
+      const classified = classifyGraphError(response.status, text);
+
+      if (classified.kind === 'auth') {
+        void sendOpsAlert({
+          key: 'whatsapp_token_auth',
+          severity: 'critical',
+          source: 'whatsapp_send',
+          subject: 'WhatsApp access token expired or invalid',
+          body:
+            `Outbound WhatsApp sends are failing with an auth error (${response.status}).\n` +
+            `All automated customer replies will fail until the Meta system-user token is rotated.\n\n` +
+            `Details: ${classified.message}`,
+          metadata: { status: response.status, graphCode: classified.code },
+        });
+      }
+
+      if (classified.retryable && attempt < MAX_ATTEMPTS) {
+        console.warn(`[whatsapp] Throttled (${response.status}), retrying once...`);
+        await new Promise((r) => setTimeout(r, 1500));
+        continue;
+      }
+
+      const errorMsg = `WhatsApp send failed (${classified.kind}): ${response.status} ${text.slice(0, 300)}`;
       console.error("[whatsapp]", errorMsg);
       throw new Error(errorMsg);
     }
@@ -161,12 +203,6 @@ async function sendWhatsAppMessage(to: string, message: string): Promise<{ metaM
     }
 
     return { metaMessageId };
-  } catch (fetchError: any) {
-    clearTimeout(timeoutId);
-    if (fetchError?.name === 'AbortError') {
-      throw new Error('WhatsApp API timeout (15s)');
-    }
-    throw fetchError;
   }
 }
 

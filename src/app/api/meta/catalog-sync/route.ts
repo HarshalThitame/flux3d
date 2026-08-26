@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import crypto from 'node:crypto'
 import { upsertMetaCatalogItem, deleteMetaCatalogItem, buildCatalogEntries, toCatalogRetailerId } from '@/lib/meta/catalog'
 import { mergeStoredCatalogHashes, queueCatalogDeletes } from '@/lib/meta/sync-state'
+import { sendOpsAlert } from '@/lib/alerts'
 import { rateLimitCheck } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -260,6 +261,20 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error('[meta/catalog-sync] Error:', error)
       await logSync('error', error instanceof Error ? error.message : String(error), { eventType, table, payload })
+      // Real-time sync path failed; the 6-hourly cron will reconcile, but ops
+      // should know the realtime pipeline is degraded.
+      void sendOpsAlert({
+        key: 'meta_catalog_webhook_error',
+        severity: 'error',
+        source: 'meta_catalog_sync',
+        subject: 'Meta catalog realtime sync failed',
+        body:
+          `A Supabase-triggered catalog sync threw an exception. The change will be\n` +
+          `reconciled by the next cron run, but this indicates a degraded realtime pipeline.\n\n` +
+          `Event: ${eventType} on ${table}\n` +
+          `Error: ${error instanceof Error ? error.message : String(error)}`,
+        metadata: { eventType, table },
+      })
     }
   })()
 

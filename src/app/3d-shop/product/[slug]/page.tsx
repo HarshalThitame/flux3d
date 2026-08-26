@@ -125,7 +125,10 @@ function makeBreadcrumbSchema(product: ShopPublicProduct) {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const product = await getShopProductBySlug(slug)
-  if (!product) return { title: 'Product — 3D Shop' }
+  // Thrown here — metadata resolves before the response starts streaming, so
+  // this reliably produces an HTTP 404 (a body-level notFound() can arrive
+  // after headers are flushed on force-dynamic pages and degrade to a 200).
+  if (!product) notFound()
   return {
     title: product.meta_title || `${product.name} — 3D Shop`,
     description: product.meta_description || product.description || `Shop ${product.name} on 3D Shop by Flux3D.`,
