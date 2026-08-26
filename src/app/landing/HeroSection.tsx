@@ -1,61 +1,64 @@
-'use client'
+"use client";
 
-import { useCallback, useMemo, useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { ArrowRight, Box, MousePointer2 } from 'lucide-react'
-import DepthBlurCarouselBoundary from '@/components/shop/DepthBlurCarouselBoundary'
-import DotGridBackground from '@/components/landing/DotGridBackground'
-import { getShopProductImages } from '@/lib/shop/selection'
-import type { ShopHomeData } from '@/lib/shop/public-types'
+import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { ArrowRight, Box, MousePointer2 } from "lucide-react";
+import DepthBlurCarouselBoundary from "@/components/shop/DepthBlurCarouselBoundary";
+import DotGridBackground from "@/components/landing/DotGridBackground";
+import { getShopProductImages } from "@/lib/shop/selection";
+import type { ShopHomeData } from "@/lib/shop/public-types";
 
-const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1]
-const MAX_ARC_ITEMS = 12
+const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const MAX_ARC_ITEMS = 12;
 
 export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
-  const router = useRouter()
-  const [activeIndex, setActiveIndex] = useState(0)
+  const router = useRouter();
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const products = useMemo(() => {
-    const seen = new Set<string>()
+    const seen = new Set<string>();
     return [...shopData.featured_products, ...shopData.new_arrivals]
       .filter((product) => {
-        if (seen.has(product.id)) return false
-        seen.add(product.id)
-        return true
+        if (seen.has(product.id)) return false;
+        seen.add(product.id);
+        return true;
       })
-      .slice(0, MAX_ARC_ITEMS)
-  }, [shopData])
+      .slice(0, MAX_ARC_ITEMS);
+  }, [shopData]);
 
-  const product = products[Math.min(activeIndex, Math.max(products.length - 1, 0))]
+  const product =
+    products[Math.min(activeIndex, Math.max(products.length - 1, 0))];
 
   const handleSelect = useCallback(
     (index: number) => {
-      const selected = products[index]
-      if (!selected) return
-      router.push(`/3d-shop/product/${selected.slug}`)
+      const selected = products[index];
+      if (!selected) return;
+      router.push(`/3d-shop/product/${selected.slug}`);
     },
-    [products, router]
-  )
+    [products, router],
+  );
 
   const handleActiveChange = useCallback((index: number) => {
-    setActiveIndex(index)
-  }, [])
+    setActiveIndex(index);
+  }, []);
 
   const items = useMemo(
     () =>
       products.map((item) => ({
         id: item.id,
-        src: item.landscape_image_url || getShopProductImages(item)[0] || null,
+        src: getShopProductImages(item)[0] || item.landscape_image_url || null,
         title: item.name,
         subheadline:
           item.category_name ||
-          (item.description ? item.description.split('.')[0].slice(0, 90) : undefined),
+          (item.description
+            ? item.description.split(".")[0].slice(0, 90)
+            : undefined),
         alt: item.name,
       })),
-    [products]
-  )
+    [products],
+  );
 
   return (
     <section className="lux-hero" aria-label="Featured 3D products">
@@ -98,7 +101,7 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
           </motion.div>
 
           <p className="sr-only" aria-live="polite">
-            {product ? `Showing ${product.name}` : ''}
+            {product ? `Showing ${product.name}` : ""}
           </p>
         </>
       )}
@@ -116,5 +119,5 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
         </div>
       )}
     </section>
-  )
+  );
 }
