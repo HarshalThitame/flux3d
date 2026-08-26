@@ -151,6 +151,18 @@ export async function GET(request: Request) {
     console.error('[sync-meta-catalog] Log write failed:', e)
   }
 
+  // Dead-man switch: ping the Better Stack heartbeat on every completed run.
+  // Better Stack alerts if a ping does NOT arrive within the expected window
+  // (7h period + grace) — catching silent cron death (QStash schedule gone,
+  // deploy breakage) that no error-based alerting can see. Fire-and-forget;
+  // unset env var = feature disabled.
+  const heartbeatUrl = process.env.CATALOG_SYNC_HEARTBEAT_URL
+  if (heartbeatUrl) {
+    void fetch(heartbeatUrl, { method: 'GET', signal: AbortSignal.timeout(10_000) }).catch((e) => {
+      console.error('[sync-meta-catalog] Heartbeat ping failed:', e)
+    })
+  }
+
   return NextResponse.json({
     success: result.failed === 0,
     total: result.total,

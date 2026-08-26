@@ -17,6 +17,9 @@ async function verifyWebhookSecret(request: Request): Promise<boolean> {
   if (!secret) return false
   const authHeader = request.headers.get('authorization')
   if (!authHeader || !authHeader.startsWith('Bearer ')) return false
+  // Defense-in-depth: the Supabase trigger also sends a marker header.
+  // Reject Bearer-only requests (e.g. secret reuse sprayed at this endpoint).
+  if (request.headers.get('x-meta-catalog-sync') !== 'v1') return false
   try {
     return crypto.timingSafeEqual(
       Buffer.from(authHeader.slice(7)),

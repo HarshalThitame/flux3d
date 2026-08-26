@@ -1380,19 +1380,19 @@ export default async function handler(
         }
       }
 
-      // === RETURN 200 IMMEDIATELY; the queue (or the inline fallback above) handles processing ===
-      res.status(200).json({ success: true, queued })
-
       // Quick acknowledgment for plain-text messages, sent only when the
       // worker will also follow up (queue path). When we processed inline
       // above the reply already went out, so we don't double up.
+      // Sent BEFORE the 200: post-response execution is killed seconds later
+      // on serverless, making the old after-response placement best-effort at
+      // best. Bounded to 4s so Meta's ~20s ack window is never at risk.
       if (!interaction && queued) {
         const hasOrderSession = await getOrderSession(from ?? '').catch(() => null)
         if (!hasOrderSession) {
           const ackReply = `👍 Got your message! Processing...`
           try {
             const ackController = new AbortController();
-            const ackTimeout = setTimeout(() => ackController.abort(), 10000);
+            const ackTimeout = setTimeout(() => ackController.abort(), 4000);
             const ackResponse = await fetch(`https://graph.facebook.com/${WHATSAPP_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
               method: 'POST',
               headers: {
@@ -1431,6 +1431,9 @@ export default async function handler(
           }
         }
       }
+
+      // === RETURN 200 IMMEDIATELY; the queue (or the inline fallback above) handles processing ===
+      res.status(200).json({ success: true, queued })
     } catch (pre200Error) {
       // Catch any error that occurs BEFORE res.status(200).json() is called.
       // Log it, but ALWAYS return 200 to stop Meta from retrying.
