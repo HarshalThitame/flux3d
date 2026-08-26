@@ -60,7 +60,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: 'https://flux3d.in', changeFrequency: 'weekly', priority: 1 },
     { url: 'https://flux3d.in/about', changeFrequency: 'monthly', priority: 0.8 },
     { url: 'https://flux3d.in/contact', changeFrequency: 'monthly', priority: 0.8 },
-    { url: 'https://flux3d.in/features', changeFrequency: 'monthly', priority: 0.9 },
     { url: 'https://flux3d.in/services', changeFrequency: 'monthly', priority: 0.9 },
     { url: 'https://flux3d.in/materials', changeFrequency: 'monthly', priority: 0.8 },
     { url: 'https://flux3d.in/gallery', changeFrequency: 'weekly', priority: 0.8 },

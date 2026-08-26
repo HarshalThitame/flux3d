@@ -65,7 +65,7 @@ export default function FooterSection() {
             <h3 className={footerHeadingClass}>Product</h3>
             <ul className="space-y-2">
               {[
-                { label: 'Features', href: '/features' },
+                { label: 'Services', href: '/services' },
                 { label: 'Pricing', href: '/pricing' },
                 { label: 'Request a Quote', href: '/contact' },
               ].map((item) => (
