@@ -15,6 +15,7 @@ type SkuPayload = {
   low_stock_threshold?: number | string | null
   weight_grams?: number | string | null
   variant_image_url?: string | null
+  model_url?: string | null
   is_available?: boolean
 }
 
@@ -36,6 +37,8 @@ function normalizeSkuPatch(body: SkuPayload) {
         : Number(body.weight_grams),
     variant_image_url:
       typeof body.variant_image_url === 'string' ? body.variant_image_url.trim() || null : body.variant_image_url ?? null,
+    model_url:
+      typeof body.model_url === 'string' ? body.model_url.trim() || null : body.model_url ?? null,
     ...(typeof body.is_available === 'boolean' ? { is_available: body.is_available } : {}),
   }
 }
@@ -125,6 +128,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         low_stock_threshold: Number.isFinite(Number(sku.low_stock_threshold)) ? Number(sku.low_stock_threshold) : 5,
         weight_grams: sku.weight_grams ?? null,
         variant_image_url: sku.variant_image_url ?? null,
+        model_url: typeof sku.model_url === 'string' ? sku.model_url.trim() || null : null,
         is_available: sku.is_available ?? true,
       }))
 

@@ -8,15 +8,17 @@ export function Section({
   description,
   children,
   defaultOpen = true,
+  sectionId,
 }: {
   title: string
   description?: string
   children: React.ReactNode
   defaultOpen?: boolean
+  sectionId?: string
 }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+    <section id={sectionId} className="scroll-mt-24 overflow-hidden rounded-2xl border border-gray-200 bg-white">
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}

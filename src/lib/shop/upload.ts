@@ -77,19 +77,45 @@ export function uploadFileWithProgress(
   })
 }
 
+export type ModelUploadKind = 'model' | 'usdz' | 'video'
+
+const UPLOAD_ACCEPT: Record<ModelUploadKind, string[]> = {
+  model: ['.glb', '.gltf', '.stl', '.obj', '.3mf'],
+  usdz: ['.usdz'],
+  video: ['.mp4', '.webm'],
+}
+
+export function validateModelFile(file: File, kind: ModelUploadKind = 'model'): string | null {
+  const name = file.name.toLowerCase()
+  if (!UPLOAD_ACCEPT[kind].some((ext) => name.endsWith(ext))) {
+    return `Only ${UPLOAD_ACCEPT[kind].join(', ')} files are allowed.`
+  }
+  if (file.size > 50 * 1024 * 1024) {
+    return 'File must be smaller than 50MB.'
+  }
+  return null
+}
+
 export function uploadModelFileWithProgress(
   file: File,
   productId: string,
-  onProgress: UploadProgressHandler
+  onProgress: UploadProgressHandler,
+  kind: ModelUploadKind = 'model'
 ) {
   return new Promise<{ publicUrl: string }>((resolve, reject) => {
     void (async () => {
       try {
+        const validationError = validateModelFile(file, kind)
+        if (validationError) {
+          reject(new Error(validationError))
+          return
+        }
+
         onProgress(5)
         const urlResponse = await fetch('/api/3d-shop/admin/models/upload-url', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileName: file.name, fileSize: file.size, productId }),
+          body: JSON.stringify({ fileName: file.name, fileSize: file.size, productId, kind }),
         })
         const body = (await urlResponse.json().catch(() => ({}))) as {
           signedUrl?: string

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Copy, History, LayoutTemplate, Loader2, Redo2, Save, Sparkles, Undo2 } from 'lucide-react'
+import { Copy, ExternalLink, History, LayoutTemplate, Loader2, Redo2, Save, Sparkles, Undo2 } from 'lucide-react'
 import { useProductEditor } from '../editor-context'
 import { TemplatesModal } from '../TemplatesModal'
 import { RevisionHistoryModal } from '../RevisionHistoryModal'
@@ -45,6 +45,18 @@ export function EditorHeader() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {product.slug && product.is_active && (
+            <a
+              href={`/3d-shop/product/${product.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="View the live product page"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-[#6F7192] hover:bg-gray-50"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span className="hidden lg:inline">View storefront</span>
+            </a>
+          )}
           <button
             type="button"
             onClick={undo}

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import ProductModelViewer from './ProductModelViewer'
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scroll-lock'
+import type { ShopProductHotspot } from '@/lib/shop/admin-types'
 
 function useScrollLock(locked: boolean) {
   useEffect(() => {
@@ -32,9 +33,11 @@ type ProductModelModalProps = {
   modelUrl: string
   productName?: string
   onClose: () => void
+  hotspots?: ShopProductHotspot[]
+  tintColor?: string | null
 }
 
-export default function ProductModelModal({ open, modelUrl, productName, onClose }: ProductModelModalProps) {
+export default function ProductModelModal({ open, modelUrl, productName, onClose, hotspots, tintColor }: ProductModelModalProps) {
   useScrollLock(open)
   useEscape(onClose, open)
 
@@ -72,7 +75,7 @@ export default function ProductModelModal({ open, modelUrl, productName, onClose
               </button>
             </div>
             <div className="min-h-0 flex-1">
-              <ProductModelViewer modelUrl={modelUrl} productName={productName} className="h-full w-full aspect-square max-h-[70dvh]" />
+              <ProductModelViewer modelUrl={modelUrl} productName={productName} hotspots={hotspots} tintColor={tintColor} className="h-full w-full aspect-square max-h-[70dvh]" />
             </div>
           </motion.div>
         </motion.div>

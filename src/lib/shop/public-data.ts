@@ -2,6 +2,7 @@ import { unstable_cache, revalidateTag } from 'next/cache'
 import { createClient as createSessionlessClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type {
+  ShopProductHotspot,
   ShopSku,
   ShopSkuImage,
   ShopVariantOption,
@@ -142,6 +143,9 @@ type RawProduct = {
   landscape_image_url?: string | null
   image_urls?: string[] | null
   model_url?: string | null
+  usdz_url?: string | null
+  hotspots?: unknown
+  hero_video_url?: string | null
   base_price?: number | string | null
   is_customizable?: boolean | null
   customization_label?: string | null
@@ -176,6 +180,9 @@ const PRODUCT_SELECT = `
   landscape_image_url,
   image_urls,
   model_url,
+  usdz_url,
+  hotspots,
+  hero_video_url,
   base_price,
   is_customizable,
   customization_label,
@@ -199,6 +206,7 @@ const PRODUCT_SELECT = `
     low_stock_threshold,
     weight_grams,
     variant_image_url,
+    model_url,
     is_available,
     pre_order_eta,
     created_at,
@@ -256,6 +264,33 @@ function normalizeSku(sku: ShopSku): ShopSku {
     weight_grams: sku.weight_grams === null ? null : normalizeShopNumber(sku.weight_grams),
     variant_combination: sku.variant_combination ?? {},
   }
+}
+
+function parseHotspotsJson(value: unknown): ShopProductHotspot[] {
+  if (!Array.isArray(value)) return []
+  const hotspots: ShopProductHotspot[] = []
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object') continue
+    const raw = entry as Record<string, unknown>
+    const position = Array.isArray(raw.position) ? raw.position.map(Number) : []
+    if (
+      position.length !== 3 ||
+      position.some((axis) => !Number.isFinite(axis)) ||
+      typeof raw.id !== 'string' ||
+      !raw.id.trim() ||
+      typeof raw.label !== 'string' ||
+      !raw.label.trim()
+    ) continue
+    if (hotspots.length >= 12) break
+    hotspots.push({
+      id: raw.id,
+      position: position as [number, number, number],
+      label: raw.label.trim(),
+      description:
+        typeof raw.description === 'string' && raw.description.trim() ? raw.description.trim() : null,
+    })
+  }
+  return hotspots
 }
 
 export function formatShopReviewerName(name: string | null | undefined) {
@@ -332,6 +367,9 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
     landscape_image_url: row.landscape_image_url ?? null,
     image_urls: row.image_urls ?? [],
     model_url: row.model_url ?? null,
+    usdz_url: row.usdz_url ?? null,
+    hotspots: parseHotspotsJson(row.hotspots),
+    hero_video_url: row.hero_video_url ?? null,
     base_price: normalizeShopNumber(row.base_price),
     display_price: minSku ? minSku.price : normalizeShopNumber(row.base_price),
     compare_at_price: saleSku?.compare_at_price ?? null,

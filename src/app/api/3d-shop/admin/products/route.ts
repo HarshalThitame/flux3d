@@ -19,6 +19,9 @@ type ProductPayload = {
   image_alt?: Record<string, string> | null
   default_dimensions?: Record<string, unknown> | null
   model_url?: string | null
+  usdz_url?: string | null
+  hotspots?: unknown
+  hero_video_url?: string | null
   base_price?: number
   is_customizable?: boolean
   customization_label?: string | null
@@ -39,6 +42,34 @@ type SkuRow = {
 
 function normalizeStringArray(value: unknown) {
   return Array.isArray(value) ? value.map((item) => String(item).trim()).filter(Boolean) : []
+}
+
+const HOTSPOT_LIMIT = 12
+
+function normalizeHotspots(value: unknown) {
+  if (!Array.isArray(value)) return []
+  const hotspots: { id: string; position: [number, number, number]; label: string; description: string | null }[] = []
+  for (const entry of value.slice(0, HOTSPOT_LIMIT)) {
+    if (!entry || typeof entry !== 'object') continue
+    const raw = entry as Record<string, unknown>
+    const position = Array.isArray(raw.position) ? raw.position.map(Number) : []
+    if (
+      position.length !== 3 ||
+      position.some((axis) => !Number.isFinite(axis)) ||
+      typeof raw.id !== 'string' ||
+      !raw.id.trim() ||
+      typeof raw.label !== 'string' ||
+      !raw.label.trim()
+    ) continue
+    hotspots.push({
+      id: raw.id.trim(),
+      position: position as [number, number, number],
+      label: raw.label.trim().slice(0, 80),
+      description:
+        typeof raw.description === 'string' && raw.description.trim() ? raw.description.trim().slice(0, 300) : null,
+    })
+  }
+  return hotspots
 }
 
 function normalizeProductPayload(body: ProductPayload, partial = false) {
@@ -74,6 +105,10 @@ function normalizeProductPayload(body: ProductPayload, partial = false) {
         ? body.default_dimensions
         : null,
     model_url: typeof body.model_url === 'string' ? body.model_url.trim() || null : body.model_url ?? null,
+    usdz_url: typeof body.usdz_url === 'string' ? body.usdz_url.trim() || null : body.usdz_url ?? null,
+    hotspots: normalizeHotspots(body.hotspots),
+    hero_video_url:
+      typeof body.hero_video_url === 'string' ? body.hero_video_url.trim() || null : body.hero_video_url ?? null,
     base_price: Number.isFinite(Number(body.base_price)) ? Number(body.base_price) : 0,
     is_customizable: body.is_customizable ?? false,
     customization_label:

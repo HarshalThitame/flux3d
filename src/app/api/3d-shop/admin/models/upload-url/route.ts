@@ -6,7 +6,13 @@ import { createAdminSupabaseClient } from '@/lib/admin/server'
 const SHOP_BUCKET = 'shop-images'
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
-const ALLOWED_EXTENSIONS = new Set(['glb', 'gltf', 'stl', 'obj', '3mf'])
+const ASSET_KINDS = {
+  model: { extensions: new Set(['glb', 'gltf', 'stl', 'obj', '3mf']), label: 'GLB, GLTF, STL, OBJ, and 3MF model files', folder: 'models' },
+  usdz: { extensions: new Set(['usdz']), label: 'USDZ files', folder: 'ar' },
+  video: { extensions: new Set(['mp4', 'webm']), label: 'MP4 and WebM video files', folder: 'videos' },
+} as const
+
+type AssetKind = keyof typeof ASSET_KINDS
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -41,21 +47,24 @@ export async function POST(request: Request) {
       )
     }
 
+    const kind: AssetKind = (body.kind && body.kind in ASSET_KINDS ? body.kind : 'model') as AssetKind
+    const assetKind = ASSET_KINDS[kind]
+
     const extension = getFileExtension(fileName)
-    if (!ALLOWED_EXTENSIONS.has(extension)) {
+    if (!assetKind.extensions.has(extension)) {
       return NextResponse.json(
-        { error: 'Only GLB, GLTF, STL, OBJ, and 3MF model files are allowed.' },
+        { error: `Only ${assetKind.label} are allowed.` },
         { status: 400 }
       )
     }
 
     if (typeof fileSize === 'number' && fileSize > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'Model must be smaller than 50MB.' }, { status: 400 })
+      return NextResponse.json({ error: 'File must be smaller than 50MB.' }, { status: 400 })
     }
 
     const supabase = createAdminSupabaseClient()
     const safeProductId = String(productId).replace(/[^a-zA-Z0-9_-]/g, '-')
-    const objectPath = `shop/models/${safeProductId}/${Date.now()}-${sanitizeFilename(fileName)}`
+    const objectPath = `shop/${assetKind.folder}/${safeProductId}/${Date.now()}-${sanitizeFilename(fileName)}`
 
     const { data: buckets } = await supabase.storage.listBuckets()
     const bucketExists = buckets?.some((b) => b.name === SHOP_BUCKET)

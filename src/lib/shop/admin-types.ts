@@ -43,6 +43,13 @@ export type ShopSkuImage = {
   created_at: string | null
 }
 
+export type ShopProductHotspot = {
+  id: string
+  position: [number, number, number]
+  label: string
+  description?: string | null
+}
+
 export type ShopCategory = {
   id: string
   name: string
@@ -73,6 +80,9 @@ export type ShopProduct = {
   image_alt: Record<string, string> | null
   default_dimensions: ProductDimensions | null
   model_url: string | null
+  usdz_url: string | null
+  hotspots: ShopProductHotspot[] | null
+  hero_video_url: string | null
   base_price: number
   is_customizable: boolean | null
   customization_label: string | null
@@ -111,6 +121,7 @@ export type ShopSku = {
   low_stock_threshold: number | null
   weight_grams: number | null
   variant_image_url: string | null
+  model_url: string | null
   is_available: boolean | null
   pre_order_eta: string | null
   created_at: string | null

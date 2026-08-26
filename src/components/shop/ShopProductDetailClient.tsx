@@ -9,9 +9,11 @@ import {
   Box,
   ChevronLeft,
   ChevronRight,
+  Link2,
   MessageCircle,
   Pencil,
   RefreshCcw,
+  Share2,
   ShieldCheck,
   ShoppingBag,
   Star,
@@ -27,6 +29,7 @@ import ProductRecommendations from '@/components/shop/ProductRecommendations'
 import ReviewModal, { type ReviewEligibility } from '@/components/shop/ReviewModal'
 import WishlistButton from '@/components/shop/WishlistButton'
 import ProductModelModal from '@/components/shop/ProductModelModal'
+import ARViewButton from '@/components/shop/ARViewButton'
 import type { AppUserProfile } from '@/lib/auth/server'
 import type { ProductDimensions } from '@/lib/shop/admin-types'
 import type { ShopPublicProduct, ShopPublicReview } from '@/lib/shop/public-types'
@@ -39,12 +42,14 @@ import {
   getShopProductImages,
   getShopStockLabel,
   resolveShopSku,
+  getSelectedSwatchColor,
   type ShopSelectedOptions,
 } from '@/lib/shop/selection'
 import { addRecentlyViewed } from '@/lib/shop/recentlyViewed'
 import { useShopCartStore } from '@/stores/shopCartStore'
 import { trackMetaEvent } from '@/lib/meta/event-utils'
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scroll-lock'
+import { sanitizeShopRichHtml } from '@/lib/shop/rich-text'
 
 function useScrollLock(locked: boolean) {
   useEffect(() => {
@@ -61,6 +66,10 @@ function useEscape(handler: () => void, active: boolean) {
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [handler, active])
+}
+
+function canHoverZoom() {
+  return typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
 }
 
 function Stars({ value }: { value: number }) {
@@ -136,7 +145,7 @@ function ProductInfoTabs({
             {active === 'description' && (
               <div className="max-w-4xl">
                 {longDescription ? (
-                  <div className="prose prose-sm max-w-none leading-7 text-[var(--shop-text-secondary)] md:prose-base" dangerouslySetInnerHTML={{ __html: longDescription }} />
+                  <div className="prose prose-sm max-w-none leading-7 text-[var(--shop-text-secondary)] md:prose-base" dangerouslySetInnerHTML={{ __html: sanitizeShopRichHtml(longDescription) }} />
                 ) : (
                   <p className="text-sm leading-7 text-[var(--shop-text-secondary)]">{description || 'Details coming soon.'}</p>
                 )}
@@ -227,11 +236,15 @@ export default function ShopProductDetailClient({
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   const [lightboxDir, setLightboxDir] = useState<1 | -1>(1)
   const [modelOpen, setModelOpen] = useState(false)
+  const [zoomEnabled, setZoomEnabled] = useState(false)
+  const [zoomOrigin, setZoomOrigin] = useState('50% 50%')
   useScrollLock(Boolean(lightboxImage) || modelOpen)
   useEscape(() => setLightboxImage(null), Boolean(lightboxImage))
 
   const resolvedSku = useMemo(() => resolveShopSku(product.skus, product.variant_options, selected), [product, selected])
   const productDimensions = useMemo(() => getShopDisplayDimensions(product, selected), [product, selected])
+  const activeModelUrl = resolvedSku?.model_url || product.model_url || null
+  const tintColor = useMemo(() => getSelectedSwatchColor(product.variant_options, selected), [product.variant_options, selected])
   const visibleImage = resolvedSku?.variant_image_url || selectedImage || images[0] || baseImages[0] || ''
 
   const gallerySignature = `${gallery.source}|${images.join(',')}`
@@ -558,6 +571,20 @@ export default function ShopProductDetailClient({
 
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_520px]">
           <section className="min-w-0">
+            {product.hero_video_url && (
+              <div className="mb-4 overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-black shadow-[var(--shop-shadow-sm)]">
+                <video
+                  src={product.hero_video_url}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  aria-label={`${product.name} showcase video`}
+                  className="aspect-square w-full object-cover"
+                />
+              </div>
+            )}
             <motion.div
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
@@ -574,6 +601,13 @@ export default function ShopProductDetailClient({
               <button
                 type="button"
                 onClick={() => { if (!draggingRef.current && visibleImage) setLightboxImage(visibleImage) }}
+                onMouseEnter={() => { if (canHoverZoom()) setZoomEnabled(true) }}
+                onMouseMove={(event) => {
+                  if (!zoomEnabled || draggingRef.current) return
+                  const rect = event.currentTarget.getBoundingClientRect()
+                  setZoomOrigin(`${(((event.clientX - rect.left) / rect.width) * 100).toFixed(1)}% ${(((event.clientY - rect.top) / rect.height) * 100).toFixed(1)}%`)
+                }}
+                onMouseLeave={() => setZoomEnabled(false)}
                 className="relative aspect-square w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)] transition hover:shadow-[var(--shop-shadow-md)]"
               >
                 {visibleImage ? (
@@ -586,7 +620,12 @@ export default function ShopProductDetailClient({
                       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                       className="absolute inset-0"
                     >
-                      <Image src={visibleImage} alt={product.name} fill priority sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover" />
+                      <div
+                        className="absolute inset-0 transition-transform duration-200 ease-out"
+                        style={{ transform: zoomEnabled ? 'scale(1.7)' : 'scale(1)', transformOrigin: zoomOrigin }}
+                      >
+                        <Image src={visibleImage} alt={product.name} fill priority sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover" />
+                      </div>
                     </motion.div>
                   </AnimatePresence>
                 ) : (
@@ -622,7 +661,7 @@ export default function ShopProductDetailClient({
                 ))}
               </div>
             )}
-            {product.model_url && (
+            {activeModelUrl && (
               <button
                 type="button"
                 onClick={() => setModelOpen(true)}
@@ -631,6 +670,11 @@ export default function ShopProductDetailClient({
                 <Box className="h-4 w-4" />
                 View interactive 3D preview
               </button>
+            )}
+            {product.usdz_url && activeModelUrl && (
+              <div className="mt-2">
+                <ARViewButton usdzUrl={product.usdz_url} glbUrl={activeModelUrl} />
+              </div>
             )}
           </section>
 
@@ -663,6 +707,12 @@ export default function ShopProductDetailClient({
                   </span>
                 )}
               </div>
+
+              {price > 0 && (
+                <p className="mt-1.5 text-xs font-medium text-[var(--shop-text-muted)]">
+                  or {formatShopPrice(Math.round(price / 12))}/mo. with EMI · Inclusive of all taxes
+                </p>
+              )}
 
               <div className="mt-6">
                 <ShopVariantControls
@@ -792,6 +842,41 @@ export default function ShopProductDetailClient({
                     <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">{item.label}</span>
                   </div>
                 ))}
+              </div>
+
+              <div className="mt-5 flex items-center gap-2 border-t border-[var(--shop-border-light)] pt-4">
+                <span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">Share</span>
+                <button
+                  type="button"
+                  aria-label="Share on WhatsApp"
+                  onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`${product.name} — ${window.location.href}`)}`, '_blank', 'noopener')}
+                  className="grid h-9 w-9 place-items-center rounded-lg border border-[var(--shop-border-light)] text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Share on X"
+                  onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(product.name)}&url=${encodeURIComponent(window.location.href)}`, '_blank', 'noopener')}
+                  className="grid h-9 w-9 place-items-center rounded-lg border border-[var(--shop-border-light)] text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Copy product link"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(window.location.href)
+                      setToast('Link copied to clipboard.')
+                    } catch {
+                      setToast('Could not copy the link.')
+                    }
+                  }}
+                  className="grid h-9 w-9 place-items-center rounded-lg border border-[var(--shop-border-light)] text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
+                >
+                  <Link2 className="h-4 w-4" />
+                </button>
               </div>
             </div>
           </aside>
@@ -993,14 +1078,39 @@ export default function ShopProductDetailClient({
           }
         }}
       />
-      {product.model_url && (
+      {activeModelUrl && (
         <ProductModelModal
           open={modelOpen}
-          modelUrl={product.model_url}
+          modelUrl={activeModelUrl}
           productName={product.name}
+          hotspots={product.hotspots}
+          tintColor={tintColor}
           onClose={() => setModelOpen(false)}
         />
       )}
+
+      <div className="fixed inset-x-0 bottom-0 z-[120] border-t border-[var(--shop-border-gold)] bg-white/95 px-4 py-3 shadow-[var(--shop-shadow-lg)] backdrop-blur-md lg:hidden" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
+        <div className="mx-auto flex max-w-7xl items-center gap-3">
+          <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-muted)]">
+            {visibleImage ? <Image src={visibleImage} alt="" fill sizes="44px" className="object-cover" /> : null}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-semibold text-[var(--shop-text-primary)]">{product.name}</p>
+            <p className="font-[var(--shop-font-heading)] text-sm font-semibold text-[var(--shop-text-primary)]">{formatShopPrice(price)}</p>
+          </div>
+          {!isTrulyOutOfStock && (
+            <button
+              type="button"
+              disabled={!canAdd}
+              onClick={() => addCurrentToCart(true)}
+              className="flex min-h-[44px] shrink-0 items-center justify-center gap-1.5 rounded-xl bg-[var(--shop-gold)] px-4 text-sm font-semibold text-white shadow-[var(--shop-shadow-gold)] transition active:scale-[0.98] disabled:opacity-50"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              Add
+            </button>
+          )}
+        </div>
+      </div>
     </main>
   )
 }

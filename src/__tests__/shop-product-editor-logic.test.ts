@@ -6,8 +6,12 @@ const validProduct = {
   ...emptyProduct,
   name: 'LED Desk Lamp',
   slug: 'led-desk-lamp',
+  category_id: 'cat-1',
+  description: 'A premium LED desk lamp.',
   base_price: 1299,
   thumbnail_url: 'https://example.com/lamp.png',
+  image_urls: ['https://example.com/gallery.png'],
+  image_alt: { 'https://example.com/gallery.png': 'Lamp shown from the side' },
 }
 
 describe('productFormSchema', () => {
@@ -75,8 +79,15 @@ describe('getPublishBlockers', () => {
     const blockers = getPublishBlockers(emptyProduct)
     expect(blockers).toContain('Add a product name')
     expect(blockers).toContain('Add a product slug')
+    expect(blockers).toContain('Assign a category')
+    expect(blockers).toContain('Add at least a short or detailed description')
     expect(blockers).toContain('Set a base price greater than zero')
     expect(blockers).toContain('Add at least one product image')
+  })
+
+  it('flags gallery images that are missing alt text', () => {
+    const blockers = getPublishBlockers({ ...validProduct, image_alt: {} })
+    expect(blockers.some((blocker) => blocker.includes('alt text'))).toBe(true)
   })
 
   it('returns no blockers for a publishable product', () => {

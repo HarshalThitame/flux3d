@@ -132,17 +132,26 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   // this reliably produces an HTTP 404 (a body-level notFound() can arrive
   // after headers are flushed on force-dynamic pages and degrade to a 200).
   if (!product) notFound()
+  const ogImage = product.landscape_image_url || product.thumbnail_url
+    ? [{ url: product.landscape_image_url || product.thumbnail_url as string }]
+    : undefined
+  const title = product.meta_title || `${product.name} — 3D Shop`
+  const description = product.meta_description || product.description || `Shop ${product.name} on 3D Shop by Flux3D.`
   return {
-    title: product.meta_title || `${product.name} — 3D Shop`,
-    description: product.meta_description || product.description || `Shop ${product.name} on 3D Shop by Flux3D.`,
+    title,
+    description,
     alternates: { canonical: `/3d-shop/product/${product.slug}` },
     openGraph: {
-      title: product.meta_title || `${product.name} — 3D Shop`,
-      description: product.meta_description || product.description || `Shop ${product.name} on 3D Shop by Flux3D.`,
+      title,
+      description,
       url: absoluteUrl(`/3d-shop/product/${product.slug}`),
-      images: product.landscape_image_url || product.thumbnail_url
-        ? [{ url: product.landscape_image_url || product.thumbnail_url as string }]
-        : undefined,
+      images: ogImage,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ogImage?.map((image) => image.url),
     },
   }
 }

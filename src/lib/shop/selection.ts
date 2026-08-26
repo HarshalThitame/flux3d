@@ -117,6 +117,22 @@ export function formatVariantLabel(combo: Record<string, string | boolean> | nul
   return entries.map(([key, value]) => `${key}: ${String(value)}`).join(' · ')
 }
 
+/**
+ * Returns the currently selected swatch color (CSS color string) so the 3D
+ * viewer can live-tint the model when a color variant changes.
+ */
+export function getSelectedSwatchColor(
+  options: ShopVariantOption[],
+  selected: ShopSelectedOptions
+): string | null {
+  for (const option of options) {
+    if (option.option_type !== 'swatch_color') continue
+    const value = selected[option.option_name]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return null
+}
+
 export function getShopProductBadge(product: ShopPublicProduct) {
   if (product.is_new) return 'NEW'
   if (product.has_sale) return 'SALE'

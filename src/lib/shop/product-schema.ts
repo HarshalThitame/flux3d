@@ -1,5 +1,14 @@
 import { z } from 'zod'
-import type { ProductDimensions } from '@/lib/shop/admin-types'
+import type { ProductDimensions, ShopProductHotspot } from '@/lib/shop/admin-types'
+
+export const productHotspotSchema: z.ZodType<ShopProductHotspot> = z.object({
+  id: z.string().min(1),
+  position: z.tuple([z.number(), z.number(), z.number()]),
+  label: z.string().trim().min(1, 'Hotspot label is required').max(80, 'Keep hotspot labels under 80 characters'),
+  description: z.string().trim().max(300, 'Keep hotspot descriptions under 300 characters').nullable().optional(),
+})
+
+export const productHotspotsSchema = z.array(productHotspotSchema).max(12, 'Use at most 12 hotspots per product')
 
 export const productDimensionsSchema: z.ZodType<ProductDimensions> = z.object({
   length_mm: z.number().min(0).nullable(),
@@ -34,6 +43,9 @@ export const productFormSchema = z.object({
   image_alt: z.record(z.string(), z.string()),
   default_dimensions: productDimensionsSchema.nullable(),
   model_url: z.string(),
+  usdz_url: z.string(),
+  hotspots: productHotspotsSchema,
+  hero_video_url: z.string(),
   base_price: z.number().min(0, 'Price cannot be negative'),
   is_customizable: z.boolean(),
   customization_label: z.string(),
@@ -73,7 +85,15 @@ export function getPublishBlockers(product: ProductForm): string[] {
   const blockers: string[] = []
   if (!product.name.trim()) blockers.push('Add a product name')
   if (!product.slug.trim()) blockers.push('Add a product slug')
+  if (!product.category_id) blockers.push('Assign a category')
+  if (!product.description.trim() && !product.long_description.trim()) {
+    blockers.push('Add at least a short or detailed description')
+  }
   if (product.base_price <= 0) blockers.push('Set a base price greater than zero')
   if (!product.thumbnail_url && product.image_urls.length === 0) blockers.push('Add at least one product image')
+  const missingAlt = product.image_urls.filter((url) => !(product.image_alt[url] ?? '').trim())
+  if (missingAlt.length > 0) {
+    blockers.push(`Add alt text to ${missingAlt.length} gallery image${missingAlt.length === 1 ? '' : 's'} for SEO & accessibility`)
+  }
   return blockers
 }

@@ -1,5 +1,6 @@
 import type {
   ProductDimensions,
+  ShopProductHotspot,
   ShopSku,
   ShopSkuImage,
   ShopVariantOption,
@@ -39,6 +40,9 @@ export type ShopPublicProduct = {
   landscape_image_url: string | null
   image_urls: string[]
   model_url: string | null
+  usdz_url: string | null
+  hotspots: ShopProductHotspot[]
+  hero_video_url: string | null
   base_price: number
   display_price: number
   compare_at_price: number | null

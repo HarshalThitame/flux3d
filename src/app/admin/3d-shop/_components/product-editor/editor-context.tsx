@@ -17,7 +17,7 @@ import { emptyDimensions } from '@/lib/shop/dimensions'
 import type { ProductForm, ProductFormErrors } from '@/lib/shop/product-schema'
 import { getPublishBlockers } from '@/lib/shop/product-schema'
 import type { AiGenerationKind, AiGenerateResult, AiTone } from '@/lib/shop/ai'
-import { uploadFileWithProgress, uploadFormFileWithProgress, uploadModelFileWithProgress } from '@/lib/shop/upload'
+import { uploadFileWithProgress, uploadFormFileWithProgress, uploadModelFileWithProgress, type ModelUploadKind } from '@/lib/shop/upload'
 import type { ProductTemplate } from '@/lib/shop/templates'
 import { templateLongDescription } from '@/lib/shop/templates'
 import { addRevision, clearRevisions, loadRevisions, type ShopRevision } from '@/lib/shop/revisions'
@@ -88,6 +88,13 @@ type ProductEditorContextValue = {
   uploadImage: (file: File, target?: 'gallery' | 'variant', skuId?: string) => Promise<void>
   uploadModel: (file: File) => Promise<void>
   removeModel: () => void
+  uploadProductAsset: (
+    file: File,
+    kind: ModelUploadKind,
+    field: 'model_url' | 'usdz_url' | 'hero_video_url'
+  ) => Promise<void>
+  removeProductAsset: (field: 'model_url' | 'usdz_url' | 'hero_video_url') => void
+  uploadSkuModel: (skuId: string, file: File) => Promise<void>
   setThumbnail: (url: string) => void
   removeImage: (url: string) => void
   handleImageDrop: (url: string) => void
@@ -941,6 +948,32 @@ export function ProductEditorProvider({
     updateProduct('model_url', '')
   }, [updateProduct])
 
+  const uploadProductAsset = useCallback(
+    async (file: File, kind: ModelUploadKind, field: 'model_url' | 'usdz_url' | 'hero_video_url') => {
+      const id = await ensureProductId()
+      const tempKey = `${field}-${file.name}-${Date.now()}`
+      setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress: 0 } }))
+      try {
+        const { publicUrl } = await uploadModelFileWithProgress(file, id, (progress) => {
+          setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress } }))
+        }, kind)
+        setUploadState((current) => ({ ...current, [tempKey]: { status: 'done', progress: 100 } }))
+        updateProduct(field, publicUrl)
+      } catch (error) {
+        setUploadState((current) => ({ ...current, [tempKey]: { status: 'error', progress: 0 } }))
+        throw error
+      }
+    },
+    [ensureProductId, updateProduct]
+  )
+
+  const removeProductAsset = useCallback(
+    (field: 'model_url' | 'usdz_url' | 'hero_video_url') => {
+      updateProduct(field, '')
+    },
+    [updateProduct]
+  )
+
   const uploadLandscapeImage = useCallback(
     async (file: File) => {
       const id = await ensureProductId()
@@ -1170,6 +1203,25 @@ export function ProductEditorProvider({
       form.setDirty(true)
     },
     [form, syncBasePriceFromSkus]
+  )
+
+  const uploadSkuModel = useCallback(
+    async (skuId: string, file: File) => {
+      const id = await ensureProductId()
+      const tempKey = `sku-model-${skuId}-${Date.now()}`
+      setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress: 0 } }))
+      try {
+        const { publicUrl } = await uploadModelFileWithProgress(file, id, (progress) => {
+          setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress } }))
+        }, 'model')
+        setUploadState((current) => ({ ...current, [tempKey]: { status: 'done', progress: 100 } }))
+        updateSku(skuId, 'model_url', publicUrl)
+      } catch (error) {
+        setUploadState((current) => ({ ...current, [tempKey]: { status: 'error', progress: 0 } }))
+        throw error
+      }
+    },
+    [ensureProductId, updateSku]
   )
 
   const bulkUpdateSkus = useCallback(
@@ -1564,6 +1616,9 @@ export function ProductEditorProvider({
     uploadImage,
     uploadModel,
     removeModel,
+    uploadProductAsset,
+    removeProductAsset,
+    uploadSkuModel,
     setThumbnail,
     removeImage,
     handleImageDrop,

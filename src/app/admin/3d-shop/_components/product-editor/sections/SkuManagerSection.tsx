@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
-import { ImagePlus, Images, Loader2, Trash2 } from 'lucide-react'
+import { Box, ImagePlus, Images, Loader2, Trash2 } from 'lucide-react'
 import { useProductEditor } from '../editor-context'
 import { Section } from '../ui'
 import { comboLabel } from '../types'
@@ -41,6 +41,41 @@ function SkuImageUpload({ skuId, url }: { skuId: string; url: string | null }) {
             void uploadImage(file, 'variant', skuId).catch((error) =>
               setToast({ type: 'error', message: error instanceof Error ? error.message : 'Upload failed.' })
             )
+        }}
+      />
+    </label>
+  )
+}
+
+function SkuModelUpload({ sku }: { sku: ShopSku }) {
+  const { uploadSkuModel, uploadState, setToast } = useProductEditor()
+  const uploadPrefix = `sku-model-${sku.id}-`
+  const uploading = Object.entries(uploadState).some(
+    ([key, state]) => key.startsWith(uploadPrefix) && state.status === 'uploading'
+  )
+
+  return (
+    <label
+      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-semibold transition ${
+        sku.model_url
+          ? 'border-[#6d28d9]/40 bg-[#6d28d9]/5 text-[#6d28d9]'
+          : 'border-gray-200 text-[#0F1B3D] hover:border-[#6d28d9]/40 hover:text-[#6d28d9]'
+      }`}
+      title={sku.model_url ? 'Replace per-SKU 3D model' : 'Upload a GLB override shown in the 3D viewer when this variant is selected'}
+    >
+      {uploading ? <Loader2 className="h-4 w-4 animate-spin text-[#6d28d9]" /> : <Box className="h-4 w-4" />}
+      3D{sku.model_url ? ' ✓' : ''}
+      <input
+        type="file"
+        accept=".glb,.gltf"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0]
+          if (file)
+            void uploadSkuModel(sku.id, file).catch((error) =>
+              setToast({ type: 'error', message: error instanceof Error ? error.message : 'Upload failed.' })
+            )
+          event.target.value = ''
         }}
       />
     </label>
@@ -331,7 +366,10 @@ export function SkuManagerSection() {
                       <SkuImageUpload skuId={sku.id} url={sku.variant_image_url} />
                     </td>
                     <td className="px-3 py-3">
-                      <SkuGalleryButton sku={sku} />
+                      <div className="flex items-center gap-2">
+                        <SkuGalleryButton sku={sku} />
+                        <SkuModelUpload sku={sku} />
+                      </div>
                     </td>
                     <td className="px-3 py-3">
                       <button
@@ -440,7 +478,10 @@ export function SkuManagerSection() {
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-2">
                   <SkuImageUpload skuId={sku.id} url={sku.variant_image_url} />
-                  <SkuGalleryButton sku={sku} />
+                  <div className="flex items-center gap-2">
+                    <SkuModelUpload sku={sku} />
+                    <SkuGalleryButton sku={sku} />
+                  </div>
                   <div className="flex items-center gap-2">
                     {isSelected && (
                       <span className="rounded-full bg-[#6d28d9]/10 px-2 py-0.5 text-xs font-semibold text-[#6d28d9]">Selected</span>

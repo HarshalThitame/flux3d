@@ -4,7 +4,8 @@ import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from 
 import dynamic from 'next/dynamic'
 import { useReducedMotion } from 'framer-motion'
 import { Box3, Vector3 } from 'three'
-import { loadShopModel, type LoadedShopModel } from '@/lib/shop/model-loader'
+import { loadShopModel, applyVariantTint, type LoadedShopModel } from '@/lib/shop/model-loader'
+import type { ShopProductHotspot } from '@/lib/shop/admin-types'
 import { Box, Maximize2, Minimize2, Move3D, RotateCcw } from 'lucide-react'
 
 // Lazy load the heavy 3D canvas so it only ships when a model is present
@@ -15,11 +16,18 @@ const ProductModelCanvas = dynamic(() => import('./ProductModelCanvas'), {
 
 function ModelSkeleton() {
   return (
-    <div className="flex h-full w-full items-center justify-center rounded-[inherit] bg-[var(--shop-bg-muted)]">
-      <div className="space-y-3 text-center">
-        <div className="mx-auto h-10 w-10 animate-pulse rounded-full bg-[var(--shop-border-medium)]" />
-        <p className="text-xs font-medium text-[var(--shop-text-muted)]">Loading 3D preview…</p>
-      </div>
+    <div className="flex h-full w-full flex-col items-center justify-center gap-4 rounded-[inherit] bg-[var(--shop-bg-muted)]">
+      <div
+        className="h-12 w-12 animate-spin rounded-full"
+        style={{
+          background: 'conic-gradient(from 0deg, transparent, var(--shop-gold))',
+          mask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))',
+          WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))',
+        }}
+      />
+      <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--shop-text-muted)]">
+        Preparing preview
+      </p>
     </div>
   )
 }
@@ -47,6 +55,8 @@ type ProductModelViewerProps = {
   modelUrl: string
   productName?: string
   className?: string
+  hotspots?: ShopProductHotspot[]
+  tintColor?: string | null
 }
 
 type ModelCanvasBoundaryProps = {
@@ -82,7 +92,7 @@ class ModelCanvasBoundary extends Component<ModelCanvasBoundaryProps, ModelCanva
   }
 }
 
-export default function ProductModelViewer({ modelUrl, productName, className = '' }: ProductModelViewerProps) {
+export default function ProductModelViewer({ modelUrl, productName, className = '', hotspots, tintColor }: ProductModelViewerProps) {
   const [model, setModel] = useState<LoadedShopModel | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -115,6 +125,10 @@ export default function ProductModelViewer({ modelUrl, productName, className = 
     }
   }, [modelUrl, reloadKey])
 
+  useEffect(() => {
+    if (model) applyVariantTint(model.object, tintColor)
+  }, [model, tintColor])
+
   function retryLoad() {
     setError(null)
     setReloadKey((key) => key + 1)
@@ -139,6 +153,7 @@ export default function ProductModelViewer({ modelUrl, productName, className = 
               object={model.object}
               autoRotate={autoRotate && !reduceMotion}
               productName={productName}
+              hotspots={hotspots}
             />
           </ModelCanvasBoundary>
           <div className="pointer-events-none absolute inset-x-4 top-4 flex items-start justify-between">
@@ -202,6 +217,7 @@ export default function ProductModelViewer({ modelUrl, productName, className = 
               object={model.object}
               autoRotate={autoRotate && !reduceMotion}
               productName={productName}
+              hotspots={hotspots}
             />
           </ModelCanvasBoundary>
         )}
