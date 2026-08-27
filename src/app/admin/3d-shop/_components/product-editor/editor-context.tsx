@@ -1,7 +1,16 @@
-'use client'
+"use client";
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
-import { useRouter } from 'next/navigation'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
+import { useRouter } from "next/navigation";
 import type {
   ShopCategory,
   ShopProduct,
@@ -11,18 +20,30 @@ import type {
   ShopVariantOptionDimension,
   ShopVariantOptionImage,
   ProductDimensions,
-} from '@/lib/shop/admin-types'
-import { slugifyShopValue, stableStringify } from '@/lib/shop/admin-types'
-import { emptyDimensions } from '@/lib/shop/dimensions'
-import type { ProductForm, ProductFormErrors } from '@/lib/shop/product-schema'
-import { getPublishBlockers } from '@/lib/shop/product-schema'
-import type { AiGenerationKind, AiGenerateResult, AiTone } from '@/lib/shop/ai'
-import { uploadFileWithProgress, uploadFormFileWithProgress, uploadModelFileWithProgress, validateImageFile, type ModelUploadKind } from '@/lib/shop/upload'
-import type { ProductTemplate } from '@/lib/shop/templates'
-import { templateLongDescription } from '@/lib/shop/templates'
-import { addRevision, clearRevisions, loadRevisions, type ShopRevision } from '@/lib/shop/revisions'
-import type { AdminToastState } from '@/components/admin/AdminToast'
-import { useProductForm, type EditorExtras } from './useProductForm'
+} from "@/lib/shop/admin-types";
+import { slugifyShopValue, stableStringify } from "@/lib/shop/admin-types";
+import { emptyDimensions } from "@/lib/shop/dimensions";
+import type { ProductForm, ProductFormErrors } from "@/lib/shop/product-schema";
+import { getPublishBlockers } from "@/lib/shop/product-schema";
+import type { AiGenerationKind, AiGenerateResult, AiTone } from "@/lib/shop/ai";
+import type { DescriptionBlocks } from "@/lib/shop/blocks";
+import {
+  uploadFileWithProgress,
+  uploadFormFileWithProgress,
+  uploadModelFileWithProgress,
+  validateImageFile,
+  type ModelUploadKind,
+} from "@/lib/shop/upload";
+import type { ProductTemplate } from "@/lib/shop/templates";
+import { templateLongDescription } from "@/lib/shop/templates";
+import {
+  addRevision,
+  clearRevisions,
+  loadRevisions,
+  type ShopRevision,
+} from "@/lib/shop/revisions";
+import type { AdminToastState } from "@/components/admin/AdminToast";
+import { useProductForm, type EditorExtras } from "./useProductForm";
 import {
   type DraftSku,
   type DraftVariant,
@@ -32,115 +53,154 @@ import {
   cartesianProduct,
   emptyProduct,
   toProductForm,
-} from './types'
+} from "./types";
 
-const AUTOSAVE_DELAY = 2000
-const MAX_GALLERY_IMAGES = 20
+const AUTOSAVE_DELAY = 2000;
+const MAX_GALLERY_IMAGES = 20;
 
-type SlugStatus = 'idle' | 'checking' | 'available' | 'taken'
+type SlugStatus = "idle" | "checking" | "available" | "taken";
 
 type ProductEditorContextValue = {
-  mode: 'new' | 'edit'
-  productId?: string
-  product: ProductForm
-  errors: ProductFormErrors
-  touched: Set<string>
-  canUndo: boolean
-  canRedo: boolean
-  dirty: boolean
-  saving: boolean
-  loading: boolean
-  categories: ShopCategory[]
-  slugStatus: SlugStatus
-  uploadState: UploadState
-  variants: DraftVariant[]
-  skus: DraftSku[]
-  variantDimensions: ShopVariantOptionDimension[]
-  variantOptionImages: ShopVariantOptionImage[]
-  skuImages: Record<string, ShopSkuImage[]>
-  defaultWeight: string
-  skuSectionRef: RefObject<HTMLDivElement | null>
-  dragImage: string | null
-  dragVariant: string | null
-  toast: AdminToastState
-  publishBlockers: string[]
-  aiTone: AiTone
-  aiBusy: Partial<Record<AiGenerationKind, boolean>>
+  mode: "new" | "edit";
+  productId?: string;
+  product: ProductForm;
+  errors: ProductFormErrors;
+  touched: Set<string>;
+  canUndo: boolean;
+  canRedo: boolean;
+  dirty: boolean;
+  saving: boolean;
+  loading: boolean;
+  categories: ShopCategory[];
+  slugStatus: SlugStatus;
+  uploadState: UploadState;
+  variants: DraftVariant[];
+  skus: DraftSku[];
+  variantDimensions: ShopVariantOptionDimension[];
+  variantOptionImages: ShopVariantOptionImage[];
+  skuImages: Record<string, ShopSkuImage[]>;
+  defaultWeight: string;
+  skuSectionRef: RefObject<HTMLDivElement | null>;
+  dragImage: string | null;
+  dragVariant: string | null;
+  toast: AdminToastState;
+  publishBlockers: string[];
+  aiTone: AiTone;
+  aiBusy: Partial<Record<AiGenerationKind, boolean>>;
 
-  updateProduct: <K extends keyof ProductForm>(key: K, value: ProductForm[K]) => void
-  markTouched: (key: keyof ProductForm) => void
-  undo: () => void
-  redo: () => void
-  markSlugTouched: () => void
-  saveProduct: (status?: SaveStatus) => Promise<void>
-  archiveProduct: () => Promise<void>
-  setToast: (toast: AdminToastState) => void
-  setDragImage: (value: string | null) => void
-  setDragVariant: (value: string | null) => void
-  setAiTone: (tone: AiTone) => void
-  generateAi: (kind: AiGenerationKind) => Promise<void>
-  setDefaultWeight: (value: string) => void
-  applyTemplate: (template: ProductTemplate) => Promise<void>
-  duplicateProduct: () => Promise<void>
-  revisions: ShopRevision[]
-  restoreRevision: (timestamp: number) => Promise<void>
-  clearRevisionHistory: () => void
+  updateProduct: <K extends keyof ProductForm>(
+    key: K,
+    value: ProductForm[K],
+  ) => void;
+  markTouched: (key: keyof ProductForm) => void;
+  undo: () => void;
+  redo: () => void;
+  markSlugTouched: () => void;
+  saveProduct: (status?: SaveStatus) => Promise<void>;
+  archiveProduct: () => Promise<void>;
+  setToast: (toast: AdminToastState) => void;
+  setDragImage: (value: string | null) => void;
+  setDragVariant: (value: string | null) => void;
+  setAiTone: (tone: AiTone) => void;
+  generateAi: (kind: AiGenerationKind) => Promise<void>;
+  setDefaultWeight: (value: string) => void;
+  applyTemplate: (template: ProductTemplate) => Promise<void>;
+  duplicateProduct: () => Promise<void>;
+  revisions: ShopRevision[];
+  restoreRevision: (timestamp: number) => Promise<void>;
+  clearRevisionHistory: () => void;
 
   uploadImage: (
     file: File,
-    target?: 'gallery' | 'variant',
+    target?: "gallery" | "variant",
     skuId?: string,
-    onProgress?: (progress: number) => void
-  ) => Promise<string | void>
-  uploadModel: (file: File) => Promise<void>
-  removeModel: () => void
+    onProgress?: (progress: number) => void,
+  ) => Promise<string | void>;
+  uploadModel: (file: File) => Promise<void>;
+  removeModel: () => void;
   uploadProductAsset: (
     file: File,
     kind: ModelUploadKind,
-    field: 'model_url' | 'usdz_url' | 'hero_video_url'
-  ) => Promise<void>
-  removeProductAsset: (field: 'model_url' | 'usdz_url' | 'hero_video_url') => void
-  uploadSkuModel: (skuId: string, file: File) => Promise<void>
-  setThumbnail: (url: string) => void
-  removeImage: (url: string) => void
-  handleImageDrop: (url: string) => void
-  setImageAlt: (url: string, alt: string) => void
-  uploadLandscapeImage: (file: File, onProgress?: (progress: number) => void) => Promise<string | void>
-  removeLandscapeImage: () => void
-  attachLibraryImage: (url: string) => void
-  aiPrompt: string
-  setAiPrompt: (value: string) => void
+    field: "model_url" | "usdz_url" | "hero_video_url",
+  ) => Promise<void>;
+  removeProductAsset: (
+    field: "model_url" | "usdz_url" | "hero_video_url",
+  ) => void;
+  uploadSkuModel: (skuId: string, file: File) => Promise<void>;
+  setThumbnail: (url: string) => void;
+  removeImage: (url: string) => void;
+  handleImageDrop: (url: string) => void;
+  setImageAlt: (url: string, alt: string) => void;
+  uploadLandscapeImage: (
+    file: File,
+    onProgress?: (progress: number) => void,
+  ) => Promise<string | void>;
+  removeLandscapeImage: () => void;
+  attachLibraryImage: (url: string) => void;
+  aiPrompt: string;
+  setAiPrompt: (value: string) => void;
 
-  addVariant: () => Promise<void>
-  updateVariant: <K extends keyof ShopVariantOption>(variantId: string, key: K, value: ShopVariantOption[K]) => void
-  deleteVariant: (variant: DraftVariant) => Promise<void>
-  reorderVariants: (targetId: string) => Promise<void>
+  addVariant: () => Promise<void>;
+  updateVariant: <K extends keyof ShopVariantOption>(
+    variantId: string,
+    key: K,
+    value: ShopVariantOption[K],
+  ) => void;
+  deleteVariant: (variant: DraftVariant) => Promise<void>;
+  reorderVariants: (targetId: string) => Promise<void>;
 
-  generateSkus: () => Promise<void>
-  updateSku: <K extends keyof ShopSku>(skuId: string, key: K, value: ShopSku[K]) => void
-  bulkUpdateSkus: (partial: Partial<ShopSku>, ids?: string[]) => void
-  saveAllSkus: () => Promise<void>
-  deleteSku: (skuId: string) => Promise<void>
+  generateSkus: () => Promise<void>;
+  updateSku: <K extends keyof ShopSku>(
+    skuId: string,
+    key: K,
+    value: ShopSku[K],
+  ) => void;
+  bulkUpdateSkus: (partial: Partial<ShopSku>, ids?: string[]) => void;
+  saveAllSkus: () => Promise<void>;
+  deleteSku: (skuId: string) => Promise<void>;
 
-  updateVariantDimension: (optionName: string, optionValue: string, dimensions: ProductDimensions) => void
-  deleteVariantDimension: (dimensionId: string) => Promise<void>
-  applyDefaultDimensionsToUnset: () => void
-  addVariantOptionImage: (optionName: string, optionValue: string, file: File) => Promise<void>
-  updateVariantOptionImage: (imageId: string, patch: { alt_text?: string; is_primary?: boolean }) => Promise<void>
-  removeVariantOptionImage: (imageId: string) => Promise<void>
-  reorderVariantOptionImages: (optionName: string, optionValue: string, orderedIds: string[]) => Promise<void>
-  addSkuImage: (skuId: string, file: File) => Promise<void>
-  updateSkuImage: (imageId: string, patch: { alt_text?: string; is_primary?: boolean }) => Promise<void>
-  removeSkuImage: (imageId: string) => Promise<void>
-  reorderSkuImages: (skuId: string, orderedIds: string[]) => Promise<void>
-}
+  updateVariantDimension: (
+    optionName: string,
+    optionValue: string,
+    dimensions: ProductDimensions,
+  ) => void;
+  deleteVariantDimension: (dimensionId: string) => Promise<void>;
+  applyDefaultDimensionsToUnset: () => void;
+  addVariantOptionImage: (
+    optionName: string,
+    optionValue: string,
+    file: File,
+  ) => Promise<void>;
+  updateVariantOptionImage: (
+    imageId: string,
+    patch: { alt_text?: string; is_primary?: boolean },
+  ) => Promise<void>;
+  removeVariantOptionImage: (imageId: string) => Promise<void>;
+  reorderVariantOptionImages: (
+    optionName: string,
+    optionValue: string,
+    orderedIds: string[],
+  ) => Promise<void>;
+  addSkuImage: (skuId: string, file: File) => Promise<void>;
+  updateSkuImage: (
+    imageId: string,
+    patch: { alt_text?: string; is_primary?: boolean },
+  ) => Promise<void>;
+  removeSkuImage: (imageId: string) => Promise<void>;
+  reorderSkuImages: (skuId: string, orderedIds: string[]) => Promise<void>;
+};
 
-const ProductEditorContext = createContext<ProductEditorContextValue | null>(null)
+const ProductEditorContext = createContext<ProductEditorContextValue | null>(
+  null,
+);
 
 export function useProductEditor() {
-  const context = useContext(ProductEditorContext)
-  if (!context) throw new Error('useProductEditor must be used within ProductEditorProvider')
-  return context
+  const context = useContext(ProductEditorContext);
+  if (!context)
+    throw new Error(
+      "useProductEditor must be used within ProductEditorProvider",
+    );
+  return context;
 }
 
 export function ProductEditorProvider({
@@ -148,302 +208,388 @@ export function ProductEditorProvider({
   productId,
   children,
 }: {
-  mode: 'new' | 'edit'
-  productId?: string
-  children: ReactNode
+  mode: "new" | "edit";
+  productId?: string;
+  children: ReactNode;
 }) {
-  const router = useRouter()
-  const [categories, setCategories] = useState<ShopCategory[]>([])
-  const [variants, setVariants] = useState<DraftVariant[]>([])
-  const [skus, setSkus] = useState<DraftSku[]>([])
-  const [variantDimensions, setVariantDimensions] = useState<ShopVariantOptionDimension[]>([])
-  const [variantOptionImages, setVariantOptionImages] = useState<ShopVariantOptionImage[]>([])
-  const [skuImages, setSkuImages] = useState<Record<string, ShopSkuImage[]>>({})
-  const [loading, setLoading] = useState(mode === 'edit')
-  const [saving, setSaving] = useState(false)
-  const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle')
-  const [uploadState, setUploadState] = useState<UploadState>({})
-  const [dragImage, setDragImage] = useState<string | null>(null)
-  const [dragVariant, setDragVariant] = useState<string | null>(null)
-  const [defaultWeight, setDefaultWeight] = useState('')
-  const [toast, setToast] = useState<AdminToastState>(null)
-  const [aiTone, setAiTone] = useState<AiTone>('professional')
-  const [aiBusy, setAiBusy] = useState<Partial<Record<AiGenerationKind, boolean>>>({})
-  const [aiPrompt, setAiPrompt] = useState('')
-  const [revisions, setRevisions] = useState<ShopRevision[]>([])
-  const skuSectionRef = useRef<HTMLDivElement | null>(null)
+  const router = useRouter();
+  const [categories, setCategories] = useState<ShopCategory[]>([]);
+  const [variants, setVariants] = useState<DraftVariant[]>([]);
+  const [skus, setSkus] = useState<DraftSku[]>([]);
+  const [variantDimensions, setVariantDimensions] = useState<
+    ShopVariantOptionDimension[]
+  >([]);
+  const [variantOptionImages, setVariantOptionImages] = useState<
+    ShopVariantOptionImage[]
+  >([]);
+  const [skuImages, setSkuImages] = useState<Record<string, ShopSkuImage[]>>(
+    {},
+  );
+  const [loading, setLoading] = useState(mode === "edit");
+  const [saving, setSaving] = useState(false);
+  const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
+  const [uploadState, setUploadState] = useState<UploadState>({});
+  const [dragImage, setDragImage] = useState<string | null>(null);
+  const [dragVariant, setDragVariant] = useState<string | null>(null);
+  const [defaultWeight, setDefaultWeight] = useState("");
+  const [toast, setToast] = useState<AdminToastState>(null);
+  const [aiTone, setAiTone] = useState<AiTone>("professional");
+  const [aiBusy, setAiBusy] = useState<
+    Partial<Record<AiGenerationKind, boolean>>
+  >({});
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [revisions, setRevisions] = useState<ShopRevision[]>([]);
+  const skuSectionRef = useRef<HTMLDivElement | null>(null);
 
-  const slugTouchedRef = useRef(mode === 'edit')
-  const savingRef = useRef(false)
-  const autosaveTimerRef = useRef<number | null>(null)
-  const variantsRef = useRef<DraftVariant[]>([])
-  const skusRef = useRef<DraftSku[]>([])
-  const variantDimensionsRef = useRef<ShopVariantOptionDimension[]>([])
-  const variantOptionImagesRef = useRef<ShopVariantOptionImage[]>([])
-  const skuImagesRef = useRef<Record<string, ShopSkuImage[]>>({})
-  const hasLoadedRef = useRef(false)
+  const slugTouchedRef = useRef(mode === "edit");
+  const savingRef = useRef(false);
+  const autosaveTimerRef = useRef<number | null>(null);
+  const variantsRef = useRef<DraftVariant[]>([]);
+  const skusRef = useRef<DraftSku[]>([]);
+  const variantDimensionsRef = useRef<ShopVariantOptionDimension[]>([]);
+  const variantOptionImagesRef = useRef<ShopVariantOptionImage[]>([]);
+  const skuImagesRef = useRef<Record<string, ShopSkuImage[]>>({});
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
-    variantsRef.current = variants
-    skusRef.current = skus
-    variantDimensionsRef.current = variantDimensions
-    variantOptionImagesRef.current = variantOptionImages
-    skuImagesRef.current = skuImages
-  }, [variants, skus, variantDimensions, variantOptionImages, skuImages])
+    variantsRef.current = variants;
+    skusRef.current = skus;
+    variantDimensionsRef.current = variantDimensions;
+    variantOptionImagesRef.current = variantOptionImages;
+    skuImagesRef.current = skuImages;
+  }, [variants, skus, variantDimensions, variantOptionImages, skuImages]);
 
   const getEditorExtras = useCallback<() => EditorExtras>(
     () => ({ variants: variantsRef.current, skus: skusRef.current }),
-    []
-  )
+    [],
+  );
   const restoreEditorExtras = useCallback((extras: EditorExtras) => {
-    setVariants(extras.variants.map((variant) => ({ ...variant, dirty: true })))
-    setSkus(extras.skus.map((sku) => ({ ...sku, dirty: true })))
-  }, [])
+    setVariants(
+      extras.variants.map((variant) => ({ ...variant, dirty: true })),
+    );
+    setSkus(extras.skus.map((sku) => ({ ...sku, dirty: true })));
+  }, []);
 
-  const form = useProductForm(emptyProduct, getEditorExtras, restoreEditorExtras)
+  const form = useProductForm(
+    emptyProduct,
+    getEditorExtras,
+    restoreEditorExtras,
+  );
 
-  const publishBlockers = getPublishBlockers(form.product)
+  const publishBlockers = getPublishBlockers(form.product);
 
   const loadVariants = useCallback(async (id: string) => {
-    const response = await fetch(`/api/3d-shop/admin/products/${id}/variants`)
-    const data = (await response.json()) as { variants?: ShopVariantOption[] }
-    setVariants(data.variants ?? [])
-  }, [])
+    const response = await fetch(`/api/3d-shop/admin/products/${id}/variants`);
+    const data = (await response.json()) as { variants?: ShopVariantOption[] };
+    setVariants(data.variants ?? []);
+  }, []);
 
   const loadSkus = useCallback(async (id: string) => {
-    const response = await fetch(`/api/3d-shop/admin/products/${id}/skus`)
-    const data = (await response.json()) as { skus?: ShopSku[] }
-    const rows = data.skus ?? []
-    setSkus(rows)
-    return rows
-  }, [])
+    const response = await fetch(`/api/3d-shop/admin/products/${id}/skus`);
+    const data = (await response.json()) as { skus?: ShopSku[] };
+    const rows = data.skus ?? [];
+    setSkus(rows);
+    return rows;
+  }, []);
 
   const loadVariantDimensions = useCallback(async (id: string) => {
-    const response = await fetch(`/api/3d-shop/admin/products/${id}/variant-dimensions`)
-    const data = (await response.json()) as { dimensions?: ShopVariantOptionDimension[] }
-    setVariantDimensions(data.dimensions ?? [])
-  }, [])
+    const response = await fetch(
+      `/api/3d-shop/admin/products/${id}/variant-dimensions`,
+    );
+    const data = (await response.json()) as {
+      dimensions?: ShopVariantOptionDimension[];
+    };
+    setVariantDimensions(data.dimensions ?? []);
+  }, []);
 
   const loadVariantOptionImages = useCallback(async (id: string) => {
-    const response = await fetch(`/api/3d-shop/admin/products/${id}/variant-images`)
-    const data = (await response.json()) as { images?: ShopVariantOptionImage[] }
-    setVariantOptionImages(data.images ?? [])
-  }, [])
+    const response = await fetch(
+      `/api/3d-shop/admin/products/${id}/variant-images`,
+    );
+    const data = (await response.json()) as {
+      images?: ShopVariantOptionImage[];
+    };
+    setVariantOptionImages(data.images ?? []);
+  }, []);
 
   const loadSkuImages = useCallback(async (skuIds: string[]) => {
-    if (skuIds.length === 0) return
-    const params = new URLSearchParams()
-    for (const id of skuIds) params.append('sku_ids', id)
-    const response = await fetch(`/api/3d-shop/admin/skus/images?${params.toString()}`)
-    const data = (await response.json()) as { images?: Record<string, ShopSkuImage[]> }
-    setSkuImages(data.images ?? {})
-  }, [])
+    if (skuIds.length === 0) return;
+    const params = new URLSearchParams();
+    for (const id of skuIds) params.append("sku_ids", id);
+    const response = await fetch(
+      `/api/3d-shop/admin/skus/images?${params.toString()}`,
+    );
+    const data = (await response.json()) as {
+      images?: Record<string, ShopSkuImage[]>;
+    };
+    setSkuImages(data.images ?? {});
+  }, []);
 
   const loadInitialData = useCallback(async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const categoriesResponse = await fetch('/api/3d-shop/admin/categories')
-      const categoriesData = (await categoriesResponse.json()) as { categories?: ShopCategory[] }
-      setCategories(categoriesData.categories ?? [])
+      const categoriesResponse = await fetch("/api/3d-shop/admin/categories");
+      const categoriesData = (await categoriesResponse.json()) as {
+        categories?: ShopCategory[];
+      };
+      setCategories(categoriesData.categories ?? []);
 
-      if (mode === 'edit' && productId) {
-        const productResponse = await fetch(`/api/3d-shop/admin/products?id=${productId}`)
-        const productData = (await productResponse.json()) as { product?: ShopProduct; error?: string }
-        if (!productResponse.ok || !productData.product) throw new Error(productData.error || 'Product not found.')
-        form.reset(toProductForm(productData.product))
-        setRevisions(loadRevisions(productId))
+      if (mode === "edit" && productId) {
+        const productResponse = await fetch(
+          `/api/3d-shop/admin/products?id=${productId}`,
+        );
+        const productData = (await productResponse.json()) as {
+          product?: ShopProduct;
+          error?: string;
+        };
+        if (!productResponse.ok || !productData.product)
+          throw new Error(productData.error || "Product not found.");
+        form.reset(toProductForm(productData.product));
+        setRevisions(loadRevisions(productId));
         await Promise.all([
           loadVariants(productId),
           loadVariantDimensions(productId),
           loadVariantOptionImages(productId),
-          loadSkus(productId).then((rows) => loadSkuImages(rows.map((sku) => sku.id))),
-        ])
+          loadSkus(productId).then((rows) =>
+            loadSkuImages(rows.map((sku) => sku.id)),
+          ),
+        ]);
       }
     } catch (error) {
-      setToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to load product.' })
+      setToast({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Failed to load product.",
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [form, loadSkus, loadSkuImages, loadVariantDimensions, loadVariantOptionImages, loadVariants, mode, productId])
+  }, [
+    form,
+    loadSkus,
+    loadSkuImages,
+    loadVariantDimensions,
+    loadVariantOptionImages,
+    loadVariants,
+    mode,
+    productId,
+  ]);
 
   useEffect(() => {
-    if (hasLoadedRef.current) return
-    hasLoadedRef.current = true
-    void loadInitialData()
-  }, [loadInitialData])
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
+    void loadInitialData();
+  }, [loadInitialData]);
 
   useEffect(() => {
-    if (!toast) return
-    const timer = window.setTimeout(() => setToast(null), 4000)
-    return () => window.clearTimeout(timer)
-  }, [toast])
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 4000);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
-      if (!form.dirty) return
-      event.preventDefault()
-      event.returnValue = ''
-    }
-    window.addEventListener('beforeunload', handler)
-    return () => window.removeEventListener('beforeunload', handler)
-  }, [form.dirty])
+      if (!form.dirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [form.dirty]);
 
   const updateProduct = useCallback(
     <K extends keyof ProductForm>(key: K, value: ProductForm[K]) => {
-      if (key === 'name' && !slugTouchedRef.current) {
-        form.updateMany({ name: value as string, slug: slugifyShopValue(String(value)) })
+      if (key === "name" && !slugTouchedRef.current) {
+        form.updateMany({
+          name: value as string,
+          slug: slugifyShopValue(String(value)),
+        });
       } else {
-        form.update(key, value)
+        form.update(key, value);
       }
     },
-    [form]
-  )
+    [form],
+  );
 
   const checkSlug = useCallback(async (slug: string, id?: string) => {
-    if (!slug) return
-    setSlugStatus('checking')
-    const params = new URLSearchParams({ slug })
-    if (id) params.set('exclude_id', id)
-    const response = await fetch(`/api/3d-shop/admin/products?${params.toString()}`)
-    const data = (await response.json().catch(() => ({}))) as { available?: boolean }
-    setSlugStatus(data.available ? 'available' : 'taken')
-  }, [])
+    if (!slug) return;
+    setSlugStatus("checking");
+    const params = new URLSearchParams({ slug });
+    if (id) params.set("exclude_id", id);
+    const response = await fetch(
+      `/api/3d-shop/admin/products?${params.toString()}`,
+    );
+    const data = (await response.json().catch(() => ({}))) as {
+      available?: boolean;
+    };
+    setSlugStatus(data.available ? "available" : "taken");
+  }, []);
 
-  const slugCheckTimerRef = useRef<number | null>(null)
+  const slugCheckTimerRef = useRef<number | null>(null);
   useEffect(() => {
-    const slug = form.product.slug
-    if (!slug) return
-    if (slugCheckTimerRef.current) window.clearTimeout(slugCheckTimerRef.current)
+    const slug = form.product.slug;
+    if (!slug) return;
+    if (slugCheckTimerRef.current)
+      window.clearTimeout(slugCheckTimerRef.current);
     slugCheckTimerRef.current = window.setTimeout(() => {
-      void checkSlug(slug, form.product.id)
-    }, 500)
+      void checkSlug(slug, form.product.id);
+    }, 500);
     return () => {
-      if (slugCheckTimerRef.current) window.clearTimeout(slugCheckTimerRef.current)
-    }
-  }, [form.product.slug, form.product.id, checkSlug])
+      if (slugCheckTimerRef.current)
+        window.clearTimeout(slugCheckTimerRef.current);
+    };
+  }, [form.product.slug, form.product.id, checkSlug]);
 
-  const productIdPromiseRef = useRef<Promise<string> | null>(null)
+  const productIdPromiseRef = useRef<Promise<string> | null>(null);
 
   const ensureProductId = useCallback(async () => {
-    const current = form.productRef.current
+    const current = form.productRef.current;
     if (current.id) {
-      productIdPromiseRef.current = null
-      return current.id
+      productIdPromiseRef.current = null;
+      return current.id;
     }
     // Memoize creation so N parallel uploads share ONE draft POST
     // instead of creating N duplicate draft products.
     if (!productIdPromiseRef.current) {
       productIdPromiseRef.current = (async () => {
-        const snapshot = form.productRef.current
-        if (!snapshot.name.trim()) throw new Error('Add a product name before saving.')
-        if (!snapshot.slug.trim()) throw new Error('Add a product slug before saving.')
+        const snapshot = form.productRef.current;
+        if (!snapshot.name.trim())
+          throw new Error("Add a product name before saving.");
+        if (!snapshot.slug.trim())
+          throw new Error("Add a product slug before saving.");
 
-        const response = await fetch('/api/3d-shop/admin/products', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(buildProductPayload(snapshot, 'draft')),
-        })
-        const data = (await response.json()) as { product?: ShopProduct; error?: string }
-        if (!response.ok || !data.product) throw new Error(data.error || 'Failed to create product.')
+        const response = await fetch("/api/3d-shop/admin/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(buildProductPayload(snapshot, "draft")),
+        });
+        const data = (await response.json()) as {
+          product?: ShopProduct;
+          error?: string;
+        };
+        if (!response.ok || !data.product)
+          throw new Error(data.error || "Failed to create product.");
 
         // Merge the generated id into CURRENT local state (not the server
         // echo) so edits made while the request was in flight survive.
-        form.markSaved({ ...form.productRef.current, id: data.product.id })
-        slugTouchedRef.current = true
-        setRevisions(loadRevisions(data.product.id))
-        if (typeof window !== 'undefined') {
-          window.history.replaceState(null, '', `/admin/3d-shop/products/${data.product.id}/edit`)
+        form.markSaved({ ...form.productRef.current, id: data.product.id });
+        slugTouchedRef.current = true;
+        setRevisions(loadRevisions(data.product.id));
+        if (typeof window !== "undefined") {
+          window.history.replaceState(
+            null,
+            "",
+            `/admin/3d-shop/products/${data.product.id}/edit`,
+          );
         }
-        return data.product.id
+        return data.product.id;
       })().catch((error) => {
-        productIdPromiseRef.current = null
-        throw error
-      })
+        productIdPromiseRef.current = null;
+        throw error;
+      });
     }
-    return productIdPromiseRef.current
-  }, [form])
+    return productIdPromiseRef.current;
+  }, [form]);
 
   const saveAllVariants = useCallback(async () => {
-    const id = form.productRef.current.id
-    if (!id) return
-    const dirtyVariants = variantsRef.current.filter((variant) => variant.dirty)
-    if (dirtyVariants.length === 0) return
+    const id = form.productRef.current.id;
+    if (!id) return;
+    const dirtyVariants = variantsRef.current.filter(
+      (variant) => variant.dirty,
+    );
+    if (dirtyVariants.length === 0) return;
     await Promise.all(
       dirtyVariants.map(async (variant) => {
-        const { dirty: _discard, ...payload } = variant
-        void _discard
-        let response = await fetch(`/api/3d-shop/admin/products/${id}/variants`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
+        const { dirty: _discard, ...payload } = variant;
+        void _discard;
+        let response = await fetch(
+          `/api/3d-shop/admin/products/${id}/variants`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          },
+        );
         if (!response.ok) {
           response = await fetch(`/api/3d-shop/admin/products/${id}/variants`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
-          })
+          });
         }
-        const data = (await response.json().catch(() => ({}))) as { error?: string }
-        if (!response.ok) throw new Error(data.error || 'Failed to save variant option.')
-      })
-    )
-    setVariants((current) => current.map((variant) => ({ ...variant, dirty: false })))
-  }, [form])
+        const data = (await response.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        if (!response.ok)
+          throw new Error(data.error || "Failed to save variant option.");
+      }),
+    );
+    setVariants((current) =>
+      current.map((variant) => ({ ...variant, dirty: false })),
+    );
+  }, [form]);
 
   const saveAllVariantDimensions = useCallback(async () => {
-    const id = form.productRef.current.id
-    if (!id) return
+    const id = form.productRef.current.id;
+    if (!id) return;
     const entries = variantDimensionsRef.current.map((entry) => ({
       option_name: entry.option_name,
       option_value: entry.option_value,
       dimensions: entry.dimensions,
-    }))
-    if (entries.length === 0) return
+    }));
+    if (entries.length === 0) return;
 
-    const response = await fetch(`/api/3d-shop/admin/products/${id}/variant-dimensions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dimensions: entries }),
-    })
-    const data = (await response.json().catch(() => ({}))) as { error?: string }
-    if (!response.ok) throw new Error(data.error || 'Failed to save variant dimensions.')
-  }, [form])
+    const response = await fetch(
+      `/api/3d-shop/admin/products/${id}/variant-dimensions`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dimensions: entries }),
+      },
+    );
+    const data = (await response.json().catch(() => ({}))) as {
+      error?: string;
+    };
+    if (!response.ok)
+      throw new Error(data.error || "Failed to save variant dimensions.");
+  }, [form]);
 
   const saveAllSkus = useCallback(async () => {
-    const id = form.productRef.current.id
-    if (!id) return
-    const dirtySkus = skusRef.current.filter((sku) => sku.dirty)
-    if (dirtySkus.length === 0) return
+    const id = form.productRef.current.id;
+    if (!id) return;
+    const dirtySkus = skusRef.current.filter((sku) => sku.dirty);
+    if (dirtySkus.length === 0) return;
     await Promise.all(
       dirtySkus.map(async (sku) => {
-        const { dirty: _discard, ...payload } = sku
-        void _discard
+        const { dirty: _discard, ...payload } = sku;
+        void _discard;
         let response = await fetch(`/api/3d-shop/admin/products/${id}/skus`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        })
+        });
         if (!response.ok) {
           response = await fetch(`/api/3d-shop/admin/products/${id}/skus`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ skus: [payload] }),
-          })
+          });
         }
-        const data = (await response.json().catch(() => ({}))) as { error?: string }
-        if (!response.ok) throw new Error(data.error || 'Failed to save SKU.')
-      })
-    )
-    setSkus((current) => current.map((sku) => ({ ...sku, dirty: false })))
+        const data = (await response.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        if (!response.ok) throw new Error(data.error || "Failed to save SKU.");
+      }),
+    );
+    setSkus((current) => current.map((sku) => ({ ...sku, dirty: false })));
     const availablePrices = skusRef.current
       .filter((sku) => sku.is_available !== false)
       .map((sku) => Number(sku.price))
-      .filter(Number.isFinite)
+      .filter(Number.isFinite);
     if (availablePrices.length > 0) {
-      form.patchLocal({ base_price: Math.min(...availablePrices) })
+      form.patchLocal({ base_price: Math.min(...availablePrices) });
     }
-  }, [form])
+  }, [form]);
 
   const captureRevision = useCallback(
     (productId: string) => {
@@ -451,136 +597,191 @@ export function ProductEditorProvider({
         timestamp: Date.now(),
         product: form.productRef.current,
         variants: variantsRef.current.map((variant) => {
-          const { dirty: _discard, ...rest } = variant
-          void _discard
-          return rest
+          const { dirty: _discard, ...rest } = variant;
+          void _discard;
+          return rest;
         }),
         skus: skusRef.current.map((sku) => {
-          const { dirty: _discard, ...rest } = sku
-          void _discard
-          return rest
+          const { dirty: _discard, ...rest } = sku;
+          void _discard;
+          return rest;
         }),
         variant_dimensions: variantDimensionsRef.current,
         variant_option_images: variantOptionImagesRef.current,
         sku_images: skuImagesRef.current,
-      }
-      setRevisions(addRevision(productId, revision))
+      };
+      setRevisions(addRevision(productId, revision));
     },
-    [form]
-  )
+    [form],
+  );
 
   const persist = useCallback(
     async (status?: SaveStatus, opts?: { silent?: boolean }) => {
-      if (savingRef.current) return { ok: false }
-      savingRef.current = true
-      setSaving(true)
+      if (savingRef.current) return { ok: false };
+      savingRef.current = true;
+      setSaving(true);
       try {
-        const current = form.productRef.current
-        if (!current.name.trim()) throw new Error('Add a product name before saving.')
+        const current = form.productRef.current;
+        if (!current.name.trim())
+          throw new Error("Add a product name before saving.");
 
-        const id = await ensureProductId()
+        const id = await ensureProductId();
 
-        const response = await fetch('/api/3d-shop/admin/products', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...buildProductPayload(form.productRef.current, status), id }),
-        })
-        const data = (await response.json()) as { product?: ShopProduct; error?: string }
-        if (!response.ok || !data.product) throw new Error(data.error || 'Failed to save product.')
+        const response = await fetch("/api/3d-shop/admin/products", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...buildProductPayload(form.productRef.current, status),
+            id,
+          }),
+        });
+        const data = (await response.json()) as {
+          product?: ShopProduct;
+          error?: string;
+        };
+        if (!response.ok || !data.product)
+          throw new Error(data.error || "Failed to save product.");
 
         // Do NOT replace local state with the server echo here — local state
         // may contain newer edits made while the PATCH was in flight.
-        form.setDirty(true)
-        await saveAllVariants()
-        await saveAllVariantDimensions()
-        await saveAllSkus()
-        form.markSaved(form.productRef.current)
-        captureRevision(id)
+        form.setDirty(true);
+        await saveAllVariants();
+        await saveAllVariantDimensions();
+        await saveAllSkus();
+        form.markSaved(form.productRef.current);
+        captureRevision(id);
 
         if (!opts?.silent) {
-          setToast({ type: 'success', message: status === 'publish' ? 'Product published.' : 'Product saved.' })
+          setToast({
+            type: "success",
+            message:
+              status === "publish" ? "Product published." : "Product saved.",
+          });
         }
-        return { ok: true }
+        return { ok: true };
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to save product.'
-        if (!opts?.silent) setToast({ type: 'error', message })
-        return { ok: false, error: message }
+        const message =
+          error instanceof Error ? error.message : "Failed to save product.";
+        if (!opts?.silent) setToast({ type: "error", message });
+        return { ok: false, error: message };
       } finally {
-        savingRef.current = false
-        setSaving(false)
+        savingRef.current = false;
+        setSaving(false);
       }
     },
-    [captureRevision, ensureProductId, form, saveAllSkus, saveAllVariantDimensions, saveAllVariants]
-  )
+    [
+      captureRevision,
+      ensureProductId,
+      form,
+      saveAllSkus,
+      saveAllVariantDimensions,
+      saveAllVariants,
+    ],
+  );
 
   const saveProduct = useCallback(
     async (status?: SaveStatus) => {
-      if (status === 'publish') {
-        const blockers = getPublishBlockers(form.productRef.current)
+      if (status === "publish") {
+        const blockers = getPublishBlockers(form.productRef.current);
         if (blockers.length > 0) {
-          form.markAllTouched()
-          setToast({ type: 'error', message: `Publish blocked: ${blockers.join(' · ')}` })
-          await persist('draft', { silent: true })
-          return
+          form.markAllTouched();
+          setToast({
+            type: "error",
+            message: `Publish blocked: ${blockers.join(" · ")}`,
+          });
+          await persist("draft", { silent: true });
+          return;
         }
       }
-      await persist(status)
+      await persist(status);
     },
-    [form, persist]
-  )
+    [form, persist],
+  );
 
   const applyAiResult = useCallback(
     (kind: AiGenerationKind, result: AiGenerateResult) => {
-      const cleanString = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
+      const cleanString = (value: unknown) =>
+        typeof value === "string" ? value.trim() : "";
       switch (kind) {
-        case 'short_description':
-          form.update('description', cleanString(result))
-          break
-        case 'long_description':
-          form.update('long_description', cleanString(result))
-          break
-        case 'meta_title':
-          form.update('meta_title', cleanString(result).slice(0, 60))
-          break
-        case 'meta_description':
-          form.update('meta_description', cleanString(result).slice(0, 160))
-          break
-        case 'tags':
-          form.update('tags', Array.isArray(result) ? result.slice(0, 12) : [])
-          break
-        case 'occasion_tags':
-          form.update('occasion_tags', Array.isArray(result) ? result.slice(0, 12) : [])
-          break
-        case 'all': {
-          const all = result as Extract<AiGenerateResult, Record<string, unknown>>
+        case "short_description":
+          form.update("description", cleanString(result));
+          break;
+        case "long_description":
+          form.update("long_description", cleanString(result));
+          break;
+        case "luxury_blocks":
+          form.update(
+            "long_description_blocks",
+            Array.isArray(result)
+              ? (result as unknown as DescriptionBlocks)
+              : [],
+          );
+          break;
+        case "meta_title":
+          form.update("meta_title", cleanString(result).slice(0, 60));
+          break;
+        case "meta_description":
+          form.update("meta_description", cleanString(result).slice(0, 160));
+          break;
+        case "tags":
+          form.update(
+            "tags",
+            Array.isArray(result)
+              ? (result as unknown as string[]).slice(0, 12)
+              : [],
+          );
+          break;
+        case "occasion_tags":
+          form.update(
+            "occasion_tags",
+            Array.isArray(result)
+              ? (result as unknown as string[]).slice(0, 12)
+              : [],
+          );
+          break;
+        case "all": {
+          const all = result as Extract<
+            AiGenerateResult,
+            Record<string, unknown>
+          >;
           form.updateMany({
             description: cleanString(all.short_description).slice(0, 200),
             long_description: cleanString(all.long_description),
+            long_description_blocks: Array.isArray(all.luxury_blocks)
+              ? (all.luxury_blocks as unknown as DescriptionBlocks)
+              : [],
             meta_title: cleanString(all.meta_title).slice(0, 60),
             meta_description: cleanString(all.meta_description).slice(0, 160),
             tags: Array.isArray(all.tags) ? all.tags.slice(0, 12) : [],
-            occasion_tags: Array.isArray(all.occasion_tags) ? all.occasion_tags.slice(0, 12) : [],
-          })
-          break
+            occasion_tags: Array.isArray(all.occasion_tags)
+              ? all.occasion_tags.slice(0, 12)
+              : [],
+          });
+          break;
         }
       }
     },
-    [form]
-  )
+    [form],
+  );
 
   const generateAi = useCallback(
     async (kind: AiGenerationKind) => {
-      const current = form.productRef.current
+      const current = form.productRef.current;
       if (!current.name.trim()) {
-        setToast({ type: 'error', message: 'Add a product name first so AI has context.' })
-        return
+        setToast({
+          type: "error",
+          message: "Add a product name first so AI has context.",
+        });
+        return;
       }
-      setAiBusy((prev) => ({ ...prev, [kind]: true }))
+      setAiBusy((prev) => ({ ...prev, [kind]: true }));
       try {
-        const categoryName = categories.find((category) => category.id === current.category_id)?.name ?? ''
-        const response = await fetch('/api/3d-shop/admin/ai/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const categoryName =
+          categories.find((category) => category.id === current.category_id)
+            ?.name ?? "";
+        const response = await fetch("/api/3d-shop/admin/ai/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             kind,
             name: current.name,
@@ -590,7 +791,10 @@ export function ProductEditorProvider({
             occasion_tags: current.occasion_tags,
             tone: aiTone,
             prompt: aiPrompt.trim() || undefined,
-            existing: kind === 'long_description' ? current.long_description : undefined,
+            existing:
+              kind === "long_description" || kind === "luxury_blocks"
+                ? current.long_description
+                : undefined,
             variants: variantsRef.current.map((variant) => ({
               option_name: variant.option_name,
               option_type: variant.option_type,
@@ -608,44 +812,68 @@ export function ProductEditorProvider({
               .map((sku) => ({
                 variant_combination: sku.variant_combination,
                 price: Number(sku.price),
-                compare_at_price: sku.compare_at_price === null ? null : Number(sku.compare_at_price),
+                compare_at_price:
+                  sku.compare_at_price === null
+                    ? null
+                    : Number(sku.compare_at_price),
               })),
           }),
-        })
-        const data = (await response.json().catch(() => ({}))) as { result?: AiGenerateResult; error?: string }
-        if (!response.ok || data.result === undefined) throw new Error(data.error || 'AI generation failed.')
-        applyAiResult(kind, data.result)
-        setToast({ type: 'success', message: 'AI copy generated.' })
+        });
+        const data = (await response.json().catch(() => ({}))) as {
+          result?: AiGenerateResult;
+          error?: string;
+        };
+        if (!response.ok || data.result === undefined)
+          throw new Error(data.error || "AI generation failed.");
+        applyAiResult(kind, data.result);
+        setToast({ type: "success", message: "AI copy generated." });
       } catch (error) {
-        setToast({ type: 'error', message: error instanceof Error ? error.message : 'AI generation failed.' })
+        setToast({
+          type: "error",
+          message:
+            error instanceof Error ? error.message : "AI generation failed.",
+        });
       } finally {
-        setAiBusy((prev) => ({ ...prev, [kind]: false }))
+        setAiBusy((prev) => ({ ...prev, [kind]: false }));
       }
     },
-    [aiPrompt, aiTone, applyAiResult, categories, form]
-  )
+    [aiPrompt, aiTone, applyAiResult, categories, form],
+  );
 
   const applyTemplate = useCallback(
     async (template: ProductTemplate) => {
-      const hasExisting = variantsRef.current.length > 0 || skusRef.current.length > 0
-      if (hasExisting && !window.confirm('Applying a template will replace current variant options and SKUs. Continue?')) return
+      const hasExisting =
+        variantsRef.current.length > 0 || skusRef.current.length > 0;
+      if (
+        hasExisting &&
+        !window.confirm(
+          "Applying a template will replace current variant options and SKUs. Continue?",
+        )
+      )
+        return;
       try {
-        const id = await ensureProductId()
+        const id = await ensureProductId();
         if (hasExisting) {
           for (const sku of skusRef.current) {
-            await fetch(`/api/3d-shop/admin/products/${id}/skus?id=${sku.id}`, { method: 'DELETE' })
+            await fetch(`/api/3d-shop/admin/products/${id}/skus?id=${sku.id}`, {
+              method: "DELETE",
+            });
           }
           for (const variant of variantsRef.current) {
-            await fetch(`/api/3d-shop/admin/products/${id}/variants?id=${variant.id}`, { method: 'DELETE' })
+            await fetch(
+              `/api/3d-shop/admin/products/${id}/variants?id=${variant.id}`,
+              { method: "DELETE" },
+            );
           }
-          setSkus([])
-          setVariants([])
-          setVariantDimensions([])
-          setVariantOptionImages([])
-          setSkuImages({})
+          setSkus([]);
+          setVariants([]);
+          setVariantDimensions([]);
+          setVariantOptionImages([]);
+          setSkuImages({});
         }
 
-        const currentName = form.productRef.current.name.trim() || template.name
+        const currentName =
+          form.productRef.current.name.trim() || template.name;
         const updates: Partial<ProductForm> = {
           name: currentName,
           description: template.short_description,
@@ -654,59 +882,80 @@ export function ProductEditorProvider({
           occasion_tags: template.occasion_tags,
           is_customizable: template.is_customizable,
           customization_label: template.customization_label,
-        }
-        if (!slugTouchedRef.current) updates.slug = slugifyShopValue(currentName)
-        form.updateMany(updates)
+        };
+        if (!slugTouchedRef.current)
+          updates.slug = slugifyShopValue(currentName);
+        form.updateMany(updates);
 
-        const created: DraftVariant[] = []
+        const created: DraftVariant[] = [];
         for (let index = 0; index < template.variants.length; index += 1) {
-          const variant = template.variants[index]
-          const response = await fetch(`/api/3d-shop/admin/products/${id}/variants`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              option_name: variant.option_name,
-              option_type: variant.option_type,
-              values: variant.values,
-              display_order: index,
-              is_required: variant.is_required,
-            }),
-          })
-          const data = (await response.json()) as { variant?: ShopVariantOption; error?: string }
-          if (!response.ok || !data.variant) throw new Error(data.error || 'Failed to apply template variant.')
-          created.push(data.variant as DraftVariant)
+          const variant = template.variants[index];
+          const response = await fetch(
+            `/api/3d-shop/admin/products/${id}/variants`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                option_name: variant.option_name,
+                option_type: variant.option_type,
+                values: variant.values,
+                display_order: index,
+                is_required: variant.is_required,
+              }),
+            },
+          );
+          const data = (await response.json()) as {
+            variant?: ShopVariantOption;
+            error?: string;
+          };
+          if (!response.ok || !data.variant)
+            throw new Error(data.error || "Failed to apply template variant.");
+          created.push(data.variant as DraftVariant);
         }
-        setVariants(created)
+        setVariants(created);
         setToast({
-          type: 'success',
+          type: "success",
           message: `Template "${template.name}" applied. Add images, then generate SKUs to finish.`,
-        })
+        });
       } catch (error) {
-        setToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to apply template.' })
+        setToast({
+          type: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to apply template.",
+        });
       }
     },
-    [ensureProductId, form]
-  )
+    [ensureProductId, form],
+  );
 
   const duplicateProduct = useCallback(async () => {
-    const current = form.productRef.current
+    const current = form.productRef.current;
     if (!current.name.trim()) {
-      setToast({ type: 'error', message: 'Add a product name before duplicating.' })
-      return
+      setToast({
+        type: "error",
+        message: "Add a product name before duplicating.",
+      });
+      return;
     }
     try {
-      const copyName = `${current.name.trim()} Copy`
-      const baseSlug = slugifyShopValue(copyName)
-      let slug = baseSlug
-      let suffix = 2
+      const copyName = `${current.name.trim()} Copy`;
+      const baseSlug = slugifyShopValue(copyName);
+      let slug = baseSlug;
+      let suffix = 2;
       const slugExists = async (candidate: string) => {
-        const res = await fetch(`/api/3d-shop/admin/products?slug=${encodeURIComponent(candidate)}`)
-        const data = (await res.json().catch(() => ({}))) as { available?: boolean }
-        return data.available === false
-      }
+        const res = await fetch(
+          `/api/3d-shop/admin/products?slug=${encodeURIComponent(candidate)}`,
+        );
+        const data = (await res.json().catch(() => ({}))) as {
+          available?: boolean;
+        };
+        return data.available === false;
+      };
       while (await slugExists(slug)) {
-        slug = `${baseSlug}-${suffix}`
-        suffix += 1
+        slug = `${baseSlug}-${suffix}`;
+        suffix += 1;
       }
 
       const payload = buildProductPayload({
@@ -717,70 +966,94 @@ export function ProductEditorProvider({
         is_archived: false,
         is_featured: false,
         published_at: null,
-      })
-      delete payload.id
+      });
+      delete payload.id;
 
-      const response = await fetch('/api/3d-shop/admin/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/3d-shop/admin/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      })
-      const data = (await response.json()) as { product?: ShopProduct; error?: string }
-      if (!response.ok || !data.product) throw new Error(data.error || 'Failed to duplicate product.')
-      const newId = data.product.id
+      });
+      const data = (await response.json()) as {
+        product?: ShopProduct;
+        error?: string;
+      };
+      if (!response.ok || !data.product)
+        throw new Error(data.error || "Failed to duplicate product.");
+      const newId = data.product.id;
 
       for (let index = 0; index < variantsRef.current.length; index += 1) {
-        const variant = variantsRef.current[index]
-        const res = await fetch(`/api/3d-shop/admin/products/${newId}/variants`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            option_name: variant.option_name,
-            option_type: variant.option_type,
-            values: variant.values ?? [],
-            display_order: variant.display_order ?? index,
-            is_required: variant.is_required ?? true,
-          }),
-        })
-        const vData = (await res.json()) as { error?: string }
-        if (!res.ok) throw new Error(vData.error || 'Failed to duplicate variants.')
+        const variant = variantsRef.current[index];
+        const res = await fetch(
+          `/api/3d-shop/admin/products/${newId}/variants`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              option_name: variant.option_name,
+              option_type: variant.option_type,
+              values: variant.values ?? [],
+              display_order: variant.display_order ?? index,
+              is_required: variant.is_required ?? true,
+            }),
+          },
+        );
+        const vData = (await res.json()) as { error?: string };
+        if (!res.ok)
+          throw new Error(vData.error || "Failed to duplicate variants.");
       }
 
-      const variantDimensionsPayload = variantDimensionsRef.current.map((entry) => ({
-        option_name: entry.option_name,
-        option_value: entry.option_value,
-        dimensions: entry.dimensions,
-      }))
+      const variantDimensionsPayload = variantDimensionsRef.current.map(
+        (entry) => ({
+          option_name: entry.option_name,
+          option_value: entry.option_value,
+          dimensions: entry.dimensions,
+        }),
+      );
       if (variantDimensionsPayload.length > 0) {
-        const res = await fetch(`/api/3d-shop/admin/products/${newId}/variant-dimensions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ dimensions: variantDimensionsPayload }),
-        })
-        const dData = (await res.json().catch(() => ({}))) as { error?: string }
-        if (!res.ok) throw new Error(dData.error || 'Failed to duplicate dimensions.')
+        const res = await fetch(
+          `/api/3d-shop/admin/products/${newId}/variant-dimensions`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ dimensions: variantDimensionsPayload }),
+          },
+        );
+        const dData = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        if (!res.ok)
+          throw new Error(dData.error || "Failed to duplicate dimensions.");
       }
 
-      const variantImagesPayload = variantOptionImagesRef.current.map((image) => ({
-        option_name: image.option_name,
-        option_value: image.option_value,
-        image_url: image.image_url,
-        alt_text: image.alt_text,
-        display_order: image.display_order,
-        is_primary: image.is_primary,
-      }))
+      const variantImagesPayload = variantOptionImagesRef.current.map(
+        (image) => ({
+          option_name: image.option_name,
+          option_value: image.option_value,
+          image_url: image.image_url,
+          alt_text: image.alt_text,
+          display_order: image.display_order,
+          is_primary: image.is_primary,
+        }),
+      );
       if (variantImagesPayload.length > 0) {
-        const res = await fetch(`/api/3d-shop/admin/products/${newId}/variant-images`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ images: variantImagesPayload }),
-        })
-        const iData = (await res.json().catch(() => ({}))) as { error?: string }
-        if (!res.ok) throw new Error(iData.error || 'Failed to duplicate variant images.')
+        const res = await fetch(
+          `/api/3d-shop/admin/products/${newId}/variant-images`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ images: variantImagesPayload }),
+          },
+        );
+        const iData = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        if (!res.ok)
+          throw new Error(iData.error || "Failed to duplicate variant images.");
       }
 
       const skuRows = skusRef.current.map((sku, index) => ({
-        sku_code: `${slug.toUpperCase().replace(/[^A-Z0-9]+/g, '-')}-${Date.now().toString(36).toUpperCase()}-${index + 1}`,
+        sku_code: `${slug.toUpperCase().replace(/[^A-Z0-9]+/g, "-")}-${Date.now().toString(36).toUpperCase()}-${index + 1}`,
         variant_combination: sku.variant_combination,
         price: sku.price,
         compare_at_price: sku.compare_at_price,
@@ -789,691 +1062,977 @@ export function ProductEditorProvider({
         weight_grams: sku.weight_grams,
         variant_image_url: sku.variant_image_url,
         is_available: sku.is_available,
-      }))
+      }));
       if (skuRows.length > 0) {
         const res = await fetch(`/api/3d-shop/admin/products/${newId}/skus`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ skus: skuRows }),
-        })
-        const sData = (await res.json()) as { skus?: ShopSku[]; error?: string }
-        if (!res.ok) throw new Error(sData.error || 'Failed to duplicate SKUs.')
+        });
+        const sData = (await res.json()) as {
+          skus?: ShopSku[];
+          error?: string;
+        };
+        if (!res.ok)
+          throw new Error(sData.error || "Failed to duplicate SKUs.");
 
-        const newSkus = sData.skus ?? []
+        const newSkus = sData.skus ?? [];
         for (const sku of skusRef.current) {
-          const images = skuImagesRef.current[sku.id] ?? []
-          if (images.length === 0) continue
+          const images = skuImagesRef.current[sku.id] ?? [];
+          if (images.length === 0) continue;
           const match = newSkus.find(
-            (newSku) => stableStringify(newSku.variant_combination) === stableStringify(sku.variant_combination)
-          )
-          if (!match) continue
-          const imageResponse = await fetch(`/api/3d-shop/admin/skus/${match.id}/images`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              images: images.map((image, index) => ({
-                image_url: image.image_url,
-                alt_text: image.alt_text,
-                display_order: index,
-                is_primary: image.is_primary,
-              })),
-            }),
-          })
-          if (!imageResponse.ok) throw new Error('Failed to duplicate SKU images.')
+            (newSku) =>
+              stableStringify(newSku.variant_combination) ===
+              stableStringify(sku.variant_combination),
+          );
+          if (!match) continue;
+          const imageResponse = await fetch(
+            `/api/3d-shop/admin/skus/${match.id}/images`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                images: images.map((image, index) => ({
+                  image_url: image.image_url,
+                  alt_text: image.alt_text,
+                  display_order: index,
+                  is_primary: image.is_primary,
+                })),
+              }),
+            },
+          );
+          if (!imageResponse.ok)
+            throw new Error("Failed to duplicate SKU images.");
         }
       }
 
-      setToast({ type: 'success', message: 'Product duplicated. Opening the copy…' })
-      router.push(`/admin/3d-shop/products/${newId}/edit`)
+      setToast({
+        type: "success",
+        message: "Product duplicated. Opening the copy…",
+      });
+      router.push(`/admin/3d-shop/products/${newId}/edit`);
     } catch (error) {
-      setToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to duplicate product.' })
+      setToast({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to duplicate product.",
+      });
     }
-  }, [form, router])
+  }, [form, router]);
 
   const restoreRevision = useCallback(
     async (timestamp: number) => {
-      const target = revisions.find((revision) => revision.timestamp === timestamp)
-      if (!target) return
-      if (!window.confirm('Restore this version? Your current changes will be replaced by the snapshot.')) return
+      const target = revisions.find(
+        (revision) => revision.timestamp === timestamp,
+      );
+      if (!target) return;
+      if (
+        !window.confirm(
+          "Restore this version? Your current changes will be replaced by the snapshot.",
+        )
+      )
+        return;
       try {
-        form.updateMany(target.product)
-        setVariants(target.variants.map((variant) => ({ ...variant, dirty: true })))
-        setSkus(target.skus.map((sku) => ({ ...sku, dirty: true })))
-        setVariantDimensions(target.variant_dimensions ?? [])
-        setVariantOptionImages(target.variant_option_images ?? [])
-        setSkuImages(target.sku_images ?? {})
-        setToast({ type: 'info', message: 'Snapshot restored — saving…' })
-        await persist('draft')
+        form.updateMany(target.product);
+        setVariants(
+          target.variants.map((variant) => ({ ...variant, dirty: true })),
+        );
+        setSkus(target.skus.map((sku) => ({ ...sku, dirty: true })));
+        setVariantDimensions(target.variant_dimensions ?? []);
+        setVariantOptionImages(target.variant_option_images ?? []);
+        setSkuImages(target.sku_images ?? {});
+        setToast({ type: "info", message: "Snapshot restored — saving…" });
+        await persist("draft");
       } catch (error) {
-        setToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to restore version.' })
+        setToast({
+          type: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to restore version.",
+        });
       }
     },
-    [form, persist, revisions]
-  )
+    [form, persist, revisions],
+  );
 
   const clearRevisionHistory = useCallback(() => {
-    const id = form.productRef.current.id
-    if (!id) return
-    if (!window.confirm('Clear all saved revisions for this product?')) return
-    clearRevisions(id)
-    setRevisions([])
-    setToast({ type: 'success', message: 'Revision history cleared.' })
-  }, [form])
+    const id = form.productRef.current.id;
+    if (!id) return;
+    if (!window.confirm("Clear all saved revisions for this product?")) return;
+    clearRevisions(id);
+    setRevisions([]);
+    setToast({ type: "success", message: "Revision history cleared." });
+  }, [form]);
 
   useEffect(() => {
-    if (!form.dirty) return
-    if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current)
+    if (!form.dirty) return;
+    if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = window.setTimeout(() => {
-      void persist('draft', { silent: true })
-    }, AUTOSAVE_DELAY)
+      void persist("draft", { silent: true });
+    }, AUTOSAVE_DELAY);
     return () => {
-      if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current)
-    }
-  }, [form.dirty, form.product, persist])
+      if (autosaveTimerRef.current)
+        window.clearTimeout(autosaveTimerRef.current);
+    };
+  }, [form.dirty, form.product, persist]);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null
+      const target = event.target as HTMLElement | null;
       const isEditable =
         target?.isContentEditable === true ||
-        target?.tagName === 'INPUT' ||
-        target?.tagName === 'TEXTAREA' ||
-        target?.tagName === 'SELECT'
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.tagName === "SELECT";
 
-      const mod = event.ctrlKey || event.metaKey
-      const key = event.key.toLowerCase()
+      const mod = event.ctrlKey || event.metaKey;
+      const key = event.key.toLowerCase();
 
-      if (mod && key === 's') {
-        event.preventDefault()
-        void saveProduct('draft')
-        return
+      if (mod && key === "s") {
+        event.preventDefault();
+        void saveProduct("draft");
+        return;
       }
-      if (mod && event.shiftKey && key === 'p') {
-        event.preventDefault()
-        void saveProduct('publish')
-        return
+      if (mod && event.shiftKey && key === "p") {
+        event.preventDefault();
+        void saveProduct("publish");
+        return;
       }
-      if (!isEditable && mod && key === 'z') {
-        event.preventDefault()
-        if (event.shiftKey) form.redo()
-        else form.undo()
-        return
+      if (!isEditable && mod && key === "z") {
+        event.preventDefault();
+        if (event.shiftKey) form.redo();
+        else form.undo();
+        return;
       }
-      if (!isEditable && mod && key === 'y') {
-        event.preventDefault()
-        form.redo()
+      if (!isEditable && mod && key === "y") {
+        event.preventDefault();
+        form.redo();
       }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [form, saveProduct])
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [form, saveProduct]);
 
   const deleteStorageAsset = useCallback((url: string) => {
-    if (!url) return
+    if (!url) return;
     // Best-effort orphan cleanup — removal from the product must not depend
     // on storage deletion succeeding.
-    void fetch('/api/3d-shop/admin/storage/delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    void fetch("/api/3d-shop/admin/storage/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url }),
-    }).catch(() => {})
-  }, [])
+    }).catch(() => {});
+  }, []);
 
   const uploadImage = useCallback(
     async (
       file: File,
-      target: 'gallery' | 'variant' = 'gallery',
+      target: "gallery" | "variant" = "gallery",
       skuId?: string,
-      onProgress?: (progress: number) => void
+      onProgress?: (progress: number) => void,
     ) => {
-      const validationError = validateImageFile(file)
-      if (validationError) throw new Error(validationError)
+      const validationError = validateImageFile(file);
+      if (validationError) throw new Error(validationError);
 
-      const id = await ensureProductId()
-      const report = onProgress ?? ((progress: number) => {
-        setUploadState((current) => {
-          const entries = Object.entries(current).filter(([, state]) => state.status !== 'done')
-          const key = `gallery-${file.name}-${entries.length}`
-          return { ...current, [key]: { status: progress >= 100 ? 'done' : 'uploading', progress } }
-        })
-      })
+      const id = await ensureProductId();
+      const report =
+        onProgress ??
+        ((progress: number) => {
+          setUploadState((current) => {
+            const entries = Object.entries(current).filter(
+              ([, state]) => state.status !== "done",
+            );
+            const key = `gallery-${file.name}-${entries.length}`;
+            return {
+              ...current,
+              [key]: {
+                status: progress >= 100 ? "done" : "uploading",
+                progress,
+              },
+            };
+          });
+        });
 
-      report(5)
-      const { publicUrl } = await uploadFileWithProgress('/api/3d-shop/admin/upload', file, id, (progress) => {
-        report(Math.min(99, progress))
-      })
-      report(100)
+      report(5);
+      const { publicUrl } = await uploadFileWithProgress(
+        "/api/3d-shop/admin/upload",
+        file,
+        id,
+        (progress) => {
+          report(Math.min(99, progress));
+        },
+      );
+      report(100);
 
-      if (target === 'variant' && skuId) {
-        form.pushUndoPoint()
+      if (target === "variant" && skuId) {
+        form.pushUndoPoint();
         setSkus((current) =>
-          current.map((sku) => (sku.id === skuId ? { ...sku, variant_image_url: publicUrl, dirty: true } : sku))
-        )
-        form.setDirty(true)
-        return publicUrl
+          current.map((sku) =>
+            sku.id === skuId
+              ? { ...sku, variant_image_url: publicUrl, dirty: true }
+              : sku,
+          ),
+        );
+        form.setDirty(true);
+        return publicUrl;
       }
 
-      const current = form.productRef.current
-      const hasThumbnail = Boolean(current.thumbnail_url)
+      const current = form.productRef.current;
+      const hasThumbnail = Boolean(current.thumbnail_url);
       if (!hasThumbnail) {
         // First image becomes the cover photo (position 1). The gallery grid
         // renders [cover, ...gallery] as one ordered list.
-        form.updateMany({ thumbnail_url: publicUrl })
+        form.updateMany({ thumbnail_url: publicUrl });
       } else {
         if (current.image_urls.length + 1 > MAX_GALLERY_IMAGES) {
-          throw new Error(`Gallery is limited to ${MAX_GALLERY_IMAGES} images.`)
+          throw new Error(
+            `Gallery is limited to ${MAX_GALLERY_IMAGES} images.`,
+          );
         }
-        form.pushUndoPoint()
-        form.patchLocal({ image_urls: [...current.image_urls, publicUrl] })
+        form.pushUndoPoint();
+        form.patchLocal({ image_urls: [...current.image_urls, publicUrl] });
       }
 
       // Persistence goes through the single debounced autosave path — no
       // ad-hoc full-row PATCH here (it raced autosave and could clobber
       // concurrent edits with stale snapshots).
-      return publicUrl
+      return publicUrl;
     },
-    [ensureProductId, form]
-  )
+    [ensureProductId, form],
+  );
 
   const uploadModel = useCallback(
     async (file: File) => {
-      const id = await ensureProductId()
-      const tempKey = `model-${file.name}-${Date.now()}`
-      setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress: 0 } }))
+      const id = await ensureProductId();
+      const tempKey = `model-${file.name}-${Date.now()}`;
+      setUploadState((current) => ({
+        ...current,
+        [tempKey]: { status: "uploading", progress: 0 },
+      }));
       try {
-        const { publicUrl } = await uploadModelFileWithProgress(file, id, (progress) => {
-          setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress } }))
-        })
-        setUploadState((current) => ({ ...current, [tempKey]: { status: 'done', progress: 100 } }))
-        updateProduct('model_url', publicUrl)
+        const { publicUrl } = await uploadModelFileWithProgress(
+          file,
+          id,
+          (progress) => {
+            setUploadState((current) => ({
+              ...current,
+              [tempKey]: { status: "uploading", progress },
+            }));
+          },
+        );
+        setUploadState((current) => ({
+          ...current,
+          [tempKey]: { status: "done", progress: 100 },
+        }));
+        updateProduct("model_url", publicUrl);
       } catch (error) {
-        setUploadState((current) => ({ ...current, [tempKey]: { status: 'error', progress: 0 } }))
-        throw error
+        setUploadState((current) => ({
+          ...current,
+          [tempKey]: { status: "error", progress: 0 },
+        }));
+        throw error;
       }
     },
-    [ensureProductId, updateProduct]
-  )
+    [ensureProductId, updateProduct],
+  );
 
   const removeModel = useCallback(() => {
-    deleteStorageAsset(form.productRef.current.model_url)
-    updateProduct('model_url', '')
-  }, [deleteStorageAsset, form, updateProduct])
+    deleteStorageAsset(form.productRef.current.model_url);
+    updateProduct("model_url", "");
+  }, [deleteStorageAsset, form, updateProduct]);
 
   const uploadProductAsset = useCallback(
-    async (file: File, kind: ModelUploadKind, field: 'model_url' | 'usdz_url' | 'hero_video_url') => {
-      const id = await ensureProductId()
-      const tempKey = `${field}-${file.name}-${Date.now()}`
-      setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress: 0 } }))
+    async (
+      file: File,
+      kind: ModelUploadKind,
+      field: "model_url" | "usdz_url" | "hero_video_url",
+    ) => {
+      const id = await ensureProductId();
+      const tempKey = `${field}-${file.name}-${Date.now()}`;
+      setUploadState((current) => ({
+        ...current,
+        [tempKey]: { status: "uploading", progress: 0 },
+      }));
       try {
-        const { publicUrl } = await uploadModelFileWithProgress(file, id, (progress) => {
-          setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress } }))
-        }, kind)
-        setUploadState((current) => ({ ...current, [tempKey]: { status: 'done', progress: 100 } }))
-        updateProduct(field, publicUrl)
+        const { publicUrl } = await uploadModelFileWithProgress(
+          file,
+          id,
+          (progress) => {
+            setUploadState((current) => ({
+              ...current,
+              [tempKey]: { status: "uploading", progress },
+            }));
+          },
+          kind,
+        );
+        setUploadState((current) => ({
+          ...current,
+          [tempKey]: { status: "done", progress: 100 },
+        }));
+        updateProduct(field, publicUrl);
       } catch (error) {
-        setUploadState((current) => ({ ...current, [tempKey]: { status: 'error', progress: 0 } }))
-        throw error
+        setUploadState((current) => ({
+          ...current,
+          [tempKey]: { status: "error", progress: 0 },
+        }));
+        throw error;
       }
     },
-    [ensureProductId, updateProduct]
-  )
+    [ensureProductId, updateProduct],
+  );
 
   const removeProductAsset = useCallback(
-    (field: 'model_url' | 'usdz_url' | 'hero_video_url') => {
-      deleteStorageAsset(form.productRef.current[field])
-      updateProduct(field, '')
+    (field: "model_url" | "usdz_url" | "hero_video_url") => {
+      deleteStorageAsset(form.productRef.current[field]);
+      updateProduct(field, "");
     },
-    [deleteStorageAsset, form, updateProduct]
-  )
+    [deleteStorageAsset, form, updateProduct],
+  );
 
   const uploadLandscapeImage = useCallback(
     async (file: File, onProgress?: (progress: number) => void) => {
-      const validationError = validateImageFile(file)
-      if (validationError) throw new Error(validationError)
+      const validationError = validateImageFile(file);
+      if (validationError) throw new Error(validationError);
 
-      const id = await ensureProductId()
-      const report = onProgress ?? ((progress: number) => {
-        setUploadState((current) => {
-          const entries = Object.entries(current).filter(([key]) => key.startsWith('landscape-'))
-          const key = `landscape-${entries.length}`
-          return { ...current, [key]: { status: progress >= 100 ? 'done' : 'uploading', progress } }
-        })
-      })
+      const id = await ensureProductId();
+      const report =
+        onProgress ??
+        ((progress: number) => {
+          setUploadState((current) => {
+            const entries = Object.entries(current).filter(([key]) =>
+              key.startsWith("landscape-"),
+            );
+            const key = `landscape-${entries.length}`;
+            return {
+              ...current,
+              [key]: {
+                status: progress >= 100 ? "done" : "uploading",
+                progress,
+              },
+            };
+          });
+        });
 
-      report(5)
-      const { publicUrl } = await uploadFileWithProgress('/api/3d-shop/admin/upload', file, id, (progress) => {
-        report(Math.min(99, progress))
-      })
-      report(100)
-      form.patchLocal({ landscape_image_url: publicUrl })
-      return publicUrl
+      report(5);
+      const { publicUrl } = await uploadFileWithProgress(
+        "/api/3d-shop/admin/upload",
+        file,
+        id,
+        (progress) => {
+          report(Math.min(99, progress));
+        },
+      );
+      report(100);
+      form.patchLocal({ landscape_image_url: publicUrl });
+      return publicUrl;
     },
-    [ensureProductId, form]
-  )
+    [ensureProductId, form],
+  );
 
   const removeLandscapeImage = useCallback(() => {
-    deleteStorageAsset(form.productRef.current.landscape_image_url)
-    form.update('landscape_image_url', '')
-  }, [deleteStorageAsset, form])
+    deleteStorageAsset(form.productRef.current.landscape_image_url);
+    form.update("landscape_image_url", "");
+  }, [deleteStorageAsset, form]);
 
   const attachLibraryImage = useCallback(
     (url: string) => {
-      const current = form.productRef.current
+      const current = form.productRef.current;
       if (current.thumbnail_url === url || current.image_urls.includes(url)) {
-        setToast({ type: 'error', message: 'This image is already in the gallery.' })
-        return
+        setToast({
+          type: "error",
+          message: "This image is already in the gallery.",
+        });
+        return;
       }
       if (!current.thumbnail_url) {
-        form.updateMany({ thumbnail_url: url })
-        return
+        form.updateMany({ thumbnail_url: url });
+        return;
       }
       if (current.image_urls.length >= MAX_GALLERY_IMAGES) {
-        setToast({ type: 'error', message: `Gallery is limited to ${MAX_GALLERY_IMAGES} images.` })
-        return
+        setToast({
+          type: "error",
+          message: `Gallery is limited to ${MAX_GALLERY_IMAGES} images.`,
+        });
+        return;
       }
-      form.pushUndoPoint()
-      form.patchLocal({ image_urls: [...current.image_urls, url] })
+      form.pushUndoPoint();
+      form.patchLocal({ image_urls: [...current.image_urls, url] });
     },
-    [form]
-  )
+    [form],
+  );
 
   const setThumbnail = useCallback(
     (url: string) => {
       form.updateMany({
         thumbnail_url: url,
-        image_urls: [form.productRef.current.thumbnail_url, ...form.productRef.current.image_urls]
+        image_urls: [
+          form.productRef.current.thumbnail_url,
+          ...form.productRef.current.image_urls,
+        ]
           .filter((item) => item !== url)
           .filter(Boolean),
-      })
+      });
     },
-    [form]
-  )
+    [form],
+  );
 
   const removeImage = useCallback(
     (url: string) => {
-      const images = [form.productRef.current.thumbnail_url, ...form.productRef.current.image_urls]
-        .filter((item) => item && item !== url) as string[]
-      const imageAlt = { ...form.productRef.current.image_alt }
-      delete imageAlt[url]
+      const images = [
+        form.productRef.current.thumbnail_url,
+        ...form.productRef.current.image_urls,
+      ].filter((item) => item && item !== url) as string[];
+      const imageAlt = { ...form.productRef.current.image_alt };
+      delete imageAlt[url];
       form.updateMany({
-        thumbnail_url: images[0] ?? '',
+        thumbnail_url: images[0] ?? "",
         image_urls: images.slice(1),
         image_alt: imageAlt,
-      })
-      deleteStorageAsset(url)
+      });
+      deleteStorageAsset(url);
     },
-    [deleteStorageAsset, form]
-  )
+    [deleteStorageAsset, form],
+  );
 
   const setImageAlt = useCallback(
     (url: string, alt: string) => {
-      const trimmed = alt.trim()
-      const imageAlt = { ...form.productRef.current.image_alt }
-      if (trimmed) imageAlt[url] = trimmed
-      else delete imageAlt[url]
-      form.update('image_alt', imageAlt)
+      const trimmed = alt.trim();
+      const imageAlt = { ...form.productRef.current.image_alt };
+      if (trimmed) imageAlt[url] = trimmed;
+      else delete imageAlt[url];
+      form.update("image_alt", imageAlt);
     },
-    [form]
-  )
+    [form],
+  );
 
   const handleImageDrop = useCallback(
     (targetUrl: string) => {
-      if (!dragImage || dragImage === targetUrl) return
-      const images = [form.productRef.current.thumbnail_url, ...form.productRef.current.image_urls].filter(Boolean)
-      const from = images.indexOf(dragImage)
-      const to = images.indexOf(targetUrl)
-      if (from < 0 || to < 0) return
-      const [moved] = images.splice(from, 1)
-      images.splice(to, 0, moved)
-      form.updateMany({ thumbnail_url: images[0] ?? '', image_urls: images.slice(1) })
-      setDragImage(null)
+      if (!dragImage || dragImage === targetUrl) return;
+      const images = [
+        form.productRef.current.thumbnail_url,
+        ...form.productRef.current.image_urls,
+      ].filter(Boolean);
+      const from = images.indexOf(dragImage);
+      const to = images.indexOf(targetUrl);
+      if (from < 0 || to < 0) return;
+      const [moved] = images.splice(from, 1);
+      images.splice(to, 0, moved);
+      form.updateMany({
+        thumbnail_url: images[0] ?? "",
+        image_urls: images.slice(1),
+      });
+      setDragImage(null);
     },
-    [dragImage, form]
-  )
+    [dragImage, form],
+  );
 
   const addVariant = useCallback(async () => {
     try {
-      const id = await ensureProductId()
-      form.pushUndoPoint()
-      const response = await fetch(`/api/3d-shop/admin/products/${id}/variants`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          option_name: 'Size',
-          option_type: 'button',
-          values: [],
-          display_order: variantsRef.current.length,
-          is_required: true,
-        }),
-      })
-      const data = (await response.json()) as { variant?: ShopVariantOption; error?: string }
-      if (!response.ok || !data.variant) throw new Error(data.error || 'Failed to add variant.')
-      setVariants((current) => [...current, data.variant as DraftVariant])
+      const id = await ensureProductId();
+      form.pushUndoPoint();
+      const response = await fetch(
+        `/api/3d-shop/admin/products/${id}/variants`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            option_name: "Size",
+            option_type: "button",
+            values: [],
+            display_order: variantsRef.current.length,
+            is_required: true,
+          }),
+        },
+      );
+      const data = (await response.json()) as {
+        variant?: ShopVariantOption;
+        error?: string;
+      };
+      if (!response.ok || !data.variant)
+        throw new Error(data.error || "Failed to add variant.");
+      setVariants((current) => [...current, data.variant as DraftVariant]);
     } catch (error) {
-      setToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to add variant.' })
+      setToast({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Failed to add variant.",
+      });
     }
-  }, [ensureProductId, form])
+  }, [ensureProductId, form]);
 
   const updateVariant = useCallback(
-    <K extends keyof ShopVariantOption>(variantId: string, key: K, value: ShopVariantOption[K]) => {
-      form.pushUndoPoint()
+    <K extends keyof ShopVariantOption>(
+      variantId: string,
+      key: K,
+      value: ShopVariantOption[K],
+    ) => {
+      form.pushUndoPoint();
       setVariants((current) =>
-        current.map((variant) => (variant.id === variantId ? { ...variant, [key]: value, dirty: true } : variant))
-      )
-      form.setDirty(true)
+        current.map((variant) =>
+          variant.id === variantId
+            ? { ...variant, [key]: value, dirty: true }
+            : variant,
+        ),
+      );
+      form.setDirty(true);
     },
-    [form]
-  )
+    [form],
+  );
 
   const deleteVariant = useCallback(
     async (variant: DraftVariant) => {
-      const id = form.productRef.current.id
-      if (!id || !window.confirm(`Delete variant option "${variant.option_name}"?`)) return
-      form.pushUndoPoint()
-      const response = await fetch(`/api/3d-shop/admin/products/${id}/variants?id=${variant.id}`, { method: 'DELETE' })
-      const data = (await response.json().catch(() => ({}))) as { error?: string }
+      const id = form.productRef.current.id;
+      if (
+        !id ||
+        !window.confirm(`Delete variant option "${variant.option_name}"?`)
+      )
+        return;
+      form.pushUndoPoint();
+      const response = await fetch(
+        `/api/3d-shop/admin/products/${id}/variants?id=${variant.id}`,
+        { method: "DELETE" },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
       if (!response.ok) {
-        setToast({ type: 'error', message: data.error || 'Failed to delete variant.' })
-        return
+        setToast({
+          type: "error",
+          message: data.error || "Failed to delete variant.",
+        });
+        return;
       }
-      setVariants((current) => current.filter((item) => item.id !== variant.id))
+      setVariants((current) =>
+        current.filter((item) => item.id !== variant.id),
+      );
     },
-    [form]
-  )
+    [form],
+  );
 
   const reorderVariants = useCallback(
     async (targetId: string) => {
-      const id = form.productRef.current.id
-      if (!dragVariant || dragVariant === targetId || !id) return
-      const current = [...variantsRef.current]
-      const from = current.findIndex((variant) => variant.id === dragVariant)
-      const to = current.findIndex((variant) => variant.id === targetId)
-      if (from < 0 || to < 0) return
-      form.pushUndoPoint()
-      const [moved] = current.splice(from, 1)
-      current.splice(to, 0, moved)
-      const ordered = current.map((variant, index) => ({ ...variant, display_order: index }))
-      setVariants(ordered)
-      setDragVariant(null)
-      const response = await fetch(`/api/3d-shop/admin/products/${id}/variants`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orders: ordered.map((variant) => ({ id: variant.id, display_order: variant.display_order ?? 0 })) }),
-      })
-      if (!response.ok) setToast({ type: 'error', message: 'Failed to save variant order.' })
+      const id = form.productRef.current.id;
+      if (!dragVariant || dragVariant === targetId || !id) return;
+      const current = [...variantsRef.current];
+      const from = current.findIndex((variant) => variant.id === dragVariant);
+      const to = current.findIndex((variant) => variant.id === targetId);
+      if (from < 0 || to < 0) return;
+      form.pushUndoPoint();
+      const [moved] = current.splice(from, 1);
+      current.splice(to, 0, moved);
+      const ordered = current.map((variant, index) => ({
+        ...variant,
+        display_order: index,
+      }));
+      setVariants(ordered);
+      setDragVariant(null);
+      const response = await fetch(
+        `/api/3d-shop/admin/products/${id}/variants`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orders: ordered.map((variant) => ({
+              id: variant.id,
+              display_order: variant.display_order ?? 0,
+            })),
+          }),
+        },
+      );
+      if (!response.ok)
+        setToast({ type: "error", message: "Failed to save variant order." });
     },
-    [dragVariant, form]
-  )
+    [dragVariant, form],
+  );
 
   const generateSkus = useCallback(async () => {
     try {
-      const id = await ensureProductId()
-      await saveAllVariants()
+      const id = await ensureProductId();
+      await saveAllVariants();
       const discreteOptions = variantsRef.current
-        .filter((variant) => !['toggle', 'text_input'].includes(variant.option_type))
-        .map((variant) => ({ name: variant.option_name, values: (variant.values ?? []).filter(Boolean) }))
-        .filter((variant) => variant.values.length > 0)
+        .filter(
+          (variant) => !["toggle", "text_input"].includes(variant.option_type),
+        )
+        .map((variant) => ({
+          name: variant.option_name,
+          values: (variant.values ?? []).filter(Boolean),
+        }))
+        .filter((variant) => variant.values.length > 0);
 
-      const combinations = cartesianProduct(discreteOptions)
-      if (!window.confirm(`This will generate ${combinations.length} SKU combination${combinations.length === 1 ? '' : 's'}. Continue?`))
-        return
-      form.pushUndoPoint()
+      const combinations = cartesianProduct(discreteOptions);
+      if (
+        !window.confirm(
+          `This will generate ${combinations.length} SKU combination${combinations.length === 1 ? "" : "s"}. Continue?`,
+        )
+      )
+        return;
+      form.pushUndoPoint();
 
-      const product = form.productRef.current
-      const existingKeys = new Set(skusRef.current.map((sku) => stableStringify(sku.variant_combination)))
+      const product = form.productRef.current;
+      const existingKeys = new Set(
+        skusRef.current.map((sku) => stableStringify(sku.variant_combination)),
+      );
       const rows = combinations
         .filter((combo) => !existingKeys.has(stableStringify(combo)))
         .map((combo, index) => ({
-          sku_code: `${product.slug.toUpperCase().replace(/[^A-Z0-9]+/g, '-')}-${Date.now().toString(36).toUpperCase()}-${index + 1}`,
+          sku_code: `${product.slug.toUpperCase().replace(/[^A-Z0-9]+/g, "-")}-${Date.now().toString(36).toUpperCase()}-${index + 1}`,
           variant_combination: combo,
           price: product.base_price || 0,
           stock_quantity: 0,
           low_stock_threshold: 5,
           weight_grams: defaultWeight ? Number(defaultWeight) || null : null,
           is_available: true,
-        }))
+        }));
 
       const response = await fetch(`/api/3d-shop/admin/products/${id}/skus`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ skus: rows }),
-      })
-      const data = (await response.json()) as { skus?: ShopSku[]; inserted?: number; skipped?: number; error?: string }
-      if (!response.ok) throw new Error(data.error || 'Failed to generate SKUs.')
-      setSkus(data.skus ?? [])
+      });
+      const data = (await response.json()) as {
+        skus?: ShopSku[];
+        inserted?: number;
+        skipped?: number;
+        error?: string;
+      };
+      if (!response.ok)
+        throw new Error(data.error || "Failed to generate SKUs.");
+      setSkus(data.skus ?? []);
       setToast({
-        type: 'success',
-        message: `Generated ${data.inserted ?? 0} SKU${data.inserted === 1 ? '' : 's'}. Skipped ${data.skipped ?? 0}.`,
-      })
-      window.setTimeout(() => skuSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
+        type: "success",
+        message: `Generated ${data.inserted ?? 0} SKU${data.inserted === 1 ? "" : "s"}. Skipped ${data.skipped ?? 0}.`,
+      });
+      window.setTimeout(
+        () =>
+          skuSectionRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          }),
+        100,
+      );
     } catch (error) {
-      setToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to generate SKUs.' })
+      setToast({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Failed to generate SKUs.",
+      });
     }
-  }, [defaultWeight, ensureProductId, form, saveAllVariants])
+  }, [defaultWeight, ensureProductId, form, saveAllVariants]);
 
   const syncBasePriceFromSkus = useCallback(
     (rows: ShopSku[]) => {
       const prices = rows
         .filter((sku) => sku.is_available !== false)
         .map((sku) => Number(sku.price))
-        .filter(Number.isFinite)
-      if (prices.length > 0) form.patchLocal({ base_price: Math.min(...prices) })
+        .filter(Number.isFinite);
+      if (prices.length > 0)
+        form.patchLocal({ base_price: Math.min(...prices) });
     },
-    [form]
-  )
+    [form],
+  );
 
   const updateSku = useCallback(
     <K extends keyof ShopSku>(skuId: string, key: K, value: ShopSku[K]) => {
-      form.pushUndoPoint()
-      setSkus((current) => current.map((sku) => (sku.id === skuId ? { ...sku, [key]: value, dirty: true } : sku)))
-      if (key === 'price' || key === 'is_available') {
-        syncBasePriceFromSkus(skusRef.current.map((sku) => (sku.id === skuId ? { ...sku, [key]: value } : sku)))
+      form.pushUndoPoint();
+      setSkus((current) =>
+        current.map((sku) =>
+          sku.id === skuId ? { ...sku, [key]: value, dirty: true } : sku,
+        ),
+      );
+      if (key === "price" || key === "is_available") {
+        syncBasePriceFromSkus(
+          skusRef.current.map((sku) =>
+            sku.id === skuId ? { ...sku, [key]: value } : sku,
+          ),
+        );
       }
-      form.setDirty(true)
+      form.setDirty(true);
     },
-    [form, syncBasePriceFromSkus]
-  )
+    [form, syncBasePriceFromSkus],
+  );
 
   const uploadSkuModel = useCallback(
     async (skuId: string, file: File) => {
-      const id = await ensureProductId()
-      const tempKey = `sku-model-${skuId}-${Date.now()}`
-      setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress: 0 } }))
+      const id = await ensureProductId();
+      const tempKey = `sku-model-${skuId}-${Date.now()}`;
+      setUploadState((current) => ({
+        ...current,
+        [tempKey]: { status: "uploading", progress: 0 },
+      }));
       try {
-        const { publicUrl } = await uploadModelFileWithProgress(file, id, (progress) => {
-          setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress } }))
-        }, 'model')
-        setUploadState((current) => ({ ...current, [tempKey]: { status: 'done', progress: 100 } }))
-        updateSku(skuId, 'model_url', publicUrl)
+        const { publicUrl } = await uploadModelFileWithProgress(
+          file,
+          id,
+          (progress) => {
+            setUploadState((current) => ({
+              ...current,
+              [tempKey]: { status: "uploading", progress },
+            }));
+          },
+          "model",
+        );
+        setUploadState((current) => ({
+          ...current,
+          [tempKey]: { status: "done", progress: 100 },
+        }));
+        updateSku(skuId, "model_url", publicUrl);
       } catch (error) {
-        setUploadState((current) => ({ ...current, [tempKey]: { status: 'error', progress: 0 } }))
-        throw error
+        setUploadState((current) => ({
+          ...current,
+          [tempKey]: { status: "error", progress: 0 },
+        }));
+        throw error;
       }
     },
-    [ensureProductId, updateSku]
-  )
+    [ensureProductId, updateSku],
+  );
 
   const bulkUpdateSkus = useCallback(
     (partial: Partial<ShopSku>, ids?: string[]) => {
-      form.pushUndoPoint()
-      const targetIds = ids && ids.length > 0 ? new Set(ids) : null
+      form.pushUndoPoint();
+      const targetIds = ids && ids.length > 0 ? new Set(ids) : null;
       setSkus((current) =>
-        current.map((sku) => (targetIds && !targetIds.has(sku.id) ? sku : { ...sku, ...partial, dirty: true }))
-      )
-      if ('price' in partial || 'is_available' in partial) {
+        current.map((sku) =>
+          targetIds && !targetIds.has(sku.id)
+            ? sku
+            : { ...sku, ...partial, dirty: true },
+        ),
+      );
+      if ("price" in partial || "is_available" in partial) {
         const updated = skusRef.current.map((sku) =>
-          targetIds && !targetIds.has(sku.id) ? sku : { ...sku, ...partial }
-        )
-        syncBasePriceFromSkus(updated)
+          targetIds && !targetIds.has(sku.id) ? sku : { ...sku, ...partial },
+        );
+        syncBasePriceFromSkus(updated);
       }
-      form.setDirty(true)
+      form.setDirty(true);
     },
-    [form, syncBasePriceFromSkus]
-  )
+    [form, syncBasePriceFromSkus],
+  );
 
   const saveAllSkusWithToast = useCallback(async () => {
     try {
-      await saveAllSkus()
-      setToast({ type: 'success', message: 'SKUs saved.' })
+      await saveAllSkus();
+      setToast({ type: "success", message: "SKUs saved." });
     } catch (error) {
-      setToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to save SKUs.' })
+      setToast({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Failed to save SKUs.",
+      });
     }
-  }, [saveAllSkus])
+  }, [saveAllSkus]);
 
   const deleteSku = useCallback(
     async (skuId: string) => {
-      const id = form.productRef.current.id
-      if (!id) return
-      if (!window.confirm('Delete this SKU? This action cannot be undone.')) return
+      const id = form.productRef.current.id;
+      if (!id) return;
+      if (!window.confirm("Delete this SKU? This action cannot be undone."))
+        return;
 
-      const response = await fetch(`/api/3d-shop/admin/products/${id}/skus?id=${encodeURIComponent(skuId)}`, {
-        method: 'DELETE',
-      })
-      const data = (await response.json().catch(() => ({}))) as { error?: string }
+      const response = await fetch(
+        `/api/3d-shop/admin/products/${id}/skus?id=${encodeURIComponent(skuId)}`,
+        {
+          method: "DELETE",
+        },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
       if (!response.ok) {
-        const message = data.error || 'Failed to delete SKU.'
-        setToast({ type: 'error', message })
-        throw new Error(message)
+        const message = data.error || "Failed to delete SKU.";
+        setToast({ type: "error", message });
+        throw new Error(message);
       }
 
-      setSkus((current) => current.filter((sku) => sku.id !== skuId))
-      const remaining = skusRef.current.filter((sku) => sku.id !== skuId)
-      syncBasePriceFromSkus(remaining)
-      form.setDirty(true)
-      setToast({ type: 'success', message: 'SKU deleted.' })
+      setSkus((current) => current.filter((sku) => sku.id !== skuId));
+      const remaining = skusRef.current.filter((sku) => sku.id !== skuId);
+      syncBasePriceFromSkus(remaining);
+      form.setDirty(true);
+      setToast({ type: "success", message: "SKU deleted." });
     },
-    [form, syncBasePriceFromSkus]
-  )
+    [form, syncBasePriceFromSkus],
+  );
 
   const updateVariantDimension = useCallback(
-    (optionName: string, optionValue: string, dimensions: ProductDimensions) => {
-      form.pushUndoPoint()
+    (
+      optionName: string,
+      optionValue: string,
+      dimensions: ProductDimensions,
+    ) => {
+      form.pushUndoPoint();
       setVariantDimensions((current) => {
         const existing = current.find(
-          (entry) => entry.option_name === optionName && entry.option_value === optionValue
-        )
+          (entry) =>
+            entry.option_name === optionName &&
+            entry.option_value === optionValue,
+        );
         if (existing) {
           return current.map((entry) =>
-            entry.id === existing.id ? { ...entry, dimensions, updated_at: new Date().toISOString() } : entry
-          )
+            entry.id === existing.id
+              ? { ...entry, dimensions, updated_at: new Date().toISOString() }
+              : entry,
+          );
         }
         return [
           ...current,
           {
             id: `draft-${Date.now()}`,
-            product_id: form.productRef.current.id ?? '',
+            product_id: form.productRef.current.id ?? "",
             option_name: optionName,
             option_value: optionValue,
             dimensions,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           },
-        ]
-      })
-      form.setDirty(true)
+        ];
+      });
+      form.setDirty(true);
     },
-    [form]
-  )
+    [form],
+  );
 
   const deleteVariantDimension = useCallback(
     async (dimensionId: string) => {
-      const id = form.productRef.current.id
-      if (!dimensionId || dimensionId.startsWith('draft-')) {
-        setVariantDimensions((current) => current.filter((entry) => entry.id !== dimensionId))
-        return
+      const id = form.productRef.current.id;
+      if (!dimensionId || dimensionId.startsWith("draft-")) {
+        setVariantDimensions((current) =>
+          current.filter((entry) => entry.id !== dimensionId),
+        );
+        return;
       }
-      if (!id) return
+      if (!id) return;
       const response = await fetch(
         `/api/3d-shop/admin/products/${id}/variant-dimensions?id=${encodeURIComponent(dimensionId)}`,
-        { method: 'DELETE' }
-      )
-      const data = (await response.json().catch(() => ({}))) as { error?: string }
+        { method: "DELETE" },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
       if (!response.ok) {
-        setToast({ type: 'error', message: data.error || 'Failed to delete dimension.' })
-        return
+        setToast({
+          type: "error",
+          message: data.error || "Failed to delete dimension.",
+        });
+        return;
       }
-      setVariantDimensions((current) => current.filter((entry) => entry.id !== dimensionId))
-      form.setDirty(true)
+      setVariantDimensions((current) =>
+        current.filter((entry) => entry.id !== dimensionId),
+      );
+      form.setDirty(true);
     },
-    [form]
-  )
+    [form],
+  );
 
   const applyDefaultDimensionsToUnset = useCallback(() => {
-    const defaults = form.productRef.current.default_dimensions
+    const defaults = form.productRef.current.default_dimensions;
     if (!defaults) {
-      setToast({ type: 'error', message: 'Set default dimensions on the product first.' })
-      return
+      setToast({
+        type: "error",
+        message: "Set default dimensions on the product first.",
+      });
+      return;
     }
-    const variants = variantsRef.current
-    const current = variantDimensionsRef.current
+    const variants = variantsRef.current;
+    const current = variantDimensionsRef.current;
     const existing = new Map<string, ShopVariantOptionDimension>(
-      current.map((entry) => [`${entry.option_name}\u0000${entry.option_value}`, entry])
-    )
-    const additions: ShopVariantOptionDimension[] = []
+      current.map((entry) => [
+        `${entry.option_name}\u0000${entry.option_value}`,
+        entry,
+      ]),
+    );
+    const additions: ShopVariantOptionDimension[] = [];
     for (const variant of variants) {
       for (const value of variant.values ?? []) {
-        const key = `${variant.option_name}\u0000${value}`
-        if (existing.has(key)) continue
+        const key = `${variant.option_name}\u0000${value}`;
+        if (existing.has(key)) continue;
         additions.push({
           id: `draft-${Date.now()}-${additions.length}`,
-          product_id: form.productRef.current.id ?? '',
+          product_id: form.productRef.current.id ?? "",
           option_name: variant.option_name,
           option_value: value,
           dimensions: { ...defaults },
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        })
+        });
       }
     }
     if (additions.length === 0) {
-      setToast({ type: 'info', message: 'All option values already have dimensions.' })
-      return
+      setToast({
+        type: "info",
+        message: "All option values already have dimensions.",
+      });
+      return;
     }
-    setVariantDimensions((currentRows) => [...currentRows, ...additions])
-    form.setDirty(true)
+    setVariantDimensions((currentRows) => [...currentRows, ...additions]);
+    form.setDirty(true);
     setToast({
-      type: 'success',
-      message: `Applied defaults to ${additions.length} value${additions.length === 1 ? '' : 's'}.`,
-    })
-  }, [form])
+      type: "success",
+      message: `Applied defaults to ${additions.length} value${additions.length === 1 ? "" : "s"}.`,
+    });
+  }, [form]);
 
   const addVariantOptionImage = useCallback(
     async (optionName: string, optionValue: string, file: File) => {
-      const id = await ensureProductId()
-      const tempKey = `variant-${optionName}-${optionValue}-${file.name}-${Date.now()}`
-      setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress: 0 } }))
+      const id = await ensureProductId();
+      const tempKey = `variant-${optionName}-${optionValue}-${file.name}-${Date.now()}`;
+      setUploadState((current) => ({
+        ...current,
+        [tempKey]: { status: "uploading", progress: 0 },
+      }));
       try {
         const data = (await uploadFormFileWithProgress(
           `/api/3d-shop/admin/products/${id}/variant-images`,
           file,
           { option_name: optionName, option_value: optionValue },
           (progress) => {
-            setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress } }))
-          }
-        )) as { image?: ShopVariantOptionImage; error?: string }
-        if (!data.image) throw new Error(data.error || 'Upload failed.')
-        setUploadState((current) => ({ ...current, [tempKey]: { status: 'done', progress: 100 } }))
-        setVariantOptionImages((current) => [...current, data.image!])
+            setUploadState((current) => ({
+              ...current,
+              [tempKey]: { status: "uploading", progress },
+            }));
+          },
+        )) as { image?: ShopVariantOptionImage; error?: string };
+        if (!data.image) throw new Error(data.error || "Upload failed.");
+        setUploadState((current) => ({
+          ...current,
+          [tempKey]: { status: "done", progress: 100 },
+        }));
+        setVariantOptionImages((current) => [...current, data.image!]);
       } catch (error) {
-        setUploadState((current) => ({ ...current, [tempKey]: { status: 'error', progress: 0 } }))
-        throw error
+        setUploadState((current) => ({
+          ...current,
+          [tempKey]: { status: "error", progress: 0 },
+        }));
+        throw error;
       }
     },
-    [ensureProductId]
-  )
+    [ensureProductId],
+  );
 
   const updateVariantOptionImage = useCallback(
-    async (imageId: string, patch: { alt_text?: string; is_primary?: boolean }) => {
-      const id = form.productRef.current.id
-      if (!id) return
-      const response = await fetch(`/api/3d-shop/admin/products/${id}/variant-images`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_id: imageId, ...patch }),
-      })
-      const data = (await response.json().catch(() => ({}))) as { image?: ShopVariantOptionImage; error?: string }
-      const updatedImage = data.image
-      if (!response.ok || !updatedImage) throw new Error(data.error || 'Failed to update image.')
+    async (
+      imageId: string,
+      patch: { alt_text?: string; is_primary?: boolean },
+    ) => {
+      const id = form.productRef.current.id;
+      if (!id) return;
+      const response = await fetch(
+        `/api/3d-shop/admin/products/${id}/variant-images`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image_id: imageId, ...patch }),
+        },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        image?: ShopVariantOptionImage;
+        error?: string;
+      };
+      const updatedImage = data.image;
+      if (!response.ok || !updatedImage)
+        throw new Error(data.error || "Failed to update image.");
       setVariantOptionImages((current) =>
         current.map((image) => {
           if (image.id !== imageId) {
@@ -1482,120 +2041,158 @@ export function ProductEditorProvider({
               image.option_name === updatedImage.option_name &&
               image.option_value === updatedImage.option_value
             ) {
-              return { ...image, is_primary: false }
+              return { ...image, is_primary: false };
             }
-            return image
+            return image;
           }
-          return updatedImage
-        })
-      )
+          return updatedImage;
+        }),
+      );
     },
-    [form]
-  )
+    [form],
+  );
 
   const removeVariantOptionImage = useCallback(
     async (imageId: string) => {
-      const id = form.productRef.current.id
-      if (!id) return
+      const id = form.productRef.current.id;
+      if (!id) return;
       const response = await fetch(
         `/api/3d-shop/admin/products/${id}/variant-images?id=${encodeURIComponent(imageId)}`,
-        { method: 'DELETE' }
-      )
-      const data = (await response.json().catch(() => ({}))) as { error?: string }
-      if (!response.ok) throw new Error(data.error || 'Failed to remove image.')
-      setVariantOptionImages((current) => current.filter((image) => image.id !== imageId))
+        { method: "DELETE" },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      if (!response.ok)
+        throw new Error(data.error || "Failed to remove image.");
+      setVariantOptionImages((current) =>
+        current.filter((image) => image.id !== imageId),
+      );
     },
-    [form]
-  )
+    [form],
+  );
 
   const reorderVariantOptionImages = useCallback(
     async (optionName: string, optionValue: string, orderedIds: string[]) => {
-      const id = form.productRef.current.id
-      if (!id) return
+      const id = form.productRef.current.id;
+      if (!id) return;
       setVariantOptionImages((current) =>
         current.map((image) =>
           image.option_name === optionName && image.option_value === optionValue
-            ? { ...image, display_order: Math.max(0, orderedIds.indexOf(image.id)) }
-            : image
-        )
-      )
+            ? {
+                ...image,
+                display_order: Math.max(0, orderedIds.indexOf(image.id)),
+              }
+            : image,
+        ),
+      );
       await Promise.all(
         orderedIds.map(async (imageId, index) => {
-          const response = await fetch(`/api/3d-shop/admin/products/${id}/variant-images`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image_id: imageId, display_order: index }),
-          })
-          if (!response.ok) throw new Error('Failed to reorder images.')
-        })
-      )
+          const response = await fetch(
+            `/api/3d-shop/admin/products/${id}/variant-images`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ image_id: imageId, display_order: index }),
+            },
+          );
+          if (!response.ok) throw new Error("Failed to reorder images.");
+        }),
+      );
     },
-    [form]
-  )
+    [form],
+  );
 
-  const addSkuImage = useCallback(
-    async (skuId: string, file: File) => {
-      const tempKey = `sku-${skuId}-${file.name}-${Date.now()}`
-      setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress: 0 } }))
-      try {
-        const data = (await uploadFormFileWithProgress(
-          `/api/3d-shop/admin/skus/${skuId}/images`,
-          file,
-          {},
-          (progress) => {
-            setUploadState((current) => ({ ...current, [tempKey]: { status: 'uploading', progress } }))
-          }
-        )) as { image?: ShopSkuImage; error?: string }
-        const uploadedImage = data.image
-        if (!uploadedImage) throw new Error(data.error || 'Upload failed.')
-        setUploadState((current) => ({ ...current, [tempKey]: { status: 'done', progress: 100 } }))
-        setSkuImages((current) => ({ ...current, [skuId]: [...(current[skuId] ?? []), uploadedImage] }))
-      } catch (error) {
-        setUploadState((current) => ({ ...current, [tempKey]: { status: 'error', progress: 0 } }))
-        throw error
-      }
-    },
-    []
-  )
+  const addSkuImage = useCallback(async (skuId: string, file: File) => {
+    const tempKey = `sku-${skuId}-${file.name}-${Date.now()}`;
+    setUploadState((current) => ({
+      ...current,
+      [tempKey]: { status: "uploading", progress: 0 },
+    }));
+    try {
+      const data = (await uploadFormFileWithProgress(
+        `/api/3d-shop/admin/skus/${skuId}/images`,
+        file,
+        {},
+        (progress) => {
+          setUploadState((current) => ({
+            ...current,
+            [tempKey]: { status: "uploading", progress },
+          }));
+        },
+      )) as { image?: ShopSkuImage; error?: string };
+      const uploadedImage = data.image;
+      if (!uploadedImage) throw new Error(data.error || "Upload failed.");
+      setUploadState((current) => ({
+        ...current,
+        [tempKey]: { status: "done", progress: 100 },
+      }));
+      setSkuImages((current) => ({
+        ...current,
+        [skuId]: [...(current[skuId] ?? []), uploadedImage],
+      }));
+    } catch (error) {
+      setUploadState((current) => ({
+        ...current,
+        [tempKey]: { status: "error", progress: 0 },
+      }));
+      throw error;
+    }
+  }, []);
 
   const updateSkuImage = useCallback(
-    async (imageId: string, patch: { alt_text?: string; is_primary?: boolean }) => {
+    async (
+      imageId: string,
+      patch: { alt_text?: string; is_primary?: boolean },
+    ) => {
       const skuId = Object.entries(skuImagesRef.current).find(([, images]) =>
-        images.some((image) => image.id === imageId)
-      )?.[0]
-      if (!skuId) return
+        images.some((image) => image.id === imageId),
+      )?.[0];
+      if (!skuId) return;
       const response = await fetch(`/api/3d-shop/admin/skus/${skuId}/images`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image_id: imageId, ...patch }),
-      })
-      const data = (await response.json().catch(() => ({}))) as { image?: ShopSkuImage; error?: string }
-      const updatedSkuImage = data.image
-      if (!response.ok || !updatedSkuImage) throw new Error(data.error || 'Failed to update image.')
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        image?: ShopSkuImage;
+        error?: string;
+      };
+      const updatedSkuImage = data.image;
+      if (!response.ok || !updatedSkuImage)
+        throw new Error(data.error || "Failed to update image.");
       setSkuImages((current) => ({
         ...current,
         [skuId]: (current[skuId] ?? []).map((image) => {
-          if (image.id === imageId) return updatedSkuImage
-          if (patch.is_primary === true) return { ...image, is_primary: false }
-          return image
+          if (image.id === imageId) return updatedSkuImage;
+          if (patch.is_primary === true) return { ...image, is_primary: false };
+          return image;
         }),
-      }))
+      }));
     },
-    []
-  )
+    [],
+  );
 
   const removeSkuImage = useCallback(async (imageId: string) => {
     const skuId = Object.entries(skuImagesRef.current).find(([, images]) =>
-      images.some((image) => image.id === imageId)
-    )?.[0]
-    if (!skuId) return
-    const response = await fetch(`/api/3d-shop/admin/skus/${skuId}/images?id=${encodeURIComponent(imageId)}`, {
-      method: 'DELETE',
-    })
-    const data = (await response.json().catch(() => ({}))) as { error?: string }
-    if (!response.ok) throw new Error(data.error || 'Failed to remove image.')
-    setSkuImages((current) => ({ ...current, [skuId]: (current[skuId] ?? []).filter((image) => image.id !== imageId) }))
-  }, [])
+      images.some((image) => image.id === imageId),
+    )?.[0];
+    if (!skuId) return;
+    const response = await fetch(
+      `/api/3d-shop/admin/skus/${skuId}/images?id=${encodeURIComponent(imageId)}`,
+      {
+        method: "DELETE",
+      },
+    );
+    const data = (await response.json().catch(() => ({}))) as {
+      error?: string;
+    };
+    if (!response.ok) throw new Error(data.error || "Failed to remove image.");
+    setSkuImages((current) => ({
+      ...current,
+      [skuId]: (current[skuId] ?? []).filter((image) => image.id !== imageId),
+    }));
+  }, []);
 
   const reorderSkuImages = useCallback(
     async (skuId: string, orderedIds: string[]) => {
@@ -1605,35 +2202,45 @@ export function ProductEditorProvider({
           ...image,
           display_order: Math.max(0, orderedIds.indexOf(image.id)),
         })),
-      }))
+      }));
       await Promise.all(
         orderedIds.map(async (imageId, index) => {
-          const response = await fetch(`/api/3d-shop/admin/skus/${skuId}/images`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image_id: imageId, display_order: index }),
-          })
-          if (!response.ok) throw new Error('Failed to reorder images.')
-        })
-      )
+          const response = await fetch(
+            `/api/3d-shop/admin/skus/${skuId}/images`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ image_id: imageId, display_order: index }),
+            },
+          );
+          if (!response.ok) throw new Error("Failed to reorder images.");
+        }),
+      );
     },
-    []
-  )
+    [],
+  );
 
   const archiveProduct = useCallback(async () => {
-    const id = form.productRef.current.id
-    if (!id || !window.confirm('Archive this product?')) return
-    const response = await fetch(`/api/3d-shop/admin/products?id=${id}`, { method: 'DELETE' })
-    const data = (await response.json().catch(() => ({}))) as { error?: string }
+    const id = form.productRef.current.id;
+    if (!id || !window.confirm("Archive this product?")) return;
+    const response = await fetch(`/api/3d-shop/admin/products?id=${id}`, {
+      method: "DELETE",
+    });
+    const data = (await response.json().catch(() => ({}))) as {
+      error?: string;
+    };
     if (!response.ok) {
-      setToast({ type: 'error', message: data.error || 'Failed to archive product.' })
-      return
+      setToast({
+        type: "error",
+        message: data.error || "Failed to archive product.",
+      });
+      return;
     }
-    setToast({ type: 'success', message: 'Product archived.' })
+    setToast({ type: "success", message: "Product archived." });
     window.setTimeout(() => {
-      router.push('/admin/3d-shop/products')
-    }, 300)
-  }, [form, router])
+      router.push("/admin/3d-shop/products");
+    }, 300);
+  }, [form, router]);
 
   const value: ProductEditorContextValue = {
     mode,
@@ -1647,7 +2254,7 @@ export function ProductEditorProvider({
     saving,
     loading,
     categories,
-    slugStatus: form.product.slug ? slugStatus : 'idle',
+    slugStatus: form.product.slug ? slugStatus : "idle",
     uploadState,
     variants,
     skus,
@@ -1667,7 +2274,7 @@ export function ProductEditorProvider({
     undo: form.undo,
     redo: form.redo,
     markSlugTouched: () => {
-      slugTouchedRef.current = true
+      slugTouchedRef.current = true;
     },
     saveProduct,
     archiveProduct,
@@ -1717,7 +2324,11 @@ export function ProductEditorProvider({
     updateSkuImage,
     removeSkuImage,
     reorderSkuImages,
-  }
+  };
 
-  return <ProductEditorContext.Provider value={value}>{children}</ProductEditorContext.Provider>
+  return (
+    <ProductEditorContext.Provider value={value}>
+      {children}
+    </ProductEditorContext.Provider>
+  );
 }

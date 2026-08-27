@@ -1,6 +1,6 @@
-import { unstable_cache, revalidateTag } from 'next/cache'
-import { createClient as createSessionlessClient } from '@supabase/supabase-js'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { unstable_cache, revalidateTag } from "next/cache";
+import { createClient as createSessionlessClient } from "@supabase/supabase-js";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type {
   ShopProductHotspot,
   ShopSku,
@@ -8,8 +8,8 @@ import type {
   ShopVariantOption,
   ShopVariantOptionDimension,
   ShopVariantOptionImage,
-} from '@/lib/shop/admin-types'
-import { parseDimensionsJson } from '@/lib/shop/dimensions'
+} from "@/lib/shop/admin-types";
+import { parseDimensionsJson } from "@/lib/shop/dimensions";
 import type {
   ShopHomeData,
   ShopProductListResult,
@@ -18,8 +18,8 @@ import type {
   ShopPublicProduct,
   ShopPublicReview,
   ShopReviewsResult,
-} from '@/lib/shop/public-types'
-import { normalizeShopNumber } from '@/lib/shop/selection'
+} from "@/lib/shop/public-types";
+import { normalizeShopNumber } from "@/lib/shop/selection";
 
 /**
  * Public shop data is served through Next.js's data cache (unstable_cache):
@@ -29,33 +29,35 @@ import { normalizeShopNumber } from '@/lib/shop/selection'
  * The cached loaders MUST NOT touch cookies/headers, hence the sessionless
  * client — public catalog reads are anonymous RLS reads anyway.
  */
-const SHOP_REVALIDATE_SECONDS = 300
-const TAG_SHOP_PRODUCTS = 'shop-products'
-const TAG_SHOP_CATEGORIES = 'shop-categories'
+const SHOP_REVALIDATE_SECONDS = 300;
+const TAG_SHOP_PRODUCTS = "shop-products";
+const TAG_SHOP_CATEGORIES = "shop-categories";
 
 function getPublicSupabaseClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) return null
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
   return createSessionlessClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
-  })
+  });
 }
 
 async function loadAllShopCategories(): Promise<ShopPublicCategory[]> {
-  const supabase = getPublicSupabaseClient()
-  if (!supabase) return []
+  const supabase = getPublicSupabaseClient();
+  if (!supabase) return [];
   const { data, error } = await supabase
-    .from('shelf_categories')
-    .select('id,name,slug,description,icon_emoji,banner_image_url,parent_category_id,display_order')
-    .eq('is_active', true)
-    .order('display_order', { ascending: true })
-    .order('name', { ascending: true })
+    .from("shelf_categories")
+    .select(
+      "id,name,slug,description,icon_emoji,banner_image_url,parent_category_id,display_order",
+    )
+    .eq("is_active", true)
+    .order("display_order", { ascending: true })
+    .order("name", { ascending: true });
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(error.message);
 
   return ((data ?? []) as RawCategory[]).map((category) => ({
     id: category.id,
@@ -65,33 +67,41 @@ async function loadAllShopCategories(): Promise<ShopPublicCategory[]> {
     icon_emoji: category.icon_emoji ?? null,
     banner_image_url: category.banner_image_url ?? null,
     parent_category_id: category.parent_category_id ?? null,
-  }))
+  }));
 }
 
 async function loadAllShopProducts(): Promise<ShopPublicProduct[]> {
-  const supabase = getPublicSupabaseClient()
-  if (!supabase) return []
+  const supabase = getPublicSupabaseClient();
+  if (!supabase) return [];
   const { data, error } = await supabase
-    .from('shelf_products')
+    .from("shelf_products")
     .select(PRODUCT_SELECT)
-    .eq('is_active', true)
-    .eq('is_archived', false)
-    .order('created_at', { ascending: false })
-    .limit(250)
+    .eq("is_active", true)
+    .eq("is_archived", false)
+    .order("created_at", { ascending: false })
+    .limit(250);
 
-  if (error) throw new Error(error.message)
-  return ((data ?? []) as unknown as RawProduct[]).map(mapProduct)
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as unknown as RawProduct[]).map(mapProduct);
 }
 
-const getCachedShopCategories = unstable_cache(loadAllShopCategories, ['shop-categories'], {
-  tags: [TAG_SHOP_CATEGORIES],
-  revalidate: SHOP_REVALIDATE_SECONDS,
-})
+const getCachedShopCategories = unstable_cache(
+  loadAllShopCategories,
+  ["shop-categories"],
+  {
+    tags: [TAG_SHOP_CATEGORIES],
+    revalidate: SHOP_REVALIDATE_SECONDS,
+  },
+);
 
-const getCachedShopProducts = unstable_cache(loadAllShopProducts, ['shop-products'], {
-  tags: [TAG_SHOP_PRODUCTS],
-  revalidate: SHOP_REVALIDATE_SECONDS,
-})
+const getCachedShopProducts = unstable_cache(
+  loadAllShopProducts,
+  ["shop-products"],
+  {
+    tags: [TAG_SHOP_PRODUCTS],
+    revalidate: SHOP_REVALIDATE_SECONDS,
+  },
+);
 
 /**
  * Invalidate the cached public catalog. Call from admin mutation paths.
@@ -102,70 +112,73 @@ export function invalidateShopDataCache() {
     try {
       // 'max' = stale-while-revalidate: stale content is served while the
       // fresh catalog is fetched in the background on next visit.
-      revalidateTag(tag, 'max')
+      revalidateTag(tag, "max");
     } catch {
       // Not in a request scope — cache will expire via revalidate TTL instead.
     }
   }
 }
 
-type RawCategory = Omit<ShopPublicCategory, 'children'> & {
-  display_order?: number | null
-}
+type RawCategory = Omit<ShopPublicCategory, "children"> & {
+  display_order?: number | null;
+};
 
 type RawReview = {
-  id?: string
-  product_id?: string
-  user_id?: string
-  order_id?: string
-  rating?: number | string | null
-  title?: string | null
-  body?: string | null
-  image_urls?: string[] | null
-  is_verified_purchase?: boolean | null
-  is_approved?: boolean | null
-  admin_reply?: string | null
-  admin_replied_at?: string | null
-  created_at?: string | null
-  updated_at?: string | null
-}
+  id?: string;
+  product_id?: string;
+  user_id?: string;
+  order_id?: string;
+  rating?: number | string | null;
+  title?: string | null;
+  body?: string | null;
+  image_urls?: string[] | null;
+  is_verified_purchase?: boolean | null;
+  is_approved?: boolean | null;
+  admin_reply?: string | null;
+  admin_replied_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
 
 type RawProduct = {
-  id: string
-  name: string
-  slug: string
-  description?: string | null
-  long_description?: string | null
-  category_id?: string | null
-  tags?: string[] | null
-  occasion_tags?: string[] | null
-  thumbnail_url?: string | null
-  landscape_image_url?: string | null
-  image_urls?: string[] | null
-  model_url?: string | null
-  usdz_url?: string | null
-  hotspots?: unknown
-  hero_video_url?: string | null
-  base_price?: number | string | null
-  is_customizable?: boolean | null
-  customization_label?: string | null
-  is_featured?: boolean | null
-  is_active?: boolean | null
-  is_archived?: boolean | null
-  meta_title?: string | null
-  meta_description?: string | null
-  created_at?: string | null
-  updated_at?: string | null
-  category?: { id?: string; name?: string | null; slug?: string | null } | null
-  skus?: (ShopSku & { images?: ShopSkuImage[] | null })[] | null
-  variant_options?: ShopVariantOption[] | null
-  default_dimensions?: unknown
-  variant_option_dimensions?: (Omit<ShopVariantOptionDimension, 'dimensions'> & {
-    dimensions?: unknown
-  })[] | null
-  variant_option_images?: ShopVariantOptionImage[] | null
-  reviews?: RawReview[] | null
-}
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  long_description?: string | null;
+  long_description_blocks?: unknown;
+  category_id?: string | null;
+  tags?: string[] | null;
+  occasion_tags?: string[] | null;
+  thumbnail_url?: string | null;
+  landscape_image_url?: string | null;
+  image_urls?: string[] | null;
+  model_url?: string | null;
+  usdz_url?: string | null;
+  hotspots?: unknown;
+  hero_video_url?: string | null;
+  base_price?: number | string | null;
+  is_customizable?: boolean | null;
+  customization_label?: string | null;
+  is_featured?: boolean | null;
+  is_active?: boolean | null;
+  is_archived?: boolean | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  category?: { id?: string; name?: string | null; slug?: string | null } | null;
+  skus?: (ShopSku & { images?: ShopSkuImage[] | null })[] | null;
+  variant_options?: ShopVariantOption[] | null;
+  default_dimensions?: unknown;
+  variant_option_dimensions?:
+    | (Omit<ShopVariantOptionDimension, "dimensions"> & {
+        dimensions?: unknown;
+      })[]
+    | null;
+  variant_option_images?: ShopVariantOptionImage[] | null;
+  reviews?: RawReview[] | null;
+};
 
 const PRODUCT_SELECT = `
   id,
@@ -173,6 +186,7 @@ const PRODUCT_SELECT = `
   slug,
   description,
   long_description,
+  long_description_blocks,
   category_id,
   tags,
   occasion_tags,
@@ -252,105 +266,140 @@ const PRODUCT_SELECT = `
     created_at
   ),
   reviews:shelf_reviews(rating,is_approved)
-`
+`;
 
 function normalizeSku(sku: ShopSku): ShopSku {
   return {
     ...sku,
     price: normalizeShopNumber(sku.price),
-    compare_at_price: sku.compare_at_price === null ? null : normalizeShopNumber(sku.compare_at_price),
+    compare_at_price:
+      sku.compare_at_price === null
+        ? null
+        : normalizeShopNumber(sku.compare_at_price),
     stock_quantity: normalizeShopNumber(sku.stock_quantity),
-    low_stock_threshold: sku.low_stock_threshold === null ? null : normalizeShopNumber(sku.low_stock_threshold),
-    weight_grams: sku.weight_grams === null ? null : normalizeShopNumber(sku.weight_grams),
+    low_stock_threshold:
+      sku.low_stock_threshold === null
+        ? null
+        : normalizeShopNumber(sku.low_stock_threshold),
+    weight_grams:
+      sku.weight_grams === null ? null : normalizeShopNumber(sku.weight_grams),
     variant_combination: sku.variant_combination ?? {},
-  }
+  };
 }
 
 function parseHotspotsJson(value: unknown): ShopProductHotspot[] {
-  if (!Array.isArray(value)) return []
-  const hotspots: ShopProductHotspot[] = []
+  if (!Array.isArray(value)) return [];
+  const hotspots: ShopProductHotspot[] = [];
   for (const entry of value) {
-    if (!entry || typeof entry !== 'object') continue
-    const raw = entry as Record<string, unknown>
-    const position = Array.isArray(raw.position) ? raw.position.map(Number) : []
+    if (!entry || typeof entry !== "object") continue;
+    const raw = entry as Record<string, unknown>;
+    const position = Array.isArray(raw.position)
+      ? raw.position.map(Number)
+      : [];
     if (
       position.length !== 3 ||
       position.some((axis) => !Number.isFinite(axis)) ||
-      typeof raw.id !== 'string' ||
+      typeof raw.id !== "string" ||
       !raw.id.trim() ||
-      typeof raw.label !== 'string' ||
+      typeof raw.label !== "string" ||
       !raw.label.trim()
-    ) continue
-    if (hotspots.length >= 12) break
+    )
+      continue;
+    if (hotspots.length >= 12) break;
     hotspots.push({
       id: raw.id,
       position: position as [number, number, number],
       label: raw.label.trim(),
       description:
-        typeof raw.description === 'string' && raw.description.trim() ? raw.description.trim() : null,
-    })
+        typeof raw.description === "string" && raw.description.trim()
+          ? raw.description.trim()
+          : null,
+    });
   }
-  return hotspots
+  return hotspots;
 }
 
 export function formatShopReviewerName(name: string | null | undefined) {
-  const parts = String(name || 'Verified customer')
+  const parts = String(name || "Verified customer")
     .trim()
     .split(/\s+/)
-    .filter(Boolean)
+    .filter(Boolean);
 
-  if (parts.length === 0) return 'Verified customer'
-  if (parts.length === 1) return parts[0]
+  if (parts.length === 0) return "Verified customer";
+  if (parts.length === 1) return parts[0];
 
-  return `${parts[0]} ${parts[parts.length - 1][0]}.`
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
 function mapProduct(row: RawProduct): ShopPublicProduct {
-  const skus = (row.skus ?? []).map(normalizeSku).sort((a, b) => a.price - b.price)
-  const skuImages: Record<string, ShopSkuImage[]> = {}
+  const skus = (row.skus ?? [])
+    .map(normalizeSku)
+    .sort((a, b) => a.price - b.price);
+  const skuImages: Record<string, ShopSkuImage[]> = {};
   for (const sku of row.skus ?? []) {
     if (sku.id && Array.isArray(sku.images) && sku.images.length > 0) {
-      skuImages[sku.id] = [...sku.images].sort((a, b) => a.display_order - b.display_order)
+      skuImages[sku.id] = [...sku.images].sort(
+        (a, b) => a.display_order - b.display_order,
+      );
     }
   }
-  const variantOptionDimensions: ShopVariantOptionDimension[] = (row.variant_option_dimensions ?? [])
+  const variantOptionDimensions: ShopVariantOptionDimension[] = (
+    row.variant_option_dimensions ?? []
+  )
     .map((entry) => {
-      const parsed = parseDimensionsJson(entry.dimensions)
-      if (!parsed) return null
+      const parsed = parseDimensionsJson(entry.dimensions);
+      if (!parsed) return null;
       return {
         ...entry,
         dimensions: parsed,
-      }
+      };
     })
-    .filter(Boolean) as ShopVariantOptionDimension[]
+    .filter(Boolean) as ShopVariantOptionDimension[];
   const variantOptionImages = (row.variant_option_images ?? []).sort(
-    (a, b) => a.display_order - b.display_order
-  )
-  const availableSkus = skus.filter((sku) => sku.is_available !== false)
-  const stockedSkus = availableSkus.filter((sku) => sku.stock_quantity > 0)
-  const minSku = availableSkus[0] ?? skus[0] ?? null
-  const saleSku = availableSkus.find((sku) => sku.compare_at_price !== null && sku.compare_at_price > sku.price)
-  const reviews = (row.reviews ?? []).filter((review) => review.is_approved !== false)
-  const reviewCount = reviews.length
+    (a, b) => a.display_order - b.display_order,
+  );
+  const availableSkus = skus.filter((sku) => sku.is_available !== false);
+  const stockedSkus = availableSkus.filter((sku) => sku.stock_quantity > 0);
+  const minSku = availableSkus[0] ?? skus[0] ?? null;
+  const saleSku = availableSkus.find(
+    (sku) => sku.compare_at_price !== null && sku.compare_at_price > sku.price,
+  );
+  const reviews = (row.reviews ?? []).filter(
+    (review) => review.is_approved !== false,
+  );
+  const reviewCount = reviews.length;
   const reviewDistribution = {
-    1: reviews.filter((review) => normalizeShopNumber(review.rating) === 1).length,
-    2: reviews.filter((review) => normalizeShopNumber(review.rating) === 2).length,
-    3: reviews.filter((review) => normalizeShopNumber(review.rating) === 3).length,
-    4: reviews.filter((review) => normalizeShopNumber(review.rating) === 4).length,
-    5: reviews.filter((review) => normalizeShopNumber(review.rating) === 5).length,
-  }
+    1: reviews.filter((review) => normalizeShopNumber(review.rating) === 1)
+      .length,
+    2: reviews.filter((review) => normalizeShopNumber(review.rating) === 2)
+      .length,
+    3: reviews.filter((review) => normalizeShopNumber(review.rating) === 3)
+      .length,
+    4: reviews.filter((review) => normalizeShopNumber(review.rating) === 4)
+      .length,
+    5: reviews.filter((review) => normalizeShopNumber(review.rating) === 5)
+      .length,
+  };
   const avgRating = reviewCount
-    ? reviews.reduce((sum, review) => sum + normalizeShopNumber(review.rating), 0) / reviewCount
-    : 0
-  const isLowStock = stockedSkus.some((sku) => sku.stock_quantity <= (sku.low_stock_threshold ?? 5))
-  const hasPreorder = availableSkus.some((sku) => Boolean(sku.pre_order_eta))
-  const inStock = stockedSkus.length > 0
-  const stockStatus =
-    hasPreorder ? 'pre_order' :
-      !skus.length ? 'unavailable' :
-        !inStock ? 'out_of_stock' :
-          isLowStock ? 'low_stock' :
-            'in_stock'
+    ? reviews.reduce(
+        (sum, review) => sum + normalizeShopNumber(review.rating),
+        0,
+      ) / reviewCount
+    : 0;
+  const isLowStock = stockedSkus.some(
+    (sku) => sku.stock_quantity <= (sku.low_stock_threshold ?? 5),
+  );
+  const hasPreorder = availableSkus.some((sku) => Boolean(sku.pre_order_eta));
+  const inStock = stockedSkus.length > 0;
+  const stockStatus = hasPreorder
+    ? "pre_order"
+    : !skus.length
+      ? "unavailable"
+      : !inStock
+        ? "out_of_stock"
+        : isLowStock
+          ? "low_stock"
+          : "in_stock";
 
   return {
     id: row.id,
@@ -358,6 +407,9 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
     slug: row.slug,
     description: row.description ?? null,
     long_description: row.long_description ?? null,
+    long_description_blocks: Array.isArray(row.long_description_blocks)
+      ? row.long_description_blocks
+      : null,
     category_id: row.category_id ?? null,
     category_name: row.category?.name ?? null,
     category_slug: row.category?.slug ?? null,
@@ -383,7 +435,9 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
     created_at: row.created_at ?? null,
     updated_at: row.updated_at ?? null,
     skus,
-    variant_options: (row.variant_options ?? []).sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
+    variant_options: (row.variant_options ?? []).sort(
+      (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0),
+    ),
     default_dimensions: parseDimensionsJson(row.default_dimensions),
     variant_option_dimensions: variantOptionDimensions,
     variant_option_images: variantOptionImages,
@@ -397,139 +451,165 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
     has_sale: Boolean(saleSku),
     has_preorder: hasPreorder,
     is_low_stock: isLowStock,
-    is_new: Boolean(row.created_at && Date.now() - new Date(row.created_at).getTime() <= 7 * 24 * 60 * 60 * 1000),
-  }
+    is_new: Boolean(
+      row.created_at &&
+      Date.now() - new Date(row.created_at).getTime() <=
+        7 * 24 * 60 * 60 * 1000,
+    ),
+  };
 }
 
 export function buildShopCategoryTree(categories: ShopPublicCategory[]) {
-  const byId = new Map<string, ShopPublicCategory>()
-  const roots: ShopPublicCategory[] = []
+  const byId = new Map<string, ShopPublicCategory>();
+  const roots: ShopPublicCategory[] = [];
 
   categories.forEach((category) => {
-    byId.set(category.id, { ...category, children: [] })
-  })
+    byId.set(category.id, { ...category, children: [] });
+  });
 
   byId.forEach((category) => {
     if (category.parent_category_id && byId.has(category.parent_category_id)) {
-      byId.get(category.parent_category_id)?.children?.push(category)
-      return
+      byId.get(category.parent_category_id)?.children?.push(category);
+      return;
     }
-    roots.push(category)
-  })
+    roots.push(category);
+  });
 
-  return roots
+  return roots;
 }
 
 export function getShopCategoryDescendantIds(category: ShopPublicCategory) {
-  const ids = [category.id]
-  for (const child of category.children ?? []) ids.push(...getShopCategoryDescendantIds(child))
-  return ids
+  const ids = [category.id];
+  for (const child of category.children ?? [])
+    ids.push(...getShopCategoryDescendantIds(child));
+  return ids;
 }
 
 export async function getShopCategories() {
-  return getCachedShopCategories()
+  return getCachedShopCategories();
 }
 
 export async function getShopCategoryBySlug(slug: string) {
-  const categories = await getShopCategories()
-  const tree = buildShopCategoryTree(categories)
-  const flat = new Map<string, ShopPublicCategory>()
+  const categories = await getShopCategories();
+  const tree = buildShopCategoryTree(categories);
+  const flat = new Map<string, ShopPublicCategory>();
   const walk = (category: ShopPublicCategory) => {
-    flat.set(category.slug, category)
-    category.children?.forEach(walk)
-  }
-  tree.forEach(walk)
-  return { category: flat.get(slug) ?? null, categories, tree }
+    flat.set(category.slug, category);
+    category.children?.forEach(walk);
+  };
+  tree.forEach(walk);
+  return { category: flat.get(slug) ?? null, categories, tree };
 }
 
 async function getAllShopProducts() {
-  return (await getCachedShopProducts()).slice()
+  return (await getCachedShopProducts()).slice();
 }
 
 export async function listAllShopProducts(): Promise<ShopPublicProduct[]> {
-  return getAllShopProducts()
+  return getAllShopProducts();
 }
 
 export async function getShopProductsByIds(ids: string[]) {
-  const uniqueIds = Array.from(new Set(ids.filter(Boolean)))
-  if (uniqueIds.length === 0) return []
+  const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+  if (uniqueIds.length === 0) return [];
 
-  const products = await getAllShopProducts()
-  const byId = new Map(products.map((product) => [product.id, product]))
-  return uniqueIds.map((id) => byId.get(id)).filter(Boolean) as ShopPublicProduct[]
+  const products = await getAllShopProducts();
+  const byId = new Map(products.map((product) => [product.id, product]));
+  return uniqueIds
+    .map((id) => byId.get(id))
+    .filter(Boolean) as ShopPublicProduct[];
 }
 
-export async function getShopProducts(query: ShopProductQuery = {}): Promise<ShopProductListResult> {
-  let products = await getAllShopProducts()
+export async function getShopProducts(
+  query: ShopProductQuery = {},
+): Promise<ShopProductListResult> {
+  let products = await getAllShopProducts();
 
   if (query.category_slug && !query.category_id) {
-    const { category } = await getShopCategoryBySlug(query.category_slug)
+    const { category } = await getShopCategoryBySlug(query.category_slug);
     if (category) {
-      const ids = getShopCategoryDescendantIds(category)
-      products = products.filter((product) => product.category_id && ids.includes(product.category_id))
+      const ids = getShopCategoryDescendantIds(category);
+      products = products.filter(
+        (product) => product.category_id && ids.includes(product.category_id),
+      );
     } else {
-      products = []
+      products = [];
     }
   }
 
   if (query.category_id) {
-    products = products.filter((product) => product.category_id === query.category_id)
+    products = products.filter(
+      (product) => product.category_id === query.category_id,
+    );
   }
 
   if (query.featured) {
-    products = products.filter((product) => product.is_featured)
+    products = products.filter((product) => product.is_featured);
   }
 
   if (query.in_stock) {
-    products = products.filter((product) => product.in_stock)
+    products = products.filter((product) => product.in_stock);
   }
 
   if (query.min_price !== null && query.min_price !== undefined) {
-    products = products.filter((product) => product.display_price >= Number(query.min_price))
+    products = products.filter(
+      (product) => product.display_price >= Number(query.min_price),
+    );
   }
 
   if (query.max_price !== null && query.max_price !== undefined) {
-    products = products.filter((product) => product.display_price <= Number(query.max_price))
+    products = products.filter(
+      (product) => product.display_price <= Number(query.max_price),
+    );
   }
 
-  const search = query.search?.trim().toLowerCase()
+  const search = query.search?.trim().toLowerCase();
   if (search) {
     products = products.filter((product) => {
       const haystack = [
         product.name,
-        product.description ?? '',
-        product.category_name ?? '',
+        product.description ?? "",
+        product.category_name ?? "",
         ...product.tags,
         ...product.occasion_tags,
-      ].join(' ').toLowerCase()
-      return haystack.includes(search)
-    })
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(search);
+    });
   }
 
   switch (query.sort) {
-    case 'price_asc':
-      products.sort((a, b) => a.display_price - b.display_price)
-      break
-    case 'price_desc':
-      products.sort((a, b) => b.display_price - a.display_price)
-      break
-    case 'rating':
-      products.sort((a, b) => b.avg_rating - a.avg_rating || b.review_count - a.review_count)
-      break
-    case 'featured':
-      products.sort((a, b) => Number(b.is_featured) - Number(a.is_featured))
-      break
-    case 'newest':
+    case "price_asc":
+      products.sort((a, b) => a.display_price - b.display_price);
+      break;
+    case "price_desc":
+      products.sort((a, b) => b.display_price - a.display_price);
+      break;
+    case "rating":
+      products.sort(
+        (a, b) =>
+          b.avg_rating - a.avg_rating || b.review_count - a.review_count,
+      );
+      break;
+    case "featured":
+      products.sort((a, b) => Number(b.is_featured) - Number(a.is_featured));
+      break;
+    case "newest":
     default:
-      products.sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())
-      break
+      products.sort(
+        (a, b) =>
+          new Date(b.created_at ?? 0).getTime() -
+          new Date(a.created_at ?? 0).getTime(),
+      );
+      break;
   }
 
-  const page = Math.max(1, Number(query.page ?? 1))
-  const limit = Math.min(96, Math.max(1, Number(query.limit ?? 24)))
-  const total = products.length
-  const start = (page - 1) * limit
-  const paginated = products.slice(start, start + limit)
+  const page = Math.max(1, Number(query.page ?? 1));
+  const limit = Math.min(96, Math.max(1, Number(query.limit ?? 24)));
+  const total = products.length;
+  const start = (page - 1) * limit;
+  const paginated = products.slice(start, start + limit);
 
   return {
     products: paginated,
@@ -537,27 +617,29 @@ export async function getShopProducts(query: ShopProductQuery = {}): Promise<Sho
     page,
     limit,
     total_pages: Math.max(1, Math.ceil(total / limit)),
-  }
+  };
 }
 
-async function queryShopProductBySlugDirect(slug: string): Promise<ShopPublicProduct | null> {
-  const supabase = getPublicSupabaseClient()
-  if (!supabase) return null
+async function queryShopProductBySlugDirect(
+  slug: string,
+): Promise<ShopPublicProduct | null> {
+  const supabase = getPublicSupabaseClient();
+  if (!supabase) return null;
   const { data, error } = await supabase
-    .from('shelf_products')
+    .from("shelf_products")
     .select(PRODUCT_SELECT)
-    .eq('slug', slug)
-    .eq('is_active', true)
-    .eq('is_archived', false)
-    .maybeSingle()
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .eq("is_archived", false)
+    .maybeSingle();
 
-  if (error) throw new Error(error.message)
-  if (!data) return null
-  return mapProduct(data as unknown as RawProduct)
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  return mapProduct(data as unknown as RawProduct);
 }
 
 export async function getShopProductBySlug(slug: string) {
-  return queryShopProductBySlugDirect(slug)
+  return queryShopProductBySlugDirect(slug);
 }
 
 export async function getShopRecommendations({
@@ -566,135 +648,187 @@ export async function getShopRecommendations({
   tags,
   limit = 6,
 }: {
-  productId?: string | null
-  categoryId?: string | null
-  tags?: string[]
-  limit?: number
+  productId?: string | null;
+  categoryId?: string | null;
+  tags?: string[];
+  limit?: number;
 }) {
-  const normalizedLimit = Math.min(12, Math.max(1, Number(limit) || 6))
-  const products = await getAllShopProducts()
-  const currentProduct = productId ? products.find((product) => product.id === productId) ?? null : null
-  const resolvedCategoryId = currentProduct?.category_id ?? categoryId ?? null
-  const resolvedTags = Array.from(new Set([
-    ...(currentProduct?.tags ?? []),
-    ...(currentProduct?.occasion_tags ?? []),
-    ...(tags ?? []),
-  ].map((tag) => tag.trim().toLowerCase()).filter(Boolean)))
-  const selected: ShopPublicProduct[] = []
-  const selectedIds = new Set<string>()
+  const normalizedLimit = Math.min(12, Math.max(1, Number(limit) || 6));
+  const products = await getAllShopProducts();
+  const currentProduct = productId
+    ? (products.find((product) => product.id === productId) ?? null)
+    : null;
+  const resolvedCategoryId = currentProduct?.category_id ?? categoryId ?? null;
+  const resolvedTags = Array.from(
+    new Set(
+      [
+        ...(currentProduct?.tags ?? []),
+        ...(currentProduct?.occasion_tags ?? []),
+        ...(tags ?? []),
+      ]
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  );
+  const selected: ShopPublicProduct[] = [];
+  const selectedIds = new Set<string>();
 
   const addProducts = (items: ShopPublicProduct[]) => {
     for (const item of items) {
-      if (selected.length >= normalizedLimit) return
-      if (item.id === productId || selectedIds.has(item.id)) continue
-      selected.push(item)
-      selectedIds.add(item.id)
+      if (selected.length >= normalizedLimit) return;
+      if (item.id === productId || selectedIds.has(item.id)) continue;
+      selected.push(item);
+      selectedIds.add(item.id);
     }
-  }
+  };
 
-  const featuredNewestSort = (left: ShopPublicProduct, right: ShopPublicProduct) =>
+  const featuredNewestSort = (
+    left: ShopPublicProduct,
+    right: ShopPublicProduct,
+  ) =>
     Number(right.is_featured) - Number(left.is_featured) ||
-    new Date(right.created_at ?? 0).getTime() - new Date(left.created_at ?? 0).getTime()
+    new Date(right.created_at ?? 0).getTime() -
+      new Date(left.created_at ?? 0).getTime();
 
   if (resolvedCategoryId) {
     addProducts(
       products
         .filter((product) => product.category_id === resolvedCategoryId)
-        .sort(featuredNewestSort)
-    )
+        .sort(featuredNewestSort),
+    );
   }
 
   if (selected.length < normalizedLimit && resolvedTags.length > 0) {
     addProducts(
       products
         .filter((product) => {
-          const productTags = [...product.tags, ...product.occasion_tags].map((tag) => tag.toLowerCase())
-          return productTags.some((tag) => resolvedTags.includes(tag))
+          const productTags = [...product.tags, ...product.occasion_tags].map(
+            (tag) => tag.toLowerCase(),
+          );
+          return productTags.some((tag) => resolvedTags.includes(tag));
         })
-        .sort(featuredNewestSort)
-    )
+        .sort(featuredNewestSort),
+    );
   }
 
   if (selected.length < normalizedLimit) {
     addProducts(
-      products.sort((left, right) => new Date(right.created_at ?? 0).getTime() - new Date(left.created_at ?? 0).getTime())
-    )
+      products.sort(
+        (left, right) =>
+          new Date(right.created_at ?? 0).getTime() -
+          new Date(left.created_at ?? 0).getTime(),
+      ),
+    );
   }
 
-  return selected.slice(0, normalizedLimit)
+  return selected.slice(0, normalizedLimit);
 }
 
 export async function getShopProductReviews(
   productId: string,
   page = 1,
   limit = 10,
-  sort: 'newest' | 'highest' | 'lowest' | 'helpful' = 'newest'
+  sort: "newest" | "highest" | "lowest" | "helpful" = "newest",
 ): Promise<ShopReviewsResult> {
-  const supabase = await createServerSupabaseClient()
-  const normalizedPage = Math.max(1, page)
-  const normalizedLimit = Math.min(30, Math.max(1, limit))
-  const from = (normalizedPage - 1) * normalizedLimit
-  const to = from + normalizedLimit - 1
+  const supabase = await createServerSupabaseClient();
+  const normalizedPage = Math.max(1, page);
+  const normalizedLimit = Math.min(30, Math.max(1, limit));
+  const from = (normalizedPage - 1) * normalizedLimit;
+  const to = from + normalizedLimit - 1;
 
-  let orderColumn = 'created_at'
-  let ascending = false
-  if (sort === 'highest') { orderColumn = 'rating'; ascending = false }
-  else if (sort === 'lowest') { orderColumn = 'rating'; ascending = true }
+  let orderColumn = "created_at";
+  let ascending = false;
+  if (sort === "highest") {
+    orderColumn = "rating";
+    ascending = false;
+  } else if (sort === "lowest") {
+    orderColumn = "rating";
+    ascending = true;
+  }
 
   const { data, count, error } = await supabase
-    .from('shelf_reviews')
-    .select('id,product_id,user_id,order_id,rating,title,body,image_urls,is_verified_purchase,admin_reply,admin_replied_at,created_at,updated_at', { count: 'exact' })
-    .eq('product_id', productId)
-    .eq('is_approved', true)
+    .from("shelf_reviews")
+    .select(
+      "id,product_id,user_id,order_id,rating,title,body,image_urls,is_verified_purchase,admin_reply,admin_replied_at,created_at,updated_at",
+      { count: "exact" },
+    )
+    .eq("product_id", productId)
+    .eq("is_approved", true)
     .order(orderColumn, { ascending })
-    .range(from, to)
+    .range(from, to);
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(error.message);
 
-  const rows = (data ?? []) as RawReview[]
-  const userIds = Array.from(new Set(rows.map((review) => review.user_id).filter(Boolean))) as string[]
-  const namesById = new Map<string, string>()
+  const rows = (data ?? []) as RawReview[];
+  const userIds = Array.from(
+    new Set(rows.map((review) => review.user_id).filter(Boolean)),
+  ) as string[];
+  const namesById = new Map<string, string>();
 
   if (userIds.length > 0) {
     const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id,name,full_name')
-      .in('id', userIds)
-    ;((profiles ?? []) as { id: string; name?: string | null; full_name?: string | null }[]).forEach((profile) => {
-      namesById.set(profile.id, formatShopReviewerName(profile.full_name || profile.name || 'Verified customer'))
-    })
+      .from("profiles")
+      .select("id,name,full_name")
+      .in("id", userIds);
+    (
+      (profiles ?? []) as {
+        id: string;
+        name?: string | null;
+        full_name?: string | null;
+      }[]
+    ).forEach((profile) => {
+      namesById.set(
+        profile.id,
+        formatShopReviewerName(
+          profile.full_name || profile.name || "Verified customer",
+        ),
+      );
+    });
   }
 
-  const reviewIds = rows.map((review) => review.id).filter(Boolean) as string[]
-  const helpfulCounts = new Map<string, { helpful: number; notHelpful: number }>()
-  const userVotes = new Map<string, boolean>()
+  const reviewIds = rows.map((review) => review.id).filter(Boolean) as string[];
+  const helpfulCounts = new Map<
+    string,
+    { helpful: number; notHelpful: number }
+  >();
+  const userVotes = new Map<string, boolean>();
 
   if (reviewIds.length > 0) {
     const { data: votes } = await supabase
-      .from('shelf_review_votes')
-      .select('review_id, user_id, is_helpful')
-      .in('review_id', reviewIds)
+      .from("shelf_review_votes")
+      .select("review_id, user_id, is_helpful")
+      .in("review_id", reviewIds);
 
-    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser();
 
-    ;(votes ?? []).forEach((vote: { review_id: string; user_id: string; is_helpful: boolean }) => {
-      const current = helpfulCounts.get(vote.review_id) ?? { helpful: 0, notHelpful: 0 }
-      if (vote.is_helpful) current.helpful += 1
-      else current.notHelpful += 1
-      helpfulCounts.set(vote.review_id, current)
-      if (currentUser && vote.user_id === currentUser.id) {
-        userVotes.set(vote.review_id, vote.is_helpful)
-      }
-    })
+    (votes ?? []).forEach(
+      (vote: { review_id: string; user_id: string; is_helpful: boolean }) => {
+        const current = helpfulCounts.get(vote.review_id) ?? {
+          helpful: 0,
+          notHelpful: 0,
+        };
+        if (vote.is_helpful) current.helpful += 1;
+        else current.notHelpful += 1;
+        helpfulCounts.set(vote.review_id, current);
+        if (currentUser && vote.user_id === currentUser.id) {
+          userVotes.set(vote.review_id, vote.is_helpful);
+        }
+      },
+    );
   }
 
   let reviews: ShopPublicReview[] = rows.map((review) => {
-    const counts = helpfulCounts.get(review.id ?? '') ?? { helpful: 0, notHelpful: 0 }
+    const counts = helpfulCounts.get(review.id ?? "") ?? {
+      helpful: 0,
+      notHelpful: 0,
+    };
     return {
-      id: review.id ?? '',
+      id: review.id ?? "",
       product_id: review.product_id ?? productId,
-      user_id: review.user_id ?? '',
-      order_id: review.order_id ?? '',
+      user_id: review.user_id ?? "",
+      order_id: review.order_id ?? "",
       rating: normalizeShopNumber(review.rating),
       title: review.title ?? null,
       body: review.body ?? null,
@@ -704,15 +838,20 @@ export async function getShopProductReviews(
       admin_replied_at: review.admin_replied_at ?? null,
       created_at: review.created_at ?? null,
       updated_at: review.updated_at ?? null,
-      reviewer_name: namesById.get(review.user_id ?? '') ?? 'Verified customer',
+      reviewer_name: namesById.get(review.user_id ?? "") ?? "Verified customer",
       helpful_count: counts.helpful,
       not_helpful_count: counts.notHelpful,
-      user_vote: userVotes.get(review.id ?? '') ?? null,
-    }
-  })
+      user_vote: userVotes.get(review.id ?? "") ?? null,
+    };
+  });
 
-  if (sort === 'helpful') {
-    reviews = reviews.sort((a, b) => b.helpful_count - a.helpful_count || b.created_at?.localeCompare(a.created_at ?? '') || 0)
+  if (sort === "helpful") {
+    reviews = reviews.sort(
+      (a, b) =>
+        b.helpful_count - a.helpful_count ||
+        b.created_at?.localeCompare(a.created_at ?? "") ||
+        0,
+    );
   }
 
   return {
@@ -720,30 +859,42 @@ export async function getShopProductReviews(
     total: count ?? reviews.length,
     page: normalizedPage,
     limit: normalizedLimit,
-    total_pages: Math.max(1, Math.ceil((count ?? reviews.length) / normalizedLimit)),
-  }
+    total_pages: Math.max(
+      1,
+      Math.ceil((count ?? reviews.length) / normalizedLimit),
+    ),
+  };
 }
 
 export async function getShopHomeData(): Promise<ShopHomeData> {
   const [categories, productResult] = await Promise.all([
     getShopCategories(),
-    getShopProducts({ limit: 96, sort: 'newest' }),
-  ])
-  const products = productResult.products
-  const occasionTags = ['Diwali', 'Gaming Setup', 'Office Desk', 'Gift']
+    getShopProducts({ limit: 96, sort: "newest" }),
+  ]);
+  const products = productResult.products;
+  const occasionTags = ["Diwali", "Gaming Setup", "Office Desk", "Gift"];
 
   return {
-    featured_products: products.filter((product) => product.is_featured).slice(0, 8),
+    featured_products: products
+      .filter((product) => product.is_featured)
+      .slice(0, 8),
     new_arrivals: products.slice(0, 8),
     categories,
-    occasion_collections: occasionTags.map((tag) => ({
-      tag,
-      products: products
-        .filter((product) =>
-          product.occasion_tags.some((item) => item.toLowerCase().includes(tag.toLowerCase())) ||
-          product.tags.some((item) => item.toLowerCase().includes(tag.toLowerCase()))
-        )
-        .slice(0, 4),
-    })).filter((collection) => collection.products.length > 0),
-  }
+    occasion_collections: occasionTags
+      .map((tag) => ({
+        tag,
+        products: products
+          .filter(
+            (product) =>
+              product.occasion_tags.some((item) =>
+                item.toLowerCase().includes(tag.toLowerCase()),
+              ) ||
+              product.tags.some((item) =>
+                item.toLowerCase().includes(tag.toLowerCase()),
+              ),
+          )
+          .slice(0, 4),
+      }))
+      .filter((collection) => collection.products.length > 0),
+  };
 }
