@@ -37,7 +37,10 @@ export function LongDescriptionSection() {
 
   function convertToBlocks() {
     if (!canConvert) return;
-    const blocks = convertRichHtmlToBlocks(product.long_description ?? "");
+    const blocks = convertRichHtmlToBlocks(
+      product.long_description ?? "",
+      product.name,
+    );
     if (blocks.length === 0) {
       setToast({
         type: "error",

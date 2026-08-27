@@ -200,6 +200,8 @@ function ProductStory({
 }) {
   const hasBlocks = Array.isArray(blocks) && blocks.length > 0;
   const hasHtml = Boolean(longDescription?.trim());
+  const hasSpecsBlock =
+    hasBlocks && blocks.some((block) => block.type === "specs_table");
   return (
     <div className="space-y-20 md:space-y-24">
       {hasBlocks ? (
@@ -220,11 +222,13 @@ function ProductStory({
           </p>
         </section>
       )}
-      <SpecificationsSection
-        skuCode={skuCode}
-        weightGrams={weightGrams}
-        dimensions={dimensions}
-      />
+      {!hasSpecsBlock && (
+        <SpecificationsSection
+          skuCode={skuCode}
+          weightGrams={weightGrams}
+          dimensions={dimensions}
+        />
+      )}
       <ShippingSection />
     </div>
   );

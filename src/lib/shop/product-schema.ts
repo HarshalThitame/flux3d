@@ -112,7 +112,14 @@ export function getPublishBlockers(product: ProductForm): string[] {
   if (!product.name.trim()) blockers.push("Add a product name");
   if (!product.slug.trim()) blockers.push("Add a product slug");
   if (!product.category_id) blockers.push("Assign a category");
-  if (!product.description.trim() && !product.long_description.trim()) {
+  const hasBlocks =
+    Array.isArray(product.long_description_blocks) &&
+    product.long_description_blocks.length > 0;
+  if (
+    !product.description.trim() &&
+    !product.long_description.trim() &&
+    !hasBlocks
+  ) {
     blockers.push("Add at least a short or detailed description");
   }
   if (product.base_price <= 0)

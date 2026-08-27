@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   Copy,
+  Eye,
   GripVertical,
   Heading1,
   Image,
@@ -29,6 +30,7 @@ import {
   updateBlockInList,
 } from "./editors";
 import { AiAssistButton } from "../AiAssist";
+import LuxuryDescriptionBlocks from "@/components/shop/blocks/LuxuryDescriptionBlocks";
 
 const BLOCK_ICONS: Record<
   BlockType,
@@ -63,6 +65,7 @@ export function BlockBuilder({
   const [addOpen, setAddOpen] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [preview, setPreview] = useState(false);
 
   function addBlock(type: BlockType) {
     onChange([...blocks, createEmptyBlock(type)]);
@@ -95,11 +98,27 @@ export function BlockBuilder({
             reorder.
           </div>
         </div>
-        <AiAssistButton
-          kind="luxury_blocks"
-          label="Generate with AI"
-          title="Generate the full luxury description with AI"
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPreview((current) => !current)}
+            disabled={blocks.length === 0}
+            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+              preview
+                ? "border-[#6d28d9]/40 bg-[#6d28d9]/10 text-[#6d28d9]"
+                : "border-[#6d28d9]/20 bg-white text-[#6d28d9] hover:bg-[#6d28d9]/5"
+            }`}
+            title="Preview how this renders on the product page"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            {preview ? "Hide Preview" : "Preview"}
+          </button>
+          <AiAssistButton
+            kind="luxury_blocks"
+            label="Generate with AI"
+            title="Generate the full luxury description with AI"
+          />
+        </div>
       </div>
 
       {blocks.length === 0 ? (
@@ -247,6 +266,23 @@ export function BlockBuilder({
               </div>
             )}
           </div>
+          {preview && (
+            <div className="rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-5 shadow-[var(--shop-shadow-sm)] md:p-8">
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-semibold text-[#0F1B3D]">
+                    Live Preview
+                  </div>
+                  <div className="mt-0.5 text-xs text-[#6F7192]">
+                    Renders exactly as it will appear on the product page.
+                  </div>
+                </div>
+              </div>
+              <div className="[&_[style]]:transition [&_.motion-safe]:transition">
+                <LuxuryDescriptionBlocks blocks={blocks} />
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

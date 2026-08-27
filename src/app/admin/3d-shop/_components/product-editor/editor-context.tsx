@@ -36,6 +36,7 @@ import {
 } from "@/lib/shop/upload";
 import type { ProductTemplate } from "@/lib/shop/templates";
 import { templateLongDescription } from "@/lib/shop/templates";
+import { convertRichHtmlToBlocks } from "@/lib/shop/html-to-blocks";
 import {
   addRevision,
   clearRevisions,
@@ -116,6 +117,7 @@ type ProductEditorContextValue = {
     skuId?: string,
     onProgress?: (progress: number) => void,
   ) => Promise<string | void>;
+  uploadBlockImage: (file: File) => Promise<string>;
   uploadModel: (file: File) => Promise<void>;
   removeModel: () => void;
   uploadProductAsset: (
@@ -874,10 +876,15 @@ export function ProductEditorProvider({
 
         const currentName =
           form.productRef.current.name.trim() || template.name;
+        const templateHtml = templateLongDescription(template, currentName);
         const updates: Partial<ProductForm> = {
           name: currentName,
           description: template.short_description,
-          long_description: templateLongDescription(template, currentName),
+          long_description: templateHtml,
+          long_description_blocks: convertRichHtmlToBlocks(
+            templateHtml,
+            currentName,
+          ),
           tags: template.tags,
           occasion_tags: template.occasion_tags,
           is_customizable: template.is_customizable,
@@ -1302,6 +1309,22 @@ export function ProductEditorProvider({
       return publicUrl;
     },
     [ensureProductId, form],
+  );
+
+  const uploadBlockImage = useCallback(
+    async (file: File) => {
+      const validationError = validateImageFile(file);
+      if (validationError) throw new Error(validationError);
+      const id = await ensureProductId();
+      const { publicUrl } = await uploadFileWithProgress(
+        "/api/3d-shop/admin/upload",
+        file,
+        id,
+        () => {},
+      );
+      return publicUrl;
+    },
+    [ensureProductId],
   );
 
   const uploadModel = useCallback(
@@ -2290,6 +2313,7 @@ export function ProductEditorProvider({
     restoreRevision,
     clearRevisionHistory,
     uploadImage,
+    uploadBlockImage,
     uploadModel,
     removeModel,
     uploadProductAsset,

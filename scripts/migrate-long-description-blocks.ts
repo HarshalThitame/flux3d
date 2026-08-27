@@ -31,7 +31,10 @@ async function main() {
   let converted = 0;
   let skipped = 0;
   for (const row of rows) {
-    const blocks = convertRichHtmlToBlocks(row.long_description ?? "");
+    const blocks = convertRichHtmlToBlocks(
+      row.long_description ?? "",
+      row.name,
+    );
     if (blocks.length === 0) {
       skipped += 1;
       continue;

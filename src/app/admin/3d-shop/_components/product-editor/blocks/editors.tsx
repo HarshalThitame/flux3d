@@ -1,8 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Plus, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { ImagePlus, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 import type { DescriptionBlock, DescriptionBlocks } from "@/lib/shop/blocks";
+import { useProductEditor } from "../editor-context";
 import { IconPicker } from "./IconPicker";
 
 const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), {
@@ -95,6 +97,7 @@ export function ParagraphEditor({
         content={block.html}
         onChange={(html) => onChange({ ...block, html })}
         placeholder="Write product details..."
+        disableHeadings
       />
     </div>
   );
@@ -281,15 +284,89 @@ export function ImageTextSplitEditor({
   block: Extract<DescriptionBlock, { type: "image_text_split" }>;
   onChange: (block: DescriptionBlock) => void;
 }) {
+  const { uploadBlockImage, setToast } = useProductEditor();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleUpload(file: File) {
+    setUploading(true);
+    try {
+      const publicUrl = await uploadBlockImage(file);
+      onChange({ ...block, image_url: publicUrl, alt: block.alt || file.name });
+    } catch (error) {
+      setToast({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Image upload failed.",
+      });
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-2">
-        <TextField
-          label="Image URL"
-          value={block.image_url}
-          onChange={(image_url) => onChange({ ...block, image_url })}
-          placeholder="https://... or select from gallery"
-        />
+        <div>
+          <span className={labelClass}>Image</span>
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void handleUpload(file);
+                event.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[#6d28d9]/20 bg-white px-3 py-2.5 text-sm font-medium text-[#6d28d9] transition hover:bg-[#6d28d9]/5 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="h-4 w-4" />
+              )}
+              {uploading ? "Uploading..." : "Upload"}
+            </button>
+            <input
+              value={block.image_url}
+              onChange={(event) =>
+                onChange({ ...block, image_url: event.target.value })
+              }
+              placeholder="...or paste image URL"
+              className={`${smallInput} w-full`}
+            />
+          </div>
+          {block.image_url ? (
+            <div className="mt-2 flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={block.image_url}
+                alt=""
+                className="h-14 w-14 shrink-0 rounded-lg border border-[#6d28d9]/10 object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => onChange({ ...block, image_url: "" })}
+                className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-2 py-1 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
+              >
+                <X className="h-3.5 w-3.5" />
+                Remove image
+              </button>
+            </div>
+          ) : (
+            <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#6F7192]">
+              <ImagePlus className="h-3.5 w-3.5" />
+              Upload or paste an image URL for this split section.
+            </p>
+          )}
+        </div>
         <TextField
           label="Alt text"
           value={block.alt}

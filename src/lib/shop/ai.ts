@@ -1,7 +1,8 @@
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import type { ProductDimensions } from "@/lib/shop/admin-types";
-import type { DescriptionBlock, DescriptionBlocks } from "@/lib/shop/blocks";
+import type { DescriptionBlocks } from "@/lib/shop/blocks";
+import { descriptionBlockSchema } from "@/lib/shop/blocks";
 
 export type AiTone = "professional" | "playful" | "technical" | "minimal";
 
@@ -242,7 +243,6 @@ export function parseJsonArray(raw: string): string[] {
       .filter((item) => item.length > 1);
   }
 }
-
 export function parseBlocksJson(raw: string): DescriptionBlocks {
   try {
     const parsed = JSON.parse(stripFences(raw)) as unknown;
@@ -250,17 +250,25 @@ export function parseBlocksJson(raw: string): DescriptionBlocks {
       ? parsed
       : (parsed as { blocks?: unknown }).blocks;
     if (!Array.isArray(list)) return [];
-    const blocks = list.filter((item): item is DescriptionBlock => {
-      if (!item || typeof item !== "object") return false;
-      const candidate = item as Record<string, unknown>;
-      return (
-        typeof candidate.type === "string" && typeof candidate === "object"
-      );
-    }) as DescriptionBlocks;
-    return blocks.slice(0, 50);
+    const blocks: DescriptionBlocks = [];
+    for (const item of list.slice(0, 50)) {
+      const result = descriptionBlockSchema.safeParse(item);
+      if (result.success) blocks.push(result.data);
+    }
+    return blocks;
   } catch {
     return [];
   }
+}
+
+function parseBlocksValue(value: unknown): DescriptionBlocks {
+  if (!Array.isArray(value)) return [];
+  const blocks: DescriptionBlocks = [];
+  for (const item of value.slice(0, 50)) {
+    const result = descriptionBlockSchema.safeParse(item);
+    if (result.success) blocks.push(result.data);
+  }
+  return blocks;
 }
 
 export function parseAllJson(raw: string): AiAllResult {
@@ -278,9 +286,7 @@ export function parseAllJson(raw: string): AiAllResult {
     return {
       short_description: String(parsed.short_description ?? "").trim(),
       long_description: String(parsed.long_description ?? "").trim(),
-      luxury_blocks: Array.isArray(parsed.luxury_blocks)
-        ? (parsed.luxury_blocks as DescriptionBlocks)
-        : [],
+      luxury_blocks: parseBlocksValue(parsed.luxury_blocks),
       meta_title: String(parsed.meta_title ?? "").trim(),
       meta_description: String(parsed.meta_description ?? "").trim(),
       tags: Array.isArray(parsed.tags) ? parsed.tags.map(String) : [],
