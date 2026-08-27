@@ -44,6 +44,11 @@ export function UnifiedMediaPool() {
     [product, variantOptionImages, skuImages, skus],
   );
 
+  const attachedUrls = useMemo(
+    () => new Set(pool.map((item) => item.url)),
+    [pool],
+  );
+
   const galleryCount = pool.filter((item) => item.inProductGallery).length;
   const variantOnlyCount = pool.length - galleryCount;
   const galleryLimit = 20;
@@ -349,6 +354,7 @@ export function UnifiedMediaPool() {
       {libraryOpen && (
         <MediaLibraryModal
           onClose={() => setLibraryOpen(false)}
+          attachedUrls={attachedUrls}
           onPick={(url) => {
             attachLibraryImage(url);
             setLibraryOpen(false);

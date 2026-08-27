@@ -96,12 +96,10 @@ function SkuModelUpload({ sku }: { sku: ShopSku }) {
 
 function SkuGallerySummary({ sku }: { sku: ShopSku }) {
   const { skuImages } = useProductEditor();
-  const attached: ShopSkuImage[] = skuImages[sku.id] ?? [];
-  const images = [
-    ...(sku.variant_image_url ? [sku.variant_image_url] : []),
-    ...attached.map((image) => image.image_url),
-  ].filter((url, index, arr) => arr.indexOf(url) === index);
-  const previews = images.slice(0, 3);
+  const images: ShopSkuImage[] = skuImages[sku.id] ?? [];
+  const previews = [...images]
+    .sort((a, b) => a.display_order - b.display_order)
+    .slice(0, 3);
 
   if (images.length === 0) {
     return (
@@ -124,14 +122,14 @@ function SkuGallerySummary({ sku }: { sku: ShopSku }) {
         <Images className="h-4 w-4" />
         {images.length}
       </span>
-      {previews.map((url) => (
+      {previews.map((image) => (
         <span
-          key={url}
+          key={image.id}
           className="relative h-7 w-7 overflow-hidden rounded-md border border-gray-200"
         >
           <Image
-            src={url}
-            alt="SKU image"
+            src={image.image_url}
+            alt={image.alt_text ?? "SKU image"}
             fill
             sizes="28px"
             className="object-cover"

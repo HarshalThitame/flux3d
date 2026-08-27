@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { X } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 type LibraryAsset = {
   id: string;
@@ -13,9 +13,11 @@ type LibraryAsset = {
 
 export function MediaLibraryModal({
   onClose,
+  attachedUrls,
   onPick,
 }: {
   onClose: () => void;
+  attachedUrls: Set<string>;
   onPick: (url: string) => void;
 }) {
   const [assets, setAssets] = useState<LibraryAsset[]>([]);
@@ -100,26 +102,42 @@ export function MediaLibraryModal({
             </p>
           )}
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
-            {assets.map((asset) => (
-              <button
-                key={asset.id}
-                type="button"
-                onClick={() => onPick(asset.public_url)}
-                title={asset.file_name ?? "Attach image"}
-                className="group relative aspect-square overflow-hidden rounded-xl border border-gray-200 bg-gray-50 transition hover:border-[#6d28d9] hover:shadow-md"
-              >
-                <Image
-                  src={asset.public_url}
-                  alt={asset.file_name ?? "Library image"}
-                  fill
-                  sizes="140px"
-                  className="object-cover"
-                />
-                <span className="absolute inset-x-0 bottom-0 hidden bg-[#0F1B3D]/75 px-1 py-0.5 text-center text-[9px] font-semibold text-white backdrop-blur group-hover:block">
-                  Attach
-                </span>
-              </button>
-            ))}
+            {assets.map((asset) => {
+              const attached = attachedUrls.has(asset.public_url);
+              return (
+                <button
+                  key={asset.id}
+                  type="button"
+                  onClick={() => onPick(asset.public_url)}
+                  title={
+                    attached
+                      ? `${asset.file_name ?? "Image"} — in this product`
+                      : (asset.file_name ?? "Attach image")
+                  }
+                  className={`group relative aspect-square overflow-hidden rounded-xl border bg-gray-50 transition hover:border-[#6d28d9] hover:shadow-md ${
+                    attached ? "border-[#6d28d9]/50" : "border-gray-200"
+                  }`}
+                >
+                  <Image
+                    src={asset.public_url}
+                    alt={asset.file_name ?? "Library image"}
+                    fill
+                    sizes="140px"
+                    className="object-cover"
+                  />
+                  {attached ? (
+                    <span className="absolute inset-x-0 top-0 inline-flex items-center justify-center gap-1 bg-[#6d28d9]/90 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white backdrop-blur">
+                      <Check className="h-2.5 w-2.5" />
+                      In product
+                    </span>
+                  ) : (
+                    <span className="absolute inset-x-0 bottom-0 hidden bg-[#0F1B3D]/75 px-1 py-0.5 text-center text-[9px] font-semibold text-white backdrop-blur group-hover:block">
+                      Attach
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
           {assets.length < total && (
             <div className="mt-4 text-center">

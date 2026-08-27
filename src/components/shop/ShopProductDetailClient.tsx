@@ -109,8 +109,18 @@ function GalleryThumb({
   onClick: () => void;
 }) {
   const [aspect, setAspect] = useState<number | null>(null);
+  const thumbRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    const img = thumbRef.current?.querySelector("img");
+    if (img && img.complete && img.naturalWidth > 0) {
+      setAspect(img.naturalWidth / img.naturalHeight);
+    }
+  }, []);
+
   return (
     <button
+      ref={thumbRef}
       type="button"
       onClick={onClick}
       aria-label={label}
@@ -364,6 +374,8 @@ export default function ShopProductDetailClient({
   const [lightboxPan, setLightboxPan] = useState({ x: 0, y: 0 });
   const lightboxZoomRef = useRef(1);
   const lightboxPanRef = useRef({ x: 0, y: 0 });
+  const lightboxNaturalRef = useRef({ w: 0, h: 0 });
+  const dragStartPanRef = useRef({ x: 0, y: 0 });
   const [modelOpen, setModelOpen] = useState(false);
   useScrollLock(Boolean(lightboxImage) || modelOpen);
   useEscape(() => setLightboxImage(null), Boolean(lightboxImage));
@@ -407,6 +419,16 @@ export default function ShopProductDetailClient({
     }
   }, [safeMediaPos]);
 
+  useEffect(() => {
+    const img = lightboxRef.current?.querySelector("img");
+    if (img && img.naturalWidth > 0) {
+      lightboxNaturalRef.current = {
+        w: img.naturalWidth,
+        h: img.naturalHeight,
+      };
+    }
+  }, [lightboxImage]);
+
   function goImage(dir: 1 | -1) {
     if (mediaItems.length < 2) return;
     const next = Math.min(
@@ -420,6 +442,7 @@ export default function ShopProductDetailClient({
   function openLightbox(src: string) {
     lightboxZoomRef.current = 1;
     lightboxPanRef.current = { x: 0, y: 0 };
+    lightboxNaturalRef.current = { w: 0, h: 0 };
     setLightboxZoom(1);
     setLightboxPan({ x: 0, y: 0 });
     setLightboxImage(src);
@@ -432,15 +455,64 @@ export default function ShopProductDetailClient({
     if (next === idx) return;
     lightboxZoomRef.current = 1;
     lightboxPanRef.current = { x: 0, y: 0 };
+    lightboxNaturalRef.current = { w: 0, h: 0 };
     setLightboxZoom(1);
     setLightboxPan({ x: 0, y: 0 });
     setLightboxImage(images[next]);
   }
 
   /**
-   * Deep zoom around a container-space point using a translate + scale
-   * transform (origin 0 0). The anchor point stays fixed under the cursor.
+   * Clamp one pan axis so the letterboxed image content never leaves the
+   * viewport. `letterboxOffset`/`contentSize` describe the `object-contain`
+   * rectangle inside the container before any transform is applied.
    */
+  function clampLightboxAxis(
+    pan: number,
+    letterboxOffset: number,
+    contentSize: number,
+    viewportSize: number,
+    zoom: number,
+  ) {
+    const scaledStart = letterboxOffset * zoom;
+    const scaledSize = contentSize * zoom;
+    const covers = scaledSize >= viewportSize;
+    const lower = covers
+      ? viewportSize - scaledStart - scaledSize
+      : -scaledStart;
+    const upper = covers
+      ? -scaledStart
+      : viewportSize - scaledStart - scaledSize;
+    return Math.max(lower, Math.min(upper, pan));
+  }
+
+  function clampLightboxPan(nextZoom: number, pan: { x: number; y: number }) {
+    const rect = lightboxRef.current?.getBoundingClientRect();
+    if (!rect || nextZoom <= 1) return { x: 0, y: 0 };
+    const W = rect.width;
+    const H = rect.height;
+    const natural = lightboxNaturalRef.current;
+    let offX = 0;
+    let offY = 0;
+    let imgW = W;
+    let imgH = H;
+    if (natural.w > 0 && natural.h > 0) {
+      const aspect = natural.w / natural.h;
+      if (W / H > aspect) {
+        imgH = H;
+        imgW = H * aspect;
+        offX = (W - imgW) / 2;
+      } else {
+        imgW = W;
+        imgH = W / aspect;
+        offY = (H - imgH) / 2;
+      }
+    }
+    return {
+      x: clampLightboxAxis(pan.x, offX, imgW, W, nextZoom),
+      y: clampLightboxAxis(pan.y, offY, imgH, H, nextZoom),
+    };
+  }
+
   function applyLightboxTransform(
     nextZoom: number,
     anchor: { x: number; y: number } | null,
@@ -457,21 +529,17 @@ export default function ShopProductDetailClient({
       };
     }
     if (panDelta) pan = { x: pan.x + panDelta.x, y: pan.y + panDelta.y };
-    const rect = lightboxRef.current?.getBoundingClientRect();
-    if (rect && nextZoom > 1) {
-      const maxX = (nextZoom - 1) * rect.width;
-      const maxY = (nextZoom - 1) * rect.height;
-      pan = {
-        x: Math.min(0, Math.max(-maxX, pan.x)),
-        y: Math.min(0, Math.max(-maxY, pan.y)),
-      };
-    } else {
-      pan = { x: 0, y: 0 };
-    }
+    pan = clampLightboxPan(nextZoom, pan);
     lightboxZoomRef.current = nextZoom;
     lightboxPanRef.current = pan;
     setLightboxZoom(nextZoom);
     setLightboxPan(pan);
+  }
+
+  function applyLightboxPan(pan: { x: number; y: number }) {
+    const clamped = clampLightboxPan(lightboxZoomRef.current, pan);
+    lightboxPanRef.current = clamped;
+    setLightboxPan(clamped);
   }
 
   function zoomLightboxAt(clientX: number, clientY: number) {
@@ -852,12 +920,21 @@ export default function ShopProductDetailClient({
                 dragElastic={0.08}
                 onDragStart={() => {
                   draggingRef.current = true;
+                  dragStartPanRef.current = lightboxPanRef.current;
+                }}
+                onDrag={(_, info) => {
+                  if (lightboxZoomRef.current > 1) {
+                    applyLightboxPan({
+                      x: dragStartPanRef.current.x + info.offset.x,
+                      y: dragStartPanRef.current.y + info.offset.y,
+                    });
+                  }
                 }}
                 onDragEnd={(_, info) => {
                   if (lightboxZoomRef.current > 1) {
-                    applyLightboxTransform(lightboxZoomRef.current, null, {
-                      x: info.offset.x,
-                      y: info.offset.y,
+                    applyLightboxPan({
+                      x: dragStartPanRef.current.x + info.offset.x,
+                      y: dragStartPanRef.current.y + info.offset.y,
                     });
                   } else if (info.offset.x < -42) {
                     goLightboxImage(1);
@@ -893,6 +970,15 @@ export default function ShopProductDetailClient({
                         sizes="100vw"
                         draggable={false}
                         className="object-contain"
+                        onLoad={(event) => {
+                          const current = event.currentTarget;
+                          if (current.naturalWidth > 0) {
+                            lightboxNaturalRef.current = {
+                              w: current.naturalWidth,
+                              h: current.naturalHeight,
+                            };
+                          }
+                        }}
                       />
                     </div>
                   </motion.div>
