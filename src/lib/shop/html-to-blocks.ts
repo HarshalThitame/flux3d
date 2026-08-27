@@ -6,8 +6,9 @@ const PARAGRAPH_RE = /<(p|div)[^>]*>([\s\S]*?)<\/\1>/gi;
 const LIST_ITEM_RE = /<li[^>]*>([\s\S]*?)<\/li>/gi;
 const TABLE_ROW_RE = /<tr[^>]*>[\s\S]*?<\/tr>/gi;
 const TABLE_CELL_RE = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
-const TH_RE = /<th[^>]*>[\s\S]*?<\/th>/gi;
+const TH_RE = /<th[^>]*>[\s\S]*?<\/th>/i;
 const UL_RE = /<ul[^>]*>([\s\S]*?)<\/ul>/gi;
+const OL_RE = /<ol[^>]*>([\s\S]*?)<\/ol>/gi;
 const TABLE_RE = /<table[^>]*>([\s\S]*?)<\/table>/gi;
 
 const DEFAULT_FEATURE_ICONS = [
@@ -103,6 +104,27 @@ export function convertRichHtmlToBlocks(
     }
   }
 
+  // Ordered lists -> bullet_grid
+  for (const match of Array.from(source.matchAll(OL_RE))) {
+    const start = match.index ?? 0;
+    const items = Array.from(match[0].matchAll(LIST_ITEM_RE))
+      .map((item) =>
+        textOnly(item[1])
+          .replace(/^\d+[.)]?\s*/, "")
+          .trim(),
+      )
+      .filter(Boolean);
+    if (items.length >= 1) {
+      push(start, start + match[0].length, {
+        type: "bullet_grid",
+        title: "",
+        items: items.slice(0, 12).map((item) => ({
+          text: item.slice(0, 300),
+        })),
+      });
+    }
+  }
+
   // Headings -> heading blocks
   for (const match of Array.from(source.matchAll(HEADING_RE))) {
     const start = match.index ?? 0;
@@ -144,6 +166,7 @@ export function convertRichHtmlToBlocks(
     source
       .replace(TABLE_RE, " ")
       .replace(UL_RE, " ")
+      .replace(OL_RE, " ")
       .replace(HEADING_RE, " ")
       .replace(PARAGRAPH_RE, " "),
   );

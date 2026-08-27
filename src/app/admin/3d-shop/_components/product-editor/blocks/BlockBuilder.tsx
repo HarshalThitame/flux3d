@@ -8,7 +8,10 @@ import {
   Heading1,
   Image,
   LayoutGrid,
+  List,
   Minus,
+  MonitorPlay,
+  MoveVertical,
   Quote,
   Table2,
   Trash2,
@@ -43,6 +46,9 @@ const BLOCK_ICONS: Record<
   image_text_split: Image,
   quote: Quote,
   divider: Minus,
+  bullet_grid: List,
+  html_embed: MonitorPlay,
+  spacer: MoveVertical,
 };
 
 const BLOCK_ACCENT: Record<BlockType, string> = {
@@ -53,6 +59,9 @@ const BLOCK_ACCENT: Record<BlockType, string> = {
   image_text_split: "text-rose-600 bg-rose-50 border-rose-200",
   quote: "text-indigo-600 bg-indigo-50 border-indigo-200",
   divider: "text-slate-500 bg-slate-100 border-slate-200",
+  bullet_grid: "text-teal-600 bg-teal-50 border-teal-200",
+  html_embed: "text-orange-600 bg-orange-50 border-orange-200",
+  spacer: "text-gray-500 bg-gray-100 border-gray-200",
 };
 
 export function BlockBuilder({

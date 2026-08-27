@@ -27,19 +27,21 @@ function TextField({
   onChange,
   placeholder,
   textarea = false,
+  rows = 2,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   textarea?: boolean;
+  rows?: number;
 }) {
   return (
     <label className="block">
       <span className={labelClass}>{label}</span>
       {textarea ? (
         <textarea
-          rows={2}
+          rows={rows}
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
@@ -473,6 +475,152 @@ export function DividerEditor({
   );
 }
 
+export function BulletGridEditor({
+  block,
+  onChange,
+}: {
+  block: Extract<DescriptionBlock, { type: "bullet_grid" }>;
+  onChange: (block: DescriptionBlock) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <TextField
+        label="Section title (optional)"
+        value={block.title ?? ""}
+        onChange={(title) => onChange({ ...block, title })}
+        placeholder="e.g. What's Included"
+      />
+      <div className="space-y-2">
+        {block.items.map((item, index) => (
+          <div key={index} className="flex items-start gap-2">
+            <div className="w-40 shrink-0">
+              <span className={labelClass}>Icon (optional)</span>
+              <IconPicker
+                value={item.icon ?? ""}
+                onChange={(icon) => {
+                  const items = block.items.map((entry, i) =>
+                    i === index ? { ...entry, icon: icon || undefined } : entry,
+                  );
+                  onChange({ ...block, items });
+                }}
+              />
+            </div>
+            <TextField
+              label="Text"
+              value={item.text}
+              onChange={(text) => {
+                const items = block.items.map((entry, i) =>
+                  i === index ? { ...entry, text } : entry,
+                );
+                onChange({ ...block, items });
+              }}
+              placeholder="Bullet point text"
+            />
+            <button
+              type="button"
+              onClick={() =>
+                onChange({
+                  ...block,
+                  items: block.items.filter((_, i) => i !== index),
+                })
+              }
+              disabled={block.items.length <= 1}
+              className="mt-6 grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40"
+              title="Remove bullet"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() =>
+          onChange({
+            ...block,
+            items: [...block.items, { icon: "CheckCircle2", text: "" }],
+          })
+        }
+        disabled={block.items.length >= 12}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-[#6d28d9]/20 bg-white px-3 py-1.5 text-xs font-medium text-[#6d28d9] transition hover:bg-[#6d28d9]/5 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <Plus className="h-3.5 w-3.5" />
+        Add bullet
+      </button>
+    </div>
+  );
+}
+
+export function HtmlEmbedEditor({
+  block,
+  onChange,
+}: {
+  block: Extract<DescriptionBlock, { type: "html_embed" }>;
+  onChange: (block: DescriptionBlock) => void;
+}) {
+  return (
+    <div className="grid gap-3">
+      <label className="block">
+        <span className={labelClass}>HTML / Embed code</span>
+        <textarea
+          rows={6}
+          value={block.html}
+          onChange={(event) => onChange({ ...block, html: event.target.value })}
+          placeholder='<iframe src="..." width="100%" height="400"></iframe>'
+          className={`${smallInput} resize-y font-mono text-xs`}
+        />
+      </label>
+      <TextField
+        label="Caption (optional)"
+        value={block.caption ?? ""}
+        onChange={(caption) => onChange({ ...block, caption })}
+        placeholder="e.g. 360° product view"
+      />
+      <p className="text-[11px] text-[#6F7192]">
+        Paste raw HTML, iframe embeds, or third-party widget code. This renders
+        exactly as written on the product page.
+      </p>
+    </div>
+  );
+}
+
+export function SpacerEditor({
+  block,
+  onChange,
+}: {
+  block: Extract<DescriptionBlock, { type: "spacer" }>;
+  onChange: (block: DescriptionBlock) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-medium text-[#6F7192]">Height</span>
+      <div className="flex items-center gap-1 rounded-xl border border-[#6d28d9]/10 bg-gray-50 p-1">
+        {(
+          [
+            { value: "sm", label: "Small" },
+            { value: "md", label: "Medium" },
+            { value: "lg", label: "Large" },
+            { value: "xl", label: "Extra Large" },
+          ] as const
+        ).map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onChange({ ...block, height: option.value })}
+            className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+              block.height === option.value
+                ? "bg-[#6d28d9] text-white"
+                : "text-[#6F7192] hover:bg-white"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function BlockEditor({
   block,
   onChange,
@@ -495,6 +643,12 @@ export function BlockEditor({
       return <QuoteEditor block={block} onChange={onChange} />;
     case "divider":
       return <DividerEditor block={block} onChange={onChange} />;
+    case "bullet_grid":
+      return <BulletGridEditor block={block} onChange={onChange} />;
+    case "html_embed":
+      return <HtmlEmbedEditor block={block} onChange={onChange} />;
+    case "spacer":
+      return <SpacerEditor block={block} onChange={onChange} />;
   }
 }
 

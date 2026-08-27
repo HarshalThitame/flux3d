@@ -163,7 +163,7 @@ function FeatureGridBlock({
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-80px" }}
-        className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4"
+        className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
       >
         {items.map((item, index) => {
           const Icon = resolveIcon(item.icon);
@@ -280,6 +280,90 @@ function DividerBlock({ style }: { style: "gold" | "subtle" }) {
   );
 }
 
+function BulletGridBlock({
+  title,
+  items,
+}: {
+  title?: string;
+  items: { icon?: string; text: string }[];
+}) {
+  return (
+    <motion.div
+      variants={reveal}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-80px" }}
+      className="mx-auto max-w-5xl"
+    >
+      {title && (
+        <h3 className="mb-8 text-center font-[var(--shop-font-heading)] text-2xl font-semibold text-[var(--shop-text-primary)] md:text-3xl">
+          {title}
+        </h3>
+      )}
+      <motion.ul
+        variants={staggerContainer}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      >
+        {items.map((item, index) => {
+          const Icon = item.icon ? resolveIcon(item.icon) : null;
+          return (
+            <motion.li
+              key={index}
+              variants={staggerItem}
+              className="flex items-start gap-3 rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-4 transition duration-300 hover:border-[var(--shop-border-gold)]"
+            >
+              {Icon && (
+                <span className="mt-0.5 shrink-0 text-[var(--shop-gold)]">
+                  <Icon className="h-4 w-4" />
+                </span>
+              )}
+              <span className="text-sm leading-6 text-[var(--shop-text-secondary)]">
+                {item.text}
+              </span>
+            </motion.li>
+          );
+        })}
+      </motion.ul>
+    </motion.div>
+  );
+}
+
+function HtmlEmbedBlock({ html, caption }: { html: string; caption?: string }) {
+  return (
+    <motion.div
+      variants={reveal}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-80px" }}
+      className="mx-auto max-w-5xl"
+    >
+      <div
+        className="overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white"
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+      {caption && (
+        <p className="mt-3 text-center text-xs text-[var(--shop-text-muted)]">
+          {caption}
+        </p>
+      )}
+    </motion.div>
+  );
+}
+
+const SPACER_HEIGHTS: Record<string, string> = {
+  sm: "h-8 md:h-12",
+  md: "h-16 md:h-24",
+  lg: "h-24 md:h-36",
+  xl: "h-36 md:h-52",
+};
+
+function SpacerBlock({ height }: { height: "sm" | "md" | "lg" | "xl" }) {
+  return <div className={SPACER_HEIGHTS[height] ?? "h-16 md:h-24"} />;
+}
+
 function BlockRenderer({ block }: { block: DescriptionBlocks[number] }) {
   switch (block.type) {
     case "heading":
@@ -304,6 +388,12 @@ function BlockRenderer({ block }: { block: DescriptionBlocks[number] }) {
       return <QuoteBlock text={block.text} attribution={block.attribution} />;
     case "divider":
       return <DividerBlock style={block.style} />;
+    case "bullet_grid":
+      return <BulletGridBlock title={block.title} items={block.items} />;
+    case "html_embed":
+      return <HtmlEmbedBlock html={block.html} caption={block.caption} />;
+    case "spacer":
+      return <SpacerBlock height={block.height} />;
   }
 }
 
@@ -315,7 +405,10 @@ export default function LuxuryDescriptionBlocks({
   if (!blocks || blocks.length === 0) return null;
   const visibleBlocks = blocks.filter(
     (block) =>
-      extractTextFromBlock(block).trim().length > 0 || block.type === "divider",
+      extractTextFromBlock(block).trim().length > 0 ||
+      block.type === "divider" ||
+      block.type === "html_embed" ||
+      block.type === "spacer",
   );
   if (visibleBlocks.length === 0) return null;
   return (
