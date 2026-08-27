@@ -237,25 +237,31 @@ export const BLOCK_TYPE_ORDER: BlockType[] = [
 export function createEmptyBlock(type: BlockType): DescriptionBlock {
   switch (type) {
     case "heading":
-      return { type, title: "", subtitle: "" };
+      return { type, title: "Heading", subtitle: "" };
     case "paragraph":
       return { type, html: "" };
     case "specs_table":
-      return { type, title: "", rows: [{ label: "", value: "" }] };
+      return { type, title: "", rows: [{ label: "Label", value: "Value" }] };
     case "feature_grid":
       return {
         type,
         title: "",
         items: [
-          { icon: "Gem", title: "", text: "" },
-          { icon: "Cpu", title: "", text: "" },
-          { icon: "ShieldCheck", title: "", text: "" },
+          { icon: "Gem", title: "Feature", text: "Short description" },
+          { icon: "Cpu", title: "Feature", text: "Short description" },
+          { icon: "ShieldCheck", title: "Feature", text: "Short description" },
         ],
       };
     case "image_text_split":
-      return { type, image_url: "", alt: "", html: "", align: "left" };
+      return {
+        type,
+        image_url: "https://placehold.co/600x400",
+        alt: "",
+        html: "<p>Text</p>",
+        align: "left",
+      };
     case "quote":
-      return { type, text: "", attribution: "" };
+      return { type, text: "Quote text", attribution: "" };
     case "divider":
       return { type, style: "gold" };
     case "bullet_grid":
@@ -263,13 +269,13 @@ export function createEmptyBlock(type: BlockType): DescriptionBlock {
         type,
         title: "",
         items: [
-          { icon: "CheckCircle2", text: "" },
-          { icon: "CheckCircle2", text: "" },
-          { icon: "CheckCircle2", text: "" },
+          { icon: "CheckCircle2", text: "Bullet point" },
+          { icon: "CheckCircle2", text: "Bullet point" },
+          { icon: "CheckCircle2", text: "Bullet point" },
         ],
       };
     case "html_embed":
-      return { type, html: "", caption: "" };
+      return { type, html: "<div>Embed content</div>", caption: "" };
     case "spacer":
       return { type, height: "md" };
   }
