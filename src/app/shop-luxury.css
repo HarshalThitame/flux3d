@@ -2,8 +2,12 @@
 
 /* ── Bento card shimmer sweep ── */
 @keyframes bentoShimmer {
-  0%   { transform: translateX(-140%) rotate(22deg); }
-  100% { transform: translateX(220%) rotate(22deg); }
+  0% {
+    transform: translateX(-140%) rotate(22deg);
+  }
+  100% {
+    transform: translateX(220%) rotate(22deg);
+  }
 }
 
 /* ── Bento card hover shimmer (pure CSS) ── */
@@ -22,10 +26,17 @@
 }
 
 .bento-card-shimmer::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -50%;
-  background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.18) 40%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.18) 60%, transparent 100%);
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.18) 40%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0.18) 60%,
+    transparent 100%
+  );
   transform: translateX(-140%) rotate(22deg);
 }
 
@@ -42,7 +53,7 @@
   --lux-bg-base: var(--luxury-ivory);
   --lux-bg-soft: var(--luxury-cream);
   --lux-bg-muted: var(--luxury-warm-gray);
-  --lux-bg-elevated: #FFFFFF;
+  --lux-bg-elevated: #ffffff;
   --lux-border-light: var(--luxury-taupe);
   --lux-border-medium: var(--luxury-sand);
   --lux-border-gold: rgba(201, 169, 98, 0.35);
@@ -54,33 +65,36 @@
   --lux-radius-md: 18px;
   --lux-radius-lg: 24px;
   --lux-radius-xl: 32px;
-  --lux-shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.04), 0 1px 3px rgba(28, 25, 23, 0.02);
-  --lux-shadow-md: 0 8px 24px rgba(28, 25, 23, 0.06), 0 2px 8px rgba(28, 25, 23, 0.03);
-  --lux-shadow-lg: 0 18px 48px rgba(28, 25, 23, 0.08), 0 6px 16px rgba(28, 25, 23, 0.04);
+  --lux-shadow-sm:
+    0 1px 2px rgba(28, 25, 23, 0.04), 0 1px 3px rgba(28, 25, 23, 0.02);
+  --lux-shadow-md:
+    0 8px 24px rgba(28, 25, 23, 0.06), 0 2px 8px rgba(28, 25, 23, 0.03);
+  --lux-shadow-lg:
+    0 18px 48px rgba(28, 25, 23, 0.08), 0 6px 16px rgba(28, 25, 23, 0.04);
 
   /* Luxury color palette */
-  --luxury-ivory: #FDFCF8;
-  --luxury-cream: #FAF9F5;
-  --luxury-warm-gray: #F2F0EA;
-  --luxury-taupe: #E7E5E0;
-  --luxury-sand: #D7D3CB;
-  --luxury-charcoal: #1C1917;
-  --luxury-stone: #44403C;
-  --luxury-muted: #78716C;
-  --luxury-subtle: #A8A29E;
-  --luxury-indigo: #4338CA;
-  --luxury-indigo-dark: #3730A3;
-  --luxury-indigo-light: #6366F1;
-  --luxury-gold: #C9A962;
-  --luxury-gold-light: #D4B978;
-  --luxury-gold-soft: #F5ECD3;
-  --luxury-gold-faint: #FAF6EB;
+  --luxury-ivory: #fdfcf8;
+  --luxury-cream: #faf9f5;
+  --luxury-warm-gray: #f2f0ea;
+  --luxury-taupe: #e7e5e0;
+  --luxury-sand: #d7d3cb;
+  --luxury-charcoal: #1c1917;
+  --luxury-stone: #44403c;
+  --luxury-muted: #78716c;
+  --luxury-subtle: #a8a29e;
+  --luxury-indigo: #4338ca;
+  --luxury-indigo-dark: #3730a3;
+  --luxury-indigo-light: #6366f1;
+  --luxury-gold: #c9a962;
+  --luxury-gold-light: #d4b978;
+  --luxury-gold-soft: #f5ecd3;
+  --luxury-gold-faint: #faf6eb;
 
   /* Shop module tokens (override/supplement globals.css) */
   --shop-bg-base: var(--luxury-ivory);
   --shop-bg-soft: var(--luxury-cream);
   --shop-bg-muted: var(--luxury-warm-gray);
-  --shop-bg-elevated: #FFFFFF;
+  --shop-bg-elevated: #ffffff;
   --shop-text-primary: var(--luxury-charcoal);
   --shop-text-secondary: var(--luxury-stone);
   --shop-text-muted: var(--luxury-muted);
@@ -93,26 +107,43 @@
   --shop-brand-primary: var(--luxury-indigo);
   --shop-brand-primary-hover: var(--luxury-indigo-dark);
   --shop-brand-secondary: var(--luxury-indigo-light);
-  --shop-brand-faint: #EEF2FF;
+  --shop-brand-faint: #eef2ff;
   --shop-gold: var(--luxury-gold);
   --shop-gold-light: var(--luxury-gold-light);
   --shop-gold-soft: var(--luxury-gold-soft);
   --shop-gold-faint: var(--luxury-gold-faint);
-  --shop-shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.04), 0 1px 3px rgba(28, 25, 23, 0.02);
-  --shop-shadow-md: 0 8px 24px rgba(28, 25, 23, 0.06), 0 2px 8px rgba(28, 25, 23, 0.03);
-  --shop-shadow-lg: 0 18px 48px rgba(28, 25, 23, 0.08), 0 6px 16px rgba(28, 25, 23, 0.04);
+  --shop-shadow-sm:
+    0 1px 2px rgba(28, 25, 23, 0.04), 0 1px 3px rgba(28, 25, 23, 0.02);
+  --shop-shadow-md:
+    0 8px 24px rgba(28, 25, 23, 0.06), 0 2px 8px rgba(28, 25, 23, 0.03);
+  --shop-shadow-lg:
+    0 18px 48px rgba(28, 25, 23, 0.08), 0 6px 16px rgba(28, 25, 23, 0.04);
   --shop-shadow-gold: 0 12px 32px rgba(201, 169, 98, 0.18);
   --shop-radius-sm: 12px;
   --shop-radius-md: 18px;
   --shop-radius-lg: 24px;
   --shop-radius-xl: 32px;
-  --shop-font-heading: var(--font-playfair), 'Playfair Display', Georgia, serif;
-  --shop-font-body: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --shop-font-heading: var(--font-playfair), "Playfair Display", Georgia, serif;
+  --shop-font-body:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   /* Gradients */
-  --shop-gradient-gold: linear-gradient(135deg, var(--luxury-gold) 0%, var(--luxury-gold-light) 100%);
-  --shop-gradient-hero: linear-gradient(180deg, var(--luxury-ivory) 0%, var(--luxury-cream) 100%);
-  --shop-gradient-soft: linear-gradient(135deg, var(--luxury-cream) 0%, #FFFFFF 100%);
+  --shop-gradient-gold: linear-gradient(
+    135deg,
+    var(--luxury-gold) 0%,
+    var(--luxury-gold-light) 100%
+  );
+  --shop-gradient-hero: linear-gradient(
+    180deg,
+    var(--luxury-ivory) 0%,
+    var(--luxury-cream) 100%
+  );
+  --shop-gradient-soft: linear-gradient(
+    135deg,
+    var(--luxury-cream) 0%,
+    #ffffff 100%
+  );
 }
 
 /* Apply luxury typography to shop headings */
@@ -149,7 +180,7 @@
 
 /* Premium filter bar surface */
 .shop-filter-surface {
-  background: linear-gradient(145deg, #FFFFFF 0%, var(--luxury-cream) 100%);
+  background: linear-gradient(145deg, #ffffff 0%, var(--luxury-cream) 100%);
   border: 1px solid var(--luxury-taupe);
   box-shadow: 0 2px 12px rgba(28, 25, 23, 0.04);
 }
@@ -187,7 +218,7 @@
 }
 
 .shop-heading-accent::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -4px;
   left: 0;
@@ -199,7 +230,9 @@
 
 /* Premium stat card hover lift */
 .shop-stat-card {
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .shop-stat-card:hover {
@@ -214,4 +247,30 @@
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* ====================================================
+   PDP — Luxury media gallery (Ken Burns + deep zoom)
+   =================================================== */
+@keyframes shopKenBurns {
+  0% {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.06) translate3d(0, -1%, 0);
+  }
+  100% {
+    transform: scale(1.03) translate3d(1%, 0, 0);
+  }
+}
+
+.shop-kenburns {
+  animation: shopKenBurns 24s cubic-bezier(0.16, 1, 0.3, 1) infinite alternate;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shop-kenburns {
+    animation: none;
+  }
 }

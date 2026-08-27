@@ -25,6 +25,7 @@ import { slugifyShopValue, stableStringify } from "@/lib/shop/admin-types";
 import { emptyDimensions } from "@/lib/shop/dimensions";
 import type { ProductForm, ProductFormErrors } from "@/lib/shop/product-schema";
 import { getPublishBlockers } from "@/lib/shop/product-schema";
+import { skuLabel } from "@/lib/shop/media-pool";
 import type { AiGenerationKind, AiGenerateResult, AiTone } from "@/lib/shop/ai";
 import type { DescriptionBlocks } from "@/lib/shop/blocks";
 import {
@@ -139,6 +140,16 @@ type ProductEditorContextValue = {
   ) => Promise<string | void>;
   removeLandscapeImage: () => void;
   attachLibraryImage: (url: string) => void;
+  assignToVariantOption: (
+    url: string,
+    optionName: string,
+    optionValue: string,
+  ) => Promise<void>;
+  unassignVariantOptionImage: (imageId: string) => Promise<void>;
+  assignToSku: (url: string, skuId: string) => Promise<void>;
+  unassignSkuImage: (imageId: string) => Promise<void>;
+  clearSkuVariantImage: (skuId: string) => Promise<void>;
+  generateImageAlt: (url: string) => Promise<string>;
   aiPrompt: string;
   setAiPrompt: (value: string) => void;
 
@@ -1503,7 +1514,8 @@ export function ProductEditorProvider({
   );
 
   const removeImage = useCallback(
-    (url: string) => {
+    async (url: string) => {
+      const productId = form.productRef.current.id;
       const images = [
         form.productRef.current.thumbnail_url,
         ...form.productRef.current.image_urls,
@@ -1515,6 +1527,68 @@ export function ProductEditorProvider({
         image_urls: images.slice(1),
         image_alt: imageAlt,
       });
+
+      if (productId) {
+        // Cascade: remove the URL from every variant-option assignment.
+        const variantMatches = variantOptionImagesRef.current.filter(
+          (image) => image.image_url === url,
+        );
+        if (variantMatches.length > 0) {
+          await Promise.all(
+            variantMatches.map(async (image) => {
+              await fetch(
+                `/api/3d-shop/admin/products/${productId}/variant-images?id=${encodeURIComponent(image.id)}`,
+                { method: "DELETE" },
+              ).catch(() => {});
+            }),
+          );
+          setVariantOptionImages((current) =>
+            current.filter((image) => image.image_url !== url),
+          );
+        }
+
+        // Cascade: remove the URL from SKU galleries and clear variant_image_url.
+        const affectedSkuIds = new Set<string>();
+        for (const sku of skusRef.current) {
+          const skuMatches = (skuImagesRef.current[sku.id] ?? []).filter(
+            (image) => image.image_url === url,
+          );
+          if (skuMatches.length > 0 || sku.variant_image_url === url)
+            affectedSkuIds.add(sku.id);
+          for (const image of skuMatches) {
+            await fetch(
+              `/api/3d-shop/admin/skus/${encodeURIComponent(sku.id)}/images?id=${encodeURIComponent(image.id)}`,
+              { method: "DELETE" },
+            ).catch(() => {});
+          }
+          if (sku.variant_image_url === url) {
+            await fetch(`/api/3d-shop/admin/products/${productId}/skus`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: sku.id, variant_image_url: null }),
+            }).catch(() => {});
+          }
+        }
+        if (affectedSkuIds.size > 0) {
+          setSkuImages((current) => {
+            const next: Record<string, ShopSkuImage[]> = { ...current };
+            for (const skuId of affectedSkuIds) {
+              next[skuId] = (next[skuId] ?? []).filter(
+                (image) => image.image_url !== url,
+              );
+            }
+            return next;
+          });
+          setSkus((current) =>
+            current.map((sku) =>
+              sku.variant_image_url === url
+                ? { ...sku, variant_image_url: null, dirty: true }
+                : sku,
+            ),
+          );
+        }
+      }
+
       deleteStorageAsset(url);
     },
     [deleteStorageAsset, form],
@@ -1529,6 +1603,196 @@ export function ProductEditorProvider({
       form.update("image_alt", imageAlt);
     },
     [form],
+  );
+
+  const assignToVariantOption = useCallback(
+    async (url: string, optionName: string, optionValue: string) => {
+      const id = form.productRef.current.id;
+      if (!id)
+        throw new Error("Save the product first before assigning images.");
+      const exists = variantOptionImagesRef.current.some(
+        (image) =>
+          image.image_url === url &&
+          image.option_name === optionName &&
+          image.option_value === optionValue,
+      );
+      if (exists) return;
+      const response = await fetch(
+        `/api/3d-shop/admin/products/${id}/variant-images`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            images: [
+              {
+                option_name: optionName,
+                option_value: optionValue,
+                image_url: url,
+              },
+            ],
+          }),
+        },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        images?: ShopVariantOptionImage[];
+        error?: string;
+      };
+      if (!response.ok || !data.images || data.images.length === 0)
+        throw new Error(data.error || "Failed to assign image to variant.");
+      form.setDirty(true);
+      setVariantOptionImages((current) => [...current, ...data.images!]);
+    },
+    [form],
+  );
+
+  const unassignVariantOptionImage = useCallback(
+    async (imageId: string) => {
+      const id = form.productRef.current.id;
+      if (!id) return;
+      const response = await fetch(
+        `/api/3d-shop/admin/products/${id}/variant-images?id=${encodeURIComponent(imageId)}`,
+        { method: "DELETE" },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      if (!response.ok)
+        throw new Error(data.error || "Failed to remove variant assignment.");
+      setVariantOptionImages((current) =>
+        current.filter((image) => image.id !== imageId),
+      );
+    },
+    [form],
+  );
+
+  const assignToSku = useCallback(
+    async (url: string, skuId: string) => {
+      const exists = (skuImagesRef.current[skuId] ?? []).some(
+        (image) => image.image_url === url,
+      );
+      if (exists) return;
+      const response = await fetch(
+        `/api/3d-shop/admin/skus/${encodeURIComponent(skuId)}/images`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ images: [{ image_url: url }] }),
+        },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        images?: ShopSkuImage[];
+        error?: string;
+      };
+      if (!response.ok || !data.images || data.images.length === 0)
+        throw new Error(data.error || "Failed to assign image to SKU.");
+      form.setDirty(true);
+      setSkuImages((current) => ({
+        ...current,
+        [skuId]: [...(current[skuId] ?? []), ...data.images!],
+      }));
+    },
+    [form],
+  );
+
+  const unassignSkuImage = useCallback(async (imageId: string) => {
+    const skuId = Object.entries(skuImagesRef.current).find(([, images]) =>
+      images.some((image) => image.id === imageId),
+    )?.[0];
+    if (!skuId) return;
+    const response = await fetch(
+      `/api/3d-shop/admin/skus/${encodeURIComponent(skuId)}/images?id=${encodeURIComponent(imageId)}`,
+      { method: "DELETE" },
+    );
+    const data = (await response.json().catch(() => ({}))) as {
+      error?: string;
+    };
+    if (!response.ok)
+      throw new Error(data.error || "Failed to remove SKU assignment.");
+    setSkuImages((current) => ({
+      ...current,
+      [skuId]: (current[skuId] ?? []).filter((image) => image.id !== imageId),
+    }));
+  }, []);
+
+  const clearSkuVariantImage = useCallback(
+    async (skuId: string) => {
+      const id = form.productRef.current.id;
+      if (!id) return;
+      const sku = skusRef.current.find((sku) => sku.id === skuId);
+      if (!sku || !sku.variant_image_url) return;
+      const response = await fetch(`/api/3d-shop/admin/products/${id}/skus`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: skuId, variant_image_url: null }),
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      if (!response.ok)
+        throw new Error(data.error || "Failed to clear SKU image.");
+      setSkus((current) =>
+        current.map((sku) =>
+          sku.id === skuId
+            ? { ...sku, variant_image_url: null, dirty: true }
+            : sku,
+        ),
+      );
+      form.setDirty(true);
+    },
+    [form],
+  );
+
+  const generateImageAlt = useCallback(
+    async (url: string) => {
+      const current = form.productRef.current;
+      if (!current.name.trim()) {
+        setToast({
+          type: "error",
+          message: "Add a product name first so AI can write alt text.",
+        });
+        return "";
+      }
+      const variantAssignments: string[] = [];
+      for (const image of variantOptionImagesRef.current) {
+        if (image.image_url === url)
+          variantAssignments.push(
+            `${image.option_name}: ${image.option_value}`,
+          );
+      }
+      for (const sku of skusRef.current) {
+        if (sku.variant_image_url === url)
+          variantAssignments.push(skuLabel(sku.variant_combination));
+        for (const image of skuImagesRef.current[sku.id] ?? []) {
+          if (image.image_url === url)
+            variantAssignments.push(skuLabel(sku.variant_combination));
+        }
+      }
+      const category =
+        categories.find((category) => category.id === current.category_id)
+          ?.name ?? "";
+      const response = await fetch("/api/3d-shop/admin/ai/alt-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          product_name: current.name,
+          category,
+          variant_assignments: [...new Set(variantAssignments)],
+          tags: current.tags ?? [],
+          image_url: url,
+          existing_alt: current.image_alt?.[url] ?? "",
+        }),
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        alt_text?: string;
+        error?: string;
+      };
+      if (!response.ok || !data.alt_text)
+        throw new Error(data.error || "AI alt text generation failed.");
+      setImageAlt(url, data.alt_text);
+      setToast({ type: "success", message: "AI alt text generated." });
+      return data.alt_text;
+    },
+    [categories, form, setImageAlt, setToast],
   );
 
   const handleImageDrop = useCallback(
@@ -2326,6 +2590,12 @@ export function ProductEditorProvider({
     setImageAlt,
     uploadLandscapeImage,
     removeLandscapeImage,
+    assignToVariantOption,
+    unassignVariantOptionImage,
+    assignToSku,
+    unassignSkuImage,
+    clearSkuVariantImage,
+    generateImageAlt,
     aiPrompt,
     setAiPrompt,
     addVariant,

@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Link2,
+  Maximize2,
   MessageCircle,
   Pencil,
   Play,
@@ -21,6 +22,7 @@ import {
   ThumbsDown,
   ThumbsUp,
   Truck,
+  X,
 } from "lucide-react";
 import { addToast } from "@/lib/toast/store";
 import ShopVariantControls from "@/components/shop/ShopVariantControls";
@@ -82,13 +84,6 @@ function useEscape(handler: () => void, active: boolean) {
   }, [handler, active]);
 }
 
-function canHoverZoom() {
-  return (
-    typeof window !== "undefined" &&
-    window.matchMedia("(hover: hover) and (pointer: fine)").matches
-  );
-}
-
 function Stars({ value }: { value: number }) {
   return (
     <div className="flex items-center gap-0.5">
@@ -99,6 +94,64 @@ function Stars({ value }: { value: number }) {
         />
       ))}
     </div>
+  );
+}
+
+function GalleryThumb({
+  item,
+  active,
+  label,
+  onClick,
+}: {
+  item: { type: "video" | "image"; src: string };
+  active: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  const [aspect, setAspect] = useState<number | null>(null);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      aria-pressed={active}
+      className={`group relative w-full overflow-hidden rounded-xl border transition duration-300 ${
+        active
+          ? "border-[var(--shop-gold)] shadow-[var(--shop-shadow-md)]"
+          : "border-[var(--shop-border-light)] hover:border-[var(--shop-border-gold)]"
+      }`}
+      style={{ aspectRatio: aspect ? `${aspect} / 1` : "1 / 1" }}
+    >
+      {item.type === "video" ? (
+        <>
+          <span className="absolute inset-0 grid place-items-center bg-black">
+            <Play className="h-5 w-5 fill-white text-white" />
+          </span>
+          <span className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white">
+            Video
+          </span>
+        </>
+      ) : (
+        <Image
+          src={item.src}
+          alt={label}
+          fill
+          sizes="76px"
+          className="object-cover transition duration-300 group-hover:scale-[1.04]"
+          onLoad={(event) => {
+            const width = event.currentTarget.naturalWidth;
+            const height = event.currentTarget.naturalHeight;
+            if (width > 0 && height > 0) setAspect(width / height);
+          }}
+        />
+      )}
+      {active && (
+        <span
+          className="absolute inset-y-0 left-0 w-[3px] bg-[var(--shop-gold)]"
+          aria-hidden="true"
+        />
+      )}
+    </button>
   );
 }
 
@@ -248,8 +301,8 @@ export default function ShopProductDetailClient({
   const addItem = useShopCartStore((state) => state.addItem);
   const openCart = useShopCartStore((state) => state.openCart);
   const baseImages = useMemo(() => getShopProductImages(product), [product]);
-  const [slideDir, setSlideDir] = useState<1 | -1>(1);
   const draggingRef = useRef(false);
+  const lightboxRef = useRef<HTMLDivElement | null>(null);
   // Pre-select the cheapest purchasable variant on load — enterprise PDPs
   // never show an ambiguous "From ₹X" / "Select options" first paint.
   const [selected, setSelected] = useState<ShopSelectedOptions>(() =>
@@ -299,10 +352,11 @@ export default function ShopProductDetailClient({
   >(currentUser ? "loading" : "guest");
   const [toast, setToast] = useState("");
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
-  const [lightboxDir, setLightboxDir] = useState<1 | -1>(1);
+  const [lightboxZoom, setLightboxZoom] = useState(1);
+  const [lightboxPan, setLightboxPan] = useState({ x: 0, y: 0 });
+  const lightboxZoomRef = useRef(1);
+  const lightboxPanRef = useRef({ x: 0, y: 0 });
   const [modelOpen, setModelOpen] = useState(false);
-  const [zoomEnabled, setZoomEnabled] = useState(false);
-  const [zoomOrigin, setZoomOrigin] = useState("50% 50%");
   useScrollLock(Boolean(lightboxImage) || modelOpen);
   useEscape(() => setLightboxImage(null), Boolean(lightboxImage));
 
@@ -338,8 +392,15 @@ export default function ShopProductDetailClient({
       mediaItems.length - 1,
     );
     if (next === safeMediaPos) return;
-    setSlideDir(dir);
     setMediaPos(next);
+  }
+
+  function openLightbox(src: string) {
+    lightboxZoomRef.current = 1;
+    lightboxPanRef.current = { x: 0, y: 0 };
+    setLightboxZoom(1);
+    setLightboxPan({ x: 0, y: 0 });
+    setLightboxImage(src);
   }
 
   function goLightboxImage(dir: 1 | -1) {
@@ -347,8 +408,66 @@ export default function ShopProductDetailClient({
     const idx = lightboxImage ? Math.max(0, images.indexOf(lightboxImage)) : 0;
     const next = Math.min(Math.max(idx + dir, 0), images.length - 1);
     if (next === idx) return;
-    setLightboxDir(dir);
+    lightboxZoomRef.current = 1;
+    lightboxPanRef.current = { x: 0, y: 0 };
+    setLightboxZoom(1);
+    setLightboxPan({ x: 0, y: 0 });
     setLightboxImage(images[next]);
+  }
+
+  /**
+   * Deep zoom around a container-space point using a translate + scale
+   * transform (origin 0 0). The anchor point stays fixed under the cursor.
+   */
+  function applyLightboxTransform(
+    nextZoom: number,
+    anchor: { x: number; y: number } | null,
+    panDelta?: { x: number; y: number },
+  ) {
+    const currentZoom = lightboxZoomRef.current;
+    const currentPan = lightboxPanRef.current;
+    let pan = currentPan;
+    if (anchor) {
+      const ratio = nextZoom / currentZoom;
+      pan = {
+        x: anchor.x - (anchor.x - currentPan.x) * ratio,
+        y: anchor.y - (anchor.y - currentPan.y) * ratio,
+      };
+    }
+    if (panDelta) pan = { x: pan.x + panDelta.x, y: pan.y + panDelta.y };
+    lightboxZoomRef.current = nextZoom;
+    lightboxPanRef.current = pan;
+    setLightboxZoom(nextZoom);
+    setLightboxPan(pan);
+  }
+
+  function zoomLightboxAt(clientX: number, clientY: number) {
+    const container = lightboxRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    if (lightboxZoomRef.current > 1) {
+      applyLightboxTransform(1, null);
+      return;
+    }
+    applyLightboxTransform(2.2, {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    });
+  }
+
+  function handleLightboxWheel(event: React.WheelEvent) {
+    const rect = lightboxRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const factor = event.deltaY < 0 ? 1.18 : 0.82;
+    const next = Math.min(3.4, Math.max(1, lightboxZoomRef.current * factor));
+    if (next <= 1) {
+      applyLightboxTransform(1, null);
+      return;
+    }
+    applyLightboxTransform(next, {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    });
   }
   const stock = getShopStockLabel(resolvedSku);
   const maxStock = resolvedSku?.pre_order_eta
@@ -643,80 +762,137 @@ export default function ShopProductDetailClient({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-[140] grid place-items-center bg-[var(--shop-text-primary)]/85 p-4 backdrop-blur-md"
+            transition={{ duration: 0.2 }}
+            className="group fixed inset-0 z-[140] bg-[var(--shop-text-primary)]/92 backdrop-blur-md"
             onClick={() => setLightboxImage(null)}
           >
             <button
               type="button"
               aria-label="Close image preview"
-              className="absolute inset-0"
+              className="absolute inset-0 cursor-default"
               onClick={() => setLightboxImage(null)}
             />
-            <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="relative z-10 aspect-square max-h-[85dvh] w-full max-w-3xl overflow-hidden rounded-[var(--shop-radius-xl)] bg-white"
-              onClick={(event) => event.stopPropagation()}
+
+            {/* Counter */}
+            <div className="absolute left-5 top-5 z-20 flex items-center gap-2">
+              <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/80 backdrop-blur">
+                {Math.max(0, images.indexOf(lightboxImage)) + 1} /{" "}
+                {images.length}
+              </span>
+            </div>
+
+            {/* Close */}
+            <button
+              type="button"
+              aria-label="Close image preview"
+              onClick={() => setLightboxImage(null)}
+              className="absolute right-5 top-5 z-20 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Zoom hint */}
+            <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 transition-opacity duration-300">
+              <span className="rounded-full bg-white/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/70 backdrop-blur">
+                {lightboxZoom > 1
+                  ? "Drag to pan · Scroll to zoom"
+                  : "Click image to zoom"}
+              </span>
+            </div>
+
+            {/* Stage */}
+            <div
+              ref={lightboxRef}
+              className="absolute inset-0 z-10 overflow-hidden"
+              onClick={(event) => {
+                event.stopPropagation();
+                zoomLightboxAt(event.clientX, event.clientY);
+              }}
+              onWheel={(event) => {
+                event.stopPropagation();
+                handleLightboxWheel(event);
+              }}
             >
               <motion.div
-                drag="x"
+                drag={lightboxZoom > 1 ? true : "x"}
                 dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.12}
+                dragElastic={0.08}
                 onDragStart={() => {
                   draggingRef.current = true;
                 }}
                 onDragEnd={(_, info) => {
-                  if (info.offset.x < -42) goLightboxImage(1);
-                  else if (info.offset.x > 42) goLightboxImage(-1);
+                  if (lightboxZoomRef.current > 1) {
+                    applyLightboxTransform(lightboxZoomRef.current, null, {
+                      x: info.offset.x,
+                      y: info.offset.y,
+                    });
+                  } else if (info.offset.x < -42) {
+                    goLightboxImage(1);
+                  } else if (info.offset.x > 42) {
+                    goLightboxImage(-1);
+                  }
                   window.setTimeout(() => {
                     draggingRef.current = false;
                   }, 80);
                 }}
-                className="absolute inset-0 cursor-grab touch-pan-y select-none"
+                className="absolute inset-0 cursor-grab select-none touch-pan-y active:cursor-grabbing"
               >
                 <AnimatePresence initial={false} mode="wait">
                   <motion.div
                     key={lightboxImage}
-                    initial={{ opacity: 0, x: 26 * lightboxDir }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -26 * lightboxDir }}
-                    transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                     className="absolute inset-0"
                   >
-                    <Image
-                      src={lightboxImage}
-                      alt="Review image"
-                      fill
-                      sizes="90vw"
-                      className="object-contain"
-                    />
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        transform: `translate3d(${lightboxPan.x}px, ${lightboxPan.y}px, 0) scale(${lightboxZoom})`,
+                        transformOrigin: "0 0",
+                      }}
+                    >
+                      <Image
+                        src={lightboxImage}
+                        alt={product.name}
+                        fill
+                        sizes="100vw"
+                        draggable={false}
+                        className="object-contain"
+                      />
+                    </div>
                   </motion.div>
                 </AnimatePresence>
               </motion.div>
+
               {images.length > 1 && (
                 <>
                   <button
                     type="button"
                     aria-label="Previous image"
-                    onClick={() => goLightboxImage(-1)}
-                    className="absolute left-3 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/80 text-[var(--shop-text-primary)] shadow-lg backdrop-blur transition hover:bg-white active:scale-95"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      goLightboxImage(-1);
+                    }}
+                    className="absolute left-3 top-1/2 z-20 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white opacity-0 shadow-lg backdrop-blur transition hover:bg-white/25 focus:opacity-100 group-hover:opacity-100 lg:left-5"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
                   <button
                     type="button"
                     aria-label="Next image"
-                    onClick={() => goLightboxImage(1)}
-                    className="absolute right-3 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/80 text-[var(--shop-text-primary)] shadow-lg backdrop-blur transition hover:bg-white active:scale-95"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      goLightboxImage(1);
+                    }}
+                    className="absolute right-3 top-1/2 z-20 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white opacity-0 shadow-lg backdrop-blur transition hover:bg-white/25 focus:opacity-100 group-hover:opacity-100 lg:right-5"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </button>
                 </>
               )}
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -752,163 +928,176 @@ export default function ShopProductDetailClient({
 
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_520px]">
           <section className="min-w-0">
-            <motion.div
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.12}
-              dragTransition={{ bounceStiffness: 600, bounceDamping: 30 }}
-              onDragStart={() => {
-                draggingRef.current = true;
-              }}
-              onDragEnd={(_, info) => {
-                if (info.offset.x < -42) goImage(1);
-                else if (info.offset.x > 42) goImage(-1);
-                window.setTimeout(() => {
-                  draggingRef.current = false;
-                }, 80);
-              }}
-              className={`touch-pan-y select-none ${activeMedia?.type === "image" ? "cursor-grab active:cursor-grabbing" : ""}`}
-            >
-              {activeMedia?.type === "video" ? (
-                // Inline player with controls — sound-on playback, Nike/Samsung style.
-                <div className="relative aspect-square w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-black shadow-[var(--shop-shadow-sm)]">
-                  <video
-                    key={activeMedia.src}
-                    src={activeMedia.src}
-                    controls
-                    playsInline
-                    preload="metadata"
-                    poster={baseImages[0] || undefined}
-                    aria-label={`${product.name} showcase video`}
-                    className="absolute inset-0 h-full w-full object-contain"
-                  />
-                </div>
-              ) : (
-                <div
-                  role="button"
-                  tabIndex={0}
-                  aria-label="View larger image"
-                  onClick={() => {
-                    if (!draggingRef.current && visibleImage)
-                      setLightboxImage(visibleImage);
-                  }}
-                  onKeyDown={(event) => {
-                    if (
-                      (event.key === "Enter" || event.key === " ") &&
-                      !draggingRef.current &&
-                      visibleImage
-                    ) {
-                      event.preventDefault();
-                      setLightboxImage(visibleImage);
-                    }
-                  }}
-                  onMouseEnter={() => {
-                    if (canHoverZoom()) setZoomEnabled(true);
-                  }}
-                  onMouseMove={(event) => {
-                    if (!zoomEnabled || draggingRef.current) return;
-                    const rect = event.currentTarget.getBoundingClientRect();
-                    setZoomOrigin(
-                      `${(((event.clientX - rect.left) / rect.width) * 100).toFixed(1)}% ${(((event.clientY - rect.top) / rect.height) * 100).toFixed(1)}%`,
-                    );
-                  }}
-                  onMouseLeave={() => setZoomEnabled(false)}
-                  className="relative aspect-square w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)] transition hover:shadow-[var(--shop-shadow-md)]"
-                >
-                  {visibleImage ? (
-                    <AnimatePresence initial={false} mode="wait">
-                      <motion.div
-                        key={visibleImage}
-                        initial={{ opacity: 0, x: 24 * slideDir }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -24 * slideDir }}
-                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                        className="absolute inset-0"
-                      >
-                        <div
-                          className="absolute inset-0 transition-transform duration-200 ease-out"
-                          style={{
-                            transform: zoomEnabled ? "scale(1.7)" : "scale(1)",
-                            transformOrigin: zoomOrigin,
-                          }}
-                        >
-                          <Image
-                            src={visibleImage}
-                            alt={
-                              gallery.caption
-                                ? `${product.name} — ${gallery.caption}`
-                                : product.name
-                            }
-                            fill
-                            priority
-                            sizes="(min-width: 1024px) 55vw, 100vw"
-                            className="object-cover"
-                          />
-                        </div>
-                      </motion.div>
-                    </AnimatePresence>
-                  ) : (
-                    <div className="grid h-full place-items-center text-6xl text-[var(--shop-text-subtle)]">
-                      🧩
-                    </div>
-                  )}
+            <div className="flex items-start gap-4">
+              {/* Vertical thumbnail rail — desktop editorial layout */}
+              {mediaItems.length > 1 && (
+                <div className="hidden w-[76px] shrink-0 lg:flex lg:max-h-[min(68vh,620px)] lg:flex-col lg:gap-2.5 lg:overflow-y-auto lg:pr-1 scrollbar-hide">
+                  {mediaItems.map((item, index) => (
+                    <GalleryThumb
+                      key={`${item.type}-${item.src}`}
+                      item={item}
+                      active={safeMediaPos === index}
+                      label={
+                        item.type === "video"
+                          ? "Play product video"
+                          : `View product image ${index + 1}`
+                      }
+                      onClick={() => setMediaPos(index)}
+                    />
+                  ))}
                 </div>
               )}
-            </motion.div>
-            {mediaItems.length > 1 && (
-              <div className="mt-4 flex items-center justify-center gap-1.5 lg:hidden">
-                {mediaItems.map((item, index) => (
-                  <button
-                    key={`${item.type}-${item.src}`}
-                    type="button"
-                    aria-label={`Go to ${item.type === "video" ? "video" : `image ${index + 1}`}`}
-                    onClick={() => setMediaPos(index)}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${index === safeMediaPos ? "w-5 bg-[var(--shop-gold)]" : "w-1.5 bg-[var(--shop-border-medium)]"}`}
-                  />
-                ))}
-              </div>
-            )}
-            {mediaItems.length > 1 && (
-              <div className="mt-4 flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 scroll-padding-x-1 scrollbar-hide [scrollbar-width:none] [-webkit-overflow-scrolling:touch]">
-                {mediaItems.map((item, index) => (
-                  <button
-                    key={`${item.type}-${item.src}`}
-                    type="button"
-                    onClick={() => setMediaPos(index)}
-                    aria-label={
-                      item.type === "video"
-                        ? `Play product video`
-                        : `View product image ${index + 1}`
-                    }
-                    className={`relative aspect-square w-[72px] shrink-0 snap-start overflow-hidden rounded-2xl border bg-white transition hover:border-[var(--shop-border-gold)] active:scale-95 ${safeMediaPos === index ? "border-[var(--shop-gold)] ring-2 ring-[var(--shop-gold)]/25" : "border-[var(--shop-border-light)]"}`}
-                  >
-                    {item.type === "video" ? (
-                      <>
-                        <span className="absolute inset-0 grid place-items-center bg-black">
-                          <Play className="h-6 w-6 fill-white text-white" />
-                        </span>
-                        <span className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white">
-                          Video
-                        </span>
-                      </>
-                    ) : (
-                      <Image
-                        src={item.src}
-                        alt={product.name}
-                        fill
-                        sizes="72px"
-                        className="object-cover"
+
+              {/* Main column */}
+              <div className="min-w-0 flex-1">
+                <motion.div
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.12}
+                  dragTransition={{ bounceStiffness: 600, bounceDamping: 30 }}
+                  onDragStart={() => {
+                    draggingRef.current = true;
+                  }}
+                  onDragEnd={(_, info) => {
+                    if (info.offset.x < -42) goImage(1);
+                    else if (info.offset.x > 42) goImage(-1);
+                    window.setTimeout(() => {
+                      draggingRef.current = false;
+                    }, 80);
+                  }}
+                  className={`touch-pan-y select-none ${activeMedia?.type === "image" ? "cursor-grab active:cursor-grabbing" : ""}`}
+                >
+                  {activeMedia?.type === "video" ? (
+                    // Inline player with controls — sound-on playback, Nike/Samsung style.
+                    <div className="relative aspect-square w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-black shadow-[var(--shop-shadow-sm)]">
+                      <video
+                        key={activeMedia.src}
+                        src={activeMedia.src}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        poster={baseImages[0] || undefined}
+                        aria-label={`${product.name} showcase video`}
+                        className="absolute inset-0 h-full w-full object-contain"
                       />
-                    )}
-                  </button>
-                ))}
+                    </div>
+                  ) : (
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-label="View larger image"
+                      onClick={() => {
+                        if (!draggingRef.current && visibleImage)
+                          openLightbox(visibleImage);
+                      }}
+                      onKeyDown={(event) => {
+                        if (
+                          (event.key === "Enter" || event.key === " ") &&
+                          !draggingRef.current &&
+                          visibleImage
+                        ) {
+                          event.preventDefault();
+                          openLightbox(visibleImage);
+                        }
+                      }}
+                      className="group relative aspect-square w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)] transition hover:shadow-[var(--shop-shadow-md)]"
+                    >
+                      {visibleImage ? (
+                        <AnimatePresence initial={false} mode="wait">
+                          <motion.div
+                            key={visibleImage}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{
+                              duration: 0.5,
+                              ease: [0.16, 1, 0.3, 1],
+                            }}
+                            className="absolute inset-0"
+                          >
+                            <div className="shop-kenburns absolute inset-0">
+                              <Image
+                                src={visibleImage}
+                                alt={
+                                  gallery.caption
+                                    ? `${product.name} — ${gallery.caption}`
+                                    : product.name
+                                }
+                                fill
+                                priority
+                                sizes="(min-width: 1024px) 50vw, 100vw"
+                                className="object-cover"
+                              />
+                            </div>
+                          </motion.div>
+                        </AnimatePresence>
+                      ) : (
+                        <div className="grid h-full place-items-center text-6xl text-[var(--shop-text-subtle)]">
+                          🧩
+                        </div>
+                      )}
+                      <span className="pointer-events-none absolute bottom-3 right-3 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-[var(--shop-text-primary)] opacity-0 shadow-sm backdrop-blur transition duration-300 group-hover:opacity-100">
+                        <Maximize2 className="h-4 w-4" />
+                      </span>
+                    </div>
+                  )}
+                </motion.div>
+                {mediaItems.length > 1 && (
+                  <div className="mt-4 flex items-center justify-center gap-1.5 lg:hidden">
+                    {mediaItems.map((item, index) => (
+                      <button
+                        key={`${item.type}-${item.src}`}
+                        type="button"
+                        aria-label={`Go to ${item.type === "video" ? "video" : `image ${index + 1}`}`}
+                        onClick={() => setMediaPos(index)}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${index === safeMediaPos ? "w-5 bg-[var(--shop-gold)]" : "w-1.5 bg-[var(--shop-border-medium)]"}`}
+                      />
+                    ))}
+                  </div>
+                )}
+                {mediaItems.length > 1 && (
+                  <div className="mt-4 flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 scroll-padding-x-1 scrollbar-hide [scrollbar-width:none] [-webkit-overflow-scrolling:touch] lg:hidden">
+                    {mediaItems.map((item, index) => (
+                      <button
+                        key={`${item.type}-${item.src}`}
+                        type="button"
+                        onClick={() => setMediaPos(index)}
+                        aria-label={
+                          item.type === "video"
+                            ? `Play product video`
+                            : `View product image ${index + 1}`
+                        }
+                        className={`relative aspect-square w-[72px] shrink-0 snap-start overflow-hidden rounded-2xl border bg-white transition hover:border-[var(--shop-border-gold)] active:scale-95 ${safeMediaPos === index ? "border-[var(--shop-gold)] ring-2 ring-[var(--shop-gold)]/25" : "border-[var(--shop-border-light)]"}`}
+                      >
+                        {item.type === "video" ? (
+                          <>
+                            <span className="absolute inset-0 grid place-items-center bg-black">
+                              <Play className="h-6 w-6 fill-white text-white" />
+                            </span>
+                            <span className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white">
+                              Video
+                            </span>
+                          </>
+                        ) : (
+                          <Image
+                            src={item.src}
+                            alt={product.name}
+                            fill
+                            sizes="72px"
+                            className="object-cover"
+                          />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {gallery.caption && mediaItems.length > 1 && (
+                  <p className="mt-3 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">
+                    Showing: {gallery.caption}
+                  </p>
+                )}
               </div>
-            )}
-            {gallery.caption && mediaItems.length > 1 && (
-              <p className="mt-3 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">
-                Showing: {gallery.caption}
-              </p>
-            )}
+            </div>
             {activeModelUrl && (
               <button
                 type="button"

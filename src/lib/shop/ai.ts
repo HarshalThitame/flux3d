@@ -14,7 +14,17 @@ export type AiGenerationKind =
   | "meta_description"
   | "tags"
   | "occasion_tags"
-  | "all";
+  | "all"
+  | "image_alt";
+
+export type AiImageAltInput = {
+  product_name: string;
+  category?: string;
+  variant_assignments?: string[];
+  tags?: string[];
+  image_url: string;
+  existing_alt?: string;
+};
 
 export type AiVariantInfo = {
   option_name: string;
@@ -424,6 +434,17 @@ export async function generateShopCopy(
       return parseJsonArray(text).slice(0, 12);
     }
 
+    case "image_alt": {
+      const text = await complete(client, [
+        { role: "system", content: system },
+        {
+          role: "user",
+          content: `${context}\n\nWrite a single SEO-optimized alt text string (max 125 characters) for a product image of: ${name}. Lead with the product name, then the most relevant variant value if any, then the category and a natural keyword. Be specific and factual; never invent details. Plain sentence, no quotes, no markdown.`,
+        },
+      ]);
+      return text.slice(0, 125);
+    }
+
     case "all": {
       const text = await complete(
         client,
@@ -445,4 +466,61 @@ export async function generateShopCopy(
     default:
       throw new Error("Unknown AI generation kind.");
   }
+}
+
+export type AiImageAltResult = {
+  alt_text: string;
+};
+
+export async function generateImageAlt(
+  input: AiImageAltInput,
+): Promise<AiImageAltResult> {
+  const client = getShopAiClient();
+  if (!client)
+    throw new Error(
+      "AI is not configured. Add OPENAI_API_KEY to your environment variables.",
+    );
+
+  const productName = input.product_name.trim();
+  if (!productName)
+    throw new Error("Product name is required before generating alt text.");
+
+  const contextLines = [
+    `Product name: ${productName}`,
+    input.category ? `Category: ${input.category}` : null,
+    input.variant_assignments?.length
+      ? `Variant assignments: ${input.variant_assignments.join(", ")}`
+      : null,
+    input.tags?.length ? `Tags: ${input.tags.join(", ")}` : null,
+  ].filter(Boolean) as string[];
+
+  const existingBlock = input.existing_alt?.trim()
+    ? `\n\nCurrent alt text (improve it, keep it concise):\n${input.existing_alt.trim()}`
+    : "";
+
+  const userPrompt = `${contextLines.join("\n")}\n\nWrite a single SEO-optimized alt text string for the product image at: ${input.image_url}${existingBlock}\n\nRequirements:\n- Maximum 125 characters.\n- Lead with the product name, then the most relevant variant value (e.g. color, finish, size) if provided.\n- Follow with the category and a natural keyword (e.g. "premium 3D printed home decor by Flux3D").\n- Be specific and factual. Never invent details that are not in the context.\n- Plain sentence, no quotes, no markdown, no hashtags.`;
+
+  const completion = await client.chat.completions.create({
+    model: SHOP_AI_MODEL,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are an accessibility and SEO specialist writing alt text for premium product imagery. Alt text must be descriptive for screen readers while naturally including searchable keywords. Return only the alt text itself, no explanation.",
+      },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.4,
+    max_tokens: 120,
+  });
+
+  const content = completion.choices[0]?.message?.content?.trim() ?? "";
+  const altText = content
+    .replace(/^["'\s]+|["'\s]+$/g, "")
+    .replace(/\s+/g, " ")
+    .slice(0, 125);
+
+  if (!altText) throw new Error("AI returned an empty alt text. Try again.");
+
+  return { alt_text: altText };
 }
