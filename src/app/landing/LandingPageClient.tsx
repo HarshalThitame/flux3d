@@ -12,15 +12,6 @@ const ProblemSection = dynamic(() => import("./ProblemSection"), {
 const ServicesSection = dynamic(() => import("./ServicesSection"), {
   ssr: false,
 });
-const OfferBanner = dynamic(
-  () =>
-    import("@/components/offers/OfferBanner").then((m) => ({
-      default: m.OfferBanner,
-    })),
-  {
-    ssr: false,
-  },
-);
 const HowItWorksSection = dynamic(() => import("./HowItWorksSection"), {
   ssr: false,
 });
@@ -104,11 +95,6 @@ export default function LandingPageClient() {
       </LazySection>
       <LazySection minHeight={760} className="premium-band premium-band-panel">
         <ServicesSection />
-      </LazySection>
-      <LazySection minHeight={160} className="premium-band premium-band-panel">
-        <section className="premium-offer-shell mx-auto mb-8 max-w-[1200px] px-6 md:mb-12 lg:mb-16">
-          <OfferBanner />
-        </section>
       </LazySection>
       <LazySection minHeight={720} className="premium-band premium-band-ink">
         <HowItWorksSection />
