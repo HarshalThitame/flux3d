@@ -33,6 +33,7 @@ import ReviewModal, {
 import WishlistButton from "@/components/shop/WishlistButton";
 import ProductModelModal from "@/components/shop/ProductModelModal";
 import ARViewButton from "@/components/shop/ARViewButton";
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import type { AppUserProfile } from "@/lib/auth/server";
 import type { ProductDimensions } from "@/lib/shop/admin-types";
 import type { DescriptionBlocks } from "@/lib/shop/blocks";
@@ -936,7 +937,6 @@ export default function ShopProductDetailClient({
                 </h1>
                 <WishlistButton
                   productId={product.id}
-                  label
                   className="shrink-0 rounded-xl border-[var(--shop-border-light)]"
                 />
               </div>
@@ -1098,7 +1098,7 @@ export default function ShopProductDetailClient({
               </form>
               {pincodeStatus && (
                 <p
-                  className={`mt-2 text-sm font-semibold ${pincodeStatus.includes("Delivered") ? "text-[var(--shop-gold)]" : "text-[var(--shop-text-secondary)]"}`}
+                  className={`mt-2 text-sm font-semibold ${pincodeStatus.includes("Delivered") ? "text-emerald-600" : "text-[var(--shop-text-secondary)]"}`}
                 >
                   {pincodeStatus}
                 </p>
@@ -1169,18 +1169,44 @@ export default function ShopProductDetailClient({
                   }
                   className="grid h-9 w-9 place-items-center rounded-lg border border-[var(--shop-border-light)] text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
                 >
-                  <MessageCircle className="h-4 w-4" />
+                  <WhatsAppIcon className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
-                  aria-label="Share on X"
-                  onClick={() =>
-                    window.open(
-                      `https://twitter.com/intent/tweet?text=${encodeURIComponent(product.name)}&url=${encodeURIComponent(window.location.href)}`,
-                      "_blank",
-                      "noopener",
-                    )
-                  }
+                  aria-label="Share product"
+                  onClick={async () => {
+                    const url = window.location.href;
+                    const shareData = {
+                      title: product.name,
+                      text: `${product.name} — Premium 3D printed piece from Flux3D`,
+                      url,
+                    };
+                    if (typeof navigator.share === "function") {
+                      try {
+                        await navigator.share(shareData);
+                      } catch (error) {
+                        if (
+                          error instanceof DOMException &&
+                          error.name === "AbortError"
+                        ) {
+                          return;
+                        }
+                        try {
+                          await navigator.clipboard.writeText(url);
+                          setToast("Link copied to clipboard.");
+                        } catch {
+                          setToast("Could not share the link.");
+                        }
+                      }
+                    } else {
+                      try {
+                        await navigator.clipboard.writeText(url);
+                        setToast("Link copied to clipboard.");
+                      } catch {
+                        setToast("Could not share the link.");
+                      }
+                    }
+                  }}
                   className="grid h-9 w-9 place-items-center rounded-lg border border-[var(--shop-border-light)] text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-gold)] hover:text-[var(--shop-gold)]"
                 >
                   <Share2 className="h-4 w-4" />

@@ -7,7 +7,7 @@ type CountdownProps = {
   className?: string;
   size?: "sm" | "md" | "lg";
   light?: boolean;
-  variant?: "default" | "light" | "luxury";
+  variant?: "default" | "light" | "luxury" | "luxury-dark";
 };
 
 function getTimeLeft(target: string) {
@@ -67,6 +67,11 @@ export default function CountdownTimer({
       num: { color: "#C9A962" },
       label: { color: "rgba(201, 169, 98, 0.6)" },
       sep: { color: "rgba(201, 169, 98, 0.7)" },
+    },
+    "luxury-dark": {
+      num: { color: "#8A6D2F" },
+      label: { color: "rgba(28, 25, 23, 0.55)" },
+      sep: { color: "#8A6D2F" },
     },
   };
 

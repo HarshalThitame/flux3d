@@ -1,19 +1,23 @@
-'use client'
+"use client";
 
-import { motion } from 'framer-motion'
-import { useInView } from 'framer-motion'
-import { useRef } from 'react'
-import Link from 'next/link'
-import { ArrowRight, MessageCircle, Mail, Check } from 'lucide-react'
-import { useBusinessSettings } from '@/lib/settings-context'
+import { motion } from "framer-motion";
+import { useInView } from "framer-motion";
+import { useRef } from "react";
+import Link from "next/link";
+import { ArrowRight, Mail, Check } from "lucide-react";
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
+import { useBusinessSettings } from "@/lib/settings-context";
 
 export default function MaterialsCTA() {
-  const { settings } = useBusinessSettings()
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-50px' })
+  const { settings } = useBusinessSettings();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
 
   return (
-    <section ref={ref} className="materials-premium-section materials-bottom-cta relative overflow-hidden px-4 pb-24 pt-20 md:px-8 lg:px-16">
+    <section
+      ref={ref}
+      className="materials-premium-section materials-bottom-cta relative overflow-hidden px-4 pb-24 pt-20 md:px-8 lg:px-16"
+    >
       <div className="materials-section-grid" aria-hidden="true" />
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -24,10 +28,13 @@ export default function MaterialsCTA() {
           From material to quote
         </span>
         <h2 className="mx-auto max-w-2xl text-[clamp(2rem,6vw,3rem)] font-extrabold text-[#070b1d] md:text-4xl">
-          Upload once. Get a material recommendation and a production-ready quote.
+          Upload once. Get a material recommendation and a production-ready
+          quote.
         </h2>
         <p className="mx-auto mb-8 mt-4 max-w-[560px] text-sm leading-6 text-[#4B5563]">
-          Upload your file and we&apos;ll recommend the perfect material and give you an instant quote. No account, no commitment — just a fast answer.
+          Upload your file and we&apos;ll recommend the perfect material and
+          give you an instant quote. No account, no commitment — just a fast
+          answer.
         </p>
 
         <div className="mb-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -39,26 +46,37 @@ export default function MaterialsCTA() {
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
           <a
-            href={`https://wa.me/${(settings.whatsappNumber || '+919623023480').replace(/[^0-9]/g, '')}?text=Hi%20${encodeURIComponent(settings.businessName || 'Flux3D')}!%20I%20need%20help%20choosing%20a%20material%20for%20my%20project.`}
+            href={`https://wa.me/${(settings.whatsappNumber || "+919623023480").replace(/[^0-9]/g, "")}?text=Hi%20${encodeURIComponent(settings.businessName || "Flux3D")}!%20I%20need%20help%20choosing%20a%20material%20for%20my%20project.`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-[#25D366]/25 bg-[#EAFBF2] px-8 text-sm font-bold text-[#138a42] transition hover:border-[#25D366]/40"
           >
-            <MessageCircle className="w-4 h-4" />
+            <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
             Ask on WhatsApp — 30 min reply
           </a>
         </div>
 
         <div className="mb-6 flex items-center justify-center gap-2">
           <Mail className="w-4 h-4 text-[#4B5563]" />
-          <a href={`mailto:${settings.primaryEmail || 'hello@flux3d.in'}`} className="text-sm text-[#4B5563] hover:text-[#070b1d] transition-colors">
-            {settings.primaryEmail || 'hello@flux3d.in'}
+          <a
+            href={`mailto:${settings.primaryEmail || "hello@flux3d.in"}`}
+            className="text-sm text-[#4B5563] hover:text-[#070b1d] transition-colors"
+          >
+            {settings.primaryEmail || "hello@flux3d.in"}
           </a>
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#4B5563]">
-          {['Free Quote', 'Expert Recommendation', 'Pan-India Delivery', 'No Minimum Order'].map(item => (
-            <span key={item} className="inline-flex items-center gap-1 rounded-full bg-[#F7F8FB] px-3 py-1.5">
+          {[
+            "Free Quote",
+            "Expert Recommendation",
+            "Pan-India Delivery",
+            "No Minimum Order",
+          ].map((item) => (
+            <span
+              key={item}
+              className="inline-flex items-center gap-1 rounded-full bg-[#F7F8FB] px-3 py-1.5"
+            >
               <Check className="h-3 w-3 text-[#6d28d9]" />
               {item}
             </span>
@@ -66,5 +84,5 @@ export default function MaterialsCTA() {
         </div>
       </motion.div>
     </section>
-  )
+  );
 }

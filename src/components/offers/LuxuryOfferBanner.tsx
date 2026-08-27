@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { X, Sparkles, ArrowRight } from "lucide-react";
+import { Sparkles, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CountdownTimer from "./CountdownTimer";
 
@@ -24,31 +24,8 @@ type Offer = {
   min_order_value: number;
 };
 
-const DISMISS_KEY = "luxury-banner-dismissed";
-const DISMISS_TTL = 24 * 60 * 60 * 1000; // 24 hours
-
-function isDismissed(): boolean {
-  if (typeof window === "undefined") return false;
-  const raw = localStorage.getItem(DISMISS_KEY);
-  if (!raw) return false;
-  try {
-    const ts = Number(raw);
-    return Date.now() - ts < DISMISS_TTL;
-  } catch {
-    return false;
-  }
-}
-
-function dismiss() {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(DISMISS_KEY, String(Date.now()));
-}
-
 export default function LuxuryOfferBanner() {
   const [offer, setOffer] = useState<Offer | null>(null);
-  const [clientDismissed, setClientDismissed] = useState(() =>
-    typeof window !== "undefined" ? isDismissed() : false,
-  );
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -67,12 +44,7 @@ export default function LuxuryOfferBanner() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  if (!offer || clientDismissed) return null;
-
-  const handleDismiss = () => {
-    dismiss();
-    setClientDismissed(true);
-  };
+  if (!offer) return null;
 
   const ctaUrl = "/3d-shop";
   const bgImage =
@@ -85,15 +57,14 @@ export default function LuxuryOfferBanner() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="relative z-50 w-full overflow-hidden"
         style={{
           background:
-            "linear-gradient(135deg, #1C1917 0%, #292524 40%, #44403C 100%)",
-          borderTop: "1px solid rgba(201, 169, 98, 0.35)",
-          borderBottom: "1px solid rgba(201, 169, 98, 0.35)",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.15)",
+            "linear-gradient(135deg, #FDFCF8 0%, #F5F3EE 45%, #EBE7E0 100%)",
+          borderTop: "1px solid rgba(201, 169, 98, 0.4)",
+          borderBottom: "1px solid rgba(201, 169, 98, 0.4)",
+          boxShadow: "0 4px 24px rgba(28,25,23,0.06)",
         }}
       >
         {/* Subtle gold radial glow behind */}
@@ -101,14 +72,14 @@ export default function LuxuryOfferBanner() {
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 60% 80% at 20% 50%, rgba(201,169,98,0.06) 0%, transparent 60%)",
+              "radial-gradient(ellipse 60% 80% at 20% 50%, rgba(201,169,98,0.12) 0%, transparent 60%)",
           }}
         />
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 40% 60% at 85% 50%, rgba(201,169,98,0.04) 0%, transparent 60%)",
+              "radial-gradient(ellipse 40% 60% at 85% 50%, rgba(201,169,98,0.08) 0%, transparent 60%)",
           }}
         />
 
@@ -122,13 +93,13 @@ export default function LuxuryOfferBanner() {
               priority
               sizes="100vw"
               className="object-cover"
-              style={{ opacity: 0.8 }}
+              style={{ opacity: 0.5 }}
             />
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(90deg, rgba(28,25,23,0.75) 0%, rgba(28,25,23,0.35) 50%, rgba(28,25,23,0.75) 100%)",
+                  "linear-gradient(90deg, rgba(253,252,248,0.92) 0%, rgba(253,252,248,0.7) 50%, rgba(253,252,248,0.92) 100%)",
               }}
             />
           </div>
@@ -141,9 +112,9 @@ export default function LuxuryOfferBanner() {
               <span
                 className="inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] sm:text-[11px]"
                 style={{
-                  borderColor: "rgba(201, 169, 98, 0.45)",
-                  color: "#C9A962",
-                  background: "rgba(201, 169, 98, 0.08)",
+                  borderColor: "rgba(201, 169, 98, 0.55)",
+                  color: "#8A6D2F",
+                  background: "rgba(201, 169, 98, 0.12)",
                 }}
               >
                 <Sparkles className="h-3 w-3" />
@@ -155,12 +126,12 @@ export default function LuxuryOfferBanner() {
               <h2
                 className="truncate text-base font-semibold tracking-[-0.01em] sm:text-lg"
                 style={{
-                  color: "#FDFCF8",
+                  color: "#1C1917",
                   fontFamily: "var(--lux-font-display)",
                 }}
               >
                 {offer.sale_label && (
-                  <span style={{ color: "#C9A962" }}>
+                  <span style={{ color: "#8A6D2F" }}>
                     {offer.sale_label} —{" "}
                   </span>
                 )}
@@ -169,7 +140,7 @@ export default function LuxuryOfferBanner() {
               {offer.description && (
                 <p
                   className="mt-0.5 hidden max-w-[420px] truncate text-xs sm:block"
-                  style={{ color: "rgba(253, 252, 248, 0.55)" }}
+                  style={{ color: "rgba(28, 25, 23, 0.62)" }}
                 >
                   {offer.description}
                 </p>
@@ -178,16 +149,16 @@ export default function LuxuryOfferBanner() {
                 <div className="mt-1.5 flex items-center justify-center gap-2 sm:justify-start">
                   <span
                     className="text-[10px] uppercase tracking-wider"
-                    style={{ color: "rgba(253,252,248,0.4)" }}
+                    style={{ color: "rgba(28,25,23,0.45)" }}
                   >
                     Code
                   </span>
                   <code
                     className="rounded-md border px-2 py-0.5 font-mono text-[11px] font-bold"
                     style={{
-                      borderColor: "rgba(201, 169, 98, 0.35)",
-                      color: "#C9A962",
-                      background: "rgba(201, 169, 98, 0.08)",
+                      borderColor: "rgba(201, 169, 98, 0.55)",
+                      color: "#8A6D2F",
+                      background: "rgba(201, 169, 98, 0.12)",
                     }}
                   >
                     {offer.coupon_code}
@@ -202,7 +173,7 @@ export default function LuxuryOfferBanner() {
             <CountdownTimer
               targetDate={offer.ends_at}
               size="sm"
-              variant="luxury"
+              variant="luxury-dark"
             />
             <Link
               href={ctaUrl}
@@ -210,16 +181,16 @@ export default function LuxuryOfferBanner() {
               style={{
                 background: "#C9A962",
                 color: "#1C1917",
-                boxShadow: "0 4px 16px rgba(201, 169, 98, 0.25)",
+                boxShadow: "0 4px 16px rgba(201, 169, 98, 0.3)",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.boxShadow =
-                  "0 6px 24px rgba(201, 169, 98, 0.4)";
+                  "0 6px 24px rgba(201, 169, 98, 0.45)";
                 e.currentTarget.style.transform = "translateY(-1px)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.boxShadow =
-                  "0 4px 16px rgba(201, 169, 98, 0.25)";
+                  "0 4px 16px rgba(201, 169, 98, 0.3)";
                 e.currentTarget.style.transform = "translateY(0)";
               }}
             >
@@ -228,24 +199,6 @@ export default function LuxuryOfferBanner() {
             </Link>
           </div>
         </div>
-
-        {/* Dismiss button */}
-        <button
-          onClick={handleDismiss}
-          aria-label="Dismiss offer banner"
-          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1.5 transition-colors sm:right-5"
-          style={{ color: "rgba(253, 252, 248, 0.35)" }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "rgba(253, 252, 248, 0.7)";
-            e.currentTarget.style.background = "rgba(253, 252, 248, 0.06)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "rgba(253, 252, 248, 0.35)";
-            e.currentTarget.style.background = "transparent";
-          }}
-        >
-          <X className="h-4 w-4" />
-        </button>
       </motion.div>
     </AnimatePresence>
   );
