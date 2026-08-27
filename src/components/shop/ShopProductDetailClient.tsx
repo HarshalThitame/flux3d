@@ -303,6 +303,7 @@ export default function ShopProductDetailClient({
   const baseImages = useMemo(() => getShopProductImages(product), [product]);
   const draggingRef = useRef(false);
   const lightboxRef = useRef<HTMLDivElement | null>(null);
+  const railRef = useRef<HTMLDivElement | null>(null);
   // Pre-select the cheapest purchasable variant on load — enterprise PDPs
   // never show an ambiguous "From ₹X" / "Select options" first paint.
   const [selected, setSelected] = useState<ShopSelectedOptions>(() =>
@@ -313,6 +314,13 @@ export default function ShopProductDetailClient({
     [product, selected],
   );
   const images = gallery.images;
+  const imageAltFor = (src: string) => {
+    const perImage = product.image_alt?.[src]?.trim();
+    if (perImage) return perImage;
+    return gallery.caption
+      ? `${product.name} — ${gallery.caption}`
+      : product.name;
+  };
   // Unified gallery media: images plus the hero video inserted right after
   // the cover shot so the video sits in the natural browsing flow.
   const mediaItems = useMemo<{ type: "video" | "image"; src: string }[]>(() => {
@@ -385,6 +393,20 @@ export default function ShopProductDetailClient({
     setMediaPos(0);
   }
 
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    const active = rail.children[safeMediaPos] as HTMLElement | null;
+    if (!active) return;
+    const top = active.offsetTop;
+    const bottom = top + active.offsetHeight;
+    if (top < rail.scrollTop) {
+      rail.scrollTo({ top, behavior: "smooth" });
+    } else if (bottom > rail.scrollTop + rail.clientHeight) {
+      rail.scrollTo({ top: bottom - rail.clientHeight, behavior: "smooth" });
+    }
+  }, [safeMediaPos]);
+
   function goImage(dir: 1 | -1) {
     if (mediaItems.length < 2) return;
     const next = Math.min(
@@ -435,6 +457,17 @@ export default function ShopProductDetailClient({
       };
     }
     if (panDelta) pan = { x: pan.x + panDelta.x, y: pan.y + panDelta.y };
+    const rect = lightboxRef.current?.getBoundingClientRect();
+    if (rect && nextZoom > 1) {
+      const maxX = (nextZoom - 1) * rect.width;
+      const maxY = (nextZoom - 1) * rect.height;
+      pan = {
+        x: Math.min(0, Math.max(-maxX, pan.x)),
+        y: Math.min(0, Math.max(-maxY, pan.y)),
+      };
+    } else {
+      pan = { x: 0, y: 0 };
+    }
     lightboxZoomRef.current = nextZoom;
     lightboxPanRef.current = pan;
     setLightboxZoom(nextZoom);
@@ -855,7 +888,7 @@ export default function ShopProductDetailClient({
                     >
                       <Image
                         src={lightboxImage}
-                        alt={product.name}
+                        alt={imageAltFor(lightboxImage)}
                         fill
                         sizes="100vw"
                         draggable={false}
@@ -931,7 +964,10 @@ export default function ShopProductDetailClient({
             <div className="flex items-start gap-4">
               {/* Vertical thumbnail rail — desktop editorial layout */}
               {mediaItems.length > 1 && (
-                <div className="hidden w-[76px] shrink-0 lg:flex lg:max-h-[min(68vh,620px)] lg:flex-col lg:gap-2.5 lg:overflow-y-auto lg:pr-1 scrollbar-hide">
+                <div
+                  ref={railRef}
+                  className="hidden w-[76px] shrink-0 lg:flex lg:max-h-[min(68vh,620px)] lg:flex-col lg:gap-2.5 lg:overflow-y-auto lg:pr-1 scrollbar-hide"
+                >
                   {mediaItems.map((item, index) => (
                     <GalleryThumb
                       key={`${item.type}-${item.src}`}
@@ -1018,11 +1054,7 @@ export default function ShopProductDetailClient({
                             <div className="shop-kenburns absolute inset-0">
                               <Image
                                 src={visibleImage}
-                                alt={
-                                  gallery.caption
-                                    ? `${product.name} — ${gallery.caption}`
-                                    : product.name
-                                }
+                                alt={imageAltFor(visibleImage)}
                                 fill
                                 priority
                                 sizes="(min-width: 1024px) 50vw, 100vw"
@@ -1081,7 +1113,7 @@ export default function ShopProductDetailClient({
                         ) : (
                           <Image
                             src={item.src}
-                            alt={product.name}
+                            alt={imageAltFor(item.src)}
                             fill
                             sizes="72px"
                             className="object-cover"

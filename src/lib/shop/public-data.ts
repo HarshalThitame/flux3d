@@ -153,6 +153,7 @@ type RawProduct = {
   thumbnail_url?: string | null;
   landscape_image_url?: string | null;
   image_urls?: string[] | null;
+  image_alt?: Record<string, string> | null;
   model_url?: string | null;
   usdz_url?: string | null;
   hotspots?: unknown;
@@ -193,6 +194,7 @@ const PRODUCT_SELECT = `
   thumbnail_url,
   landscape_image_url,
   image_urls,
+  image_alt,
   model_url,
   usdz_url,
   hotspots,
@@ -418,6 +420,7 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
     thumbnail_url: row.thumbnail_url ?? null,
     landscape_image_url: row.landscape_image_url ?? null,
     image_urls: row.image_urls ?? [],
+    image_alt: row.image_alt ?? {},
     model_url: row.model_url ?? null,
     usdz_url: row.usdz_url ?? null,
     hotspots: parseHotspotsJson(row.hotspots),

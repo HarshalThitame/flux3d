@@ -23,6 +23,7 @@ function makeProduct(
     thumbnail_url: "cover.jpg",
     landscape_image_url: null,
     image_urls: ["gallery-a.jpg", "gallery-b.jpg"],
+    image_alt: {},
     model_url: null,
     usdz_url: null,
     hotspots: [],

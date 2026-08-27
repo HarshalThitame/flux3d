@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { Box, ImagePlus, Images, Loader2, Trash2 } from "lucide-react";
+import { Box, Images, Loader2, Trash2 } from "lucide-react";
 import { useProductEditor } from "../editor-context";
 import { Section } from "../ui";
 import { comboLabel } from "../types";
@@ -18,41 +18,31 @@ const bulkFields: { key: BulkField; label: string; skuKey: keyof ShopSku }[] = [
   { key: "weight", label: "Weight (g)", skuKey: "weight_grams" },
 ];
 
-function SkuImageUpload({ skuId, url }: { skuId: string; url: string | null }) {
-  const { uploadImage, setToast } = useProductEditor();
+function SkuVariantImageSummary({ url }: { url: string | null }) {
+  if (!url) {
+    return (
+      <span
+        className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 bg-gray-50/60 px-2.5 py-2 text-xs font-semibold text-[#6F7192]"
+        title="Assign an image to this variant in the Media section above"
+      >
+        <Images className="h-4 w-4" />
+        Variant
+      </span>
+    );
+  }
   return (
-    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-2 py-2 text-xs text-[#6F7192]">
-      {url ? (
-        <span className="relative h-6 w-6 overflow-hidden rounded">
-          <Image
-            src={url}
-            alt="Variant"
-            fill
-            sizes="24px"
-            className="object-cover"
-          />
-        </span>
-      ) : (
-        <ImagePlus className="h-4 w-4" />
-      )}
-      Upload
-      <input
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file)
-            void uploadImage(file, "variant", skuId).catch((error) =>
-              setToast({
-                type: "error",
-                message:
-                  error instanceof Error ? error.message : "Upload failed.",
-              }),
-            );
-        }}
+    <span
+      className="relative inline-block h-8 w-8 overflow-hidden rounded-lg border border-gray-200"
+      title="Variant image — manage in the Media section above"
+    >
+      <Image
+        src={url}
+        alt="Variant"
+        fill
+        sizes="32px"
+        className="object-cover"
       />
-    </label>
+    </span>
   );
 }
 
@@ -106,10 +96,12 @@ function SkuModelUpload({ sku }: { sku: ShopSku }) {
 
 function SkuGallerySummary({ sku }: { sku: ShopSku }) {
   const { skuImages } = useProductEditor();
-  const images: ShopSkuImage[] = skuImages[sku.id] ?? [];
-  const previews = [...images]
-    .sort((a, b) => a.display_order - b.display_order)
-    .slice(0, 3);
+  const attached: ShopSkuImage[] = skuImages[sku.id] ?? [];
+  const images = [
+    ...(sku.variant_image_url ? [sku.variant_image_url] : []),
+    ...attached.map((image) => image.image_url),
+  ].filter((url, index, arr) => arr.indexOf(url) === index);
+  const previews = images.slice(0, 3);
 
   if (images.length === 0) {
     return (
@@ -132,14 +124,14 @@ function SkuGallerySummary({ sku }: { sku: ShopSku }) {
         <Images className="h-4 w-4" />
         {images.length}
       </span>
-      {previews.map((image) => (
+      {previews.map((url) => (
         <span
-          key={image.id}
+          key={url}
           className="relative h-7 w-7 overflow-hidden rounded-md border border-gray-200"
         >
           <Image
-            src={image.image_url}
-            alt={image.alt_text ?? "SKU image"}
+            src={url}
+            alt="SKU image"
             fill
             sizes="28px"
             className="object-cover"
@@ -498,10 +490,7 @@ export function SkuManagerSection() {
                       />
                     </td>
                     <td className="px-3 py-3">
-                      <SkuImageUpload
-                        skuId={sku.id}
-                        url={sku.variant_image_url}
-                      />
+                      <SkuVariantImageSummary url={sku.variant_image_url} />
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
@@ -573,17 +562,6 @@ export function SkuManagerSection() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {sku.variant_image_url && (
-                      <span className="relative h-6 w-6 overflow-hidden rounded">
-                        <Image
-                          src={sku.variant_image_url}
-                          alt="Variant"
-                          fill
-                          sizes="24px"
-                          className="object-cover"
-                        />
-                      </span>
-                    )}
                     <button
                       type="button"
                       aria-pressed={sku.is_available ?? true}
@@ -660,7 +638,7 @@ export function SkuManagerSection() {
                   })}
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-2">
-                  <SkuImageUpload skuId={sku.id} url={sku.variant_image_url} />
+                  <SkuVariantImageSummary url={sku.variant_image_url} />
                   <div className="flex items-center gap-2">
                     <SkuModelUpload sku={sku} />
                     <SkuGallerySummary sku={sku} />

@@ -352,6 +352,7 @@ export function UnifiedMediaPool() {
           onPick={(url) => {
             attachLibraryImage(url);
             setLibraryOpen(false);
+            setAssignTargetUrl(url);
           }}
         />
       )}

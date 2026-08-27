@@ -41,6 +41,7 @@ export type ShopPublicProduct = {
   thumbnail_url: string | null;
   landscape_image_url: string | null;
   image_urls: string[];
+  image_alt: Record<string, string>;
   model_url: string | null;
   usdz_url: string | null;
   hotspots: ShopProductHotspot[];
