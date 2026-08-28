@@ -13,7 +13,6 @@ import {
   PartyPopper,
 } from "lucide-react";
 import { useBusinessSettings } from "@/lib/settings-context";
-import { trackPixelEvent, generateEventId } from "@/lib/meta/event-utils";
 
 type OrderSuccessData = {
   orderId: string;
@@ -44,16 +43,8 @@ export default function OrderSuccessPage() {
       router.replace("/");
       return;
     }
-    // Meta requires custom_data.value > 0; skip tracking when no valid total exists.
-    const purchaseValue = orderData.totalPrice ?? 0;
-    if (purchaseValue <= 0) return;
-    trackPixelEvent({
-      eventName: "Purchase",
-      eventId: generateEventId(),
-      // No content_ids: orderData.orderId is a UUID, not a catalog id. The
-      // server-side CAPI Purchase sends catalog-matched content_ids on capture.
-      customData: { value: purchaseValue, currency: "INR" },
-    });
+    // Purchase is reported by the server-side CAPI on capture; no client pixel
+    // here avoids duplicate Purchase events with different eventIds.
   }, [orderData, router]);
 
   if (!orderData) {

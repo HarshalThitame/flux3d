@@ -19,7 +19,6 @@ import {
   verifyCartPaymentAndCreateOrder,
   type PrepareCartPaymentResult,
 } from "@/app/cart/delivery/actions";
-import { trackPixelEvent, generateEventId } from "@/lib/meta/event-utils";
 import { useGlobalLoading } from "@/hooks/useGlobalLoading";
 import AddressForm from "@/components/instant-quote/AddressForm";
 import Toast, { type ToastState } from "@/components/quote/Toast";
@@ -394,16 +393,9 @@ export default function CartDeliveryClient({
               razorpaySignature: response.razorpay_signature,
             });
 
-            trackPixelEvent({
-              eventName: "Purchase",
-              eventId: generateEventId(),
-              customData: {
-                value: payableTotal,
-                currency: "INR",
-                // Custom-quote cart: no catalog SKUs, so no content_ids (an
-                // order UUID here would create unmatched Meta events).
-              },
-            });
+            // Purchase is reported by the server-side CAPI
+            // (cart/delivery/actions.ts) on capture; no client pixel here
+            // avoids duplicate Purchase events with different eventIds.
 
             setPaymentStatus("paid");
             setPaymentResult({

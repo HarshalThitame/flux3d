@@ -19,7 +19,6 @@ import {
 import ShopShell from "@/components/shop/ShopShell";
 import { createAdminSupabaseClient } from "@/lib/admin/server";
 import { getCurrentUserProfile } from "@/lib/auth/server";
-import { toCatalogRetailerId } from "@/lib/meta/catalog";
 import {
   formatShopOrderDateTime,
   getShopFulfilmentStatusLabel,
@@ -30,7 +29,6 @@ import {
   type ShopOrder,
 } from "@/lib/shop/orders";
 import { formatShopPrice } from "@/lib/shop/selection";
-import ShopOrderTracking from "./ShopOrderTracking";
 
 export const metadata: Metadata = {
   title: "Order Placed — 3D Shop",
@@ -422,16 +420,6 @@ export default async function ShopOrderSuccessPage({
           </section>
         </div>
       </main>
-      <ShopOrderTracking
-        orderNumber={order.order_number}
-        itemIds={order.items.map((i) => toCatalogRetailerId(i.skuCode))}
-        contents={order.items.map((i) => ({
-          id: toCatalogRetailerId(i.skuCode),
-          quantity: i.quantity,
-          item_price: i.unitPrice,
-        }))}
-        value={order.total_amount}
-      />
     </ShopShell>
   );
 }

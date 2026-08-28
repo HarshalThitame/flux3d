@@ -340,18 +340,6 @@ export default function ShopCheckoutClient({
   async function handlePlaceOrder() {
     if (isPlacing || items.length === 0) return;
 
-    trackMetaEvent("AddPaymentInfo", {
-      content_ids: items.map((i) => i.catalogRetailerId ?? i.skuCode),
-      content_type: "product",
-      contents: items.map((i) => ({
-        id: i.catalogRetailerId ?? i.skuCode,
-        quantity: i.quantity,
-        item_price: i.price,
-      })),
-      value: totals.subtotal,
-      currency: "INR",
-    });
-
     setToast("");
     setReviewBanner(false);
     setAffectedItemIds([]);
@@ -392,6 +380,20 @@ export default function ShopCheckoutClient({
         return;
       }
     }
+
+    // Only fire AddPaymentInfo after all validations pass, immediately before
+    // order creation, so the event reflects an order that can actually proceed.
+    trackMetaEvent("AddPaymentInfo", {
+      content_ids: items.map((i) => i.catalogRetailerId ?? i.skuCode),
+      content_type: "product",
+      contents: items.map((i) => ({
+        id: i.catalogRetailerId ?? i.skuCode,
+        quantity: i.quantity,
+        item_price: i.price,
+      })),
+      value: totals.subtotal,
+      currency: "INR",
+    });
 
     setIsPlacing(true);
     try {

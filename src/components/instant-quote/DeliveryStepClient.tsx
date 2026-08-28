@@ -18,7 +18,6 @@ import {
   verifyQuotePaymentAndCreateOrder,
   type PrepareQuotePaymentResult,
 } from "@/app/instant-quote/actions";
-import { trackPixelEvent, generateEventId } from "@/lib/meta/event-utils";
 import { useGlobalLoading } from "@/hooks/useGlobalLoading";
 import AddressForm from "@/components/instant-quote/AddressForm";
 import Toast, { type ToastState } from "@/components/quote/Toast";
@@ -424,21 +423,9 @@ export default function DeliveryStepClient({
               razorpaySignature: response.razorpay_signature,
             });
 
-            // Meta requires custom_data.value > 0; skip tracking when no valid total exists.
-            const purchaseValue =
-              orderResult.grandTotal ?? draft.grandTotal ?? 0;
-            if (purchaseValue > 0) {
-              trackPixelEvent({
-                eventName: "Purchase",
-                eventId: generateEventId(),
-                customData: {
-                  value: purchaseValue,
-                  currency: "INR",
-                  // Custom-quote order: no catalog SKU, so no content_ids (an
-                  // order UUID here would create unmatched Meta events).
-                },
-              });
-            }
+            // Purchase is reported by the server-side CAPI
+            // (instant-quote/actions.ts) on capture; no client pixel here
+            // avoids duplicate Purchase events with different eventIds.
 
             setPaymentStatus("paid");
             setPaymentResult({

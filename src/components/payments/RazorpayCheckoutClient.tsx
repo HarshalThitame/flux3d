@@ -11,7 +11,6 @@ import {
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import Confetti from "@/components/Confetti";
-import { trackPixelEvent, generateEventId } from "@/lib/meta/event-utils";
 import { getClientCspNonce } from "@/lib/csp-client";
 
 type RazorpayWindow = Window & {
@@ -218,14 +217,9 @@ export default function RazorpayCheckoutClient({
             data.paymentStatus === "captured"
           ) {
             setStatus("paid");
-            trackPixelEvent({
-              eventName: "Purchase",
-              eventId: generateEventId(),
-              // No content_ids: the internalOrderId UUID is not a catalog id,
-              // and the server-side CAPI Purchase (payments/service.ts) already
-              // sends catalog-matched content_ids on capture.
-              customData: { value: amountPaise / 100, currency },
-            });
+            // Purchase is reported by the server-side CAPI (payments/service.ts)
+            // on capture, with catalog-matched content_ids. No client pixel here
+            // avoids duplicate Purchase events with different eventIds.
             onSuccessAction?.();
             return;
           }
@@ -360,14 +354,8 @@ export default function RazorpayCheckoutClient({
 
             if (verifyBody.status === "paid") {
               setStatus("paid");
-              trackPixelEvent({
-                eventName: "Purchase",
-                eventId: generateEventId(),
-                // No content_ids: internalOrderId is a UUID, not a catalog id;
-                // server-side CAPI Purchase (payments/service.ts) sends matched
-                // content_ids on capture.
-                customData: { value: amountPaise / 100, currency },
-              });
+              // Purchase is reported by the server-side CAPI on capture; no
+              // client pixel here avoids duplicate Purchase events.
               onSuccessAction?.();
               return;
             }
