@@ -166,22 +166,34 @@ export function UnifiedMediaPool() {
   const handleRemove = useCallback(
     async (item: MediaItem) => {
       const isCover = product.thumbnail_url === item.url;
-      if (isCover && galleryCount > 1) {
-        const confirmed = window.confirm(
-          "This is the cover photo — removing it promotes the next image to cover. This also removes every variant / SKU assignment for it. Continue?",
+      const notes: string[] = [];
+      if (isCover) notes.push("the next image will become the cover");
+      if (item.assignments.length > 0) {
+        notes.push(
+          `it will also be removed from ${item.assignments.length} variant/SKU target${item.assignments.length === 1 ? "" : "s"}`,
         );
-        if (!confirmed) return;
       }
-      if (item.assignments.length > 0 && !isCover) {
-        const confirmed = window.confirm(
-          `This image is linked to ${item.assignments.length} variant/SKU target${item.assignments.length === 1 ? "" : "s"}. Remove it everywhere?`,
-        );
-        if (!confirmed) return;
+      const confirmed = window.confirm(
+        `Are you sure you want to remove this image?${
+          notes.length > 0 ? ` ${notes.join(" and ")}.` : ""
+        } This will delete it from the database permanently.`,
+      );
+      if (!confirmed) return;
+      try {
+        await removeImage(item.url);
+        if (assignTargetUrl === item.url) setAssignTargetUrl(null);
+        setToast({ type: "success", message: "Image removed." });
+      } catch (error) {
+        setToast({
+          type: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to remove image. Please retry.",
+        });
       }
-      await removeImage(item.url);
-      if (assignTargetUrl === item.url) setAssignTargetUrl(null);
     },
-    [assignTargetUrl, galleryCount, product.thumbnail_url, removeImage],
+    [assignTargetUrl, product.thumbnail_url, removeImage, setToast],
   );
 
   async function handleAiAlt(url: string) {

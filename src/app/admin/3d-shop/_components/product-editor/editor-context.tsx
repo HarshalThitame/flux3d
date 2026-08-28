@@ -143,7 +143,7 @@ type ProductEditorContextValue = {
   ) => void;
   uploadSkuModel: (skuId: string, file: File) => Promise<void>;
   setThumbnail: (url: string) => void;
-  removeImage: (url: string) => void;
+  removeImage: (url: string) => Promise<void>;
   handleImageDrop: (url: string) => void;
   setImageAlt: (url: string, alt: string) => void;
   uploadLandscapeImage: (
@@ -1621,6 +1621,60 @@ export function ProductEditorProvider({
   const removeImage = useCallback(
     async (url: string) => {
       const productId = form.productRef.current.id;
+
+      // 1. Delete from the database FIRST — if any delete fails, abort and
+      //    keep the image in the UI so the user knows it wasn't removed.
+      if (productId) {
+        // Variant-option assignments
+        const variantMatches = variantOptionImagesRef.current.filter(
+          (image) => image.image_url === url,
+        );
+        if (variantMatches.length > 0) {
+          for (const image of variantMatches) {
+            const response = await fetch(
+              `/api/3d-shop/admin/products/${productId}/variant-images?id=${encodeURIComponent(image.id)}`,
+              { method: "DELETE" },
+            );
+            if (!response.ok)
+              throw new Error(
+                "Failed to remove the image from its variant assignment. Please retry.",
+              );
+          }
+        }
+
+        // SKU assignments + variant_image_url
+        for (const sku of skusRef.current) {
+          const skuMatches = (skuImagesRef.current[sku.id] ?? []).filter(
+            (image) => image.image_url === url,
+          );
+          for (const image of skuMatches) {
+            const response = await fetch(
+              `/api/3d-shop/admin/skus/${encodeURIComponent(sku.id)}/images?id=${encodeURIComponent(image.id)}`,
+              { method: "DELETE" },
+            );
+            if (!response.ok)
+              throw new Error(
+                "Failed to remove the image from its SKU assignment. Please retry.",
+              );
+          }
+          if (sku.variant_image_url === url) {
+            const response = await fetch(
+              `/api/3d-shop/admin/products/${productId}/skus`,
+              {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: sku.id, variant_image_url: null }),
+              },
+            );
+            if (!response.ok)
+              throw new Error(
+                "Failed to clear the image from the SKU cover. Please retry.",
+              );
+          }
+        }
+      }
+
+      // 2. All DB deletes succeeded — now update the local UI state.
       const images = [
         form.productRef.current.thumbnail_url,
         ...form.productRef.current.image_urls,
@@ -1634,25 +1688,13 @@ export function ProductEditorProvider({
       });
 
       if (productId) {
-        // Cascade: remove the URL from every variant-option assignment.
-        const variantMatches = variantOptionImagesRef.current.filter(
-          (image) => image.image_url === url,
-        );
-        if (variantMatches.length > 0) {
-          await Promise.all(
-            variantMatches.map(async (image) => {
-              await fetch(
-                `/api/3d-shop/admin/products/${productId}/variant-images?id=${encodeURIComponent(image.id)}`,
-                { method: "DELETE" },
-              ).catch(() => {});
-            }),
-          );
+        if (
+          variantOptionImagesRef.current.some((img) => img.image_url === url)
+        ) {
           setVariantOptionImages((current) =>
             current.filter((image) => image.image_url !== url),
           );
         }
-
-        // Cascade: remove the URL from SKU galleries and clear variant_image_url.
         const affectedSkuIds = new Set<string>();
         for (const sku of skusRef.current) {
           const skuMatches = (skuImagesRef.current[sku.id] ?? []).filter(
@@ -1660,19 +1702,6 @@ export function ProductEditorProvider({
           );
           if (skuMatches.length > 0 || sku.variant_image_url === url)
             affectedSkuIds.add(sku.id);
-          for (const image of skuMatches) {
-            await fetch(
-              `/api/3d-shop/admin/skus/${encodeURIComponent(sku.id)}/images?id=${encodeURIComponent(image.id)}`,
-              { method: "DELETE" },
-            ).catch(() => {});
-          }
-          if (sku.variant_image_url === url) {
-            await fetch(`/api/3d-shop/admin/products/${productId}/skus`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: sku.id, variant_image_url: null }),
-            }).catch(() => {});
-          }
         }
         if (affectedSkuIds.size > 0) {
           setSkuImages((current) => {
@@ -1694,6 +1723,7 @@ export function ProductEditorProvider({
         }
       }
 
+      // 3. Best-effort storage cleanup — never fails the operation.
       deleteStorageAsset(url);
     },
     [deleteStorageAsset, form],
