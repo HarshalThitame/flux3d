@@ -62,7 +62,7 @@ function buildCatalogItem(
   const baseUrl = (
     process.env.NEXT_PUBLIC_SITE_URL || "https://flux3d.in"
   ).replace(/\/+$/, "");
-  const productUrl = `${baseUrl}/3d-shop/product/${product.slug}${sku.sku_code ? `?sku=${sku.sku_code}` : ""}`;
+  const productUrl = `${baseUrl}/3d-shop/product/${product.slug}${sku.sku_code ? `?sku=${encodeURIComponent(sku.sku_code)}` : ""}`;
   const image =
     sku.variant_image_url ||
     product.thumbnail_url ||
@@ -84,8 +84,13 @@ function buildCatalogItem(
 
   const item: MetaCatalogItemData = {
     id: retailerId,
-    title: variantLabel ? `${product.name} — ${variantLabel}` : product.name,
-    description: product.description?.slice(0, 9999) || undefined,
+    // Meta caps title at 150 chars and description at 5000 chars; anything
+    // longer is rejected by the items_batch validation.
+    title: (variantLabel
+      ? `${product.name} — ${variantLabel}`
+      : product.name
+    ).slice(0, 150),
+    description: product.description?.slice(0, 5000) || undefined,
     availability,
     condition: "new",
     price: `${(sku.price || product.base_price).toFixed(2)} INR`,
@@ -334,7 +339,6 @@ export async function deleteMetaCatalogItem(
   const entry: MetaBatchRequestEntry = {
     method: "DELETE",
     retailer_id: catalogRetailerId,
-    data: { id: catalogRetailerId },
   };
 
   const postResult = await postItemsBatch(catalogId, headers, [entry]);

@@ -37,9 +37,22 @@ function extractMetaErrorMessage(result: Record<string, unknown>): string {
   return JSON.stringify(errorObj);
 }
 
+class MetaApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "MetaApiError";
+    this.status = status;
+  }
+}
+
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+// Graph API calls should not hang forever when Meta has an outage. AbortSignal
+// .timeout is available in Node 18+/Vercel's Node runtime.
+const META_API_TIMEOUT_MS = 30_000;
 
 async function withRetry<T>(
   label: string,
@@ -52,7 +65,12 @@ async function withRetry<T>(
       return await fn();
     } catch (err) {
       lastErr = err instanceof Error ? err : new Error(String(err));
-      if (attempt >= MAX_RETRIES) break;
+      const status = err instanceof MetaApiError ? err.status : 0;
+      // status 0 means a network/timeout error — always transient and worth
+      // retrying. 5xx and 429 are handled by the caller's predicate. 4xx
+      // (invalid params, auth) are NOT retried.
+      const retryable = status === 0 || isRetryable(status, {});
+      if (attempt >= MAX_RETRIES || !retryable) break;
       logWarn(`Meta API retry ${attempt}/${MAX_RETRIES} for ${label}`, {
         module: "meta-ads",
         error: lastErr,
@@ -164,6 +182,7 @@ async function metaApiPostRaw(path: string, body: Record<string, unknown>) {
     method: "POST",
     headers,
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(META_API_TIMEOUT_MS),
   });
 
   const result = (await response.json().catch(() => ({}))) as Record<
@@ -173,12 +192,15 @@ async function metaApiPostRaw(path: string, body: Record<string, unknown>) {
 
   if (!response.ok) {
     const message = extractMetaErrorMessage(result);
-    throw new Error(`Meta API error ${response.status}: ${message}`);
+    throw new MetaApiError(
+      response.status,
+      `Meta API error ${response.status}: ${message}`,
+    );
   }
 
   if (result.error) {
     const message = extractMetaErrorMessage(result);
-    throw new Error(`Meta API error: ${message}`);
+    throw new MetaApiError(200, `Meta API error: ${message}`);
   }
 
   return result;
@@ -197,7 +219,10 @@ async function metaApiGetRaw(path: string) {
   const headers = getMetaApiHeaders();
   const url = `${base}${path}`;
 
-  const response = await fetch(url, { headers });
+  const response = await fetch(url, {
+    headers,
+    signal: AbortSignal.timeout(META_API_TIMEOUT_MS),
+  });
   const result = (await response.json().catch(() => ({}))) as Record<
     string,
     unknown
@@ -205,7 +230,10 @@ async function metaApiGetRaw(path: string) {
 
   if (!response.ok) {
     const message = extractMetaErrorMessage(result);
-    throw new Error(`Meta API error ${response.status}: ${message}`);
+    throw new MetaApiError(
+      response.status,
+      `Meta API error ${response.status}: ${message}`,
+    );
   }
 
   return result;
@@ -684,7 +712,11 @@ async function metaApiDeleteRaw(path: string) {
   const headers = getMetaApiHeaders();
   const url = `${base}${path}`;
 
-  const response = await fetch(url, { method: "DELETE", headers });
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers,
+    signal: AbortSignal.timeout(META_API_TIMEOUT_MS),
+  });
   const result = (await response.json().catch(() => ({}))) as Record<
     string,
     unknown
@@ -692,7 +724,10 @@ async function metaApiDeleteRaw(path: string) {
 
   if (!response.ok) {
     const message = extractMetaErrorMessage(result);
-    throw new Error(`Meta API error ${response.status}: ${message}`);
+    throw new MetaApiError(
+      response.status,
+      `Meta API error ${response.status}: ${message}`,
+    );
   }
 
   return result;
@@ -756,14 +791,21 @@ export async function getAdAccountInsights(
   return result.data ?? [];
 }
 
+// Meta's `time_range` requires YYYY-MM-DD (not relative strings like "7_days_ago").
+function isoDateDaysAgo(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
 export async function getAdAccountInsightsTimeSeries(
   days = 7,
 ): Promise<MetaCampaignInsight[]> {
   const adAccountId = getMetaAdAccountId();
   const fields = "spend,impressions,clicks,date_start";
   const timeRange = JSON.stringify({
-    since: `${days}_days_ago`,
-    until: "today",
+    since: isoDateDaysAgo(days),
+    until: isoDateDaysAgo(0),
   });
   const result = (await metaApiGet(
     `/${adAccountId}/insights?fields=${encodeURIComponent(fields)}&time_range=${encodeURIComponent(timeRange)}&time_increment=1`,
@@ -778,8 +820,8 @@ export async function getCampaignInsightsTimeSeries(
 ): Promise<MetaCampaignInsight[]> {
   const fields = "spend,impressions,clicks,date_start";
   const timeRange = JSON.stringify({
-    since: `${days}_days_ago`,
-    until: "today",
+    since: isoDateDaysAgo(days),
+    until: isoDateDaysAgo(0),
   });
   const result = (await metaApiGet(
     `/${campaignId}/insights?fields=${encodeURIComponent(fields)}&time_range=${encodeURIComponent(timeRange)}&time_increment=1`,
