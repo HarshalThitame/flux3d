@@ -21,8 +21,8 @@ export function getShopProductImages(
   product: Pick<ShopPublicProduct, "thumbnail_url" | "image_urls">,
 ) {
   return [product.thumbnail_url, ...(product.image_urls ?? [])].filter(
-    Boolean,
-  ) as string[];
+    (url): url is string => Boolean(url?.trim()),
+  );
 }
 
 export function getShopVariantOptionImages(
@@ -32,7 +32,9 @@ export function getShopVariantOptionImages(
 ) {
   return (product.variant_option_images ?? []).filter(
     (image) =>
-      image.option_name === optionName && image.option_value === optionValue,
+      image.option_name === optionName &&
+      image.option_value === optionValue &&
+      Boolean(image.image_url?.trim()),
   );
 }
 
@@ -41,7 +43,11 @@ export function getShopSkuImages(
   sku: ShopSku | null,
 ): ShopSkuImage[] {
   if (!sku) return [];
-  return (product.sku_images ?? {})[sku.id] ?? [];
+  return (
+    (product.sku_images ?? {})[sku.id]?.filter((image) =>
+      Boolean(image.image_url?.trim()),
+    ) ?? []
+  );
 }
 
 export type ShopGallerySource = "option" | "sku" | "product";
@@ -68,6 +74,8 @@ export function getShopGalleryImages(
   product: ShopPublicProduct,
   selected: ShopSelectedOptions,
 ): { images: string[]; caption?: string; source: ShopGallerySource } {
+  const allOptionUrls: string[] = [];
+  const matchedCaptions: string[] = [];
   for (const option of getSkuRelevantOptions(product.variant_options)) {
     const value = selected[option.option_name];
     if (typeof value !== "string") continue;
@@ -77,15 +85,23 @@ export function getShopGalleryImages(
       value,
     );
     if (optionImages.length > 0) {
-      return {
-        images: mergeGalleryWithProductImages(
-          optionImages.map((image) => image.image_url),
-          product,
-        ),
-        caption: `${option.option_name}: ${value}`,
-        source: "option",
-      };
+      allOptionUrls.push(...optionImages.map((image) => image.image_url));
+      matchedCaptions.push(`${option.option_name}: ${value}`);
     }
+  }
+
+  if (allOptionUrls.length > 0) {
+    const seen = new Set<string>();
+    const deduped = allOptionUrls.filter((url) => {
+      if (seen.has(url)) return false;
+      seen.add(url);
+      return true;
+    });
+    return {
+      images: mergeGalleryWithProductImages(deduped, product),
+      caption: matchedCaptions.join(" · "),
+      source: "option",
+    };
   }
 
   const resolvedSku = resolveShopSku(

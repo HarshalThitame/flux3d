@@ -174,6 +174,260 @@ describe("getShopGalleryImages — merged galleries", () => {
   });
 });
 
+describe("getShopGalleryImages — multi-option merging (Option A)", () => {
+  const twoOptions = [
+    {
+      id: "o1",
+      product_id: "p1",
+      option_name: "Color",
+      option_type: "button" as const,
+      values: ["Red", "Blue"],
+      display_order: 0,
+      is_required: true,
+      created_at: null,
+    },
+    {
+      id: "o2",
+      product_id: "p1",
+      option_name: "Size",
+      option_type: "button" as const,
+      values: ["Large", "Small"],
+      display_order: 1,
+      is_required: true,
+      created_at: null,
+    },
+  ];
+  const twoSkus = [
+    {
+      product_id: "p1",
+      id: "s-red-large",
+      sku_code: "RL",
+      variant_combination: { Color: "Red", Size: "Large" },
+      price: 1000,
+      compare_at_price: null,
+      stock_quantity: 5,
+      low_stock_threshold: 5,
+      weight_grams: null,
+      variant_image_url: null,
+      model_url: null,
+      is_available: true,
+      pre_order_eta: null,
+      created_at: null,
+      updated_at: null,
+    },
+    {
+      product_id: "p1",
+      id: "s-red-small",
+      sku_code: "RS",
+      variant_combination: { Color: "Red", Size: "Small" },
+      price: 900,
+      compare_at_price: null,
+      stock_quantity: 5,
+      low_stock_threshold: 5,
+      weight_grams: null,
+      variant_image_url: null,
+      model_url: null,
+      is_available: true,
+      pre_order_eta: null,
+      created_at: null,
+      updated_at: null,
+    },
+  ];
+
+  it("merges images from every selected option that has a gallery", () => {
+    const product = makeProduct({
+      skus: twoSkus,
+      variant_options: twoOptions,
+      variant_option_images: [
+        {
+          id: "v1",
+          product_id: "p1",
+          option_name: "Color",
+          option_value: "Red",
+          image_url: "red-1.jpg",
+          alt_text: null,
+          display_order: 0,
+          is_primary: true,
+          created_at: null,
+        },
+        {
+          id: "v2",
+          product_id: "p1",
+          option_name: "Size",
+          option_value: "Large",
+          image_url: "large-1.jpg",
+          alt_text: null,
+          display_order: 0,
+          is_primary: true,
+          created_at: null,
+        },
+      ],
+    });
+    const gallery = getShopGalleryImages(product, {
+      Color: "Red",
+      Size: "Large",
+    });
+    expect(gallery.images.slice(0, 2)).toEqual(["red-1.jpg", "large-1.jpg"]);
+    expect(gallery.source).toBe("option");
+    expect(gallery.caption).toBe("Color: Red · Size: Large");
+  });
+
+  it("deduplicates a URL shared across multiple option assignments", () => {
+    const product = makeProduct({
+      skus: twoSkus,
+      variant_options: twoOptions,
+      variant_option_images: [
+        {
+          id: "v1",
+          product_id: "p1",
+          option_name: "Color",
+          option_value: "Red",
+          image_url: "shared.jpg",
+          alt_text: null,
+          display_order: 0,
+          is_primary: true,
+          created_at: null,
+        },
+        {
+          id: "v2",
+          product_id: "p1",
+          option_name: "Size",
+          option_value: "Large",
+          image_url: "shared.jpg",
+          alt_text: null,
+          display_order: 0,
+          is_primary: true,
+          created_at: null,
+        },
+      ],
+    });
+    const gallery = getShopGalleryImages(product, {
+      Color: "Red",
+      Size: "Large",
+    });
+    expect(gallery.images.filter((url) => url === "shared.jpg")).toHaveLength(
+      1,
+    );
+  });
+
+  it("skips option images with empty or whitespace-only URLs", () => {
+    const product = makeProduct({
+      skus: twoSkus,
+      variant_options: twoOptions,
+      variant_option_images: [
+        {
+          id: "v1",
+          product_id: "p1",
+          option_name: "Color",
+          option_value: "Red",
+          image_url: "",
+          alt_text: null,
+          display_order: 0,
+          is_primary: false,
+          created_at: null,
+        },
+        {
+          id: "v2",
+          product_id: "p1",
+          option_name: "Color",
+          option_value: "Red",
+          image_url: "   ",
+          alt_text: null,
+          display_order: 1,
+          is_primary: false,
+          created_at: null,
+        },
+        {
+          id: "v3",
+          product_id: "p1",
+          option_name: "Color",
+          option_value: "Red",
+          image_url: "red.jpg",
+          alt_text: null,
+          display_order: 2,
+          is_primary: true,
+          created_at: null,
+        },
+      ],
+    });
+    const gallery = getShopGalleryImages(product, { Color: "Red" });
+    expect(gallery.images).toContain("red.jpg");
+    expect(gallery.images).not.toContain("");
+    expect(gallery.images).not.toContain("   ");
+  });
+
+  it("falls back to SKU images when no option gallery matches", () => {
+    const product = makeProduct({
+      skus: twoSkus,
+      variant_options: twoOptions,
+      sku_images: {
+        "s-red-small": [
+          {
+            id: "si1",
+            sku_id: "s-red-small",
+            image_url: "sku-red.jpg",
+            alt_text: null,
+            display_order: 0,
+            is_primary: true,
+            created_at: null,
+          },
+        ],
+      },
+    });
+    const gallery = getShopGalleryImages(product, {
+      Color: "Red",
+      Size: "Small",
+    });
+    expect(gallery.source).toBe("sku");
+    expect(gallery.images[0]).toBe("sku-red.jpg");
+  });
+
+  it("skips SKU images with empty URLs when building the gallery", () => {
+    const product = makeProduct({
+      skus: twoSkus,
+      variant_options: twoOptions,
+      sku_images: {
+        "s-red-small": [
+          {
+            id: "si1",
+            sku_id: "s-red-small",
+            image_url: "",
+            alt_text: null,
+            display_order: 0,
+            is_primary: false,
+            created_at: null,
+          },
+          {
+            id: "si2",
+            sku_id: "s-red-small",
+            image_url: "sku-valid.jpg",
+            alt_text: null,
+            display_order: 1,
+            is_primary: true,
+            created_at: null,
+          },
+        ],
+      },
+    });
+    const gallery = getShopGalleryImages(product, {
+      Color: "Red",
+      Size: "Small",
+    });
+    expect(gallery.images).toContain("sku-valid.jpg");
+    expect(gallery.images).not.toContain("");
+  });
+
+  it("filters whitespace-only product images from the fallback", () => {
+    const product = makeProduct({
+      thumbnail_url: "",
+      image_urls: ["   ", "real.jpg"],
+    });
+    const gallery = getShopGalleryImages(product, {});
+    expect(gallery.images).toEqual(["real.jpg"]);
+    expect(gallery.source).toBe("product");
+  });
+});
+
 describe("getDefaultShopSelection", () => {
   const options = [
     {
