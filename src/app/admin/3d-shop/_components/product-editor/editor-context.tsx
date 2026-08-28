@@ -16,13 +16,22 @@ import type {
   ShopProduct,
   ShopSku,
   ShopSkuImage,
+  ShopSkuPricingRule,
+  ShopSkuTierPrice,
+  SkuPatternTemplate,
   ShopVariantOption,
   ShopVariantOptionDimension,
   ShopVariantOptionImage,
   ProductDimensions,
+  VariantValueMetadata,
 } from "@/lib/shop/admin-types";
 import { slugifyShopValue, stableStringify } from "@/lib/shop/admin-types";
-import { emptyDimensions } from "@/lib/shop/dimensions";
+import {
+  buildSkuRows,
+  isDiscreteOptionType,
+  type SkuDraftRow,
+  type SkuPatternOption,
+} from "@/lib/shop/sku-engine";
 import type { ProductForm, ProductFormErrors } from "@/lib/shop/product-schema";
 import { getPublishBlockers } from "@/lib/shop/product-schema";
 import { skuLabel } from "@/lib/shop/media-pool";
@@ -52,7 +61,6 @@ import {
   type SaveStatus,
   type UploadState,
   buildProductPayload,
-  cartesianProduct,
   emptyProduct,
   toProductForm,
 } from "./types";
@@ -153,7 +161,7 @@ type ProductEditorContextValue = {
   aiPrompt: string;
   setAiPrompt: (value: string) => void;
 
-  addVariant: () => Promise<void>;
+  addVariant: () => Promise<ShopVariantOption | null>;
   updateVariant: <K extends keyof ShopVariantOption>(
     variantId: string,
     key: K,
@@ -161,8 +169,38 @@ type ProductEditorContextValue = {
   ) => void;
   deleteVariant: (variant: DraftVariant) => Promise<void>;
   reorderVariants: (targetId: string) => Promise<void>;
+  updateVariantValueMetadata: (
+    variantId: string,
+    value: string,
+    patch: Partial<VariantValueMetadata>,
+  ) => void;
+  removeVariantValue: (variantId: string, value: string) => void;
+  reorderVariantValues: (variantId: string, orderedValues: string[]) => void;
 
-  generateSkus: () => Promise<void>;
+  pricingRules: ShopSkuPricingRule[];
+  addPricingRule: (
+    rule: Omit<
+      ShopSkuPricingRule,
+      "id" | "product_id" | "created_at" | "updated_at"
+    >,
+  ) => Promise<void>;
+  updatePricingRule: (
+    ruleId: string,
+    patch: Partial<ShopSkuPricingRule>,
+  ) => Promise<void>;
+  deletePricingRule: (ruleId: string) => Promise<void>;
+
+  skuPatternTemplates: SkuPatternTemplate[];
+  generateSkuPreview: () => Promise<SkuDraftRow[]>;
+  generateSkus: (rows?: SkuDraftRow[]) => Promise<void>;
+
+  tierPrices: Record<string, ShopSkuTierPrice[]>;
+  updateTierPrices: (
+    skuId: string,
+    prices: { tier_name: string; price: number }[],
+  ) => Promise<void>;
+  generateSkuQr: (skuId: string) => Promise<string | null>;
+
   updateSku: <K extends keyof ShopSku>(
     skuId: string,
     key: K,
@@ -252,6 +290,13 @@ export function ProductEditorProvider({
   >({});
   const [aiPrompt, setAiPrompt] = useState("");
   const [revisions, setRevisions] = useState<ShopRevision[]>([]);
+  const [pricingRules, setPricingRules] = useState<ShopSkuPricingRule[]>([]);
+  const [skuPatternTemplates, setSkuPatternTemplates] = useState<
+    SkuPatternTemplate[]
+  >([]);
+  const [tierPrices, setTierPrices] = useState<
+    Record<string, ShopSkuTierPrice[]>
+  >({});
   const skuSectionRef = useRef<HTMLDivElement | null>(null);
 
   const slugTouchedRef = useRef(mode === "edit");
@@ -262,6 +307,7 @@ export function ProductEditorProvider({
   const variantDimensionsRef = useRef<ShopVariantOptionDimension[]>([]);
   const variantOptionImagesRef = useRef<ShopVariantOptionImage[]>([]);
   const skuImagesRef = useRef<Record<string, ShopSkuImage[]>>({});
+  const pricingRulesRef = useRef<ShopSkuPricingRule[]>([]);
   const hasLoadedRef = useRef(false);
 
   useEffect(() => {
@@ -270,7 +316,15 @@ export function ProductEditorProvider({
     variantDimensionsRef.current = variantDimensions;
     variantOptionImagesRef.current = variantOptionImages;
     skuImagesRef.current = skuImages;
-  }, [variants, skus, variantDimensions, variantOptionImages, skuImages]);
+    pricingRulesRef.current = pricingRules;
+  }, [
+    variants,
+    skus,
+    variantDimensions,
+    variantOptionImages,
+    skuImages,
+    pricingRules,
+  ]);
 
   const getEditorExtras = useCallback<() => EditorExtras>(
     () => ({ variants: variantsRef.current, skus: skusRef.current }),
@@ -338,6 +392,41 @@ export function ProductEditorProvider({
     setSkuImages(data.images ?? {});
   }, []);
 
+  const loadPricingRules = useCallback(async (id: string) => {
+    const response = await fetch(
+      `/api/3d-shop/admin/products/${id}/pricing-rules`,
+    );
+    const data = (await response.json()) as {
+      rules?: ShopSkuPricingRule[];
+    };
+    setPricingRules(data.rules ?? []);
+  }, []);
+
+  const loadSkuPatternTemplates = useCallback(async () => {
+    const response = await fetch(`/api/3d-shop/admin/sku-pattern-templates`);
+    const data = (await response.json()) as {
+      templates?: SkuPatternTemplate[];
+    };
+    setSkuPatternTemplates(data.templates ?? []);
+  }, []);
+
+  const loadTierPrices = useCallback(async (skuIds: string[]) => {
+    if (skuIds.length === 0) return;
+    const entries: Record<string, ShopSkuTierPrice[]> = {};
+    await Promise.all(
+      skuIds.map(async (skuId) => {
+        const response = await fetch(
+          `/api/3d-shop/admin/skus/${skuId}/tier-prices`,
+        );
+        const data = (await response.json()) as {
+          tier_prices?: ShopSkuTierPrice[];
+        };
+        entries[skuId] = data.tier_prices ?? [];
+      }),
+    );
+    setTierPrices(entries);
+  }, []);
+
   const loadInitialData = useCallback(async () => {
     setLoading(true);
     try {
@@ -363,10 +452,17 @@ export function ProductEditorProvider({
           loadVariants(productId),
           loadVariantDimensions(productId),
           loadVariantOptionImages(productId),
+          loadPricingRules(productId),
+          loadSkuPatternTemplates(),
           loadSkus(productId).then((rows) =>
-            loadSkuImages(rows.map((sku) => sku.id)),
+            Promise.all([
+              loadSkuImages(rows.map((sku) => sku.id)),
+              loadTierPrices(rows.map((sku) => sku.id)),
+            ]),
           ),
         ]);
+      } else {
+        await loadSkuPatternTemplates();
       }
     } catch (error) {
       setToast({
@@ -384,6 +480,9 @@ export function ProductEditorProvider({
     loadVariantDimensions,
     loadVariantOptionImages,
     loadVariants,
+    loadPricingRules,
+    loadSkuPatternTemplates,
+    loadTierPrices,
     mode,
     productId,
   ]);
@@ -1841,12 +1940,14 @@ export function ProductEditorProvider({
       if (!response.ok || !data.variant)
         throw new Error(data.error || "Failed to add variant.");
       setVariants((current) => [...current, data.variant as DraftVariant]);
+      return data.variant;
     } catch (error) {
       setToast({
         type: "error",
         message:
           error instanceof Error ? error.message : "Failed to add variant.",
       });
+      return null;
     }
   }, [ensureProductId, form]);
 
@@ -1935,79 +2036,319 @@ export function ProductEditorProvider({
     [dragVariant, form],
   );
 
-  const generateSkus = useCallback(async () => {
-    try {
-      const id = await ensureProductId();
-      await saveAllVariants();
-      const discreteOptions = variantsRef.current
-        .filter(
-          (variant) => !["toggle", "text_input"].includes(variant.option_type),
-        )
-        .map((variant) => ({
-          name: variant.option_name,
-          values: (variant.values ?? []).filter(Boolean),
-        }))
-        .filter((variant) => variant.values.length > 0);
-
-      const combinations = cartesianProduct(discreteOptions);
-      if (
-        !window.confirm(
-          `This will generate ${combinations.length} SKU combination${combinations.length === 1 ? "" : "s"}. Continue?`,
-        )
-      )
-        return;
+  const updateVariantValueMetadata = useCallback(
+    (
+      variantId: string,
+      value: string,
+      patch: Partial<VariantValueMetadata>,
+    ) => {
       form.pushUndoPoint();
-
-      const product = form.productRef.current;
-      const existingKeys = new Set(
-        skusRef.current.map((sku) => stableStringify(sku.variant_combination)),
+      setVariants((current) =>
+        current.map((variant) => {
+          if (variant.id !== variantId) return variant;
+          const metadata = { ...(variant.value_metadata ?? {}) };
+          metadata[value] = { ...(metadata[value] ?? {}), ...patch };
+          return { ...variant, value_metadata: metadata, dirty: true };
+        }),
       );
-      const rows = combinations
-        .filter((combo) => !existingKeys.has(stableStringify(combo)))
-        .map((combo, index) => ({
-          sku_code: `${product.slug.toUpperCase().replace(/[^A-Z0-9]+/g, "-")}-${Date.now().toString(36).toUpperCase()}-${index + 1}`,
-          variant_combination: combo,
-          price: product.base_price || 0,
-          stock_quantity: 0,
-          low_stock_threshold: 5,
-          weight_grams: defaultWeight ? Number(defaultWeight) || null : null,
-          is_available: true,
-        }));
+      form.setDirty(true);
+    },
+    [form],
+  );
 
-      const response = await fetch(`/api/3d-shop/admin/products/${id}/skus`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ skus: rows }),
-      });
-      const data = (await response.json()) as {
-        skus?: ShopSku[];
-        inserted?: number;
-        skipped?: number;
+  const removeVariantValue = useCallback(
+    (variantId: string, value: string) => {
+      form.pushUndoPoint();
+      setVariants((current) =>
+        current.map((variant) => {
+          if (variant.id !== variantId) return variant;
+          const values = (variant.values ?? []).filter(
+            (item) => item !== value,
+          );
+          const metadata = { ...(variant.value_metadata ?? {}) };
+          delete metadata[value];
+          return { ...variant, values, value_metadata: metadata, dirty: true };
+        }),
+      );
+      form.setDirty(true);
+    },
+    [form],
+  );
+
+  const reorderVariantValues = useCallback(
+    (variantId: string, orderedValues: string[]) => {
+      form.pushUndoPoint();
+      setVariants((current) =>
+        current.map((variant) =>
+          variant.id === variantId
+            ? { ...variant, values: orderedValues, dirty: true }
+            : variant,
+        ),
+      );
+      form.setDirty(true);
+    },
+    [form],
+  );
+
+  const pricingRuleApi = useCallback(
+    async (
+      method: "POST" | "PATCH" | "DELETE",
+      payload: Record<string, unknown> & { id?: string },
+    ) => {
+      const id = await ensureProductId();
+      const query = payload.id ? `?id=${encodeURIComponent(payload.id)}` : "";
+      const response = await fetch(
+        `/api/3d-shop/admin/products/${id}/pricing-rules${query}`,
+        {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: method === "DELETE" ? undefined : JSON.stringify(payload),
+        },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        rule?: ShopSkuPricingRule;
         error?: string;
       };
       if (!response.ok)
-        throw new Error(data.error || "Failed to generate SKUs.");
-      setSkus(data.skus ?? []);
-      setToast({
-        type: "success",
-        message: `Generated ${data.inserted ?? 0} SKU${data.inserted === 1 ? "" : "s"}. Skipped ${data.skipped ?? 0}.`,
-      });
-      window.setTimeout(
-        () =>
-          skuSectionRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          }),
-        100,
-      );
-    } catch (error) {
-      setToast({
-        type: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to generate SKUs.",
-      });
-    }
-  }, [defaultWeight, ensureProductId, form, saveAllVariants]);
+        throw new Error(data.error || "Failed to save pricing rule.");
+      return data.rule;
+    },
+    [ensureProductId],
+  );
+
+  const addPricingRule = useCallback(
+    async (
+      rule: Omit<
+        ShopSkuPricingRule,
+        "id" | "product_id" | "created_at" | "updated_at"
+      >,
+    ) => {
+      try {
+        const saved = await pricingRuleApi("POST", rule);
+        if (saved)
+          setPricingRules((current) => [
+            ...current.filter((item) => item.id !== saved.id),
+            saved,
+          ]);
+      } catch (error) {
+        setToast({
+          type: "error",
+          message:
+            error instanceof Error ? error.message : "Failed to add rule.",
+        });
+      }
+    },
+    [pricingRuleApi],
+  );
+
+  const updatePricingRule = useCallback(
+    async (ruleId: string, patch: Partial<ShopSkuPricingRule>) => {
+      try {
+        const saved = await pricingRuleApi("PATCH", { ...patch, id: ruleId });
+        if (saved)
+          setPricingRules((current) =>
+            current.map((rule) => (rule.id === saved.id ? saved : rule)),
+          );
+      } catch (error) {
+        setToast({
+          type: "error",
+          message:
+            error instanceof Error ? error.message : "Failed to update rule.",
+        });
+      }
+    },
+    [pricingRuleApi],
+  );
+
+  const deletePricingRule = useCallback(
+    async (ruleId: string) => {
+      try {
+        await pricingRuleApi("DELETE", { id: ruleId });
+        setPricingRules((current) =>
+          current.filter((rule) => rule.id !== ruleId),
+        );
+      } catch (error) {
+        setToast({
+          type: "error",
+          message:
+            error instanceof Error ? error.message : "Failed to delete rule.",
+        });
+      }
+    },
+    [pricingRuleApi],
+  );
+
+  const buildPatternOptions = useCallback((): SkuPatternOption[] => {
+    return variantsRef.current
+      .filter((variant) => isDiscreteOptionType(variant.option_type))
+      .map((variant) => ({
+        name: variant.option_name,
+        values: (variant.values ?? []).filter(Boolean),
+        metadata: variant.value_metadata ?? undefined,
+      }))
+      .filter((variant) => variant.values.length > 0);
+  }, []);
+
+  const generateSkuPreview = useCallback(async () => {
+    await ensureProductId();
+    await saveAllVariants();
+    const product = form.productRef.current;
+    const options = buildPatternOptions();
+    return buildSkuRows({
+      product: {
+        slug: product.slug,
+        name: product.name,
+        base_price: product.base_price || 0,
+        sku_pattern: product.sku_pattern || undefined,
+      },
+      variants: options,
+      rules: pricingRulesRef.current,
+      defaultWeight,
+      existingCodes: skusRef.current.map((sku) => sku.sku_code),
+    });
+  }, [
+    buildPatternOptions,
+    defaultWeight,
+    ensureProductId,
+    form,
+    saveAllVariants,
+  ]);
+
+  const generateSkus = useCallback(
+    async (rows?: SkuDraftRow[]) => {
+      try {
+        const id = await ensureProductId();
+        await saveAllVariants();
+        const draftRows =
+          rows ??
+          (await generateSkuPreview().catch(() => {
+            const product = form.productRef.current;
+            const options = buildPatternOptions();
+            return buildSkuRows({
+              product: {
+                slug: product.slug,
+                name: product.name,
+                base_price: product.base_price || 0,
+                sku_pattern: product.sku_pattern || undefined,
+              },
+              variants: options,
+              rules: pricingRulesRef.current,
+              defaultWeight,
+              existingCodes: skusRef.current.map((sku) => sku.sku_code),
+            });
+          }));
+
+        const existingKeys = new Set(
+          skusRef.current.map((sku) =>
+            stableStringify(sku.variant_combination),
+          ),
+        );
+        const payload = draftRows
+          .filter(
+            (row) =>
+              !existingKeys.has(stableStringify(row.variant_combination)),
+          )
+          .map((row) => ({
+            sku_code: row.sku_code,
+            variant_combination: row.variant_combination,
+            price: row.price,
+            compare_at_price: row.compare_at_price,
+            cost_price: row.cost_price,
+            stock_quantity: row.stock_quantity,
+            low_stock_threshold: row.low_stock_threshold,
+            weight_grams: row.weight_grams,
+            is_available: row.is_available,
+          }));
+
+        if (payload.length === 0) {
+          setToast({
+            type: "success",
+            message: "All combinations already exist.",
+          });
+          return;
+        }
+
+        form.pushUndoPoint();
+        const response = await fetch(`/api/3d-shop/admin/products/${id}/skus`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ skus: payload }),
+        });
+        const data = (await response.json()) as {
+          skus?: ShopSku[];
+          inserted?: number;
+          skipped?: number;
+          error?: string;
+        };
+        if (!response.ok)
+          throw new Error(data.error || "Failed to generate SKUs.");
+        setSkus(data.skus ?? []);
+        const loaded = data.skus ?? [];
+        await loadTierPrices(loaded.map((sku) => sku.id));
+        setToast({
+          type: "success",
+          message: `Generated ${data.inserted ?? 0} SKU${data.inserted === 1 ? "" : "s"}. Skipped ${data.skipped ?? 0}.`,
+        });
+        window.setTimeout(
+          () =>
+            skuSectionRef.current?.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            }),
+          100,
+        );
+      } catch (error) {
+        setToast({
+          type: "error",
+          message:
+            error instanceof Error ? error.message : "Failed to generate SKUs.",
+        });
+      }
+    },
+    [
+      buildPatternOptions,
+      defaultWeight,
+      ensureProductId,
+      form,
+      generateSkuPreview,
+      loadTierPrices,
+      saveAllVariants,
+    ],
+  );
+
+  const updateTierPrices = useCallback(
+    async (skuId: string, prices: { tier_name: string; price: number }[]) => {
+      try {
+        const response = await fetch(
+          `/api/3d-shop/admin/skus/${skuId}/tier-prices`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tier_prices: prices }),
+          },
+        );
+        const data = (await response.json()) as {
+          tier_prices?: ShopSkuTierPrice[];
+          error?: string;
+        };
+        if (!response.ok)
+          throw new Error(data.error || "Failed to save tier prices.");
+        setTierPrices((current) => ({
+          ...current,
+          [skuId]: data.tier_prices ?? [],
+        }));
+      } catch (error) {
+        setToast({
+          type: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to save tier prices.",
+        });
+      }
+    },
+    [],
+  );
 
   const syncBasePriceFromSkus = useCallback(
     (rows: ShopSku[]) => {
@@ -2039,6 +2380,32 @@ export function ProductEditorProvider({
       form.setDirty(true);
     },
     [form, syncBasePriceFromSkus],
+  );
+
+  const generateSkuQr = useCallback(
+    async (skuId: string) => {
+      try {
+        const response = await fetch(`/api/3d-shop/admin/skus/${skuId}/qr`, {
+          method: "POST",
+        });
+        const data = (await response.json()) as {
+          qr_url?: string;
+          error?: string;
+        };
+        if (!response.ok)
+          throw new Error(data.error || "Failed to generate QR.");
+        updateSku(skuId, "qr_url", data.qr_url ?? null);
+        return data.qr_url ?? null;
+      } catch (error) {
+        setToast({
+          type: "error",
+          message:
+            error instanceof Error ? error.message : "Failed to generate QR.",
+        });
+        return null;
+      }
+    },
+    [updateSku],
   );
 
   const uploadSkuModel = useCallback(
@@ -2602,7 +2969,19 @@ export function ProductEditorProvider({
     updateVariant,
     deleteVariant,
     reorderVariants,
+    updateVariantValueMetadata,
+    removeVariantValue,
+    reorderVariantValues,
+    pricingRules,
+    addPricingRule,
+    updatePricingRule,
+    deletePricingRule,
+    skuPatternTemplates,
+    generateSkuPreview,
     generateSkus,
+    tierPrices,
+    updateTierPrices,
+    generateSkuQr,
     updateSku,
     bulkUpdateSkus,
     saveAllSkus: saveAllSkusWithToast,

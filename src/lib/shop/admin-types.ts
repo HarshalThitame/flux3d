@@ -45,6 +45,78 @@ export type ShopSkuImage = {
   created_at: string | null;
 };
 
+// ============================================================================
+// Luxury Variant & SKU System (AETHER) types
+// ============================================================================
+
+export type VariantValueMetadata = {
+  swatch_image_url?: string | null;
+  hex_color?: string | null;
+  description?: string | null;
+  price_modifier?: number | null;
+  slug?: string | null;
+};
+
+export type SkuStatus =
+  | "in_stock"
+  | "low_stock"
+  | "out_of_stock"
+  | "unavailable"
+  | "made_to_order"
+  | "limited_edition"
+  | "discontinued";
+
+export type PricingRuleType =
+  "fixed_add" | "percent_add" | "fixed_override" | "multiply";
+
+export type SkuPricingRuleCondition = Record<
+  string,
+  string | string[] | boolean
+>;
+
+export type ShopSkuPricingRule = {
+  id: string;
+  product_id: string;
+  name: string;
+  rule_type: PricingRuleType;
+  conditions: SkuPricingRuleCondition;
+  value: number;
+  priority: number;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+export const SKU_TIER_NAMES = ["Member", "VIP", "Wholesale"] as const;
+export type SkuTierName = (typeof SKU_TIER_NAMES)[number];
+
+export type ShopSkuTierPrice = {
+  id: string;
+  sku_id: string;
+  tier_name: SkuTierName;
+  price: number;
+  created_at: string | null;
+};
+
+export type SkuPatternTemplate = {
+  id: string;
+  name: string;
+  pattern: string;
+  category_id: string | null;
+  is_default: boolean;
+  created_at: string | null;
+};
+
+export const SKU_PATTERN_TOKENS = [
+  "{SLUG}",
+  "{COLOR}",
+  "{MATERIAL}",
+  "{SIZE}",
+  "{FINISH}",
+  "{STYLE}",
+  "{INITIALS}",
+] as const;
+
 export type ShopProductHotspot = {
   id: string;
   position: [number, number, number];
@@ -87,6 +159,7 @@ export type ShopProduct = {
   hotspots: ShopProductHotspot[] | null;
   hero_video_url: string | null;
   base_price: number;
+  sku_pattern: string | null;
   is_customizable: boolean | null;
   customization_label: string | null;
   is_featured: boolean | null;
@@ -108,6 +181,7 @@ export type ShopVariantOption = {
   option_name: string;
   option_type: "swatch_color" | "button" | "dropdown" | "toggle" | "text_input";
   values: string[] | null;
+  value_metadata?: Record<string, VariantValueMetadata> | null;
   display_order: number | null;
   is_required: boolean | null;
   created_at: string | null;
@@ -120,6 +194,8 @@ export type ShopSku = {
   variant_combination: Record<string, string | boolean>;
   price: number;
   compare_at_price: number | null;
+  cost_price?: number | null;
+  status?: SkuStatus | null;
   stock_quantity: number;
   low_stock_threshold: number | null;
   weight_grams: number | null;
@@ -127,6 +203,8 @@ export type ShopSku = {
   model_url: string | null;
   is_available: boolean | null;
   pre_order_eta: string | null;
+  barcode?: string | null;
+  qr_url?: string | null;
   created_at: string | null;
   updated_at: string | null;
 };

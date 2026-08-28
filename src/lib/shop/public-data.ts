@@ -218,6 +218,8 @@ const PRODUCT_SELECT = `
     variant_combination,
     price,
     compare_at_price,
+    cost_price,
+    status,
     stock_quantity,
     low_stock_threshold,
     weight_grams,
@@ -225,6 +227,8 @@ const PRODUCT_SELECT = `
     model_url,
     is_available,
     pre_order_eta,
+    barcode,
+    qr_url,
     created_at,
     updated_at,
     images:shelf_sku_images(
@@ -243,6 +247,7 @@ const PRODUCT_SELECT = `
     option_name,
     option_type,
     values,
+    value_metadata,
     display_order,
     is_required,
     created_at
@@ -278,6 +283,8 @@ function normalizeSku(sku: ShopSku): ShopSku {
       sku.compare_at_price === null
         ? null
         : normalizeShopNumber(sku.compare_at_price),
+    cost_price:
+      sku.cost_price === null ? null : normalizeShopNumber(sku.cost_price),
     stock_quantity: normalizeShopNumber(sku.stock_quantity),
     low_stock_threshold:
       sku.low_stock_threshold === null

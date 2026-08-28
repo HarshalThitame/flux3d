@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { addToast } from "@/lib/toast/store";
 import ShopVariantControls from "@/components/shop/ShopVariantControls";
+import ConfigurationSummaryBar from "@/components/shop/ConfigurationSummaryBar";
+import RarityBadge from "@/components/shop/RarityBadge";
 import QuantityStepper from "@/components/shop/QuantityStepper";
 import NotifyMeForm from "@/components/shop/NotifyMeForm";
 import ProductRecommendations from "@/components/shop/ProductRecommendations";
@@ -1296,6 +1298,18 @@ export default function ShopProductDetailClient({
                   }
                 />
               </div>
+
+              <ConfigurationSummaryBar
+                selected={selected}
+                price={price}
+                resolvedLabel={
+                  resolvedSku
+                    ? formatVariantLabel(resolvedSku.variant_combination)
+                    : undefined
+                }
+              />
+
+              <RarityBadge sku={resolvedSku} />
 
               {productDimensions && (
                 <div className="mt-5">

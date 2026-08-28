@@ -24,6 +24,7 @@ type ProductPayload = {
   hotspots?: unknown;
   hero_video_url?: string | null;
   base_price?: number;
+  sku_pattern?: string | null;
   is_customizable?: boolean;
   customization_label?: string | null;
   is_featured?: boolean;
@@ -150,6 +151,10 @@ function normalizeProductPayload(body: ProductPayload, partial = false) {
     base_price: Number.isFinite(Number(body.base_price))
       ? Number(body.base_price)
       : 0,
+    sku_pattern:
+      typeof body.sku_pattern === "string"
+        ? body.sku_pattern.trim() || null
+        : (body.sku_pattern ?? null),
     is_customizable: body.is_customizable ?? false,
     customization_label:
       typeof body.customization_label === "string"

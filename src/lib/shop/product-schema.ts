@@ -68,6 +68,7 @@ export const productFormSchema = z.object({
   hotspots: productHotspotsSchema,
   hero_video_url: z.string(),
   base_price: z.number().min(0, "Price cannot be negative"),
+  sku_pattern: z.string(),
   is_customizable: z.boolean(),
   customization_label: z.string(),
   is_featured: z.boolean(),

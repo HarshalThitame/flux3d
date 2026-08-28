@@ -3,44 +3,37 @@ import { getAdminApiErrorResponse } from "@/lib/admin/api";
 import { requireAdminRequest } from "@/lib/admin/request";
 import { createAdminSupabaseClient } from "@/lib/admin/server";
 
-type VariantPayload = {
+type PricingRulePayload = {
   id?: string;
-  option_name?: string;
-  option_type?:
-    "swatch_color" | "button" | "dropdown" | "toggle" | "text_input";
-  values?: string[];
-  value_metadata?: Record<string, unknown>;
-  display_order?: number;
-  is_required?: boolean;
-  orders?: { id: string; display_order: number }[];
+  name?: string;
+  rule_type?: "fixed_add" | "percent_add" | "fixed_override" | "multiply";
+  conditions?: Record<string, string | string[] | boolean>;
+  value?: number | string;
+  priority?: number | string;
+  is_active?: boolean;
 };
 
-function normalizeVariantPayload(body: VariantPayload, productId: string) {
-  const optionName =
-    typeof body.option_name === "string" ? body.option_name.trim() : "";
-  const optionType = body.option_type;
-  if (!optionName) throw new Error("Option name is required.");
+function normalizeRulePayload(body: PricingRulePayload) {
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const ruleType = body.rule_type;
+  if (!name) throw new Error("Rule name is required.");
   if (
-    !optionType ||
-    !["swatch_color", "button", "dropdown", "toggle", "text_input"].includes(
-      optionType,
+    !ruleType ||
+    !["fixed_add", "percent_add", "fixed_override", "multiply"].includes(
+      ruleType,
     )
   ) {
-    throw new Error("Option type is invalid.");
+    throw new Error("Rule type is invalid.");
   }
-
   return {
-    product_id: productId,
-    option_name: optionName,
-    option_type: optionType,
-    values: Array.isArray(body.values)
-      ? body.values.map((value) => String(value).trim()).filter(Boolean)
-      : [],
-    value_metadata: body.value_metadata ?? {},
-    display_order: Number.isFinite(Number(body.display_order))
-      ? Number(body.display_order)
+    name,
+    rule_type: ruleType,
+    conditions: body.conditions ?? {},
+    value: Number.isFinite(Number(body.value)) ? Number(body.value) : 0,
+    priority: Number.isFinite(Number(body.priority))
+      ? Number(body.priority)
       : 0,
-    is_required: body.is_required ?? true,
+    is_active: body.is_active ?? true,
   };
 }
 
@@ -55,14 +48,14 @@ export async function GET(
     const { id } = await context.params;
     const supabase = createAdminSupabaseClient();
     const { data, error } = await supabase
-      .from("shelf_variant_options")
+      .from("shelf_sku_pricing_rules")
       .select("*")
       .eq("product_id", id)
-      .order("display_order", { ascending: true })
+      .order("priority", { ascending: false })
       .order("created_at", { ascending: true });
 
     if (error) throw new Error(error.message);
-    return NextResponse.json({ variants: data ?? [] });
+    return NextResponse.json({ rules: data ?? [] });
   } catch (error) {
     return getAdminApiErrorResponse(error);
   }
@@ -77,19 +70,16 @@ export async function POST(
 
   try {
     const { id } = await context.params;
-    const body = (await request.json()) as VariantPayload;
+    const body = (await request.json()) as PricingRulePayload;
     const supabase = createAdminSupabaseClient();
     const { data, error } = await supabase
-      .from("shelf_variant_options")
-      .insert({
-        ...normalizeVariantPayload(body, id),
-        ...(typeof body.id === "string" ? { id: body.id } : {}),
-      })
+      .from("shelf_sku_pricing_rules")
+      .insert({ product_id: id, ...normalizeRulePayload(body) })
       .select("*")
       .single();
 
     if (error) throw new Error(error.message);
-    return NextResponse.json({ variant: data }, { status: 201 });
+    return NextResponse.json({ rule: data }, { status: 201 });
   } catch (error) {
     return getAdminApiErrorResponse(error);
   }
@@ -104,39 +94,24 @@ export async function PATCH(
 
   try {
     const { id } = await context.params;
-    const body = (await request.json()) as VariantPayload;
-    const supabase = createAdminSupabaseClient();
-
-    if (Array.isArray(body.orders)) {
-      await Promise.all(
-        body.orders.map(async (item) => {
-          const { error } = await supabase
-            .from("shelf_variant_options")
-            .update({ display_order: item.display_order })
-            .eq("product_id", id)
-            .eq("id", item.id);
-          if (error) throw new Error(error.message);
-        }),
-      );
-      return NextResponse.json({ ok: true });
-    }
-
+    const body = (await request.json()) as PricingRulePayload;
     if (!body.id)
       return NextResponse.json(
-        { error: "Variant option id is required." },
+        { error: "Rule id is required." },
         { status: 400 },
       );
 
+    const supabase = createAdminSupabaseClient();
     const { data, error } = await supabase
-      .from("shelf_variant_options")
-      .update(normalizeVariantPayload(body, id))
+      .from("shelf_sku_pricing_rules")
+      .update(normalizeRulePayload(body))
       .eq("product_id", id)
       .eq("id", body.id)
       .select("*")
       .single();
 
     if (error) throw new Error(error.message);
-    return NextResponse.json({ variant: data });
+    return NextResponse.json({ rule: data });
   } catch (error) {
     return getAdminApiErrorResponse(error);
   }
@@ -152,19 +127,19 @@ export async function DELETE(
   try {
     const { id } = await context.params;
     const { searchParams } = new URL(request.url);
-    const variantId = searchParams.get("id");
-    if (!variantId)
+    const ruleId = searchParams.get("id");
+    if (!ruleId)
       return NextResponse.json(
-        { error: "Variant option id is required." },
+        { error: "Rule id is required." },
         { status: 400 },
       );
 
     const supabase = createAdminSupabaseClient();
     const { error } = await supabase
-      .from("shelf_variant_options")
+      .from("shelf_sku_pricing_rules")
       .delete()
       .eq("product_id", id)
-      .eq("id", variantId);
+      .eq("id", ruleId);
 
     if (error) throw new Error(error.message);
     return NextResponse.json({ ok: true });

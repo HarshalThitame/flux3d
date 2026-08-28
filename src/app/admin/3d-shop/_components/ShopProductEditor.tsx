@@ -11,6 +11,8 @@ import { UnifiedMediaPool } from "./product-editor/sections/media/UnifiedMediaPo
 import { Model3DSection } from "./product-editor/sections/Model3DSection";
 import { HotspotSection } from "./product-editor/sections/HotspotSection";
 import { VariantOptionsSection } from "./product-editor/sections/VariantOptionsSection";
+import { SkuPatternStudio } from "./product-editor/sections/SkuPatternStudio";
+import { PricingRulesEngine } from "./product-editor/sections/PricingRulesEngine";
 import { SkuManagerSection } from "./product-editor/sections/SkuManagerSection";
 import { DimensionsSection } from "./product-editor/sections/DimensionsSection";
 import { CustomizationSection } from "./product-editor/sections/CustomizationSection";
@@ -22,6 +24,8 @@ const editorSections = [
   { id: "sec-model", label: "3D & Cinematic" },
   { id: "sec-hotspots", label: "Hotspots" },
   { id: "sec-variants", label: "Variants" },
+  { id: "sec-pattern", label: "SKU Pattern" },
+  { id: "sec-pricing", label: "Pricing Rules" },
   { id: "sec-dimensions", label: "Dimensions" },
   { id: "sec-skus", label: "SKUs" },
   { id: "sec-customization", label: "Customization" },
@@ -81,6 +85,12 @@ function EditorShell() {
           </div>
           <div id="sec-variants" className="scroll-mt-28">
             <VariantOptionsSection />
+          </div>
+          <div id="sec-pattern" className="scroll-mt-28">
+            <SkuPatternStudio />
+          </div>
+          <div id="sec-pricing" className="scroll-mt-28">
+            <PricingRulesEngine />
           </div>
           <div id="sec-dimensions" className="scroll-mt-28">
             <DimensionsSection />
