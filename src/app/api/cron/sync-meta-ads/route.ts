@@ -73,6 +73,25 @@ export async function GET(request: Request) {
   const supabase = createClient(supabaseUrl, serviceKey);
   const startTime = Date.now();
 
+  const writeLog = async (row: {
+    severity: "info" | "warning" | "error";
+    message: string;
+    error_message?: string;
+    metadata?: Record<string, unknown>;
+  }) => {
+    try {
+      await supabase.from("error_logs").insert({
+        source: "meta_ads_sync",
+        severity: row.severity,
+        message: row.message,
+        error_message: row.error_message ?? row.message,
+        metadata: row.metadata ?? {},
+      });
+    } catch (e) {
+      console.error("[sync-meta-ads] Log write failed:", e);
+    }
+  };
+
   try {
     // ─── Fetch all campaigns from Meta ───────────────────────────────────
     const metaCampaigns = await listCampaigns();
@@ -199,6 +218,18 @@ export async function GET(request: Request) {
 
     const duration = Date.now() - startTime;
 
+    await writeLog({
+      severity: spendAnomalies > 0 ? "warning" : "info",
+      message: `Meta ads sync: ${updated} updated, ${orphanedLocal} archived, ${orphanedMeta} orphaned in Meta, ${spendAnomalies} spend anomalies auto-paused`,
+      metadata: {
+        updated,
+        archived: orphanedLocal,
+        orphanedMeta,
+        spendAnomalies,
+        durationMs: duration,
+      },
+    });
+
     logInfo("Meta ads sync completed", {
       module: "meta-ads",
       duration,
@@ -219,13 +250,25 @@ export async function GET(request: Request) {
       durationMs: duration,
     });
   } catch (err) {
+    const message = err instanceof Error ? err.message : "Sync failed";
     logError("Meta ads sync error", {
       module: "meta-ads",
       error: err instanceof Error ? err : new Error(String(err)),
     });
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Sync failed" },
-      { status: 500 },
-    );
+    // Mirror into error_logs so ads failures survive Vercel log rotation.
+    try {
+      await createClient(supabaseUrl, serviceKey)
+        .from("error_logs")
+        .insert({
+          source: "meta_ads_sync",
+          severity: "error",
+          message: `Meta ads sync error: ${message}`,
+          error_message: message,
+          metadata: { durationMs: Date.now() - startTime },
+        });
+    } catch (e) {
+      console.error("[sync-meta-ads] Error-log write failed:", e);
+    }
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

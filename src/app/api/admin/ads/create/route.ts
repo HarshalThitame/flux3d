@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { createAdminSupabaseClient } from "@/lib/admin/server";
 import { CreateCampaignSchema } from "@/lib/admin/meta-ads-schemas";
 import { validateBody } from "@/lib/admin/meta-ads-route";
 import {
@@ -153,13 +154,31 @@ export async function POST(request: NextRequest) {
       note: 'Both campaigns are created in PAUSED status. Go to Meta Ads Manager and click "Publish" when you are ready.',
     });
   } catch (err) {
-    logError("Meta ad creation error", {
-      module: "meta-ads",
-      error: err instanceof Error ? err : new Error(String(err)),
-    });
-
     const message =
       err instanceof Error ? err.message : "Failed to create Meta ad campaign";
+    logError("Meta ad creation error", {
+      module: "meta-ads",
+      error: err instanceof Error ? err : new Error(message),
+    });
+
+    // Mirror into error_logs so ad creation failures survive Vercel log
+    // rotation and show up in the same place as catalog sync failures.
+    try {
+      await createAdminSupabaseClient()
+        .from("error_logs")
+        .insert({
+          source: "meta_ads_sync",
+          severity: "error",
+          message: `Meta ad creation error: ${message}`,
+          error_message: message,
+          metadata: {
+            durationMs: Date.now() - startTime,
+            route: "admin/ads/create",
+          },
+        });
+    } catch (e) {
+      console.error("[admin/ads/create] Error-log write failed:", e);
+    }
 
     // Return structured errors from the service
     if (message.includes("No active category found")) {
