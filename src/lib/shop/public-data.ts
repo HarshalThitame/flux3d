@@ -363,9 +363,9 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
   const skuImages: Record<string, ShopSkuImage[]> = {};
   for (const sku of row.skus ?? []) {
     if (sku.id && Array.isArray(sku.images) && sku.images.length > 0) {
-      skuImages[sku.id] = [...sku.images].sort(
-        (a, b) => a.display_order - b.display_order,
-      );
+      skuImages[sku.id] = [...sku.images]
+        .filter((image) => Boolean(image.image_url?.trim()))
+        .sort((a, b) => a.display_order - b.display_order);
     }
   }
   const variantOptionDimensions: ShopVariantOptionDimension[] = (
@@ -380,9 +380,9 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
       };
     })
     .filter(Boolean) as ShopVariantOptionDimension[];
-  const variantOptionImages = (row.variant_option_images ?? []).sort(
-    (a, b) => a.display_order - b.display_order,
-  );
+  const variantOptionImages = (row.variant_option_images ?? [])
+    .filter((image) => Boolean(image.image_url?.trim()))
+    .sort((a, b) => a.display_order - b.display_order);
   const availableSkus = skus.filter((sku) => sku.is_available !== false);
   const stockedSkus = availableSkus.filter((sku) => sku.stock_quantity > 0);
   const minSku = availableSkus[0] ?? skus[0] ?? null;
