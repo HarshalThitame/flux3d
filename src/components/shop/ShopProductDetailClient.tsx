@@ -78,14 +78,18 @@ function useScrollLock(locked: boolean) {
 }
 
 function useEscape(handler: () => void, active: boolean) {
+  const handlerRef = useRef(handler);
+  useEffect(() => {
+    handlerRef.current = handler;
+  });
   useEffect(() => {
     if (!active) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") handler();
+      if (event.key === "Escape") handlerRef.current();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [handler, active]);
+  }, [active]);
 }
 
 function Stars({ value }: { value: number }) {
@@ -374,6 +378,7 @@ export default function ShopProductDetailClient({
   >(currentUser ? "loading" : "guest");
   const [toast, setToast] = useState("");
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [lightboxList, setLightboxList] = useState<string[]>([]);
   const [lightboxZoom, setLightboxZoom] = useState(1);
   const [lightboxPan, setLightboxPan] = useState({ x: 0, y: 0 });
   const lightboxZoomRef = useRef(1);
@@ -449,20 +454,33 @@ export default function ShopProductDetailClient({
     lightboxNaturalRef.current = { w: 0, h: 0 };
     setLightboxZoom(1);
     setLightboxPan({ x: 0, y: 0 });
+    setLightboxList(images);
     setLightboxImage(src);
   }
 
+  function openReviewLightbox(url: string, urls: string[]) {
+    lightboxZoomRef.current = 1;
+    lightboxPanRef.current = { x: 0, y: 0 };
+    lightboxNaturalRef.current = { w: 0, h: 0 };
+    setLightboxZoom(1);
+    setLightboxPan({ x: 0, y: 0 });
+    setLightboxList(urls);
+    setLightboxImage(url);
+  }
+
   function goLightboxImage(dir: 1 | -1) {
-    if (images.length < 2) return;
-    const idx = lightboxImage ? Math.max(0, images.indexOf(lightboxImage)) : 0;
-    const next = Math.min(Math.max(idx + dir, 0), images.length - 1);
+    if (lightboxList.length < 2) return;
+    const idx = lightboxImage
+      ? Math.max(0, lightboxList.indexOf(lightboxImage))
+      : 0;
+    const next = Math.min(Math.max(idx + dir, 0), lightboxList.length - 1);
     if (next === idx) return;
     lightboxZoomRef.current = 1;
     lightboxPanRef.current = { x: 0, y: 0 };
     lightboxNaturalRef.current = { w: 0, h: 0 };
     setLightboxZoom(1);
     setLightboxPan({ x: 0, y: 0 });
-    setLightboxImage(images[next]);
+    setLightboxImage(lightboxList[next]);
   }
 
   /**
@@ -882,8 +900,8 @@ export default function ShopProductDetailClient({
             {/* Counter */}
             <div className="absolute left-5 top-5 z-20 flex items-center gap-2">
               <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/80 backdrop-blur">
-                {Math.max(0, images.indexOf(lightboxImage)) + 1} /{" "}
-                {images.length}
+                {Math.max(0, lightboxList.indexOf(lightboxImage)) + 1} /{" "}
+                {lightboxList.length}
               </span>
             </div>
 
@@ -922,7 +940,7 @@ export default function ShopProductDetailClient({
               <motion.div
                 drag={lightboxZoom > 1 ? true : "x"}
                 dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.08}
+                dragElastic={lightboxZoom > 1 ? 0 : 0.08}
                 onDragStart={() => {
                   draggingRef.current = true;
                   dragStartPanRef.current = lightboxPanRef.current;
@@ -990,7 +1008,7 @@ export default function ShopProductDetailClient({
                 </AnimatePresence>
               </motion.div>
 
-              {images.length > 1 && (
+              {lightboxList.length > 1 && (
                 <>
                   <button
                     type="button"
@@ -1705,7 +1723,9 @@ export default function ShopProductDetailClient({
                           <button
                             key={url}
                             type="button"
-                            onClick={() => setLightboxImage(url)}
+                            onClick={() =>
+                              openReviewLightbox(url, review.image_urls)
+                            }
                             className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-[var(--shop-border-light)] bg-white"
                           >
                             <Image

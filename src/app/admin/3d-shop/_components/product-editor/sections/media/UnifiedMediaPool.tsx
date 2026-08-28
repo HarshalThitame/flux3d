@@ -356,7 +356,7 @@ export function UnifiedMediaPool() {
           onClose={() => setLibraryOpen(false)}
           attachedUrls={attachedUrls}
           onPick={(url) => {
-            attachLibraryImage(url);
+            if (!attachedUrls.has(url)) attachLibraryImage(url);
             setLibraryOpen(false);
             setAssignTargetUrl(url);
           }}

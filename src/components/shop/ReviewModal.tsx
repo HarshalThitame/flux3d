@@ -1,66 +1,83 @@
-'use client'
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import Image from 'next/image'
-import { AnimatePresence, motion } from 'framer-motion'
-import { ImagePlus, Loader2, Star, X } from 'lucide-react'
-import type { ShopPublicReview } from '@/lib/shop/public-types'
-import { lockBodyScroll, unlockBodyScroll } from '@/lib/scroll-lock'
+import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { AnimatePresence, motion } from "framer-motion";
+import { ImagePlus, Loader2, Star, X } from "lucide-react";
+import type { ShopPublicReview } from "@/lib/shop/public-types";
+import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 
 function useScrollLock(locked: boolean) {
   useEffect(() => {
-    if (!locked) return
-    lockBodyScroll()
-    return () => { unlockBodyScroll() }
-  }, [locked])
+    if (!locked) return;
+    lockBodyScroll();
+    return () => {
+      unlockBodyScroll();
+    };
+  }, [locked]);
 }
 
 function useEscape(handler: () => void, active: boolean) {
+  const handlerRef = useRef(handler);
   useEffect(() => {
-    if (!active) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handler() }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [handler, active])
+    handlerRef.current = handler;
+  });
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handlerRef.current();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [active]);
 }
 
-function useFocusTrap(ref: React.RefObject<HTMLElement | null>, active: boolean) {
+function useFocusTrap(
+  ref: React.RefObject<HTMLElement | null>,
+  active: boolean,
+) {
   useEffect(() => {
-    if (!active || !ref.current) return
-    const el = ref.current
+    if (!active || !ref.current) return;
+    const el = ref.current;
     const focusable = el.querySelectorAll<HTMLElement>(
-      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
-    )
-    if (focusable.length === 0) return
-    const first = focusable[0]
-    const last = focusable[focusable.length - 1]
-    first.focus()
+      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+    );
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    first.focus();
     function trap(e: KeyboardEvent) {
-      if (e.key !== 'Tab') return
+      if (e.key !== "Tab") return;
       if (e.shiftKey) {
-        if (document.activeElement === first) { e.preventDefault(); last.focus() }
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
       } else {
-        if (document.activeElement === last) { e.preventDefault(); first.focus() }
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     }
-    document.addEventListener('keydown', trap)
-    return () => document.removeEventListener('keydown', trap)
-  }, [active, ref])
+    document.addEventListener("keydown", trap);
+    return () => document.removeEventListener("keydown", trap);
+  }, [active, ref]);
 }
 
 export type ReviewEligibility = {
-  productId: string
-  productName: string
-  productThumbnail: string | null
-  orderId: string
-  orderNumber: string
-}
+  productId: string;
+  productName: string;
+  productThumbnail: string | null;
+  orderId: string;
+  orderNumber: string;
+};
 
 export type ReviewModalProduct = {
-  id: string
-  name: string
-  thumbnailUrl?: string | null
-}
+  id: string;
+  name: string;
+  thumbnailUrl?: string | null;
+};
 
 export default function ReviewModal({
   open,
@@ -70,95 +87,112 @@ export default function ReviewModal({
   onOpenChangeAction,
   onSubmittedAction,
 }: {
-  open: boolean
-  product: ReviewModalProduct
-  eligibility: ReviewEligibility | null
-  existingReview?: ShopPublicReview | null
-  onOpenChangeAction: (open: boolean) => void
-  onSubmittedAction: (message: string) => void
+  open: boolean;
+  product: ReviewModalProduct;
+  eligibility: ReviewEligibility | null;
+  existingReview?: ShopPublicReview | null;
+  onOpenChangeAction: (open: boolean) => void;
+  onSubmittedAction: (message: string) => void;
 }) {
-  const isEditMode = Boolean(existingReview)
-  const thumbnail = eligibility?.productThumbnail || product.thumbnailUrl || ''
-  const [rating, setRating] = useState(0)
-  const [hoverRating, setHoverRating] = useState(0)
-  const [body, setBody] = useState('')
-  const [imageUrls, setImageUrls] = useState<string[]>([])
-  const [uploading, setUploading] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
-  const panelRef = useRef<HTMLDivElement | null>(null)
-  useScrollLock(open)
-  useEscape(() => onOpenChangeAction(false), open)
-  useFocusTrap(panelRef, open)
+  const isEditMode = Boolean(existingReview);
+  const thumbnail = eligibility?.productThumbnail || product.thumbnailUrl || "";
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [body, setBody] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  useScrollLock(open);
+  useEscape(() => onOpenChangeAction(false), open);
+  useFocusTrap(panelRef, open);
 
-  const activeRating = hoverRating || rating
+  const activeRating = hoverRating || rating;
   const canSubmit = useMemo(
-    () => Boolean((isEditMode || eligibility) && rating >= 1 && rating <= 5 && !submitting),
-    [isEditMode, eligibility, rating, submitting]
-  )
+    () =>
+      Boolean(
+        (isEditMode || eligibility) &&
+        rating >= 1 &&
+        rating <= 5 &&
+        !submitting,
+      ),
+    [isEditMode, eligibility, rating, submitting],
+  );
 
-  const initKey = `${open}:${existingReview?.id ?? 'new'}`
-  const [lastInitKey, setLastInitKey] = useState(initKey)
+  const initKey = `${open}:${existingReview?.id ?? "new"}`;
+  const [lastInitKey, setLastInitKey] = useState(initKey);
   if (initKey !== lastInitKey) {
-    setLastInitKey(initKey)
-    setError('')
+    setLastInitKey(initKey);
+    setError("");
     if (open) {
       if (existingReview) {
-        setRating(existingReview.rating)
-        setBody(existingReview.body ?? '')
-        setImageUrls(existingReview.image_urls)
+        setRating(existingReview.rating);
+        setBody(existingReview.body ?? "");
+        setImageUrls(existingReview.image_urls);
       } else {
-        setRating(0)
-        setHoverRating(0)
-        setBody('')
-        setImageUrls([])
+        setRating(0);
+        setHoverRating(0);
+        setBody("");
+        setImageUrls([]);
       }
     }
   }
 
   async function uploadReviewImage(file: File) {
-    if (imageUrls.length >= 3) return
-    setUploading(true)
-    setError('')
+    if (imageUrls.length >= 3) return;
+    setUploading(true);
+    setError("");
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('scope', 'review')
-      formData.append('productId', product.id)
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("scope", "review");
+      formData.append("productId", product.id);
 
-      const response = await fetch('/api/3d-shop/admin/upload', { method: 'POST', body: formData })
-      const data = await response.json().catch(() => ({})) as { publicUrl?: string; error?: string }
-      if (!response.ok || !data.publicUrl) throw new Error(data.error || 'Upload failed.')
-      setImageUrls((current) => [...current, data.publicUrl as string].slice(0, 3))
+      const response = await fetch("/api/3d-shop/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        publicUrl?: string;
+        error?: string;
+      };
+      if (!response.ok || !data.publicUrl)
+        throw new Error(data.error || "Upload failed.");
+      setImageUrls((current) =>
+        [...current, data.publicUrl as string].slice(0, 3),
+      );
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : 'Upload failed.')
+      setError(
+        uploadError instanceof Error ? uploadError.message : "Upload failed.",
+      );
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
   }
 
   async function submitReview() {
-    if (!isEditMode && !eligibility) return
-    setSubmitting(true)
-    setError('')
+    if (!isEditMode && !eligibility) return;
+    setSubmitting(true);
+    setError("");
 
     try {
-      let response: Response
+      let response: Response;
       if (isEditMode && existingReview) {
         response = await fetch(`/api/3d-shop/reviews/${existingReview.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             rating,
             body,
             imageUrls,
           }),
-        })
+        });
       } else {
-        response = await fetch('/api/3d-shop/reviews', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        response = await fetch("/api/3d-shop/reviews", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             productId: product.id,
             orderId: eligibility!.orderId,
@@ -166,30 +200,55 @@ export default function ReviewModal({
             body,
             imageUrls,
           }),
-        })
+        });
       }
-      const data = await response.json().catch(() => ({})) as { message?: string; error?: string }
-      if (!response.ok) throw new Error(data.error || (isEditMode ? 'Review update failed.' : 'Review submission failed.'))
+      const data = (await response.json().catch(() => ({}))) as {
+        message?: string;
+        error?: string;
+      };
+      if (!response.ok)
+        throw new Error(
+          data.error ||
+            (isEditMode
+              ? "Review update failed."
+              : "Review submission failed."),
+        );
 
       if (!isEditMode) {
-        setRating(0)
-        setHoverRating(0)
-        setBody('')
-        setImageUrls([])
+        setRating(0);
+        setHoverRating(0);
+        setBody("");
+        setImageUrls([]);
       }
-      onOpenChangeAction(false)
-      onSubmittedAction(data.message || (isEditMode ? 'Review updated successfully.' : "Review submitted! It'll appear after approval."))
+      onOpenChangeAction(false);
+      onSubmittedAction(
+        data.message ||
+          (isEditMode
+            ? "Review updated successfully."
+            : "Review submitted! It'll appear after approval."),
+      );
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : (isEditMode ? 'Review update failed.' : 'Review submission failed.'))
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : isEditMode
+            ? "Review update failed."
+            : "Review submission failed.",
+      );
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
 
   return (
     <AnimatePresence>
       {open && (
-        <motion.div className="fixed inset-0 z-[130]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <motion.div
+          className="fixed inset-0 z-[130]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
           <button
             type="button"
             aria-label="Close review modal"
@@ -207,11 +266,25 @@ export default function ReviewModal({
             <div className="flex items-start justify-between gap-4">
               <div className="flex min-w-0 gap-3">
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-[var(--shop-bg-muted)]">
-                  {thumbnail ? <Image src={thumbnail} alt={product.name} fill sizes="64px" className="object-cover" /> : null}
+                  {thumbnail ? (
+                    <Image
+                      src={thumbnail}
+                      alt={product.name}
+                      fill
+                      sizes="64px"
+                      className="object-cover"
+                    />
+                  ) : null}
                 </div>
                 <div className="min-w-0">
-                  <h2 className="line-clamp-2 text-lg font-semibold text-[var(--shop-text-primary)]">{product.name}</h2>
-                  {eligibility && <p className="mt-1 text-sm text-[var(--shop-text-secondary)]">Order #{eligibility.orderNumber}</p>}
+                  <h2 className="line-clamp-2 text-lg font-semibold text-[var(--shop-text-primary)]">
+                    {product.name}
+                  </h2>
+                  {eligibility && (
+                    <p className="mt-1 text-sm text-[var(--shop-text-secondary)]">
+                      Order #{eligibility.orderNumber}
+                    </p>
+                  )}
                 </div>
               </div>
               <button
@@ -226,10 +299,12 @@ export default function ReviewModal({
 
             <div className="mt-6 space-y-5">
               <div>
-                <div className="mb-2 text-sm font-bold text-[var(--shop-text-primary)]">Rating</div>
+                <div className="mb-2 text-sm font-bold text-[var(--shop-text-primary)]">
+                  Rating
+                </div>
                 <div className="flex gap-1">
                   {Array.from({ length: 5 }).map((_, index) => {
-                    const value = index + 1
+                    const value = index + 1;
                     return (
                       <button
                         key={value}
@@ -238,17 +313,21 @@ export default function ReviewModal({
                         onMouseLeave={() => setHoverRating(0)}
                         onClick={() => setRating(value)}
                         className="rounded-lg p-1 text-[var(--shop-gold)]"
-                        aria-label={`${value} star${value === 1 ? '' : 's'}`}
+                        aria-label={`${value} star${value === 1 ? "" : "s"}`}
                       >
-                        <Star className={`h-8 w-8 ${value <= activeRating ? 'fill-[var(--shop-gold)] text-[var(--shop-gold)]' : 'text-[var(--shop-border-medium)]'}`} />
+                        <Star
+                          className={`h-8 w-8 ${value <= activeRating ? "fill-[var(--shop-gold)] text-[var(--shop-gold)]" : "text-[var(--shop-border-medium)]"}`}
+                        />
                       </button>
-                    )
+                    );
                   })}
                 </div>
               </div>
 
               <label className="block">
-                <span className="mb-1.5 block text-sm font-bold text-[var(--shop-text-primary)]">Review</span>
+                <span className="mb-1.5 block text-sm font-bold text-[var(--shop-text-primary)]">
+                  Review
+                </span>
                 <textarea
                   value={body}
                   maxLength={500}
@@ -256,30 +335,47 @@ export default function ReviewModal({
                   className="min-h-[140px] w-full resize-none rounded-xl border border-[var(--shop-border-light)] bg-white p-3 text-sm leading-6 outline-none focus:border-[var(--shop-border-gold)]"
                   placeholder="Share your experience"
                 />
-                <span className="mt-1 block text-right text-xs text-[var(--shop-text-muted)]">{body.length}/500</span>
+                <span className="mt-1 block text-right text-xs text-[var(--shop-text-muted)]">
+                  {body.length}/500
+                </span>
               </label>
 
               <div>
-                <div className="mb-2 text-sm font-bold text-[var(--shop-text-primary)]">Images</div>
+                <div className="mb-2 text-sm font-bold text-[var(--shop-text-primary)]">
+                  Images
+                </div>
                 <div className="flex flex-wrap gap-3">
                   {imageUrls.map((url) => (
-                    <div key={url} className="relative h-16 w-16 overflow-hidden rounded-xl border border-[var(--shop-border-light)] bg-white">
-                      <Image src={url} alt="Review image" fill sizes="64px" className="object-cover" />
+                    <div
+                      key={url}
+                      className="relative h-16 w-16 overflow-hidden rounded-xl border border-[var(--shop-border-light)] bg-white"
+                    >
+                      <Image
+                        src={url}
+                        alt="Review image"
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
                     </div>
                   ))}
                   {imageUrls.length < 3 && (
                     <label className="grid h-16 w-16 cursor-pointer place-items-center rounded-xl border border-dashed border-[var(--shop-border-medium)] bg-white text-[var(--shop-text-secondary)]">
-                      {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
+                      {uploading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <ImagePlus className="h-5 w-5" />
+                      )}
                       <input
                         type="file"
                         accept="image/*"
                         className="hidden"
                         disabled={uploading}
                         onChange={(event) => {
-                          const file = event.target.files?.[0]
-                          event.currentTarget.value = ''
-                          if (!file) return
-                          void uploadReviewImage(file)
+                          const file = event.target.files?.[0];
+                          event.currentTarget.value = "";
+                          if (!file) return;
+                          void uploadReviewImage(file);
                         }}
                       />
                     </label>
@@ -287,7 +383,11 @@ export default function ReviewModal({
                 </div>
               </div>
 
-              {error && <p className="rounded-xl border border-rose-200 bg-rose-50/70 px-3 py-2 text-sm font-semibold text-rose-700">{error}</p>}
+              {error && (
+                <p className="rounded-xl border border-rose-200 bg-rose-50/70 px-3 py-2 text-sm font-semibold text-rose-700">
+                  {error}
+                </p>
+              )}
 
               <button
                 type="button"
@@ -296,12 +396,12 @@ export default function ReviewModal({
                 className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[var(--shop-radius-lg)] bg-[var(--shop-gold)] px-6 text-base font-semibold text-[var(--luxury-charcoal)] shadow-[var(--shop-shadow-gold)] transition hover:bg-[var(--shop-gold-light)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isEditMode ? 'Update Review' : 'Submit Review'}
+                {isEditMode ? "Update Review" : "Submit Review"}
               </button>
             </div>
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
-  )
+  );
 }
