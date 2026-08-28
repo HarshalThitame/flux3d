@@ -103,8 +103,16 @@ function buildCatalogItem(
     google_product_category: "Electronics > 3D Printing",
   };
 
+  // Send every product image (besides the primary) so the WhatsApp catalog and
+  // DPA ad creative can render rich galleries. Meta allows up to 10.
+  const extraImages = (product.image_urls ?? [])
+    .filter((url) => url && url !== image)
+    .slice(0, 10);
   if (product.thumbnail_url && image !== product.thumbnail_url) {
-    item.additional_image_link = [product.thumbnail_url];
+    extraImages.unshift(product.thumbnail_url);
+  }
+  if (extraImages.length > 0) {
+    item.additional_image_link = extraImages;
   }
 
   if (product.category_name) {
@@ -410,6 +418,17 @@ export async function syncFullCatalogToMeta(
         delete hashes[entry.retailerId];
       }
       continue;
+    }
+
+    // A product created without SKUs gets a slug-based catalog entry. Once SKUs
+    // are added, that slug entry is orphaned forever (nothing references it),
+    // so delete it on first sight and prune its hash.
+    const slugRetailerId = toCatalogRetailerId(product.slug);
+    const hasSkus = (product.skus?.length ?? 0) > 0;
+    if (hasSkus && storedHashes[slugRetailerId]) {
+      const result = await deleteMetaCatalogItem(slugRetailerId);
+      allActions.push(result);
+      delete hashes[slugRetailerId];
     }
 
     const changed: CatalogEntry[] = [];

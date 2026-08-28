@@ -133,10 +133,26 @@ async function runCatalogSync(request: Request) {
   // Load previously stored payload hashes so unchanged items are skipped.
   // Without this the 6-hourly sync re-pushed every item, re-triggering WhatsApp
   // review each time and flipping APPROVED items to OUTDATED/NO_REVIEW.
-  const storedHashes = await getStoredCatalogHashes().catch((e) => {
-    console.error("[sync-meta-catalog] Failed to load stored hashes:", e);
-    return {};
-  });
+  let storedHashes: Record<string, string>;
+  try {
+    storedHashes = await getStoredCatalogHashes();
+  } catch (e) {
+    console.error(
+      "[sync-meta-catalog] Failed to load stored hashes — aborting sync to avoid re-triggering WhatsApp review on all items:",
+      e,
+    );
+    await supabase.from("error_logs").insert({
+      source: "meta_catalog_cron",
+      severity: "error",
+      message: "Catalog sync aborted: failed to load stored hashes",
+      error_message: e instanceof Error ? e.message : String(e),
+      metadata: { abortReason: "stored_hashes_read_failed" },
+    });
+    return NextResponse.json(
+      { error: "Failed to load stored hashes; sync aborted" },
+      { status: 503 },
+    );
+  }
 
   const result = await syncFullCatalogToMeta(
     products as Parameters<typeof syncFullCatalogToMeta>[0],
