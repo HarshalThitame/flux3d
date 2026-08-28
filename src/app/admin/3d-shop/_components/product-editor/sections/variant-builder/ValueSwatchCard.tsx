@@ -55,6 +55,10 @@ export function ValueSwatchCard({
   onMove,
   onGenerateTexture,
   textureBusy,
+  dragging,
+  onDragStart,
+  onDragOver,
+  onDrop,
 }: {
   variant: DraftVariant;
   value: string;
@@ -66,6 +70,10 @@ export function ValueSwatchCard({
   onMove: (direction: -1 | 1) => void;
   onGenerateTexture: (value: string) => void;
   textureBusy: boolean;
+  dragging?: boolean;
+  onDragStart?: () => void;
+  onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDrop?: () => void;
 }) {
   const { uploadImage, setToast } = useProductEditor();
   const [busy, setBusy] = useState(false);
@@ -89,7 +97,13 @@ export function ValueSwatchCard({
   }
 
   return (
-    <div className="group flex items-start gap-3 rounded-2xl border border-[#C9A24B]/15 bg-gradient-to-b from-white to-[#FAF7EF] p-3 shadow-[0_2px_12px_rgba(201,162,75,0.08)] transition hover:border-[#C9A24B]/40">
+    <div
+      className={`group flex items-start gap-3 rounded-2xl border border-[#C9A24B]/15 bg-gradient-to-b from-white to-[#FAF7EF] p-3 shadow-[0_2px_12px_rgba(201,162,75,0.08)] transition hover:border-[#C9A24B]/40 ${dragging ? "opacity-50" : ""} ${onDragStart ? "cursor-grab active:cursor-grabbing" : ""}`}
+      draggable={Boolean(onDragStart)}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+    >
       <div className="flex flex-col items-center gap-1 pt-1">
         <GripVertical className="h-4 w-4 text-[#C9A24B]/40" />
         <div className="flex flex-col gap-0.5">

@@ -1,6 +1,7 @@
 import type {
   PricingRuleType,
   ShopSkuPricingRule,
+  SkuPatternOption,
   SkuStatus,
   VariantValueMetadata,
 } from "@/lib/shop/admin-types";
@@ -96,12 +97,7 @@ function initialsOf(name: string) {
     .toUpperCase();
 }
 
-export type SkuPatternOption = {
-  name: string;
-  values: string[];
-  metadata?: Record<string, VariantValueMetadata>;
-  type?: string;
-};
+export type { SkuPatternOption } from "@/lib/shop/admin-types";
 
 /**
  * Resolve a SKU pattern template against a variant combination.

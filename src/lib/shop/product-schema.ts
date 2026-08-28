@@ -35,6 +35,34 @@ export const productDimensionsSchema: z.ZodType<ProductDimensions> = z.object({
   weight_unit: z.enum(["g", "kg", "oz", "lb"]),
 });
 
+export const variantOptionTypeSchema = z.enum([
+  "swatch_color",
+  "button",
+  "dropdown",
+  "toggle",
+  "text_input",
+]);
+
+export const variantValueMetadataSchema = z.object({
+  swatch_image_url: z.string().nullable().optional(),
+  hex_color: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  price_modifier: z.number().nullable().optional(),
+  slug: z.string().nullable().optional(),
+});
+
+export const variantOptionSchema = z.object({
+  id: z.string().optional(),
+  option_name: z.string().trim().min(1, "Option name is required"),
+  option_type: variantOptionTypeSchema,
+  values: z.array(z.string().trim().min(1)).default([]),
+  value_metadata: z.record(z.string(), variantValueMetadataSchema).default({}),
+  display_order: z.number().int().min(0).optional(),
+  is_required: z.boolean().optional(),
+});
+
+export const variantOptionsSchema = z.array(variantOptionSchema);
+
 export const productFormSchema = z.object({
   id: z.string().optional(),
   name: z

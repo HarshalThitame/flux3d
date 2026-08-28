@@ -31,6 +31,7 @@ function makeProduct(
     base_price: 1000,
     display_price: 1000,
     compare_at_price: null,
+    sku_pattern: null,
     is_customizable: false,
     customization_label: null,
     is_featured: false,

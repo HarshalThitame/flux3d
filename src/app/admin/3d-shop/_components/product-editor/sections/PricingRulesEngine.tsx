@@ -53,6 +53,8 @@ export function PricingRulesEngine() {
   const [editPriority, setEditPriority] = useState("0");
   const [editCondName, setEditCondName] = useState("");
   const [editCondValue, setEditCondValue] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [ruleBusy, setRuleBusy] = useState<Set<string>>(new Set());
 
   const discreteOptions = useMemo(
     () =>
@@ -76,25 +78,30 @@ export function PricingRulesEngine() {
       setToast({ type: "error", message: "Enter a valid rule value." });
       return;
     }
-    const conditions: SkuPricingRuleCondition = {};
-    if (conditionName && conditionValue) {
-      conditions[conditionName] = conditionValue
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean);
+    setAdding(true);
+    try {
+      const conditions: SkuPricingRuleCondition = {};
+      if (conditionName && conditionValue) {
+        conditions[conditionName] = conditionValue
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+      await addPricingRule({
+        name: name.trim(),
+        rule_type: ruleType,
+        conditions,
+        value: Number(value),
+        priority: Number(priority) || 0,
+        is_active: true,
+      });
+      setName("");
+      setValue("");
+      setPriority("10");
+      setConditionValue("");
+    } finally {
+      setAdding(false);
     }
-    await addPricingRule({
-      name: name.trim(),
-      rule_type: ruleType,
-      conditions,
-      value: Number(value),
-      priority: Number(priority) || 0,
-      is_active: true,
-    });
-    setName("");
-    setValue("");
-    setPriority("10");
-    setConditionValue("");
   }
 
   async function runAiRules() {
@@ -177,21 +184,43 @@ export function PricingRulesEngine() {
       setToast({ type: "error", message: "Enter a valid rule value." });
       return;
     }
-    const conditions: SkuPricingRuleCondition = {};
-    if (editCondName && editCondValue) {
-      conditions[editCondName] = editCondValue
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean);
+    setRuleBusy((current) => new Set(current).add(editingId));
+    try {
+      const conditions: SkuPricingRuleCondition = {};
+      if (editCondName && editCondValue) {
+        conditions[editCondName] = editCondValue
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+      await updatePricingRule(editingId, {
+        name: editName.trim(),
+        rule_type: editType,
+        conditions,
+        value: Number(editValue),
+        priority: Number(editPriority) || 0,
+      });
+      setEditingId(null);
+    } finally {
+      setRuleBusy((current) => {
+        const next = new Set(current);
+        next.delete(editingId);
+        return next;
+      });
     }
-    await updatePricingRule(editingId, {
-      name: editName.trim(),
-      rule_type: editType,
-      conditions,
-      value: Number(editValue),
-      priority: Number(editPriority) || 0,
-    });
-    setEditingId(null);
+  }
+
+  async function handleDelete(ruleId: string) {
+    setRuleBusy((current) => new Set(current).add(ruleId));
+    try {
+      await deletePricingRule(ruleId);
+    } finally {
+      setRuleBusy((current) => {
+        const next = new Set(current);
+        next.delete(ruleId);
+        return next;
+      });
+    }
   }
 
   return (
@@ -280,9 +309,14 @@ export function PricingRulesEngine() {
                     <button
                       type="button"
                       onClick={() => void saveEdit()}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#0F1B3D] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#1B2A54]"
+                      disabled={ruleBusy.has(editingId)}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#0F1B3D] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#1B2A54] disabled:opacity-50"
                     >
-                      <Check className="h-3.5 w-3.5" />
+                      {ruleBusy.has(editingId) ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Check className="h-3.5 w-3.5" />
+                      )}
                       Save
                     </button>
                     <button
@@ -343,11 +377,16 @@ export function PricingRulesEngine() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => void deletePricingRule(rule.id)}
-                    className="rounded-lg p-2 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600"
+                    onClick={() => void handleDelete(rule.id)}
+                    disabled={ruleBusy.has(rule.id)}
+                    className="rounded-lg p-2 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
                     aria-label={`Delete rule ${rule.name}`}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {ruleBusy.has(rule.id) ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               )}
@@ -437,9 +476,14 @@ export function PricingRulesEngine() {
               <button
                 type="button"
                 onClick={() => void handleAdd()}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F1B3D] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1B2A54]"
+                disabled={adding}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F1B3D] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1B2A54] disabled:opacity-60"
               >
-                <Sparkles className="h-4 w-4 text-[#D4AF37]" />
+                {adding ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4 text-[#D4AF37]" />
+                )}
                 Add Rule
               </button>
             </div>

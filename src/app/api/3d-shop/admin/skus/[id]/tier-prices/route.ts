@@ -191,14 +191,6 @@ export async function PUT(
 
     const supabase = createAdminSupabaseClient();
 
-    // Prune any tier rows for SKUs that are no longer listed.
-    const { error: pruneError } = await supabase
-      .from("shelf_sku_tier_prices")
-      .delete()
-      .eq("sku_id", id)
-      .not("tier_name", "in", `(${SKU_TIER_NAMES.join(",")})`);
-    if (pruneError) throw new Error(pruneError.message);
-
     const normalized = body.tier_prices
       .filter((tier) =>
         SKU_TIER_NAMES.includes(
@@ -211,18 +203,30 @@ export async function PUT(
         price: Number.isFinite(Number(tier.price)) ? Number(tier.price) : 0,
       }));
 
-    // Upsert via delete + insert to keep behavior simple and atomic enough.
-    const { error: deleteError } = await supabase
-      .from("shelf_sku_tier_prices")
-      .delete()
-      .eq("sku_id", id);
-    if (deleteError) throw new Error(deleteError.message);
-
+    // Atomic upsert on (sku_id, tier_name), then remove any rows for this SKU
+    // that are no longer in the submitted set. No delete-then-insert window,
+    // so tier prices can never be lost if a subsequent step fails.
     if (normalized.length > 0) {
-      const { error: insertError } = await supabase
+      const { error: upsertError } = await supabase
         .from("shelf_sku_tier_prices")
-        .insert(normalized);
-      if (insertError) throw new Error(insertError.message);
+        .upsert(normalized, { onConflict: "sku_id,tier_name" });
+      if (upsertError) throw new Error(upsertError.message);
+    }
+
+    const submittedNames = normalized.map((tier) => tier.tier_name);
+    if (submittedNames.length > 0) {
+      const { error: cleanupError } = await supabase
+        .from("shelf_sku_tier_prices")
+        .delete()
+        .eq("sku_id", id)
+        .not("tier_name", "in", submittedNames);
+      if (cleanupError) throw new Error(cleanupError.message);
+    } else {
+      const { error: clearError } = await supabase
+        .from("shelf_sku_tier_prices")
+        .delete()
+        .eq("sku_id", id);
+      if (clearError) throw new Error(clearError.message);
     }
 
     const { data, error } = await supabase

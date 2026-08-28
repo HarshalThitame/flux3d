@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminApiErrorResponse } from "@/lib/admin/api";
 import { requireAdminRequest } from "@/lib/admin/request";
+import { getShopAiClient } from "@/lib/shop/ai";
 import { suggestVariants } from "@/lib/shop/ai-variants";
 
 export async function POST(request: Request) {
@@ -19,6 +20,16 @@ export async function POST(request: Request) {
         { error: "product_name is required." },
         { status: 400 },
       );
+
+    if (!getShopAiClient()) {
+      return NextResponse.json(
+        {
+          error:
+            "AI is not configured. Add OPENAI_API_KEY to your environment.",
+        },
+        { status: 503 },
+      );
+    }
 
     const options = await suggestVariants({
       product_name: body.product_name,

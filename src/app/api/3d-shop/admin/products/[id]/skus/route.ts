@@ -23,61 +23,70 @@ type SkuPayload = {
   qr_url?: string | null;
 };
 
-function normalizeSkuPatch(body: SkuPayload) {
-  return {
-    ...(Number.isFinite(Number(body.price))
-      ? { price: Number(body.price) }
-      : {}),
-    compare_at_price:
-      body.compare_at_price === null ||
-      body.compare_at_price === undefined ||
-      body.compare_at_price === ""
+function normalizeSkuPatch(body: SkuPayload): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+
+  if (body.price !== undefined) {
+    patch.price = Number.isFinite(Number(body.price)) ? Number(body.price) : 0;
+  }
+  if (body.compare_at_price !== undefined) {
+    patch.compare_at_price =
+      body.compare_at_price === null || body.compare_at_price === ""
         ? null
-        : Number(body.compare_at_price),
-    cost_price:
-      body.cost_price === null ||
-      body.cost_price === undefined ||
-      body.cost_price === ""
+        : Number(body.compare_at_price);
+  }
+  if (body.cost_price !== undefined) {
+    patch.cost_price =
+      body.cost_price === null || body.cost_price === ""
         ? null
-        : Number(body.cost_price),
-    status:
+        : Number(body.cost_price);
+  }
+  if (body.status !== undefined) {
+    patch.status =
       typeof body.status === "string" && body.status.trim()
         ? body.status.trim()
-        : null,
-    ...(Number.isFinite(Number(body.stock_quantity))
-      ? { stock_quantity: Number(body.stock_quantity) }
-      : {}),
-    low_stock_threshold:
-      body.low_stock_threshold === null ||
-      body.low_stock_threshold === undefined
-        ? 5
-        : Number(body.low_stock_threshold),
-    weight_grams:
-      body.weight_grams === null ||
-      body.weight_grams === undefined ||
-      body.weight_grams === ""
+        : null;
+  }
+  if (body.stock_quantity !== undefined) {
+    patch.stock_quantity = Number.isFinite(Number(body.stock_quantity))
+      ? Number(body.stock_quantity)
+      : 0;
+  }
+  if (body.low_stock_threshold !== undefined) {
+    patch.low_stock_threshold =
+      body.low_stock_threshold === null ? 5 : Number(body.low_stock_threshold);
+  }
+  if (body.weight_grams !== undefined) {
+    patch.weight_grams =
+      body.weight_grams === null || body.weight_grams === ""
         ? null
-        : Number(body.weight_grams),
-    variant_image_url:
+        : Number(body.weight_grams);
+  }
+  if (body.variant_image_url !== undefined) {
+    patch.variant_image_url =
       typeof body.variant_image_url === "string"
         ? body.variant_image_url.trim() || null
-        : (body.variant_image_url ?? null),
-    model_url:
+        : (body.variant_image_url ?? null);
+  }
+  if (body.model_url !== undefined) {
+    patch.model_url =
       typeof body.model_url === "string"
         ? body.model_url.trim() || null
-        : (body.model_url ?? null),
-    ...(typeof body.is_available === "boolean"
-      ? { is_available: body.is_available }
-      : {}),
-    barcode:
-      typeof body.barcode === "string"
-        ? body.barcode.trim() || null
-        : (body.barcode ?? null),
-    qr_url:
-      typeof body.qr_url === "string"
-        ? body.qr_url.trim() || null
-        : (body.qr_url ?? null),
-  };
+        : (body.model_url ?? null);
+  }
+  if (body.is_available !== undefined) {
+    patch.is_available = body.is_available;
+  }
+  if (body.barcode !== undefined) {
+    patch.barcode =
+      typeof body.barcode === "string" ? body.barcode.trim() || null : null;
+  }
+  if (body.qr_url !== undefined) {
+    patch.qr_url =
+      typeof body.qr_url === "string" ? body.qr_url.trim() || null : null;
+  }
+
+  return patch;
 }
 
 async function updateProductBasePrice(productId: string) {
@@ -177,21 +186,39 @@ export async function POST(
           `SHOP-${id.slice(0, 8).toUpperCase()}-${Date.now()}-${index + 1}`,
         variant_combination: sku.variant_combination ?? {},
         price: Number.isFinite(Number(sku.price)) ? Number(sku.price) : 0,
-        compare_at_price: sku.compare_at_price ?? null,
+        compare_at_price:
+          sku.compare_at_price === null || sku.compare_at_price === ""
+            ? null
+            : Number.isFinite(Number(sku.compare_at_price))
+              ? Number(sku.compare_at_price)
+              : null,
         stock_quantity: Number.isFinite(Number(sku.stock_quantity))
           ? Number(sku.stock_quantity)
           : 0,
         low_stock_threshold: Number.isFinite(Number(sku.low_stock_threshold))
           ? Number(sku.low_stock_threshold)
           : 5,
-        weight_grams: sku.weight_grams ?? null,
-        variant_image_url: sku.variant_image_url ?? null,
+        weight_grams:
+          sku.weight_grams === null || sku.weight_grams === ""
+            ? null
+            : Number.isFinite(Number(sku.weight_grams))
+              ? Number(sku.weight_grams)
+              : null,
+        variant_image_url:
+          typeof sku.variant_image_url === "string"
+            ? sku.variant_image_url.trim() || null
+            : null,
         model_url:
           typeof sku.model_url === "string"
             ? sku.model_url.trim() || null
             : null,
         is_available: sku.is_available ?? true,
-        cost_price: sku.cost_price ?? null,
+        cost_price:
+          sku.cost_price === null || sku.cost_price === ""
+            ? null
+            : Number.isFinite(Number(sku.cost_price))
+              ? Number(sku.cost_price)
+              : null,
         status:
           typeof sku.status === "string" && sku.status.trim()
             ? sku.status.trim()

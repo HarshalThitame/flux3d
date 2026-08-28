@@ -13,28 +13,61 @@ type PricingRulePayload = {
   is_active?: boolean;
 };
 
-function normalizeRulePayload(body: PricingRulePayload) {
-  const name = typeof body.name === "string" ? body.name.trim() : "";
-  const ruleType = body.rule_type;
-  if (!name) throw new Error("Rule name is required.");
-  if (
-    !ruleType ||
-    !["fixed_add", "percent_add", "fixed_override", "multiply"].includes(
-      ruleType,
-    )
-  ) {
-    throw new Error("Rule type is invalid.");
+function normalizeRulePayload(
+  body: PricingRulePayload,
+  partial = false,
+): Record<string, unknown> {
+  if (!partial) {
+    const name = typeof body.name === "string" ? body.name.trim() : "";
+    const ruleType = body.rule_type;
+    if (!name) throw new Error("Rule name is required.");
+    if (
+      !ruleType ||
+      !["fixed_add", "percent_add", "fixed_override", "multiply"].includes(
+        ruleType,
+      )
+    ) {
+      throw new Error("Rule type is invalid.");
+    }
+    return {
+      name,
+      rule_type: ruleType,
+      conditions: body.conditions ?? {},
+      value: Number.isFinite(Number(body.value)) ? Number(body.value) : 0,
+      priority: Number.isFinite(Number(body.priority))
+        ? Number(body.priority)
+        : 0,
+      is_active: body.is_active ?? true,
+    };
   }
-  return {
-    name,
-    rule_type: ruleType,
-    conditions: body.conditions ?? {},
-    value: Number.isFinite(Number(body.value)) ? Number(body.value) : 0,
-    priority: Number.isFinite(Number(body.priority))
+
+  const patch: Record<string, unknown> = {};
+  if (typeof body.name === "string") {
+    const name = body.name.trim();
+    if (!name) throw new Error("Rule name cannot be empty.");
+    patch.name = name;
+  }
+  if (body.rule_type !== undefined) {
+    if (
+      !["fixed_add", "percent_add", "fixed_override", "multiply"].includes(
+        body.rule_type,
+      )
+    ) {
+      throw new Error("Rule type is invalid.");
+    }
+    patch.rule_type = body.rule_type;
+  }
+  if (body.conditions !== undefined) patch.conditions = body.conditions;
+  if (body.value !== undefined) {
+    patch.value = Number.isFinite(Number(body.value)) ? Number(body.value) : 0;
+  }
+  if (body.priority !== undefined) {
+    patch.priority = Number.isFinite(Number(body.priority))
       ? Number(body.priority)
-      : 0,
-    is_active: body.is_active ?? true,
-  };
+      : 0;
+  }
+  if (body.is_active !== undefined) patch.is_active = body.is_active;
+  return patch;
 }
 
 export async function GET(
@@ -104,7 +137,7 @@ export async function PATCH(
     const supabase = createAdminSupabaseClient();
     const { data, error } = await supabase
       .from("shelf_sku_pricing_rules")
-      .update(normalizeRulePayload(body))
+      .update(normalizeRulePayload(body, true))
       .eq("product_id", id)
       .eq("id", body.id)
       .select("*")

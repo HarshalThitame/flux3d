@@ -119,6 +119,13 @@ export const SKU_PATTERN_TOKENS = [
   "{INITIALS}",
 ] as const;
 
+export type SkuPatternOption = {
+  name: string;
+  values: string[];
+  metadata?: Record<string, VariantValueMetadata>;
+  type?: string;
+};
+
 export type ShopProductHotspot = {
   id: string;
   position: [number, number, number];
@@ -207,6 +214,7 @@ export type ShopSku = {
   pre_order_eta: string | null;
   barcode?: string | null;
   qr_url?: string | null;
+  tier_prices?: ShopSkuTierPrice[];
   created_at: string | null;
   updated_at: string | null;
 };

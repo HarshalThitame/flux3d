@@ -93,7 +93,7 @@ function normalizeProductPayload(body: ProductPayload, partial = false) {
   if (!partial && !name) throw new Error("Product name is required.");
   if (!partial && !slug) throw new Error("Product slug is required.");
 
-  return {
+  const full: Record<string, unknown> = {
     ...(name || !partial ? { name } : {}),
     ...(slug || !partial ? { slug } : {}),
     description:
@@ -171,11 +171,22 @@ function normalizeProductPayload(body: ProductPayload, partial = false) {
       typeof body.meta_description === "string"
         ? body.meta_description.trim() || null
         : (body.meta_description ?? null),
-    published_at:
-      typeof body.published_at === "string" && body.published_at.trim()
-        ? new Date(body.published_at).toISOString()
-        : null,
+    published_at: normalizePublishedAt(body.published_at),
   };
+
+  if (!partial) return full;
+
+  const bodyRecord = body as unknown as Record<string, unknown>;
+  return Object.fromEntries(
+    Object.entries(full).filter(([key]) => bodyRecord[key] !== undefined),
+  );
+}
+
+function normalizePublishedAt(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
 }
 
 function getStockStatus(skus: SkuRow[] | null | undefined) {

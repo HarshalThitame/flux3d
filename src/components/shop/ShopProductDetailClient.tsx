@@ -28,6 +28,7 @@ import { addToast } from "@/lib/toast/store";
 import ShopVariantControls from "@/components/shop/ShopVariantControls";
 import ConfigurationSummaryBar from "@/components/shop/ConfigurationSummaryBar";
 import RarityBadge from "@/components/shop/RarityBadge";
+import { TierPriceStrip } from "@/components/shop/TierPriceStrip";
 import QuantityStepper from "@/components/shop/QuantityStepper";
 import NotifyMeForm from "@/components/shop/NotifyMeForm";
 import ProductRecommendations from "@/components/shop/ProductRecommendations";
@@ -54,6 +55,7 @@ import {
   getShopGalleryImages,
   getShopProductImages,
   getShopStockLabel,
+  isSkuBlockedByStatus,
   resolveShopSku,
   getSelectedSwatchColor,
   type ShopSelectedOptions,
@@ -579,12 +581,13 @@ export default function ShopProductDetailClient({
   const canAdd = Boolean(
     resolvedSku &&
     resolvedSku.is_available !== false &&
+    !isSkuBlockedByStatus(resolvedSku) &&
     (resolvedSku.stock_quantity > 0 || resolvedSku.pre_order_eta),
   );
   const isTrulyOutOfStock = Boolean(
     resolvedSku &&
-    resolvedSku.stock_quantity <= 0 &&
-    !resolvedSku.pre_order_eta,
+    !resolvedSku.pre_order_eta &&
+    (resolvedSku.stock_quantity <= 0 || isSkuBlockedByStatus(resolvedSku)),
   );
   const price = resolvedSku?.price ?? product.display_price;
   const compareAt = resolvedSku?.compare_at_price ?? product.compare_at_price;
@@ -1288,6 +1291,8 @@ export default function ShopProductDetailClient({
                   Inclusive of all taxes
                 </p>
               )}
+
+              <TierPriceStrip tierPrices={resolvedSku?.tier_prices ?? []} />
 
               <div className="mt-6">
                 <ShopVariantControls

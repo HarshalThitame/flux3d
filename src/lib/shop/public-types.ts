@@ -49,6 +49,7 @@ export type ShopPublicProduct = {
   base_price: number;
   display_price: number;
   compare_at_price: number | null;
+  sku_pattern: string | null;
   is_customizable: boolean;
   customization_label: string | null;
   is_featured: boolean;

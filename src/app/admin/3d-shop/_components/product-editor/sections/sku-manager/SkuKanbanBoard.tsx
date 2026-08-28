@@ -1,9 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import { Loader2, Trash2 } from "lucide-react";
 import type { ShopSku, SkuStatus } from "@/lib/shop/admin-types";
 import { comboLabel } from "../../types";
 import { deriveSkuStatus } from "@/lib/shop/sku-engine";
+
+const STATUS_OPTIONS: { value: SkuStatus | ""; label: string }[] = [
+  { value: "", label: "Derived" },
+  { value: "active", label: "Active" },
+  { value: "draft", label: "Draft" },
+  { value: "in_stock", label: "In Stock (legacy)" },
+  { value: "low_stock", label: "Low Stock" },
+  { value: "out_of_stock", label: "Out of Stock" },
+  { value: "made_to_order", label: "Made to Order" },
+  { value: "limited_edition", label: "Limited Edition" },
+  { value: "unavailable", label: "Unavailable" },
+  { value: "discontinued", label: "Discontinued" },
+];
 
 const COLUMNS: { status: SkuStatus | "derived"; label: string; dot: string }[] =
   [
@@ -37,9 +51,13 @@ function mapToColumn(status: SkuStatus): string {
 export function SkuKanbanBoard({
   skus,
   onUpdateStatus,
+  onDelete,
+  deleting,
 }: {
   skus: ShopSku[];
-  onUpdateStatus: (skuId: string, status: SkuStatus) => void;
+  onUpdateStatus: (skuId: string, status: SkuStatus | null) => void;
+  onDelete: (skuId: string) => void;
+  deleting: Set<string>;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
 
@@ -96,6 +114,39 @@ export function SkuKanbanBoard({
                     <span className="text-[10px] text-[#6F7192]">
                       {Number(sku.stock_quantity) || 0} units
                     </span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <select
+                      value={sku.status ?? ""}
+                      onChange={(event) =>
+                        onUpdateStatus(
+                          sku.id,
+                          (event.target.value || null) as SkuStatus | null,
+                        )
+                      }
+                      className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-1.5 py-1 text-[10px] text-[#0F1B3D] outline-none"
+                      title="Override status"
+                    >
+                      {STATUS_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(sku.id)}
+                      disabled={deleting.has(sku.id)}
+                      className="rounded-lg p-1.5 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
+                      title="Delete SKU"
+                      aria-label={`Delete SKU ${sku.sku_code}`}
+                    >
+                      {deleting.has(sku.id) ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                    </button>
                   </div>
                 </div>
               ))}

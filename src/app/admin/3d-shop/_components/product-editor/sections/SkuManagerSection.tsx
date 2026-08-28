@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import Image from "next/image";
 import {
   Columns3,
@@ -20,6 +20,7 @@ import { SkuGalleryCard } from "./sku-manager/SkuGalleryCard";
 import { SkuKanbanBoard } from "./sku-manager/SkuKanbanBoard";
 import { MarginBadge } from "./sku-manager/MarginBadge";
 import { StockHealthBar } from "./sku-manager/StockHealthBar";
+import { TierPriceEditor } from "./sku-manager/TierPriceEditor";
 
 type BulkField =
   "price" | "compare_at" | "stock" | "low_stock" | "weight" | "cost";
@@ -136,6 +137,8 @@ export function SkuManagerSection() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | SkuStatus>("all");
   const [qrBusy, setQrBusy] = useState<Set<string>>(new Set());
+  const [expandedTiers, setExpandedTiers] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState<Set<string>>(new Set());
 
   const validSelected = useMemo(() => {
     const ids = new Set(skus.map((sku) => sku.id));
@@ -186,6 +189,7 @@ export function SkuManagerSection() {
   }
 
   function handleDeleteSku(skuId: string) {
+    setDeleting((current) => new Set(current).add(skuId));
     void deleteSku(skuId)
       .then(() => {
         setSelected((prev) => {
@@ -195,7 +199,23 @@ export function SkuManagerSection() {
           return next;
         });
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        setDeleting((current) => {
+          const next = new Set(current);
+          next.delete(skuId);
+          return next;
+        });
+      });
+  }
+
+  function toggleTierRow(skuId: string) {
+    setExpandedTiers((current) => {
+      const next = new Set(current);
+      if (next.has(skuId)) next.delete(skuId);
+      else next.add(skuId);
+      return next;
+    });
   }
 
   function applyBulk(field: BulkField) {
@@ -469,6 +489,7 @@ export function SkuManagerSection() {
                     "Cost",
                     "Compare",
                     "Stock",
+                    "Health",
                     "Low Stock",
                     "Margin",
                     "Weight",
@@ -494,205 +515,244 @@ export function SkuManagerSection() {
                 {filtered.map((sku) => {
                   const isSelected = selected.has(sku.id);
                   return (
-                    <tr
-                      key={sku.id}
-                      className={`border-b border-gray-100 last:border-0 ${isSelected ? "bg-[#FAF7EF]" : ""}`}
-                    >
-                      <td className="px-3 py-3">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleSelect(sku.id)}
-                          aria-label="Select SKU"
-                          className="h-4 w-4 accent-[#B8860B]"
-                        />
-                      </td>
-                      <td className="px-3 py-3 text-sm font-medium text-[#0F1B3D]">
-                        {comboLabel(sku.variant_combination)}
-                      </td>
-                      <td className="px-3 py-3 font-mono text-xs text-[#6F7192]">
-                        {sku.sku_code}
-                      </td>
-                      <td className="px-3 py-3">
-                        <input
-                          type="number"
-                          value={sku.price}
-                          data-sku-field="price"
-                          onKeyDown={(event) => handleEnter(event, "price")}
-                          onChange={(event) =>
-                            updateSku(
-                              sku.id,
-                              "price",
-                              Number(event.target.value),
-                            )
-                          }
-                          className={numInput}
-                        />
-                      </td>
-                      <td className="px-3 py-3">
-                        <input
-                          type="number"
-                          value={sku.cost_price ?? ""}
-                          data-sku-field="cost_price"
-                          onKeyDown={(event) =>
-                            handleEnter(event, "cost_price")
-                          }
-                          onChange={(event) =>
-                            updateSku(
-                              sku.id,
-                              "cost_price",
-                              event.target.value
-                                ? Number(event.target.value)
-                                : null,
-                            )
-                          }
-                          className={narrowInput}
-                        />
-                      </td>
-                      <td className="px-3 py-3">
-                        <input
-                          type="number"
-                          value={sku.compare_at_price ?? ""}
-                          data-sku-field="compare_at_price"
-                          onKeyDown={(event) =>
-                            handleEnter(event, "compare_at_price")
-                          }
-                          onChange={(event) =>
-                            updateSku(
-                              sku.id,
-                              "compare_at_price",
-                              event.target.value
-                                ? Number(event.target.value)
-                                : null,
-                            )
-                          }
-                          className={numInput}
-                        />
-                      </td>
-                      <td className="px-3 py-3">
-                        <input
-                          type="number"
-                          value={sku.stock_quantity}
-                          data-sku-field="stock_quantity"
-                          onKeyDown={(event) =>
-                            handleEnter(event, "stock_quantity")
-                          }
-                          onChange={(event) =>
-                            updateSku(
-                              sku.id,
-                              "stock_quantity",
-                              Number(event.target.value),
-                            )
-                          }
-                          className={narrowInput}
-                        />
-                      </td>
-                      <td className="px-3 py-3">
-                        <input
-                          type="number"
-                          value={sku.low_stock_threshold ?? 5}
-                          data-sku-field="low_stock_threshold"
-                          onKeyDown={(event) =>
-                            handleEnter(event, "low_stock_threshold")
-                          }
-                          onChange={(event) =>
-                            updateSku(
-                              sku.id,
-                              "low_stock_threshold",
-                              Number(event.target.value),
-                            )
-                          }
-                          className={narrowInput}
-                        />
-                      </td>
-                      <td className="px-3 py-3">
-                        <MarginBadge sku={sku} />
-                      </td>
-                      <td className="px-3 py-3">
-                        <input
-                          type="number"
-                          value={sku.weight_grams ?? ""}
-                          data-sku-field="weight_grams"
-                          onKeyDown={(event) =>
-                            handleEnter(event, "weight_grams")
-                          }
-                          onChange={(event) =>
-                            updateSku(
-                              sku.id,
-                              "weight_grams",
-                              event.target.value
-                                ? Number(event.target.value)
-                                : null,
-                            )
-                          }
-                          className={numInput}
-                        />
-                      </td>
-                      <td className="px-3 py-3">
-                        <SkuVariantImageSummary url={sku.variant_image_url} />
-                      </td>
-                      <td className="px-3 py-3">
-                        <SkuMediaSummary
-                          sku={sku}
-                          skuImages={skuImages[sku.id] ?? []}
-                        />
-                      </td>
-                      <td className="px-3 py-3">
-                        <select
-                          value={sku.status ?? ""}
-                          onChange={(event) =>
-                            updateSku(
-                              sku.id,
-                              "status",
-                              (event.target.value || null) as SkuStatus | null,
-                            )
-                          }
-                          className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-[#0F1B3D] outline-none"
-                        >
-                          {STATUS_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-3 py-3">
-                        <button
-                          type="button"
-                          aria-pressed={sku.is_available ?? true}
-                          onClick={() =>
-                            updateSku(
-                              sku.id,
-                              "is_available",
-                              !(sku.is_available ?? true),
-                            )
-                          }
-                          className={`relative h-6 w-11 rounded-full transition ${(sku.is_available ?? true) ? "bg-[#B8860B]" : "bg-gray-200"}`}
-                        >
-                          <span
-                            className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${(sku.is_available ?? true) ? "translate-x-6" : "translate-x-1"}`}
+                    <Fragment key={sku.id}>
+                      <tr
+                        className={`border-b border-gray-100 last:border-0 ${isSelected ? "bg-[#FAF7EF]" : ""}`}
+                      >
+                        <td className="px-3 py-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelect(sku.id)}
+                            aria-label="Select SKU"
+                            className="h-4 w-4 accent-[#B8860B]"
                           />
-                        </button>
-                      </td>
-                      <td className="px-3 py-3">
-                        <SkuQrButton
-                          url={sku.qr_url}
-                          busy={qrBusy.has(sku.id)}
-                          onGenerate={() => void handleGenerateQr(sku.id)}
-                        />
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteSku(sku.id)}
-                          className="rounded-lg p-2 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600"
-                          title="Delete SKU"
-                          aria-label={`Delete SKU ${sku.sku_code}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="px-3 py-3 text-sm font-medium text-[#0F1B3D]">
+                          {comboLabel(sku.variant_combination)}
+                        </td>
+                        <td className="px-3 py-3 font-mono text-xs text-[#6F7192]">
+                          {sku.sku_code}
+                        </td>
+                        <td className="px-3 py-3">
+                          <input
+                            type="number"
+                            value={sku.price}
+                            data-sku-field="price"
+                            onKeyDown={(event) => handleEnter(event, "price")}
+                            onChange={(event) =>
+                              updateSku(
+                                sku.id,
+                                "price",
+                                Number(event.target.value),
+                              )
+                            }
+                            className={numInput}
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <input
+                            type="number"
+                            value={sku.cost_price ?? ""}
+                            data-sku-field="cost_price"
+                            onKeyDown={(event) =>
+                              handleEnter(event, "cost_price")
+                            }
+                            onChange={(event) =>
+                              updateSku(
+                                sku.id,
+                                "cost_price",
+                                event.target.value
+                                  ? Number(event.target.value)
+                                  : null,
+                              )
+                            }
+                            className={narrowInput}
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <input
+                            type="number"
+                            value={sku.compare_at_price ?? ""}
+                            data-sku-field="compare_at_price"
+                            onKeyDown={(event) =>
+                              handleEnter(event, "compare_at_price")
+                            }
+                            onChange={(event) =>
+                              updateSku(
+                                sku.id,
+                                "compare_at_price",
+                                event.target.value
+                                  ? Number(event.target.value)
+                                  : null,
+                              )
+                            }
+                            className={numInput}
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <input
+                            type="number"
+                            value={sku.stock_quantity}
+                            data-sku-field="stock_quantity"
+                            onKeyDown={(event) =>
+                              handleEnter(event, "stock_quantity")
+                            }
+                            onChange={(event) =>
+                              updateSku(
+                                sku.id,
+                                "stock_quantity",
+                                Number(event.target.value),
+                              )
+                            }
+                            className={narrowInput}
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <MiniStockBar sku={sku} />
+                        </td>
+                        <td className="px-3 py-3">
+                          <input
+                            type="number"
+                            value={sku.low_stock_threshold ?? 5}
+                            data-sku-field="low_stock_threshold"
+                            onKeyDown={(event) =>
+                              handleEnter(event, "low_stock_threshold")
+                            }
+                            onChange={(event) =>
+                              updateSku(
+                                sku.id,
+                                "low_stock_threshold",
+                                Number(event.target.value),
+                              )
+                            }
+                            className={narrowInput}
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <MarginBadge sku={sku} />
+                        </td>
+                        <td className="px-3 py-3">
+                          <input
+                            type="number"
+                            value={sku.weight_grams ?? ""}
+                            data-sku-field="weight_grams"
+                            onKeyDown={(event) =>
+                              handleEnter(event, "weight_grams")
+                            }
+                            onChange={(event) =>
+                              updateSku(
+                                sku.id,
+                                "weight_grams",
+                                event.target.value
+                                  ? Number(event.target.value)
+                                  : null,
+                              )
+                            }
+                            className={numInput}
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <SkuVariantImageSummary url={sku.variant_image_url} />
+                        </td>
+                        <td className="px-3 py-3">
+                          <SkuMediaSummary
+                            sku={sku}
+                            skuImages={skuImages[sku.id] ?? []}
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <select
+                            value={sku.status ?? ""}
+                            onChange={(event) =>
+                              updateSku(
+                                sku.id,
+                                "status",
+                                (event.target.value ||
+                                  null) as SkuStatus | null,
+                              )
+                            }
+                            className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-[#0F1B3D] outline-none"
+                          >
+                            {STATUS_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-3 py-3">
+                          <button
+                            type="button"
+                            aria-pressed={sku.is_available ?? true}
+                            onClick={() =>
+                              updateSku(
+                                sku.id,
+                                "is_available",
+                                !(sku.is_available ?? true),
+                              )
+                            }
+                            className={`relative h-6 w-11 rounded-full transition ${(sku.is_available ?? true) ? "bg-[#B8860B]" : "bg-gray-200"}`}
+                          >
+                            <span
+                              className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${(sku.is_available ?? true) ? "translate-x-6" : "translate-x-1"}`}
+                            />
+                          </button>
+                        </td>
+                        <td className="px-3 py-3">
+                          <SkuQrButton
+                            url={sku.qr_url}
+                            busy={qrBusy.has(sku.id)}
+                            onGenerate={() => void handleGenerateQr(sku.id)}
+                          />
+                        </td>
+                        <td className="px-3 py-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => toggleTierRow(sku.id)}
+                            className={`mr-1 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
+                              expandedTiers.has(sku.id)
+                                ? "border-[#B8860B]/50 bg-[#F4EDDC] text-[#8a6d1a]"
+                                : "border-gray-200 text-[#6F7192] hover:border-[#C9A24B]/50"
+                            }`}
+                            title="Edit tier pricing"
+                            aria-label={`Edit tier pricing for ${sku.sku_code}`}
+                          >
+                            Tiers
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSku(sku.id)}
+                            disabled={deleting.has(sku.id)}
+                            className="rounded-lg p-2 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
+                            title="Delete SKU"
+                            aria-label={`Delete SKU ${sku.sku_code}`}
+                          >
+                            {deleting.has(sku.id) ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        </td>
+                      </tr>
+                      {expandedTiers.has(sku.id) && (
+                        <tr className="border-b border-gray-100 bg-[#FAF7EF]">
+                          <td />
+                          <td colSpan={16} className="px-3 py-3">
+                            <div className="max-w-xl">
+                              <TierPriceEditor
+                                sku={sku}
+                                tiers={tierPrices[sku.id] ?? []}
+                                onSave={(prices) =>
+                                  updateTierPrices(sku.id, prices)
+                                }
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   );
                 })}
               </tbody>
@@ -727,6 +787,8 @@ export function SkuManagerSection() {
             onUpdateStatus={(skuId, status) =>
               updateSku(skuId, "status", status)
             }
+            onDelete={handleDeleteSku}
+            deleting={deleting}
           />
         )}
 
@@ -856,11 +918,16 @@ export function SkuManagerSection() {
                     <button
                       type="button"
                       onClick={() => handleDeleteSku(sku.id)}
-                      className="rounded-lg p-2 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600"
+                      disabled={deleting.has(sku.id)}
+                      className="rounded-lg p-2 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
                       title="Delete SKU"
                       aria-label={`Delete SKU ${sku.sku_code}`}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {deleting.has(sku.id) ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -914,6 +981,30 @@ function SkuMediaSummary({
           />
         </span>
       ))}
+    </div>
+  );
+}
+
+function MiniStockBar({ sku }: { sku: ShopSku }) {
+  const stock = Number(sku.stock_quantity) || 0;
+  const threshold = sku.low_stock_threshold ?? 5;
+  const pct = Math.min(100, Math.round((stock / 50) * 100));
+  const tone =
+    sku.is_available === false
+      ? "bg-gray-300"
+      : stock <= 0
+        ? "bg-rose-500"
+        : stock <= threshold
+          ? "bg-amber-400"
+          : "bg-emerald-500";
+  return (
+    <div className="w-16" title={`${stock} units · threshold ${threshold}`}>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+        <div
+          className={`h-full rounded-full transition-all ${tone}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
     </div>
   );
 }

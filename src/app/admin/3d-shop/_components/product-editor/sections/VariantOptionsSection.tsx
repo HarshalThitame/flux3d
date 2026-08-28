@@ -35,6 +35,14 @@ export function VariantOptionsSection() {
   const [valueDraft, setValueDraft] = useState<Record<string, string>>({});
   const [textureBusy, setTextureBusy] = useState<Record<string, boolean>>({});
   const [aiSuggestBusy, setAiSuggestBusy] = useState(false);
+  const [dragValue, setDragValue] = useState<{
+    variantId: string;
+    value: string;
+  } | null>(null);
+  const [addingVariant, setAddingVariant] = useState(false);
+  const [deletingVariants, setDeletingVariants] = useState<Set<string>>(
+    new Set(),
+  );
 
   async function handleGenerateTexture(
     variantId: string,
@@ -114,6 +122,47 @@ export function VariantOptionsSection() {
     if (from < 0 || to < 0 || to >= values.length) return;
     [values[from], values[to]] = [values[to], values[from]];
     reorderVariantValues(variantId, values);
+  }
+
+  function dropValue(variantId: string, fromValue: string, toValue: string) {
+    const variant = variants.find((item) => item.id === variantId);
+    if (!variant || fromValue === toValue) {
+      setDragValue(null);
+      return;
+    }
+    const values = [...(variant.values ?? [])];
+    const from = values.indexOf(fromValue);
+    const to = values.indexOf(toValue);
+    if (from < 0 || to < 0) {
+      setDragValue(null);
+      return;
+    }
+    values.splice(from, 1);
+    values.splice(to, 0, fromValue);
+    reorderVariantValues(variantId, values);
+    setDragValue(null);
+  }
+
+  async function handleAddVariant() {
+    setAddingVariant(true);
+    try {
+      return await addVariant();
+    } finally {
+      setAddingVariant(false);
+    }
+  }
+
+  async function handleDeleteVariant(variant: DraftVariant) {
+    setDeletingVariants((current) => new Set(current).add(variant.id));
+    try {
+      await deleteVariant(variant);
+    } finally {
+      setDeletingVariants((current) => {
+        const next = new Set(current);
+        next.delete(variant.id);
+        return next;
+      });
+    }
   }
 
   async function handleApplyTemplate(template: {
@@ -213,10 +262,15 @@ export function VariantOptionsSection() {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <button
           type="button"
-          onClick={() => void addVariant()}
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#B8860B] to-[#D4AF37] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(201,162,75,0.35)] transition hover:brightness-110"
+          onClick={() => void handleAddVariant()}
+          disabled={addingVariant}
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#B8860B] to-[#D4AF37] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(201,162,75,0.35)] transition hover:brightness-110 disabled:opacity-60"
         >
-          <Plus className="h-4 w-4" />
+          {addingVariant ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
           Add Variant Option
         </button>
         <button
@@ -271,10 +325,14 @@ export function VariantOptionsSection() {
           </p>
           <button
             type="button"
-            onClick={() => void addVariant()}
-            className="mt-4 rounded-xl bg-gradient-to-r from-[#B8860B] to-[#D4AF37] px-4 py-2.5 text-sm font-semibold text-white"
+            onClick={() => void handleAddVariant()}
+            disabled={addingVariant}
+            className="mt-4 rounded-xl bg-gradient-to-r from-[#B8860B] to-[#D4AF37] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
-            Add First Variant Option
+            {addingVariant ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : null}
+            {addingVariant ? "Adding…" : "Add First Variant Option"}
           </button>
         </div>
       ) : (
@@ -358,11 +416,16 @@ export function VariantOptionsSection() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => void deleteVariant(variant)}
+                      onClick={() => void handleDeleteVariant(variant)}
+                      disabled={deletingVariants.has(variant.id)}
                       aria-label={`Delete variant ${variant.option_name}`}
-                      className="ml-auto rounded-xl border border-rose-200 p-2.5 text-rose-600 transition hover:bg-rose-50"
+                      className="ml-auto rounded-xl border border-rose-200 p-2.5 text-rose-600 transition hover:bg-rose-50 disabled:opacity-40"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {deletingVariants.has(variant.id) ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
 
@@ -427,6 +490,21 @@ export function VariantOptionsSection() {
                             }
                             textureBusy={
                               textureBusy[`${variant.id}:${value}`] ?? false
+                            }
+                            dragging={
+                              dragValue?.variantId === variant.id &&
+                              dragValue.value === value
+                            }
+                            onDragStart={() =>
+                              setDragValue({ variantId: variant.id, value })
+                            }
+                            onDragOver={(event) => event.preventDefault()}
+                            onDrop={() =>
+                              dropValue(
+                                variant.id,
+                                dragValue?.value ?? value,
+                                value,
+                              )
                             }
                           />
                         ))}

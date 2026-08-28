@@ -159,6 +159,7 @@ type RawProduct = {
   hotspots?: unknown;
   hero_video_url?: string | null;
   base_price?: number | string | null;
+  sku_pattern?: string | null;
   is_customizable?: boolean | null;
   customization_label?: string | null;
   is_featured?: boolean | null;
@@ -239,6 +240,13 @@ const PRODUCT_SELECT = `
       display_order,
       is_primary,
       created_at
+    ),
+    tier_prices:shelf_sku_tier_prices(
+      id,
+      sku_id,
+      tier_name,
+      price,
+      created_at
     )
   ),
   variant_options:shelf_variant_options(
@@ -293,6 +301,10 @@ function normalizeSku(sku: ShopSku): ShopSku {
     weight_grams:
       sku.weight_grams === null ? null : normalizeShopNumber(sku.weight_grams),
     variant_combination: sku.variant_combination ?? {},
+    tier_prices: (sku.tier_prices ?? []).map((tier) => ({
+      ...tier,
+      price: normalizeShopNumber(tier.price),
+    })),
   };
 }
 
@@ -435,6 +447,10 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
     base_price: normalizeShopNumber(row.base_price),
     display_price: minSku ? minSku.price : normalizeShopNumber(row.base_price),
     compare_at_price: saleSku?.compare_at_price ?? null,
+    sku_pattern:
+      typeof row.sku_pattern === "string" && row.sku_pattern.trim()
+        ? row.sku_pattern.trim()
+        : null,
     is_customizable: Boolean(row.is_customizable),
     customization_label: row.customization_label ?? null,
     is_featured: Boolean(row.is_featured),
