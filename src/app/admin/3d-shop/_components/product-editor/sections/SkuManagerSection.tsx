@@ -775,6 +775,7 @@ export function SkuManagerSection() {
                 tiers={tierPrices[sku.id] ?? []}
                 onSaveTiers={(prices) => updateTierPrices(sku.id, prices)}
                 qrBusy={qrBusy.has(sku.id)}
+                deleting={deleting.has(sku.id)}
               />
             ))}
           </div>
@@ -789,6 +790,10 @@ export function SkuManagerSection() {
             }
             onDelete={handleDeleteSku}
             deleting={deleting}
+            tiersBySku={tierPrices}
+            onSaveTiers={(skuId, prices) => updateTierPrices(skuId, prices)}
+            qrBusy={qrBusy}
+            onGenerateQr={(skuId) => void handleGenerateQr(skuId)}
           />
         )}
 
@@ -917,6 +922,19 @@ export function SkuManagerSection() {
                     <MarginBadge sku={sku} />
                     <button
                       type="button"
+                      onClick={() => toggleTierRow(sku.id)}
+                      className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition ${
+                        expandedTiers.has(sku.id)
+                          ? "border-[#B8860B]/50 bg-[#F4EDDC] text-[#8a6d1a]"
+                          : "border-gray-200 text-[#6F7192] hover:border-[#C9A24B]/50"
+                      }`}
+                      title="Edit tier pricing"
+                      aria-label={`Edit tier pricing for ${sku.sku_code}`}
+                    >
+                      Tiers
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleDeleteSku(sku.id)}
                       disabled={deleting.has(sku.id)}
                       className="rounded-lg p-2 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
@@ -931,6 +949,40 @@ export function SkuManagerSection() {
                     </button>
                   </div>
                 </div>
+                <div className="mt-3">
+                  <label className="block">
+                    <span className="mb-1 block text-[10px] uppercase tracking-wider text-[#6F7192]">
+                      Status override
+                    </span>
+                    <select
+                      value={sku.status ?? ""}
+                      onChange={(event) =>
+                        updateSku(
+                          sku.id,
+                          "status",
+                          (event.target.value || null) as SkuStatus | null,
+                        )
+                      }
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-[#0F1B3D] outline-none"
+                      title="Override status"
+                    >
+                      {STATUS_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                {expandedTiers.has(sku.id) && (
+                  <div className="mt-3">
+                    <TierPriceEditor
+                      sku={sku}
+                      tiers={tierPrices[sku.id] ?? []}
+                      onSave={(prices) => updateTierPrices(sku.id, prices)}
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -170,7 +170,10 @@ export function VariantOptionsSection() {
       name: string;
       type: string;
       values: string[];
-      metadata?: Record<string, { hex_color?: string; description?: string }>;
+      metadata?: Record<
+        string,
+        { hex_color?: string; description?: string; price_modifier?: number }
+      >;
     }[];
   }) {
     for (const option of template.options) {

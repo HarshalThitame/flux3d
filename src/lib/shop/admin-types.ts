@@ -116,6 +116,10 @@ export const SKU_PATTERN_TOKENS = [
   "{SIZE}",
   "{FINISH}",
   "{STYLE}",
+  "{INFILL}",
+  "{LAYER_HEIGHT}",
+  "{BULB}",
+  "{MOVEMENT}",
   "{INITIALS}",
 ] as const;
 

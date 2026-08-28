@@ -61,6 +61,7 @@ export function SkuGalleryCard({
   tiers,
   onSaveTiers,
   qrBusy,
+  deleting = false,
 }: {
   sku: ShopSku;
   heroImage?: string | null;
@@ -73,6 +74,7 @@ export function SkuGalleryCard({
     prices: { tier_name: string; price: number }[],
   ) => Promise<void>;
   qrBusy: boolean;
+  deleting?: boolean;
 }) {
   const [showTiers, setShowTiers] = useState(false);
   const status =
@@ -120,10 +122,16 @@ export function SkuGalleryCard({
         <button
           type="button"
           onClick={onDelete}
-          className="absolute bottom-2.5 right-2.5 rounded-lg bg-white/80 p-1.5 text-[#6F7192] opacity-0 shadow transition group-hover:opacity-100 hover:text-rose-600"
+          disabled={deleting}
+          className="absolute bottom-2.5 right-2.5 rounded-lg bg-white/80 p-1.5 text-[#6F7192] opacity-0 shadow transition group-hover:opacity-100 hover:text-rose-600 disabled:opacity-60"
           aria-label="Delete SKU"
+          title={deleting ? "Deleting…" : "Delete SKU"}
         >
-          <Trash2 className="h-4 w-4" />
+          {deleting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Trash2 className="h-4 w-4" />
+          )}
         </button>
       </div>
 

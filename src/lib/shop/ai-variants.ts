@@ -49,11 +49,13 @@ export async function suggestVariants(input: {
   if (!client) return [];
 
   const system =
-    "You are a luxury merchandising director for a premium 3D-printed home decor, gadget and gifting house. " +
-    "Design the optimal set of configurable product options (variants). Respond ONLY with JSON: " +
+    "You are a merchandising director for a 3D-printing home decor, lamp, organizer, toy and custom-print studio. " +
+    "Design the optimal set of configurable product options (variants) for 3D-printed products. Respond ONLY with JSON: " +
     '{"options":[{"name":"...","type":"swatch_color|button|dropdown|text_input|toggle","values":[...],' +
     '"description":"why this option matters for the customer"}]}. ' +
-    "Prefer 2-4 high-value options. Values should be evocative, premium and realistic. " +
+    "Prefer 2-4 high-value options. Common 3D-print options: Material (PLA, PETG, ABS, TPU, Resin, Nylon, Wood Fill, Carbon Fiber), " +
+    "Colour, Size (Small/Medium/Large/XL), Finish (Raw/Sanded/Painted/Varnished), Infill, Layer Height, Bulb Type. " +
+    "Values should be evocative, premium and realistic. " +
     "Use swatch_color for colour/material options and include hex colours as metadata is NOT required here.";
 
   const user = [
@@ -104,10 +106,10 @@ export async function suggestSkuPattern(input: {
     .filter((token) => token !== "{SLUG}");
 
   const system =
-    "You design elegant, human-readable SKU codes for luxury products. " +
+    "You design elegant, human-readable SKU codes for 3D-printed products (home decor, lamps, organizers, toys, custom prints). " +
     `Respond ONLY with a JSON object: {"pattern":"..."} using ONLY these tokens: ${tokens.join(", ")}. ` +
-    "Order tokens by what a buyer would say first (material/finish before size). Use hyphens, keep it under 24 chars. " +
-    'Example: {"pattern":"{SLUG}-{MATERIAL}-{SIZE}"}.';
+    "Order tokens by what a buyer would say first (material before finish, finish before size). Use hyphens, keep it under 24 chars. " +
+    'Example: {"pattern":"{SLUG}-{MATERIAL}-{COLOR}-{SIZE}"}.';
 
   try {
     const parsed = await completeJson(client, [
@@ -157,11 +159,15 @@ export async function suggestPricingRules(input: {
     .join("\n");
 
   const system =
-    "You are a pricing strategist for a luxury home/gifting brand in India. " +
-    "Design pricing rules for SKU generation. Respond ONLY with JSON: " +
+    "You are a pricing strategist for a 3D-printing home decor, lamp, organizer, toy and custom-print studio in India. " +
+    "Design pricing rules for SKU generation of 3D-printed products. Respond ONLY with JSON: " +
     '{"rules":[{"name":"...","rule_type":"fixed_add|percent_add|fixed_override|multiply","conditions":{"OPTION_NAME":"VALUE or [VALUES]"},"value":0,"priority":10}]}. ' +
-    "The highest priority matching rule wins (do not stack). Use fixed_add for premium materials, percent_add for expensive upgrades. " +
-    "Priorities: 10 default; use 20 for a rule that should beat others. Keep rules to 1-5. Values are in INR (₹).";
+    "The highest priority matching rule wins (do not stack). Use fixed_add for premium materials (Resin, Carbon Fiber, Nylon), " +
+    "large sizes (XL), high infill (100%), fine layer height (0.12mm) and post-processing (Painted, Varnished). " +
+    "Use percent_add for expensive or complex prints. " +
+    "Priorities: 10 default; use 20 for a rule that should beat others. Keep rules to 1-5. Values are in INR (₹). " +
+    "Sensible 3D-print surcharges: Resin +₹300-500, Carbon Fiber +₹500-800, Nylon +₹400-600, TPU +₹200-300, " +
+    "100% infill +₹400, 0.12mm layer +₹300, Painted +₹400-500, Varnished +₹250.";
 
   try {
     const parsed = await completeJson(client, [

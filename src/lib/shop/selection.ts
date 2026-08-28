@@ -263,9 +263,15 @@ export function getShopStockLabel(sku: ShopSku | null) {
 /**
  * Editorial statuses that must block purchase even if stock_quantity is
  * positive: out_of_stock, unavailable, discontinued and draft.
+ * Also blocks SKUs whose availability is undecided (is_available IS NULL →
+ * draft) or explicitly disabled (is_available = false → unavailable), so the
+ * storefront stays consistent with deriveSkuStatus used in the admin.
  */
 export function isSkuBlockedByStatus(sku: ShopSku | null): boolean {
-  const status = sku?.status;
+  if (!sku) return false;
+  if (sku.is_available == null) return true;
+  if (sku.is_available === false) return true;
+  const status = sku.status;
   if (!status) return false;
   return (
     status === "out_of_stock" ||

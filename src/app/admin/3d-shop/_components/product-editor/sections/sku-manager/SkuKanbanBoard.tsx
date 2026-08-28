@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Trash2 } from "lucide-react";
-import type { ShopSku, SkuStatus } from "@/lib/shop/admin-types";
+import { ChevronDown, ChevronUp, Loader2, QrCode, Trash2 } from "lucide-react";
+import type {
+  ShopSku,
+  ShopSkuTierPrice,
+  SkuStatus,
+} from "@/lib/shop/admin-types";
 import { comboLabel } from "../../types";
 import { deriveSkuStatus } from "@/lib/shop/sku-engine";
+import { StockHealthBar } from "./StockHealthBar";
+import { MarginBadge } from "./MarginBadge";
+import { TierPriceEditor } from "./TierPriceEditor";
 
 const STATUS_OPTIONS: { value: SkuStatus | ""; label: string }[] = [
   { value: "", label: "Derived" },
@@ -53,13 +60,34 @@ export function SkuKanbanBoard({
   onUpdateStatus,
   onDelete,
   deleting,
+  tiersBySku,
+  onSaveTiers,
+  qrBusy,
+  onGenerateQr,
 }: {
   skus: ShopSku[];
   onUpdateStatus: (skuId: string, status: SkuStatus | null) => void;
   onDelete: (skuId: string) => void;
   deleting: Set<string>;
+  tiersBySku: Record<string, ShopSkuTierPrice[]>;
+  onSaveTiers: (
+    skuId: string,
+    prices: { tier_name: string; price: number }[],
+  ) => Promise<void>;
+  qrBusy: Set<string>;
+  onGenerateQr: (skuId: string) => void;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  function toggleExpand(skuId: string) {
+    setExpanded((current) => {
+      const next = new Set(current);
+      if (next.has(skuId)) next.delete(skuId);
+      else next.add(skuId);
+      return next;
+    });
+  }
 
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-7">
@@ -89,67 +117,125 @@ export function SkuKanbanBoard({
               </span>
             </div>
             <div className="space-y-2">
-              {items.map((sku) => (
-                <div
-                  key={sku.id}
-                  draggable
-                  onDragStart={() => setDragId(sku.id)}
-                  onDragEnd={() => setDragId(null)}
-                  className={`cursor-grab rounded-xl border bg-white p-2.5 transition active:cursor-grabbing ${
-                    dragId === sku.id
-                      ? "border-[#C9A24B] opacity-50"
-                      : "border-gray-100 hover:border-[#C9A24B]/40"
-                  }`}
-                >
-                  <div className="truncate text-xs font-semibold text-[#0F1B3D]">
-                    {comboLabel(sku.variant_combination)}
+              {items.map((sku) => {
+                const isExpanded = expanded.has(sku.id);
+                return (
+                  <div
+                    key={sku.id}
+                    draggable
+                    onDragStart={() => setDragId(sku.id)}
+                    onDragEnd={() => setDragId(null)}
+                    className={`cursor-grab rounded-xl border bg-white p-2.5 transition active:cursor-grabbing ${
+                      dragId === sku.id
+                        ? "border-[#C9A24B] opacity-50"
+                        : "border-gray-100 hover:border-[#C9A24B]/40"
+                    }`}
+                  >
+                    <div className="truncate text-xs font-semibold text-[#0F1B3D]">
+                      {comboLabel(sku.variant_combination)}
+                    </div>
+                    <div className="mt-0.5 truncate font-mono text-[10px] text-[#6F7192]">
+                      {sku.sku_code}
+                    </div>
+                    <div className="mt-1.5 flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#B8860B]">
+                        ₹{Number(sku.price).toLocaleString("en-IN")}
+                      </span>
+                      <span className="text-[10px] text-[#6F7192]">
+                        {Number(sku.stock_quantity) || 0} units
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <select
+                        value={sku.status ?? ""}
+                        onChange={(event) =>
+                          onUpdateStatus(
+                            sku.id,
+                            (event.target.value || null) as SkuStatus | null,
+                          )
+                        }
+                        className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-1.5 py-1 text-[10px] text-[#0F1B3D] outline-none"
+                        title="Override status"
+                      >
+                        {STATUS_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand(sku.id)}
+                        className={`rounded-lg border px-1.5 py-1 transition ${
+                          isExpanded
+                            ? "border-[#C9A24B]/50 bg-[#F4EDDC] text-[#8a6d1a]"
+                            : "border-gray-200 text-[#6F7192] hover:border-[#C9A24B]/50"
+                        }`}
+                        title={
+                          isExpanded ? "Collapse details" : "Expand details"
+                        }
+                        aria-label={`${isExpanded ? "Collapse" : "Expand"} ${sku.sku_code}`}
+                      >
+                        {isExpanded ? (
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDelete(sku.id)}
+                        disabled={deleting.has(sku.id)}
+                        className="rounded-lg p-1.5 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
+                        title="Delete SKU"
+                        aria-label={`Delete SKU ${sku.sku_code}`}
+                      >
+                        {deleting.has(sku.id) ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="mt-2 space-y-2 border-t border-[#C9A24B]/10 pt-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <MarginBadge sku={sku} />
+                          <button
+                            type="button"
+                            onClick={() => onGenerateQr(sku.id)}
+                            disabled={qrBusy.has(sku.id)}
+                            className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-semibold transition disabled:opacity-40 ${
+                              sku.qr_url
+                                ? "border-[#B8860B]/40 bg-[#F4EDDC] text-[#8a6d1a]"
+                                : "border-gray-200 text-[#0F1B3D] hover:border-[#C9A24B]/50"
+                            }`}
+                            title={
+                              sku.qr_url
+                                ? "QR generated — regenerate"
+                                : "Generate scannable QR code"
+                            }
+                          >
+                            {qrBusy.has(sku.id) ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <QrCode className="h-3 w-3" />
+                            )}
+                            {sku.qr_url ? "QR ✓" : "QR"}
+                          </button>
+                        </div>
+                        <StockHealthBar sku={sku} />
+                        <TierPriceEditor
+                          sku={sku}
+                          tiers={tiersBySku[sku.id] ?? []}
+                          onSave={(prices) => onSaveTiers(sku.id, prices)}
+                        />
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-0.5 truncate font-mono text-[10px] text-[#6F7192]">
-                    {sku.sku_code}
-                  </div>
-                  <div className="mt-1.5 flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#B8860B]">
-                      ₹{Number(sku.price).toLocaleString("en-IN")}
-                    </span>
-                    <span className="text-[10px] text-[#6F7192]">
-                      {Number(sku.stock_quantity) || 0} units
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <select
-                      value={sku.status ?? ""}
-                      onChange={(event) =>
-                        onUpdateStatus(
-                          sku.id,
-                          (event.target.value || null) as SkuStatus | null,
-                        )
-                      }
-                      className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-1.5 py-1 text-[10px] text-[#0F1B3D] outline-none"
-                      title="Override status"
-                    >
-                      {STATUS_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => onDelete(sku.id)}
-                      disabled={deleting.has(sku.id)}
-                      className="rounded-lg p-1.5 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
-                      title="Delete SKU"
-                      aria-label={`Delete SKU ${sku.sku_code}`}
-                    >
-                      {deleting.has(sku.id) ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-3.5 w-3.5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {items.length === 0 && (
                 <div className="rounded-xl border border-dashed border-[#C9A24B]/20 p-4 text-center text-[11px] text-[#6F7192]">
                   No SKUs

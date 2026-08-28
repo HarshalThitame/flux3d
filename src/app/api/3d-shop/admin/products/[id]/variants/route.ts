@@ -153,11 +153,30 @@ export async function PATCH(
     const supabase = createAdminSupabaseClient();
 
     if (Array.isArray(body.orders)) {
+      for (const item of body.orders) {
+        if (
+          !item ||
+          typeof item !== "object" ||
+          typeof item.id !== "string" ||
+          !item.id.trim()
+        ) {
+          return NextResponse.json(
+            { error: "Each order item requires a non-empty variant id." },
+            { status: 400 },
+          );
+        }
+        if (!Number.isFinite(item.display_order)) {
+          return NextResponse.json(
+            { error: "Each order item requires a numeric display_order." },
+            { status: 400 },
+          );
+        }
+      }
       await Promise.all(
         body.orders.map(async (item) => {
           const { error } = await supabase
             .from("shelf_variant_options")
-            .update({ display_order: item.display_order })
+            .update({ display_order: Math.trunc(item.display_order) })
             .eq("product_id", id)
             .eq("id", item.id);
           if (error) throw new Error(error.message);
