@@ -21,7 +21,16 @@ export default function ConfigurationSummaryBar({
     ([, value]) => value !== "" && value !== false && value != null,
   );
 
-  if (entries.length === 0) return null;
+  const chipText = entries
+    .map(([key, value]) => `${key}: ${String(value)}`)
+    .join(" · ");
+
+  // The resolved SKU label mirrors the chips when a SKU is matched — only
+  // surface it when it carries information the chips don't already show.
+  const showResolved =
+    Boolean(resolvedLabel) && chipText.length > 0 && resolvedLabel !== chipText;
+
+  if (entries.length === 0 && !showResolved) return null;
 
   return (
     <motion.div
@@ -49,7 +58,7 @@ export default function ConfigurationSummaryBar({
             {String(value)}
           </span>
         ))}
-        {resolvedLabel && (
+        {showResolved && resolvedLabel && (
           <span className="inline-flex items-center rounded-full bg-[var(--shop-gold-faint)] px-3 py-1.5 text-xs font-semibold text-[var(--shop-gold)]">
             {resolvedLabel}
           </span>
