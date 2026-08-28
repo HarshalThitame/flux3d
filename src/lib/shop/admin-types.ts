@@ -58,6 +58,8 @@ export type VariantValueMetadata = {
 };
 
 export type SkuStatus =
+  | "active"
+  | "draft"
   | "in_stock"
   | "low_stock"
   | "out_of_stock"

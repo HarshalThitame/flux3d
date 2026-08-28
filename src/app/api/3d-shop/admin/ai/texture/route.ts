@@ -3,7 +3,7 @@ import { getAdminApiErrorResponse } from "@/lib/admin/api";
 import { requireAdminRequest } from "@/lib/admin/request";
 import { createAdminSupabaseClient } from "@/lib/admin/server";
 import { getShopAiClient } from "@/lib/shop/ai";
-import { generateTextureSwatch } from "@/lib/shop/ai-variants";
+import { generateTexture } from "@/lib/shop/ai-variants";
 
 const SHOP_BUCKET = "shop-images";
 
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const generated = await generateTextureSwatch({
+    const generated = await generateTexture({
       value,
       option_name: optionName,
     });

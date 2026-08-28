@@ -1,7 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Loader2, Plus, Sparkles, Trash2, Wand2 } from "lucide-react";
+import {
+  Check,
+  Loader2,
+  Pencil,
+  Plus,
+  Sparkles,
+  Trash2,
+  Wand2,
+  X,
+} from "lucide-react";
 import { useProductEditor } from "../editor-context";
 import { Section } from "../ui";
 import type {
@@ -36,6 +45,14 @@ export function PricingRulesEngine() {
   const [conditionName, setConditionName] = useState("");
   const [conditionValue, setConditionValue] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editType, setEditType] = useState<PricingRuleType>("fixed_add");
+  const [editValue, setEditValue] = useState("");
+  const [editPriority, setEditPriority] = useState("0");
+  const [editCondName, setEditCondName] = useState("");
+  const [editCondValue, setEditCondValue] = useState("");
 
   const discreteOptions = useMemo(
     () =>
@@ -132,6 +149,51 @@ export function PricingRulesEngine() {
     }
   }
 
+  function startEdit(rule: ShopSkuPricingRule) {
+    setEditingId(rule.id);
+    setEditName(rule.name);
+    setEditType(rule.rule_type);
+    setEditValue(String(rule.value));
+    setEditPriority(String(rule.priority));
+    const entries = Object.entries(rule.conditions);
+    const [firstKey, firstVal] = entries[0] ?? [""];
+    setEditCondName(firstKey);
+    setEditCondValue(
+      Array.isArray(firstVal) ? firstVal.join(", ") : String(firstVal ?? ""),
+    );
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+  }
+
+  async function saveEdit() {
+    if (!editingId) return;
+    if (!editName.trim()) {
+      setToast({ type: "error", message: "Give the rule a name." });
+      return;
+    }
+    if (!Number.isFinite(Number(editValue))) {
+      setToast({ type: "error", message: "Enter a valid rule value." });
+      return;
+    }
+    const conditions: SkuPricingRuleCondition = {};
+    if (editCondName && editCondValue) {
+      conditions[editCondName] = editCondValue
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+    await updatePricingRule(editingId, {
+      name: editName.trim(),
+      rule_type: editType,
+      conditions,
+      value: Number(editValue),
+      priority: Number(editPriority) || 0,
+    });
+    setEditingId(null);
+  }
+
   return (
     <Section
       title="Pricing Rules"
@@ -150,46 +212,145 @@ export function PricingRulesEngine() {
           {pricingRules.map((rule) => (
             <div
               key={rule.id}
-              className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#C9A24B]/15 bg-white p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.04)]"
+              className="rounded-2xl border border-[#C9A24B]/15 bg-white p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.04)]"
             >
-              <button
-                type="button"
-                onClick={() =>
-                  updatePricingRule(rule.id, { is_active: !rule.is_active })
-                }
-                className={`relative h-6 w-11 shrink-0 rounded-full transition ${rule.is_active ? "bg-[#B8860B]" : "bg-gray-200"}`}
-                aria-pressed={rule.is_active}
-              >
-                <span
-                  className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${rule.is_active ? "translate-x-6" : "translate-x-1"}`}
-                />
-              </button>
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold text-[#0F1B3D]">
-                  {rule.name}
+              {editingId === rule.id ? (
+                <div className="space-y-2.5">
+                  <div className="grid gap-2.5 sm:grid-cols-2">
+                    <input
+                      value={editName}
+                      onChange={(event) => setEditName(event.target.value)}
+                      placeholder="Rule name"
+                      className="w-full rounded-xl border border-[#C9A24B]/20 bg-white px-3 py-2 text-sm text-[#0F1B3D] outline-none focus:border-[#C9A24B]/50"
+                    />
+                    <select
+                      value={editType}
+                      onChange={(event) =>
+                        setEditType(event.target.value as PricingRuleType)
+                      }
+                      className="w-full rounded-xl border border-[#C9A24B]/20 bg-white px-3 py-2 text-sm text-[#0F1B3D] outline-none"
+                    >
+                      {RULE_TYPES.map((type) => (
+                        <option key={type.key} value={type.key}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <input
+                      value={editValue}
+                      onChange={(event) => setEditValue(event.target.value)}
+                      type="number"
+                      placeholder="Value"
+                      className="w-full rounded-xl border border-[#C9A24B]/20 bg-white px-3 py-2 text-sm text-[#0F1B3D] outline-none"
+                    />
+                    <input
+                      value={editPriority}
+                      onChange={(event) => setEditPriority(event.target.value)}
+                      type="number"
+                      placeholder="Priority"
+                      className="w-full rounded-xl border border-[#C9A24B]/20 bg-white px-3 py-2 text-sm text-[#0F1B3D] outline-none"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <select
+                      value={editCondName}
+                      onChange={(event) => {
+                        setEditCondName(event.target.value);
+                        setEditCondValue("");
+                      }}
+                      className="w-full rounded-xl border border-[#C9A24B]/20 bg-white px-3 py-2 text-sm text-[#0F1B3D] outline-none"
+                    >
+                      <option value="">All options</option>
+                      {discreteOptions.map((option) => (
+                        <option key={option.name} value={option.name}>
+                          {option.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      value={editCondValue}
+                      onChange={(event) => setEditCondValue(event.target.value)}
+                      placeholder="Values (comma-separated)"
+                      className="w-full rounded-xl border border-[#C9A24B]/20 bg-white px-3 py-2 text-sm text-[#0F1B3D] outline-none"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void saveEdit()}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#0F1B3D] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#1B2A54]"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-[#6F7192] transition hover:text-[#0F1B3D]"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-                <div className="mt-0.5 text-xs text-[#6F7192]">
-                  {Object.keys(rule.conditions).length > 0
-                    ? Object.entries(rule.conditions)
-                        .map(
-                          ([key, val]) =>
-                            `${key}: ${Array.isArray(val) ? val.join(", ") : val}`,
-                        )
-                        .join(" · ")
-                    : "Applies to all combinations"}
+              ) : (
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updatePricingRule(rule.id, {
+                        is_active: !rule.is_active,
+                      })
+                    }
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition ${rule.is_active ? "bg-[#B8860B]" : "bg-gray-200"}`}
+                    aria-pressed={rule.is_active}
+                  >
+                    <span
+                      className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${rule.is_active ? "translate-x-6" : "translate-x-1"}`}
+                    />
+                  </button>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-[#0F1B3D]">
+                      {rule.name}
+                    </div>
+                    <div className="mt-0.5 text-xs text-[#6F7192]">
+                      {Object.keys(rule.conditions).length > 0
+                        ? Object.entries(rule.conditions)
+                            .map(
+                              ([key, val]) =>
+                                `${key}: ${Array.isArray(val) ? val.join(", ") : val}`,
+                            )
+                            .join(" · ")
+                        : "Applies to all combinations"}
+                    </div>
+                  </div>
+                  <span className="rounded-lg bg-[#F4EDDC] px-2.5 py-1 font-mono text-xs font-bold text-[#B8860B]">
+                    {pricingRuleLabel(rule.rule_type, rule.value)}
+                  </span>
+                  <span className="text-xs text-[#6F7192]">
+                    P{rule.priority}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => startEdit(rule)}
+                    className="rounded-lg p-2 text-[#6F7192] transition hover:bg-[#C9A24B]/10 hover:text-[#B8860B]"
+                    title="Edit rule"
+                    aria-label={`Edit rule ${rule.name}`}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void deletePricingRule(rule.id)}
+                    className="rounded-lg p-2 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600"
+                    aria-label={`Delete rule ${rule.name}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
-              </div>
-              <span className="rounded-lg bg-[#F4EDDC] px-2.5 py-1 font-mono text-xs font-bold text-[#B8860B]">
-                {pricingRuleLabel(rule.rule_type, rule.value)}
-              </span>
-              <span className="text-xs text-[#6F7192]">P{rule.priority}</span>
-              <button
-                type="button"
-                onClick={() => void deletePricingRule(rule.id)}
-                className="rounded-lg p-2 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              )}
             </div>
           ))}
         </div>

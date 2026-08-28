@@ -7,7 +7,8 @@ import { deriveSkuStatus } from "@/lib/shop/sku-engine";
 
 const COLUMNS: { status: SkuStatus | "derived"; label: string; dot: string }[] =
   [
-    { status: "in_stock", label: "In Stock", dot: "bg-emerald-500" },
+    { status: "active", label: "Active", dot: "bg-emerald-500" },
+    { status: "draft", label: "Draft", dot: "bg-slate-400" },
     { status: "low_stock", label: "Low Stock", dot: "bg-amber-400" },
     { status: "out_of_stock", label: "Out of Stock", dot: "bg-rose-500" },
     { status: "made_to_order", label: "Made to Order", dot: "bg-[#C9A24B]" },
@@ -21,7 +22,7 @@ function effectiveStatus(sku: ShopSku): SkuStatus {
     deriveSkuStatus(
       Number(sku.stock_quantity) || 0,
       sku.low_stock_threshold ?? 5,
-      sku.is_available ?? true,
+      sku.is_available,
     )
   );
 }
@@ -29,6 +30,7 @@ function effectiveStatus(sku: ShopSku): SkuStatus {
 function mapToColumn(status: SkuStatus): string {
   if (status === "discontinued") return "unavailable";
   if (status === "limited_edition") return "limited_edition";
+  if (status === "in_stock") return "active";
   return status;
 }
 
@@ -42,7 +44,7 @@ export function SkuKanbanBoard({
   const [dragId, setDragId] = useState<string | null>(null);
 
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-7">
       {COLUMNS.map((column) => {
         const items = skus.filter(
           (sku) => mapToColumn(effectiveStatus(sku)) === column.status,

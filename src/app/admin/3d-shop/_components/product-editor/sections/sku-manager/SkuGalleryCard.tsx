@@ -9,11 +9,14 @@ import type {
   SkuStatus,
 } from "@/lib/shop/admin-types";
 import { comboLabel } from "../../types";
+import { deriveSkuStatus } from "@/lib/shop/sku-engine";
 import { StockHealthBar } from "./StockHealthBar";
 import { MarginBadge } from "./MarginBadge";
 import { TierPriceEditor } from "./TierPriceEditor";
 
 const STATUS_BADGES: Record<SkuStatus, string> = {
+  active: "bg-emerald-100 text-emerald-700",
+  draft: "bg-slate-100 text-slate-600",
   in_stock: "bg-emerald-100 text-emerald-700",
   low_stock: "bg-amber-100 text-amber-700",
   out_of_stock: "bg-rose-100 text-rose-700",
@@ -24,6 +27,8 @@ const STATUS_BADGES: Record<SkuStatus, string> = {
 };
 
 const STATUS_LABELS: Record<SkuStatus, string> = {
+  active: "Active",
+  draft: "Draft",
   in_stock: "In Stock",
   low_stock: "Low Stock",
   out_of_stock: "Out of Stock",
@@ -32,6 +37,19 @@ const STATUS_LABELS: Record<SkuStatus, string> = {
   limited_edition: "Limited Edition",
   discontinued: "Discontinued",
 };
+
+const STATUS_OPTIONS: { value: SkuStatus | ""; label: string }[] = [
+  { value: "", label: "Derived" },
+  { value: "active", label: "Active" },
+  { value: "draft", label: "Draft" },
+  { value: "in_stock", label: "In Stock (legacy)" },
+  { value: "low_stock", label: "Low Stock" },
+  { value: "out_of_stock", label: "Out of Stock" },
+  { value: "made_to_order", label: "Made to Order" },
+  { value: "limited_edition", label: "Limited Edition" },
+  { value: "unavailable", label: "Unavailable" },
+  { value: "discontinued", label: "Discontinued" },
+];
 
 export function SkuGalleryCard({
   sku,
@@ -57,7 +75,13 @@ export function SkuGalleryCard({
   qrBusy: boolean;
 }) {
   const [showTiers, setShowTiers] = useState(false);
-  const status = (sku.status as SkuStatus | null) ?? deriveStatus(sku);
+  const status =
+    (sku.status as SkuStatus | null) ??
+    deriveSkuStatus(
+      Number(sku.stock_quantity) || 0,
+      sku.low_stock_threshold ?? 5,
+      sku.is_available,
+    );
   const discount =
     sku.compare_at_price != null && sku.compare_at_price > sku.price
       ? Math.round(
@@ -131,6 +155,23 @@ export function SkuGalleryCard({
             </div>
             <div className="mt-1 flex items-center gap-2">
               <MarginBadge sku={sku} />
+              <select
+                value={sku.status ?? ""}
+                onChange={(event) =>
+                  onUpdate(
+                    "status",
+                    (event.target.value || null) as SkuStatus | null,
+                  )
+                }
+                className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-[10px] text-[#0F1B3D] outline-none"
+                title="Override status"
+              >
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
               <label className="inline-flex cursor-pointer items-center gap-1.5 text-[10px] text-[#6F7192]">
                 <input
                   type="checkbox"
@@ -177,12 +218,4 @@ export function SkuGalleryCard({
       </div>
     </div>
   );
-}
-
-function deriveStatus(sku: ShopSku): SkuStatus {
-  if (sku.is_available === false) return "unavailable";
-  const stock = Number(sku.stock_quantity) || 0;
-  if (stock <= 0) return "out_of_stock";
-  const th = sku.low_stock_threshold ?? 5;
-  return stock <= th ? "low_stock" : "in_stock";
 }

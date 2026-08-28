@@ -39,7 +39,7 @@ export type AiSuggestedOption = {
   description?: string;
 };
 
-export async function suggestVariantOptions(input: {
+export async function suggestVariants(input: {
   product_name: string;
   description?: string;
   category?: string;
@@ -231,7 +231,7 @@ export async function generateValueDescriptions(input: {
 const TEXTURE_IMAGE_MODEL =
   process.env.SHOP_AI_IMAGE_MODEL?.trim() || "gpt-image-1";
 
-export async function generateTextureSwatch(input: {
+export async function generateTexture(input: {
   value: string;
   option_name: string;
 }): Promise<{ b64: string; mime: string } | null> {

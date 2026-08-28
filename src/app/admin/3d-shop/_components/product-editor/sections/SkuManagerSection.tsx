@@ -36,7 +36,9 @@ const bulkFields: { key: BulkField; label: string; skuKey: keyof ShopSku }[] = [
 
 const STATUS_OPTIONS: { value: SkuStatus | ""; label: string }[] = [
   { value: "", label: "Derived" },
-  { value: "in_stock", label: "In Stock" },
+  { value: "active", label: "Active" },
+  { value: "draft", label: "Draft" },
+  { value: "in_stock", label: "In Stock (legacy)" },
   { value: "low_stock", label: "Low Stock" },
   { value: "out_of_stock", label: "Out of Stock" },
   { value: "made_to_order", label: "Made to Order" },
@@ -110,6 +112,10 @@ export function SkuManagerSection() {
     saving,
     defaultWeight,
     setDefaultWeight,
+    defaultCost,
+    setDefaultCost,
+    defaultCompareAt,
+    setDefaultCompareAt,
     setToast,
     skuImages,
     tierPrices,
@@ -388,7 +394,7 @@ export function SkuManagerSection() {
               className="text-xs font-medium text-[#6F7192]"
               htmlFor="default-weight"
             >
-              Default weight for new SKUs (g)
+              Default weight (g)
             </label>
             <input
               id="default-weight"
@@ -396,6 +402,34 @@ export function SkuManagerSection() {
               onChange={(event) => setDefaultWeight(event.target.value)}
               type="number"
               placeholder="e.g. 150"
+              className="w-28 rounded-xl border border-[#C9A24B]/15 bg-white px-3 py-2 text-sm outline-none"
+            />
+            <label
+              className="text-xs font-medium text-[#6F7192]"
+              htmlFor="default-cost"
+            >
+              Default cost (₹)
+            </label>
+            <input
+              id="default-cost"
+              value={defaultCost}
+              onChange={(event) => setDefaultCost(event.target.value)}
+              type="number"
+              placeholder="e.g. 1200"
+              className="w-28 rounded-xl border border-[#C9A24B]/15 bg-white px-3 py-2 text-sm outline-none"
+            />
+            <label
+              className="text-xs font-medium text-[#6F7192]"
+              htmlFor="default-compare-at"
+            >
+              Default compare-at (₹)
+            </label>
+            <input
+              id="default-compare-at"
+              value={defaultCompareAt}
+              onChange={(event) => setDefaultCompareAt(event.target.value)}
+              type="number"
+              placeholder="e.g. 2500"
               className="w-28 rounded-xl border border-[#C9A24B]/15 bg-white px-3 py-2 text-sm outline-none"
             />
             <span className="text-xs text-[#6F7192]">

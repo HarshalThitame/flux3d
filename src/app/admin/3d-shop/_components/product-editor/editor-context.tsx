@@ -90,6 +90,8 @@ type ProductEditorContextValue = {
   variantOptionImages: ShopVariantOptionImage[];
   skuImages: Record<string, ShopSkuImage[]>;
   defaultWeight: string;
+  defaultCost: string;
+  defaultCompareAt: string;
   skuSectionRef: RefObject<HTMLDivElement | null>;
   dragImage: string | null;
   dragVariant: string | null;
@@ -114,6 +116,8 @@ type ProductEditorContextValue = {
   setAiTone: (tone: AiTone) => void;
   generateAi: (kind: AiGenerationKind) => Promise<void>;
   setDefaultWeight: (value: string) => void;
+  setDefaultCost: (value: string) => void;
+  setDefaultCompareAt: (value: string) => void;
   applyTemplate: (template: ProductTemplate) => Promise<void>;
   duplicateProduct: () => Promise<void>;
   revisions: ShopRevision[];
@@ -283,6 +287,8 @@ export function ProductEditorProvider({
   const [dragImage, setDragImage] = useState<string | null>(null);
   const [dragVariant, setDragVariant] = useState<string | null>(null);
   const [defaultWeight, setDefaultWeight] = useState("");
+  const [defaultCost, setDefaultCost] = useState("");
+  const [defaultCompareAt, setDefaultCompareAt] = useState("");
   const [toast, setToast] = useState<AdminToastState>(null);
   const [aiTone, setAiTone] = useState<AiTone>("professional");
   const [aiBusy, setAiBusy] = useState<
@@ -2185,6 +2191,7 @@ export function ProductEditorProvider({
         name: variant.option_name,
         values: (variant.values ?? []).filter(Boolean),
         metadata: variant.value_metadata ?? undefined,
+        type: variant.option_type,
       }))
       .filter((variant) => variant.values.length > 0);
   }, []);
@@ -2204,11 +2211,15 @@ export function ProductEditorProvider({
       variants: options,
       rules: pricingRulesRef.current,
       defaultWeight,
+      defaultCost,
+      defaultCompareAt,
       existingCodes: skusRef.current.map((sku) => sku.sku_code),
     });
   }, [
     buildPatternOptions,
     defaultWeight,
+    defaultCost,
+    defaultCompareAt,
     ensureProductId,
     form,
     saveAllVariants,
@@ -2234,6 +2245,8 @@ export function ProductEditorProvider({
               variants: options,
               rules: pricingRulesRef.current,
               defaultWeight,
+              defaultCost,
+              defaultCompareAt,
               existingCodes: skusRef.current.map((sku) => sku.sku_code),
             });
           }));
@@ -2308,6 +2321,8 @@ export function ProductEditorProvider({
     [
       buildPatternOptions,
       defaultWeight,
+      defaultCost,
+      defaultCompareAt,
       ensureProductId,
       form,
       generateSkuPreview,
@@ -2916,6 +2931,8 @@ export function ProductEditorProvider({
     variantOptionImages,
     skuImages,
     defaultWeight,
+    defaultCost,
+    defaultCompareAt,
     skuSectionRef,
     dragImage,
     dragVariant,
@@ -2938,6 +2955,8 @@ export function ProductEditorProvider({
     setAiTone,
     generateAi,
     setDefaultWeight,
+    setDefaultCost,
+    setDefaultCompareAt,
     applyTemplate,
     duplicateProduct,
     revisions,

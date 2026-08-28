@@ -100,6 +100,7 @@ export type SkuPatternOption = {
   name: string;
   values: string[];
   metadata?: Record<string, VariantValueMetadata>;
+  type?: string;
 };
 
 /**
@@ -253,11 +254,12 @@ export function deriveSkuStatus(
   threshold: number | null,
   isAvailable: boolean | null,
 ): SkuStatus {
+  if (isAvailable == null) return "draft";
   if (isAvailable === false) return "unavailable";
   if (stock <= 0) return "out_of_stock";
   const th = threshold ?? 5;
   if (stock <= th) return "low_stock";
-  return "in_stock";
+  return "active";
 }
 
 export function computeMarginPct(
@@ -332,6 +334,9 @@ export type SkuGenerationInput = {
   variants: SkuPatternOption[];
   rules: ShopSkuPricingRule[];
   defaultWeight?: number | string | null;
+  defaultCost?: number | string | null;
+  defaultCompareAt?: number | string | null;
+  defaultIsAvailable?: boolean;
   existingCodes?: string[];
   stock_quantity?: number;
   low_stock_threshold?: number;
@@ -360,15 +365,17 @@ export function buildSkuRows(input: SkuGenerationInput): SkuDraftRow[] {
     variants,
     rules,
     defaultWeight,
+    defaultCost,
+    defaultCompareAt,
+    defaultIsAvailable = true,
     existingCodes = [],
     stock_quantity = 0,
     low_stock_threshold = 5,
   } = input;
 
-  const discrete = variants.filter((variant) => {
-    if (variant.name.toLowerCase() === "size") return true;
-    return true;
-  });
+  const discrete = variants.filter((variant) =>
+    variant.type ? isDiscreteOptionType(variant.type) : true,
+  );
 
   const combos = cartesian(discrete);
   const usedCodes = new Set(existingCodes.filter(Boolean));
@@ -389,6 +396,16 @@ export function buildSkuRows(input: SkuGenerationInput): SkuDraftRow[] {
       defaultWeight !== ""
         ? Number(defaultWeight) || null
         : null;
+    const cost =
+      defaultCost !== undefined && defaultCost !== null && defaultCost !== ""
+        ? Number(defaultCost) || null
+        : null;
+    const compareAt =
+      defaultCompareAt !== undefined &&
+      defaultCompareAt !== null &&
+      defaultCompareAt !== ""
+        ? Number(defaultCompareAt) || null
+        : null;
 
     return {
       sku_code: buildSkuCode(
@@ -402,12 +419,12 @@ export function buildSkuRows(input: SkuGenerationInput): SkuDraftRow[] {
       ),
       variant_combination: combo,
       price,
-      compare_at_price: null,
+      compare_at_price: compareAt,
       stock_quantity,
       low_stock_threshold,
       weight_grams: weight,
-      is_available: true,
-      cost_price: null,
+      is_available: defaultIsAvailable !== false,
+      cost_price: cost,
       price_modifier: priceModifier,
     };
   });

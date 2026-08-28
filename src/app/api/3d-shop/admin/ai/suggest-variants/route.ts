@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminApiErrorResponse } from "@/lib/admin/api";
 import { requireAdminRequest } from "@/lib/admin/request";
-import { suggestVariantOptions } from "@/lib/shop/ai-variants";
+import { suggestVariants } from "@/lib/shop/ai-variants";
 
 export async function POST(request: Request) {
   const auth = await requireAdminRequest();
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
         { status: 400 },
       );
 
-    const options = await suggestVariantOptions({
+    const options = await suggestVariants({
       product_name: body.product_name,
       description: body.description,
       category: body.category,
