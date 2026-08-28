@@ -77,6 +77,7 @@ export default function ProductCard({
         directSku.variant_image_url || product.thumbnail_url || images[0] || "",
       skuId: directSku.id,
       skuCode: directSku.sku_code,
+      catalogRetailerId: directSku.catalog_retailer_id ?? directSku.sku_code,
       variantCombination: directSku.variant_combination,
       variantLabel: formatVariantLabel(directSku.variant_combination),
       customizationText: "",
@@ -87,10 +88,14 @@ export default function ProductCard({
     });
     setAdded(true);
     trackMetaEvent("AddToCart", {
-      content_ids: [directSku.sku_code],
+      content_ids: [directSku.catalog_retailer_id ?? directSku.sku_code],
       content_type: "product",
       contents: [
-        { id: directSku.sku_code, quantity: 1, item_price: directSku.price },
+        {
+          id: directSku.catalog_retailer_id ?? directSku.sku_code,
+          quantity: 1,
+          item_price: directSku.price,
+        },
       ],
       value: directSku.price,
       currency: "INR",
@@ -118,6 +123,9 @@ export default function ProductCard({
       >
         <WishlistButton
           productId={product.id}
+          catalogRetailerId={
+            directSku?.catalog_retailer_id ?? directSku?.sku_code
+          }
           className="absolute right-3 top-3 z-10"
         />
         <Link

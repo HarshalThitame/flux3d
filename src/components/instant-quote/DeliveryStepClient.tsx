@@ -434,8 +434,8 @@ export default function DeliveryStepClient({
                 customData: {
                   value: purchaseValue,
                   currency: "INR",
-                  content_ids: [orderResult.id],
-                  content_type: "product",
+                  // Custom-quote order: no catalog SKU, so no content_ids (an
+                  // order UUID here would create unmatched Meta events).
                 },
               });
             }

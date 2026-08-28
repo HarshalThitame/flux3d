@@ -1,12 +1,17 @@
-import { getSettings } from '@/lib/settings'
-import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { buildPublicBusinessProfile } from '@/lib/public-business'
-import { verifyGuestOrderAccess } from '@/lib/shop/guest-access'
-import { notifyPaymentCaptured, notifyPaymentFailed, notifyRefundProcessed } from './email-triggers'
-import { notifyWhatsAppOrderConfirmed } from '@/lib/whatsapp/notifications'
-import { sendCapiEvents, buildPurchaseEvent } from '@/lib/meta/conversions-api'
-import { generateEventId } from '@/lib/meta/event-utils'
-import { reportError } from '@/lib/error-handling'
+import { getSettings } from "@/lib/settings";
+import { createAdminSupabaseClient } from "@/lib/admin/server";
+import { buildPublicBusinessProfile } from "@/lib/public-business";
+import { verifyGuestOrderAccess } from "@/lib/shop/guest-access";
+import {
+  notifyPaymentCaptured,
+  notifyPaymentFailed,
+  notifyRefundProcessed,
+} from "./email-triggers";
+import { notifyWhatsAppOrderConfirmed } from "@/lib/whatsapp/notifications";
+import { sendCapiEvents, buildPurchaseEvent } from "@/lib/meta/conversions-api";
+import { generateEventId } from "@/lib/meta/event-utils";
+import { toCatalogRetailerId } from "@/lib/meta/catalog";
+import { reportError } from "@/lib/error-handling";
 import {
   fetchInternalOrder,
   fetchPaymentAttemptById,
@@ -37,14 +42,14 @@ import {
   upsertPaymentAttempt,
   type InternalOrderLookup,
   type PaymentOrderSnapshot,
-} from './repository'
-import { isQuoteApproved } from '@/lib/quote/approval'
+} from "./repository";
+import { isQuoteApproved } from "@/lib/quote/approval";
 import {
   updateOrderPaymentStatus,
   updatePaymentAttemptStatus,
   tryUpdatePaymentAttemptStatus,
   type PaymentStatusUpdateReason,
-} from '@/lib/payments/state'
+} from "@/lib/payments/state";
 import {
   createRazorpayOrder,
   createRazorpayRefund,
@@ -56,7 +61,7 @@ import {
   verifyRazorpayWebhookSignature,
   fetchRazorpayOrder,
   fetchRazorpayPayment,
-} from './razorpay'
+} from "./razorpay";
 import type {
   InternalOrderType,
   PaymentAttemptRecord,
@@ -64,61 +69,78 @@ import type {
   PaymentStatus,
   RazorpayCheckoutSession,
   RazorpayRefundResponse,
-} from './types'
+} from "./types";
 import {
   calculateRefundableBalance,
   summarizeReconciliation,
   summarizeWebhookHealth,
-} from './logic'
+} from "./logic";
 
 async function sendPurchaseCapiEvent(attempt: PaymentAttemptRecord) {
   try {
-    const adminSupabase = createAdminSupabaseClient()
+    const adminSupabase = createAdminSupabaseClient();
 
-    let contentIds: string[] = []
-    let contents: Array<{ id: string; quantity: number; item_price?: number }> = []
-    let orderId: string | undefined
-    let eventSourceUrl: string | undefined
+    let contentIds: string[] = [];
+    let contents: Array<{ id: string; quantity: number; item_price?: number }> =
+      [];
+    let orderId: string | undefined;
+    let eventSourceUrl: string | undefined;
 
-    if (attempt.internal_order_type === 'shop_order') {
+    if (attempt.internal_order_type === "shop_order") {
       const { data: order } = await adminSupabase
-        .from('shelf_orders')
-        .select('order_number, items, total_amount')
-        .eq('id', attempt.internal_order_id)
-        .maybeSingle()
+        .from("shelf_orders")
+        .select("order_number, items, total_amount")
+        .eq("id", attempt.internal_order_id)
+        .maybeSingle();
 
       if (order) {
-        const items = (order.items as Array<{ skuCode?: string; productName?: string; quantity?: number; unitPrice?: number }>) ?? []
-        contentIds = items.map((i) => i.skuCode || '').filter(Boolean)
-        contents = items.map((i) => ({ id: i.skuCode || i.productName || '', quantity: i.quantity ?? 1, item_price: i.unitPrice }))
-        orderId = String(order.order_number ?? attempt.internal_order_id)
-        eventSourceUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://flux3d.in'}/3d-shop/order/${attempt.internal_order_id}`
+        const items =
+          (order.items as Array<{
+            skuCode?: string;
+            productName?: string;
+            quantity?: number;
+            unitPrice?: number;
+          }>) ?? [];
+        // Send the catalog retailer_id (shortened for long SKUs) so purchases
+        // match the Meta catalog instead of being logged as unmatched events.
+        contentIds = items
+          .map((i) => toCatalogRetailerId(i.skuCode || ""))
+          .filter(Boolean);
+        contents = items.map((i) => ({
+          id: toCatalogRetailerId(i.skuCode || i.productName || ""),
+          quantity: i.quantity ?? 1,
+          item_price: i.unitPrice,
+        }));
+        orderId = String(order.order_number ?? attempt.internal_order_id);
+        eventSourceUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://flux3d.in"}/3d-shop/order/${attempt.internal_order_id}`;
       }
     }
 
+    // Non-shop (custom quote) purchases have no catalog SKU. Send the Purchase
+    // event without content_ids so Meta never tries (and fails) to match an
+    // order UUID against the catalog.
     if (contentIds.length === 0) {
-      contentIds = [attempt.id]
-      contents = [{ id: attempt.id, quantity: 1, item_price: attempt.amount_paise / 100 }]
+      contents = [];
     }
 
     // Guest orders have no profile row — fall back to the checkout snapshot.
     const snapshotCustomer = isRecord(attempt.metadata?.customer)
       ? asRecord(attempt.metadata.customer)
-      : {}
+      : {};
 
-    let customerEmail: string | undefined
-    let customerPhone: string | undefined
+    let customerEmail: string | undefined;
+    let customerPhone: string | undefined;
     if (attempt.customer_id) {
       const { data: profile } = await adminSupabase
-        .from('profiles')
-        .select('email, phone_number')
-        .eq('id', attempt.customer_id)
-        .maybeSingle()
-      customerEmail = profile?.email
-      customerPhone = profile?.phone_number
+        .from("profiles")
+        .select("email, phone_number")
+        .eq("id", attempt.customer_id)
+        .maybeSingle();
+      customerEmail = profile?.email;
+      customerPhone = profile?.phone_number;
     } else {
-      customerEmail = normalizeText(snapshotCustomer.email) || undefined
-      customerPhone = normalizeText(snapshotCustomer.contact) || undefined
+      customerEmail = normalizeText(snapshotCustomer.email) || undefined;
+      customerPhone = normalizeText(snapshotCustomer.contact) || undefined;
     }
 
     const event = buildPurchaseEvent({
@@ -130,86 +152,117 @@ async function sendPurchaseCapiEvent(attempt: PaymentAttemptRecord) {
       contentIds,
       contents,
       value: attempt.amount_paise / 100,
-      currency: attempt.currency || 'INR',
+      currency: attempt.currency || "INR",
       orderId,
       numItems: contents.reduce((s, c) => s + c.quantity, 0),
-    })
+    });
 
-    await sendCapiEvents([event])
+    await sendCapiEvents([event]);
   } catch (error) {
-    console.error('[payment] Failed to send Purchase CAPI event:', error)
+    console.error("[payment] Failed to send Purchase CAPI event:", error);
   }
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === 'object' && !Array.isArray(value))
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
 
 function normalizeText(value: unknown) {
-  return typeof value === 'string' ? value.trim() : ''
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function normalizeMoney(value: unknown) {
-  const next = Number(value)
-  return Number.isFinite(next) ? next : 0
+  const next = Number(value);
+  return Number.isFinite(next) ? next : 0;
 }
 
 function getPaymentPurposeForOrder(type: InternalOrderType) {
-  return type === 'shop_order' ? 'shop_order' : 'custom_quote_full_payment'
+  return type === "shop_order" ? "shop_order" : "custom_quote_full_payment";
 }
 
-function systemReason(actorId: string | null | undefined, reason = 'Gateway event'): PaymentStatusUpdateReason {
-  return { actorId: actorId ?? '', actorRole: 'system', reason }
+function systemReason(
+  actorId: string | null | undefined,
+  reason = "Gateway event",
+): PaymentStatusUpdateReason {
+  return { actorId: actorId ?? "", actorRole: "system", reason };
 }
 
-function customerReason(actorId: string | null | undefined, reason: string): PaymentStatusUpdateReason {
-  return { actorId: actorId ?? '', actorRole: 'customer', reason }
+function customerReason(
+  actorId: string | null | undefined,
+  reason: string,
+): PaymentStatusUpdateReason {
+  return { actorId: actorId ?? "", actorRole: "customer", reason };
 }
 
-function financeReason(actorId: string, reason: string): PaymentStatusUpdateReason {
-  return { actorId, actorRole: 'finance', reason, approvedByAdminId: actorId }
+function financeReason(
+  actorId: string,
+  reason: string,
+): PaymentStatusUpdateReason {
+  return { actorId, actorRole: "finance", reason, approvedByAdminId: actorId };
 }
 
-async function assertQuoteApprovedForPayment(order: Record<string, unknown>, type: InternalOrderType) {
-  if (type !== 'custom_quote') return
-  if (await isQuoteApproved(String(order.id))) return
-  throw new Error('Quote is pending review. Please wait for admin approval before payment.')
+async function assertQuoteApprovedForPayment(
+  order: Record<string, unknown>,
+  type: InternalOrderType,
+) {
+  if (type !== "custom_quote") return;
+  if (await isQuoteApproved(String(order.id))) return;
+  throw new Error(
+    "Quote is pending review. Please wait for admin approval before payment.",
+  );
 }
 
-function getContactFields(order: Record<string, unknown>, type: InternalOrderType) {
-  if (type === 'shop_order') {
-    const address = asRecord(order.shipping_address)
-    const guestContact = asRecord(order.guest_contact)
+function getContactFields(
+  order: Record<string, unknown>,
+  type: InternalOrderType,
+) {
+  if (type === "shop_order") {
+    const address = asRecord(order.shipping_address);
+    const guestContact = asRecord(order.guest_contact);
     return {
-      name: normalizeText(address.name) || normalizeText(order.full_name) || 'Flux3D customer',
-      email: normalizeText(order.customer_email) || normalizeText(order.email) || normalizeText(guestContact.email),
-      contact: normalizeText(address.phone) || normalizeText(order.phone) || '',
+      name:
+        normalizeText(address.name) ||
+        normalizeText(order.full_name) ||
+        "Flux3D customer",
+      email:
+        normalizeText(order.customer_email) ||
+        normalizeText(order.email) ||
+        normalizeText(guestContact.email),
+      contact: normalizeText(address.phone) || normalizeText(order.phone) || "",
       shippingAddress: address,
-    }
+    };
   }
 
   return {
-    name: normalizeText(order.full_name) || normalizeText(order.name) || 'Flux3D customer',
-    email: normalizeText(order.email) || '',
-    contact: normalizeText(order.phone) || '',
+    name:
+      normalizeText(order.full_name) ||
+      normalizeText(order.name) ||
+      "Flux3D customer",
+    email: normalizeText(order.email) || "",
+    contact: normalizeText(order.phone) || "",
     shippingAddress: {
-      name: normalizeText(order.full_name) || '',
-      phone: normalizeText(order.phone) || '',
-      line1: normalizeText(order.address_line1) || '',
-      line2: normalizeText(order.address_line2) || '',
-      city: normalizeText(order.city) || '',
-      state: normalizeText(order.state) || '',
-      pincode: normalizeText(order.pincode) || '',
+      name: normalizeText(order.full_name) || "",
+      phone: normalizeText(order.phone) || "",
+      line1: normalizeText(order.address_line1) || "",
+      line2: normalizeText(order.address_line2) || "",
+      city: normalizeText(order.city) || "",
+      state: normalizeText(order.state) || "",
+      pincode: normalizeText(order.pincode) || "",
     },
-  }
+  };
 }
 
-function buildPricingSnapshot(order: Record<string, unknown>, type: InternalOrderType) {
-  if (type === 'shop_order') {
+function buildPricingSnapshot(
+  order: Record<string, unknown>,
+  type: InternalOrderType,
+) {
+  if (type === "shop_order") {
     return {
       subtotal: normalizeMoney(order.subtotal),
       discount_amount: normalizeMoney(order.discount_amount),
@@ -217,7 +270,7 @@ function buildPricingSnapshot(order: Record<string, unknown>, type: InternalOrde
       total_amount: normalizeMoney(order.total_amount),
       items: Array.isArray(order.items) ? order.items : [],
       shipping_address: asRecord(order.shipping_address),
-    }
+    };
   }
 
   return {
@@ -231,14 +284,22 @@ function buildPricingSnapshot(order: Record<string, unknown>, type: InternalOrde
     grand_total: normalizeMoney(order.grand_total ?? order.total_price),
     price_breakdown: asRecord(order.price_breakdown),
     file_url: normalizeText(order.file_url),
-  }
+  };
 }
 
-function buildOrderSnapshot(order: Record<string, unknown>, type: InternalOrderType): PaymentOrderSnapshot {
-  const contact = getContactFields(order, type)
-  const amountPaise = snapshotAmount(type === 'shop_order' ? normalizeMoney(order.total_amount) : normalizeMoney(order.grand_total ?? order.total_price))
-  const orderNumber = normalizeText(order.order_number) || normalizeText(order.id)
-  const currency = normalizeText(order.payment_currency) || 'INR'
+function buildOrderSnapshot(
+  order: Record<string, unknown>,
+  type: InternalOrderType,
+): PaymentOrderSnapshot {
+  const contact = getContactFields(order, type);
+  const amountPaise = snapshotAmount(
+    type === "shop_order"
+      ? normalizeMoney(order.total_amount)
+      : normalizeMoney(order.grand_total ?? order.total_price),
+  );
+  const orderNumber =
+    normalizeText(order.order_number) || normalizeText(order.id);
+  const currency = normalizeText(order.payment_currency) || "INR";
 
   return {
     orderNumber,
@@ -250,7 +311,12 @@ function buildOrderSnapshot(order: Record<string, unknown>, type: InternalOrderT
     billingName: contact.name,
     billingEmail: contact.email,
     billingPhone: contact.contact,
-    lineItems: type === 'shop_order' ? (Array.isArray(order.items) ? order.items as Array<Record<string, unknown>> : []) : [buildPricingSnapshot(order, type)],
+    lineItems:
+      type === "shop_order"
+        ? Array.isArray(order.items)
+          ? (order.items as Array<Record<string, unknown>>)
+          : []
+        : [buildPricingSnapshot(order, type)],
     shippingAddress: contact.shippingAddress,
     metadata: {
       orderType: type,
@@ -258,19 +324,21 @@ function buildOrderSnapshot(order: Record<string, unknown>, type: InternalOrderT
       orderNumber,
       purpose: getPaymentPurposeForOrder(type),
     },
-    currentPaymentStatus: normalizeText(order.payment_status) as PaymentStatus | null,
+    currentPaymentStatus: normalizeText(
+      order.payment_status,
+    ) as PaymentStatus | null,
     currentProviderOrderId: normalizeText(order.provider_order_id) || null,
     currentProviderPaymentId: normalizeText(order.provider_payment_id) || null,
     pricingSnapshot: buildPricingSnapshot(order, type),
-  }
+  };
 }
 
 function createIdempotencyKey(params: {
-  type: InternalOrderType
-  orderId: string
-  paymentPurpose: PaymentPurpose
-  attemptNumber: number
-  amountPaise: number
+  type: InternalOrderType;
+  orderId: string;
+  paymentPurpose: PaymentPurpose;
+  attemptNumber: number;
+  amountPaise: number;
 }) {
   return [
     params.type,
@@ -278,65 +346,81 @@ function createIdempotencyKey(params: {
     params.paymentPurpose,
     params.attemptNumber,
     params.amountPaise,
-  ].join(':')
+  ].join(":");
 }
 
 export type CreateCheckoutResult = {
-  session: RazorpayCheckoutSession
-  paymentAttempt: PaymentAttemptRecord
-  orderSnapshot: PaymentOrderSnapshot
-}
+  session: RazorpayCheckoutSession;
+  paymentAttempt: PaymentAttemptRecord;
+  orderSnapshot: PaymentOrderSnapshot;
+};
 
-export async function createCheckoutSession(params: InternalOrderLookup & {
-  paymentPurpose?: PaymentPurpose
-  expectedAmountPaise?: number
-}) : Promise<CreateCheckoutResult> {
-  const order = await fetchInternalOrder(params)
+export async function createCheckoutSession(
+  params: InternalOrderLookup & {
+    paymentPurpose?: PaymentPurpose;
+    expectedAmountPaise?: number;
+  },
+): Promise<CreateCheckoutResult> {
+  const order = await fetchInternalOrder(params);
   if (!order) {
-    throw new Error(`Order not found (type: ${params.type}, id: ${params.id}).`)
+    throw new Error(
+      `Order not found (type: ${params.type}, id: ${params.id}).`,
+    );
   }
 
-  if (params.type === 'shop_order') {
-    const status = normalizeText(order.payment_status)
-    if (status === 'paid' || status === 'captured') {
-      throw new Error('This order is already paid.')
+  if (params.type === "shop_order") {
+    const status = normalizeText(order.payment_status);
+    if (status === "paid" || status === "captured") {
+      throw new Error("This order is already paid.");
     }
   } else {
-    const status = normalizeText(order.payment_status)
-    if (status === 'paid' || status === 'captured') {
-      throw new Error('This quote has already been paid.')
+    const status = normalizeText(order.payment_status);
+    if (status === "paid" || status === "captured") {
+      throw new Error("This quote has already been paid.");
     }
-    await assertQuoteApprovedForPayment(order, params.type)
+    await assertQuoteApprovedForPayment(order, params.type);
   }
 
-  const orderSnapshot = buildOrderSnapshot(order, params.type)
-  const amountPaise = params.expectedAmountPaise ?? orderSnapshot.amountPaise
+  const orderSnapshot = buildOrderSnapshot(order, params.type);
+  const amountPaise = params.expectedAmountPaise ?? orderSnapshot.amountPaise;
   if (amountPaise !== orderSnapshot.amountPaise) {
-    throw new Error('Order amount changed. Please refresh and try again.')
+    throw new Error("Order amount changed. Please refresh and try again.");
   }
 
-  const settings = await getSettings()
-  if (settings.paymentsEnabled === false || settings.razorpayEnabled === false) {
-    throw new Error('Payments are temporarily disabled.')
+  const settings = await getSettings();
+  if (
+    settings.paymentsEnabled === false ||
+    settings.razorpayEnabled === false
+  ) {
+    throw new Error("Payments are temporarily disabled.");
   }
 
-  const paymentPurpose = params.paymentPurpose ?? getPaymentPurposeForOrder(params.type)
-  const orderUserId = order.user_id ? String(order.user_id) : null
+  const paymentPurpose =
+    params.paymentPurpose ?? getPaymentPurposeForOrder(params.type);
+  const orderUserId = order.user_id ? String(order.user_id) : null;
   const existing = await fetchActivePaymentAttempt({
     internalOrderType: params.type,
     internalOrderId: params.id,
     paymentPurpose,
-    provider: 'razorpay',
-  })
+    provider: "razorpay",
+  });
 
-  if (existing && existing.amount_paise === amountPaise && existing.provider_order_id) {
+  if (
+    existing &&
+    existing.amount_paise === amountPaise &&
+    existing.provider_order_id
+  ) {
     return {
       session: makeCheckoutSession({
         orderId: existing.provider_order_id,
         amount: existing.amount_paise,
         currency: existing.currency,
-        name: settings.razorpayCheckoutName || buildPublicBusinessProfile(settings).brandName,
-        description: settings.razorpayCheckoutDescription || `${buildPublicBusinessProfile(settings).brandName} ${params.type === 'shop_order' ? 'shop order' : 'custom quote'} ${orderSnapshot.orderNumber}`,
+        name:
+          settings.razorpayCheckoutName ||
+          buildPublicBusinessProfile(settings).brandName,
+        description:
+          settings.razorpayCheckoutDescription ||
+          `${buildPublicBusinessProfile(settings).brandName} ${params.type === "shop_order" ? "shop order" : "custom quote"} ${orderSnapshot.orderNumber}`,
         reference: orderSnapshot.orderNumber,
         customer: {
           name: orderSnapshot.customerName,
@@ -350,51 +434,67 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
           payment_purpose: paymentPurpose,
         },
         theme: {
-          color: settings.razorpayBrandColor || settings.primaryColor || settings.secondaryColor || '#0f172a',
+          color:
+            settings.razorpayBrandColor ||
+            settings.primaryColor ||
+            settings.secondaryColor ||
+            "#0f172a",
         },
       }),
       paymentAttempt: existing,
       orderSnapshot,
-    }
+    };
   }
 
-  if (existing && existing.amount_paise !== amountPaise && existing.status !== 'paid') {
+  if (
+    existing &&
+    existing.amount_paise !== amountPaise &&
+    existing.status !== "paid"
+  ) {
     await updatePaymentAttemptStatus(
       existing.id,
       existing.status,
-      'cancelled',
+      "cancelled",
       {
         failed_at: new Date().toISOString(),
-        failure_code: 'amount_changed',
-        failure_description: 'A newer payment attempt was created after the order changed.',
+        failure_code: "amount_changed",
+        failure_description:
+          "A newer payment attempt was created after the order changed.",
       },
-      systemReason(orderUserId, 'Amount changed before new attempt')
-    )
+      systemReason(orderUserId, "Amount changed before new attempt"),
+    );
   }
 
-  const attemptNumber = existing && existing.amount_paise === amountPaise
-    ? existing.attempt_number
-    : (existing ? existing.attempt_number + 1 : 1)
-  const receipt = makeReceipt(orderSnapshot.orderNumber.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 10) || 'FLX3D', attemptNumber)
+  const attemptNumber =
+    existing && existing.amount_paise === amountPaise
+      ? existing.attempt_number
+      : existing
+        ? existing.attempt_number + 1
+        : 1;
+  const receipt = makeReceipt(
+    orderSnapshot.orderNumber.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 10) ||
+      "FLX3D",
+    attemptNumber,
+  );
   const idempotencyKey = createIdempotencyKey({
     type: params.type,
     orderId: params.id,
     paymentPurpose,
     attemptNumber,
     amountPaise,
-  })
+  });
 
   const paymentAttempt = await upsertPaymentAttempt({
     internal_order_type: params.type,
     internal_order_id: params.id,
     customer_id: orderUserId,
-    provider: 'razorpay',
+    provider: "razorpay",
     payment_purpose: paymentPurpose,
     provider_order_id: null,
     provider_payment_id: null,
     amount_paise: amountPaise,
-    currency: 'INR',
-    status: 'created',
+    currency: "INR",
+    status: "created",
     attempt_number: attemptNumber,
     idempotency_key: idempotencyKey,
     receipt,
@@ -412,11 +512,11 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
         contact: orderSnapshot.customerPhone,
       },
     },
-  })
+  });
 
   const providerOrder = await createRazorpayOrder({
     amountPaise,
-    currency: 'INR',
+    currency: "INR",
     receipt,
     notes: {
       internal_order_type: params.type,
@@ -425,12 +525,12 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
       order_number: orderSnapshot.orderNumber,
       payment_purpose: paymentPurpose,
     },
-  })
+  });
 
   const updatedAttempt = await updatePaymentAttemptStatus(
     paymentAttempt.id,
     paymentAttempt.status,
-    'pending',
+    "pending",
     {
       provider_order_id: providerOrder.id,
       metadata: {
@@ -438,39 +538,40 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
         razorpay: providerOrder,
       },
     },
-    customerReason(orderUserId, 'Payment attempt created')
-  )
+    customerReason(orderUserId, "Payment attempt created"),
+  );
 
-  const currentOrderStatus: import('./types').PaymentStatus =
-    (normalizeText(order.payment_status) as import('./types').PaymentStatus) || 'created'
+  const currentOrderStatus: import("./types").PaymentStatus =
+    (normalizeText(order.payment_status) as import("./types").PaymentStatus) ||
+    "created";
 
   await updateOrderPaymentStatus({
     type: params.type,
     id: params.id,
     currentStatus: currentOrderStatus,
-    nextStatus: 'pending',
+    nextStatus: "pending",
     patch: {
-      payment_provider: 'razorpay',
+      payment_provider: "razorpay",
       payment_purpose: paymentPurpose,
       payment_attempt_id: updatedAttempt.id,
       provider_order_id: providerOrder.id,
       provider_payment_id: null,
       payment_amount_paise: amountPaise,
-      payment_currency: 'INR',
+      payment_currency: "INR",
       payment_snapshot: orderSnapshot.pricingSnapshot,
       payment_verified_at: null,
       payment_failed_at: null,
       payment_method: null,
-      payment_refund_status: 'none',
+      payment_refund_status: "none",
       payment_refund_amount_paise: 0,
     },
-    reason: customerReason(orderUserId, 'Payment attempt created'),
-  })
+    reason: customerReason(orderUserId, "Payment attempt created"),
+  });
 
   await insertPaymentAuditLog({
     actor_id: orderUserId,
-    actor_role: 'customer',
-    action: 'payment_attempt_created',
+    actor_role: "customer",
+    action: "payment_attempt_created",
     entity_type: params.type,
     entity_id: params.id,
     previous_state: null,
@@ -480,15 +581,15 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
       amount_paise: amountPaise,
       payment_purpose: paymentPurpose,
     },
-  })
+  });
 
   return {
     session: makeCheckoutSession({
       orderId: providerOrder.id,
       amount: amountPaise,
-      currency: 'INR',
+      currency: "INR",
       name: buildPublicBusinessProfile(settings).brandName,
-      description: `Flux3D ${params.type === 'shop_order' ? 'shop order' : 'custom quote'} ${orderSnapshot.orderNumber}`,
+      description: `Flux3D ${params.type === "shop_order" ? "shop order" : "custom quote"} ${orderSnapshot.orderNumber}`,
       reference: orderSnapshot.orderNumber,
       customer: {
         name: orderSnapshot.customerName,
@@ -502,34 +603,42 @@ export async function createCheckoutSession(params: InternalOrderLookup & {
         payment_purpose: paymentPurpose,
       },
       theme: {
-        color: settings.primaryColor || settings.secondaryColor || '#0f172a',
+        color: settings.primaryColor || settings.secondaryColor || "#0f172a",
       },
     }),
     paymentAttempt: updatedAttempt,
     orderSnapshot,
-  }
+  };
 }
 
 export type VerifyCheckoutResult = {
-  status: 'paid' | 'pending'
-  paymentAttempt: PaymentAttemptRecord
-  orderSnapshot: PaymentOrderSnapshot
-}
+  status: "paid" | "pending";
+  paymentAttempt: PaymentAttemptRecord;
+  orderSnapshot: PaymentOrderSnapshot;
+};
 
 export async function verifyCheckoutPayment(params: {
-  internalOrderType: InternalOrderType
-  internalOrderId: string
+  internalOrderType: InternalOrderType;
+  internalOrderId: string;
   /** auth.users id of the caller — required for logged-in orders. */
-  customerId?: string | null
+  customerId?: string | null;
   /** Guest order access token — required instead of customerId for guest orders. */
-  guestAccessToken?: string | null
-  razorpayOrderId: string
-  razorpayPaymentId: string
-  razorpaySignature: string
-}) : Promise<VerifyCheckoutResult> {
-  const attempt = await fetchPaymentAttemptByProviderOrderId(params.razorpayOrderId)
-  if (!attempt || attempt.internal_order_type !== params.internalOrderType || attempt.internal_order_id !== params.internalOrderId) {
-    throw new Error(`Payment attempt not found (provider_order_id: ${params.razorpayOrderId}).`)
+  guestAccessToken?: string | null;
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+}): Promise<VerifyCheckoutResult> {
+  const attempt = await fetchPaymentAttemptByProviderOrderId(
+    params.razorpayOrderId,
+  );
+  if (
+    !attempt ||
+    attempt.internal_order_type !== params.internalOrderType ||
+    attempt.internal_order_id !== params.internalOrderId
+  ) {
+    throw new Error(
+      `Payment attempt not found (provider_order_id: ${params.razorpayOrderId}).`,
+    );
   }
 
   // Signature is checked up-front: it is cryptographic proof from Razorpay
@@ -540,23 +649,28 @@ export async function verifyCheckoutPayment(params: {
     orderId: params.razorpayOrderId,
     paymentId: params.razorpayPaymentId,
     signature: params.razorpaySignature,
-  })
+  });
 
   // Ownership check: logged-in orders require the authenticated owner. Guest
   // orders (customer_id IS NULL) accept a valid guest access token OR a valid
   // Razorpay checkout signature. Both failure paths return the same message.
-  const notAllowed = new Error('You are not allowed to verify this payment.')
+  const notAllowed = new Error("You are not allowed to verify this payment.");
   if (attempt.customer_id) {
     if (attempt.customer_id !== params.customerId) {
-      throw notAllowed
+      throw notAllowed;
     }
   } else {
-    let tokenValid = false
+    let tokenValid = false;
     if (params.guestAccessToken) {
-      tokenValid = Boolean(await verifyGuestOrderAccess(params.internalOrderId, params.guestAccessToken))
+      tokenValid = Boolean(
+        await verifyGuestOrderAccess(
+          params.internalOrderId,
+          params.guestAccessToken,
+        ),
+      );
     }
     if (!tokenValid && !signatureValid) {
-      throw notAllowed
+      throw notAllowed;
     }
   }
 
@@ -564,53 +678,81 @@ export async function verifyCheckoutPayment(params: {
     type: params.internalOrderType,
     id: params.internalOrderId,
     ...(attempt.customer_id ? { customerId: attempt.customer_id } : {}),
-  })
-  if (!order) throw new Error(`Order not found (type: ${params.internalOrderType}, id: ${params.internalOrderId}).`)
+  });
+  if (!order)
+    throw new Error(
+      `Order not found (type: ${params.internalOrderType}, id: ${params.internalOrderId}).`,
+    );
 
-  const orderSnapshot = buildOrderSnapshot(order, params.internalOrderType)
+  const orderSnapshot = buildOrderSnapshot(order, params.internalOrderType);
 
   if (!signatureValid) {
     await updatePaymentAttemptStatus(
       attempt.id,
       attempt.status,
-      'failed',
+      "failed",
       {
         provider_payment_id: params.razorpayPaymentId,
         failed_at: new Date().toISOString(),
-        failure_code: 'invalid_signature',
-        failure_description: 'Checkout signature validation failed.',
+        failure_code: "invalid_signature",
+        failure_description: "Checkout signature validation failed.",
       },
-      systemReason(params.customerId ?? '', 'Checkout signature validation failed')
-    )
+      systemReason(
+        params.customerId ?? "",
+        "Checkout signature validation failed",
+      ),
+    );
     await updateOrderPaymentStatus({
       type: params.internalOrderType,
       id: params.internalOrderId,
       currentStatus: attempt.status,
-      nextStatus: 'failed',
+      nextStatus: "failed",
       patch: {
         provider_payment_id: params.razorpayPaymentId,
         payment_failed_at: new Date().toISOString(),
       },
-      reason: systemReason(params.customerId ?? '', 'Checkout signature validation failed'),
-    })
-    throw new Error(`Payment verification failed (invalid signature, provider_order_id: ${params.razorpayOrderId}).`)
+      reason: systemReason(
+        params.customerId ?? "",
+        "Checkout signature validation failed",
+      ),
+    });
+    throw new Error(
+      `Payment verification failed (invalid signature, provider_order_id: ${params.razorpayOrderId}).`,
+    );
   }
 
-  const providerOrder = await fetchRazorpayOrder(params.razorpayOrderId)
-  const providerPayment = await fetchRazorpayPayment(params.razorpayPaymentId)
+  const providerOrder = await fetchRazorpayOrder(params.razorpayOrderId);
+  const providerPayment = await fetchRazorpayPayment(params.razorpayPaymentId);
 
-  if (providerPayment.order_id !== params.razorpayOrderId || providerOrder.id !== params.razorpayOrderId) {
-    throw new Error(`Payment verification failed (order mismatch, provider_order_id: ${params.razorpayOrderId}).`)
+  if (
+    providerPayment.order_id !== params.razorpayOrderId ||
+    providerOrder.id !== params.razorpayOrderId
+  ) {
+    throw new Error(
+      `Payment verification failed (order mismatch, provider_order_id: ${params.razorpayOrderId}).`,
+    );
   }
 
-  if (Number(providerOrder.amount) !== orderSnapshot.amountPaise || providerOrder.currency !== orderSnapshot.currency) {
-    throw new Error(`Payment amount mismatch (expected ₹${orderSnapshot.amountPaise / 100} ${orderSnapshot.currency}, provider: ₹${Number(providerOrder.amount) / 100} ${providerOrder.currency}).`)
+  if (
+    Number(providerOrder.amount) !== orderSnapshot.amountPaise ||
+    providerOrder.currency !== orderSnapshot.currency
+  ) {
+    throw new Error(
+      `Payment amount mismatch (expected ₹${orderSnapshot.amountPaise / 100} ${orderSnapshot.currency}, provider: ₹${Number(providerOrder.amount) / 100} ${providerOrder.currency}).`,
+    );
   }
 
-  const captured = providerPayment.status === 'captured' || providerPayment.captured === true || providerOrder.status === 'paid'
-  const authorized = providerPayment.status === 'authorized'
+  const captured =
+    providerPayment.status === "captured" ||
+    providerPayment.captured === true ||
+    providerOrder.status === "paid";
+  const authorized = providerPayment.status === "authorized";
 
-  const nextStatus: PaymentStatus = captured ? 'paid' : authorized ? 'authorized' : 'pending'
+  const nextStatus: PaymentStatus = captured
+    ? "paid"
+    : authorized
+      ? "authorized"
+      : "pending";
 
   const updatedAttempt = await updatePaymentAttemptStatus(
     attempt.id,
@@ -620,9 +762,15 @@ export async function verifyCheckoutPayment(params: {
       provider_payment_id: providerPayment.id,
       payment_method: providerPayment.method ?? attempt.payment_method,
       captured_at: captured ? new Date().toISOString() : attempt.captured_at,
-      failed_at: providerPayment.status === 'failed' ? new Date().toISOString() : attempt.failed_at,
+      failed_at:
+        providerPayment.status === "failed"
+          ? new Date().toISOString()
+          : attempt.failed_at,
       failure_code: providerPayment.error_code ?? null,
-      failure_description: providerPayment.error_description ?? providerPayment.error_reason ?? null,
+      failure_description:
+        providerPayment.error_description ??
+        providerPayment.error_reason ??
+        null,
       metadata: {
         ...attempt.metadata,
         verification: {
@@ -635,8 +783,8 @@ export async function verifyCheckoutPayment(params: {
         },
       },
     },
-    customerReason(params.customerId ?? '', 'Checkout payment verified')
-  )
+    customerReason(params.customerId ?? "", "Checkout payment verified"),
+  );
 
   await updateOrderPaymentStatus({
     type: params.internalOrderType,
@@ -644,87 +792,118 @@ export async function verifyCheckoutPayment(params: {
     currentStatus: attempt.status,
     nextStatus,
     patch: {
-      payment_provider: 'razorpay',
+      payment_provider: "razorpay",
       provider_order_id: params.razorpayOrderId,
       provider_payment_id: params.razorpayPaymentId,
       payment_method: providerPayment.method ?? null,
       payment_verified_at: captured ? new Date().toISOString() : null,
-      payment_failed_at: providerPayment.status === 'failed' ? new Date().toISOString() : null,
+      payment_failed_at:
+        providerPayment.status === "failed" ? new Date().toISOString() : null,
     },
-    reason: customerReason(params.customerId ?? '', captured ? 'Payment captured' : `Payment ${nextStatus}`),
-  })
+    reason: customerReason(
+      params.customerId ?? "",
+      captured ? "Payment captured" : `Payment ${nextStatus}`,
+    ),
+  });
 
   if (captured) {
     // Convert inventory reservations on successful payment
-    if (params.internalOrderType === 'shop_order') {
-      const adminSupabase = createAdminSupabaseClient()
+    if (params.internalOrderType === "shop_order") {
+      const adminSupabase = createAdminSupabaseClient();
       try {
-        const { error: convError } = await adminSupabase.rpc('convert_inventory_reservations', { p_order_id: params.internalOrderId })
-        if (convError) reportError(convError, 'Failed to convert inventory reservations', { module: 'payments', tags: { flow: 'checkout_verify', orderId: params.internalOrderId } })
+        const { error: convError } = await adminSupabase.rpc(
+          "convert_inventory_reservations",
+          { p_order_id: params.internalOrderId },
+        );
+        if (convError)
+          reportError(convError, "Failed to convert inventory reservations", {
+            module: "payments",
+            tags: { flow: "checkout_verify", orderId: params.internalOrderId },
+          });
       } catch (error) {
-        reportError(error, 'Failed to convert inventory reservations', { module: 'payments', tags: { flow: 'checkout_verify', orderId: params.internalOrderId } })
+        reportError(error, "Failed to convert inventory reservations", {
+          module: "payments",
+          tags: { flow: "checkout_verify", orderId: params.internalOrderId },
+        });
       }
     }
 
     await insertPaymentAuditLog({
       actor_id: params.customerId ?? null,
-      actor_role: 'customer',
-      action: 'payment_attempt_verified',
+      actor_role: "customer",
+      action: "payment_attempt_verified",
       entity_type: params.internalOrderType,
       entity_id: params.internalOrderId,
       previous_state: { payment_status: attempt.status },
-      new_state: { payment_status: 'paid', provider_payment_id: params.razorpayPaymentId },
-    })
+      new_state: {
+        payment_status: "paid",
+        provider_payment_id: params.razorpayPaymentId,
+      },
+    });
 
     // Send payment confirmation email immediately (webhook handler will also try,
     // but deduplication in the email trigger prevents duplicates). Awaited —
     // serverless functions can freeze after the response, killing un-awaited work.
     try {
-      await notifyPaymentCaptured(attempt)
+      await notifyPaymentCaptured(attempt);
     } catch (error) {
-      reportError(error, 'Payment captured notification failed', { module: 'payments', level: 'warn', tags: { flow: 'checkout_verify_email', attemptId: attempt.id } })
+      reportError(error, "Payment captured notification failed", {
+        module: "payments",
+        level: "warn",
+        tags: { flow: "checkout_verify_email", attemptId: attempt.id },
+      });
     }
 
     // Send WhatsApp order-confirmation template (fires on paid; deduped per
     // order, delivered via the outbox so it survives serverless freezes).
-    if (attempt.internal_order_type === 'shop_order' && attempt.internal_order_id) {
+    if (
+      attempt.internal_order_type === "shop_order" &&
+      attempt.internal_order_id
+    ) {
       notifyWhatsAppOrderConfirmed({
         orderId: attempt.internal_order_id,
         orderNumber: orderSnapshot.orderNumber,
         amountPaise: attempt.amount_paise,
       }).catch((err) => {
-        console.error('[payments] WhatsApp order confirmed notify failed:', err)
-      })
+        console.error(
+          "[payments] WhatsApp order confirmed notify failed:",
+          err,
+        );
+      });
     }
 
     // Send Purchase event to Meta Conversions API
-    sendPurchaseCapiEvent(attempt)
+    sendPurchaseCapiEvent(attempt);
 
     return {
-      status: 'paid',
+      status: "paid",
       paymentAttempt: updatedAttempt,
       orderSnapshot,
-    }
+    };
   }
 
   return {
-    status: 'pending',
+    status: "pending",
     paymentAttempt: updatedAttempt,
     orderSnapshot,
-  }
+  };
 }
 
 function unwrapRazorpayEntity(value: unknown): Record<string, unknown> {
-  return isRecord(value) && isRecord(value.entity) ? asRecord(value.entity) : isRecord(value) ? asRecord(value) : {}
+  return isRecord(value) && isRecord(value.entity)
+    ? asRecord(value.entity)
+    : isRecord(value)
+      ? asRecord(value)
+      : {};
 }
 
 function sanitizeEventPayload(payload: Record<string, unknown>) {
-  const event = normalizeText(payload.event)
-  const entity = isRecord(payload.payload) ? payload.payload : {}
-  const payment = unwrapRazorpayEntity(entity.payment)
-  const order = unwrapRazorpayEntity(entity.order)
-  const refund = unwrapRazorpayEntity(entity.refund)
-  const paymentLink = unwrapRazorpayEntity(entity.payment_link)
+  const event = normalizeText(payload.event);
+  const entity = isRecord(payload.payload) ? payload.payload : {};
+  const payment = unwrapRazorpayEntity(entity.payment);
+  const order = unwrapRazorpayEntity(entity.order);
+  const refund = unwrapRazorpayEntity(entity.refund);
+  const paymentLink = unwrapRazorpayEntity(entity.payment_link);
 
   return {
     event,
@@ -764,124 +943,166 @@ function sanitizeEventPayload(payload: Record<string, unknown>) {
       amount: paymentLink.amount ?? null,
       notes: isRecord(paymentLink.notes) ? asRecord(paymentLink.notes) : null,
     },
-  }
+  };
 }
 
-async function processPaymentLifecycleEvent(eventName: string, payload: Record<string, unknown>) {
-  const container = isRecord(payload.payload) ? asRecord(payload.payload) : {}
-  const paymentEntity = unwrapRazorpayEntity(container.payment)
-  const orderEntity = unwrapRazorpayEntity(container.order)
-  const paymentLinkEntity = unwrapRazorpayEntity(container.payment_link)
-  const providerOrderId = normalizeText(paymentEntity.order_id) || normalizeText(orderEntity.id)
-  const providerPaymentId = normalizeText(paymentEntity.id)
-  const providerPaymentStatus = normalizeText(paymentEntity.status)
-  const paymentLinkId = normalizeText(paymentLinkEntity.id)
-  const paymentLinkNotes = isRecord(paymentLinkEntity.notes) ? asRecord(paymentLinkEntity.notes) : {}
-  const paymentNotes = isRecord(paymentEntity.notes) ? asRecord(paymentEntity.notes) : {}
+async function processPaymentLifecycleEvent(
+  eventName: string,
+  payload: Record<string, unknown>,
+) {
+  const container = isRecord(payload.payload) ? asRecord(payload.payload) : {};
+  const paymentEntity = unwrapRazorpayEntity(container.payment);
+  const orderEntity = unwrapRazorpayEntity(container.order);
+  const paymentLinkEntity = unwrapRazorpayEntity(container.payment_link);
+  const providerOrderId =
+    normalizeText(paymentEntity.order_id) || normalizeText(orderEntity.id);
+  const providerPaymentId = normalizeText(paymentEntity.id);
+  const providerPaymentStatus = normalizeText(paymentEntity.status);
+  const paymentLinkId = normalizeText(paymentLinkEntity.id);
+  const paymentLinkNotes = isRecord(paymentLinkEntity.notes)
+    ? asRecord(paymentLinkEntity.notes)
+    : {};
+  const paymentNotes = isRecord(paymentEntity.notes)
+    ? asRecord(paymentEntity.notes)
+    : {};
 
-  let attempt = providerOrderId ? await fetchPaymentAttemptByProviderOrderId(providerOrderId) : null
+  let attempt = providerOrderId
+    ? await fetchPaymentAttemptByProviderOrderId(providerOrderId)
+    : null;
   if (!attempt && providerPaymentId) {
-    attempt = await fetchPaymentAttemptByProviderPaymentId(providerPaymentId)
+    attempt = await fetchPaymentAttemptByProviderPaymentId(providerPaymentId);
   }
   if (!attempt && paymentLinkId) {
-    attempt = await fetchPaymentAttemptByPaymentLinkId(paymentLinkId)
+    attempt = await fetchPaymentAttemptByPaymentLinkId(paymentLinkId);
   }
-  const linkAttemptId = normalizeText(paymentLinkNotes.payment_attempt_id) || normalizeText(paymentNotes.payment_attempt_id)
+  const linkAttemptId =
+    normalizeText(paymentLinkNotes.payment_attempt_id) ||
+    normalizeText(paymentNotes.payment_attempt_id);
   if (!attempt && linkAttemptId) {
-    attempt = await fetchPaymentAttemptById(linkAttemptId)
+    attempt = await fetchPaymentAttemptById(linkAttemptId);
   }
 
   if (!attempt) {
-    return { handled: false, processingStatus: 'ignored' as const }
+    return { handled: false, processingStatus: "ignored" as const };
   }
 
   // Already captured by an earlier event for the same payment — record missing
   // provider ids but never regress status or re-notify.
-  if (attempt.status === 'paid') {
+  if (attempt.status === "paid") {
     if (providerPaymentId && !attempt.provider_payment_id) {
-      await updatePaymentAttempt(attempt.id, { provider_payment_id: providerPaymentId })
+      await updatePaymentAttempt(attempt.id, {
+        provider_payment_id: providerPaymentId,
+      });
     }
-    return { handled: true, processingStatus: 'processed' as const }
+    return { handled: true, processingStatus: "processed" as const };
   }
 
-  if (eventName === 'payment.failed') {
+  if (eventName === "payment.failed") {
     const updatedRow = await tryUpdatePaymentAttemptStatus(
       attempt.id,
       attempt.status,
-      'failed',
+      "failed",
       {
         provider_payment_id: providerPaymentId || attempt.provider_payment_id,
         failed_at: new Date().toISOString(),
         failure_code: normalizeText(paymentEntity.error_code) || null,
-        failure_description: normalizeText(paymentEntity.error_description) || normalizeText(paymentEntity.error_reason) || null,
+        failure_description:
+          normalizeText(paymentEntity.error_description) ||
+          normalizeText(paymentEntity.error_reason) ||
+          null,
         metadata: {
           ...attempt.metadata,
           webhook: sanitizeEventPayload(payload),
         },
       },
-      systemReason(attempt.customer_id, `Webhook ${eventName}`)
-    )
+      systemReason(attempt.customer_id, `Webhook ${eventName}`),
+    );
 
     if (!updatedRow) {
       await insertPaymentAuditLog({
-        actor_role: 'system',
-        action: 'payment_transition_skipped_duplicate',
-        entity_type: 'payment_attempt',
+        actor_role: "system",
+        action: "payment_transition_skipped_duplicate",
+        entity_type: "payment_attempt",
         entity_id: attempt.id,
         previous_state: { status: attempt.status },
-        new_state: { status: 'failed', skipped: true, reason: 'concurrent transition won' },
-      })
-      return { handled: true, processingStatus: 'processed' as const }
+        new_state: {
+          status: "failed",
+          skipped: true,
+          reason: "concurrent transition won",
+        },
+      });
+      return { handled: true, processingStatus: "processed" as const };
     }
 
     await updateOrderPaymentStatus({
       type: attempt.internal_order_type,
       id: attempt.internal_order_id,
       currentStatus: attempt.status,
-      nextStatus: 'failed',
+      nextStatus: "failed",
       patch: {
         provider_payment_id: providerPaymentId || attempt.provider_payment_id,
         payment_failed_at: new Date().toISOString(),
       },
       reason: systemReason(attempt.customer_id, `Webhook ${eventName}`),
-    })
+    });
 
     try {
-      await notifyPaymentFailed(attempt)
+      await notifyPaymentFailed(attempt);
     } catch (error) {
-      reportError(error, 'Payment failed notification error', { module: 'payments', level: 'warn', tags: { flow: 'payment_failed', attemptId: attempt.id } })
+      reportError(error, "Payment failed notification error", {
+        module: "payments",
+        level: "warn",
+        tags: { flow: "payment_failed", attemptId: attempt.id },
+      });
     }
 
-    return { handled: true, processingStatus: 'processed' as const }
+    return { handled: true, processingStatus: "processed" as const };
   }
 
   if (
-    eventName === 'payment.authorized' ||
-    eventName === 'payment.captured' ||
-    eventName === 'order.paid' ||
-    eventName === 'payment_link.paid'
+    eventName === "payment.authorized" ||
+    eventName === "payment.captured" ||
+    eventName === "order.paid" ||
+    eventName === "payment_link.paid"
   ) {
-    const payment = providerPaymentId ? await fetchRazorpayPayment(providerPaymentId) : null
-    const order = providerOrderId ? await fetchRazorpayOrder(providerOrderId) : null
+    const payment = providerPaymentId
+      ? await fetchRazorpayPayment(providerPaymentId)
+      : null;
+    const order = providerOrderId
+      ? await fetchRazorpayOrder(providerOrderId)
+      : null;
     const finalPayment = payment ?? {
       id: providerPaymentId,
-      amount: Number(paymentEntity.amount ?? orderEntity.amount ?? attempt.amount_paise),
-      currency: normalizeText(paymentEntity.currency) || normalizeText(orderEntity.currency) || attempt.currency,
-      status: providerPaymentStatus || 'authorized',
-      order_id: providerOrderId || attempt.provider_order_id || '',
-      method: normalizeText(paymentEntity.method) || attempt.payment_method || undefined,
+      amount: Number(
+        paymentEntity.amount ?? orderEntity.amount ?? attempt.amount_paise,
+      ),
+      currency:
+        normalizeText(paymentEntity.currency) ||
+        normalizeText(orderEntity.currency) ||
+        attempt.currency,
+      status: providerPaymentStatus || "authorized",
+      order_id: providerOrderId || attempt.provider_order_id || "",
+      method:
+        normalizeText(paymentEntity.method) ||
+        attempt.payment_method ||
+        undefined,
       captured: Boolean(paymentEntity.captured),
-    }
+    };
 
-    const paymentLinkStatus = normalizeText(paymentLinkEntity.status)
+    const paymentLinkStatus = normalizeText(paymentLinkEntity.status);
     const captured =
-      normalizeText(finalPayment.status) === 'captured' ||
+      normalizeText(finalPayment.status) === "captured" ||
       Boolean((finalPayment as Record<string, unknown>).captured) ||
-      normalizeText(order?.status) === 'paid' ||
-      (eventName === 'payment_link.paid' && paymentLinkStatus === 'paid')
-    const authorized = normalizeText(finalPayment.status) === 'authorized' && !captured
+      normalizeText(order?.status) === "paid" ||
+      (eventName === "payment_link.paid" && paymentLinkStatus === "paid");
+    const authorized =
+      normalizeText(finalPayment.status) === "authorized" && !captured;
 
-    const nextStatus: PaymentStatus = captured ? 'paid' : authorized ? 'authorized' : 'pending'
+    const nextStatus: PaymentStatus = captured
+      ? "paid"
+      : authorized
+        ? "authorized"
+        : "pending";
 
     const updatedRow = await tryUpdatePaymentAttemptStatus(
       attempt.id,
@@ -890,28 +1111,34 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
       {
         provider_order_id: providerOrderId || attempt.provider_order_id,
         provider_payment_id: providerPaymentId || attempt.provider_payment_id,
-        payment_method: normalizeText((finalPayment as Record<string, unknown>).method) || attempt.payment_method,
+        payment_method:
+          normalizeText((finalPayment as Record<string, unknown>).method) ||
+          attempt.payment_method,
         captured_at: captured ? new Date().toISOString() : attempt.captured_at,
         metadata: {
           ...attempt.metadata,
           webhook: sanitizeEventPayload(payload),
         },
       },
-      systemReason(attempt.customer_id, `Webhook ${eventName}`)
-    )
+      systemReason(attempt.customer_id, `Webhook ${eventName}`),
+    );
 
     // If a concurrent event already transitioned this attempt, skip — the
     // first (winner) will have notified already. (Atomic guard.)
     if (!updatedRow) {
       await insertPaymentAuditLog({
-        actor_role: 'system',
-        action: 'payment_transition_skipped_duplicate',
-        entity_type: 'payment_attempt',
+        actor_role: "system",
+        action: "payment_transition_skipped_duplicate",
+        entity_type: "payment_attempt",
         entity_id: attempt.id,
         previous_state: { status: attempt.status },
-        new_state: { status: nextStatus, skipped: true, reason: 'concurrent transition won' },
-      })
-      return { handled: true, processingStatus: 'processed' as const }
+        new_state: {
+          status: nextStatus,
+          skipped: true,
+          reason: "concurrent transition won",
+        },
+      });
+      return { handled: true, processingStatus: "processed" as const };
     }
 
     await updateOrderPaymentStatus({
@@ -920,71 +1147,97 @@ async function processPaymentLifecycleEvent(eventName: string, payload: Record<s
       currentStatus: attempt.status,
       nextStatus,
       patch: {
-        payment_provider: 'razorpay',
+        payment_provider: "razorpay",
         provider_order_id: providerOrderId || attempt.provider_order_id,
         provider_payment_id: providerPaymentId || attempt.provider_payment_id,
-        payment_method: normalizeText((finalPayment as Record<string, unknown>).method) || null,
+        payment_method:
+          normalizeText((finalPayment as Record<string, unknown>).method) ||
+          null,
         payment_verified_at: captured ? new Date().toISOString() : null,
         payment_failed_at: null,
       },
       reason: systemReason(attempt.customer_id, `Webhook ${eventName}`),
-    })
+    });
 
     // Convert inventory reservations for shop orders on capture
-    if (captured && attempt.internal_order_type === 'shop_order') {
+    if (captured && attempt.internal_order_type === "shop_order") {
       try {
-        const adminSupabase = createAdminSupabaseClient()
-        await adminSupabase.rpc('convert_inventory_reservations', { p_order_id: attempt.internal_order_id })
+        const adminSupabase = createAdminSupabaseClient();
+        await adminSupabase.rpc("convert_inventory_reservations", {
+          p_order_id: attempt.internal_order_id,
+        });
       } catch (error) {
-        reportError(error, 'Webhook failed to convert inventory reservations', { module: 'payments', tags: { flow: 'webhook_capture', orderId: attempt.internal_order_id } })
+        reportError(error, "Webhook failed to convert inventory reservations", {
+          module: "payments",
+          tags: { flow: "webhook_capture", orderId: attempt.internal_order_id },
+        });
       }
     }
 
     if (captured) {
       try {
-        await notifyPaymentCaptured(attempt)
+        await notifyPaymentCaptured(attempt);
       } catch (error) {
-        reportError(error, 'Payment captured notification failed', { module: 'payments', level: 'warn', tags: { flow: 'webhook_capture', attemptId: attempt.id } })
+        reportError(error, "Payment captured notification failed", {
+          module: "payments",
+          level: "warn",
+          tags: { flow: "webhook_capture", attemptId: attempt.id },
+        });
       }
 
       // Send WhatsApp order-confirmation template (fires on paid; deduped per
       // order, delivered via the outbox so it survives serverless freezes).
-      if (attempt.internal_order_type === 'shop_order' && attempt.internal_order_id) {
+      if (
+        attempt.internal_order_type === "shop_order" &&
+        attempt.internal_order_id
+      ) {
         const orderNumberFromMeta =
           (attempt.metadata as Record<string, unknown> | null)?.order_number ??
-          (attempt.metadata as Record<string, unknown> | null)?.orderNumber
+          (attempt.metadata as Record<string, unknown> | null)?.orderNumber;
         notifyWhatsAppOrderConfirmed({
           orderId: attempt.internal_order_id,
-          orderNumber: normalizeText(orderNumberFromMeta) || attempt.internal_order_id,
+          orderNumber:
+            normalizeText(orderNumberFromMeta) || attempt.internal_order_id,
           amountPaise: attempt.amount_paise,
         }).catch((err) => {
-          console.error('[payments] WhatsApp order confirmed notify failed:', err)
-        })
+          console.error(
+            "[payments] WhatsApp order confirmed notify failed:",
+            err,
+          );
+        });
       }
 
-      sendPurchaseCapiEvent(attempt)
+      sendPurchaseCapiEvent(attempt);
     }
 
-    return { handled: true, processingStatus: 'processed' as const }
+    return { handled: true, processingStatus: "processed" as const };
   }
 
-  return { handled: false, processingStatus: 'ignored' as const }
+  return { handled: false, processingStatus: "ignored" as const };
 }
 
-async function processRefundEvent(eventName: string, payload: Record<string, unknown>) {
-  const container = isRecord(payload.payload) ? asRecord(payload.payload) : {}
-  const refundEntity = unwrapRazorpayEntity(container.refund)
-  const providerRefundId = normalizeText(refundEntity.id)
-  if (!providerRefundId) return { handled: false, processingStatus: 'ignored' as const }
+async function processRefundEvent(
+  eventName: string,
+  payload: Record<string, unknown>,
+) {
+  const container = isRecord(payload.payload) ? asRecord(payload.payload) : {};
+  const refundEntity = unwrapRazorpayEntity(container.refund);
+  const providerRefundId = normalizeText(refundEntity.id);
+  if (!providerRefundId)
+    return { handled: false, processingStatus: "ignored" as const };
 
-  const localRefund = await fetchPaymentRefundByProviderRefundId(providerRefundId)
-  if (!localRefund) return { handled: false, processingStatus: 'ignored' as const }
+  const localRefund =
+    await fetchPaymentRefundByProviderRefundId(providerRefundId);
+  if (!localRefund)
+    return { handled: false, processingStatus: "ignored" as const };
 
-  const nextStatus = eventName === 'refund.failed'
-    ? 'failed'
-    : normalizeText(refundEntity.status) === 'processed' || eventName === 'refund.processed'
-      ? 'processed'
-      : 'pending'
+  const nextStatus =
+    eventName === "refund.failed"
+      ? "failed"
+      : normalizeText(refundEntity.status) === "processed" ||
+          eventName === "refund.processed"
+        ? "processed"
+        : "pending";
 
   await updatePaymentRefund(localRefund.id, {
     provider_refund_id: providerRefundId,
@@ -993,86 +1246,112 @@ async function processRefundEvent(eventName: string, payload: Record<string, unk
       ...localRefund.provider_response,
       webhook: sanitizeEventPayload(payload),
     },
-    processed_at: nextStatus === 'processed' ? new Date().toISOString() : localRefund.processed_at,
-    failed_at: nextStatus === 'failed' ? new Date().toISOString() : localRefund.failed_at,
-  })
+    processed_at:
+      nextStatus === "processed"
+        ? new Date().toISOString()
+        : localRefund.processed_at,
+    failed_at:
+      nextStatus === "failed"
+        ? new Date().toISOString()
+        : localRefund.failed_at,
+  });
 
   // Update parent payment attempt and order status
-  const attempt = await fetchPaymentAttemptById(localRefund.payment_attempt_id)
-  if (!attempt) return { handled: true, processingStatus: 'processed' as const }
+  const attempt = await fetchPaymentAttemptById(localRefund.payment_attempt_id);
+  if (!attempt)
+    return { handled: true, processingStatus: "processed" as const };
 
-  if (nextStatus === 'processed') {
-    const attemptRefunds = await listPaymentRefundsByAttemptId(attempt.id)
+  if (nextStatus === "processed") {
+    const attemptRefunds = await listPaymentRefundsByAttemptId(attempt.id);
     const totalRefunded = attemptRefunds
-      .filter((r) => ['pending', 'processed'].includes(r.status))
-      .reduce((sum, r) => sum + Number(r.amount_paise), 0)
-    const isFullyRefunded = totalRefunded >= attempt.amount_paise
+      .filter((r) => ["pending", "processed"].includes(r.status))
+      .reduce((sum, r) => sum + Number(r.amount_paise), 0);
+    const isFullyRefunded = totalRefunded >= attempt.amount_paise;
 
-    const attemptNextStatus: PaymentStatus = isFullyRefunded ? 'refunded' : 'partially_refunded'
+    const attemptNextStatus: PaymentStatus = isFullyRefunded
+      ? "refunded"
+      : "partially_refunded";
 
     try {
       await updatePaymentAttemptStatus(
-        attempt.id, attempt.status, attemptNextStatus, {},
-        systemReason(attempt.customer_id, `Webhook ${eventName}`)
-      )
+        attempt.id,
+        attempt.status,
+        attemptNextStatus,
+        {},
+        systemReason(attempt.customer_id, `Webhook ${eventName}`),
+      );
       await updateOrderPaymentStatus({
         type: attempt.internal_order_type,
         id: attempt.internal_order_id,
         currentStatus: attempt.status,
         nextStatus: attemptNextStatus,
         patch: {
-          payment_refund_status: isFullyRefunded ? 'completed' : 'partial',
+          payment_refund_status: isFullyRefunded ? "completed" : "partial",
           payment_refund_amount_paise: totalRefunded,
         },
         reason: systemReason(attempt.customer_id, `Webhook ${eventName}`),
-      })
+      });
     } catch (error) {
       // Expected when the attempt is already in a terminal state — but never
       // silent. Log for visibility in case a legitimate transition fails.
-      reportError(error, 'Refund status transition failed', {
-        module: 'payments',
-        level: 'warn',
-        tags: { flow: 'refund_processed', refundId: localRefund.id, attemptId: attempt.id },
-      })
+      reportError(error, "Refund status transition failed", {
+        module: "payments",
+        level: "warn",
+        tags: {
+          flow: "refund_processed",
+          refundId: localRefund.id,
+          attemptId: attempt.id,
+        },
+      });
     }
 
     await insertPaymentAuditLog({
-      actor_role: 'system',
-      action: 'refund_processed',
-      entity_type: 'payment_refund',
+      actor_role: "system",
+      action: "refund_processed",
+      entity_type: "payment_refund",
       entity_id: localRefund.id,
-      new_state: { status: nextStatus, total_refunded_paise: totalRefunded, fully_refunded: isFullyRefunded },
-    })
+      new_state: {
+        status: nextStatus,
+        total_refunded_paise: totalRefunded,
+        fully_refunded: isFullyRefunded,
+      },
+    });
 
-    notifyRefundProcessed(attempt, localRefund.amount_paise).catch((error) => reportError(error, 'Refund processed notification failed', { module: 'payments', level: 'warn', tags: { flow: 'refund_processed', refundId: localRefund.id } }))
+    notifyRefundProcessed(attempt, localRefund.amount_paise).catch((error) =>
+      reportError(error, "Refund processed notification failed", {
+        module: "payments",
+        level: "warn",
+        tags: { flow: "refund_processed", refundId: localRefund.id },
+      }),
+    );
   }
 
-  if (nextStatus === 'failed') {
+  if (nextStatus === "failed") {
     await updateOrderPaymentStatus({
       type: attempt.internal_order_type,
       id: attempt.internal_order_id,
       currentStatus: attempt.status,
       nextStatus: attempt.status,
-      patch: { payment_refund_status: 'failed' },
+      patch: { payment_refund_status: "failed" },
       reason: systemReason(attempt.customer_id, `Webhook ${eventName}`),
-    })
+    });
     await insertPaymentAuditLog({
-      actor_role: 'system',
-      action: 'refund_failed',
-      entity_type: 'payment_refund',
+      actor_role: "system",
+      action: "refund_failed",
+      entity_type: "payment_refund",
       entity_id: localRefund.id,
-      new_state: { status: 'failed', provider_refund_id: providerRefundId },
-    })
+      new_state: { status: "failed", provider_refund_id: providerRefundId },
+    });
   }
 
-  return { handled: true, processingStatus: 'processed' as const }
+  return { handled: true, processingStatus: "processed" as const };
 }
 
 export type WebhookIngestResult = {
-  acknowledged: boolean
-  duplicate: boolean
-  eventId: string | null
-}
+  acknowledged: boolean;
+  duplicate: boolean;
+  eventId: string | null;
+};
 
 /**
  * Fast-path: verify signature, persist + de-dupe the event record, and return
@@ -1081,127 +1360,156 @@ export type WebhookIngestResult = {
  * enqueued via QStash.
  */
 export async function ingestRazorpayWebhook(params: {
-  rawBody: string
-  signature: string
-  eventId: string
+  rawBody: string;
+  signature: string;
+  eventId: string;
 }): Promise<WebhookIngestResult> {
-  const payload = JSON.parse(params.rawBody) as Record<string, unknown>
-  const eventName = normalizeText(payload.event)
+  const payload = JSON.parse(params.rawBody) as Record<string, unknown>;
+  const eventName = normalizeText(payload.event);
   if (!eventName) {
-    throw new Error('Missing webhook event.')
+    throw new Error("Missing webhook event.");
   }
 
-  const signatureVerified = verifyRazorpayWebhookSignature(params.rawBody, params.signature)
+  const signatureVerified = verifyRazorpayWebhookSignature(
+    params.rawBody,
+    params.signature,
+  );
   if (!signatureVerified) {
-    throw new Error('Invalid webhook signature.')
+    throw new Error("Invalid webhook signature.");
   }
 
-  const providerOrderId = normalizeText(isRecord(payload.payload) ? unwrapRazorpayEntity(payload.payload.order).id : null) || null
-  const providerPaymentId = normalizeText(isRecord(payload.payload) ? unwrapRazorpayEntity(payload.payload.payment).id : null) || null
+  const providerOrderId =
+    normalizeText(
+      isRecord(payload.payload)
+        ? unwrapRazorpayEntity(payload.payload.order).id
+        : null,
+    ) || null;
+  const providerPaymentId =
+    normalizeText(
+      isRecord(payload.payload)
+        ? unwrapRazorpayEntity(payload.payload.payment).id
+        : null,
+    ) || null;
 
   const existingEvent = await insertPaymentEvent({
-    provider: 'razorpay',
+    provider: "razorpay",
     provider_event_id: params.eventId,
     event_type: eventName,
     provider_order_id: providerOrderId,
     provider_payment_id: providerPaymentId,
     signature_verified: true,
-    processing_status: 'received',
+    processing_status: "received",
     retry_count: 0,
     sanitized_payload: sanitizeEventPayload(payload),
     processing_error: null,
   }).catch(async (error) => {
-    const message = error instanceof Error ? error.message : ''
-    if (!message.toLowerCase().includes('duplicate key')) {
-      throw error
+    const message = error instanceof Error ? error.message : "";
+    if (!message.toLowerCase().includes("duplicate key")) {
+      throw error;
     }
     // Already ingested — load the stored one so the caller can (re)process if needed.
-    const stored = await fetchPaymentEvent('razorpay', params.eventId)
-    return stored
-  })
+    const stored = await fetchPaymentEvent("razorpay", params.eventId);
+    return stored;
+  });
 
   if (!existingEvent) {
-    return { acknowledged: true, duplicate: true, eventId: null }
+    return { acknowledged: true, duplicate: true, eventId: null };
   }
 
-  return { acknowledged: true, duplicate: false, eventId: existingEvent.id }
+  return { acknowledged: true, duplicate: false, eventId: existingEvent.id };
 }
 
 /**
  * Process an already-ingested webhook event (loaded by id). Runs the capture-
  * type de-dupe check and lifecycle handling. Used by the QStash worker.
  */
-export async function processWebhookEventById(eventId: string): Promise<{ acknowledged: boolean; duplicate: boolean }> {
+export async function processWebhookEventById(
+  eventId: string,
+): Promise<{ acknowledged: boolean; duplicate: boolean }> {
   // `eventId` here is the internal payment_events `id` (a UUID), as returned by
   // ingestRazorpayWebhook. Fetch by that id directly — NOT by provider_event_id,
   // which is a separate column and would silently return nothing.
-  const event = await fetchPaymentEventById(eventId)
+  const event = await fetchPaymentEventById(eventId);
   if (!event) {
-    throw new Error('Webhook event not found.')
+    throw new Error("Webhook event not found.");
   }
-  if (event.processing_status === 'processed') {
-    return { acknowledged: true, duplicate: true }
+  if (event.processing_status === "processed") {
+    return { acknowledged: true, duplicate: true };
   }
 
-  const eventName = event.event_type
-  const payload = rebuildWebhookPayload(eventName, event.sanitized_payload)
+  const eventName = event.event_type;
+  const payload = rebuildWebhookPayload(eventName, event.sanitized_payload);
 
-  await updatePaymentEvent(event.id, { processing_status: 'processing', processing_error: null })
+  await updatePaymentEvent(event.id, {
+    processing_status: "processing",
+    processing_error: null,
+  });
 
   try {
     // Razorpay fires payment.authorized, payment.captured, order.paid and
     // payment_link.paid for the same payment. Only the first capture-type
     // event should transition the attempt and notify — the rest are duplicates.
-    const captureEventTypes = ['payment.captured', 'order.paid', 'payment_link.paid']
-    const providerPaymentId = normalizeText(event.provider_payment_id)
+    const captureEventTypes = [
+      "payment.captured",
+      "order.paid",
+      "payment_link.paid",
+    ];
+    const providerPaymentId = normalizeText(event.provider_payment_id);
     if (captureEventTypes.includes(eventName) && providerPaymentId) {
-      const sibling = await fetchCaptureEventForPayment(providerPaymentId, event.id, captureEventTypes)
+      const sibling = await fetchCaptureEventForPayment(
+        providerPaymentId,
+        event.id,
+        captureEventTypes,
+      );
       if (sibling) {
         await updatePaymentEvent(event.id, {
-          processing_status: 'processed',
+          processing_status: "processed",
           processed_at: new Date().toISOString(),
           processing_error: null,
-        })
+        });
         await insertPaymentAuditLog({
-          actor_role: 'system',
-          action: 'payment_webhook_processed',
-          entity_type: 'payment_event',
+          actor_role: "system",
+          action: "payment_webhook_processed",
+          entity_type: "payment_event",
           entity_id: event.id,
           new_state: { event: eventName, duplicate_of: sibling.id },
-        })
-        return { acknowledged: true, duplicate: true }
+        });
+        return { acknowledged: true, duplicate: true };
       }
     }
 
-    if (eventName.startsWith('refund.')) {
-      await processRefundEvent(eventName, payload)
+    if (eventName.startsWith("refund.")) {
+      await processRefundEvent(eventName, payload);
     } else {
-      await processPaymentLifecycleEvent(eventName, payload)
+      await processPaymentLifecycleEvent(eventName, payload);
     }
 
     await updatePaymentEvent(event.id, {
-      processing_status: 'processed',
+      processing_status: "processed",
       processed_at: new Date().toISOString(),
       processing_error: null,
-    })
+    });
 
     await insertPaymentAuditLog({
-      actor_role: 'system',
-      action: 'payment_webhook_processed',
-      entity_type: 'payment_event',
+      actor_role: "system",
+      action: "payment_webhook_processed",
+      entity_type: "payment_event",
       entity_id: event.id,
       new_state: { event: eventName },
-    })
+    });
 
-    return { acknowledged: true, duplicate: false }
+    return { acknowledged: true, duplicate: false };
   } catch (error) {
     await updatePaymentEvent(event.id, {
-      processing_status: 'failed',
+      processing_status: "failed",
       processed_at: null,
-      processing_error: error instanceof Error ? error.message.slice(0, 500) : 'Webhook processing failed.',
+      processing_error:
+        error instanceof Error
+          ? error.message.slice(0, 500)
+          : "Webhook processing failed.",
       retry_count: Number(event.retry_count ?? 0) + 1,
-    })
-    throw error
+    });
+    throw error;
   }
 }
 
@@ -1210,63 +1518,68 @@ export async function processWebhookEventById(eventId: string): Promise<{ acknow
  * Still used by tests and the admin re-process flow.
  */
 export async function processRazorpayWebhook(params: {
-  rawBody: string
-  signature: string
-  eventId: string
+  rawBody: string;
+  signature: string;
+  eventId: string;
 }) {
-  const ingested = await ingestRazorpayWebhook(params)
+  const ingested = await ingestRazorpayWebhook(params);
   if (ingested.duplicate || !ingested.eventId) {
-    return { acknowledged: true, duplicate: true }
+    return { acknowledged: true, duplicate: true };
   }
-  const outcome = await processWebhookEventById(ingested.eventId)
-  return { acknowledged: outcome.acknowledged, duplicate: outcome.duplicate }
+  const outcome = await processWebhookEventById(ingested.eventId);
+  return { acknowledged: outcome.acknowledged, duplicate: outcome.duplicate };
 }
 
 export async function initiateRefund(params: {
-  paymentAttemptId: string
-  amountPaise: number
-  reason: string
-  speed?: 'normal' | 'optimum'
-  initiatedByAdminId: string
+  paymentAttemptId: string;
+  amountPaise: number;
+  reason: string;
+  speed?: "normal" | "optimum";
+  initiatedByAdminId: string;
 }) {
-  const attempt = await fetchPaymentAttemptById(params.paymentAttemptId)
-  if (!attempt) throw new Error(`Payment attempt not found (id: ${params.paymentAttemptId}).`)
-  if (!['paid', 'captured', 'partially_refunded'].includes(attempt.status)) {
-    throw new Error('Only captured payments can be refunded.')
+  const attempt = await fetchPaymentAttemptById(params.paymentAttemptId);
+  if (!attempt)
+    throw new Error(
+      `Payment attempt not found (id: ${params.paymentAttemptId}).`,
+    );
+  if (!["paid", "captured", "partially_refunded"].includes(attempt.status)) {
+    throw new Error("Only captured payments can be refunded.");
   }
 
-  const existingRefunds = await listPaymentRefundsByAttemptId(attempt.id)
+  const existingRefunds = await listPaymentRefundsByAttemptId(attempt.id);
   const refundedAmount = existingRefunds
-    .filter((refund) => ['pending', 'processed'].includes(refund.status))
-    .reduce((sum, refund) => sum + Number(refund.amount_paise ?? 0), 0)
-  const refundable = calculateRefundableBalance(attempt.amount_paise, [refundedAmount])
+    .filter((refund) => ["pending", "processed"].includes(refund.status))
+    .reduce((sum, refund) => sum + Number(refund.amount_paise ?? 0), 0);
+  const refundable = calculateRefundableBalance(attempt.amount_paise, [
+    refundedAmount,
+  ]);
   if (params.amountPaise <= 0 || params.amountPaise > refundable) {
-    throw new Error('Refund amount exceeds the refundable balance.')
+    throw new Error("Refund amount exceeds the refundable balance.");
   }
 
   // Fail fast if Razorpay is not configured — no DB writes until gateway is reachable
-  const razorpayConfig = getRazorpayConfig()
+  const razorpayConfig = getRazorpayConfig();
   if (!razorpayConfig) {
-    throw new Error('Razorpay is not configured.')
+    throw new Error("Razorpay is not configured.");
   }
 
   const refundRow = await insertPaymentRefund({
     payment_attempt_id: attempt.id,
     provider_refund_id: null,
     amount_paise: params.amountPaise,
-    status: 'created',
+    status: "created",
     reason: params.reason,
     speed: params.speed ?? null,
     initiated_by_admin_id: params.initiatedByAdminId,
     provider_response: {},
     processed_at: null,
     failed_at: null,
-  })
+  });
 
-  let response: RazorpayRefundResponse
+  let response: RazorpayRefundResponse;
   try {
     response = await createRazorpayRefund({
-      paymentId: attempt.provider_payment_id || '',
+      paymentId: attempt.provider_payment_id || "",
       amountPaise: params.amountPaise,
       reason: params.reason,
       speed: params.speed,
@@ -1275,40 +1588,49 @@ export async function initiateRefund(params: {
         internal_order_id: attempt.internal_order_id,
         internal_order_type: attempt.internal_order_type,
       },
-    })
+    });
   } catch (razorpayError) {
-    const errorMessage = razorpayError instanceof Error ? razorpayError.message : 'Refund creation failed at payment gateway.'
+    const errorMessage =
+      razorpayError instanceof Error
+        ? razorpayError.message
+        : "Refund creation failed at payment gateway.";
     await updatePaymentRefund(refundRow.id, {
-      status: 'failed',
+      status: "failed",
       provider_response: { error: errorMessage },
       failed_at: new Date().toISOString(),
-    })
+    });
     await insertPaymentAuditLog({
       actor_id: params.initiatedByAdminId,
-      actor_role: 'admin',
-      action: 'refund_initiated',
-      entity_type: 'payment_refund',
+      actor_role: "admin",
+      action: "refund_initiated",
+      entity_type: "payment_refund",
       entity_id: refundRow.id,
-      previous_state: { status: 'created' },
-      new_state: { status: 'failed', error: errorMessage },
-    })
-    throw new Error(`Refund failed at payment gateway: ${errorMessage}`)
+      previous_state: { status: "created" },
+      new_state: { status: "failed", error: errorMessage },
+    });
+    throw new Error(`Refund failed at payment gateway: ${errorMessage}`);
   }
 
   const updatedRefund = await updatePaymentRefund(refundRow.id, {
     provider_refund_id: response.id,
-    status: 'pending',
+    status: "pending",
     provider_response: response,
-  })
+  });
 
-  const nextStatus = params.amountPaise === attempt.amount_paise ? 'refunded' : 'partially_refunded'
+  const nextStatus =
+    params.amountPaise === attempt.amount_paise
+      ? "refunded"
+      : "partially_refunded";
   await updatePaymentAttemptStatus(
     attempt.id,
     attempt.status,
     nextStatus,
     {},
-    financeReason(params.initiatedByAdminId, `Refund initiated: ${params.reason}`)
-  )
+    financeReason(
+      params.initiatedByAdminId,
+      `Refund initiated: ${params.reason}`,
+    ),
+  );
 
   await updateOrderPaymentStatus({
     type: attempt.internal_order_type,
@@ -1316,55 +1638,69 @@ export async function initiateRefund(params: {
     currentStatus: attempt.status,
     nextStatus,
     patch: {
-      payment_refund_status: params.amountPaise === attempt.amount_paise ? 'pending' : 'partial',
+      payment_refund_status:
+        params.amountPaise === attempt.amount_paise ? "pending" : "partial",
       payment_refund_amount_paise: refundedAmount + params.amountPaise,
     },
-    reason: financeReason(params.initiatedByAdminId, `Refund initiated: ${params.reason}`),
-  })
+    reason: financeReason(
+      params.initiatedByAdminId,
+      `Refund initiated: ${params.reason}`,
+    ),
+  });
 
   await insertPaymentAuditLog({
     actor_id: params.initiatedByAdminId,
-    actor_role: 'admin',
-    action: 'refund_initiated',
-    entity_type: 'payment_refund',
+    actor_role: "admin",
+    action: "refund_initiated",
+    entity_type: "payment_refund",
     entity_id: updatedRefund.id,
     previous_state: null,
     new_state: response,
-  })
+  });
 
-  return { refund: updatedRefund, providerResponse: response }
+  return { refund: updatedRefund, providerResponse: response };
 }
 
 export async function getPaymentStatusForOrder(params: InternalOrderLookup) {
-  const order = await fetchInternalOrder(params)
-  if (!order) throw new Error(`Order not found (type: ${params.type}, id: ${params.id}).`)
+  const order = await fetchInternalOrder(params);
+  if (!order)
+    throw new Error(
+      `Order not found (type: ${params.type}, id: ${params.id}).`,
+    );
 
   const paymentAttempt = await lookupPaymentAttemptByInternalOrder({
     internalOrderType: params.type,
     internalOrderId: params.id,
     paymentPurpose: getPaymentPurposeForOrder(params.type),
-  })
+  });
 
   return {
     order: asRecord(order),
     paymentAttempt,
-  }
+  };
 }
 
 export async function getPaymentAttemptDetail(paymentAttemptId: string) {
-  const attempt = await fetchPaymentAttemptById(paymentAttemptId)
-  if (!attempt) throw new Error(`Payment attempt not found (id: ${paymentAttemptId}).`)
+  const attempt = await fetchPaymentAttemptById(paymentAttemptId);
+  if (!attempt)
+    throw new Error(`Payment attempt not found (id: ${paymentAttemptId}).`);
 
   const [refunds, events, auditLogs] = await Promise.all([
     listPaymentRefundsByAttemptId(attempt.id),
-    listPaymentEventsByOrderOrPaymentId(attempt.provider_order_id, attempt.provider_payment_id),
-    listPaymentAuditLogsByEntity(attempt.internal_order_type, attempt.internal_order_id),
-  ])
+    listPaymentEventsByOrderOrPaymentId(
+      attempt.provider_order_id,
+      attempt.provider_payment_id,
+    ),
+    listPaymentAuditLogsByEntity(
+      attempt.internal_order_type,
+      attempt.internal_order_id,
+    ),
+  ]);
   const internalOrder = await fetchInternalOrder({
     type: attempt.internal_order_type,
     id: attempt.internal_order_id,
     customerId: attempt.customer_id ?? undefined,
-  })
+  });
 
   return {
     attempt,
@@ -1373,28 +1709,40 @@ export async function getPaymentAttemptDetail(paymentAttemptId: string) {
     events,
     auditLogs,
     providerDashboard: {
-      paymentUrl: attempt.provider_payment_id ? `https://dashboard.razorpay.com/app/payments/${attempt.provider_payment_id}` : null,
-      orderUrl: attempt.provider_order_id ? `https://dashboard.razorpay.com/app/orders/${attempt.provider_order_id}` : null,
+      paymentUrl: attempt.provider_payment_id
+        ? `https://dashboard.razorpay.com/app/payments/${attempt.provider_payment_id}`
+        : null,
+      orderUrl: attempt.provider_order_id
+        ? `https://dashboard.razorpay.com/app/orders/${attempt.provider_order_id}`
+        : null,
     },
-  }
+  };
 }
 
 export async function refreshPaymentAttemptFromProvider(attemptId: string) {
-  const attempt = await fetchPaymentAttemptById(attemptId)
+  const attempt = await fetchPaymentAttemptById(attemptId);
   if (!attempt || !attempt.provider_order_id) {
-    throw new Error(`Payment attempt not found or missing provider order (id: ${attemptId}).`)
+    throw new Error(
+      `Payment attempt not found or missing provider order (id: ${attemptId}).`,
+    );
   }
 
-  const providerOrder = await fetchRazorpayOrder(attempt.provider_order_id)
-  const providerPaymentId = providerOrder.status === 'paid' ? attempt.provider_payment_id : attempt.provider_payment_id
-  const providerPayment = providerPaymentId ? await fetchRazorpayPayment(providerPaymentId) : null
-  const captured = providerPayment?.status === 'captured' || providerOrder.status === 'paid'
+  const providerOrder = await fetchRazorpayOrder(attempt.provider_order_id);
+  const providerPaymentId =
+    providerOrder.status === "paid"
+      ? attempt.provider_payment_id
+      : attempt.provider_payment_id;
+  const providerPayment = providerPaymentId
+    ? await fetchRazorpayPayment(providerPaymentId)
+    : null;
+  const captured =
+    providerPayment?.status === "captured" || providerOrder.status === "paid";
 
   const nextStatus: PaymentStatus = captured
-    ? 'paid'
-    : providerPayment?.status === 'authorized'
-      ? 'authorized'
-      : attempt.status
+    ? "paid"
+    : providerPayment?.status === "authorized"
+      ? "authorized"
+      : attempt.status;
 
   if (nextStatus !== attempt.status) {
     await updatePaymentAttemptStatus(
@@ -1413,8 +1761,11 @@ export async function refreshPaymentAttemptFromProvider(attemptId: string) {
           },
         },
       },
-      systemReason(attempt.customer_id, 'Refreshed payment status from provider')
-    )
+      systemReason(
+        attempt.customer_id,
+        "Refreshed payment status from provider",
+      ),
+    );
 
     await updateOrderPaymentStatus({
       type: attempt.internal_order_type,
@@ -1424,49 +1775,60 @@ export async function refreshPaymentAttemptFromProvider(attemptId: string) {
       patch: {
         provider_order_id: providerOrder.id,
         provider_payment_id: providerPayment?.id ?? attempt.provider_payment_id,
-        payment_method: providerPayment?.method ?? attempt.payment_method ?? null,
+        payment_method:
+          providerPayment?.method ?? attempt.payment_method ?? null,
         payment_verified_at: captured ? new Date().toISOString() : null,
       },
-      reason: systemReason(attempt.customer_id, 'Refreshed payment status from provider'),
-    })
+      reason: systemReason(
+        attempt.customer_id,
+        "Refreshed payment status from provider",
+      ),
+    });
   }
 
-  return { attempt: await fetchPaymentAttemptById(attempt.id), providerOrder, providerPayment }
+  return {
+    attempt: await fetchPaymentAttemptById(attempt.id),
+    providerOrder,
+    providerPayment,
+  };
 }
 
 export async function getAdminPaymentsOverview(limit = 100) {
   const [attempts, refunds] = await Promise.all([
     listPaymentAttemptSummaries(limit),
     listPaymentRefundSummaries(limit),
-  ])
+  ]);
 
-  return { attempts, refunds }
+  return { attempts, refunds };
 }
 
 export async function getAdminRefundsData(limit = 100) {
-  const refunds = await listPaymentRefunds(limit)
-  const attempts = await listPaymentAttemptsByProvider('razorpay', limit)
+  const refunds = await listPaymentRefunds(limit);
+  const attempts = await listPaymentAttemptsByProvider("razorpay", limit);
   return {
     refunds,
     attempts,
-  }
+  };
 }
 
 export async function getWebhookHealthData(limit = 100) {
-  const events = await listPaymentEvents(limit)
-  const runs = await listReconciliationRuns(20)
+  const events = await listPaymentEvents(limit);
+  const runs = await listReconciliationRuns(20);
   return {
     health: summarizeWebhookHealth(events),
     events,
     reconciliationRuns: runs,
-  }
+  };
 }
 
-function rebuildWebhookPayload(eventType: string, payload: Record<string, unknown>) {
-  const payment = asRecord(payload.payment)
-  const order = asRecord(payload.order)
-  const refund = asRecord(payload.refund)
-  const paymentLink = asRecord(payload.payment_link)
+function rebuildWebhookPayload(
+  eventType: string,
+  payload: Record<string, unknown>,
+) {
+  const payment = asRecord(payload.payment);
+  const order = asRecord(payload.order);
+  const refund = asRecord(payload.refund);
+  const paymentLink = asRecord(payload.payment_link);
   return {
     event: eventType,
     created_at: payload.created_at ?? null,
@@ -1474,102 +1836,117 @@ function rebuildWebhookPayload(eventType: string, payload: Record<string, unknow
       payment,
       order,
       refund,
-      ...(Object.keys(paymentLink).length > 0 ? { payment_link: paymentLink } : {}),
+      ...(Object.keys(paymentLink).length > 0
+        ? { payment_link: paymentLink }
+        : {}),
     },
-  }
+  };
 }
 
 export async function reprocessStoredWebhookEvent(eventId: string) {
-  const event = await fetchPaymentEvent('razorpay', eventId)
+  const event = await fetchPaymentEvent("razorpay", eventId);
   if (!event) {
-    throw new Error('Webhook event not found.')
+    throw new Error("Webhook event not found.");
   }
   if (event.signature_verified !== true) {
-    throw new Error('Only verified webhook events can be reprocessed.')
+    throw new Error("Only verified webhook events can be reprocessed.");
   }
 
-  const rebuiltPayload = rebuildWebhookPayload(event.event_type, event.sanitized_payload)
+  const rebuiltPayload = rebuildWebhookPayload(
+    event.event_type,
+    event.sanitized_payload,
+  );
   await updatePaymentEvent(event.id, {
-    processing_status: 'processing',
+    processing_status: "processing",
     processing_error: null,
-  })
+  });
 
   try {
-    if (event.event_type.startsWith('refund.')) {
-      await processRefundEvent(event.event_type, rebuiltPayload)
+    if (event.event_type.startsWith("refund.")) {
+      await processRefundEvent(event.event_type, rebuiltPayload);
     } else {
-      await processPaymentLifecycleEvent(event.event_type, rebuiltPayload)
+      await processPaymentLifecycleEvent(event.event_type, rebuiltPayload);
     }
 
     await updatePaymentEvent(event.id, {
-      processing_status: 'processed',
+      processing_status: "processed",
       processed_at: new Date().toISOString(),
       processing_error: null,
-    })
+    });
 
-    return { reprocessed: true }
+    return { reprocessed: true };
   } catch (error) {
     await updatePaymentEvent(event.id, {
-      processing_status: 'failed',
+      processing_status: "failed",
       processed_at: null,
-      processing_error: error instanceof Error ? error.message.slice(0, 500) : 'Webhook reprocessing failed.',
+      processing_error:
+        error instanceof Error
+          ? error.message.slice(0, 500)
+          : "Webhook reprocessing failed.",
       retry_count: Number(event.retry_count ?? 0) + 1,
-    })
-    throw error
+    });
+    throw error;
   }
 }
 
 export async function runPaymentReconciliation(limit = 100) {
-  const attempts = await listPaymentAttemptsByProvider('razorpay', limit)
-  const providerPayments = await listRazorpayPayments(limit)
+  const attempts = await listPaymentAttemptsByProvider("razorpay", limit);
+  const providerPayments = await listRazorpayPayments(limit);
   const normalizedPayments = Array.isArray(providerPayments)
     ? providerPayments.map((payment: Record<string, unknown>) => ({
-        id: String(payment.id ?? ''),
+        id: String(payment.id ?? ""),
         amount: Number(payment.amount ?? 0),
-        currency: String(payment.currency ?? 'INR'),
-        status: String(payment.status ?? ''),
+        currency: String(payment.currency ?? "INR"),
+        status: String(payment.status ?? ""),
       }))
-    : []
+    : [];
 
-  const summary = summarizeReconciliation(attempts, normalizedPayments)
+  const summary = summarizeReconciliation(attempts, normalizedPayments);
   const run = await insertReconciliationRun({
     date_range_start: null,
     date_range_end: null,
     initiated_by: null,
-    status: 'completed',
-    matched_count: summary.totalProviderPayments - summary.mismatchCount - summary.missingLocallyCount,
+    status: "completed",
+    matched_count:
+      summary.totalProviderPayments -
+      summary.mismatchCount -
+      summary.missingLocallyCount,
     mismatch_count: summary.mismatchCount,
     missing_count: summary.missingLocallyCount,
     report: summary,
     started_at: new Date().toISOString(),
     completed_at: new Date().toISOString(),
-  })
+  });
 
-  return { run, summary, providerPayments: normalizedPayments }
+  return { run, summary, providerPayments: normalizedPayments };
 }
 
 async function listPaymentAttemptSummaries(limit: number) {
-  const { createAdminSupabaseClient } = await import('@/lib/admin/server')
-  const supabase = createAdminSupabaseClient()
+  const { createAdminSupabaseClient } = await import("@/lib/admin/server");
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
-    .from('payment_attempts')
-    .select('id, internal_order_type, internal_order_id, customer_id, provider, payment_purpose, provider_order_id, provider_payment_id, amount_paise, currency, status, attempt_number, receipt, payment_method, captured_at, failed_at, created_at, updated_at')
-    .order('created_at', { ascending: false })
-    .limit(limit)
+    .from("payment_attempts")
+    .select(
+      "id, internal_order_type, internal_order_id, customer_id, provider, payment_purpose, provider_order_id, provider_payment_id, amount_paise, currency, status, attempt_number, receipt, payment_method, captured_at, failed_at, created_at, updated_at",
+    )
+    .order("created_at", { ascending: false })
+    .limit(limit);
 
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((row) => asRecord(row))
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => asRecord(row));
 }
 
 async function listPaymentRefundSummaries(limit: number) {
-  const { createAdminSupabaseClient } = await import('@/lib/admin/server')
-  const supabase = createAdminSupabaseClient()
+  const { createAdminSupabaseClient } = await import("@/lib/admin/server");
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
-    .from('payment_refunds')
-    .select('id, payment_attempt_id, provider_refund_id, amount_paise, status, reason, speed, initiated_by_admin_id, created_at, processed_at, failed_at')
-    .order('created_at', { ascending: false })
-    .limit(limit)
+    .from("payment_refunds")
+    .select(
+      "id, payment_attempt_id, provider_refund_id, amount_paise, status, reason, speed, initiated_by_admin_id, created_at, processed_at, failed_at",
+    )
+    .order("created_at", { ascending: false })
+    .limit(limit);
 
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((row) => asRecord(row))
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => asRecord(row));
 }

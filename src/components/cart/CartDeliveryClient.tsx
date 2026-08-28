@@ -400,8 +400,8 @@ export default function CartDeliveryClient({
               customData: {
                 value: payableTotal,
                 currency: "INR",
-                content_ids: [orderResult.orderId],
-                content_type: "product",
+                // Custom-quote cart: no catalog SKUs, so no content_ids (an
+                // order UUID here would create unmatched Meta events).
               },
             });
 

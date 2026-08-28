@@ -1,7 +1,7 @@
-import type { Metadata } from 'next'
-import Image from 'next/image'
-import Link from 'next/link'
-import { redirect } from 'next/navigation'
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   ArrowRight,
   BadgeCheck,
@@ -15,10 +15,11 @@ import {
   ReceiptText,
   ShoppingBag,
   Sparkles,
-} from 'lucide-react'
-import ShopShell from '@/components/shop/ShopShell'
-import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { getCurrentUserProfile } from '@/lib/auth/server'
+} from "lucide-react";
+import ShopShell from "@/components/shop/ShopShell";
+import { createAdminSupabaseClient } from "@/lib/admin/server";
+import { getCurrentUserProfile } from "@/lib/auth/server";
+import { toCatalogRetailerId } from "@/lib/meta/catalog";
 import {
   formatShopOrderDateTime,
   getShopFulfilmentStatusLabel,
@@ -27,90 +28,106 @@ import {
   mapShopOrderRow,
   normalizeShopOrderMoney,
   type ShopOrder,
-} from '@/lib/shop/orders'
-import { formatShopPrice } from '@/lib/shop/selection'
-import ShopOrderTracking from './ShopOrderTracking'
+} from "@/lib/shop/orders";
+import { formatShopPrice } from "@/lib/shop/selection";
+import ShopOrderTracking from "./ShopOrderTracking";
 
 export const metadata: Metadata = {
-  title: 'Order Placed — 3D Shop',
-  description: 'Your 3D Shop order has been placed successfully.',
+  title: "Order Placed — 3D Shop",
+  description: "Your 3D Shop order has been placed successfully.",
   robots: {
     index: false,
     follow: false,
   },
-}
+};
 
 type ShopOrderSuccessPageProps = {
-  searchParams: Promise<{ orderId?: string | string[] }>
-}
+  searchParams: Promise<{ orderId?: string | string[] }>;
+};
 
 function getSearchValue(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value
+  return Array.isArray(value) ? value[0] : value;
 }
 
 function getOrderItemCount(order: ShopOrder) {
-  return order.items.reduce((count, item) => count + normalizeShopOrderMoney(item.quantity), 0)
+  return order.items.reduce(
+    (count, item) => count + normalizeShopOrderMoney(item.quantity),
+    0,
+  );
 }
 
 function getPrimaryImage(order: ShopOrder) {
-  return order.items.find((item) => item.productThumbnail)?.productThumbnail ?? null
+  return (
+    order.items.find((item) => item.productThumbnail)?.productThumbnail ?? null
+  );
 }
 
 function getPaymentModeLabel(value: string | null) {
-  const normalized = value?.trim().toLowerCase()
-  if (!normalized) return 'Not set'
-  if (normalized === 'razorpay') return 'Razorpay'
-  if (normalized === 'payu') return 'PayU'
-  if (normalized === 'upi') return 'UPI'
-  if (normalized === 'card') return 'Credit / Debit Card'
-  if (normalized === 'netbanking') return 'Net Banking'
-  if (normalized === 'wallet') return 'Wallet'
-  if (normalized === 'emi') return 'EMI'
-  if (normalized === 'bank_transfer') return 'Bank Transfer'
-  if (normalized === 'paylater') return 'Pay Later'
-  if (normalized === 'cardless_emi') return 'Cardless EMI'
-  return value
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return "Not set";
+  if (normalized === "razorpay") return "Razorpay";
+  if (normalized === "payu") return "PayU";
+  if (normalized === "upi") return "UPI";
+  if (normalized === "card") return "Credit / Debit Card";
+  if (normalized === "netbanking") return "Net Banking";
+  if (normalized === "wallet") return "Wallet";
+  if (normalized === "emi") return "EMI";
+  if (normalized === "bank_transfer") return "Bank Transfer";
+  if (normalized === "paylater") return "Pay Later";
+  if (normalized === "cardless_emi") return "Cardless EMI";
+  return value;
 }
 
 async function getSuccessOrder(orderId: string, userId: string) {
-  const supabase = createAdminSupabaseClient()
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
-    .from('shelf_orders')
-    .select('*')
-    .eq('id', orderId)
-    .eq('user_id', userId)
-    .maybeSingle()
+    .from("shelf_orders")
+    .select("*")
+    .eq("id", orderId)
+    .eq("user_id", userId)
+    .maybeSingle();
 
-  if (error) throw new Error(error.message)
-  return data ? mapShopOrderRow(data) : null
+  if (error) throw new Error(error.message);
+  return data ? mapShopOrderRow(data) : null;
 }
 
-export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSuccessPageProps) {
-  const auth = await getCurrentUserProfile()
-  const { orderId: rawOrderId } = await searchParams
-  const orderId = getSearchValue(rawOrderId)
+export default async function ShopOrderSuccessPage({
+  searchParams,
+}: ShopOrderSuccessPageProps) {
+  const auth = await getCurrentUserProfile();
+  const { orderId: rawOrderId } = await searchParams;
+  const orderId = getSearchValue(rawOrderId);
 
   if (!auth) {
     const nextPath = orderId
       ? `/3d-shop/order-success?orderId=${encodeURIComponent(orderId)}`
-      : '/3d-shop/orders'
-    redirect(`/login?next=${encodeURIComponent(nextPath)}`)
+      : "/3d-shop/orders";
+    redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
-  if (!orderId) redirect('/3d-shop/orders')
+  if (!orderId) redirect("/3d-shop/orders");
 
-  const order = await getSuccessOrder(orderId, auth.profile.id)
-  if (!order) redirect('/3d-shop/orders')
+  const order = await getSuccessOrder(orderId, auth.profile.id);
+  if (!order) redirect("/3d-shop/orders");
 
-  const itemCount = getOrderItemCount(order)
-  const primaryImage = getPrimaryImage(order)
-  const previewItems = order.items.slice(0, 4)
-  const currentFulfilmentIndex = SHOP_FULFILMENT_PROGRESS.indexOf(order.fulfilment_status)
+  const itemCount = getOrderItemCount(order);
+  const primaryImage = getPrimaryImage(order);
+  const previewItems = order.items.slice(0, 4);
+  const currentFulfilmentIndex = SHOP_FULFILMENT_PROGRESS.indexOf(
+    order.fulfilment_status,
+  );
   const timeline = SHOP_FULFILMENT_PROGRESS.map((status, index) => ({
     label: getShopFulfilmentStatusLabel(status),
-    detail: index === 0 ? 'Order locked' : index === 3 ? 'Dispatch prep' : index === 4 ? 'Tracking shared' : '',
+    detail:
+      index === 0
+        ? "Order locked"
+        : index === 3
+          ? "Dispatch prep"
+          : index === 4
+            ? "Tracking shared"
+            : "",
     active: index <= currentFulfilmentIndex,
-  }))
+  }));
 
   return (
     <ShopShell transparentNav>
@@ -132,7 +149,8 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
               </h1>
 
               <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--shop-text-secondary)]">
-                We have reserved your items, captured the delivery details, and queued the order for fulfillment.
+                We have reserved your items, captured the delivery details, and
+                queued the order for fulfillment.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -154,10 +172,26 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
 
               <div className="mt-9 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {[
-                  { icon: ReceiptText, label: 'Order', value: `#${order.order_number}` },
-                  { icon: PackageCheck, label: 'Items', value: `${itemCount} item${itemCount === 1 ? '' : 's'}` },
-                  { icon: Banknote, label: 'Total', value: formatShopPrice(order.total_amount) },
-                  { icon: MapPin, label: 'Delivery', value: order.shipping_address.city },
+                  {
+                    icon: ReceiptText,
+                    label: "Order",
+                    value: `#${order.order_number}`,
+                  },
+                  {
+                    icon: PackageCheck,
+                    label: "Items",
+                    value: `${itemCount} item${itemCount === 1 ? "" : "s"}`,
+                  },
+                  {
+                    icon: Banknote,
+                    label: "Total",
+                    value: formatShopPrice(order.total_amount),
+                  },
+                  {
+                    icon: MapPin,
+                    label: "Delivery",
+                    value: order.shipping_address.city,
+                  },
                 ].map((item) => (
                   <div
                     key={item.label}
@@ -167,7 +201,9 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
                       <item.icon className="h-4 w-4 text-[var(--shop-gold)]" />
                       {item.label}
                     </div>
-                    <div className="mt-2 break-all text-lg font-semibold text-[var(--shop-text-primary)]">{item.value}</div>
+                    <div className="mt-2 break-all text-lg font-semibold text-[var(--shop-text-primary)]">
+                      {item.value}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -182,7 +218,9 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
                         <Sparkles className="h-4 w-4" />
                         Flux3D Shop
                       </div>
-                      <div className="font-[var(--shop-font-heading)] mt-3 text-2xl font-semibold text-[var(--shop-text-primary)]">Success Receipt</div>
+                      <div className="font-[var(--shop-font-heading)] mt-3 text-2xl font-semibold text-[var(--shop-text-primary)]">
+                        Success Receipt
+                      </div>
                       <div className="mt-1 text-sm font-medium text-[var(--shop-text-muted)]">
                         {formatShopOrderDateTime(order.placed_at)}
                       </div>
@@ -197,7 +235,9 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
                       <div className="relative aspect-[16/10] bg-[var(--shop-bg-muted)]">
                         <Image
                           src={primaryImage}
-                          alt={order.items[0]?.productName || '3D Shop order item'}
+                          alt={
+                            order.items[0]?.productName || "3D Shop order item"
+                          }
                           fill
                           sizes="(min-width: 1024px) 420px, 100vw"
                           className="object-cover"
@@ -221,17 +261,31 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
 
                     <div className="grid grid-cols-3 divide-x divide-[var(--shop-border-light)] border-t border-[var(--shop-border-light)] text-center">
                       <div className="px-3 py-4">
-                        <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--shop-text-muted)]">Status</div>
-                        <div className="mt-1 text-sm font-semibold text-emerald-700">{getShopFulfilmentStatusLabel(order.fulfilment_status)}</div>
+                        <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--shop-text-muted)]">
+                          Status
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-emerald-700">
+                          {getShopFulfilmentStatusLabel(
+                            order.fulfilment_status,
+                          )}
+                        </div>
                       </div>
                       <div className="px-3 py-4">
-                        <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--shop-text-muted)]">Payment</div>
-                        <div className="mt-1 text-sm font-semibold text-[var(--shop-text-primary)]">{getShopPaymentStatusLabel(order.payment_status)}</div>
-                      </div>
-                      <div className="px-3 py-4">
-                        <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--shop-text-muted)]">Mode</div>
+                        <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--shop-text-muted)]">
+                          Payment
+                        </div>
                         <div className="mt-1 text-sm font-semibold text-[var(--shop-text-primary)]">
-                          {getPaymentModeLabel(order.payment_provider ?? order.payment_method)}
+                          {getShopPaymentStatusLabel(order.payment_status)}
+                        </div>
+                      </div>
+                      <div className="px-3 py-4">
+                        <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--shop-text-muted)]">
+                          Mode
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-[var(--shop-text-primary)]">
+                          {getPaymentModeLabel(
+                            order.payment_provider ?? order.payment_method,
+                          )}
                         </div>
                       </div>
                     </div>
@@ -240,12 +294,18 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
                   <div className="mt-5 space-y-3">
                     {previewItems.map((item) => (
                       <div
-                        key={`${item.skuId}-${item.customizationText ?? ''}`}
+                        key={`${item.skuId}-${item.customizationText ?? ""}`}
                         className="grid grid-cols-[48px_1fr_auto] items-center gap-3 rounded-[var(--shop-radius-md)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-2.5"
                       >
                         <div className="relative h-12 w-12 overflow-hidden rounded-xl bg-[var(--shop-bg-muted)]">
                           {item.productThumbnail ? (
-                            <Image src={item.productThumbnail} alt={item.productName} fill sizes="48px" className="object-cover" />
+                            <Image
+                              src={item.productThumbnail}
+                              alt={item.productName}
+                              fill
+                              sizes="48px"
+                              className="object-cover"
+                            />
                           ) : (
                             <div className="grid h-full place-items-center">
                               <PackageCheck className="h-5 w-5 text-[var(--shop-text-muted)]" />
@@ -253,10 +313,16 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
                           )}
                         </div>
                         <div className="min-w-0">
-                          <div className="line-clamp-1 text-sm font-semibold text-[var(--shop-text-primary)]">{item.productName}</div>
-                          <div className="line-clamp-1 text-xs font-medium text-[var(--shop-text-muted)]">{item.variantLabel}</div>
+                          <div className="line-clamp-1 text-sm font-semibold text-[var(--shop-text-primary)]">
+                            {item.productName}
+                          </div>
+                          <div className="line-clamp-1 text-xs font-medium text-[var(--shop-text-muted)]">
+                            {item.variantLabel}
+                          </div>
                         </div>
-                        <div className="text-right text-sm font-semibold text-[var(--shop-text-primary)]">x{item.quantity}</div>
+                        <div className="text-right text-sm font-semibold text-[var(--shop-text-primary)]">
+                          x{item.quantity}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -272,7 +338,9 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
                   <CircleDot className="h-4 w-4" />
                   Live Fulfillment
                 </div>
-                <h2 className="font-[var(--shop-font-heading)] mt-2 text-2xl font-semibold text-[var(--shop-text-primary)]">What happens next</h2>
+                <h2 className="font-[var(--shop-font-heading)] mt-2 text-2xl font-semibold text-[var(--shop-text-primary)]">
+                  What happens next
+                </h2>
               </div>
               <Link
                 href="/3d-shop/orders"
@@ -289,14 +357,18 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
                   key={step.label}
                   className={`rounded-[var(--shop-radius-lg)] border p-4 ${
                     step.active
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                      : 'border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] text-[var(--shop-text-secondary)]'
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                      : "border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] text-[var(--shop-text-secondary)]"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <div className={`grid h-9 w-9 place-items-center rounded-full border ${
-                      step.active ? 'border-emerald-200 bg-emerald-600 text-white' : 'border-[var(--shop-border-light)] bg-white text-[var(--shop-text-muted)]'
-                    }`}>
+                    <div
+                      className={`grid h-9 w-9 place-items-center rounded-full border ${
+                        step.active
+                          ? "border-emerald-200 bg-emerald-600 text-white"
+                          : "border-[var(--shop-border-light)] bg-white text-[var(--shop-text-muted)]"
+                      }`}
+                    >
                       {step.active ? <Check className="h-5 w-5" /> : index + 1}
                     </div>
                     {step.active ? (
@@ -305,24 +377,45 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
                       <Clock3 className="h-5 w-5 text-[var(--shop-text-muted)]" />
                     )}
                   </div>
-                  <div className="mt-4 text-base font-semibold">{step.label}</div>
-                  <div className="mt-1 text-sm font-medium opacity-70">{step.detail}</div>
+                  <div className="mt-4 text-base font-semibold">
+                    {step.label}
+                  </div>
+                  <div className="mt-1 text-sm font-medium opacity-70">
+                    {step.detail}
+                  </div>
                 </div>
               ))}
             </div>
 
             <div className="mt-6 grid gap-4 md:grid-cols-3">
               {[
-                { icon: CalendarClock, label: 'Placed', value: formatShopOrderDateTime(order.placed_at) },
-                { icon: Banknote, label: 'Payable', value: `${formatShopPrice(order.total_amount)} on delivery` },
-                { icon: MapPin, label: 'Destination', value: `${order.shipping_address.city}, ${order.shipping_address.state} ${order.shipping_address.pincode}` },
+                {
+                  icon: CalendarClock,
+                  label: "Placed",
+                  value: formatShopOrderDateTime(order.placed_at),
+                },
+                {
+                  icon: Banknote,
+                  label: "Payable",
+                  value: `${formatShopPrice(order.total_amount)} on delivery`,
+                },
+                {
+                  icon: MapPin,
+                  label: "Destination",
+                  value: `${order.shipping_address.city}, ${order.shipping_address.state} ${order.shipping_address.pincode}`,
+                },
               ].map((item) => (
-                <div key={item.label} className="rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-4">
+                <div
+                  key={item.label}
+                  className="rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] p-4"
+                >
                   <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--shop-text-muted)]">
                     <item.icon className="h-4 w-4 text-[var(--shop-gold)]" />
                     {item.label}
                   </div>
-                  <div className="mt-2 line-clamp-1 text-sm font-semibold text-[var(--shop-text-primary)]">{item.value}</div>
+                  <div className="mt-2 line-clamp-1 text-sm font-semibold text-[var(--shop-text-primary)]">
+                    {item.value}
+                  </div>
                 </div>
               ))}
             </div>
@@ -331,10 +424,14 @@ export default async function ShopOrderSuccessPage({ searchParams }: ShopOrderSu
       </main>
       <ShopOrderTracking
         orderNumber={order.order_number}
-        itemIds={order.items.map((i) => i.skuCode)}
-        contents={order.items.map((i) => ({ id: i.skuCode, quantity: i.quantity, item_price: i.unitPrice }))}
+        itemIds={order.items.map((i) => toCatalogRetailerId(i.skuCode))}
+        contents={order.items.map((i) => ({
+          id: toCatalogRetailerId(i.skuCode),
+          quantity: i.quantity,
+          item_price: i.unitPrice,
+        }))}
         value={order.total_amount}
       />
     </ShopShell>
-  )
+  );
 }

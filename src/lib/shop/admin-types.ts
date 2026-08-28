@@ -204,6 +204,13 @@ export type ShopSku = {
   id: string;
   product_id: string;
   sku_code: string;
+  /**
+   * The id used in the Meta (WhatsApp) catalog for this SKU. SKU codes over
+   * Meta's 100-char retailer_id limit are shortened deterministically — pixel
+   * / CAPI events must send THIS value as content_ids, never the raw sku_code.
+   * Populated server-side in public-data normalizeSku().
+   */
+  catalog_retailer_id?: string;
   variant_combination: Record<string, string | boolean>;
   price: number;
   compare_at_price: number | null;

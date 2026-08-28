@@ -188,10 +188,19 @@ export async function generateMetadata({
     blocksText.slice(0, 155) ||
     product.description ||
     `Shop ${product.name} on 3D Shop by Flux3D.`;
+  // The id the Meta catalog uses for this product — lets Meta's automatic pixel
+  // scraping match the page to catalog items instead of falling back to URL.
+  const retailerItemId =
+    product.skus[0]?.catalog_retailer_id ?? product.skus[0]?.sku_code;
   return {
     title,
     description,
     alternates: { canonical: `/3d-shop/product/${product.slug}` },
+    other: retailerItemId
+      ? {
+          "product:retailer_item_id": retailerItemId,
+        }
+      : undefined,
     openGraph: {
       title,
       description,

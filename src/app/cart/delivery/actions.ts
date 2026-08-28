@@ -1415,19 +1415,17 @@ export async function verifyCartPaymentAndCreateOrder(params: {
 
     const fileName =
       (cartItem?.fileName as string) ?? `item-${order.id.slice(0, 8)}.stl`;
-    await adminSupabase
-      .from("model_files")
-      .upsert(
-        {
-          user_id: auth.user.id,
-          file_name: fileName,
-          file_url: cartItem?.fileUrl as string,
-          material: (cartItem?.material as string)?.trim() ?? "",
-          status: "ordered",
-          uploaded_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,file_url", ignoreDuplicates: false },
-      );
+    await adminSupabase.from("model_files").upsert(
+      {
+        user_id: auth.user.id,
+        file_name: fileName,
+        file_url: cartItem?.fileUrl as string,
+        material: (cartItem?.material as string)?.trim() ?? "",
+        status: "ordered",
+        uploaded_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,file_url", ignoreDuplicates: false },
+    );
 
     const { data: qvRow } = await adminSupabase
       .from("quote_versions")
@@ -1687,12 +1685,11 @@ export async function verifyCartPaymentAndCreateOrder(params: {
     .select("phone_number")
     .eq("id", auth.user.id)
     .maybeSingle();
-  const contentIds = insertedOrders.map((o) => o.id);
-  const contents = insertedOrders.map((o) => ({
-    id: o.id,
-    quantity: 1,
-    item_price: capture.amountPaise / 100,
-  }));
+  // Custom-quote cart orders have no catalog SKUs — never send order UUIDs as
+  // content_ids (they create "unmatched event" noise in Meta Events Manager).
+  const contentIds: string[] = [];
+  const contents: Array<{ id: string; quantity: number; item_price?: number }> =
+    [];
   const purchaseEvent = buildPurchaseEvent({
     eventId: generateEventId(),
     eventSourceUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://flux3d.in"}/my-orders/${firstOrder.id}`,

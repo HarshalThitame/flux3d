@@ -20,6 +20,7 @@ import type {
   ShopReviewsResult,
 } from "@/lib/shop/public-types";
 import { normalizeShopNumber } from "@/lib/shop/selection";
+import { toCatalogRetailerId } from "@/lib/meta/catalog";
 
 /**
  * Public shop data is served through Next.js's data cache (unstable_cache):
@@ -286,6 +287,9 @@ const PRODUCT_SELECT = `
 function normalizeSku(sku: ShopSku): ShopSku {
   return {
     ...sku,
+    // The id the Meta catalog uses for this SKU. Long sku_codes are shortened
+    // deterministically here so pixel/CAPI content_ids can match the catalog.
+    catalog_retailer_id: toCatalogRetailerId(sku.sku_code),
     price: normalizeShopNumber(sku.price),
     compare_at_price:
       sku.compare_at_price === null

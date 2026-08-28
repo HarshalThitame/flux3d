@@ -130,6 +130,8 @@ export default function QuickAddModal({
         "",
       skuId: resolvedSku.id,
       skuCode: resolvedSku.sku_code,
+      catalogRetailerId:
+        resolvedSku.catalog_retailer_id ?? resolvedSku.sku_code,
       variantCombination: resolvedSku.variant_combination,
       variantLabel: formatVariantLabel(resolvedSku.variant_combination),
       customizationText,
@@ -140,10 +142,14 @@ export default function QuickAddModal({
     });
     setAdded(true);
     trackMetaEvent("AddToCart", {
-      content_ids: [resolvedSku.sku_code],
+      content_ids: [resolvedSku.catalog_retailer_id ?? resolvedSku.sku_code],
       content_type: "product",
       contents: [
-        { id: resolvedSku.sku_code, quantity, item_price: resolvedSku.price },
+        {
+          id: resolvedSku.catalog_retailer_id ?? resolvedSku.sku_code,
+          quantity,
+          item_price: resolvedSku.price,
+        },
       ],
       value: resolvedSku.price * quantity,
       currency: "INR",

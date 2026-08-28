@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import {
   GripVertical,
@@ -77,8 +77,10 @@ export function ValueSwatchCard({
 }) {
   const { uploadImage, setToast } = useProductEditor();
   const [busy, setBusy] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const metadata = variant.value_metadata?.[value] ?? {};
   const showColor = variant.option_type === "swatch_color";
+  const hasImage = Boolean(metadata.swatch_image_url);
 
   async function handleSwatchUpload(file: File) {
     setBusy(true);
@@ -98,7 +100,7 @@ export function ValueSwatchCard({
 
   return (
     <div
-      className={`group flex items-start gap-3 rounded-2xl border border-[#C9A24B]/15 bg-gradient-to-b from-white to-[#FAF7EF] p-3 shadow-[0_2px_12px_rgba(201,162,75,0.08)] transition hover:border-[#C9A24B]/40 ${dragging ? "opacity-50" : ""} ${onDragStart ? "cursor-grab active:cursor-grabbing" : ""}`}
+      className={`flex items-start gap-3 rounded-2xl border border-[#C9A24B]/15 bg-gradient-to-b from-white to-[#FAF7EF] p-3 shadow-[0_2px_12px_rgba(201,162,75,0.08)] transition hover:border-[#C9A24B]/40 ${dragging ? "opacity-50" : ""} ${onDragStart ? "cursor-grab active:cursor-grabbing" : ""}`}
       draggable={Boolean(onDragStart)}
       onDragStart={onDragStart}
       onDragOver={onDragOver}
@@ -130,23 +132,6 @@ export function ValueSwatchCard({
 
       <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-[#C9A24B]/20 bg-[#F4EDDC]">
         {swatchPreview(metadata, value, variant.option_type)}
-        <label className="absolute inset-0 grid cursor-pointer place-items-center bg-black/0 opacity-0 transition group-hover:bg-black/25 group-hover:opacity-100">
-          {busy ? (
-            <Loader2 className="h-5 w-5 animate-spin text-white" />
-          ) : (
-            <ImagePlus className="h-5 w-5 text-white" />
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) void handleSwatchUpload(file);
-              event.target.value = "";
-            }}
-          />
-        </label>
       </div>
 
       <div className="min-w-0 flex-1 space-y-2">
@@ -158,24 +143,61 @@ export function ValueSwatchCard({
           />
           <button
             type="button"
-            onClick={() => onGenerateTexture(value)}
-            disabled={textureBusy}
-            title="Generate a luxury texture swatch with AI"
-            className="shrink-0 rounded-lg border border-[#C9A24B]/25 p-1.5 text-[#B8860B] transition hover:bg-[#C9A24B]/10 disabled:opacity-40"
-          >
-            {textureBusy ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="h-3.5 w-3.5" />
-            )}
-          </button>
-          <button
-            type="button"
             onClick={onRemove}
             aria-label={`Remove ${value}`}
             className="shrink-0 rounded-lg p-1.5 text-[#6F7192] transition hover:bg-rose-50 hover:text-rose-600"
           >
             <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) void handleSwatchUpload(file);
+              event.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#C9A24B]/25 px-2.5 py-1 text-[11px] font-semibold text-[#B8860B] transition hover:bg-[#C9A24B]/10 disabled:opacity-40"
+          >
+            {busy ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <ImagePlus className="h-3 w-3" />
+            )}
+            {hasImage ? "Replace image" : "Upload image"}
+          </button>
+          {hasImage && (
+            <button
+              type="button"
+              onClick={() => onUpdateMetadata({ swatch_image_url: null })}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-2.5 py-1 text-[11px] font-semibold text-rose-600 transition hover:bg-rose-50"
+            >
+              Remove image
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => onGenerateTexture(value)}
+            disabled={textureBusy}
+            title="Generate a luxury texture swatch with AI"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#C9A24B]/25 px-2.5 py-1 text-[11px] font-semibold text-[#B8860B] transition hover:bg-[#C9A24B]/10 disabled:opacity-40"
+          >
+            {textureBusy ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Sparkles className="h-3 w-3" />
+            )}
+            Generate with AI
           </button>
         </div>
 

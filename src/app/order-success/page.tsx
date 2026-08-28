@@ -1,54 +1,63 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { CheckCircle2, PackageCheck, FileText, ArrowRight, Sparkles, PartyPopper } from 'lucide-react'
-import { useBusinessSettings } from '@/lib/settings-context'
-import { trackPixelEvent, generateEventId } from '@/lib/meta/event-utils'
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  CheckCircle2,
+  PackageCheck,
+  FileText,
+  ArrowRight,
+  Sparkles,
+  PartyPopper,
+} from "lucide-react";
+import { useBusinessSettings } from "@/lib/settings-context";
+import { trackPixelEvent, generateEventId } from "@/lib/meta/event-utils";
 
 type OrderSuccessData = {
-  orderId: string
-  orderNumber: string
-  itemCount?: number
-  totalPrice?: number
-}
+  orderId: string;
+  orderNumber: string;
+  itemCount?: number;
+  totalPrice?: number;
+};
 
 export default function OrderSuccessPage() {
-  const { settings } = useBusinessSettings()
-  const router = useRouter()
+  const { settings } = useBusinessSettings();
+  const router = useRouter();
   const [orderData] = useState<OrderSuccessData | null>(() => {
-    if (typeof window !== 'undefined') {
-      const raw = sessionStorage.getItem('flux3d-order-success')
+    if (typeof window !== "undefined") {
+      const raw = sessionStorage.getItem("flux3d-order-success");
       if (raw) {
         try {
-          return JSON.parse(raw) as OrderSuccessData
+          return JSON.parse(raw) as OrderSuccessData;
         } catch {
-          return null
+          return null;
         }
       }
     }
-    return null
-  })
+    return null;
+  });
 
   useEffect(() => {
     if (!orderData) {
-      router.replace('/')
-      return
+      router.replace("/");
+      return;
     }
     // Meta requires custom_data.value > 0; skip tracking when no valid total exists.
-    const purchaseValue = orderData.totalPrice ?? 0
-    if (purchaseValue <= 0) return
+    const purchaseValue = orderData.totalPrice ?? 0;
+    if (purchaseValue <= 0) return;
     trackPixelEvent({
-      eventName: 'Purchase',
+      eventName: "Purchase",
       eventId: generateEventId(),
-      customData: { value: purchaseValue, currency: 'INR', content_ids: [orderData.orderId], content_type: 'product' },
-    })
-  }, [orderData, router])
+      // No content_ids: orderData.orderId is a UUID, not a catalog id. The
+      // server-side CAPI Purchase sends catalog-matched content_ids on capture.
+      customData: { value: purchaseValue, currency: "INR" },
+    });
+  }, [orderData, router]);
 
   if (!orderData) {
-    return null
+    return null;
   }
 
   return (
@@ -63,14 +72,17 @@ export default function OrderSuccessPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
           className="mb-8"
         >
           <div className="relative">
             <div className="absolute inset-0 animate-ping rounded-full bg-emerald-400/20" />
             <div className="absolute inset-0 animate-pulse rounded-full bg-emerald-400/10" />
             <div className="relative flex h-28 w-28 items-center justify-center rounded-full bg-[linear-gradient(135deg,rgba(16,185,129,0.2),rgba(5,150,105,0.1))] border border-emerald-400/30">
-              <CheckCircle2 className="h-14 w-14 text-emerald-400" strokeWidth={2.5} />
+              <CheckCircle2
+                className="h-14 w-14 text-emerald-400"
+                strokeWidth={2.5}
+              />
             </div>
           </div>
         </motion.div>
@@ -87,14 +99,15 @@ export default function OrderSuccessPage() {
           </div>
 
           <h1 className="font-[var(--font-syne)] text-[clamp(2.5rem,6vw,4.5rem)] font-extrabold leading-[0.95] tracking-[-2px] text-[#070b1d]">
-            Order{' '}
+            Order{" "}
             <span className="bg-[linear-gradient(135deg,#6d28d9,#a855f7,#6d28d9)] bg-clip-text text-transparent">
               Submitted
             </span>
           </h1>
 
           <p className="mx-auto mt-5 max-w-[520px] text-base leading-relaxed text-[#6F7192]">
-            Your order has been successfully submitted and is now being reviewed by our team. You&apos;ll receive updates as your order progresses.
+            Your order has been successfully submitted and is now being reviewed
+            by our team. You&apos;ll receive updates as your order progresses.
           </p>
         </motion.div>
 
@@ -110,7 +123,9 @@ export default function OrderSuccessPage() {
                 <PackageCheck className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Order Number</div>
+                <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
+                  Order Number
+                </div>
                 <div className="mt-0.5 font-[var(--font-syne)] text-xl font-bold text-[#070b1d]">
                   {orderData.orderNumber}
                 </div>
@@ -121,14 +136,19 @@ export default function OrderSuccessPage() {
               {orderData.itemCount !== undefined && (
                 <div className="flex items-center justify-between rounded-[16px] border border-[#6d28d9]/10 bg-white/[0.02] px-4 py-3">
                   <span className="text-sm text-[#6F7192]">Items</span>
-                  <span className="text-sm font-semibold text-[#070b1d]">{orderData.itemCount} item{orderData.itemCount !== 1 ? 's' : ''}</span>
+                  <span className="text-sm font-semibold text-[#070b1d]">
+                    {orderData.itemCount} item
+                    {orderData.itemCount !== 1 ? "s" : ""}
+                  </span>
                 </div>
               )}
 
               {orderData.totalPrice !== undefined && (
                 <div className="flex items-center justify-between rounded-[16px] border border-[#6d28d9]/10 bg-white/[0.02] px-4 py-3">
                   <span className="text-sm text-[#6F7192]">Total Amount</span>
-                  <span className="text-sm font-semibold text-[#6d28d9]">₹{orderData.totalPrice.toFixed(0)}</span>
+                  <span className="text-sm font-semibold text-[#6d28d9]">
+                    ₹{orderData.totalPrice.toFixed(0)}
+                  </span>
                 </div>
               )}
 
@@ -192,5 +212,5 @@ export default function OrderSuccessPage() {
         </motion.div>
       </div>
     </div>
-  )
+  );
 }

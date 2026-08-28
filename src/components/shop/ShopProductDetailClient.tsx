@@ -634,10 +634,10 @@ export default function ShopProductDetailClient({
 
   useEffect(() => {
     trackMetaEvent("ViewContent", {
-      content_ids: product.skus.map((s) => s.sku_code),
+      content_ids: product.skus.map((s) => s.catalog_retailer_id ?? s.sku_code),
       content_type: "product_group",
       contents: product.skus.map((s) => ({
-        id: s.sku_code,
+        id: s.catalog_retailer_id ?? s.sku_code,
         quantity: 1,
         item_price: s.price,
       })),
@@ -700,6 +700,8 @@ export default function ShopProductDetailClient({
         "",
       skuId: resolvedSku.id,
       skuCode: resolvedSku.sku_code,
+      catalogRetailerId:
+        resolvedSku.catalog_retailer_id ?? resolvedSku.sku_code,
       variantCombination: resolvedSku.variant_combination,
       variantLabel: formatVariantLabel(resolvedSku.variant_combination),
       customizationText,
@@ -709,10 +711,14 @@ export default function ShopProductDetailClient({
       maxStock,
     });
     trackMetaEvent("AddToCart", {
-      content_ids: [resolvedSku.sku_code],
+      content_ids: [resolvedSku.catalog_retailer_id ?? resolvedSku.sku_code],
       content_type: "product",
       contents: [
-        { id: resolvedSku.sku_code, quantity, item_price: resolvedSku.price },
+        {
+          id: resolvedSku.catalog_retailer_id ?? resolvedSku.sku_code,
+          quantity,
+          item_price: resolvedSku.price,
+        },
       ],
       value: resolvedSku.price * quantity,
       currency: "INR",
@@ -1267,6 +1273,9 @@ export default function ShopProductDetailClient({
                 </h1>
                 <WishlistButton
                   productId={product.id}
+                  catalogRetailerId={
+                    resolvedSku?.catalog_retailer_id ?? resolvedSku?.sku_code
+                  }
                   className="shrink-0 rounded-xl border-[var(--shop-border-light)]"
                 />
               </div>
