@@ -1,8 +1,15 @@
-'use client'
+"use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
-import dynamic from 'next/dynamic'
-import { motion, useReducedMotion } from 'framer-motion'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import dynamic from "next/dynamic";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   UploadCloud,
   CheckCircle2,
@@ -20,54 +27,68 @@ import {
   FileArchive,
   Move3D,
   Cuboid,
-} from 'lucide-react'
-import EmptyState from '@/components/admin/EmptyState'
-import type { AppUserProfile } from '@/lib/auth/server'
-import { trackMetaEvent } from '@/lib/meta/event-utils'
-import { getMaterialById, layerHeightOptions } from '@/lib/quote/materials'
-import { calculateInstantQuote, formatDurationMinutes, getPostProcessingCharge, postProcessingOptions } from '@/lib/quote/pricing-engine'
-import type { PricingSettingsInput } from '@/lib/quote/pricing-waterfall'
+} from "lucide-react";
+import EmptyState from "@/components/admin/EmptyState";
+import type { AppUserProfile } from "@/lib/auth/server";
+import { getMaterialById, layerHeightOptions } from "@/lib/quote/materials";
+import {
+  calculateInstantQuote,
+  formatDurationMinutes,
+  getPostProcessingCharge,
+  postProcessingOptions,
+} from "@/lib/quote/pricing-engine";
+import type { PricingSettingsInput } from "@/lib/quote/pricing-waterfall";
 import {
   getSignedModelUrl,
   saveQuoteToSupabase,
   uploadFileToSupabaseStorage,
   validateModelFile,
-} from '@/lib/quote/supabase-storage'
-import { hasSupabaseConfig } from '@/lib/supabase/config'
-import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
-import type { ModelMetadata } from '@/lib/quote/server-pricing'
-import type { ParsedModel, QuoteConfig, QuoteMaterial, UploadState } from '@/lib/quote/types'
-import { useCart } from '@/lib/cart/context'
-import type { CartItem } from '@/lib/cart/types'
-import Toast, { type ToastState } from '@/components/quote/Toast'
-import Link from 'next/link'
-import { ORDER_DRAFT_STORAGE_KEY, type OrderDraft } from '@/lib/orders'
+} from "@/lib/quote/supabase-storage";
+import { hasSupabaseConfig } from "@/lib/supabase/config";
+import { trackFeatureUsage } from "@/lib/tracking/featureTracker";
+import type { ModelMetadata } from "@/lib/quote/server-pricing";
+import type {
+  ParsedModel,
+  QuoteConfig,
+  QuoteMaterial,
+  UploadState,
+} from "@/lib/quote/types";
+import { useCart } from "@/lib/cart/context";
+import type { CartItem } from "@/lib/cart/types";
+import Toast, { type ToastState } from "@/components/quote/Toast";
+import Link from "next/link";
+import { ORDER_DRAFT_STORAGE_KEY, type OrderDraft } from "@/lib/orders";
 
 const initialUploadState: UploadState = {
-  status: 'idle',
+  status: "idle",
   progress: 0,
-}
+};
 
-const ViewerSection = dynamic(() => import('@/components/instant-quote/ViewerSection'), {
-  ssr: false,
-  loading: () => <div className="h-[400px] animate-pulse rounded-2xl bg-[#070a12]" />,
-})
+const ViewerSection = dynamic(
+  () => import("@/components/instant-quote/ViewerSection"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[400px] animate-pulse rounded-2xl bg-[#070a12]" />
+    ),
+  },
+);
 
 export type InstantQuoteWorkspaceProps = {
-  user: AppUserProfile | null
-  materials: QuoteMaterial[]
-  initialMaterialId?: string
+  user: AppUserProfile | null;
+  materials: QuoteMaterial[];
+  initialMaterialId?: string;
   initialModelFile?: {
-    fileName: string
-    fileUrl: string
-    material?: string | null
-  }
-  pricingSettings: PricingSettingsInput
+    fileName: string;
+    fileUrl: string;
+    material?: string | null;
+  };
+  pricingSettings: PricingSettingsInput;
   bulkOrderContact: {
-    email: string
-    whatsappNumber: string
-  }
-}
+    email: string;
+    whatsappNumber: string;
+  };
+};
 
 export default function InstantQuoteWorkspace({
   user,
@@ -77,7 +98,7 @@ export default function InstantQuoteWorkspace({
   pricingSettings,
   bulkOrderContact,
 }: InstantQuoteWorkspaceProps) {
-  const shouldReduceMotion = useReducedMotion()
+  const shouldReduceMotion = useReducedMotion();
   if (materials.length === 0) {
     return (
       <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-8 text-[#070b1d] md:px-8 md:pt-10 xl:px-10">
@@ -88,7 +109,7 @@ export default function InstantQuoteWorkspace({
           />
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -100,76 +121,86 @@ export default function InstantQuoteWorkspace({
       pricingSettings={pricingSettings}
       bulkOrderContact={bulkOrderContact}
     />
-  )
+  );
 }
 
-const WORKSPACE_STORAGE_KEY = 'flux3d-workspace-draft'
-const QUOTE_ID_STORAGE_KEY = 'flux3d-quote-id'
+const WORKSPACE_STORAGE_KEY = "flux3d-workspace-draft";
+const QUOTE_ID_STORAGE_KEY = "flux3d-quote-id";
 
 function getInitialQuoteId() {
-  if (typeof window === 'undefined') {
-    return ''
+  if (typeof window === "undefined") {
+    return "";
   }
 
-  const stored = sessionStorage.getItem(QUOTE_ID_STORAGE_KEY)
+  const stored = sessionStorage.getItem(QUOTE_ID_STORAGE_KEY);
   if (stored) {
-    return stored
+    return stored;
   }
 
-  const newId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
-  sessionStorage.setItem(QUOTE_ID_STORAGE_KEY, newId)
-  return newId
+  const newId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+  sessionStorage.setItem(QUOTE_ID_STORAGE_KEY, newId);
+  return newId;
 }
 
 function subscribeQuoteId() {
-  return () => {}
+  return () => {};
 }
 
 function getServerQuoteId() {
-  return ''
+  return "";
 }
 
-function getInitialWorkspaceConfig(defaultConfig: QuoteConfig, forceMaterialSelection: boolean) {
-  if (typeof window === 'undefined') {
-    return defaultConfig
+function getInitialWorkspaceConfig(
+  defaultConfig: QuoteConfig,
+  forceMaterialSelection: boolean,
+) {
+  if (typeof window === "undefined") {
+    return defaultConfig;
   }
 
-  const raw = sessionStorage.getItem(WORKSPACE_STORAGE_KEY)
+  const raw = sessionStorage.getItem(WORKSPACE_STORAGE_KEY);
   if (!raw) {
-    return defaultConfig
+    return defaultConfig;
   }
 
   try {
-    const parsed = JSON.parse(raw) as { config?: QuoteConfig }
-    const merged = { ...defaultConfig, ...parsed.config }
+    const parsed = JSON.parse(raw) as { config?: QuoteConfig };
+    const merged = { ...defaultConfig, ...parsed.config };
     return forceMaterialSelection
-      ? { ...merged, materialId: defaultConfig.materialId, color: defaultConfig.color }
-      : merged
+      ? {
+          ...merged,
+          materialId: defaultConfig.materialId,
+          color: defaultConfig.color,
+        }
+      : merged;
   } catch {
-    return defaultConfig
+    return defaultConfig;
   }
 }
 
 function getModelStoragePath(value: string) {
-  const bucket = process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? 'quote-models'
-  const trimmed = value.trim()
+  const bucket =
+    process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? "quote-models";
+  const trimmed = value.trim();
 
-  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
-    return trimmed
+  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+    return trimmed;
   }
 
   try {
-    const parsed = new URL(trimmed)
-    const publicPrefix = `/storage/v1/object/public/${bucket}/`
-    const signedPrefix = `/storage/v1/object/sign/${bucket}/`
+    const parsed = new URL(trimmed);
+    const publicPrefix = `/storage/v1/object/public/${bucket}/`;
+    const signedPrefix = `/storage/v1/object/sign/${bucket}/`;
 
-    if (parsed.pathname.startsWith(publicPrefix)) return parsed.pathname.slice(publicPrefix.length)
-    if (parsed.pathname.startsWith(signedPrefix)) return parsed.pathname.slice(signedPrefix.length)
+    if (parsed.pathname.startsWith(publicPrefix))
+      return parsed.pathname.slice(publicPrefix.length);
+    if (parsed.pathname.startsWith(signedPrefix))
+      return parsed.pathname.slice(signedPrefix.length);
   } catch {
-    return null
+    return null;
   }
 
-  return null
+  return null;
 }
 
 function CartEnabledWorkspace({
@@ -180,84 +211,126 @@ function CartEnabledWorkspace({
   pricingSettings,
   bulkOrderContact,
 }: InstantQuoteWorkspaceProps) {
-  const shouldReduceMotion = useReducedMotion()
-  const { addItem, isInCart } = useCart()
-  const supabaseEnabled = hasSupabaseConfig()
-  const preferredMaterial = initialMaterialId ? getMaterialById(initialMaterialId, materials) : undefined
-  const defaultMaterial = preferredMaterial ?? getMaterialById('pla', materials) ?? getMaterialById('pla-plus', materials) ?? materials[0]
-  const hydratedQuoteId = useSyncExternalStore(subscribeQuoteId, getInitialQuoteId, getServerQuoteId)
-  const [quoteIdOverride, setInitialQuoteId] = useState<string | null>(null)
-  const initialQuoteId = quoteIdOverride ?? hydratedQuoteId
+  const shouldReduceMotion = useReducedMotion();
+  const { addItem, isInCart } = useCart();
+  const supabaseEnabled = hasSupabaseConfig();
+  const preferredMaterial = initialMaterialId
+    ? getMaterialById(initialMaterialId, materials)
+    : undefined;
+  const defaultMaterial =
+    preferredMaterial ??
+    getMaterialById("pla", materials) ??
+    getMaterialById("pla-plus", materials) ??
+    materials[0];
+  const hydratedQuoteId = useSyncExternalStore(
+    subscribeQuoteId,
+    getInitialQuoteId,
+    getServerQuoteId,
+  );
+  const [quoteIdOverride, setInitialQuoteId] = useState<string | null>(null);
+  const initialQuoteId = quoteIdOverride ?? hydratedQuoteId;
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [selectedModel, setSelectedModel] = useState<ParsedModel | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedModel, setSelectedModel] = useState<ParsedModel | null>(null);
   const defaultConfig: QuoteConfig = {
     materialId: defaultMaterial.id,
-    color: defaultMaterial.colors[0]?.name ?? 'Default',
+    color: defaultMaterial.colors[0]?.name ?? "Default",
     infill: 20,
     layerHeight: 0.2,
     quantity: 1,
-    postProcessingLevel: 'none',
+    postProcessingLevel: "none",
     supports: false,
-  }
-  const [config, setConfig] = useState<QuoteConfig>(() => getInitialWorkspaceConfig(defaultConfig, Boolean(initialMaterialId)))
-  const [uploadState, setUploadState] = useState<UploadState>(initialUploadState)
-  const [viewerLoading, setViewerLoading] = useState(false)
-  const [fileError, setFileError] = useState<string | null>(null)
-  const [toast, setToast] = useState<ToastState>(null)
-  const [hasUserSelectedMaterial, setHasUserSelectedMaterial] = useState(Boolean(initialMaterialId))
-  const [savingQuote, setSavingQuote] = useState(false)
-  const uploadRef = useRef<HTMLDivElement>(null)
-  const viewerRef = useRef<HTMLDivElement>(null)
-  const materialRef = useRef<HTMLDivElement>(null)
-  const settingsRef = useRef<HTMLDivElement>(null)
-  const trackedQuoteRef = useRef<string | null>(null)
-  const prefilledModelRef = useRef(false)
+  };
+  const [config, setConfig] = useState<QuoteConfig>(() =>
+    getInitialWorkspaceConfig(defaultConfig, Boolean(initialMaterialId)),
+  );
+  const [uploadState, setUploadState] =
+    useState<UploadState>(initialUploadState);
+  const [viewerLoading, setViewerLoading] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastState>(null);
+  const [hasUserSelectedMaterial, setHasUserSelectedMaterial] = useState(
+    Boolean(initialMaterialId),
+  );
+  const [savingQuote, setSavingQuote] = useState(false);
+  const uploadRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<HTMLDivElement>(null);
+  const materialRef = useRef<HTMLDivElement>(null);
+  const settingsRef = useRef<HTMLDivElement>(null);
+  const trackedQuoteRef = useRef<string | null>(null);
+  const prefilledModelRef = useRef(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const draft = { config }
-    sessionStorage.setItem(WORKSPACE_STORAGE_KEY, JSON.stringify(draft))
-  }, [config])
+    if (typeof window === "undefined") return;
+    const draft = { config };
+    sessionStorage.setItem(WORKSPACE_STORAGE_KEY, JSON.stringify(draft));
+  }, [config]);
 
   useEffect(() => {
     if (!toast) {
-      return
+      return;
     }
 
-    const timer = window.setTimeout(() => setToast(null), 3200)
-    return () => window.clearTimeout(timer)
-  }, [toast])
+    const timer = window.setTimeout(() => setToast(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   const priceBreakdown = useMemo(
     () =>
       selectedModel?.requiresReview
         ? null
-        : calculateInstantQuote(selectedModel, config, materials, pricingSettings),
-    [selectedModel, config, materials, pricingSettings]
-  )
+        : calculateInstantQuote(
+            selectedModel,
+            config,
+            materials,
+            pricingSettings,
+          ),
+    [selectedModel, config, materials, pricingSettings],
+  );
 
   useEffect(() => {
-    if (!selectedModel || !priceBreakdown || !initialQuoteId || trackedQuoteRef.current === initialQuoteId) {
-      return
+    if (
+      !selectedModel ||
+      !priceBreakdown ||
+      !initialQuoteId ||
+      trackedQuoteRef.current === initialQuoteId
+    ) {
+      return;
     }
 
-    trackedQuoteRef.current = initialQuoteId
-    void trackFeatureUsage(user?.id ?? null, 'instant_quote', {
+    trackedQuoteRef.current = initialQuoteId;
+    void trackFeatureUsage(user?.id ?? null, "instant_quote", {
       quoteId: initialQuoteId,
       fileName: selectedModel.fileName,
       materialId: config.materialId,
       color: config.color,
       quantity: config.quantity,
       grandTotal: priceBreakdown.grandTotal,
-    }).catch(() => {})
-  }, [config.color, config.materialId, config.quantity, initialQuoteId, priceBreakdown, selectedModel, user?.id])
-  const selectedMaterial = getMaterialById(config.materialId, materials)
-  const postProcessingBaseAmount = priceBreakdown ? priceBreakdown.materialCost + priceBreakdown.machineCost : 0
-  const selectedColorName = config.color
+    }).catch(() => {});
+  }, [
+    config.color,
+    config.materialId,
+    config.quantity,
+    initialQuoteId,
+    priceBreakdown,
+    selectedModel,
+    user?.id,
+  ]);
+  const selectedMaterial = getMaterialById(config.materialId, materials);
+  const postProcessingBaseAmount = priceBreakdown
+    ? priceBreakdown.materialCost + priceBreakdown.machineCost
+    : 0;
+  const selectedColorName = config.color;
   const orderDraft = useMemo<OrderDraft | null>(() => {
-    if (!initialQuoteId || !selectedMaterial || !selectedModel || !priceBreakdown || uploadState.status !== 'success' || !uploadState.path) {
-      return null
+    if (
+      !initialQuoteId ||
+      !selectedMaterial ||
+      !selectedModel ||
+      !priceBreakdown ||
+      uploadState.status !== "success" ||
+      !uploadState.path
+    ) {
+      return null;
     }
 
     return {
@@ -308,7 +381,7 @@ function CartEnabledWorkspace({
         minimumOrderValue: priceBreakdown.minimumOrderValue,
         priceBeforeMinimum: priceBreakdown.priceBeforeMinimum,
       },
-      notes: '',
+      notes: "",
       modelMetadata: {
         fileName: selectedModel.fileName,
         fileSize: selectedModel.fileSize,
@@ -318,7 +391,7 @@ function CartEnabledWorkspace({
         triangleCount: selectedModel.triangleCount,
         suggestedMaterialId: selectedModel.suggestedMaterialId,
       } satisfies ModelMetadata,
-    }
+    };
   }, [
     config.infill,
     config.layerHeight,
@@ -332,229 +405,278 @@ function CartEnabledWorkspace({
     selectedModel,
     uploadState.path,
     uploadState.status,
-  ])
+  ]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
+    if (typeof window === "undefined") {
+      return;
     }
 
     if (orderDraft) {
-      window.sessionStorage.setItem(ORDER_DRAFT_STORAGE_KEY, JSON.stringify(orderDraft))
-      return
+      window.sessionStorage.setItem(
+        ORDER_DRAFT_STORAGE_KEY,
+        JSON.stringify(orderDraft),
+      );
+      return;
     }
 
-    window.sessionStorage.removeItem(ORDER_DRAFT_STORAGE_KEY)
-  }, [orderDraft])
+    window.sessionStorage.removeItem(ORDER_DRAFT_STORAGE_KEY);
+  }, [orderDraft]);
 
-  const handleFileSelect = useCallback(async (file: File) => {
-    const validationError = validateModelFile(file)
-    if (validationError) {
-      setFileError(validationError)
-      setToast({ type: 'error', message: validationError })
-      return
-    }
-
-    const newQuoteId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
-    sessionStorage.setItem('flux3d-quote-id', newQuoteId)
-    setInitialQuoteId(newQuoteId)
-
-    setFileError(null)
-    setSelectedFile(file)
-    setViewerLoading(true)
-    setUploadState({ status: 'uploading', progress: user && supabaseEnabled ? 0 : 12 })
-
-    try {
-      const { parseModelFile } = await import('@/lib/quote/model-utils')
-      const parsedModel = await parseModelFile(file)
-      setSelectedModel(parsedModel)
-
-      if (parsedModel.requiresReview) {
-        setToast({
-          type: 'info',
-          message: 'File accepted for manual review. Our team will calculate pricing and contact you.',
-        })
-      } else if (!hasUserSelectedMaterial) {
-        const suggestedMaterial = getMaterialById(parsedModel.suggestedMaterialId, materials) ?? materials[0]
-        if (!suggestedMaterial) {
-          throw new Error('No printable material is available for this model.')
-        }
-        setConfig((current) => ({
-          ...current,
-          materialId: suggestedMaterial.id,
-          color: suggestedMaterial.colors[0]?.name ?? current.color,
-        }))
-        setToast({
-          type: 'info',
-          message: `Suggested material: ${suggestedMaterial.name} based on your model size.`,
-        })
+  const handleFileSelect = useCallback(
+    async (file: File) => {
+      const validationError = validateModelFile(file);
+      if (validationError) {
+        setFileError(validationError);
+        setToast({ type: "error", message: validationError });
+        return;
       }
 
-      if (user && supabaseEnabled) {
-        const uploadResult = await uploadFileToSupabaseStorage(
-          file,
-          user.id,
-          newQuoteId,
-          (progress) => setUploadState({ status: 'uploading', progress })
-        )
-        setUploadState(uploadResult)
+      const newQuoteId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+      sessionStorage.setItem("flux3d-quote-id", newQuoteId);
+      setInitialQuoteId(newQuoteId);
 
-        void fetch('/api/quote/model-metadata', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fileUrl: uploadResult.path,
-            volumeMm3: parsedModel.volumeMm3,
-            dimensionsMm: parsedModel.dimensionsMm,
-            triangleCount: parsedModel.triangleCount,
-            fileName: file.name,
-            fileSize: file.size,
-            extension: parsedModel.extension,
-          }),
-        }).catch(() => {})
-      } else {
-        setUploadState({
-          status: 'success',
-          progress: 100,
-        })
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not process the uploaded model.'
-      setSelectedModel(null)
+      setFileError(null);
+      setSelectedFile(file);
+      setViewerLoading(true);
       setUploadState({
-        status: 'error',
-        progress: 0,
-        error: message,
-      })
-      setFileError(message)
-      setToast({ type: 'error', message })
-    } finally {
-      setViewerLoading(false)
-    }
-  }, [hasUserSelectedMaterial, materials, supabaseEnabled, user])
+        status: "uploading",
+        progress: user && supabaseEnabled ? 0 : 12,
+      });
+
+      try {
+        const { parseModelFile } = await import("@/lib/quote/model-utils");
+        const parsedModel = await parseModelFile(file);
+        setSelectedModel(parsedModel);
+
+        if (parsedModel.requiresReview) {
+          setToast({
+            type: "info",
+            message:
+              "File accepted for manual review. Our team will calculate pricing and contact you.",
+          });
+        } else if (!hasUserSelectedMaterial) {
+          const suggestedMaterial =
+            getMaterialById(parsedModel.suggestedMaterialId, materials) ??
+            materials[0];
+          if (!suggestedMaterial) {
+            throw new Error(
+              "No printable material is available for this model.",
+            );
+          }
+          setConfig((current) => ({
+            ...current,
+            materialId: suggestedMaterial.id,
+            color: suggestedMaterial.colors[0]?.name ?? current.color,
+          }));
+          setToast({
+            type: "info",
+            message: `Suggested material: ${suggestedMaterial.name} based on your model size.`,
+          });
+        }
+
+        if (user && supabaseEnabled) {
+          const uploadResult = await uploadFileToSupabaseStorage(
+            file,
+            user.id,
+            newQuoteId,
+            (progress) => setUploadState({ status: "uploading", progress }),
+          );
+          setUploadState(uploadResult);
+
+          void fetch("/api/quote/model-metadata", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileUrl: uploadResult.path,
+              volumeMm3: parsedModel.volumeMm3,
+              dimensionsMm: parsedModel.dimensionsMm,
+              triangleCount: parsedModel.triangleCount,
+              fileName: file.name,
+              fileSize: file.size,
+              extension: parsedModel.extension,
+            }),
+          }).catch(() => {});
+        } else {
+          setUploadState({
+            status: "success",
+            progress: 100,
+          });
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Could not process the uploaded model.";
+        setSelectedModel(null);
+        setUploadState({
+          status: "error",
+          progress: 0,
+          error: message,
+        });
+        setFileError(message);
+        setToast({ type: "error", message });
+      } finally {
+        setViewerLoading(false);
+      }
+    },
+    [hasUserSelectedMaterial, materials, supabaseEnabled, user],
+  );
 
   useEffect(() => {
-    if (!initialModelFile || prefilledModelRef.current || !user || !supabaseEnabled) {
-      return
+    if (
+      !initialModelFile ||
+      prefilledModelRef.current ||
+      !user ||
+      !supabaseEnabled
+    ) {
+      return;
     }
 
-    prefilledModelRef.current = true
+    prefilledModelRef.current = true;
 
     const loadInitialModel = async () => {
       try {
-        const storagePath = getModelStoragePath(initialModelFile.fileUrl)
+        const storagePath = getModelStoragePath(initialModelFile.fileUrl);
         if (!storagePath) {
-          throw new Error('Could not load the selected model file.')
+          throw new Error("Could not load the selected model file.");
         }
 
-        const signedUrl = await getSignedModelUrl(storagePath)
-        const response = await fetch(signedUrl)
+        const signedUrl = await getSignedModelUrl(storagePath);
+        const response = await fetch(signedUrl);
         if (!response.ok) {
-          throw new Error('Could not fetch the selected model file.')
+          throw new Error("Could not fetch the selected model file.");
         }
-        const blob = await response.blob()
+        const blob = await response.blob();
         const file = new File([blob], initialModelFile.fileName, {
-          type: blob.type || 'application/octet-stream',
-        })
+          type: blob.type || "application/octet-stream",
+        });
 
-        await handleFileSelect(file)
+        await handleFileSelect(file);
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Could not load the selected model file.'
-        setToast({ type: 'error', message })
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Could not load the selected model file.";
+        setToast({ type: "error", message });
       }
-    }
+    };
 
-    void loadInitialModel()
-  }, [handleFileSelect, initialModelFile, supabaseEnabled, user])
+    void loadInitialModel();
+  }, [handleFileSelect, initialModelFile, supabaseEnabled, user]);
 
   const handleMaterialChange = (materialId: string) => {
-    const nextMaterial = getMaterialById(materialId, materials) ?? materials[0]
+    const nextMaterial = getMaterialById(materialId, materials) ?? materials[0];
     if (!nextMaterial) {
-      return
+      return;
     }
-    setHasUserSelectedMaterial(true)
+    setHasUserSelectedMaterial(true);
     setConfig((current) => ({
       ...current,
       materialId,
       color: nextMaterial.colors[0]?.name ?? current.color,
-    }))
-  }
+    }));
+  };
 
   const handleSaveQuote = async () => {
     if (!supabaseEnabled) {
       setToast({
-        type: 'error',
-        message: 'Supabase is not configured. Local preview works, but account save is unavailable.',
-      })
-      return
+        type: "error",
+        message:
+          "Supabase is not configured. Local preview works, but account save is unavailable.",
+      });
+      return;
     }
 
     if (!user) {
-      setToast({ type: 'error', message: 'Sign in to save this quote to your account.' })
-      return
+      setToast({
+        type: "error",
+        message: "Sign in to save this quote to your account.",
+      });
+      return;
     }
 
     if (!selectedModel || !priceBreakdown) {
-      setToast({ type: 'error', message: 'Upload a model before saving a quote.' })
-      return
+      setToast({
+        type: "error",
+        message: "Upload a model before saving a quote.",
+      });
+      return;
     }
 
     try {
-      setSavingQuote(true)
+      setSavingQuote(true);
       await saveQuoteToSupabase({
         userId: user.id,
         quoteId: initialQuoteId,
         name: user.name,
         email: user.email,
-        phone: '',
+        phone: "",
         filePath: uploadState.path,
         config,
-        notes: '',
+        notes: "",
         estimate: {
           total: priceBreakdown.grandTotal,
           estimatedHours: priceBreakdown.estimatedHours,
           dimensions: priceBreakdown.dimensionsMm,
         },
-      })
-      setToast({ type: 'success', message: `Quote ${initialQuoteId} saved to your account.` })
+      });
+      setToast({
+        type: "success",
+        message: `Quote ${initialQuoteId} saved to your account.`,
+      });
     } catch (error) {
       setToast({
-        type: 'error',
-        message: error instanceof Error ? error.message : 'Failed to save quote.',
-      })
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Failed to save quote.",
+      });
     } finally {
-      setSavingQuote(false)
+      setSavingQuote(false);
     }
-  }
+  };
 
-  const cartItemCheck = isInCart(initialQuoteId)
+  const cartItemCheck = isInCart(initialQuoteId);
 
   const handleAddToCart = () => {
-    if (!priceBreakdown || !selectedModel || !selectedMaterial || !initialQuoteId) {
+    if (
+      !priceBreakdown ||
+      !selectedModel ||
+      !selectedMaterial ||
+      !initialQuoteId
+    ) {
       if (selectedModel?.requiresReview) {
-        setToast({ type: 'error', message: 'Models requiring manual review cannot be auto-quoted. Please use the contact form for a custom quote.' })
-        return
+        setToast({
+          type: "error",
+          message:
+            "Models requiring manual review cannot be auto-quoted. Please use the contact form for a custom quote.",
+        });
+        return;
       }
-      setToast({ type: 'error', message: 'Upload a model and generate a quote before adding to cart.' })
-      return
+      setToast({
+        type: "error",
+        message: "Upload a model and generate a quote before adding to cart.",
+      });
+      return;
     }
 
     if (!uploadState.path) {
       setToast({
-        type: 'error',
-        message: 'Sign in and upload the model to storage before adding this quote to cart.',
-      })
-      return
+        type: "error",
+        message:
+          "Sign in and upload the model to storage before adding this quote to cart.",
+      });
+      return;
     }
 
     const cartItem: CartItem = {
       id: initialQuoteId,
-      name: selectedModel?.fileName ?? 'model',
+      name: selectedModel?.fileName ?? "model",
       quoteId: initialQuoteId,
       fileUrl: uploadState.path,
-      fileName: selectedModel?.fileName ?? 'model',
+      fileName: selectedModel?.fileName ?? "model",
       material: selectedMaterial.name,
-      color: selectedColorName ?? '',
+      color: selectedColorName ?? "",
       infill: config.infill,
       layerHeight: config.layerHeight,
       quantity: config.quantity,
@@ -577,11 +699,12 @@ function CartEnabledWorkspace({
       estimatedTime: priceBreakdown?.estimatedHours ?? 0,
       weight: priceBreakdown?.materialWeightGrams ?? 0,
       modelVolumeMm3: selectedModel?.volumeMm3 ?? 0,
-      difficultyFactor: priceBreakdown?.difficultyFactor ?? selectedMaterial.difficultyFactor,
+      difficultyFactor:
+        priceBreakdown?.difficultyFactor ?? selectedMaterial.difficultyFactor,
       dimensions: priceBreakdown?.dimensionsMm ?? { x: 0, y: 0, z: 0 },
       config: {
         materialId: selectedMaterial.id,
-        color: selectedColorName ?? '',
+        color: selectedColorName ?? "",
         infill: config.infill,
         layerHeight: config.layerHeight,
         quantity: config.quantity,
@@ -589,51 +712,51 @@ function CartEnabledWorkspace({
         supports: config.supports,
       },
       addedAt: new Date().toISOString(),
-    }
+    };
 
-    addItem(cartItem)
-    trackMetaEvent('AddToCart', {
-      content_ids: ['custom_3d_print'],
-      content_type: 'product',
-      content_name: selectedModel?.fileName,
-      contents: [{ id: 'custom_3d_print', quantity: config.quantity, item_price: priceBreakdown.finalPrice }],
-      value: priceBreakdown.finalPrice,
-      currency: 'INR',
-    })
-    setToast({ type: 'success', message: `${selectedModel.fileName} added to cart.` })
-  }
+    addItem(cartItem);
+    setToast({
+      type: "success",
+      message: `${selectedModel.fileName} added to cart.`,
+    });
+  };
 
   const handleStepClick = (ref: React.RefObject<HTMLDivElement | null>) => {
-    const el = ref.current
+    const el = ref.current;
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }
+  };
 
   const getStepDone = (stepId: string) => {
-    switch(stepId) {
-      case 'upload': return uploadState.status === 'success'
-      case 'viewer': return selectedModel !== null
-      case 'material': return selectedModel !== null
-      case 'settings': return false
-      default: return false
+    switch (stepId) {
+      case "upload":
+        return uploadState.status === "success";
+      case "viewer":
+        return selectedModel !== null;
+      case "material":
+        return selectedModel !== null;
+      case "settings":
+        return false;
+      default:
+        return false;
     }
-  }
+  };
 
   const stepConfigs = [
-    { id: 'upload', label: 'Upload' },
-    { id: 'viewer', label: 'Preview' },
-    { id: 'material', label: 'Configure' },
-    { id: 'settings', label: 'Settings' },
-  ]
+    { id: "upload", label: "Upload" },
+    { id: "viewer", label: "Preview" },
+    { id: "material", label: "Configure" },
+    { id: "settings", label: "Settings" },
+  ];
 
   const stepRefs = {
     upload: uploadRef,
     viewer: viewerRef,
     material: materialRef,
     settings: settingsRef,
-  }
-  const whatsappDigits = bulkOrderContact.whatsappNumber.replace(/[^0-9]/g, '')
+  };
+  const whatsappDigits = bulkOrderContact.whatsappNumber.replace(/[^0-9]/g, "");
 
   return (
     <>
@@ -643,14 +766,26 @@ function CartEnabledWorkspace({
         <div className="quote-premium-frame" aria-hidden="true" />
         <motion.div
           aria-hidden
-          animate={shouldReduceMotion ? undefined : { x: [0, 50, 0], y: [0, -20, 0] }}
-          transition={shouldReduceMotion ? undefined : { duration: 16, repeat: Infinity, ease: 'easeInOut' }}
+          animate={
+            shouldReduceMotion ? undefined : { x: [0, 50, 0], y: [0, -20, 0] }
+          }
+          transition={
+            shouldReduceMotion
+              ? undefined
+              : { duration: 16, repeat: Infinity, ease: "easeInOut" }
+          }
           className="quote-orb quote-orb-left pointer-events-none absolute left-[-8rem] top-28 h-72 w-72 rounded-full bg-[#6d28d9]/8 blur-3xl"
         />
         <motion.div
           aria-hidden
-          animate={shouldReduceMotion ? undefined : { x: [0, -45, 0], y: [0, 25, 0] }}
-          transition={shouldReduceMotion ? undefined : { duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+          animate={
+            shouldReduceMotion ? undefined : { x: [0, -45, 0], y: [0, 25, 0] }
+          }
+          transition={
+            shouldReduceMotion
+              ? undefined
+              : { duration: 18, repeat: Infinity, ease: "easeInOut" }
+          }
           className="quote-orb quote-orb-right pointer-events-none absolute right-[-7rem] top-36 h-80 w-80 rounded-full bg-cyan-400/8 blur-3xl"
         />
 
@@ -663,40 +798,52 @@ function CartEnabledWorkspace({
                   Instant Pricing Experience
                 </div>
                 <h1 className="quote-hero-title mt-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3.2rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#070b1d]">
-                  Get Your <span className="quote-title-accent text-[#6d28d9]">Instant Quote</span>
+                  Get Your{" "}
+                  <span className="quote-title-accent text-[#6d28d9]">
+                    Instant Quote
+                  </span>
                 </h1>
                 <p className="quote-hero-copy mt-3 max-w-[600px] text-sm leading-7 text-[#6F7192]">
-                  Upload, preview, configure, and get pricing in one streamlined workflow.
+                  Upload, preview, configure, and get pricing in one streamlined
+                  workflow.
                 </p>
               </div>
 
-                {/* Step Navigator */}
-                <div className="quote-step-nav flex items-center gap-1 overflow-x-auto rounded-2xl border border-[#6d28d9]/10 bg-white p-1.5 shadow-sm scrollbar-hide">
-                  {stepConfigs.map((step, i) => {
-                    const done = getStepDone(step.id)
-                    const ref = stepRefs[step.id as keyof typeof stepRefs]
-                    return (
+              {/* Step Navigator */}
+              <div className="quote-step-nav flex items-center gap-1 overflow-x-auto rounded-2xl border border-[#6d28d9]/10 bg-white p-1.5 shadow-sm scrollbar-hide">
+                {stepConfigs.map((step, i) => {
+                  const done = getStepDone(step.id);
+                  const ref = stepRefs[step.id as keyof typeof stepRefs];
+                  return (
                     <button
                       key={step.id}
                       onClick={() => handleStepClick(ref)}
-                      className={`quote-step-button ${done ? 'quote-step-button-done' : ''} flex min-h-[44px] flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 py-2.5 text-xs font-medium transition-colors hover:bg-gray-100`}
+                      className={`quote-step-button ${done ? "quote-step-button-done" : ""} flex min-h-[44px] flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 py-2.5 text-xs font-medium transition-colors hover:bg-gray-100`}
                     >
-                    <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
-                      done
-                        ? 'bg-emerald-700/20 text-emerald-700'
-                        : 'bg-white text-[#6F7192]'
-                    }`}>
-                      {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
-                    </span>
-                    <span className={done ? 'text-emerald-700' : 'text-[#6F7192]'}>
-                      {step.label}
-                    </span>
-                    {i < stepConfigs.length - 1 && (
-                      <ArrowRight className="ml-1 h-3 w-3 text-[#070b1d]/20" />
-                    )}
-                  </button>
-                    )
-                  })}
+                      <span
+                        className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
+                          done
+                            ? "bg-emerald-700/20 text-emerald-700"
+                            : "bg-white text-[#6F7192]"
+                        }`}
+                      >
+                        {done ? (
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        ) : (
+                          i + 1
+                        )}
+                      </span>
+                      <span
+                        className={done ? "text-emerald-700" : "text-[#6F7192]"}
+                      >
+                        {step.label}
+                      </span>
+                      {i < stepConfigs.length - 1 && (
+                        <ArrowRight className="ml-1 h-3 w-3 text-[#070b1d]/20" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -709,11 +856,14 @@ function CartEnabledWorkspace({
               {/* Left Column */}
               <div className="space-y-6">
                 <div className="quote-bulk-strip rounded-2xl border border-cyan-400/15 bg-cyan-400/8 px-4 py-3 text-sm text-[#070b1d]">
-                  For bulk orders contact{' '}
-                  <a className="font-medium text-[#6d28d9] hover:underline" href={`mailto:${bulkOrderContact.email}`}>
+                  For bulk orders contact{" "}
+                  <a
+                    className="font-medium text-[#6d28d9] hover:underline"
+                    href={`mailto:${bulkOrderContact.email}`}
+                  >
                     {bulkOrderContact.email}
-                  </a>{' '}
-                  or{' '}
+                  </a>{" "}
+                  or{" "}
                   <a
                     className="font-medium text-[#6d28d9] hover:underline"
                     href={`https://wa.me/${whatsappDigits}`}
@@ -738,8 +888,13 @@ function CartEnabledWorkspace({
                         <UploadCloud className="h-5 w-5" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-[#070b1d]">1. Upload Your Model</h2>
-                        <p className="text-xs text-[#6F7192]">STL, OBJ, 3MF, GLB, GLTF, FBX, PLY, DAE, AMF, STEP, IGES, BREP, DWG, DXF supported</p>
+                        <h2 className="text-lg font-semibold text-[#070b1d]">
+                          1. Upload Your Model
+                        </h2>
+                        <p className="text-xs text-[#6F7192]">
+                          STL, OBJ, 3MF, GLB, GLTF, FBX, PLY, DAE, AMF, STEP,
+                          IGES, BREP, DWG, DXF supported
+                        </p>
                       </div>
                     </div>
 
@@ -747,9 +902,9 @@ function CartEnabledWorkspace({
                       className="quote-upload-dropzone relative flex min-h-[200px] items-center justify-center rounded-2xl border-2 border-dashed border-[#6d28d9]/10 bg-white p-6 text-center transition-colors hover:border-[#6d28d9]/30"
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
-                        e.preventDefault()
-                        const files = e.dataTransfer.files
-                        if (files[0]) handleFileSelect(files[0])
+                        e.preventDefault();
+                        const files = e.dataTransfer.files;
+                        if (files[0]) handleFileSelect(files[0]);
                       }}
                     >
                       <input
@@ -757,24 +912,38 @@ function CartEnabledWorkspace({
                         accept=".stl,.obj,.3mf,.glb,.gltf,.fbx,.ply,.dae,.amf,.step,.stp,.iges,.igs,.brep,.dwg,.dxf"
                         className="absolute inset-0 cursor-pointer opacity-0"
                         onChange={(e) => {
-                          if (e.target.files?.[0]) handleFileSelect(e.target.files[0])
+                          if (e.target.files?.[0])
+                            handleFileSelect(e.target.files[0]);
                         }}
                       />
                       <div>
                         <motion.div
-                          animate={shouldReduceMotion ? undefined : { y: [0, -4, 0] }}
-                          transition={shouldReduceMotion ? undefined : { duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                          animate={
+                            shouldReduceMotion ? undefined : { y: [0, -4, 0] }
+                          }
+                          transition={
+                            shouldReduceMotion
+                              ? undefined
+                              : {
+                                  duration: 3,
+                                  repeat: Infinity,
+                                  ease: "easeInOut",
+                                }
+                          }
                           className="quote-upload-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-[#6d28d9]/25 bg-[#6d28d9]/12 text-[#6d28d9]"
                         >
                           <UploadCloud className="h-6 w-6" />
                         </motion.div>
                         <div className="text-base font-semibold text-[#070b1d]">
-                          {selectedFile ? selectedFile.name : 'Drop your file or click to browse'}
+                          {selectedFile
+                            ? selectedFile.name
+                            : "Drop your file or click to browse"}
                         </div>
                         {!selectedFile && (
-<div className="mt-2 text-xs text-[#6F7192]">
-  STL · OBJ · 3MF · GLB · GLTF · FBX · PLY · DAE · AMF · STEP · IGES · BREP · DWG · DXF
-</div>
+                          <div className="mt-2 text-xs text-[#6F7192]">
+                            STL · OBJ · 3MF · GLB · GLTF · FBX · PLY · DAE · AMF
+                            · STEP · IGES · BREP · DWG · DXF
+                          </div>
                         )}
                         {selectedFile && (
                           <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#6d28d9]/10 bg-white px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
@@ -786,7 +955,7 @@ function CartEnabledWorkspace({
                     </div>
 
                     {/* Progress */}
-                    {uploadState.status === 'uploading' && (
+                    {uploadState.status === "uploading" && (
                       <div className="mt-4">
                         <div className="mb-1.5 flex items-center justify-between text-xs text-[#6F7192]">
                           <span className="inline-flex items-center gap-1.5">
@@ -803,13 +972,13 @@ function CartEnabledWorkspace({
                         </div>
                       </div>
                     )}
-                    {uploadState.status === 'success' && (
+                    {uploadState.status === "success" && (
                       <div className="mt-3 flex items-center gap-2 text-xs text-emerald-700">
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         Upload complete
                       </div>
                     )}
-                    {uploadState.status === 'error' && uploadState.error && (
+                    {uploadState.status === "error" && uploadState.error && (
                       <div className="mt-3 flex items-start gap-2 text-xs text-rose-600">
                         <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                         {uploadState.error}
@@ -852,26 +1021,32 @@ function CartEnabledWorkspace({
                         <Palette className="h-5 w-5" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-[#070b1d]">3. Material & Color</h2>
-                        <p className="text-xs text-[#6F7192]">Choose the best material and finish for your part</p>
+                        <h2 className="text-lg font-semibold text-[#070b1d]">
+                          3. Material & Color
+                        </h2>
+                        <p className="text-xs text-[#6F7192]">
+                          Choose the best material and finish for your part
+                        </p>
                       </div>
                     </div>
 
                     {/* Material Selection */}
                     <div className="mb-5">
-                      <label className="mb-2 block text-xs font-medium text-[#6F7192]">Material</label>
+                      <label className="mb-2 block text-xs font-medium text-[#6F7192]">
+                        Material
+                      </label>
                       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {materials.map((material) => {
-                          const isActive = material.id === config.materialId
+                          const isActive = material.id === config.materialId;
                           return (
                             <button
                               key={material.id}
                               type="button"
                               onClick={() => handleMaterialChange(material.id)}
-                              className={`quote-option-card ${isActive ? 'quote-option-card-active' : ''} flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
+                              className={`quote-option-card ${isActive ? "quote-option-card-active" : ""} flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
                                 isActive
-                                  ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)] shadow-[0_4px_16px_rgba(109, 40, 217,0.1)]'
-                                  : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10'
+                                  ? "border-[#6d28d9]/35 bg-[var(--brand-faint)] shadow-[0_4px_16px_rgba(109, 40, 217,0.1)]"
+                                  : "border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10"
                               }`}
                             >
                               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-base">
@@ -879,13 +1054,23 @@ function CartEnabledWorkspace({
                               </span>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-2">
-                                  <span className={`truncate text-sm font-medium ${isActive ? 'text-[var(--brand-primary)]' : 'text-[#070b1d]'}`}>{material.name}</span>
-                                  {isActive && <CheckCircle2 className="h-4 w-4 shrink-0 text-[#6d28d9]" />}
+                                  <span
+                                    className={`truncate text-sm font-medium ${isActive ? "text-[var(--brand-primary)]" : "text-[#070b1d]"}`}
+                                  >
+                                    {material.name}
+                                  </span>
+                                  {isActive && (
+                                    <CheckCircle2 className="h-4 w-4 shrink-0 text-[#6d28d9]" />
+                                  )}
                                 </div>
-                                <p className={`mt-0.5 truncate text-[11px] ${isActive ? 'text-[var(--text-secondary)]' : 'text-[#6F7192]'}`}>{material.summary}</p>
+                                <p
+                                  className={`mt-0.5 truncate text-[11px] ${isActive ? "text-[var(--text-secondary)]" : "text-[#6F7192]"}`}
+                                >
+                                  {material.summary}
+                                </p>
                               </div>
                             </button>
-                          )
+                          );
                         })}
                       </div>
                     </div>
@@ -893,26 +1078,34 @@ function CartEnabledWorkspace({
                     {/* Color Selection */}
                     <div>
                       <label className="mb-2 block text-xs font-medium text-[#6F7192]">
-                        Color — {selectedMaterial?.name ?? 'Material'}
+                        Color — {selectedMaterial?.name ?? "Material"}
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {(selectedMaterial?.colors ?? []).map((color, idx) => {
-                          const isActive = color.name === config.color
+                          const isActive = color.name === config.color;
                           return (
                             <button
                               key={`${color.name}-${idx}`}
                               type="button"
-                              onClick={() => setConfig((c) => ({ ...c, color: color.name }))}
-                              className={`quote-option-card ${isActive ? 'quote-option-card-active' : ''} flex min-h-11 items-center gap-2 rounded-xl border px-4 text-left transition-all ${
+                              onClick={() =>
+                                setConfig((c) => ({ ...c, color: color.name }))
+                              }
+                              className={`quote-option-card ${isActive ? "quote-option-card-active" : ""} flex min-h-11 items-center gap-2 rounded-xl border px-4 text-left transition-all ${
                                 isActive
-                                  ? 'border-[#6d28d9]/40 bg-[var(--brand-faint)]'
-                                  : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10'
+                                  ? "border-[#6d28d9]/40 bg-[var(--brand-faint)]"
+                                  : "border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10"
                               }`}
                             >
-                              <span className={`text-xs font-medium ${isActive ? 'text-[var(--brand-primary)]' : 'text-[#070b1d]'}`}>{color.name}</span>
-                              {isActive && <CheckCircle2 className="h-3.5 w-3.5 text-[#6d28d9]" />}
+                              <span
+                                className={`text-xs font-medium ${isActive ? "text-[var(--brand-primary)]" : "text-[#070b1d]"}`}
+                              >
+                                {color.name}
+                              </span>
+                              {isActive && (
+                                <CheckCircle2 className="h-3.5 w-3.5 text-[#6d28d9]" />
+                              )}
                             </button>
-                          )
+                          );
                         })}
                       </div>
                     </div>
@@ -932,8 +1125,12 @@ function CartEnabledWorkspace({
                         <Layers3 className="h-5 w-5" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-[#070b1d]">4. Print Settings</h2>
-                        <p className="text-xs text-[#6F7192]">Fine-tune quality, strength, and scale</p>
+                        <h2 className="text-lg font-semibold text-[#070b1d]">
+                          4. Print Settings
+                        </h2>
+                        <p className="text-xs text-[#6F7192]">
+                          Fine-tune quality, strength, and scale
+                        </p>
                       </div>
                     </div>
 
@@ -942,7 +1139,9 @@ function CartEnabledWorkspace({
                       <div>
                         <div className="mb-2 flex items-center justify-between text-sm">
                           <span className="text-[#6F7192]">Infill Density</span>
-                          <span className="font-semibold text-[#070b1d]">{config.infill}%</span>
+                          <span className="font-semibold text-[#070b1d]">
+                            {config.infill}%
+                          </span>
                         </div>
                         <input
                           type="range"
@@ -950,7 +1149,12 @@ function CartEnabledWorkspace({
                           max={100}
                           step={5}
                           value={config.infill}
-                          onChange={(e) => setConfig((c) => ({ ...c, infill: Number(e.target.value) }))}
+                          onChange={(e) =>
+                            setConfig((c) => ({
+                              ...c,
+                              infill: Number(e.target.value),
+                            }))
+                          }
                           className="w-full accent-[#6d28d9]"
                         />
                         <div className="mt-1 flex justify-between text-[10px] text-[#6F7192]">
@@ -963,7 +1167,9 @@ function CartEnabledWorkspace({
                       <div>
                         <div className="mb-2 flex items-center justify-between text-sm">
                           <span className="text-[#6F7192]">Quantity</span>
-                          <span className="font-semibold text-[#070b1d]">{config.quantity} pcs</span>
+                          <span className="font-semibold text-[#070b1d]">
+                            {config.quantity} pcs
+                          </span>
                         </div>
                         <input
                           type="number"
@@ -971,40 +1177,63 @@ function CartEnabledWorkspace({
                           max={99}
                           step={1}
                           value={config.quantity}
-                          onChange={(e) => setConfig((c) => ({ ...c, quantity: Math.max(1, Math.floor(Number(e.target.value) || 1)) }))}
+                          onChange={(e) =>
+                            setConfig((c) => ({
+                              ...c,
+                              quantity: Math.max(
+                                1,
+                                Math.floor(Number(e.target.value) || 1),
+                              ),
+                            }))
+                          }
                           className="w-full rounded-xl border border-[#6d28d9]/10 bg-white px-3 py-3 text-sm text-[#070b1d] outline-none"
                         />
                       </div>
 
                       {/* Post-processing */}
                       <div>
-                        <div className="mb-2 text-sm text-[#6F7192]">Post-processing</div>
+                        <div className="mb-2 text-sm text-[#6F7192]">
+                          Post-processing
+                        </div>
                         <div className="grid gap-2">
                           {postProcessingOptions.map((option) => (
                             <button
                               key={option.value}
                               type="button"
-                              onClick={() => setConfig((c) => ({ ...c, postProcessingLevel: option.value }))}
-                              className={`quote-option-card ${option.value === config.postProcessingLevel ? 'quote-option-card-active' : ''} min-h-11 rounded-xl border px-3 text-left transition-all ${
+                              onClick={() =>
+                                setConfig((c) => ({
+                                  ...c,
+                                  postProcessingLevel: option.value,
+                                }))
+                              }
+                              className={`quote-option-card ${option.value === config.postProcessingLevel ? "quote-option-card-active" : ""} min-h-11 rounded-xl border px-3 text-left transition-all ${
                                 option.value === config.postProcessingLevel
-                                  ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)]'
-                                  : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10'
+                                  ? "border-[#6d28d9]/35 bg-[var(--brand-faint)]"
+                                  : "border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10"
                               }`}
                             >
                               <div className="flex items-center justify-between gap-3">
-                                <div className={`text-xs font-medium ${option.value === config.postProcessingLevel ? 'text-[var(--brand-primary)]' : 'text-[#070b1d]'}`}>{option.label}</div>
+                                <div
+                                  className={`text-xs font-medium ${option.value === config.postProcessingLevel ? "text-[var(--brand-primary)]" : "text-[#070b1d]"}`}
+                                >
+                                  {option.label}
+                                </div>
                                 <div className="text-[10px] uppercase tracking-[0.18em] text-[#6d28d9]">
                                   {priceBreakdown
                                     ? `₹${getPostProcessingCharge(
                                         option.value,
                                         postProcessingBaseAmount,
                                         selectedMaterial?.difficultyFactor ?? 0,
-                                        pricingSettings.postProcessingMultipliers
+                                        pricingSettings.postProcessingMultipliers,
                                       ).toFixed(2)}`
-                                    : '—'}
+                                    : "—"}
                                 </div>
                               </div>
-                              <div className={`mt-0.5 text-[10px] ${option.value === config.postProcessingLevel ? 'text-[var(--text-secondary)]' : 'text-[#6F7192]'}`}>{option.description}</div>
+                              <div
+                                className={`mt-0.5 text-[10px] ${option.value === config.postProcessingLevel ? "text-[var(--text-secondary)]" : "text-[#6F7192]"}`}
+                              >
+                                {option.description}
+                              </div>
                             </button>
                           ))}
                         </div>
@@ -1012,21 +1241,36 @@ function CartEnabledWorkspace({
 
                       {/* Layer Height */}
                       <div>
-                        <div className="mb-2 text-sm text-[#6F7192]">Layer Height</div>
+                        <div className="mb-2 text-sm text-[#6F7192]">
+                          Layer Height
+                        </div>
                         <div className="grid gap-2">
                           {layerHeightOptions.map((option) => (
                             <button
                               key={option.value}
                               type="button"
-                              onClick={() => setConfig((c) => ({ ...c, layerHeight: option.value }))}
-                              className={`quote-option-card ${option.value === config.layerHeight ? 'quote-option-card-active' : ''} min-h-11 rounded-xl border px-3 text-left transition-all ${
+                              onClick={() =>
+                                setConfig((c) => ({
+                                  ...c,
+                                  layerHeight: option.value,
+                                }))
+                              }
+                              className={`quote-option-card ${option.value === config.layerHeight ? "quote-option-card-active" : ""} min-h-11 rounded-xl border px-3 text-left transition-all ${
                                 option.value === config.layerHeight
-                                  ? 'border-[#6d28d9]/35 bg-[var(--brand-faint)]'
-                                  : 'border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10'
+                                  ? "border-[#6d28d9]/35 bg-[var(--brand-faint)]"
+                                  : "border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10"
                               }`}
                             >
-                              <div className={`text-xs font-medium ${option.value === config.layerHeight ? 'text-[var(--brand-primary)]' : 'text-[#070b1d]'}`}>{option.label}</div>
-                              <div className={`mt-0.5 text-[10px] ${option.value === config.layerHeight ? 'text-[var(--text-secondary)]' : 'text-[#6F7192]'}`}>{option.description}</div>
+                              <div
+                                className={`text-xs font-medium ${option.value === config.layerHeight ? "text-[var(--brand-primary)]" : "text-[#070b1d]"}`}
+                              >
+                                {option.label}
+                              </div>
+                              <div
+                                className={`mt-0.5 text-[10px] ${option.value === config.layerHeight ? "text-[var(--text-secondary)]" : "text-[#6F7192]"}`}
+                              >
+                                {option.description}
+                              </div>
                             </button>
                           ))}
                         </div>
@@ -1039,18 +1283,26 @@ function CartEnabledWorkspace({
                         <div className="flex items-center gap-3">
                           <ShieldCheck className="h-5 w-5 text-emerald-700" />
                           <div>
-                            <div className="text-xs font-medium text-[#070b1d]">{user.name}</div>
-                            <div className="text-[10px] text-[#6F7192]">{user.email}</div>
+                            <div className="text-xs font-medium text-[#070b1d]">
+                              {user.name}
+                            </div>
+                            <div className="text-[10px] text-[#6F7192]">
+                              {user.email}
+                            </div>
                           </div>
                         </div>
                         <button
                           type="button"
                           onClick={handleSaveQuote}
-                          disabled={!selectedModel || savingQuote || uploadState.status === 'uploading'}
+                          disabled={
+                            !selectedModel ||
+                            savingQuote ||
+                            uploadState.status === "uploading"
+                          }
                           className="quote-secondary-action inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-gray-50 px-4 text-xs font-medium text-[#070b1d] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                         >
                           <BookmarkPlus className="h-3.5 w-3.5" />
-                          {savingQuote ? 'Saving...' : 'Save Quote'}
+                          {savingQuote ? "Saving..." : "Save Quote"}
                         </button>
                       </div>
                     )}
@@ -1068,7 +1320,9 @@ function CartEnabledWorkspace({
                 <div className="quote-summary-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-5 shadow-[0_10px_40px_rgba(0,0,0,0.2)] sm:p-6 sm:shadow-[0_18px_70px_rgba(0,0,0,0.3)]">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-[#070b1d]">Quote Summary</h2>
+                      <h2 className="text-lg font-semibold text-[#070b1d]">
+                        Quote Summary
+                      </h2>
                       <p className="text-xs text-[#6F7192]">{initialQuoteId}</p>
                     </div>
                     <div className="rounded-xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-2 text-[#6d28d9]">
@@ -1087,17 +1341,25 @@ function CartEnabledWorkspace({
                       {/* Config Summary */}
                       <div className="quote-config-pill mb-4 rounded-xl border border-[#6d28d9]/10 bg-white p-3">
                         <div className="flex items-center gap-2 text-xs">
-                          <span className="text-[#070b1d]">{selectedMaterial?.name ?? 'Material'}</span>
+                          <span className="text-[#070b1d]">
+                            {selectedMaterial?.name ?? "Material"}
+                          </span>
                           <span className="text-[#6F7192]">·</span>
-                          <span className="text-[#6F7192]">{config.infill}% infill</span>
+                          <span className="text-[#6F7192]">
+                            {config.infill}% infill
+                          </span>
                           <span className="text-[#6F7192]">·</span>
-                          <span className="text-[#6F7192]">{config.layerHeight}mm</span>
+                          <span className="text-[#6F7192]">
+                            {config.layerHeight}mm
+                          </span>
                         </div>
                       </div>
 
                       {/* Price Breakdown */}
                       <div className="quote-total-card rounded-xl border border-[#6d28d9]/20 bg-[linear-gradient(180deg,rgba(109,40,217,0.12),rgba(109,40,217,0.06))] p-4">
-                        <div className="text-[10px] uppercase tracking-[0.22em] text-[#6F7192]">Total Price</div>
+                        <div className="text-[10px] uppercase tracking-[0.22em] text-[#6F7192]">
+                          Total Price
+                        </div>
                         <div className="mt-1 font-[var(--font-syne)] text-3xl font-bold text-[#070b1d]">
                           ₹{priceBreakdown.priceBeforeDiscount.toFixed(0)}
                         </div>
@@ -1108,45 +1370,78 @@ function CartEnabledWorkspace({
                           </div>
                           <div className="flex justify-between">
                             <span>Material usage</span>
-                            <span>{priceBreakdown.materialWeightGrams.toFixed(2)} g</span>
+                            <span>
+                              {priceBreakdown.materialWeightGrams.toFixed(2)} g
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span>Material cost</span>
-                            <span>₹{priceBreakdown.materialCost.toFixed(2)}</span>
+                            <span>
+                              ₹{priceBreakdown.materialCost.toFixed(2)}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span>Machine time</span>
-                            <span>{formatDurationMinutes(priceBreakdown.estimatedMinutes)}</span>
+                            <span>
+                              {formatDurationMinutes(
+                                priceBreakdown.estimatedMinutes,
+                              )}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span>Machine cost</span>
-                            <span>₹{priceBreakdown.machineCost.toFixed(2)}</span>
+                            <span>
+                              ₹{priceBreakdown.machineCost.toFixed(2)}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span>Post-processing</span>
-                            <span>₹{priceBreakdown.postProcessingCharges.toFixed(2)}</span>
+                            <span>
+                              ₹{priceBreakdown.postProcessingCharges.toFixed(2)}
+                            </span>
                           </div>
                           <div className="border-t border-[#6d28d9]/10 pt-1.5 flex justify-between font-medium text-[#070b1d]">
                             <span>Production cost</span>
                             <span>₹{priceBreakdown.subtotal.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>Service fee ({priceBreakdown.overheadPercentage + priceBreakdown.marginPercentage}%)</span>
-                            <span>₹{(priceBreakdown.overheadAmount + priceBreakdown.marginAmount).toFixed(2)}</span>
+                            <span>
+                              Service fee (
+                              {priceBreakdown.overheadPercentage +
+                                priceBreakdown.marginPercentage}
+                              %)
+                            </span>
+                            <span>
+                              ₹
+                              {(
+                                priceBreakdown.overheadAmount +
+                                priceBreakdown.marginAmount
+                              ).toFixed(2)}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span>Cart discount</span>
-                            <span>{priceBreakdown.cartDiscountPercent}% · {priceBreakdown.cartDiscountAmount > 0 ? '-' : ''}₹{priceBreakdown.cartDiscountAmount.toFixed(2)}</span>
+                            <span>
+                              {priceBreakdown.cartDiscountPercent}% ·{" "}
+                              {priceBreakdown.cartDiscountAmount > 0 ? "-" : ""}
+                              ₹{priceBreakdown.cartDiscountAmount.toFixed(2)}
+                            </span>
                           </div>
-                          {priceBreakdown.priceBeforeMinimum !== priceBreakdown.finalPrice && priceBreakdown.minimumOrderValue > 0 && (
-                            <div className="flex justify-between">
-                              <span>Minimum order value</span>
-                              <span className="text-[#070b1d]">₹{priceBreakdown.minimumOrderValue.toFixed(2)}</span>
-                            </div>
-                          )}
+                          {priceBreakdown.priceBeforeMinimum !==
+                            priceBreakdown.finalPrice &&
+                            priceBreakdown.minimumOrderValue > 0 && (
+                              <div className="flex justify-between">
+                                <span>Minimum order value</span>
+                                <span className="text-[#070b1d]">
+                                  ₹{priceBreakdown.minimumOrderValue.toFixed(2)}
+                                </span>
+                              </div>
+                            )}
                           <div className="border-t border-[#6d28d9]/10 pt-1.5 flex justify-between font-medium text-[#070b1d]">
                             <span>Total price</span>
-                            <span>₹{priceBreakdown.priceBeforeDiscount.toFixed(2)}</span>
+                            <span>
+                              ₹{priceBreakdown.priceBeforeDiscount.toFixed(2)}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span>Final price</span>
@@ -1154,7 +1449,11 @@ function CartEnabledWorkspace({
                           </div>
                           <div className="flex justify-between">
                             <span>Delivery</span>
-                            <span>{priceBreakdown.deliveryCharge === 0 ? 'FREE' : `₹${priceBreakdown.deliveryCharge.toFixed(0)}`}</span>
+                            <span>
+                              {priceBreakdown.deliveryCharge === 0
+                                ? "FREE"
+                                : `₹${priceBreakdown.deliveryCharge.toFixed(0)}`}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span>Grand total</span>
@@ -1166,12 +1465,25 @@ function CartEnabledWorkspace({
                       {/* Quick Stats */}
                       <div className="mt-4 grid grid-cols-2 gap-3">
                         <div className="quote-mini-stat rounded-xl border border-[#6d28d9]/10 bg-white p-3">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Weight</div>
-                          <div className="mt-1 text-sm font-medium text-[#070b1d]">{priceBreakdown.materialUsageGramsPerUnit.toFixed(2)} g / unit</div>
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
+                            Weight
+                          </div>
+                          <div className="mt-1 text-sm font-medium text-[#070b1d]">
+                            {priceBreakdown.materialUsageGramsPerUnit.toFixed(
+                              2,
+                            )}{" "}
+                            g / unit
+                          </div>
                         </div>
                         <div className="quote-mini-stat rounded-xl border border-[#6d28d9]/10 bg-white p-3">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">Print time</div>
-                          <div className="mt-1 text-sm font-medium text-[#070b1d]">{formatDurationMinutes(priceBreakdown.estimatedMinutes)}</div>
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
+                            Print time
+                          </div>
+                          <div className="mt-1 text-sm font-medium text-[#070b1d]">
+                            {formatDurationMinutes(
+                              priceBreakdown.estimatedMinutes,
+                            )}
+                          </div>
                         </div>
                         <div className="quote-mini-stat col-span-2 rounded-xl border border-[#6d28d9]/10 bg-white p-3">
                           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
@@ -1179,7 +1491,9 @@ function CartEnabledWorkspace({
                             Dimensions
                           </div>
                           <div className="mt-1 text-xs text-[#070b1d]">
-                            {priceBreakdown.dimensionsMm.x.toFixed(0)} × {priceBreakdown.dimensionsMm.y.toFixed(0)} × {priceBreakdown.dimensionsMm.z.toFixed(0)} mm
+                            {priceBreakdown.dimensionsMm.x.toFixed(0)} ×{" "}
+                            {priceBreakdown.dimensionsMm.y.toFixed(0)} ×{" "}
+                            {priceBreakdown.dimensionsMm.z.toFixed(0)} mm
                           </div>
                         </div>
                       </div>
@@ -1190,9 +1504,13 @@ function CartEnabledWorkspace({
                           <Truck className="h-3 w-3" />
                           Delivery
                         </div>
-                        <div className="mt-1 text-xs font-medium text-[#070b1d]">~48 hour print and delivery</div>
+                        <div className="mt-1 text-xs font-medium text-[#070b1d]">
+                          ~48 hour print and delivery
+                        </div>
                         {pricingSettings.gstInclusivePricing && (
-                          <div className="mt-1 text-[10px] text-[#6F7192]">Prices inclusive of all applicable taxes</div>
+                          <div className="mt-1 text-[10px] text-[#6F7192]">
+                            Prices inclusive of all applicable taxes
+                          </div>
                         )}
                       </div>
 
@@ -1204,28 +1522,31 @@ function CartEnabledWorkspace({
                             Manual review required — contact for custom quote
                           </div>
                         ) : (
-                        <button
-                          type="button"
-                          onClick={handleAddToCart}
-                          disabled={!selectedModel || uploadState.status === 'uploading'}
-                          className={`quote-primary-action inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
-                            cartItemCheck
-                              ? 'border border-emerald-700/30 bg-emerald-700/10 text-emerald-700'
-                              : 'bg-[#6d28d9] text-white hover:opacity-95'
-                          }`}
-                        >
-                          {cartItemCheck ? (
-                            <>
-                              <PackageCheck className="h-4 w-4" />
-                              Added to Cart
-                            </>
-                          ) : (
-                            <>
-                              <ShoppingCart className="h-4 w-4" />
-                              Add to Cart
-                            </>
-                          )}
-                        </button>
+                          <button
+                            type="button"
+                            onClick={handleAddToCart}
+                            disabled={
+                              !selectedModel ||
+                              uploadState.status === "uploading"
+                            }
+                            className={`quote-primary-action inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
+                              cartItemCheck
+                                ? "border border-emerald-700/30 bg-emerald-700/10 text-emerald-700"
+                                : "bg-[#6d28d9] text-white hover:opacity-95"
+                            }`}
+                          >
+                            {cartItemCheck ? (
+                              <>
+                                <PackageCheck className="h-4 w-4" />
+                                Added to Cart
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingCart className="h-4 w-4" />
+                                Add to Cart
+                              </>
+                            )}
+                          </button>
                         )}
 
                         {cartItemCheck && (
@@ -1259,5 +1580,5 @@ function CartEnabledWorkspace({
 
       <Toast toast={toast} />
     </>
-  )
+  );
 }
