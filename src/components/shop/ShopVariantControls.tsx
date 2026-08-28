@@ -40,6 +40,10 @@ export default function ShopVariantControls({
       {options.map((option) => {
         const values = option.values ?? [];
         const selectedValue = selected[option.option_name];
+        const selectedMeta =
+          typeof selectedValue === "string"
+            ? option.value_metadata?.[selectedValue]
+            : undefined;
 
         return (
           <div key={option.id} className="space-y-3">
@@ -90,7 +94,10 @@ export default function ShopVariantControls({
                       ) : (
                         <span
                           className="block h-full w-full transition duration-300 group-hover:scale-110"
-                          style={{ background: swatchBackground(value) }}
+                          style={{
+                            background:
+                              meta.hex_color || swatchBackground(value),
+                          }}
                         />
                       )}
                       {delta && active && (
@@ -182,6 +189,17 @@ export default function ShopVariantControls({
                   );
                 })}
               </div>
+            )}
+            {selectedMeta?.description && (
+              <motion.p
+                key={String(selectedValue)}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                className="text-xs leading-relaxed text-[var(--shop-text-muted)]"
+              >
+                {selectedMeta.description}
+              </motion.p>
             )}
           </div>
         );

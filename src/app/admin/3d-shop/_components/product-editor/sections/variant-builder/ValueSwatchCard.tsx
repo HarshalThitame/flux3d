@@ -226,6 +226,10 @@ export function ValueSwatchCard({
           placeholder="Luxury micro-description — e.g. Italian full-grain leather, hand-stitched"
           className="w-full rounded-lg border border-[#C9A24B]/15 bg-white px-2 py-1.5 text-xs text-[#6F7192] outline-none transition focus:border-[#C9A24B]/40"
         />
+        <p className="text-[10px] leading-relaxed text-[#6F7192]/70">
+          Image is optional — the {showColor ? "colour swatch above" : "value"}{" "}
+          is shown to customers when no image is uploaded.
+        </p>
       </div>
     </div>
   );

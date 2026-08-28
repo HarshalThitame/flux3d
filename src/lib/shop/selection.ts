@@ -229,7 +229,10 @@ export function getSelectedSwatchColor(
   for (const option of options) {
     if (option.option_type !== "swatch_color") continue;
     const value = selected[option.option_name];
-    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value !== "string" || !value.trim()) continue;
+    const meta = option.value_metadata?.[value];
+    if (meta?.hex_color) return meta.hex_color;
+    return value.trim();
   }
   return null;
 }
