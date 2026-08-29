@@ -20,9 +20,12 @@ function makeProduct(
     category_slug: null,
     tags: [],
     occasion_tags: [],
-    thumbnail_url: "cover.jpg",
+    thumbnail_url: "https://example.com/cover.jpg",
     landscape_image_url: null,
-    image_urls: ["gallery-a.jpg", "gallery-b.jpg"],
+    image_urls: [
+      "https://example.com/gallery-a.jpg",
+      "https://example.com/gallery-b.jpg",
+    ],
     image_alt: {},
     model_url: null,
     usdz_url: null,
@@ -100,7 +103,7 @@ describe("getShopGalleryImages — merged galleries", () => {
           product_id: "p1",
           option_name: "Color",
           option_value: "Red",
-          image_url: "red-1.jpg",
+          image_url: "https://example.com/red-1.jpg",
           alt_text: null,
           display_order: 0,
           is_primary: true,
@@ -111,7 +114,7 @@ describe("getShopGalleryImages — merged galleries", () => {
           product_id: "p1",
           option_name: "Color",
           option_value: "Red",
-          image_url: "red-2.jpg",
+          image_url: "https://example.com/red-2.jpg",
           alt_text: null,
           display_order: 1,
           is_primary: false,
@@ -122,11 +125,14 @@ describe("getShopGalleryImages — merged galleries", () => {
 
     const gallery = getShopGalleryImages(product, { Color: "Red" });
     // Variant shots first...
-    expect(gallery.images.slice(0, 2)).toEqual(["red-1.jpg", "red-2.jpg"]);
+    expect(gallery.images.slice(0, 2)).toEqual([
+      "https://example.com/red-1.jpg",
+      "https://example.com/red-2.jpg",
+    ]);
     // ...then the general product shots remain swipeable.
-    expect(gallery.images).toContain("cover.jpg");
-    expect(gallery.images).toContain("gallery-a.jpg");
-    expect(gallery.images).toContain("gallery-b.jpg");
+    expect(gallery.images).toContain("https://example.com/cover.jpg");
+    expect(gallery.images).toContain("https://example.com/gallery-a.jpg");
+    expect(gallery.images).toContain("https://example.com/gallery-b.jpg");
     expect(gallery.caption).toBe("Color: Red");
   });
 
@@ -138,7 +144,7 @@ describe("getShopGalleryImages — merged galleries", () => {
           product_id: "p1",
           option_name: "Color",
           option_value: "Red",
-          image_url: "cover.jpg",
+          image_url: "https://example.com/cover.jpg",
           alt_text: null,
           display_order: 0,
           is_primary: true,
@@ -159,16 +165,18 @@ describe("getShopGalleryImages — merged galleries", () => {
       ],
     });
     const gallery = getShopGalleryImages(product, { Color: "Red" });
-    expect(gallery.images.filter((url) => url === "cover.jpg")).toHaveLength(1);
+    expect(
+      gallery.images.filter((url) => url === "https://example.com/cover.jpg"),
+    ).toHaveLength(1);
   });
 
   it("falls back to the full product gallery when nothing variant-specific matches", () => {
     const product = makeProduct();
     const gallery = getShopGalleryImages(product, {});
     expect(gallery.images).toEqual([
-      "cover.jpg",
-      "gallery-a.jpg",
-      "gallery-b.jpg",
+      "https://example.com/cover.jpg",
+      "https://example.com/gallery-a.jpg",
+      "https://example.com/gallery-b.jpg",
     ]);
     expect(gallery.source).toBe("product");
   });
@@ -244,7 +252,7 @@ describe("getShopGalleryImages — multi-option merging (Option A)", () => {
           product_id: "p1",
           option_name: "Color",
           option_value: "Red",
-          image_url: "red-1.jpg",
+          image_url: "https://example.com/red-1.jpg",
           alt_text: null,
           display_order: 0,
           is_primary: true,
@@ -255,7 +263,7 @@ describe("getShopGalleryImages — multi-option merging (Option A)", () => {
           product_id: "p1",
           option_name: "Size",
           option_value: "Large",
-          image_url: "large-1.jpg",
+          image_url: "https://example.com/large-1.jpg",
           alt_text: null,
           display_order: 0,
           is_primary: true,
@@ -267,7 +275,10 @@ describe("getShopGalleryImages — multi-option merging (Option A)", () => {
       Color: "Red",
       Size: "Large",
     });
-    expect(gallery.images.slice(0, 2)).toEqual(["red-1.jpg", "large-1.jpg"]);
+    expect(gallery.images.slice(0, 2)).toEqual([
+      "https://example.com/red-1.jpg",
+      "https://example.com/large-1.jpg",
+    ]);
     expect(gallery.source).toBe("option");
     expect(gallery.caption).toBe("Color: Red · Size: Large");
   });
@@ -282,7 +293,7 @@ describe("getShopGalleryImages — multi-option merging (Option A)", () => {
           product_id: "p1",
           option_name: "Color",
           option_value: "Red",
-          image_url: "shared.jpg",
+          image_url: "https://example.com/shared.jpg",
           alt_text: null,
           display_order: 0,
           is_primary: true,
@@ -293,7 +304,7 @@ describe("getShopGalleryImages — multi-option merging (Option A)", () => {
           product_id: "p1",
           option_name: "Size",
           option_value: "Large",
-          image_url: "shared.jpg",
+          image_url: "https://example.com/shared.jpg",
           alt_text: null,
           display_order: 0,
           is_primary: true,
@@ -305,9 +316,9 @@ describe("getShopGalleryImages — multi-option merging (Option A)", () => {
       Color: "Red",
       Size: "Large",
     });
-    expect(gallery.images.filter((url) => url === "shared.jpg")).toHaveLength(
-      1,
-    );
+    expect(
+      gallery.images.filter((url) => url === "https://example.com/shared.jpg"),
+    ).toHaveLength(1);
   });
 
   it("skips option images with empty or whitespace-only URLs", () => {
@@ -342,7 +353,7 @@ describe("getShopGalleryImages — multi-option merging (Option A)", () => {
           product_id: "p1",
           option_name: "Color",
           option_value: "Red",
-          image_url: "red.jpg",
+          image_url: "https://example.com/red.jpg",
           alt_text: null,
           display_order: 2,
           is_primary: true,
@@ -351,7 +362,7 @@ describe("getShopGalleryImages — multi-option merging (Option A)", () => {
       ],
     });
     const gallery = getShopGalleryImages(product, { Color: "Red" });
-    expect(gallery.images).toContain("red.jpg");
+    expect(gallery.images).toContain("https://example.com/red.jpg");
     expect(gallery.images).not.toContain("");
     expect(gallery.images).not.toContain("   ");
   });
@@ -365,7 +376,7 @@ describe("getShopGalleryImages — multi-option merging (Option A)", () => {
           {
             id: "si1",
             sku_id: "s-red-small",
-            image_url: "sku-red.jpg",
+            image_url: "https://example.com/sku-red.jpg",
             alt_text: null,
             display_order: 0,
             is_primary: true,
@@ -379,7 +390,7 @@ describe("getShopGalleryImages — multi-option merging (Option A)", () => {
       Size: "Small",
     });
     expect(gallery.source).toBe("sku");
-    expect(gallery.images[0]).toBe("sku-red.jpg");
+    expect(gallery.images[0]).toBe("https://example.com/sku-red.jpg");
   });
 
   it("skips SKU images with empty URLs when building the gallery", () => {
@@ -400,7 +411,7 @@ describe("getShopGalleryImages — multi-option merging (Option A)", () => {
           {
             id: "si2",
             sku_id: "s-red-small",
-            image_url: "sku-valid.jpg",
+            image_url: "https://example.com/sku-valid.jpg",
             alt_text: null,
             display_order: 1,
             is_primary: true,
@@ -413,17 +424,17 @@ describe("getShopGalleryImages — multi-option merging (Option A)", () => {
       Color: "Red",
       Size: "Small",
     });
-    expect(gallery.images).toContain("sku-valid.jpg");
+    expect(gallery.images).toContain("https://example.com/sku-valid.jpg");
     expect(gallery.images).not.toContain("");
   });
 
   it("filters whitespace-only product images from the fallback", () => {
     const product = makeProduct({
       thumbnail_url: "",
-      image_urls: ["   ", "real.jpg"],
+      image_urls: ["   ", "https://example.com/real.jpg"],
     });
     const gallery = getShopGalleryImages(product, {});
-    expect(gallery.images).toEqual(["real.jpg"]);
+    expect(gallery.images).toEqual(["https://example.com/real.jpg"]);
     expect(gallery.source).toBe("product");
   });
 });

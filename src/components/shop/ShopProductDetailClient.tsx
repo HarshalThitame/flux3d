@@ -161,6 +161,10 @@ function GalleryThumb({
             const height = event.currentTarget.naturalHeight;
             if (width > 0 && height > 0) setAspect(width / height);
           }}
+          onError={(event) => {
+            console.error(`[ShopPDP] Desktop thumb failed:`, item.src);
+            event.currentTarget.style.display = "none";
+          }}
         />
       )}
       {active && (
@@ -1008,6 +1012,13 @@ export default function ShopProductDetailClient({
                             };
                           }
                         }}
+                        onError={(event) => {
+                          console.error(
+                            `[ShopPDP] Lightbox image failed for ${product.slug}:`,
+                            lightboxImage,
+                          );
+                          event.currentTarget.style.display = "none";
+                        }}
                       />
                     </div>
                   </motion.div>
@@ -1171,9 +1182,18 @@ export default function ShopProductDetailClient({
                                 src={visibleImage}
                                 alt={imageAltFor(visibleImage)}
                                 fill
-                                priority
+                                preload
+                                loading="eager"
+                                fetchPriority="high"
                                 sizes="(min-width: 1024px) 50vw, 100vw"
                                 className="object-cover"
+                                onError={(event) => {
+                                  console.error(
+                                    `[ShopPDP] Hero image failed for ${product.slug}:`,
+                                    visibleImage,
+                                  );
+                                  event.currentTarget.style.display = "none";
+                                }}
                               />
                             </div>
                           </motion.div>
@@ -1232,6 +1252,13 @@ export default function ShopProductDetailClient({
                             fill
                             sizes="72px"
                             className="object-cover"
+                            onError={(event) => {
+                              console.error(
+                                `[ShopPDP] Mobile thumb failed for ${product.slug}:`,
+                                item.src,
+                              );
+                              event.currentTarget.style.display = "none";
+                            }}
                           />
                         )}
                       </button>
@@ -1743,6 +1770,13 @@ export default function ShopProductDetailClient({
                               fill
                               sizes="64px"
                               className="object-cover"
+                              onError={(event) => {
+                                console.error(
+                                  `[ShopPDP] Review image failed for ${product.slug}:`,
+                                  url,
+                                );
+                                event.currentTarget.style.display = "none";
+                              }}
                             />
                           </button>
                         ))}
@@ -1883,6 +1917,13 @@ export default function ShopProductDetailClient({
                 fill
                 sizes="44px"
                 className="object-cover"
+                onError={(event) => {
+                  console.error(
+                    `[ShopPDP] Sticky bar image failed for ${product.slug}:`,
+                    visibleImage,
+                  );
+                  event.currentTarget.style.display = "none";
+                }}
               />
             ) : null}
           </div>

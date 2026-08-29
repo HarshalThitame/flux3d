@@ -17,12 +17,31 @@ export function normalizeShopNumber(value: unknown, fallback = 0) {
   return Number.isFinite(numeric) ? numeric : fallback;
 }
 
+/** Rejects empty strings, relative paths, and malformed URLs.
+ *  Product images must be absolute URLs (Supabase Storage, CDN, data/blob). */
+export function isValidImageUrl(url: string | null | undefined): url is string {
+  if (!url || !url.trim()) return false;
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function getShopProductImages(
   product: Pick<ShopPublicProduct, "thumbnail_url" | "image_urls">,
 ) {
-  return [product.thumbnail_url, ...(product.image_urls ?? [])].filter(
-    (url): url is string => Boolean(url?.trim()),
+  const urls = [product.thumbnail_url, ...(product.image_urls ?? [])].filter(
+    isValidImageUrl,
   );
+  // Deduplicate thumbnail if it also appears in image_urls
+  const seen = new Set<string>();
+  return urls.filter((url) => {
+    if (seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
 }
 
 export function getShopVariantOptionImages(
@@ -34,7 +53,7 @@ export function getShopVariantOptionImages(
     (image) =>
       image.option_name === optionName &&
       image.option_value === optionValue &&
-      Boolean(image.image_url?.trim()),
+      isValidImageUrl(image.image_url),
   );
 }
 
@@ -45,7 +64,7 @@ export function getShopSkuImages(
   if (!sku) return [];
   return (
     (product.sku_images ?? {})[sku.id]?.filter((image) =>
-      Boolean(image.image_url?.trim()),
+      isValidImageUrl(image.image_url),
     ) ?? []
   );
 }
@@ -110,19 +129,21 @@ export function getShopGalleryImages(
     selected,
   );
   const skuImages = getShopSkuImages(product, resolvedSku);
-  const variantImage = resolvedSku?.variant_image_url;
+  const validVariantImage = isValidImageUrl(resolvedSku?.variant_image_url)
+    ? resolvedSku.variant_image_url
+    : null;
   let variantSpecific: string[] | null = null;
   if (skuImages.length > 0) {
-    variantSpecific = variantImage
+    variantSpecific = validVariantImage
       ? [
-          variantImage,
+          validVariantImage,
           ...skuImages
             .map((image) => image.image_url)
-            .filter((url) => url !== variantImage),
+            .filter((url) => url !== validVariantImage),
         ]
       : skuImages.map((image) => image.image_url);
-  } else if (variantImage) {
-    variantSpecific = [variantImage];
+  } else if (validVariantImage) {
+    variantSpecific = [validVariantImage];
   }
 
   if (variantSpecific && variantSpecific.length > 0) {
