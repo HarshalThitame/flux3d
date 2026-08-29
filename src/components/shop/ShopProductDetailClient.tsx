@@ -1092,7 +1092,7 @@ export default function ShopProductDetailClient({
               {mediaItems.length > 1 && (
                 <div
                   ref={railRef}
-                  className="hidden w-[76px] shrink-0 lg:flex lg:max-h-[min(68vh,620px)] lg:flex-col lg:gap-2.5 lg:overflow-y-auto lg:pr-1 scrollbar-hide"
+                  className="hidden w-[84px] shrink-0 lg:flex lg:max-h-[min(68vh,620px)] lg:flex-col lg:gap-2.5 lg:overflow-y-auto lg:pr-1 [scrollbar-width:thin] [scrollbar-color:var(--shop-gold)_transparent] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--shop-gold)]/50"
                 >
                   {mediaItems.map((item, index) => (
                     <GalleryThumb
@@ -1131,7 +1131,10 @@ export default function ShopProductDetailClient({
                 >
                   {activeMedia?.type === "video" ? (
                     // Inline player with controls — sound-on playback, Nike/Samsung style.
-                    <div className="relative aspect-square w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-black shadow-[var(--shop-shadow-sm)]">
+                    <div
+                      className="relative w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-black shadow-[var(--shop-shadow-sm)]"
+                      style={{ height: "clamp(320px, 60vw, 560px)" }}
+                    >
                       <video
                         key={activeMedia.src}
                         src={activeMedia.src}
@@ -1162,7 +1165,8 @@ export default function ShopProductDetailClient({
                           openLightbox(visibleImage);
                         }
                       }}
-                      className="group relative aspect-square w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)] transition hover:shadow-[var(--shop-shadow-md)]"
+                      className="group relative w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)] transition hover:shadow-[var(--shop-shadow-md)]"
+                      style={{ height: "clamp(320px, 60vw, 560px)" }}
                     >
                       {visibleImage ? (
                         <AnimatePresence initial={false} mode="wait">
@@ -1186,7 +1190,7 @@ export default function ShopProductDetailClient({
                                 loading="eager"
                                 fetchPriority="high"
                                 sizes="(min-width: 1024px) 50vw, 100vw"
-                                className="object-cover"
+                                className="object-contain"
                                 onError={(event) => {
                                   console.error(
                                     `[ShopPDP] Hero image failed for ${product.slug}:`,
@@ -1223,7 +1227,7 @@ export default function ShopProductDetailClient({
                   </div>
                 )}
                 {mediaItems.length > 1 && (
-                  <div className="mt-4 flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-2 scroll-padding-x-1 scrollbar-hide [scrollbar-width:none] [-webkit-overflow-scrolling:touch] lg:hidden">
+                  <div className="mt-4 flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-3 scroll-padding-x-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] [scrollbar-color:var(--shop-gold)_transparent] [&::-webkit-scrollbar]:h-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--shop-gold)]/50 lg:hidden">
                     {mediaItems.map((item, index) => (
                       <button
                         key={`${item.type}-${item.src}`}

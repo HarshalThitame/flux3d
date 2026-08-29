@@ -47,15 +47,42 @@ WHERE id IN (
   WHERE rn > 1
 );
 
--- 3. Constraints
-ALTER TABLE public.shelf_variant_option_images
-  ADD CONSTRAINT unique_variant_option_image
-  UNIQUE (product_id, option_name, option_value, image_url);
+-- 3. Constraints (idempotent — only add if not already present)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'unique_variant_option_image'
+      AND conrelid = 'public.shelf_variant_option_images'::regclass
+  ) THEN
+    ALTER TABLE public.shelf_variant_option_images
+      ADD CONSTRAINT unique_variant_option_image
+      UNIQUE (product_id, option_name, option_value, image_url);
+  END IF;
+END $$;
 
-ALTER TABLE public.shelf_variant_option_images
-  ADD CONSTRAINT check_variant_option_image_url_not_empty
-  CHECK (image_url IS NOT NULL AND trim(image_url) <> '');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'check_variant_option_image_url_not_empty'
+      AND conrelid = 'public.shelf_variant_option_images'::regclass
+  ) THEN
+    ALTER TABLE public.shelf_variant_option_images
+      ADD CONSTRAINT check_variant_option_image_url_not_empty
+      CHECK (image_url IS NOT NULL AND trim(image_url) <> '');
+  END IF;
+END $$;
 
-ALTER TABLE public.shelf_sku_images
-  ADD CONSTRAINT check_sku_image_url_not_empty
-  CHECK (image_url IS NOT NULL AND trim(image_url) <> '');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'check_sku_image_url_not_empty'
+      AND conrelid = 'public.shelf_sku_images'::regclass
+  ) THEN
+    ALTER TABLE public.shelf_sku_images
+      ADD CONSTRAINT check_sku_image_url_not_empty
+      CHECK (image_url IS NOT NULL AND trim(image_url) <> '');
+  END IF;
+END $$;
