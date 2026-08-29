@@ -154,6 +154,30 @@ export async function POST(
         );
       }
       const supabase = createAdminSupabaseClient();
+
+      // Guard: reject any URL whose storage object no longer exists.
+      for (const img of validImages) {
+        const match = String(img.image_url || "").match(
+          /\/storage\/v1\/object\/public\/shop-images\/(.+)$/,
+        );
+        if (match) {
+          const parts = decodeURIComponent(match[1]).split("/");
+          const folder = parts.slice(0, -1).join("/");
+          const filename = parts.at(-1) ?? "";
+          const { data: objs } = await supabase.storage
+            .from(SHOP_BUCKET)
+            .list(folder, { search: filename });
+          if (!objs?.some((o) => o.name === filename)) {
+            return NextResponse.json(
+              {
+                error: `Image file no longer exists in storage: ${img.image_url}. Please re-upload the image.`,
+              },
+              { status: 422 },
+            );
+          }
+        }
+      }
+
       const { data, error } = await supabase
         .from("shelf_sku_images")
         .insert(
