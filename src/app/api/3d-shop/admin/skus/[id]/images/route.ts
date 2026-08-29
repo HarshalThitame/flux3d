@@ -155,25 +155,27 @@ export async function POST(
       }
       const supabase = createAdminSupabaseClient();
 
-      // Guard: reject any URL whose storage object no longer exists.
+      // Guard: verify the image URL is actually reachable in storage.
+      // We use a HEAD request on the public URL — it's exact (no pagination
+      // or prefix-search issues) and avoids the storage.list() false-negative
+      // bug where a freshly-uploaded file is not yet visible in folder listings.
       for (const img of validImages) {
-        const match = String(img.image_url || "").match(
-          /\/storage\/v1\/object\/public\/shop-images\/(.+)$/,
-        );
-        if (match) {
-          const parts = decodeURIComponent(match[1]).split("/");
-          const folder = parts.slice(0, -1).join("/");
-          const filename = parts.at(-1) ?? "";
-          const { data: objs } = await supabase.storage
-            .from(SHOP_BUCKET)
-            .list(folder, { search: filename });
-          if (!objs?.some((o) => o.name === filename)) {
-            return NextResponse.json(
-              {
-                error: `Image file no longer exists in storage: ${img.image_url}. Please re-upload the image.`,
-              },
-              { status: 422 },
-            );
+        const rawUrl = String(img.image_url || "").trim();
+        // Only validate URLs that point at our own Supabase storage bucket
+        if (rawUrl.includes("/storage/v1/object/public/shop-images/")) {
+          try {
+            const headRes = await fetch(rawUrl, { method: "HEAD" });
+            if (!headRes.ok) {
+              return NextResponse.json(
+                {
+                  error: `Image file no longer exists in storage: ${rawUrl}. Please re-upload the image.`,
+                },
+                { status: 422 },
+              );
+            }
+          } catch {
+            // Network errors (e.g. DNS issues in CI) — fail open so a transient
+            // connectivity hiccup never blocks a legitimate admin action.
           }
         }
       }
