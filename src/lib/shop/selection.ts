@@ -44,16 +44,28 @@ export function getShopProductImages(
   });
 }
 
+function sortVariantImages<
+  T extends { is_primary: boolean; display_order: number },
+>(images: T[]): T[] {
+  return [...images].sort(
+    (a, b) =>
+      Number(b.is_primary) - Number(a.is_primary) ||
+      a.display_order - b.display_order,
+  );
+}
+
 export function getShopVariantOptionImages(
   product: Pick<ShopPublicProduct, "variant_option_images">,
   optionName: string,
   optionValue: string,
 ) {
-  return (product.variant_option_images ?? []).filter(
-    (image) =>
-      image.option_name === optionName &&
-      image.option_value === optionValue &&
-      isValidImageUrl(image.image_url),
+  return sortVariantImages(
+    (product.variant_option_images ?? []).filter(
+      (image) =>
+        image.option_name === optionName &&
+        image.option_value === optionValue &&
+        isValidImageUrl(image.image_url),
+    ),
   );
 }
 
@@ -62,10 +74,10 @@ export function getShopSkuImages(
   sku: ShopSku | null,
 ): ShopSkuImage[] {
   if (!sku) return [];
-  return (
+  return sortVariantImages(
     (product.sku_images ?? {})[sku.id]?.filter((image) =>
       isValidImageUrl(image.image_url),
-    ) ?? []
+    ) ?? [],
   );
 }
 

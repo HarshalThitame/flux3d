@@ -182,6 +182,14 @@ export async function POST(
 
     const supabase = createAdminSupabaseClient();
     const publicUrl = await uploadVariantImage(supabase, file, id);
+
+    const { count: existingCount } = await supabase
+      .from("shelf_variant_option_images")
+      .select("id", { count: "exact", head: true })
+      .eq("product_id", id)
+      .eq("option_name", optionName)
+      .eq("option_value", optionValue);
+
     const { data, error } = await supabase
       .from("shelf_variant_option_images")
       .insert({
@@ -190,7 +198,7 @@ export async function POST(
         option_value: optionValue,
         image_url: publicUrl,
         alt_text: altText || null,
-        display_order: 0,
+        display_order: existingCount ?? 0,
         is_primary: false,
       })
       .select("*")

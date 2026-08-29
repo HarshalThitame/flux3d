@@ -17,10 +17,12 @@ import { SkuManagerSection } from "./product-editor/sections/SkuManagerSection";
 import { DimensionsSection } from "./product-editor/sections/DimensionsSection";
 import { CustomizationSection } from "./product-editor/sections/CustomizationSection";
 import { SeoVisibilitySection } from "./product-editor/sections/SeoVisibilitySection";
+import { VariantImageGalleriesSection } from "./product-editor/sections/VariantImageGalleriesSection";
 
 const editorSections = [
   { id: "sec-basic", label: "Basics" },
   { id: "sec-media", label: "Media" },
+  { id: "sec-variant-galleries", label: "Variant Galleries" },
   { id: "sec-model", label: "3D & Cinematic" },
   { id: "sec-hotspots", label: "Hotspots" },
   { id: "sec-variants", label: "Variants" },
@@ -76,6 +78,9 @@ function EditorShell() {
           </div>
           <div id="sec-media" className="scroll-mt-28">
             <UnifiedMediaPool />
+          </div>
+          <div id="sec-variant-galleries" className="scroll-mt-28">
+            <VariantImageGalleriesSection />
           </div>
           <div id="sec-model" className="scroll-mt-28">
             <Model3DSection />

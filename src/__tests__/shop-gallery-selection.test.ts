@@ -548,3 +548,169 @@ describe("getDefaultShopSelection", () => {
     ).toEqual({});
   });
 });
+
+describe("getShopGalleryImages — is_primary sorting", () => {
+  it("places the primary image first even when display_order is higher", () => {
+    const product = makeProduct({
+      variant_options: [
+        {
+          id: "o1",
+          product_id: "p1",
+          option_name: "Color",
+          option_type: "button" as const,
+          values: ["Red"],
+          display_order: 0,
+          is_required: true,
+          created_at: null,
+        },
+      ],
+      variant_option_images: [
+        {
+          id: "v1",
+          product_id: "p1",
+          option_name: "Color",
+          option_value: "Red",
+          image_url: "https://example.com/red-secondary.jpg",
+          alt_text: null,
+          display_order: 0,
+          is_primary: false,
+          created_at: null,
+        },
+        {
+          id: "v2",
+          product_id: "p1",
+          option_name: "Color",
+          option_value: "Red",
+          image_url: "https://example.com/red-primary.jpg",
+          alt_text: null,
+          display_order: 5,
+          is_primary: true,
+          created_at: null,
+        },
+      ],
+    });
+    const gallery = getShopGalleryImages(product, { Color: "Red" });
+    expect(gallery.images[0]).toBe("https://example.com/red-primary.jpg");
+    expect(gallery.images[1]).toBe("https://example.com/red-secondary.jpg");
+  });
+
+  it("falls back to display_order when is_primary is tied", () => {
+    const product = makeProduct({
+      variant_options: [
+        {
+          id: "o1",
+          product_id: "p1",
+          option_name: "Color",
+          option_type: "button" as const,
+          values: ["Red"],
+          display_order: 0,
+          is_required: true,
+          created_at: null,
+        },
+      ],
+      variant_option_images: [
+        {
+          id: "v1",
+          product_id: "p1",
+          option_name: "Color",
+          option_value: "Red",
+          image_url: "https://example.com/red-3.jpg",
+          alt_text: null,
+          display_order: 2,
+          is_primary: false,
+          created_at: null,
+        },
+        {
+          id: "v2",
+          product_id: "p1",
+          option_name: "Color",
+          option_value: "Red",
+          image_url: "https://example.com/red-1.jpg",
+          alt_text: null,
+          display_order: 0,
+          is_primary: false,
+          created_at: null,
+        },
+        {
+          id: "v3",
+          product_id: "p1",
+          option_name: "Color",
+          option_value: "Red",
+          image_url: "https://example.com/red-2.jpg",
+          alt_text: null,
+          display_order: 1,
+          is_primary: false,
+          created_at: null,
+        },
+      ],
+    });
+    const gallery = getShopGalleryImages(product, { Color: "Red" });
+    expect(gallery.images.slice(0, 3)).toEqual([
+      "https://example.com/red-1.jpg",
+      "https://example.com/red-2.jpg",
+      "https://example.com/red-3.jpg",
+    ]);
+  });
+
+  it("sorts SKU images by is_primary then display_order", () => {
+    const product = makeProduct({
+      skus: [
+        {
+          product_id: "p1",
+          id: "s-red",
+          sku_code: "R",
+          variant_combination: { Color: "Red" },
+          price: 1000,
+          compare_at_price: null,
+          stock_quantity: 5,
+          low_stock_threshold: 5,
+          weight_grams: null,
+          variant_image_url: null,
+          model_url: null,
+          is_available: true,
+          pre_order_eta: null,
+          created_at: null,
+          updated_at: null,
+        },
+      ],
+      variant_options: [
+        {
+          id: "o1",
+          product_id: "p1",
+          option_name: "Color",
+          option_type: "button" as const,
+          values: ["Red"],
+          display_order: 0,
+          is_required: true,
+          created_at: null,
+        },
+      ],
+      sku_images: {
+        "s-red": [
+          {
+            id: "si1",
+            sku_id: "s-red",
+            image_url: "https://example.com/sku-secondary.jpg",
+            alt_text: null,
+            display_order: 0,
+            is_primary: false,
+            created_at: null,
+          },
+          {
+            id: "si2",
+            sku_id: "s-red",
+            image_url: "https://example.com/sku-primary.jpg",
+            alt_text: null,
+            display_order: 10,
+            is_primary: true,
+            created_at: null,
+          },
+        ],
+      },
+    });
+    const gallery = getShopGalleryImages(product, { Color: "Red" });
+    expect(gallery.source).toBe("sku");
+    expect(gallery.images[0]).toBe("https://example.com/sku-primary.jpg");
+    expect(gallery.images[1]).toBe("https://example.com/sku-secondary.jpg");
+  });
+});
