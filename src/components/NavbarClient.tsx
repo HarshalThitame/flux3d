@@ -27,6 +27,9 @@ import type { AppUserProfile } from "@/lib/auth/server";
 import { useProfile } from "@/hooks/useProfile";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 
+import type { ShopPublicCategory } from "@/lib/shop/public-types";
+import ShopMegaMenu from "@/components/shop/ShopMegaMenu";
+
 const ShopNavControls = dynamic(
   () => import("@/components/shop/ShopNavControls"),
   { ssr: false },
@@ -41,6 +44,7 @@ interface NavbarClientProps {
   logoUrl?: string;
   darkLogoUrl?: string;
   whatsappNumber?: string;
+  categories?: ShopPublicCategory[];
 }
 
 function getInitials(name: string) {
@@ -75,6 +79,7 @@ export default function NavbarClient({
   logoUrl = "/logo.webp",
   darkLogoUrl,
   whatsappNumber = "+919623023480",
+  categories,
 }: NavbarClientProps) {
   const { profile: liveProfile, loading } = useProfile(user, { enabled: true });
   const router = useRouter();
@@ -345,7 +350,7 @@ export default function NavbarClient({
             {navLinks.map((link) => {
               const active = isActive(link.href);
               return (
-                <li key={link.href}>
+                <li key={link.href} className={link.label === "3D Shop" ? "group relative" : ""}>
                   <Link
                     href={link.href}
                     prefetch={false}
@@ -360,6 +365,11 @@ export default function NavbarClient({
                   >
                     <span>{link.label}</span>
                   </Link>
+                  {link.label === "3D Shop" && categories && categories.length > 0 && (
+                    <div className="invisible absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 transition-all group-hover:visible group-hover:opacity-100 z-50">
+                      <ShopMegaMenu categories={categories} onClose={() => {}} />
+                    </div>
+                  )}
                 </li>
               );
             })}
