@@ -7,7 +7,7 @@ import { useProductEditor } from "../editor-context";
 import { AiAssistButton } from "../AiAssist";
 import { BlockBuilder } from "../blocks/BlockBuilder";
 import { convertRichHtmlToBlocks } from "@/lib/shop/html-to-blocks";
-import { descriptionBlocksSchema } from "@/lib/shop/blocks";
+import type { DescriptionBlocks } from "@/lib/shop/blocks";
 
 const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), {
   ssr: false,
@@ -58,15 +58,7 @@ export function LongDescriptionSection() {
   }
 
   function applyBlocks(value: unknown) {
-    const parsed = descriptionBlocksSchema.safeParse(value);
-    if (parsed.success) {
-      updateProduct("long_description_blocks", parsed.data);
-    } else {
-      setToast({
-        type: "error",
-        message: "Block data is invalid. Revert your last change.",
-      });
-    }
+    updateProduct("long_description_blocks", value as DescriptionBlocks);
   }
 
   return (

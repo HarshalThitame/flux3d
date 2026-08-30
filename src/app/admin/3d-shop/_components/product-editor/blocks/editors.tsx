@@ -167,7 +167,7 @@ export function SpecsTableEditor({
         onClick={() =>
           onChange({
             ...block,
-            rows: [...block.rows, { label: "", value: "" }],
+            rows: [...block.rows, { label: "New label", value: "New value" }],
           })
         }
         className="inline-flex items-center gap-1.5 rounded-lg border border-[#6d28d9]/20 bg-white px-3 py-1.5 text-xs font-medium text-[#6d28d9] transition hover:bg-[#6d28d9]/5"
@@ -266,7 +266,14 @@ export function FeatureGridEditor({
         onClick={() =>
           onChange({
             ...block,
-            items: [...block.items, { icon: "Sparkles", title: "", text: "" }],
+            items: [
+              ...block.items,
+              {
+                icon: "Sparkles",
+                title: "New feature",
+                text: "Feature description",
+              },
+            ],
           })
         }
         disabled={block.items.length >= 6}
@@ -538,7 +545,10 @@ export function BulletGridEditor({
         onClick={() =>
           onChange({
             ...block,
-            items: [...block.items, { icon: "CheckCircle2", text: "" }],
+            items: [
+              ...block.items,
+              { icon: "CheckCircle2", text: "New bullet point" },
+            ],
           })
         }
         disabled={block.items.length >= 12}
