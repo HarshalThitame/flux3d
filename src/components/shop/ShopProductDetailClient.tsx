@@ -59,7 +59,6 @@ import {
   getShopGalleryImages,
   getShopProductImages,
   getShopStockLabel,
-  getShopVariantOptionImages,
   isSkuBlockedByStatus,
   resolveShopSku,
   getSelectedSwatchColor,
@@ -142,7 +141,7 @@ function GalleryThumb({
       onClick={onClick}
       aria-label={label}
       aria-pressed={active}
-      className={`group relative w-full overflow-hidden rounded-xl border-2 transition-all duration-200 ${
+      className={`group relative shrink-0 w-full overflow-hidden rounded-xl border-2 transition-all duration-200 ${
         active
           ? "border-[var(--shop-gold)] shadow-[0_0_0_1px_var(--shop-gold)] shadow-[var(--shop-shadow-md)]"
           : "border-transparent hover:border-[var(--shop-border-gold)] hover:shadow-sm"
@@ -353,10 +352,6 @@ export default function ShopProductDetailClient({
   const [selected, setSelected] = useState<ShopSelectedOptions>(() =>
     getDefaultShopSelection(product),
   );
-  const [lastChangedOption, setLastChangedOption] = useState<{
-    name: string;
-    value: string;
-  } | null>(null);
   const gallery = useMemo(
     () => getShopGalleryImages(product, selected),
     [product, selected],
@@ -441,24 +436,7 @@ export default function ShopProductDetailClient({
   const [seenGallery, setSeenGallery] = useState(gallerySignature);
   if (seenGallery !== gallerySignature) {
     setSeenGallery(gallerySignature);
-    let nextPos = 0;
-    if (lastChangedOption) {
-      const optImages = getShopVariantOptionImages(
-        product,
-        lastChangedOption.name,
-        lastChangedOption.value,
-      );
-      if (optImages.length > 0) {
-        const firstUrl = optImages[0].image_url;
-        const idx = mediaItems.findIndex(
-          (m) => m.type === "image" && m.src === firstUrl,
-        );
-        if (idx !== -1) {
-          nextPos = idx;
-        }
-      }
-    }
-    setMediaPos(nextPos);
+    setMediaPos(0);
   }
 
   useEffect(() => {
@@ -1514,7 +1492,7 @@ export default function ShopProductDetailClient({
                   selected={selected}
                   onChangeAction={(name, value) => {
                     setSelected((current) => ({ ...current, [name]: value }));
-                    setLastChangedOption({ name, value: String(value) });
+                    setMediaPos(0);
                   }}
                 />
               </div>
