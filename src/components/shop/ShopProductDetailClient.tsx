@@ -59,6 +59,7 @@ import {
   getShopGalleryImages,
   getShopProductImages,
   getShopStockLabel,
+  getShopVariantOptionImages,
   isSkuBlockedByStatus,
   resolveShopSku,
   getSelectedSwatchColor,
@@ -352,6 +353,10 @@ export default function ShopProductDetailClient({
   const [selected, setSelected] = useState<ShopSelectedOptions>(() =>
     getDefaultShopSelection(product),
   );
+  const [lastChangedOption, setLastChangedOption] = useState<{
+    name: string;
+    value: string;
+  } | null>(null);
   const gallery = useMemo(
     () => getShopGalleryImages(product, selected),
     [product, selected],
@@ -436,7 +441,24 @@ export default function ShopProductDetailClient({
   const [seenGallery, setSeenGallery] = useState(gallerySignature);
   if (seenGallery !== gallerySignature) {
     setSeenGallery(gallerySignature);
-    setMediaPos(0);
+    let nextPos = 0;
+    if (lastChangedOption) {
+      const optImages = getShopVariantOptionImages(
+        product,
+        lastChangedOption.name,
+        lastChangedOption.value,
+      );
+      if (optImages.length > 0) {
+        const firstUrl = optImages[0].image_url;
+        const idx = mediaItems.findIndex(
+          (m) => m.type === "image" && m.src === firstUrl,
+        );
+        if (idx !== -1) {
+          nextPos = idx;
+        }
+      }
+    }
+    setMediaPos(nextPos);
   }
 
   useEffect(() => {
@@ -1490,9 +1512,10 @@ export default function ShopProductDetailClient({
                 <ShopVariantControls
                   options={product.variant_options}
                   selected={selected}
-                  onChangeAction={(name, value) =>
-                    setSelected((current) => ({ ...current, [name]: value }))
-                  }
+                  onChangeAction={(name, value) => {
+                    setSelected((current) => ({ ...current, [name]: value }));
+                    setLastChangedOption({ name, value: String(value) });
+                  }}
                 />
               </div>
 
