@@ -417,6 +417,38 @@ export function VariantOptionsSection() {
                         label="Required"
                       />
                     </div>
+                    <div className="hidden sm:block border-l border-[#C9A24B]/20 pl-3">
+                      <Toggle
+                        checked={variant.affects_images ?? false}
+                        onChange={(checked) =>
+                          updateVariant(variant.id, "affects_images", checked)
+                        }
+                        label="Affects Product Images"
+                      />
+                    </div>
+                    {variant.affects_images && (
+                      <label className="flex items-center gap-2 border-l border-[#C9A24B]/20 pl-3">
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#B8860B]">
+                          Priority
+                        </span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={variant.image_priority ?? ""}
+                          onChange={(e) =>
+                            updateVariant(
+                              variant.id,
+                              "image_priority",
+                              e.target.value
+                                ? parseInt(e.target.value, 10)
+                                : null,
+                            )
+                          }
+                          className={`${inputClass} !py-1 w-20`}
+                          placeholder="e.g. 1"
+                        />
+                      </label>
+                    )}
                     <button
                       type="button"
                       onClick={() => void handleDeleteVariant(variant)}

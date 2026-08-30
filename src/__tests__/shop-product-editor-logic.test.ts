@@ -205,6 +205,8 @@ describe("getSelectedSwatchColor", () => {
     value_metadata: metadata,
     display_order: 0,
     is_required: true,
+    affects_images: true,
+    image_priority: 1,
     created_at: null,
   });
 

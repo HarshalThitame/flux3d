@@ -14,6 +14,8 @@ type VariantPayload = {
   value_metadata?: Record<string, VariantValueMetadata>;
   display_order?: number;
   is_required?: boolean;
+  affects_images?: boolean | null;
+  image_priority?: number | null;
   orders?: { id: string; display_order: number }[];
 };
 
@@ -51,6 +53,8 @@ function normalizeVariantPayload(
         ? Number(body.display_order)
         : 0,
       is_required: body.is_required ?? true,
+      affects_images: body.affects_images ?? false,
+      image_priority: body.image_priority ?? null,
     };
   }
 
@@ -79,6 +83,10 @@ function normalizeVariantPayload(
       : 0;
   }
   if (body.is_required !== undefined) patch.is_required = body.is_required;
+  if (body.affects_images !== undefined)
+    patch.affects_images = body.affects_images;
+  if (body.image_priority !== undefined)
+    patch.image_priority = body.image_priority;
   return patch;
 }
 

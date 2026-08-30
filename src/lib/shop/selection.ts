@@ -105,10 +105,12 @@ export function getShopGalleryImages(
   product: ShopPublicProduct,
   selected: ShopSelectedOptions,
 ): { images: string[]; caption?: string; source: ShopGallerySource } {
-  // 1. Map each option's display_order for tie-breaking
-  const optionDisplayOrders = new Map<string, number>();
+  // 1. Identify which options affect images and map their priorities
+  const imageAffectingOptions = new Map<string, number>();
   for (const opt of product.variant_options ?? []) {
-    optionDisplayOrders.set(opt.option_name, opt.display_order ?? 999);
+    if (opt.affects_images) {
+      imageAffectingOptions.set(opt.option_name, opt.image_priority ?? 999);
+    }
   }
 
   // 2. Score every variant image based on the selected options
@@ -120,7 +122,7 @@ export function getShopGalleryImages(
       conflicts: boolean;
       isPrimary: boolean;
       minDisplayOrder: number;
-      minOptionDisplayOrder: number;
+      minOptionPriority: number;
       matchedCaptions: string[];
     }
   >();
@@ -129,6 +131,9 @@ export function getShopGalleryImages(
     if (!isValidImageUrl(img.image_url)) continue;
 
     const optionName = img.option_name;
+    // Ignore images assigned to options that do not affect the gallery
+    if (!imageAffectingOptions.has(optionName)) continue;
+
     const optionValue = img.option_value;
     const selectedValue = selected[optionName];
 
@@ -140,14 +145,13 @@ export function getShopGalleryImages(
         conflicts: false,
         isPrimary: false,
         minDisplayOrder: Infinity,
-        minOptionDisplayOrder: Infinity,
+        minOptionPriority: Infinity,
         matchedCaptions: [],
       };
       imageStats.set(img.image_url, stats);
     }
 
-    // Treat non-matching values (including undefined/unselected) as a conflict
-    // so an image strictly assigned to "Size=Large" never shows if Size isn't Large.
+    // Treat non-matching values as a conflict so partial mismatches are rejected
     if (selectedValue === optionValue) {
       stats.matchCount += 1;
       stats.matchedCaptions.push(`${optionName}: ${optionValue}`);
@@ -155,9 +159,9 @@ export function getShopGalleryImages(
       if (img.display_order < stats.minDisplayOrder) {
         stats.minDisplayOrder = img.display_order;
       }
-      const optOrder = optionDisplayOrders.get(optionName) ?? 999;
-      if (optOrder < stats.minOptionDisplayOrder) {
-        stats.minOptionDisplayOrder = optOrder;
+      const optPriority = imageAffectingOptions.get(optionName) ?? 999;
+      if (optPriority < stats.minOptionPriority) {
+        stats.minOptionPriority = optPriority;
       }
     } else {
       stats.conflicts = true;
@@ -170,18 +174,23 @@ export function getShopGalleryImages(
   );
 
   if (candidates.length > 0) {
-    // 4. Prioritize the most specific combination matches
+    // 4. Prioritize the most specific combination match (highest match count)
     const maxMatchCount = Math.max(...candidates.map((s) => s.matchCount));
-    const bestCandidates = candidates.filter(
+    let bestCandidates = candidates.filter(
       (s) => s.matchCount === maxMatchCount,
     );
 
-    // 5. Order the best candidates deterministically
+    // 5. If there are still ties, pick the ones matching the highest priority option
+    const bestOptionPriority = Math.min(
+      ...bestCandidates.map((s) => s.minOptionPriority),
+    );
+    bestCandidates = bestCandidates.filter(
+      (s) => s.minOptionPriority === bestOptionPriority,
+    );
+
+    // 6. Order the best candidates deterministically
     bestCandidates.sort((a, b) => {
       if (a.isPrimary !== b.isPrimary) return a.isPrimary ? -1 : 1;
-      if (a.minOptionDisplayOrder !== b.minOptionDisplayOrder) {
-        return a.minOptionDisplayOrder - b.minOptionDisplayOrder;
-      }
       return a.minDisplayOrder - b.minDisplayOrder;
     });
 

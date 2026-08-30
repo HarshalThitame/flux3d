@@ -59,6 +59,8 @@ export const variantOptionSchema = z.object({
   value_metadata: z.record(z.string(), variantValueMetadataSchema).default({}),
   display_order: z.number().int().min(0).optional(),
   is_required: z.boolean().optional(),
+  affects_images: z.boolean().optional(),
+  image_priority: z.number().int().min(1).nullable().optional(),
 });
 
 export const variantOptionsSchema = z.array(variantOptionSchema);

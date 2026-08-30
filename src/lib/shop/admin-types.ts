@@ -197,6 +197,8 @@ export type ShopVariantOption = {
   value_metadata?: Record<string, VariantValueMetadata> | null;
   display_order: number | null;
   is_required: boolean | null;
+  affects_images: boolean | null;
+  image_priority: number | null;
   created_at: string | null;
 };
 
