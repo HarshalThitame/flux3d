@@ -361,11 +361,6 @@ export async function DELETE(
 
     if (error) throw new Error(error.message);
 
-    if (existing?.image_url) {
-      const { deleteShopImageAsset } =
-        await import("@/lib/shop/storage-cleanup");
-      await deleteShopImageAsset(existing.image_url);
-    }
     invalidateShopDataCache();
     return NextResponse.json({ ok: true });
   } catch (error) {

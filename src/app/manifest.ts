@@ -1,40 +1,37 @@
-import type {MetadataRoute} from 'next'
-import {getSettings} from '@/lib/settings'
+import type { MetadataRoute } from "next";
+import { getSettings } from "@/lib/settings";
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
-    const settings = await getSettings()
-    return {
-        name: settings.businessName || 'Flux3D',
-        short_name: settings.brandName || settings.businessName || 'Flux3D',
-        description: settings.businessDescription || '3D printing, rapid prototyping, resin printing, and custom CAD support across India.',
-        start_url: '/',
-        display: 'standalone',
-        background_color: '#f9f7f4',
-        theme_color: '#6d28d9',
-        icons: [
-            {
-                src: '/icons/192',
-                sizes: '192x192',
-                type: 'image/png',
-                purpose: 'any',
-            },
-            {
-                src: '/icons/512',
-                sizes: '512x512',
-                type: 'image/png',
-                purpose: 'any',
-            },
-            {
-                src: '/icons/512',
-                sizes: '512x512',
-                type: 'image/png',
-                purpose: 'maskable',
-            },
-            {
-                src: settings.faviconUrl || '/favicon.ico',
-                sizes: 'any',
-                type: 'image/x-icon',
-            },
-        ],
-    }
+  const settings = await getSettings();
+  return {
+    name: settings.businessName || "Flux3D",
+    short_name: settings.brandName || settings.businessName || "Flux3D",
+    description:
+      settings.businessDescription ||
+      "3D printing, rapid prototyping, resin printing, and custom CAD support across India.",
+    start_url: "/",
+    display: "standalone",
+    background_color: "#f9f7f4",
+    theme_color: "#6d28d9",
+    icons: [
+      {
+        src: "/icons/192",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icons/512",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icons/512",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
+      },
+    ],
+  };
 }
