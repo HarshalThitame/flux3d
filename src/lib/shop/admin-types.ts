@@ -184,6 +184,8 @@ export type ShopProduct = {
   created_at: string | null;
   updated_at: string | null;
   category_name?: string | null;
+  product_categories?: { category_id: string; is_primary: boolean }[] | null;
+  categories?: { id: string; name: string; slug: string; is_primary: boolean }[] | null;
   sku_count?: number;
   stock_status?: "All In Stock" | "Some Low Stock" | "Out of Stock" | "No SKUs";
 };

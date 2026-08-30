@@ -86,6 +86,7 @@ export const productFormSchema = z.object({
   long_description: z.string(),
   long_description_blocks: descriptionBlocksSchema,
   category_id: z.string(),
+  product_categories: z.array(z.object({ category_id: z.string(), is_primary: z.boolean() })).optional(),
   tags: z.array(z.string()),
   occasion_tags: z.array(z.string()),
   thumbnail_url: z.string(),

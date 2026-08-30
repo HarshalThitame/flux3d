@@ -12,6 +12,7 @@ type ProductPayload = {
   long_description?: string | null;
   long_description_blocks?: unknown;
   category_id?: string | null;
+  product_categories?: { category_id: string; is_primary: boolean }[] | null;
   tags?: string[];
   occasion_tags?: string[];
   thumbnail_url?: string | null;
@@ -236,7 +237,7 @@ export async function GET(request: Request) {
       const { data, error } = await supabase
         .from("shelf_products")
         .select(
-          "*, category:shelf_categories(name), shelf_skus(id, stock_quantity, low_stock_threshold, is_available)",
+          "*, category:shelf_categories(name), product_categories:shelf_product_categories(category_id, is_primary, category:shelf_categories(name)), shelf_skus(id, stock_quantity, low_stock_threshold, is_available)",
         )
         .eq("id", id)
         .maybeSingle();
@@ -248,9 +249,10 @@ export async function GET(request: Request) {
           { status: 404 },
         );
 
+      const primaryCat = data.product_categories?.find((pc: { is_primary?: boolean, category?: unknown }) => pc.is_primary)?.category || data.category;
       const product = {
         ...data,
-        category_name: data.category?.name ?? null,
+        category_name: primaryCat?.name ?? null,
         sku_count: data.shelf_skus?.length ?? 0,
         stock_status: getStockStatus(data.shelf_skus),
       };
@@ -261,7 +263,7 @@ export async function GET(request: Request) {
     let query = supabase
       .from("shelf_products")
       .select(
-        "*, category:shelf_categories(name), shelf_skus(id, stock_quantity, low_stock_threshold, is_available)",
+        "*, category:shelf_categories(name), product_categories:shelf_product_categories(category_id, is_primary, category:shelf_categories(name)), shelf_skus(id, stock_quantity, low_stock_threshold, is_available)",
       )
       .order("created_at", { ascending: false });
 
@@ -282,12 +284,15 @@ export async function GET(request: Request) {
     const { data, error } = await query;
     if (error) throw new Error(error.message);
 
-    const products = (data ?? []).map((product) => ({
-      ...product,
-      category_name: product.category?.name ?? null,
-      sku_count: product.shelf_skus?.length ?? 0,
-      stock_status: getStockStatus(product.shelf_skus),
-    }));
+    const products = (data ?? []).map((product) => {
+      const primaryCat = product.product_categories?.find((pc: { is_primary?: boolean, category?: unknown }) => pc.is_primary)?.category || product.category;
+      return {
+        ...product,
+        category_name: primaryCat?.name ?? null,
+        sku_count: product.shelf_skus?.length ?? 0,
+        stock_status: getStockStatus(product.shelf_skus),
+      };
+    });
 
     return NextResponse.json({ products });
   } catch (error) {
@@ -309,6 +314,21 @@ export async function POST(request: Request) {
       .single();
 
     if (error) throw new Error(error.message);
+
+    if (body.product_categories && body.product_categories.length > 0) {
+      await supabase.from("shelf_product_categories").insert(body.product_categories.map(pc => ({
+          product_id: data.id,
+          category_id: pc.category_id,
+          is_primary: pc.is_primary
+      })));
+    } else if (body.category_id) {
+      await supabase.from("shelf_product_categories").insert({
+          product_id: data.id,
+          category_id: body.category_id,
+          is_primary: true
+      });
+    }
+
     invalidateShopDataCache();
     return NextResponse.json({ product: data }, { status: 201 });
   } catch (error) {
@@ -337,6 +357,18 @@ export async function PATCH(request: Request) {
       .single();
 
     if (error) throw new Error(error.message);
+
+    if (body.product_categories !== undefined) {
+      await supabase.from("shelf_product_categories").delete().eq("product_id", body.id);
+      if (body.product_categories && body.product_categories.length > 0) {
+        await supabase.from("shelf_product_categories").insert(body.product_categories.map(pc => ({
+            product_id: body.id,
+            category_id: pc.category_id,
+            is_primary: pc.is_primary
+        })));
+      }
+    }
+
     invalidateShopDataCache();
     return NextResponse.json({ product: data });
   } catch (error) {

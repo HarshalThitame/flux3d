@@ -145,14 +145,19 @@ export function BasicInfoSection() {
             className="mb-1.5 block text-xs font-medium text-[#6F7192]"
             htmlFor="product-category"
           >
-            Category
+            Primary Category
           </label>
           <select
             id="product-category"
-            value={product.category_id}
-            onChange={(event) =>
-              updateProduct("category_id", event.target.value)
-            }
+            value={product.category_id || product.product_categories?.find(pc => pc.is_primary)?.category_id || ""}
+            onChange={(event) => {
+                const val = event.target.value;
+                const secondary = product.product_categories?.filter(pc => !pc.is_primary).map(pc => pc.category_id) || [];
+                const newCats = val ? [{ category_id: val, is_primary: true }] : [];
+                newCats.push(...secondary.filter(id => id !== val).map(id => ({ category_id: id, is_primary: false })));
+                updateProduct("category_id", val);
+                updateProduct("product_categories", newCats);
+            }}
             className={inputClass}
           >
             <option value="">Uncategorized</option>
@@ -162,6 +167,37 @@ export function BasicInfoSection() {
               </option>
             ))}
           </select>
+
+          <div className="mt-4">
+            <span className="mb-2 block text-xs font-medium text-[#6F7192]">Secondary Categories</span>
+            <div className="max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-2 scrollbar-hide">
+              <div className="grid gap-1">
+                {categories.filter(c => c.id !== (product.category_id || product.product_categories?.find(pc => pc.is_primary)?.category_id)).map(category => (
+                  <label key={category.id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white text-sm text-[#0F1B3D] cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-gray-300 text-[#6d28d9] focus:ring-[#6d28d9]"
+                      checked={product.product_categories?.some(pc => !pc.is_primary && pc.category_id === category.id) || false}
+                      onChange={(e) => {
+                        const primaryId = product.category_id || product.product_categories?.find(pc => pc.is_primary)?.category_id;
+                        let secondary = product.product_categories?.filter(pc => !pc.is_primary).map(pc => pc.category_id) || [];
+                        if (e.target.checked) {
+                            secondary.push(category.id);
+                        } else {
+                            secondary = secondary.filter(id => id !== category.id);
+                        }
+                        const newCats = primaryId ? [{ category_id: primaryId, is_primary: true }] : [];
+                        newCats.push(...secondary.map(id => ({ category_id: id, is_primary: false })));
+                        updateProduct("product_categories", newCats);
+                      }}
+                    />
+                    {category.name}
+                  </label>
+                ))}
+                {categories.length <= 1 && <div className="text-xs text-gray-400 p-2">No other categories available.</div>}
+              </div>
+            </div>
+          </div>
         </div>
         <div>
           <label

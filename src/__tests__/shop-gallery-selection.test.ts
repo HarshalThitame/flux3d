@@ -18,6 +18,8 @@ function makeProduct(
     category_id: null,
     category_name: null,
     category_slug: null,
+    product_categories: [],
+    categories: [],
     tags: [],
     occasion_tags: [],
     thumbnail_url: "https://example.com/cover.jpg",

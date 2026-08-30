@@ -36,6 +36,8 @@ export type ShopPublicProduct = {
   category_id: string | null;
   category_name: string | null;
   category_slug: string | null;
+  product_categories: { category_id: string; is_primary: boolean }[];
+  categories: { id: string; name: string; slug: string; is_primary: boolean }[];
   tags: string[];
   occasion_tags: string[];
   thumbnail_url: string | null;

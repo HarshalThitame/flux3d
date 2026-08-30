@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Edit3, GripVertical, ImagePlus, Layers, Plus, Trash2 } from 'lucide-react'
+import { Edit3, GripVertical, ImagePlus, Layers, Plus, Trash2, Folder, FolderOpen, CornerDownRight } from 'lucide-react'
 import Modal from '@/components/admin/Modal'
 import AdminToast, { type AdminToastState } from '@/components/admin/AdminToast'
 import type { ShopCategory } from '@/lib/shop/admin-types'
@@ -32,6 +32,8 @@ const emptyForm: CategoryForm = {
   is_active: true,
 }
 
+type TreeNode = ShopCategory & { children: TreeNode[] }
+
 export default function ShopCategoryManager() {
   const [categories, setCategories] = useState<ShopCategory[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,6 +43,8 @@ export default function ShopCategoryManager() {
   const [form, setForm] = useState<CategoryForm>(emptyForm)
   const [dragId, setDragId] = useState<string | null>(null)
   const [toast, setToast] = useState<AdminToastState>(null)
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const [dropTarget, setDropTarget] = useState<string | null>(null)
 
   useEffect(() => {
     void loadCategories()
@@ -52,7 +56,28 @@ export default function ShopCategoryManager() {
     return () => window.clearTimeout(timer)
   }, [toast])
 
-  const categoryById = useMemo(() => new Map(categories.map((category) => [category.id, category])), [categories])
+  const { tree, categoryById } = useMemo(() => {
+    const map = new Map<string, TreeNode>()
+    const rootNodes: TreeNode[] = []
+    
+    categories.forEach(c => map.set(c.id, { ...c, children: [] }))
+    
+    categories.forEach(c => {
+      if (c.parent_category_id && map.has(c.parent_category_id)) {
+        map.get(c.parent_category_id)!.children.push(map.get(c.id)!)
+      } else {
+        rootNodes.push(map.get(c.id)!)
+      }
+    })
+
+    const sortTree = (nodes: TreeNode[]) => {
+      nodes.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+      nodes.forEach(n => sortTree(n.children))
+    }
+    sortTree(rootNodes)
+    
+    return { tree: rootNodes, categoryById: map }
+  }, [categories])
 
   async function loadCategories() {
     setLoading(true)
@@ -68,8 +93,8 @@ export default function ShopCategoryManager() {
     }
   }
 
-  function openCreateModal() {
-    setForm({ ...emptyForm, display_order: categories.length })
+  function openCreateModal(parentId?: string) {
+    setForm({ ...emptyForm, display_order: categories.length, parent_category_id: parentId ?? '' })
     setSlugLocked(true)
     setModalOpen(true)
   }
@@ -102,8 +127,19 @@ export default function ShopCategoryManager() {
 
   async function saveCategory(event: React.FormEvent) {
     event.preventDefault()
-    setSaving(true)
+    
+    if (form.id && form.parent_category_id) {
+        if (form.id === form.parent_category_id) {
+            setToast({ type: 'error', message: 'Category cannot be its own parent.' })
+            return
+        }
+        if (isDescendant(form.id, form.parent_category_id)) {
+            setToast({ type: 'error', message: 'Circular loop detected: Cannot set a descendant as a parent.' })
+            return
+        }
+    }
 
+    setSaving(true)
     try {
       const payload = {
         ...form,
@@ -128,22 +164,7 @@ export default function ShopCategoryManager() {
     }
   }
 
-  async function toggleActive(category: ShopCategory) {
-    const response = await fetch('/api/3d-shop/admin/categories', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...category,
-        is_active: !(category.is_active ?? true),
-      }),
-    })
-    if (!response.ok) {
-      const data = (await response.json().catch(() => ({}))) as { error?: string }
-      setToast({ type: 'error', message: data.error || 'Failed to update category.' })
-      return
-    }
-    await loadCategories()
-  }
+
 
   async function deleteCategory(category: ShopCategory) {
     if (!window.confirm(`Delete "${category.name}"? This only works when no products are linked.`)) return
@@ -168,31 +189,128 @@ export default function ShopCategoryManager() {
     updateForm('banner_image_url', data.publicUrl)
   }
 
-  async function persistOrder(nextCategories: ShopCategory[]) {
-    setCategories(nextCategories)
+  function isDescendant(parentId: string, nodeId: string): boolean {
+    const parent = categoryById.get(parentId)
+    if (!parent) return false
+    if (parent.children.some(c => c.id === nodeId)) return true
+    return parent.children.some(c => isDescendant(c.id, nodeId))
+  }
+
+  async function handleReparent(draggedId: string, targetId: string | null) {
+    if (draggedId === targetId) return
+    if (targetId && isDescendant(draggedId, targetId)) {
+        setToast({ type: 'error', message: 'Cannot move a category inside its own descendant (Circular loop).' })
+        return
+    }
+    
+    setCategories(current => current.map(c => c.id === draggedId ? { ...c, parent_category_id: targetId } : c))
     const response = await fetch('/api/3d-shop/admin/categories', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        orders: nextCategories.map((category, index) => ({ id: category.id, display_order: index })),
+        id: draggedId,
+        parent_category_id: targetId
       }),
     })
     if (!response.ok) {
-      setToast({ type: 'error', message: 'Failed to save category order.' })
+      setToast({ type: 'error', message: 'Failed to update category parent.' })
       await loadCategories()
+    } else {
+        setToast({ type: 'success', message: 'Category moved successfully.' })
+        if (targetId) {
+            setExpanded(prev => {
+                const next = new Set(prev)
+                next.add(targetId)
+                return next
+            })
+        }
     }
   }
 
-  function handleDrop(targetId: string) {
-    if (!dragId || dragId === targetId) return
-    const current = [...categories]
-    const from = current.findIndex((category) => category.id === dragId)
-    const to = current.findIndex((category) => category.id === targetId)
-    if (from < 0 || to < 0) return
-    const [moved] = current.splice(from, 1)
-    current.splice(to, 0, moved)
-    setDragId(null)
-    void persistOrder(current)
+  function toggleExpanded(id: string) {
+    setExpanded(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const renderNode = (node: TreeNode, depth = 0) => {
+    const isExpanded = expanded.has(node.id)
+    const isDragTarget = dropTarget === node.id
+    
+    return (
+      <div key={node.id} className="w-full">
+        <div 
+            draggable
+            onDragStart={(e) => { e.stopPropagation(); setDragId(node.id); }}
+            onDragOver={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                if (dragId !== node.id && !isDescendant(dragId!, node.id)) {
+                    setDropTarget(node.id)
+                }
+            }}
+            onDragLeave={(e) => { e.stopPropagation(); setDropTarget(null); }}
+            onDrop={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setDropTarget(null)
+                if (dragId) handleReparent(dragId, node.id)
+            }}
+            className={`group flex items-center justify-between border-b border-gray-100 py-3 pr-4 transition-colors hover:bg-gray-50 ${isDragTarget ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-500' : ''}`}
+            style={{ paddingLeft: `${Math.max(1, depth * 2)}rem` }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex w-6 justify-center cursor-move text-gray-300 hover:text-gray-500">
+                <GripVertical className="h-4 w-4" />
+            </div>
+            
+            <button 
+                type="button" 
+                onClick={() => toggleExpanded(node.id)}
+                className={`flex w-6 justify-center ${node.children.length === 0 ? 'invisible' : 'text-gray-400 hover:text-gray-700'}`}
+            >
+                {isExpanded ? <FolderOpen className="h-4 w-4" /> : <Folder className="h-4 w-4" />}
+            </button>
+            
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-lg">
+                {node.icon_emoji || '🧩'}
+            </div>
+            
+            <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-[#0F1B3D]">{node.name}</span>
+                    <span className="text-xs text-[#6F7192]">/{node.slug}</span>
+                    {!node.is_active && (
+                         <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">Hidden</span>
+                    )}
+                </div>
+                <span className="text-[10px] text-gray-400">Order: {node.display_order ?? 0} • Products: {node.product_count ?? 0}</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <button type="button" onClick={() => openCreateModal(node.id)} className="rounded-md p-1.5 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600" title="Add Subcategory">
+              <Plus className="h-4 w-4" />
+            </button>
+            <button type="button" onClick={() => openEditModal(node)} className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-900" title="Edit">
+              <Edit3 className="h-4 w-4" />
+            </button>
+            <button type="button" onClick={() => void deleteCategory(node)} className="rounded-md p-1.5 text-gray-400 hover:bg-rose-50 hover:text-rose-600" title="Delete">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+        
+        {isExpanded && node.children.length > 0 && (
+            <div className="w-full">
+                {node.children.map(child => renderNode(child, depth + 1))}
+            </div>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -204,83 +322,52 @@ export default function ShopCategoryManager() {
             <Layers className="h-3 w-3" />
             3D Shop
           </div>
-          <h1 className="font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">Category Manager</h1>
+          <h1 className="font-[var(--font-syne)] text-3xl font-bold tracking-tight text-[#0F1B3D]">Category Hierarchy</h1>
           <p className="mt-2 max-w-2xl text-sm text-[#6F7192]">
-            Organize product categories, hierarchy, banners, and storefront visibility.
+            Drag and drop to reorganize categories into an infinite nested tree.
           </p>
         </div>
         <button
           type="button"
-          onClick={openCreateModal}
+          onClick={() => openCreateModal()}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5b21b6]"
         >
           <Plus className="h-4 w-4" />
-          Add Category
+          Add Root Category
         </button>
       </motion.div>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-              <tr className="border-b border-gray-100">
-                {['', 'Icon', 'Name', 'Slug', 'Parent', 'Products count', 'Active', 'Display Order', 'Actions'].map((label) => (
-                  <th key={label} className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-[0.15em] text-[#6F7192]">
-                    {label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={9} className="px-5 py-12 text-center text-sm text-[#6F7192]">Loading categories...</td>
-                </tr>
-              ) : categories.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="px-5 py-12 text-center text-sm text-[#6F7192]">No categories yet.</td>
-                </tr>
-              ) : (
-                categories.map((category) => (
-                  <tr
-                    key={category.id}
-                    draggable
-                    onDragStart={() => setDragId(category.id)}
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={() => handleDrop(category.id)}
-                    className="border-b border-gray-100 last:border-0"
-                  >
-                    <td className="px-4 py-3 text-[#9ca3af]"><GripVertical className="h-4 w-4" /></td>
-                    <td className="px-4 py-3 text-xl">{category.icon_emoji || '🧩'}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-[#0F1B3D]">{category.name}</td>
-                    <td className="px-4 py-3 text-sm text-[#6F7192]">{category.slug}</td>
-                    <td className="px-4 py-3 text-sm text-[#6F7192]">{category.parent_category_id ? categoryById.get(category.parent_category_id)?.name ?? 'Unknown' : 'None'}</td>
-                    <td className="px-4 py-3 text-sm text-[#0F1B3D]">{category.product_count ?? 0}</td>
-                    <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        onClick={() => void toggleActive(category)}
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${category.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-[#6F7192]'}`}
-                      >
-                        {category.is_active ? 'Active' : 'Hidden'}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-[#6F7192]">{category.display_order ?? 0}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <button type="button" onClick={() => openEditModal(category)} aria-label={`Edit ${category.name}`} className="rounded-lg border border-gray-200 p-2 text-[#6F7192] hover:bg-gray-50 hover:text-[#0F1B3D]">
-                          <Edit3 className="h-4 w-4" />
-                        </button>
-                        <button type="button" onClick={() => void deleteCategory(category)} aria-label={`Delete ${category.name}`} className="rounded-lg border border-rose-200 p-2 text-rose-600 hover:bg-rose-50">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div 
+            className={`border-b border-gray-100 bg-gray-50 px-4 py-3 ${dropTarget === 'root' ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-500' : ''}`}
+            onDragOver={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                if (dragId && categoryById.get(dragId)?.parent_category_id !== null) {
+                    setDropTarget('root')
+                }
+            }}
+            onDragLeave={(e) => { e.stopPropagation(); setDropTarget(null); }}
+            onDrop={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setDropTarget(null)
+                if (dragId) handleReparent(dragId, null)
+            }}
+        >
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-gray-500">
+                <CornerDownRight className="h-4 w-4 text-gray-400" />
+                Root Level (Drop here to make top-level)
+            </div>
+        </div>
+        <div className="flex flex-col w-full">
+            {loading ? (
+                <div className="px-5 py-12 text-center text-sm text-[#6F7192]">Loading categories...</div>
+            ) : tree.length === 0 ? (
+                <div className="px-5 py-12 text-center text-sm text-[#6F7192]">No categories yet.</div>
+            ) : (
+                tree.map(node => renderNode(node, 0))
+            )}
         </div>
       </div>
 
@@ -349,8 +436,8 @@ export default function ShopCategoryManager() {
                 onChange={(event) => updateForm('parent_category_id', event.target.value)}
                 className="w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
               >
-                <option value="">None</option>
-                {categories.filter((category) => category.id !== form.id).map((category) => (
+                <option value="">None (Root)</option>
+                {categories.filter((category) => category.id !== form.id && !isDescendant(form.id || '', category.id)).map((category) => (
                   <option key={category.id} value={category.id}>{category.name}</option>
                 ))}
               </select>
