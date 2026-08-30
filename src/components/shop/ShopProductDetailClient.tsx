@@ -9,11 +9,14 @@ import {
   Box,
   ChevronLeft,
   ChevronRight,
+  Download,
+  Layers,
   Link2,
-  Maximize2,
   MessageCircle,
+  Minus,
   Pencil,
   Play,
+  Plus,
   RefreshCcw,
   Share2,
   ShieldCheck,
@@ -23,6 +26,7 @@ import {
   ThumbsUp,
   Truck,
   X,
+  ZoomIn,
 } from "lucide-react";
 import { addToast } from "@/lib/toast/store";
 import ShopVariantControls from "@/components/shop/ShopVariantControls";
@@ -109,11 +113,15 @@ function GalleryThumb({
   item,
   active,
   label,
+  index,
+  isPrimary,
   onClick,
 }: {
   item: { type: "video" | "image"; src: string };
   active: boolean;
   label: string;
+  index: number;
+  isPrimary?: boolean;
   onClick: () => void;
 }) {
   const [aspect, setAspect] = useState<number | null>(null);
@@ -133,13 +141,20 @@ function GalleryThumb({
       onClick={onClick}
       aria-label={label}
       aria-pressed={active}
-      className={`group relative w-full overflow-hidden rounded-xl border transition duration-300 ${
+      className={`group relative w-full overflow-hidden rounded-xl border-2 transition-all duration-200 ${
         active
-          ? "border-[var(--shop-gold)] shadow-[var(--shop-shadow-md)]"
-          : "border-[var(--shop-border-light)] hover:border-[var(--shop-border-gold)]"
+          ? "border-[var(--shop-gold)] shadow-[0_0_0_1px_var(--shop-gold)] shadow-[var(--shop-shadow-md)]"
+          : "border-transparent hover:border-[var(--shop-border-gold)] hover:shadow-sm"
       }`}
       style={{ aspectRatio: aspect ? `${aspect} / 1` : "1 / 1" }}
     >
+      {/* Outer ring for active state */}
+      {active && (
+        <span
+          className="pointer-events-none absolute inset-0 z-10 rounded-[10px] ring-2 ring-[var(--shop-gold)] ring-offset-0"
+          aria-hidden="true"
+        />
+      )}
       {item.type === "video" ? (
         <>
           <span className="absolute inset-0 grid place-items-center bg-black">
@@ -154,7 +169,7 @@ function GalleryThumb({
           src={item.src}
           alt={label}
           fill
-          sizes="76px"
+          sizes="84px"
           className="object-cover transition duration-300 group-hover:scale-[1.04]"
           onLoad={(event) => {
             const width = event.currentTarget.naturalWidth;
@@ -167,9 +182,15 @@ function GalleryThumb({
           }}
         />
       )}
+      {/* Primary badge */}
+      {isPrimary && index === 0 && (
+        <span className="absolute bottom-1 left-1 z-10 rounded-[4px] bg-[var(--shop-gold)]/90 px-1 py-0.5 text-[7px] font-bold uppercase tracking-wide text-white backdrop-blur-sm">
+          Cover
+        </span>
+      )}
       {active && (
         <span
-          className="absolute inset-y-0 left-0 w-[3px] bg-[var(--shop-gold)]"
+          className="absolute inset-y-0 left-0 w-[3px] rounded-r-full bg-[var(--shop-gold)]"
           aria-hidden="true"
         />
       )}
@@ -896,162 +917,251 @@ export default function ShopProductDetailClient({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="group fixed inset-0 z-[140] bg-[var(--shop-text-primary)]/92 backdrop-blur-md"
-            onClick={() => setLightboxImage(null)}
+            transition={{ duration: 0.18 }}
+            className="group fixed inset-0 z-[140] flex flex-col bg-black/95 backdrop-blur-xl"
           >
-            <button
-              type="button"
-              aria-label="Close image preview"
-              className="absolute inset-0 cursor-default"
-              onClick={() => setLightboxImage(null)}
-            />
-
-            {/* Counter */}
-            <div className="absolute left-5 top-5 z-20 flex items-center gap-2">
-              <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/80 backdrop-blur">
-                {Math.max(0, lightboxList.indexOf(lightboxImage)) + 1} /{" "}
-                {lightboxList.length}
-              </span>
+            {/* ── Top bar ── */}
+            <div className="relative z-30 flex h-14 shrink-0 items-center justify-between px-4 sm:px-6">
+              {/* Counter */}
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/80 backdrop-blur">
+                  {Math.max(0, lightboxList.indexOf(lightboxImage)) + 1} /{" "}
+                  {lightboxList.length}
+                </span>
+                {gallery.caption && (
+                  <span className="hidden rounded-full bg-[var(--shop-gold)]/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--shop-gold)] sm:inline-block">
+                    {gallery.caption}
+                  </span>
+                )}
+              </div>
+              {/* Right controls */}
+              <div className="flex items-center gap-2">
+                {/* Zoom controls */}
+                <button
+                  type="button"
+                  aria-label="Zoom out"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    applyLightboxTransform(
+                      Math.max(1, lightboxZoomRef.current / 1.4),
+                      null,
+                    );
+                  }}
+                  disabled={lightboxZoom <= 1}
+                  className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 disabled:opacity-30"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+                <span className="min-w-[36px] text-center text-[11px] font-semibold text-white/60">
+                  {Math.round(lightboxZoom * 100)}%
+                </span>
+                <button
+                  type="button"
+                  aria-label="Zoom in"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    applyLightboxTransform(
+                      Math.min(3.4, lightboxZoomRef.current * 1.4),
+                      null,
+                    );
+                  }}
+                  disabled={lightboxZoom >= 3.4}
+                  className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 disabled:opacity-30"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+                {/* Download */}
+                <a
+                  href={lightboxImage}
+                  download
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Download image"
+                  onClick={(event) => event.stopPropagation()}
+                  className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20"
+                >
+                  <Download className="h-4 w-4" />
+                </a>
+                {/* Close */}
+                <button
+                  type="button"
+                  aria-label="Close image preview"
+                  onClick={() => setLightboxImage(null)}
+                  className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
-            {/* Close */}
-            <button
-              type="button"
-              aria-label="Close image preview"
-              onClick={() => setLightboxImage(null)}
-              className="absolute right-5 top-5 z-20 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            {/* ── Main stage ── */}
+            <div className="relative min-h-0 flex-1">
+              {/* Zoom hint */}
+              <div className="pointer-events-none absolute bottom-3 left-1/2 z-20 -translate-x-1/2 transition-opacity duration-300">
+                <span className="rounded-full bg-white/10 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60 backdrop-blur">
+                  {lightboxZoom > 1
+                    ? "Drag to pan · Scroll or pinch to zoom"
+                    : "Click to zoom · Swipe to browse"}
+                </span>
+              </div>
 
-            {/* Zoom hint */}
-            <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 transition-opacity duration-300">
-              <span className="rounded-full bg-white/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/70 backdrop-blur">
-                {lightboxZoom > 1
-                  ? "Drag to pan · Scroll to zoom"
-                  : "Click image to zoom"}
-              </span>
-            </div>
-
-            {/* Stage */}
-            <div
-              ref={lightboxRef}
-              className="absolute inset-0 z-10 overflow-hidden"
-              onClick={(event) => {
-                event.stopPropagation();
-                zoomLightboxAt(event.clientX, event.clientY);
-              }}
-              onWheel={(event) => {
-                event.stopPropagation();
-                handleLightboxWheel(event);
-              }}
-            >
-              <motion.div
-                drag={lightboxZoom > 1 ? true : "x"}
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={lightboxZoom > 1 ? 0 : 0.08}
-                onDragStart={() => {
-                  draggingRef.current = true;
-                  dragStartPanRef.current = lightboxPanRef.current;
+              {/* Stage canvas */}
+              <div
+                ref={lightboxRef}
+                className="absolute inset-0 z-10 overflow-hidden"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  zoomLightboxAt(event.clientX, event.clientY);
                 }}
-                onDrag={(_, info) => {
-                  if (lightboxZoomRef.current > 1) {
-                    applyLightboxPan({
-                      x: dragStartPanRef.current.x + info.offset.x,
-                      y: dragStartPanRef.current.y + info.offset.y,
-                    });
-                  }
+                onWheel={(event) => {
+                  event.stopPropagation();
+                  handleLightboxWheel(event);
                 }}
-                onDragEnd={(_, info) => {
-                  if (lightboxZoomRef.current > 1) {
-                    applyLightboxPan({
-                      x: dragStartPanRef.current.x + info.offset.x,
-                      y: dragStartPanRef.current.y + info.offset.y,
-                    });
-                  } else if (info.offset.x < -42) {
-                    goLightboxImage(1);
-                  } else if (info.offset.x > 42) {
-                    goLightboxImage(-1);
-                  }
-                  window.setTimeout(() => {
-                    draggingRef.current = false;
-                  }, 80);
-                }}
-                className="absolute inset-0 cursor-grab select-none touch-pan-y active:cursor-grabbing"
               >
-                <AnimatePresence initial={false} mode="wait">
-                  <motion.div
-                    key={lightboxImage}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute inset-0"
-                  >
-                    <div
+                <motion.div
+                  drag={lightboxZoom > 1 ? true : "x"}
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={lightboxZoom > 1 ? 0 : 0.08}
+                  onDragStart={() => {
+                    draggingRef.current = true;
+                    dragStartPanRef.current = lightboxPanRef.current;
+                  }}
+                  onDrag={(_, info) => {
+                    if (lightboxZoomRef.current > 1) {
+                      applyLightboxPan({
+                        x: dragStartPanRef.current.x + info.offset.x,
+                        y: dragStartPanRef.current.y + info.offset.y,
+                      });
+                    }
+                  }}
+                  onDragEnd={(_, info) => {
+                    if (lightboxZoomRef.current > 1) {
+                      applyLightboxPan({
+                        x: dragStartPanRef.current.x + info.offset.x,
+                        y: dragStartPanRef.current.y + info.offset.y,
+                      });
+                    } else if (info.offset.x < -42) {
+                      goLightboxImage(1);
+                    } else if (info.offset.x > 42) {
+                      goLightboxImage(-1);
+                    }
+                    window.setTimeout(() => {
+                      draggingRef.current = false;
+                    }, 80);
+                  }}
+                  className="absolute inset-0 cursor-grab select-none touch-pan-y active:cursor-grabbing"
+                >
+                  <AnimatePresence initial={false} mode="wait">
+                    <motion.div
+                      key={lightboxImage}
+                      initial={{ opacity: 0, scale: 0.97 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.97 }}
+                      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
                       className="absolute inset-0"
-                      style={{
-                        transform: `translate3d(${lightboxPan.x}px, ${lightboxPan.y}px, 0) scale(${lightboxZoom})`,
-                        transformOrigin: "0 0",
+                    >
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          transform: `translate3d(${lightboxPan.x}px, ${lightboxPan.y}px, 0) scale(${lightboxZoom})`,
+                          transformOrigin: "0 0",
+                        }}
+                      >
+                        <Image
+                          src={lightboxImage}
+                          alt={imageAltFor(lightboxImage)}
+                          fill
+                          sizes="100vw"
+                          draggable={false}
+                          className="object-contain"
+                          onLoad={(event) => {
+                            const current = event.currentTarget;
+                            if (current.naturalWidth > 0) {
+                              lightboxNaturalRef.current = {
+                                w: current.naturalWidth,
+                                h: current.naturalHeight,
+                              };
+                            }
+                          }}
+                          onError={(event) => {
+                            console.error(
+                              `[ShopPDP] Lightbox image failed for ${product.slug}:`,
+                              lightboxImage,
+                            );
+                            event.currentTarget.style.display = "none";
+                          }}
+                        />
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </motion.div>
+
+                {/* Prev/Next arrows */}
+                {lightboxList.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      aria-label="Previous image"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        goLightboxImage(-1);
                       }}
+                      className="absolute left-3 top-1/2 z-20 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white opacity-0 shadow-xl backdrop-blur-md transition-all hover:bg-white/25 focus:opacity-100 group-hover:opacity-100 lg:left-6"
+                    >
+                      <ChevronLeft className="h-6 w-6" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Next image"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        goLightboxImage(1);
+                      }}
+                      className="absolute right-3 top-1/2 z-20 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white opacity-0 shadow-xl backdrop-blur-md transition-all hover:bg-white/25 focus:opacity-100 group-hover:opacity-100 lg:right-6"
+                    >
+                      <ChevronRight className="h-6 w-6" />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* ── Filmstrip ── */}
+            {lightboxList.length > 1 && (
+              <div className="z-30 shrink-0 overflow-x-auto border-t border-white/10 bg-black/60 px-4 py-3 backdrop-blur-md [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex justify-center gap-2">
+                  {lightboxList.map((url, idx) => (
+                    <button
+                      key={url}
+                      type="button"
+                      aria-label={`View image ${idx + 1}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        lightboxZoomRef.current = 1;
+                        lightboxPanRef.current = { x: 0, y: 0 };
+                        lightboxNaturalRef.current = { w: 0, h: 0 };
+                        setLightboxZoom(1);
+                        setLightboxPan({ x: 0, y: 0 });
+                        setLightboxImage(url);
+                      }}
+                      className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg transition-all duration-200 ${
+                        lightboxImage === url
+                          ? "ring-2 ring-[var(--shop-gold)] ring-offset-1 ring-offset-black/90 scale-105"
+                          : "opacity-50 hover:opacity-90 hover:scale-105"
+                      }`}
                     >
                       <Image
-                        src={lightboxImage}
-                        alt={imageAltFor(lightboxImage)}
+                        src={url}
+                        alt={`Thumbnail ${idx + 1}`}
                         fill
-                        sizes="100vw"
-                        draggable={false}
-                        className="object-contain"
-                        onLoad={(event) => {
-                          const current = event.currentTarget;
-                          if (current.naturalWidth > 0) {
-                            lightboxNaturalRef.current = {
-                              w: current.naturalWidth,
-                              h: current.naturalHeight,
-                            };
-                          }
-                        }}
-                        onError={(event) => {
-                          console.error(
-                            `[ShopPDP] Lightbox image failed for ${product.slug}:`,
-                            lightboxImage,
-                          );
-                          event.currentTarget.style.display = "none";
-                        }}
+                        sizes="56px"
+                        className="object-cover"
                       />
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
-              </motion.div>
-
-              {lightboxList.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    aria-label="Previous image"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      goLightboxImage(-1);
-                    }}
-                    className="absolute left-3 top-1/2 z-20 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white opacity-0 shadow-lg backdrop-blur transition hover:bg-white/25 focus:opacity-100 group-hover:opacity-100 lg:left-5"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Next image"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      goLightboxImage(1);
-                    }}
-                    className="absolute right-3 top-1/2 z-20 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white opacity-0 shadow-lg backdrop-blur transition hover:bg-white/25 focus:opacity-100 group-hover:opacity-100 lg:right-5"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </>
-              )}
-            </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -1092,13 +1202,15 @@ export default function ShopProductDetailClient({
               {mediaItems.length > 1 && (
                 <div
                   ref={railRef}
-                  className="hidden w-[84px] shrink-0 lg:flex lg:max-h-[min(68vh,620px)] lg:flex-col lg:gap-2.5 lg:overflow-y-auto lg:pr-1 [scrollbar-width:thin] [scrollbar-color:var(--shop-gold)_transparent] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--shop-gold)]/50"
+                  className="hidden w-[88px] shrink-0 lg:flex lg:max-h-[min(68vh,620px)] lg:flex-col lg:gap-2 lg:overflow-y-auto lg:pr-1 [scrollbar-width:thin] [scrollbar-color:var(--shop-gold)_transparent] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--shop-gold)]/50"
                 >
                   {mediaItems.map((item, index) => (
                     <GalleryThumb
                       key={`${item.type}-${item.src}`}
                       item={item}
                       active={safeMediaPos === index}
+                      index={index}
+                      isPrimary={gallery.source !== "product" && index === 0}
                       label={
                         item.type === "video"
                           ? "Play product video"
@@ -1166,17 +1278,17 @@ export default function ShopProductDetailClient({
                         }
                       }}
                       className="group relative w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)] transition hover:shadow-[var(--shop-shadow-md)]"
-                      style={{ height: "clamp(320px, 60vw, 560px)" }}
+                      style={{ height: "clamp(320px, 60vw, 580px)" }}
                     >
                       {visibleImage ? (
                         <AnimatePresence initial={false} mode="wait">
                           <motion.div
                             key={visibleImage}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
+                            initial={{ opacity: 0, scale: 0.99 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.99 }}
                             transition={{
-                              duration: 0.5,
+                              duration: 0.45,
                               ease: [0.16, 1, 0.3, 1],
                             }}
                             className="absolute inset-0"
@@ -1207,12 +1319,28 @@ export default function ShopProductDetailClient({
                           🧩
                         </div>
                       )}
-                      <span className="pointer-events-none absolute bottom-3 right-3 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-[var(--shop-text-primary)] opacity-0 shadow-sm backdrop-blur transition duration-300 group-hover:opacity-100">
-                        <Maximize2 className="h-4 w-4" />
+                      {/* Zoom-in hint badge */}
+                      <span className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--shop-text-primary)] opacity-0 shadow-sm backdrop-blur transition duration-300 group-hover:opacity-100">
+                        <ZoomIn className="h-3 w-3" />
+                        Zoom
                       </span>
+                      {/* Image position indicator */}
+                      {mediaItems.length > 1 && (
+                        <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/40 px-2.5 py-1 text-[10px] font-bold text-white/90 backdrop-blur-sm">
+                          {safeMediaPos + 1} / {mediaItems.length}
+                        </span>
+                      )}
+                      {/* Variant gallery badge */}
+                      {gallery.source !== "product" && gallery.caption && (
+                        <span className="pointer-events-none absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-[var(--shop-gold)]/90 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.1em] text-white backdrop-blur-sm">
+                          <Layers className="h-2.5 w-2.5" />
+                          {gallery.caption}
+                        </span>
+                      )}
                     </div>
                   )}
                 </motion.div>
+                {/* Mobile dot indicators */}
                 {mediaItems.length > 1 && (
                   <div className="mt-4 flex items-center justify-center gap-1.5 lg:hidden">
                     {mediaItems.map((item, index) => (
@@ -1221,13 +1349,14 @@ export default function ShopProductDetailClient({
                         type="button"
                         aria-label={`Go to ${item.type === "video" ? "video" : `image ${index + 1}`}`}
                         onClick={() => setMediaPos(index)}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${index === safeMediaPos ? "w-5 bg-[var(--shop-gold)]" : "w-1.5 bg-[var(--shop-border-medium)]"}`}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${index === safeMediaPos ? "w-6 bg-[var(--shop-gold)]" : "w-1.5 bg-[var(--shop-border-medium)] hover:bg-[var(--shop-gold)]/50"}`}
                       />
                     ))}
                   </div>
                 )}
+                {/* Mobile thumbnail strip */}
                 {mediaItems.length > 1 && (
-                  <div className="mt-4 flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-3 scroll-padding-x-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] [scrollbar-color:var(--shop-gold)_transparent] [&::-webkit-scrollbar]:h-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--shop-gold)]/50 lg:hidden">
+                  <div className="mt-3 flex w-full snap-x snap-mandatory gap-2.5 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden">
                     {mediaItems.map((item, index) => (
                       <button
                         key={`${item.type}-${item.src}`}
@@ -1238,12 +1367,16 @@ export default function ShopProductDetailClient({
                             ? `Play product video`
                             : `View product image ${index + 1}`
                         }
-                        className={`relative aspect-square w-[72px] shrink-0 snap-start overflow-hidden rounded-2xl border bg-white transition hover:border-[var(--shop-border-gold)] active:scale-95 ${safeMediaPos === index ? "border-[var(--shop-gold)] ring-2 ring-[var(--shop-gold)]/25" : "border-[var(--shop-border-light)]"}`}
+                        className={`relative aspect-square w-[68px] shrink-0 snap-start overflow-hidden rounded-xl border-2 bg-white transition-all duration-200 active:scale-95 ${
+                          safeMediaPos === index
+                            ? "border-[var(--shop-gold)] shadow-[0_0_0_1px_var(--shop-gold)]"
+                            : "border-transparent hover:border-[var(--shop-border-gold)]"
+                        }`}
                       >
                         {item.type === "video" ? (
                           <>
                             <span className="absolute inset-0 grid place-items-center bg-black">
-                              <Play className="h-6 w-6 fill-white text-white" />
+                              <Play className="h-5 w-5 fill-white text-white" />
                             </span>
                             <span className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white">
                               Video
@@ -1254,7 +1387,7 @@ export default function ShopProductDetailClient({
                             src={item.src}
                             alt={imageAltFor(item.src)}
                             fill
-                            sizes="72px"
+                            sizes="68px"
                             className="object-cover"
                             onError={(event) => {
                               console.error(
@@ -1265,14 +1398,15 @@ export default function ShopProductDetailClient({
                             }}
                           />
                         )}
+                        {/* Primary badge on first image when variant-specific */}
+                        {gallery.source !== "product" && index === 0 && (
+                          <span className="absolute bottom-1 left-1 rounded-[3px] bg-[var(--shop-gold)]/90 px-1 py-0.5 text-[6px] font-bold uppercase tracking-wide text-white">
+                            Cover
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
-                )}
-                {gallery.caption && mediaItems.length > 1 && (
-                  <p className="mt-3 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--shop-text-muted)]">
-                    Showing: {gallery.caption}
-                  </p>
                 )}
               </div>
             </div>
