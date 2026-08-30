@@ -105,78 +105,97 @@ export function getShopGalleryImages(
   product: ShopPublicProduct,
   selected: ShopSelectedOptions,
 ): { images: string[]; caption?: string; source: ShopGallerySource } {
-  // Collect per-option image sets (only options that actually have images).
-  const optionSets: {
-    option: ShopVariantOption;
-    caption: string;
-    urls: Set<string>;
-    sorted: string[];
-  }[] = [];
+  // 1. Map each option's display_order for tie-breaking
+  const optionDisplayOrders = new Map<string, number>();
+  for (const opt of product.variant_options ?? []) {
+    optionDisplayOrders.set(opt.option_name, opt.display_order ?? 999);
+  }
 
-  for (const option of getSkuRelevantOptions(product.variant_options)) {
-    const value = selected[option.option_name];
-    if (typeof value !== "string") continue;
-    const optionImages = getShopVariantOptionImages(
-      product,
-      option.option_name,
-      value,
-    );
-    if (optionImages.length > 0) {
-      const sorted = optionImages.map((img) => img.image_url);
-      optionSets.push({
-        option,
-        caption: `${option.option_name}: ${value}`,
-        urls: new Set(sorted),
-        sorted,
-      });
+  // 2. Score every variant image based on the selected options
+  const imageStats = new Map<
+    string,
+    {
+      url: string;
+      matchCount: number;
+      conflicts: boolean;
+      isPrimary: boolean;
+      minDisplayOrder: number;
+      minOptionDisplayOrder: number;
+      matchedCaptions: string[];
+    }
+  >();
+
+  for (const img of product.variant_option_images ?? []) {
+    if (!isValidImageUrl(img.image_url)) continue;
+
+    const optionName = img.option_name;
+    const optionValue = img.option_value;
+    const selectedValue = selected[optionName];
+
+    let stats = imageStats.get(img.image_url);
+    if (!stats) {
+      stats = {
+        url: img.image_url,
+        matchCount: 0,
+        conflicts: false,
+        isPrimary: false,
+        minDisplayOrder: Infinity,
+        minOptionDisplayOrder: Infinity,
+        matchedCaptions: [],
+      };
+      imageStats.set(img.image_url, stats);
+    }
+
+    // Treat non-matching values (including undefined/unselected) as a conflict
+    // so an image strictly assigned to "Size=Large" never shows if Size isn't Large.
+    if (selectedValue === optionValue) {
+      stats.matchCount += 1;
+      stats.matchedCaptions.push(`${optionName}: ${optionValue}`);
+      if (img.is_primary) stats.isPrimary = true;
+      if (img.display_order < stats.minDisplayOrder) {
+        stats.minDisplayOrder = img.display_order;
+      }
+      const optOrder = optionDisplayOrders.get(optionName) ?? 999;
+      if (optOrder < stats.minOptionDisplayOrder) {
+        stats.minOptionDisplayOrder = optOrder;
+      }
+    } else {
+      stats.conflicts = true;
     }
   }
 
-  if (optionSets.length > 0) {
-    const caption = optionSets.map((s) => s.caption).join(" · ");
+  // 3. Filter to valid candidates (no conflicts, at least 1 match)
+  const candidates = Array.from(imageStats.values()).filter(
+    (s) => !s.conflicts && s.matchCount > 0,
+  );
 
-    // AND — keep only URLs present in every option's image set.
-    const andResult = optionSets[0].sorted.filter((url) =>
-      optionSets.every((s) => s.urls.has(url)),
+  if (candidates.length > 0) {
+    // 4. Prioritize the most specific combination matches
+    const maxMatchCount = Math.max(...candidates.map((s) => s.matchCount));
+    const bestCandidates = candidates.filter(
+      (s) => s.matchCount === maxMatchCount,
     );
 
-    if (andResult.length > 0) {
-      return {
-        images: mergeGalleryWithProductImages(andResult, product),
-        caption,
-        source: "option",
-      };
-    }
-
-    // Priority union — merge ALL option image sets in priority order so that
-    // changing Finish or Size also updates the gallery, while Color always leads.
-    //
-    // Sort order (highest priority first):
-    //   1. swatch_color option (Color) — always shown first
-    //   2. Remaining options by display_order descending (higher = more specific)
-    //      e.g. Finish (order 1) before Size (order 0)
-    const sortedSets = [...optionSets].sort((a, b) => {
-      const aIsSwatch = a.option.option_type === "swatch_color" ? 1 : 0;
-      const bIsSwatch = b.option.option_type === "swatch_color" ? 1 : 0;
-      if (aIsSwatch !== bIsSwatch) return bIsSwatch - aIsSwatch; // swatch first
-      // Higher display_order = more specific = higher priority
-      return (b.option.display_order ?? 0) - (a.option.display_order ?? 0);
+    // 5. Order the best candidates deterministically
+    bestCandidates.sort((a, b) => {
+      if (a.isPrimary !== b.isPrimary) return a.isPrimary ? -1 : 1;
+      if (a.minOptionDisplayOrder !== b.minOptionDisplayOrder) {
+        return a.minOptionDisplayOrder - b.minOptionDisplayOrder;
+      }
+      return a.minDisplayOrder - b.minDisplayOrder;
     });
 
-    // Merge in priority order, deduplicating URLs
-    const seen = new Set<string>();
-    const merged: string[] = [];
-    for (const { sorted } of sortedSets) {
-      for (const url of sorted) {
-        if (!seen.has(url)) {
-          seen.add(url);
-          merged.push(url);
-        }
-      }
+    const sortedUrls = bestCandidates.map((c) => c.url);
+    const merged = mergeGalleryWithProductImages(sortedUrls, product);
+
+    const allCaptions = new Set<string>();
+    for (const c of bestCandidates) {
+      for (const cap of c.matchedCaptions) allCaptions.add(cap);
     }
+    const caption = Array.from(allCaptions).join(" · ");
 
     return {
-      images: mergeGalleryWithProductImages(merged, product),
+      images: merged,
       caption,
       source: "option",
     };
