@@ -150,24 +150,24 @@ export async function POST(
       // Guard: reject any URL whose storage object no longer exists.
       // This prevents assigning previously-deleted image URLs, which would create
       // dangling DB references that return HTTP 400 on the storefront.
+      // We use a HEAD request to the public URL — it's definitive (200 = exists,
+      // anything else = gone), whereas supabase.storage.list() with `search` only
+      // does prefix matching and can produce false negatives.
       for (const img of validImages) {
-        const match = String(img.image_url || "").match(
-          /\/storage\/v1\/object\/public\/shop-images\/(.+)$/,
-        );
-        if (match) {
-          const parts = decodeURIComponent(match[1]).split("/");
-          const folder = parts.slice(0, -1).join("/");
-          const filename = parts.at(-1) ?? "";
-          const { data: objs } = await supabase.storage
-            .from(SHOP_BUCKET)
-            .list(folder, { search: filename });
-          if (!objs?.some((o) => o.name === filename)) {
-            return NextResponse.json(
-              {
-                error: `Image file no longer exists in storage: ${img.image_url}. Please re-upload the image.`,
-              },
-              { status: 422 },
-            );
+        const rawUrl = String(img.image_url || "").trim();
+        if (rawUrl.includes("/storage/v1/object/public/shop-images/")) {
+          try {
+            const headRes = await fetch(rawUrl, { method: "HEAD" });
+            if (!headRes.ok) {
+              return NextResponse.json(
+                {
+                  error: `Image file no longer exists in storage: ${rawUrl}. Please re-upload the image.`,
+                },
+                { status: 422 },
+              );
+            }
+          } catch {
+            // Network error — don't block the assignment; storage may be temporarily unavailable
           }
         }
       }
