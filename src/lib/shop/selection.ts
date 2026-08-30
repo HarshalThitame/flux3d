@@ -105,8 +105,9 @@ export function getShopGalleryImages(
   product: ShopPublicProduct,
   selected: ShopSelectedOptions,
 ): { images: string[]; caption?: string; source: ShopGallerySource } {
-  const allOptionUrls: string[] = [];
-  const matchedCaptions: string[] = [];
+  // Collect per-option image sets (only options that actually have images).
+  const optionSets: { caption: string; urls: Set<string>; sorted: string[] }[] =
+    [];
   for (const option of getSkuRelevantOptions(product.variant_options)) {
     const value = selected[option.option_name];
     if (typeof value !== "string") continue;
@@ -116,21 +117,44 @@ export function getShopGalleryImages(
       value,
     );
     if (optionImages.length > 0) {
-      allOptionUrls.push(...optionImages.map((image) => image.image_url));
-      matchedCaptions.push(`${option.option_name}: ${value}`);
+      const sorted = optionImages.map((img) => img.image_url);
+      optionSets.push({
+        caption: `${option.option_name}: ${value}`,
+        urls: new Set(sorted),
+        sorted,
+      });
     }
   }
 
-  if (allOptionUrls.length > 0) {
-    const seen = new Set<string>();
-    const deduped = allOptionUrls.filter((url) => {
-      if (seen.has(url)) return false;
-      seen.add(url);
-      return true;
-    });
+  if (optionSets.length > 0) {
+    const caption = optionSets.map((s) => s.caption).join(" · ");
+
+    // AND — keep only URLs present in every option's image set.
+    const andResult = optionSets[0].sorted.filter((url) =>
+      optionSets.every((s) => s.urls.has(url)),
+    );
+
+    // Graceful OR fallback — if no image satisfies all options simultaneously,
+    // show the union so the gallery is never empty.
+    let finalUrls: string[];
+    if (andResult.length > 0) {
+      finalUrls = andResult;
+    } else {
+      const seen = new Set<string>();
+      finalUrls = [];
+      for (const { sorted } of optionSets) {
+        for (const url of sorted) {
+          if (!seen.has(url)) {
+            seen.add(url);
+            finalUrls.push(url);
+          }
+        }
+      }
+    }
+
     return {
-      images: mergeGalleryWithProductImages(deduped, product),
-      caption: matchedCaptions.join(" · "),
+      images: mergeGalleryWithProductImages(finalUrls, product),
+      caption,
       source: "option",
     };
   }
