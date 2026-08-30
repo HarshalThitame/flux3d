@@ -1202,7 +1202,7 @@ export default function ShopProductDetailClient({
               {mediaItems.length > 1 && (
                 <div
                   ref={railRef}
-                  className="hidden w-[92px] shrink-0 lg:flex lg:max-h-[min(68vh,620px)] lg:flex-col lg:gap-2 lg:overflow-y-auto lg:pr-1.5 [scrollbar-width:thin] [scrollbar-color:var(--shop-gold)_var(--shop-border-light)] [&::-webkit-scrollbar]:w-[5px] [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[var(--shop-border-light)] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--shop-gold)]"
+                  className="hidden w-[92px] shrink-0 lg:flex lg:h-[clamp(320px,60vw,580px)] lg:flex-col lg:gap-2 lg:overflow-y-auto lg:pr-1.5 [scrollbar-width:thin] [scrollbar-color:var(--shop-gold)_var(--shop-border-light)] [&::-webkit-scrollbar]:w-[5px] [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[var(--shop-border-light)] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--shop-gold)]"
                 >
                   {mediaItems.map((item, index) => (
                     <GalleryThumb

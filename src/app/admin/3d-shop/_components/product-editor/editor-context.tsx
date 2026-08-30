@@ -66,7 +66,7 @@ import {
 } from "./types";
 
 const AUTOSAVE_DELAY = 2000;
-const MAX_GALLERY_IMAGES = 20;
+const MAX_GALLERY_IMAGES = 40;
 
 type SlugStatus = "idle" | "checking" | "available" | "taken";
 
