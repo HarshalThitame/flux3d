@@ -106,8 +106,13 @@ export function getShopGalleryImages(
   selected: ShopSelectedOptions,
 ): { images: string[]; caption?: string; source: ShopGallerySource } {
   // Collect per-option image sets (only options that actually have images).
-  const optionSets: { caption: string; urls: Set<string>; sorted: string[] }[] =
-    [];
+  const optionSets: {
+    option: ShopVariantOption;
+    caption: string;
+    urls: Set<string>;
+    sorted: string[];
+  }[] = [];
+
   for (const option of getSkuRelevantOptions(product.variant_options)) {
     const value = selected[option.option_name];
     if (typeof value !== "string") continue;
@@ -119,6 +124,7 @@ export function getShopGalleryImages(
     if (optionImages.length > 0) {
       const sorted = optionImages.map((img) => img.image_url);
       optionSets.push({
+        option,
         caption: `${option.option_name}: ${value}`,
         urls: new Set(sorted),
         sorted,
@@ -134,27 +140,39 @@ export function getShopGalleryImages(
       optionSets.every((s) => s.urls.has(url)),
     );
 
-    // Graceful OR fallback — if no image satisfies all options simultaneously,
-    // show the union so the gallery is never empty.
-    let finalUrls: string[];
     if (andResult.length > 0) {
-      finalUrls = andResult;
-    } else {
-      const seen = new Set<string>();
-      finalUrls = [];
-      for (const { sorted } of optionSets) {
-        for (const url of sorted) {
-          if (!seen.has(url)) {
-            seen.add(url);
-            finalUrls.push(url);
-          }
-        }
-      }
+      return {
+        images: mergeGalleryWithProductImages(andResult, product),
+        caption,
+        source: "option",
+      };
     }
 
+    // Cascade fallback — no image is tagged to ALL selected options simultaneously.
+    // Instead of a union (which causes wrong-color images to appear), show only
+    // the single most-specific option's images.
+    //
+    // Priority:
+    //   1. swatch_color option — most visually decisive (the user picked a color)
+    //   2. Option with the fewest images — usually the most tightly scoped set
+    const swatchSet = optionSets.find(
+      (s) => s.option.option_type === "swatch_color",
+    );
+    if (swatchSet) {
+      return {
+        images: mergeGalleryWithProductImages(swatchSet.sorted, product),
+        caption: swatchSet.caption,
+        source: "option",
+      };
+    }
+
+    // Pick the option set with the fewest images (most specific)
+    const mostSpecific = [...optionSets].sort(
+      (a, b) => a.sorted.length - b.sorted.length,
+    )[0];
     return {
-      images: mergeGalleryWithProductImages(finalUrls, product),
-      caption,
+      images: mergeGalleryWithProductImages(mostSpecific.sorted, product),
+      caption: mostSpecific.caption,
       source: "option",
     };
   }
