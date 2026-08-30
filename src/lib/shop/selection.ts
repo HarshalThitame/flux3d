@@ -174,31 +174,29 @@ export function getShopGalleryImages(
   );
 
   if (candidates.length > 0) {
-    // 4. Prioritize the most specific combination match (highest match count)
-    const maxMatchCount = Math.max(...candidates.map((s) => s.matchCount));
-    let bestCandidates = candidates.filter(
-      (s) => s.matchCount === maxMatchCount,
-    );
-
-    // 5. If there are still ties, pick the ones matching the highest priority option
-    const bestOptionPriority = Math.min(
-      ...bestCandidates.map((s) => s.minOptionPriority),
-    );
-    bestCandidates = bestCandidates.filter(
-      (s) => s.minOptionPriority === bestOptionPriority,
-    );
-
-    // 6. Order the best candidates deterministically
-    bestCandidates.sort((a, b) => {
-      if (a.isPrimary !== b.isPrimary) return a.isPrimary ? -1 : 1;
+    // 4. Order the candidates based on Enterprise Media Matching Algorithm
+    candidates.sort((a, b) => {
+      // 1. Highest Specificity Match (matchCount DESC)
+      if (a.matchCount !== b.matchCount) {
+        return b.matchCount - a.matchCount;
+      }
+      // 2. Configured Option Priority (minOptionPriority ASC)
+      if (a.minOptionPriority !== b.minOptionPriority) {
+        return a.minOptionPriority - b.minOptionPriority;
+      }
+      // 3. Primary flag (simulates explicit gallery priority)
+      if (a.isPrimary !== b.isPrimary) {
+        return a.isPrimary ? -1 : 1;
+      }
+      // 4. Admin gallery order ASC
       return a.minDisplayOrder - b.minDisplayOrder;
     });
 
-    const sortedUrls = bestCandidates.map((c) => c.url);
+    const sortedUrls = candidates.map((c) => c.url);
     const merged = mergeGalleryWithProductImages(sortedUrls, product);
 
     const allCaptions = new Set<string>();
-    for (const c of bestCandidates) {
+    for (const c of candidates) {
       for (const cap of c.matchedCaptions) allCaptions.add(cap);
     }
     const caption = Array.from(allCaptions).join(" · ");
