@@ -148,31 +148,36 @@ export function getShopGalleryImages(
       };
     }
 
-    // Cascade fallback — no image is tagged to ALL selected options simultaneously.
-    // Instead of a union (which causes wrong-color images to appear), show only
-    // the single most-specific option's images.
+    // Priority union — merge ALL option image sets in priority order so that
+    // changing Finish or Size also updates the gallery, while Color always leads.
     //
-    // Priority:
-    //   1. swatch_color option — most visually decisive (the user picked a color)
-    //   2. Option with the fewest images — usually the most tightly scoped set
-    const swatchSet = optionSets.find(
-      (s) => s.option.option_type === "swatch_color",
-    );
-    if (swatchSet) {
-      return {
-        images: mergeGalleryWithProductImages(swatchSet.sorted, product),
-        caption: swatchSet.caption,
-        source: "option",
-      };
+    // Sort order (highest priority first):
+    //   1. swatch_color option (Color) — always shown first
+    //   2. Remaining options by display_order descending (higher = more specific)
+    //      e.g. Finish (order 1) before Size (order 0)
+    const sortedSets = [...optionSets].sort((a, b) => {
+      const aIsSwatch = a.option.option_type === "swatch_color" ? 1 : 0;
+      const bIsSwatch = b.option.option_type === "swatch_color" ? 1 : 0;
+      if (aIsSwatch !== bIsSwatch) return bIsSwatch - aIsSwatch; // swatch first
+      // Higher display_order = more specific = higher priority
+      return (b.option.display_order ?? 0) - (a.option.display_order ?? 0);
+    });
+
+    // Merge in priority order, deduplicating URLs
+    const seen = new Set<string>();
+    const merged: string[] = [];
+    for (const { sorted } of sortedSets) {
+      for (const url of sorted) {
+        if (!seen.has(url)) {
+          seen.add(url);
+          merged.push(url);
+        }
+      }
     }
 
-    // Pick the option set with the fewest images (most specific)
-    const mostSpecific = [...optionSets].sort(
-      (a, b) => a.sorted.length - b.sorted.length,
-    )[0];
     return {
-      images: mergeGalleryWithProductImages(mostSpecific.sorted, product),
-      caption: mostSpecific.caption,
+      images: mergeGalleryWithProductImages(merged, product),
+      caption,
       source: "option",
     };
   }
