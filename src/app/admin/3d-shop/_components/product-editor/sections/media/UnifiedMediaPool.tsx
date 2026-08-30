@@ -51,7 +51,7 @@ export function UnifiedMediaPool() {
 
   const galleryCount = pool.filter((item) => item.inProductGallery).length;
   const variantOnlyCount = pool.length - galleryCount;
-  const galleryLimit = 20;
+  const galleryLimit = 40;
 
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [assignTargetUrl, setAssignTargetUrl] = useState<string | null>(null);

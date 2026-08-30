@@ -1202,7 +1202,7 @@ export default function ShopProductDetailClient({
               {mediaItems.length > 1 && (
                 <div
                   ref={railRef}
-                  className="hidden w-[88px] shrink-0 lg:flex lg:max-h-[min(68vh,620px)] lg:flex-col lg:gap-2 lg:overflow-y-auto lg:pr-1 [scrollbar-width:thin] [scrollbar-color:var(--shop-gold)_transparent] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--shop-gold)]/50"
+                  className="hidden w-[92px] shrink-0 lg:flex lg:max-h-[min(68vh,620px)] lg:flex-col lg:gap-2 lg:overflow-y-auto lg:pr-1.5 [scrollbar-width:thin] [scrollbar-color:var(--shop-gold)_var(--shop-border-light)] [&::-webkit-scrollbar]:w-[5px] [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[var(--shop-border-light)] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--shop-gold)]"
                 >
                   {mediaItems.map((item, index) => (
                     <GalleryThumb
@@ -1356,7 +1356,7 @@ export default function ShopProductDetailClient({
                 )}
                 {/* Mobile thumbnail strip */}
                 {mediaItems.length > 1 && (
-                  <div className="mt-3 flex w-full snap-x snap-mandatory gap-2.5 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden">
+                  <div className="mt-3 flex w-full snap-x snap-mandatory gap-2.5 overflow-x-auto pb-2.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] [scrollbar-color:var(--shop-gold)_var(--shop-border-light)] [&::-webkit-scrollbar]:h-[4px] [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[var(--shop-border-light)] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--shop-gold)] lg:hidden">
                     {mediaItems.map((item, index) => (
                       <button
                         key={`${item.type}-${item.src}`}
