@@ -259,6 +259,8 @@ const PRODUCT_SELECT = `
     value_metadata,
     display_order,
     is_required,
+    affects_images,
+    image_priority,
     created_at
   ),
   variant_option_dimensions:shelf_variant_option_dimensions(
