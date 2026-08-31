@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownUp, Check, ChevronDown, X, Filter } from "lucide-react";
+import {
+  ArrowDownUp,
+  Check,
+  ChevronDown,
+  X,
+  SlidersHorizontal,
+  Package,
+  Tag,
+  Layers3,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type {
   ShopPublicCategory,
@@ -17,9 +26,45 @@ interface ProductFilterBarProps {
   className?: string;
 }
 
+interface DropdownButtonProps {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ElementType;
+  label: string;
+  value: string | undefined;
+}
+
+function DropdownButton({
+  active,
+  onClick,
+  icon: Icon,
+  label,
+  value,
+}: DropdownButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition-all ${
+        active
+          ? "border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] text-[var(--shop-text-primary)] shadow-sm"
+          : "border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] text-[var(--shop-text-secondary)] hover:border-[var(--shop-border-gold)] hover:text-[var(--shop-text-primary)] hover:shadow-sm"
+      }`}
+    >
+      <Icon
+        className={`h-4 w-4 ${active ? "text-[var(--shop-gold)]" : "text-[var(--shop-text-muted)]"}`}
+      />
+      <span className="hidden sm:inline">{label}:</span>
+      <span className={active ? "text-[var(--shop-gold)]" : ""}>{value}</span>
+      <ChevronDown
+        className={`ml-1 h-3.5 w-3.5 transition-transform duration-300 ${active ? "rotate-180 text-[var(--shop-gold)]" : "text-[var(--shop-text-muted)]"}`}
+      />
+    </button>
+  );
+}
+
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "featured", label: "Featured" },
-  { value: "newest", label: "Newest" },
+  { value: "newest", label: "Newest Arrivals" },
   { value: "price_asc", label: "Price: Low to High" },
   { value: "price_desc", label: "Price: High to Low" },
   { value: "rating", label: "Top Rated" },
@@ -44,9 +89,26 @@ export default function ProductFilterBar({
   const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
   const [sort, setSort] = useState<SortOption>("featured");
   const [inStockOnly, setInStockOnly] = useState(false);
-  const [sortOpen, setSortOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<
+    "category" | "price" | "sort" | null
+  >(null);
 
-  // Build tree
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setActiveDropdown(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const { rootCategories, categoryMap } = useMemo(() => {
     const map = new Map<
       string,
@@ -55,6 +117,10 @@ export default function ProductFilterBar({
     categories.forEach((c) => map.set(c.id, { ...c, children: [] }));
     const roots: (ShopPublicCategory & { children: ShopPublicCategory[] })[] =
       [];
+    const slugMap = new Map<
+      string,
+      ShopPublicCategory & { children: ShopPublicCategory[] }
+    >();
 
     map.forEach((c) => {
       if (c.parent_category_id && map.has(c.parent_category_id)) {
@@ -64,48 +130,32 @@ export default function ProductFilterBar({
       }
     });
 
-    // Also build a slug->id map for quick lookup
-    const slugMap = new Map<
-      string,
-      ShopPublicCategory & { children: ShopPublicCategory[] }
-    >();
     map.forEach((c) => slugMap.set(c.slug, c));
-
     return { rootCategories: roots, categoryMap: slugMap };
   }, [categories]);
 
-  // Determine active root category (for showing subcategories)
-  const activeRoot = useMemo(() => {
-    if (selectedCategorySlug === "all") return null;
-    const cat = categoryMap.get(selectedCategorySlug);
-    if (!cat) return null;
-    if (!cat.parent_category_id) return cat;
-    return (
-      categoryMap.get(
-        categories.find((c) => c.id === cat.parent_category_id)?.slug ?? "",
-      ) ?? null
-    );
-  }, [selectedCategorySlug, categoryMap, categories]);
-
   const activeFilters = useMemo(() => {
-    const filters: { label: string; onRemove: () => void }[] = [];
+    const filters: { id: string; label: string; onRemove: () => void }[] = [];
     if (selectedCategorySlug !== "all") {
       const cat = categoryMap.get(selectedCategorySlug);
       if (cat)
         filters.push({
+          id: "cat",
           label: cat.name,
           onRemove: () => setSelectedCategorySlug("all"),
         });
     }
     if (selectedPrice !== null) {
       filters.push({
+        id: "price",
         label: PRICE_RANGES[selectedPrice].label,
         onRemove: () => setSelectedPrice(null),
       });
     }
     if (inStockOnly) {
       filters.push({
-        label: "In Stock",
+        id: "stock",
+        label: "In Stock Only",
         onRemove: () => setInStockOnly(false),
       });
     }
@@ -114,29 +164,23 @@ export default function ProductFilterBar({
 
   const filtered = useMemo(() => {
     let result = [...products];
-
     if (selectedCategorySlug !== "all") {
       const cat = categoryMap.get(selectedCategorySlug);
       if (cat) {
-        // Collect all descendant IDs
         const ids = new Set([cat.id]);
         cat.children?.forEach((child) => ids.add(child.id));
-
         result = result.filter((p) => p.categories?.some((c) => ids.has(c.id)));
       }
     }
-
     if (selectedPrice !== null) {
       const range = PRICE_RANGES[selectedPrice];
       result = result.filter(
         (p) => p.display_price >= range.min && p.display_price <= range.max,
       );
     }
-
     if (inStockOnly) {
       result = result.filter((p) => p.in_stock);
     }
-
     switch (sort) {
       case "price_asc":
         result.sort((a, b) => a.display_price - b.display_price);
@@ -167,7 +211,6 @@ export default function ProductFilterBar({
         );
         break;
     }
-
     return result;
   }, [
     products,
@@ -178,260 +221,259 @@ export default function ProductFilterBar({
     categoryMap,
   ]);
 
+  useEffect(() => {
+    onFilteredChange(filtered);
+  }, [filtered, onFilteredChange]);
   return (
-    <div className={`${className}`}>
-      {/* Filter bar container */}
-      <div className="flex flex-col gap-4">
-        {/* Tier 1: Root Categories + Sort */}
-        <div className="flex items-center gap-3">
-          <div className="flex flex-1 items-center gap-2 overflow-x-auto pb-1 scrollbar-hide [-webkit-overflow-scrolling:touch]">
-            <button
-              type="button"
-              onClick={() => setSelectedCategorySlug("all")}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full px-5 py-2.5 text-[13px] font-bold tracking-[0.03em] transition-all duration-300 ${
-                selectedCategorySlug === "all"
-                  ? "bg-[var(--shop-text-primary)] text-white shadow-[var(--shop-shadow-md)]"
-                  : "border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] text-[var(--shop-text-secondary)] hover:border-[var(--shop-border-gold)] hover:bg-white hover:text-[var(--shop-text-primary)] hover:shadow-[var(--shop-shadow-sm)]"
-              }`}
-            >
-              All
-            </button>
-            {rootCategories.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setSelectedCategorySlug(cat.slug)}
-                className={`flex shrink-0 items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-bold tracking-[0.03em] transition-all duration-300 ${
-                  activeRoot?.id === cat.id
-                    ? "bg-[var(--shop-text-primary)] text-white shadow-[var(--shop-shadow-md)]"
-                    : "border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] text-[var(--shop-text-secondary)] hover:border-[var(--shop-border-gold)] hover:bg-white hover:text-[var(--shop-text-primary)] hover:shadow-[var(--shop-shadow-sm)]"
-                }`}
-              >
-                {cat.icon_emoji && (
-                  <span className="text-[14px]">{cat.icon_emoji}</span>
-                )}
-                {cat.name}
-              </button>
-            ))}
+    <div
+      ref={containerRef}
+      className={`relative flex flex-col gap-4 ${className}`}
+    >
+      {/* Top Toolbar */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between border-b border-[var(--shop-border-light)] pb-4">
+        {/* Left Side: Filters */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 border-r border-[var(--shop-border-light)] pr-2 sm:pr-4">
+            <SlidersHorizontal className="h-4 w-4 text-[var(--shop-text-muted)]" />
+            <span className="hidden sm:inline text-xs font-bold uppercase tracking-widest text-[var(--shop-text-secondary)]">
+              Filters
+            </span>
           </div>
 
-          {/* Sort dropdown */}
-          <div className="relative shrink-0 hidden sm:block">
-            <button
-              type="button"
-              onClick={() => setSortOpen(!sortOpen)}
-              className="flex min-h-[42px] items-center gap-2 rounded-full border border-[var(--shop-border-light)] bg-white px-5 text-[13px] font-bold text-[var(--shop-text-primary)] shadow-sm transition-all hover:border-[var(--shop-border-gold)] hover:shadow-[var(--shop-shadow-sm)]"
-            >
-              <ArrowDownUp className="h-4 w-4 text-[var(--shop-gold)]" />
-              <span>{SORT_OPTIONS.find((o) => o.value === sort)?.label}</span>
-              <ChevronDown
-                className={`h-4 w-4 text-[var(--shop-text-muted)] transition-transform duration-300 ${sortOpen ? "rotate-180" : ""}`}
-              />
-            </button>
+          {/* Category Dropdown */}
+          <div className="relative">
+            <DropdownButton
+              active={activeDropdown === "category"}
+              onClick={() =>
+                setActiveDropdown(
+                  activeDropdown === "category" ? null : "category",
+                )
+              }
+              icon={Layers3}
+              label="Category"
+              value={
+                selectedCategorySlug === "all"
+                  ? "All"
+                  : categoryMap.get(selectedCategorySlug)?.name
+              }
+            />
             <AnimatePresence>
-              {sortOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setSortOpen(false)}
-                  />
-                  <motion.div
-                    role="listbox"
-                    initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute right-0 top-[calc(100%+0.5rem)] z-50 min-w-[220px] overflow-hidden rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-light)] bg-white p-1.5 shadow-[var(--shop-shadow-lg)]"
-                  >
-                    {SORT_OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="option"
-                        aria-selected={sort === option.value}
-                        onClick={() => {
-                          setSort(option.value);
-                          setSortOpen(false);
-                        }}
-                        className={`flex w-full items-center gap-3 rounded-[var(--shop-radius-md)] px-4 py-2.5 text-[13px] font-semibold transition-all ${
-                          sort === option.value
-                            ? "bg-[var(--shop-gold-faint)] text-[var(--shop-text-primary)]"
-                            : "text-[var(--shop-text-muted)] hover:bg-[var(--shop-bg-soft)] hover:text-[var(--shop-text-primary)]"
-                        }`}
-                      >
-                        <Check
-                          className={`h-4 w-4 ${sort === option.value ? "text-[var(--shop-gold)] opacity-100" : "opacity-0"}`}
-                        />
-                        {option.label}
-                      </button>
+              {activeDropdown === "category" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute left-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-2 shadow-[var(--shop-shadow-xl)]"
+                >
+                  <div className="max-h-80 overflow-y-auto">
+                    <button
+                      onClick={() => {
+                        setSelectedCategorySlug("all");
+                        setActiveDropdown(null);
+                      }}
+                      className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
+                        selectedCategorySlug === "all"
+                          ? "bg-[var(--shop-gold-faint)] font-bold text-[var(--shop-text-primary)]"
+                          : "text-[var(--shop-text-secondary)] hover:bg-[var(--shop-bg-soft)]"
+                      }`}
+                    >
+                      All Categories
+                    </button>
+                    {rootCategories.map((cat) => (
+                      <div key={cat.id} className="mt-1">
+                        <button
+                          onClick={() => {
+                            setSelectedCategorySlug(cat.slug);
+                            setActiveDropdown(null);
+                          }}
+                          className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
+                            selectedCategorySlug === cat.slug
+                              ? "bg-[var(--shop-gold-faint)] font-bold text-[var(--shop-text-primary)]"
+                              : "text-[var(--shop-text-secondary)] hover:bg-[var(--shop-bg-soft)]"
+                          }`}
+                        >
+                          {cat.icon_emoji} {cat.name}
+                        </button>
+                        {cat.children.map((child) => (
+                          <button
+                            key={child.id}
+                            onClick={() => {
+                              setSelectedCategorySlug(child.slug);
+                              setActiveDropdown(null);
+                            }}
+                            className={`flex w-full items-center gap-2 rounded-lg pl-8 pr-3 py-1.5 text-sm transition-colors ${
+                              selectedCategorySlug === child.slug
+                                ? "bg-[var(--shop-gold-faint)] font-bold text-[var(--shop-text-primary)]"
+                                : "text-[var(--shop-text-muted)] hover:bg-[var(--shop-bg-soft)] hover:text-[var(--shop-text-secondary)]"
+                            }`}
+                          >
+                            {child.name}
+                          </button>
+                        ))}
+                      </div>
                     ))}
-                  </motion.div>
-                </>
+                  </div>
+                </motion.div>
               )}
             </AnimatePresence>
           </div>
-        </div>
 
-        {/* Tier 2: Subcategories (Only shows if active root has children) */}
-        <AnimatePresence mode="wait">
-          {activeRoot && activeRoot.children.length > 0 && (
-            <motion.div
-              key={`sub-${activeRoot.id}`}
-              initial={{ opacity: 0, height: 0, marginTop: -16 }}
-              animate={{ opacity: 1, height: "auto", marginTop: 0 }}
-              exit={{ opacity: 0, height: 0, marginTop: -16 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide [-webkit-overflow-scrolling:touch]"
-            >
-              <div className="flex shrink-0 items-center gap-2 border-l-2 border-[var(--shop-border-gold)] pl-3">
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategorySlug(activeRoot.slug)}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-1.5 text-[12px] font-bold tracking-[0.03em] transition-all duration-300 ${
-                    selectedCategorySlug === activeRoot.slug
-                      ? "bg-[var(--shop-gold-faint)] border border-[var(--shop-border-gold)] text-[var(--shop-gold)] shadow-sm"
-                      : "border border-transparent bg-transparent text-[var(--shop-text-muted)] hover:bg-[var(--shop-bg-soft)] hover:text-[var(--shop-text-primary)]"
-                  }`}
+          {/* Price Dropdown */}
+          <div className="relative">
+            <DropdownButton
+              active={activeDropdown === "price"}
+              onClick={() =>
+                setActiveDropdown(activeDropdown === "price" ? null : "price")
+              }
+              icon={Tag}
+              label="Price"
+              value={
+                selectedPrice === null
+                  ? "Any"
+                  : PRICE_RANGES[selectedPrice].label
+              }
+            />
+            <AnimatePresence>
+              {activeDropdown === "price" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute left-0 top-[calc(100%+0.5rem)] z-50 w-56 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-2 shadow-[var(--shop-shadow-xl)]"
                 >
-                  All {activeRoot.name}
-                </button>
-                {activeRoot.children.map((child) => (
                   <button
-                    key={child.id}
-                    type="button"
-                    onClick={() => setSelectedCategorySlug(child.slug)}
-                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-1.5 text-[12px] font-bold tracking-[0.03em] transition-all duration-300 ${
-                      selectedCategorySlug === child.slug
-                        ? "bg-[var(--shop-gold-faint)] border border-[var(--shop-border-gold)] text-[var(--shop-gold)] shadow-sm"
-                        : "border border-transparent bg-transparent text-[var(--shop-text-muted)] hover:bg-[var(--shop-bg-soft)] hover:text-[var(--shop-text-primary)]"
+                    onClick={() => {
+                      setSelectedPrice(null);
+                      setActiveDropdown(null);
+                    }}
+                    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                      selectedPrice === null
+                        ? "bg-[var(--shop-gold-faint)] font-bold text-[var(--shop-text-primary)]"
+                        : "text-[var(--shop-text-secondary)] hover:bg-[var(--shop-bg-soft)]"
                     }`}
                   >
-                    {child.icon_emoji && (
-                      <span className="text-[12px]">{child.icon_emoji}</span>
-                    )}
-                    {child.name}
+                    Any Price
                   </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Third row: price pills + stock toggle (Compact Utilities) */}
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--shop-border-light)]">
-          {/* Mobile sort (only visible on mobile) */}
-          <div className="relative shrink-0 sm:hidden">
-            <button
-              type="button"
-              onClick={() => setSortOpen(!sortOpen)}
-              className="flex items-center gap-1.5 rounded-lg border border-[var(--shop-border-light)] bg-white px-3 py-1.5 text-[11px] font-bold text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-border-gold)]"
-            >
-              <Filter className="h-3.5 w-3.5" />
-              Sort
-            </button>
+                  {PRICE_RANGES.map((range, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setSelectedPrice(idx);
+                        setActiveDropdown(null);
+                      }}
+                      className={`mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                        selectedPrice === idx
+                          ? "bg-[var(--shop-gold-faint)] font-bold text-[var(--shop-text-primary)]"
+                          : "text-[var(--shop-text-secondary)] hover:bg-[var(--shop-bg-soft)]"
+                      }`}
+                    >
+                      {range.label}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          <div className="hidden sm:block h-4 w-px bg-[var(--shop-border-light)] mr-1" />
-
-          {PRICE_RANGES.map((range, i) => (
-            <button
-              key={range.label}
-              type="button"
-              onClick={() => setSelectedPrice(selectedPrice === i ? null : i)}
-              className={`rounded-lg px-3 py-1.5 text-[11px] font-bold tracking-[0.04em] transition-all duration-200 ${
-                selectedPrice === i
-                  ? "border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] text-[var(--shop-gold)]"
-                  : "border border-[var(--shop-border-light)] bg-white text-[var(--shop-text-muted)] hover:border-[var(--shop-border-medium)] hover:text-[var(--shop-text-secondary)]"
-              }`}
-            >
-              {range.label}
-            </button>
-          ))}
-
-          <div className="mx-1 h-4 w-px bg-[var(--shop-border-light)]" />
-
-          <button
-            type="button"
-            onClick={() => setInStockOnly(!inStockOnly)}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold tracking-[0.04em] transition-all duration-200 ${
-              inStockOnly
-                ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border border-[var(--shop-border-light)] bg-white text-[var(--shop-text-muted)] hover:border-[var(--shop-border-medium)] hover:text-[var(--shop-text-secondary)]"
-            }`}
-          >
-            <span
-              className={`h-1.5 w-1.5 rounded-full ${inStockOnly ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-[var(--shop-text-subtle)]"}`}
+          {/* In Stock Toggle */}
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] px-3 py-2 text-sm font-semibold text-[var(--shop-text-secondary)] transition-all hover:border-[var(--shop-border-gold)] hover:shadow-sm">
+            <input
+              type="checkbox"
+              checked={inStockOnly}
+              onChange={(e) => setInStockOnly(e.target.checked)}
+              className="h-4 w-4 rounded border-[var(--shop-border-light)] text-[var(--shop-gold)] focus:ring-[var(--shop-gold)]"
             />
+            <Package className="h-4 w-4 text-[var(--shop-text-muted)] hidden sm:block" />
             In Stock
-          </button>
+          </label>
         </div>
 
-        {/* Active filter chips */}
-        <AnimatePresence>
-          {activeFilters.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="flex flex-wrap items-center gap-2 pt-1"
-            >
-              {activeFilters.map((filter, i) => (
-                <motion.span
-                  key={`${filter.label}-${i}`}
-                  initial={{ opacity: 0, scale: 0.9 }}
+        {/* Right Side: Sort */}
+        <div className="relative">
+          <DropdownButton
+            active={activeDropdown === "sort"}
+            onClick={() =>
+              setActiveDropdown(activeDropdown === "sort" ? null : "sort")
+            }
+            icon={ArrowDownUp}
+            label="Sort"
+            value={SORT_OPTIONS.find((o) => o.value === sort)?.label}
+          />
+          <AnimatePresence>
+            {activeDropdown === "sort" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-56 rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-2 shadow-[var(--shop-shadow-xl)]"
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setSort(option.value);
+                      setActiveDropdown(null);
+                    }}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                      sort === option.value
+                        ? "bg-[var(--shop-gold-faint)] font-bold text-[var(--shop-text-primary)]"
+                        : "text-[var(--shop-text-secondary)] hover:bg-[var(--shop-bg-soft)]"
+                    }`}
+                  >
+                    <Check
+                      className={`h-4 w-4 ${sort === option.value ? "text-[var(--shop-gold)] opacity-100" : "opacity-0"}`}
+                    />
+                    {option.label}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Active Filter Badges */}
+      <AnimatePresence>
+        {activeFilters.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex flex-wrap items-center gap-2 pt-1"
+          >
+            <span className="text-xs font-semibold text-[var(--shop-text-muted)] mr-1">
+              Active Filters:
+            </span>
+            <AnimatePresence>
+              {activeFilters.map((filter) => (
+                <motion.button
+                  key={filter.id}
+                  initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-3 py-1 text-[11px] font-semibold text-[var(--shop-gold)] shadow-sm"
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  onClick={filter.onRemove}
+                  className="group flex items-center gap-1.5 rounded-full border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] px-3 py-1 text-xs font-semibold text-[var(--shop-text-secondary)] shadow-sm transition-colors hover:border-[var(--shop-border-gold)] hover:bg-[var(--shop-gold-faint)] hover:text-[var(--shop-text-primary)]"
                 >
                   {filter.label}
-                  <button
-                    type="button"
-                    onClick={filter.onRemove}
-                    aria-label={`Remove ${filter.label} filter`}
-                    className="ml-0.5 inline-flex hover:text-[var(--shop-text-primary)]"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </motion.span>
+                  <X className="h-3 w-3 text-[var(--shop-text-muted)] transition-colors group-hover:text-[var(--shop-text-primary)]" />
+                </motion.button>
               ))}
+            </AnimatePresence>
+            {activeFilters.length > 1 && (
               <button
-                type="button"
                 onClick={() => {
                   setSelectedCategorySlug("all");
                   setSelectedPrice(null);
                   setInStockOnly(false);
                 }}
-                className="ml-2 text-[11px] font-bold text-[var(--shop-text-muted)] underline underline-offset-2 transition hover:text-[var(--shop-text-primary)]"
+                className="ml-2 text-xs font-bold text-[var(--shop-gold)] hover:underline"
               >
                 Clear all
               </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Hidden: trigger parent update via a child effect wrapper */}
-      <FilterChangeTrigger filtered={filtered} onChange={onFilteredChange} />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
-}
-
-function FilterChangeTrigger({
-  filtered,
-  onChange,
-}: {
-  filtered: ShopPublicProduct[];
-  onChange: (p: ShopPublicProduct[]) => void;
-}) {
-  const key = filtered.map((p) => p.id).join(",");
-  const prevKeyRef = useRef("");
-
-  useEffect(() => {
-    if (key !== prevKeyRef.current) {
-      prevKeyRef.current = key;
-      onChange(filtered);
-    }
-  }, [key, filtered, onChange]);
-
-  return null;
 }
