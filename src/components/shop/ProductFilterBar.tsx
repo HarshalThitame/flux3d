@@ -10,6 +10,7 @@ import {
   Package,
   Tag,
   Layers3,
+  type LucideIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type {
@@ -29,7 +30,7 @@ interface ProductFilterBarProps {
 interface DropdownButtonProps {
   active: boolean;
   onClick: () => void;
-  icon: React.ElementType;
+  icon: LucideIcon;
   label: string;
   value: string | undefined;
 }

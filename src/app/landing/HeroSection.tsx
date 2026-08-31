@@ -62,32 +62,31 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
 
   return (
     <section className="lux-hero" aria-label="Featured 3D products">
-      <div className="absolute inset-x-0 top-0 z-40 flex flex-col items-center justify-center px-4 pt-20 text-center pointer-events-none sm:px-6 sm:pt-28 lg:px-8 lg:pt-32">
+      <div className="absolute inset-x-0 top-0 z-40 flex flex-col items-start justify-start px-6 pt-6 sm:px-8 sm:pt-7 pointer-events-none">
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, x: -15 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
-          className="lux-eyebrow mb-4 flex items-center justify-center gap-2"
+          className="mb-1 flex items-center gap-2 font-[var(--lux-font-display)] text-xl font-semibold tracking-tight text-[var(--lux-text-primary)] sm:text-2xl"
         >
-          <Sparkles className="h-4 w-4 text-[var(--lux-gold)]" />
-          Flux3D Store
+          <Sparkles className="h-5 w-5 text-[var(--lux-gold)]" />
+          Flux3D <span className="italic text-[var(--lux-gold)]">Store</span>
         </motion.div>
         <motion.h1
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, x: -15 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, ease: EASE_OUT_EXPO, delay: 0.1 }}
-          className="lux-heading-1 max-w-4xl text-[var(--lux-text-primary)]"
+          className="text-sm font-semibold tracking-tight text-[var(--lux-text-primary)] sm:text-base max-w-[200px] sm:max-w-xs"
         >
           Shop ready-made 3D printed products
         </motion.h1>
         <motion.p
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, x: -15 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, ease: EASE_OUT_EXPO, delay: 0.2 }}
-          className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--lux-text-muted)] sm:text-lg"
+          className="mt-1.5 max-w-[220px] text-xs leading-relaxed text-[var(--lux-text-muted)] sm:max-w-xs"
         >
-          Handpicked Flux3D objects with clean finishes and ready-to-ship
-          presentation for desks, creators, gifting, and everyday setups.
+          Handpicked objects with clean finishes and ready-to-ship presentation.
         </motion.p>
       </div>
 
