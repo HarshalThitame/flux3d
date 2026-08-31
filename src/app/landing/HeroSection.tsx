@@ -67,27 +67,19 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
           initial={{ opacity: 0, x: -15 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
-          className="mb-1 flex items-center gap-2 font-[var(--lux-font-display)] text-xl font-semibold tracking-tight text-[var(--lux-text-primary)] sm:text-2xl"
+          className="mb-0.5 flex items-center gap-2 font-[var(--lux-font-display)] text-lg font-semibold tracking-tight text-[var(--lux-text-primary)] sm:text-xl"
         >
-          <Sparkles className="h-5 w-5 text-[var(--lux-gold)]" />
+          <Sparkles className="h-4 w-4 text-[var(--lux-gold)]" />
           Flux3D <span className="italic text-[var(--lux-gold)]">Store</span>
         </motion.div>
         <motion.h1
           initial={{ opacity: 0, x: -15 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, ease: EASE_OUT_EXPO, delay: 0.1 }}
-          className="text-sm font-semibold tracking-tight text-[var(--lux-text-primary)] sm:text-base max-w-[200px] sm:max-w-xs"
+          className="text-[10px] font-bold tracking-widest uppercase text-[var(--lux-text-primary)] sm:text-[11px] whitespace-nowrap"
         >
           Shop ready-made 3D printed products
         </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, x: -15 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, ease: EASE_OUT_EXPO, delay: 0.2 }}
-          className="mt-1.5 max-w-[220px] text-xs leading-relaxed text-[var(--lux-text-muted)] sm:max-w-xs"
-        >
-          Handpicked objects with clean finishes and ready-to-ship presentation.
-        </motion.p>
       </div>
 
       <DotGridBackground
