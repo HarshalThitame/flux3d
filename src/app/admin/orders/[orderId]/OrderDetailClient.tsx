@@ -90,7 +90,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[] | null>(null);
-  const [auditLogsLoading, setAuditLogsLoading] = useState(false);
+  const [auditLogsLoading, setAuditLogsLoading] = useState(true);
   const toastTimer = useRef<number | null>(null);
 
   const [trackingForm, setTrackingForm] = useState({
@@ -127,24 +127,6 @@ export default function OrderDetailClient({ initialOrder }: Props) {
   ].filter(Boolean) as string[];
   const mapQuery = addressLines.join(", ");
   const statusOptions = getAllowedOrderStatusTransitions(order.status);
-
-  async function loadAuditLogs() {
-    if (auditLogs !== null) return; // already loaded
-    setAuditLogsLoading(true);
-    try {
-      const response = await fetch(
-        `/api/admin/orders/${order.groupId}/audit-logs`,
-      );
-      if (response.ok) {
-        const data = (await response.json()) as { logs: AuditLogEntry[] };
-        setAuditLogs(data.logs);
-      }
-    } catch {
-      // silently fail
-    } finally {
-      setAuditLogsLoading(false);
-    }
-  }
 
   function showToast(nextToast: NonNullable<AdminToastState>) {
     setToast(nextToast);
@@ -332,9 +314,26 @@ export default function OrderDetailClient({ initialOrder }: Props) {
     }
   }
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps -- Load audit logs on mount
   useEffect(() => {
-    loadAuditLogs();
+    let active = true;
+    if (auditLogs !== null) return;
+
+    fetch(`/api/admin/orders/${order.groupId}/audit-logs`)
+      .then((res) => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then((data) => {
+        if (active) setAuditLogs(data.logs as AuditLogEntry[]);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setAuditLogsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
