@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion, type Variants } from "framer-motion";
 import {
@@ -120,7 +120,7 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
   );
 
   // Deduplicate all products for the unified grid
-  const allProducts = (() => {
+  const allProducts = useMemo(() => {
     const seen = new Set<string>();
     const result: ShopPublicProduct[] = [];
     for (const p of [...data.featured_products, ...data.new_arrivals]) {
@@ -139,7 +139,7 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
       }
     }
     return result;
-  })();
+  }, [data]);
 
   const featuredFiltered = filteredProducts
     .filter((p) => p.is_featured)
