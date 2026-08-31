@@ -61,10 +61,10 @@ export default function LuxuryOfferBanner() {
         className="relative z-50 w-full overflow-hidden"
         style={{
           background:
-            "linear-gradient(135deg, #FDFCF8 0%, #F5F3EE 45%, #EBE7E0 100%)",
+            "linear-gradient(135deg, #111111 0%, #050505 45%, #000000 100%)",
           borderTop: "1px solid rgba(201, 169, 98, 0.4)",
           borderBottom: "1px solid rgba(201, 169, 98, 0.4)",
-          boxShadow: "0 4px 24px rgba(28,25,23,0.06)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
         }}
       >
         {/* Subtle gold radial glow behind */}
@@ -72,14 +72,14 @@ export default function LuxuryOfferBanner() {
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 60% 80% at 20% 50%, rgba(201,169,98,0.12) 0%, transparent 60%)",
+              "radial-gradient(ellipse 60% 80% at 20% 50%, rgba(201,169,98,0.18) 0%, transparent 60%)",
           }}
         />
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 40% 60% at 85% 50%, rgba(201,169,98,0.08) 0%, transparent 60%)",
+              "radial-gradient(ellipse 40% 60% at 85% 50%, rgba(201,169,98,0.12) 0%, transparent 60%)",
           }}
         />
 
@@ -93,13 +93,13 @@ export default function LuxuryOfferBanner() {
               priority
               sizes="100vw"
               className="object-cover"
-              style={{ opacity: 0.5 }}
+              style={{ opacity: 0.6 }}
             />
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(90deg, rgba(253,252,248,0.92) 0%, rgba(253,252,248,0.7) 50%, rgba(253,252,248,0.92) 100%)",
+                  "linear-gradient(90deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.7) 50%, rgba(10,10,10,0.95) 100%)",
               }}
             />
           </div>
@@ -112,9 +112,9 @@ export default function LuxuryOfferBanner() {
               <span
                 className="inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] sm:text-[11px]"
                 style={{
-                  borderColor: "rgba(201, 169, 98, 0.55)",
-                  color: "#8A6D2F",
-                  background: "rgba(201, 169, 98, 0.12)",
+                  borderColor: "rgba(201, 169, 98, 0.6)",
+                  color: "#E5C882",
+                  background: "rgba(201, 169, 98, 0.15)",
                 }}
               >
                 <Sparkles className="h-3 w-3" />
@@ -126,12 +126,13 @@ export default function LuxuryOfferBanner() {
               <h2
                 className="truncate text-base font-semibold tracking-[-0.01em] sm:text-lg"
                 style={{
-                  color: "#1C1917",
+                  color: "#FFFFFF",
                   fontFamily: "var(--lux-font-display)",
+                  textShadow: "0 2px 10px rgba(0,0,0,0.8)",
                 }}
               >
                 {offer.sale_label && (
-                  <span style={{ color: "#8A6D2F" }}>
+                  <span style={{ color: "#E5C882" }}>
                     {offer.sale_label} —{" "}
                   </span>
                 )}
@@ -140,7 +141,10 @@ export default function LuxuryOfferBanner() {
               {offer.description && (
                 <p
                   className="mt-0.5 hidden max-w-[420px] truncate text-xs sm:block"
-                  style={{ color: "rgba(28, 25, 23, 0.62)" }}
+                  style={{
+                    color: "rgba(255, 255, 255, 0.85)",
+                    textShadow: "0 1px 4px rgba(0,0,0,0.5)",
+                  }}
                 >
                   {offer.description}
                 </p>
@@ -149,16 +153,16 @@ export default function LuxuryOfferBanner() {
                 <div className="mt-1.5 flex items-center justify-center gap-2 sm:justify-start">
                   <span
                     className="text-[10px] uppercase tracking-wider"
-                    style={{ color: "rgba(28,25,23,0.45)" }}
+                    style={{ color: "rgba(255,255,255,0.6)" }}
                   >
                     Code
                   </span>
                   <code
                     className="rounded-md border px-2 py-0.5 font-mono text-[11px] font-bold"
                     style={{
-                      borderColor: "rgba(201, 169, 98, 0.55)",
-                      color: "#8A6D2F",
-                      background: "rgba(201, 169, 98, 0.12)",
+                      borderColor: "rgba(201, 169, 98, 0.6)",
+                      color: "#E5C882",
+                      background: "rgba(201, 169, 98, 0.15)",
                     }}
                   >
                     {offer.coupon_code}

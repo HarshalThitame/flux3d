@@ -26,24 +26,24 @@ function FinalCTASection() {
       className="relative overflow-hidden px-6 py-12 md:py-16 lg:py-24"
     >
       <Reveal className="relative z-10 mx-auto max-w-[1000px]">
-        <div className="rounded-[var(--shop-radius-xl,32px)] border border-[var(--shop-border-gold)] bg-[var(--shop-text-primary,#1C1917)] p-8 text-center text-white shadow-[var(--shop-shadow-lg)] md:p-12 lg:p-16">
+        <div className="rounded-[var(--shop-radius-xl,32px)] border border-[var(--shop-border-gold)] bg-[#000000] p-8 text-center text-white shadow-[0_0_40px_rgba(201,169,98,0.15)] md:p-12 lg:p-16">
           <div className="relative z-10">
             <Reveal delay={40}>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--shop-border-gold)] bg-[rgba(201,169,98,0.12)] px-4 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[var(--shop-gold,#C9A962)]">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--shop-border-gold)] bg-[rgba(201,169,98,0.12)] px-4 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[var(--shop-gold,#C9A962)] drop-shadow-md">
                 <Sparkles className="w-4 h-4" />
                 Start with a real quote
               </div>
             </Reveal>
 
             <Reveal delay={100}>
-              <h2 className="mb-4 font-[var(--shop-font-heading)] text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.1] text-white">
+              <h2 className="mb-4 font-[var(--shop-font-heading)] text-[clamp(2rem,4vw,3.2rem)] font-bold leading-[1.1] text-[#FFFFFF] drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]">
                 Tell us what you need and we&apos;ll review it before
                 production.
               </h2>
             </Reveal>
 
             <Reveal delay={160}>
-              <p className="mx-auto mb-8 max-w-[640px] text-base leading-[1.7] text-[var(--shop-sand,#D7D3CB)]">
+              <p className="mx-auto mb-8 max-w-[640px] text-base leading-[1.7] text-[rgba(255,255,255,0.9)] drop-shadow-md">
                 Flux3D handles custom 3D printing, prototyping, model printing
                 and ready-made products through a review-and-confirm workflow.
                 Share the file or requirement and we&apos;ll take it from there.
