@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { motion, type Variants } from 'framer-motion'
+import { useState } from "react";
+import Link from "next/link";
+import { motion, type Variants } from "framer-motion";
 import {
   ArrowRight,
   BadgeCheck,
@@ -11,15 +11,14 @@ import {
   PackageCheck,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
   Truck,
   type LucideIcon,
-} from 'lucide-react'
-import ProductCard from '@/components/shop/ProductCard'
-import ProductFilterBar from '@/components/shop/ProductFilterBar'
-import type { ShopHomeData, ShopPublicProduct } from '@/lib/shop/public-types'
+} from "lucide-react";
+import ProductCard from "@/components/shop/ProductCard";
+import ProductFilterBar from "@/components/shop/ProductFilterBar";
+import type { ShopHomeData, ShopPublicProduct } from "@/lib/shop/public-types";
 
-const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1]
+const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 const revealVariants: Variants = {
   hidden: { opacity: 0, y: 24 },
@@ -28,7 +27,7 @@ const revealVariants: Variants = {
     y: 0,
     transition: { duration: 0.7, ease: EASE_OUT_EXPO, delay },
   }),
-}
+};
 
 function SectionHeading({
   eyebrow,
@@ -36,30 +35,46 @@ function SectionHeading({
   title,
   subtitle,
   href,
-  linkLabel = 'View all',
+  linkLabel = "View all",
 }: {
-  eyebrow: string
-  icon: LucideIcon
-  title: string
-  subtitle?: string
-  href?: string
-  linkLabel?: string
+  eyebrow: string;
+  icon: LucideIcon;
+  title: string;
+  subtitle?: string;
+  href?: string;
+  linkLabel?: string;
 }) {
   return (
     <motion.div
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: '-60px' }}
+      viewport={{ once: true, margin: "-60px" }}
       className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
     >
       <div className="min-w-0">
-        <motion.div variants={revealVariants} custom={0} className="lux-eyebrow mb-3">
+        <motion.div
+          variants={revealVariants}
+          custom={0}
+          className="lux-eyebrow mb-3"
+        >
           <Icon className="h-4 w-4" />
           {eyebrow}
         </motion.div>
-        <motion.h2 variants={revealVariants} custom={0.08} className="lux-heading-2">{title}</motion.h2>
+        <motion.h2
+          variants={revealVariants}
+          custom={0.08}
+          className="lux-heading-2"
+        >
+          {title}
+        </motion.h2>
         {subtitle && (
-          <motion.p variants={revealVariants} custom={0.16} className="mt-2 max-w-xl text-sm leading-6 text-[var(--lux-text-muted)]">{subtitle}</motion.p>
+          <motion.p
+            variants={revealVariants}
+            custom={0.16}
+            className="mt-2 max-w-xl text-sm leading-6 text-[var(--lux-text-muted)]"
+          >
+            {subtitle}
+          </motion.p>
         )}
       </div>
       {href && (
@@ -74,56 +89,71 @@ function SectionHeading({
         </motion.div>
       )}
     </motion.div>
-  )
+  );
 }
 
 function ProductRow({ products }: { products: ShopPublicProduct[] }) {
   return (
     <div className="lux-product-row">
       {products.map((product, index) => (
-        <ProductCard key={product.id} product={product} index={index} className="h-full" />
+        <ProductCard
+          key={product.id}
+          product={product}
+          index={index}
+          className="h-full"
+        />
       ))}
     </div>
-  )
+  );
 }
 
 export default function LandingShopSection({ data }: { data: ShopHomeData }) {
-  const [filteredProducts, setFilteredProducts] = useState<ShopPublicProduct[]>(() => {
-    const seen = new Set<string>()
-    return [...data.featured_products, ...data.new_arrivals].filter((p) => {
-      if (seen.has(p.id)) return false
-      seen.add(p.id)
-      return true
-    })
-  })
+  const [filteredProducts, setFilteredProducts] = useState<ShopPublicProduct[]>(
+    () => {
+      const seen = new Set<string>();
+      return [...data.featured_products, ...data.new_arrivals].filter((p) => {
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      });
+    },
+  );
 
   // Deduplicate all products for the unified grid
   const allProducts = (() => {
-    const seen = new Set<string>()
-    const result: ShopPublicProduct[] = []
+    const seen = new Set<string>();
+    const result: ShopPublicProduct[] = [];
     for (const p of [...data.featured_products, ...data.new_arrivals]) {
       if (!seen.has(p.id)) {
-        seen.add(p.id)
-        result.push(p)
+        seen.add(p.id);
+        result.push(p);
       }
     }
     // Add occasion collection products too
     for (const col of data.occasion_collections) {
       for (const p of col.products) {
         if (!seen.has(p.id)) {
-          seen.add(p.id)
-          result.push(p)
+          seen.add(p.id);
+          result.push(p);
         }
       }
     }
-    return result
-  })()
+    return result;
+  })();
 
-  const featuredFiltered = filteredProducts.filter((p) => p.is_featured).slice(0, 8)
-  const newFiltered = filteredProducts.filter((p) => !p.is_featured).slice(0, 8)
+  const featuredFiltered = filteredProducts
+    .filter((p) => p.is_featured)
+    .slice(0, 8);
+  const newFiltered = filteredProducts
+    .filter((p) => !p.is_featured)
+    .slice(0, 8);
 
   return (
-    <section id="shop" className="lux-section lux-band-ivory" aria-label="3D Shop">
+    <section
+      id="shop"
+      className="lux-section lux-band-ivory"
+      aria-label="3D Shop"
+    >
       {/* Trust bar */}
       <motion.div
         className="lux-trustbar"
@@ -132,10 +162,10 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
         viewport={{ once: true }}
       >
         {[
-          { icon: ShieldCheck, label: 'QA checked' },
-          { icon: Truck, label: 'Ready to ship' },
-          { icon: Box, label: '3D preview' },
-          { icon: ShoppingBag, label: 'Secure cart' },
+          { icon: ShieldCheck, label: "QA checked" },
+          { icon: Truck, label: "Ready to ship" },
+          { icon: Box, label: "3D preview" },
+          { icon: ShoppingBag, label: "Secure cart" },
         ].map((item, i) => (
           <motion.div
             key={item.label}
@@ -150,18 +180,11 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
       </motion.div>
 
       <div className="mx-auto w-full max-w-[1280px] px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-20">
-        <SectionHeading
-          eyebrow="Flux3D Store"
-          icon={Sparkles}
-          title="Shop ready-made 3D printed products"
-          subtitle="Handpicked Flux3D objects with clean finishes and ready-to-ship presentation for desks, creators, gifting, and everyday setups."
-        />
-
         {/* Premium Filter Bar */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
+          viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.7, ease: EASE_OUT_EXPO, delay: 0.1 }}
           className="mb-10 rounded-[var(--lux-radius-lg)] border border-[var(--lux-border-light)] bg-white p-4 shadow-[var(--lux-shadow-sm)] sm:p-5"
         >
@@ -207,8 +230,12 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
         {filteredProducts.length === 0 && (
           <div className="py-16 text-center">
             <Box className="mx-auto mb-4 h-12 w-12 text-[var(--lux-taupe)]" />
-            <h3 className="lux-heading-3 mb-2">No products match your filters</h3>
-            <p className="text-sm text-[var(--lux-text-muted)]">Try adjusting your category or price selection.</p>
+            <h3 className="lux-heading-3 mb-2">
+              No products match your filters
+            </h3>
+            <p className="text-sm text-[var(--lux-text-muted)]">
+              Try adjusting your category or price selection.
+            </p>
           </div>
         )}
 
@@ -216,7 +243,7 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
+          viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.8, ease: EASE_OUT_EXPO }}
           className="mt-10 flex flex-col items-start gap-5 rounded-[var(--lux-radius-xl)] border border-[var(--lux-border-light)] bg-[var(--lux-bg-elevated)] p-6 shadow-[var(--lux-shadow-sm)] sm:flex-row sm:items-center sm:p-8"
         >
@@ -228,18 +255,16 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
               Explore the full 3D Shop
             </h3>
             <p className="mt-1 text-sm leading-6 text-[var(--lux-text-muted)]">
-              Every product in the store — browse by category, filter by price, and view live 3D models before you buy.
+              Every product in the store — browse by category, filter by price,
+              and view live 3D models before you buy.
             </p>
           </div>
-          <Link
-            href="/3d-shop"
-            className="lux-btn-primary shrink-0"
-          >
+          <Link href="/3d-shop" className="lux-btn-primary shrink-0">
             Visit Shop
             <ArrowRight className="h-4 w-4" />
           </Link>
         </motion.div>
       </div>
     </section>
-  )
+  );
 }

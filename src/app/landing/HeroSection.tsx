@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, Box, MousePointer2 } from "lucide-react";
+import { ArrowRight, Box, MousePointer2, Sparkles } from "lucide-react";
 import DepthBlurCarouselBoundary from "@/components/shop/DepthBlurCarouselBoundary";
 import DotGridBackground from "@/components/landing/DotGridBackground";
 import { getShopProductImages } from "@/lib/shop/selection";
@@ -62,12 +62,33 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
 
   return (
     <section className="lux-hero" aria-label="Featured 3D products">
-      <div className="absolute inset-x-0 top-0 z-40 flex items-center px-6 pt-6 sm:px-8 sm:pt-7">
-        <Link href="/" aria-label="Flux3D home" className="group">
-          <div className="font-[var(--lux-font-display)] text-xl font-semibold tracking-tight text-[var(--lux-text-primary)] sm:text-2xl">
-            Flux3D <span className="italic text-[var(--lux-gold)]">Store</span>
-          </div>
-        </Link>
+      <div className="absolute inset-x-0 top-0 z-40 flex flex-col items-center justify-center px-4 pt-20 text-center pointer-events-none sm:px-6 sm:pt-28 lg:px-8 lg:pt-32">
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
+          className="lux-eyebrow mb-4 flex items-center justify-center gap-2"
+        >
+          <Sparkles className="h-4 w-4 text-[var(--lux-gold)]" />
+          Flux3D Store
+        </motion.div>
+        <motion.h1
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: EASE_OUT_EXPO, delay: 0.1 }}
+          className="lux-heading-1 max-w-4xl text-[var(--lux-text-primary)]"
+        >
+          Shop ready-made 3D printed products
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: EASE_OUT_EXPO, delay: 0.2 }}
+          className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--lux-text-muted)] sm:text-lg"
+        >
+          Handpicked Flux3D objects with clean finishes and ready-to-ship
+          presentation for desks, creators, gifting, and everyday setups.
+        </motion.p>
       </div>
 
       <DotGridBackground
