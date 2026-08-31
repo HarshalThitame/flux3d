@@ -342,7 +342,7 @@ export default function NavbarClient({
               height={478}
               sizes="(min-width: 640px) 260px, 220px"
               priority
-              className="h-14 w-auto max-w-[220px] object-contain transition-transform duration-300 group-hover:scale-[1.02] sm:h-16 sm:max-w-[260px]"
+              className="h-9 w-auto max-w-[160px] object-contain transition-transform duration-300 group-hover:scale-[1.02] sm:h-10 sm:max-w-[180px]"
             />
           </Link>
 
@@ -350,7 +350,10 @@ export default function NavbarClient({
             {navLinks.map((link) => {
               const active = isActive(link.href);
               return (
-                <li key={link.href} className={link.label === "3D Shop" ? "group relative" : ""}>
+                <li
+                  key={link.href}
+                  className={link.label === "3D Shop" ? "group relative" : ""}
+                >
                   <Link
                     href={link.href}
                     prefetch={false}
@@ -365,11 +368,16 @@ export default function NavbarClient({
                   >
                     <span>{link.label}</span>
                   </Link>
-                  {link.label === "3D Shop" && categories && categories.length > 0 && (
-                    <div className="invisible absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 transition-all group-hover:visible group-hover:opacity-100 z-50">
-                      <ShopMegaMenu categories={categories} onClose={() => {}} />
-                    </div>
-                  )}
+                  {link.label === "3D Shop" &&
+                    categories &&
+                    categories.length > 0 && (
+                      <div className="invisible absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 transition-all group-hover:visible group-hover:opacity-100 z-50">
+                        <ShopMegaMenu
+                          categories={categories}
+                          onClose={() => {}}
+                        />
+                      </div>
+                    )}
                 </li>
               );
             })}
