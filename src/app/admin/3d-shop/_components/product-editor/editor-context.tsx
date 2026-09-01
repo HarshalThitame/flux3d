@@ -115,6 +115,7 @@ type ProductEditorContextValue = {
   setDragVariant: (value: string | null) => void;
   setAiTone: (tone: AiTone) => void;
   generateAi: (kind: AiGenerationKind) => Promise<void>;
+  generateAiField: (fieldContext: string, draftText: string) => Promise<string>;
   setDefaultWeight: (value: string) => void;
   setDefaultCost: (value: string) => void;
   setDefaultCompareAt: (value: string) => void;
@@ -955,7 +956,70 @@ export function ProductEditorProvider({
         setAiBusy((prev) => ({ ...prev, [kind]: false }));
       }
     },
-    [aiPrompt, aiTone, applyAiResult, categories, form],
+    [aiPrompt, aiTone, categories, form, applyAiResult],
+  );
+
+  const generateAiField = useCallback(
+    async (fieldContext: string, draftText: string) => {
+      const current = form.productRef.current;
+      if (!current.name.trim()) {
+        throw new Error("Add a product name first so AI has context.");
+      }
+      const categoryName =
+        categories.find((category) => category.id === current.category_id)
+          ?.name ?? "";
+
+      const response = await fetch("/api/3d-shop/admin/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "inline_field",
+          name: current.name,
+          category: categoryName,
+          description: current.description,
+          tags: current.tags,
+          occasion_tags: current.occasion_tags,
+          tone: aiTone,
+          field_context: fieldContext,
+          draft_text: draftText,
+          variants: variantsRef.current.map((variant) => ({
+            option_name: variant.option_name,
+            option_type: variant.option_type,
+            values: variant.values ?? [],
+          })),
+          variant_dimensions: variantDimensionsRef.current.map((entry) => ({
+            option_name: entry.option_name,
+            option_value: entry.option_value,
+            dimensions: entry.dimensions,
+          })),
+          default_dimensions: current.default_dimensions ?? undefined,
+          base_price: current.base_price,
+          skus: skusRef.current
+            .filter((sku) => sku.is_available !== false)
+            .map((sku) => ({
+              variant_combination: sku.variant_combination,
+              price: Number(sku.price),
+              compare_at_price:
+                sku.compare_at_price === null
+                  ? null
+                  : Number(sku.compare_at_price),
+            })),
+        }),
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        result?: string;
+        error?: string;
+      };
+      if (!response.ok || data.result === undefined)
+        throw new Error(data.error || "AI field generation failed.");
+
+      setToast({
+        type: "success",
+        message: "Generated with AI. Press Ctrl+Z to undo.",
+      });
+      return data.result;
+    },
+    [aiTone, categories, form],
   );
 
   const applyTemplate = useCallback(
@@ -2984,6 +3048,7 @@ export function ProductEditorProvider({
     setDragVariant,
     setAiTone,
     generateAi,
+    generateAiField,
     setDefaultWeight,
     setDefaultCost,
     setDefaultCompareAt,

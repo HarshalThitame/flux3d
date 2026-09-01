@@ -2,7 +2,15 @@
 
 import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
+import {
+  ImagePlus,
+  Loader2,
+  Plus,
+  Trash2,
+  Upload,
+  X,
+  Sparkles,
+} from "lucide-react";
 import type { DescriptionBlock, DescriptionBlocks } from "@/lib/shop/blocks";
 import { useProductEditor } from "../editor-context";
 import { IconPicker } from "./IconPicker";
@@ -28,6 +36,7 @@ function TextField({
   placeholder,
   textarea = false,
   rows = 2,
+  fieldContext,
 }: {
   label: string;
   value: string;
@@ -35,10 +44,52 @@ function TextField({
   placeholder?: string;
   textarea?: boolean;
   rows?: number;
+  fieldContext?: string;
 }) {
+  const { generateAiField, setToast } = useProductEditor();
+  const [generating, setGenerating] = useState(false);
+
+  const handleAi = async () => {
+    if (!fieldContext) return;
+    setGenerating(true);
+    try {
+      const generated = await generateAiField(fieldContext, value);
+      onChange(generated);
+    } catch (error) {
+      setToast({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "AI generation failed.",
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <label className="block">
-      <span className={labelClass}>{label}</span>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-medium text-[#6F7192]">{label}</span>
+        {fieldContext && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              void handleAi();
+            }}
+            disabled={generating}
+            className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-[#6d28d9] bg-[#6d28d9]/5 hover:bg-[#6d28d9]/10 transition disabled:opacity-50"
+            title={`Generate ${fieldContext} with AI`}
+          >
+            {generating ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Sparkles className="h-3 w-3" />
+            )}
+            AI
+          </button>
+        )}
+      </div>
       {textarea ? (
         <textarea
           rows={rows}
@@ -73,6 +124,7 @@ export function HeadingEditor({
         value={block.title}
         onChange={(title) => onChange({ ...block, title })}
         placeholder="e.g. Engineered for the Extraordinary"
+        fieldContext="heading block title"
       />
       <TextField
         label="Subtitle (optional)"
@@ -80,6 +132,7 @@ export function HeadingEditor({
         onChange={(subtitle) => onChange({ ...block, subtitle })}
         placeholder="A short elegant line that sets the tone"
         textarea
+        fieldContext="heading block subtitle"
       />
     </div>
   );
@@ -92,9 +145,49 @@ export function ParagraphEditor({
   block: Extract<DescriptionBlock, { type: "paragraph" }>;
   onChange: (block: DescriptionBlock) => void;
 }) {
+  const { generateAiField, setToast } = useProductEditor();
+  const [generating, setGenerating] = useState(false);
+
+  const handleAi = async () => {
+    setGenerating(true);
+    try {
+      // Strip HTML tags for the draft text to give the AI clean text
+      const rawText = block.html.replace(/<[^>]*>?/gm, "");
+      const generated = await generateAiField("paragraph narrative", rawText);
+      onChange({ ...block, html: generated });
+    } catch (error) {
+      setToast({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "AI generation failed.",
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div>
-      <span className={labelClass}>Text</span>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-medium text-[#6F7192]">Text</span>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            void handleAi();
+          }}
+          disabled={generating}
+          className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-[#6d28d9] bg-[#6d28d9]/5 hover:bg-[#6d28d9]/10 transition disabled:opacity-50"
+          title={`Generate paragraph with AI`}
+        >
+          {generating ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Sparkles className="h-3 w-3" />
+          )}
+          AI
+        </button>
+      </div>
       <RichTextEditor
         content={block.html}
         onChange={(html) => onChange({ ...block, html })}
@@ -119,6 +212,7 @@ export function SpecsTableEditor({
         value={block.title ?? ""}
         onChange={(title) => onChange({ ...block, title })}
         placeholder="e.g. Technical Specifications"
+        fieldContext="specifications section title"
       />
       <div className="space-y-2">
         {block.rows.map((row, index) => (
@@ -193,6 +287,7 @@ export function FeatureGridEditor({
         value={block.title ?? ""}
         onChange={(title) => onChange({ ...block, title })}
         placeholder="e.g. Why You'll Love It"
+        fieldContext="feature grid section title"
       />
       <div className="space-y-3">
         {block.items.map((item, index) => (
@@ -242,6 +337,7 @@ export function FeatureGridEditor({
                   onChange({ ...block, items });
                 }}
                 placeholder="e.g. Precision Crafted"
+                fieldContext="feature item title"
               />
             </div>
             <div className="mt-2.5">
@@ -256,6 +352,7 @@ export function FeatureGridEditor({
                 }}
                 placeholder="Short benefit-driven sentence"
                 textarea
+                fieldContext="feature item description"
               />
             </div>
           </div>
@@ -436,12 +533,14 @@ export function QuoteEditor({
         onChange={(text) => onChange({ ...block, text })}
         placeholder="Not just a product. A statement."
         textarea
+        fieldContext="quote text"
       />
       <TextField
         label="Attribution (optional)"
         value={block.attribution ?? ""}
         onChange={(attribution) => onChange({ ...block, attribution })}
         placeholder="e.g. Flux3D Design Studio"
+        fieldContext="quote attribution"
       />
     </div>
   );
@@ -496,6 +595,7 @@ export function BulletGridEditor({
         value={block.title ?? ""}
         onChange={(title) => onChange({ ...block, title })}
         placeholder="e.g. What's Included"
+        fieldContext="bullet grid section title"
       />
       <div className="space-y-2">
         {block.items.map((item, index) => (
@@ -522,6 +622,7 @@ export function BulletGridEditor({
                 onChange({ ...block, items });
               }}
               placeholder="Bullet point text"
+              fieldContext="bullet point text"
             />
             <button
               type="button"
