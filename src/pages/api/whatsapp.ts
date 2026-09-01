@@ -815,6 +815,69 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       metaMessageId: inboundMetaMessageId,
     }).catch(() => {});
 
+    // ── Conversational Components Interceptor ──
+    // Intercept explicit commands and ice breakers
+    if (text) {
+      let interceptReply: string | null = null;
+      const cmdMatch = text.match(/^\/([a-z0-9_-]+)/i);
+      
+      if (cmdMatch) {
+        const command = cmdMatch[1].toLowerCase();
+        switch (command) {
+          case 'quote':
+            interceptReply = "To get a price estimate, please share your 3D file (.STL, .STEP, or .OBJ), preferred material, and quantity.";
+            break;
+          case 'status':
+            interceptReply = "To check your order status, please reply with your Order ID (e.g. ORD-1234) or your registered email address.";
+            break;
+          case 'materials':
+            interceptReply = "We offer a wide range of materials including PLA, ABS, PETG, TPU, and various Resins. Do you have a specific use case in mind?";
+            break;
+          case 'support':
+            interceptReply = `A human support agent will be with you shortly. You can also reach us directly at ${FALLBACK_SETTINGS.whatsappSupportNumber}.`;
+            break;
+          default:
+            interceptReply = `I didn't recognize the command /${command}. Try /quote, /status, /materials, or /support.`;
+        }
+      } else if (text === "Get a 3D printing quote") {
+        interceptReply = "To get a price estimate, please share your 3D file (.STL, .STEP, or .OBJ), preferred material, and quantity.";
+      } else if (text === "Check order status") {
+        interceptReply = "To check your order status, please reply with your Order ID (e.g. ORD-1234) or your registered email address.";
+      } else if (text === "What materials do you offer?") {
+        interceptReply = "We offer a wide range of materials including PLA, ABS, PETG, TPU, and various Resins. Do you have a specific use case in mind?";
+      }
+
+      if (interceptReply) {
+        _log("intercepted_command");
+        await sendWhatsAppMessage(from, interceptReply).catch(() => {});
+        
+        logWhatsAppMessage(supabase, {
+          userId,
+          sender: from,
+          direction: "outgoing",
+          messageText: interceptReply,
+          automated: true,
+          triggerEvent: "automated_command_reply",
+          responded: true,
+          responseTimeMinutes: 0,
+        }).catch(() => {});
+
+        if (supabase && eventRecord?.id) {
+          try {
+            await supabase
+              .from("whatsapp_webhook_events")
+              .update({
+                processed_at: new Date().toISOString(),
+                reply_sent: true,
+              })
+              .eq("id", eventRecord.id);
+          } catch {
+            // best-effort marking
+          }
+        }
+        return;
+      }
+    }
     // ── WhatsApp account linking flow (Direction A) ──
     // Runs before the ordering state machine so a link flow never collides
     // with it. Returns true (and the webhook returns) only when the message

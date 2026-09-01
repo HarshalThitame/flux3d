@@ -1,0 +1,238 @@
+
+> flux3d@0.1.0 lint
+> eslint src
+
+
+/home/rutik-thitame/flux3d/src/__tests__/e2e/payment-flow.test.ts
+    1:53  warning  'beforeEach' is defined but never used         @typescript-eslint/no-unused-vars
+   36:7   warning  'attemptId' is defined but never used          @typescript-eslint/no-unused-vars
+  124:19  warning  'released' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/__tests__/rls-policies.test.ts
+  3:10  warning  'getDb' is defined but never used         @typescript-eslint/no-unused-vars
+  3:40  warning  'TEST_USER_ID' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/__tests__/whatsapp-price-validation.test.ts
+  1:44  warning  'vi' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/__tests__/whatsapp-webhook-integration.test.ts
+    2:8   warning  'crypto' is defined but never used                     @typescript-eslint/no-unused-vars
+    3:10  warning  'Readable' is defined but never used                   @typescript-eslint/no-unused-vars
+  510:9   warning  'capturedMessages' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/admin/3d-shop/_components/ShopCategoryManager.tsx
+  13:3  warning  'Folder' is defined but never used      @typescript-eslint/no-unused-vars
+  14:3  warning  'FolderOpen' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/admin/3d-shop/_components/product-editor/sections/HotspotSection.tsx
+  31:9  warning  The 'hotspots' logical expression could make the dependencies of useCallback Hook (at line 82) change on every render. To fix this, wrap the initialization of 'hotspots' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  31:9  warning  The 'hotspots' logical expression could make the dependencies of useCallback Hook (at line 92) change on every render. To fix this, wrap the initialization of 'hotspots' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  31:9  warning  The 'hotspots' logical expression could make the dependencies of useCallback Hook (at line 99) change on every render. To fix this, wrap the initialization of 'hotspots' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/home/rutik-thitame/flux3d/src/app/admin/3d-shop/_components/product-editor/sections/VariantImageGalleriesSection.tsx
+  5:47  warning  'X' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/admin/ads/page.tsx
+  74:10  warning  'asyncJobError' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/admin/orders/OrdersListClient.tsx
+  163:6  warning  React Hook useMemo has a missing dependency: 'sortOrders'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/rutik-thitame/flux3d/src/app/admin/orders/[orderId]/OrderDetailClient.tsx
+  319:3  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  340:6  warning  React Hook useEffect has missing dependencies: 'auditLogs' and 'order.groupId'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/rutik-thitame/flux3d/src/app/admin/whatsapp/inbox/WhatsAppInboxClient.tsx
+   768:35  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  1225:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/rutik-thitame/flux3d/src/app/api/3d-shop/admin/products/[id]/variant-images/route.ts
+  349:19  warning  'existing' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/api/3d-shop/admin/skus/[id]/images/route.ts
+  327:19  warning  'existing' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/api/admin/ads/jobs/process/__tests__/route.test.ts
+  50:25  warning  'body' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/api/admin/analytics/sessions/route.ts
+  88:20  warning  'abandonedCarts' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/api/admin/email-templates/[id]/preview/route.ts
+  3:10  warning  'createAdminClient' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/api/admin/support/stats/route.ts
+  18:11  warning  'now' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/api/admin/whatsapp-knowledge/route.ts
+  19:6  warning  'KnowledgeRow' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/api/cron/sync-meta-ads/route.ts
+  114:11  warning  'archived' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/api/materials/[id]/route.ts
+   61:12  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  102:12  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/api/materials/route.ts
+   94:12  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  146:12  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  197:12  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  236:12  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/api/meta/capi/route.ts
+  54:22  warning  '_dropped' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/blog/BlogClient.tsx
+  170:6  warning  React Hook useEffect has a missing dependency: 'isFinePointer'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/rutik-thitame/flux3d/src/app/cart/delivery/actions.ts
+    53:10  warning  'buildPublicBusinessProfile' is defined but never used  @typescript-eslint/no-unused-vars
+   337:11  warning  'estimatedMinutes' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  1184:9   warning  'settings' is assigned a value but never used           @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/gallery/GalleryClient.tsx
+  236:6  warning  React Hook useEffect has a missing dependency: 'isFinePointer'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/rutik-thitame/flux3d/src/app/instant-quote/actions.ts
+    3:8  warning  'crypto' is defined but never used                    @typescript-eslint/no-unused-vars
+   38:3  warning  'cancelQuoteCapture' is defined but never used        @typescript-eslint/no-unused-vars
+   43:3  warning  'makeCheckoutSession' is defined but never used       @typescript-eslint/no-unused-vars
+   52:3  warning  'updatePaymentAttempt' is defined but never used      @typescript-eslint/no-unused-vars
+  618:9  warning  'businessProfile' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/link/actions.ts
+  413:3  warning  'formData' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/materials/MaterialsHero.tsx
+  112:6  warning  React Hook useEffect has a missing dependency: 'isFinePointer'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/rutik-thitame/flux3d/src/app/my-orders/OrdersListClient.tsx
+  127:9  warning  'observerRef' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/my-orders/[orderId]/OrderDetailClient.tsx
+    9:10  warning  'DownloadInvoiceButton' is defined but never used  @typescript-eslint/no-unused-vars
+  176:3   warning  'hasAnyDiscount' is defined but never used         @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/my-orders/page.tsx
+  8:3  warning  'ORDERS_TABLE_UNAVAILABLE_MESSAGE' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/refund-policy/RefundPolicyClient.tsx
+  5:32  warning  'Clock' is defined but never used          @typescript-eslint/no-unused-vars
+  5:39  warning  'AlertTriangle' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/app/shipping-policy/ShippingPolicyClient.tsx
+  5:28  warning  'Package' is defined but never used        @typescript-eslint/no-unused-vars
+  5:37  warning  'Clock' is defined but never used          @typescript-eslint/no-unused-vars
+  5:52  warning  'AlertTriangle' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/components/MobileBottomBar.tsx
+  10:3  warning  'UserCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/components/TrackingBootstrap.tsx
+  9:6  warning  'AuthSessionResult' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/components/admin/CampaignEditModal.tsx
+  46:6  warning  React Hook useEffect has missing dependencies: 'campaign.daily_budget' and 'campaign?.name'. Either include them or remove the dependency array. If 'setName' needs the current value of 'campaign.name', you can also switch to useReducer instead of useState and read 'campaign.name' in the reducer  react-hooks/exhaustive-deps
+
+/home/rutik-thitame/flux3d/src/components/admin/CreateCampaignForm.tsx
+  378:27  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  404:27  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/rutik-thitame/flux3d/src/components/admin/EmailLogsTable.tsx
+  213:6  warning  React Hook useEffect has missing dependencies: 'fetchLogs' and 'limit'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/rutik-thitame/flux3d/src/components/admin/emails/AttachmentManager.tsx
+  57:5   warning  React Hook useCallback has a missing dependency: 'handleFile'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  84:12  warning  Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images      jsx-a11y/alt-text
+
+/home/rutik-thitame/flux3d/src/components/admin/emails/EmailAnalyticsClient.tsx
+  147:6  warning  React Hook useEffect has a missing dependency: 'fetchAnalytics'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/rutik-thitame/flux3d/src/components/admin/emails/EmailBrandingForm.tsx
+  301:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/rutik-thitame/flux3d/src/components/admin/emails/EmailQueueTable.tsx
+  87:6  warning  React Hook useEffect has missing dependencies: 'fetchQueue' and 'limit'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/rutik-thitame/flux3d/src/components/admin/emails/EmailTemplatesClient.tsx
+  111:6  warning  React Hook useEffect has missing dependencies: 'fetchTemplates' and 'limit'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/rutik-thitame/flux3d/src/components/admin/emails/LogoUploader.tsx
+  45:9  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/rutik-thitame/flux3d/src/components/admin/emails/TestEmailSender.tsx
+  46:6  warning  React Hook useEffect has a missing dependency: 'selectedTemplate'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/rutik-thitame/flux3d/src/components/auth/SignupForm.tsx
+  112:22  warning  'setOauthError' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/components/cart/CartDeliveryClient.tsx
+   9:3  warning  'PackageCheck' is defined but never used              @typescript-eslint/no-unused-vars
+  20:8  warning  'PrepareCartPaymentResult' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/components/instant-quote/DeliveryStepClient.tsx
+   9:3  warning  'PackageCheck' is defined but never used               @typescript-eslint/no-unused-vars
+  19:8  warning  'PrepareQuotePaymentResult' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/components/instant-quote/InstantQuoteWorkspace.tsx
+   28:3  warning  'Move3D' is defined but never used                       @typescript-eslint/no-unused-vars
+  101:9  warning  'shouldReduceMotion' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/components/instant-quote/ModelPreviewCanvas.tsx
+  63:18  warning  'clippingPlanes' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/components/instant-quote/QuoteSummary.tsx
+  42:3  warning  'deliveryCharge' is defined but never used  @typescript-eslint/no-unused-vars
+  43:3  warning  'totalPrice' is defined but never used      @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/components/instant-quote/ViewerSection.tsx
+   7:3  warning  'Compass' is defined but never used    @typescript-eslint/no-unused-vars
+  13:3  warning  'Minimize2' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/components/orders/PriceBreakdown.tsx
+  38:3  warning  'cartDiscountLabel' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/components/payments/RazorpayCheckoutClient.tsx
+   12:10  warning  'AnimatePresence' is defined but never used                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  260:6   warning  React Hook useEffect has missing dependencies: 'authHeaders' and 'onSuccessAction'. Either include them or remove the dependency array. If 'onSuccessAction' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+  406:9   warning  'showOverlay' is assigned a value but never used                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/components/shop/ProductModelViewer.tsx
+  13:10  warning  'Box3' is defined but never used     @typescript-eslint/no-unused-vars
+  13:16  warning  'Vector3' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/components/shop/ShopProductDetailClient.tsx
+  345:9  warning  'openCart' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/lib/admin/meta-ads-route.ts
+  4:10  warning  'logError' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/lib/api/handler.ts
+  4:10  warning  'redactForAuditLog' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/lib/email/payload-renderer.ts
+  13:3  warning  'OrderPlacedCustomerPayload' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/lib/email/triggers.ts
+  8:3  warning  'ReviewThankYouPayload' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/lib/meta/marketing-api.ts
+  10:19  warning  'logError' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/lib/shop/model-loader.ts
+  4:46  warning  'Matrix4' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/lib/storage/validate.ts
+  9:7  warning  'MODEL_MIME_TYPES' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/lib/whatsapp-rag.ts
+  2:29  warning  'SupabaseClient' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/rutik-thitame/flux3d/src/pages/api/whatsapp.ts
+   27:8  warning  'ClassifiedIntent' is defined but never used      @typescript-eslint/no-unused-vars
+  706:5  warning  'payloadHash' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 100 problems (0 errors, 100 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
