@@ -172,15 +172,17 @@ export async function generateMetadata({
   // this reliably produces an HTTP 404 (a body-level notFound() can arrive
   // after headers are flushed on force-dynamic pages and degrade to a 200).
   if (!product) notFound();
-  const ogImage =
-    product.landscape_image_url || product.thumbnail_url
-      ? [
-          {
-            url:
-              product.landscape_image_url || (product.thumbnail_url as string),
-          },
-        ]
-      : undefined;
+  const imageUrl = product.landscape_image_url || product.thumbnail_url;
+  const ogImage = imageUrl
+    ? [
+        {
+          url: absoluteUrl(imageUrl as string),
+          width: product.landscape_image_url ? 1200 : 800,
+          height: product.landscape_image_url ? 630 : 800,
+          alt: product.name,
+        },
+      ]
+    : undefined;
   const title = product.meta_title || `${product.name} — 3D Shop`;
   const blocksText = extractTextFromBlocks(product.long_description_blocks);
   const description =
@@ -202,6 +204,7 @@ export async function generateMetadata({
         }
       : undefined,
     openGraph: {
+      type: "website",
       title,
       description,
       url: absoluteUrl(`/3d-shop/product/${product.slug}`),
