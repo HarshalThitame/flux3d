@@ -205,6 +205,30 @@ export function SpecsTableEditor({
   block: Extract<DescriptionBlock, { type: "specs_table" }>;
   onChange: (block: DescriptionBlock) => void;
 }) {
+  const { generateAiSpecsRows, setToast } = useProductEditor();
+  const [prompt, setPrompt] = useState("");
+  const [generating, setGenerating] = useState(false);
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) return;
+    setGenerating(true);
+    try {
+      const rows = await generateAiSpecsRows(prompt);
+      if (rows.length > 0) {
+        onChange({ ...block, rows });
+        setPrompt("");
+      } else {
+        setToast({ type: "error", message: "AI did not generate any options." });
+      }
+    } catch (error) {
+      setToast({
+        type: "error",
+        message: error instanceof Error ? error.message : "AI generation failed.",
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
   return (
     <div className="space-y-3">
       <TextField
@@ -256,19 +280,47 @@ export function SpecsTableEditor({
           </div>
         ))}
       </div>
-      <button
-        type="button"
-        onClick={() =>
-          onChange({
-            ...block,
-            rows: [...block.rows, { label: "New label", value: "New value" }],
-          })
-        }
-        className="inline-flex items-center gap-1.5 rounded-lg border border-[#6d28d9]/20 bg-white px-3 py-1.5 text-xs font-medium text-[#6d28d9] transition hover:bg-[#6d28d9]/5"
-      >
-        <Plus className="h-3.5 w-3.5" />
-        Add row
-      </button>
+        <button
+          type="button"
+          onClick={() =>
+            onChange({
+              ...block,
+              rows: [...block.rows, { label: "New label", value: "New value" }],
+            })
+          }
+          className="inline-flex items-center gap-1.5 rounded-lg border border-[#6d28d9]/20 bg-white px-3 py-1.5 text-xs font-medium text-[#6d28d9] transition hover:bg-[#6d28d9]/5"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Add row
+        </button>
+      <div className="rounded-xl border border-[#6d28d9]/10 bg-[#6d28d9]/5 p-3">
+        <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-[#6d28d9]">
+          <Sparkles className="h-3.5 w-3.5" /> AI Generate Specs
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="E.g., Extract specifications for a carbon fiber drone frame..."
+            className={`${smallInput} flex-1`}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void handleGenerate();
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => void handleGenerate()}
+            disabled={generating || !prompt.trim()}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#6d28d9] px-3 py-2 text-xs font-medium text-white transition hover:bg-[#5b21b6] disabled:opacity-50"
+          >
+            {generating ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              "Generate"
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -352,7 +404,7 @@ export function FeatureGridEditor({
                 }}
                 placeholder="Short benefit-driven sentence"
                 textarea
-                fieldContext="feature item description"
+                fieldContext="feature item description (Keep it extremely concise—just 1 short sentence)"
               />
             </div>
           </div>
@@ -622,7 +674,7 @@ export function BulletGridEditor({
                 onChange({ ...block, items });
               }}
               placeholder="Bullet point text"
-              fieldContext="bullet point text"
+              fieldContext="bullet point text (Keep it minimal, informative, suitable for a bullet point, e.g. under 8 words)"
             />
             <button
               type="button"
