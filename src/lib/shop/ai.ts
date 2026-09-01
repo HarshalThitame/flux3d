@@ -275,21 +275,30 @@ export function parseJsonArray(raw: string): string[] {
       .filter((item) => item.length > 1);
   }
 }
-export function parseBlocksJson(raw: string): DescriptionBlocks {
+export function parseBlocksJson(raw: string): {
+  blocks: DescriptionBlocks;
+  rawCount: number;
+  droppedCount: number;
+} {
   try {
     const parsed = JSON.parse(stripFences(raw)) as unknown;
     const list = Array.isArray(parsed)
       ? parsed
       : (parsed as { blocks?: unknown }).blocks;
-    if (!Array.isArray(list)) return [];
+    if (!Array.isArray(list))
+      return { blocks: [], rawCount: 0, droppedCount: 0 };
     const blocks: DescriptionBlocks = [];
     for (const item of list.slice(0, 50)) {
       const result = descriptionBlockSchema.safeParse(item);
       if (result.success) blocks.push(result.data);
     }
-    return blocks;
+    return {
+      blocks,
+      rawCount: list.length,
+      droppedCount: list.length - blocks.length,
+    };
   } catch {
-    return [];
+    return { blocks: [], rawCount: 0, droppedCount: 0 };
   }
 }
 
@@ -366,19 +375,36 @@ export async function generateShopCopy(
     }
 
     case "long_description": {
-      const text = await complete(client, [
+      const longPrompt = `${context}\n\nWrite a detailed, SEO-rich product description as clean HTML for a rich-text editor. Use only <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>, and <blockquote> tags.\n\nYou MUST structure the narrative exactly in this order, wrapping each section with these explicit HTML comments:\n<!-- HOOK -->\n(A compelling opening focusing on the ultimate benefit)\n<!-- BENEFIT -->\n(Core problem solved or main advantage)\n<!-- TECH -->\n(Material, finish, craft, dimensions, variants)\n<!-- LIFESTYLE -->\n(Indian home decor, gifting, desk/workspace)\n<!-- CTA -->\n(A strong closing call to action)\n\nWeave in natural keywords. Do not invent facts. Do not wrap in a code block.${input.existing ? `\n\nCurrent description (rewrite and substantially improve it):\n${input.existing}` : ""}${merchant}`;
+
+      let text = await complete(client, [
         { role: "system", content: system },
-        {
-          role: "user",
-          content: `${context}\n\nWrite a detailed, SEO-rich product description as clean HTML for a rich-text editor. Use only <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>, and <blockquote> tags.\n\nYou MUST structure the narrative exactly in this order, wrapping each section with these explicit HTML comments:\n<!-- HOOK -->\n(A compelling opening focusing on the ultimate benefit)\n<!-- BENEFIT -->\n(Core problem solved or main advantage)\n<!-- TECH -->\n(Material, finish, craft, dimensions, variants)\n<!-- LIFESTYLE -->\n(Indian home decor, gifting, desk/workspace)\n<!-- CTA -->\n(A strong closing call to action)\n\nWeave in natural keywords. Do not invent facts. Do not wrap in a code block.${input.existing ? `\n\nCurrent description (rewrite and substantially improve it):\n${input.existing}` : ""}${merchant}`,
-        },
+        { role: "user", content: longPrompt },
       ]);
-      return text;
+
+      const requiredSections = ["HOOK", "BENEFIT", "TECH", "LIFESTYLE", "CTA"];
+      const missingSections = requiredSections.filter(
+        (sec) => !text.includes(`<!-- ${sec} -->`),
+      );
+
+      if (missingSections.length > 0) {
+        text = await complete(client, [
+          { role: "system", content: system },
+          { role: "user", content: longPrompt },
+          { role: "assistant", content: text },
+          {
+            role: "user",
+            content: `You missed the following required sections: ${missingSections.join(", ")}. Please rewrite the entire description and ensure ALL 5 sections are present and explicitly wrapped in their respective HTML comments.`,
+          },
+        ]);
+      }
+
+      return text.replace(/<!--[\s\S]*?-->/g, "").trim();
     }
 
     case "luxury_blocks": {
       const luxuryPrompt =
-        `${context}\n\nBuild a luxury, scroll-animated product story as a JSON object like {"blocks": [...]}. The blocks array is rendered on a premium product page, so design it like an Apple or Rolex product narrative.\n\nEach block must be one of these exact shapes:\n1. {"type":"heading","title":"...","subtitle":"..."} - a powerful emotional hook as the FIRST block.\n2. {"type":"paragraph","html":"<p>...</p>"} - benefit-driven narrative; only <p>, <strong>, <em>, <a>, <ul>, <li> allowed.\n3. {"type":"feature_grid","title":"...","items":[{"icon":"Gem","title":"...","text":"..."}]} - 3-4 key selling points. Use ONLY these Lucide icon names: Gem, Sparkles, Cpu, Zap, ShieldCheck, Package, Gift, Palette, Layers, Hand, Ruler, Weight, Award, Trophy, Crown, Diamond, Compass, Target, Flame, Droplets, Leaf, Bolt, Wrench, Brush, Clock, Globe, MapPin, Box, Truck, Heart, Star, Lock, Key, Eye, BatteryCharging, Wifi, Signal, RefreshCcw, Settings2, Filter, AudioLines, Camera, BookOpen, FileText, ListChecks, CheckCircle2, ThumbsUp, Users, Lightbulb, Lamp, Sofa, Utensils.\n4. {"type":"bullet_grid","title":"...","items":[{"icon":"CheckCircle2","text":"..."}]} - 4-8 concise bullets (what's included, care tips, delivery info). Icon is optional; omit it if unsure.\n5. {"type":"specs_table","title":"...","rows":[{"label":"Material","value":"..."}]} - 4-8 technical specifications using ONLY facts from the context (material, dimensions, weight, volume, variants, care).\n6. {"type":"image_text_split","image_url":"","alt":"","html":"<p>...</p>","align":"left"} - only include this if you are confident a suitable product image URL is available; otherwise OMIT it. Set image_url to an empty string if unsure.\n7. {"type":"quote","text":"...","attribution":"..."} - an aspirational closing statement.\n8. {"type":"html_embed","html":"...","caption":"..."} - only include if you have a specific embed URL (e.g. a YouTube iframe). Omit otherwise.\n9. {"type":"divider","style":"gold"} - a section break.\n10. {"type":"spacer","height":"md"} - adds breathing room between sections; use sparingly.\n\nRules:\n- Structure: heading (hook) -> paragraph(s) -> feature_grid -> bullet_grid (if relevant) -> specs_table -> quote -> optional divider/spacer.\n- No two heading blocks.\n- Paragraph HTML must not contain <h1>, <h2>, or <h3> tags.\n- SEO: naturally include the product name, category, material, and primary keywords.\n- Accuracy: NEVER invent facts. Omit a section rather than hallucinate.\n\nExamples of good structure:\nExample 1 (Technical Part):\n{"blocks":[{"type":"heading","title":"Industrial Grade Precision","subtitle":"Built for performance."},{"type":"feature_grid","title":"Core Tech","items":[{"icon":"Cpu","title":"High Temp Resistance","text":"Withstands up to 200C."}]},{"type":"specs_table","title":"Specs","rows":[{"label":"Material","value":"Carbon Fiber PETG"}]}]}\n\nExample 2 (Decor Item):\n{"blocks":[{"type":"heading","title":"Elegance Redefined","subtitle":"A statement piece for any room."},{"type":"paragraph","html":"<p>Crafted to perfection, it brings a touch of luxury to your daily life.</p>"},{"type":"quote","text":"The perfect blend of art and utility.","attribution":"Design Team"}]}` +
+        `${context}\n\nBuild a luxury, scroll-animated product story as a JSON object like {"blocks": [...]}. The blocks array is rendered on a premium product page, so design it like an Apple or Rolex product narrative.\n\nEach block must be one of these exact shapes:\n1. {"type":"heading","title":"...","subtitle":"..."} - a powerful emotional hook as the FIRST block.\n2. {"type":"paragraph","html":"<p>...</p>"} - benefit-driven narrative; only <p>, <strong>, <em>, <a>, <ul>, <li> allowed.\n3. {"type":"feature_grid","title":"...","items":[{"icon":"Gem","title":"...","text":"..."}]} - 3-4 key selling points. Use ONLY these Lucide icon names: Gem, Sparkles, Cpu, Zap, ShieldCheck, Package, Gift, Palette, Layers, Hand, Ruler, Weight, Award, Trophy, Crown, Diamond, Compass, Target, Flame, Droplets, Leaf, Bolt, Wrench, Brush, Clock, Globe, MapPin, Box, Truck, Heart, Star, Lock, Key, Eye, BatteryCharging, Wifi, Signal, RefreshCcw, Settings2, Filter, AudioLines, Camera, BookOpen, FileText, ListChecks, CheckCircle2, ThumbsUp, Users, Lightbulb, Lamp, Sofa, Utensils.\n4. {"type":"bullet_grid","title":"...","items":[{"icon":"CheckCircle2","text":"..."}]} - 4-8 concise bullets (what's included, care tips, delivery info). Icon is optional; omit it if unsure.\n5. {"type":"specs_table","title":"...","rows":[{"label":"Material","value":"..."}]} - 4-8 technical specifications using ONLY facts from the context (material, dimensions, weight, volume, variants, care).\n6. {"type":"image_text_split","image_url":"","alt":"","html":"<p>...</p>","align":"left"} - DO NOT use this type. No product image URLs have been provided to you.\n7. {"type":"quote","text":"...","attribution":"..."} - an aspirational closing statement.\n8. {"type":"html_embed","html":"...","caption":"..."} - DO NOT use this type. No embed URLs have been provided to you.\n9. {"type":"divider","style":"gold"} - a section break.\n10. {"type":"spacer","height":"md"} - adds breathing room between sections; use sparingly.\n\nRules:\n- Structure: heading (hook) -> paragraph(s) -> feature_grid -> bullet_grid (if relevant) -> specs_table -> quote -> optional divider/spacer.\n- No two heading blocks.\n- Paragraph HTML must not contain <h1>, <h2>, or <h3> tags.\n- SEO: naturally include the product name, category, material, and primary keywords.\n- Accuracy: NEVER invent facts. Omit a section rather than hallucinate.\n- You have NOT been given any image URLs or embed URLs in the context above. Never emit "image_text_split" or "html_embed" blocks under any circumstances — treat them as unavailable block types, not optional ones.\n\nExamples of good structure:\nExample 1 (Technical Part):\n{"blocks":[{"type":"heading","title":"Industrial Grade Precision","subtitle":"Built for performance."},{"type":"feature_grid","title":"Core Tech","items":[{"icon":"Cpu","title":"High Temp Resistance","text":"Withstands up to 200C."}]},{"type":"specs_table","title":"Specs","rows":[{"label":"Material","value":"Carbon Fiber PETG"}]}]}\n\nExample 2 (Decor Item):\n{"blocks":[{"type":"heading","title":"Elegance Redefined","subtitle":"A statement piece for any room."},{"type":"paragraph","html":"<p>Crafted to perfection, it brings a touch of luxury to your daily life.</p>"},{"type":"quote","text":"The perfect blend of art and utility.","attribution":"Design Team"}]}` +
         (input.existing
           ? `\n\nCurrent description (use only as reference for facts):\n${input.existing}`
           : "");
@@ -393,8 +419,15 @@ export async function generateShopCopy(
         2800,
       );
 
-      let parsed = parseBlocksJson(text);
-      if (parsed.length === 0) {
+      const { blocks, droppedCount } = parseBlocksJson(text);
+      let parsed = blocks;
+
+      if (parsed.length === 0 || droppedCount > 0) {
+        const retryReason =
+          parsed.length === 0
+            ? "The JSON you provided failed schema validation or was empty."
+            : `${droppedCount} of your blocks failed schema validation and were dropped. Fix them.`;
+
         text = await complete(
           client,
           [
@@ -403,14 +436,17 @@ export async function generateShopCopy(
             { role: "assistant", content: text },
             {
               role: "user",
-              content:
-                "The JSON you provided failed schema validation or was empty. Please provide a valid JSON object matching the 'blocks' array schema exactly. Ensure no icons outside the allowed list are used.",
+              content: `${retryReason} Please provide a valid JSON object matching the 'blocks' array schema exactly for ALL blocks. Ensure no icons outside the allowed list are used, and every block matches one of the 10 defined shapes exactly.`,
             },
           ],
           true,
           2800,
         );
-        parsed = parseBlocksJson(text);
+        const retryResult = parseBlocksJson(text);
+        parsed =
+          retryResult.blocks.length >= parsed.length
+            ? retryResult.blocks
+            : parsed;
       }
       return parsed;
     }

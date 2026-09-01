@@ -218,14 +218,14 @@ describe("parseBlocksJson", () => {
       { type: "paragraph", html: "<p>x</p>" },
       { type: "nope" },
     ]);
-    const blocks = parseBlocksJson(raw);
+    const { blocks } = parseBlocksJson(raw);
     expect(blocks).toHaveLength(2);
     expect(blocks.map((block) => block.type)).toEqual(["heading", "paragraph"]);
   });
 
   it("applies Zod defaults through parseBlocksJson", () => {
     const raw = JSON.stringify([{ type: "divider" }]);
-    const blocks = parseBlocksJson(raw);
+    const { blocks } = parseBlocksJson(raw);
     expect(blocks).toHaveLength(1);
     expect(blocks[0]).toEqual({ type: "divider", style: "gold" });
   });
@@ -233,13 +233,13 @@ describe("parseBlocksJson", () => {
   it("handles an object wrapper and strips fences", () => {
     const raw =
       '```json\n{"blocks":[{"type":"quote","text":"hello","attribution":"A"}]}\n```';
-    const blocks = parseBlocksJson(stripFences(raw));
+    const { blocks } = parseBlocksJson(stripFences(raw));
     expect(blocks).toHaveLength(1);
     expect(blocks[0]).toMatchObject({ type: "quote", text: "hello" });
   });
 
   it("returns [] for malformed JSON", () => {
-    expect(parseBlocksJson("not json")).toEqual([]);
+    expect(parseBlocksJson("not json").blocks).toEqual([]);
   });
 
   it("parseAllJson validates luxury_blocks", () => {
