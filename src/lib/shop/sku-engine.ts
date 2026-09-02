@@ -300,8 +300,8 @@ export function roundPrice(value: number) {
 
 export function isDiscreteOptionType(
   optionType: string,
-): optionType is "button" | "swatch_color" | "dropdown" {
-  return ["button", "swatch_color", "dropdown"].includes(optionType);
+): optionType is "button" | "swatch_color" | "dropdown" | "toggle" {
+  return ["button", "swatch_color", "dropdown", "toggle"].includes(optionType);
 }
 
 export function deriveComboPriceModifier(
