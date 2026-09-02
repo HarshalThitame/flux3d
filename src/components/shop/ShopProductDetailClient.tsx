@@ -727,6 +727,10 @@ export default function ShopProductDetailClient({
       }
     }
 
+    const rawThumb =
+      resolvedSku.variant_image_url || product.thumbnail_url || images[0] || "";
+    const safeThumb = rawThumb.length > 2000 ? "" : rawThumb;
+
     addItem({
       productId: product.id,
       productSlug: product.slug,
@@ -734,11 +738,7 @@ export default function ShopProductDetailClient({
       categoryId: product.category_id,
       categoryName: product.category_name,
       categorySlug: product.category_slug,
-      thumbnail:
-        resolvedSku.variant_image_url ||
-        product.thumbnail_url ||
-        images[0] ||
-        "",
+      thumbnail: safeThumb,
       skuId: resolvedSku.id,
       skuCode: resolvedSku.sku_code,
       catalogRetailerId:
