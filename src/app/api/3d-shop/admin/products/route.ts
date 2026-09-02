@@ -28,6 +28,9 @@ type ProductPayload = {
   sku_pattern?: string | null;
   is_customizable?: boolean;
   customization_label?: string | null;
+  customization_is_required?: boolean;
+  customization_min_length?: number;
+  customization_max_length?: number;
   is_featured?: boolean;
   is_active?: boolean;
   is_archived?: boolean;
@@ -161,6 +164,9 @@ function normalizeProductPayload(body: ProductPayload, partial = false) {
       typeof body.customization_label === "string"
         ? body.customization_label.trim() || null
         : (body.customization_label ?? null),
+    customization_is_required: body.customization_is_required ?? false,
+    customization_min_length: body.customization_min_length ?? 0,
+    customization_max_length: body.customization_max_length ?? null,
     is_featured: body.is_featured ?? false,
     is_active: body.is_active ?? true,
     is_archived: body.is_archived ?? false,
@@ -249,7 +255,10 @@ export async function GET(request: Request) {
           { status: 404 },
         );
 
-      const primaryCat = data.product_categories?.find((pc: { is_primary?: boolean, category?: unknown }) => pc.is_primary)?.category || data.category;
+      const primaryCat =
+        data.product_categories?.find(
+          (pc: { is_primary?: boolean; category?: unknown }) => pc.is_primary,
+        )?.category || data.category;
       const product = {
         ...data,
         category_name: primaryCat?.name ?? null,
@@ -285,7 +294,10 @@ export async function GET(request: Request) {
     if (error) throw new Error(error.message);
 
     const products = (data ?? []).map((product) => {
-      const primaryCat = product.product_categories?.find((pc: { is_primary?: boolean, category?: unknown }) => pc.is_primary)?.category || product.category;
+      const primaryCat =
+        product.product_categories?.find(
+          (pc: { is_primary?: boolean; category?: unknown }) => pc.is_primary,
+        )?.category || product.category;
       return {
         ...product,
         category_name: primaryCat?.name ?? null,
@@ -316,16 +328,18 @@ export async function POST(request: Request) {
     if (error) throw new Error(error.message);
 
     if (body.product_categories && body.product_categories.length > 0) {
-      await supabase.from("shelf_product_categories").insert(body.product_categories.map(pc => ({
+      await supabase.from("shelf_product_categories").insert(
+        body.product_categories.map((pc) => ({
           product_id: data.id,
           category_id: pc.category_id,
-          is_primary: pc.is_primary
-      })));
+          is_primary: pc.is_primary,
+        })),
+      );
     } else if (body.category_id) {
       await supabase.from("shelf_product_categories").insert({
-          product_id: data.id,
-          category_id: body.category_id,
-          is_primary: true
+        product_id: data.id,
+        category_id: body.category_id,
+        is_primary: true,
       });
     }
 
@@ -359,13 +373,18 @@ export async function PATCH(request: Request) {
     if (error) throw new Error(error.message);
 
     if (body.product_categories !== undefined) {
-      await supabase.from("shelf_product_categories").delete().eq("product_id", body.id);
+      await supabase
+        .from("shelf_product_categories")
+        .delete()
+        .eq("product_id", body.id);
       if (body.product_categories && body.product_categories.length > 0) {
-        await supabase.from("shelf_product_categories").insert(body.product_categories.map(pc => ({
+        await supabase.from("shelf_product_categories").insert(
+          body.product_categories.map((pc) => ({
             product_id: body.id,
             category_id: pc.category_id,
-            is_primary: pc.is_primary
-        })));
+            is_primary: pc.is_primary,
+          })),
+        );
       }
     }
 

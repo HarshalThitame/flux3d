@@ -713,7 +713,7 @@ export default function ShopProductDetailClient({
     if (!resolvedSku || !canAdd) return;
 
     if (product.is_customizable) {
-      const minLen = product.customization_min_length ?? 1;
+      const minLen = Math.max(product.customization_min_length || 1, 1);
       if (
         product.customization_is_required &&
         customizationText.trim().length < minLen
