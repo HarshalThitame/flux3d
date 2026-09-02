@@ -147,10 +147,10 @@
 }
 
 /* Apply luxury typography to shop headings */
-.shop-luxury h1,
-.shop-luxury h2,
-.shop-luxury h3,
-.shop-luxury .shop-heading {
+:where(.shop-luxury) h1,
+:where(.shop-luxury) h2,
+:where(.shop-luxury) h3,
+:where(.shop-luxury) .shop-heading {
   font-family: var(--shop-font-heading);
   font-weight: 600;
   letter-spacing: -0.02em;
