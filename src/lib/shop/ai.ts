@@ -82,7 +82,7 @@ export type AiGenerateResult =
   | DescriptionBlocks
   | { label: string; value: string }[];
 
-const SHOP_AI_MODEL = process.env.SHOP_AI_MODEL?.trim() || "gpt-4.1-mini";
+const SHOP_AI_MODEL = process.env.SHOP_AI_MODEL?.trim() || "gpt-4o-mini";
 
 const TONE_GUIDE: Record<AiTone, string> = {
   professional:
@@ -101,7 +101,7 @@ const ENTERPRISE_STANDARDS = `Enterprise copywriting standards you must always f
 - Conversion: open with the strongest benefit, address buyer objections, and give a clear sense of value.
 - Locale: use Indian English and reference occasions and use cases relevant to India (e.g. Diwali, gifting, home decor).
 - Do not wrap output in markdown fences or code blocks.
-CRITICAL: NEVER invent, guess, or hallucinate specific measurements, materials, certifications, or variants not explicitly provided in the input context. If a detail is missing, omit it entirely.`;
+CRITICAL: NEVER invent, guess, or hallucinate specific measurements, materials, certifications, or variants not explicitly provided in the input context. If a detail is missing, omit it entirely. You are strictly forbidden from fabricating facts.`;
 
 function formatDimensions(dimensions: ProductDimensions): string {
   const parts: string[] = [];
@@ -235,7 +235,7 @@ async function complete(
       const completion = await client.chat.completions.create({
         model: SHOP_AI_MODEL,
         messages,
-        temperature: 0.7,
+        temperature: 0.3,
         max_tokens: maxTokens,
         response_format: json ? { type: "json_object" } : undefined,
       });
@@ -556,12 +556,12 @@ export async function generateShopCopy(
           {
             role: "user",
             content: userPrompt(
-              `The user wants to generate specifications table options based on their instructions:\n<draft>\n${draft}\n</draft>\n\nReturn ONLY a JSON object with a "rows" array: {"rows": [{"label": "Material", "value": "..."}]}. Extract or infer specs from the product context and the user's instructions.`
+              `The user wants to generate specifications table options based on their instructions:\n<draft>\n${draft}\n</draft>\n\nReturn ONLY a JSON object with a "rows" array: {"rows": [{"label": "Material", "value": "..."}]}. Extract or infer specs from the product context and the user's instructions.`,
             ),
           },
         ],
         true, // json
-        600
+        600,
       );
       try {
         const parsed = JSON.parse(text);
