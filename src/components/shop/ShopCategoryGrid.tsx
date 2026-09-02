@@ -91,7 +91,7 @@ export default function ShopCategoryGrid({
                       {category.name}
                     </h3>
                     {category.description ? (
-                      <p className="mt-1 line-clamp-1 text-xs leading-5 text-white/70 transition-colors duration-300 group-hover:text-white/95">
+                      <p className="mt-1 line-clamp-1 text-xs leading-5 text-white transition-colors duration-300">
                         {category.description}
                       </p>
                     ) : null}
