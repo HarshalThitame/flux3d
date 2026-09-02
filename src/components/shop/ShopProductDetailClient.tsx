@@ -711,6 +711,22 @@ export default function ShopProductDetailClient({
 
   function addCurrentToCart(goToCheckout = false) {
     if (!resolvedSku || !canAdd) return;
+
+    if (product.is_customizable) {
+      const minLen = product.customization_min_length ?? 1;
+      if (
+        product.customization_is_required &&
+        customizationText.trim().length < minLen
+      ) {
+        addToast({
+          type: "error",
+          title: "Customization Required",
+          description: `Please enter at least ${minLen} character${minLen !== 1 ? "s" : ""} for ${product.customization_label || "customization"}.`,
+        });
+        return;
+      }
+    }
+
     addItem({
       productId: product.id,
       productSlug: product.slug,
@@ -1564,18 +1580,24 @@ export default function ShopProductDetailClient({
                 <label className="mt-5 block">
                   <span className="mb-1.5 block text-sm font-semibold text-[var(--shop-text-primary)]">
                     {product.customization_label || "Customization"}
+                    {product.customization_is_required && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
                   </span>
                   <input
                     value={customizationText}
-                    maxLength={50}
+                    maxLength={product.customization_max_length ?? 50}
                     onChange={(event) =>
                       setCustomizationText(event.target.value)
                     }
                     className="min-h-[44px] w-full rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-soft)] px-3 text-sm text-[var(--shop-text-primary)] outline-none transition focus:border-[var(--shop-gold)]"
                   />
-                  <span className="mt-1 block text-xs text-[var(--shop-text-muted)]">
-                    This will be used for personalization ·{" "}
-                    {customizationText.length}/50
+                  <span className="mt-1 flex items-center justify-between text-xs text-[var(--shop-text-muted)]">
+                    <span>This will be used for personalization</span>
+                    <span>
+                      {customizationText.length}/
+                      {product.customization_max_length ?? 50}
+                    </span>
                   </span>
                 </label>
               )}

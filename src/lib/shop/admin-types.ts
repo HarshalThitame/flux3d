@@ -174,6 +174,9 @@ export type ShopProduct = {
   sku_pattern: string | null;
   is_customizable: boolean | null;
   customization_label: string | null;
+  customization_is_required: boolean | null;
+  customization_min_length: number | null;
+  customization_max_length: number | null;
   is_featured: boolean | null;
   is_active: boolean | null;
   is_archived: boolean | null;
