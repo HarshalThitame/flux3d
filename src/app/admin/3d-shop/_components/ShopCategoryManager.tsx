@@ -31,7 +31,6 @@ type CategoryForm = {
   name: string;
   slug: string;
   description: string;
-  icon_emoji: string;
   banner_image_url: string;
   parent_category_id: string;
   display_order: number;
@@ -42,7 +41,6 @@ const emptyForm: CategoryForm = {
   name: "",
   slug: "",
   description: "",
-  icon_emoji: "🧩",
   banner_image_url: "",
   parent_category_id: "",
   display_order: 0,
@@ -144,7 +142,6 @@ export default function ShopCategoryManager() {
       name: category.name,
       slug: category.slug,
       description: category.description ?? "",
-      icon_emoji: category.icon_emoji ?? "",
       banner_image_url: category.banner_image_url ?? "",
       parent_category_id: category.parent_category_id ?? "",
       display_order: category.display_order ?? 0,
@@ -194,7 +191,6 @@ export default function ShopCategoryManager() {
         ...form,
         parent_category_id: form.parent_category_id || null,
         banner_image_url: form.banner_image_url || null,
-        icon_emoji: form.icon_emoji || null,
       };
       const response = await fetch("/api/3d-shop/admin/categories", {
         method: form.id ? "PATCH" : "POST",
@@ -384,13 +380,9 @@ export default function ShopCategoryManager() {
               )}
             </button>
 
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-gray-200 text-lg shadow-sm">
-              {node.icon_emoji || "🧩"}
-            </div>
-
             <div className="flex flex-col ml-1">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-[#0F1B3D]">
+                <span className="truncate font-semibold text-[#0F1B3D]">
                   {node.name}
                 </span>
                 <span className="text-xs text-gray-400">/{node.slug}</span>
@@ -598,24 +590,6 @@ export default function ShopCategoryManager() {
           </label>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="block">
-              <span className="mb-1.5 block text-xs font-medium text-[#6F7192]">
-                Icon Emoji
-              </span>
-              <div className="flex items-center gap-2">
-                <input
-                  value={form.icon_emoji}
-                  onChange={(event) =>
-                    updateForm("icon_emoji", event.target.value)
-                  }
-                  className="w-full rounded-xl border border-[#6d28d9]/10 bg-gray-50 px-3.5 py-2.5 text-sm text-[#0F1B3D] outline-none focus:border-[#6d28d9]/30"
-                />
-                <span className="grid h-11 w-11 place-items-center rounded-xl border border-gray-200 bg-gray-50 text-xl">
-                  {form.icon_emoji || "🧩"}
-                </span>
-              </div>
-            </label>
-
             <label className="block">
               <span className="mb-1.5 block text-xs font-medium text-[#6F7192]">
                 Parent Category

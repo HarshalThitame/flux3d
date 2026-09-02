@@ -14,7 +14,6 @@ export type ShopPublicCategory = {
   name: string;
   slug: string;
   description: string | null;
-  icon_emoji: string | null;
   banner_image_url: string | null;
   parent_category_id: string | null;
   children?: ShopPublicCategory[];

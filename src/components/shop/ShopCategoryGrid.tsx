@@ -1,18 +1,23 @@
-'use client'
+"use client";
 
-import Image from 'next/image'
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { ArrowRight, Layers3, Sparkles } from 'lucide-react'
-import type { ShopPublicCategory } from '@/lib/shop/public-types'
+import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { ArrowRight, Layers3, Sparkles } from "lucide-react";
+import type { ShopPublicCategory } from "@/lib/shop/public-types";
 
 interface ShopCategoryGridProps {
-  categories: ShopPublicCategory[]
+  categories: ShopPublicCategory[];
 }
 
-export default function ShopCategoryGrid({ categories }: ShopCategoryGridProps) {
+export default function ShopCategoryGrid({
+  categories,
+}: ShopCategoryGridProps) {
   return (
-    <section id="shop-categories" className="px-4 py-12 sm:px-6 md:px-10 lg:px-12 lg:py-16">
+    <section
+      id="shop-categories"
+      className="px-4 py-12 sm:px-6 md:px-10 lg:px-12 lg:py-16"
+    >
       <div className="mx-auto w-full max-w-[1280px]">
         <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
@@ -36,8 +41,8 @@ export default function ShopCategoryGrid({ categories }: ShopCategoryGridProps) 
         <div
           className={`grid gap-3 ${
             categories.length <= 2
-              ? 'grid-cols-1 sm:grid-cols-2'
-              : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+              ? "grid-cols-1 sm:grid-cols-2"
+              : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
           }`}
         >
           {categories.map((category, index) => {
@@ -46,8 +51,12 @@ export default function ShopCategoryGrid({ categories }: ShopCategoryGridProps) 
                 key={category.id}
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-60px' }}
-                transition={{ duration: 0.55, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{
+                  duration: 0.55,
+                  delay: index * 0.1,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
               >
                 <Link
                   href={`/3d-shop/category/${category.slug}`}
@@ -78,13 +87,6 @@ export default function ShopCategoryGrid({ categories }: ShopCategoryGridProps) 
                   />
 
                   <div className="absolute inset-x-4 bottom-4 z-10">
-                    <div className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-sm transition-all duration-300 group-hover:border-[var(--shop-gold)] group-hover:bg-[var(--shop-gold)]/20 group-hover:shadow-[0_0_16px_rgba(201,169,98,0.35)]">
-                      {category.icon_emoji ? (
-                        <span className="text-sm">{category.icon_emoji}</span>
-                      ) : (
-                        <Sparkles className="h-3.5 w-3.5" />
-                      )}
-                    </div>
                     <h3 className="font-[var(--shop-font-heading)] mt-2 text-base font-semibold text-white transition-all duration-300 group-hover:translate-y-[-2px]">
                       {category.name}
                     </h3>
@@ -96,10 +98,10 @@ export default function ShopCategoryGrid({ categories }: ShopCategoryGridProps) 
                   </div>
                 </Link>
               </motion.div>
-            )
+            );
           })}
         </div>
       </div>
     </section>
-  )
+  );
 }

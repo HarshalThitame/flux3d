@@ -293,7 +293,7 @@ export default function ProductFilterBar({
                               : "text-[var(--shop-text-secondary)] hover:bg-[var(--shop-bg-soft)]"
                           }`}
                         >
-                          {cat.icon_emoji} {cat.name}
+                          {cat.name}
                         </button>
                         {cat.children.map((child) => (
                           <button

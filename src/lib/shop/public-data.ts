@@ -52,7 +52,7 @@ async function loadAllShopCategories(): Promise<ShopPublicCategory[]> {
   const { data, error } = await supabase
     .from("shelf_categories")
     .select(
-      "id,name,slug,description,icon_emoji,banner_image_url,parent_category_id,display_order",
+      "id,name,slug,description,banner_image_url,parent_category_id,display_order",
     )
     .eq("is_active", true)
     .order("display_order", { ascending: true })
@@ -65,7 +65,6 @@ async function loadAllShopCategories(): Promise<ShopPublicCategory[]> {
     name: category.name,
     slug: category.slug,
     description: category.description ?? null,
-    icon_emoji: category.icon_emoji ?? null,
     banner_image_url: category.banner_image_url ?? null,
     parent_category_id: category.parent_category_id ?? null,
   }));
@@ -171,7 +170,17 @@ type RawProduct = {
   created_at?: string | null;
   updated_at?: string | null;
   category?: { id?: string; name?: string | null; slug?: string | null } | null;
-  product_categories?: { category_id?: string; is_primary?: boolean; category?: { id?: string; name?: string | null; slug?: string | null } | null }[] | null;
+  product_categories?:
+    | {
+        category_id?: string;
+        is_primary?: boolean;
+        category?: {
+          id?: string;
+          name?: string | null;
+          slug?: string | null;
+        } | null;
+      }[]
+    | null;
   skus?: (ShopSku & { images?: ShopSkuImage[] | null })[] | null;
   variant_options?: ShopVariantOption[] | null;
   default_dimensions?: unknown;
@@ -442,13 +451,13 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
     category_id: row.category_id ?? null,
     category_name: row.category?.name ?? null,
     category_slug: row.category?.slug ?? null,
-    product_categories: (row.product_categories ?? []).map(pc => ({
+    product_categories: (row.product_categories ?? []).map((pc) => ({
       category_id: pc.category_id ?? "",
       is_primary: Boolean(pc.is_primary),
     })),
     categories: (row.product_categories ?? [])
-      .filter(pc => pc.category)
-      .map(pc => ({
+      .filter((pc) => pc.category)
+      .map((pc) => ({
         id: pc.category!.id ?? "",
         name: pc.category!.name ?? "",
         slug: pc.category!.slug ?? "",
@@ -578,7 +587,9 @@ export async function getShopProducts(
       products = products.filter(
         (product) =>
           (product.category_id && ids.includes(product.category_id)) ||
-          product.product_categories?.some((pc) => ids.includes(pc.category_id)),
+          product.product_categories?.some((pc) =>
+            ids.includes(pc.category_id),
+          ),
       );
     } else {
       products = [];
@@ -745,7 +756,13 @@ export async function getShopRecommendations({
   if (resolvedCategoryId) {
     addProducts(
       products
-        .filter((product) => product.category_id === resolvedCategoryId || product.product_categories?.some(pc => pc.category_id === resolvedCategoryId))
+        .filter(
+          (product) =>
+            product.category_id === resolvedCategoryId ||
+            product.product_categories?.some(
+              (pc) => pc.category_id === resolvedCategoryId,
+            ),
+        )
         .sort(featuredNewestSort),
     );
   }

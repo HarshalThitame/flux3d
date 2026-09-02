@@ -286,9 +286,6 @@ export default function ShopCategoryBrowser({
             <span aria-hidden="true">/</span>
             <span className="font-medium text-white">{category.name}</span>
           </nav>
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-2xl text-white backdrop-blur-sm">
-            {category.icon_emoji || "🧩"}
-          </div>
           <h1 className="font-[var(--shop-font-heading)] mt-4 text-4xl font-semibold text-white md:text-6xl">
             {category.name}
           </h1>
@@ -309,7 +306,7 @@ export default function ShopCategoryBrowser({
                 href={`/3d-shop/category/${child.slug}`}
                 className="inline-flex h-11 shrink-0 snap-start items-center whitespace-nowrap rounded-full border border-[var(--shop-border-light)] bg-white px-4 text-sm font-semibold text-[var(--shop-text-secondary)] transition hover:border-[var(--shop-border-gold)] hover:text-[var(--shop-gold)]"
               >
-                {child.icon_emoji || "🧩"} {child.name}
+                {child.name}
               </Link>
             ))}
           </div>
