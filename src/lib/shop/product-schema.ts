@@ -86,7 +86,9 @@ export const productFormSchema = z.object({
   long_description: z.string(),
   long_description_blocks: descriptionBlocksSchema,
   category_id: z.string(),
-  product_categories: z.array(z.object({ category_id: z.string(), is_primary: z.boolean() })).optional(),
+  product_categories: z
+    .array(z.object({ category_id: z.string(), is_primary: z.boolean() }))
+    .optional(),
   tags: z.array(z.string()),
   occasion_tags: z.array(z.string()),
   thumbnail_url: z.string(),
@@ -102,6 +104,9 @@ export const productFormSchema = z.object({
   sku_pattern: z.string(),
   is_customizable: z.boolean(),
   customization_label: z.string(),
+  customization_is_required: z.boolean(),
+  customization_min_length: z.number().int().min(0),
+  customization_max_length: z.number().int().min(1),
   is_featured: z.boolean(),
   is_active: z.boolean(),
   is_archived: z.boolean(),

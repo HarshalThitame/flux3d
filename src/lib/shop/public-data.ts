@@ -162,6 +162,9 @@ type RawProduct = {
   sku_pattern?: string | null;
   is_customizable?: boolean | null;
   customization_label?: string | null;
+  customization_is_required?: boolean | null;
+  customization_min_length?: number | null;
+  customization_max_length?: number | null;
   is_featured?: boolean | null;
   is_active?: boolean | null;
   is_archived?: boolean | null;
@@ -214,6 +217,9 @@ const PRODUCT_SELECT = `
   base_price,
   is_customizable,
   customization_label,
+  customization_is_required,
+  customization_min_length,
+  customization_max_length,
   is_featured,
   is_active,
   is_archived,
@@ -482,6 +488,9 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
         : null,
     is_customizable: Boolean(row.is_customizable),
     customization_label: row.customization_label ?? null,
+    customization_is_required: row.customization_is_required ?? null,
+    customization_min_length: row.customization_min_length ?? null,
+    customization_max_length: row.customization_max_length ?? null,
     is_featured: Boolean(row.is_featured),
     is_active: row.is_active !== false,
     is_archived: Boolean(row.is_archived),
