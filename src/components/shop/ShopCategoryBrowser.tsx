@@ -286,11 +286,11 @@ export default function ShopCategoryBrowser({
             <span aria-hidden="true">/</span>
             <span className="font-medium text-white">{category.name}</span>
           </nav>
-          <h1 className="font-[var(--shop-font-heading)] mt-4 text-4xl font-semibold text-white md:text-6xl">
+          <h1 className="font-[var(--shop-font-heading)] mt-4 text-4xl font-semibold !text-white md:text-6xl">
             {category.name}
           </h1>
           {category.description && (
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-white">
+            <p className="mt-4 max-w-2xl text-lg leading-8 !text-white">
               {category.description}
             </p>
           )}
