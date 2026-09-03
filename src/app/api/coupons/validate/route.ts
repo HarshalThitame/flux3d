@@ -1,105 +1,124 @@
-import { NextResponse } from 'next/server'
-import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { trackFeatureUsage } from '@/lib/tracking/featureTracker'
+import { NextResponse } from "next/server";
+import { createAdminSupabaseClient } from "@/lib/admin/server";
+import { trackFeatureUsage } from "@/lib/tracking/featureTracker";
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const code = searchParams.get('code')?.toUpperCase().replace(/\s+/g, '')
-    const userId = searchParams.get('userId')
-    const orderAmount = parseFloat(searchParams.get('orderAmount') ?? '0')
+    const { searchParams } = new URL(request.url);
+    const code = searchParams.get("code")?.toUpperCase().replace(/\s+/g, "");
+    const userId = searchParams.get("userId");
+    const orderAmount = parseFloat(searchParams.get("orderAmount") ?? "0");
 
     if (!code) {
-      return NextResponse.json({ valid: false, error: 'Coupon code is required' }, { status: 400 })
+      return NextResponse.json(
+        { valid: false, error: "Coupon code is required" },
+        { status: 400 },
+      );
     }
 
-    const supabase = createAdminSupabaseClient()
-    const now = new Date().toISOString()
+    const supabase = createAdminSupabaseClient();
+    const now = new Date().toISOString();
 
     const { data: coupon, error } = await supabase
-      .from('coupons')
-      .select('*')
-      .eq('code', code)
-      .maybeSingle()
+      .from("coupons")
+      .select("*")
+      .eq("code", code)
+      .maybeSingle();
 
     if (error) {
-      return NextResponse.json({ valid: false, error: error.message }, { status: 500 })
+      return NextResponse.json(
+        { valid: false, error: error.message },
+        { status: 500 },
+      );
     }
 
     if (!coupon) {
-      return NextResponse.json({ valid: false, error: 'Invalid coupon code' })
+      return NextResponse.json({ valid: false, error: "Invalid coupon code" });
     }
 
     if (!coupon.is_active) {
-      return NextResponse.json({ valid: false, error: 'This coupon is no longer active' })
+      return NextResponse.json({
+        valid: false,
+        error: "This coupon is no longer active",
+      });
     }
 
-    if (now < coupon.starts_at) {
-      return NextResponse.json({ valid: false, error: 'This coupon is not yet valid' })
+    if (coupon.starts_at && now < coupon.starts_at) {
+      return NextResponse.json({
+        valid: false,
+        error: "This coupon is not yet valid",
+      });
     }
 
-    if (now > coupon.expires_at) {
-      return NextResponse.json({ valid: false, error: 'This coupon has expired' })
+    if (coupon.expires_at && now > coupon.expires_at) {
+      return NextResponse.json({
+        valid: false,
+        error: "This coupon has expired",
+      });
     }
 
     if (coupon.usage_limit && coupon.used_count >= coupon.usage_limit) {
-      return NextResponse.json({ valid: false, error: 'This coupon has reached its usage limit' })
+      return NextResponse.json({
+        valid: false,
+        error: "This coupon has reached its usage limit",
+      });
     }
 
     if (orderAmount < coupon.min_order_value) {
       return NextResponse.json({
         valid: false,
         error: `Minimum order value of ₹${coupon.min_order_value} required`,
-      })
+      });
     }
 
     if (userId && coupon.usage_per_user) {
       const { count } = await supabase
-        .from('redemptions')
-        .select('*', { count: 'exact', head: true })
-        .eq('coupon_id', coupon.id)
-        .eq('user_id', userId)
+        .from("redemptions")
+        .select("*", { count: "exact", head: true })
+        .eq("coupon_id", coupon.id)
+        .eq("user_id", userId);
 
       if (count && count >= coupon.usage_per_user) {
         return NextResponse.json({
           valid: false,
-          error: 'You have already used this coupon the maximum number of times',
-        })
+          error:
+            "You have already used this coupon the maximum number of times",
+        });
       }
     }
 
     if (userId && coupon.first_order_only) {
       const { count } = await supabase
-        .from('orders')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
+        .from("orders")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
 
       if (count && count > 0) {
         return NextResponse.json({
           valid: false,
-          error: 'This coupon is for first-time orders only',
-        })
+          error: "This coupon is for first-time orders only",
+        });
       }
     }
 
-    let discountAmount = 0
-    if (coupon.discount_type === 'percentage') {
-      discountAmount = (orderAmount * coupon.discount_value) / 100
+    let discountAmount = 0;
+    if (coupon.discount_type === "percentage") {
+      discountAmount = (orderAmount * coupon.discount_value) / 100;
       if (coupon.max_discount && discountAmount > coupon.max_discount) {
-        discountAmount = coupon.max_discount
+        discountAmount = coupon.max_discount;
       }
-    } else if (coupon.discount_type === 'fixed_amount') {
-      discountAmount = Math.min(coupon.discount_value, orderAmount)
+    } else if (coupon.discount_type === "fixed_amount") {
+      discountAmount = Math.min(coupon.discount_value, orderAmount);
     }
     // free_shipping -- handled client-side by setting delivery charge to 0
 
-    void trackFeatureUsage(userId ?? null, 'coupon_applied', {
+    void trackFeatureUsage(userId ?? null, "coupon_applied", {
       code: coupon.code,
       couponId: coupon.id,
       discountType: coupon.discount_type,
       discountAmount,
       orderAmount,
-    }).catch(() => {})
+    }).catch(() => {});
 
     return NextResponse.json({
       valid: true,
@@ -114,13 +133,16 @@ export async function GET(request: Request) {
         applicable_categories: coupon.applicable_categories ?? null,
         applicable_materials: coupon.applicable_materials ?? null,
         applicable_products: coupon.applicable_products ?? null,
-        free_shipping: coupon.discount_type === 'free_shipping',
+        free_shipping: coupon.discount_type === "free_shipping",
       },
-    })
+    });
   } catch (error) {
     return NextResponse.json(
-      { valid: false, error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    )
+      {
+        valid: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
   }
 }

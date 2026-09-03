@@ -23,6 +23,7 @@ import {
   type ShopCartItem,
   useShopCartStore,
 } from "@/stores/shopCartStore";
+import { useShopCartPromotionSync } from "@/components/shop/ShopCartPromotions";
 import { refreshShopCartFromServer } from "@/lib/cart/shop-cart-sync";
 import type { AddressRow } from "../../../../types/database";
 import { trackMetaEvent } from "@/lib/meta/event-utils";
@@ -182,6 +183,11 @@ export default function ShopCheckoutClient({
       }),
     [appliedCoupon, autoApplyOffer, couponCode, discountAmount, items],
   );
+
+  // Re-validate a persisted coupon code on checkout page load.
+  // This heals the state when appliedCoupon metadata was lost on navigation.
+  useShopCartPromotionSync(totals.subtotal);
+
   const shippingCharge = totals.freeShipping
     ? 0
     : calculateDeliveryChargeFromSettings(totals.total, {

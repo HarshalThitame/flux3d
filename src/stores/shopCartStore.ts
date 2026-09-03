@@ -48,6 +48,7 @@ type ShopCartPersistedState = {
   items: ShopCartItem[];
   couponCode: string | null;
   discountAmount?: number;
+  appliedCoupon: AppliedCoupon | null;
 };
 
 type ShopCartState = ShopCartPersistedState & {
@@ -448,6 +449,7 @@ export const useShopCartStore = create<ShopCartState>()(
         items: state.items,
         couponCode: state.couponCode,
         discountAmount: 0,
+        appliedCoupon: state.appliedCoupon,
       }),
     },
   ),

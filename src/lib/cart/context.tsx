@@ -1,7 +1,14 @@
-'use client'
+"use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import {
   addToCart,
   calculateCartSummary,
@@ -11,7 +18,7 @@ import {
   removeFromCart,
   saveCartToStorage,
   updateCartItem,
-} from '@/lib/cart/utils'
+} from "@/lib/cart/utils";
 import {
   clearServerCart,
   deleteServerCartLine,
@@ -19,504 +26,608 @@ import {
   loadServerCart,
   updateServerCartLine,
   type ServerCartLine,
-} from '@/lib/cart/server-cart'
-import type { BusinessSettings } from '@/lib/admin/business-settings'
-import type { AppliedCoupon, AppliedOffer, CartDiscountTier, CartItem, CartSummary } from '@/lib/cart/types'
+} from "@/lib/cart/server-cart";
+import type { BusinessSettings } from "@/lib/admin/business-settings";
+import type {
+  AppliedCoupon,
+  AppliedOffer,
+  CartDiscountTier,
+  CartItem,
+  CartSummary,
+} from "@/lib/cart/types";
 
-const CART_SKIP_RESTORE_FLAG = 'flux3d-cart-skip-restore'
+const CART_SKIP_RESTORE_FLAG = "flux3d-cart-skip-restore";
 const AUTH_CART_BOOTSTRAP_PATHS = [
-  '/3d-shop',
-  '/cart',
-  '/instant-quote',
-  '/my-orders',
-  '/orders',
-  '/profile',
-  '/quote',
-  '/saved-quotes',
-]
+  "/3d-shop",
+  "/3d-shop/cart",
+  "/3d-shop/checkout",
+  "/cart",
+  "/instant-quote",
+  "/my-orders",
+  "/orders",
+  "/profile",
+  "/quote",
+  "/saved-quotes",
+];
 
 function runWhenIdle(callback: () => void, timeout = 2500) {
-  if (typeof window === 'undefined') return () => {}
+  if (typeof window === "undefined") return () => {};
 
   const idleWindow = window as Window & {
-    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number
-    cancelIdleCallback?: (id: number) => void
-  }
+    requestIdleCallback?: (
+      callback: () => void,
+      options?: { timeout: number },
+    ) => number;
+    cancelIdleCallback?: (id: number) => void;
+  };
 
   if (idleWindow.requestIdleCallback && idleWindow.cancelIdleCallback) {
-    const idleId = idleWindow.requestIdleCallback(callback, { timeout })
-    return () => idleWindow.cancelIdleCallback?.(idleId)
+    const idleId = idleWindow.requestIdleCallback(callback, { timeout });
+    return () => idleWindow.cancelIdleCallback?.(idleId);
   }
 
-  const timeoutId = window.setTimeout(callback, Math.min(timeout, 1200))
-  return () => window.clearTimeout(timeoutId)
+  const timeoutId = window.setTimeout(callback, Math.min(timeout, 1200));
+  return () => window.clearTimeout(timeoutId);
 }
 
 function runOnFirstIntent(callback: () => void) {
-  if (typeof window === 'undefined') return () => {}
+  if (typeof window === "undefined") return () => {};
 
-  let done = false
-  const events = ['pointerdown', 'keydown', 'touchstart'] as const
+  let done = false;
+  const events = ["pointerdown", "keydown", "touchstart"] as const;
 
   const run = () => {
-    if (done) return
-    done = true
-    events.forEach((event) => window.removeEventListener(event, run))
-    callback()
-  }
+    if (done) return;
+    done = true;
+    events.forEach((event) => window.removeEventListener(event, run));
+    callback();
+  };
 
-  events.forEach((event) => window.addEventListener(event, run, { once: true, passive: true }))
+  events.forEach((event) =>
+    window.addEventListener(event, run, { once: true, passive: true }),
+  );
 
   return () => {
-    done = true
-    events.forEach((event) => window.removeEventListener(event, run))
-  }
+    done = true;
+    events.forEach((event) => window.removeEventListener(event, run));
+  };
 }
 
 function shouldBootstrapAuthCartImmediately() {
-  if (typeof window === 'undefined') return false
-  const pathname = window.location.pathname || '/'
-  return AUTH_CART_BOOTSTRAP_PATHS.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+  if (typeof window === "undefined") return false;
+  const pathname = window.location.pathname || "/";
+  return AUTH_CART_BOOTSTRAP_PATHS.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
 }
 
 type CartContextType = {
-  items: CartItem[]
-  summary: CartSummary
-  addItem: (item: CartItem) => void
-  removeItem: (addedAt: string) => void
-  updateItem: (addedAt: string, updates: Partial<CartItem>) => void
-  clearItems: () => void
-  resetCartState: () => void
-  isInCart: (quoteId: string) => boolean
-  isLoading: boolean
-  appliedCoupon: AppliedCoupon | null
-  setAppliedCoupon: (coupon: AppliedCoupon | null) => void
-  autoApplyOffer: AppliedOffer | null
-}
+  items: CartItem[];
+  summary: CartSummary;
+  addItem: (item: CartItem) => void;
+  removeItem: (addedAt: string) => void;
+  updateItem: (addedAt: string, updates: Partial<CartItem>) => void;
+  clearItems: () => void;
+  resetCartState: () => void;
+  isInCart: (quoteId: string) => boolean;
+  isLoading: boolean;
+  appliedCoupon: AppliedCoupon | null;
+  setAppliedCoupon: (coupon: AppliedCoupon | null) => void;
+  autoApplyOffer: AppliedOffer | null;
+};
 
-const CartContext = createContext<CartContextType | undefined>(undefined)
+const CartContext = createContext<CartContextType | undefined>(undefined);
 
-function quoteItemKey(item: Pick<CartItem, 'quoteId' | 'fileName' | 'material' | 'color'>) {
-  return item.quoteId ?? [item.fileName ?? '', item.material ?? '', item.color ?? ''].join('|')
+function quoteItemKey(
+  item: Pick<CartItem, "quoteId" | "fileName" | "material" | "color">,
+) {
+  return (
+    item.quoteId ??
+    [item.fileName ?? "", item.material ?? "", item.color ?? ""].join("|")
+  );
 }
 
 function lineToCartItem(line: ServerCartLine): CartItem {
-  const payloadItem = { ...((line.payload ?? {}) as Partial<CartItem>) } as CartItem
+  const payloadItem = {
+    ...((line.payload ?? {}) as Partial<CartItem>),
+  } as CartItem;
   return {
     ...payloadItem,
     id: payloadItem.id || line.id,
     addedAt: payloadItem.addedAt ?? line.created_at,
     serverLineId: line.id,
-    quantity: Math.max(1, Math.floor(Number(line.quantity ?? payloadItem.quantity ?? 1))),
-  }
+    quantity: Math.max(
+      1,
+      Math.floor(Number(line.quantity ?? payloadItem.quantity ?? 1)),
+    ),
+  };
 }
 
-function quoteItemToServerLine(userId: string, item: CartItem): Parameters<typeof insertServerCartLine>[0] {
-  const { serverLineId: _serverLineId, ...payloadItem } = item
-  void _serverLineId
+function quoteItemToServerLine(
+  userId: string,
+  item: CartItem,
+): Parameters<typeof insertServerCartLine>[0] {
+  const { serverLineId: _serverLineId, ...payloadItem } = item;
+  void _serverLineId;
   return {
     user_id: userId,
-    cart_type: 'quote',
+    cart_type: "quote",
     quantity: Math.max(1, Math.floor(Number(item.quantity ?? 1))),
     material: item.material || null,
     weight_grams: item.weight != null ? Number(item.weight) : null,
-    estimated_cost: Number(Number(item.finalPrice ?? item.totalPrice ?? item.price ?? 0).toFixed(2)),
+    estimated_cost: Number(
+      Number(item.finalPrice ?? item.totalPrice ?? item.price ?? 0).toFixed(2),
+    ),
     express_delivery: false,
     gift_packaging: false,
     payload: {
       ...payloadItem,
       dedupeKey: quoteItemKey(item),
     },
-  }
+  };
 }
 
 type CartProviderSettings = Pick<
   BusinessSettings,
-  'cartDiscountEnabled' | 'cartDiscountTiers' | 'deliveryChargeThreshold' | 'defaultDeliveryCharge'
->
+  | "cartDiscountEnabled"
+  | "cartDiscountTiers"
+  | "deliveryChargeThreshold"
+  | "defaultDeliveryCharge"
+>;
 
 export function CartProvider({
   children,
   initialSettings,
 }: {
-  children: React.ReactNode
-  initialSettings?: CartProviderSettings
+  children: React.ReactNode;
+  initialSettings?: CartProviderSettings;
 }) {
-  const [items, setItems] = useState<CartItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [storageKey, setStorageKey] = useState(() => getCartStorageKey())
-  const [userCoupon, setUserCoupon] = useState<AppliedCoupon | null>(null)
-  const [autoApplyOffer, setAutoApplyOffer] = useState<AppliedOffer | null>(null)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [cartDiscountEnabled, setCartDiscountEnabled] = useState(initialSettings?.cartDiscountEnabled ?? true)
-  const [cartDiscountTiers, setCartDiscountTiers] = useState<CartDiscountTier[]>(initialSettings?.cartDiscountTiers ?? [])
-  const [deliveryChargeThreshold, setDeliveryChargeThreshold] = useState<number | undefined>(initialSettings?.deliveryChargeThreshold)
-  const [defaultDeliveryCharge, setDefaultDeliveryCharge] = useState<number | undefined>(initialSettings?.defaultDeliveryCharge)
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [storageKey, setStorageKey] = useState(() => getCartStorageKey());
+  const [userCoupon, setUserCoupon] = useState<AppliedCoupon | null>(null);
+  const [autoApplyOffer, setAutoApplyOffer] = useState<AppliedOffer | null>(
+    null,
+  );
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [cartDiscountEnabled, setCartDiscountEnabled] = useState(
+    initialSettings?.cartDiscountEnabled ?? true,
+  );
+  const [cartDiscountTiers, setCartDiscountTiers] = useState<
+    CartDiscountTier[]
+  >(initialSettings?.cartDiscountTiers ?? []);
+  const [deliveryChargeThreshold, setDeliveryChargeThreshold] = useState<
+    number | undefined
+  >(initialSettings?.deliveryChargeThreshold);
+  const [defaultDeliveryCharge, setDefaultDeliveryCharge] = useState<
+    number | undefined
+  >(initialSettings?.defaultDeliveryCharge);
 
-  const appliedCoupon = userCoupon
+  const appliedCoupon = userCoupon;
 
   const setAppliedCoupon = useCallback((coupon: AppliedCoupon | null) => {
-    setUserCoupon(coupon)
-  }, [])
+    setUserCoupon(coupon);
+  }, []);
 
   useEffect(() => {
-    if (isLoading || initialSettings) return
-    let cancelled = false
+    if (isLoading || initialSettings) return;
+    let cancelled = false;
 
     const cancelIdle = runWhenIdle(() => {
-      fetch('/api/public/settings')
-        .then(r => r.json())
-        .then(data => {
-          if (cancelled) return
-          const nextEnabled = data?.settings?.cartDiscountEnabled
-          const nextTiers = data?.settings?.cartDiscountTiers
-          const nextDeliveryThreshold = Number(data?.settings?.deliveryChargeThreshold)
-          const nextDeliveryCharge = Number(data?.settings?.defaultDeliveryCharge)
-          if (typeof nextEnabled === 'boolean') {
-            setCartDiscountEnabled(nextEnabled)
+      fetch("/api/public/settings")
+        .then((r) => r.json())
+        .then((data) => {
+          if (cancelled) return;
+          const nextEnabled = data?.settings?.cartDiscountEnabled;
+          const nextTiers = data?.settings?.cartDiscountTiers;
+          const nextDeliveryThreshold = Number(
+            data?.settings?.deliveryChargeThreshold,
+          );
+          const nextDeliveryCharge = Number(
+            data?.settings?.defaultDeliveryCharge,
+          );
+          if (typeof nextEnabled === "boolean") {
+            setCartDiscountEnabled(nextEnabled);
           }
           if (Array.isArray(nextTiers)) {
             setCartDiscountTiers(
               nextTiers
-                .map((tier: { minCartValue?: number; discountPercent?: number }) => ({
-                  minCartValue: Number(tier.minCartValue ?? 0),
-                  discountPercent: Number(tier.discountPercent ?? 0),
-                }))
-                .filter((tier: CartDiscountTier) => Number.isFinite(tier.minCartValue) && Number.isFinite(tier.discountPercent))
-            )
+                .map(
+                  (tier: {
+                    minCartValue?: number;
+                    discountPercent?: number;
+                  }) => ({
+                    minCartValue: Number(tier.minCartValue ?? 0),
+                    discountPercent: Number(tier.discountPercent ?? 0),
+                  }),
+                )
+                .filter(
+                  (tier: CartDiscountTier) =>
+                    Number.isFinite(tier.minCartValue) &&
+                    Number.isFinite(tier.discountPercent),
+                ),
+            );
           }
-          if (Number.isFinite(nextDeliveryThreshold)) setDeliveryChargeThreshold(nextDeliveryThreshold)
-          if (Number.isFinite(nextDeliveryCharge)) setDefaultDeliveryCharge(nextDeliveryCharge)
+          if (Number.isFinite(nextDeliveryThreshold))
+            setDeliveryChargeThreshold(nextDeliveryThreshold);
+          if (Number.isFinite(nextDeliveryCharge))
+            setDefaultDeliveryCharge(nextDeliveryCharge);
         })
         .catch(() => {
           // Fall back to defaults if public settings cannot be loaded.
-        })
-    })
+        });
+    });
 
     return () => {
-      cancelled = true
-      cancelIdle()
-    }
-  }, [initialSettings, isLoading])
+      cancelled = true;
+      cancelIdle();
+    };
+  }, [initialSettings, isLoading]);
 
   useEffect(() => {
-    if (isLoading) return
-    let cancelled = false
+    if (isLoading) return;
+    let cancelled = false;
 
     const cancelIdle = runWhenIdle(() => {
-      fetch('/api/offers/auto-apply')
-        .then(r => r.json())
-        .then(data => {
+      fetch("/api/offers/auto-apply")
+        .then((r) => r.json())
+        .then((data) => {
           if (cancelled || !data.valid || !data.offer) {
-            if (!cancelled) setAutoApplyOffer(null)
-            return
+            if (!cancelled) setAutoApplyOffer(null);
+            return;
           }
-          if (!cancelled) setAutoApplyOffer(data.offer)
+          if (!cancelled) setAutoApplyOffer(data.offer);
         })
         .catch(() => {
-          if (!cancelled) setAutoApplyOffer(null)
-        })
-    })
+          if (!cancelled) setAutoApplyOffer(null);
+        });
+    });
 
     return () => {
-      cancelled = true
-      cancelIdle()
-    }
-  }, [isLoading])
+      cancelled = true;
+      cancelIdle();
+    };
+  }, [isLoading]);
 
-  const summary = useMemo(() => calculateCartSummary(items, {
-    appliedCoupon: userCoupon,
-    appliedOffer: autoApplyOffer,
-    cartDiscountEnabled,
-    cartDiscountTiers,
-    deliveryChargeThreshold,
-    defaultDeliveryCharge,
-  }), [
-    autoApplyOffer,
-    cartDiscountEnabled,
-    cartDiscountTiers,
-    defaultDeliveryCharge,
-    deliveryChargeThreshold,
-    items,
-    userCoupon,
-  ])
+  const summary = useMemo(
+    () =>
+      calculateCartSummary(items, {
+        appliedCoupon: userCoupon,
+        appliedOffer: autoApplyOffer,
+        cartDiscountEnabled,
+        cartDiscountTiers,
+        deliveryChargeThreshold,
+        defaultDeliveryCharge,
+      }),
+    [
+      autoApplyOffer,
+      cartDiscountEnabled,
+      cartDiscountTiers,
+      defaultDeliveryCharge,
+      deliveryChargeThreshold,
+      items,
+      userCoupon,
+    ],
+  );
 
   useEffect(() => {
-    let active = true
-    let authListener: { subscription: { unsubscribe: () => void } } | null = null
-    let activeUserId: string | null = null
+    let active = true;
+    let authListener: { subscription: { unsubscribe: () => void } } | null =
+      null;
+    let activeUserId: string | null = null;
 
     async function reloadServerQuoteCart(userId: string) {
       try {
-        const lines = await loadServerCart(userId, 'quote')
-        if (!active || activeUserId !== userId) return
-        const nextItems = lines.map(lineToCartItem)
-        setItems(nextItems)
-        saveCartToStorage(nextItems, getCartStorageKey(userId))
+        const lines = await loadServerCart(userId, "quote");
+        if (!active || activeUserId !== userId) return;
+        const nextItems = lines.map(lineToCartItem);
+        setItems(nextItems);
+        saveCartToStorage(nextItems, getCartStorageKey(userId));
       } catch (error) {
-        console.warn('[cart] Server cart refresh failed', error)
+        console.warn("[cart] Server cart refresh failed", error);
       }
     }
 
     async function syncCartForUser(userId: string | null) {
       const shouldSkipAnonymousRestore =
         userId === null &&
-        typeof window !== 'undefined' &&
-        window.sessionStorage.getItem(CART_SKIP_RESTORE_FLAG) === '1'
+        typeof window !== "undefined" &&
+        window.sessionStorage.getItem(CART_SKIP_RESTORE_FLAG) === "1";
 
       if (shouldSkipAnonymousRestore) {
-        window.sessionStorage.removeItem(CART_SKIP_RESTORE_FLAG)
+        window.sessionStorage.removeItem(CART_SKIP_RESTORE_FLAG);
 
         if (!active) {
-          return
+          return;
         }
 
-        setStorageKey(getCartStorageKey(null))
-        setCurrentUserId(null)
-        setItems([])
-        setIsLoading(false)
-        return
+        setStorageKey(getCartStorageKey(null));
+        setCurrentUserId(null);
+        setItems([]);
+        setIsLoading(false);
+        return;
       }
 
-      activeUserId = userId
+      activeUserId = userId;
 
       if (!userId) {
-        const anonymousItems = getCartFromStorage(getCartStorageKey(null))
+        const anonymousItems = getCartFromStorage(getCartStorageKey(null));
 
         if (!active) {
-          return
+          return;
         }
 
-        setStorageKey(getCartStorageKey(null))
-        setCurrentUserId(null)
-        setItems(anonymousItems)
-        setIsLoading(false)
-        return
+        setStorageKey(getCartStorageKey(null));
+        setCurrentUserId(null);
+        setItems(anonymousItems);
+        setIsLoading(false);
+        return;
       }
 
-      const userStorageKey = getCartStorageKey(userId)
-      const guestItems = getCartFromStorage(getCartStorageKey(null))
+      const userStorageKey = getCartStorageKey(userId);
+      const guestItems = getCartFromStorage(getCartStorageKey(null));
 
       try {
-        let lines = await loadServerCart(userId, 'quote')
+        let lines = await loadServerCart(userId, "quote");
 
-        const existingKeys = new Set(lines.map((line) => String(line.payload?.dedupeKey ?? '')))
-        let merged = false
+        const existingKeys = new Set(
+          lines.map((line) => String(line.payload?.dedupeKey ?? "")),
+        );
+        let merged = false;
         for (const guestItem of guestItems) {
-          if (existingKeys.has(quoteItemKey(guestItem))) continue
-          const inserted = await insertServerCartLine(quoteItemToServerLine(userId, guestItem))
-          lines = [...lines, inserted]
-          merged = true
+          if (existingKeys.has(quoteItemKey(guestItem))) continue;
+          const inserted = await insertServerCartLine(
+            quoteItemToServerLine(userId, guestItem),
+          );
+          lines = [...lines, inserted];
+          merged = true;
         }
         if (merged && guestItems.length > 0) {
-          clearCart(getCartStorageKey(null))
+          clearCart(getCartStorageKey(null));
         }
 
         if (!active || activeUserId !== userId) {
-          return
+          return;
         }
 
-        const serverItems = lines.map(lineToCartItem)
-        saveCartToStorage(serverItems, userStorageKey)
-        setStorageKey(userStorageKey)
-        setCurrentUserId(userId)
-        setItems(serverItems)
+        const serverItems = lines.map(lineToCartItem);
+        saveCartToStorage(serverItems, userStorageKey);
+        setStorageKey(userStorageKey);
+        setCurrentUserId(userId);
+        setItems(serverItems);
       } catch (error) {
-        console.warn('[cart] Server cart load failed, using local cache', error)
+        console.warn(
+          "[cart] Server cart load failed, using local cache",
+          error,
+        );
 
         if (!active) {
-          return
+          return;
         }
 
-        setStorageKey(userStorageKey)
-        setCurrentUserId(userId)
-        setItems(getCartFromStorage(userStorageKey))
+        setStorageKey(userStorageKey);
+        setCurrentUserId(userId);
+        setItems(getCartFromStorage(userStorageKey));
       } finally {
-        if (active) setIsLoading(false)
+        if (active) setIsLoading(false);
       }
     }
 
     async function bootstrap() {
       try {
-        const { getSupabaseBrowserClient } = await import('@/lib/supabase/client')
-        const supabase = getSupabaseBrowserClient()
-        const { data } = await supabase.auth.getUser()
-        await syncCartForUser(data.user?.id ?? null)
+        const { getSupabaseBrowserClient } =
+          await import("@/lib/supabase/client");
+        const supabase = getSupabaseBrowserClient();
+        const { data } = await supabase.auth.getUser();
+        await syncCartForUser(data.user?.id ?? null);
 
         const handleWindowFocus = () => {
-          if (!active || !activeUserId) return
-          void reloadServerQuoteCart(activeUserId)
-        }
-        window.addEventListener('focus', handleWindowFocus)
+          if (!active || !activeUserId) return;
+          void reloadServerQuoteCart(activeUserId);
+        };
+        window.addEventListener("focus", handleWindowFocus);
 
         const { data: nextAuthListener } = supabase.auth.onAuthStateChange(
           (event: AuthChangeEvent, session: Session | null) => {
             if (!active) {
-              return
+              return;
             }
 
             if (session?.user.id) {
-              void syncCartForUser(session.user.id)
-              return
+              void syncCartForUser(session.user.id);
+              return;
             }
 
-            void syncCartForUser(null)
-          }
-        )
+            void syncCartForUser(null);
+          },
+        );
         authListener = {
           subscription: {
             unsubscribe: () => {
-              nextAuthListener.subscription.unsubscribe()
-              window.removeEventListener('focus', handleWindowFocus)
+              nextAuthListener.subscription.unsubscribe();
+              window.removeEventListener("focus", handleWindowFocus);
             },
           },
-        }
+        };
       } catch {
-        await syncCartForUser(null)
+        await syncCartForUser(null);
       }
     }
 
-    void syncCartForUser(null)
-    const scheduleBootstrap = shouldBootstrapAuthCartImmediately() ? runWhenIdle : runOnFirstIntent
+    void syncCartForUser(null);
+    const scheduleBootstrap = shouldBootstrapAuthCartImmediately()
+      ? runWhenIdle
+      : runOnFirstIntent;
     const cancelBootstrap = scheduleBootstrap(() => {
-      if (active) void bootstrap()
-    })
+      if (active) void bootstrap();
+    });
 
     return () => {
-      active = false
-      cancelBootstrap()
-      authListener?.subscription.unsubscribe()
-    }
-  }, [])
+      active = false;
+      cancelBootstrap();
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (isLoading) {
-      return
+      return;
     }
 
-    saveCartToStorage(items, storageKey)
-  }, [items, storageKey, isLoading])
+    saveCartToStorage(items, storageKey);
+  }, [items, storageKey, isLoading]);
 
-  const addItem = useCallback((item: CartItem) => {
-    const newItems = addToCart(item, storageKey)
-    setItems(newItems)
+  const addItem = useCallback(
+    (item: CartItem) => {
+      const newItems = addToCart(item, storageKey);
+      setItems(newItems);
 
-    if (currentUserId) {
-      void insertServerCartLine(quoteItemToServerLine(currentUserId, item))
-        .then((line) => {
-          const withLineId = updateCartItem(item.addedAt ?? item.id, { serverLineId: line.id }, storageKey)
-          setItems(withLineId)
-        })
-        .catch((error) => console.warn('[cart] Quote cart add sync failed', error))
-    }
+      if (currentUserId) {
+        void insertServerCartLine(quoteItemToServerLine(currentUserId, item))
+          .then((line) => {
+            const withLineId = updateCartItem(
+              item.addedAt ?? item.id,
+              { serverLineId: line.id },
+              storageKey,
+            );
+            setItems(withLineId);
+          })
+          .catch((error) =>
+            console.warn("[cart] Quote cart add sync failed", error),
+          );
+      }
 
-    void import('@/lib/tracking/featureTracker')
-      .then(({ trackFeatureUsage }) => trackFeatureUsage(currentUserId, 'item_added_to_cart', {
-        quoteId: item.quoteId,
-        material: item.material,
-        quantity: item.quantity,
-        total: item.totalPrice ?? item.price,
-      }))
-      .catch(() => {})
-  }, [currentUserId, storageKey])
+      void import("@/lib/tracking/featureTracker")
+        .then(({ trackFeatureUsage }) =>
+          trackFeatureUsage(currentUserId, "item_added_to_cart", {
+            quoteId: item.quoteId,
+            material: item.material,
+            quantity: item.quantity,
+            total: item.totalPrice ?? item.price,
+          }),
+        )
+        .catch(() => {});
+    },
+    [currentUserId, storageKey],
+  );
 
-  const removeItem = useCallback((addedAt: string) => {
-    const target = getCartFromStorage(storageKey).find((item) => item.addedAt === addedAt)
-    const newItems = removeFromCart(addedAt, storageKey)
-    setItems(newItems)
+  const removeItem = useCallback(
+    (addedAt: string) => {
+      const target = getCartFromStorage(storageKey).find(
+        (item) => item.addedAt === addedAt,
+      );
+      const newItems = removeFromCart(addedAt, storageKey);
+      setItems(newItems);
 
-    if (currentUserId && target?.serverLineId) {
-      void deleteServerCartLine(target.serverLineId)
-        .catch((error) => console.warn('[cart] Quote cart remove sync failed', error))
-    }
-  }, [currentUserId, storageKey])
+      if (currentUserId && target?.serverLineId) {
+        void deleteServerCartLine(target.serverLineId).catch((error) =>
+          console.warn("[cart] Quote cart remove sync failed", error),
+        );
+      }
+    },
+    [currentUserId, storageKey],
+  );
 
-  const updateItem = useCallback((addedAt: string, updates: Partial<CartItem>) => {
-    const newItems = updateCartItem(addedAt, updates, storageKey)
-    setItems(newItems)
+  const updateItem = useCallback(
+    (addedAt: string, updates: Partial<CartItem>) => {
+      const newItems = updateCartItem(addedAt, updates, storageKey);
+      setItems(newItems);
 
-    if (!currentUserId) return
-    const updated = newItems.find((item) => item.addedAt === addedAt)
-    if (!updated?.serverLineId) return
+      if (!currentUserId) return;
+      const updated = newItems.find((item) => item.addedAt === addedAt);
+      if (!updated?.serverLineId) return;
 
-    const { serverLineId: _serverLineId, ...payloadItem } = updated
-    void _serverLineId
-    void updateServerCartLine(updated.serverLineId, {
-      quantity: Math.max(1, Math.floor(Number(updated.quantity ?? 1))),
-      estimated_cost: Number(Number(updated.finalPrice ?? updated.totalPrice ?? updated.price ?? 0).toFixed(2)),
-      weight_grams: updated.weight != null ? Number(updated.weight) : null,
-      payload: {
-        ...payloadItem,
-        dedupeKey: quoteItemKey(updated),
-      },
-    }).catch((error) => console.warn('[cart] Quote cart update sync failed', error))
-  }, [currentUserId, storageKey])
+      const { serverLineId: _serverLineId, ...payloadItem } = updated;
+      void _serverLineId;
+      void updateServerCartLine(updated.serverLineId, {
+        quantity: Math.max(1, Math.floor(Number(updated.quantity ?? 1))),
+        estimated_cost: Number(
+          Number(
+            updated.finalPrice ?? updated.totalPrice ?? updated.price ?? 0,
+          ).toFixed(2),
+        ),
+        weight_grams: updated.weight != null ? Number(updated.weight) : null,
+        payload: {
+          ...payloadItem,
+          dedupeKey: quoteItemKey(updated),
+        },
+      }).catch((error) =>
+        console.warn("[cart] Quote cart update sync failed", error),
+      );
+    },
+    [currentUserId, storageKey],
+  );
 
   const clearItems = useCallback(() => {
-    clearCart(storageKey)
-    setItems([])
-    setUserCoupon(null)
+    clearCart(storageKey);
+    setItems([]);
+    setUserCoupon(null);
 
     if (currentUserId) {
-      void clearServerCart('quote')
-        .catch((error) => console.warn('[cart] Quote cart clear sync failed', error))
+      void clearServerCart("quote").catch((error) =>
+        console.warn("[cart] Quote cart clear sync failed", error),
+      );
     }
-  }, [currentUserId, storageKey])
+  }, [currentUserId, storageKey]);
 
   const resetCartState = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem(CART_SKIP_RESTORE_FLAG, '1')
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(CART_SKIP_RESTORE_FLAG, "1");
     }
 
-    setStorageKey(getCartStorageKey(null))
-    setCurrentUserId(null)
-    setItems([])
-    setIsLoading(false)
-  }, [])
+    setStorageKey(getCartStorageKey(null));
+    setCurrentUserId(null);
+    setItems([]);
+    setIsLoading(false);
+  }, []);
 
-  const isInCart = useCallback((quoteId: string) => {
-    return items.some((item) => item.quoteId === quoteId)
-  }, [items])
+  const isInCart = useCallback(
+    (quoteId: string) => {
+      return items.some((item) => item.quoteId === quoteId);
+    },
+    [items],
+  );
 
-  const contextValue = useMemo<CartContextType>(() => ({
-    items,
-    summary,
-    addItem,
-    removeItem,
-    updateItem,
-    clearItems,
-    resetCartState,
-    isInCart,
-    isLoading,
-    appliedCoupon,
-    setAppliedCoupon,
-    autoApplyOffer,
-  }), [
-    addItem,
-    appliedCoupon,
-    autoApplyOffer,
-    clearItems,
-    isInCart,
-    isLoading,
-    items,
-    removeItem,
-    resetCartState,
-    setAppliedCoupon,
-    summary,
-    updateItem,
-  ])
+  const contextValue = useMemo<CartContextType>(
+    () => ({
+      items,
+      summary,
+      addItem,
+      removeItem,
+      updateItem,
+      clearItems,
+      resetCartState,
+      isInCart,
+      isLoading,
+      appliedCoupon,
+      setAppliedCoupon,
+      autoApplyOffer,
+    }),
+    [
+      addItem,
+      appliedCoupon,
+      autoApplyOffer,
+      clearItems,
+      isInCart,
+      isLoading,
+      items,
+      removeItem,
+      resetCartState,
+      setAppliedCoupon,
+      summary,
+      updateItem,
+    ],
+  );
 
   return (
-    <CartContext.Provider value={contextValue}>
-      {children}
-    </CartContext.Provider>
-  )
+    <CartContext.Provider value={contextValue}>{children}</CartContext.Provider>
+  );
 }
 
 export function useCart() {
-  const context = useContext(CartContext)
+  const context = useContext(CartContext);
   if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider')
+    throw new Error("useCart must be used within a CartProvider");
   }
-  return context
+  return context;
 }
