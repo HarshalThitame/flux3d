@@ -330,18 +330,45 @@ export default function RazorpayCheckoutClient({
           setStatus("verifying");
           setMessage("Verifying payment...");
           try {
-            const verifyResponse = await fetch(verifyEndpoint, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", ...authHeaders },
-              credentials: "include",
-              body: JSON.stringify({
-                internalOrderType,
-                internalOrderId,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            });
+            let verifyResponse: Response | null = null;
+            let lastError: unknown;
+            const maxRetries = 4;
+
+            for (let i = 0; i < maxRetries; i++) {
+              try {
+                if (i > 0) {
+                  setMessage(`Verifying payment (attempt ${i + 1})...`);
+                  await new Promise((resolve) =>
+                    window.setTimeout(resolve, 1500 * i),
+                  );
+                }
+                verifyResponse = await fetch(verifyEndpoint, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    ...authHeaders,
+                  },
+                  credentials: "include",
+                  body: JSON.stringify({
+                    internalOrderType,
+                    internalOrderId,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                  }),
+                });
+                break; // Network success, exit retry loop
+              } catch (e) {
+                lastError = e;
+                if (i === maxRetries - 1) throw e;
+              }
+            }
+
+            if (!verifyResponse) {
+              throw (
+                lastError || new Error("Network error during verification.")
+              );
+            }
 
             const verifyBody = (await verifyResponse
               .json()
@@ -364,10 +391,14 @@ export default function RazorpayCheckoutClient({
             setMessage("Confirming payment with the gateway...");
           } catch (error) {
             setStatus("failed");
-            setMessage(
+            const rawMsg =
               error instanceof Error
                 ? error.message
-                : "Payment verification failed.",
+                : "Payment verification failed.";
+            setMessage(
+              rawMsg === "Failed to fetch"
+                ? "Network connection lost. Please check your internet and click Try Again to verify."
+                : rawMsg,
             );
           } finally {
             setLoading(false);
@@ -390,8 +421,12 @@ export default function RazorpayCheckoutClient({
       checkoutRef.current.open();
     } catch (error) {
       setStatus("failed");
+      const rawMsg =
+        error instanceof Error ? error.message : "Could not start payment.";
       setMessage(
-        error instanceof Error ? error.message : "Could not start payment.",
+        rawMsg === "Failed to fetch"
+          ? "Network connection lost. Please check your internet and try again."
+          : rawMsg,
       );
       setLoading(false);
     }
