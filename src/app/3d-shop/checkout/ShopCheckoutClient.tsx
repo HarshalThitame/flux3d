@@ -405,17 +405,24 @@ export default function ShopCheckoutClient({
     try {
       await withLoading(async () => {
         if (showAddressForm && saveAddress && !isGuest) {
-          await addAddress({
-            full_name: shippingAddress.name,
-            phone: shippingAddress.phone,
-            address_line_1: shippingAddress.line1,
-            address_line_2: shippingAddress.line2,
-            city: shippingAddress.city,
-            state: shippingAddress.state,
-            pincode: shippingAddress.pincode,
-            country: "India",
-            is_default: addresses.length === 0,
-          });
+          try {
+            await addAddress({
+              full_name: shippingAddress.name,
+              phone: shippingAddress.phone,
+              address_line_1: shippingAddress.line1,
+              address_line_2: shippingAddress.line2,
+              city: shippingAddress.city,
+              state: shippingAddress.state,
+              pincode: shippingAddress.pincode,
+              country: "India",
+              is_default: addresses.length === 0,
+            });
+          } catch (e) {
+            console.warn(
+              "Failed to save address, proceeding with checkout.",
+              e,
+            );
+          }
         }
 
         const payload = {

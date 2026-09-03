@@ -289,6 +289,7 @@ export async function createAdSet(
     targeting: input.targeting,
     promoted_object: input.promotedObject,
     status: "PAUSED",
+    is_adset_budget_sharing_enabled: false,
   })) as { id: string };
 
   return result;
