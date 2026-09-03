@@ -25,6 +25,7 @@ import WebVitalsReporter from "@/components/WebVitalsReporter";
 import "./globals.css";
 import "./shop-luxury.css";
 import "./landing-premium.css";
+import "./liquid-morph.css";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],

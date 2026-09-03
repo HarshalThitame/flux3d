@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import ToastContainer from '@/components/Toast'
-import TopProgressBar from '@/components/ui/TopProgressBar'
+import ToastContainer from "@/components/Toast";
+import LiquidMorphLoader from "@/components/ui/LiquidMorphLoader";
 
 export default function ClientShellOverlays() {
   return (
     <>
-      <TopProgressBar />
+      <LiquidMorphLoader />
       <ToastContainer />
     </>
-  )
+  );
 }
