@@ -151,7 +151,7 @@ export default function ShopCheckoutClient({
     null,
   );
   const [useNewAddress, setUseNewAddress] = useState(false);
-  const [saveAddress, setSaveAddress] = useState(false);
+  const [saveAddress, setSaveAddress] = useState(true);
   const [addressForm, setAddressForm] =
     useState<AddressFormState>(emptyAddressForm);
   const [addressErrors, setAddressErrors] = useState<
