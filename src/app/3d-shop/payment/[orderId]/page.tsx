@@ -1,285 +1,282 @@
-import type { Metadata } from 'next'
-import Image from 'next/image'
-import Link from 'next/link'
-import { redirect, notFound } from 'next/navigation'
-import { ArrowLeft, BadgeCheck, CreditCard, MapPin, PackageCheck, ShieldCheck, User } from 'lucide-react'
-import ShopShell from '@/components/shop/ShopShell'
-import PaymentPageClient from './PaymentPageClient'
-import { getCurrentUserProfile } from '@/lib/auth/server'
-import { absoluteUrl } from '@/lib/site'
-import { getSettings } from '@/lib/settings'
-import { buildPublicBusinessProfile } from '@/lib/public-business'
-import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { formatShopPrice } from '@/lib/shop/selection'
-import { mapShopOrderRow, type ShopOrder } from '@/lib/shop/orders'
-import { verifyGuestOrderAccess } from '@/lib/shop/guest-access'
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { redirect, notFound } from "next/navigation";
+import { ArrowLeft, MapPin, ShieldCheck } from "lucide-react";
+import ShopShell from "@/components/shop/ShopShell";
+import PaymentPageClient from "./PaymentPageClient";
+import { getCurrentUserProfile } from "@/lib/auth/server";
+import { absoluteUrl } from "@/lib/site";
+import { getSettings } from "@/lib/settings";
+import { buildPublicBusinessProfile } from "@/lib/public-business";
+import { createAdminSupabaseClient } from "@/lib/admin/server";
+import { formatShopPrice } from "@/lib/shop/selection";
+import { mapShopOrderRow, type ShopOrder } from "@/lib/shop/orders";
+import { verifyGuestOrderAccess } from "@/lib/shop/guest-access";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 type PaymentPageProps = {
-  params: Promise<{ orderId: string }>
-  searchParams: Promise<{ token?: string }>
-}
+  params: Promise<{ orderId: string }>;
+  searchParams: Promise<{ token?: string }>;
+};
 
-export async function generateMetadata({ params }: PaymentPageProps): Promise<Metadata> {
-  const { orderId } = await params
+export async function generateMetadata({
+  params,
+}: PaymentPageProps): Promise<Metadata> {
+  const { orderId } = await params;
   return {
-    title: 'Secure Payment — 3D Shop',
-    description: 'Review your Flux3D order summary and complete payment through Razorpay Checkout.',
+    title: "Secure Payment — 3D Shop",
+    description:
+      "Review your Flux3D order summary and complete payment through Razorpay Checkout.",
     alternates: { canonical: absoluteUrl(`/3d-shop/payment/${orderId}`) },
     robots: {
       index: false,
       follow: false,
     },
-  }
+  };
 }
 
 async function getOrder(orderId: string) {
-  const supabase = createAdminSupabaseClient()
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
-    .from('shelf_orders')
-    .select('*')
-    .eq('id', orderId)
-    .maybeSingle()
+    .from("shelf_orders")
+    .select("*")
+    .eq("id", orderId)
+    .maybeSingle();
 
-  if (error) throw new Error(error.message)
-  return data ? mapShopOrderRow(data) : null
-}
-
-function getItemCount(order: ShopOrder) {
-  return order.items.reduce((count, item) => count + item.quantity, 0)
+  if (error) throw new Error(error.message);
+  return data ? mapShopOrderRow(data) : null;
 }
 
 function getPrimaryImage(order: ShopOrder) {
-  return order.items.find((item) => item.productThumbnail)?.productThumbnail ?? null
+  return (
+    order.items.find((item) => item.productThumbnail)?.productThumbnail ?? null
+  );
 }
 
 const SHOP_GOLD_THEME = {
-  accent: 'var(--shop-gold)',
-  accentFaint: 'var(--shop-gold-faint)',
-  accentBorder: 'var(--shop-border-gold)',
-  accentText: 'var(--shop-gold)',
-  buttonBg: 'var(--shop-text-primary)',
-  buttonHoverBg: 'var(--shop-text-secondary)',
-  buttonShadow: 'var(--shop-shadow-sm)',
-  containerBorder: 'var(--shop-border-light)',
-  containerBg: '#ffffff',
-  containerRadius: 'var(--shop-radius-xl)',
-}
+  accent: "#d4af37",
+  accentFaint: "rgba(212, 175, 55, 0.05)",
+  accentBorder: "rgba(212, 175, 55, 0.15)",
+  accentText: "#d4af37",
+  buttonBg: "#d4af37",
+  buttonHoverBg: "#b5952f",
+  buttonShadow: "0 8px 32px rgba(212, 175, 55, 0.2)",
+  containerBorder: "rgba(255, 255, 255, 0.06)",
+  containerBg: "rgba(10, 10, 10, 0.6)",
+  containerRadius: "24px",
+};
 
-export default async function RazorpayShopPaymentPage({ params, searchParams }: PaymentPageProps) {
-  const { orderId } = await params
-  const { token: guestToken } = await searchParams
-  const auth = await getCurrentUserProfile()
-  const order = await getOrder(orderId)
-  if (!order) notFound()
+export default async function RazorpayShopPaymentPage({
+  params,
+  searchParams,
+}: PaymentPageProps) {
+  const { orderId } = await params;
+  const { token: guestToken } = await searchParams;
+  const auth = await getCurrentUserProfile();
+  const order = await getOrder(orderId);
+  if (!order) notFound();
 
   // Authorization: logged-in orders require the owner; guest orders (no
   // user_id) require the guest access token issued at checkout.
-  let customerEmail = auth?.profile.email ?? ''
+  let customerEmail = auth?.profile.email ?? "";
   if (order.user_id) {
     if (!auth || auth.profile.id !== order.user_id) {
-      redirect(`/login?next=/3d-shop/payment/${encodeURIComponent(orderId)}`)
+      redirect(`/login?next=/3d-shop/payment/${encodeURIComponent(orderId)}`);
     }
   } else {
-    const access = await verifyGuestOrderAccess(order.id, guestToken ?? '')
-    if (!access) notFound()
+    const access = await verifyGuestOrderAccess(order.id, guestToken ?? "");
+    if (!access) notFound();
     customerEmail =
-      (order.payment_snapshot && typeof order.payment_snapshot === 'object'
-        ? String((order.payment_snapshot as Record<string, unknown>).guestEmail ?? '')
-        : '') ||
-      order.shipping_address.phone
+      (order.payment_snapshot && typeof order.payment_snapshot === "object"
+        ? String(
+            (order.payment_snapshot as Record<string, unknown>).guestEmail ??
+              "",
+          )
+        : "") || order.shipping_address.phone;
   }
 
-  const isGuestOrder = !order.user_id
+  const isGuestOrder = !order.user_id;
 
-  if (order.payment_status === 'paid') {
+  if (order.payment_status === "paid") {
     redirect(
       isGuestOrder
-        ? `/3d-shop/track/${order.id}?token=${encodeURIComponent(guestToken ?? '')}`
-        : `/3d-shop/order/${order.id}`
-    )
+        ? `/3d-shop/track/${order.id}?token=${encodeURIComponent(guestToken ?? "")}`
+        : `/3d-shop/order/${order.id}`,
+    );
   }
 
-  const settings = await getSettings()
-  const profile = buildPublicBusinessProfile(settings)
-  const itemCount = getItemCount(order)
-  const primaryImage = getPrimaryImage(order)
-
-  const orderStats = [
-    { label: 'Order', value: order.order_number, icon: BadgeCheck },
-    { label: 'Items', value: `${itemCount} item${itemCount === 1 ? '' : 's'}`, icon: PackageCheck },
-    { label: 'Amount', value: formatShopPrice(order.total_amount), icon: CreditCard },
-    { label: 'Delivery', value: order.shipping_address.city, icon: MapPin },
-  ]
+  const settings = await getSettings();
+  const profile = buildPublicBusinessProfile(settings);
+  const primaryImage = getPrimaryImage(order);
 
   return (
     <ShopShell transparentNav>
-      <main className="px-4 pb-20 pt-5 md:px-8 lg:px-16">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-8">
-            <nav className="mb-4 flex flex-wrap items-center gap-2 text-sm text-[var(--shop-text-muted)]">
-              <Link href="/" className="transition hover:text-[var(--shop-text-primary)]">Home</Link>
-              <span>/</span>
-              <Link href="/3d-shop" className="transition hover:text-[var(--shop-text-primary)]">3D Shop</Link>
-              <span>/</span>
-              <span className="text-[var(--shop-text-primary)]">Payment</span>
-            </nav>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--shop-gold)]">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Secure payment
-            </div>
-            <h1 className="font-[var(--shop-font-heading)] mt-4 text-[clamp(2rem,6vw,3.5rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-[var(--shop-text-primary)]">
-              Complete your payment.
-            </h1>
-            <p className="mt-3 max-w-2xl text-base leading-8 text-[var(--shop-text-secondary)]">
-              The final amount is calculated on the server from the live order record and cannot be changed from the browser.
-            </p>
-          </div>
+      <main className="min-h-screen bg-[#050505] text-white selection:bg-[#d4af37]/30">
+        <div className="relative w-full h-[45vh] lg:h-[50vh]">
+          {primaryImage ? (
+            <>
+              <Image
+                src={primaryImage}
+                alt={order.items[0]?.productName || "3D Shop order item"}
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent" />
+            </>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-b from-neutral-900 to-[#050505]" />
+          )}
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-            <section className="space-y-6">
-              <div className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white p-5 shadow-[var(--shop-shadow-sm)]">
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  {orderStats.map((stat) => {
-                    const Icon = stat.icon
-                    return (
-                      <div key={stat.label} className="rounded-[var(--shop-radius-md)] border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-4 shadow-[var(--shop-shadow-sm)]">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--shop-text-muted)]">{stat.label}</div>
-                        <div className="mt-2 flex items-center gap-2">
-                          <Icon className="h-4 w-4 text-[var(--shop-gold)]" />
-                          <span className="break-all text-lg font-black text-[var(--shop-text-primary)]">{stat.value}</span>
-                        </div>
-                      </div>
-                    )
-                  })}
+          <div className="absolute bottom-10 left-0 right-0 px-6 text-center">
+            <h1 className="font-light tracking-[0.25em] uppercase text-[10px] text-neutral-400 mb-3">
+              Checkout
+            </h1>
+            <div className="text-3xl md:text-4xl font-normal tracking-wide text-white">
+              {order.items[0]?.productName || "Complete Payment"}
+            </div>
+          </div>
+        </div>
+
+        <div className="relative z-10 px-4 md:px-8 pb-24 mx-auto max-w-5xl -mt-2 lg:grid lg:grid-cols-[1fr_1.2fr] lg:gap-16 lg:-mt-12 lg:items-start">
+          <section className="space-y-6 hidden lg:block">
+            <div className="backdrop-blur-2xl bg-white/5 border border-white/5 rounded-[24px] p-8 shadow-2xl">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-[10px] uppercase tracking-[0.2em] text-neutral-400 font-bold">
+                  Shipping Details
+                </h3>
+                <MapPin className="w-4 h-4 text-[#d4af37]" />
+              </div>
+              <div className="space-y-6">
+                <div className="flex justify-between items-start">
+                  <span className="text-sm text-neutral-500 tracking-wide">
+                    Recipient
+                  </span>
+                  <span className="text-sm font-medium text-white text-right tracking-wide">
+                    {order.shipping_address.name}
+                  </span>
+                </div>
+                <div className="flex justify-between items-start">
+                  <span className="text-sm text-neutral-500 tracking-wide">
+                    Address
+                  </span>
+                  <span className="text-sm font-medium text-white text-right max-w-[200px] leading-relaxed tracking-wide">
+                    {order.shipping_address.line1}
+                    {order.shipping_address.line2
+                      ? `, ${order.shipping_address.line2}`
+                      : ""}
+                    <br />
+                    {order.shipping_address.city},{" "}
+                    {order.shipping_address.state}{" "}
+                    {order.shipping_address.pincode}
+                  </span>
                 </div>
               </div>
+            </div>
 
-              <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-                <div className="overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)]">
-                  {primaryImage ? (
-                    <div className="relative aspect-[16/10] bg-[var(--shop-bg-muted)]">
-                      <Image
-                        src={primaryImage}
-                        alt={order.items[0]?.productName || '3D Shop order item'}
-                        fill
-                        sizes="(min-width: 1024px) 50vw, 100vw"
-                        className="object-cover"
-                      />
-                      <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_40%,rgba(15,23,42,0.75))]" />
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <div className="text-lg font-bold text-white">{order.items[0]?.productName}</div>
-                        <div className="mt-1 text-sm font-semibold text-white/80">{order.items[0]?.variantLabel}</div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid aspect-[16/10] place-items-center bg-gradient-to-br from-[var(--shop-gold-faint)] to-[var(--shop-bg-soft)]">
-                      <div className="text-sm font-bold text-[var(--shop-gold)]">Flux3D production slot</div>
+            <Link
+              href="/3d-shop/cart"
+              className="inline-flex items-center gap-3 text-xs font-semibold uppercase tracking-widest text-neutral-500 transition hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Return to Cart
+            </Link>
+          </section>
+
+          <aside
+            className="mt-6 lg:mt-0"
+            style={
+              {
+                "--shop-text-primary": "#ffffff",
+                "--shop-text-muted": "#a3a3a3",
+                "--shop-bg-base": "#050505",
+              } as React.CSSProperties
+            }
+          >
+            <PaymentPageClient
+              orderId={order.id}
+              createOrderEndpoint="/api/payments/razorpay/create-order"
+              verifyEndpoint="/api/payments/razorpay/verify"
+              statusEndpoint={`/api/payments/status/shop_order/${order.id}`}
+              successHref={
+                isGuestOrder
+                  ? `/3d-shop/track/${order.id}?token=${encodeURIComponent(guestToken ?? "")}`
+                  : `/3d-shop/order/${order.id}?payment=success`
+              }
+              orderNumber={order.order_number}
+              amountPaise={Math.round(Number(order.total_amount) * 100)}
+              currency="INR"
+              title="Payment"
+              subtitle=""
+              supportEmail={profile.supportEmail}
+              supportPhone={profile.supportPhone}
+              authHeaders={
+                isGuestOrder
+                  ? { "x-guest-order-token": guestToken ?? "" }
+                  : undefined
+              }
+              customer={{
+                name: order.shipping_address.name,
+                email: customerEmail,
+                contact: order.shipping_address.phone,
+              }}
+              orderSummary={
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-400 font-light tracking-wide">
+                      Subtotal
+                    </span>
+                    <span className="text-white tracking-wide">
+                      {formatShopPrice(order.subtotal)}
+                    </span>
+                  </div>
+                  {order.discount_amount > 0 && (
+                    <div className="flex items-center justify-between text-sm text-[#d4af37]">
+                      <span className="font-light tracking-wide">Discount</span>
+                      <span className="tracking-wide">
+                        -{formatShopPrice(order.discount_amount)}
+                      </span>
                     </div>
                   )}
-                </div>
-
-                <div className="space-y-4 rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white p-5 shadow-[var(--shop-shadow-sm)]">
-                  <div className="flex items-center gap-3">
-                    <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--shop-gold-faint)] text-[var(--shop-gold)]">
-                      <User className="h-5 w-5" />
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-400 font-light tracking-wide">
+                      Shipping
                     </span>
-                    <div className="text-xs font-black uppercase tracking-[0.16em] text-[var(--shop-text-muted)]">Checkout details</div>
+                    <span className="text-white tracking-wide">
+                      {order.shipping_charge === 0
+                        ? "Complimentary"
+                        : formatShopPrice(order.shipping_charge)}
+                    </span>
                   </div>
-                  <div className="grid gap-4 text-sm text-[var(--shop-text-secondary)]">
-                    <div className="flex items-start justify-between gap-4">
-                      <span>Customer</span>
-                      <span className="text-right font-semibold text-[var(--shop-text-primary)]">{order.shipping_address.name}</span>
-                    </div>
-                    <div className="flex items-start justify-between gap-4">
-                      <span>Address</span>
-                      <span className="max-w-[240px] text-right font-semibold text-[var(--shop-text-primary)]">
-                        {order.shipping_address.line1}
-                        {order.shipping_address.line2 ? `, ${order.shipping_address.line2}` : ''}
-                        {`, ${order.shipping_address.city}, ${order.shipping_address.state} ${order.shipping_address.pincode}`}
-                      </span>
-                    </div>
-                    <div className="flex items-start justify-between gap-4">
-                      <span>Support</span>
-                      <span className="text-right font-semibold text-[var(--shop-text-primary)]">
-                        <a href={`mailto:${profile.supportEmail}`} className="text-[var(--shop-gold)] underline-offset-4 hover:underline">{profile.supportEmail}</a>
-                      </span>
-                    </div>
-                    <div className="flex items-start justify-between gap-4">
-                      <span>Phone</span>
-                      <span className="text-right font-semibold text-[var(--shop-text-primary)]">{profile.supportPhone}</span>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] p-4 text-sm leading-7 text-[var(--shop-gold)]">
-                    Razorpay Standard Checkout will open in a secure modal. Flux3D only receives the order reference and verification data.
+                  <div className="flex items-center justify-between pt-5 mt-5 border-t border-white/10">
+                    <span className="text-xs font-semibold tracking-widest uppercase text-neutral-400">
+                      Total
+                    </span>
+                    <span className="text-2xl font-light tracking-wider text-white">
+                      {formatShopPrice(order.total_amount)}
+                    </span>
                   </div>
                 </div>
-              </div>
+              }
+              themeColor="#d4af37"
+              theme={SHOP_GOLD_THEME}
+            />
+          </aside>
 
-              <Link
-                href="/3d-shop/cart"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--shop-text-secondary)] transition hover:text-[var(--shop-gold)]"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to cart
-              </Link>
-            </section>
-
-            <aside className="h-fit lg:sticky lg:top-28">
-              <PaymentPageClient
-                orderId={order.id}
-                createOrderEndpoint="/api/payments/razorpay/create-order"
-                verifyEndpoint="/api/payments/razorpay/verify"
-                statusEndpoint={`/api/payments/status/shop_order/${order.id}`}
-                successHref={
-                  isGuestOrder
-                    ? `/3d-shop/track/${order.id}?token=${encodeURIComponent(guestToken ?? '')}`
-                    : `/3d-shop/order/${order.id}?payment=success`
-                }
-                orderNumber={order.order_number}
-                amountPaise={Math.round(Number(order.total_amount) * 100)}
-                currency="INR"
-                title="Pay securely with Razorpay"
-                subtitle="Verify the order once, then complete checkout in a trusted payment modal."
-                supportEmail={profile.supportEmail}
-                supportPhone={profile.supportPhone}
-                authHeaders={isGuestOrder ? { 'x-guest-order-token': guestToken ?? '' } : undefined}
-                customer={{
-                  name: order.shipping_address.name,
-                  email: customerEmail,
-                  contact: order.shipping_address.phone,
-                }}
-                orderSummary={(
-                  <div className="grid gap-3 text-sm text-[var(--shop-text-secondary)]">
-                    <div className="flex items-center justify-between">
-                      <span>Subtotal</span>
-                      <span className="font-semibold text-[var(--shop-text-primary)]">{formatShopPrice(order.subtotal)}</span>
-                    </div>
-                    {order.discount_amount > 0 && (
-                      <div className="flex items-center justify-between text-emerald-700">
-                        <span>Discount{order.coupon_code ? ` (${order.coupon_code})` : ''}</span>
-                        <span className="font-semibold">-{formatShopPrice(order.discount_amount)}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between">
-                      <span>Shipping</span>
-                      <span className="font-semibold text-[var(--shop-text-primary)]">{order.shipping_charge === 0 ? 'Free' : formatShopPrice(order.shipping_charge)}</span>
-                    </div>
-                    <div className="flex items-center justify-between border-t border-[var(--shop-border-light)] pt-3 text-base">
-                      <span className="font-black text-[var(--shop-text-primary)]">Total</span>
-                      <span className="text-lg font-black text-[var(--shop-text-primary)]">{formatShopPrice(order.total_amount)}</span>
-                    </div>
-                  </div>
-                )}
-                themeColor={settings.primaryColor || settings.secondaryColor || '#c9a962'}
-                theme={SHOP_GOLD_THEME}
-              />
-            </aside>
+          <div className="mt-12 text-center lg:hidden">
+            <Link
+              href="/3d-shop/cart"
+              className="inline-flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-neutral-500 transition hover:text-white"
+            >
+              <ArrowLeft className="h-3 w-3" />
+              Return to Cart
+            </Link>
           </div>
         </div>
       </main>
     </ShopShell>
-  )
+  );
 }
