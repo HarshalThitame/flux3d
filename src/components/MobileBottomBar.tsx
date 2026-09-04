@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -11,7 +12,6 @@ import {
   FileText,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useProfile } from "@/hooks/useProfile";
 import { getShopCartTotals, useShopCartStore } from "@/stores/shopCartStore";
 
 type BarItem = {
@@ -40,10 +40,39 @@ const BAR_ITEMS: BarItem[] = [
 
 export default function MobileBottomBar() {
   const pathname = usePathname() ?? "/";
-  const { profile, loading } = useProfile(null, { enabled: true });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const loading = isAuthenticated === null;
   const shopCartCount = useShopCartStore(
     (state) => getShopCartTotals(state).itemCount,
   );
+
+  useEffect(() => {
+    let mounted = true;
+    let subscription: { unsubscribe: () => void } | undefined;
+
+    const initAuth = async () => {
+      const { getSupabaseBrowserClient } =
+        await import("@/lib/supabase/client");
+      const supabase = getSupabaseBrowserClient();
+
+      const { data } = await supabase.auth.getUser();
+      if (mounted) setIsAuthenticated(!!data.user);
+
+      const { data: subData } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          if (mounted) setIsAuthenticated(!!session?.user);
+        },
+      );
+      subscription = subData.subscription;
+    };
+
+    initAuth();
+
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe();
+    };
+  }, []);
 
   // Never render on admin or auth screens
   if (
@@ -58,7 +87,7 @@ export default function MobileBottomBar() {
     item.match.some((prefix) => pathname.startsWith(prefix));
 
   // 4th slot: Orders when logged in, Login when guest
-  const accountItem: BarItem = profile
+  const accountItem: BarItem = isAuthenticated
     ? {
         href: "/3d-shop/orders",
         label: "Orders",
@@ -101,7 +130,7 @@ export default function MobileBottomBar() {
           );
         })}
         {/* Dynamic 4th tab */}
-        {loading && !profile ? (
+        {loading ? (
           <div className="flex min-h-[56px] min-w-[64px] flex-1 flex-col items-center justify-center gap-1.5 opacity-50">
             <div className="h-5 w-5 animate-pulse rounded-full bg-gray-200" />
             <div className="h-1.5 w-6 animate-pulse rounded-full bg-gray-200" />
