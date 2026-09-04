@@ -399,10 +399,19 @@ function ContactCard({
 }
 
 function OrderCard({ msg, isOutgoing }: { msg: Message; isOutgoing: boolean }) {
-  const items = Array.isArray(msg.interactive_payload?.product_items)
-    ? msg.interactive_payload.product_items
+  let payload = msg.interactive_payload;
+  if (typeof payload === "string") {
+    try {
+      payload = JSON.parse(payload);
+    } catch (e) {
+      // ignore parse errors
+    }
+  }
+
+  const items = Array.isArray(payload?.product_items)
+    ? payload.product_items
     : [];
-  const note = msg.interactive_payload?.text as string | undefined;
+  const note = payload?.text as string | undefined;
 
   return (
     <div
@@ -878,35 +887,40 @@ export default function WhatsAppInboxClient() {
   return (
     <div
       data-lenis-prevent
-      className="flex flex-col h-[calc(100vh-8rem)] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg"
+      className="flex flex-col h-[calc(100dvh-6rem)] md:h-[calc(100dvh-8rem)] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg"
     >
       {/* Top Header Stats Banner */}
       {sessionStats && (
-        <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50/80 px-6 py-2.5 text-xs text-[#6F7192]">
-          <div className="flex items-center gap-6">
+        <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50/80 px-3 sm:px-6 py-2.5 text-xs text-[#6F7192] overflow-x-auto hide-scrollbar whitespace-nowrap">
+          <div className="flex items-center gap-3 sm:gap-6">
             <span className="flex items-center gap-1.5 font-medium text-[#0F1B3D]">
               <WhatsAppIcon className="h-3.5 w-3.5 text-[#6d28d9]" />
-              WhatsApp Enterprise Workspace
+              <span className="hidden sm:inline">
+                WhatsApp Enterprise Workspace
+              </span>
+              <span className="sm:hidden">Inbox</span>
             </span>
-            <span>
+            <span className="hidden sm:inline">
               Total Sessions:{" "}
               <strong className="text-[#0F1B3D]">
                 {sessionStats.totalSessions}
               </strong>
             </span>
             <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              24h Active:{" "}
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span className="hidden sm:inline">24h Active:</span>
               <strong className="text-emerald-600">
-                {sessionStats.active24h}
+                {sessionStats.active24h}{" "}
+                <span className="sm:hidden">Active</span>
               </strong>
             </span>
           </div>
           <button
             onClick={() => loadConversations()}
-            className="flex items-center gap-1 hover:text-[#6d28d9] transition"
+            className="flex items-center gap-1 hover:text-[#6d28d9] transition shrink-0 ml-4"
           >
-            <RefreshCw className="h-3 w-3" /> Refresh Inbox
+            <RefreshCw className="h-3 w-3" />{" "}
+            <span className="hidden sm:inline">Refresh Inbox</span>
           </button>
         </div>
       )}
@@ -1078,33 +1092,45 @@ export default function WhatsAppInboxClient() {
                       <User className="h-4 w-4" />
                     )}
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-sm font-bold text-[#0F1B3D] flex items-center gap-2">
-                      {contactName || activeSender}
+                      <span className="truncate max-w-[100px] sm:max-w-[200px]">
+                        {contactName || activeSender}
+                      </span>
                       {profileId && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                          <ShieldCheck className="h-3 w-3" /> Account Linked
+                        <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                          <ShieldCheck className="h-3 w-3" />{" "}
+                          <span className="hidden sm:inline">
+                            Account Linked
+                          </span>
                         </span>
                       )}
                     </h3>
-                    <p className="text-[11px] text-gray-400">
+                    <p className="text-[11px] text-gray-400 truncate">
                       {contactName ? activeSender : "WhatsApp Contact"}
                     </p>
                   </div>
                 </div>
 
                 {/* Header Actions & 24h Window Indicator */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 ml-2">
                   {windowActive ? (
-                    <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-[11px] font-semibold text-emerald-700">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                      24h Window Active (
-                      {Math.floor(remainingWindowMinutes / 60)}h{" "}
-                      {remainingWindowMinutes % 60}m)
+                    <span className="flex items-center gap-1 sm:gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2 sm:px-3 py-1 text-[10px] sm:text-[11px] font-semibold text-emerald-700">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                      <span className="hidden sm:inline">
+                        24h Window Active (
+                        {Math.floor(remainingWindowMinutes / 60)}h{" "}
+                        {remainingWindowMinutes % 60}m)
+                      </span>
+                      <span className="sm:hidden">Active</span>
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-[11px] font-semibold text-amber-700">
-                      <AlertCircle className="h-3.5 w-3.5" /> 24h Window Expired
+                    <span className="flex items-center gap-1 sm:gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-2 sm:px-3 py-1 text-[10px] sm:text-[11px] font-semibold text-amber-700">
+                      <AlertCircle className="h-3 sm:h-3.5 w-3 sm:w-3.5 shrink-0" />
+                      <span className="hidden sm:inline">
+                        24h Window Expired
+                      </span>
+                      <span className="sm:hidden">Expired</span>
                     </span>
                   )}
 
