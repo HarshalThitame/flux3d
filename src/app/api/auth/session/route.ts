@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,9 @@ export async function GET() {
     // Force rewrite all supabase cookies to remove HttpOnly for existing users
     const cookieStore = await cookies();
     const allCookies = cookieStore.getAll();
-    const supabaseCookies = allCookies.filter((c) => c.name.startsWith("sb-"));
+    const supabaseCookies = allCookies.filter(
+      (c: { name: string; value: string }) => c.name.startsWith("sb-"),
+    );
 
     for (const cookie of supabaseCookies) {
       cookieStore.set({
