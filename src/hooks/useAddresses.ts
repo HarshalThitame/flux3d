@@ -1,124 +1,147 @@
-'use client'
+"use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { getSupabaseBrowserClient } from '@/lib/supabase/client'
-import type { AddressRow } from '../../types/database'
-
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { AddressRow } from "../../types/database";
+import type { AuthChangeEvent } from "@supabase/supabase-js";
 export type AddressInput = {
-  full_name: string
-  phone: string
-  address_line_1: string
-  address_line_2?: string | null
-  city: string
-  state: string
-  pincode: string
-  landmark?: string | null
-  country?: string
-  is_default?: boolean
-}
+  full_name: string;
+  phone: string;
+  address_line_1: string;
+  address_line_2?: string | null;
+  city: string;
+  state: string;
+  pincode: string;
+  landmark?: string | null;
+  country?: string;
+  is_default?: boolean;
+};
 
 type UseAddressesResult = {
-  addresses: AddressRow[]
-  defaultAddress: AddressRow | null
-  loading: boolean
-  error: string | null
-  refetch: () => Promise<void>
-  addAddress: (input: AddressInput) => Promise<void>
-  updateAddress: (id: string, input: Partial<AddressInput>) => Promise<void>
-  deleteAddress: (id: string) => Promise<void>
-  setDefault: (id: string) => Promise<void>
-}
+  addresses: AddressRow[];
+  defaultAddress: AddressRow | null;
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+  addAddress: (input: AddressInput) => Promise<void>;
+  updateAddress: (id: string, input: Partial<AddressInput>) => Promise<void>;
+  deleteAddress: (id: string) => Promise<void>;
+  setDefault: (id: string) => Promise<void>;
+};
 
 async function fetchAddressesForCurrentUser() {
-  const supabase = getSupabaseBrowserClient()
-  const { data: authData, error: authError } = await supabase.auth.getUser()
-  if (authError) throw authError
-  const user = authData.user
+  const supabase = getSupabaseBrowserClient();
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  const user = authData.user;
   if (!user) {
-    return { userId: null, addresses: [] as AddressRow[] }
+    return { userId: null, addresses: [] as AddressRow[] };
   }
 
   const { data, error: addressError } = await supabase
-    .from('addresses')
-    .select('id, user_id, full_name, phone, address_line_1, address_line_2, city, state, pincode, country, landmark, is_default, created_at, updated_at')
-    .eq('user_id', user.id)
-    .order('is_default', { ascending: false })
-    .order('updated_at', { ascending: false })
-    .order('created_at', { ascending: false })
+    .from("addresses")
+    .select(
+      "id, user_id, full_name, phone, address_line_1, address_line_2, city, state, pincode, country, landmark, is_default, created_at, updated_at",
+    )
+    .eq("user_id", user.id)
+    .order("is_default", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .order("created_at", { ascending: false });
 
-  if (addressError) throw addressError
+  if (addressError) throw addressError;
 
   return {
     userId: user.id,
     addresses: (data ?? []) as AddressRow[],
-  }
+  };
 }
 
 export function useAddresses(): UseAddressesResult {
-  const [userId, setUserId] = useState<string | null>(null)
-  const [addresses, setAddresses] = useState<AddressRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null);
+  const [addresses, setAddresses] = useState<AddressRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const defaultAddress = useMemo(
-    () => addresses.find((address) => address.is_default) ?? addresses[0] ?? null,
-    [addresses]
-  )
+    () =>
+      addresses.find((address) => address.is_default) ?? addresses[0] ?? null,
+    [addresses],
+  );
 
   const loadAddresses = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
-      const next = await fetchAddressesForCurrentUser()
-      setUserId(next.userId)
-      setAddresses(next.addresses)
+      const next = await fetchAddressesForCurrentUser();
+      setUserId(next.userId);
+      setAddresses(next.addresses);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Failed to load addresses.')
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Failed to load addresses.",
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    let active = true
+    let active = true;
+    const supabase = getSupabaseBrowserClient();
 
     async function bootstrap() {
       try {
-        const next = await fetchAddressesForCurrentUser()
-        if (!active) return
-        setUserId(next.userId)
-        setAddresses(next.addresses)
+        setLoading(true);
+        const next = await fetchAddressesForCurrentUser();
+        if (!active) return;
+        setUserId(next.userId);
+        setAddresses(next.addresses);
       } catch (loadError) {
-        if (!active) return
-        setError(loadError instanceof Error ? loadError.message : 'Failed to load addresses.')
+        if (!active) return;
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Failed to load addresses.",
+        );
       } finally {
         if (active) {
-          setLoading(false)
+          setLoading(false);
         }
       }
     }
 
-    void bootstrap()
+    void bootstrap();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event: AuthChangeEvent) => {
+      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+        void bootstrap();
+      }
+    });
 
     return () => {
-      active = false
-    }
-  }, [])
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   async function requireUserId() {
-    if (userId) return userId
-    const supabase = getSupabaseBrowserClient()
-    const { data, error: authError } = await supabase.auth.getUser()
-    if (authError) throw authError
-    if (!data.user) throw new Error('You must be signed in to manage addresses.')
-    setUserId(data.user.id)
-    return data.user.id
+    if (userId) return userId;
+    const supabase = getSupabaseBrowserClient();
+    const { data, error: authError } = await supabase.auth.getUser();
+    if (authError) throw authError;
+    if (!data.user)
+      throw new Error("You must be signed in to manage addresses.");
+    setUserId(data.user.id);
+    return data.user.id;
   }
 
   async function addAddress(input: AddressInput) {
-    const id = await requireUserId()
-    const supabase = getSupabaseBrowserClient()
-    const optimisticId = crypto.randomUUID()
+    const id = await requireUserId();
+    const supabase = getSupabaseBrowserClient();
+    const optimisticId = crypto.randomUUID();
     const optimistic: AddressRow = {
       id: optimisticId,
       user_id: id,
@@ -129,54 +152,69 @@ export function useAddresses(): UseAddressesResult {
       city: input.city,
       state: input.state,
       pincode: input.pincode,
-      country: input.country ?? 'India',
+      country: input.country ?? "India",
       landmark: input.landmark ?? null,
       is_default: Boolean(input.is_default),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    }
-    setAddresses((current) => [optimistic, ...current.map((address) => input.is_default ? { ...address, is_default: false } : address)])
-    const { error: insertError } = await supabase.from('addresses').insert({ user_id: id, ...input })
+    };
+    setAddresses((current) => [
+      optimistic,
+      ...current.map((address) =>
+        input.is_default ? { ...address, is_default: false } : address,
+      ),
+    ]);
+    const { error: insertError } = await supabase
+      .from("addresses")
+      .insert({ user_id: id, ...input });
     if (insertError) {
-      setAddresses((current) => current.filter((address) => address.id !== optimisticId))
-      throw insertError
+      setAddresses((current) =>
+        current.filter((address) => address.id !== optimisticId),
+      );
+      throw insertError;
     }
-    await loadAddresses()
+    await loadAddresses();
   }
 
   async function updateAddress(id: string, input: Partial<AddressInput>) {
-    const supabase = getSupabaseBrowserClient()
-    const previous = addresses
+    const supabase = getSupabaseBrowserClient();
+    const previous = addresses;
     setAddresses((current) =>
       current.map((address) =>
         address.id === id
           ? { ...address, ...input }
           : input.is_default
             ? { ...address, is_default: false }
-            : address
-      )
-    )
-    const { error: updateError } = await supabase.from('addresses').update(input).eq('id', id)
+            : address,
+      ),
+    );
+    const { error: updateError } = await supabase
+      .from("addresses")
+      .update(input)
+      .eq("id", id);
     if (updateError) {
-      setAddresses(previous)
-      throw updateError
+      setAddresses(previous);
+      throw updateError;
     }
-    await loadAddresses()
+    await loadAddresses();
   }
 
   async function deleteAddress(id: string) {
-    const supabase = getSupabaseBrowserClient()
-    const previous = addresses
-    setAddresses((current) => current.filter((address) => address.id !== id))
-    const { error: deleteError } = await supabase.from('addresses').delete().eq('id', id)
+    const supabase = getSupabaseBrowserClient();
+    const previous = addresses;
+    setAddresses((current) => current.filter((address) => address.id !== id));
+    const { error: deleteError } = await supabase
+      .from("addresses")
+      .delete()
+      .eq("id", id);
     if (deleteError) {
-      setAddresses(previous)
-      throw deleteError
+      setAddresses(previous);
+      throw deleteError;
     }
   }
 
   async function setDefault(id: string) {
-    await updateAddress(id, { is_default: true })
+    await updateAddress(id, { is_default: true });
   }
 
   return {
@@ -189,5 +227,5 @@ export function useAddresses(): UseAddressesResult {
     updateAddress,
     deleteAddress,
     setDefault,
-  }
+  };
 }
