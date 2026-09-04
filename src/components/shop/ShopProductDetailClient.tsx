@@ -660,7 +660,7 @@ export default function ShopProductDetailClient({
   useEffect(() => {
     trackMetaEvent("ViewContent", {
       content_ids: product.skus.map((s) => s.catalog_retailer_id ?? s.sku_code),
-      content_type: "product_group",
+      content_type: "product",
       contents: product.skus.map((s) => ({
         id: s.catalog_retailer_id ?? s.sku_code,
         quantity: 1,

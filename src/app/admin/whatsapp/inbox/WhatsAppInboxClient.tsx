@@ -24,6 +24,7 @@ import {
   Pencil,
 } from "lucide-react";
 import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import AdminToast, {
   type AdminToastState,
 } from "@/components/admin/AdminToast";
@@ -62,6 +63,8 @@ type Message = {
     | "sticker"
     | "stl"
     | "template"
+    | "order"
+    | "interactive"
     | null;
   media_url: string | null;
   media_filename: string | null;
@@ -263,6 +266,8 @@ export default function WhatsAppInboxClient() {
     }
   }
 
+
+
   useEffect(() => {
     async function load() {
       await Promise.all([loadConversations(), loadQuickReplies()]);
@@ -273,6 +278,7 @@ export default function WhatsAppInboxClient() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
 
   const loadMessages = useCallback(async (sender: string) => {
     setMessagesLoading(true);
@@ -359,7 +365,7 @@ export default function WhatsAppInboxClient() {
   }
 
   async function sendReply() {
-    if ((!replyText.trim() && !selectedFile) || !activeSender || sending)
+    if ((!replyText.trim() && !selectedFile) || !activeSender || sending || !isWindowOpen)
       return;
     setSending(true);
     try {
@@ -462,6 +468,45 @@ export default function WhatsAppInboxClient() {
     }
   }
 
+  const activeSenderRef = useRef<string | null>(null);
+  useEffect(() => {
+    activeSenderRef.current = activeSender;
+  }, [activeSender]);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    const channel = supabase
+      .channel("whatsapp-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "whatsapp_messages" },
+        (payload: any) => {
+          const newMsg = payload.new as { sender?: string };
+          if (newMsg.sender) {
+            if (activeSenderRef.current === newMsg.sender) {
+              loadMessages(newMsg.sender);
+            }
+            loadConversations();
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "whatsapp_messages" },
+        (payload: any) => {
+          const updatedMsg = payload.new as { sender?: string };
+          if (updatedMsg.sender && updatedMsg.sender === activeSenderRef.current) {
+             loadMessages(activeSenderRef.current);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadMessages, loadConversations]);
+
   const filteredConversations = conversations.filter((c) => {
     const matchesSearch =
       c.sender.includes(search) ||
@@ -471,6 +516,17 @@ export default function WhatsAppInboxClient() {
     if (filterTab === "archived") return c.isArchived;
     return !c.isArchived;
   });
+
+
+  const lastIncomingDate = messages
+    .filter((m) => m.direction === "incoming" && m.created_at)
+    .map((m) => new Date(m.created_at!).getTime())
+    .sort((a, b) => b - a)[0] || 0;
+  
+  // If we have an incoming message, use it. Otherwise fallback to the backend's windowActive flag.
+  const isWindowOpen = lastIncomingDate > 0 
+    ? (lastIncomingDate > Date.now() - 24 * 60 * 60 * 1000)
+    : windowActive;
 
   if (loading) {
     return (
@@ -646,7 +702,7 @@ export default function WhatsAppInboxClient() {
 
         {/* Column 2: Active Chat Stream & Composer (Middle) */}
         <div
-          className={`flex flex-1 flex-col bg-gray-50 ${!activeSender ? "hidden md:flex" : "flex"}`}
+          className={`flex flex-1 flex-col bg-gray-50 ${!activeSender || (activeSender && showDrawer) ? "hidden md:flex" : "flex"}`}
         >
           {!activeSender ? (
             <div className="flex flex-1 items-center justify-center p-8">
@@ -757,6 +813,7 @@ export default function WhatsAppInboxClient() {
                           }`}
                         >
                           {/* Render Media Cards */}
+
                           {msg.media_type && (
                             <div className="mb-2">
                               {msg.media_type === "image" && msg.media_url && (
@@ -947,12 +1004,13 @@ export default function WhatsAppInboxClient() {
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Type WhatsApp reply... (Press Enter to send)"
+                    placeholder={isWindowOpen ? "Type WhatsApp reply... (Press Enter to send)" : "24h window expired. Use a template."}
+                    disabled={!isWindowOpen}
                     className="flex-1 rounded-xl border border-gray-200 bg-gray-50 p-2.5 text-xs text-[#0F1B3D] outline-none focus:border-[#6d28d9]/40 focus:bg-white resize-none"
                   />
                   <button
                     type="button"
-                    disabled={sending || (!replyText.trim() && !selectedFile)}
+                    disabled={sending || (!replyText.trim() && !selectedFile) || !isWindowOpen}
                     onClick={sendReply}
                     className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#6d28d9] text-white transition hover:bg-purple-700 disabled:opacity-40"
                   >
@@ -972,7 +1030,7 @@ export default function WhatsAppInboxClient() {
         {activeSender && showDrawer && (
           <div
             data-lenis-prevent
-            className="w-[320px] shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-y-auto"
+            className={`w-full md:w-[320px] shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-y-auto ${!showDrawer ? "hidden md:flex" : "flex"}`}
           >
             <div className="border-b border-gray-200 p-4">
               <div className="flex items-center justify-between">

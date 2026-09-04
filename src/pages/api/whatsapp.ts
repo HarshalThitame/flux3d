@@ -539,6 +539,22 @@ async function logWhatsAppMessage(
 ) {
   if (!supabase) return;
 
+  if (entry.metaMessageId) {
+    const { data: existing } = await supabase
+      .from("whatsapp_messages")
+      .select("id")
+      .eq("meta_message_id", entry.metaMessageId)
+      .limit(1)
+      .single();
+
+    if (existing) {
+      console.log(
+        `[whatsapp] Message with meta_message_id ${entry.metaMessageId} already exists. Skipping insert.`,
+      );
+      return;
+    }
+  }
+
   const { error } = await supabase.from("whatsapp_messages").insert({
     user_id: entry.userId,
     sender: entry.sender,

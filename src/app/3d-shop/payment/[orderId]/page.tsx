@@ -56,15 +56,15 @@ function getPrimaryImage(order: ShopOrder) {
 }
 
 const SHOP_GOLD_THEME = {
-  accent: "#d4af37",
-  accentFaint: "rgba(212, 175, 55, 0.05)",
-  accentBorder: "rgba(212, 175, 55, 0.15)",
-  accentText: "#d4af37",
-  buttonBg: "#d4af37",
-  buttonHoverBg: "#b5952f",
-  buttonShadow: "0 8px 32px rgba(212, 175, 55, 0.2)",
-  containerBorder: "rgba(255, 255, 255, 0.06)",
-  containerBg: "rgba(10, 10, 10, 0.6)",
+  accent: "#c9a962",
+  accentFaint: "rgba(201, 169, 98, 0.1)",
+  accentBorder: "rgba(201, 169, 98, 0.2)",
+  accentText: "#a18342",
+  buttonBg: "#111111",
+  buttonHoverBg: "#333333",
+  buttonShadow: "0 8px 32px rgba(0, 0, 0, 0.15)",
+  containerBorder: "rgba(0, 0, 0, 0.08)",
+  containerBg: "rgba(255, 255, 255, 0.8)",
   containerRadius: "24px",
 };
 
@@ -113,7 +113,7 @@ export default async function RazorpayShopPaymentPage({
 
   return (
     <ShopShell transparentNav>
-      <main className="min-h-screen bg-[#050505] text-white selection:bg-[#d4af37]/30">
+      <main className="min-h-screen bg-[#fafafa] text-[#111111] selection:bg-[#c9a962]/30">
         <div className="relative w-full h-[45vh] lg:h-[50vh]">
           {primaryImage ? (
             <>
@@ -125,17 +125,17 @@ export default async function RazorpayShopPaymentPage({
                 sizes="100vw"
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#fafafa] via-[#fafafa]/60 to-transparent" />
             </>
           ) : (
-            <div className="w-full h-full bg-gradient-to-b from-neutral-900 to-[#050505]" />
+            <div className="w-full h-full bg-gradient-to-b from-neutral-100 to-[#fafafa]" />
           )}
 
           <div className="absolute bottom-10 left-0 right-0 px-6 text-center">
-            <h1 className="font-light tracking-[0.25em] uppercase text-[10px] text-neutral-400 mb-3">
+            <h1 className="font-light tracking-[0.25em] uppercase text-[10px] text-neutral-500 mb-3">
               Checkout
             </h1>
-            <div className="text-3xl md:text-4xl font-normal tracking-wide text-white">
+            <div className="text-3xl md:text-4xl font-normal tracking-wide text-[#111111]">
               {order.items[0]?.productName || "Complete Payment"}
             </div>
           </div>
@@ -143,19 +143,19 @@ export default async function RazorpayShopPaymentPage({
 
         <div className="relative z-10 px-4 md:px-8 pb-24 mx-auto max-w-5xl -mt-2 lg:grid lg:grid-cols-[1fr_1.2fr] lg:gap-16 lg:-mt-12 lg:items-start">
           <section className="space-y-6 hidden lg:block">
-            <div className="backdrop-blur-2xl bg-white/5 border border-white/5 rounded-[24px] p-8 shadow-2xl">
+            <div className="backdrop-blur-2xl bg-white border border-black/5 rounded-[24px] p-8 shadow-2xl shadow-black/5">
               <div className="flex items-center justify-between mb-8">
-                <h3 className="text-[10px] uppercase tracking-[0.2em] text-neutral-400 font-bold">
+                <h3 className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-bold">
                   Shipping Details
                 </h3>
-                <MapPin className="w-4 h-4 text-[#d4af37]" />
+                <MapPin className="w-4 h-4 text-[#c9a962]" />
               </div>
               <div className="space-y-6">
                 <div className="flex justify-between items-start">
                   <span className="text-sm text-neutral-500 tracking-wide">
                     Recipient
                   </span>
-                  <span className="text-sm font-medium text-white text-right tracking-wide">
+                  <span className="text-sm font-medium text-[#111111] text-right tracking-wide">
                     {order.shipping_address.name}
                   </span>
                 </div>
@@ -163,7 +163,7 @@ export default async function RazorpayShopPaymentPage({
                   <span className="text-sm text-neutral-500 tracking-wide">
                     Address
                   </span>
-                  <span className="text-sm font-medium text-white text-right max-w-[200px] leading-relaxed tracking-wide">
+                  <span className="text-sm font-medium text-[#111111] text-right max-w-[200px] leading-relaxed tracking-wide">
                     {order.shipping_address.line1}
                     {order.shipping_address.line2
                       ? `, ${order.shipping_address.line2}`
@@ -179,7 +179,7 @@ export default async function RazorpayShopPaymentPage({
 
             <Link
               href="/3d-shop/cart"
-              className="inline-flex items-center gap-3 text-xs font-semibold uppercase tracking-widest text-neutral-500 transition hover:text-white"
+              className="inline-flex items-center gap-3 text-xs font-semibold uppercase tracking-widest text-neutral-500 transition hover:text-[#111111]"
             >
               <ArrowLeft className="h-4 w-4" />
               Return to Cart
@@ -190,9 +190,9 @@ export default async function RazorpayShopPaymentPage({
             className="mt-6 lg:mt-0"
             style={
               {
-                "--shop-text-primary": "#ffffff",
-                "--shop-text-muted": "#a3a3a3",
-                "--shop-bg-base": "#050505",
+                "--shop-text-primary": "#111111",
+                "--shop-text-muted": "#6b7280",
+                "--shop-bg-base": "#ffffff",
               } as React.CSSProperties
             }
           >
@@ -226,15 +226,15 @@ export default async function RazorpayShopPaymentPage({
               orderSummary={
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-400 font-light tracking-wide">
+                    <span className="text-neutral-500 font-light tracking-wide">
                       Subtotal
                     </span>
-                    <span className="text-white tracking-wide">
+                    <span className="text-[#111111] tracking-wide">
                       {formatShopPrice(order.subtotal)}
                     </span>
                   </div>
                   {order.discount_amount > 0 && (
-                    <div className="flex items-center justify-between text-sm text-[#d4af37]">
+                    <div className="flex items-center justify-between text-sm text-[#c9a962]">
                       <span className="font-light tracking-wide">Discount</span>
                       <span className="tracking-wide">
                         -{formatShopPrice(order.discount_amount)}
@@ -242,26 +242,26 @@ export default async function RazorpayShopPaymentPage({
                     </div>
                   )}
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-400 font-light tracking-wide">
+                    <span className="text-neutral-500 font-light tracking-wide">
                       Shipping
                     </span>
-                    <span className="text-white tracking-wide">
+                    <span className="text-[#111111] tracking-wide">
                       {order.shipping_charge === 0
                         ? "Complimentary"
                         : formatShopPrice(order.shipping_charge)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between pt-5 mt-5 border-t border-white/10">
-                    <span className="text-xs font-semibold tracking-widest uppercase text-neutral-400">
+                  <div className="flex items-center justify-between pt-5 mt-5 border-t border-black/10">
+                    <span className="text-xs font-semibold tracking-widest uppercase text-neutral-500">
                       Total
                     </span>
-                    <span className="text-2xl font-light tracking-wider text-white">
+                    <span className="text-2xl font-light tracking-wider text-[#111111]">
                       {formatShopPrice(order.total_amount)}
                     </span>
                   </div>
                 </div>
               }
-              themeColor="#d4af37"
+              themeColor="#c9a962"
               theme={SHOP_GOLD_THEME}
             />
           </aside>
@@ -269,7 +269,7 @@ export default async function RazorpayShopPaymentPage({
           <div className="mt-12 text-center lg:hidden">
             <Link
               href="/3d-shop/cart"
-              className="inline-flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-neutral-500 transition hover:text-white"
+              className="inline-flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-neutral-500 transition hover:text-[#111111]"
             >
               <ArrowLeft className="h-3 w-3" />
               Return to Cart
