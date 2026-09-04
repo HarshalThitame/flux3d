@@ -744,6 +744,8 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
   // inline-processing and QStash worker paths) and stores the file to Supabase
   // Storage so admins can preview/download customer attachments in the inbox.
   let inboundMedia: MediaResult | null = null;
+  let inboundParsedMedia:
+    import("@/lib/whatsapp/message-parser").ParsedWhatsAppMessage | null = null;
   let inboundMediaType: ParsedWhatsAppMessage["mediaType"] = null;
   let inboundMetaMessageId: string | null = null;
   if (supabase) {
@@ -758,6 +760,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         }
       )?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
       const parsedMedia = parseWhatsAppMessage(rawPayloadMessage);
+      inboundParsedMedia = parsedMedia;
       inboundMediaType = parsedMedia.mediaType ?? null;
       inboundMetaMessageId = parsedMedia.metaMessageId ?? null;
       if (parsedMedia.mediaId && parsedMedia.mediaType) {
@@ -818,8 +821,8 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       mediaMimeType: inboundMedia?.mimeType,
       mediaSizeBytes: inboundMedia?.sizeBytes,
       metaMessageId: inboundMetaMessageId,
-      metadata: parsedMedia.metadata,
-      contextMessageId: parsedMedia.contextMessageId,
+      metadata: inboundParsedMedia?.metadata,
+      contextMessageId: inboundParsedMedia?.contextMessageId,
     });
 
     // ── Conversational Components Interceptor ──
