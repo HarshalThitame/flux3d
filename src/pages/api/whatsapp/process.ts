@@ -145,7 +145,16 @@ export default async function handler(
       : event.payload;
   const message = payload?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
   const from = message?.from;
-  const { text, interaction } = parseWhatsAppMessage(message);
+  const {
+    text: parsedText,
+    interaction,
+    mediaInfo,
+  } = parseWhatsAppMessage(message);
+  let text = parsedText;
+
+  if (mediaInfo && !text) {
+    text = mediaInfo;
+  }
 
   if (!from || (typeof text !== "string" && !interaction)) {
     // No actionable message — mark processed so retries stop
