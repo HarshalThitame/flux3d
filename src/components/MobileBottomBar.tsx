@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogIn, Package, ShoppingCart, Store, FileText } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
+import type { AuthChangeEvent } from "@supabase/supabase-js";
 import { getShopCartTotals, useShopCartStore } from "@/stores/shopCartStore";
 
 type BarItem = {
@@ -44,9 +44,9 @@ export default function MobileBottomBar() {
     let mounted = true;
     let subscription: { unsubscribe: () => void } | undefined;
 
-    const initAuth = async () => {
+    const checkAuth = async () => {
       try {
-        const res = await fetch("/api/auth/session");
+        const res = await fetch("/api/auth/session", { cache: "no-store" });
         if (res.ok) {
           const { authenticated } = await res.json();
           if (mounted) setIsAuthenticated(authenticated);
@@ -54,14 +54,24 @@ export default function MobileBottomBar() {
       } catch (error) {
         console.error("Failed to fetch auth session", error);
       }
+    };
+
+    const initAuth = async () => {
+      checkAuth();
 
       const { getSupabaseBrowserClient } =
         await import("@/lib/supabase/client");
       const supabase = getSupabaseBrowserClient();
 
       const { data: subData } = supabase.auth.onAuthStateChange(
-        (event: AuthChangeEvent, session: Session | null) => {
-          if (mounted) setIsAuthenticated(!!session?.user);
+        (event: AuthChangeEvent) => {
+          if (
+            event === "SIGNED_IN" ||
+            event === "SIGNED_OUT" ||
+            event === "USER_UPDATED"
+          ) {
+            checkAuth();
+          }
         },
       );
       subscription = subData.subscription;
