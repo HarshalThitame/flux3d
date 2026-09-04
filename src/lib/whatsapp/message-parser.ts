@@ -171,9 +171,10 @@ export function parseWhatsAppMessage(
   } else if (msgType === "system") {
     text = String(getNested(message, "system.body") || "[System Message]");
   } else if (msgType === "order") {
-    const items = parseOrderCartItems(
-      getNested(message, "order.product_items"),
-    );
+    const rawOrder = getNested(message, "order") as
+      Record<string, unknown> | undefined;
+    interactivePayload = rawOrder ?? null;
+    const items = parseOrderCartItems(rawOrder?.product_items);
     if (items.length > 0) {
       interaction = { kind: "order", items };
       text = text || `[order cart: ${items.length} item(s)]`;

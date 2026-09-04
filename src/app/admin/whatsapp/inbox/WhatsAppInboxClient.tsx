@@ -399,17 +399,57 @@ function ContactCard({
 }
 
 function OrderCard({ msg, isOutgoing }: { msg: Message; isOutgoing: boolean }) {
+  const items = Array.isArray(msg.interactive_payload?.product_items)
+    ? msg.interactive_payload.product_items
+    : [];
+  const note = msg.interactive_payload?.text as string | undefined;
+
   return (
     <div
-      className={`flex flex-col gap-1 rounded-xl border p-3 mb-2 ${isOutgoing ? "bg-white/10 border-white/20" : "bg-blue-50 border-blue-200"}`}
+      className={`flex flex-col gap-2 rounded-xl border p-3 mb-2 ${isOutgoing ? "bg-white/10 border-white/20" : "bg-emerald-50 border-emerald-200"}`}
     >
-      <div className="flex items-center gap-2 mb-1">
+      <div className="flex items-center gap-2 border-b pb-2 border-black/5">
         <ShoppingCart
-          className={`h-4 w-4 ${isOutgoing ? "text-white" : "text-blue-600"}`}
+          className={`h-4 w-4 ${isOutgoing ? "text-white" : "text-emerald-600"}`}
         />
-        <span className="font-bold text-xs">Order Context</span>
+        <span className="font-bold text-xs uppercase tracking-wider text-emerald-800">
+          Shopping Cart
+        </span>
       </div>
-      <p className="text-xs">{msg.message_text}</p>
+
+      {items.length > 0 ? (
+        <div className="flex flex-col gap-1.5 mt-1">
+          {items.map((item: Record<string, unknown>, idx: number) => (
+            <div
+              key={idx}
+              className="flex justify-between items-center text-xs"
+            >
+              <span
+                className="font-medium truncate max-w-[140px] text-gray-800"
+                title={String(item.product_retailer_id ?? "")}
+              >
+                {String(item.quantity ?? "")}x{" "}
+                <span className="font-mono text-[10px] bg-white/50 px-1 py-0.5 rounded">
+                  {String(item.product_retailer_id ?? "")}
+                </span>
+              </span>
+              {Boolean(item.item_price) && Boolean(item.currency) && (
+                <span className="text-gray-600">
+                  {String(item.currency)} {String(item.item_price)}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs">{msg.message_text}</p>
+      )}
+
+      {note && (
+        <div className="mt-2 text-xs italic text-gray-600 border-t border-black/5 pt-2">
+          &quot;{note}&quot;
+        </div>
+      )}
     </div>
   );
 }
