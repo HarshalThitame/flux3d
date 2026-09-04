@@ -801,7 +801,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     // This ensures every customer message is stored in the whatsapp_messages
     // table, even if it gets consumed by the account-link flow, order flow,
     // out-of-scope handler, or unsupported-media handler below.
-    logWhatsAppMessage(supabase, {
+    await logWhatsAppMessage(supabase, {
       userId,
       sender: from,
       direction: "incoming",
@@ -816,7 +816,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       mediaMimeType: inboundMedia?.mimeType,
       mediaSizeBytes: inboundMedia?.sizeBytes,
       metaMessageId: inboundMetaMessageId,
-    }).catch(() => {});
+    });
 
     // ── Conversational Components Interceptor ──
     // Intercept explicit commands and ice breakers
@@ -860,7 +860,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         _log("intercepted_command");
         await sendWhatsAppMessage(from, interceptReply).catch(() => {});
 
-        logWhatsAppMessage(supabase, {
+        await logWhatsAppMessage(supabase, {
           userId,
           sender: from,
           direction: "outgoing",
@@ -869,7 +869,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
           triggerEvent: "automated_command_reply",
           responded: true,
           responseTimeMinutes: 0,
-        }).catch(() => {});
+        });
 
         if (supabase && eventRecord?.id) {
           try {
@@ -1119,7 +1119,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         };
         // Log the outgoing bot reply so it appears in the admin inbox
         if (sendResult?.metaMessageId) {
-          logWhatsAppMessage(supabase, {
+          await logWhatsAppMessage(supabase, {
             userId,
             sender: from,
             direction: "outgoing",
@@ -1129,9 +1129,9 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
             responded: true,
             responseTimeMinutes: (Date.now() - requestStartedAt) / 60000,
             metaMessageId: sendResult.metaMessageId,
-          }).catch(() => {});
+          });
         } else {
-          logWhatsAppMessage(supabase, {
+          await logWhatsAppMessage(supabase, {
             userId,
             sender: from,
             direction: "outgoing",
@@ -1140,7 +1140,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
             triggerEvent: "out_of_scope_reply",
             responded: true,
             responseTimeMinutes: (Date.now() - requestStartedAt) / 60000,
-          }).catch(() => {});
+          });
         }
       } catch (error) {
         auditRecord.response_metadata = {
@@ -1340,7 +1340,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       };
 
       // Non-blocking post-send operations (don't delay the reply)
-      logWhatsAppMessage(supabase, {
+      await logWhatsAppMessage(supabase, {
         userId,
         sender: from,
         direction: "outgoing",
@@ -1350,9 +1350,9 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
         responded: true,
         responseTimeMinutes: (Date.now() - requestStartedAt) / 60000,
         metaMessageId: sendResult?.metaMessageId ?? null,
-      }).catch(() => {});
+      });
 
-      saveSession(supabase, from, text, finalReply).catch(() => {});
+      await saveSession(supabase, from, text, finalReply);
 
       if (supabase && userId) {
         supabase
@@ -1388,7 +1388,7 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       };
       replySendFailed = true;
       // Save session even on send failure so context isn't lost
-      saveSession(supabase, from, text, finalReply).catch(() => {});
+      await saveSession(supabase, from, text, finalReply);
       console.error(
         "[whatsapp] Failed to send outbound WhatsApp message:",
         error,
@@ -1675,7 +1675,7 @@ export default async function handler(
 
         // Log the incoming media message so it appears in the admin inbox
         const parsedMedia = parseWhatsAppMessage(message);
-        logWhatsAppMessage(supabase, {
+        await logWhatsAppMessage(supabase, {
           userId: mediaUserId,
           sender: from,
           direction: "incoming",
@@ -1688,7 +1688,7 @@ export default async function handler(
           mediaFilename: parsedMedia.mediaFilename ?? null,
           mediaMimeType: parsedMedia.mediaMimeType ?? null,
           metaMessageId: parsedMedia.metaMessageId ?? null,
-        }).catch(() => {});
+        });
 
         try {
           const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
@@ -1726,7 +1726,7 @@ export default async function handler(
             } catch {
               /* best-effort */
             }
-            logWhatsAppMessage(supabase, {
+            await logWhatsAppMessage(supabase, {
               userId: mediaUserId,
               sender: from,
               direction: "outgoing",
@@ -1736,7 +1736,7 @@ export default async function handler(
               responded: true,
               responseTimeMinutes: null,
               metaMessageId: mediaReplyId ?? null,
-            }).catch(() => {});
+            });
           }
         } catch {
           /* best-effort */
@@ -1896,7 +1896,7 @@ export default async function handler(
             } catch {
               /* best-effort */
             }
-            logWhatsAppMessage(supabase, {
+            await logWhatsAppMessage(supabase, {
               userId: null,
               sender: from,
               direction: "outgoing",
@@ -1906,7 +1906,7 @@ export default async function handler(
               responded: true,
               responseTimeMinutes: null,
               metaMessageId: ackMessageId ?? null,
-            }).catch(() => {});
+            });
           } catch (ackError) {
             console.error("[whatsapp] ACK failed:", ackError);
           }
