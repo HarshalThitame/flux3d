@@ -545,7 +545,7 @@ async function logWhatsAppMessage(
       p_user_id: entry.userId || null,
       p_sender: entry.sender,
       p_direction: entry.direction,
-      p_message_text: entry.messageText,
+      p_message_text: entry.messageText || null,
       p_automated: entry.automated,
       p_trigger_event: entry.triggerEvent || null,
       p_responded: entry.responded,
