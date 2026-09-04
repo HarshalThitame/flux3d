@@ -418,10 +418,17 @@ export default function ShopCheckoutClient({
               is_default: addresses.length === 0,
             });
           } catch (e) {
-            console.warn(
-              "Failed to save address, proceeding with checkout.",
-              e,
-            );
+            console.warn("Failed to save address:", e);
+            if (
+              e instanceof Error &&
+              e.message.includes("session has expired")
+            ) {
+              setToast(
+                "Your session has expired. Please refresh the page or log in again.",
+              );
+              return;
+            }
+            // For other generic errors, we log and proceed so the user isn't fully blocked.
           }
         }
 

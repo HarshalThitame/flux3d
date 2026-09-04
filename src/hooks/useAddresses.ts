@@ -32,7 +32,12 @@ type UseAddressesResult = {
 async function fetchAddressesForCurrentUser() {
   const supabase = getSupabaseBrowserClient();
   const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError) throw authError;
+  if (authError) {
+    if (authError.name === "AuthSessionMissingError") {
+      return { userId: null, addresses: [] as AddressRow[] };
+    }
+    throw authError;
+  }
   const user = authData.user;
   if (!user) {
     return { userId: null, addresses: [] as AddressRow[] };
@@ -131,9 +136,18 @@ export function useAddresses(): UseAddressesResult {
     if (userId) return userId;
     const supabase = getSupabaseBrowserClient();
     const { data, error: authError } = await supabase.auth.getUser();
-    if (authError) throw authError;
+    if (authError) {
+      if (authError.name === "AuthSessionMissingError") {
+        throw new Error(
+          "Your session has expired. Please log in again to continue.",
+        );
+      }
+      throw authError;
+    }
     if (!data.user)
-      throw new Error("You must be signed in to manage addresses.");
+      throw new Error(
+        "Your session has expired. Please log in again to continue.",
+      );
     setUserId(data.user.id);
     return data.user.id;
   }
