@@ -108,6 +108,7 @@ export function parseWhatsAppMessage(
     mediaType = "sticker";
     mediaInfo = `[Sticker]`;
   } else if (msgType === "interactive") {
+    mediaType = "interactive";
     const interactive = getNested(message, "interactive") as
       Record<string, unknown> | undefined;
     interactivePayload = interactive ?? null;
@@ -174,6 +175,7 @@ export function parseWhatsAppMessage(
     const rawOrder = getNested(message, "order") as
       Record<string, unknown> | undefined;
     interactivePayload = rawOrder ?? null;
+    mediaType = "order";
     const items = parseOrderCartItems(rawOrder?.product_items);
     if (items.length > 0) {
       interaction = { kind: "order", items };
