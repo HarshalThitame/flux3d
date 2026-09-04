@@ -49,8 +49,8 @@ export default function MobileBottomBar() {
         await import("@/lib/supabase/client");
       const supabase = getSupabaseBrowserClient();
 
-      const { data } = await supabase.auth.getUser();
-      if (mounted) setIsAuthenticated(!!data.user);
+      const { data } = await supabase.auth.getSession();
+      if (mounted) setIsAuthenticated(!!data.session?.user);
 
       const { data: subData } = supabase.auth.onAuthStateChange(
         (event: AuthChangeEvent, session: Session | null) => {
