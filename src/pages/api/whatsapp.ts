@@ -539,39 +539,26 @@ async function logWhatsAppMessage(
 ) {
   if (!supabase) return;
 
-  if (entry.metaMessageId) {
-    const { data: existing } = await supabase
-      .from("whatsapp_messages")
-      .select("id")
-      .eq("meta_message_id", entry.metaMessageId)
-      .limit(1)
-      .single();
-
-    if (existing) {
-      console.log(
-        `[whatsapp] Message with meta_message_id ${entry.metaMessageId} already exists. Skipping insert.`,
-      );
-      return;
-    }
-  }
-
-  const { error } = await supabase.from("whatsapp_messages").insert({
-    user_id: entry.userId,
-    sender: entry.sender,
-    direction: entry.direction,
-    message_text: entry.messageText,
-    automated: entry.automated,
-    trigger_event: entry.triggerEvent,
-    responded: entry.responded,
-    response_time_minutes: entry.responseTimeMinutes,
-    media_type: entry.mediaType ?? null,
-    media_url: entry.mediaUrl ?? null,
-    media_filename: entry.mediaFilename ?? null,
-    media_mime_type: entry.mediaMimeType ?? null,
-    media_size_bytes: entry.mediaSizeBytes ?? null,
-    meta_message_id: entry.metaMessageId ?? null,
-    status: entry.status ?? "sent",
-  });
+  const { error } = await supabase.rpc(
+    "insert_whatsapp_message_if_not_exists",
+    {
+      p_user_id: entry.userId || null,
+      p_sender: entry.sender,
+      p_direction: entry.direction,
+      p_message_text: entry.messageText,
+      p_automated: entry.automated,
+      p_trigger_event: entry.triggerEvent || null,
+      p_responded: entry.responded,
+      p_response_time_minutes: entry.responseTimeMinutes || null,
+      p_media_type: entry.mediaType || null,
+      p_media_url: entry.mediaUrl || null,
+      p_media_filename: entry.mediaFilename || null,
+      p_media_mime_type: entry.mediaMimeType || null,
+      p_media_size_bytes: entry.mediaSizeBytes || null,
+      p_meta_message_id: entry.metaMessageId || null,
+      p_status: entry.status ?? "sent",
+    },
+  );
 
   if (error) {
     console.error("[whatsapp] Failed to log message:", error);
@@ -836,37 +823,43 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     if (text) {
       let interceptReply: string | null = null;
       const cmdMatch = text.match(/^\/([a-z0-9_-]+)/i);
-      
+
       if (cmdMatch) {
         const command = cmdMatch[1].toLowerCase();
         switch (command) {
-          case 'quote':
-            interceptReply = "To get a price estimate, please share your 3D file (.STL, .STEP, or .OBJ), preferred material, and quantity.";
+          case "quote":
+            interceptReply =
+              "To get a price estimate, please share your 3D file (.STL, .STEP, or .OBJ), preferred material, and quantity.";
             break;
-          case 'status':
-            interceptReply = "To check your order status, please reply with your Order ID (e.g. ORD-1234) or your registered email address.";
+          case "status":
+            interceptReply =
+              "To check your order status, please reply with your Order ID (e.g. ORD-1234) or your registered email address.";
             break;
-          case 'materials':
-            interceptReply = "We offer a wide range of materials including PLA, ABS, PETG, TPU, and various Resins. Do you have a specific use case in mind?";
+          case "materials":
+            interceptReply =
+              "We offer a wide range of materials including PLA, ABS, PETG, TPU, and various Resins. Do you have a specific use case in mind?";
             break;
-          case 'support':
+          case "support":
             interceptReply = `A human support agent will be with you shortly. You can also reach us directly at ${FALLBACK_SETTINGS.whatsappSupportNumber}.`;
             break;
           default:
             interceptReply = `I didn't recognize the command /${command}. Try /quote, /status, /materials, or /support.`;
         }
       } else if (text === "Get a 3D printing quote") {
-        interceptReply = "To get a price estimate, please share your 3D file (.STL, .STEP, or .OBJ), preferred material, and quantity.";
+        interceptReply =
+          "To get a price estimate, please share your 3D file (.STL, .STEP, or .OBJ), preferred material, and quantity.";
       } else if (text === "Check order status") {
-        interceptReply = "To check your order status, please reply with your Order ID (e.g. ORD-1234) or your registered email address.";
+        interceptReply =
+          "To check your order status, please reply with your Order ID (e.g. ORD-1234) or your registered email address.";
       } else if (text === "What materials do you offer?") {
-        interceptReply = "We offer a wide range of materials including PLA, ABS, PETG, TPU, and various Resins. Do you have a specific use case in mind?";
+        interceptReply =
+          "We offer a wide range of materials including PLA, ABS, PETG, TPU, and various Resins. Do you have a specific use case in mind?";
       }
 
       if (interceptReply) {
         _log("intercepted_command");
         await sendWhatsAppMessage(from, interceptReply).catch(() => {});
-        
+
         logWhatsAppMessage(supabase, {
           userId,
           sender: from,
@@ -1515,12 +1508,10 @@ export default async function handler(
     try {
       getEnv();
     } catch (e) {
-      return res
-        .status(500)
-        .json({
-          success: false,
-          error: e instanceof Error ? e.message : "Configuration error",
-        });
+      return res.status(500).json({
+        success: false,
+        error: e instanceof Error ? e.message : "Configuration error",
+      });
     }
 
     const webhookSpan = Sentry.startInactiveSpan({
@@ -1771,12 +1762,10 @@ export default async function handler(
       // Phone-based rate limit
       const phoneLimit = await rateLimitCheck(`whatsapp_phone:${from}`, 60, 10);
       if (!phoneLimit.success) {
-        return res
-          .status(429)
-          .json({
-            success: false,
-            error: "Too many messages. Please wait before sending another.",
-          });
+        return res.status(429).json({
+          success: false,
+          error: "Too many messages. Please wait before sending another.",
+        });
       }
 
       // Write the event record immediately (worker will use this ID)
