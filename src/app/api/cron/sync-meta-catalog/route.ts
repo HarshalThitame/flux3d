@@ -221,9 +221,11 @@ async function runCatalogSync(request: Request) {
   if (heartbeatUrl) {
     void fetch(heartbeatUrl, {
       method: "GET",
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(30_000),
     }).catch((e) => {
-      console.error("[sync-meta-catalog] Heartbeat ping failed:", e);
+      if (e.name !== "TimeoutError" && e.name !== "AbortError") {
+        console.error("[sync-meta-catalog] Heartbeat ping failed:", e);
+      }
     });
   }
 
