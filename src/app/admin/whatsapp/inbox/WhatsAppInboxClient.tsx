@@ -248,7 +248,8 @@ function InteractiveSelectionLine({ msg }: { msg: Message }) {
   return (
     <div className="my-1 flex justify-center">
       <span className="rounded-full bg-blue-50 border border-blue-100 px-3 py-1 text-[11px] text-blue-600 italic">
-        Customer selected: {msg.interactive_payload?.title || msg.message_text}
+        Customer selected:{" "}
+        {String(msg.interactive_payload?.title || msg.message_text)}
       </span>
     </div>
   );
@@ -352,7 +353,11 @@ function ContactCard({
   isOutgoing: boolean;
 }) {
   const contacts =
-    (msg.metadata?.contacts as Array<Record<string, unknown>>) || [];
+    (msg.metadata?.contacts as Array<{
+      name?: { formatted_name?: string };
+      phones?: Array<{ phone?: string; type?: string }>;
+      org?: { company?: string };
+    }>) || [];
   return (
     <div className="flex flex-col gap-2 mb-2">
       {contacts.map((contact, i) => (
@@ -1331,7 +1336,7 @@ export default function WhatsAppInboxClient() {
                               )}
 
                               {(msg.media_type === "location" ||
-                                msg.metadata?.location) && (
+                                Boolean(msg.metadata?.location)) && (
                                 <LocationBubble
                                   msg={msg}
                                   isOutgoing={isOutgoing}
@@ -1339,7 +1344,7 @@ export default function WhatsAppInboxClient() {
                               )}
 
                               {(msg.media_type === "contacts" ||
-                                msg.metadata?.contacts) && (
+                                Boolean(msg.metadata?.contacts)) && (
                                 <ContactCard
                                   msg={msg}
                                   isOutgoing={isOutgoing}
