@@ -8,7 +8,18 @@ export type ParsedWhatsAppMessage = {
   mediaMimeType?: string | null;
   mediaFilename?: string | null;
   mediaType?:
-    "image" | "document" | "audio" | "video" | "sticker" | "stl" | null;
+    | "image"
+    | "document"
+    | "audio"
+    | "video"
+    | "sticker"
+    | "stl"
+    | "order"
+    | "interactive"
+    | "location"
+    | "contacts"
+    | "reaction"
+    | null;
   metaMessageId?: string | null;
   interaction: OrderInteraction | null;
   contextMessageId?: string | null;
