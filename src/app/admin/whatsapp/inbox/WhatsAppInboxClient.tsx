@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
 import {
   ArrowLeft,
   Bot,
@@ -22,6 +23,20 @@ import {
   AlertCircle,
   FileCheck,
   Pencil,
+  Check,
+  Clock,
+  Forward,
+  MapPin,
+  Contact,
+  Mic,
+  Play,
+  Image as ImageIcon,
+  Film,
+  Music,
+  FileDown,
+  Smile,
+  CornerUpLeft,
+  MessageSquare,
 } from "lucide-react";
 import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -65,13 +80,23 @@ type Message = {
     | "template"
     | "order"
     | "interactive"
+    | "location"
+    | "contacts"
+    | "reaction"
+    | "system"
     | null;
   media_url: string | null;
   media_filename: string | null;
   media_mime_type: string | null;
   media_size_bytes: number | null;
+  media_thumbnail_url: string | null;
   status: "queued" | "sent" | "delivered" | "read" | "failed" | null;
   meta_message_id: string | null;
+  context_message_id?: string | null;
+  is_forwarded?: boolean;
+  interactive_payload?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  reactions?: Array<{ emoji: string; reactor_phone: string }>;
 };
 
 type ShopOrder = {
@@ -137,6 +162,253 @@ function formatBytes(bytes: number | null) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+// --- WhatsApp Inbox Renderers ---
+function formatDuration(sec?: number) {
+  if (!sec) return "0:00";
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s < 10 ? "0" + s : s}`;
+}
+
+function LinkedText({ text }: { text: string }) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return (
+    <p className="text-xs leading-relaxed whitespace-pre-wrap break-words">
+      {parts.map((part, i) =>
+        urlRegex.test(part) ? (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noreferrer"
+            className="underline hover:opacity-80"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        ) : (
+          part
+        ),
+      )}
+    </p>
+  );
+}
+
+function DeliveryTicks({ status }: { status: Message["status"] }) {
+  switch (status) {
+    case "queued":
+      return <Clock className="h-3 w-3 text-white/50" />;
+    case "sent":
+      return <Check className="h-3 w-3 text-white/60" />;
+    case "delivered":
+      return <CheckCheck className="h-3 w-3 text-white/80" />;
+    case "read":
+      return <CheckCheck className="h-3 w-3 text-sky-300" />;
+    case "failed":
+      return <AlertCircle className="h-3 w-3 text-red-300" />;
+    default:
+      return null;
+  }
+}
+
+function MessageFooter({
+  msg,
+  isOutgoing,
+  minimal = false,
+}: {
+  msg: Message;
+  isOutgoing: boolean;
+  minimal?: boolean;
+}) {
+  return (
+    <div
+      className={`mt-1.5 flex items-center gap-1 text-[10px] ${isOutgoing ? "justify-end text-white/70" : "justify-start text-gray-400"}`}
+    >
+      {msg.automated && (
+        <span className="rounded bg-black/10 px-1 py-0.5 text-[9px]">BOT</span>
+      )}
+      <span>{formatTime(msg.created_at)}</span>
+      {isOutgoing && <DeliveryTicks status={msg.status} />}
+    </div>
+  );
+}
+
+function SystemLine({ text }: { text: string }) {
+  return (
+    <div className="my-2 flex justify-center">
+      <span className="rounded-full bg-gray-100 px-4 py-1.5 text-[11px] text-gray-500">
+        {text}
+      </span>
+    </div>
+  );
+}
+
+function InteractiveSelectionLine({ msg }: { msg: Message }) {
+  return (
+    <div className="my-1 flex justify-center">
+      <span className="rounded-full bg-blue-50 border border-blue-100 px-3 py-1 text-[11px] text-blue-600 italic">
+        Customer selected: {msg.interactive_payload?.title || msg.message_text}
+      </span>
+    </div>
+  );
+}
+
+function ForwardedLabel() {
+  return (
+    <div className="mb-1 flex items-center gap-1 text-[10px] text-gray-500 italic">
+      <Forward className="h-3 w-3" /> Forwarded
+    </div>
+  );
+}
+
+function QuotedPreview({
+  quotedMsg,
+  isOutgoing,
+}: {
+  quotedMsg: Message;
+  isOutgoing: boolean;
+}) {
+  return (
+    <div
+      className={`mb-1.5 rounded-lg border-l-[3px] ${isOutgoing ? "border-purple-300 bg-white/10" : "border-[#6d28d9] bg-purple-50"} px-2 py-1 text-[10px] opacity-90`}
+    >
+      <p
+        className={`font-bold truncate ${isOutgoing ? "text-purple-200" : "text-[#6d28d9]"}`}
+      >
+        {quotedMsg.direction === "incoming" ? "Customer" : "You"}
+      </p>
+      <p className="truncate opacity-80">
+        {quotedMsg.message_text || `[${quotedMsg.media_type}]`}
+      </p>
+    </div>
+  );
+}
+
+function ReactionBadges({
+  reactions,
+}: {
+  reactions: NonNullable<Message["reactions"]>;
+}) {
+  return (
+    <div className="mt-1 flex flex-wrap gap-1">
+      {reactions.map((r, i) => (
+        <span
+          key={i}
+          className="rounded-full bg-white shadow-sm border border-gray-100 px-1.5 py-0.5 text-[10px] text-black"
+        >
+          {r.emoji}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function LocationBubble({
+  msg,
+  isOutgoing,
+}: {
+  msg: Message;
+  isOutgoing: boolean;
+}) {
+  const loc = msg.metadata?.location as
+    | { latitude?: number; longitude?: number; name?: string; address?: string }
+    | undefined;
+  if (!loc?.latitude || !loc?.longitude) return null;
+  const mapUrl = `https://staticmap.openstreetmap.de/staticmap.php?center=${loc.latitude},${loc.longitude}&zoom=15&size=280x180&markers=${loc.latitude},${loc.longitude},red-pushpin`;
+  const mapsLink = `https://maps.google.com/?q=${loc.latitude},${loc.longitude}`;
+  return (
+    <div className="rounded-xl overflow-hidden border border-black/10 mb-2">
+      <img
+        src={mapUrl}
+        alt="Location"
+        className="w-full h-[140px] object-cover"
+      />
+      <div
+        className={`p-2 ${isOutgoing ? "bg-white/10" : "bg-white text-gray-800"}`}
+      >
+        <p className="text-xs font-bold">{loc.name || "Shared Location"}</p>
+        {loc.address && (
+          <p className="text-[10px] opacity-70 mt-0.5">{loc.address}</p>
+        )}
+        <a
+          href={mapsLink}
+          target="_blank"
+          rel="noreferrer"
+          className="text-[10px] text-blue-500 hover:underline mt-1 inline-block"
+        >
+          Open in Maps ↗
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function ContactCard({
+  msg,
+  isOutgoing,
+}: {
+  msg: Message;
+  isOutgoing: boolean;
+}) {
+  const contacts =
+    (msg.metadata?.contacts as Array<Record<string, unknown>>) || [];
+  return (
+    <div className="flex flex-col gap-2 mb-2">
+      {contacts.map((contact, i) => (
+        <div
+          key={i}
+          className={`flex items-center gap-3 rounded-xl border p-2.5 ${isOutgoing ? "bg-white/10 border-white/20" : "bg-gray-50 border-gray-200"}`}
+        >
+          <div
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${isOutgoing ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"}`}
+          >
+            <User className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-bold">
+              {contact.name?.formatted_name || "Contact"}
+            </p>
+            {contact.phones?.map(
+              (p: { phone?: string; type?: string }, idx: number) => (
+                <p
+                  key={idx}
+                  className={`text-[10px] ${isOutgoing ? "opacity-80" : "text-gray-500"}`}
+                >
+                  {p.phone}
+                </p>
+              ),
+            )}
+            {contact.org?.company && (
+              <p
+                className={`text-[10px] mt-0.5 ${isOutgoing ? "opacity-70" : "text-gray-400"}`}
+              >
+                {contact.org.company}
+              </p>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function OrderCard({ msg, isOutgoing }: { msg: Message; isOutgoing: boolean }) {
+  return (
+    <div
+      className={`flex flex-col gap-1 rounded-xl border p-3 mb-2 ${isOutgoing ? "bg-white/10 border-white/20" : "bg-blue-50 border-blue-200"}`}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <ShoppingCart
+          className={`h-4 w-4 ${isOutgoing ? "text-white" : "text-blue-600"}`}
+        />
+        <span className="font-bold text-xs">Order Context</span>
+      </div>
+      <p className="text-xs">{msg.message_text}</p>
+    </div>
+  );
+}
+
 export default function WhatsAppInboxClient() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,6 +418,14 @@ export default function WhatsAppInboxClient() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [contactName, setContactName] = useState<string | null>(null);
+
+  // Phase 3 Composer States
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
+  const [showProductPicker, setShowProductPicker] = useState(false);
+
+  const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
   const [contactEmail, setContactEmail] = useState<string | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [orders, setOrders] = useState<ShopOrder[]>([]);
@@ -266,8 +546,6 @@ export default function WhatsAppInboxClient() {
     }
   }
 
-
-
   useEffect(() => {
     async function load() {
       await Promise.all([loadConversations(), loadQuickReplies()]);
@@ -278,7 +556,6 @@ export default function WhatsAppInboxClient() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
 
   const loadMessages = useCallback(async (sender: string) => {
     setMessagesLoading(true);
@@ -365,7 +642,12 @@ export default function WhatsAppInboxClient() {
   }
 
   async function sendReply() {
-    if ((!replyText.trim() && !selectedFile) || !activeSender || sending || !isWindowOpen)
+    if (
+      (!replyText.trim() && !selectedFile) ||
+      !activeSender ||
+      sending ||
+      !isWindowOpen
+    )
       return;
     setSending(true);
     try {
@@ -392,6 +674,7 @@ export default function WhatsAppInboxClient() {
 
       setReplyText("");
       setSelectedFile(null);
+      setReplyToMessage(null);
       await loadMessages(activeSender);
       await loadConversations();
       setToast({ type: "success", message: "Message sent to WhatsApp." });
@@ -480,7 +763,7 @@ export default function WhatsAppInboxClient() {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "whatsapp_messages" },
-        (payload: any) => {
+        (payload: Record<string, unknown>) => {
           const newMsg = payload.new as { sender?: string };
           if (newMsg.sender) {
             if (activeSenderRef.current === newMsg.sender) {
@@ -488,17 +771,20 @@ export default function WhatsAppInboxClient() {
             }
             loadConversations();
           }
-        }
+        },
       )
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "whatsapp_messages" },
-        (payload: any) => {
+        (payload: Record<string, unknown>) => {
           const updatedMsg = payload.new as { sender?: string };
-          if (updatedMsg.sender && updatedMsg.sender === activeSenderRef.current) {
-             loadMessages(activeSenderRef.current);
+          if (
+            updatedMsg.sender &&
+            updatedMsg.sender === activeSenderRef.current
+          ) {
+            loadMessages(activeSenderRef.current);
           }
-        }
+        },
       )
       .subscribe();
 
@@ -507,7 +793,7 @@ export default function WhatsAppInboxClient() {
     };
   }, [loadMessages, loadConversations]);
 
-  const filteredConversations = conversations.filter((c) => {
+  const filteredConversations = conversations.filter((c: Conversation) => {
     const matchesSearch =
       c.sender.includes(search) ||
       (c.contactName ?? "").toLowerCase().includes(search.toLowerCase());
@@ -517,16 +803,24 @@ export default function WhatsAppInboxClient() {
     return !c.isArchived;
   });
 
+  const lastIncomingDate =
+    messages
+      .filter((m: Message) => m.direction === "incoming" && m.created_at)
+      .map((m: Message) => new Date(m.created_at!).getTime())
+      .sort((a: number, b: number) => b - a)[0] || 0;
 
-  const lastIncomingDate = messages
-    .filter((m) => m.direction === "incoming" && m.created_at)
-    .map((m) => new Date(m.created_at!).getTime())
-    .sort((a, b) => b - a)[0] || 0;
-  
   // If we have an incoming message, use it. Otherwise fallback to the backend's windowActive flag.
-  const isWindowOpen = lastIncomingDate > 0 
-    ? (lastIncomingDate > Date.now() - 24 * 60 * 60 * 1000)
-    : windowActive;
+
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const isWindowOpen =
+    lastIncomingDate > 0
+      ? lastIncomingDate > now - 24 * 60 * 60 * 1000
+      : windowActive;
 
   if (loading) {
     return (
@@ -798,13 +1092,120 @@ export default function WhatsAppInboxClient() {
                     No messages found in thread.
                   </div>
                 ) : (
-                  messages.map((msg) => {
+                  messages.map((msg: Message) => {
                     const isOutgoing = msg.direction === "outgoing";
+
+                    // 1. System messages
+                    if (
+                      msg.trigger_event === "system_message" ||
+                      msg.metadata?.systemType ||
+                      msg.media_type === "system"
+                    ) {
+                      return (
+                        <SystemLine key={msg.id} text={msg.message_text} />
+                      );
+                    }
+
+                    // 2. Interactive reply selections
+                    if (
+                      msg.direction === "incoming" &&
+                      msg.media_type === "interactive" &&
+                      msg.interactive_payload
+                    ) {
+                      return (
+                        <InteractiveSelectionLine key={msg.id} msg={msg} />
+                      );
+                    }
+
+                    // Look up quoted message if present
+                    let quotedMsg = null;
+                    if (msg.context_message_id) {
+                      quotedMsg =
+                        messages.find(
+                          (m: Message) =>
+                            m.meta_message_id === msg.context_message_id,
+                        ) || null;
+                    }
+
+                    // 3. Sticker Bubble (special transparent rendering)
+                    if (msg.media_type === "sticker") {
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex ${isOutgoing ? "justify-end" : "justify-start"}`}
+                        >
+                          <div className="max-w-[160px]">
+                            {msg.is_forwarded && <ForwardedLabel />}
+                            {quotedMsg && (
+                              <QuotedPreview
+                                quotedMsg={quotedMsg}
+                                isOutgoing={isOutgoing}
+                              />
+                            )}
+                            <img
+                              src={msg.media_url ?? ""}
+                              alt="Sticker"
+                              className="max-h-32 max-w-32 object-contain drop-shadow-sm"
+                            />
+                            {msg.reactions && msg.reactions.length > 0 && (
+                              <ReactionBadges reactions={msg.reactions} />
+                            )}
+                            <MessageFooter
+                              msg={msg}
+                              isOutgoing={isOutgoing}
+                              minimal
+                            />
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // 4. Standard Message Bubble
                     return (
                       <div
                         key={msg.id}
-                        className={`flex ${isOutgoing ? "justify-end" : "justify-start"}`}
+                        className={`group flex items-center gap-2 ${isOutgoing ? "justify-end flex-row-reverse" : "justify-start"}`}
                       >
+                        {/* Hover Actions */}
+                        <div
+                          className={`opacity-0 transition-opacity group-hover:opacity-100 flex items-center gap-1 ${isOutgoing ? "flex-row-reverse" : ""}`}
+                        >
+                          <button
+                            onClick={() => setReplyToMessage(msg)}
+                            className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                          >
+                            <CornerUpLeft className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() =>
+                              setShowEmojiPicker(
+                                showEmojiPicker === msg.id ? null : msg.id,
+                              )
+                            }
+                            className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 relative"
+                          >
+                            <Smile className="h-3.5 w-3.5" />
+                            {showEmojiPicker === msg.id && (
+                              <div
+                                className={`absolute ${isOutgoing ? "right-full mr-2" : "left-full ml-2"} top-0 flex gap-1 rounded-full bg-white p-1 shadow-md border border-gray-100 z-10`}
+                              >
+                                {QUICK_EMOJIS.map((emoji) => (
+                                  <span
+                                    key={emoji}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowEmojiPicker(null);
+                                    }}
+                                    className="cursor-pointer hover:scale-125 transition-transform px-1"
+                                  >
+                                    {emoji}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </button>
+                        </div>
+
                         <div
                           className={`max-w-[78%] rounded-2xl p-3 shadow-sm ${
                             isOutgoing
@@ -812,30 +1213,100 @@ export default function WhatsAppInboxClient() {
                               : "bg-white text-[#0F1B3D] border border-gray-200/80 rounded-bl-none"
                           }`}
                         >
-                          {/* Render Media Cards */}
+                          {msg.is_forwarded && <ForwardedLabel />}
+                          {quotedMsg && (
+                            <QuotedPreview
+                              quotedMsg={quotedMsg}
+                              isOutgoing={isOutgoing}
+                            />
+                          )}
 
+                          {/* Media specific rendering */}
                           {msg.media_type && (
                             <div className="mb-2">
                               {msg.media_type === "image" && msg.media_url && (
                                 <button
                                   type="button"
-                                  onClick={() => setPreviewImage(msg.media_url)}
-                                  className="group relative overflow-hidden rounded-xl border border-black/10"
+                                  onClick={() =>
+                                    setPreviewImage(msg.media_url!)
+                                  }
+                                  className="group relative overflow-hidden rounded-xl border border-black/10 w-full"
                                 >
                                   <img
-                                    src={msg.media_url}
-                                    alt="WhatsApp Media"
-                                    className="max-h-60 rounded-xl object-cover transition group-hover:scale-105"
+                                    src={
+                                      msg.media_thumbnail_url || msg.media_url
+                                    }
+                                    alt="Image"
+                                    className="max-h-60 w-full object-cover transition group-hover:opacity-90"
                                   />
                                 </button>
                               )}
 
-                              {msg.media_type === "stl" && (
+                              {msg.media_type === "video" && msg.media_url && (
+                                <div className="rounded-xl overflow-hidden border border-black/10 w-full bg-black">
+                                  <video
+                                    src={msg.media_url}
+                                    poster={
+                                      msg.media_thumbnail_url ?? undefined
+                                    }
+                                    controls
+                                    preload="none"
+                                    className="max-h-60 w-full object-contain"
+                                  />
+                                </div>
+                              )}
+
+                              {msg.media_type === "audio" && msg.media_url && (
+                                <div
+                                  className={`flex items-center gap-3 rounded-full border px-3 py-2 ${isOutgoing ? "bg-white/10 border-white/20" : "bg-gray-50 border-gray-200"}`}
+                                >
+                                  <Mic
+                                    className={`h-5 w-5 shrink-0 ${isOutgoing ? "text-white" : "text-gray-500"}`}
+                                  />
+                                  <audio
+                                    src={msg.media_url}
+                                    controls
+                                    className="h-8 w-48 max-w-full"
+                                  />
+                                </div>
+                              )}
+
+                              {msg.media_type === "document" &&
+                                msg.media_url && (
+                                  <div
+                                    className={`flex items-center gap-3 rounded-xl border p-2.5 ${isOutgoing ? "bg-white/10 border-white/20" : "bg-gray-50 border-gray-200"}`}
+                                  >
+                                    <FileText
+                                      className={`h-6 w-6 shrink-0 ${isOutgoing ? "text-white" : "text-gray-600"}`}
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="truncate text-xs font-medium">
+                                        {msg.media_filename || "Document"}
+                                      </p>
+                                      <p
+                                        className={`text-[10px] ${isOutgoing ? "text-white/70" : "text-gray-500"}`}
+                                      >
+                                        {formatBytes(msg.media_size_bytes)}
+                                      </p>
+                                    </div>
+                                    <a
+                                      href={msg.media_url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      download
+                                      className={`shrink-0 rounded-lg p-1.5 transition ${isOutgoing ? "bg-white/20 text-white hover:bg-white/30" : "bg-white text-gray-700 hover:bg-gray-200"}`}
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </a>
+                                  </div>
+                                )}
+
+                              {msg.media_type === "stl" && msg.media_url && (
                                 <div
                                   className={`flex items-center gap-3 rounded-xl border p-2.5 ${isOutgoing ? "bg-white/10 border-white/20" : "bg-purple-50 border-purple-200"}`}
                                 >
                                   <Box
-                                    className={`h-8 w-8 ${isOutgoing ? "text-white" : "text-[#6d28d9]"}`}
+                                    className={`h-8 w-8 shrink-0 ${isOutgoing ? "text-white" : "text-[#6d28d9]"}`}
                                   />
                                   <div className="min-w-0 flex-1">
                                     <p className="truncate text-xs font-bold">
@@ -847,76 +1318,77 @@ export default function WhatsAppInboxClient() {
                                       {formatBytes(msg.media_size_bytes)}
                                     </p>
                                   </div>
-                                  {msg.media_url && (
-                                    <a
-                                      href={msg.media_url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      download
-                                      aria-label={`Download ${msg.media_filename || "media file"}`}
-                                      className={`rounded-lg p-1.5 transition ${isOutgoing ? "bg-white/20 text-white hover:bg-white/30" : "bg-white text-[#6d28d9] hover:bg-purple-100"}`}
-                                    >
-                                      <Download className="h-4 w-4" />
-                                    </a>
-                                  )}
+                                  <a
+                                    href={msg.media_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    download
+                                    className={`shrink-0 rounded-lg p-1.5 transition ${isOutgoing ? "bg-white/20 text-white hover:bg-white/30" : "bg-white text-[#6d28d9] hover:bg-purple-100"}`}
+                                  >
+                                    <Download className="h-4 w-4" />
+                                  </a>
                                 </div>
                               )}
 
-                              {msg.media_type === "document" && (
-                                <div
-                                  className={`flex items-center gap-3 rounded-xl border p-2.5 ${isOutgoing ? "bg-white/10 border-white/20" : "bg-gray-100 border-gray-200"}`}
-                                >
-                                  <FileText
-                                    className={`h-6 w-6 ${isOutgoing ? "text-white" : "text-gray-600"}`}
-                                  />
-                                  <div className="min-w-0 flex-1">
-                                    <p className="truncate text-xs font-medium">
-                                      {msg.media_filename || "Document"}
-                                    </p>
-                                    <p
-                                      className={`text-[10px] ${isOutgoing ? "text-white/70" : "text-gray-500"}`}
-                                    >
-                                      {formatBytes(msg.media_size_bytes)}
-                                    </p>
+                              {(msg.media_type === "location" ||
+                                msg.metadata?.location) && (
+                                <LocationBubble
+                                  msg={msg}
+                                  isOutgoing={isOutgoing}
+                                />
+                              )}
+
+                              {(msg.media_type === "contacts" ||
+                                msg.metadata?.contacts) && (
+                                <ContactCard
+                                  msg={msg}
+                                  isOutgoing={isOutgoing}
+                                />
+                              )}
+
+                              {msg.media_type === "order" && (
+                                <OrderCard msg={msg} isOutgoing={isOutgoing} />
+                              )}
+
+                              {msg.media_type === "interactive" &&
+                                !msg.interactive_payload && (
+                                  <div className="rounded-xl border border-dashed border-gray-300 p-3 text-xs opacity-80 italic">
+                                    [Interactive message sent]
                                   </div>
-                                  {msg.media_url && (
-                                    <a
-                                      href={msg.media_url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      download
-                                      aria-label={`Download ${msg.media_filename || "document"}`}
-                                      className={`rounded-lg p-1.5 transition ${isOutgoing ? "bg-white/20 text-white hover:bg-white/30" : "bg-white text-gray-700 hover:bg-gray-200"}`}
-                                    >
-                                      <Download className="h-4 w-4" />
-                                    </a>
-                                  )}
+                                )}
+
+                              {![
+                                "image",
+                                "video",
+                                "audio",
+                                "document",
+                                "stl",
+                                "sticker",
+                                "location",
+                                "contacts",
+                                "order",
+                                "interactive",
+                                "system",
+                              ].includes(msg.media_type) && (
+                                <div className="rounded-xl border border-dashed border-gray-300 p-3 text-xs opacity-80 italic">
+                                  ⚠️ Unsupported media type ({msg.media_type}).
+                                  View on phone.
                                 </div>
                               )}
                             </div>
                           )}
 
-                          {/* Message Text */}
-                          {msg.message_text && (
-                            <p className="text-xs leading-relaxed whitespace-pre-wrap break-words">
-                              {msg.message_text}
-                            </p>
+                          {msg.message_text &&
+                            (!msg.media_type ||
+                              !["order", "location", "contacts"].includes(
+                                msg.media_type,
+                              )) && <LinkedText text={msg.message_text} />}
+
+                          {msg.reactions && msg.reactions.length > 0 && (
+                            <ReactionBadges reactions={msg.reactions} />
                           )}
 
-                          {/* Timestamp & Status Ticks */}
-                          <div
-                            className={`mt-1.5 flex items-center gap-1 text-[10px] ${isOutgoing ? "justify-end text-white/70" : "justify-start text-gray-400"}`}
-                          >
-                            {msg.automated && (
-                              <span className="rounded bg-black/10 px-1 py-0.5 text-[9px]">
-                                BOT
-                              </span>
-                            )}
-                            <span>{formatTime(msg.created_at)}</span>
-                            {isOutgoing && (
-                              <CheckCheck className="h-3 w-3 text-purple-200" />
-                            )}
-                          </div>
+                          <MessageFooter msg={msg} isOutgoing={isOutgoing} />
                         </div>
                       </div>
                     );
@@ -924,6 +1396,27 @@ export default function WhatsAppInboxClient() {
                 )}
                 <div ref={messagesEndRef} />
               </div>
+
+              {/* Reply Preview */}
+              {replyToMessage && (
+                <div className="mx-4 mb-2 flex items-center justify-between rounded-xl border-l-4 border-purple-500 bg-purple-50 px-3 py-2 text-xs">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-[10px] text-purple-700">
+                      Replying to{" "}
+                      {replyToMessage.direction === "incoming"
+                        ? "customer"
+                        : "you"}
+                    </p>
+                    <p className="truncate text-gray-600">
+                      {replyToMessage.message_text?.slice(0, 80) ||
+                        `[${replyToMessage.media_type || "Media"}]`}
+                    </p>
+                  </div>
+                  <button onClick={() => setReplyToMessage(null)}>
+                    <X className="h-4 w-4 text-gray-400 hover:text-gray-700" />
+                  </button>
+                </div>
+              )}
 
               {/* Selected File Attachment Badge */}
               {selectedFile && (
@@ -1004,13 +1497,21 @@ export default function WhatsAppInboxClient() {
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={isWindowOpen ? "Type WhatsApp reply... (Press Enter to send)" : "24h window expired. Use a template."}
+                    placeholder={
+                      isWindowOpen
+                        ? "Type WhatsApp reply... (Press Enter to send)"
+                        : "24h window expired. Use a template."
+                    }
                     disabled={!isWindowOpen}
                     className="flex-1 rounded-xl border border-gray-200 bg-gray-50 p-2.5 text-xs text-[#0F1B3D] outline-none focus:border-[#6d28d9]/40 focus:bg-white resize-none"
                   />
                   <button
                     type="button"
-                    disabled={sending || (!replyText.trim() && !selectedFile) || !isWindowOpen}
+                    disabled={
+                      sending ||
+                      (!replyText.trim() && !selectedFile) ||
+                      !isWindowOpen
+                    }
                     onClick={sendReply}
                     className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#6d28d9] text-white transition hover:bg-purple-700 disabled:opacity-40"
                   >
@@ -1084,7 +1585,7 @@ export default function WhatsAppInboxClient() {
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {orders.map((ord) => (
+                  {orders.map((ord: ShopOrder) => (
                     <div
                       key={ord.id}
                       className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs"
@@ -1144,7 +1645,7 @@ export default function WhatsAppInboxClient() {
                 data-lenis-prevent
                 className="space-y-2 overflow-y-auto max-h-48"
               >
-                {notes.map((n) => (
+                {notes.map((n: InternalNote) => (
                   <div
                     key={n.id}
                     className="rounded-lg bg-amber-50/70 border border-amber-200/60 p-2 text-[11px] text-amber-900"
@@ -1160,6 +1661,36 @@ export default function WhatsAppInboxClient() {
           </div>
         )}
       </div>
+
+      {/* Product Picker Modal */}
+      <AnimatePresence>
+        {showProductPicker && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b pb-4">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Select Products
+                </h3>
+                <button
+                  onClick={() => setShowProductPicker(false)}
+                  className="rounded-full p-2 hover:bg-gray-100"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+              <div className="py-8 text-center text-gray-500">
+                <ShoppingCart className="mx-auto h-8 w-8 mb-2 opacity-20" />
+                <p>Product catalog integration not yet configured.</p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Quick Replies Modal */}
       <AnimatePresence>
@@ -1187,7 +1718,7 @@ export default function WhatsAppInboxClient() {
                 data-lenis-prevent
                 className="mt-4 max-h-80 overflow-y-auto space-y-2"
               >
-                {quickReplies.map((qr) => (
+                {quickReplies.map((qr: QuickReply) => (
                   <div
                     key={qr.id}
                     onClick={(e) => {

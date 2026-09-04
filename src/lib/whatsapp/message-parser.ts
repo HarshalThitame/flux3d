@@ -12,6 +12,9 @@ export type ParsedWhatsAppMessage = {
   metaMessageId?: string | null;
   interaction: OrderInteraction | null;
   contextMessageId?: string | null;
+  isForwarded?: boolean;
+  isFrequentlyForwarded?: boolean;
+  interactivePayload?: Record<string, unknown> | null;
 };
 
 type MetaMessage = Record<string, unknown>;
@@ -40,6 +43,9 @@ export function parseWhatsAppMessage(
   let mediaFilename: string | null = null;
   let mediaType: ParsedWhatsAppMessage["mediaType"] = null;
   let interaction: OrderInteraction | null = null;
+  let isForwarded = false;
+  let isFrequentlyForwarded = false;
+  let interactivePayload: Record<string, unknown> | null = null;
   const metadata: Record<string, unknown> = {};
 
   // Handle Context (Reply to a message)
@@ -49,6 +55,8 @@ export function parseWhatsAppMessage(
   if (context && context.id) {
     contextMessageId = String(context.id);
   }
+  if (context?.forwarded) isForwarded = true;
+  if (context?.frequently_forwarded) isFrequentlyForwarded = true;
 
   if (msgType === "text") {
     text = (getNested(message, "text.body") as string | undefined) ?? undefined;
@@ -102,6 +110,7 @@ export function parseWhatsAppMessage(
   } else if (msgType === "interactive") {
     const interactive = getNested(message, "interactive") as
       Record<string, unknown> | undefined;
+    interactivePayload = interactive ?? null;
     const interactiveType = interactive?.type;
     if (interactiveType === "list_reply") {
       interaction = {
@@ -182,5 +191,8 @@ export function parseWhatsAppMessage(
     interaction,
     metadata,
     contextMessageId,
+    isForwarded,
+    isFrequentlyForwarded,
+    interactivePayload,
   };
 }

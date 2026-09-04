@@ -537,6 +537,9 @@ async function logWhatsAppMessage(
     status?: string | null;
     contextMessageId?: string | null;
     metadata?: Record<string, unknown> | null;
+    isForwarded?: boolean;
+    interactivePayload?: Record<string, unknown> | null;
+    mediaThumbnailUrl?: string | null;
   },
 ) {
   if (!supabase) return;
@@ -559,6 +562,13 @@ async function logWhatsAppMessage(
       p_media_size_bytes: entry.mediaSizeBytes || null,
       p_meta_message_id: entry.metaMessageId || null,
       p_status: entry.status ?? "sent",
+      p_context_message_id: entry.contextMessageId || null,
+      p_metadata: entry.metadata ? JSON.stringify(entry.metadata) : null,
+      p_is_forwarded: entry.isForwarded || false,
+      p_interactive_payload: entry.interactivePayload
+        ? JSON.stringify(entry.interactivePayload)
+        : null,
+      p_media_thumbnail_url: entry.mediaThumbnailUrl || null,
     },
   );
 
@@ -775,6 +785,52 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
     }
   }
 
+  // ── Reaction messages — store in separate table, not as a regular message ──
+  if (inboundParsedMedia?.metadata?.reaction && supabase) {
+    const { emoji, messageId } = inboundParsedMedia.metadata.reaction as {
+      emoji: string;
+      messageId: string;
+    };
+    if (messageId) {
+      if (emoji) {
+        // Upsert reaction (emoji present = add/change reaction)
+        await supabase
+          .from("whatsapp_message_reactions")
+          .upsert(
+            {
+              message_meta_id: messageId,
+              reactor_phone: from,
+              emoji,
+            },
+            { onConflict: "message_meta_id,reactor_phone" },
+          )
+          .catch((err: unknown) =>
+            console.error("[whatsapp] Failed to upsert reaction:", err),
+          );
+      } else {
+        // Empty emoji = remove reaction
+        await supabase
+          .from("whatsapp_message_reactions")
+          .delete()
+          .eq("message_meta_id", messageId)
+          .eq("reactor_phone", from)
+          .catch((err: unknown) =>
+            console.error("[whatsapp] Failed to remove reaction:", err),
+          );
+      }
+    }
+    // Mark event processed and return — reactions are not standalone messages
+    if (eventRecord?.id) {
+      await supabase
+        .from("whatsapp_webhook_events")
+        .update({ processed_at: new Date().toISOString() })
+        .eq("id", eventRecord.id)
+        .catch(() => {});
+    }
+    processingSpan?.end();
+    return;
+  }
+
   try {
     // Sender allow-list: only reply if sender phone exists in profiles
     let senderRecognized = false;
@@ -817,12 +873,15 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       responseTimeMinutes: null,
       mediaType: inboundMedia?.mediaType ?? inboundMediaType,
       mediaUrl: inboundMedia?.url,
+      mediaThumbnailUrl: inboundMedia?.thumbnailUrl ?? null,
       mediaFilename: inboundMedia?.filename,
       mediaMimeType: inboundMedia?.mimeType,
       mediaSizeBytes: inboundMedia?.sizeBytes,
       metaMessageId: inboundMetaMessageId,
       metadata: inboundParsedMedia?.metadata,
       contextMessageId: inboundParsedMedia?.contextMessageId,
+      isForwarded: inboundParsedMedia?.isForwarded,
+      interactivePayload: inboundParsedMedia?.interactivePayload,
     });
 
     // ── Conversational Components Interceptor ──
@@ -1653,103 +1712,10 @@ export default async function handler(
         return res.status(200).json({ success: true });
       }
 
-      // Handle unsupported media types (audio, video, sticker) with a direct reply
-      if (
-        msgType &&
-        msgType !== "text" &&
-        msgType !== "image" &&
-        msgType !== "document" &&
-        !text
-      ) {
-        const mediaReply = `Thanks for your ${msgType}. I can only assist with text, images, and documents. Please describe what you need in text.`;
-        await await insertWebhookEvent(supabase, payloadHash, payload, {
-          sender: from,
-          processed_at: new Date().toISOString(),
-        });
-
-        // Look up profile for userId (best-effort, 2s timeout)
-        let mediaUserId: string | null = null;
-        try {
-          const { data: mediaProfile } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("phone_number", from)
-            .maybeSingle();
-          mediaUserId = mediaProfile?.id ?? null;
-        } catch {
-          /* ignore */
-        }
-
-        // Log the incoming media message so it appears in the admin inbox
-        const parsedMedia = parseWhatsAppMessage(message);
-        await logWhatsAppMessage(supabase, {
-          userId: mediaUserId,
-          sender: from,
-          direction: "incoming",
-          messageText: `[${parsedMedia.mediaType ?? msgType}]`,
-          automated: false,
-          triggerEvent: "incoming_whatsapp_message",
-          responded: true,
-          responseTimeMinutes: null,
-          mediaType: parsedMedia.mediaType ?? msgType,
-          mediaFilename: parsedMedia.mediaFilename ?? null,
-          mediaMimeType: parsedMedia.mediaMimeType ?? null,
-          metaMessageId: parsedMedia.metaMessageId ?? null,
-        });
-
-        try {
-          const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-          const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-          if (phoneNumberId && accessToken) {
-            const apiVersion = process.env.WHATSAPP_API_VERSION || "v22.0";
-            const mediaController = new AbortController();
-            const mediaTimeout = setTimeout(
-              () => mediaController.abort(),
-              10000,
-            );
-            const mediaResponse = await fetch(
-              `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`,
-              {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${accessToken}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  messaging_product: "whatsapp",
-                  to: from,
-                  type: "text",
-                  text: { body: mediaReply },
-                }),
-                signal: mediaController.signal,
-              },
-            ).finally(() => clearTimeout(mediaTimeout));
-
-            // Log the outgoing reply so it appears in the admin inbox
-            let mediaReplyId: string | undefined;
-            try {
-              const mediaResult = await mediaResponse.json().catch(() => null);
-              mediaReplyId = mediaResult?.messages?.[0]?.id;
-            } catch {
-              /* best-effort */
-            }
-            await logWhatsAppMessage(supabase, {
-              userId: mediaUserId,
-              sender: from,
-              direction: "outgoing",
-              messageText: mediaReply,
-              automated: true,
-              triggerEvent: "unsupported_media_reply",
-              responded: true,
-              responseTimeMinutes: null,
-              metaMessageId: mediaReplyId ?? null,
-            });
-          }
-        } catch {
-          /* best-effort */
-        }
-        return res.status(200).json({ success: true });
-      }
+      // NOTE: Previously, audio/video/sticker messages hit an early-return here
+      // that sent "I can only assist with text, images, and documents." This has
+      // been removed — all media types now flow through processIncomingMessage()
+      // and are rendered in the admin inbox with dedicated renderers.
 
       // Media without caption — use guided fallback
       if (mediaInfo && !text) {

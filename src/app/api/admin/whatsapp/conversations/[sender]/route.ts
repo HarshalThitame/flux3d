@@ -1,125 +1,176 @@
-import { NextResponse } from 'next/server'
-import { getAdminApiErrorResponse } from '@/lib/admin/api'
-import { requireAdminRequest } from '@/lib/admin/request'
-import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { createSignedWhatsAppMediaUrl } from '@/lib/whatsapp/media'
+import { NextResponse } from "next/server";
+import { getAdminApiErrorResponse } from "@/lib/admin/api";
+import { requireAdminRequest } from "@/lib/admin/request";
+import { createAdminSupabaseClient } from "@/lib/admin/server";
+import { createSignedWhatsAppMediaUrl } from "@/lib/whatsapp/media";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ sender: string }> }
+  { params }: { params: Promise<{ sender: string }> },
 ) {
-  const auth = await requireAdminRequest()
-  if ('response' in auth) return auth.response
+  const auth = await requireAdminRequest();
+  if ("response" in auth) return auth.response;
 
   try {
-    const { sender } = await params
-    const phone = decodeURIComponent(sender)
-    const supabase = createAdminSupabaseClient()
+    const { sender } = await params;
+    const phone = decodeURIComponent(sender);
+    const supabase = createAdminSupabaseClient();
 
     // 1. Fetch messages (most recent 1000 for the thread)
     const { data: messages, error } = await supabase
-      .from('whatsapp_messages')
-      .select('id, sender, direction, message_text, automated, trigger_event, responded, created_at, media_type, media_url, media_filename, media_mime_type, media_size_bytes, status, meta_message_id')
-      .eq('sender', phone)
-      .order('created_at', { ascending: false })
-      .limit(1000)
+      .from("whatsapp_messages")
+      .select(
+        "id, sender, direction, message_text, automated, trigger_event, responded, created_at, media_type, media_url, media_filename, media_mime_type, media_size_bytes, media_thumbnail_url, status, meta_message_id, context_message_id, metadata, is_forwarded, interactive_payload",
+      )
+      .eq("sender", phone)
+      .order("created_at", { ascending: false })
+      .limit(1000);
 
-    if (error) throw new Error(error.message)
+    if (error) throw new Error(error.message);
 
-    if (messages) messages.reverse()
+    if (messages) messages.reverse();
 
     // The whatsapp-media bucket is private: replace stored media references
     // (bare storage paths or legacy public/signed URLs) with fresh 1-hour
     // signed URLs so only authenticated admin views can access attachments.
     await Promise.all(
       (messages ?? []).map(async (msg) => {
-        if (!msg.media_url || !msg.media_type) return
-        const signed = await createSignedWhatsAppMediaUrl(supabase, msg.media_url, 3600)
-        if (signed) msg.media_url = signed
+        if (msg.media_url && msg.media_type) {
+          const signed = await createSignedWhatsAppMediaUrl(
+            supabase,
+            msg.media_url,
+            3600,
+          );
+          if (signed) msg.media_url = signed;
+        }
+        if (msg.media_thumbnail_url) {
+          const thumbSigned = await createSignedWhatsAppMediaUrl(
+            supabase,
+            msg.media_thumbnail_url,
+            3600,
+          );
+          if (thumbSigned) msg.media_thumbnail_url = thumbSigned;
+        }
       }),
-    )
+    );
+
+    // Batch-load reactions for all messages in this thread
+    const metaIds = (messages ?? [])
+      .map((m: { meta_message_id: string | null }) => m.meta_message_id)
+      .filter((id: string | null): id is string => Boolean(id));
+
+    const reactionsMap: Record<
+      string,
+      Array<{ emoji: string; reactor_phone: string }>
+    > = {};
+    if (metaIds.length > 0) {
+      const { data: reactions } = await supabase
+        .from("whatsapp_message_reactions")
+        .select("message_meta_id, emoji, reactor_phone")
+        .in("message_meta_id", metaIds);
+
+      for (const r of reactions ?? []) {
+        if (!reactionsMap[r.message_meta_id])
+          reactionsMap[r.message_meta_id] = [];
+        reactionsMap[r.message_meta_id].push({
+          emoji: r.emoji,
+          reactor_phone: r.reactor_phone,
+        });
+      }
+    }
+
+    // Attach reactions to each message
+    for (const msg of messages ?? []) {
+      (msg as Record<string, unknown>).reactions = msg.meta_message_id
+        ? (reactionsMap[msg.meta_message_id] ?? [])
+        : [];
+    }
 
     // Mark unread incoming messages as responded/read when admin views conversation
     await supabase
-      .from('whatsapp_messages')
+      .from("whatsapp_messages")
       .update({ responded: true })
-      .eq('sender', phone)
-      .eq('direction', 'incoming')
-      .eq('responded', false)
+      .eq("sender", phone)
+      .eq("direction", "incoming")
+      .eq("responded", false);
 
     // 2. Fetch Customer Profile
     const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, phone_number, created_at')
-      .eq('phone_number', phone)
-      .maybeSingle()
+      .from("profiles")
+      .select("id, full_name, email, phone_number, created_at")
+      .eq("phone_number", phone)
+      .maybeSingle();
 
     // 3. Fetch Customer Orders ("Orders on Chat")
     type OrderRow = {
-      id: string
-      order_number: string
-      total_amount: number
-      currency: string
-      status: string
-      payment_status: string
-      fulfilment_status: string
-      items: unknown
-      created_at: string
-      shipping_address: unknown
-    }
-    let orders: OrderRow[] = []
+      id: string;
+      order_number: string;
+      total_amount: number;
+      currency: string;
+      status: string;
+      payment_status: string;
+      fulfilment_status: string;
+      items: unknown;
+      created_at: string;
+      shipping_address: unknown;
+    };
+    let orders: OrderRow[] = [];
     if (phone || profile?.id) {
       const orderQuery = supabase
-        .from('shop_orders')
-        .select('id, order_number, total_amount, currency, status, payment_status, fulfilment_status, items, created_at, shipping_address')
-        .order('created_at', { ascending: false })
-        .limit(10)
+        .from("shop_orders")
+        .select(
+          "id, order_number, total_amount, currency, status, payment_status, fulfilment_status, items, created_at, shipping_address",
+        )
+        .order("created_at", { ascending: false })
+        .limit(10);
 
       if (profile?.id) {
-        orderQuery.or(`user_id.eq.${profile.id},phone.eq.${phone}`)
+        orderQuery.or(`user_id.eq.${profile.id},phone.eq.${phone}`);
       } else {
-        orderQuery.eq('phone', phone)
+        orderQuery.eq("phone", phone);
       }
 
-      const { data: orderData } = await orderQuery
-      orders = (orderData as OrderRow[] | null) ?? []
+      const { data: orderData } = await orderQuery;
+      orders = (orderData as OrderRow[] | null) ?? [];
     }
 
     // 4. Fetch Internal Admin Notes
     const { data: notes } = await supabase
-      .from('whatsapp_internal_notes')
-      .select('id, note_text, created_at, author_id')
-      .eq('sender', phone)
-      .order('created_at', { ascending: false })
+      .from("whatsapp_internal_notes")
+      .select("id, note_text, created_at, author_id")
+      .eq("sender", phone)
+      .order("created_at", { ascending: false });
 
     // 5. Fetch Tags & Metadata
     const { data: meta } = await supabase
-      .from('whatsapp_conversation_meta')
-      .select('*')
-      .eq('sender', phone)
-      .maybeSingle()
+      .from("whatsapp_conversation_meta")
+      .select("*")
+      .eq("sender", phone)
+      .maybeSingle();
 
     // 6. Calculate 24-hour Messaging Window Status
-    let lastCustomerMessageAt: string | null = null
+    let lastCustomerMessageAt: string | null = null;
     for (let i = (messages ?? []).length - 1; i >= 0; i--) {
-      if (messages![i].direction === 'incoming') {
-        lastCustomerMessageAt = messages![i].created_at
-        break
+      if (messages![i].direction === "incoming") {
+        lastCustomerMessageAt = messages![i].created_at;
+        break;
       }
     }
 
-    const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000
-    const now = Date.now()
-    let windowActive = false
-    let remainingWindowMinutes = 0
+    const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    let windowActive = false;
+    let remainingWindowMinutes = 0;
 
     if (lastCustomerMessageAt) {
-      const diff = now - new Date(lastCustomerMessageAt).getTime()
+      const diff = now - new Date(lastCustomerMessageAt).getTime();
       if (diff < TWENTY_FOUR_HOURS_MS) {
-        windowActive = true
-        remainingWindowMinutes = Math.floor((TWENTY_FOUR_HOURS_MS - diff) / 60000)
+        windowActive = true;
+        remainingWindowMinutes = Math.floor(
+          (TWENTY_FOUR_HOURS_MS - diff) / 60000,
+        );
       }
     }
 
@@ -136,8 +187,8 @@ export async function GET(
       lastCustomerMessageAt,
       windowActive,
       remainingWindowMinutes,
-    })
+    });
   } catch (error) {
-    return getAdminApiErrorResponse(error)
+    return getAdminApiErrorResponse(error);
   }
 }
