@@ -3,15 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LogIn,
-  Package,
-  ShoppingCart,
-  Store,
-  UserCircle,
-  FileText,
-} from "lucide-react";
+import { LogIn, Package, ShoppingCart, Store, FileText } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { getShopCartTotals, useShopCartStore } from "@/stores/shopCartStore";
 
 type BarItem = {
@@ -59,7 +53,7 @@ export default function MobileBottomBar() {
       if (mounted) setIsAuthenticated(!!data.user);
 
       const { data: subData } = supabase.auth.onAuthStateChange(
-        (event, session) => {
+        (event: AuthChangeEvent, session: Session | null) => {
           if (mounted) setIsAuthenticated(!!session?.user);
         },
       );
