@@ -535,6 +535,8 @@ async function logWhatsAppMessage(
     mediaSizeBytes?: number | null;
     metaMessageId?: string | null;
     status?: string | null;
+    contextMessageId?: string | null;
+    metadata?: Record<string, unknown> | null;
   },
 ) {
   if (!supabase) return;
@@ -816,6 +818,8 @@ export async function processIncomingMessage(params: IncomingMessageParams) {
       mediaMimeType: inboundMedia?.mimeType,
       mediaSizeBytes: inboundMedia?.sizeBytes,
       metaMessageId: inboundMetaMessageId,
+      metadata: parsedMedia.metadata,
+      contextMessageId: parsedMedia.contextMessageId,
     });
 
     // ── Conversational Components Interceptor ──
@@ -1620,10 +1624,10 @@ export default async function handler(
             console.error("[whatsapp] Failed to update message status:", error);
           }
         }
-        await insertWebhookEvent(supabase, payloadHash, payload, {
+        await await insertWebhookEvent(supabase, payloadHash, payload, {
           sender: null,
           processed_at: new Date().toISOString(),
-        }).catch(() => {});
+        });
         // Status-only events have no message body — nothing else to process
         if (!message || !from) return res.status(200).json({ success: true });
       }
@@ -1639,10 +1643,10 @@ export default async function handler(
       const interaction: OrderInteraction | null = parsedInteraction;
 
       if (!message || !from) {
-        await insertWebhookEvent(supabase, payloadHash, payload, {
+        await await insertWebhookEvent(supabase, payloadHash, payload, {
           sender: from ?? null,
           processed_at: new Date().toISOString(),
-        }).catch(() => {});
+        });
         return res.status(200).json({ success: true });
       }
 
@@ -1655,10 +1659,10 @@ export default async function handler(
         !text
       ) {
         const mediaReply = `Thanks for your ${msgType}. I can only assist with text, images, and documents. Please describe what you need in text.`;
-        await insertWebhookEvent(supabase, payloadHash, payload, {
+        await await insertWebhookEvent(supabase, payloadHash, payload, {
           sender: from,
           processed_at: new Date().toISOString(),
-        }).catch(() => {});
+        });
 
         // Look up profile for userId (best-effort, 2s timeout)
         let mediaUserId: string | null = null;
@@ -1752,10 +1756,10 @@ export default async function handler(
 
       // Fallback if no text or interaction could be extracted (shouldn't reach here)
       if ((!text || typeof text !== "string") && !interaction) {
-        await insertWebhookEvent(supabase, payloadHash, payload, {
+        await await insertWebhookEvent(supabase, payloadHash, payload, {
           sender: from,
           processed_at: new Date().toISOString(),
-        }).catch(() => {});
+        });
         return res.status(200).json({ success: true });
       }
 
