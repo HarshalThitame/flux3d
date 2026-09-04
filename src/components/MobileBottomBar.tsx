@@ -44,40 +44,34 @@ export default function MobileBottomBar() {
     let mounted = true;
     let subscription: { unsubscribe: () => void } | undefined;
 
-    const checkAuth = async () => {
-      try {
-        const res = await fetch("/api/auth/session", { cache: "no-store" });
-        if (res.ok) {
-          const { authenticated } = await res.json();
-          if (mounted) setIsAuthenticated(authenticated);
-        }
-      } catch (error) {
-        console.error("Failed to fetch auth session", error);
-      }
-    };
-
     const initAuth = async () => {
-      checkAuth();
-
       const { getSupabaseBrowserClient } =
         await import("@/lib/supabase/client");
       const supabase = getSupabaseBrowserClient();
 
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (mounted) setIsAuthenticated(!!user);
+
       const { data: subData } = supabase.auth.onAuthStateChange(
-        (event: AuthChangeEvent) => {
+        async (event: AuthChangeEvent) => {
           if (
             event === "SIGNED_IN" ||
             event === "SIGNED_OUT" ||
             event === "USER_UPDATED"
           ) {
-            checkAuth();
+            const {
+              data: { user: updatedUser },
+            } = await supabase.auth.getUser();
+            if (mounted) setIsAuthenticated(!!updatedUser);
           }
         },
       );
       subscription = subData.subscription;
     };
 
-    initAuth();
+    void initAuth();
 
     return () => {
       mounted = false;
