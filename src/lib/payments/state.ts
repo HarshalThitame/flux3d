@@ -137,6 +137,15 @@ export async function updateOrderPaymentStatus(
     })
   }
 
+  // Component 3: Trigger Whatsapp Notification
+  if (params.nextStatus === 'paid') {
+    import('@/lib/whatsapp/order-notifications').then(m => m.enqueueOrderNotification(params.id, 'payment_confirmed')).catch(console.error);
+  } else if (params.nextStatus === 'failed') {
+    import('@/lib/whatsapp/order-notifications').then(m => m.enqueueOrderNotification(params.id, 'payment_failed')).catch(console.error);
+  } else if (params.nextStatus === 'refunded') {
+    import('@/lib/whatsapp/order-notifications').then(m => m.enqueueOrderNotification(params.id, 'refunded')).catch(console.error);
+  }
+
   return data
 }
 

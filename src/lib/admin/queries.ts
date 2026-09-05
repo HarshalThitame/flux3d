@@ -989,6 +989,16 @@ export async function updateAdminOrderStatus(groupId: string, status: AdminOrder
 
   if (updateError) throw new Error(updateError.message)
 
+  // Component 3: Trigger Whatsapp Notification
+  if (['shipped', 'out_for_delivery', 'delivered'].includes(status)) {
+    // Fire and forget so it doesn't block
+    import('@/lib/whatsapp/order-notifications').then(m => {
+      // groupId might be used for all orders in group, but enqueueOrderNotification expects orderId.
+      // We'll pass rows[0].id to grab the primary order for contact info.
+      m.enqueueOrderNotification(rows[0].id, status)
+    }).catch(console.error)
+  }
+
   const { data, error } = await supabase
     .from('orders')
     .select(ADMIN_ORDER_SELECT)

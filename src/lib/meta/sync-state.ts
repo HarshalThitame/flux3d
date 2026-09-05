@@ -29,7 +29,7 @@ function getClient(): SupabaseClient | null {
     global: {
       fetch: (input: RequestInfo | URL, init?: RequestInit) => {
         const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 8000)
+        const timeout = setTimeout(() => controller.abort(), 15000)
         return fetch(input, { ...init, signal: controller.signal })
           .finally(() => clearTimeout(timeout))
       },

@@ -132,7 +132,11 @@ export default function NavbarClient({
       setIsOpen(false);
       setIsProfileOpen(false);
       setIsMoreOpen(false);
-      router.push("/login");
+      
+      // router.refresh() followed by router.push() can be racey.
+      // A hard navigation ensures the Next.js router cache is bypassed
+      // and the server is forced to re-evaluate the auth state without cookies.
+      window.location.href = "/login";
     } catch (error) {
       console.error("[Auth] Unexpected logout error", error);
     } finally {

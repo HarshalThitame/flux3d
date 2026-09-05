@@ -5,7 +5,7 @@ let cachedAdminClient: SupabaseClient | null = null
 
 function fetchWithTimeout(url: RequestInfo | URL, options?: RequestInit): Promise<Response> {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 8000)
+  const timeout = setTimeout(() => controller.abort(), 15000)
   return fetch(url, { ...options, signal: controller.signal })
     .finally(() => clearTimeout(timeout))
 }

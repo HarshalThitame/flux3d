@@ -212,7 +212,7 @@ export async function mapCatalogItemToSku(catalogItemId: string): Promise<string
 
   try {
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 8000)
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
     const response = await fetch(
       `https://graph.facebook.com/${API_VERSION}/${catalogItemId}?fields=retailer_id,custom_label_4`,
       { headers: { Authorization: `Bearer ${accessToken}` }, signal: controller.signal }

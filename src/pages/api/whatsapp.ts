@@ -57,7 +57,7 @@ function getServiceClient() {
     global: {
       fetch: (url: RequestInfo | URL, options?: RequestInit) => {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000);
+        const timeout = setTimeout(() => controller.abort(), 15000);
         return fetch(url, { ...options, signal: controller.signal }).finally(
           () => clearTimeout(timeout),
         );

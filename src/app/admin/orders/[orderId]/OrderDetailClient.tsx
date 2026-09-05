@@ -91,6 +91,8 @@ export default function OrderDetailClient({ initialOrder }: Props) {
   const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[] | null>(null);
   const [auditLogsLoading, setAuditLogsLoading] = useState(true);
+  const [notifications, setNotifications] = useState<any[] | null>(null);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
   const toastTimer = useRef<number | null>(null);
 
   const [trackingForm, setTrackingForm] = useState({
@@ -146,6 +148,28 @@ export default function OrderDetailClient({ initialOrder }: Props) {
         type: "error",
         message: `Could not copy ${label.toLowerCase()}.`,
       });
+    }
+  }
+
+  async function resendNotification(status: string) {
+    try {
+      showToast({ type: "success", message: "Enqueuing..." });
+      const res = await fetch(`/api/admin/orders/${order.id}/notifications`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        showToast({ type: "success", message: "Notification enqueued." });
+        // Refresh notifications
+        fetch(`/api/admin/orders/${order.id}/notifications`)
+          .then((r) => r.json())
+          .then((d) => setNotifications(d.notifications || []));
+      } else {
+        showToast({ type: "error", message: "Failed to enqueue." });
+      }
+    } catch (err) {
+      showToast({ type: "error", message: "Failed to enqueue." });
     }
   }
 
@@ -336,6 +360,26 @@ export default function OrderDetailClient({ initialOrder }: Props) {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    if (notifications !== null) return;
+    fetch(`/api/admin/orders/${order.id}/notifications`)
+      .then((res) => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then((data) => {
+        if (active) setNotifications(data.notifications || []);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setNotificationsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <>
       <div className="w-full bg-gray-50 text-gray-900">
@@ -499,6 +543,53 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                             {formatAuditValue(log.action, log.new_value)}
                           </div>
                         )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+
+              <Card title="WhatsApp Notifications">
+                {notificationsLoading && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                    Loading notifications...
+                  </div>
+                )}
+                {notifications !== null &&
+                  !notificationsLoading &&
+                  notifications.length === 0 && (
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-600">
+                      No notifications recorded.
+                    </div>
+                  )}
+                {notifications !== null && notifications.length > 0 && (
+                  <div className="space-y-2">
+                    {notifications.map((notif: any) => (
+                      <div
+                        key={notif.id}
+                        className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm flex items-center justify-between"
+                      >
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            {notif.order_status}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Status: {notif.status} (Attempts: {notif.attempt_count})
+                          </div>
+                          {notif.last_error && (
+                            <div className="text-xs text-red-500">
+                              Error: {notif.last_error}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => resendNotification(notif.order_status)}
+                          className="text-xs text-violet-600 hover:underline"
+                        >
+                          Resend
+                        </button>
                       </div>
                     ))}
                   </div>

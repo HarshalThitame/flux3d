@@ -20,7 +20,7 @@ export default function AdminLogoutPage() {
           return
         }
 
-        router.replace('/login?next=/admin')
+        window.location.replace('/login?next=/admin')
       } catch (err) {
         console.error('[Auth] Unexpected logout error', err)
         setError(err instanceof Error ? err.message : 'Failed to log out.')
