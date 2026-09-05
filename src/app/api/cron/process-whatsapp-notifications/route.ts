@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
-import { sendWhatsAppTemplate } from '@/lib/whatsapp/messages'
+import { sendWhatsAppTemplate, type WhatsAppTemplateComponent } from '@/lib/whatsapp/messages'
 
 export const maxDuration = 60; // 60 seconds
 export const dynamic = 'force-dynamic';
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 
       // Map payload variables for the template
       // Variables: 1: name, 2: order_number, 3: amount/eta
-      const components = [
+      const components: WhatsAppTemplateComponent[] = [
         {
           type: 'body',
           parameters: [
