@@ -995,7 +995,7 @@ export async function updateAdminOrderStatus(groupId: string, status: AdminOrder
     import('@/lib/whatsapp/order-notifications').then(m => {
       // groupId might be used for all orders in group, but enqueueOrderNotification expects orderId.
       // We'll pass rows[0].id to grab the primary order for contact info.
-      m.enqueueOrderNotification(rows[0].id, status)
+      m.enqueueOrderNotification(String(rows[0].id), status)
     }).catch(console.error)
   }
 

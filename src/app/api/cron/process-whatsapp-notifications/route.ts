@@ -62,10 +62,9 @@ export async function POST(req: Request) {
       }
 
       // Send the template
-      await sendWhatsAppTemplate({
-        to: phone,
-        templateName: payload.template_name,
-        languageCode: payload.template_language,
+      await sendWhatsAppTemplate(phone, {
+        name: payload.template_name,
+        language: payload.template_language,
         components
       });
 
