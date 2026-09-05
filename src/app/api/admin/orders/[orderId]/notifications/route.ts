@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createAdminSupabaseClient } from '@/lib/supabase/admin'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
 
 export async function GET(req: Request, context: any) {
   // Await the params object to satisfy Next.js 15 routing constraints

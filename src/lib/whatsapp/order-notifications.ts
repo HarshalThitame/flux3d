@@ -1,4 +1,4 @@
-import { createAdminSupabaseClient } from '@/lib/supabase/admin'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
 
 export async function enqueueOrderNotification(
   orderId: string,

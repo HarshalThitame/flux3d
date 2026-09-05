@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createAdminSupabaseClient } from '@/lib/supabase/admin'
+import { createAdminSupabaseClient } from '@/lib/admin/server'
 import { sendWhatsAppTemplate } from '@/lib/whatsapp/messages'
 
 export const maxDuration = 60; // 60 seconds
