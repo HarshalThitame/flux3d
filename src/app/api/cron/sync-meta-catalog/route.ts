@@ -36,10 +36,22 @@ async function verifyQStash(request: Request): Promise<boolean> {
   const headerSignature = request.headers.get("upstash-signature") ?? "";
   if (headerSignature) {
     try {
+      const isValid = await qstashReceiver
+        .verify({
+          body,
+          signature: headerSignature,
+          url: request.url,
+        })
+        .catch(() => false);
+      if (isValid) return true;
+
+      // Fallback: Check against the canonical URL if request.url was mangled
+      // e.g., Next.js App Router on Vercel modifying the internal host
+      const canonicalUrl = `https://flux3d.in/api/cron/sync-meta-catalog`;
       return await qstashReceiver.verify({
         body,
         signature: headerSignature,
-        url: request.url,
+        url: canonicalUrl,
       });
     } catch {
       return false;
@@ -49,10 +61,20 @@ async function verifyQStash(request: Request): Promise<boolean> {
     new URL(request.url).searchParams.get("upstash-signature") ?? "";
   if (!querySignature) return false;
   try {
+    const isValid = await qstashReceiver
+      .verify({
+        body,
+        signature: querySignature,
+        url: request.url,
+      })
+      .catch(() => false);
+    if (isValid) return true;
+
+    const canonicalUrl = `https://flux3d.in/api/cron/sync-meta-catalog`;
     return await qstashReceiver.verify({
       body,
       signature: querySignature,
-      url: request.url,
+      url: canonicalUrl,
     });
   } catch {
     return false;

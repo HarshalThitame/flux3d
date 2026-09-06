@@ -10,6 +10,7 @@ import {
 import {
   mergeStoredCatalogHashes,
   queueCatalogDeletes,
+  deleteFromStoredCatalogHashes,
 } from "@/lib/meta/sync-state";
 import { sendOpsAlert } from "@/lib/alerts";
 import { rateLimitCheck } from "@/lib/rate-limit";
@@ -212,6 +213,34 @@ export async function POST(request: Request) {
 
       const result = await upsertMetaCatalogItem(productInput);
 
+      // ── Delete the slug-based ghost entry whenever product has SKUs ──────────
+      // When a product is first created (no SKUs yet), the webhook pushes it
+      // with retailer_id = slug (and often price = 0 / base_price at creation
+      // time). Later, when SKUs are added, the SKU-code-based entries are pushed
+      // correctly — but the old slug entry lingers in the Meta catalog as a
+      // 0-price ghost that shows up as an extra "variant" in WhatsApp / Commerce
+      // Manager.
+      //
+      // Fix: always call deleteMetaCatalogItem(slugRetailerId) when the product
+      // has SKUs, regardless of whether the slug is in storedHashes. The Meta API
+      // treats DELETE on a non-existent item as "already gone" (success), so this
+      // is safe to call even if the slug entry no longer exists.
+      //
+      // Also prune the slug key from meta_sync_state.hashes so the full-sync
+      // cron doesn't see it as "known-good" and skip the delete on its next run.
+      if ((productInput.skus?.length ?? 0) > 0) {
+        const slugRetailerId = toCatalogRetailerId(productInput.slug);
+        const delResult = await deleteMetaCatalogItem(slugRetailerId);
+        if (!delResult.success) {
+          // Queue for retry on next cron run
+          await queueCatalogDeletes([slugRetailerId]);
+        }
+        // Always prune the slug hash key — whether the delete succeeded (item is
+        // gone) or was already gone (alreadyGone). If delete is queued for retry,
+        // we still remove the hash so the cron does not "skip" it as unchanged.
+        await deleteFromStoredCatalogHashes([slugRetailerId]);
+      }
+
       const failed = result.filter((a) => !a.success);
       const allSucceeded = failed.length === 0;
       const primaryHandle = allSucceeded ? result[0]?.metaHandle : null;
@@ -330,6 +359,30 @@ export async function POST(request: Request) {
             result.success ? "info" : "warning",
             `SKU renamed ${oldSku} -> ${newSku}; old catalog item ${result.success ? "deleted" : "delete queued for retry"}`,
             { action: "rename", table, oldSku, newSku },
+          );
+        }
+      }
+
+      // Product rename: the OLD slug-based retailer_id would stay orphaned in the catalog
+      // (only hard DELETE events clean up). Delete the old slug explicitly.
+      if (
+        table === "shelf_products" &&
+        eventType === "UPDATE" &&
+        record &&
+        oldRecord
+      ) {
+        const newSlug = typeof record.slug === "string" ? record.slug : "";
+        const oldSlug =
+          typeof oldRecord.slug === "string" ? oldRecord.slug : "";
+        if (newSlug && oldSlug && newSlug !== oldSlug) {
+          const result = await deleteMetaCatalogItem(oldSlug);
+          if (!result.success) {
+            await queueCatalogDeletes([toCatalogRetailerId(oldSlug)]);
+          }
+          await logSync(
+            result.success ? "info" : "warning",
+            `Product slug renamed ${oldSlug} -> ${newSlug}; old catalog item ${result.success ? "deleted" : "delete queued for retry"}`,
+            { action: "rename", table, oldSlug, newSlug },
           );
         }
       }

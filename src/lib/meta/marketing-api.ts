@@ -769,11 +769,15 @@ export async function getCampaignInsights(
   campaignIds: string[],
   datePreset: "today" | "yesterday" | "last_7d" | "last_30d" = "last_7d",
 ): Promise<MetaCampaignInsight[]> {
+  if (campaignIds.length === 0) return [];
+  const adAccountId = getMetaAdAccountId();
   const fields =
     "campaign_id,campaign_name,spend,impressions,clicks,ctr,cpc,conversions,cost_per_conversion";
-  const ids = campaignIds.join(",");
+  const filtering = JSON.stringify([
+    { field: "campaign.id", operator: "IN", value: campaignIds },
+  ]);
   const result = (await metaApiGet(
-    `/insights?level=campaign&campaign_ids=[${ids}]&fields=${encodeURIComponent(fields)}&date_preset=${datePreset}`,
+    `/${adAccountId}/insights?level=campaign&filtering=${encodeURIComponent(filtering)}&fields=${encodeURIComponent(fields)}&date_preset=${datePreset}`,
   )) as { data?: MetaCampaignInsight[] };
 
   return result.data ?? [];
