@@ -159,11 +159,6 @@ function GalleryThumb({
           fill
           sizes="84px"
           className="object-cover transition duration-300 group-hover:scale-[1.04]"
-          onLoad={(event) => {
-            const width = event.currentTarget.naturalWidth;
-            const height = event.currentTarget.naturalHeight;
-            if (width > 0 && height > 0) setAspect(width / height);
-          }}
           onError={(event) => {
             console.error(`[ShopPDP] Desktop thumb failed:`, item.src);
             event.currentTarget.style.display = "none";
