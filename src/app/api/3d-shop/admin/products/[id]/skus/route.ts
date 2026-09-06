@@ -91,24 +91,13 @@ function normalizeSkuPatch(body: SkuPayload): Record<string, unknown> {
 
 async function updateProductBasePrice(productId: string) {
   const supabase = createAdminSupabaseClient();
-  const { data, error } = await supabase
-    .from("shelf_skus")
-    .select("price")
-    .eq("product_id", productId)
-    .eq("is_available", true)
-    .order("price", { ascending: true })
-    .limit(1);
-
+  // Use the update_base_price_no_sync RPC which suppresses the shelf_products_meta
+  // trigger to prevent a double Meta catalog sync (the shelf_skus_meta trigger that
+  // fired for the SKU INSERT/UPDATE already handles the full product sync).
+  const { error } = await supabase.rpc("update_base_price_no_sync", {
+    p_product_id: productId,
+  });
   if (error) throw new Error(error.message);
-  const minPrice = data?.[0]?.price;
-  if (typeof minPrice !== "number") return;
-
-  const { error: updateError } = await supabase
-    .from("shelf_products")
-    .update({ base_price: minPrice })
-    .eq("id", productId);
-
-  if (updateError) throw new Error(updateError.message);
 }
 
 export async function GET(

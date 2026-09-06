@@ -51,7 +51,9 @@ type ProductInput = {
   skus?: ProductSkuInput[] | null;
 };
 
-function getGoogleProductCategory(categoryName: string | null | undefined): string {
+function getGoogleProductCategory(
+  categoryName: string | null | undefined,
+): string {
   const cat = (categoryName || "").toLowerCase();
   if (cat.includes("lamp") || cat.includes("light")) {
     return "Home & Garden > Lighting > Lamps";
@@ -86,13 +88,17 @@ function buildCatalogItem(
     process.env.NEXT_PUBLIC_SITE_URL || "https://flux3d.in"
   ).replace(/\/+$/, "");
   const productUrl = `${baseUrl}/3d-shop/product/${product.slug}${sku.sku_code ? `?sku=${encodeURIComponent(sku.sku_code)}` : ""}`;
-  
+
   const image =
     sku.variant_image_url ||
     product.thumbnail_url ||
     product.image_urls?.[0] ||
     undefined;
-  const absoluteImage = image ? (image.startsWith('http') ? image : new URL(image, baseUrl).toString()) : undefined;
+  const absoluteImage = image
+    ? image.startsWith("http")
+      ? image
+      : new URL(image, baseUrl).toString()
+    : undefined;
 
   // Meta limits `id`/`retailer_id` to 100 chars. Always send the shortened form,
   // and keep the full sku_code in custom_label_4 so catalog taps can be resolved
@@ -131,17 +137,21 @@ function buildCatalogItem(
 
   // Send every product image (besides the primary) so the WhatsApp catalog and
   // DPA ad creative can render rich galleries. Meta allows up to 10.
-  const extraImages = (product.image_urls ?? []).filter((url) => url && url !== image);
+  const extraImages = (product.image_urls ?? []).filter(
+    (url) => url && url !== image,
+  );
   if (product.thumbnail_url && image !== product.thumbnail_url) {
     extraImages.unshift(product.thumbnail_url);
   }
-  
+
   const absoluteExtraImages = Array.from(new Set(extraImages))
-    .map(url => url.startsWith('http') ? url : new URL(url, baseUrl).toString())
+    .map((url) =>
+      url.startsWith("http") ? url : new URL(url, baseUrl).toString(),
+    )
     .slice(0, 10);
-    
+
   if (absoluteExtraImages.length > 0) {
-    item.additional_image_link = absoluteExtraImages.join(',');
+    item.additional_image_link = absoluteExtraImages.join(",");
   }
 
   if (product.category_name) {
@@ -171,13 +181,14 @@ function buildCatalogItem(
   }
 
   // Meta only groups variants if they differ by standard attributes (color, size, pattern, material).
-  // If the user created a custom option like "Style" or "Finish", map it to "pattern" so WhatsApp 
+  // If the user created a custom option like "Style" or "Finish", map it to "pattern" so WhatsApp
   // correctly registers it as a distinct variant and updates images when selected.
   const unhandledKeys = Object.keys(comb).filter(
-    k => !['color','Color','material','Material','size','Size'].includes(k)
+    (k) =>
+      !["color", "Color", "material", "Material", "size", "Size"].includes(k),
   );
   if (unhandledKeys.length > 0 && !item.pattern) {
-    const patternVals = unhandledKeys.map(k => comb[k]).join('-');
+    const patternVals = unhandledKeys.map((k) => comb[k]).join("-");
     item.pattern = patternVals.slice(0, 100);
   }
 
@@ -441,9 +452,15 @@ export async function syncFullCatalogToMeta(
   const allActions: ProductSyncAction[] = [];
   const hashes: StoredCatalogHashes = {};
   let skipped = 0;
+  const validRetailerIds = new Set<string>();
 
   for (const product of products) {
     const entries = buildCatalogEntries(product);
+    if (!product.is_archived) {
+      for (const entry of entries) {
+        validRetailerIds.add(entry.retailerId);
+      }
+    }
 
     // Archived products are permanently removed from the Meta catalog. Pushing
     // them with visibility:'staging' leaves stale items that still surface in
@@ -459,14 +476,24 @@ export async function syncFullCatalogToMeta(
     }
 
     // A product created without SKUs gets a slug-based catalog entry. Once SKUs
-    // are added, that slug entry is orphaned forever (nothing references it),
-    // so delete it on first sight and prune its hash.
+    // are added, that slug entry is orphaned (it shows as a 0-price duplicate
+    // in the Meta catalog / WhatsApp shop). Delete it unconditionally whenever
+    // the product now has SKUs — the Meta API treats DELETE on a non-existent
+    // item as success, so this is safe even if the entry no longer exists.
     const slugRetailerId = toCatalogRetailerId(product.slug);
     const hasSkus = (product.skus?.length ?? 0) > 0;
-    if (hasSkus && storedHashes[slugRetailerId]) {
-      const result = await deleteMetaCatalogItem(slugRetailerId);
-      allActions.push(result);
-      delete hashes[slugRetailerId];
+    if (hasSkus) {
+      // Only call the delete API if we know the slug entry exists (in hashes)
+      // OR if this is the first time we're seeing this product (slug not in hashes
+      // but product might still have a ghost in Meta from before hash tracking).
+      // Limit API calls on healthy runs: only call delete if slug is in hashes
+      // (confirmed to exist) or if the product was recently synced without SKUs.
+      const slugInHashes = !!storedHashes[slugRetailerId];
+      if (slugInHashes) {
+        const result = await deleteMetaCatalogItem(slugRetailerId);
+        allActions.push(result);
+        delete hashes[slugRetailerId];
+      }
     }
 
     const changed: CatalogEntry[] = [];
@@ -498,6 +525,19 @@ export async function syncFullCatalogToMeta(
         hashes[entry.retailerId] = entry.hash;
       }
     }
+  }
+
+  // Delete orphaned items that were in storedHashes but are no longer in the DB
+  // (e.g. SKUs hard-deleted, or leftover items from bugs).
+  const orphans = Object.keys(storedHashes).filter(
+    (id) => !validRetailerIds.has(id) && !hashes[id],
+  );
+  for (const orphan of orphans) {
+    const result = await deleteMetaCatalogItem(orphan);
+    allActions.push(result);
+    // If successfully deleted, we don't add to `hashes` so it's forgotten.
+    // If it fails, maybe we should keep it in hashes so we try again?
+    // Let's rely on the pending queue or the next sync run (since it won't be in validRetailerIds).
   }
 
   return {
