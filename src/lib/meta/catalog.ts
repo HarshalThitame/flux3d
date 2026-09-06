@@ -128,7 +128,7 @@ function buildCatalogItem(
     price: `${(sku.price || product.base_price).toFixed(2)} INR`,
     link: productUrl,
     image_link: absoluteImage,
-    item_group_id: product.slug,
+    item_group_id: toCatalogRetailerId(product.slug),
     visibility:
       product.is_active && !product.is_archived ? "published" : "staging",
     brand: "Flux3D",
