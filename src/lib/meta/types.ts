@@ -97,7 +97,7 @@ export type MetaCatalogItemData = {
   item_group_id?: string
   inventory?: number
   visibility?: 'published' | 'staging'
-  additional_image_link?: string[]
+  additional_image_link?: string | string[]
   short_description?: string
   custom_label_0?: string
   custom_label_1?: string
