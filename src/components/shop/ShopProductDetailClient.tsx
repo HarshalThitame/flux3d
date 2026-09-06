@@ -124,29 +124,17 @@ function GalleryThumb({
   isPrimary?: boolean;
   onClick: () => void;
 }) {
-  const [aspect, setAspect] = useState<number | null>(null);
-  const thumbRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    const img = thumbRef.current?.querySelector("img");
-    if (img && img.complete && img.naturalWidth > 0) {
-      setAspect(img.naturalWidth / img.naturalHeight);
-    }
-  }, []);
-
   return (
     <button
-      ref={thumbRef}
       type="button"
       onClick={onClick}
       aria-label={label}
       aria-pressed={active}
-      className={`group relative shrink-0 w-full overflow-hidden rounded-xl border-2 transition-all duration-200 ${
+      className={`group relative shrink-0 w-full aspect-square overflow-hidden rounded-xl border-2 transition-all duration-200 ${
         active
           ? "border-[var(--shop-gold)] shadow-[0_0_0_1px_var(--shop-gold)] shadow-[var(--shop-shadow-md)]"
           : "border-transparent hover:border-[var(--shop-border-gold)] hover:shadow-sm"
       }`}
-      style={{ aspectRatio: aspect ? `${aspect} / 1` : "1 / 1" }}
     >
       {/* Outer ring for active state */}
       {active && (
@@ -1292,8 +1280,7 @@ export default function ShopProductDetailClient({
                           openLightbox(visibleImage);
                         }
                       }}
-                      className="group relative w-full overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)] transition hover:shadow-[var(--shop-shadow-md)]"
-                      style={{ height: "clamp(320px, 60vw, 580px)" }}
+                      className="group relative w-full aspect-square overflow-hidden rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white shadow-[var(--shop-shadow-sm)] transition hover:shadow-[var(--shop-shadow-md)]"
                     >
                       {visibleImage ? (
                         <AnimatePresence initial={false} mode="wait">
