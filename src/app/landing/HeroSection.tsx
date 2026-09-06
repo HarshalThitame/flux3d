@@ -4,7 +4,13 @@ import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, Box, MousePointer2, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Box,
+  MousePointer2,
+  Sparkles,
+  Maximize2,
+} from "lucide-react";
 import DepthBlurCarouselBoundary from "@/components/shop/DepthBlurCarouselBoundary";
 import DotGridBackground from "@/components/landing/DotGridBackground";
 import { getShopProductImages } from "@/lib/shop/selection";
@@ -80,6 +86,15 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
         >
           Shop ready-made 3D printed products
         </motion.h1>
+        <motion.div
+          initial={{ opacity: 0, x: -15 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, ease: EASE_OUT_EXPO, delay: 0.25 }}
+          className="mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-[var(--lux-border-gold)] bg-[var(--lux-gold-faint)] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[var(--lux-gold)]"
+        >
+          <Maximize2 className="h-2.5 w-2.5" />
+          Larger than market
+        </motion.div>
       </div>
 
       <DotGridBackground

@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   ShoppingBag,
   Truck,
+  Maximize2,
   type LucideIcon,
 } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
@@ -164,8 +165,9 @@ export default function LandingShopSection({ data }: { data: ShopHomeData }) {
         {[
           { icon: ShieldCheck, label: "QA checked" },
           { icon: Truck, label: "Ready to ship" },
-          { icon: Box, label: "3D preview" },
+          { icon: Maximize2, label: "Larger than market" },
           { icon: ShoppingBag, label: "Secure cart" },
+          { icon: Box, label: "3D preview" },
         ].map((item, i) => (
           <motion.div
             key={item.label}

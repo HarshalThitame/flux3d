@@ -9,6 +9,9 @@ import { useBusinessSettings } from "@/lib/settings-context";
 const ProblemSection = dynamic(() => import("./ProblemSection"), {
   ssr: false,
 });
+const SizeSection = dynamic(() => import("./SizeSection"), {
+  ssr: false,
+});
 const ServicesSection = dynamic(() => import("./ServicesSection"), {
   ssr: false,
 });
@@ -92,6 +95,9 @@ export default function LandingPageClient() {
       <FloatingWhatsAppButton />
       <LazySection minHeight={520} className="premium-band premium-band-ink">
         <ProblemSection />
+      </LazySection>
+      <LazySection minHeight={560} className="premium-band premium-band-panel">
+        <SizeSection />
       </LazySection>
       <LazySection minHeight={760} className="premium-band premium-band-panel">
         <ServicesSection />
