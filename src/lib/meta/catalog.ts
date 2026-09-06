@@ -79,19 +79,21 @@ function buildCatalogItem(
   product: ProductInput,
   sku: ProductSkuInput,
 ): MetaCatalogItemData {
-  const variantParts = Object.entries(sku.variant_combination ?? {}).map(
-    ([k, v]) => `${k}:${v}`,
-  );
+  const comb = sku.variant_combination ?? {};
+  const variantParts = Object.entries(comb).map(([k, v]) => `${k}:${v}`);
   const variantLabel = variantParts.join(", ");
   const baseUrl = (
     process.env.NEXT_PUBLIC_SITE_URL || "https://flux3d.in"
   ).replace(/\/+$/, "");
   const productUrl = `${baseUrl}/3d-shop/product/${product.slug}${sku.sku_code ? `?sku=${encodeURIComponent(sku.sku_code)}` : ""}`;
+  
   const image =
     sku.variant_image_url ||
     product.thumbnail_url ||
     product.image_urls?.[0] ||
     undefined;
+  const absoluteImage = image ? (image.startsWith('http') ? image : new URL(image, baseUrl).toString()) : undefined;
+
   // Meta limits `id`/`retailer_id` to 100 chars. Always send the shortened form,
   // and keep the full sku_code in custom_label_4 so catalog taps can be resolved
   // back to the DB sku (see mapCatalogItemToSku).
@@ -119,7 +121,7 @@ function buildCatalogItem(
     condition: "new",
     price: `${(sku.price || product.base_price).toFixed(2)} INR`,
     link: productUrl,
-    image_link: image,
+    image_link: absoluteImage,
     item_group_id: product.slug,
     visibility:
       product.is_active && !product.is_archived ? "published" : "staging",
@@ -129,14 +131,17 @@ function buildCatalogItem(
 
   // Send every product image (besides the primary) so the WhatsApp catalog and
   // DPA ad creative can render rich galleries. Meta allows up to 10.
-  const extraImages = (product.image_urls ?? [])
-    .filter((url) => url && url !== image)
-    .slice(0, 10);
+  const extraImages = (product.image_urls ?? []).filter((url) => url && url !== image);
   if (product.thumbnail_url && image !== product.thumbnail_url) {
     extraImages.unshift(product.thumbnail_url);
   }
-  if (extraImages.length > 0) {
-    item.additional_image_link = extraImages;
+  
+  const absoluteExtraImages = Array.from(new Set(extraImages))
+    .map(url => url.startsWith('http') ? url : new URL(url, baseUrl).toString())
+    .slice(0, 10);
+    
+  if (absoluteExtraImages.length > 0) {
+    item.additional_image_link = absoluteExtraImages.join(',');
   }
 
   if (product.category_name) {
@@ -147,24 +152,33 @@ function buildCatalogItem(
     item.inventory = sku.stock_quantity;
   }
 
-  const color =
-    sku.variant_combination?.color ?? sku.variant_combination?.Color;
+  const color = comb.color ?? comb.Color;
   if (color) {
     item.color = String(color);
     item.custom_label_1 = `Color:${color}`;
   }
 
-  const material =
-    sku.variant_combination?.material ?? sku.variant_combination?.Material;
+  const material = comb.material ?? comb.Material;
   if (material) {
     item.material = String(material);
     item.custom_label_2 = `Material:${material}`;
   }
 
-  const size = sku.variant_combination?.size ?? sku.variant_combination?.Size;
+  const size = comb.size ?? comb.Size;
   if (size) {
     item.size = String(size);
     item.custom_label_3 = `Size:${size}`;
+  }
+
+  // Meta only groups variants if they differ by standard attributes (color, size, pattern, material).
+  // If the user created a custom option like "Style" or "Finish", map it to "pattern" so WhatsApp 
+  // correctly registers it as a distinct variant and updates images when selected.
+  const unhandledKeys = Object.keys(comb).filter(
+    k => !['color','Color','material','Material','size','Size'].includes(k)
+  );
+  if (unhandledKeys.length > 0 && !item.pattern) {
+    const patternVals = unhandledKeys.map(k => comb[k]).join('-');
+    item.pattern = patternVals.slice(0, 100);
   }
 
   item.custom_label_4 = `SKU:${sku.sku_code}`;
