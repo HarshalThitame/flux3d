@@ -12,6 +12,10 @@ type CreateOrderBody = {
   internalOrderId?: unknown
   paymentPurpose?: unknown
   expectedAmountPaise?: unknown
+  /** Meta pixel _fbp cookie value for CAPI match quality */
+  fbp?: unknown
+  /** Meta pixel _fbc cookie value for CAPI match quality */
+  fbc?: unknown
 }
 
 function normalizeText(value: unknown) {
@@ -37,6 +41,9 @@ export async function POST(request: Request) {
     const internalOrderId = normalizeText(body.internalOrderId)
     const paymentPurpose = normalizeText(body.paymentPurpose) as 'shop_order' | 'custom_quote_full_payment' | 'custom_quote_deposit' | 'custom_quote_balance'
     const expectedAmountPaise = Number(body.expectedAmountPaise)
+    // Meta pixel browser identifiers — optional, used to improve CAPI match quality
+    const fbp = typeof body.fbp === 'string' && body.fbp ? body.fbp : undefined
+    const fbc = typeof body.fbc === 'string' && body.fbc ? body.fbc : undefined
 
     if (!internalOrderType || !internalOrderId) {
       return NextResponse.json({ error: 'Order details are required.' }, { status: 400 })
@@ -76,6 +83,8 @@ export async function POST(request: Request) {
       ...(userId ? { customerId: userId } : {}),
       paymentPurpose: paymentPurpose || undefined,
       ...(Number.isFinite(expectedAmountPaise) && expectedAmountPaise > 0 ? { expectedAmountPaise } : {}),
+      fbp,
+      fbc,
     })
 
     return NextResponse.json({

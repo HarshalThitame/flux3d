@@ -346,6 +346,9 @@ export default function CartDeliveryClient({
           state: address.state,
           pincode: address.pincode,
           landmark: address.landmark,
+          // Meta pixel browser identifiers for CAPI match quality
+          fbp: document.cookie.match(/_fbp=([^;]+)/)?.[1] ?? undefined,
+          fbc: document.cookie.match(/_fbc=([^;]+)/)?.[1] ?? undefined,
         });
         const loaded = await loadRazorpayScript();
         if (!loaded) throw new Error("Secure payment script failed to load.");

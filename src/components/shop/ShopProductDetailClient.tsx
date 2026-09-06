@@ -658,18 +658,17 @@ export default function ShopProductDetailClient({
   ]);
 
   useEffect(() => {
+    if (!resolvedSku) return;
+
+    const id = resolvedSku.catalog_retailer_id ?? resolvedSku.sku_code;
     trackMetaEvent("ViewContent", {
-      content_ids: product.skus.map((s) => s.catalog_retailer_id ?? s.sku_code),
+      content_ids: [id],
       content_type: "product",
-      contents: product.skus.map((s) => ({
-        id: s.catalog_retailer_id ?? s.sku_code,
-        quantity: 1,
-        item_price: s.price,
-      })),
-      value: product.display_price,
+      contents: [{ id, quantity: 1, item_price: resolvedSku.price }],
+      value: resolvedSku.price,
       currency: "INR",
     });
-  }, [product.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [resolvedSku?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!currentUser) return;

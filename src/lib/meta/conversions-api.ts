@@ -84,21 +84,25 @@ export function buildPurchaseEvent(params: {
     userData.ph = [hash(formatPhone(params.customerPhone))];
   if (params.customerId) userData.external_id = [hash(params.customerId)];
 
-  // Value must be > 0 per Meta's contract. When unusable (e.g. free order),
-  // omit the field rather than fabricating a value Meta would count as revenue.
   const contentsTotal = params.contents.reduce(
     (s, c) => s + (c.item_price ?? 0) * c.quantity,
     0,
   );
   const value =
     normalizeCapiValue(params.value) ?? normalizeCapiValue(contentsTotal);
+  // Normalize item_price inside each content entry — Meta flags 0, negatives,
+  // or non-numeric item_price as "formatting issues" (data quality error).
+  const normalizedContents = params.contents.map((c) => {
+    const ip = normalizeCapiValue(c.item_price ?? null);
+    return ip != null ? { ...c, item_price: ip } : { id: c.id, quantity: c.quantity };
+  });
   const customData: MetaCapiCustomData = {
     content_ids: params.contentIds,
     content_type: "product",
-    contents: params.contents,
+    contents: normalizedContents,
     num_items:
       params.numItems ?? params.contents.reduce((s, c) => s + c.quantity, 0),
-    currency: params.currency as "INR",
+    currency: (params.currency || "INR").toUpperCase() as "INR",
     order_id: params.orderId,
   };
   if (value != null) customData.value = value;

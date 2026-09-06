@@ -376,6 +376,9 @@ export default function DeliveryStepClient({
           estimatedTime: draft.estimatedTime,
           weight: draft.weight,
           difficultyFactor: draft.difficultyFactor,
+          // Meta pixel browser identifiers for CAPI match quality
+          fbp: document.cookie.match(/_fbp=([^;]+)/)?.[1] ?? undefined,
+          fbc: document.cookie.match(/_fbc=([^;]+)/)?.[1] ?? undefined,
         });
         const loaded = await loadRazorpayScript();
         if (!loaded) throw new Error("Secure payment script failed to load.");

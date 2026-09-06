@@ -99,6 +99,10 @@ export type CreateOrderInput = {
   estimatedTime: number
   weight: number
   difficultyFactor: number
+  /** Meta pixel _fbp cookie — stored for server-side CAPI Purchase event match quality */
+  fbp?: string
+  /** Meta pixel _fbc cookie — stored for server-side CAPI Purchase event match quality */
+  fbc?: string
 }
 
 export type AddressFields = {

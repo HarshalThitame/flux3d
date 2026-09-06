@@ -118,6 +118,10 @@ type CreateCartOrderInput = {
   pincode: string;
   landmark: string;
   discount?: number;
+  /** Meta pixel _fbp cookie — stored for server-side CAPI Purchase event match quality */
+  fbp?: string;
+  /** Meta pixel _fbc cookie — stored for server-side CAPI Purchase event match quality */
+  fbc?: string;
 };
 
 function normalizeNumber(value: number, field: string) {
@@ -1090,6 +1094,9 @@ export async function prepareCartPaymentAction(
         email: auth.user.email ?? "",
         contact: normalizePhone(input.phone),
       },
+      // Meta pixel identifiers stored for server-side CAPI match quality
+      ...(input.fbp ? { meta_fbp: input.fbp } : {}),
+      ...(input.fbc ? { meta_fbc: input.fbc } : {}),
     },
   });
 
@@ -1685,6 +1692,15 @@ export async function verifyCartPaymentAndCreateOrder(params: {
     .select("phone_number")
     .eq("id", auth.user.id)
     .maybeSingle();
+
+  // Fetch the payment attempt metadata to retrieve fbp/fbc for CAPI match quality
+  const { data: attemptMetaRow } = await adminSupabase
+    .from("payment_attempts")
+    .select("metadata")
+    .eq("id", paymentAttemptId)
+    .maybeSingle();
+  const attemptMeta = (attemptMetaRow?.metadata ?? {}) as Record<string, unknown>;
+
   // Custom-quote cart orders have no catalog SKUs — never send order UUIDs as
   // content_ids (they create "unmatched event" noise in Meta Events Manager).
   const contentIds: string[] = [];
@@ -1703,6 +1719,10 @@ export async function verifyCartPaymentAndCreateOrder(params: {
     orderId: firstOrderNumber,
     numItems: insertedOrders.length,
   });
+  // Attach browser pixel cookies stored at payment initiation for match quality
+  if (typeof attemptMeta.meta_fbp === "string") purchaseEvent.user_data.fbp = attemptMeta.meta_fbp;
+  if (typeof attemptMeta.meta_fbc === "string") purchaseEvent.user_data.fbc = attemptMeta.meta_fbc;
+
   await sendCapiEvents([purchaseEvent], undefined).catch((err) =>
     console.error("[Meta CAPI] Purchase event failed:", err),
   );

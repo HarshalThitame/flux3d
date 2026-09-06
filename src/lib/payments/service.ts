@@ -157,6 +157,19 @@ async function sendPurchaseCapiEvent(attempt: PaymentAttemptRecord) {
       numItems: contents.reduce((s, c) => s + c.quantity, 0),
     });
 
+    // Attach Meta pixel browser cookies stored at checkout-session creation time.
+    // These improve event match quality for server-side CAPI events.
+    const metaFbp =
+      typeof attempt.metadata?.meta_fbp === "string"
+        ? attempt.metadata.meta_fbp
+        : undefined;
+    const metaFbc =
+      typeof attempt.metadata?.meta_fbc === "string"
+        ? attempt.metadata.meta_fbc
+        : undefined;
+    if (metaFbp) event.user_data.fbp = metaFbp;
+    if (metaFbc) event.user_data.fbc = metaFbc;
+
     await sendCapiEvents([event]);
   } catch (error) {
     console.error("[payment] Failed to send Purchase CAPI event:", error);
@@ -359,6 +372,10 @@ export async function createCheckoutSession(
   params: InternalOrderLookup & {
     paymentPurpose?: PaymentPurpose;
     expectedAmountPaise?: number;
+    /** Meta pixel _fbp cookie — stored for CAPI Purchase event match quality */
+    fbp?: string;
+    /** Meta pixel _fbc cookie — stored for CAPI Purchase event match quality */
+    fbc?: string;
   },
 ): Promise<CreateCheckoutResult> {
   const order = await fetchInternalOrder(params);
@@ -511,6 +528,9 @@ export async function createCheckoutSession(
         email: orderSnapshot.customerEmail,
         contact: orderSnapshot.customerPhone,
       },
+      // Meta pixel identifiers stored for server-side CAPI match quality
+      ...(params.fbp ? { meta_fbp: params.fbp } : {}),
+      ...(params.fbc ? { meta_fbc: params.fbc } : {}),
     },
   });
 

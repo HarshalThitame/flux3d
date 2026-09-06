@@ -51,6 +51,30 @@ type ProductInput = {
   skus?: ProductSkuInput[] | null;
 };
 
+function getGoogleProductCategory(categoryName: string | null | undefined): string {
+  const cat = (categoryName || "").toLowerCase();
+  if (cat.includes("lamp") || cat.includes("light")) {
+    return "Home & Garden > Lighting > Lamps";
+  }
+  if (cat.includes("planter") || cat.includes("pot") || cat.includes("vase")) {
+    return "Home & Garden > Lawn & Garden > Gardening > Pots & Planters";
+  }
+  if (cat.includes("toy") || cat.includes("game")) {
+    return "Toys & Games > Toys";
+  }
+  if (cat.includes("art") || cat.includes("sculpture")) {
+    return "Arts & Entertainment > Hobbies & Creative Arts > Artwork";
+  }
+  if (cat.includes("jewelry") || cat.includes("keychain")) {
+    return "Apparel & Accessories > Jewelry";
+  }
+  if (cat.includes("home") || cat.includes("decor")) {
+    return "Home & Garden > Decor";
+  }
+  // Default for general 3D printed items if no specific category matched
+  return "Home & Garden > Decor";
+}
+
 function buildCatalogItem(
   product: ProductInput,
   sku: ProductSkuInput,
@@ -100,7 +124,7 @@ function buildCatalogItem(
     visibility:
       product.is_active && !product.is_archived ? "published" : "staging",
     brand: "Flux3D",
-    google_product_category: "Electronics > 3D Printing",
+    google_product_category: getGoogleProductCategory(product.category_name),
   };
 
   // Send every product image (besides the primary) so the WhatsApp catalog and

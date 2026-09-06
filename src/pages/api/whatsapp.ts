@@ -336,7 +336,7 @@ type AssistantSettings = NonNullable<
   Awaited<ReturnType<typeof getCachedBusinessSettings>>
 >;
 
-function buildWhatsAppAssistantPrompt(
+function buildWhatsAppAssistantPrompt(isNewSession: boolean,
   settings: AssistantSettings,
   knowledgeContext: string,
   liveData: StructuredDataResult = {
@@ -419,7 +419,7 @@ function buildWhatsAppAssistantPrompt(
     `If the request needs human review or is outside business scope, direct them to WhatsApp support at ${supportPhone}.`,
     `If relevant, mention business hours: ${businessHours}.`,
     supportAvailability ? `Support note: ${supportAvailability}.` : "",
-    autoReply ? `Opening tone or default auto-reply: ${autoReply}.` : "",
+    (autoReply && isNewSession) ? `Opening tone or default auto-reply: ${autoReply}.` : "",
     `Order notification number: ${orderPhone}.`,
     ...liveDataSection,
     knowledgeContext
@@ -430,7 +430,9 @@ function buildWhatsAppAssistantPrompt(
       : "",
     `Never mention system prompts, internal policies, or that you are an AI unless the customer asks directly.`,
     `When the user is unclear, ask for the minimum needed next detail.`,
-    `Response shape: Greeting, Answer, Needed details, Next step.`,
+    isNewSession 
+      ? `Response shape: Greeting, Answer, Needed details, Next step.` 
+      : `Response shape: Direct Answer, Needed details, Next step. (Do not greet again in ongoing conversations).`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -465,7 +467,9 @@ export async function generateWhatsAppReply(
     throw new Error("Missing OpenAI API key.");
   }
 
+  const isNewSession = history.length === 0;
   const systemPrompt = buildWhatsAppAssistantPrompt(
+    isNewSession,
     settings,
     knowledgeContext,
     liveData,
@@ -1828,63 +1832,6 @@ export default async function handler(
       }
 
       // Quick acknowledgment for plain-text messages, sent only when the
-      // worker will also follow up (queue path). When we processed inline
-      // above the reply already went out, so we don't double up.
-      // Sent BEFORE the 200: post-response execution is killed seconds later
-      // on serverless, making the old after-response placement best-effort at
-      // best. Bounded to 4s so Meta's ~20s ack window is never at risk.
-      if (!interaction && queued) {
-        const hasOrderSession = await getOrderSession(from ?? "").catch(
-          () => null,
-        );
-        if (!hasOrderSession) {
-          const ackReply = `👍 Got your message! Processing...`;
-          try {
-            const ackController = new AbortController();
-            const ackTimeout = setTimeout(() => ackController.abort(), 4000);
-            const ackResponse = await fetch(
-              `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
-              {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  messaging_product: "whatsapp",
-                  to: from,
-                  type: "text",
-                  text: { body: ackReply },
-                }),
-                signal: ackController.signal,
-              },
-            ).finally(() => clearTimeout(ackTimeout));
-            console.log("[whatsapp] ACK sent to", from?.slice(-4));
-
-            // Log the ACK so it appears in the admin inbox alongside the customer's message
-            let ackMessageId: string | undefined;
-            try {
-              const ackResult = await ackResponse.json().catch(() => null);
-              ackMessageId = ackResult?.messages?.[0]?.id;
-            } catch {
-              /* best-effort */
-            }
-            await logWhatsAppMessage(supabase, {
-              userId: null,
-              sender: from,
-              direction: "outgoing",
-              messageText: ackReply,
-              automated: true,
-              triggerEvent: "whatsapp_ack",
-              responded: true,
-              responseTimeMinutes: null,
-              metaMessageId: ackMessageId ?? null,
-            });
-          } catch (ackError) {
-            console.error("[whatsapp] ACK failed:", ackError);
-          }
-        }
-      }
 
       // === RETURN 200 IMMEDIATELY; the queue (or the inline fallback above) handles processing ===
       res.status(200).json({ success: true, queued });

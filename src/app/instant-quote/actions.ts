@@ -658,6 +658,9 @@ export async function prepareQuotePaymentAction(
         email: auth.user.email ?? "",
         contact: normalizedPhone,
       },
+      // Meta pixel identifiers stored for server-side CAPI match quality
+      ...(input.fbp ? { meta_fbp: input.fbp } : {}),
+      ...(input.fbc ? { meta_fbc: input.fbc } : {}),
     },
   });
 
@@ -903,10 +906,11 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
 
   const { data: attemptRow } = await adminSupabase
     .from("payment_attempts")
-    .select("id")
+    .select("id, metadata")
     .eq("provider_order_id", params.razorpayOrderId)
     .maybeSingle();
   const paymentAttemptId = attemptRow?.id ?? capture.paymentAttemptId ?? "";
+  const attemptMeta = (attemptRow?.metadata ?? {}) as Record<string, unknown>;
 
   await markQuoteCapturePaid({
     reference: capture.reference,
@@ -1067,6 +1071,10 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
     orderId: orderNumber,
     numItems: 1,
   });
+  // Attach browser pixel cookies stored at payment initiation for match quality
+  if (typeof attemptMeta.meta_fbp === "string") purchaseEvent.user_data.fbp = attemptMeta.meta_fbp;
+  if (typeof attemptMeta.meta_fbc === "string") purchaseEvent.user_data.fbc = attemptMeta.meta_fbc;
+
   await sendCapiEvents([purchaseEvent], undefined).catch((err) =>
     console.error("[Meta CAPI] Purchase event failed:", err),
   );

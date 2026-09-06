@@ -39,31 +39,61 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No events provided" }, { status: 400 });
   }
 
-  // Meta's custom_data.value is optional. When present but unusable (0,
-  // negative, NaN), omit the field instead of dropping the whole event so
-  // zero-value conversions (e.g. free products) still reach Meta.
+  // Normalize custom_data fields that Meta validates strictly:
+  //  - custom_data.value: must be a positive finite number. When unusable (0,
+  //    negative, NaN), omit the field rather than drop the event so non-purchase
+  //    events (e.g. free samples) still reach Meta.
+  //  - custom_data.contents[].item_price: same rules apply — Meta flags events
+  //    where item_price is 0, negative, or non-numeric (15% data quality error).
   const validEvents: MetaCapiEvent[] = [];
   for (const event of body.data) {
     const raw = event.custom_data as Record<string, unknown> | undefined;
-    if (!raw || !("value" in raw)) {
+    if (!raw) {
       validEvents.push(event);
       continue;
     }
-    const value = normalizeCapiValue(raw.value);
-    if (value == null) {
-      const { value: _dropped, ...rest } = raw;
-      validEvents.push({ ...event, custom_data: rest } as MetaCapiEvent);
-      continue;
+
+    // Normalize top-level value
+    let normalized: Record<string, unknown> = { ...raw };
+    if ("value" in raw) {
+      const value = normalizeCapiValue(raw.value);
+      if (value == null) {
+        const { value: _dropped, ...rest } = normalized;
+        normalized = rest;
+      } else {
+        normalized = { ...normalized, value };
+      }
     }
-    validEvents.push({
-      ...event,
-      custom_data: { ...raw, value },
-    } as MetaCapiEvent);
+
+    // Normalize item_price inside contents[]
+    if (Array.isArray(normalized.contents)) {
+      normalized = {
+        ...normalized,
+        contents: (normalized.contents as Array<Record<string, unknown>>).map(
+          (item) => {
+            if (!("item_price" in item)) return item;
+            const itemPrice = normalizeCapiValue(item.item_price);
+            if (itemPrice == null) {
+              const { item_price: _dropped, ...rest } = item;
+              return rest;
+            }
+            return { ...item, item_price: itemPrice };
+          },
+        ),
+      };
+    }
+
+    // Normalize currency to uppercase
+    if (typeof normalized.currency === "string") {
+      normalized = { ...normalized, currency: normalized.currency.toUpperCase() };
+    }
+
+    validEvents.push({ ...event, custom_data: normalized } as MetaCapiEvent);
   }
 
   if (!validEvents.length) {
     return NextResponse.json(
-      { error: "No events with a valid value provided" },
+      { error: "No events provided" },
       { status: 400 },
     );
   }
