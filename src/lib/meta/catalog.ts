@@ -386,6 +386,7 @@ export async function deleteMetaCatalogItem(
   const entry: MetaBatchRequestEntry = {
     method: "DELETE",
     retailer_id: catalogRetailerId,
+    data: { id: catalogRetailerId },
   };
 
   const postResult = await postItemsBatch(catalogId, headers, [entry]);
