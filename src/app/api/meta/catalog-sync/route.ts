@@ -195,6 +195,14 @@ export async function POST(request: Request) {
             await queueCatalogDeletes([entry.retailerId]);
           }
         }
+
+        // Also cleanup legacy slug ghost
+        const slugRetailerId = toCatalogRetailerId(productInput.slug);
+        const delResult = await deleteMetaCatalogItem(slugRetailerId);
+        if (!delResult.success) {
+          await queueCatalogDeletes([slugRetailerId]);
+        }
+        await deleteFromStoredCatalogHashes([slugRetailerId]);
         await supabase
           .from("shelf_products")
           .update({
@@ -213,33 +221,21 @@ export async function POST(request: Request) {
 
       const result = await upsertMetaCatalogItem(productInput);
 
-      // ── Delete the slug-based ghost entry whenever product has SKUs ──────────
-      // When a product is first created (no SKUs yet), the webhook pushes it
-      // with retailer_id = slug (and often price = 0 / base_price at creation
-      // time). Later, when SKUs are added, the SKU-code-based entries are pushed
-      // correctly — but the old slug entry lingers in the Meta catalog as a
-      // 0-price ghost that shows up as an extra "variant" in WhatsApp / Commerce
-      // Manager.
-      //
-      // Fix: always call deleteMetaCatalogItem(slugRetailerId) when the product
-      // has SKUs, regardless of whether the slug is in storedHashes. The Meta API
-      // treats DELETE on a non-existent item as "already gone" (success), so this
-      // is safe to call even if the slug entry no longer exists.
-      //
-      // Also prune the slug key from meta_sync_state.hashes so the full-sync
-      // cron doesn't see it as "known-good" and skip the delete on its next run.
-      if ((productInput.skus?.length ?? 0) > 0) {
-        const slugRetailerId = toCatalogRetailerId(productInput.slug);
-        const delResult = await deleteMetaCatalogItem(slugRetailerId);
-        if (!delResult.success) {
-          // Queue for retry on next cron run
-          await queueCatalogDeletes([slugRetailerId]);
-        }
-        // Always prune the slug hash key — whether the delete succeeded (item is
-        // gone) or was already gone (alreadyGone). If delete is queued for retry,
-        // we still remove the hash so the cron does not "skip" it as unchanged.
-        await deleteFromStoredCatalogHashes([slugRetailerId]);
+      // ── Delete the slug-based ghost entry ──────────
+      // In older code, when a product was first created (no SKUs yet), the webhook
+      // pushed it with retailer_id = slug (and price = 0 / base_price). We now skip
+      // syncing products with 0 SKUs entirely, but we must delete any legacy ghosts
+      // that may have been created or orphaned.
+      const slugRetailerId = toCatalogRetailerId(productInput.slug);
+      const delResult = await deleteMetaCatalogItem(slugRetailerId);
+      if (!delResult.success) {
+        // Queue for retry on next cron run
+        await queueCatalogDeletes([slugRetailerId]);
       }
+      // Always prune the slug hash key — whether the delete succeeded (item is
+      // gone) or was already gone (alreadyGone). If delete is queued for retry,
+      // we still remove the hash so the cron does not "skip" it as unchanged.
+      await deleteFromStoredCatalogHashes([slugRetailerId]);
 
       const failed = result.filter((a) => !a.success);
       const allSucceeded = failed.length === 0;

@@ -304,17 +304,7 @@ export type CatalogEntry = {
 
 export function buildCatalogEntries(product: ProductInput): CatalogEntry[] {
   if (!product.skus?.length) {
-    const retailerId = toCatalogRetailerId(product.slug);
-    const data = buildCatalogItem(product, {
-      id: product.id,
-      sku_code: product.slug,
-      price: product.base_price,
-      stock_quantity: 0,
-      is_available: product.is_active,
-      variant_combination: {},
-      variant_image_url: null,
-    });
-    return [{ retailerId, data, hash: computeCatalogItemHash(data) }];
+    return [];
   }
 
   return product.skus.map((sku) => {
@@ -475,25 +465,15 @@ export async function syncFullCatalogToMeta(
       continue;
     }
 
-    // A product created without SKUs gets a slug-based catalog entry. Once SKUs
-    // are added, that slug entry is orphaned (it shows as a 0-price duplicate
-    // in the Meta catalog / WhatsApp shop). Delete it unconditionally whenever
-    // the product now has SKUs — the Meta API treats DELETE on a non-existent
-    // item as success, so this is safe even if the entry no longer exists.
+    // A product created without SKUs used to get a slug-based catalog entry.
+    // We now skip syncing products with 0 SKUs entirely, but we must delete
+    // any legacy ghosts that may have been created or orphaned.
     const slugRetailerId = toCatalogRetailerId(product.slug);
-    const hasSkus = (product.skus?.length ?? 0) > 0;
-    if (hasSkus) {
-      // Only call the delete API if we know the slug entry exists (in hashes)
-      // OR if this is the first time we're seeing this product (slug not in hashes
-      // but product might still have a ghost in Meta from before hash tracking).
-      // Limit API calls on healthy runs: only call delete if slug is in hashes
-      // (confirmed to exist) or if the product was recently synced without SKUs.
-      const slugInHashes = !!storedHashes[slugRetailerId];
-      if (slugInHashes) {
-        const result = await deleteMetaCatalogItem(slugRetailerId);
-        allActions.push(result);
-        delete hashes[slugRetailerId];
-      }
+    const slugInHashes = !!storedHashes[slugRetailerId];
+    if (slugInHashes) {
+      const result = await deleteMetaCatalogItem(slugRetailerId);
+      allActions.push(result);
+      delete hashes[slugRetailerId];
     }
 
     const changed: CatalogEntry[] = [];
