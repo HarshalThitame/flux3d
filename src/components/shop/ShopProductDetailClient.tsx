@@ -2045,51 +2045,6 @@ export default function ShopProductDetailClient({
           onClose={() => setModelOpen(false)}
         />
       )}
-
-      <div
-        className="fixed inset-x-0 bottom-0 z-[120] border-t border-[var(--shop-border-gold)] bg-white/95 px-4 py-3 shadow-[var(--shop-shadow-lg)] backdrop-blur-md lg:hidden"
-        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
-      >
-        <div className="mx-auto flex max-w-7xl items-center gap-3">
-          <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-muted)]">
-            {visibleImage ? (
-              <Image
-                src={visibleImage}
-                alt=""
-                fill
-                sizes="44px"
-                className="object-cover"
-                onError={(event) => {
-                  console.error(
-                    `[ShopPDP] Sticky bar image failed for ${product.slug}:`,
-                    visibleImage,
-                  );
-                  event.currentTarget.style.display = "none";
-                }}
-              />
-            ) : null}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold text-[var(--shop-text-primary)]">
-              {product.name}
-            </p>
-            <p className="font-[var(--shop-font-heading)] text-sm font-semibold text-[var(--shop-text-primary)]">
-              {formatShopPrice(price)}
-            </p>
-          </div>
-          {!isTrulyOutOfStock && (
-            <button
-              type="button"
-              disabled={!canAdd}
-              onClick={() => addCurrentToCart(true)}
-              className="flex min-h-[44px] shrink-0 items-center justify-center gap-1.5 rounded-xl bg-[var(--shop-gold)] px-4 text-sm font-semibold text-white shadow-[var(--shop-shadow-gold)] transition active:scale-[0.98] disabled:opacity-50"
-            >
-              <ShoppingBag className="h-4 w-4" />
-              Add
-            </button>
-          )}
-        </div>
-      </div>
     </main>
   );
 }

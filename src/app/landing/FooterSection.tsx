@@ -230,25 +230,6 @@ export default function FooterSection() {
                 ))}
               </div>
             </div>
-            <div className="flex flex-col items-center gap-3 md:items-start md:flex-row md:gap-6">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[rgba(255,255,255,0.4)]">
-                Delivery
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                {[
-                  "Courier partner",
-                  "Dispatch tracking",
-                  "Serviceable locations",
-                ].map((partner) => (
-                  <span
-                    key={partner}
-                    className="text-xs font-medium text-[rgba(255,255,255,0.7)]"
-                  >
-                    {partner}
-                  </span>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 
@@ -256,13 +237,17 @@ export default function FooterSection() {
           <div className="flex flex-col items-center gap-2 lg:items-start">
             <p className="text-xs text-[rgba(255,255,255,0.5)]">
               &copy; {businessYear}{" "}
-              {settings.brandName || settings.businessName} ·{" "}
-              {settings.legalBusinessName || settings.businessName}.
-            </p>
-            <p className="text-[10px] text-[rgba(255,255,255,0.3)]">
-              Brand: {settings.brandName || settings.businessName}. Legal
-              operator: {settings.legalBusinessName || settings.businessName}.{" "}
-              {settings.city ? `${settings.city}, ${settings.state}` : "India"}.
+              {settings.brandName || settings.businessName}. All rights are
+              reserved and this application is developed by{" "}
+              <a
+                href="https://www.instagram.com/harshal_thitame"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white transition-colors"
+              >
+                Harshal Thitame
+              </a>
+              .
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 text-xs">
