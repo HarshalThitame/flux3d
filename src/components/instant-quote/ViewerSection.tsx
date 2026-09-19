@@ -251,6 +251,27 @@ export default function ViewerSection({
                 <span className="font-semibold text-cyan-400">{materialId.toUpperCase()}</span> ·{' '}
                 <span className="text-purple-300">{colorName}</span>
               </div>
+
+              {/* Filament Legend */}
+              {model.slicerResult && model.slicerResult.weightsPerColor && model.slicerResult.weightsPerColor.length > 0 && (
+                <div className="pointer-events-none absolute right-4 top-4 rounded-xl border border-white/10 bg-[#070a12]/80 p-3 text-xs text-white/90 backdrop-blur-md min-w-[140px]">
+                  <div className="mb-2 font-semibold text-white/70 uppercase tracking-wider text-[10px]">Filament Legend</div>
+                  <div className="space-y-1.5">
+                    {model.slicerResult.weightsPerColor.map((weight, index) => {
+                       const color = model.detectedColors?.[index] || '#ffffff';
+                       return (
+                         <div key={index} className="flex items-center justify-between gap-3">
+                           <div className="flex items-center gap-1.5">
+                             <div className="h-3 w-3 rounded-full border border-white/20 shadow-inner" style={{ backgroundColor: color }} />
+                             <span>AMS Slot {index + 1}</span>
+                           </div>
+                           <span className="font-mono text-cyan-400">{weight.toFixed(1)}g</span>
+                         </div>
+                       )
+                    })}
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center">

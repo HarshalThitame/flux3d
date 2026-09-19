@@ -76,6 +76,7 @@ export type ParsedModel = {
   suggestedMaterialId: string;
   requiresReview: boolean;
   slicerResult?: SlicerResult;
+  detectedColors?: string[];
 };
 
 export type QuoteConfig = {
@@ -152,6 +153,8 @@ export type PriceBreakdown = {
   slicerUsed: boolean;
   weightsPerColor: number[];
   amsColorChangeSurcharge: number;
+  modelWeightGrams: number;
+  amsWasteWeightGrams: number;
 };
 
 export type UploadState = {

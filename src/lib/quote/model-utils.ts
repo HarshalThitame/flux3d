@@ -206,6 +206,24 @@ export async function parseModelFile(file: File): Promise<ParsedModel> {
   normalizeMeshMaterials(object)
   const { dimensionsMm, volumeMm3, triangleCount } = gatherModelStats(object)
 
+  const detectedColors: string[] = []
+  if (extension === '3mf') {
+    const colorSet = new Set<string>()
+    object.traverse((child) => {
+      if (child instanceof Mesh) {
+        if (child.material) {
+          const mats = Array.isArray(child.material) ? child.material : [child.material]
+          mats.forEach((m) => {
+            if (m.color && m !== defaultMaterial && m.color.getHexString() !== 'a5b4fc') {
+              colorSet.add('#' + m.color.getHexString())
+            }
+          })
+        }
+      }
+    })
+    detectedColors.push(...Array.from(colorSet))
+  }
+
   return {
     fileName: file.name,
     fileSize: file.size,
@@ -216,6 +234,7 @@ export async function parseModelFile(file: File): Promise<ParsedModel> {
     triangleCount,
     suggestedMaterialId: suggestMaterialByModel(dimensionsMm, volumeMm3),
     requiresReview: false,
+    detectedColors,
   }
 }
 

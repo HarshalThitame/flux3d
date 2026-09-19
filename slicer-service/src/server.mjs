@@ -50,31 +50,48 @@ app.post("/slice", async (req, res) => {
     const modelFile = path.join(tmpDir, `model.${ext}`);
     await fs.writeFile(modelFile, modelBuf);
 
-    // 2. Create a job-specific 3MF by copying the template
-    const jobTemplate = path.join(tmpDir, "job.3mf");
-    await patchTemplate(TEMPLATE_PATH, jobTemplate, {
-      layerHeight,
-      infill,
-      numColors,
-    });
-
-    // 3. Run OrcaSlicer headless with XVFB virtual display
+    // 2. Determine if the file is a Bambu Studio project or plain geometry
     const outputDir = path.join(tmpDir, "output");
     await fs.mkdir(outputDir, { recursive: true });
+    
+    let isBambuProject = false;
+    let jobProject = path.join(tmpDir, "job.3mf");
 
+    if (ext === "3mf") {
+      try {
+        const zip = new AdmZip(modelFile);
+        if (zip.getEntry("Metadata/project_settings.config")) {
+          isBambuProject = true;
+        }
+      } catch (e) {
+        // Invalid zip or just raw geometry
+      }
+    }
+
+    let slicerArgs = [
+      "--auto-servernum",
+      "orca-slicer",
+      "--slice",
+      "1",
+    ];
+
+    if (isBambuProject) {
+      // Patch the user's uploaded Bambu project directly
+      await patchTemplate(modelFile, jobProject, { layerHeight, infill, numColors });
+      slicerArgs.push(jobProject);
+      slicerArgs.push("--export-3mf", path.join(outputDir, "result.gcode.3mf"));
+    } else {
+      // It's raw geometry (STL, OBJ, generic 3MF). Use A2L template.
+      await patchTemplate(TEMPLATE_PATH, jobProject, { layerHeight, infill, numColors });
+      slicerArgs.push("--load", jobProject);
+      slicerArgs.push("--export-3mf", path.join(outputDir, "result.gcode.3mf"));
+      slicerArgs.push(modelFile);
+    }
+
+    // 3. Run OrcaSlicer headless with XVFB virtual display
     await execFileAsync(
       "xvfb-run",
-      [
-        "--auto-servernum",
-        "orca-slicer",
-        "--slice",
-        "1",
-        "--load",
-        jobTemplate,
-        "--export-3mf",
-        path.join(outputDir, "result.gcode.3mf"),
-        modelFile,
-      ],
+      slicerArgs,
       {
         timeout: 180_000,
         env: { ...process.env, DISPLAY: ":99" },
@@ -153,9 +170,11 @@ async function patchTemplate(
  */
 function parseGcodeHeader(header) {
   const weightLine = header.match(/;\s*filament used \[g\] = (.+)/);
-  const timeLine = header.match(
-    /;\s*estimated printing time \(normal mode\) = (.+)/,
-  );
+  const modelWeightLine = header.match(/;\s*model weight \[g\] = ([0-9.]+)/);
+  const flushWeightLine = header.match(/;\s*flush weight \[g\] = ([0-9.]+)/);
+  const wipeTowerWeightLine = header.match(/;\s*wipe tower weight \[g\] = ([0-9.]+)/);
+  
+  const timeLine = header.match(/;\s*estimated printing time \(normal mode\) = (.+)/);
   const layerLine = header.match(/;\s*total layers count = (\d+)/);
 
   const weightsPerColor = weightLine
@@ -164,8 +183,18 @@ function parseGcodeHeader(header) {
         .map((s) => parseFloat(s.trim()))
         .filter((n) => !isNaN(n))
     : [0];
-  const totalWeightGrams =
-    Math.round(weightsPerColor.reduce((a, b) => a + b, 0) * 100) / 100;
+    
+  const totalWeightGrams = Math.round(weightsPerColor.reduce((a, b) => a + b, 0) * 100) / 100;
+  
+  const reportedModelWeight = modelWeightLine ? parseFloat(modelWeightLine[1]) : 0;
+  const reportedFlushWeight = flushWeightLine ? parseFloat(flushWeightLine[1]) : 0;
+  const reportedWipeWeight = wipeTowerWeightLine ? parseFloat(wipeTowerWeightLine[1]) : 0;
+  
+  const reportedWasteWeight = Math.round((reportedFlushWeight + reportedWipeWeight) * 100) / 100;
+  
+  // If the slicer doesn't report explicit model/waste weights, fallback safely
+  const modelWeightGrams = reportedModelWeight > 0 ? reportedModelWeight : totalWeightGrams;
+  const wasteWeightGrams = reportedWasteWeight > 0 ? reportedWasteWeight : Math.max(0, totalWeightGrams - modelWeightGrams);
 
   const timeStr = timeLine?.[1] ?? "";
   const hours = parseInt(timeStr.match(/(\d+)h/)?.[1] ?? "0");
@@ -174,6 +203,8 @@ function parseGcodeHeader(header) {
 
   return {
     totalWeightGrams,
+    modelWeightGrams,
+    wasteWeightGrams,
     weightsPerColor,
     estimatedMinutes,
     layerCount: parseInt(layerLine?.[1] ?? "0"),

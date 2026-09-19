@@ -101,9 +101,26 @@ function ViewerModel({
             clippingPlanes: planes,
           })
         } else {
+          // Preserve 3MF/Original colors if not using the default material color
+          let finalColor = pbr.color;
+          let useVertexColors = false;
+          const origMat = (child as THREE.Mesh).material;
+          if (origMat) {
+            const mats = Array.isArray(origMat) ? origMat : [origMat];
+            if (mats[0]) {
+              if (mats[0].vertexColors) {
+                useVertexColors = true;
+                finalColor = '#ffffff'; // Vertex colors multiply against material color
+              } else if (mats[0].color && mats[0].color.getHexString() !== 'a5b4fc') {
+                finalColor = '#' + mats[0].color.getHexString();
+              }
+            }
+          }
+
           // Solid PBR Shading
           child.material = new MeshPhysicalMaterial({
-            color: pbr.color,
+            color: finalColor,
+            vertexColors: useVertexColors,
             roughness: pbr.roughness,
             metalness: pbr.metalness,
             clearcoat: pbr.clearcoat ?? 0,

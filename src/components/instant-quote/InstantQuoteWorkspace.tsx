@@ -254,7 +254,7 @@ function CartEnabledWorkspace({
   );
 
   // ── Slicer state ──────────────────────────────────────────────────────────
-  const [slicerLoading, setSlicerLoading] = useState(false);
+  const [slicerStatus, setSlicerStatus] = useState<string | null>(null);
   const [slicerError, setSlicerError] = useState<string | null>(null);
 
   const [savingQuote, setSavingQuote] = useState(false);
@@ -585,8 +585,22 @@ function CartEnabledWorkspace({
 
   const handleGetPreciseQuote = async () => {
     if (!uploadState.path || !selectedModel || !user) return;
-    setSlicerLoading(true);
+    setSlicerStatus("Uploading model to processing node...");
     setSlicerError(null);
+
+    let stepIndex = 0;
+    const steps = [
+      "Uploading model to processing node...",
+      "Preparing .3mf geometry...",
+      "Slicing Model & generating G-Code...",
+      "Calculating Waste & AMS Purge...",
+      "Finalizing price breakdown..."
+    ];
+
+    const progressInterval = setInterval(() => {
+      stepIndex = Math.min(stepIndex + 1, steps.length - 1);
+      setSlicerStatus(steps[stepIndex]);
+    }, 4500);
 
     try {
       const signedUrl = await getSignedModelUrl(uploadState.path);
@@ -619,7 +633,8 @@ function CartEnabledWorkspace({
         message: `Slicer: ${msg}. Quick estimate shown.`,
       });
     } finally {
-      setSlicerLoading(false);
+      clearInterval(progressInterval);
+      setSlicerStatus(null);
     }
   };
 
@@ -1220,13 +1235,13 @@ function CartEnabledWorkspace({
                         <button
                           type="button"
                           onClick={handleGetPreciseQuote}
-                          disabled={slicerLoading}
+                          disabled={slicerStatus !== null}
                           className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] bg-[#6d28d9] px-4 py-3 text-sm font-semibold text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          {slicerLoading ? (
+                          {slicerStatus !== null ? (
                             <>
                               <LoaderCircle className="h-4 w-4 animate-spin" />{" "}
-                              Slicing… (15–90s)
+                              {slicerStatus}
                             </>
                           ) : selectedModel.slicerResult ? (
                             "🔄 Re-slice with current settings"
