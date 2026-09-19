@@ -91,7 +91,6 @@ export type QuotePricingResult = PricingWaterfall & {
   materialWeightGrams: number;
   modelWeightGrams: number;
   amsWasteWeightGrams: number;
-  amsColorChangeSurcharge: number;
   supportWeightGrams: number;
   materialRatePerKg: number;
   machineRatePerHour: number;
@@ -426,7 +425,6 @@ export function calculateQuotePricing(
     materialWeightGrams: materialWeightGramsTotal,
     modelWeightGrams,
     amsWasteWeightGrams,
-    amsColorChangeSurcharge,
     supportWeightGrams: supportWeightGramsTotal,
     materialRatePerKg,
     machineRatePerHour,
