@@ -53,6 +53,8 @@ export type PostProcessingLevel = "none" | "sanded" | "sanded-painted";
 export type SlicerResult = {
   source: "slicer" | "geometry";
   totalWeightGrams: number;
+  modelWeightGrams: number;
+  wasteWeightGrams: number;
   /** Per AMS slot weights — index 0 = slot 1 */
   weightsPerColor: number[];
   estimatedMinutes: number;

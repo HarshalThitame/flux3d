@@ -89,6 +89,9 @@ export type QuotePricingResult = PricingWaterfall & {
   infillMultiplier: number;
   materialUsageGramsPerUnit: number;
   materialWeightGrams: number;
+  modelWeightGrams: number;
+  amsWasteWeightGrams: number;
+  amsColorChangeSurcharge: number;
   supportWeightGrams: number;
   materialRatePerKg: number;
   machineRatePerHour: number;
@@ -303,15 +306,31 @@ export function calculateQuotePricing(
   const slicerUsed = hasSlicer;
 
   // Weight: slicer wins over geometry math
-  const materialWeightGramsPerUnit = hasSlicer
-    ? model.slicerResult!.totalWeightGrams / quantity
-    : baseWeightGrams * infillFactor * material.multiplier * supportFactor;
+  let materialWeightGramsTotal = 0;
+  let modelWeightGrams = 0;
+  let amsWasteWeightGrams = 0;
+
+  if (hasSlicer) {
+    materialWeightGramsTotal = model.slicerResult!.totalWeightGrams;
+    modelWeightGrams = model.slicerResult!.modelWeightGrams;
+    amsWasteWeightGrams = model.slicerResult!.wasteWeightGrams;
+  } else {
+    modelWeightGrams =
+      baseWeightGrams *
+      infillFactor *
+      material.multiplier *
+      supportFactor *
+      quantity;
+    materialWeightGramsTotal = modelWeightGrams;
+    amsWasteWeightGrams = 0;
+  }
+
+  const materialWeightGramsPerUnit = materialWeightGramsTotal / quantity;
 
   const supportWeightGramsPerUnit =
     config.supports && !hasSlicer
       ? materialWeightGramsPerUnit * (0.12 / 1.12)
       : 0;
-  const materialWeightGramsTotal = materialWeightGramsPerUnit * quantity;
   const supportWeightGramsTotal = supportWeightGramsPerUnit * quantity;
   const materialRatePerKg = material.pricePerGram * 1000;
   const markupMultiplier =
@@ -405,6 +424,9 @@ export function calculateQuotePricing(
     infillMultiplier: infillFactor,
     materialUsageGramsPerUnit: materialWeightGramsPerUnit,
     materialWeightGrams: materialWeightGramsTotal,
+    modelWeightGrams,
+    amsWasteWeightGrams,
+    amsColorChangeSurcharge,
     supportWeightGrams: supportWeightGramsTotal,
     materialRatePerKg,
     machineRatePerHour,

@@ -138,7 +138,7 @@ export default function QuoteSummary({
               >
                 <div className="flex items-center justify-between text-sm text-[var(--text-secondary)]">
                   <span className="flex items-center gap-1.5">
-                    Print weight
+                    Model weight
                     {priceBreakdown.slicerUsed && (
                       <span className="rounded-full bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700">
                         Slicer
@@ -146,14 +146,14 @@ export default function QuoteSummary({
                     )}
                   </span>
                   <span className="font-medium text-[#070b1d]">
-                    {priceBreakdown.materialWeightGrams.toFixed(2)} g
+                    {priceBreakdown.modelWeightGrams.toFixed(2)} g
                   </span>
                 </div>
 
                 {/* Per-color AMS breakdown */}
                 {priceBreakdown.slicerUsed &&
                   priceBreakdown.weightsPerColor.length > 1 && (
-                    <div className="mt-2 space-y-1">
+                    <div className="mt-2 space-y-1 border-t border-[#6d28d9]/10 pt-2">
                       {priceBreakdown.weightsPerColor.map((w, i) => (
                         <div
                           key={i}
@@ -165,6 +165,26 @@ export default function QuoteSummary({
                       ))}
                     </div>
                   )}
+
+                {/* Waste breakdown */}
+                {priceBreakdown.slicerUsed &&
+                  priceBreakdown.amsWasteWeightGrams > 0 && (
+                    <div className="mt-2 flex justify-between border-t border-[#6d28d9]/10 pt-2 text-xs text-rose-500">
+                      <span>AMS Purge / Waste</span>
+                      <span className="font-medium">
+                        {priceBreakdown.amsWasteWeightGrams.toFixed(2)} g
+                      </span>
+                    </div>
+                  )}
+
+                {priceBreakdown.slicerUsed && (
+                  <div className="mt-2 flex justify-between border-t border-[#6d28d9]/10 pt-2 text-xs font-medium text-[#070b1d]">
+                    <span>Total Consumed</span>
+                    <span>
+                      {priceBreakdown.materialWeightGrams.toFixed(2)} g
+                    </span>
+                  </div>
+                )}
 
                 <p className="mt-2 text-xs text-[#6F7192]">
                   {priceBreakdown.slicerUsed
