@@ -1,399 +1,421 @@
-import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { createAdminSupabaseClient } from "@/lib/admin/server";
 
 export type CartDiscountTier = {
-  minCartValue: number
-  discountPercent: number
-}
+  minCartValue: number;
+  discountPercent: number;
+};
 
-export type PostProcessingMultipliers = Record<string, number>
+export type PostProcessingMultipliers = Record<string, number>;
 
 export type BusinessSettings = {
-  id: string
-  businessName: string
-  legalBusinessName: string
-  brandName: string
-  tagline: string
-  businessDescription: string
-  gstNumber: string
-  panNumber: string
-  cinNumber: string
-  msmeNumber: string
-  businessType: string
+  id: string;
+  businessName: string;
+  legalBusinessName: string;
+  brandName: string;
+  tagline: string;
+  businessDescription: string;
+  gstNumber: string;
+  panNumber: string;
+  cinNumber: string;
+  msmeNumber: string;
+  businessType: string;
 
-  primaryEmail: string
-  supportEmail: string
-  salesEmail: string
-  billingEmail: string
-  primaryPhone: string
-  whatsappNumber: string
-  alternatePhone: string
-  tollFreeNumber: string
+  primaryEmail: string;
+  supportEmail: string;
+  salesEmail: string;
+  billingEmail: string;
+  primaryPhone: string;
+  whatsappNumber: string;
+  alternatePhone: string;
+  tollFreeNumber: string;
 
-  addressLine1: string
-  addressLine2: string
-  landmark: string
-  city: string
-  state: string
-  country: string
-  postalCode: string
-  billingSameAsOffice: boolean
-  billingAddressLine1: string
-  billingAddressLine2: string
-  billingCity: string
-  billingState: string
-  billingCountry: string
-  billingPostalCode: string
+  addressLine1: string;
+  addressLine2: string;
+  landmark: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode: string;
+  billingSameAsOffice: boolean;
+  billingAddressLine1: string;
+  billingAddressLine2: string;
+  billingCity: string;
+  billingState: string;
+  billingCountry: string;
+  billingPostalCode: string;
 
-  instagramUrl: string
-  facebookUrl: string
-  linkedinUrl: string
-  twitterUrl: string
-  youtubeUrl: string
-  threadsUrl: string
-  pinterestUrl: string
-  githubUrl: string
-  websiteUrl: string
+  instagramUrl: string;
+  facebookUrl: string;
+  linkedinUrl: string;
+  twitterUrl: string;
+  youtubeUrl: string;
+  threadsUrl: string;
+  pinterestUrl: string;
+  githubUrl: string;
+  websiteUrl: string;
 
-  logoUrl: string
-  darkLogoUrl: string
-  faviconUrl: string
-  invoiceLogoUrl: string
-  emailLogoUrl: string
-  primaryColor: string
-  secondaryColor: string
+  logoUrl: string;
+  darkLogoUrl: string;
+  faviconUrl: string;
+  invoiceLogoUrl: string;
+  emailLogoUrl: string;
+  primaryColor: string;
+  secondaryColor: string;
 
-  invoicePrefix: string
-  quotationPrefix: string
-  invoiceStartNumber: number
-  quotationStartNumber: number
-  shopInvoicePrefix: string
-  shopInvoiceStartNumber: number
-  currency: string
-  currencySymbol: string
-  taxPercentage: number
-  gstEnabled: boolean
-  cgstPercent: number
-  sgstPercent: number
-  sacHsnCode: string
-  paymentTerms: string
-  bankAccountName: string
-  bankName: string
-  accountNumber: string
-  ifscCode: string
-  upiId: string
-  upiQrCodeUrl: string
+  invoicePrefix: string;
+  quotationPrefix: string;
+  invoiceStartNumber: number;
+  quotationStartNumber: number;
+  shopInvoicePrefix: string;
+  shopInvoiceStartNumber: number;
+  currency: string;
+  currencySymbol: string;
+  taxPercentage: number;
+  gstEnabled: boolean;
+  cgstPercent: number;
+  sgstPercent: number;
+  sacHsnCode: string;
+  paymentTerms: string;
+  bankAccountName: string;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  upiId: string;
+  upiQrCodeUrl: string;
 
-  whatsappOrderNumber: string
-  whatsappSupportNumber: string
-  defaultWhatsappTemplate: string
-  autoReplyMessage: string
-  businessHours: string
-  supportAvailabilityMessage: string
+  whatsappOrderNumber: string;
+  whatsappSupportNumber: string;
+  defaultWhatsappTemplate: string;
+  autoReplyMessage: string;
+  businessHours: string;
+  supportAvailabilityMessage: string;
 
-  metaTitle: string
-  metaDescription: string
-  metaKeywords: string
-  ogImageUrl: string
-  twitterImageUrl: string
-  canonicalUrl: string
-  robotsIndex: boolean
+  metaTitle: string;
+  metaDescription: string;
+  metaKeywords: string;
+  ogImageUrl: string;
+  twitterImageUrl: string;
+  canonicalUrl: string;
+  robotsIndex: boolean;
 
-  smtpHost: string
-  smtpPort: number
-  smtpUsername: string
-  smtpPassword: string
-  smtpSenderName: string
-  smtpSenderEmail: string
+  smtpHost: string;
+  smtpPort: number;
+  smtpUsername: string;
+  smtpPassword: string;
+  smtpSenderName: string;
+  smtpSenderEmail: string;
 
-  resendApiKey: string
-  resendSenderDomain: string
-  resendSenderName: string
-  resendSenderEmail: string
-  resendWebhookSecret: string
-  complaintsEmail: string
+  resendApiKey: string;
+  resendSenderDomain: string;
+  resendSenderName: string;
+  resendSenderEmail: string;
+  resendWebhookSecret: string;
+  complaintsEmail: string;
 
-  privacyPolicyUrl: string
-  termsUrl: string
-  refundPolicyUrl: string
-  shippingPolicyUrl: string
+  privacyPolicyUrl: string;
+  termsUrl: string;
+  refundPolicyUrl: string;
+  shippingPolicyUrl: string;
 
-  workingDays: string
-  workingHours: string
-  holidayMessage: string
-  emergencyContact: string
-  orderProcessingTime: string
-  deliveryChargeThreshold: number
-  defaultDeliveryCharge: number
-  shopMinimumOrderValue: number
-  overheadPercentage: number
-  marginPercentage: number
-  materialMarkupPercent: number
-  printSpeedGramsPerHour: number
-  postProcessingMultipliers: PostProcessingMultipliers
-  cartDiscountEnabled: boolean
-  cartDiscountTiers: CartDiscountTier[]
-  minimumOrderValue: number
-  gstInclusivePricing: boolean
-  pickupAvailable: boolean
-  paymentsEnabled: boolean
-  razorpayEnabled: boolean
-  razorpayKeyId: string
-  razorpayEnvironment: string
-  razorpayCheckoutName: string
-  razorpayCheckoutDescription: string
-  razorpayBrandColor: string
-  razorpayPaymentMethods: string
-  razorpayTimeoutMinutes: number
-  razorpayOrderBufferMinutes: number
-  razorpayWebhookHealthy: boolean
-  razorpayLastConnectionCheckAt: string
-  razorpayLastConnectionStatus: string
-  razorpayLastConnectionMessage: string
-  razorpayRefundPermissionMode: string
+  workingDays: string;
+  workingHours: string;
+  holidayMessage: string;
+  emergencyContact: string;
+  orderProcessingTime: string;
+  deliveryChargeThreshold: number;
+  defaultDeliveryCharge: number;
+  shopMinimumOrderValue: number;
+  overheadPercentage: number;
+  marginPercentage: number;
+  materialMarkupPercent: number;
+  printSpeedGramsPerHour: number;
+  postProcessingMultipliers: PostProcessingMultipliers;
+  cartDiscountEnabled: boolean;
+  cartDiscountTiers: CartDiscountTier[];
+  minimumOrderValue: number;
+  gstInclusivePricing: boolean;
+  amsColorChangeSurcharge: number;
+  slicerServiceUrl: string;
+  slicerServiceEnabled: boolean;
+  pickupAvailable: boolean;
+  paymentsEnabled: boolean;
+  razorpayEnabled: boolean;
+  razorpayKeyId: string;
+  razorpayEnvironment: string;
+  razorpayCheckoutName: string;
+  razorpayCheckoutDescription: string;
+  razorpayBrandColor: string;
+  razorpayPaymentMethods: string;
+  razorpayTimeoutMinutes: number;
+  razorpayOrderBufferMinutes: number;
+  razorpayWebhookHealthy: boolean;
+  razorpayLastConnectionCheckAt: string;
+  razorpayLastConnectionStatus: string;
+  razorpayLastConnectionMessage: string;
+  razorpayRefundPermissionMode: string;
 
-  createdAt: string
-  updatedAt: string
-}
+  createdAt: string;
+  updatedAt: string;
+};
 
 const SENSITIVE_SETTING_FIELDS: (keyof BusinessSettings)[] = [
-  'smtpPassword',
-  'razorpayKeyId',
-  'accountNumber',
-  'ifscCode',
-  'upiId',
-  'resendApiKey',
-  'resendWebhookSecret',
-]
+  "smtpPassword",
+  "razorpayKeyId",
+  "accountNumber",
+  "ifscCode",
+  "upiId",
+  "resendApiKey",
+  "resendWebhookSecret",
+];
 
-export const BUSINESS_SETTING_SECRET_MASK = '••••••••'
+export const BUSINESS_SETTING_SECRET_MASK = "••••••••";
 
-export function maskBusinessSettingsSecrets(settings: BusinessSettings): BusinessSettings {
-  const masked = { ...settings }
+export function maskBusinessSettingsSecrets(
+  settings: BusinessSettings,
+): BusinessSettings {
+  const masked = { ...settings };
   for (const field of SENSITIVE_SETTING_FIELDS) {
-    const value = masked[field]
-    if (typeof value === 'string' && value.length > 0) {
-      ;(masked as Record<keyof BusinessSettings, unknown>)[field] = BUSINESS_SETTING_SECRET_MASK
+    const value = masked[field];
+    if (typeof value === "string" && value.length > 0) {
+      (masked as Record<keyof BusinessSettings, unknown>)[field] =
+        BUSINESS_SETTING_SECRET_MASK;
     }
   }
-  return masked
+  return masked;
 }
 
 export function stripMaskedSecretUpdates<T extends Record<string, unknown>>(
-  updates: T
+  updates: T,
 ): T {
-  const copy = { ...updates }
+  const copy = { ...updates };
   for (const field of SENSITIVE_SETTING_FIELDS) {
     if (copy[field] === BUSINESS_SETTING_SECRET_MASK) {
-      delete copy[field]
+      delete copy[field];
     }
   }
-  return copy
+  return copy;
 }
 
 export type BusinessSettingsRow = {
-  id: string
-  business_name: string | null
-  legal_business_name: string | null
-  brand_name: string | null
-  tagline: string | null
-  business_description: string | null
-  gst_number: string | null
-  pan_number: string | null
-  cin_number: string | null
-  msme_number: string | null
-  business_type: string | null
+  id: string;
+  business_name: string | null;
+  legal_business_name: string | null;
+  brand_name: string | null;
+  tagline: string | null;
+  business_description: string | null;
+  gst_number: string | null;
+  pan_number: string | null;
+  cin_number: string | null;
+  msme_number: string | null;
+  business_type: string | null;
 
-  primary_email: string | null
-  support_email: string | null
-  sales_email: string | null
-  billing_email: string | null
-  primary_phone: string | null
-  whatsapp_number: string | null
-  alternate_phone: string | null
-  toll_free_number: string | null
+  primary_email: string | null;
+  support_email: string | null;
+  sales_email: string | null;
+  billing_email: string | null;
+  primary_phone: string | null;
+  whatsapp_number: string | null;
+  alternate_phone: string | null;
+  toll_free_number: string | null;
 
-  address_line_1: string | null
-  address_line_2: string | null
-  landmark: string | null
-  city: string | null
-  state: string | null
-  country: string | null
-  postal_code: string | null
-  billing_same_as_office: boolean | null
-  billing_address_line_1: string | null
-  billing_address_line_2: string | null
-  billing_city: string | null
-  billing_state: string | null
-  billing_country: string | null
-  billing_postal_code: string | null
+  address_line_1: string | null;
+  address_line_2: string | null;
+  landmark: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  postal_code: string | null;
+  billing_same_as_office: boolean | null;
+  billing_address_line_1: string | null;
+  billing_address_line_2: string | null;
+  billing_city: string | null;
+  billing_state: string | null;
+  billing_country: string | null;
+  billing_postal_code: string | null;
 
-  instagram_url: string | null
-  facebook_url: string | null
-  linkedin_url: string | null
-  twitter_url: string | null
-  youtube_url: string | null
-  threads_url: string | null
-  pinterest_url: string | null
-  github_url: string | null
-  website_url: string | null
+  instagram_url: string | null;
+  facebook_url: string | null;
+  linkedin_url: string | null;
+  twitter_url: string | null;
+  youtube_url: string | null;
+  threads_url: string | null;
+  pinterest_url: string | null;
+  github_url: string | null;
+  website_url: string | null;
 
-  logo_url: string | null
-  dark_logo_url: string | null
-  favicon_url: string | null
-  invoice_logo_url: string | null
-  email_logo_url: string | null
-  primary_color: string | null
-  secondary_color: string | null
+  logo_url: string | null;
+  dark_logo_url: string | null;
+  favicon_url: string | null;
+  invoice_logo_url: string | null;
+  email_logo_url: string | null;
+  primary_color: string | null;
+  secondary_color: string | null;
 
-  invoice_prefix: string | null
-  quotation_prefix: string | null
-  invoice_start_number: number | null
-  quotation_start_number: number | null
-  shop_invoice_prefix: string | null
-  shop_invoice_start_number: number | null
-  currency: string | null
-  currency_symbol: string | null
-  tax_percentage: number | null
-  gst_enabled: boolean | null
-  cgst_percent: number | null
-  sgst_percent: number | null
-  sac_hsn_code: string | null
-  payment_terms: string | null
-  bank_account_name: string | null
-  bank_name: string | null
-  account_number: string | null
-  ifsc_code: string | null
-  upi_id: string | null
-  upi_qr_code_url: string | null
+  invoice_prefix: string | null;
+  quotation_prefix: string | null;
+  invoice_start_number: number | null;
+  quotation_start_number: number | null;
+  shop_invoice_prefix: string | null;
+  shop_invoice_start_number: number | null;
+  currency: string | null;
+  currency_symbol: string | null;
+  tax_percentage: number | null;
+  gst_enabled: boolean | null;
+  cgst_percent: number | null;
+  sgst_percent: number | null;
+  sac_hsn_code: string | null;
+  payment_terms: string | null;
+  bank_account_name: string | null;
+  bank_name: string | null;
+  account_number: string | null;
+  ifsc_code: string | null;
+  upi_id: string | null;
+  upi_qr_code_url: string | null;
 
-  whatsapp_order_number: string | null
-  whatsapp_support_number: string | null
-  default_whatsapp_template: string | null
-  auto_reply_message: string | null
-  business_hours: string | null
-  support_availability_message: string | null
+  whatsapp_order_number: string | null;
+  whatsapp_support_number: string | null;
+  default_whatsapp_template: string | null;
+  auto_reply_message: string | null;
+  business_hours: string | null;
+  support_availability_message: string | null;
 
-  meta_title: string | null
-  meta_description: string | null
-  meta_keywords: string | null
-  og_image_url: string | null
-  twitter_image_url: string | null
-  canonical_url: string | null
-  robots_index: boolean | null
+  meta_title: string | null;
+  meta_description: string | null;
+  meta_keywords: string | null;
+  og_image_url: string | null;
+  twitter_image_url: string | null;
+  canonical_url: string | null;
+  robots_index: boolean | null;
 
-  smtp_host: string | null
-  smtp_port: number | null
-  smtp_username: string | null
-  smtp_password: string | null
-  smtp_sender_name: string | null
-  smtp_sender_email: string | null
+  smtp_host: string | null;
+  smtp_port: number | null;
+  smtp_username: string | null;
+  smtp_password: string | null;
+  smtp_sender_name: string | null;
+  smtp_sender_email: string | null;
 
-  resend_api_key: string | null
-  resend_sender_domain: string | null
-  resend_sender_name: string | null
-  resend_sender_email: string | null
-  resend_webhook_secret: string | null
-  complaints_email: string | null
+  resend_api_key: string | null;
+  resend_sender_domain: string | null;
+  resend_sender_name: string | null;
+  resend_sender_email: string | null;
+  resend_webhook_secret: string | null;
+  complaints_email: string | null;
 
-  privacy_policy_url: string | null
-  terms_url: string | null
-  refund_policy_url: string | null
-  shipping_policy_url: string | null
+  privacy_policy_url: string | null;
+  terms_url: string | null;
+  refund_policy_url: string | null;
+  shipping_policy_url: string | null;
 
-  working_days: string | null
-  working_hours: string | null
-  holiday_message: string | null
-  emergency_contact: string | null
-  order_processing_time: string | null
-  delivery_charge_threshold: number | null
-  default_delivery_charge: number | null
-  shop_min_order_value: number | null
-  overhead_percent: number | null
-  margin_percentage: number | null
-  material_markup_percent: number | null
-  print_speed_grams_per_hour: number | null
-  post_processing_multipliers: unknown | null
-  cart_discount_enabled: boolean | null
-  cart_discount_tiers: unknown | null
-  minimum_order_value: number | null
-  gst_inclusive_pricing: boolean | null
-  pickup_available: boolean | null
-  payments_enabled: boolean | null
-  razorpay_enabled: boolean | null
-  razorpay_key_id: string | null
-  razorpay_environment: string | null
-  razorpay_checkout_name: string | null
-  razorpay_checkout_description: string | null
-  razorpay_brand_color: string | null
-  razorpay_payment_methods: string | null
-  razorpay_timeout_minutes: number | null
-  razorpay_order_buffer_minutes: number | null
-  razorpay_webhook_healthy: boolean | null
-  razorpay_last_connection_check_at: string | null
-  razorpay_last_connection_status: string | null
-  razorpay_last_connection_message: string | null
-  razorpay_refund_permission_mode: string | null
+  working_days: string | null;
+  working_hours: string | null;
+  holiday_message: string | null;
+  emergency_contact: string | null;
+  order_processing_time: string | null;
+  delivery_charge_threshold: number | null;
+  default_delivery_charge: number | null;
+  shop_min_order_value: number | null;
+  overhead_percent: number | null;
+  margin_percentage: number | null;
+  material_markup_percent: number | null;
+  print_speed_grams_per_hour: number | null;
+  post_processing_multipliers: unknown | null;
+  cart_discount_enabled: boolean | null;
+  cart_discount_tiers: unknown | null;
+  minimum_order_value: number | null;
+  gst_inclusive_pricing: boolean | null;
+  ams_color_change_surcharge: number | null;
+  slicer_service_url: string | null;
+  slicer_service_enabled: boolean | null;
+  pickup_available: boolean | null;
+  payments_enabled: boolean | null;
+  razorpay_enabled: boolean | null;
+  razorpay_key_id: string | null;
+  razorpay_environment: string | null;
+  razorpay_checkout_name: string | null;
+  razorpay_checkout_description: string | null;
+  razorpay_brand_color: string | null;
+  razorpay_payment_methods: string | null;
+  razorpay_timeout_minutes: number | null;
+  razorpay_order_buffer_minutes: number | null;
+  razorpay_webhook_healthy: boolean | null;
+  razorpay_last_connection_check_at: string | null;
+  razorpay_last_connection_status: string | null;
+  razorpay_last_connection_message: string | null;
+  razorpay_refund_permission_mode: string | null;
 
-  created_at: string | null
-  updated_at: string | null
-}
+  created_at: string | null;
+  updated_at: string | null;
+};
 
 function n(value: string | null | undefined): string {
-  return value ?? ''
+  return value ?? "";
 }
 
 function bool(value: boolean | null | undefined): boolean {
-  return value ?? false
+  return value ?? false;
 }
 
 function num(value: number | null | undefined): number {
-  return value ?? 0
+  return value ?? 0;
 }
 
 function parseCartDiscountTiers(value: unknown): CartDiscountTier[] {
   if (!Array.isArray(value)) {
-    return []
+    return [];
   }
 
   return value
     .map((tier) => {
-      if (!tier || typeof tier !== 'object') return null
-      const record = tier as Record<string, unknown>
-      const minCartValue = Number(record.min_cart_value ?? record.minCartValue)
-      const discountPercent = Number(record.discount_percent ?? record.discountPercent)
+      if (!tier || typeof tier !== "object") return null;
+      const record = tier as Record<string, unknown>;
+      const minCartValue = Number(record.min_cart_value ?? record.minCartValue);
+      const discountPercent = Number(
+        record.discount_percent ?? record.discountPercent,
+      );
 
       if (!Number.isFinite(minCartValue) || !Number.isFinite(discountPercent)) {
-        return null
+        return null;
       }
 
       return {
         minCartValue: Math.max(0, minCartValue),
         discountPercent: Math.max(0, discountPercent),
-      }
+      };
     })
     .filter((tier): tier is CartDiscountTier => Boolean(tier))
-    .sort((left, right) => left.minCartValue - right.minCartValue)
+    .sort((left, right) => left.minCartValue - right.minCartValue);
 }
 
-function parsePostProcessingMultipliers(value: unknown): PostProcessingMultipliers {
+function parsePostProcessingMultipliers(
+  value: unknown,
+): PostProcessingMultipliers {
   const defaults: PostProcessingMultipliers = {
     none: 0,
     sanded: 0.25,
-    'sanded-painted': 0.6,
+    "sanded-painted": 0.6,
+  };
+
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return defaults;
   }
 
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return defaults
-  }
-
-  return Object.entries(value as Record<string, unknown>).reduce<PostProcessingMultipliers>((acc, [key, raw]) => {
-    const next = Number(raw)
-    acc[key] = Number.isFinite(next) ? Math.max(0, next) : defaults[key] ?? 0
-    return acc
-  }, { ...defaults })
+  return Object.entries(
+    value as Record<string, unknown>,
+  ).reduce<PostProcessingMultipliers>(
+    (acc, [key, raw]) => {
+      const next = Number(raw);
+      acc[key] = Number.isFinite(next)
+        ? Math.max(0, next)
+        : (defaults[key] ?? 0);
+      return acc;
+    },
+    { ...defaults },
+  );
 }
 
-export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettings {
+export function mapBusinessSettingsRow(
+  row: BusinessSettingsRow,
+): BusinessSettings {
   return {
     id: row.id,
     businessName: n(row.business_name),
@@ -453,7 +475,7 @@ export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettin
     quotationPrefix: n(row.quotation_prefix),
     invoiceStartNumber: num(row.invoice_start_number),
     quotationStartNumber: num(row.quotation_start_number),
-    shopInvoicePrefix: n(row.shop_invoice_prefix) || 'SHP-',
+    shopInvoicePrefix: n(row.shop_invoice_prefix) || "SHP-",
     shopInvoiceStartNumber: num(row.shop_invoice_start_number) || 1001,
     currency: n(row.currency),
     currencySymbol: n(row.currency_symbol),
@@ -516,11 +538,16 @@ export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettin
     marginPercentage: row.margin_percentage ?? 30,
     materialMarkupPercent: row.material_markup_percent ?? 15,
     printSpeedGramsPerHour: row.print_speed_grams_per_hour ?? 14.5,
-    postProcessingMultipliers: parsePostProcessingMultipliers(row.post_processing_multipliers),
+    postProcessingMultipliers: parsePostProcessingMultipliers(
+      row.post_processing_multipliers,
+    ),
     cartDiscountEnabled: bool(row.cart_discount_enabled ?? true),
     cartDiscountTiers: parseCartDiscountTiers(row.cart_discount_tiers),
     minimumOrderValue: num(row.minimum_order_value ?? 100),
     gstInclusivePricing: bool(row.gst_inclusive_pricing ?? true),
+    amsColorChangeSurcharge: num(row.ams_color_change_surcharge ?? 30),
+    slicerServiceUrl: n(row.slicer_service_url),
+    slicerServiceEnabled: bool(row.slicer_service_enabled),
     pickupAvailable: bool(row.pickup_available),
     paymentsEnabled: bool(row.payments_enabled ?? true),
     razorpayEnabled: bool(row.razorpay_enabled ?? true),
@@ -538,203 +565,207 @@ export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettin
     razorpayLastConnectionMessage: n(row.razorpay_last_connection_message),
     razorpayRefundPermissionMode: n(row.razorpay_refund_permission_mode),
 
-    createdAt: row.created_at ?? '',
-    updatedAt: row.updated_at ?? '',
-  }
+    createdAt: row.created_at ?? "",
+    updatedAt: row.updated_at ?? "",
+  };
 }
 
-export function toSnakeCase(data: Partial<BusinessSettings>): Record<string, unknown> {
-  const result: Record<string, unknown> = {}
+export function toSnakeCase(
+  data: Partial<BusinessSettings>,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
   const map: Record<string, string> = {
-    businessName: 'business_name',
-    legalBusinessName: 'legal_business_name',
-    brandName: 'brand_name',
-    tagline: 'tagline',
-    businessDescription: 'business_description',
-    gstNumber: 'gst_number',
-    panNumber: 'pan_number',
-    cinNumber: 'cin_number',
-    msmeNumber: 'msme_number',
-    businessType: 'business_type',
-    primaryEmail: 'primary_email',
-    supportEmail: 'support_email',
-    salesEmail: 'sales_email',
-    billingEmail: 'billing_email',
-    primaryPhone: 'primary_phone',
-    whatsappNumber: 'whatsapp_number',
-    alternatePhone: 'alternate_phone',
-    tollFreeNumber: 'toll_free_number',
-    addressLine1: 'address_line_1',
-    addressLine2: 'address_line_2',
-    landmark: 'landmark',
-    city: 'city',
-    state: 'state',
-    country: 'country',
-    postalCode: 'postal_code',
-    billingSameAsOffice: 'billing_same_as_office',
-    billingAddressLine1: 'billing_address_line_1',
-    billingAddressLine2: 'billing_address_line_2',
-    billingCity: 'billing_city',
-    billingState: 'billing_state',
-    billingCountry: 'billing_country',
-    billingPostalCode: 'billing_postal_code',
-    instagramUrl: 'instagram_url',
-    facebookUrl: 'facebook_url',
-    linkedinUrl: 'linkedin_url',
-    twitterUrl: 'twitter_url',
-    youtubeUrl: 'youtube_url',
-    threadsUrl: 'threads_url',
-    pinterestUrl: 'pinterest_url',
-    githubUrl: 'github_url',
-    websiteUrl: 'website_url',
-    logoUrl: 'logo_url',
-    darkLogoUrl: 'dark_logo_url',
-    faviconUrl: 'favicon_url',
-    invoiceLogoUrl: 'invoice_logo_url',
-    emailLogoUrl: 'email_logo_url',
-    primaryColor: 'primary_color',
-    secondaryColor: 'secondary_color',
-    invoicePrefix: 'invoice_prefix',
-    quotationPrefix: 'quotation_prefix',
-    invoiceStartNumber: 'invoice_start_number',
-    quotationStartNumber: 'quotation_start_number',
-    shopInvoicePrefix: 'shop_invoice_prefix',
-    shopInvoiceStartNumber: 'shop_invoice_start_number',
-    currency: 'currency',
-    currencySymbol: 'currency_symbol',
-    taxPercentage: 'tax_percentage',
-    gstEnabled: 'gst_enabled',
-    cgstPercent: 'cgst_percent',
-    sgstPercent: 'sgst_percent',
-    sacHsnCode: 'sac_hsn_code',
-    paymentTerms: 'payment_terms',
-    bankAccountName: 'bank_account_name',
-    bankName: 'bank_name',
-    accountNumber: 'account_number',
-    ifscCode: 'ifsc_code',
-    upiId: 'upi_id',
-    upiQrCodeUrl: 'upi_qr_code_url',
-    whatsappOrderNumber: 'whatsapp_order_number',
-    whatsappSupportNumber: 'whatsapp_support_number',
-    defaultWhatsappTemplate: 'default_whatsapp_template',
-    autoReplyMessage: 'auto_reply_message',
-    businessHours: 'business_hours',
-    supportAvailabilityMessage: 'support_availability_message',
-    metaTitle: 'meta_title',
-    metaDescription: 'meta_description',
-    metaKeywords: 'meta_keywords',
-    ogImageUrl: 'og_image_url',
-    twitterImageUrl: 'twitter_image_url',
-    canonicalUrl: 'canonical_url',
-    robotsIndex: 'robots_index',
-    smtpHost: 'smtp_host',
-    smtpPort: 'smtp_port',
-    smtpUsername: 'smtp_username',
-    smtpPassword: 'smtp_password',
-    smtpSenderName: 'smtp_sender_name',
-    smtpSenderEmail: 'smtp_sender_email',
-    resendApiKey: 'resend_api_key',
-    resendSenderDomain: 'resend_sender_domain',
-    resendSenderName: 'resend_sender_name',
-    resendSenderEmail: 'resend_sender_email',
-    resendWebhookSecret: 'resend_webhook_secret',
-    complaintsEmail: 'complaints_email',
-    privacyPolicyUrl: 'privacy_policy_url',
-    termsUrl: 'terms_url',
-    refundPolicyUrl: 'refund_policy_url',
-    shippingPolicyUrl: 'shipping_policy_url',
-    workingDays: 'working_days',
-    workingHours: 'working_hours',
-    holidayMessage: 'holiday_message',
-    emergencyContact: 'emergency_contact',
-    orderProcessingTime: 'order_processing_time',
-    deliveryChargeThreshold: 'delivery_charge_threshold',
-    defaultDeliveryCharge: 'default_delivery_charge',
-    shopMinimumOrderValue: 'shop_min_order_value',
-    overheadPercentage: 'overhead_percent',
-    marginPercentage: 'margin_percentage',
-    materialMarkupPercent: 'material_markup_percent',
-    printSpeedGramsPerHour: 'print_speed_grams_per_hour',
-    postProcessingMultipliers: 'post_processing_multipliers',
-    cartDiscountEnabled: 'cart_discount_enabled',
-    cartDiscountTiers: 'cart_discount_tiers',
-    minimumOrderValue: 'minimum_order_value',
-    gstInclusivePricing: 'gst_inclusive_pricing',
-    pickupAvailable: 'pickup_available',
-    paymentsEnabled: 'payments_enabled',
-    razorpayEnabled: 'razorpay_enabled',
-    razorpayKeyId: 'razorpay_key_id',
-    razorpayEnvironment: 'razorpay_environment',
-    razorpayCheckoutName: 'razorpay_checkout_name',
-    razorpayCheckoutDescription: 'razorpay_checkout_description',
-    razorpayBrandColor: 'razorpay_brand_color',
-    razorpayPaymentMethods: 'razorpay_payment_methods',
-    razorpayTimeoutMinutes: 'razorpay_timeout_minutes',
-    razorpayOrderBufferMinutes: 'razorpay_order_buffer_minutes',
-    razorpayWebhookHealthy: 'razorpay_webhook_healthy',
-    razorpayLastConnectionCheckAt: 'razorpay_last_connection_check_at',
-    razorpayLastConnectionStatus: 'razorpay_last_connection_status',
-    razorpayLastConnectionMessage: 'razorpay_last_connection_message',
-    razorpayRefundPermissionMode: 'razorpay_refund_permission_mode',
-  }
+    businessName: "business_name",
+    legalBusinessName: "legal_business_name",
+    brandName: "brand_name",
+    tagline: "tagline",
+    businessDescription: "business_description",
+    gstNumber: "gst_number",
+    panNumber: "pan_number",
+    cinNumber: "cin_number",
+    msmeNumber: "msme_number",
+    businessType: "business_type",
+    primaryEmail: "primary_email",
+    supportEmail: "support_email",
+    salesEmail: "sales_email",
+    billingEmail: "billing_email",
+    primaryPhone: "primary_phone",
+    whatsappNumber: "whatsapp_number",
+    alternatePhone: "alternate_phone",
+    tollFreeNumber: "toll_free_number",
+    addressLine1: "address_line_1",
+    addressLine2: "address_line_2",
+    landmark: "landmark",
+    city: "city",
+    state: "state",
+    country: "country",
+    postalCode: "postal_code",
+    billingSameAsOffice: "billing_same_as_office",
+    billingAddressLine1: "billing_address_line_1",
+    billingAddressLine2: "billing_address_line_2",
+    billingCity: "billing_city",
+    billingState: "billing_state",
+    billingCountry: "billing_country",
+    billingPostalCode: "billing_postal_code",
+    instagramUrl: "instagram_url",
+    facebookUrl: "facebook_url",
+    linkedinUrl: "linkedin_url",
+    twitterUrl: "twitter_url",
+    youtubeUrl: "youtube_url",
+    threadsUrl: "threads_url",
+    pinterestUrl: "pinterest_url",
+    githubUrl: "github_url",
+    websiteUrl: "website_url",
+    logoUrl: "logo_url",
+    darkLogoUrl: "dark_logo_url",
+    faviconUrl: "favicon_url",
+    invoiceLogoUrl: "invoice_logo_url",
+    emailLogoUrl: "email_logo_url",
+    primaryColor: "primary_color",
+    secondaryColor: "secondary_color",
+    invoicePrefix: "invoice_prefix",
+    quotationPrefix: "quotation_prefix",
+    invoiceStartNumber: "invoice_start_number",
+    quotationStartNumber: "quotation_start_number",
+    shopInvoicePrefix: "shop_invoice_prefix",
+    shopInvoiceStartNumber: "shop_invoice_start_number",
+    currency: "currency",
+    currencySymbol: "currency_symbol",
+    taxPercentage: "tax_percentage",
+    gstEnabled: "gst_enabled",
+    cgstPercent: "cgst_percent",
+    sgstPercent: "sgst_percent",
+    sacHsnCode: "sac_hsn_code",
+    paymentTerms: "payment_terms",
+    bankAccountName: "bank_account_name",
+    bankName: "bank_name",
+    accountNumber: "account_number",
+    ifscCode: "ifsc_code",
+    upiId: "upi_id",
+    upiQrCodeUrl: "upi_qr_code_url",
+    whatsappOrderNumber: "whatsapp_order_number",
+    whatsappSupportNumber: "whatsapp_support_number",
+    defaultWhatsappTemplate: "default_whatsapp_template",
+    autoReplyMessage: "auto_reply_message",
+    businessHours: "business_hours",
+    supportAvailabilityMessage: "support_availability_message",
+    metaTitle: "meta_title",
+    metaDescription: "meta_description",
+    metaKeywords: "meta_keywords",
+    ogImageUrl: "og_image_url",
+    twitterImageUrl: "twitter_image_url",
+    canonicalUrl: "canonical_url",
+    robotsIndex: "robots_index",
+    smtpHost: "smtp_host",
+    smtpPort: "smtp_port",
+    smtpUsername: "smtp_username",
+    smtpPassword: "smtp_password",
+    smtpSenderName: "smtp_sender_name",
+    smtpSenderEmail: "smtp_sender_email",
+    resendApiKey: "resend_api_key",
+    resendSenderDomain: "resend_sender_domain",
+    resendSenderName: "resend_sender_name",
+    resendSenderEmail: "resend_sender_email",
+    resendWebhookSecret: "resend_webhook_secret",
+    complaintsEmail: "complaints_email",
+    privacyPolicyUrl: "privacy_policy_url",
+    termsUrl: "terms_url",
+    refundPolicyUrl: "refund_policy_url",
+    shippingPolicyUrl: "shipping_policy_url",
+    workingDays: "working_days",
+    workingHours: "working_hours",
+    holidayMessage: "holiday_message",
+    emergencyContact: "emergency_contact",
+    orderProcessingTime: "order_processing_time",
+    deliveryChargeThreshold: "delivery_charge_threshold",
+    defaultDeliveryCharge: "default_delivery_charge",
+    shopMinimumOrderValue: "shop_min_order_value",
+    overheadPercentage: "overhead_percent",
+    marginPercentage: "margin_percentage",
+    materialMarkupPercent: "material_markup_percent",
+    printSpeedGramsPerHour: "print_speed_grams_per_hour",
+    postProcessingMultipliers: "post_processing_multipliers",
+    cartDiscountEnabled: "cart_discount_enabled",
+    cartDiscountTiers: "cart_discount_tiers",
+    minimumOrderValue: "minimum_order_value",
+    gstInclusivePricing: "gst_inclusive_pricing",
+    pickupAvailable: "pickup_available",
+    paymentsEnabled: "payments_enabled",
+    razorpayEnabled: "razorpay_enabled",
+    razorpayKeyId: "razorpay_key_id",
+    razorpayEnvironment: "razorpay_environment",
+    razorpayCheckoutName: "razorpay_checkout_name",
+    razorpayCheckoutDescription: "razorpay_checkout_description",
+    razorpayBrandColor: "razorpay_brand_color",
+    razorpayPaymentMethods: "razorpay_payment_methods",
+    razorpayTimeoutMinutes: "razorpay_timeout_minutes",
+    razorpayOrderBufferMinutes: "razorpay_order_buffer_minutes",
+    razorpayWebhookHealthy: "razorpay_webhook_healthy",
+    razorpayLastConnectionCheckAt: "razorpay_last_connection_check_at",
+    razorpayLastConnectionStatus: "razorpay_last_connection_status",
+    razorpayLastConnectionMessage: "razorpay_last_connection_message",
+    razorpayRefundPermissionMode: "razorpay_refund_permission_mode",
+  };
 
   for (const [camel, snake] of Object.entries(map)) {
     if (camel in data) {
-      result[snake] = (data as Record<string, unknown>)[camel]
+      result[snake] = (data as Record<string, unknown>)[camel];
     }
   }
 
-  return result
+  return result;
 }
 
 export async function getBusinessSettings(): Promise<BusinessSettings | null> {
-  const supabase = createAdminSupabaseClient()
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
-    .from('business_settings')
-    .select('*')
-    .is('deleted_at', null)
+    .from("business_settings")
+    .select("*")
+    .is("deleted_at", null)
     .limit(1)
-    .maybeSingle()
+    .maybeSingle();
 
   if (error) {
-    if (error.code === '42P01') return null
-    throw new Error(error.message)
+    if (error.code === "42P01") return null;
+    throw new Error(error.message);
   }
 
-  if (!data) return null
-  return mapBusinessSettingsRow(data as BusinessSettingsRow)
+  if (!data) return null;
+  return mapBusinessSettingsRow(data as BusinessSettingsRow);
 }
 
-export async function upsertBusinessSettings(data: Partial<BusinessSettings>): Promise<BusinessSettings> {
-  const supabase = createAdminSupabaseClient()
-  const snakeData = toSnakeCase(data)
-  snakeData.updated_at = new Date().toISOString()
+export async function upsertBusinessSettings(
+  data: Partial<BusinessSettings>,
+): Promise<BusinessSettings> {
+  const supabase = createAdminSupabaseClient();
+  const snakeData = toSnakeCase(data);
+  snakeData.updated_at = new Date().toISOString();
 
-  const existing = await getBusinessSettings()
-  let result
+  const existing = await getBusinessSettings();
+  let result;
 
   if (existing) {
     const { data: updated, error } = await supabase
-      .from('business_settings')
+      .from("business_settings")
       .update(snakeData)
-      .eq('id', existing.id)
-      .is('deleted_at', null)
-      .select('*')
-      .single()
+      .eq("id", existing.id)
+      .is("deleted_at", null)
+      .select("*")
+      .single();
 
-    if (error) throw new Error(error.message)
-    result = updated
+    if (error) throw new Error(error.message);
+    result = updated;
   } else {
-    snakeData.created_at = new Date().toISOString()
+    snakeData.created_at = new Date().toISOString();
     const { data: created, error } = await supabase
-      .from('business_settings')
+      .from("business_settings")
       .insert(snakeData)
-      .select('*')
-      .single()
+      .select("*")
+      .single();
 
-    if (error) throw new Error(error.message)
-    result = created
+    if (error) throw new Error(error.message);
+    result = created;
   }
 
-  return mapBusinessSettingsRow(result as BusinessSettingsRow)
+  return mapBusinessSettingsRow(result as BusinessSettingsRow);
 }

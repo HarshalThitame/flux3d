@@ -252,6 +252,11 @@ function CartEnabledWorkspace({
   const [hasUserSelectedMaterial, setHasUserSelectedMaterial] = useState(
     Boolean(initialMaterialId),
   );
+
+  // ── Slicer state ──────────────────────────────────────────────────────────
+  const [slicerLoading, setSlicerLoading] = useState(false);
+  const [slicerError, setSlicerError] = useState<string | null>(null);
+
   const [savingQuote, setSavingQuote] = useState(false);
   const uploadRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -576,6 +581,53 @@ function CartEnabledWorkspace({
       materialId,
       color: nextMaterial.colors[0]?.name ?? current.color,
     }));
+  };
+
+  const handleGetPreciseQuote = async () => {
+    if (!uploadState.path || !selectedModel || !user) return;
+    setSlicerLoading(true);
+    setSlicerError(null);
+
+    try {
+      const signedUrl = await getSignedModelUrl(uploadState.path);
+      const res = await fetch("/api/quote/slice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileUrl: signedUrl,
+          layerHeight: config.layerHeight,
+          infill: config.infill,
+          numColors: config.amsColorCount ?? 1,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.fallback)
+        throw new Error(data.error ?? "Slicer unavailable");
+
+      setSelectedModel((prev) =>
+        prev ? { ...prev, slicerResult: { source: "slicer", ...data } } : prev,
+      );
+      setToast({
+        type: "success",
+        message: "✅ Precise quote ready — slicer data applied.",
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Slicer failed";
+      setSlicerError(msg);
+      setToast({
+        type: "error",
+        message: `Slicer: ${msg}. Quick estimate shown.`,
+      });
+    } finally {
+      setSlicerLoading(false);
+    }
+  };
+
+  const handleAmsColorCountChange = (count: number) => {
+    setConfig((c) => ({ ...c, amsColorCount: count }));
+    setSelectedModel((prev) =>
+      prev ? { ...prev, slicerResult: undefined } : prev,
+    );
   };
 
   const handleSaveQuote = async () => {
@@ -1110,6 +1162,87 @@ function CartEnabledWorkspace({
                       </div>
                     </div>
                   </div>
+
+                  {/* ── Precise Slicer Quote ─────────────────────────────────────────── */}
+                  {selectedModel &&
+                    !selectedModel.requiresReview &&
+                    uploadState.path &&
+                    user && (
+                      <div className="mt-6 rounded-[20px] border border-[#6d28d9]/15 bg-gradient-to-br from-[#6d28d9]/5 to-transparent p-5">
+                        <div className="mb-4 flex items-center justify-between">
+                          <div>
+                            <h3 className="text-sm font-semibold text-[#070b1d] flex items-center gap-2">
+                              🎯 Precise Slicer Quote
+                              {selectedModel.slicerResult && (
+                                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                                  ✓ Active
+                                </span>
+                              )}
+                            </h3>
+                            <p className="mt-0.5 text-xs text-[#6F7192]">
+                              {selectedModel.slicerResult
+                                ? "Weight and print time from OrcaSlicer + your A2L profile."
+                                : "Run OrcaSlicer on this exact model with your A2L settings for accurate weight and time."}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* AMS color count */}
+                        <div className="mb-4">
+                          <label className="mb-2 block text-xs font-medium text-[#6F7192]">
+                            Number of AMS colors
+                          </label>
+                          <div className="flex gap-2">
+                            {[1, 2, 3, 4].map((n) => (
+                              <button
+                                key={n}
+                                type="button"
+                                onClick={() => handleAmsColorCountChange(n)}
+                                className={`flex h-10 w-10 items-center justify-center rounded-xl border text-sm font-semibold transition-all ${
+                                  (config.amsColorCount ?? 1) === n
+                                    ? "border-[#6d28d9]/40 bg-[#6d28d9] text-white"
+                                    : "border-[#6d28d9]/10 bg-white text-[#070b1d] hover:bg-[var(--bg-soft)]"
+                                }`}
+                              >
+                                {n}
+                              </button>
+                            ))}
+                          </div>
+                          {(config.amsColorCount ?? 1) > 1 && (
+                            <p className="mt-1 text-[11px] text-[#6F7192]">
+                              AMS Lite surcharge will be applied:{" "}
+                              {config.amsColorCount! - 1} × ₹30 color change fee
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Get Precise Quote button */}
+                        <button
+                          type="button"
+                          onClick={handleGetPreciseQuote}
+                          disabled={slicerLoading}
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] bg-[#6d28d9] px-4 py-3 text-sm font-semibold text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {slicerLoading ? (
+                            <>
+                              <LoaderCircle className="h-4 w-4 animate-spin" />{" "}
+                              Slicing… (15–90s)
+                            </>
+                          ) : selectedModel.slicerResult ? (
+                            "🔄 Re-slice with current settings"
+                          ) : (
+                            "🎯 Get Precise Quote"
+                          )}
+                        </button>
+
+                        {slicerError && (
+                          <p className="mt-2 flex items-center gap-1.5 text-xs text-rose-600">
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                            {slicerError} — quick estimate shown.
+                          </p>
+                        )}
+                      </div>
+                    )}
                 </motion.div>
 
                 {/* Settings Section */}
