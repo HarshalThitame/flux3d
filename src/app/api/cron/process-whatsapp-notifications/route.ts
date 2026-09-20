@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/admin/server";
 import {
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
 
   for (const job of jobs) {
     try {
-      const payload = job.payload as Record<string, unknown>;
+      const payload = job.payload as any;
 
       const phone = payload.phone;
       if (!phone) {
@@ -105,7 +106,7 @@ export async function POST(req: Request) {
         .from("whatsapp_notification_jobs")
         .update({
           status: "failed",
-          last_error: error.message || "Unknown error",
+          last_error: (error as Error).message || "Unknown error",
           attempt_count: job.attempt_count + 1,
           updated_at: new Date().toISOString(),
         })
