@@ -25,6 +25,7 @@ import {
 } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { getMaterialShaderProps } from "@/lib/quote/material-shaders";
+import type { SlicerResult } from "@/lib/quote/types";
 
 export type ModelPreviewCanvasProps = {
   object: Object3D;
@@ -35,6 +36,7 @@ export type ModelPreviewCanvasProps = {
   clippingZPercent?: number;
   cameraPreset?: "iso" | "top" | "front" | "side" | null;
   onPresetApplied?: () => void;
+  slicerResult?: SlicerResult;
 };
 
 function BuildVolumeCage() {
@@ -167,6 +169,7 @@ export default function ModelPreviewCanvas({
   clippingZPercent = 100,
   cameraPreset,
   onPresetApplied,
+  slicerResult,
 }: ModelPreviewCanvasProps) {
   const [contextLost, setContextLost] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -259,21 +262,43 @@ export default function ModelPreviewCanvas({
       <directionalLight position={[120, 150, 80]} intensity={1.2} castShadow />
       <directionalLight position={[-100, -60, -80]} intensity={0.35} />
 
-      {/* Grid & Shadows */}
-      <gridHelper
-        args={[280, 28, "#38bdf8", "#1e293b"]}
-        position={[0, -55, 0]}
-      />
-      <ContactShadows
-        position={[0, -54.9, 0]}
-        opacity={0.6}
-        scale={200}
-        blur={2.2}
-        far={40}
-      />
-
-      {/* Build Plate Cage Envelope */}
-      {showBuildVolume && <BuildVolumeCage />}
+      {/* Dynamic Grids based on plates */}
+      {slicerResult?.plates && slicerResult.plates.length > 0 ? (
+        slicerResult.plates.map((plate, index) => {
+          const offsetX = index * 300;
+          return (
+            <group key={plate.plateIndex} position={[offsetX, 0, 0]}>
+              <gridHelper
+                args={[280, 28, "#38bdf8", "#1e293b"]}
+                position={[0, -55, 0]}
+              />
+              <ContactShadows
+                position={[0, -54.9, 0]}
+                opacity={0.6}
+                scale={200}
+                blur={2.2}
+                far={40}
+              />
+              {showBuildVolume && <BuildVolumeCage />}
+            </group>
+          );
+        })
+      ) : (
+        <group>
+          <gridHelper
+            args={[280, 28, "#38bdf8", "#1e293b"]}
+            position={[0, -55, 0]}
+          />
+          <ContactShadows
+            position={[0, -54.9, 0]}
+            opacity={0.6}
+            scale={200}
+            blur={2.2}
+            far={40}
+          />
+          {showBuildVolume && <BuildVolumeCage />}
+        </group>
+      )}
 
       <Bounds fit clip observe margin={1.3}>
         <ViewerModel

@@ -262,6 +262,7 @@ export default function ViewerSection({
                 clippingZPercent={clippingZPercent}
                 cameraPreset={cameraPreset}
                 onPresetApplied={() => setCameraPreset(null)}
+                slicerResult={model.slicerResult}
               />
 
               {/* Material Live Badge Overlay */}
@@ -416,6 +417,7 @@ export default function ViewerSection({
               clippingZPercent={clippingZPercent}
               cameraPreset={cameraPreset}
               onPresetApplied={() => setCameraPreset(null)}
+              slicerResult={model.slicerResult}
             />
           </div>
         </div>

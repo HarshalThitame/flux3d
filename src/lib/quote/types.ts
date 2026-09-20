@@ -59,6 +59,12 @@ export type SlicerResult = {
   weightsPerColor: number[];
   estimatedMinutes: number;
   layerCount: number;
+  plates?: Array<{
+    plateIndex: number;
+    modelWeightGrams: number;
+    wasteWeightGrams: number;
+    estimatedMinutes: number;
+  }>;
 };
 
 export type ParsedModel = {

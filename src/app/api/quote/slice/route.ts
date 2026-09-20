@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
-  if (!body?.fileUrl) {
+  if (!body?.fileUrl && !body?.fileUrls) {
     return NextResponse.json({ error: "fileUrl required" }, { status: 400 });
   }
 

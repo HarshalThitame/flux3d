@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { getMaterialById } from "@/lib/quote/materials";
 import type { PriceBreakdown, QuoteMaterial } from "@/lib/quote/types";
-import type { QuoteConfig } from "@/lib/quote/types";
+import type { QuoteConfig, SlicerResult } from "@/lib/quote/types";
 import {
   formatDurationMinutes,
   postProcessingOptions,
@@ -32,6 +32,7 @@ type QuoteSummaryProps = {
   config: QuoteConfig;
   onAddToCart: () => void;
   isInCart: boolean;
+  slicerResult?: SlicerResult;
 };
 
 function SummarySkeleton() {
@@ -56,6 +57,7 @@ export default function QuoteSummary({
   config,
   onAddToCart,
   isInCart,
+  slicerResult,
 }: QuoteSummaryProps) {
   const shouldReduceMotion = useReducedMotion();
   const material = getMaterialById(materialId, materials);
@@ -183,6 +185,23 @@ export default function QuoteSummary({
                     <span>
                       {priceBreakdown.materialWeightGrams.toFixed(2)} g
                     </span>
+                  </div>
+                )}
+
+                {slicerResult?.plates && slicerResult.plates.length > 0 && (
+                  <div className="mt-2 space-y-1 border-t border-[#6d28d9]/10 pt-2">
+                    {slicerResult.plates.map((p, i) => (
+                      <div
+                        key={i}
+                        className="flex justify-between text-xs text-[#6F7192]"
+                      >
+                        <span>Plate {p.plateIndex}</span>
+                        <span>
+                          {formatDurationMinutes(p.estimatedMinutes)} -{" "}
+                          {p.modelWeightGrams.toFixed(1)} g
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
 

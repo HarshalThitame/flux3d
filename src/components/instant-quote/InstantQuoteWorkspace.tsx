@@ -427,12 +427,17 @@ function CartEnabledWorkspace({
   }, [orderDraft]);
 
   const handleFileSelect = useCallback(
-    async (file: File) => {
-      const validationError = validateModelFile(file);
-      if (validationError) {
-        setFileError(validationError);
-        setToast({ type: "error", message: validationError });
-        return;
+    async (files: File[] | File) => {
+      const fileArray = Array.isArray(files) ? files : [files];
+      if (!fileArray.length) return;
+
+      for (const f of fileArray) {
+        const validationError = validateModelFile(f);
+        if (validationError) {
+          setFileError(validationError);
+          setToast({ type: "error", message: validationError });
+          return;
+        }
       }
 
       const newQuoteId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
@@ -440,7 +445,7 @@ function CartEnabledWorkspace({
       setInitialQuoteId(newQuoteId);
 
       setFileError(null);
-      setSelectedFile(file);
+      setSelectedFile(fileArray[0]);
       setViewerLoading(true);
       setUploadState({
         status: "uploading",
@@ -449,7 +454,43 @@ function CartEnabledWorkspace({
 
       try {
         const { parseModelFile } = await import("@/lib/quote/model-utils");
-        const parsedModel = await parseModelFile(file);
+        const parsedModels = await Promise.all(
+          fileArray.map((f) => parseModelFile(f)),
+        );
+
+        const { Group } = await import("three");
+        const group = new Group();
+        let totalVolume = 0;
+        let totalTriangleCount = 0;
+        const maxDimensions = { x: 0, y: 0, z: 0 };
+        const detectedColors = new Set<string>();
+
+        parsedModels.forEach((pm, i) => {
+          pm.object.position.x = i * 150;
+          group.add(pm.object);
+          totalVolume += pm.volumeMm3;
+          totalTriangleCount += pm.triangleCount;
+          maxDimensions.x = Math.max(maxDimensions.x, pm.dimensionsMm.x);
+          maxDimensions.y = Math.max(maxDimensions.y, pm.dimensionsMm.y);
+          maxDimensions.z = Math.max(maxDimensions.z, pm.dimensionsMm.z);
+          pm.detectedColors?.forEach((c) => detectedColors.add(c));
+        });
+
+        const mergedModel = {
+          ...parsedModels[0],
+          fileName:
+            fileArray.length === 1
+              ? fileArray[0].name
+              : `${fileArray.length} files`,
+          fileSize: fileArray.reduce((acc, f) => acc + f.size, 0),
+          object: group,
+          volumeMm3: totalVolume,
+          triangleCount: totalTriangleCount,
+          dimensionsMm: maxDimensions,
+          detectedColors: Array.from(detectedColors),
+          requiresReview: parsedModels.some((pm) => pm.requiresReview),
+        };
+        const parsedModel = mergedModel;
         setSelectedModel(parsedModel);
 
         if (parsedModel.requiresReview) {
@@ -479,24 +520,38 @@ function CartEnabledWorkspace({
         }
 
         if (user && supabaseEnabled) {
-          const uploadResult = await uploadFileToSupabaseStorage(
-            file,
-            user.id,
-            newQuoteId,
-            (progress) => setUploadState({ status: "uploading", progress }),
+          const uploadResults = await Promise.all(
+            fileArray.map((f, i) =>
+              uploadFileToSupabaseStorage(
+                f,
+                user.id,
+                newQuoteId + "-" + i,
+                (progress) =>
+                  setUploadState({
+                    status: "uploading",
+                    progress: Math.round(progress / fileArray.length),
+                  }),
+              ),
+            ),
           );
-          setUploadState(uploadResult);
+
+          const joinedPath = uploadResults.map((r) => r.path).join(",");
+          setUploadState({
+            status: "success",
+            progress: 100,
+            path: joinedPath,
+          });
 
           void fetch("/api/quote/model-metadata", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              fileUrl: uploadResult.path,
+              fileUrl: joinedPath,
               volumeMm3: parsedModel.volumeMm3,
               dimensionsMm: parsedModel.dimensionsMm,
               triangleCount: parsedModel.triangleCount,
-              fileName: file.name,
-              fileSize: file.size,
+              fileName: parsedModel.fileName,
+              fileSize: parsedModel.fileSize,
               extension: parsedModel.extension,
             }),
           }).catch(() => {});
@@ -601,12 +656,15 @@ function CartEnabledWorkspace({
     }, 4500);
 
     try {
-      const signedUrl = await getSignedModelUrl(uploadState.path);
+      const paths = uploadState.path.split(",");
+      const signedUrls = await Promise.all(
+        paths.map((p) => getSignedModelUrl(p)),
+      );
       const res = await fetch("/api/quote/slice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fileUrl: signedUrl,
+          fileUrls: signedUrls,
           layerHeight: config.layerHeight,
           infill: config.infill,
           numColors: config.amsColorCount ?? 1,
@@ -635,6 +693,20 @@ function CartEnabledWorkspace({
       setSlicerStatus(null);
     }
   };
+
+  useEffect(() => {
+    if (
+      selectedModel &&
+      selectedModel.slicerResult &&
+      uploadState.status === "success" &&
+      uploadState.path &&
+      user
+    ) {
+      setTimeout(() => {
+        void handleGetPreciseQuote();
+      }, 0);
+    }
+  }, [config.layerHeight, config.infill]);
 
   const handleAmsColorCountChange = (count: number) => {
     setConfig((c) => ({ ...c, amsColorCount: count }));
@@ -969,16 +1041,18 @@ function CartEnabledWorkspace({
                       onDrop={(e) => {
                         e.preventDefault();
                         const files = e.dataTransfer.files;
-                        if (files[0]) handleFileSelect(files[0]);
+                        if (files.length > 0)
+                          handleFileSelect(Array.from(files));
                       }}
                     >
                       <input
+                        multiple={true}
                         type="file"
                         accept=".stl,.obj,.3mf,.glb,.gltf,.fbx,.ply,.dae,.amf,.step,.stp,.iges,.igs,.brep,.dwg,.dxf"
                         className="absolute inset-0 cursor-pointer opacity-0"
                         onChange={(e) => {
-                          if (e.target.files?.[0])
-                            handleFileSelect(e.target.files[0]);
+                          if (e.target.files && e.target.files.length > 0)
+                            handleFileSelect(Array.from(e.target.files));
                         }}
                       />
                       <div>
