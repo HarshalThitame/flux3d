@@ -117,7 +117,7 @@ function ViewerModel({
           // Preserve 3MF/Original colors if not using the default material color
           let finalColor = pbr.color;
           let useVertexColors = false;
-          const origMat = (child as THREE.Mesh).material;
+          const origMat = (child as Mesh).material;
           if (origMat) {
             const mats = Array.isArray(origMat) ? origMat : [origMat];
             if (mats[0]) {
