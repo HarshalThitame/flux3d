@@ -125,10 +125,12 @@ function ViewerModel({
                 useVertexColors = true;
                 finalColor = "#ffffff"; // Vertex colors multiply against material color
               } else if (
-                mats[0].color &&
-                mats[0].color.getHexString() !== "a5b4fc"
+                (mats[0] as MeshStandardMaterial).color &&
+                (mats[0] as MeshStandardMaterial).color.getHexString() !==
+                  "a5b4fc"
               ) {
-                finalColor = "#" + mats[0].color.getHexString();
+                finalColor =
+                  "#" + (mats[0] as MeshStandardMaterial).color.getHexString();
               }
             }
           }
