@@ -1,26 +1,32 @@
-import { NextResponse } from 'next/server'
-import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { NextResponse } from "next/server";
+import { createAdminSupabaseClient } from "@/lib/admin/server";
 
-export async function GET(req: Request, context: any) {
+export async function GET(
+  req: Request,
+  context: { params: Promise<{ orderId: string }> },
+) {
   // Await the params object to satisfy Next.js 15 routing constraints
   const params = await context.params;
   const orderId = params.orderId;
-  const supabase = createAdminSupabaseClient()
+  const supabase = createAdminSupabaseClient();
 
   const { data, error } = await supabase
-    .from('whatsapp_notification_jobs')
-    .select('*')
-    .eq('order_id', orderId)
-    .order('created_at', { ascending: false })
+    .from("whatsapp_notification_jobs")
+    .select("*")
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ notifications: data || [] })
+  return NextResponse.json({ notifications: data || [] });
 }
 
-export async function POST(req: Request, context: any) {
+export async function POST(
+  req: Request,
+  context: { params: Promise<{ orderId: string }> },
+) {
   // Resend notification
   const params = await context.params;
   const orderId = params.orderId;
@@ -28,15 +34,15 @@ export async function POST(req: Request, context: any) {
   const status = body.status;
 
   if (!status) {
-    return NextResponse.json({ error: 'Missing status' }, { status: 400 })
+    return NextResponse.json({ error: "Missing status" }, { status: 400 });
   }
 
   // Enqueue it again by importing the enqueue function directly
   try {
-    const m = await import('@/lib/whatsapp/order-notifications');
+    const m = await import("@/lib/whatsapp/order-notifications");
     await m.enqueueOrderNotification(orderId, status);
-    return NextResponse.json({ ok: true })
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

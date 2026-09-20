@@ -91,7 +91,9 @@ export default function OrderDetailClient({ initialOrder }: Props) {
   const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[] | null>(null);
   const [auditLogsLoading, setAuditLogsLoading] = useState(true);
-  const [notifications, setNotifications] = useState<any[] | null>(null);
+  const [notifications, setNotifications] = useState<
+    Record<string, unknown>[] | null
+  >(null);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const toastTimer = useRef<number | null>(null);
 
@@ -565,7 +567,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                   )}
                 {notifications !== null && notifications.length > 0 && (
                   <div className="space-y-2">
-                    {notifications.map((notif: any) => (
+                    {notifications.map((notif: Record<string, unknown>) => (
                       <div
                         key={notif.id}
                         className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm flex items-center justify-between"
@@ -575,7 +577,8 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                             {notif.order_status}
                           </div>
                           <div className="text-xs text-gray-500">
-                            Status: {notif.status} (Attempts: {notif.attempt_count})
+                            Status: {notif.status} (Attempts:{" "}
+                            {notif.attempt_count})
                           </div>
                           {notif.last_error && (
                             <div className="text-xs text-red-500">
