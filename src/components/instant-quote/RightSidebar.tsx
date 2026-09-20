@@ -183,7 +183,7 @@ export default function RightSidebar({
               className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 outline-none focus:border-[#6d28d9] focus:ring-1 focus:ring-[#6d28d9]"
             >
               {postProcessingOptions.map((opt) => (
-                <option key={opt.level} value={opt.level}>
+                <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
