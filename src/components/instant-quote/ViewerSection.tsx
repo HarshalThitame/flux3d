@@ -4,14 +4,12 @@ import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   Box,
-  Cuboid,
   Eye,
   Grid3X3,
   Layers,
   Maximize2,
   Move3D,
   Scissors,
-  Sparkles,
   X,
 } from "lucide-react";
 import type { ParsedModel } from "@/lib/quote/types";
@@ -22,6 +20,9 @@ type ViewerSectionProps = {
   isLoading: boolean;
   materialId?: string;
   colorName?: string;
+  isSlicing?: boolean;
+  slicingProgress?: string;
+  activePlateIndex?: number;
 };
 
 export default function ViewerSection({
@@ -29,6 +30,9 @@ export default function ViewerSection({
   isLoading,
   materialId = "pla",
   colorName = "Default",
+  isSlicing,
+  slicingProgress,
+  activePlateIndex = 0,
 }: ViewerSectionProps) {
   const shouldReduceMotion = useReducedMotion();
   const [displayMode, setDisplayMode] = useState<
@@ -44,69 +48,19 @@ export default function ViewerSection({
 
   return (
     <>
-      <motion.section
-        whileHover={{ y: -4 }}
-        transition={{ type: "spring", stiffness: 220, damping: 20 }}
-        className="group relative flex h-full flex-col overflow-hidden rounded-[28px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.94))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)] transition-all duration-300 hover:border-cyan-400/20 hover:shadow-[0_24px_90px_rgba(56,189,248,0.08)]"
-      >
-        <motion.div
-          aria-hidden
-          animate={
-            shouldReduceMotion
-              ? undefined
-              : { x: [0, -20, 0], y: [0, 8, 0], opacity: [0.24, 0.38, 0.24] }
-          }
-          transition={
-            shouldReduceMotion
-              ? undefined
-              : { duration: 9, repeat: Infinity, ease: "easeInOut" }
-          }
-          className="pointer-events-none absolute -left-10 -top-10 h-36 w-36 rounded-full bg-cyan-400/10 blur-3xl"
-        />
-
-        {/* Header */}
-        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
-                3D File Viewer
-              </h2>
-              <span className="inline-flex items-center gap-1 rounded-full border border-purple-500/20 bg-purple-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-700">
-                <Sparkles className="h-3 w-3" /> PBR Engine 5.0
-              </span>
-            </div>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-[#6F7192]">
-              Real-time studio rendering with physical materials, wireframe
-              mode, 3D build envelope, and cross-section inspection.
-            </p>
-          </div>
-          <motion.div
-            animate={
-              shouldReduceMotion ? undefined : { rotate: [0, 4, 0, -4, 0] }
-            }
-            transition={
-              shouldReduceMotion
-                ? undefined
-                : { duration: 5, repeat: Infinity, ease: "easeInOut" }
-            }
-            className="rounded-2xl border border-cyan-400/20 bg-cyan-50 p-3 text-cyan-700"
-          >
-            <Cuboid className="h-5 w-5" />
-          </motion.div>
-        </div>
-
+      <div className="flex h-full flex-col p-4 bg-[#070a12]">
         {/* 3D Inspection Toolbar */}
         {model && (
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#6d28d9]/10 bg-white/80 p-2 backdrop-blur-md">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 p-2 backdrop-blur-md">
             {/* Shading Mode */}
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => setDisplayMode("solid")}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                   displayMode === "solid"
-                    ? "bg-[#6d28d9] text-white shadow-sm"
-                    : "text-[#6F7192] hover:bg-gray-100 hover:text-[#070b1d]"
+                    ? "bg-[#6d28d9] text-white"
+                    : "text-white/60 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 <Eye className="h-3.5 w-3.5" /> Solid
@@ -114,10 +68,10 @@ export default function ViewerSection({
               <button
                 type="button"
                 onClick={() => setDisplayMode("wireframe")}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                   displayMode === "wireframe"
-                    ? "bg-[#6d28d9] text-white shadow-sm"
-                    : "text-[#6F7192] hover:bg-gray-100 hover:text-[#070b1d]"
+                    ? "bg-[#6d28d9] text-white"
+                    : "text-white/60 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 <Grid3X3 className="h-3.5 w-3.5" /> Wireframe
@@ -125,10 +79,10 @@ export default function ViewerSection({
               <button
                 type="button"
                 onClick={() => setDisplayMode("xray")}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                   displayMode === "xray"
-                    ? "bg-[#6d28d9] text-white shadow-sm"
-                    : "text-[#6F7192] hover:bg-gray-100 hover:text-[#070b1d]"
+                    ? "bg-[#6d28d9] text-white"
+                    : "text-white/60 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 <Layers className="h-3.5 w-3.5" /> X-Ray
@@ -141,11 +95,11 @@ export default function ViewerSection({
               <button
                 type="button"
                 onClick={() => setShowBuildVolume(!showBuildVolume)}
-                title="Toggle 220x220x250mm 3D Printer Build Volume Box"
-                className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs font-medium transition-all ${
+                title="Toggle 330x320x325mm 3D Printer Build Volume Box"
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all ${
                   showBuildVolume
-                    ? "border-cyan-400/40 bg-cyan-50 text-cyan-700"
-                    : "border-[#6d28d9]/10 bg-white text-[#6F7192] hover:bg-gray-50"
+                    ? "border-cyan-400/40 bg-cyan-900/40 text-cyan-400"
+                    : "border-white/10 bg-transparent text-white/60 hover:bg-white/10"
                 }`}
               >
                 <Box className="h-3.5 w-3.5" /> Build Box
@@ -156,10 +110,10 @@ export default function ViewerSection({
                 type="button"
                 onClick={() => setShowClippingSlider(!showClippingSlider)}
                 title="Toggle Cross-Section Slice"
-                className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs font-medium transition-all ${
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all ${
                   showClippingSlider || clippingZPercent < 100
-                    ? "border-purple-400/40 bg-purple-50 text-purple-700"
-                    : "border-[#6d28d9]/10 bg-white text-[#6F7192] hover:bg-gray-50"
+                    ? "border-purple-400/40 bg-purple-900/40 text-purple-400"
+                    : "border-white/10 bg-transparent text-white/60 hover:bg-white/10"
                 }`}
               >
                 <Scissors className="h-3.5 w-3.5" /> Slice
@@ -170,7 +124,7 @@ export default function ViewerSection({
                 <button
                   type="button"
                   onClick={() => setCameraPreset("iso")}
-                  className="rounded-lg border border-[#6d28d9]/10 bg-white px-2 py-1 text-[11px] text-[#6F7192] hover:bg-gray-50"
+                  className="rounded-lg border border-white/10 bg-transparent px-2 py-1 text-[11px] text-white/60 hover:bg-white/10"
                   title="Isometric View"
                 >
                   ISO
@@ -178,7 +132,7 @@ export default function ViewerSection({
                 <button
                   type="button"
                   onClick={() => setCameraPreset("top")}
-                  className="rounded-lg border border-[#6d28d9]/10 bg-white px-2 py-1 text-[11px] text-[#6F7192] hover:bg-gray-50"
+                  className="rounded-lg border border-white/10 bg-transparent px-2 py-1 text-[11px] text-white/60 hover:bg-white/10"
                   title="Top View"
                 >
                   TOP
@@ -186,7 +140,7 @@ export default function ViewerSection({
                 <button
                   type="button"
                   onClick={() => setCameraPreset("front")}
-                  className="rounded-lg border border-[#6d28d9]/10 bg-white px-2 py-1 text-[11px] text-[#6F7192] hover:bg-gray-50"
+                  className="rounded-lg border border-white/10 bg-transparent px-2 py-1 text-[11px] text-white/60 hover:bg-white/10"
                   title="FRONT View"
                 >
                   FRONT
@@ -194,7 +148,7 @@ export default function ViewerSection({
                 <button
                   type="button"
                   onClick={() => setCameraPreset("side")}
-                  className="rounded-lg border border-[#6d28d9]/10 bg-white px-2 py-1 text-[11px] text-[#6F7192] hover:bg-gray-50"
+                  className="rounded-lg border border-white/10 bg-transparent px-2 py-1 text-[11px] text-white/60 hover:bg-white/10"
                   title="SIDE View"
                 >
                   SIDE
@@ -207,7 +161,7 @@ export default function ViewerSection({
                 onClick={() => setIsFullScreen(true)}
                 title="Full Screen Inspection"
                 aria-label="Enter fullscreen inspection"
-                className="rounded-xl border border-[#6d28d9]/10 bg-white p-1.5 text-[#6F7192] hover:bg-gray-50 hover:text-[#070b1d]"
+                className="rounded-lg border border-white/10 bg-transparent p-1.5 text-white/60 hover:bg-white/10 hover:text-white"
               >
                 <Maximize2 className="h-4 w-4" />
               </button>
@@ -217,7 +171,7 @@ export default function ViewerSection({
 
         {/* Slice Slider Bar */}
         {showClippingSlider && model && (
-          <div className="mb-3 flex items-center gap-3 rounded-xl border border-purple-400/20 bg-purple-50/80 px-4 py-2 text-xs text-purple-900">
+          <div className="mb-3 flex items-center gap-3 rounded-xl border border-purple-500/20 bg-purple-900/30 px-4 py-2 text-xs text-purple-200">
             <span className="shrink-0 font-medium">Cross-Section Cut:</span>
             <input
               type="range"
@@ -234,7 +188,7 @@ export default function ViewerSection({
               <button
                 type="button"
                 onClick={() => setClippingZPercent(100)}
-                className="text-[10px] text-purple-700 underline underline-offset-2"
+                className="text-[10px] text-purple-400 underline underline-offset-2"
               >
                 Reset
               </button>
@@ -243,14 +197,7 @@ export default function ViewerSection({
         )}
 
         {/* 3D Canvas Stage */}
-        <motion.div
-          whileHover={{ scale: 1.005 }}
-          transition={{ type: "spring", stiffness: 240, damping: 22 }}
-          className="relative min-h-[320px] flex-1 overflow-hidden rounded-[24px] border border-[#6d28d9]/10 bg-[#070a12]"
-        >
-          {/* Soft seam — light chrome bleeds gently into the dark canvas */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-16 bg-gradient-to-b from-[#faf9f7]/45 via-[#faf9f7]/10 to-transparent" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-gradient-to-t from-[#faf9f7]/25 to-transparent" />
+        <div className="relative flex-1 overflow-hidden rounded-[24px] border border-white/10 bg-[#070a12]">
           {model ? (
             <>
               <ModelPreviewCanvas
@@ -263,6 +210,9 @@ export default function ViewerSection({
                 cameraPreset={cameraPreset}
                 onPresetApplied={() => setCameraPreset(null)}
                 slicerResult={model.slicerResult}
+                isSlicing={isSlicing}
+                slicingProgress={slicingProgress}
+                activePlateIndex={activePlateIndex}
               />
 
               {/* Material Live Badge Overlay */}
@@ -273,42 +223,6 @@ export default function ViewerSection({
                 </span>{" "}
                 · <span className="text-purple-300">{colorName}</span>
               </div>
-
-              {/* Filament Legend */}
-              {model.slicerResult &&
-                model.slicerResult.weightsPerColor &&
-                model.slicerResult.weightsPerColor.length > 0 && (
-                  <div className="pointer-events-none absolute right-4 top-4 rounded-xl border border-white/10 bg-[#070a12]/80 p-3 text-xs text-white/90 backdrop-blur-md min-w-[140px]">
-                    <div className="mb-2 font-semibold text-white/70 uppercase tracking-wider text-[10px]">
-                      Filament Legend
-                    </div>
-                    <div className="space-y-1.5">
-                      {model.slicerResult.weightsPerColor.map(
-                        (weight, index) => {
-                          const color =
-                            model.detectedColors?.[index] || "#ffffff";
-                          return (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between gap-3"
-                            >
-                              <div className="flex items-center gap-1.5">
-                                <div
-                                  className="h-3 w-3 rounded-full border border-white/20 shadow-inner"
-                                  style={{ backgroundColor: color }}
-                                />
-                                <span>AMS Slot {index + 1}</span>
-                              </div>
-                              <span className="font-mono text-cyan-400">
-                                {weight.toFixed(1)}g
-                              </span>
-                            </div>
-                          );
-                        },
-                      )}
-                    </div>
-                  </div>
-                )}
             </>
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center">
@@ -327,63 +241,22 @@ export default function ViewerSection({
                 Awaiting 3D Model
               </div>
               <p className="max-w-md text-sm leading-7 text-white/50">
-                Upload an STL, OBJ, or 3MF file above to render a studio-quality
-                PBR 3D preview with dynamic materials, environment lighting, and
+                Upload an STL, OBJ, or 3MF file to render a studio-quality PBR
+                3D preview with dynamic materials, environment lighting, and
                 inspection tools.
               </p>
             </div>
           )}
 
           {isLoading ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-[rgba(4,8,16,0.62)] backdrop-blur-sm">
-              <div className="rounded-2xl border border-white/10 bg-[#070a12] px-4 py-3 text-sm text-white">
+            <div className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(4,8,16,0.62)] backdrop-blur-sm">
+              <div className="rounded-xl border border-white/10 bg-[#070a12] px-4 py-3 text-sm text-white">
                 Building 3D preview engine...
               </div>
             </div>
           ) : null}
-        </motion.div>
-
-        {/* Stats Grid */}
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <motion.div
-            whileHover={{ y: -2 }}
-            className="rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3"
-          >
-            <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
-              Controls
-            </div>
-            <div className="mt-2 text-sm text-[#070b1d]">
-              Rotate · Zoom · Pan
-            </div>
-          </motion.div>
-          <motion.div
-            whileHover={{ y: -2 }}
-            className="rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3"
-          >
-            <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
-              Bounding Box
-            </div>
-            <div className="mt-2 text-sm text-[#070b1d]">
-              {model
-                ? `${model.dimensionsMm.x.toFixed(1)} × ${model.dimensionsMm.y.toFixed(1)} × ${model.dimensionsMm.z.toFixed(1)} mm`
-                : "Waiting for geometry"}
-            </div>
-          </motion.div>
-          <motion.div
-            whileHover={{ y: -2 }}
-            className="rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3"
-          >
-            <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
-              Mesh Density
-            </div>
-            <div className="mt-2 text-sm text-[#070b1d]">
-              {model
-                ? `${model.triangleCount.toLocaleString()} tris`
-                : "0 tris"}
-            </div>
-          </motion.div>
         </div>
-      </motion.section>
+      </div>
 
       {/* Full Screen Viewport Modal */}
       {isFullScreen && model && (
@@ -418,6 +291,7 @@ export default function ViewerSection({
               cameraPreset={cameraPreset}
               onPresetApplied={() => setCameraPreset(null)}
               slicerResult={model.slicerResult}
+              activePlateIndex={activePlateIndex}
             />
           </div>
         </div>

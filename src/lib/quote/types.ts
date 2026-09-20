@@ -50,6 +50,15 @@ export type LayerHeightOption = {
 
 export type PostProcessingLevel = "none" | "sanded" | "sanded-painted";
 
+export type SlicerPlate = {
+  plateIndex: number;
+  modelWeightGrams: number;
+  wasteWeightGrams: number;
+  estimatedMinutes: number;
+  layerCount: number;
+  weightsPerColor: number[];
+};
+
 export type SlicerResult = {
   source: "slicer" | "geometry";
   totalWeightGrams: number;
@@ -59,12 +68,7 @@ export type SlicerResult = {
   weightsPerColor: number[];
   estimatedMinutes: number;
   layerCount: number;
-  plates?: Array<{
-    plateIndex: number;
-    modelWeightGrams: number;
-    wasteWeightGrams: number;
-    estimatedMinutes: number;
-  }>;
+  plates?: SlicerPlate[];
 };
 
 export type ParsedModel = {

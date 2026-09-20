@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth/server";
+
 import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 160; // seconds (Vercel Pro allows up to 300s)
 
 export async function POST(request: Request) {
-  // Must be signed-in (file is in their Supabase storage bucket)
-  await requireUser("/instant-quote");
+  // Allow guest users to trigger slicer — files are passed as signed URLs
+  // Authentication is optional (guests use geometry estimate + slicer if URLs provided)
 
   const settings = await getSettings();
   if (!settings.slicerServiceEnabled || !settings.slicerServiceUrl) {

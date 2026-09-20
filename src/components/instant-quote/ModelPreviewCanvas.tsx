@@ -37,12 +37,15 @@ export type ModelPreviewCanvasProps = {
   cameraPreset?: "iso" | "top" | "front" | "side" | null;
   onPresetApplied?: () => void;
   slicerResult?: SlicerResult;
+  isSlicing?: boolean;
+  slicingProgress?: string;
+  activePlateIndex?: number;
 };
 
 function BuildVolumeCage() {
   const cageMesh = useMemo(() => {
-    // Standard 3D printer build volume (220mm x 220mm x 250mm)
-    const geometry = new BoxGeometry(220, 250, 220);
+    // Bambu Lab A2L build volume (330mm x 325mm x 320mm)
+    const geometry = new BoxGeometry(330, 325, 320);
     const edges = new EdgesGeometry(geometry);
     const material = new LineBasicMaterial({
       color: "#38bdf8",
@@ -50,7 +53,7 @@ function BuildVolumeCage() {
       transparent: true,
     });
     const lineSegments = new LineSegments(edges, material);
-    lineSegments.position.set(0, 70, 0);
+    lineSegments.position.set(0, 160, 0);
     return lineSegments;
   }, []);
 
@@ -170,6 +173,9 @@ export default function ModelPreviewCanvas({
   cameraPreset,
   onPresetApplied,
   slicerResult,
+  isSlicing,
+  slicingProgress,
+  activePlateIndex = 0,
 }: ModelPreviewCanvasProps) {
   const [contextLost, setContextLost] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -265,11 +271,12 @@ export default function ModelPreviewCanvas({
       {/* Dynamic Grids based on plates */}
       {slicerResult?.plates && slicerResult.plates.length > 0 ? (
         slicerResult.plates.map((plate, index) => {
-          const offsetX = index * 300;
+          const offsetX = index * 380;
+          const isActive = index === activePlateIndex;
           return (
             <group key={plate.plateIndex} position={[offsetX, 0, 0]}>
               <gridHelper
-                args={[280, 28, "#38bdf8", "#1e293b"]}
+                args={[340, 34, isActive ? "#6d28d9" : "#38bdf8", "#1e293b"]}
                 position={[0, -55, 0]}
               />
               <ContactShadows
@@ -279,14 +286,14 @@ export default function ModelPreviewCanvas({
                 blur={2.2}
                 far={40}
               />
-              {showBuildVolume && <BuildVolumeCage />}
+              {showBuildVolume && isActive && <BuildVolumeCage />}
             </group>
           );
         })
       ) : (
         <group>
           <gridHelper
-            args={[280, 28, "#38bdf8", "#1e293b"]}
+            args={[340, 34, "#38bdf8", "#1e293b"]}
             position={[0, -55, 0]}
           />
           <ContactShadows
