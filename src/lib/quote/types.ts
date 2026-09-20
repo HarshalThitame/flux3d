@@ -99,6 +99,16 @@ export type QuoteConfig = {
   supports: boolean;
   /** AMS Lite color slot count (1–4). Controls "multi-color" mode. */
   amsColorCount?: number;
+  /** Per-slot AMS colours used by the preview, ordered from slot 1 through 4. */
+  amsSlotColors?: string[];
+  /** Uniform model scale as a percentage; 100 preserves the uploaded size. */
+  scaleFactor?: number;
+  /** Number of printed perimeters/walls. */
+  wallCount?: number;
+  /** Print-speed profile sent to the slicer. */
+  printSpeedPreset?: "quality" | "standard" | "fast";
+  /** Requested dimensional tolerance and its pricing difficulty adjustment. */
+  tolerancePreset?: "standard" | "fine" | "precision";
 };
 
 export type CartDiscountTier = {
@@ -165,6 +175,8 @@ export type PriceBreakdown = {
   amsColorChangeSurcharge: number;
   modelWeightGrams: number;
   amsWasteWeightGrams: number;
+  /** Scale used to produce the displayed dimensions and geometry estimate. */
+  appliedScaleFactor: number;
 };
 
 export type UploadState = {

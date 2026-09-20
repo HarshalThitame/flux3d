@@ -346,11 +346,19 @@ export default function QuoteSummary({
                   <div className="mb-2 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
                     <Cuboid className="h-3.5 w-3.5" />
                     Dimensions
+                    {priceBreakdown.appliedScaleFactor !== 1 && (
+                      <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold normal-case tracking-normal text-amber-700">
+                        {Math.round(priceBreakdown.appliedScaleFactor * 100)}% scale
+                      </span>
+                    )}
                   </div>
                   <div className="text-sm text-[#070b1d]">
                     {priceBreakdown.dimensionsMm.x.toFixed(1)} ×{" "}
                     {priceBreakdown.dimensionsMm.y.toFixed(1)} ×{" "}
                     {priceBreakdown.dimensionsMm.z.toFixed(1)} mm
+                  </div>
+                  <div className="mt-1 text-xs text-[#6F7192]">
+                    {priceBreakdown.scaledVolumeCm3.toFixed(2)} cm³
                   </div>
                 </motion.div>
 

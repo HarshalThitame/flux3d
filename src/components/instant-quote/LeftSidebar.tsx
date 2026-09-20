@@ -13,9 +13,12 @@ type LeftSidebarProps = {
   onPlateSelect: (index: number) => void;
   amsColorCount: number;
   onAmsColorCountChange: (count: number) => void;
+  amsSlotColors: string[];
+  onAmsSlotColorChange: (slotIndex: number, color: string) => void;
   slicerResult?: SlicerResult;
   model: ParsedModel | null;
   detectedColors: string[];
+  scaleFactor: number;
 };
 
 export default function LeftSidebar({
@@ -27,10 +30,14 @@ export default function LeftSidebar({
   onPlateSelect,
   amsColorCount,
   onAmsColorCountChange,
+  amsSlotColors,
+  onAmsSlotColorChange,
   slicerResult,
   model,
   detectedColors,
+  scaleFactor,
 }: LeftSidebarProps) {
+  const scale = scaleFactor / 100;
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
     if (e.dataTransfer.files.length) {
@@ -137,30 +144,32 @@ export default function LeftSidebar({
           ))}
         </div>
 
-        {model?.slicerResult && model.slicerResult.weightsPerColor && (
-          <div className="space-y-1.5 mt-3">
-            {model.slicerResult.weightsPerColor.map((weight, index) => {
-              const color = detectedColors?.[index] || "#ffffff";
-              return (
-                <div
-                  key={index}
-                  className="flex items-center justify-between gap-3 text-xs bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-100"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <div
-                      className="h-3 w-3 rounded-full border border-black/10 shadow-inner"
-                      style={{ backgroundColor: color }}
-                    />
-                    <span className="text-gray-700">Slot {index + 1}</span>
-                  </div>
-                  <span className="font-mono text-gray-600 font-medium">
+        <div className="space-y-1.5 mt-3">
+          {Array.from({ length: amsColorCount }, (_, index) => {
+            const weight = slicerResult?.weightsPerColor[index];
+            const color = amsSlotColors[index] ?? detectedColors[index] ?? "#ffffff";
+            return (
+              <div
+                key={index}
+                className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-xs"
+              >
+                <input
+                  aria-label={`AMS slot ${index + 1} colour`}
+                  type="color"
+                  value={color}
+                  onChange={(event) => onAmsSlotColorChange(index, event.target.value)}
+                  className="h-7 w-7 cursor-pointer rounded-md border border-gray-200 bg-white p-0"
+                />
+                <span className="text-gray-700">Slot {index + 1}</span>
+                {weight != null && (
+                  <span className="ml-auto font-mono font-medium text-gray-600">
                     {weight.toFixed(1)}g
                   </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {model && (
@@ -174,9 +183,15 @@ export default function LeftSidebar({
                 <Cuboid className="h-3 w-3" /> Size
               </span>
               <span className="text-gray-700 font-mono">
-                {model.dimensionsMm.x.toFixed(0)}×
-                {model.dimensionsMm.y.toFixed(0)}×
-                {model.dimensionsMm.z.toFixed(0)} mm
+                {(model.dimensionsMm.x * scale).toFixed(1)}×
+                {(model.dimensionsMm.y * scale).toFixed(1)}×
+                {(model.dimensionsMm.z * scale).toFixed(1)} mm
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">Volume</span>
+              <span className="text-gray-700 font-mono">
+                {((model.volumeMm3 / 1000) * scale ** 3).toFixed(2)} cm³
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">

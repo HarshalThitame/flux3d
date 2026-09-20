@@ -464,4 +464,65 @@ describe("calculateInstantQuote", () => {
       expect(result.materialCost).toBeCloseTo(34.72, 2);
     }
   });
+
+  it("scales geometry volume cubically and dimensions linearly", async () => {
+    const { calculateInstantQuote } = await import("../pricing-engine");
+    const model = {
+      volumeMm3: 1_000,
+      dimensionsMm: { x: 10, y: 20, z: 30 },
+      fileName: "scale-test.stl",
+      fileSize: 100,
+      extension: "stl",
+      triangleCount: 12,
+      suggestedMaterialId: "pla",
+      object: null,
+    } as unknown as ParsedModel;
+    const material = {
+      id: "pla",
+      name: "PLA",
+      icon: "",
+      summary: "",
+      density: 1.24,
+      pricePerGram: 1,
+      machineRate: 1,
+      multiplier: 1,
+      recommendedFor: "",
+      properties: { strength: "", flexibility: "", tempResistance: "", difficulty: "" },
+      colors: [{ name: "White" }],
+      difficultyFactor: 1,
+    } as QuoteMaterial;
+    const settings = {
+      overheadPercentage: 0,
+      marginPercentage: 0,
+      materialMarkupPercent: 0,
+      printSpeedGramsPerHour: 40,
+      postProcessingMultipliers: { none: 0, sanded: 0, "sanded-painted": 0 },
+      deliveryChargeThreshold: 0,
+      defaultDeliveryCharge: 0,
+      cartDiscountEnabled: false,
+      cartDiscountTiers: [],
+      minimumOrderValue: 0,
+      gstInclusivePricing: true,
+      amsColorChangeSurcharge: 0,
+    };
+    const result = calculateInstantQuote(
+      model,
+      {
+        materialId: "pla",
+        color: "White",
+        infill: 100,
+        layerHeight: 0.2,
+        quantity: 1,
+        postProcessingLevel: "none",
+        supports: false,
+        scaleFactor: 200,
+      },
+      [material],
+      settings,
+    );
+
+    expect(result?.scaledVolumeCm3).toBeCloseTo(8);
+    expect(result?.dimensionsMm).toEqual({ x: 20, y: 40, z: 60 });
+    expect(result?.appliedScaleFactor).toBe(2);
+  });
 });

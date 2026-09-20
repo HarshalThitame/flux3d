@@ -376,6 +376,13 @@ export default function DeliveryStepClient({
           estimatedTime: draft.estimatedTime,
           weight: draft.weight,
           difficultyFactor: draft.difficultyFactor,
+          // Enterprise quote config — must be forwarded so quote_versions.config
+          // captures the full print settings at order creation time.
+          scaleFactor: draft.scaleFactor,
+          wallCount: draft.wallCount,
+          printSpeedPreset: draft.printSpeedPreset,
+          tolerancePreset: draft.tolerancePreset,
+          amsSlotColors: draft.amsSlotColors,
           // Meta pixel browser identifiers for CAPI match quality
           fbp: document.cookie.match(/_fbp=([^;]+)/)?.[1] ?? undefined,
           fbc: document.cookie.match(/_fbc=([^;]+)/)?.[1] ?? undefined,

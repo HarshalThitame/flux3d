@@ -15,6 +15,26 @@ import {
 } from "@/lib/quote/pricing-engine";
 import { layerHeightOptions } from "@/lib/quote/materials";
 
+const infillPresets = [
+  { value: 10, label: "Hollow", description: "Prototype" },
+  { value: 20, label: "Light", description: "Everyday" },
+  { value: 40, label: "Standard", description: "Structural" },
+  { value: 60, label: "Dense", description: "Load-bearing" },
+  { value: 80, label: "Solid", description: "Max strength" },
+] as const;
+
+const speedPresets = [
+  { value: "quality", label: "Quality", detail: "80 mm/s" },
+  { value: "standard", label: "Standard", detail: "150 mm/s" },
+  { value: "fast", label: "Fast", detail: "220 mm/s" },
+] as const;
+
+const tolerancePresets = [
+  { value: "standard", label: "±0.3 mm", detail: "Standard" },
+  { value: "fine", label: "±0.2 mm", detail: "Fine +10%" },
+  { value: "precision", label: "±0.1 mm", detail: "Precision +25%" },
+] as const;
+
 type RightSidebarProps = {
   materials: QuoteMaterial[];
   config: QuoteConfig;
@@ -56,7 +76,7 @@ export default function RightSidebar({
     materials.find((m) => m.id === config.materialId) || materials[0];
 
   return (
-    <div className="flex h-full w-[340px] flex-col overflow-y-auto border-l border-[#6d28d9]/10 bg-white p-5 shrink-0 shadow-sm">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-y-auto p-5">
       <div className="mb-6">
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#6F7192]">
           Material
@@ -111,19 +131,23 @@ export default function RightSidebar({
             <label className="mb-1.5 flex text-xs font-medium text-gray-700">
               Layer Height
             </label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {layerHeightOptions.map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
                   onClick={() => onConfigChange({ layerHeight: opt.value })}
-                  className={`flex-1 rounded-lg border py-1.5 text-xs transition-colors ${
+                  title={opt.description}
+                  className={`rounded-lg border px-2 py-2 text-left text-xs transition-colors ${
                     config.layerHeight === opt.value
                       ? "border-[#6d28d9] bg-purple-50 text-purple-700 font-semibold"
                       : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                   }`}
                 >
-                  {opt.value}mm
+                  <span className="block font-semibold">{opt.label}</span>
+                  <span className="mt-0.5 block text-[10px] opacity-75">
+                    {opt.description}
+                  </span>
                 </button>
               ))}
             </div>
@@ -137,18 +161,123 @@ export default function RightSidebar({
                 {config.infill}%
               </span>
             </label>
+            <div className="grid grid-cols-5 gap-1">
+              {infillPresets.map((preset) => (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onClick={() => onConfigChange({ infill: preset.value })}
+                  className={`rounded-lg border px-1 py-2 text-center transition-colors ${
+                    config.infill === preset.value
+                      ? "border-[#6d28d9] bg-purple-50 text-purple-700"
+                      : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="block text-[11px] font-semibold">{preset.value}%</span>
+                  <span className="block text-[9px] leading-3">{preset.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 flex justify-between text-xs font-medium text-gray-700">
+              <span>Scale</span>
+              <span className="font-mono text-purple-600">{config.scaleFactor ?? 100}%</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="range"
+                min={25}
+                max={400}
+                step={5}
+                value={config.scaleFactor ?? 100}
+                onChange={(event) => onConfigChange({ scaleFactor: Number(event.target.value) })}
+                className="min-w-0 flex-1 accent-[#6d28d9]"
+              />
+              <button
+                type="button"
+                onClick={() => onConfigChange({ scaleFactor: 100 })}
+                className="text-[11px] font-medium text-purple-700 hover:text-purple-900"
+              >
+                Reset
+              </button>
+            </div>
+            {priceBreakdown && (
+              <div className="mt-1.5 rounded-lg bg-gray-50 px-2 py-1.5 font-mono text-[10px] text-gray-600">
+                {priceBreakdown.dimensionsMm.x.toFixed(1)} × {priceBreakdown.dimensionsMm.y.toFixed(1)} × {priceBreakdown.dimensionsMm.z.toFixed(1)} mm · {priceBreakdown.scaledVolumeCm3.toFixed(2)} cm³
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-1.5 flex justify-between text-xs font-medium text-gray-700">
+              <span>Wall Count</span>
+              <span className="font-mono text-purple-600">{config.wallCount ?? 3}</span>
+            </label>
             <input
               type="range"
-              min={5}
-              max={100}
-              step={5}
-              value={config.infill}
-              onChange={(e) =>
-                onConfigChange({ infill: Number(e.target.value) })
-              }
+              min={1}
+              max={8}
+              step={1}
+              value={config.wallCount ?? 3}
+              onChange={(event) => onConfigChange({ wallCount: Number(event.target.value) })}
               className="w-full accent-[#6d28d9]"
             />
+            <div className="flex justify-between text-[10px] text-gray-400"><span>1 Thin</span><span>4 Standard</span><span>8 Solid</span></div>
           </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-gray-700">Print Speed</label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {speedPresets.map((preset) => (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onClick={() => onConfigChange({ printSpeedPreset: preset.value })}
+                  className={`rounded-lg border px-1 py-2 text-center text-[10px] transition-colors ${
+                    (config.printSpeedPreset ?? "standard") === preset.value
+                      ? "border-[#6d28d9] bg-purple-50 text-purple-700"
+                      : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="block font-semibold">{preset.label}</span>
+                  <span className="block opacity-75">{preset.detail}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-gray-700">Tolerance</label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {tolerancePresets.map((preset) => (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onClick={() => onConfigChange({ tolerancePreset: preset.value })}
+                  className={`rounded-lg border px-1 py-2 text-center text-[10px] transition-colors ${
+                    (config.tolerancePreset ?? "standard") === preset.value
+                      ? "border-[#6d28d9] bg-purple-50 text-purple-700"
+                      : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="block font-semibold">{preset.label}</span>
+                  <span className="block opacity-75">{preset.detail}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="flex cursor-pointer items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">
+            <span><span className="font-medium">Generate supports</span><span className="mt-0.5 block text-[10px] text-gray-500">Added to slicer calculations</span></span>
+            <input
+              type="checkbox"
+              checked={config.supports}
+              onChange={(event) => onConfigChange({ supports: event.target.checked })}
+              className="h-4 w-4 accent-[#6d28d9]"
+            />
+          </label>
 
           {/* Quantity */}
           <div>

@@ -10,7 +10,15 @@ const app = express();
 app.use(express.json({ limit: "5mb" }));
 
 const SLICER_SECRET = process.env.SLICER_SECRET ?? "";
-const TEMPLATE_PATH = "/app/templates/a2l_template.3mf";
+// OrcaSlicer 2.3.0 ships these compatible system presets. The previous A2L
+// template was created by a newer BambuStudio version and cannot be sliced by
+// this Orca runtime.
+const MACHINE_PROFILE =
+  "/opt/orca-slicer/resources/profiles/BBL/machine/Bambu Lab X1 Carbon 0.4 nozzle.json";
+const PROCESS_PROFILE =
+  "/opt/orca-slicer/resources/profiles/BBL/process/0.20mm Standard @BBL X1C.json";
+const FILAMENT_PROFILE =
+  "/opt/orca-slicer/resources/profiles/BBL/filament/Bambu PLA Basic @BBL X1C.json";
 
 // ── Auth middleware ──────────────────────────────────────────────────────────
 app.use((req, res, next) => {
@@ -33,6 +41,10 @@ app.post("/slice", async (req, res) => {
     layerHeight = 0.2,
     infill = 20,
     numColors = 1,
+    scalePercent = 100,
+    wallCount = 3,
+    printSpeedMms,
+    supports = false,
   } = req.body;
   if (!fileUrls && fileUrl) fileUrls = [fileUrl];
   if (!fileUrls || fileUrls.length === 0)
@@ -47,8 +59,6 @@ app.post("/slice", async (req, res) => {
     await fs.mkdir(outputDir, { recursive: true });
 
     const localFiles = [];
-    let bambuProjectFile = null;
-
     for (let i = 0; i < fileUrls.length; i++) {
       const url = fileUrls[i];
       const ext = (url.split("?")[0].split(".").pop() ?? "stl").toLowerCase();
@@ -59,48 +69,54 @@ app.post("/slice", async (req, res) => {
       const localPath = path.join(tmpDir, `model_${i}.${ext}`);
       await fs.writeFile(localPath, modelBuf);
 
-      if (ext === "3mf" && !bambuProjectFile) {
-        try {
-          const zip = new AdmZip(localPath);
-          if (zip.getEntry("Metadata/project_settings.config")) {
-            bambuProjectFile = localPath;
-          } else {
-            localFiles.push(localPath);
-          }
-        } catch {
-          localFiles.push(localPath);
-        }
-      } else {
-        localFiles.push(localPath);
-      }
+      localFiles.push(localPath);
     }
 
-    let jobProject = path.join(tmpDir, "job.3mf");
-    const templateSource = bambuProjectFile || TEMPLATE_PATH;
-
-    await patchTemplate(templateSource, jobProject, {
+    await fs.mkdir("/tmp/orca-runtime", { recursive: true, mode: 0o700 });
+    const processProfile = path.join(tmpDir, "process-profile.json");
+    await createProcessProfile(processProfile, {
       layerHeight,
       infill,
-      numColors,
+      wallCount,
+      printSpeedMms,
+      supports,
     });
 
     let slicerArgs = [
       "--auto-servernum",
+      "-s",
+      "-screen 0 1280x1024x24",
       "orca-slicer",
       "--slice",
       "0",
       "--arrange",
       "1",
+      "--load-settings",
+      `${MACHINE_PROFILE};${processProfile}`,
+      "--load-filaments",
+      Array(Math.max(1, Math.min(4, Number(numColors) || 1)))
+        .fill(FILAMENT_PROFILE)
+        .join(";"),
     ];
-    slicerArgs.push(jobProject);
-    for (const file of localFiles) {
-      slicerArgs.push("--load", file);
+    const safeScalePercent = Math.min(400, Math.max(25, Number(scalePercent) || 100));
+    if (safeScalePercent !== 100) {
+      const scale = safeScalePercent / 100;
+      // OrcaSlicer accepts one uniform scale factor (not an XYZ tuple).
+      slicerArgs.push("--scale", String(scale));
     }
+    // Model files are positional CLI arguments in OrcaSlicer 2.4.2.
+    slicerArgs.push(...localFiles);
     slicerArgs.push("--export-3mf", path.join(outputDir, "result.gcode.3mf"));
 
     await execFileAsync("xvfb-run", slicerArgs, {
       timeout: 180_000,
-      env: { ...process.env, DISPLAY: ":99" },
+      env: {
+        ...process.env,
+        DISPLAY: ":99",
+        GDK_BACKEND: "x11",
+        LIBGL_ALWAYS_SOFTWARE: "1",
+        XDG_RUNTIME_DIR: "/tmp/orca-runtime",
+      },
     });
 
     const outputFiles = await fs.readdir(outputDir);
@@ -135,8 +151,8 @@ app.post("/slice", async (req, res) => {
 
     for (let i = 0; i < gcodeEntries.length; i++) {
       const entry = gcodeEntries[i];
-      const gcodeHeader = zip.readAsText(entry).slice(0, 32_768);
-      const stats = parseGcodeHeader(gcodeHeader);
+      // Orca 2.3 writes material totals at the end of generated G-code.
+      const stats = parseGcodeHeader(zip.readAsText(entry));
       plates.push({ plateIndex: i + 1, ...stats });
 
       totalModelWeightGrams += stats.modelWeightGrams;
@@ -173,39 +189,30 @@ app.post("/slice", async (req, res) => {
   }
 });
 
-async function patchTemplate(
-  templatePath,
+async function createProcessProfile(
   outputPath,
-  { layerHeight, infill, numColors },
+  { layerHeight, infill, wallCount, printSpeedMms, supports },
 ) {
-  const zip = new AdmZip(templatePath);
-  const settingsEntry = zip.getEntry("Metadata/project_settings.config");
-  if (!settingsEntry)
-    throw new Error("Template missing project_settings.config");
-
-  const settings = JSON.parse(zip.readAsText(settingsEntry));
+  const settings = JSON.parse(await fs.readFile(PROCESS_PROFILE, "utf8"));
   settings.layer_height = String(layerHeight);
   settings.sparse_infill_density = `${infill}%`;
-
-  if (numColors > 1 && settings.default_filament_profile) {
-    const baseProfile = settings.default_filament_profile[0];
-    settings.default_filament_profile = Array(numColors).fill(baseProfile);
-    if (settings.filament_type) {
-      settings.filament_type = Array(numColors).fill(
-        settings.filament_type[0] ?? "PLA",
-      );
-    }
+  const safeWallCount = Math.min(8, Math.max(1, Math.round(Number(wallCount) || 3)));
+  settings.wall_loops = String(safeWallCount);
+  if (Number.isFinite(Number(printSpeedMms)) && Number(printSpeedMms) > 0) {
+    const speed = String(Number(printSpeedMms));
+    settings.inner_wall_speed = Array.isArray(settings.inner_wall_speed)
+      ? settings.inner_wall_speed.map(() => speed)
+      : speed;
   }
-
-  zip.updateFile(
-    "Metadata/project_settings.config",
-    Buffer.from(JSON.stringify(settings)),
-  );
-  zip.writeZip(outputPath);
+  settings.enable_support = supports ? "1" : "0";
+  // Required by Orca's relative-extrusion safety validation in headless mode.
+  settings.layer_change_gcode = "G92 E0";
+  await fs.writeFile(outputPath, JSON.stringify(settings));
 }
 
 function parseGcodeHeader(header) {
   const weightLine = header.match(/;\s*filament used \[g\] = (.+)/);
+  const volumeLine = header.match(/;\s*filament used \[cm3\] = ([0-9.]+)/);
   const modelWeightLine = header.match(/;\s*model weight \[g\] = ([0-9.]+)/);
   const flushWeightLine = header.match(/;\s*flush weight \[g\] = ([0-9.]+)/);
   const wipeTowerWeightLine = header.match(
@@ -214,7 +221,10 @@ function parseGcodeHeader(header) {
   const timeLine = header.match(
     /;\s*estimated printing time \(normal mode\) = (.+)/,
   );
-  const layerLine = header.match(/;\s*total layers count = (\d+)/);
+  const totalTimeLine = header.match(
+    /;\s*model printing time:.*?total estimated time:\s*([^;\n]+)/,
+  );
+  const layerLine = header.match(/;\s*total (?:layers count|layer number): (\d+)/);
 
   const weightsPerColor = weightLine
     ? weightLine[1]
@@ -223,8 +233,14 @@ function parseGcodeHeader(header) {
         .filter((n) => !isNaN(n))
     : [0];
 
-  const totalWeightGrams =
+  const reportedWeightGrams =
     Math.round(weightsPerColor.reduce((a, b) => a + b, 0) * 100) / 100;
+  // The managed default is PLA (1.24g/cm3). Orca 2.3 reports exact volume
+  // but omits grams when its system filament profile has no density value.
+  const totalWeightGrams =
+    reportedWeightGrams > 0
+      ? reportedWeightGrams
+      : Math.round(parseFloat(volumeLine?.[1] ?? "0") * 1.24 * 100) / 100;
   const reportedModelWeight = modelWeightLine
     ? parseFloat(modelWeightLine[1])
     : 0;
@@ -245,7 +261,7 @@ function parseGcodeHeader(header) {
       ? reportedWasteWeight
       : Math.max(0, totalWeightGrams - modelWeightGrams);
 
-  const timeStr = timeLine?.[1] ?? "";
+  const timeStr = totalTimeLine?.[1] ?? timeLine?.[1] ?? "";
   const hours = parseInt(timeStr.match(/(\d+)h/)?.[1] ?? "0");
   const mins = parseInt(timeStr.match(/(\d+)m/)?.[1] ?? "0");
   const estimatedMinutes = hours * 60 + mins;
@@ -254,7 +270,10 @@ function parseGcodeHeader(header) {
     totalWeightGrams,
     modelWeightGrams,
     wasteWeightGrams,
-    weightsPerColor,
+    weightsPerColor:
+      totalWeightGrams > 0 && weightsPerColor.every((weight) => weight === 0)
+        ? [totalWeightGrams]
+        : weightsPerColor,
     estimatedMinutes,
     layerCount: parseInt(layerLine?.[1] ?? "0"),
   };

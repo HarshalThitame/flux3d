@@ -40,6 +40,8 @@ export type ModelPreviewCanvasProps = {
   isSlicing?: boolean;
   slicingProgress?: string;
   activePlateIndex?: number;
+  amsSlotColors?: string[];
+  amsColorCount?: number;
 };
 
 function BuildVolumeCage() {
@@ -66,12 +68,16 @@ function ViewerModel({
   colorName,
   displayMode = "solid",
   clippingZPercent = 100,
+  amsSlotColors,
+  amsColorCount = 1,
 }: {
   object: Object3D;
   materialId?: string;
   colorName?: string;
   displayMode?: "solid" | "wireframe" | "xray";
   clippingZPercent?: number;
+  amsSlotColors?: string[];
+  amsColorCount?: number;
 }) {
   const pbr = useMemo(
     () => getMaterialShaderProps(materialId, colorName),
@@ -95,21 +101,28 @@ function ViewerModel({
       planes = [new Plane(new Vector3(0, 0, -1), cutZ)];
     }
 
+    let meshIndex = 0;
     cloned.traverse((child) => {
       if (child instanceof Mesh) {
         child.castShadow = true;
         child.receiveShadow = true;
 
+        const amsColor =
+          amsColorCount > 1
+            ? amsSlotColors?.[meshIndex % amsColorCount]
+            : undefined;
+        meshIndex += 1;
+
         if (displayMode === "wireframe") {
           child.material = new MeshStandardMaterial({
-            color: pbr.color,
+            color: amsColor ?? pbr.color,
             wireframe: true,
             side: DoubleSide,
             clippingPlanes: planes,
           });
         } else if (displayMode === "xray") {
           child.material = new MeshPhysicalMaterial({
-            color: pbr.color,
+            color: amsColor ?? pbr.color,
             transparent: true,
             opacity: 0.35,
             roughness: 0.1,
@@ -142,8 +155,8 @@ function ViewerModel({
 
           // Solid PBR Shading
           child.material = new MeshPhysicalMaterial({
-            color: finalColor,
-            vertexColors: useVertexColors,
+            color: amsColor ?? finalColor,
+            vertexColors: amsColor ? false : useVertexColors,
             roughness: pbr.roughness,
             metalness: pbr.metalness,
             clearcoat: pbr.clearcoat ?? 0,
@@ -158,7 +171,7 @@ function ViewerModel({
     });
 
     return { clone: cloned, clippingPlanes: planes };
-  }, [object, pbr, displayMode, clippingZPercent]);
+  }, [object, pbr, displayMode, clippingZPercent, amsSlotColors, amsColorCount]);
 
   return <primitive object={clone} />;
 }
@@ -176,6 +189,8 @@ export default function ModelPreviewCanvas({
   isSlicing,
   slicingProgress,
   activePlateIndex = 0,
+  amsSlotColors,
+  amsColorCount = 1,
 }: ModelPreviewCanvasProps) {
   const [contextLost, setContextLost] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -314,6 +329,8 @@ export default function ModelPreviewCanvas({
           colorName={colorName}
           displayMode={displayMode}
           clippingZPercent={clippingZPercent}
+          amsSlotColors={amsSlotColors}
+          amsColorCount={amsColorCount}
         />
       </Bounds>
 

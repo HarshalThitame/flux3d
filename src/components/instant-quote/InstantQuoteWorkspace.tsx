@@ -37,6 +37,7 @@ import Link from "next/link";
 import { ORDER_DRAFT_STORAGE_KEY, type OrderDraft } from "@/lib/orders";
 import LeftSidebar from "./LeftSidebar";
 import RightSidebar from "./RightSidebar";
+import WhatsAppCTABanner from "./WhatsAppCTABanner";
 
 const ViewerSection = dynamic(
   () => import("@/components/instant-quote/ViewerSection"),
@@ -71,6 +72,8 @@ export type InstantQuoteWorkspaceProps = {
 
 const WORKSPACE_STORAGE_KEY = "flux3d-workspace-draft";
 const QUOTE_ID_STORAGE_KEY = "flux3d-quote-id";
+const DEFAULT_AMS_SLOT_COLORS = ["#ffffff", "#000000", "#ff0000", "#0000ff"];
+const PRINT_SPEED_MMS = { quality: 80, standard: 150, fast: 220 } as const;
 
 function getInitialQuoteId() {
   if (typeof window === "undefined") return "";
@@ -198,6 +201,11 @@ function CartEnabledWorkspace({
     postProcessingLevel: "none",
     supports: false,
     amsColorCount: 1,
+    amsSlotColors: DEFAULT_AMS_SLOT_COLORS,
+    scaleFactor: 100,
+    wallCount: 3,
+    printSpeedPreset: "standard",
+    tolerancePreset: "standard",
   };
   const [config, setConfig] = useState<QuoteConfig>(() =>
     getInitialWorkspaceConfig(defaultConfig, Boolean(initialMaterialId)),
@@ -210,6 +218,7 @@ function CartEnabledWorkspace({
 
   const [activePlateIndex, setActivePlateIndex] = useState(0);
   const sliceDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const sliceRequestRef = useRef(0);
 
   const [slicerStatus, setSlicerStatus] = useState<string | null>(null);
   const [slicerError, setSlicerError] = useState<string | null>(null);
@@ -217,6 +226,15 @@ function CartEnabledWorkspace({
 
   const trackedQuoteRef = useRef<string | null>(null);
   const prefilledModelRef = useRef(false);
+  const sliceSettingsKey = JSON.stringify({
+    layerHeight: config.layerHeight,
+    infill: config.infill,
+    amsColorCount: config.amsColorCount ?? 1,
+    scaleFactor: config.scaleFactor ?? 100,
+    wallCount: config.wallCount ?? 3,
+    printSpeedPreset: config.printSpeedPreset ?? "standard",
+    supports: config.supports,
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -334,6 +352,25 @@ function CartEnabledWorkspace({
         };
 
         setSelectedModel(mergedModel);
+        const detectedSlotColors = mergedModel.detectedColors
+          .filter((color) => /^#[0-9a-f]{6}$/i.test(color))
+          .slice(0, 4);
+        if (detectedSlotColors.length > 0) {
+          setConfig((current) => {
+            const amsSlotColors = [...DEFAULT_AMS_SLOT_COLORS];
+            detectedSlotColors.forEach((color, index) => {
+              amsSlotColors[index] = color;
+            });
+            return {
+              ...current,
+              amsSlotColors,
+              amsColorCount:
+                detectedSlotColors.length > 1
+                  ? detectedSlotColors.length
+                  : current.amsColorCount ?? 1,
+            };
+          });
+        }
 
         if (user && supabaseEnabled) {
           const uploadResults = await Promise.all(
@@ -379,6 +416,7 @@ function CartEnabledWorkspace({
     if (!uploadState.path || !selectedModel) return;
     setSlicerStatus("Uploading model to processing node...");
     setSlicerError(null);
+    const requestId = ++sliceRequestRef.current;
 
     let stepIndex = 0;
     const steps = [
@@ -405,15 +443,24 @@ function CartEnabledWorkspace({
           layerHeight: config.layerHeight,
           infill: config.infill,
           numColors: config.amsColorCount ?? 1,
+          scalePercent: config.scaleFactor ?? 100,
+          wallCount: config.wallCount ?? 3,
+          printSpeedMms:
+            PRINT_SPEED_MMS[config.printSpeedPreset ?? "standard"],
+          supports: config.supports,
         }),
       });
       const data = await res.json();
       if (!res.ok || data.fallback)
         throw new Error(data.error ?? "Slicer unavailable");
 
-      setSelectedModel((prev) =>
-        prev ? { ...prev, slicerResult: { source: "slicer", ...data } } : prev,
-      );
+      if (requestId === sliceRequestRef.current) {
+        setSelectedModel((prev) =>
+          prev
+            ? { ...prev, slicerResult: { source: "slicer", ...data } }
+            : prev,
+        );
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Slicer failed";
       setSlicerError(msg);
@@ -431,6 +478,15 @@ function CartEnabledWorkspace({
     if (!selectedModel || !uploadState.path || uploadState.status !== "success")
       return;
 
+    // A previous slicer response was calculated for different settings. Remove
+    // it immediately so pricing falls back to a scaled geometry estimate while
+    // the new precise result is in flight.
+    sliceRequestRef.current += 1;
+    if (selectedModel.slicerResult) {
+      setSelectedModel((current) =>
+        current ? { ...current, slicerResult: undefined } : current,
+      );
+    }
     if (sliceDebounceRef.current) clearTimeout(sliceDebounceRef.current);
     sliceDebounceRef.current = setTimeout(() => {
       void handleGetPreciseQuote();
@@ -440,10 +496,10 @@ function CartEnabledWorkspace({
       if (sliceDebounceRef.current) clearTimeout(sliceDebounceRef.current);
     };
   }, [
-    config.layerHeight,
-    config.infill,
-    config.amsColorCount,
-    config.materialId,
+    selectedModel?.object,
+    uploadState.path,
+    uploadState.status,
+    sliceSettingsKey,
   ]);
 
   const handleSaveQuote = async () => {
@@ -514,15 +570,7 @@ function CartEnabledWorkspace({
       modelVolumeMm3: selectedModel.volumeMm3,
       difficultyFactor: priceBreakdown.difficultyFactor,
       dimensions: priceBreakdown.dimensionsMm,
-      config: {
-        materialId: selectedMaterial.id,
-        color: config.color,
-        infill: config.infill,
-        layerHeight: config.layerHeight,
-        quantity: config.quantity,
-        postProcessingLevel: config.postProcessingLevel,
-        supports: config.supports,
-      },
+      config: { ...config, materialId: selectedMaterial.id },
       addedAt: new Date().toISOString(),
     };
     addItem(cartItem);
@@ -565,6 +613,17 @@ function CartEnabledWorkspace({
           slicerResult={selectedModel?.slicerResult}
           model={selectedModel}
           detectedColors={selectedModel?.detectedColors ?? []}
+          amsSlotColors={config.amsSlotColors ?? DEFAULT_AMS_SLOT_COLORS}
+          onAmsSlotColorChange={(slotIndex, color) =>
+            setConfig((current) => {
+              const amsSlotColors = [
+                ...(current.amsSlotColors ?? DEFAULT_AMS_SLOT_COLORS),
+              ];
+              amsSlotColors[slotIndex] = color;
+              return { ...current, amsSlotColors };
+            })
+          }
+          scaleFactor={config.scaleFactor ?? 100}
         />
 
         <main className="flex flex-1 flex-col bg-[#070a12] relative">
@@ -576,6 +635,8 @@ function CartEnabledWorkspace({
             isSlicing={!!slicerStatus}
             slicingProgress={slicerStatus ?? undefined}
             activePlateIndex={activePlateIndex}
+            amsSlotColors={config.amsSlotColors}
+            amsColorCount={config.amsColorCount ?? 1}
           />
           {slicerStatus && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -587,26 +648,32 @@ function CartEnabledWorkspace({
           )}
         </main>
 
-        <RightSidebar
-          materials={materials}
-          config={config}
-          onConfigChange={(update) => setConfig((c) => ({ ...c, ...update }))}
-          onMaterialChange={(id) =>
-            setConfig((c) => ({ ...c, materialId: id }))
-          }
-          priceBreakdown={priceBreakdown}
-          slicerStatus={slicerStatus}
-          slicerError={slicerError}
-          slicerResult={selectedModel?.slicerResult}
-          onSlice={handleGetPreciseQuote}
-          onAddToCart={handleAddToCart}
-          onSaveQuote={handleSaveQuote}
-          isInCart={isInCart(initialQuoteId)}
-          user={user}
-          pricingSettings={pricingSettings}
-          quoteId={initialQuoteId}
-          savingQuote={savingQuote}
-        />
+        <aside className="flex h-full w-[340px] shrink-0 flex-col border-l border-[#6d28d9]/10 bg-white shadow-sm">
+          <RightSidebar
+            materials={materials}
+            config={config}
+            onConfigChange={(update) => setConfig((c) => ({ ...c, ...update }))}
+            onMaterialChange={(id) =>
+              setConfig((c) => ({ ...c, materialId: id }))
+            }
+            priceBreakdown={priceBreakdown}
+            slicerStatus={slicerStatus}
+            slicerError={slicerError}
+            slicerResult={selectedModel?.slicerResult}
+            onSlice={handleGetPreciseQuote}
+            onAddToCart={handleAddToCart}
+            onSaveQuote={handleSaveQuote}
+            isInCart={isInCart(initialQuoteId)}
+            user={user}
+            pricingSettings={pricingSettings}
+            quoteId={initialQuoteId}
+            savingQuote={savingQuote}
+          />
+          <WhatsAppCTABanner
+            whatsappNumber={bulkOrderContact.whatsappNumber}
+            show={Boolean(selectedModel)}
+          />
+        </aside>
       </div>
       {toast && <Toast toast={toast} />}
     </div>

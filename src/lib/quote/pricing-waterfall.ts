@@ -114,6 +114,7 @@ export type QuotePricingResult = PricingWaterfall & {
   slicerUsed: boolean;
   weightsPerColor: number[];
   amsColorChangeSurcharge: number;
+  appliedScaleFactor: number;
 };
 
 export function roundMoney(value: number) {
@@ -297,7 +298,12 @@ export function calculateQuotePricing(
   if (!layerHeight) return null;
 
   const quantity = Math.max(1, Math.floor(config.quantity || 1));
-  const scaledVolumeCm3 = model.volumeMm3 / 1000;
+  const appliedScaleFactor = Math.min(
+    4,
+    Math.max(0.25, positiveNumber(config.scaleFactor, 100) / 100),
+  );
+  const scaledVolumeCm3 =
+    (model.volumeMm3 / 1000) * Math.pow(appliedScaleFactor, 3);
   const infillFactor = 0.2 + 0.8 * (config.infill / 100);
   const supportFactor = config.supports ? 1.12 : 1;
   const baseWeightGrams = scaledVolumeCm3 * material.density;
@@ -378,10 +384,16 @@ export function calculateQuotePricing(
     (estimatedMinutesPerUnit / 60) * machineRatePerHour;
   const machineCost = machineCostPerUnit * quantity;
   const postProcessingLevel = config.postProcessingLevel;
+  const toleranceMultiplier = {
+    standard: 1,
+    fine: 1.1,
+    precision: 1.25,
+  }[config.tolerancePreset ?? "standard"];
+  const difficultyFactor = material.difficultyFactor * toleranceMultiplier;
   const postProcessingCostPerUnit = calculatePostProcessingCharge(
     postProcessingLevel,
     materialCostPerUnit + machineCostPerUnit,
-    material.difficultyFactor,
+    difficultyFactor,
     settings.postProcessingMultipliers,
   );
   const postProcessingCost = postProcessingCostPerUnit * quantity;
@@ -439,14 +451,15 @@ export function calculateQuotePricing(
     postProcessingLevel,
     postProcessingCostPerUnit,
     profitMargin: waterfall.marginAmount,
-    difficultyFactor: material.difficultyFactor,
+    difficultyFactor,
     dimensionsMm: {
-      x: model.dimensionsMm.x,
-      y: model.dimensionsMm.y,
-      z: model.dimensionsMm.z,
+      x: model.dimensionsMm.x * appliedScaleFactor,
+      y: model.dimensionsMm.y * appliedScaleFactor,
+      z: model.dimensionsMm.z * appliedScaleFactor,
     },
     slicerUsed,
     weightsPerColor,
     amsColorChangeSurcharge,
+    appliedScaleFactor,
   };
 }

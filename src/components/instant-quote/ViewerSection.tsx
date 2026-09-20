@@ -23,6 +23,8 @@ type ViewerSectionProps = {
   isSlicing?: boolean;
   slicingProgress?: string;
   activePlateIndex?: number;
+  amsSlotColors?: string[];
+  amsColorCount?: number;
 };
 
 export default function ViewerSection({
@@ -33,6 +35,8 @@ export default function ViewerSection({
   isSlicing,
   slicingProgress,
   activePlateIndex = 0,
+  amsSlotColors,
+  amsColorCount = 1,
 }: ViewerSectionProps) {
   const shouldReduceMotion = useReducedMotion();
   const [displayMode, setDisplayMode] = useState<
@@ -213,6 +217,8 @@ export default function ViewerSection({
                 isSlicing={isSlicing}
                 slicingProgress={slicingProgress}
                 activePlateIndex={activePlateIndex}
+                amsSlotColors={amsSlotColors}
+                amsColorCount={amsColorCount}
               />
 
               {/* Material Live Badge Overlay */}
@@ -292,6 +298,8 @@ export default function ViewerSection({
               onPresetApplied={() => setCameraPreset(null)}
               slicerResult={model.slicerResult}
               activePlateIndex={activePlateIndex}
+              amsSlotColors={amsSlotColors}
+              amsColorCount={amsColorCount}
             />
           </div>
         </div>
