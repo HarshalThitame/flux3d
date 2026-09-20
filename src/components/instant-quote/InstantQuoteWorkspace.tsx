@@ -25,7 +25,6 @@ import {
   ArrowRight,
   AlertTriangle,
   FileArchive,
-  Move3D,
   Cuboid,
 } from "lucide-react";
 import EmptyState from "@/components/admin/EmptyState";
@@ -98,7 +97,6 @@ export default function InstantQuoteWorkspace({
   pricingSettings,
   bulkOrderContact,
 }: InstantQuoteWorkspaceProps) {
-  const shouldReduceMotion = useReducedMotion();
   if (materials.length === 0) {
     return (
       <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-8 text-[#070b1d] md:px-8 md:pt-10 xl:px-10">
@@ -594,7 +592,7 @@ function CartEnabledWorkspace({
       "Preparing .3mf geometry...",
       "Slicing Model & generating G-Code...",
       "Calculating Waste & AMS Purge...",
-      "Finalizing price breakdown..."
+      "Finalizing price breakdown...",
     ];
 
     const progressInterval = setInterval(() => {
