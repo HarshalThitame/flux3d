@@ -66,8 +66,22 @@ app.post("/slice", async (req, res) => {
       if (!dlRes.ok)
         throw new Error(`Model download failed: HTTP ${dlRes.status}`);
       const modelBuf = Buffer.from(await dlRes.arrayBuffer());
-      const localPath = path.join(tmpDir, `model_${i}.${ext}`);
-      await fs.writeFile(localPath, modelBuf);
+      let localPath = path.join(tmpDir, `model_${i}.${ext}`);
+      if (ext === "3mf") {
+        try {
+          const normalizedStl = convert3mfToStl(modelBuf);
+          localPath = path.join(tmpDir, `model_${i}.stl`);
+          await fs.writeFile(localPath, normalizedStl);
+        } catch (conversionError) {
+          console.warn(
+            `[slicer] ${jobId}: 3MF normalization skipped:`,
+            conversionError.message,
+          );
+          await fs.writeFile(localPath, modelBuf);
+        }
+      } else {
+        await fs.writeFile(localPath, modelBuf);
+      }
 
       localFiles.push(localPath);
     }
@@ -98,7 +112,10 @@ app.post("/slice", async (req, res) => {
         .fill(FILAMENT_PROFILE)
         .join(";"),
     ];
-    const safeScalePercent = Math.min(400, Math.max(25, Number(scalePercent) || 100));
+    const safeScalePercent = Math.min(
+      400,
+      Math.max(25, Number(scalePercent) || 100),
+    );
     if (safeScalePercent !== 100) {
       const scale = safeScalePercent / 100;
       // OrcaSlicer accepts one uniform scale factor (not an XYZ tuple).
@@ -110,6 +127,7 @@ app.post("/slice", async (req, res) => {
 
     await execFileAsync("xvfb-run", slicerArgs, {
       timeout: 180_000,
+      maxBuffer: 16 * 1024 * 1024,
       env: {
         ...process.env,
         DISPLAY: ":99",
@@ -182,8 +200,11 @@ app.post("/slice", async (req, res) => {
       plates,
     });
   } catch (err) {
-    console.error(`[slicer] ${jobId} failed:`, err.message);
-    res.status(500).json({ success: false, error: err.message });
+    const details = [err?.message, err?.stderr, err?.stdout]
+      .filter(Boolean)
+      .join("\n");
+    console.error(`[slicer] ${jobId} failed:`, details);
+    res.status(500).json({ success: false, error: details });
   } finally {
     fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
   }
@@ -196,7 +217,10 @@ async function createProcessProfile(
   const settings = JSON.parse(await fs.readFile(PROCESS_PROFILE, "utf8"));
   settings.layer_height = String(layerHeight);
   settings.sparse_infill_density = `${infill}%`;
-  const safeWallCount = Math.min(8, Math.max(1, Math.round(Number(wallCount) || 3)));
+  const safeWallCount = Math.min(
+    8,
+    Math.max(1, Math.round(Number(wallCount) || 3)),
+  );
   settings.wall_loops = String(safeWallCount);
   if (Number.isFinite(Number(printSpeedMms)) && Number(printSpeedMms) > 0) {
     const speed = String(Number(printSpeedMms));
@@ -208,6 +232,57 @@ async function createProcessProfile(
   // Required by Orca's relative-extrusion safety validation in headless mode.
   settings.layer_change_gcode = "G92 E0";
   await fs.writeFile(outputPath, JSON.stringify(settings));
+}
+
+function convert3mfToStl(modelBuffer) {
+  const archive = new AdmZip(modelBuffer);
+  const modelEntry = archive
+    .getEntries()
+    .find((entry) => /^3d\/[^/]+\.model$/i.test(entry.entryName));
+  if (!modelEntry) throw new Error("3MF archive has no 3D model XML");
+
+  const xml = modelEntry.getData().toString("utf8");
+  const stl = ["solid flux3d"];
+  const meshPattern = /<mesh\b[\s\S]*?<\/mesh>/gi;
+  const meshes = xml.match(meshPattern) ?? [];
+  for (const mesh of meshes) {
+    const vertices = [
+      ...mesh.matchAll(
+        /<vertex\b[^>]*\bx="([^\"]+)"[^>]*\by="([^\"]+)"[^>]*\bz="([^\"]+)"[^>]*\/?\s*>/gi,
+      ),
+    ].map((match) => match.slice(1).map(Number));
+    const triangles = [
+      ...mesh.matchAll(
+        /<triangle\b[^>]*\bv1="(\d+)"[^>]*\bv2="(\d+)"[^>]*\bv3="(\d+)"[^>]*\/?\s*>/gi,
+      ),
+    ].map((match) => match.slice(1).map(Number));
+    for (const [a, b, c] of triangles) {
+      const va = vertices[a];
+      const vb = vertices[b];
+      const vc = vertices[c];
+      if (!va || !vb || !vc) continue;
+      const ux = vb[0] - va[0];
+      const uy = vb[1] - va[1];
+      const uz = vb[2] - va[2];
+      const vx = vc[0] - va[0];
+      const vy = vc[1] - va[1];
+      const vz = vc[2] - va[2];
+      const nx = uy * vz - uz * vy;
+      const ny = uz * vx - ux * vz;
+      const nz = ux * vy - uy * vx;
+      const length = Math.hypot(nx, ny, nz) || 1;
+      stl.push(`facet normal ${nx / length} ${ny / length} ${nz / length}`);
+      stl.push(" outer loop");
+      stl.push(`  vertex ${va[0]} ${va[1]} ${va[2]}`);
+      stl.push(`  vertex ${vb[0]} ${vb[1]} ${vb[2]}`);
+      stl.push(`  vertex ${vc[0]} ${vc[1]} ${vc[2]}`);
+      stl.push(" endloop", "endfacet");
+    }
+  }
+  if (stl.length === 1)
+    throw new Error("3MF model contains no renderable triangles");
+  stl.push("endsolid flux3d");
+  return Buffer.from(stl.join("\n"));
 }
 
 function parseGcodeHeader(header) {
@@ -224,7 +299,9 @@ function parseGcodeHeader(header) {
   const totalTimeLine = header.match(
     /;\s*model printing time:.*?total estimated time:\s*([^;\n]+)/,
   );
-  const layerLine = header.match(/;\s*total (?:layers count|layer number): (\d+)/);
+  const layerLine = header.match(
+    /;\s*total (?:layers count|layer number): (\d+)/,
+  );
 
   const weightsPerColor = weightLine
     ? weightLine[1]

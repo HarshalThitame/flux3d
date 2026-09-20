@@ -13,6 +13,7 @@ import {
 import {
   Box3,
   BufferGeometry,
+  Float32BufferAttribute,
   Group,
   Matrix4,
   Mesh,
@@ -20,6 +21,7 @@ import {
   Object3D,
   Vector3,
 } from "three";
+import { unzipSync } from "fflate";
 import type { ParsedModel } from "@/lib/quote/types";
 
 const defaultMaterial = new MeshStandardMaterial({
@@ -168,6 +170,57 @@ function objectFromGeometry(geometry: BufferGeometry) {
   return group;
 }
 
+/**
+ * Some Bambu Studio 3MF projects contain metadata/extensions that ThreeMFLoader
+ * intentionally rejects. The mesh itself is still standard 3MF XML, so keep a
+ * small standards-only fallback instead of showing a misleading placeholder.
+ */
+function parseStandard3mfMesh(arrayBuffer: ArrayBuffer) {
+  const files = unzipSync(new Uint8Array(arrayBuffer));
+  const modelEntry = Object.keys(files).find((name) =>
+    /^3d\/[^/]+\.model$/i.test(name),
+  );
+  if (!modelEntry) throw new Error("3MF archive has no 3D model XML");
+
+  const xml = new TextDecoder().decode(files[modelEntry]);
+  const document = new DOMParser().parseFromString(xml, "application/xml");
+  if (document.querySelector("parsererror")) {
+    throw new Error("3MF model XML is invalid");
+  }
+
+  const positions: number[] = [];
+  const indices: number[] = [];
+  const meshes = Array.from(document.getElementsByTagNameNS("*", "mesh"));
+  for (const mesh of meshes) {
+    const vertices = Array.from(mesh.getElementsByTagNameNS("*", "vertex"));
+    const triangles = Array.from(mesh.getElementsByTagNameNS("*", "triangle"));
+    const offset = positions.length / 3;
+    for (const vertex of vertices) {
+      positions.push(
+        Number(vertex.getAttribute("x") ?? 0),
+        Number(vertex.getAttribute("y") ?? 0),
+        Number(vertex.getAttribute("z") ?? 0),
+      );
+    }
+    for (const triangle of triangles) {
+      indices.push(
+        offset + Number(triangle.getAttribute("v1") ?? 0),
+        offset + Number(triangle.getAttribute("v2") ?? 0),
+        offset + Number(triangle.getAttribute("v3") ?? 0),
+      );
+    }
+  }
+
+  if (positions.length === 0 || indices.length === 0) {
+    throw new Error("3MF model contains no renderable triangles");
+  }
+  const geometry = new BufferGeometry();
+  geometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return objectFromGeometry(geometry);
+}
+
 function fixOrientation(object: Object3D, extension: string) {
   if (["stl", "obj", "3mf", "dae", "fbx", "amf"].includes(extension)) {
     object.rotation.x = -Math.PI / 2;
@@ -214,11 +267,9 @@ export async function parseModelFile(file: File): Promise<ParsedModel> {
         "ThreeMFLoader failed to parse 3MF (likely a Bambu Studio project):",
         err,
       );
-      // Fallback to a dummy 10x10x10 cube so it doesn't crash the upload flow.
-      // The background OrcaSlicer microservice will still slice it perfectly using the real geometry!
-      const { BoxGeometry } = await import("three");
-      const dummyGeo = new BoxGeometry(10, 10, 10);
-      object = objectFromGeometry(dummyGeo);
+      // Preserve the real mesh when a vendor-specific extension defeats the
+      // full loader; never display a fabricated placeholder geometry.
+      object = parseStandard3mfMesh(arrayBuffer);
     }
   } else if (extension === "glb" || extension === "gltf") {
     const gltf = await new Promise<{ scene: Object3D }>((resolve, reject) => {
