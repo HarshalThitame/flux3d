@@ -7,19 +7,6 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-// Initialize Redis for rate limiting
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || '',
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
-});
-
-// Create a new ratelimiter, that allows 3 requests per 1 day
-const ratelimit = new Ratelimit({
-  redis: redis,
-  limiter: Ratelimit.slidingWindow(3, '1 d'),
-  analytics: true,
-});
-
 type ParamsType = { token: string };
 
 export async function POST(
@@ -27,6 +14,19 @@ export async function POST(
   { params }: { params: Promise<ParamsType> }
 ) {
   try {
+    // Initialize Redis for rate limiting inside handler to avoid build time errors
+    const redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL || 'https://dummy.upstash.io',
+      token: process.env.UPSTASH_REDIS_REST_TOKEN || 'dummy',
+    });
+
+    // Create a new ratelimiter, that allows 3 requests per 1 day
+    const ratelimit = new Ratelimit({
+      redis: redis,
+      limiter: Ratelimit.slidingWindow(3, '1 d'),
+      analytics: true,
+    });
+
     const resolvedParams = await params;
     const { token } = resolvedParams;
 

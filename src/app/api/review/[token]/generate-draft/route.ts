@@ -7,15 +7,15 @@ import OpenAI from 'openai';
 
 type ParamsType = { token: string };
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<ParamsType> }
 ) {
   try {
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || 'dummy_key_for_build',
+    });
+
     const resolvedParams = await params;
     const { token } = resolvedParams;
 
