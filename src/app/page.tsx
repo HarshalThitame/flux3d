@@ -6,6 +6,7 @@ import { faqPageJsonLd, makeLocalBusinessJsonLd } from "@/lib/structured-data";
 import { getShopHomeData } from "@/lib/shop/public-data";
 import { getCspNonce } from "@/lib/csp";
 import "./landing-luxury-unified.css";
+import TestimonialsSection from "@/components/TestimonialsSection";
 import HeroSection from "./landing/HeroSection";
 import LandingPageBoundary from "./landing/LandingPageBoundary";
 import LandingShopSection from "./landing/LandingShopSection";
@@ -71,6 +72,7 @@ export default async function Home() {
       <main>
         <HeroSection shopData={shopData} />
         <LandingShopSection data={shopData} />
+        <TestimonialsSection />
         <LandingPageBoundary />
       </main>
     </div>
