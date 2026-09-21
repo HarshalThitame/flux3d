@@ -61,6 +61,8 @@ export const adminNavItems: NavItem[] = [
   { label: 'Blog', href: '/admin/blog', icon: Eye, section: 'main' },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3, section: 'main' },
   { label: 'Meta Ads', href: '/admin/ads', icon: Megaphone, section: 'main' },
+  { label: 'Custom Orders', href: '/admin/custom-orders/create', icon: ShoppingCart, section: 'main' },
+  { label: 'All Reviews', href: '/admin/reviews', icon: Star, section: 'main' },
   { label: '3D Shop Categories', href: '/admin/3d-shop/categories', icon: Layers, section: 'shop' },
   { label: '3D Shop Products', href: '/admin/3d-shop/products', icon: Package, section: 'shop' },
   { label: '3D Shop Stock', href: '/admin/3d-shop/stock', icon: Warehouse, section: 'shop' },
