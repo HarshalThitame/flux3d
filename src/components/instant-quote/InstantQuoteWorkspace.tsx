@@ -387,6 +387,8 @@ function CartEnabledWorkspace({
         fileSize: selectedModel.fileSize,
         extension: selectedModel.extension,
         volumeMm3: selectedModel.volumeMm3,
+        surfaceAreaMm2: selectedModel.surfaceAreaMm2,
+        supportVolumeMm3: selectedModel.supportVolumeMm3,
         dimensionsMm: selectedModel.dimensionsMm,
         triangleCount: selectedModel.triangleCount,
         suggestedMaterialId: selectedModel.suggestedMaterialId,
