@@ -15,6 +15,7 @@ const SizeSection = dynamic(() => import("./SizeSection"), {
 const ServicesSection = dynamic(() => import("./ServicesSection"), {
   ssr: false,
 });
+const TestimonialsSection = dynamic(() => import("./TestimonialsSection"), { ssr: false });
 const HowItWorksSection = dynamic(() => import("./HowItWorksSection"), {
   ssr: false,
 });
@@ -89,6 +90,7 @@ function LazySection({
   );
 }
 
+
 export default function LandingPageClient() {
   return (
     <div className="landing-premium relative">
@@ -109,7 +111,8 @@ export default function LandingPageClient() {
         <PricingSection />
       </LazySection>
       <LazySection minHeight={720} className="premium-band premium-band-panel">
-        <FAQSection />
+        <TestimonialsSection />
+      <FAQSection />
       </LazySection>
       <LazySection minHeight={560} className="premium-band premium-band-black">
         <FinalCTASection />

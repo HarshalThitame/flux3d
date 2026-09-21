@@ -121,6 +121,9 @@ export const FALLBACK_SETTINGS: BusinessSettings = {
   },
   minimumOrderValue: 100,
   gstInclusivePricing: true,
+  amsColorChangeSurcharge: 30,
+  slicerServiceUrl: "",
+  slicerServiceEnabled: false,
   cartDiscountEnabled: true,
   cartDiscountTiers: [
     { minCartValue: 2000, discountPercent: 3 },

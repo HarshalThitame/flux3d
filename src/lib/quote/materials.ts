@@ -3,6 +3,7 @@ import type { LayerHeightOption, QuoteMaterial } from '@/lib/quote/types'
 export const quoteMaterials: QuoteMaterial[] = []
 
 export const layerHeightOptions: LayerHeightOption[] = [
+  { value: 0.28, label: '⚪ Draft (0.28mm)', multiplier: 0.78, description: 'Fastest production profile with visible layer lines. Best for: Fit checks, large prototypes, and quick iterations' },
   { value: 0.2, label: '🟢 Standard Quality (0.2mm)', multiplier: 1.0, description: 'Balanced quality and cost. Slight layer lines may be visible. Best for: Everyday prints, prototypes, basic parts' },
   { value: 0.12, label: '🔵 High Quality (0.12mm)', multiplier: 1.3, description: 'Smoother surface with finer details and less visible lines. Best for: Display models, gifts, detailed designs' },
   { value: 0.08, label: '🟣 Ultra Quality (0.08mm)', multiplier: 1.8, description: 'Premium finish with very smooth surface and sharp details. Best for: Showcase pieces, premium products, professional use' },

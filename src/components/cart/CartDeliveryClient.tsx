@@ -320,6 +320,7 @@ export default function CartDeliveryClient({
               (item as { modelVolumeMm3?: number }).modelVolumeMm3 ?? 0,
             difficultyFactor: item.difficultyFactor ?? 1,
             dimensions: item.dimensions ?? { x: 0, y: 0, z: 0 },
+            config: item.config,
           })),
           subtotal: summary.itemsTotal,
           itemsTotal: summary.itemsTotal,
