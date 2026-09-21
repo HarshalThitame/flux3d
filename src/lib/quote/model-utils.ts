@@ -230,7 +230,16 @@ export async function parseModelFile(file: File): Promise<ParsedModel> {
     const text = new TextDecoder().decode(arrayBuffer);
     object = new OBJLoader().parse(text);
   } else if (extension === "3mf") {
-    object = new ThreeMFLoader().parse(arrayBuffer);
+    try {
+      object = new ThreeMFLoader().parse(arrayBuffer);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("mesh")) {
+        throw new Error(
+          "The 3MF file contains an unsupported internal structure. Please re-export it from your slicer/CAD software or convert it to STL/OBJ.",
+        );
+      }
+      throw error;
+    }
   } else if (extension === "glb" || extension === "gltf") {
     const gltf = await new Promise<{ scene: Object3D }>((resolve, reject) => {
       new GLTFLoader().parse(arrayBuffer, "", (gltf) => resolve(gltf), reject);
