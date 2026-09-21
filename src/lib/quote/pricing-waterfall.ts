@@ -389,7 +389,7 @@ export function calculateQuotePricing(
     scaledVolumeCm3,
     quantity,
     baseWeightGrams,
-    infillMultiplier: infillFactor,
+    infillMultiplier,
     materialUsageGramsPerUnit: materialWeightGramsPerUnit,
     materialWeightGrams: materialWeightGramsTotal,
     supportWeightGrams: supportWeightGramsTotal,
