@@ -1,165 +1,207 @@
-import type { Object3D } from 'three'
+import type { Object3D } from "three";
 
 export type MaterialPropertySet = {
-  strength: string
-  flexibility: string
-  tempResistance: string
-  difficulty: string
-}
+  strength: string;
+  flexibility: string;
+  tempResistance: string;
+  difficulty: string;
+};
 
 export type MaterialColor = {
-  name: string
-}
+  name: string;
+};
 
 export const DIFFICULTY_FACTOR_OPTIONS = [
-  { value: 1.1, label: '1.1X' },
-  { value: 1.2, label: '1.2X' },
-  { value: 1.3, label: '1.3X' },
-  { value: 1.5, label: '1.5X' },
-  { value: 10, label: '10X' },
-] as const
+  { value: 1.1, label: "1.1X" },
+  { value: 1.2, label: "1.2X" },
+  { value: 1.3, label: "1.3X" },
+  { value: 1.5, label: "1.5X" },
+  { value: 10, label: "10X" },
+] as const;
 
 export type QuoteMaterial = {
-  id: string
-  name: string
-  icon: string
-  summary: string
-  density: number
-  pricePerGram: number
-  machineRate: number
-  multiplier: number
-  recommendedFor: string
-  properties: MaterialPropertySet
-  colors: MaterialColor[]
-  difficultyFactor: number
-  keyProperties?: string[]
-  bestFor?: string[]
-  difficultyLevel?: 'Easy' | 'Medium' | 'Hard'
-  heatResistance?: 'Low' | 'Medium' | 'High'
-  strengthRating?: 'Low' | 'Medium' | 'High'
-  finishQuality?: 'Basic' | 'Good' | 'Excellent'
-  samplePhoto?: string
-}
+  id: string;
+  name: string;
+  icon: string;
+  summary: string;
+  density: number;
+  pricePerGram: number;
+  machineRate: number;
+  multiplier: number;
+  recommendedFor: string;
+  properties: MaterialPropertySet;
+  colors: MaterialColor[];
+  difficultyFactor: number;
+  keyProperties?: string[];
+  bestFor?: string[];
+  difficultyLevel?: "Easy" | "Medium" | "Hard";
+  heatResistance?: "Low" | "Medium" | "High";
+  strengthRating?: "Low" | "Medium" | "High";
+  finishQuality?: "Basic" | "Good" | "Excellent";
+  samplePhoto?: string;
+};
 
 export type LayerHeightOption = {
-  value: number
-  label: string
-  multiplier: number
-  description: string
-}
+  value: number;
+  label: string;
+  multiplier: number;
+  description: string;
+};
 
-export type PostProcessingLevel = 'none' | 'sanded' | 'sanded-painted'
+export type PostProcessingLevel = "none" | "sanded" | "sanded-painted";
+
+export type SlicerPlate = {
+  plateIndex: number;
+  modelWeightGrams: number;
+  wasteWeightGrams: number;
+  estimatedMinutes: number;
+  layerCount: number;
+  weightsPerColor: number[];
+};
+
+export type SlicerResult = {
+  source: "slicer" | "geometry";
+  totalWeightGrams: number;
+  modelWeightGrams: number;
+  wasteWeightGrams: number;
+  /** Per AMS slot weights — index 0 = slot 1 */
+  weightsPerColor: number[];
+  estimatedMinutes: number;
+  layerCount: number;
+  plates?: SlicerPlate[];
+};
 
 export type ParsedModel = {
-  fileName: string
-  fileSize: number
-  extension: string
-  object: Object3D
+  fileName: string;
+  fileSize: number;
+  extension: string;
+  object: Object3D;
   dimensionsMm: {
-    x: number
-    y: number
-    z: number
-  }
-  volumeMm3: number
-  triangleCount: number
-  suggestedMaterialId: string
-  requiresReview: boolean
-}
+    x: number;
+    y: number;
+    z: number;
+  };
+  volumeMm3: number;
+  triangleCount: number;
+  suggestedMaterialId: string;
+  requiresReview: boolean;
+  slicerResult?: SlicerResult;
+  detectedColors?: string[];
+};
 
 export type QuoteConfig = {
-  materialId: string
-  color: string
-  infill: number
-  layerHeight: number
-  quantity: number
-  postProcessingLevel: PostProcessingLevel
-  supports: boolean
-}
+  materialId: string;
+  color: string;
+  infill: number;
+  layerHeight: number;
+  quantity: number;
+  postProcessingLevel: PostProcessingLevel;
+  supports: boolean;
+  /** AMS Lite color slot count (1–4). Controls "multi-color" mode. */
+  amsColorCount?: number;
+  /** Per-slot AMS colours used by the preview, ordered from slot 1 through 4. */
+  amsSlotColors?: string[];
+  /** Uniform model scale as a percentage; 100 preserves the uploaded size. */
+  scaleFactor?: number;
+  /** Number of printed perimeters/walls. */
+  wallCount?: number;
+  /** Print-speed profile sent to the slicer. */
+  printSpeedPreset?: "quality" | "standard" | "fast";
+  /** Requested dimensional tolerance and its pricing difficulty adjustment. */
+  tolerancePreset?: "standard" | "fine" | "precision";
+};
 
 export type CartDiscountTier = {
-  minCartValue: number
-  discountPercent: number
-}
+  minCartValue: number;
+  discountPercent: number;
+};
 
 export type PriceBreakdown = {
-  scaledVolumeCm3: number
-  quantity: number
-  baseWeightGrams: number
-  infillMultiplier: number
-  materialUsageGramsPerUnit: number
-  materialWeightGrams: number
-  supportWeightGrams: number
-  materialRatePerKg: number
-  machineRatePerHour: number
-  basePrintTimeMinutesPerUnit: number
-  estimatedMinutesPerUnit: number
-  estimatedMinutes: number
-  estimatedHours: number
-  materialCost: number
-  machineCost: number
-  postProcessingCharges: number
-  subtotal: number
-  overheadPercent: number
-  overheadPercentage: number
-  marginPercent: number
-  marginPercentage: number
-  overheadAmount: number
-  marginAmount: number
-  priceBeforeDiscount: number
+  scaledVolumeCm3: number;
+  quantity: number;
+  baseWeightGrams: number;
+  infillMultiplier: number;
+  materialUsageGramsPerUnit: number;
+  materialWeightGrams: number;
+  supportWeightGrams: number;
+  materialRatePerKg: number;
+  machineRatePerHour: number;
+  basePrintTimeMinutesPerUnit: number;
+  estimatedMinutesPerUnit: number;
+  estimatedMinutes: number;
+  estimatedHours: number;
+  materialCost: number;
+  machineCost: number;
+  postProcessingCharges: number;
+  subtotal: number;
+  overheadPercent: number;
+  overheadPercentage: number;
+  marginPercent: number;
+  marginPercentage: number;
+  overheadAmount: number;
+  marginAmount: number;
+  priceBeforeDiscount: number;
   /** Database-compatible alias for priceBeforeDiscount / orders.total_price. */
-  totalPrice: number
-  cartDiscountPercent: number
-  cartDiscountAmount: number
-  afterCart: number
-  couponDiscountAmount: number
-  afterCoupon: number
-  offerDiscountAmount: number
-  discount: number
-  finalPrice: number
-  minimumOrderValue: number
-  priceBeforeMinimum: number
-  deliveryCharge: number
-  grandTotal: number
-  price: number
-  pricePerUnit: number
-  timeCost: number
-  labourCost: number
-  setupCost: number
-  supportCost: number
-  postProcessingLevel: PostProcessingLevel
-  postProcessingCostPerUnit: number
-  profitMargin: number
-  difficultyFactor: number
+  totalPrice: number;
+  cartDiscountPercent: number;
+  cartDiscountAmount: number;
+  afterCart: number;
+  couponDiscountAmount: number;
+  afterCoupon: number;
+  offerDiscountAmount: number;
+  discount: number;
+  finalPrice: number;
+  minimumOrderValue: number;
+  priceBeforeMinimum: number;
+  deliveryCharge: number;
+  grandTotal: number;
+  price: number;
+  pricePerUnit: number;
+  timeCost: number;
+  labourCost: number;
+  setupCost: number;
+  supportCost: number;
+  postProcessingLevel: PostProcessingLevel;
+  postProcessingCostPerUnit: number;
+  profitMargin: number;
+  difficultyFactor: number;
   dimensionsMm: {
-    x: number
-    y: number
-    z: number
-  }
-}
+    x: number;
+    y: number;
+    z: number;
+  };
+  slicerUsed: boolean;
+  weightsPerColor: number[];
+  amsColorChangeSurcharge: number;
+  modelWeightGrams: number;
+  amsWasteWeightGrams: number;
+  /** Scale used to produce the displayed dimensions and geometry estimate. */
+  appliedScaleFactor: number;
+};
 
 export type UploadState = {
-  status: 'idle' | 'uploading' | 'success' | 'error'
-  progress: number
-  path?: string
-  error?: string
-}
+  status: "idle" | "uploading" | "success" | "error";
+  progress: number;
+  path?: string;
+  error?: string;
+};
 
 export type QuoteCapture = {
-  id: string
-  userId: string
-  reference: string
-  status: 'pending' | 'paid' | 'cancelled' | 'expired'
-  amountPaise: number
-  currency: string
-  draftData: Record<string, unknown>
-  addressData: Record<string, unknown>
-  configData: Record<string, unknown>
-  pricingData: Record<string, unknown>
-  modelMetadata: Record<string, unknown>
-  razorpayOrderId: string | null
-  paymentAttemptId: string | null
-  orderId: string | null
-  createdAt: string
-  expiresAt: string
-  paidAt: string | null
-}
+  id: string;
+  userId: string;
+  reference: string;
+  status: "pending" | "paid" | "cancelled" | "expired";
+  amountPaise: number;
+  currency: string;
+  draftData: Record<string, unknown>;
+  addressData: Record<string, unknown>;
+  configData: Record<string, unknown>;
+  pricingData: Record<string, unknown>;
+  modelMetadata: Record<string, unknown>;
+  razorpayOrderId: string | null;
+  paymentAttemptId: string | null;
+  orderId: string | null;
+  createdAt: string;
+  expiresAt: string;
+  paidAt: string | null;
+};

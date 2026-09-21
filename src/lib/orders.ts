@@ -70,6 +70,11 @@ export type CreateOrderInput = {
   quantity: number
   postProcessingLevel: 'none' | 'sanded' | 'sanded-painted'
   supports: boolean
+  scaleFactor?: number
+  wallCount?: number
+  printSpeedPreset?: 'quality' | 'standard' | 'fast'
+  tolerancePreset?: 'standard' | 'fine' | 'precision'
+  amsSlotColors?: string[]
   notes?: string
   fullName: string
   phone: string
@@ -135,6 +140,11 @@ export type OrderDraft = {
   postProcessingLevel: 'none' | 'sanded' | 'sanded-painted'
   postProcessingCharges: number
   supports: boolean
+  scaleFactor?: number
+  wallCount?: number
+  printSpeedPreset?: 'quality' | 'standard' | 'fast'
+  tolerancePreset?: 'standard' | 'fine' | 'precision'
+  amsSlotColors?: string[]
   materialCost: number
   machineCost: number
   subtotal: number

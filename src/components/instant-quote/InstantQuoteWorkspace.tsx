@@ -9,34 +9,11 @@ import {
   useSyncExternalStore,
 } from "react";
 import dynamic from "next/dynamic";
-import { motion, useReducedMotion } from "framer-motion";
-import {
-  UploadCloud,
-  CheckCircle2,
-  LoaderCircle,
-  Palette,
-  Package2,
-  Layers3,
-  ShieldCheck,
-  BookmarkPlus,
-  Truck,
-  ShoppingCart,
-  PackageCheck,
-  ArrowRight,
-  AlertTriangle,
-  FileArchive,
-  Move3D,
-  Cuboid,
-} from "lucide-react";
-import EmptyState from "@/components/admin/EmptyState";
+import { useReducedMotion } from "framer-motion";
+import { LoaderCircle } from "lucide-react";
 import type { AppUserProfile } from "@/lib/auth/server";
-import { getMaterialById, layerHeightOptions } from "@/lib/quote/materials";
-import {
-  calculateInstantQuote,
-  formatDurationMinutes,
-  getPostProcessingCharge,
-  postProcessingOptions,
-} from "@/lib/quote/pricing-engine";
+import { getMaterialById } from "@/lib/quote/materials";
+import { calculateInstantQuote } from "@/lib/quote/pricing-engine";
 import type { PricingSettingsInput } from "@/lib/quote/pricing-waterfall";
 import {
   getSignedModelUrl,
@@ -58,11 +35,9 @@ import type { CartItem } from "@/lib/cart/types";
 import Toast, { type ToastState } from "@/components/quote/Toast";
 import Link from "next/link";
 import { ORDER_DRAFT_STORAGE_KEY, type OrderDraft } from "@/lib/orders";
-
-const initialUploadState: UploadState = {
-  status: "idle",
-  progress: 0,
-};
+import LeftSidebar from "./LeftSidebar";
+import RightSidebar from "./RightSidebar";
+import WhatsAppCTABanner from "./WhatsAppCTABanner";
 
 const ViewerSection = dynamic(
   () => import("@/components/instant-quote/ViewerSection"),
@@ -73,6 +48,11 @@ const ViewerSection = dynamic(
     ),
   },
 );
+
+const initialUploadState: UploadState = {
+  status: "idle",
+  progress: 0,
+};
 
 export type InstantQuoteWorkspaceProps = {
   user: AppUserProfile | null;
@@ -90,53 +70,15 @@ export type InstantQuoteWorkspaceProps = {
   };
 };
 
-export default function InstantQuoteWorkspace({
-  user,
-  materials,
-  initialMaterialId,
-  initialModelFile,
-  pricingSettings,
-  bulkOrderContact,
-}: InstantQuoteWorkspaceProps) {
-  const shouldReduceMotion = useReducedMotion();
-  if (materials.length === 0) {
-    return (
-      <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-8 text-[#070b1d] md:px-8 md:pt-10 xl:px-10">
-        <div className="mx-auto max-w-[1100px]">
-          <EmptyState
-            title="No materials available"
-            description="The admin catalog is empty right now, so ordering is disabled until a material is added in the admin panel."
-          />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <CartEnabledWorkspace
-      user={user}
-      materials={materials}
-      initialMaterialId={initialMaterialId}
-      initialModelFile={initialModelFile}
-      pricingSettings={pricingSettings}
-      bulkOrderContact={bulkOrderContact}
-    />
-  );
-}
-
 const WORKSPACE_STORAGE_KEY = "flux3d-workspace-draft";
 const QUOTE_ID_STORAGE_KEY = "flux3d-quote-id";
+const DEFAULT_AMS_SLOT_COLORS = ["#ffffff", "#000000", "#ff0000", "#0000ff"];
+const PRINT_SPEED_MMS = { quality: 80, standard: 150, fast: 220 } as const;
 
 function getInitialQuoteId() {
-  if (typeof window === "undefined") {
-    return "";
-  }
-
+  if (typeof window === "undefined") return "";
   const stored = sessionStorage.getItem(QUOTE_ID_STORAGE_KEY);
-  if (stored) {
-    return stored;
-  }
-
+  if (stored) return stored;
   const newId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
   sessionStorage.setItem(QUOTE_ID_STORAGE_KEY, newId);
   return newId;
@@ -145,7 +87,6 @@ function getInitialQuoteId() {
 function subscribeQuoteId() {
   return () => {};
 }
-
 function getServerQuoteId() {
   return "";
 }
@@ -154,15 +95,9 @@ function getInitialWorkspaceConfig(
   defaultConfig: QuoteConfig,
   forceMaterialSelection: boolean,
 ) {
-  if (typeof window === "undefined") {
-    return defaultConfig;
-  }
-
+  if (typeof window === "undefined") return defaultConfig;
   const raw = sessionStorage.getItem(WORKSPACE_STORAGE_KEY);
-  if (!raw) {
-    return defaultConfig;
-  }
-
+  if (!raw) return defaultConfig;
   try {
     const parsed = JSON.parse(raw) as { config?: QuoteConfig };
     const merged = { ...defaultConfig, ...parsed.config };
@@ -182,16 +117,12 @@ function getModelStoragePath(value: string) {
   const bucket =
     process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? "quote-models";
   const trimmed = value.trim();
-
-  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://"))
     return trimmed;
-  }
-
   try {
     const parsed = new URL(trimmed);
     const publicPrefix = `/storage/v1/object/public/${bucket}/`;
     const signedPrefix = `/storage/v1/object/sign/${bucket}/`;
-
     if (parsed.pathname.startsWith(publicPrefix))
       return parsed.pathname.slice(publicPrefix.length);
     if (parsed.pathname.startsWith(signedPrefix))
@@ -199,8 +130,38 @@ function getModelStoragePath(value: string) {
   } catch {
     return null;
   }
-
   return null;
+}
+
+export default function InstantQuoteWorkspace({
+  user,
+  materials,
+  initialMaterialId,
+  initialModelFile,
+  pricingSettings,
+  bulkOrderContact,
+}: InstantQuoteWorkspaceProps) {
+  if (materials.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-8 text-[#070b1d] md:px-8 md:pt-10 xl:px-10">
+        <div className="mx-auto max-w-[1100px]">
+          <div className="p-8 text-center text-red-500">
+            No materials available
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <CartEnabledWorkspace
+      user={user}
+      materials={materials}
+      initialMaterialId={initialMaterialId}
+      initialModelFile={initialModelFile}
+      pricingSettings={pricingSettings}
+      bulkOrderContact={bulkOrderContact}
+    />
+  );
 }
 
 function CartEnabledWorkspace({
@@ -211,7 +172,6 @@ function CartEnabledWorkspace({
   pricingSettings,
   bulkOrderContact,
 }: InstantQuoteWorkspaceProps) {
-  const shouldReduceMotion = useReducedMotion();
   const { addItem, isInCart } = useCart();
   const supabaseEnabled = hasSupabaseConfig();
   const preferredMaterial = initialMaterialId
@@ -230,7 +190,7 @@ function CartEnabledWorkspace({
   const [quoteIdOverride, setInitialQuoteId] = useState<string | null>(null);
   const initialQuoteId = quoteIdOverride ?? hydratedQuoteId;
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [selectedModel, setSelectedModel] = useState<ParsedModel | null>(null);
   const defaultConfig: QuoteConfig = {
     materialId: defaultMaterial.id,
@@ -240,6 +200,12 @@ function CartEnabledWorkspace({
     quantity: 1,
     postProcessingLevel: "none",
     supports: false,
+    amsColorCount: 1,
+    amsSlotColors: DEFAULT_AMS_SLOT_COLORS,
+    scaleFactor: 100,
+    wallCount: 3,
+    printSpeedPreset: "standard",
+    tolerancePreset: "standard",
   };
   const [config, setConfig] = useState<QuoteConfig>(() =>
     getInitialWorkspaceConfig(defaultConfig, Boolean(initialMaterialId)),
@@ -249,16 +215,26 @@ function CartEnabledWorkspace({
   const [viewerLoading, setViewerLoading] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
-  const [hasUserSelectedMaterial, setHasUserSelectedMaterial] = useState(
-    Boolean(initialMaterialId),
-  );
+
+  const [activePlateIndex, setActivePlateIndex] = useState(0);
+  const sliceDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const sliceRequestRef = useRef(0);
+
+  const [slicerStatus, setSlicerStatus] = useState<string | null>(null);
+  const [slicerError, setSlicerError] = useState<string | null>(null);
   const [savingQuote, setSavingQuote] = useState(false);
-  const uploadRef = useRef<HTMLDivElement>(null);
-  const viewerRef = useRef<HTMLDivElement>(null);
-  const materialRef = useRef<HTMLDivElement>(null);
-  const settingsRef = useRef<HTMLDivElement>(null);
+
   const trackedQuoteRef = useRef<string | null>(null);
   const prefilledModelRef = useRef(false);
+  const sliceSettingsKey = JSON.stringify({
+    layerHeight: config.layerHeight,
+    infill: config.infill,
+    amsColorCount: config.amsColorCount ?? 1,
+    scaleFactor: config.scaleFactor ?? 100,
+    wallCount: config.wallCount ?? 3,
+    printSpeedPreset: config.printSpeedPreset ?? "standard",
+    supports: config.supports,
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -267,10 +243,7 @@ function CartEnabledWorkspace({
   }, [config]);
 
   useEffect(() => {
-    if (!toast) {
-      return;
-    }
-
+    if (!toast) return;
     const timer = window.setTimeout(() => setToast(null), 3200);
     return () => window.clearTimeout(timer);
   }, [toast]);
@@ -294,10 +267,8 @@ function CartEnabledWorkspace({
       !priceBreakdown ||
       !initialQuoteId ||
       trackedQuoteRef.current === initialQuoteId
-    ) {
+    )
       return;
-    }
-
     trackedQuoteRef.current = initialQuoteId;
     void trackFeatureUsage(user?.id ?? null, "instant_quote", {
       quoteId: initialQuoteId,
@@ -316,128 +287,28 @@ function CartEnabledWorkspace({
     selectedModel,
     user?.id,
   ]);
-  const selectedMaterial = getMaterialById(config.materialId, materials);
-  const postProcessingBaseAmount = priceBreakdown
-    ? priceBreakdown.materialCost + priceBreakdown.machineCost
-    : 0;
-  const selectedColorName = config.color;
-  const orderDraft = useMemo<OrderDraft | null>(() => {
-    if (
-      !initialQuoteId ||
-      !selectedMaterial ||
-      !selectedModel ||
-      !priceBreakdown ||
-      uploadState.status !== "success" ||
-      !uploadState.path
-    ) {
-      return null;
-    }
 
-    return {
-      quoteId: initialQuoteId,
-      fileUrl: uploadState.path,
-      material: selectedMaterial.name,
-      color: selectedColorName,
-      infill: config.infill,
-      layerHeight: config.layerHeight,
-      quantity: config.quantity,
-      postProcessingLevel: config.postProcessingLevel,
-      materialCost: priceBreakdown.materialCost,
-      machineCost: priceBreakdown.machineCost,
-      subtotal: priceBreakdown.subtotal,
-      postProcessingCharges: priceBreakdown.postProcessingCharges,
-      totalPrice: priceBreakdown.priceBeforeDiscount,
-      cartDiscountAmount: priceBreakdown.cartDiscountAmount,
-      cartDiscountPercent: priceBreakdown.cartDiscountPercent,
-      finalPrice: priceBreakdown.finalPrice,
-      minimumOrderValue: priceBreakdown.minimumOrderValue,
-      priceBeforeMinimum: priceBreakdown.priceBeforeMinimum,
-      deliveryCharge: priceBreakdown.deliveryCharge,
-      grandTotal: priceBreakdown.grandTotal,
-      supports: config.supports,
-      price: priceBreakdown.finalPrice,
-      estimatedTime: priceBreakdown.estimatedHours,
-      weight: priceBreakdown.materialWeightGrams,
-      difficultyFactor: priceBreakdown.difficultyFactor,
-      overheadPercentage: priceBreakdown.overheadPercentage,
-      overheadAmount: priceBreakdown.overheadAmount,
-      marginPercentage: priceBreakdown.marginPercentage,
-      marginAmount: priceBreakdown.marginAmount,
-      priceBreakdown: {
-        materialCost: priceBreakdown.materialCost,
-        machineCost: priceBreakdown.machineCost,
-        postProcessingCharges: priceBreakdown.postProcessingCharges,
-        subtotal: priceBreakdown.subtotal,
-        overheadPercentage: priceBreakdown.overheadPercentage,
-        overheadAmount: priceBreakdown.overheadAmount,
-        marginPercentage: priceBreakdown.marginPercentage,
-        marginAmount: priceBreakdown.marginAmount,
-        totalPrice: priceBreakdown.priceBeforeDiscount,
-        cartDiscountAmount: priceBreakdown.cartDiscountAmount,
-        cartDiscountPercent: priceBreakdown.cartDiscountPercent,
-        finalPrice: priceBreakdown.finalPrice,
-        deliveryCharge: priceBreakdown.deliveryCharge,
-        grandTotal: priceBreakdown.grandTotal,
-        minimumOrderValue: priceBreakdown.minimumOrderValue,
-        priceBeforeMinimum: priceBreakdown.priceBeforeMinimum,
-      },
-      notes: "",
-      modelMetadata: {
-        fileName: selectedModel.fileName,
-        fileSize: selectedModel.fileSize,
-        extension: selectedModel.extension,
-        volumeMm3: selectedModel.volumeMm3,
-        dimensionsMm: selectedModel.dimensionsMm,
-        triangleCount: selectedModel.triangleCount,
-        suggestedMaterialId: selectedModel.suggestedMaterialId,
-      } satisfies ModelMetadata,
-    };
-  }, [
-    config.infill,
-    config.layerHeight,
-    config.quantity,
-    config.postProcessingLevel,
-    config.supports,
-    initialQuoteId,
-    priceBreakdown,
-    selectedColorName,
-    selectedMaterial,
-    selectedModel,
-    uploadState.path,
-    uploadState.status,
-  ]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    if (orderDraft) {
-      window.sessionStorage.setItem(
-        ORDER_DRAFT_STORAGE_KEY,
-        JSON.stringify(orderDraft),
-      );
-      return;
-    }
-
-    window.sessionStorage.removeItem(ORDER_DRAFT_STORAGE_KEY);
-  }, [orderDraft]);
+  const selectedMaterial =
+    getMaterialById(config.materialId, materials) ?? materials[0];
 
   const handleFileSelect = useCallback(
-    async (file: File) => {
-      const validationError = validateModelFile(file);
-      if (validationError) {
-        setFileError(validationError);
-        setToast({ type: "error", message: validationError });
-        return;
+    async (files: File[]) => {
+      if (!files.length) return;
+      for (const f of files) {
+        const validationError = validateModelFile(f);
+        if (validationError) {
+          setFileError(validationError);
+          setToast({ type: "error", message: validationError });
+          return;
+        }
       }
+
+      setUploadedFiles(files);
 
       const newQuoteId = `F3D-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
       sessionStorage.setItem("flux3d-quote-id", newQuoteId);
       setInitialQuoteId(newQuoteId);
-
       setFileError(null);
-      setSelectedFile(file);
       setViewerLoading(true);
       setUploadState({
         status: "uploading",
@@ -446,62 +317,84 @@ function CartEnabledWorkspace({
 
       try {
         const { parseModelFile } = await import("@/lib/quote/model-utils");
-        const parsedModel = await parseModelFile(file);
-        setSelectedModel(parsedModel);
+        const parsedModels = await Promise.all(
+          files.map((f) => parseModelFile(f)),
+        );
+        const { Group } = await import("three");
+        const group = new Group();
+        let totalVolume = 0;
+        let totalTriangleCount = 0;
+        const maxDimensions = { x: 0, y: 0, z: 0 };
+        const detectedColors = new Set<string>();
 
-        if (parsedModel.requiresReview) {
-          setToast({
-            type: "info",
-            message:
-              "File accepted for manual review. Our team will calculate pricing and contact you.",
-          });
-        } else if (!hasUserSelectedMaterial) {
-          const suggestedMaterial =
-            getMaterialById(parsedModel.suggestedMaterialId, materials) ??
-            materials[0];
-          if (!suggestedMaterial) {
-            throw new Error(
-              "No printable material is available for this model.",
-            );
-          }
-          setConfig((current) => ({
-            ...current,
-            materialId: suggestedMaterial.id,
-            color: suggestedMaterial.colors[0]?.name ?? current.color,
-          }));
-          setToast({
-            type: "info",
-            message: `Suggested material: ${suggestedMaterial.name} based on your model size.`,
+        parsedModels.forEach((pm, i) => {
+          pm.object.position.x = i * 150;
+          group.add(pm.object);
+          totalVolume += pm.volumeMm3;
+          totalTriangleCount += pm.triangleCount;
+          maxDimensions.x = Math.max(maxDimensions.x, pm.dimensionsMm.x);
+          maxDimensions.y = Math.max(maxDimensions.y, pm.dimensionsMm.y);
+          maxDimensions.z = Math.max(maxDimensions.z, pm.dimensionsMm.z);
+          pm.detectedColors?.forEach((c) => detectedColors.add(c));
+        });
+
+        const mergedModel = {
+          ...parsedModels[0],
+          fileName:
+            files.length === 1 ? files[0].name : `${files.length} files`,
+          fileSize: files.reduce((acc, f) => acc + f.size, 0),
+          object: group,
+          volumeMm3: totalVolume,
+          triangleCount: totalTriangleCount,
+          dimensionsMm: maxDimensions,
+          detectedColors: Array.from(detectedColors),
+          requiresReview: parsedModels.some((pm) => pm.requiresReview),
+        };
+
+        setSelectedModel(mergedModel);
+        const detectedSlotColors = mergedModel.detectedColors
+          .filter((color) => /^#[0-9a-f]{6}$/i.test(color))
+          .slice(0, 4);
+        if (detectedSlotColors.length > 0) {
+          setConfig((current) => {
+            const amsSlotColors = [...DEFAULT_AMS_SLOT_COLORS];
+            detectedSlotColors.forEach((color, index) => {
+              amsSlotColors[index] = color;
+            });
+            return {
+              ...current,
+              amsSlotColors,
+              amsColorCount:
+                detectedSlotColors.length > 1
+                  ? detectedSlotColors.length
+                  : current.amsColorCount ?? 1,
+            };
           });
         }
 
         if (user && supabaseEnabled) {
-          const uploadResult = await uploadFileToSupabaseStorage(
-            file,
-            user.id,
-            newQuoteId,
-            (progress) => setUploadState({ status: "uploading", progress }),
+          const uploadResults = await Promise.all(
+            files.map((f, i) =>
+              uploadFileToSupabaseStorage(
+                f,
+                user.id,
+                newQuoteId + "-" + i,
+                (progress) =>
+                  setUploadState({
+                    status: "uploading",
+                    progress: Math.round(progress / files.length),
+                  }),
+              ),
+            ),
           );
-          setUploadState(uploadResult);
-
-          void fetch("/api/quote/model-metadata", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              fileUrl: uploadResult.path,
-              volumeMm3: parsedModel.volumeMm3,
-              dimensionsMm: parsedModel.dimensionsMm,
-              triangleCount: parsedModel.triangleCount,
-              fileName: file.name,
-              fileSize: file.size,
-              extension: parsedModel.extension,
-            }),
-          }).catch(() => {});
-        } else {
+          const joinedPath = uploadResults.map((r) => r.path).join(",");
           setUploadState({
             status: "success",
             progress: 100,
+            path: joinedPath,
           });
+        } else {
+          setUploadState({ status: "success", progress: 100 });
         }
       } catch (error) {
         const message =
@@ -509,101 +402,108 @@ function CartEnabledWorkspace({
             ? error.message
             : "Could not process the uploaded model.";
         setSelectedModel(null);
-        setUploadState({
-          status: "error",
-          progress: 0,
-          error: message,
-        });
+        setUploadState({ status: "error", progress: 0, error: message });
         setFileError(message);
         setToast({ type: "error", message });
       } finally {
         setViewerLoading(false);
       }
     },
-    [hasUserSelectedMaterial, materials, supabaseEnabled, user],
+    [materials, supabaseEnabled, user],
   );
 
-  useEffect(() => {
-    if (
-      !initialModelFile ||
-      prefilledModelRef.current ||
-      !user ||
-      !supabaseEnabled
-    ) {
-      return;
-    }
+  const handleGetPreciseQuote = async () => {
+    if (!uploadState.path || !selectedModel) return;
+    setSlicerStatus("Uploading model to processing node...");
+    setSlicerError(null);
+    const requestId = ++sliceRequestRef.current;
 
-    prefilledModelRef.current = true;
+    let stepIndex = 0;
+    const steps = [
+      "Preparing .3mf geometry...",
+      "Slicing Model & generating G-Code...",
+      "Calculating Waste & AMS Purge...",
+      "Finalizing price breakdown...",
+    ];
+    const progressInterval = setInterval(() => {
+      stepIndex = Math.min(stepIndex + 1, steps.length - 1);
+      setSlicerStatus(steps[stepIndex]);
+    }, 4500);
 
-    const loadInitialModel = async () => {
-      try {
-        const storagePath = getModelStoragePath(initialModelFile.fileUrl);
-        if (!storagePath) {
-          throw new Error("Could not load the selected model file.");
-        }
+    try {
+      const paths = uploadState.path.split(",");
+      const signedUrls = await Promise.all(
+        paths.map((p) => getSignedModelUrl(p)),
+      );
+      const res = await fetch("/api/quote/slice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileUrls: signedUrls,
+          layerHeight: config.layerHeight,
+          infill: config.infill,
+          numColors: config.amsColorCount ?? 1,
+          scalePercent: config.scaleFactor ?? 100,
+          wallCount: config.wallCount ?? 3,
+          printSpeedMms:
+            PRINT_SPEED_MMS[config.printSpeedPreset ?? "standard"],
+          supports: config.supports,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.fallback)
+        throw new Error(data.error ?? "Slicer unavailable");
 
-        const signedUrl = await getSignedModelUrl(storagePath);
-        const response = await fetch(signedUrl);
-        if (!response.ok) {
-          throw new Error("Could not fetch the selected model file.");
-        }
-        const blob = await response.blob();
-        const file = new File([blob], initialModelFile.fileName, {
-          type: blob.type || "application/octet-stream",
-        });
-
-        await handleFileSelect(file);
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Could not load the selected model file.";
-        setToast({ type: "error", message });
+      if (requestId === sliceRequestRef.current) {
+        setSelectedModel((prev) =>
+          prev
+            ? { ...prev, slicerResult: { source: "slicer", ...data } }
+            : prev,
+        );
       }
-    };
-
-    void loadInitialModel();
-  }, [handleFileSelect, initialModelFile, supabaseEnabled, user]);
-
-  const handleMaterialChange = (materialId: string) => {
-    const nextMaterial = getMaterialById(materialId, materials) ?? materials[0];
-    if (!nextMaterial) {
-      return;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Slicer failed";
+      setSlicerError(msg);
+      setToast({
+        type: "error",
+        message: `Slicer: ${msg}. Quick estimate shown.`,
+      });
+    } finally {
+      clearInterval(progressInterval);
+      setSlicerStatus(null);
     }
-    setHasUserSelectedMaterial(true);
-    setConfig((current) => ({
-      ...current,
-      materialId,
-      color: nextMaterial.colors[0]?.name ?? current.color,
-    }));
   };
 
+  useEffect(() => {
+    if (!selectedModel || !uploadState.path || uploadState.status !== "success")
+      return;
+
+    // A previous slicer response was calculated for different settings. Remove
+    // it immediately so pricing falls back to a scaled geometry estimate while
+    // the new precise result is in flight.
+    sliceRequestRef.current += 1;
+    if (selectedModel.slicerResult) {
+      setSelectedModel((current) =>
+        current ? { ...current, slicerResult: undefined } : current,
+      );
+    }
+    if (sliceDebounceRef.current) clearTimeout(sliceDebounceRef.current);
+    sliceDebounceRef.current = setTimeout(() => {
+      void handleGetPreciseQuote();
+    }, 800);
+
+    return () => {
+      if (sliceDebounceRef.current) clearTimeout(sliceDebounceRef.current);
+    };
+  }, [
+    selectedModel?.object,
+    uploadState.path,
+    uploadState.status,
+    sliceSettingsKey,
+  ]);
+
   const handleSaveQuote = async () => {
-    if (!supabaseEnabled) {
-      setToast({
-        type: "error",
-        message:
-          "Supabase is not configured. Local preview works, but account save is unavailable.",
-      });
-      return;
-    }
-
-    if (!user) {
-      setToast({
-        type: "error",
-        message: "Sign in to save this quote to your account.",
-      });
-      return;
-    }
-
-    if (!selectedModel || !priceBreakdown) {
-      setToast({
-        type: "error",
-        message: "Upload a model before saving a quote.",
-      });
-      return;
-    }
-
+    if (!supabaseEnabled || !user || !selectedModel || !priceBreakdown) return;
     try {
       setSavingQuote(true);
       await saveQuoteToSupabase({
@@ -612,7 +512,7 @@ function CartEnabledWorkspace({
         name: user.name,
         email: user.email,
         phone: "",
-        filePath: uploadState.path,
+        filePath: uploadState.path || "",
         config,
         notes: "",
         estimate: {
@@ -621,964 +521,161 @@ function CartEnabledWorkspace({
           dimensions: priceBreakdown.dimensionsMm,
         },
       });
-      setToast({
-        type: "success",
-        message: `Quote ${initialQuoteId} saved to your account.`,
-      });
+      setToast({ type: "success", message: `Quote saved.` });
     } catch (error) {
-      setToast({
-        type: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to save quote.",
-      });
+      setToast({ type: "error", message: "Failed to save quote." });
     } finally {
       setSavingQuote(false);
     }
   };
-
-  const cartItemCheck = isInCart(initialQuoteId);
 
   const handleAddToCart = () => {
     if (
       !priceBreakdown ||
       !selectedModel ||
       !selectedMaterial ||
-      !initialQuoteId
-    ) {
-      if (selectedModel?.requiresReview) {
-        setToast({
-          type: "error",
-          message:
-            "Models requiring manual review cannot be auto-quoted. Please use the contact form for a custom quote.",
-        });
-        return;
-      }
-      setToast({
-        type: "error",
-        message: "Upload a model and generate a quote before adding to cart.",
-      });
+      !initialQuoteId ||
+      !uploadState.path
+    )
       return;
-    }
-
-    if (!uploadState.path) {
-      setToast({
-        type: "error",
-        message:
-          "Sign in and upload the model to storage before adding this quote to cart.",
-      });
-      return;
-    }
-
     const cartItem: CartItem = {
       id: initialQuoteId,
-      name: selectedModel?.fileName ?? "model",
+      name: selectedModel.fileName,
       quoteId: initialQuoteId,
       fileUrl: uploadState.path,
-      fileName: selectedModel?.fileName ?? "model",
+      fileName: selectedModel.fileName,
       material: selectedMaterial.name,
-      color: selectedColorName ?? "",
+      color: config.color,
       infill: config.infill,
       layerHeight: config.layerHeight,
       quantity: config.quantity,
       supports: config.supports,
-      materialCost: priceBreakdown?.materialCost ?? 0,
-      machineCost: priceBreakdown?.machineCost ?? 0,
-      subtotal: priceBreakdown?.subtotal ?? 0,
-      postProcessingCharges: priceBreakdown?.postProcessingCharges ?? 0,
-      overheadPercentage: priceBreakdown?.overheadPercentage ?? 0,
-      overheadAmount: priceBreakdown?.overheadAmount ?? 0,
-      marginPercentage: priceBreakdown?.marginPercentage ?? 0,
-      marginAmount: priceBreakdown?.marginAmount ?? 0,
-      totalPrice: priceBreakdown?.priceBeforeDiscount ?? 0,
-      cartDiscountAmount: priceBreakdown?.cartDiscountAmount ?? 0,
-      cartDiscountPercent: priceBreakdown?.cartDiscountPercent ?? 0,
-      finalPrice: priceBreakdown?.finalPrice ?? 0,
-      deliveryCharge: priceBreakdown?.deliveryCharge ?? 0,
-      grandTotal: priceBreakdown?.grandTotal ?? 0,
-      price: priceBreakdown?.finalPrice ?? 0,
-      estimatedTime: priceBreakdown?.estimatedHours ?? 0,
-      weight: priceBreakdown?.materialWeightGrams ?? 0,
-      modelVolumeMm3: selectedModel?.volumeMm3 ?? 0,
-      difficultyFactor:
-        priceBreakdown?.difficultyFactor ?? selectedMaterial.difficultyFactor,
-      dimensions: priceBreakdown?.dimensionsMm ?? { x: 0, y: 0, z: 0 },
-      config: {
-        materialId: selectedMaterial.id,
-        color: selectedColorName ?? "",
-        infill: config.infill,
-        layerHeight: config.layerHeight,
-        quantity: config.quantity,
-        postProcessingLevel: config.postProcessingLevel,
-        supports: config.supports,
-      },
+      materialCost: priceBreakdown.materialCost,
+      machineCost: priceBreakdown.machineCost,
+      subtotal: priceBreakdown.subtotal,
+      postProcessingCharges: priceBreakdown.postProcessingCharges,
+      overheadPercentage: priceBreakdown.overheadPercentage,
+      overheadAmount: priceBreakdown.overheadAmount,
+      marginPercentage: priceBreakdown.marginPercentage,
+      marginAmount: priceBreakdown.marginAmount,
+      totalPrice: priceBreakdown.priceBeforeDiscount,
+      cartDiscountAmount: priceBreakdown.cartDiscountAmount,
+      cartDiscountPercent: priceBreakdown.cartDiscountPercent,
+      finalPrice: priceBreakdown.finalPrice,
+      deliveryCharge: priceBreakdown.deliveryCharge,
+      grandTotal: priceBreakdown.grandTotal,
+      price: priceBreakdown.finalPrice,
+      estimatedTime: priceBreakdown.estimatedHours,
+      weight: priceBreakdown.materialWeightGrams,
+      modelVolumeMm3: selectedModel.volumeMm3,
+      difficultyFactor: priceBreakdown.difficultyFactor,
+      dimensions: priceBreakdown.dimensionsMm,
+      config: { ...config, materialId: selectedMaterial.id },
       addedAt: new Date().toISOString(),
     };
-
     addItem(cartItem);
-    setToast({
-      type: "success",
-      message: `${selectedModel.fileName} added to cart.`,
-    });
+    setToast({ type: "success", message: `Added to cart.` });
   };
-
-  const handleStepClick = (ref: React.RefObject<HTMLDivElement | null>) => {
-    const el = ref.current;
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
-  const getStepDone = (stepId: string) => {
-    switch (stepId) {
-      case "upload":
-        return uploadState.status === "success";
-      case "viewer":
-        return selectedModel !== null;
-      case "material":
-        return selectedModel !== null;
-      case "settings":
-        return false;
-      default:
-        return false;
-    }
-  };
-
-  const stepConfigs = [
-    { id: "upload", label: "Upload" },
-    { id: "viewer", label: "Preview" },
-    { id: "material", label: "Configure" },
-    { id: "settings", label: "Settings" },
-  ];
-
-  const stepRefs = {
-    upload: uploadRef,
-    viewer: viewerRef,
-    material: materialRef,
-    settings: settingsRef,
-  };
-  const whatsappDigits = bulkOrderContact.whatsappNumber.replace(/[^0-9]/g, "");
 
   return (
-    <>
-      <div className="instant-quote-workspace relative min-h-screen overflow-hidden">
-        <div className="quote-premium-grid" aria-hidden="true" />
-        <div className="quote-premium-beam" aria-hidden="true" />
-        <div className="quote-premium-frame" aria-hidden="true" />
-        <motion.div
-          aria-hidden
-          animate={
-            shouldReduceMotion ? undefined : { x: [0, 50, 0], y: [0, -20, 0] }
+    <div className="flex h-screen flex-col bg-gray-50 overflow-hidden">
+      <header className="flex h-12 shrink-0 items-center justify-between border-b border-[#6d28d9]/10 bg-white px-4">
+        <span className="font-[var(--font-syne)] font-bold text-[#070b1d]">
+          Flux3D Instant Quote
+        </span>
+        <div className="flex items-center gap-4">
+          {!user && <span className="text-xs text-gray-500">Guest</span>}
+          {user && <span className="text-xs text-gray-500">{user.email}</span>}
+        </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
+        <LeftSidebar
+          files={uploadedFiles.map((f) => ({ name: f.name, size: f.size }))}
+          onAddFiles={(files) => handleFileSelect(files)}
+          onRemoveFile={(idx) => {
+            const newFiles = [...uploadedFiles];
+            newFiles.splice(idx, 1);
+            if (newFiles.length === 0) {
+              setSelectedModel(null);
+              setUploadState(initialUploadState);
+            }
+            setUploadedFiles(newFiles);
+            if (newFiles.length > 0) handleFileSelect(newFiles);
+          }}
+          plates={selectedModel?.slicerResult?.plates}
+          activePlateIndex={activePlateIndex}
+          onPlateSelect={setActivePlateIndex}
+          amsColorCount={config.amsColorCount ?? 1}
+          onAmsColorCountChange={(c) =>
+            setConfig({ ...config, amsColorCount: c })
           }
-          transition={
-            shouldReduceMotion
-              ? undefined
-              : { duration: 16, repeat: Infinity, ease: "easeInOut" }
+          slicerResult={selectedModel?.slicerResult}
+          model={selectedModel}
+          detectedColors={selectedModel?.detectedColors ?? []}
+          amsSlotColors={config.amsSlotColors ?? DEFAULT_AMS_SLOT_COLORS}
+          onAmsSlotColorChange={(slotIndex, color) =>
+            setConfig((current) => {
+              const amsSlotColors = [
+                ...(current.amsSlotColors ?? DEFAULT_AMS_SLOT_COLORS),
+              ];
+              amsSlotColors[slotIndex] = color;
+              return { ...current, amsSlotColors };
+            })
           }
-          className="quote-orb quote-orb-left pointer-events-none absolute left-[-8rem] top-28 h-72 w-72 rounded-full bg-[#6d28d9]/8 blur-3xl"
-        />
-        <motion.div
-          aria-hidden
-          animate={
-            shouldReduceMotion ? undefined : { x: [0, -45, 0], y: [0, 25, 0] }
-          }
-          transition={
-            shouldReduceMotion
-              ? undefined
-              : { duration: 18, repeat: Infinity, ease: "easeInOut" }
-          }
-          className="quote-orb quote-orb-right pointer-events-none absolute right-[-7rem] top-36 h-80 w-80 rounded-full bg-cyan-400/8 blur-3xl"
+          scaleFactor={config.scaleFactor ?? 100}
         />
 
-        {/* Header */}
-        <div className="quote-hero relative px-4 pb-6 pt-8 md:px-8 md:pt-10 xl:px-10">
-          <div className="mx-auto max-w-[1500px]">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <div className="quote-hero-kicker inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/25 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#6d28d9]">
-                  Instant Pricing Experience
-                </div>
-                <h1 className="quote-hero-title mt-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3.2rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#070b1d]">
-                  Get Your{" "}
-                  <span className="quote-title-accent text-[#6d28d9]">
-                    Instant Quote
-                  </span>
-                </h1>
-                <p className="quote-hero-copy mt-3 max-w-[600px] text-sm leading-7 text-[#6F7192]">
-                  Upload, preview, configure, and get pricing in one streamlined
-                  workflow.
-                </p>
-              </div>
-
-              {/* Step Navigator */}
-              <div className="quote-step-nav flex items-center gap-1 overflow-x-auto rounded-2xl border border-[#6d28d9]/10 bg-white p-1.5 shadow-sm scrollbar-hide">
-                {stepConfigs.map((step, i) => {
-                  const done = getStepDone(step.id);
-                  const ref = stepRefs[step.id as keyof typeof stepRefs];
-                  return (
-                    <button
-                      key={step.id}
-                      onClick={() => handleStepClick(ref)}
-                      className={`quote-step-button ${done ? "quote-step-button-done" : ""} flex min-h-[44px] flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 py-2.5 text-xs font-medium transition-colors hover:bg-gray-100`}
-                    >
-                      <span
-                        className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
-                          done
-                            ? "bg-emerald-700/20 text-emerald-700"
-                            : "bg-white text-[#6F7192]"
-                        }`}
-                      >
-                        {done ? (
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                        ) : (
-                          i + 1
-                        )}
-                      </span>
-                      <span
-                        className={done ? "text-emerald-700" : "text-[#6F7192]"}
-                      >
-                        {step.label}
-                      </span>
-                      {i < stepConfigs.length - 1 && (
-                        <ArrowRight className="ml-1 h-3 w-3 text-[#070b1d]/20" />
-                      )}
-                    </button>
-                  );
-                })}
+        <main className="flex flex-1 flex-col bg-[#070a12] relative">
+          <ViewerSection
+            model={selectedModel}
+            isLoading={viewerLoading}
+            materialId={config.materialId}
+            colorName={config.color}
+            isSlicing={!!slicerStatus}
+            slicingProgress={slicerStatus ?? undefined}
+            activePlateIndex={activePlateIndex}
+            amsSlotColors={config.amsSlotColors}
+            amsColorCount={config.amsColorCount ?? 1}
+          />
+          {slicerStatus && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+              <div className="flex flex-col items-center gap-3 bg-[#070a12] border border-[#6d28d9]/30 rounded-2xl p-6 text-white shadow-2xl">
+                <LoaderCircle className="h-8 w-8 animate-spin text-[#6d28d9]" />
+                <span className="text-sm font-medium">{slicerStatus}</span>
               </div>
             </div>
-          </div>
-        </div>
+          )}
+        </main>
 
-        {/* Main Content */}
-        <div className="px-4 pb-16 md:px-8 xl:px-10">
-          <div className="mx-auto max-w-[1500px]">
-            <div className="quote-layout-grid grid gap-6 lg:gap-8 xl:grid-cols-[1fr_380px]">
-              {/* Left Column */}
-              <div className="space-y-6">
-                <div className="quote-bulk-strip rounded-2xl border border-cyan-400/15 bg-cyan-400/8 px-4 py-3 text-sm text-[#070b1d]">
-                  For bulk orders contact{" "}
-                  <a
-                    className="font-medium text-[#6d28d9] hover:underline"
-                    href={`mailto:${bulkOrderContact.email}`}
-                  >
-                    {bulkOrderContact.email}
-                  </a>{" "}
-                  or{" "}
-                  <a
-                    className="font-medium text-[#6d28d9] hover:underline"
-                    href={`https://wa.me/${whatsappDigits}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    WhatsApp us
-                  </a>
-                  .
-                </div>
-
-                {/* Upload Section */}
-                <motion.div
-                  ref={uploadRef}
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.05 }}
-                >
-                  <div className="quote-premium-card quote-upload-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
-                    <div className="mb-5 flex items-center gap-3">
-                      <div className="quote-section-icon rounded-xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-2.5 text-[#6d28d9]">
-                        <UploadCloud className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold text-[#070b1d]">
-                          1. Upload Your Model
-                        </h2>
-                        <p className="text-xs text-[#6F7192]">
-                          STL, OBJ, 3MF, GLB, GLTF, FBX, PLY, DAE, AMF, STEP,
-                          IGES, BREP, DWG, DXF supported
-                        </p>
-                      </div>
-                    </div>
-
-                    <div
-                      className="quote-upload-dropzone relative flex min-h-[200px] items-center justify-center rounded-2xl border-2 border-dashed border-[#6d28d9]/10 bg-white p-6 text-center transition-colors hover:border-[#6d28d9]/30"
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        const files = e.dataTransfer.files;
-                        if (files[0]) handleFileSelect(files[0]);
-                      }}
-                    >
-                      <input
-                        type="file"
-                        accept=".stl,.obj,.3mf,.glb,.gltf,.fbx,.ply,.dae,.amf,.step,.stp,.iges,.igs,.brep,.dwg,.dxf"
-                        className="absolute inset-0 cursor-pointer opacity-0"
-                        onChange={(e) => {
-                          if (e.target.files?.[0])
-                            handleFileSelect(e.target.files[0]);
-                        }}
-                      />
-                      <div>
-                        <motion.div
-                          animate={
-                            shouldReduceMotion ? undefined : { y: [0, -4, 0] }
-                          }
-                          transition={
-                            shouldReduceMotion
-                              ? undefined
-                              : {
-                                  duration: 3,
-                                  repeat: Infinity,
-                                  ease: "easeInOut",
-                                }
-                          }
-                          className="quote-upload-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-[#6d28d9]/25 bg-[#6d28d9]/12 text-[#6d28d9]"
-                        >
-                          <UploadCloud className="h-6 w-6" />
-                        </motion.div>
-                        <div className="text-base font-semibold text-[#070b1d]">
-                          {selectedFile
-                            ? selectedFile.name
-                            : "Drop your file or click to browse"}
-                        </div>
-                        {!selectedFile && (
-                          <div className="mt-2 text-xs text-[#6F7192]">
-                            STL · OBJ · 3MF · GLB · GLTF · FBX · PLY · DAE · AMF
-                            · STEP · IGES · BREP · DWG · DXF
-                          </div>
-                        )}
-                        {selectedFile && (
-                          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#6d28d9]/10 bg-white px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
-                            <FileArchive className="h-3 w-3" />
-                            {selectedFile.name}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Progress */}
-                    {uploadState.status === "uploading" && (
-                      <div className="mt-4">
-                        <div className="mb-1.5 flex items-center justify-between text-xs text-[#6F7192]">
-                          <span className="inline-flex items-center gap-1.5">
-                            <LoaderCircle className="h-3 w-3 animate-spin" />
-                            Uploading...
-                          </span>
-                          <span>{uploadState.progress}%</span>
-                        </div>
-                        <div className="quote-progress-track h-1.5 overflow-hidden rounded-full bg-gray-100">
-                          <div
-                            className="quote-progress-fill h-full rounded-full bg-[#6d28d9] transition-all duration-300"
-                            style={{ width: `${uploadState.progress}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                    {uploadState.status === "success" && (
-                      <div className="mt-3 flex items-center gap-2 text-xs text-emerald-700">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Upload complete
-                      </div>
-                    )}
-                    {uploadState.status === "error" && uploadState.error && (
-                      <div className="mt-3 flex items-start gap-2 text-xs text-rose-600">
-                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                        {uploadState.error}
-                      </div>
-                    )}
-                    {fileError && (
-                      <div className="mt-3 flex items-start gap-2 text-xs text-amber-700">
-                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                        {fileError}
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-
-                {/* Viewer Section */}
-                <motion.div
-                  ref={viewerRef}
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
-                >
-                  <ViewerSection
-                    model={selectedModel}
-                    isLoading={viewerLoading}
-                    materialId={config.materialId}
-                    colorName={config.color}
-                  />
-                </motion.div>
-
-                {/* Material & Color Section */}
-                <motion.div
-                  ref={materialRef}
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.15 }}
-                >
-                  <div className="quote-premium-card quote-material-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
-                    <div className="mb-5 flex items-center gap-3">
-                      <div className="quote-section-icon rounded-xl border border-violet-400/20 bg-violet-400/10 p-2.5 text-violet-200">
-                        <Palette className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold text-[#070b1d]">
-                          3. Material & Color
-                        </h2>
-                        <p className="text-xs text-[#6F7192]">
-                          Choose the best material and finish for your part
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Material Selection */}
-                    <div className="mb-5">
-                      <label className="mb-2 block text-xs font-medium text-[#6F7192]">
-                        Material
-                      </label>
-                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                        {materials.map((material) => {
-                          const isActive = material.id === config.materialId;
-                          return (
-                            <button
-                              key={material.id}
-                              type="button"
-                              onClick={() => handleMaterialChange(material.id)}
-                              className={`quote-option-card ${isActive ? "quote-option-card-active" : ""} flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
-                                isActive
-                                  ? "border-[#6d28d9]/35 bg-[var(--brand-faint)] shadow-[0_4px_16px_rgba(109, 40, 217,0.1)]"
-                                  : "border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10"
-                              }`}
-                            >
-                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#6d28d9]/10 text-base">
-                                {material.icon}
-                              </span>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span
-                                    className={`truncate text-sm font-medium ${isActive ? "text-[var(--brand-primary)]" : "text-[#070b1d]"}`}
-                                  >
-                                    {material.name}
-                                  </span>
-                                  {isActive && (
-                                    <CheckCircle2 className="h-4 w-4 shrink-0 text-[#6d28d9]" />
-                                  )}
-                                </div>
-                                <p
-                                  className={`mt-0.5 truncate text-[11px] ${isActive ? "text-[var(--text-secondary)]" : "text-[#6F7192]"}`}
-                                >
-                                  {material.summary}
-                                </p>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Color Selection */}
-                    <div>
-                      <label className="mb-2 block text-xs font-medium text-[#6F7192]">
-                        Color — {selectedMaterial?.name ?? "Material"}
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {(selectedMaterial?.colors ?? []).map((color, idx) => {
-                          const isActive = color.name === config.color;
-                          return (
-                            <button
-                              key={`${color.name}-${idx}`}
-                              type="button"
-                              onClick={() =>
-                                setConfig((c) => ({ ...c, color: color.name }))
-                              }
-                              className={`quote-option-card ${isActive ? "quote-option-card-active" : ""} flex min-h-11 items-center gap-2 rounded-xl border px-4 text-left transition-all ${
-                                isActive
-                                  ? "border-[#6d28d9]/40 bg-[var(--brand-faint)]"
-                                  : "border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10"
-                              }`}
-                            >
-                              <span
-                                className={`text-xs font-medium ${isActive ? "text-[var(--brand-primary)]" : "text-[#070b1d]"}`}
-                              >
-                                {color.name}
-                              </span>
-                              {isActive && (
-                                <CheckCircle2 className="h-3.5 w-3.5 text-[#6d28d9]" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Settings Section */}
-                <motion.div
-                  ref={settingsRef}
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.2 }}
-                >
-                  <div className="quote-premium-card quote-settings-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
-                    <div className="mb-5 flex items-center gap-3">
-                      <div className="quote-section-icon rounded-xl border border-sky-400/20 bg-sky-50 p-2.5 text-sky-700">
-                        <Layers3 className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold text-[#070b1d]">
-                          4. Print Settings
-                        </h2>
-                        <p className="text-xs text-[#6F7192]">
-                          Fine-tune quality, strength, and scale
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-6 sm:grid-cols-2">
-                      {/* Infill */}
-                      <div>
-                        <div className="mb-2 flex items-center justify-between text-sm">
-                          <span className="text-[#6F7192]">Infill Density</span>
-                          <span className="font-semibold text-[#070b1d]">
-                            {config.infill}%
-                          </span>
-                        </div>
-                        <input
-                          type="range"
-                          min={5}
-                          max={100}
-                          step={5}
-                          value={config.infill}
-                          onChange={(e) =>
-                            setConfig((c) => ({
-                              ...c,
-                              infill: Number(e.target.value),
-                            }))
-                          }
-                          className="w-full accent-[#6d28d9]"
-                        />
-                        <div className="mt-1 flex justify-between text-[10px] text-[#6F7192]">
-                          <span>Hollow</span>
-                          <span>Solid</span>
-                        </div>
-                      </div>
-
-                      {/* Quantity */}
-                      <div>
-                        <div className="mb-2 flex items-center justify-between text-sm">
-                          <span className="text-[#6F7192]">Quantity</span>
-                          <span className="font-semibold text-[#070b1d]">
-                            {config.quantity} pcs
-                          </span>
-                        </div>
-                        <input
-                          type="number"
-                          min={1}
-                          max={99}
-                          step={1}
-                          value={config.quantity}
-                          onChange={(e) =>
-                            setConfig((c) => ({
-                              ...c,
-                              quantity: Math.max(
-                                1,
-                                Math.floor(Number(e.target.value) || 1),
-                              ),
-                            }))
-                          }
-                          className="w-full rounded-xl border border-[#6d28d9]/10 bg-white px-3 py-3 text-sm text-[#070b1d] outline-none"
-                        />
-                      </div>
-
-                      {/* Post-processing */}
-                      <div>
-                        <div className="mb-2 text-sm text-[#6F7192]">
-                          Post-processing
-                        </div>
-                        <div className="grid gap-2">
-                          {postProcessingOptions.map((option) => (
-                            <button
-                              key={option.value}
-                              type="button"
-                              onClick={() =>
-                                setConfig((c) => ({
-                                  ...c,
-                                  postProcessingLevel: option.value,
-                                }))
-                              }
-                              className={`quote-option-card ${option.value === config.postProcessingLevel ? "quote-option-card-active" : ""} min-h-11 rounded-xl border px-3 text-left transition-all ${
-                                option.value === config.postProcessingLevel
-                                  ? "border-[#6d28d9]/35 bg-[var(--brand-faint)]"
-                                  : "border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10"
-                              }`}
-                            >
-                              <div className="flex items-center justify-between gap-3">
-                                <div
-                                  className={`text-xs font-medium ${option.value === config.postProcessingLevel ? "text-[var(--brand-primary)]" : "text-[#070b1d]"}`}
-                                >
-                                  {option.label}
-                                </div>
-                                <div className="text-[10px] uppercase tracking-[0.18em] text-[#6d28d9]">
-                                  {priceBreakdown
-                                    ? `₹${getPostProcessingCharge(
-                                        option.value,
-                                        postProcessingBaseAmount,
-                                        selectedMaterial?.difficultyFactor ?? 0,
-                                        pricingSettings.postProcessingMultipliers,
-                                      ).toFixed(2)}`
-                                    : "—"}
-                                </div>
-                              </div>
-                              <div
-                                className={`mt-0.5 text-[10px] ${option.value === config.postProcessingLevel ? "text-[var(--text-secondary)]" : "text-[#6F7192]"}`}
-                              >
-                                {option.description}
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Layer Height */}
-                      <div>
-                        <div className="mb-2 text-sm text-[#6F7192]">
-                          Layer Height
-                        </div>
-                        <div className="grid gap-2">
-                          {layerHeightOptions.map((option) => (
-                            <button
-                              key={option.value}
-                              type="button"
-                              onClick={() =>
-                                setConfig((c) => ({
-                                  ...c,
-                                  layerHeight: option.value,
-                                }))
-                              }
-                              className={`quote-option-card ${option.value === config.layerHeight ? "quote-option-card-active" : ""} min-h-11 rounded-xl border px-3 text-left transition-all ${
-                                option.value === config.layerHeight
-                                  ? "border-[#6d28d9]/35 bg-[var(--brand-faint)]"
-                                  : "border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10"
-                              }`}
-                            >
-                              <div
-                                className={`text-xs font-medium ${option.value === config.layerHeight ? "text-[var(--brand-primary)]" : "text-[#070b1d]"}`}
-                              >
-                                {option.label}
-                              </div>
-                              <div
-                                className={`mt-0.5 text-[10px] ${option.value === config.layerHeight ? "text-[var(--text-secondary)]" : "text-[#6F7192]"}`}
-                              >
-                                {option.description}
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Save Quote */}
-                    {user && (
-                      <div className="quote-save-strip mt-6 flex flex-col items-center justify-between gap-3 rounded-xl border border-[#6d28d9]/10 bg-white p-4 sm:flex-row">
-                        <div className="flex items-center gap-3">
-                          <ShieldCheck className="h-5 w-5 text-emerald-700" />
-                          <div>
-                            <div className="text-xs font-medium text-[#070b1d]">
-                              {user.name}
-                            </div>
-                            <div className="text-[10px] text-[#6F7192]">
-                              {user.email}
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleSaveQuote}
-                          disabled={
-                            !selectedModel ||
-                            savingQuote ||
-                            uploadState.status === "uploading"
-                          }
-                          className="quote-secondary-action inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-gray-50 px-4 text-xs font-medium text-[#070b1d] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                        >
-                          <BookmarkPlus className="h-3.5 w-3.5" />
-                          {savingQuote ? "Saving..." : "Save Quote"}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Right Sidebar - Sticky Quote Summary */}
-              <motion.aside
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.25 }}
-                className="quote-summary-shell xl:sticky xl:top-24 xl:self-start"
-              >
-                <div className="quote-summary-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-5 shadow-[0_10px_40px_rgba(0,0,0,0.2)] sm:p-6 sm:shadow-[0_18px_70px_rgba(0,0,0,0.3)]">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <h2 className="text-lg font-semibold text-[#070b1d]">
-                        Quote Summary
-                      </h2>
-                      <p className="text-xs text-[#6F7192]">{initialQuoteId}</p>
-                    </div>
-                    <div className="rounded-xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-2 text-[#6d28d9]">
-                      <Package2 className="h-4 w-4" />
-                    </div>
-                  </div>
-
-                  {!priceBreakdown ? (
-                    <div className="space-y-3">
-                      <div className="h-12 animate-pulse rounded-xl bg-gray-50" />
-                      <div className="h-12 animate-pulse rounded-xl bg-gray-50" />
-                      <div className="h-20 animate-pulse rounded-xl bg-gray-50" />
-                    </div>
-                  ) : (
-                    <>
-                      {/* Config Summary */}
-                      <div className="quote-config-pill mb-4 rounded-xl border border-[#6d28d9]/10 bg-white p-3">
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="text-[#070b1d]">
-                            {selectedMaterial?.name ?? "Material"}
-                          </span>
-                          <span className="text-[#6F7192]">·</span>
-                          <span className="text-[#6F7192]">
-                            {config.infill}% infill
-                          </span>
-                          <span className="text-[#6F7192]">·</span>
-                          <span className="text-[#6F7192]">
-                            {config.layerHeight}mm
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Price Breakdown */}
-                      <div className="quote-total-card rounded-xl border border-[#6d28d9]/20 bg-[linear-gradient(180deg,rgba(109,40,217,0.12),rgba(109,40,217,0.06))] p-4">
-                        <div className="text-[10px] uppercase tracking-[0.22em] text-[#6F7192]">
-                          Total Price
-                        </div>
-                        <div className="mt-1 font-[var(--font-syne)] text-3xl font-bold text-[#070b1d]">
-                          ₹{priceBreakdown.priceBeforeDiscount.toFixed(0)}
-                        </div>
-                        <div className="mt-3 space-y-1.5 text-xs text-[#6F7192]">
-                          <div className="flex justify-between">
-                            <span>Quantity</span>
-                            <span>{priceBreakdown.quantity} pcs</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Material usage</span>
-                            <span>
-                              {priceBreakdown.materialWeightGrams.toFixed(2)} g
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Material cost</span>
-                            <span>
-                              ₹{priceBreakdown.materialCost.toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Machine time</span>
-                            <span>
-                              {formatDurationMinutes(
-                                priceBreakdown.estimatedMinutes,
-                              )}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Machine cost</span>
-                            <span>
-                              ₹{priceBreakdown.machineCost.toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Post-processing</span>
-                            <span>
-                              ₹{priceBreakdown.postProcessingCharges.toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="border-t border-[#6d28d9]/10 pt-1.5 flex justify-between font-medium text-[#070b1d]">
-                            <span>Production cost</span>
-                            <span>₹{priceBreakdown.subtotal.toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>
-                              Service fee (
-                              {priceBreakdown.overheadPercentage +
-                                priceBreakdown.marginPercentage}
-                              %)
-                            </span>
-                            <span>
-                              ₹
-                              {(
-                                priceBreakdown.overheadAmount +
-                                priceBreakdown.marginAmount
-                              ).toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Cart discount</span>
-                            <span>
-                              {priceBreakdown.cartDiscountPercent}% ·{" "}
-                              {priceBreakdown.cartDiscountAmount > 0 ? "-" : ""}
-                              ₹{priceBreakdown.cartDiscountAmount.toFixed(2)}
-                            </span>
-                          </div>
-                          {priceBreakdown.priceBeforeMinimum !==
-                            priceBreakdown.finalPrice &&
-                            priceBreakdown.minimumOrderValue > 0 && (
-                              <div className="flex justify-between">
-                                <span>Minimum order value</span>
-                                <span className="text-[#070b1d]">
-                                  ₹{priceBreakdown.minimumOrderValue.toFixed(2)}
-                                </span>
-                              </div>
-                            )}
-                          <div className="border-t border-[#6d28d9]/10 pt-1.5 flex justify-between font-medium text-[#070b1d]">
-                            <span>Total price</span>
-                            <span>
-                              ₹{priceBreakdown.priceBeforeDiscount.toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Final price</span>
-                            <span>₹{priceBreakdown.finalPrice.toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Delivery</span>
-                            <span>
-                              {priceBreakdown.deliveryCharge === 0
-                                ? "FREE"
-                                : `₹${priceBreakdown.deliveryCharge.toFixed(0)}`}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Grand total</span>
-                            <span>₹{priceBreakdown.grandTotal.toFixed(2)}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Quick Stats */}
-                      <div className="mt-4 grid grid-cols-2 gap-3">
-                        <div className="quote-mini-stat rounded-xl border border-[#6d28d9]/10 bg-white p-3">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
-                            Weight
-                          </div>
-                          <div className="mt-1 text-sm font-medium text-[#070b1d]">
-                            {priceBreakdown.materialUsageGramsPerUnit.toFixed(
-                              2,
-                            )}{" "}
-                            g / unit
-                          </div>
-                        </div>
-                        <div className="quote-mini-stat rounded-xl border border-[#6d28d9]/10 bg-white p-3">
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
-                            Print time
-                          </div>
-                          <div className="mt-1 text-sm font-medium text-[#070b1d]">
-                            {formatDurationMinutes(
-                              priceBreakdown.estimatedMinutes,
-                            )}
-                          </div>
-                        </div>
-                        <div className="quote-mini-stat col-span-2 rounded-xl border border-[#6d28d9]/10 bg-white p-3">
-                          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
-                            <Cuboid className="h-3 w-3" />
-                            Dimensions
-                          </div>
-                          <div className="mt-1 text-xs text-[#070b1d]">
-                            {priceBreakdown.dimensionsMm.x.toFixed(0)} ×{" "}
-                            {priceBreakdown.dimensionsMm.y.toFixed(0)} ×{" "}
-                            {priceBreakdown.dimensionsMm.z.toFixed(0)} mm
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Delivery */}
-                      <div className="quote-delivery-card mt-4 rounded-xl border border-emerald-400/15 bg-emerald-400/10 p-3">
-                        <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-emerald-700">
-                          <Truck className="h-3 w-3" />
-                          Delivery
-                        </div>
-                        <div className="mt-1 text-xs font-medium text-[#070b1d]">
-                          ~48 hour print and delivery
-                        </div>
-                        {pricingSettings.gstInclusivePricing && (
-                          <div className="mt-1 text-[10px] text-[#6F7192]">
-                            Prices inclusive of all applicable taxes
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Actions */}
-                      <div className="mt-5 space-y-2.5">
-                        {selectedModel?.requiresReview ? (
-                          <div className="quote-primary-action flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400/15 px-4 py-3 text-sm font-semibold text-amber-800">
-                            <AlertTriangle className="h-4 w-4" />
-                            Manual review required — contact for custom quote
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={handleAddToCart}
-                            disabled={
-                              !selectedModel ||
-                              uploadState.status === "uploading"
-                            }
-                            className={`quote-primary-action inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
-                              cartItemCheck
-                                ? "border border-emerald-700/30 bg-emerald-700/10 text-emerald-700"
-                                : "bg-[#6d28d9] text-white hover:opacity-95"
-                            }`}
-                          >
-                            {cartItemCheck ? (
-                              <>
-                                <PackageCheck className="h-4 w-4" />
-                                Added to Cart
-                              </>
-                            ) : (
-                              <>
-                                <ShoppingCart className="h-4 w-4" />
-                                Add to Cart
-                              </>
-                            )}
-                          </button>
-                        )}
-
-                        {cartItemCheck && (
-                          <Link
-                            href="/cart"
-                            className="quote-secondary-action inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/30 bg-[#6d28d9]/10 px-4 text-xs font-medium text-[#6d28d9] transition-colors hover:bg-[#6d28d9]/20"
-                          >
-                            View Cart
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </Link>
-                        )}
-                      </div>
-
-                      {!user && (
-                        <Link
-                          href="/login?next=%2Finstant-quote"
-                          className="quote-secondary-action mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/10 bg-white px-4 text-xs font-medium text-[#070b1d] transition-colors hover:bg-purple-50"
-                        >
-                          Sign in to save quotes
-                          <ArrowRight className="h-3 w-3" />
-                        </Link>
-                      )}
-                    </>
-                  )}
-                </div>
-              </motion.aside>
-            </div>
-          </div>
-        </div>
+        <aside className="flex h-full w-[340px] shrink-0 flex-col border-l border-[#6d28d9]/10 bg-white shadow-sm">
+          <RightSidebar
+            materials={materials}
+            config={config}
+            onConfigChange={(update) => setConfig((c) => ({ ...c, ...update }))}
+            onMaterialChange={(id) =>
+              setConfig((c) => ({ ...c, materialId: id }))
+            }
+            priceBreakdown={priceBreakdown}
+            slicerStatus={slicerStatus}
+            slicerError={slicerError}
+            slicerResult={selectedModel?.slicerResult}
+            onSlice={handleGetPreciseQuote}
+            onAddToCart={handleAddToCart}
+            onSaveQuote={handleSaveQuote}
+            isInCart={isInCart(initialQuoteId)}
+            user={user}
+            pricingSettings={pricingSettings}
+            quoteId={initialQuoteId}
+            savingQuote={savingQuote}
+          />
+          <WhatsAppCTABanner
+            whatsappNumber={bulkOrderContact.whatsappNumber}
+            show={Boolean(selectedModel)}
+          />
+        </aside>
       </div>
-
-      <Toast toast={toast} />
-    </>
+      {toast && <Toast toast={toast} />}
+    </div>
   );
 }

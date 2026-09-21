@@ -51,6 +51,7 @@ import {
 import { updatePaymentAttemptStatus } from "@/lib/payments/state";
 import { notifyPaymentCaptured } from "@/lib/payments/email-triggers";
 import { buildPublicBusinessProfile } from "@/lib/public-business";
+import type { QuoteConfig } from "@/lib/quote/types";
 import { sendCapiEvents, buildPurchaseEvent } from "@/lib/meta/conversions-api";
 import { generateEventId } from "@/lib/meta/event-utils";
 
@@ -89,6 +90,7 @@ type CartOrderItem = {
     y: number;
     z: number;
   };
+  config?: QuoteConfig;
 };
 
 type CreateCartOrderInput = {
@@ -761,7 +763,15 @@ export async function createCartOrderAction(
             postProcessingCharges: cartItem?.postProcessingCharges ?? 0,
           }),
           material_id: cartItem?.material?.trim() ?? "",
-          config: {},
+          config: cartItem?.config ?? {
+            materialId: cartItem?.material?.trim() ?? "",
+            color: cartItem?.color ?? "",
+            infill: cartItem?.infill ?? 20,
+            layerHeight: cartItem?.layerHeight ?? 0.2,
+            quantity: cartItem?.quantity ?? 1,
+            postProcessingLevel: cartItem?.postProcessingLevel ?? "none",
+            supports: cartItem?.supports ?? false,
+          },
           model_metadata: redactSensitiveValues({
             fileName: cartItem?.fileName ?? "",
             fileSize: 0,
@@ -1044,6 +1054,7 @@ export async function prepareCartPaymentAction(
         modelVolumeMm3: item.modelVolumeMm3 ?? 0,
         difficultyFactor: item.difficultyFactor ?? 1,
         dimensions: item.dimensions,
+        config: item.config,
       })),
     } as unknown as Record<string, unknown>,
     modelMetadata: {} as Record<string, unknown>,
@@ -1454,7 +1465,17 @@ export async function verifyCartPaymentAndCreateOrder(params: {
           postProcessingCharges: Number(cartItem?.postProcessingCharges ?? 0),
         }),
         material_id: (cartItem?.material as string)?.trim() ?? "",
-        config: {},
+        config: (cartItem?.config as QuoteConfig | undefined) ?? {
+          materialId: (cartItem?.material as string)?.trim() ?? "",
+          color: (cartItem?.color as string) ?? "",
+          infill: Number(cartItem?.infill ?? 20),
+          layerHeight: Number(cartItem?.layerHeight ?? 0.2),
+          quantity: Number(cartItem?.quantity ?? 1),
+          postProcessingLevel:
+            (cartItem?.postProcessingLevel as QuoteConfig["postProcessingLevel"]) ??
+            "none",
+          supports: Boolean(cartItem?.supports),
+        },
         model_metadata: redactSensitiveValues({
           fileName: cartItem?.fileName ?? "",
           fileSize: 0,

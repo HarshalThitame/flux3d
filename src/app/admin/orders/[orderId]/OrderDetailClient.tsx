@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -575,7 +576,8 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                             {notif.order_status}
                           </div>
                           <div className="text-xs text-gray-500">
-                            Status: {notif.status} (Attempts: {notif.attempt_count})
+                            Status: {notif.status} (Attempts:{" "}
+                            {notif.attempt_count})
                           </div>
                           {notif.last_error && (
                             <div className="text-xs text-red-500">

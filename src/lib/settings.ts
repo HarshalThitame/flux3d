@@ -219,6 +219,10 @@ function mapRow(row: BusinessSettingsRow): BusinessSettings {
     minimumOrderValue: row.minimum_order_value ?? FALLBACK.minimumOrderValue,
     gstInclusivePricing:
       row.gst_inclusive_pricing ?? FALLBACK.gstInclusivePricing,
+    amsColorChangeSurcharge:
+      num(row.ams_color_change_surcharge) || FALLBACK.amsColorChangeSurcharge,
+    slicerServiceUrl: n(row.slicer_service_url) || FALLBACK.slicerServiceUrl,
+    slicerServiceEnabled: bool(row.slicer_service_enabled),
     pickupAvailable: bool(row.pickup_available),
     paymentsEnabled: bool(row.payments_enabled ?? true),
     razorpayEnabled: bool(row.razorpay_enabled ?? true),

@@ -346,6 +346,11 @@ export async function createOrderAction(
           quantity: normalizedQuantity,
           postProcessingLevel: input.postProcessingLevel,
           supports: input.supports,
+          scaleFactor: input.scaleFactor ?? 100,
+          wallCount: input.wallCount ?? 3,
+          printSpeedPreset: input.printSpeedPreset ?? "standard",
+          tolerancePreset: input.tolerancePreset ?? "standard",
+          amsSlotColors: input.amsSlotColors ?? [],
         },
         model_metadata: redactSensitiveValues(input.modelMetadata),
       })
@@ -563,6 +568,11 @@ export async function prepareQuotePaymentAction(
     quantity: normalizedQuantity,
     postProcessingLevel: input.postProcessingLevel,
     supports: input.supports,
+    scaleFactor: input.scaleFactor ?? 100,
+    wallCount: input.wallCount ?? 3,
+    printSpeedPreset: input.printSpeedPreset ?? "standard",
+    tolerancePreset: input.tolerancePreset ?? "standard",
+    amsSlotColors: input.amsSlotColors ?? [],
     notes: input.notes?.trim() ?? "",
   };
 
