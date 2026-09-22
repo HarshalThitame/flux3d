@@ -40,8 +40,7 @@ export async function POST(
         token,
         order_type: orderType,
         order_id: orderId,
-        expires_at: expiresAt.toISOString(),
-        is_used: false
+        expires_at: expiresAt.toISOString()
       })
       .select()
       .single();

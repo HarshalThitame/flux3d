@@ -53,7 +53,7 @@ export async function POST(
       .from('review_links')
       .select('*')
       .eq('token', token)
-      .eq('is_used', false)
+      .is('used_at', null)
       .single();
 
     if (linkError || !link) {
@@ -85,7 +85,7 @@ export async function POST(
     // Mark token as used
     await supabase
       .from('review_links')
-      .update({ is_used: true })
+      .update({ used_at: new Date().toISOString() })
       .eq('id', link.id);
 
     return NextResponse.json({ success: true, message: 'Review submitted successfully' });
