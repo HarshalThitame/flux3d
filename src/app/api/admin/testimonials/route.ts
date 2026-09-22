@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminUser } from "@/lib/admin/server";
+import { requireAdminRequest } from "@/lib/admin/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -10,14 +10,16 @@ export const dynamic = "force-dynamic";
  * Service-role client bypasses RLS that limits anon to approved-only.
  */
 export async function GET() {
+  const auth = await requireAdminRequest();
+  if ("response" in auth) return auth.response;
+
   try {
-    await requireAdminUser();
     const supabase = createAdminClient();
 
     const { data, error } = await supabase
       .from("reviews")
       .select(
-        "id, order_type, order_id, customer_name, customer_email, rating, title, body, status, is_verified_purchase, created_at, image_urls",
+        "id, order_type, order_id, customer_name, customer_email, rating, title, body, status, is_verified_purchase, created_at",
       )
       .order("created_at", { ascending: false });
 
@@ -35,8 +37,10 @@ export async function GET() {
  * Update testimonial status: { id, status: 'approved'|'rejected'|'pending' }
  */
 export async function PATCH(req: NextRequest) {
+  const auth = await requireAdminRequest();
+  if ("response" in auth) return auth.response;
+
   try {
-    await requireAdminUser();
     const { id, status } = (await req.json()) as { id: string; status: string };
 
     if (!id || !["approved", "rejected", "pending"].includes(status)) {
