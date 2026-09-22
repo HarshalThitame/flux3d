@@ -12,28 +12,31 @@ export async function POST(
   { params }: { params: Promise<Params> },
 ) {
   try {
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL || "https://dummy.upstash.io",
-      token: process.env.UPSTASH_REDIS_REST_TOKEN || "dummy",
-    });
-
-    const ratelimit = new Ratelimit({
-      redis,
-      // Allow 10 submissions per day per IP (multi-use links)
-      limiter: Ratelimit.slidingWindow(10, "1 d"),
-      analytics: true,
-    });
-
     const { token } = await params;
 
-    const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
-    const { success } = await ratelimit.limit(`review_submit_${ip}`);
+    // Only apply rate limiting if Redis is configured
+    if (process.env.UPSTASH_REDIS_REST_URL) {
+      const redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
+      });
 
-    if (!success) {
-      return NextResponse.json(
-        { error: "Too many requests. Please try again tomorrow." },
-        { status: 429 },
-      );
+      const ratelimit = new Ratelimit({
+        redis,
+        // Allow 10 submissions per day per IP (multi-use links)
+        limiter: Ratelimit.slidingWindow(10, "1 d"),
+        analytics: true,
+      });
+
+      const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
+      const { success } = await ratelimit.limit(`review_submit_${ip}`);
+
+      if (!success) {
+        return NextResponse.json(
+          { error: "Too many requests. Please try again tomorrow." },
+          { status: 429 },
+        );
+      }
     }
 
     const body = await req.json();
