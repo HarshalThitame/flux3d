@@ -135,8 +135,8 @@ export default function TestimonialsSection() {
       .catch(() => {});
   }, []);
 
-  // Need at least 2 to show the section
-  if (testimonials.length < 2) return null;
+  // Need at least 1 to show the section
+  if (testimonials.length === 0) return null;
 
   const [featured, ...rest] = testimonials;
   const marqueeItems = rest.length > 0 ? rest : testimonials;
