@@ -38,7 +38,9 @@ export default function ShopCartPageClient() {
   const priceChangedItemIds = useShopCartStore(
     (state) => state.priceChangedItemIds,
   );
-  const [quoteCartCount] = useState(getQuoteCartCount);
+  const [quoteCartCount, setQuoteCartCount] = useState(() =>
+    getQuoteCartCount(),
+  );
 
   useEffect(() => {
     void refreshShopCartFromServer();

@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   Loader2,
   MapPin,
-  PackageCheck,
   ShieldCheck,
   TriangleAlert,
   Truck,
@@ -17,7 +16,6 @@ import { useRouter } from "next/navigation";
 import {
   prepareCartPaymentAction,
   verifyCartPaymentAndCreateOrder,
-  type PrepareCartPaymentResult,
 } from "@/app/cart/delivery/actions";
 import { useGlobalLoading } from "@/hooks/useGlobalLoading";
 import AddressForm from "@/components/instant-quote/AddressForm";
@@ -51,10 +49,9 @@ export default function CartDeliveryClient({
 }: CartDeliveryClientProps) {
   const router = useRouter();
   const { items, summary, clearItems } = useCart();
-  const [localItems] = useState<CartItem[]>(() => {
-    const key = getCartStorageKey(user.id);
-    return getCartFromStorage(key);
-  });
+  const [localItems, setLocalItems] = useState<CartItem[]>(() =>
+    getCartFromStorage(getCartStorageKey(user.id)),
+  );
   const [selectedAddressId, setSelectedAddressId] = useState<string | "new">(
     savedAddresses[0]?.id ?? "new",
   );

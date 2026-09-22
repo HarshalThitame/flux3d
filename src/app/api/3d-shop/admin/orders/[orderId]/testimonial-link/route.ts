@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/admin/server";
+import { createAdminSupabaseClient } from "@/lib/admin/server";
 import { generateTestimonialLink } from "@/lib/testimonials/generate-link";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getGuestContact } from "@/lib/shop/orders";
 
 type Params = { orderId: string };
+
+type ProfileRow = {
+  full_name: string | null;
+  email: string | null;
+  phone_number: string | null;
+};
 
 export async function POST(
   _req: NextRequest,
@@ -12,23 +19,12 @@ export async function POST(
   try {
     await requireAdminUser();
     const { orderId } = await params;
+    const supabase = createAdminSupabaseClient();
 
-    const supabase = await createAdminClient();
-
-    // Fetch the shop order with customer profile data
+    // Fetch the shop order — items are stored as a JSON column in shelf_orders
     const { data: order, error: orderError } = await supabase
       .from("shelf_orders")
-      .select(
-        `
-        id,
-        user_id,
-        shipping_address,
-        guest_contact,
-        items:shelf_order_items(
-          product:shelf_products(title)
-        )
-      `,
-      )
+      .select("*")
       .eq("id", orderId)
       .maybeSingle();
 
@@ -36,40 +32,41 @@ export async function POST(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Resolve customer data — profile first, fall back to shipping address / guest contact
+    const row = order as Record<string, unknown>;
+
+    // Resolve customer — profile first, then fallback to shipping/guest data
     let customerName: string | null = null;
     let customerEmail: string | null = null;
     let customerPhone: string | null = null;
 
-    if (order.user_id) {
+    if (row.user_id) {
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name, email, phone_number")
-        .eq("id", order.user_id)
+        .eq("id", String(row.user_id))
         .maybeSingle();
 
-      customerName =
-        (profile as { full_name?: string | null } | null)?.full_name ?? null;
-      customerEmail =
-        (profile as { email?: string | null } | null)?.email ?? null;
-      customerPhone =
-        (profile as { phone_number?: string | null } | null)?.phone_number ??
-        null;
+      const p = profile as ProfileRow | null;
+      customerName = p?.full_name ?? null;
+      customerEmail = p?.email ?? null;
+      customerPhone = p?.phone_number ?? null;
     }
 
-    // Fall back to shipping address fields
-    const addr = (order.shipping_address ?? {}) as Record<string, unknown>;
-    const guest = (order.guest_contact ?? {}) as Record<string, unknown>;
+    // Fall back to shipping address / guest contact
+    const addr =
+      row.shipping_address && typeof row.shipping_address === "object"
+        ? (row.shipping_address as Record<string, unknown>)
+        : {};
+    const guestContact = getGuestContact(row);
 
     if (!customerName && addr.name) customerName = String(addr.name);
-    if (!customerEmail && guest.email) customerEmail = String(guest.email);
+    if (!customerEmail) customerEmail = guestContact.email;
     if (!customerPhone && addr.phone) customerPhone = String(addr.phone);
 
-    // Get first product name
-    const items =
-      (order as { items?: Array<{ product?: { title?: string } }> }).items ??
-      [];
-    const productName = items[0]?.product?.title ?? null;
+    // Get first product name from the items JSON column
+    type ItemRow = { productName?: string };
+    const items = Array.isArray(row.items) ? (row.items as ItemRow[]) : [];
+    const productName = items[0]?.productName ?? null;
 
     const result = await generateTestimonialLink({
       orderId,
