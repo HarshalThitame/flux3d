@@ -1,56 +1,57 @@
-/* eslint-disable */
-// @ts-nocheck
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAdminUser } from '@/lib/admin/server';
-import crypto from 'crypto';
+import { NextRequest, NextResponse } from "next/server";
+import { requireAdminUser } from "@/lib/admin/server";
+import { generateTestimonialLink } from "@/lib/testimonials/generate-link";
 
-type ParamsType = { orderId: string };
+type Params = { orderId: string };
+
+const VALID_ORDER_TYPES = ["shop", "custom", "custom_order"] as const;
+type ValidOrderType = (typeof VALID_ORDER_TYPES)[number];
+
+function normaliseOrderType(raw: unknown): "shop" | "custom_order" | null {
+  if (!VALID_ORDER_TYPES.includes(raw as ValidOrderType)) return null;
+  // 'custom' and 'custom_order' both map to 'custom_order' for the new schema
+  return raw === "shop" ? "shop" : "custom_order";
+}
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<ParamsType> }
+  { params }: { params: Promise<Params> },
 ) {
   try {
     await requireAdminUser();
-    const resolvedParams = await params;
-    const { orderId } = resolvedParams;
+    const { orderId } = await params;
 
-    const body = await req.json();
-    const { orderType } = body; // 'shop', 'custom', or 'custom_order'
+    const body = (await req.json()) as {
+      orderType?: unknown;
+      customerName?: unknown;
+      customerEmail?: unknown;
+      customerPhone?: unknown;
+    };
 
-    if (!['shop', 'custom', 'custom_order'].includes(orderType)) {
-      return NextResponse.json({ error: 'Invalid orderType' }, { status: 400 });
+    const orderType = normaliseOrderType(body.orderType);
+    if (!orderType) {
+      return NextResponse.json({ error: "Invalid orderType" }, { status: 400 });
     }
 
-    const supabase = await createAdminClient();
+    const customerName =
+      typeof body.customerName === "string" ? body.customerName : null;
+    const customerEmail =
+      typeof body.customerEmail === "string" ? body.customerEmail : null;
+    const customerPhone =
+      typeof body.customerPhone === "string" ? body.customerPhone : null;
 
-    // Generate secure 32-byte hex token
-    const token = crypto.randomBytes(32).toString('hex');
-    
-    // Set expiry to 30 days from now
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
+    const result = await generateTestimonialLink({
+      orderId,
+      orderType,
+      customerName,
+      customerEmail,
+      customerPhone,
+    });
 
-    const { data: reviewLink, error } = await supabase
-      .from('review_links')
-      .insert({
-        token,
-        order_type: orderType,
-        order_id: orderId,
-        expires_at: expiresAt.toISOString()
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return NextResponse.json({ token, url: `${process.env.NEXT_PUBLIC_SITE_URL || ''}/review/${token}` });
-
-  } catch (err: any) {
-    console.error('Create review link error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json(result);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal error";
+    console.error("Create testimonial link error:", err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

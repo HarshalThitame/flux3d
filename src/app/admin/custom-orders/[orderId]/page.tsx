@@ -1,42 +1,69 @@
 /* eslint-disable */
 // @ts-nocheck
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
 import {
-  User, Building2, Phone, Mail, Package, CreditCard,
-  Truck, Printer, MessageCircle, Clock, ChevronDown, Copy, ExternalLink, ArrowLeft
-} from 'lucide-react';
-import AdminShell from '@/components/admin/AdminShell';
-import { OmsStatusBadges, ORDER_STATUS_CONFIG } from '@/components/admin/oms/OrderStatusBadges';
-import PricingBreakdown from '@/components/admin/oms/PricingBreakdown';
-import PaymentHistory from '@/components/admin/oms/PaymentHistory';
-import ShipmentPanel from '@/components/admin/oms/ShipmentPanel';
-import ProductionPanel from '@/components/admin/oms/ProductionPanel';
-import CommunicationTimeline from '@/components/admin/oms/CommunicationTimeline';
-import OrderTimeline from '@/components/admin/oms/OrderTimeline';
-import Link from 'next/link';
+  User,
+  Building2,
+  Phone,
+  Mail,
+  Package,
+  CreditCard,
+  Truck,
+  Printer,
+  MessageCircle,
+  Clock,
+  ChevronDown,
+  Copy,
+  ExternalLink,
+  ArrowLeft,
+} from "lucide-react";
+import AdminShell from "@/components/admin/AdminShell";
+import {
+  OmsStatusBadges,
+  ORDER_STATUS_CONFIG,
+} from "@/components/admin/oms/OrderStatusBadges";
+import PricingBreakdown from "@/components/admin/oms/PricingBreakdown";
+import PaymentHistory from "@/components/admin/oms/PaymentHistory";
+import ShipmentPanel from "@/components/admin/oms/ShipmentPanel";
+import ProductionPanel from "@/components/admin/oms/ProductionPanel";
+import CommunicationTimeline from "@/components/admin/oms/CommunicationTimeline";
+import OrderTimeline from "@/components/admin/oms/OrderTimeline";
+import TestimonialLinkPanel from "@/components/admin/TestimonialLinkPanel";
+import Link from "next/link";
 
 // Valid transitions from state machine (mirrors server)
 const TRANSITIONS: Record<string, string[]> = {
-  DRAFT:             ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED:         ['PAYMENT_PENDING', 'PAYMENT_RECEIVED', 'CANCELLED', 'ON_HOLD'],
-  PAYMENT_PENDING:   ['PAYMENT_RECEIVED', 'PAYMENT_FAILED', 'CANCELLED', 'ON_HOLD'],
-  PAYMENT_RECEIVED:  ['IN_PRODUCTION', 'CANCELLED', 'ON_HOLD'],
-  IN_PRODUCTION:     ['QUALITY_CHECK', 'PRINT_FAILED', 'ON_HOLD'],
-  QUALITY_CHECK:     ['PACKED', 'IN_PRODUCTION'],
-  PRINT_FAILED:      ['IN_PRODUCTION', 'CANCELLED'],
-  PACKED:            ['SHIPPED', 'ON_HOLD'],
-  SHIPPED:           ['OUT_FOR_DELIVERY', 'DELIVERED'],
-  OUT_FOR_DELIVERY:  ['DELIVERED'],
-  DELIVERED:         ['RETURN_REQUESTED', 'REFUNDED'],
-  RETURN_REQUESTED:  ['RETURNED', 'DELIVERED'],
-  RETURNED:          ['REFUNDED'],
-  ON_HOLD:           ['CONFIRMED', 'PAYMENT_PENDING', 'PAYMENT_RECEIVED', 'IN_PRODUCTION', 'CANCELLED'],
-  CANCELLED:         ['REFUNDED'],
-  REFUNDED:          [],
-  PAYMENT_FAILED:    ['PAYMENT_PENDING', 'CANCELLED'],
+  DRAFT: ["CONFIRMED", "CANCELLED"],
+  CONFIRMED: ["PAYMENT_PENDING", "PAYMENT_RECEIVED", "CANCELLED", "ON_HOLD"],
+  PAYMENT_PENDING: [
+    "PAYMENT_RECEIVED",
+    "PAYMENT_FAILED",
+    "CANCELLED",
+    "ON_HOLD",
+  ],
+  PAYMENT_RECEIVED: ["IN_PRODUCTION", "CANCELLED", "ON_HOLD"],
+  IN_PRODUCTION: ["QUALITY_CHECK", "PRINT_FAILED", "ON_HOLD"],
+  QUALITY_CHECK: ["PACKED", "IN_PRODUCTION"],
+  PRINT_FAILED: ["IN_PRODUCTION", "CANCELLED"],
+  PACKED: ["SHIPPED", "ON_HOLD"],
+  SHIPPED: ["OUT_FOR_DELIVERY", "DELIVERED"],
+  OUT_FOR_DELIVERY: ["DELIVERED"],
+  DELIVERED: ["RETURN_REQUESTED", "REFUNDED"],
+  RETURN_REQUESTED: ["RETURNED", "DELIVERED"],
+  RETURNED: ["REFUNDED"],
+  ON_HOLD: [
+    "CONFIRMED",
+    "PAYMENT_PENDING",
+    "PAYMENT_RECEIVED",
+    "IN_PRODUCTION",
+    "CANCELLED",
+  ],
+  CANCELLED: ["REFUNDED"],
+  REFUNDED: [],
+  PAYMENT_FAILED: ["PAYMENT_PENDING", "CANCELLED"],
 };
 
 function Section({ title, icon: Icon, children }: any) {
@@ -44,19 +71,33 @@ function Section({ title, icon: Icon, children }: any) {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Icon className="w-4 h-4 text-gray-400" />
-        <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">{title}</h2>
+        <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+          {title}
+        </h2>
       </div>
       {children}
     </div>
   );
 }
 
-function InfoRow({ label, value, mono }: { label: string; value?: string | null; mono?: boolean }) {
+function InfoRow({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value?: string | null;
+  mono?: boolean;
+}) {
   if (!value) return null;
   return (
     <div className="flex justify-between items-start gap-4 py-1.5 border-b border-gray-50 last:border-0">
       <span className="text-xs text-gray-400 shrink-0">{label}</span>
-      <span className={`text-xs text-right ${mono ? 'font-mono text-gray-700' : 'font-medium text-gray-900'}`}>{value}</span>
+      <span
+        className={`text-xs text-right ${mono ? "font-mono text-gray-700" : "font-medium text-gray-900"}`}
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -68,7 +109,6 @@ export default function OMSOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [transitionLoading, setTransitionLoading] = useState(false);
   const [showTransitions, setShowTransitions] = useState(false);
-  const [reviewUrl, setReviewUrl] = useState('');
   const [paymentLinkLoading, setPaymentLinkLoading] = useState(false);
 
   const fetchOrder = useCallback(async () => {
@@ -83,40 +123,45 @@ export default function OMSOrderDetailPage() {
     }
   }, [orderId]);
 
-  useEffect(() => { fetchOrder(); }, [fetchOrder]);
+  useEffect(() => {
+    fetchOrder();
+  }, [fetchOrder]);
 
   const changeStatus = async (newStatus: string) => {
     setTransitionLoading(true);
     try {
       const res = await fetch(`/api/admin/oms/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (res.ok) { await fetchOrder(); setShowTransitions(false); }
-      else { const d = await res.json(); alert(d.error); }
-    } finally { setTransitionLoading(false); }
+      if (res.ok) {
+        await fetchOrder();
+        setShowTransitions(false);
+      } else {
+        const d = await res.json();
+        alert(d.error);
+      }
+    } finally {
+      setTransitionLoading(false);
+    }
   };
 
   const generatePaymentLink = async () => {
     setPaymentLinkLoading(true);
     try {
-      const res = await fetch(`/api/admin/custom-orders/${orderId}/payment-link`, { method: 'POST' });
+      const res = await fetch(
+        `/api/admin/custom-orders/${orderId}/payment-link`,
+        { method: "POST" },
+      );
       const data = await res.json();
-      if (res.ok) { navigator.clipboard.writeText(data.paymentLink); alert('Payment link copied to clipboard!'); }
-      else alert(data.error);
-    } finally { setPaymentLinkLoading(false); }
-  };
-
-  const generateReviewLink = async () => {
-    const res = await fetch(`/api/admin/orders/${orderId}/review-link`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderType: 'custom_order' }),
-    });
-    const data = await res.json();
-    if (res.ok) setReviewUrl(data.url);
-    else alert(data.error);
+      if (res.ok) {
+        navigator.clipboard.writeText(data.paymentLink);
+        alert("Payment link copied to clipboard!");
+      } else alert(data.error);
+    } finally {
+      setPaymentLinkLoading(false);
+    }
   };
 
   if (loading) {
@@ -147,17 +192,23 @@ export default function OMSOrderDetailPage() {
   return (
     <AdminShell>
       <div className="max-w-[1400px] mx-auto space-y-6">
-
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <Link href="/admin/custom-orders" className="text-gray-400 hover:text-gray-700 transition-colors">
+              <Link
+                href="/admin/custom-orders"
+                className="text-gray-400 hover:text-gray-700 transition-colors"
+              >
                 <ArrowLeft className="w-4 h-4" />
               </Link>
-              <h1 className="text-2xl font-bold text-gray-900 font-mono tracking-tight">{order.order_number}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 font-mono tracking-tight">
+                {order.order_number}
+              </h1>
               <button
-                onClick={() => navigator.clipboard.writeText(order.order_number)}
+                onClick={() =>
+                  navigator.clipboard.writeText(order.order_number)
+                }
                 className="text-gray-300 hover:text-gray-500 transition-colors"
               >
                 <Copy className="w-4 h-4" />
@@ -169,9 +220,20 @@ export default function OMSOrderDetailPage() {
               fulfillmentStatus={order.fulfillment_status}
             />
             <p className="text-xs text-gray-400">
-              Order date: {new Date(order.order_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
-              {' · '}
-              Created: {new Date(order.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+              Order date:{" "}
+              {new Date(order.order_date).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+              {" · "}
+              Created:{" "}
+              {new Date(order.created_at).toLocaleString("en-IN", {
+                day: "numeric",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </p>
           </div>
 
@@ -181,19 +243,21 @@ export default function OMSOrderDetailPage() {
             {allowedTransitions.length > 0 && (
               <div className="relative">
                 <button
-                  onClick={() => setShowTransitions(v => !v)}
+                  onClick={() => setShowTransitions((v) => !v)}
                   disabled={transitionLoading}
                   className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                 >
                   {transitionLoading ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <>Update Status <ChevronDown className="w-4 h-4" /></>
+                    <>
+                      Update Status <ChevronDown className="w-4 h-4" />
+                    </>
                   )}
                 </button>
                 {showTransitions && (
                   <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50 min-w-[180px]">
-                    {allowedTransitions.map(s => {
+                    {allowedTransitions.map((s) => {
                       const cfg = ORDER_STATUS_CONFIG[s];
                       return (
                         <button
@@ -201,7 +265,9 @@ export default function OMSOrderDetailPage() {
                           onClick={() => changeStatus(s)}
                           className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
                         >
-                          <span className={`w-2 h-2 rounded-full ${cfg?.color?.split(' ').find(c => c.startsWith('bg-')) ?? 'bg-gray-400'}`} />
+                          <span
+                            className={`w-2 h-2 rounded-full ${cfg?.color?.split(" ").find((c) => c.startsWith("bg-")) ?? "bg-gray-400"}`}
+                          />
                           {cfg?.label ?? s}
                         </button>
                       );
@@ -218,84 +284,85 @@ export default function OMSOrderDetailPage() {
             >
               💳 Payment Link
             </button>
-            <button
-              onClick={generateReviewLink}
-              className="px-3 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              ⭐ Review Link
-            </button>
+            <TestimonialLinkPanel
+              apiEndpoint={`/api/admin/oms/orders/${orderId}/testimonial-link`}
+            />
           </div>
         </div>
 
-        {/* Review link banner */}
-        {reviewUrl && (
-          <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-xl">
-            <div>
-              <p className="text-sm font-semibold text-green-900">Review Link Generated</p>
-              <p className="text-xs text-green-700">Send via WhatsApp or Email — single use.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <input type="text" readOnly value={reviewUrl}
-                className="w-48 sm:w-64 text-xs border border-green-200 rounded-lg px-2 py-1.5 bg-white" />
-              <button
-                onClick={() => navigator.clipboard.writeText(reviewUrl)}
-                className="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-xs font-medium hover:bg-green-200 transition-colors"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Main grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
           {/* Left column: main content */}
           <div className="xl:col-span-2 space-y-6">
-
             {/* Customer */}
             <Section title="Customer" icon={User}>
               <div className="bg-white border border-gray-200 rounded-xl p-4">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-                    {cust?.customer_type === 'business'
-                      ? <Building2 className="w-4 h-4 text-indigo-600" />
-                      : <User className="w-4 h-4 text-indigo-600" />
-                    }
+                    {cust?.customer_type === "business" ? (
+                      <Building2 className="w-4 h-4 text-indigo-600" />
+                    ) : (
+                      <User className="w-4 h-4 text-indigo-600" />
+                    )}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-gray-900">{cust?.full_name || '—'}</p>
-                      {cust?.customer_type === 'business' && (
-                        <span className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-semibold uppercase tracking-wide">Business</span>
+                      <p className="font-semibold text-gray-900">
+                        {cust?.full_name || "—"}
+                      </p>
+                      {cust?.customer_type === "business" && (
+                        <span className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-semibold uppercase tracking-wide">
+                          Business
+                        </span>
                       )}
                     </div>
-                    {cust?.company_name && <p className="text-sm text-gray-500">{cust.company_name}</p>}
-                    {cust?.gstin && <p className="text-xs text-gray-400 font-mono">GST: {cust.gstin}</p>}
+                    {cust?.company_name && (
+                      <p className="text-sm text-gray-500">
+                        {cust.company_name}
+                      </p>
+                    )}
+                    {cust?.gstin && (
+                      <p className="text-xs text-gray-400 font-mono">
+                        GST: {cust.gstin}
+                      </p>
+                    )}
                     <div className="flex flex-wrap gap-3 mt-1">
                       {cust?.phone && (
-                        <a href={`tel:${cust.phone}`} className="flex items-center gap-1 text-xs text-gray-600 hover:text-indigo-600">
-                          <Phone className="w-3 h-3" />{cust.phone}
+                        <a
+                          href={`tel:${cust.phone}`}
+                          className="flex items-center gap-1 text-xs text-gray-600 hover:text-indigo-600"
+                        >
+                          <Phone className="w-3 h-3" />
+                          {cust.phone}
                         </a>
                       )}
                       {cust?.email && (
-                        <a href={`mailto:${cust.email}`} className="flex items-center gap-1 text-xs text-gray-600 hover:text-indigo-600">
-                          <Mail className="w-3 h-3" />{cust.email}
+                        <a
+                          href={`mailto:${cust.email}`}
+                          className="flex items-center gap-1 text-xs text-gray-600 hover:text-indigo-600"
+                        >
+                          <Mail className="w-3 h-3" />
+                          {cust.email}
                         </a>
                       )}
                     </div>
                   </div>
                   {cust?.id && (
-                    <Link href={`/admin/customers/${cust.id}`}
-                      className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 shrink-0">
-                      <ExternalLink className="w-3 h-3" />View
+                    <Link
+                      href={`/admin/customers/${cust.id}`}
+                      className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 shrink-0"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      View
                     </Link>
                   )}
                 </div>
                 {/* Order source */}
                 <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-2 gap-2">
                   <InfoRow label="Source" value={order.source} />
-                  {order.source_reference && <InfoRow label="Reference" value={order.source_reference} />}
+                  {order.source_reference && (
+                    <InfoRow label="Reference" value={order.source_reference} />
+                  )}
                 </div>
               </div>
             </Section>
@@ -304,10 +371,14 @@ export default function OMSOrderDetailPage() {
             <Section title="Line Items" icon={Package}>
               <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
                 <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                  <span className="text-xs text-gray-500">{order.oms_order_items?.length || 0} items</span>
+                  <span className="text-xs text-gray-500">
+                    {order.oms_order_items?.length || 0} items
+                  </span>
                 </div>
                 {order.oms_order_items?.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-sm text-gray-400">No items.</div>
+                  <div className="px-4 py-8 text-center text-sm text-gray-400">
+                    No items.
+                  </div>
                 ) : (
                   <ul className="divide-y divide-gray-50">
                     {order.oms_order_items?.map((item: any) => {
@@ -316,25 +387,69 @@ export default function OMSOrderDetailPage() {
                         <li key={item.id} className="px-4 py-4">
                           <div className="flex justify-between items-start gap-4">
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-gray-900">{item.product_name}</p>
-                              {item.description && <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>}
+                              <p className="font-medium text-gray-900">
+                                {item.product_name}
+                              </p>
+                              {item.description && (
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                  {item.description}
+                                </p>
+                              )}
                               {/* 3D attributes */}
                               {Object.keys(attrs).length > 0 && (
                                 <div className="mt-2 flex flex-wrap gap-1.5">
-                                  {attrs.material && <span className="text-[10px] bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full font-medium">{attrs.material}</span>}
-                                  {attrs.color && <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">{attrs.color}</span>}
-                                  {attrs.infill && <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Infill {attrs.infill}</span>}
-                                  {attrs.printQuality && <span className="text-[10px] bg-teal-50 text-teal-600 px-2 py-0.5 rounded-full font-medium">{attrs.printQuality}</span>}
-                                  {attrs.estimatedWeightG && <span className="text-[10px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full font-medium">{attrs.estimatedWeightG}g</span>}
-                                  {attrs.estimatedTimeMins && <span className="text-[10px] bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full font-medium flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" />{attrs.estimatedTimeMins}</span>}
+                                  {attrs.material && (
+                                    <span className="text-[10px] bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full font-medium">
+                                      {attrs.material}
+                                    </span>
+                                  )}
+                                  {attrs.color && (
+                                    <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
+                                      {attrs.color}
+                                    </span>
+                                  )}
+                                  {attrs.infill && (
+                                    <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">
+                                      Infill {attrs.infill}
+                                    </span>
+                                  )}
+                                  {attrs.printQuality && (
+                                    <span className="text-[10px] bg-teal-50 text-teal-600 px-2 py-0.5 rounded-full font-medium">
+                                      {attrs.printQuality}
+                                    </span>
+                                  )}
+                                  {attrs.estimatedWeightG && (
+                                    <span className="text-[10px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full font-medium">
+                                      {attrs.estimatedWeightG}g
+                                    </span>
+                                  )}
+                                  {attrs.estimatedTimeMins && (
+                                    <span className="text-[10px] bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+                                      <Clock className="w-2.5 h-2.5" />
+                                      {attrs.estimatedTimeMins}
+                                    </span>
+                                  )}
                                 </div>
                               )}
-                              {attrs.customSpec && <p className="text-xs text-gray-400 mt-1 italic">{attrs.customSpec}</p>}
+                              {attrs.customSpec && (
+                                <p className="text-xs text-gray-400 mt-1 italic">
+                                  {attrs.customSpec}
+                                </p>
+                              )}
                             </div>
                             <div className="text-right shrink-0">
-                              <p className="font-semibold text-gray-900">₹{Number(item.subtotal).toFixed(2)}</p>
-                              <p className="text-xs text-gray-400">{item.quantity} × ₹{Number(item.unit_price).toFixed(2)}</p>
-                              {item.discount > 0 && <p className="text-xs text-red-400">−₹{Number(item.discount).toFixed(2)} off</p>}
+                              <p className="font-semibold text-gray-900">
+                                ₹{Number(item.subtotal).toFixed(2)}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {item.quantity} × ₹
+                                {Number(item.unit_price).toFixed(2)}
+                              </p>
+                              {item.discount > 0 && (
+                                <p className="text-xs text-red-400">
+                                  −₹{Number(item.discount).toFixed(2)} off
+                                </p>
+                              )}
                             </div>
                           </div>
                         </li>
@@ -375,7 +490,6 @@ export default function OMSOrderDetailPage() {
 
           {/* Right column: sidebar */}
           <div className="space-y-6">
-
             {/* Pricing */}
             <Section title="Pricing" icon={CreditCard}>
               <PricingBreakdown
@@ -406,14 +520,22 @@ export default function OMSOrderDetailPage() {
                 <div className="px-4 py-3 space-y-3">
                   {order.customer_notes && (
                     <div>
-                      <p className="text-xs font-semibold text-green-600 mb-1">Customer Note</p>
-                      <p className="text-sm text-gray-600 leading-relaxed">{order.customer_notes}</p>
+                      <p className="text-xs font-semibold text-green-600 mb-1">
+                        Customer Note
+                      </p>
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        {order.customer_notes}
+                      </p>
                     </div>
                   )}
                   {order.internal_notes && (
                     <div>
-                      <p className="text-xs font-semibold text-orange-600 mb-1">🔒 Internal Note</p>
-                      <p className="text-sm text-gray-600 leading-relaxed">{order.internal_notes}</p>
+                      <p className="text-xs font-semibold text-orange-600 mb-1">
+                        🔒 Internal Note
+                      </p>
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        {order.internal_notes}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -426,31 +548,38 @@ export default function OMSOrderDetailPage() {
             {/* Lifecycle timestamps */}
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-                <h3 className="text-sm font-semibold text-gray-700">Timestamps</h3>
+                <h3 className="text-sm font-semibold text-gray-700">
+                  Timestamps
+                </h3>
               </div>
               <div className="px-4 py-3">
                 {[
-                  ['Order Date', order.order_date],
-                  ['Created At', order.created_at],
-                  ['Confirmed', order.confirmed_at],
-                  ['Payment Received', order.payment_received_at],
-                  ['Production Started', order.production_started_at],
-                  ['Production Done', order.production_completed_at],
-                  ['Packed', order.packed_at],
-                  ['Shipped', order.shipped_at],
-                  ['Out for Delivery', order.out_for_delivery_at],
-                  ['Delivered', order.delivered_at],
-                  ['Cancelled', order.cancelled_at],
-                ].filter(([, v]) => !!v).map(([l, v]) => (
-                  <InfoRow
-                    key={l as string}
-                    label={l as string}
-                    value={new Date(v as string).toLocaleString('en-IN', {
-                      day: 'numeric', month: 'short', year: 'numeric',
-                      hour: '2-digit', minute: '2-digit',
-                    })}
-                  />
-                ))}
+                  ["Order Date", order.order_date],
+                  ["Created At", order.created_at],
+                  ["Confirmed", order.confirmed_at],
+                  ["Payment Received", order.payment_received_at],
+                  ["Production Started", order.production_started_at],
+                  ["Production Done", order.production_completed_at],
+                  ["Packed", order.packed_at],
+                  ["Shipped", order.shipped_at],
+                  ["Out for Delivery", order.out_for_delivery_at],
+                  ["Delivered", order.delivered_at],
+                  ["Cancelled", order.cancelled_at],
+                ]
+                  .filter(([, v]) => !!v)
+                  .map(([l, v]) => (
+                    <InfoRow
+                      key={l as string}
+                      label={l as string}
+                      value={new Date(v as string).toLocaleString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    />
+                  ))}
               </div>
             </div>
           </div>

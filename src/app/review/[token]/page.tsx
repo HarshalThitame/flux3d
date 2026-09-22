@@ -1,199 +1,532 @@
-/* eslint-disable */
-// @ts-nocheck
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, Loader2, RefreshCw, Sparkles } from "lucide-react";
 
-export default function ReviewPage() {
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+interface LinkData {
+  order_type: string;
+  customer_name: string | null;
+  customer_email: string | null;
+  product_name: string | null;
+  expired: boolean;
+}
+
+// ─── Rating helpers ───────────────────────────────────────────────────────────
+
+const RATING_LABELS: Record<number, string> = {
+  1: "We can do better — let's hear what went wrong",
+  2: "Sorry to hear that — your feedback matters",
+  3: "Good, but there's room to grow",
+  4: "Great experience — we're glad! 😊",
+  5: "Absolutely loved it! 🎉",
+};
+
+function getPromptChips(rating: number, orderType: string): string[] {
+  if (rating === 5) {
+    return orderType === "shop"
+      ? [
+          "Arrived perfectly packed",
+          "Exact print quality, sharp details",
+          "Great value for money",
+        ]
+      : [
+          "Quality exceeded my expectations",
+          "Delivered on time, no delays",
+          "Team was very responsive",
+        ];
+  }
+  if (rating === 4) {
+    return [
+      "Overall great experience",
+      "Good quality, minor improvements possible",
+      "Would definitely order again",
+    ];
+  }
+  if (rating === 3) {
+    return [
+      "Decent, but expected a bit more",
+      "Good start, some room to improve",
+      "Okay experience overall",
+    ];
+  }
+  return [
+    "Wasn't fully satisfied with the quality",
+    "Expected better for the price",
+    "Delivery took longer than expected",
+  ];
+}
+
+// ─── Star component ───────────────────────────────────────────────────────────
+
+function StarRating({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (n: number) => void;
+}) {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => {
+        const filled = star <= (hover || value);
+        return (
+          <button
+            key={star}
+            type="button"
+            onMouseEnter={() => setHover(star)}
+            onMouseLeave={() => setHover(0)}
+            onClick={() => onChange(star)}
+            className="focus:outline-none"
+            aria-label={`${star} star${star > 1 ? "s" : ""}`}
+          >
+            <motion.svg
+              whileHover={{ scale: 1.2 }}
+              whileTap={{ scale: 0.9 }}
+              className={`h-10 w-10 transition-colors duration-150 ${filled ? "text-amber-400" : "text-gray-200"}`}
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </motion.svg>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
+export default function TestimonialPage() {
   const params = useParams();
-  const token = params.token as string;
-  const router = useRouter();
+  const token = (params?.token ?? "") as string;
 
-  const [step, setStep] = useState(1);
+  // Link data
+  const [linkData, setLinkData] = useState<LinkData | null>(null);
+  const [linkLoading, setLinkLoading] = useState(true);
+
+  // Form state
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [notes, setNotes] = useState('');
-  const [draft, setDraft] = useState('');
-  const [customerName, setCustomerName] = useState('');
-  const [loading, setLoading] = useState(false);
-  
-  // Invisible honeypot field
-  const [website, setWebsite] = useState('');
+  const [shortPrompt, setShortPrompt] = useState("");
+  const [body, setBody] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [nameError, setNameError] = useState("");
 
-  const generateDraft = async () => {
-    if (!rating || !notes) return alert('Please provide a rating and some thoughts.');
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/review/${token}/generate-draft`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating, customerInput: notes })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setDraft(data.draft);
-        setStep(3);
-      } else {
-        alert(data.error);
+  // Honeypot
+  const [website, setWebsite] = useState("");
+
+  // Auto-scroll to body textarea after generation
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
+  // ── Fetch link data for prefill ──────────────────────────────────────────
+  useEffect(() => {
+    if (!token) return;
+    fetch(`/api/testimonial/${token}`)
+      .then((r) => r.json())
+      .then((data: LinkData) => {
+        setLinkData(data);
+        if (data.customer_name) setCustomerName(data.customer_name);
+        if (data.customer_email) setCustomerEmail(data.customer_email);
+      })
+      .catch(() => setLinkData(null))
+      .finally(() => setLinkLoading(false));
+  }, [token]);
+
+  // ── AI generation ────────────────────────────────────────────────────────
+  const generateDraft = useCallback(
+    async (prompt?: string) => {
+      const input = prompt ?? shortPrompt;
+      if (!rating || !input.trim()) return;
+      setGenerating(true);
+      try {
+        const res = await fetch(`/api/review/${token}/generate-draft`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            rating,
+            customerInput: input,
+            orderType: linkData?.order_type ?? "custom",
+            productName: linkData?.product_name ?? null,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.draft) {
+          setBody(data.draft);
+          window.setTimeout(() => bodyRef.current?.focus(), 100);
+        }
+      } finally {
+        setGenerating(false);
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [token, rating, shortPrompt, linkData],
+  );
 
-  const submitReview = async () => {
-    setLoading(true);
+  // ── Chip click: fill short prompt + auto-generate ────────────────────────
+  const handleChipClick = useCallback(
+    (chip: string) => {
+      setShortPrompt(chip);
+      generateDraft(chip);
+    },
+    [generateDraft],
+  );
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+  const handleSubmit = useCallback(async () => {
+    setNameError("");
+    if (!customerName.trim()) {
+      setNameError("Your name is required");
+      return;
+    }
+    if (!rating) return;
+    if (!body.trim()) return;
+
+    setSubmitting(true);
     try {
       const res = await fetch(`/api/review/${token}/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          website, // Honeypot
+          website, // honeypot
           rating,
-          title: 'Review from ' + customerName,
-          body: draft,
-          customerName
-        })
+          title: `Testimonial from ${customerName}`,
+          body,
+          customerName,
+          customerEmail: customerEmail || null,
+        }),
       });
-      const data = await res.json();
       if (res.ok) {
-        setStep(4); // Success screen
-      } else {
-        alert(data.error);
+        setSubmitted(true);
       }
-    } catch (err) {
-      console.error(err);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
-  };
+  }, [token, website, rating, body, customerName, customerEmail]);
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden">
-        
-        {/* Progress */}
-        <div className="h-1 bg-gray-100 w-full">
-          <motion.div 
-            className="h-full bg-indigo-600"
-            initial={{ width: '25%' }}
-            animate={{ width: `${(step / 4) * 100}%` }}
-          />
+  // ─── Loading ──────────────────────────────────────────────────────────────
+  if (linkLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+      </div>
+    );
+  }
+
+  // ─── Expired ──────────────────────────────────────────────────────────────
+  if (!linkData || linkData.expired) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+        <div className="w-full max-w-md text-center">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 text-4xl">
+            🔒
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Link Expired</h1>
+          <p className="mt-3 text-gray-500">
+            This testimonial link has expired. Please contact us and we&apos;ll
+            send you a new one.
+          </p>
+          <Link
+            href="/"
+            className="mt-6 inline-block rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
+          >
+            Back to FLUX3D
+          </Link>
         </div>
+      </div>
+    );
+  }
 
-        <div className="p-8">
-          <AnimatePresence mode="wait">
-            {step === 1 && (
-              <motion.div key="step1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <h1 className="text-2xl font-bold text-center mb-2">How was your experience?</h1>
-                <p className="text-center text-gray-500 mb-8">Tap to rate your custom order</p>
-                
-                <div className="flex justify-center space-x-2 mb-8">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <motion.button
-                      key={star}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onMouseEnter={() => setHoverRating(star)}
-                      onMouseLeave={() => setHoverRating(0)}
-                      onClick={() => { setRating(star); setStep(2); }}
-                      className="text-4xl text-gray-300 focus:outline-none"
-                    >
-                      <svg
-                        className={`w-12 h-12 ${star <= (hoverRating || rating) ? 'text-yellow-400' : 'text-gray-200'}`}
-                        fill="currentColor" viewBox="0 0 20 20"
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.div>
+  // ─── Success ──────────────────────────────────────────────────────────────
+  if (submitted) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md text-center"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-100"
+          >
+            <Check className="h-12 w-12 text-green-600" strokeWidth={2.5} />
+          </motion.div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Thank you{customerName ? `, ${customerName.split(" ")[0]}` : ""}!
+          </h1>
+          <p className="mt-3 text-lg text-gray-600">
+            Your testimonial has been submitted.
+          </p>
+          <p className="mt-1 text-sm text-gray-400">
+            It will appear on our website after a quick review. We truly
+            appreciate you taking the time! 🙏
+          </p>
+          <div className="mt-6 flex justify-center gap-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <motion.span
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + i * 0.08 }}
+                className="text-2xl"
+              >
+                ⭐
+              </motion.span>
+            ))}
+          </div>
+          <Link
+            href="/"
+            className="mt-8 inline-block rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
+          >
+            Visit FLUX3D
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
+
+  const chips = rating > 0 ? getPromptChips(rating, linkData.order_type) : [];
+
+  // ─── Form ─────────────────────────────────────────────────────────────────
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+      {/* Header */}
+      <div className="border-b border-gray-100 bg-white/80 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-4">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold text-sm">
+            F3
+          </div>
+          <span className="font-semibold text-gray-900">FLUX3D</span>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-lg px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          {/* Title */}
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Share Your Experience
+            </h1>
+            <p className="mt-1 text-gray-500">
+              Your story helps others discover us 🙏
+            </p>
+            {linkData.product_name && (
+              <p className="mt-2 inline-block rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+                📦 {linkData.product_name}
+              </p>
             )}
+          </div>
 
-            {step === 2 && (
-              <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h1 className="text-2xl font-bold mb-4">What did you love?</h1>
-                <p className="text-gray-500 mb-4">Jot down a few words and our AI will help you craft a beautifully written review.</p>
-                <textarea 
-                  className="w-full border-2 border-gray-200 rounded-xl p-4 mb-4 min-h-[120px] focus:border-indigo-500 outline-none"
-                  placeholder="E.g. Great quality, fast shipping, amazing support..."
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
+          {/* Card container */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-6">
+            {/* ── Your Details ── */}
+            <section>
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400">
+                Your Details
+              </h2>
+              <div className="space-y-3">
+                {/* Honeypot */}
+                <input
+                  type="text"
+                  className="hidden"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
                 />
-                <button 
-                  onClick={generateDraft}
-                  disabled={loading || !notes}
-                  className="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50"
-                >
-                  {loading ? 'Generating draft...' : 'Generate Review ✨'}
-                </button>
-              </motion.div>
-            )}
-
-            {step === 3 && (
-              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h1 className="text-2xl font-bold mb-4">Almost there!</h1>
-                <p className="text-gray-500 mb-4">Feel free to edit the draft below before submitting.</p>
-                
-                {/* Honeypot field - invisible to humans */}
-                <input 
-                  type="text" 
-                  className="hidden" 
-                  value={website} 
-                  onChange={e => setWebsite(e.target.value)} 
-                  tabIndex={-1} 
-                  autoComplete="off" 
-                />
-
-                <textarea 
-                  className="w-full border-2 border-gray-200 rounded-xl p-4 mb-4 min-h-[160px] focus:border-indigo-500 outline-none"
-                  value={draft}
-                  onChange={e => setDraft(e.target.value)}
-                />
-                
-                <div className="mb-6">
-                  <label className="block text-sm font-medium mb-1">Your Name (optional)</label>
-                  <input 
-                    type="text" 
-                    className="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-indigo-500 outline-none"
-                    placeholder="Jane Doe"
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
                     value={customerName}
-                    onChange={e => setCustomerName(e.target.value)}
+                    onChange={(e) => {
+                      setCustomerName(e.target.value);
+                      setNameError("");
+                    }}
+                    placeholder="Your name"
+                    className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-indigo-100 ${
+                      nameError
+                        ? "border-red-400 focus:border-red-400"
+                        : "border-gray-200 focus:border-indigo-400"
+                    }`}
+                  />
+                  {nameError && (
+                    <p className="mt-1 text-xs text-red-500">{nameError}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Email{" "}
+                    <span className="text-gray-400 font-normal">
+                      (optional)
+                    </span>
+                  </label>
+                  <input
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                   />
                 </div>
+              </div>
+            </section>
 
-                <button 
-                  onClick={submitReview}
-                  disabled={loading || !draft}
-                  className="w-full py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 disabled:opacity-50"
+            {/* ── Rating ── */}
+            <section>
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400">
+                Your Rating
+              </h2>
+              <StarRating value={rating} onChange={setRating} />
+              <AnimatePresence>
+                {rating > 0 && (
+                  <motion.p
+                    key={rating}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="mt-2 text-sm font-medium text-indigo-700"
+                  >
+                    {RATING_LABELS[rating]}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </section>
+
+            {/* ── Quick Prompt Chips ── */}
+            <AnimatePresence>
+              {chips.length > 0 && (
+                <motion.section
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
                 >
-                  {loading ? 'Submitting...' : 'Submit Review'}
-                </button>
-              </motion.div>
-            )}
-
-            {step === 4 && (
-              <motion.div key="step4" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-                <div className="text-center py-8">
-                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
+                  <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400">
+                    Quick Prompts — tap to generate
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {chips.map((chip) => (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => handleChipClick(chip)}
+                        disabled={generating}
+                        className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50"
+                      >
+                        {generating && shortPrompt === chip ? (
+                          <Loader2 className="inline h-3 w-3 animate-spin mr-1" />
+                        ) : (
+                          <Sparkles className="inline h-3 w-3 mr-1" />
+                        )}
+                        {chip}
+                      </button>
+                    ))}
                   </div>
-                  <h1 className="text-3xl font-bold mb-2">Thank You!</h1>
-                  <p className="text-gray-500">Your review helps us grow and improve.</p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                </motion.section>
+              )}
+            </AnimatePresence>
+
+            {/* ── Testimonial writer ── */}
+            <section>
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400">
+                Your Testimonial
+              </h2>
+
+              {/* Short prompt input + Generate */}
+              <div className="mb-3 flex gap-2">
+                <input
+                  type="text"
+                  value={shortPrompt}
+                  onChange={(e) => setShortPrompt(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void generateDraft();
+                    }
+                  }}
+                  placeholder="A few words... (e.g. loved the print quality and packaging)"
+                  className="min-w-0 flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                />
+                <button
+                  type="button"
+                  onClick={() => void generateDraft()}
+                  disabled={generating || !shortPrompt.trim() || rating === 0}
+                  className="flex shrink-0 items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {generating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  {generating ? "Generating…" : "Generate"}
+                </button>
+              </div>
+
+              {/* Body textarea */}
+              <textarea
+                ref={bodyRef}
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                rows={5}
+                placeholder="Your testimonial will appear here. You can type directly or use the quick prompts above."
+                className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              />
+
+              {/* Regenerate */}
+              {body && (
+                <button
+                  type="button"
+                  onClick={() => void generateDraft()}
+                  disabled={generating || !shortPrompt.trim()}
+                  className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400 transition hover:text-indigo-600 disabled:opacity-50"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Regenerate
+                </button>
+              )}
+            </section>
+
+            {/* ── Submit ── */}
+            <button
+              type="button"
+              onClick={() => void handleSubmit()}
+              disabled={
+                submitting || !rating || !body.trim() || !customerName.trim()
+              }
+              className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {submitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Submitting…
+                </span>
+              ) : (
+                "Submit My Testimonial →"
+              )}
+            </button>
+          </div>
+
+          <p className="text-center text-xs text-gray-400">
+            Your testimonial will be reviewed before it appears on our site.
+          </p>
+        </motion.div>
       </div>
     </div>
   );

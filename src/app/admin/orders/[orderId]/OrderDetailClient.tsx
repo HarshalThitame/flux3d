@@ -46,6 +46,7 @@ import {
   safeText,
   statusPillClass,
 } from "../order-ui";
+import TestimonialLinkPanel from "@/components/admin/TestimonialLinkPanel";
 
 type Props = {
   initialOrder: AdminOrder;
@@ -91,7 +92,16 @@ export default function OrderDetailClient({ initialOrder }: Props) {
   const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[] | null>(null);
   const [auditLogsLoading, setAuditLogsLoading] = useState(true);
-  const [notifications, setNotifications] = useState<any[] | null>(null);
+  const [notifications, setNotifications] = useState<
+    | {
+        id: string;
+        order_status: string;
+        status: string;
+        attempt_count: number;
+        last_error: string | null;
+      }[]
+    | null
+  >(null);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const toastTimer = useRef<number | null>(null);
 
@@ -168,7 +178,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
       } else {
         showToast({ type: "error", message: "Failed to enqueue." });
       }
-    } catch (err) {
+    } catch {
       showToast({ type: "error", message: "Failed to enqueue." });
     }
   }
@@ -358,7 +368,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [auditLogs, order.groupId]);
 
   useEffect(() => {
     let active = true;
@@ -378,7 +388,7 @@ export default function OrderDetailClient({ initialOrder }: Props) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [notifications, order.id]);
 
   return (
     <>
@@ -443,6 +453,15 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                   <Ban className="h-4 w-4" />
                   Cancel
                 </button>
+                <TestimonialLinkPanel
+                  apiEndpoint={`/api/admin/orders/${order.id}/review-link`}
+                  requestBody={{
+                    orderType: "custom",
+                    customerName: order.fullName ?? null,
+                    customerEmail: order.email ?? null,
+                    customerPhone: order.phone ?? null,
+                  }}
+                />
                 <select
                   value={order.status}
                   disabled={updatingStatus}
@@ -565,33 +584,44 @@ export default function OrderDetailClient({ initialOrder }: Props) {
                   )}
                 {notifications !== null && notifications.length > 0 && (
                   <div className="space-y-2">
-                    {notifications.map((notif: any) => (
-                      <div
-                        key={notif.id}
-                        className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm flex items-center justify-between"
-                      >
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {notif.order_status}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            Status: {notif.status} (Attempts: {notif.attempt_count})
-                          </div>
-                          {notif.last_error && (
-                            <div className="text-xs text-red-500">
-                              Error: {notif.last_error}
-                            </div>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => resendNotification(notif.order_status)}
-                          className="text-xs text-violet-600 hover:underline"
+                    {notifications.map(
+                      (notif: {
+                        id: string;
+                        order_status: string;
+                        status: string;
+                        attempt_count: number;
+                        last_error: string | null;
+                      }) => (
+                        <div
+                          key={notif.id}
+                          className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm flex items-center justify-between"
                         >
-                          Resend
-                        </button>
-                      </div>
-                    ))}
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {notif.order_status as string}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Status: {notif.status} (Attempts:{" "}
+                              {notif.attempt_count})
+                            </div>
+                            {notif.last_error && (
+                              <div className="text-xs text-red-500">
+                                Error: {notif.last_error}
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              resendNotification(notif.order_status)
+                            }
+                            className="text-xs text-violet-600 hover:underline"
+                          >
+                            Resend
+                          </button>
+                        </div>
+                      ),
+                    )}
                   </div>
                 )}
               </Card>
