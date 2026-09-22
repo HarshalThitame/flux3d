@@ -18,7 +18,7 @@ export async function POST(
   { params }: { params: Promise<Params> },
 ) {
   try {
-    await requireAdminUser();
+    const auth = await requireAdminUser();
     const { orderId } = await params;
 
     const body = (await req.json()) as {
@@ -43,6 +43,7 @@ export async function POST(
     const result = await generateTestimonialLink({
       orderId,
       orderType,
+      createdByAdminId: auth.user.id,
       customerName,
       customerEmail,
       customerPhone,

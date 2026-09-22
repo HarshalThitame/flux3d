@@ -10,7 +10,7 @@ export async function POST(
   { params }: { params: Promise<Params> },
 ) {
   try {
-    await requireAdminUser();
+    const auth = await requireAdminUser();
     const { id: orderId } = await params;
 
     const supabase = await createAdminClient();
@@ -45,6 +45,7 @@ export async function POST(
     const result = await generateTestimonialLink({
       orderId,
       orderType: "custom_order",
+      createdByAdminId: auth.user.id,
       customerName: cust.full_name ?? null,
       customerEmail: cust.email ?? null,
       customerPhone: cust.phone ?? null,

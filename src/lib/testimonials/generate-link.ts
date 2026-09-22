@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export interface GenerateLinkOptions {
   orderId: string;
   orderType: "shop" | "custom_order";
+  createdByAdminId: string;
   customerName?: string | null;
   customerEmail?: string | null;
   customerPhone?: string | null;
@@ -38,6 +39,7 @@ export async function generateTestimonialLink(
     token,
     order_type: opts.orderType,
     order_id: opts.orderId,
+    created_by_admin_id: opts.createdByAdminId,
     expires_at: expiresAt.toISOString(),
     customer_name: opts.customerName ?? null,
     customer_email: opts.customerEmail ?? null,
