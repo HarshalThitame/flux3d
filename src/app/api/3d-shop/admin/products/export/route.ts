@@ -40,6 +40,10 @@ export async function GET(request: Request) {
     const categoryId = searchParams.get("category_id");
     const status = searchParams.get("status");
     const search = searchParams.get("search");
+    const selectedIds = (searchParams.get("ids") ?? "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
 
     const supabase = createAdminSupabaseClient();
 
@@ -55,10 +59,11 @@ export async function GET(request: Request) {
       query = query.eq("is_archived", false).eq("is_active", false);
     } else if (status === "active") {
       query = query.eq("is_archived", false).eq("is_active", true);
-    } else {
+    } else if (selectedIds.length === 0) {
       query = query.eq("is_archived", false);
     }
     if (search) query = query.ilike("name", `%${search}%`);
+    if (selectedIds.length > 0) query = query.in("id", selectedIds);
 
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
