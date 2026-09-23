@@ -4,9 +4,16 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import {
+  Check,
+  Loader2,
+  RefreshCw,
+  Sparkles,
+  Star,
+  ArrowRight,
+} from "lucide-react";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface LinkData {
   order_type: string;
@@ -16,22 +23,47 @@ interface LinkData {
   expired: boolean;
 }
 
-// ─── Rating helpers ───────────────────────────────────────────────────────────
+// ─── Rating helpers ──────────────────────────────────────────────────────────
 
-const RATING_LABELS: Record<number, string> = {
-  1: "We are sorry to hear that — your feedback is valuable 🙏",
-  2: "Thank you for being honest — we will work to do better 💪",
-  3: "Appreciate your honest take — always room to grow ✨",
-  4: "Great to hear — glad you had a good experience 😊",
-  5: "Absolutely loved it — thank you so much! 🎉",
+const RATING_META: Record<
+  number,
+  { label: string; color: string; bg: string; emoji: string }
+> = {
+  1: {
+    label: "We are sorry to hear that — your feedback is valuable",
+    color: "text-red-600",
+    bg: "bg-red-50 border-red-100",
+    emoji: "🙏",
+  },
+  2: {
+    label: "Thank you for being honest — we will work to do better",
+    color: "text-orange-600",
+    bg: "bg-orange-50 border-orange-100",
+    emoji: "💪",
+  },
+  3: {
+    label: "Appreciate your honest take — always room to grow",
+    color: "text-amber-600",
+    bg: "bg-amber-50 border-amber-100",
+    emoji: "✨",
+  },
+  4: {
+    label: "Great to hear — glad you had a good experience",
+    color: "text-emerald-600",
+    bg: "bg-emerald-50 border-emerald-100",
+    emoji: "😊",
+  },
+  5: {
+    label: "Absolutely loved it — thank you so much",
+    color: "text-indigo-600",
+    bg: "bg-indigo-50 border-indigo-100",
+    emoji: "🎉",
+  },
 };
 
 function getPromptChips(rating: number, orderType: string): string[] {
   const isShop = orderType === "shop";
-
-  // 1-star: hide chips — handled separately in JSX with a helper message
   if (rating === 1) return [];
-
   if (rating === 5) {
     return isShop
       ? [
@@ -47,7 +79,6 @@ function getPromptChips(rating: number, orderType: string): string[] {
           "Best 3D printing service I have found in India",
         ];
   }
-
   if (rating === 4) {
     return isShop
       ? [
@@ -63,7 +94,6 @@ function getPromptChips(rating: number, orderType: string): string[] {
           "Professional team with good execution",
         ];
   }
-
   if (rating === 3) {
     return [
       "Decent experience overall — a few things could be better",
@@ -71,8 +101,6 @@ function getPromptChips(rating: number, orderType: string): string[] {
       "Promising service — looking forward to future improvements",
     ];
   }
-
-  // 2-star: constructive, not harsh
   return [
     "Had some concerns — hoping the team can improve",
     "Mixed experience — a few things did not go as expected",
@@ -80,7 +108,7 @@ function getPromptChips(rating: number, orderType: string): string[] {
   ];
 }
 
-// ─── Star component ───────────────────────────────────────────────────────────
+// ─── Star Rating Component ────────────────────────────────────────────────────
 
 function StarRating({
   value,
@@ -90,47 +118,114 @@ function StarRating({
   onChange: (n: number) => void;
 }) {
   const [hover, setHover] = useState(0);
+  const active = hover || value;
+
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center justify-center gap-2">
       {[1, 2, 3, 4, 5].map((star) => {
-        const filled = star <= (hover || value);
+        const filled = star <= active;
         return (
-          <button
+          <motion.button
             key={star}
             type="button"
             onMouseEnter={() => setHover(star)}
             onMouseLeave={() => setHover(0)}
             onClick={() => onChange(star)}
+            whileHover={{ scale: 1.25, y: -4 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
             className="focus:outline-none"
             aria-label={`${star} star${star > 1 ? "s" : ""}`}
           >
-            <motion.svg
-              whileHover={{ scale: 1.2 }}
-              whileTap={{ scale: 0.9 }}
-              className={`h-10 w-10 transition-colors duration-150 ${filled ? "text-amber-400" : "text-gray-200"}`}
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </motion.svg>
-          </button>
+            <Star
+              className={`h-12 w-12 transition-all duration-200 drop-shadow-sm ${
+                filled
+                  ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]"
+                  : "fill-gray-100 text-gray-300"
+              }`}
+            />
+          </motion.button>
         );
       })}
     </div>
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Floating Label Input ─────────────────────────────────────────────────────
+
+function FloatingInput({
+  label,
+  value,
+  onChange,
+  type = "text",
+  optional = false,
+  error = "",
+  placeholder = "",
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  optional?: boolean;
+  error?: string;
+  placeholder?: string;
+}) {
+  const [focused, setFocused] = useState(false);
+  const lifted = focused || value.length > 0;
+
+  return (
+    <div className="relative">
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder={lifted ? placeholder : ""}
+        className={`peer w-full rounded-2xl border bg-white/80 px-4 pb-3 pt-6 text-sm text-gray-900 outline-none backdrop-blur-sm transition-all duration-200 ${
+          error
+            ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100"
+            : focused
+              ? "border-indigo-300 ring-2 ring-indigo-100 shadow-sm"
+              : "border-gray-200 hover:border-gray-300"
+        }`}
+      />
+      <label
+        className={`pointer-events-none absolute left-4 font-medium transition-all duration-200 ${
+          lifted
+            ? "top-2 text-[10px] tracking-widest uppercase"
+            : "top-1/2 -translate-y-1/2 text-sm"
+        } ${error ? "text-red-500" : focused ? "text-indigo-500" : "text-gray-400"}`}
+      >
+        {label}
+        {optional && (
+          <span className="ml-1 normal-case tracking-normal font-normal text-gray-300">
+            (optional)
+          </span>
+        )}
+      </label>
+      {error && (
+        <motion.p
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-1.5 pl-1 text-xs text-red-500"
+        >
+          {error}
+        </motion.p>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function TestimonialPage() {
   const params = useParams();
   const token = (params?.token ?? "") as string;
 
-  // Link data
   const [linkData, setLinkData] = useState<LinkData | null>(null);
   const [linkLoading, setLinkLoading] = useState(true);
 
-  // Form state
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [rating, setRating] = useState(0);
@@ -140,14 +235,11 @@ export default function TestimonialPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [nameError, setNameError] = useState("");
-
-  // Honeypot
   const [website, setWebsite] = useState("");
 
-  // Auto-scroll to body textarea after generation
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const writeRef = useRef<HTMLDivElement>(null);
 
-  // ── Fetch link data for prefill ──────────────────────────────────────────
   useEffect(() => {
     if (!token) return;
     fetch(`/api/testimonial/${token}`)
@@ -161,7 +253,18 @@ export default function TestimonialPage() {
       .finally(() => setLinkLoading(false));
   }, [token]);
 
-  // ── AI generation ────────────────────────────────────────────────────────
+  // Scroll to writing section when rating is selected
+  useEffect(() => {
+    if (rating > 0) {
+      window.setTimeout(() => {
+        writeRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 300);
+    }
+  }, [rating]);
+
   const generateDraft = useCallback(
     async (prompt?: string) => {
       const input = prompt ?? shortPrompt;
@@ -190,7 +293,6 @@ export default function TestimonialPage() {
     [token, rating, shortPrompt, linkData],
   );
 
-  // ── Chip click: fill short prompt + auto-generate ────────────────────────
   const handleChipClick = useCallback(
     (chip: string) => {
       setShortPrompt(chip);
@@ -199,15 +301,13 @@ export default function TestimonialPage() {
     [generateDraft],
   );
 
-  // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = useCallback(async () => {
     setNameError("");
     if (!customerName.trim()) {
       setNameError("Your name is required");
       return;
     }
-    if (!rating) return;
-    if (!body.trim()) return;
+    if (!rating || !body.trim()) return;
 
     setSubmitting(true);
     try {
@@ -215,7 +315,7 @@ export default function TestimonialPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          website, // honeypot
+          website,
           rating,
           title: `Testimonial from ${customerName}`,
           body,
@@ -223,92 +323,107 @@ export default function TestimonialPage() {
           customerEmail: customerEmail || null,
         }),
       });
-      if (res.ok) {
-        setSubmitted(true);
-      }
+      if (res.ok) setSubmitted(true);
     } finally {
       setSubmitting(false);
     }
   }, [token, website, rating, body, customerName, customerEmail]);
 
-  // ─── Loading ──────────────────────────────────────────────────────────────
+  // ─── Loading ───────────────────────────────────────────────────────────────
   if (linkLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
-      </div>
-    );
-  }
-
-  // ─── Expired ──────────────────────────────────────────────────────────────
-  if (!linkData || linkData.expired) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-        <div className="w-full max-w-md text-center">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 text-4xl">
-            🔒
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50/30">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+            <span className="text-white font-black text-lg">F</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Link Expired</h1>
-          <p className="mt-3 text-gray-500">
-            This testimonial link has expired. Please contact us and we&apos;ll
-            send you a new one.
-          </p>
-          <Link
-            href="/"
-            className="mt-6 inline-block rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
-          >
-            Back to FLUX3D
-          </Link>
+          <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
         </div>
       </div>
     );
   }
 
-  // ─── Success ──────────────────────────────────────────────────────────────
+  // ─── Expired ───────────────────────────────────────────────────────────────
+  if (!linkData || linkData.expired) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50/30 p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm text-center"
+        >
+          <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-gray-100 text-5xl shadow-inner">
+            🔒
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Link Expired</h1>
+          <p className="mt-3 text-gray-500 leading-relaxed">
+            This testimonial link has expired. Please contact us and we&apos;ll
+            send you a fresh one.
+          </p>
+          <Link
+            href="/"
+            className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700 hover:shadow-indigo-300"
+          >
+            Back to FLUX3D <ArrowRight className="h-4 w-4" />
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ─── Success ───────────────────────────────────────────────────────────────
   if (submitted) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 p-6">
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md text-center"
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-sm text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-100"
+            transition={{
+              delay: 0.15,
+              type: "spring",
+              stiffness: 250,
+              damping: 20,
+            }}
+            className="mx-auto mb-8 flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 shadow-xl shadow-emerald-200"
           >
-            <Check className="h-12 w-12 text-green-600" strokeWidth={2.5} />
+            <Check className="h-14 w-14 text-white" strokeWidth={2.5} />
           </motion.div>
-          <h1 className="text-3xl font-bold text-gray-900">
+
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">
             Thank you{customerName ? `, ${customerName.split(" ")[0]}` : ""}!
           </h1>
-          <p className="mt-3 text-lg text-gray-600">
-            Your testimonial has been submitted.
+          <p className="mt-3 text-gray-600 leading-relaxed">
+            Your testimonial has been submitted and is under review.
           </p>
           <p className="mt-1 text-sm text-gray-400">
-            It will appear on our website after a quick review. We truly
-            appreciate you taking the time! 🙏
+            We truly appreciate you taking the time. 🙏
           </p>
-          <div className="mt-6 flex justify-center gap-2">
+
+          <div className="mt-6 flex justify-center gap-1">
             {[1, 2, 3, 4, 5].map((i) => (
               <motion.span
                 key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 + i * 0.08 }}
+                initial={{ opacity: 0, scale: 0, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ delay: 0.3 + i * 0.07, type: "spring" }}
                 className="text-2xl"
               >
                 ⭐
               </motion.span>
             ))}
           </div>
+
           <Link
             href="/"
-            className="mt-8 inline-block rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700"
           >
-            Visit FLUX3D
+            Explore FLUX3D <ArrowRight className="h-4 w-4" />
           </Link>
         </motion.div>
       </div>
@@ -316,254 +431,341 @@ export default function TestimonialPage() {
   }
 
   const chips = rating > 0 ? getPromptChips(rating, linkData.order_type) : [];
+  const meta = rating > 0 ? RATING_META[rating] : null;
 
-  // ─── Form ─────────────────────────────────────────────────────────────────
+  // ─── Form ──────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
-      {/* Header */}
-      <div className="border-b border-gray-100 bg-white/80 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-4">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold text-sm">
-            F3
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+      {/* Honeypot */}
+      <input
+        type="text"
+        className="hidden"
+        value={website}
+        onChange={(e) => setWebsite(e.target.value)}
+        tabIndex={-1}
+        autoComplete="off"
+      />
+
+      {/* ── Top bar ── */}
+      <div className="sticky top-0 z-10 border-b border-gray-100/80 bg-white/70 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-xl items-center justify-between px-5 py-3.5">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
+              <span className="text-xs font-black text-white">F3</span>
+            </div>
+            <span className="text-sm font-bold text-gray-900 tracking-tight">
+              FLUX3D
+            </span>
           </div>
-          <span className="font-semibold text-gray-900">FLUX3D</span>
+          <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-indigo-500">
+            Testimonial
+          </span>
         </div>
       </div>
 
-      <div className="mx-auto max-w-lg px-4 py-8">
+      <div className="mx-auto max-w-xl px-5 pb-20 pt-10">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
+          transition={{ duration: 0.5 }}
+          className="space-y-5"
         >
-          {/* Title */}
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Share Your Experience
-            </h1>
-            <p className="mt-1 text-gray-500">
-              Your story helps others discover us 🙏
-            </p>
+          {/* ── Hero heading ── */}
+          <div className="text-center pb-2">
             {linkData.product_name && (
-              <p className="mt-2 inline-block rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
-                📦 {linkData.product_name}
-              </p>
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-4 py-1.5 mb-5"
+              >
+                <span className="text-xs">📦</span>
+                <span className="text-xs font-semibold text-indigo-700 tracking-wide">
+                  {linkData.product_name}
+                </span>
+              </motion.div>
             )}
+            <h1 className="text-4xl font-black tracking-tight text-gray-900 leading-tight">
+              How was your
+              <br />
+              <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                FLUX3D experience?
+              </span>
+            </h1>
+            <p className="mt-3 text-gray-500 text-base">
+              Your story helps others make confident decisions 🙏
+            </p>
           </div>
 
-          {/* Card container */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-6">
-            {/* ── Your Details ── */}
-            <section>
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400">
-                Your Details
-              </h2>
-              <div className="space-y-3">
-                {/* Honeypot */}
-                <input
-                  type="text"
-                  className="hidden"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  tabIndex={-1}
-                  autoComplete="off"
-                />
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => {
-                      setCustomerName(e.target.value);
-                      setNameError("");
-                    }}
-                    placeholder="Your name"
-                    className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-indigo-100 ${
-                      nameError
-                        ? "border-red-400 focus:border-red-400"
-                        : "border-gray-200 focus:border-indigo-400"
-                    }`}
-                  />
-                  {nameError && (
-                    <p className="mt-1 text-xs text-red-500">{nameError}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Email{" "}
-                    <span className="text-gray-400 font-normal">
-                      (optional)
-                    </span>
-                  </label>
-                  <input
-                    type="email"
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
+          {/* ── Section 1: Details ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm shadow-gray-100"
+          >
+            <div className="mb-5 flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-black text-white">
+                1
               </div>
-            </section>
+              <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400">
+                About You
+              </h2>
+            </div>
+            <div className="space-y-3.5">
+              <FloatingInput
+                label="Your Name"
+                value={customerName}
+                onChange={(v) => {
+                  setCustomerName(v);
+                  setNameError("");
+                }}
+                error={nameError}
+                placeholder="e.g. Rahul Sharma"
+              />
+              <FloatingInput
+                label="Email Address"
+                value={customerEmail}
+                onChange={setCustomerEmail}
+                type="email"
+                optional
+                placeholder="your@email.com"
+              />
+            </div>
+          </motion.div>
 
-            {/* ── Rating ── */}
-            <section>
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400">
+          {/* ── Section 2: Rating ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm shadow-gray-100"
+          >
+            <div className="mb-5 flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-black text-white">
+                2
+              </div>
+              <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400">
                 Your Rating
               </h2>
-              <StarRating value={rating} onChange={setRating} />
-              <AnimatePresence>
-                {rating > 0 && (
-                  <motion.p
-                    key={rating}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="mt-2 text-sm font-medium text-indigo-700"
-                  >
-                    {RATING_LABELS[rating]}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </section>
+            </div>
 
-            {/* ── Quick Prompt Chips / 1-star helper ── */}
-            <AnimatePresence>
-              {rating === 1 ? (
-                <motion.section
-                  key="one-star-helper"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
+            <StarRating value={rating} onChange={setRating} />
+
+            <AnimatePresence mode="wait">
+              {meta && (
+                <motion.div
+                  key={rating}
+                  initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.2 }}
+                  className={`mt-4 flex items-center gap-2 rounded-2xl border px-4 py-3 ${meta.bg}`}
                 >
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-                    <p className="text-sm font-medium text-amber-800">
-                      💬 Tell us what went wrong — your honest feedback helps us
-                      improve 🙏
-                    </p>
-                    <p className="mt-1 text-xs text-amber-600">
-                      Type your experience below. Our team personally reads
-                      every response.
-                    </p>
-                  </div>
-                </motion.section>
-              ) : chips.length > 0 ? (
-                <motion.section
-                  key="chips"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400">
-                    Quick Prompts — tap to generate
-                  </h2>
-                  <div className="flex flex-wrap gap-2">
-                    {chips.map((chip) => (
-                      <button
-                        key={chip}
-                        type="button"
-                        onClick={() => handleChipClick(chip)}
-                        disabled={generating}
-                        className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50"
-                      >
-                        {generating && shortPrompt === chip ? (
-                          <Loader2 className="inline h-3 w-3 animate-spin mr-1" />
-                        ) : (
-                          <Sparkles className="inline h-3 w-3 mr-1" />
-                        )}
-                        {chip}
-                      </button>
-                    ))}
-                  </div>
-                </motion.section>
-              ) : null}
+                  <span className="text-lg">{meta.emoji}</span>
+                  <p className={`text-sm font-semibold ${meta.color}`}>
+                    {meta.label}
+                  </p>
+                </motion.div>
+              )}
             </AnimatePresence>
+          </motion.div>
 
-            {/* ── Testimonial writer ── */}
-            <section>
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400">
-                Your Testimonial
-              </h2>
+          {/* ── Section 3: Write testimonial ── */}
+          <AnimatePresence>
+            {rating > 0 && (
+              <motion.div
+                ref={writeRef}
+                key="write-section"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.35 }}
+                className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm shadow-gray-100"
+              >
+                <div className="mb-5 flex items-center gap-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-black text-white">
+                    3
+                  </div>
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400">
+                    Your Testimonial
+                  </h2>
+                </div>
 
-              {/* Short prompt input + Generate */}
-              <div className="mb-3 flex gap-2">
-                <input
-                  type="text"
-                  value={shortPrompt}
-                  onChange={(e) => setShortPrompt(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      void generateDraft();
-                    }
-                  }}
-                  placeholder="A few words... (e.g. loved the print quality and packaging)"
-                  className="min-w-0 flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-                />
-                <button
-                  type="button"
-                  onClick={() => void generateDraft()}
-                  disabled={generating || !shortPrompt.trim() || rating === 0}
-                  className="flex shrink-0 items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
-                >
-                  {generating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-4 w-4" />
+                {/* 1-star helper */}
+                {rating === 1 ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5"
+                  >
+                    <p className="text-sm font-semibold text-amber-800">
+                      💬 Tell us what went wrong
+                    </p>
+                    <p className="mt-1 text-xs text-amber-600 leading-relaxed">
+                      Your honest feedback helps us improve. Our team personally
+                      reads every response.
+                    </p>
+                  </motion.div>
+                ) : (
+                  <>
+                    {/* Quick prompt chips */}
+                    <div className="mb-4">
+                      <p className="mb-2.5 text-xs font-semibold text-gray-400 uppercase tracking-widest">
+                        ✨ Quick prompts — tap to generate
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {chips.map((chip) => (
+                          <motion.button
+                            key={chip}
+                            type="button"
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => handleChipClick(chip)}
+                            disabled={generating}
+                            className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all disabled:opacity-50 ${
+                              shortPrompt === chip && generating
+                                ? "border-indigo-300 bg-indigo-50 text-indigo-600"
+                                : "border-gray-200 bg-gray-50 text-gray-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                            }`}
+                          >
+                            {generating && shortPrompt === chip ? (
+                              <Loader2 className="inline h-3 w-3 animate-spin mr-1" />
+                            ) : (
+                              <Sparkles className="inline h-3 w-3 mr-1 text-indigo-400" />
+                            )}
+                            {chip}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Custom prompt row */}
+                    <div className="mb-3 flex gap-2">
+                      <input
+                        type="text"
+                        value={shortPrompt}
+                        onChange={(e) => setShortPrompt(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            void generateDraft();
+                          }
+                        }}
+                        placeholder="Or type a few words and let AI write for you…"
+                        className="min-w-0 flex-1 rounded-2xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm text-gray-800 outline-none transition hover:border-gray-300 focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100 placeholder:text-gray-400"
+                      />
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => void generateDraft()}
+                        disabled={generating || !shortPrompt.trim()}
+                        className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-700 disabled:opacity-40"
+                      >
+                        {generating ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-4 w-4" />
+                        )}
+                        {generating ? "Writing…" : "Generate"}
+                      </motion.button>
+                    </div>
+                  </>
+                )}
+
+                {/* Textarea */}
+                <div className="relative">
+                  {generating && !body && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/80 backdrop-blur-sm">
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
+                        <p className="text-xs text-gray-400 font-medium">
+                          AI is writing your testimonial…
+                        </p>
+                      </div>
+                    </div>
                   )}
-                  {generating ? "Generating…" : "Generate"}
-                </button>
-              </div>
+                  <textarea
+                    ref={bodyRef}
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    rows={6}
+                    placeholder={
+                      rating === 1
+                        ? "Share what went wrong and what could have been better…"
+                        : "Your testimonial will appear here. You can also write directly — no need to use AI."
+                    }
+                    className="w-full resize-none rounded-2xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 text-sm leading-relaxed text-gray-800 outline-none transition hover:border-gray-300 focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100 placeholder:text-gray-400"
+                  />
+                </div>
 
-              {/* Body textarea */}
-              <textarea
-                ref={bodyRef}
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                rows={5}
-                placeholder="Your testimonial will appear here. You can type directly or use the quick prompts above."
-                className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-              />
+                {/* Char count + regenerate */}
+                <div className="mt-2 flex items-center justify-between">
+                  <div>
+                    {body && shortPrompt && (
+                      <button
+                        type="button"
+                        onClick={() => void generateDraft()}
+                        disabled={generating}
+                        className="flex items-center gap-1.5 text-xs text-gray-400 transition hover:text-indigo-600 disabled:opacity-40"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        Regenerate
+                      </button>
+                    )}
+                  </div>
+                  <span
+                    className={`text-xs tabular-nums ${body.length > 500 ? "text-amber-500" : "text-gray-300"}`}
+                  >
+                    {body.length} / 600
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-              {/* Regenerate */}
-              {body && (
-                <button
+          {/* ── Submit button ── */}
+          <AnimatePresence>
+            {rating > 0 && (
+              <motion.div
+                key="submit"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <motion.button
                   type="button"
-                  onClick={() => void generateDraft()}
-                  disabled={generating || !shortPrompt.trim()}
-                  className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400 transition hover:text-indigo-600 disabled:opacity-50"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => void handleSubmit()}
+                  disabled={
+                    submitting ||
+                    !rating ||
+                    !body.trim() ||
+                    !customerName.trim()
+                  }
+                  className="w-full rounded-3xl bg-gradient-to-r from-indigo-600 to-violet-600 py-4 text-sm font-bold text-white shadow-xl shadow-indigo-200 transition-all hover:shadow-indigo-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
                 >
-                  <RefreshCw className="h-3 w-3" />
-                  Regenerate
-                </button>
-              )}
-            </section>
+                  {submitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Submitting…
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      Submit My Testimonial
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
+                  )}
+                </motion.button>
 
-            {/* ── Submit ── */}
-            <button
-              type="button"
-              onClick={() => void handleSubmit()}
-              disabled={
-                submitting || !rating || !body.trim() || !customerName.trim()
-              }
-              className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {submitting ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Submitting…
-                </span>
-              ) : (
-                "Submit My Testimonial →"
-              )}
-            </button>
-          </div>
-
-          <p className="text-center text-xs text-gray-400">
-            Your testimonial will be reviewed before it appears on our site.
-          </p>
+                <p className="mt-3 text-center text-xs text-gray-400">
+                  Your testimonial is reviewed before it appears on our site
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
     </div>
