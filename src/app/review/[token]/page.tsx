@@ -19,45 +19,64 @@ interface LinkData {
 // ─── Rating helpers ───────────────────────────────────────────────────────────
 
 const RATING_LABELS: Record<number, string> = {
-  1: "We can do better — let's hear what went wrong",
-  2: "Sorry to hear that — your feedback matters",
-  3: "Good, but there's room to grow",
-  4: "Great experience — we're glad! 😊",
-  5: "Absolutely loved it! 🎉",
+  1: "We are sorry to hear that — your feedback is valuable 🙏",
+  2: "Thank you for being honest — we will work to do better 💪",
+  3: "Appreciate your honest take — always room to grow ✨",
+  4: "Great to hear — glad you had a good experience 😊",
+  5: "Absolutely loved it — thank you so much! 🎉",
 };
 
 function getPromptChips(rating: number, orderType: string): string[] {
+  const isShop = orderType === "shop";
+
+  // 1-star: hide chips — handled separately in JSX with a helper message
+  if (rating === 1) return [];
+
   if (rating === 5) {
-    return orderType === "shop"
+    return isShop
       ? [
-          "Arrived perfectly packed",
-          "Exact print quality, sharp details",
-          "Great value for money",
+          "Perfect print quality — every detail came out sharp",
+          "Packaging was excellent, product arrived safely",
+          "Exceeded expectations — worth every rupee",
+          "Great communication from the team",
         ]
       : [
-          "Quality exceeded my expectations",
-          "Delivered on time, no delays",
-          "Team was very responsive",
+          "Team understood my design vision exactly",
+          "Delivered on time, quality was superb",
+          "Will definitely order again without hesitation",
+          "Best 3D printing service I have found in India",
         ];
   }
+
   if (rating === 4) {
-    return [
-      "Overall great experience",
-      "Good quality, minor improvements possible",
-      "Would definitely order again",
-    ];
+    return isShop
+      ? [
+          "Good quality overall, happy with the result",
+          "Product looked great, minor improvements possible",
+          "Smooth ordering experience from start to finish",
+          "Solid service — will order again",
+        ]
+      : [
+          "Good experience overall, would recommend",
+          "Quality was solid, communication was good",
+          "Happy with the final output",
+          "Professional team with good execution",
+        ];
   }
+
   if (rating === 3) {
     return [
-      "Decent, but expected a bit more",
-      "Good start, some room to improve",
-      "Okay experience overall",
+      "Decent experience overall — a few things could be better",
+      "Product was okay but packaging could improve",
+      "Promising service — looking forward to future improvements",
     ];
   }
+
+  // 2-star: constructive, not harsh
   return [
-    "Wasn't fully satisfied with the quality",
-    "Expected better for the price",
-    "Delivery took longer than expected",
+    "Had some concerns — hoping the team can improve",
+    "Mixed experience — a few things did not go as expected",
+    "Not fully satisfied, but I see potential here",
   ];
 }
 
@@ -410,10 +429,29 @@ export default function TestimonialPage() {
               </AnimatePresence>
             </section>
 
-            {/* ── Quick Prompt Chips ── */}
+            {/* ── Quick Prompt Chips / 1-star helper ── */}
             <AnimatePresence>
-              {chips.length > 0 && (
+              {rating === 1 ? (
                 <motion.section
+                  key="one-star-helper"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                >
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                    <p className="text-sm font-medium text-amber-800">
+                      💬 Tell us what went wrong — your honest feedback helps us
+                      improve 🙏
+                    </p>
+                    <p className="mt-1 text-xs text-amber-600">
+                      Type your experience below. Our team personally reads
+                      every response.
+                    </p>
+                  </div>
+                </motion.section>
+              ) : chips.length > 0 ? (
+                <motion.section
+                  key="chips"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
@@ -440,7 +478,7 @@ export default function TestimonialPage() {
                     ))}
                   </div>
                 </motion.section>
-              )}
+              ) : null}
             </AnimatePresence>
 
             {/* ── Testimonial writer ── */}
