@@ -10,6 +10,11 @@ import {
   type ShopCouponResult,
 } from "@/lib/shop/pricing";
 import { calculateShippingFromRules } from "@/lib/shop/shipping";
+import {
+  groupRulesByProduct,
+  resolveCartUnitPrice,
+  type CartPriceRule,
+} from "@/lib/shop/cart-price-rules";
 import type { ShopOrderItem, ShopShippingAddress } from "@/lib/shop/orders";
 
 export const MAX_ORDER_NUMBER_RETRIES = 5;
@@ -419,6 +424,23 @@ export async function placeShopOrder(
   const skusById = new Map(
     (skuRows ?? []).map((sku) => [sku.id, sku as SkuSnapshot]),
   );
+  const skuProductIds = Array.from(
+    new Set(
+      (skuRows ?? []).map((sku) => String(sku.product_id)).filter(Boolean),
+    ),
+  );
+  const { data: cartPriceRuleRows, error: cartPriceRuleError } =
+    skuProductIds.length
+      ? await supabase
+          .from("shelf_product_cart_price_rules")
+          .select("*")
+          .in("product_id", skuProductIds)
+          .eq("is_active", true)
+      : { data: [], error: null };
+  if (cartPriceRuleError) throw new Error(cartPriceRuleError.message);
+  const cartPriceRulesByProduct = groupRulesByProduct(
+    (cartPriceRuleRows ?? []) as CartPriceRule[],
+  );
 
   const items: ShopOrderItem[] = [];
   let totalWeightGrams = 0;
@@ -438,7 +460,12 @@ export async function placeShopOrder(
       );
     }
 
-    const unitPrice = roundMoney(Number(sku.price));
+    const baseUnitPrice = roundMoney(Number(sku.price));
+    const priceAdjustment = resolveCartUnitPrice(
+      baseUnitPrice,
+      cartPriceRulesByProduct.get(sku.product_id) ?? null,
+    );
+    const unitPrice = priceAdjustment?.adjustedUnitPrice ?? baseUnitPrice;
     const weight = Number(sku.weight_grams ?? 0);
     totalWeightGrams += weight * rawItem.quantity;
 
@@ -453,6 +480,14 @@ export async function placeShopOrder(
       variantLabel: "",
       quantity: rawItem.quantity,
       unitPrice,
+      pricingAdjustment: priceAdjustment
+        ? {
+            ruleId: priceAdjustment.ruleId,
+            ruleName: priceAdjustment.ruleName,
+            baseUnitPrice,
+            amount: priceAdjustment.amount,
+          }
+        : null,
       customizationText: rawItem.customizationText ?? null,
     });
   }

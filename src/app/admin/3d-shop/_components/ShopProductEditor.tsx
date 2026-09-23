@@ -13,6 +13,7 @@ import { HotspotSection } from "./product-editor/sections/HotspotSection";
 import { VariantOptionsSection } from "./product-editor/sections/VariantOptionsSection";
 import { SkuPatternStudio } from "./product-editor/sections/SkuPatternStudio";
 import { PricingRulesEngine } from "./product-editor/sections/PricingRulesEngine";
+import { CartPriceControl } from "./product-editor/sections/CartPriceControl";
 import { SkuManagerSection } from "./product-editor/sections/SkuManagerSection";
 import { DimensionsSection } from "./product-editor/sections/DimensionsSection";
 import { CustomizationSection } from "./product-editor/sections/CustomizationSection";
@@ -28,6 +29,7 @@ const editorSections = [
   { id: "sec-variants", label: "Variants" },
   { id: "sec-pattern", label: "SKU Pattern" },
   { id: "sec-pricing", label: "Pricing Rules" },
+  { id: "sec-cart-pricing", label: "Cart Pricing" },
   { id: "sec-dimensions", label: "Dimensions" },
   { id: "sec-skus", label: "SKUs" },
   { id: "sec-customization", label: "Customization" },
@@ -96,6 +98,9 @@ function EditorShell() {
           </div>
           <div id="sec-pricing" className="scroll-mt-28">
             <PricingRulesEngine />
+          </div>
+          <div id="sec-cart-pricing" className="scroll-mt-28">
+            <CartPriceControl />
           </div>
           <div id="sec-dimensions" className="scroll-mt-28">
             <DimensionsSection />

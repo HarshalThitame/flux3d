@@ -75,6 +75,9 @@ function lineToShopItem(
     ),
     customizationText: String(payload.customizationText ?? "").trim(),
     price: Number(live ? live.price : (payload.price ?? 0)),
+    basePrice: Number(
+      live ? live.basePrice : (payload.basePrice ?? payload.price ?? 0),
+    ),
     compareAtPrice: live
       ? live.compareAtPrice
       : ((payload.compareAtPrice as number | null) ?? null),
@@ -110,6 +113,7 @@ function shopItemToLine(userId: string, item: ShopCartItem): NewServerCartLine {
       variantLabel: item.variantLabel,
       customizationText: item.customizationText.trim(),
       price: item.price,
+      basePrice: item.basePrice ?? item.price,
       compareAtPrice: item.compareAtPrice,
       maxStock: item.maxStock,
       weightGrams: item.weightGrams ?? 0,

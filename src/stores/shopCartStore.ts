@@ -34,6 +34,8 @@ export type ShopCartItem = {
   variantLabel: string;
   customizationText: string;
   price: number;
+  /** Immutable SKU catalog price before any active cart price rule. */
+  basePrice?: number;
   compareAtPrice: number | null;
   quantity: number;
   maxStock: number;

@@ -21,6 +21,12 @@ import type {
 } from "@/lib/shop/public-types";
 import { normalizeShopNumber } from "@/lib/shop/selection";
 import { toCatalogRetailerId } from "@/lib/meta/catalog";
+import {
+  groupRulesByProduct,
+  resolveCartUnitPrice,
+  type CartPriceRule,
+} from "@/lib/shop/cart-price-rules";
+import { createAdminSupabaseClient } from "@/lib/admin/server";
 
 /**
  * Public shop data is served through Next.js's data cache (unstable_cache):
@@ -82,7 +88,24 @@ async function loadAllShopProducts(): Promise<ShopPublicProduct[]> {
     .limit(250);
 
   if (error) throw new Error(error.message);
-  return ((data ?? []) as unknown as RawProduct[]).map(mapProduct);
+  const rows = (data ?? []) as unknown as RawProduct[];
+  const rulesByProduct = await loadActiveCartPriceRules(
+    rows.map((row) => row.id),
+  );
+  return rows.map((row) => mapProduct(row, rulesByProduct.get(row.id) ?? null));
+}
+
+async function loadActiveCartPriceRules(productIds: string[]) {
+  const uniqueProductIds = Array.from(new Set(productIds.filter(Boolean)));
+  if (!uniqueProductIds.length) return new Map<string, CartPriceRule | null>();
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("shelf_product_cart_price_rules")
+    .select("*")
+    .in("product_id", uniqueProductIds)
+    .eq("is_active", true);
+  if (error) throw new Error(error.message);
+  return groupRulesByProduct((data ?? []) as CartPriceRule[]);
 }
 
 const getCachedShopCategories = unstable_cache(
@@ -375,9 +398,25 @@ export function formatShopReviewerName(name: string | null | undefined) {
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
-function mapProduct(row: RawProduct): ShopPublicProduct {
+function mapProduct(
+  row: RawProduct,
+  cartPriceRule: CartPriceRule | null = null,
+): ShopPublicProduct {
   const skus = (row.skus ?? [])
     .map(normalizeSku)
+    .map((sku) => {
+      const adjustment = resolveCartUnitPrice(sku.price, cartPriceRule);
+      if (!adjustment) return sku;
+      const compareAt =
+        adjustment.adjustedUnitPrice < sku.price
+          ? Math.max(sku.compare_at_price ?? 0, sku.price)
+          : sku.compare_at_price;
+      return {
+        ...sku,
+        price: adjustment.adjustedUnitPrice,
+        compare_at_price: compareAt || null,
+      };
+    })
     .sort((a, b) => a.price - b.price);
   const skuImages: Record<string, ShopSkuImage[]> = {};
   for (const sku of row.skus ?? []) {
@@ -479,7 +518,7 @@ function mapProduct(row: RawProduct): ShopPublicProduct {
     usdz_url: row.usdz_url ?? null,
     hotspots: parseHotspotsJson(row.hotspots),
     hero_video_url: row.hero_video_url ?? null,
-    base_price: normalizeShopNumber(row.base_price),
+    base_price: minSku ? minSku.price : normalizeShopNumber(row.base_price),
     display_price: minSku ? minSku.price : normalizeShopNumber(row.base_price),
     compare_at_price: saleSku?.compare_at_price ?? null,
     sku_pattern:
@@ -707,7 +746,9 @@ async function queryShopProductBySlugDirect(
 
   if (error) throw new Error(error.message);
   if (!data) return null;
-  return mapProduct(data as unknown as RawProduct);
+  const row = data as unknown as RawProduct;
+  const rulesByProduct = await loadActiveCartPriceRules([row.id]);
+  return mapProduct(row, rulesByProduct.get(row.id) ?? null);
 }
 
 export async function getShopProductBySlug(slug: string) {
