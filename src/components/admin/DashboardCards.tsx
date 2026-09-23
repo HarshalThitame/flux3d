@@ -1,71 +1,43 @@
-import { ArrowDownRight, ArrowUpRight, Clock3, IndianRupee, Layers3, PackageOpen, Percent, RefreshCcw, Target, Users } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { Clock3, IndianRupee, Layers3, PackageOpen, Percent, RefreshCcw, Target, Users } from 'lucide-react'
 import type { DashboardMetric } from '@/lib/admin/types'
 
-const icons = [PackageOpen, IndianRupee, Clock3, Layers3, Percent, Target, RefreshCcw, Users]
-
-const gradients = [
-  'from-[#6d28d9]/10 to-transparent',
-  'from-emerald-400/10 to-transparent',
-  'from-cyan-400/10 to-transparent',
-  'from-violet-400/10 to-transparent',
+const icons = [PackageOpen, IndianRupee, Clock3, Layers3, Target, Percent, RefreshCcw, Users]
+const iconStyles = [
+  'bg-[#f0eafd] text-[#6d28d9]',
+  'bg-[#e7f5ed] text-[#238253]',
+  'bg-[#fff3e6] text-[#b97525]',
+  'bg-[#eaf2fc] text-[#4172ac]',
 ]
 
-const iconGradients = [
-  'from-[#6d28d9] to-[#a855f7]',
-  'from-emerald-400 to-emerald-500',
-  'from-cyan-400 to-cyan-500',
-  'from-violet-400 to-violet-500',
-]
-
-export default function DashboardCards({
-  metrics,
-}: {
-  metrics: DashboardMetric[]
-}) {
+export default function DashboardCards({ metrics }: { metrics: DashboardMetric[] }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <section aria-label="Business metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {metrics.map((metric, index) => {
         const Icon = icons[index] ?? PackageOpen
-        const isNegative = typeof metric.change === 'string' && metric.change.startsWith('-')
-        const ChangeIcon = isNegative ? ArrowDownRight : ArrowUpRight
+        const detailStyle = metric.tone === 'warning'
+          ? 'text-[#a46523]'
+          : metric.tone === 'positive'
+            ? 'text-[#238253]'
+            : 'text-[#738298]'
 
         return (
-          <motion.div
+          <div
             key={metric.label}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.06 }}
-            className={`group relative overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-b ${gradients[index % 4]} p-5`}
+            className="min-h-[146px] rounded-2xl border border-[#e4e8ef] bg-white p-5 shadow-[0_3px_18px_rgba(25,35,65,0.035)]"
           >
-            <div className="relative">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-sm text-[#6F7192]">{metric.label}</div>
-                  <div className="mt-2 font-[var(--font-syne)] text-3xl font-bold text-[#0F1B3D]">
-                    {metric.value}
-                  </div>
-                </div>
-                <div className={`rounded-xl bg-gradient-to-br ${iconGradients[index % 4]} p-2.5 text-[#0F1B3D] shadow-lg`}>
-                  <Icon className="h-4.5 w-4.5" />
-                </div>
-              </div>
-              <div className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${
-                isNegative
-                  ? 'border-rose-200 bg-rose-50 text-rose-600'
-                  : metric.tone === 'positive'
-                    ? 'border-emerald-400/20 bg-emerald-50 text-emerald-600'
-                    : metric.tone === 'warning'
-                      ? 'border-amber-200 bg-amber-50 text-amber-600'
-                      : 'border-cyan-200 bg-cyan-50 text-cyan-600'
-              }`}>
-                <ChangeIcon className="h-3 w-3" />
-                {metric.change}
-              </div>
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm font-medium leading-5 text-[#65758b]">{metric.label}</p>
+              <span aria-hidden="true" className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] ${iconStyles[index % iconStyles.length]}`}>
+                <Icon className="h-[18px] w-[18px]" />
+              </span>
             </div>
-          </motion.div>
+            <div className="mt-3 font-[var(--font-syne)] text-[clamp(1.55rem,2.4vw,2rem)] font-bold leading-tight tracking-[-0.045em] text-[#182540]">
+              {metric.value}
+            </div>
+            <p className={`mt-2 text-xs leading-5 ${detailStyle}`}>{metric.change}</p>
+          </div>
         )
       })}
-    </div>
+    </section>
   )
 }
