@@ -23,7 +23,7 @@ export default function AdminShell({
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#F4F6FA] text-[#0F1B3D]">
+    <div className="min-h-screen bg-[#f5f7fb] text-[#182540]">
       <Sidebar collapsed={collapsed} onToggleAction={() => setCollapsed((current) => !current)} />
 
       <AnimatePresence>
@@ -135,12 +135,12 @@ export default function AdminShell({
         )}
       </AnimatePresence>
 
-      <div className={`min-h-screen transition-all duration-300 ${collapsed ? 'md:pl-[88px]' : 'md:pl-[260px]'}`}>
+      <div className={`min-h-screen transition-all duration-300 ${collapsed ? 'md:pl-[92px]' : 'md:pl-[280px]'}`}>
         <Topbar
           onOpenMobileNav={() => setMobileNavOpen(true)}
         />
-        <main className="px-4 py-6 md:px-8">
-          <div className="mx-auto max-w-[1500px]">{children}</div>
+        <main className="px-4 py-6 md:px-7 lg:px-9">
+          <div className="mx-auto max-w-[1600px]">{children}</div>
         </main>
       </div>
     </div>
