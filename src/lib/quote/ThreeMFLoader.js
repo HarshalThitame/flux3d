@@ -1112,6 +1112,7 @@ class ThreeMFLoader extends Loader {
           build = objects[component.objectId]
         }
 
+        if (build === undefined) { continue; }
         const object3D = build.clone()
 
         // apply component transform
@@ -1208,6 +1209,7 @@ class ThreeMFLoader extends Loader {
       for (let i = 0; i < buildData.length; i++) {
         const buildItem = buildData[i]
         const object3D = objects[buildItem['objectId']]
+        if (!object3D) { continue; }
 
         // apply transform
 
