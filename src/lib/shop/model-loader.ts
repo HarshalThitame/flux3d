@@ -1,6 +1,8 @@
 'use client'
 
-import { GLTFLoader, OBJLoader, STLLoader, ThreeMFLoader } from 'three-stdlib'
+import { GLTFLoader, OBJLoader, STLLoader } from 'three-stdlib'
+import { ThreeMFLoader } from "../quote/ThreeMFLoader";
+
 import { Box3, BufferGeometry, Color, Group, Matrix4, Mesh, MeshStandardMaterial, Object3D, Vector3 } from 'three'
 
 const defaultMaterial = new MeshStandardMaterial({

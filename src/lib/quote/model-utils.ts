@@ -8,8 +8,8 @@ import {
   OBJLoader,
   PLYLoader,
   STLLoader,
-  ThreeMFLoader,
 } from "three-stdlib";
+import { ThreeMFLoader } from "./ThreeMFLoader";
 import {
   Box3,
   BufferGeometry,
