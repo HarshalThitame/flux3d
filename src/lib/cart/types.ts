@@ -8,6 +8,7 @@ export type CartDiscountTier = {
 export type CartItem = {
   id: string;
   quoteId?: string;
+  quoteVersionId?: string;
   name: string;
   fileName?: string;
   fileUrl?: string;
@@ -49,6 +50,7 @@ export type CartItem = {
 
 export type CartOrderItem = {
   quoteId?: string;
+  quoteVersionId?: string;
   fileUrl?: string;
   fileName?: string;
   material: string;

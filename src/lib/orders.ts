@@ -105,6 +105,23 @@ export type CreateOrderInput = {
   fbc?: string
 }
 
+export type PrepareAuthoritativeQuotePaymentInput = {
+  quoteVersionId: string
+  fullName: string
+  phone: string
+  addressLine1: string
+  addressLine2?: string
+  city: string
+  state: string
+  pincode: string
+  landmark?: string
+  notes?: string
+  /** Meta pixel _fbp cookie — used only for server-side CAPI match quality. */
+  fbp?: string
+  /** Meta pixel _fbc cookie — used only for server-side CAPI match quality. */
+  fbc?: string
+}
+
 export type AddressFields = {
   fullName: string
   phone: string
@@ -125,6 +142,7 @@ export type SavedAddress = AddressFields & {
 }
 
 export type OrderDraft = {
+  quoteVersionId?: string
   quoteId: string
   fileUrl: string
   material: string

@@ -22,7 +22,6 @@ import AddressForm from "@/components/instant-quote/AddressForm";
 import Toast, { type ToastState } from "@/components/quote/Toast";
 import { useCart } from "@/lib/cart/context";
 import type { AppUserProfile } from "@/lib/auth/server";
-import { normalizeOwnedStoragePath } from "@/lib/quote/storage-path";
 import { getClientCspNonce } from "@/lib/csp-client";
 import { getCartFromStorage, getCartStorageKey } from "@/lib/cart/utils";
 import type { CartItem } from "@/lib/cart/types";
@@ -49,7 +48,7 @@ export default function CartDeliveryClient({
 }: CartDeliveryClientProps) {
   const router = useRouter();
   const { items, summary, clearItems } = useCart();
-  const [localItems, setLocalItems] = useState<CartItem[]>(() =>
+  const [localItems] = useState<CartItem[]>(() =>
     getCartFromStorage(getCartStorageKey(user.id)),
   );
   const [selectedAddressId, setSelectedAddressId] = useState<string | "new">(
@@ -250,17 +249,12 @@ export default function CartDeliveryClient({
       return;
     }
 
-    try {
-      items.forEach((item) => {
-        normalizeOwnedStoragePath(item.fileUrl ?? "", user.id);
-      });
-    } catch (error) {
+    const quoteVersionIds = items.map((item) => item.quoteVersionId);
+    if (quoteVersionIds.some((id) => !id)) {
       setToast({
         type: "error",
         message:
-          error instanceof Error
-            ? error.message
-            : "One or more cart items has an invalid file upload.",
+          "One or more cart items uses a legacy estimate. Re-analyse it before checkout.",
       });
       return;
     }
@@ -282,59 +276,7 @@ export default function CartDeliveryClient({
 
       const paymentResult = await withLoading(async () => {
         const result = await prepareCartPaymentAction({
-          items: items.map((item) => ({
-            quoteId: item.quoteId ?? item.id ?? "",
-            fileUrl: item.fileUrl ?? "",
-            fileName: item.fileName ?? item.name ?? "",
-            material: item.material ?? "",
-            color: item.color ?? "",
-            quantity: item.quantity ?? 1,
-            infill: item.infill ?? 20,
-            layerHeight: item.layerHeight ?? 0.2,
-            postProcessingLevel: item.config?.postProcessingLevel ?? "none",
-            supports: item.supports ?? false,
-            materialCost: item.materialCost ?? 0,
-            machineCost: item.machineCost ?? 0,
-            subtotal: item.subtotal ?? item.price ?? 0,
-            postProcessingCharges: item.postProcessingCharges ?? 0,
-            overheadPercentage: item.overheadPercentage ?? 0,
-            overheadAmount: item.overheadAmount ?? 0,
-            marginPercentage: item.marginPercentage ?? 0,
-            marginAmount: item.marginAmount ?? 0,
-            totalPrice: item.totalPrice ?? item.price ?? 0,
-            cartDiscountAmount: item.cartDiscountAmount ?? 0,
-            cartDiscountPercent: item.cartDiscountPercent ?? 0,
-            finalPrice: item.finalPrice ?? item.totalPrice ?? item.price ?? 0,
-            deliveryCharge: item.deliveryCharge ?? 0,
-            grandTotal:
-              item.grandTotal ??
-              (item.finalPrice ?? item.totalPrice ?? item.price ?? 0) +
-                (item.deliveryCharge ?? 0),
-            price: item.price ?? 0,
-            estimatedTime: item.estimatedTime ?? 0,
-            weight: item.weight ?? 0,
-            modelVolumeMm3:
-              (item as { modelVolumeMm3?: number }).modelVolumeMm3 ?? 0,
-            difficultyFactor: item.difficultyFactor ?? 1,
-            dimensions: item.dimensions ?? { x: 0, y: 0, z: 0 },
-          })),
-          subtotal: summary.itemsTotal,
-          itemsTotal: summary.itemsTotal,
-          cartDiscountAmount: summary.cartDiscountAmount,
-          cartDiscountPercent: summary.cartDiscountPercent,
-          couponDiscountAmount: summary.couponDiscountAmount,
-          couponCode: summary.couponCode,
-          couponId: summary.couponId,
-          couponDiscountType: summary.couponDiscountType,
-          offerId: summary.offerId,
-          offerDiscountAmount: summary.offerDiscountAmount,
-          offerName: summary.offerName,
-          offerCode: summary.offerCode,
-          offerDiscountType: summary.offerDiscountType,
-          discount: summary.discount,
-          finalPrice: summary.finalPrice,
-          deliveryCharge: summary.deliveryCharge,
-          grandTotal: summary.grandTotal,
+          quoteVersionIds: quoteVersionIds as string[],
           fullName: address.fullName,
           phone: address.phone,
           addressLine1: address.addressLine1,

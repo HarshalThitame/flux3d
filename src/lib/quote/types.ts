@@ -149,6 +149,7 @@ export type UploadState = {
 export type QuoteCapture = {
   id: string;
   userId: string;
+  quoteVersionId: string | null;
   reference: string;
   status: "pending" | "paid" | "cancelled" | "expired";
   amountPaise: number;

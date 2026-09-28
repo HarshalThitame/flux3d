@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { requireUser } from "@/lib/auth/server";
 import {
   formatOrderNumber,
@@ -50,9 +51,13 @@ import {
 } from "@/lib/payments/repository";
 import { updatePaymentAttemptStatus } from "@/lib/payments/state";
 import { notifyPaymentCaptured } from "@/lib/payments/email-triggers";
-import { buildPublicBusinessProfile } from "@/lib/public-business";
 import { sendCapiEvents, buildPurchaseEvent } from "@/lib/meta/conversions-api";
 import { generateEventId } from "@/lib/meta/event-utils";
+import {
+  prepareAuthoritativeCartPayment,
+  type PrepareAuthoritativeCartPaymentInput,
+} from "@/lib/quote/checkout";
+import { rateLimitCheck } from "@/lib/rate-limit";
 
 type CartOrderItem = {
   quoteId: string;
@@ -184,7 +189,10 @@ type PreparedCartOrderItem = CartOrderItem & {
   totalPrice: number;
 };
 
-export async function createCartOrderAction(
+// Historical pre-payment path retained only for reading old capture shapes.
+// It is intentionally not exported and therefore cannot be invoked as a Server Action.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function legacyCreateCartOrderAction(
   input: CreateCartOrderInput,
 ): Promise<{
   orderId: string;
@@ -338,8 +346,6 @@ export async function createCartOrderAction(
       item.machineCost ?? 0,
       "machine cost",
     );
-    const estimatedMinutes = item.estimatedTime * 60;
-
     const postProcessingCharges = normalizeNumber(
       item.postProcessingCharges ?? 0,
       "post processing charges",
@@ -948,6 +954,30 @@ export type PrepareCartPaymentResult = {
 };
 
 export async function prepareCartPaymentAction(
+  input: PrepareAuthoritativeCartPaymentInput,
+): Promise<PrepareCartPaymentResult> {
+  const auth = await requireUser("/cart/delivery");
+  const headersList = await headers();
+  const clientIp =
+    (headersList.get("x-forwarded-for") ?? "").split(",")[0]?.trim() ||
+    "unknown";
+  const rateLimit = await rateLimitCheck(
+    `prepare_authoritative_cart_payment:${auth.user.id}:${clientIp}`,
+    60,
+    10,
+  );
+  if (!rateLimit.success) {
+    throw new Error("Too many requests. Please wait a moment and try again.");
+  }
+
+  return prepareAuthoritativeCartPayment(
+    { userId: auth.user.id, email: auth.user.email ?? "" },
+    input,
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function prepareLegacyCartPaymentAction(
   input: CreateCartOrderInput,
 ): Promise<PrepareCartPaymentResult> {
   const auth = await requireUser("/cart/delivery");
@@ -1164,6 +1194,12 @@ export async function verifyCartPaymentAndCreateOrder(params: {
   if (capture.status !== "pending")
     throw new Error("Capture is not in pending state.");
   if (capture.userId !== auth.user.id) throw new Error("Unauthorized.");
+  if (
+    !capture.razorpayOrderId ||
+    capture.razorpayOrderId !== params.razorpayOrderId
+  ) {
+    throw new Error("Payment order does not match this quote capture.");
+  }
 
   const signatureValid = verifyRazorpayCheckoutSignature({
     orderId: params.razorpayOrderId,
@@ -1174,6 +1210,9 @@ export async function verifyCartPaymentAndCreateOrder(params: {
     throw new Error("Payment signature verification failed.");
 
   const razorpayPayment = await fetchRazorpayPayment(params.razorpayPaymentId);
+  if (razorpayPayment.order_id !== params.razorpayOrderId) {
+    throw new Error("Payment provider order does not match this checkout.");
+  }
   const isCaptured = razorpayPayment.status === "captured";
   const isAuthorized = razorpayPayment.status === "authorized";
   if (!isCaptured && !isAuthorized) {
@@ -1188,11 +1227,67 @@ export async function verifyCartPaymentAndCreateOrder(params: {
 
   const supabase = await createServerSupabaseClient();
   const adminSupabase = createAdminSupabaseClient();
-  const settings = await getSettings();
-
   const pricingData = capture.pricingData as Record<string, unknown>;
   const addressData = capture.addressData as Record<string, unknown>;
   const itemsData = (pricingData.items ?? []) as Array<Record<string, unknown>>;
+  const quoteVersionIds = itemsData.map((item) =>
+    String(item.quoteVersionId ?? ""),
+  );
+  if (
+    itemsData.length === 0 ||
+    new Set(quoteVersionIds).size !== quoteVersionIds.length ||
+    quoteVersionIds.some((id) => !/^[0-9a-f-]{36}$/i.test(id))
+  ) {
+    throw new Error("Cart capture does not contain authoritative quote versions.");
+  }
+  const { data: payableQuotes, error: payableQuotesError } = await adminSupabase
+    .from("quote_versions")
+    .select("id, status, user_id, expires_at")
+    .eq("user_id", auth.user.id)
+    .in("id", quoteVersionIds);
+  const { data: existingQuoteOrders, error: existingQuoteOrdersError } =
+    await adminSupabase
+      .from("orders")
+      .select("id, serial_number, created_at")
+      .eq("user_id", auth.user.id)
+      .in("quote_version_id", quoteVersionIds);
+  if (existingQuoteOrdersError) throw new Error(existingQuoteOrdersError.message);
+  if (existingQuoteOrders && existingQuoteOrders.length === quoteVersionIds.length) {
+    const firstExistingOrder = existingQuoteOrders[0];
+    const firstExistingOrderNumber = formatOrderNumber(
+      firstExistingOrder.serial_number,
+      firstExistingOrder.created_at,
+    );
+    const { data: attemptRow } = await adminSupabase
+      .from("payment_attempts")
+      .select("id")
+      .eq("provider_order_id", params.razorpayOrderId)
+      .maybeSingle();
+    await markQuoteCapturePaid({
+      reference: capture.reference,
+      razorpayOrderId: params.razorpayOrderId,
+      paymentAttemptId: attemptRow?.id ?? capture.paymentAttemptId ?? "",
+      orderId: firstExistingOrder.id,
+    });
+    return {
+      orderId: firstExistingOrder.id,
+      orderNumber: firstExistingOrderNumber,
+      itemCount: existingQuoteOrders.length,
+    };
+  }
+  if (
+    payableQuotesError ||
+    !payableQuotes ||
+    payableQuotes.length !== quoteVersionIds.length ||
+    payableQuotes.some(
+      (quote) =>
+        quote.status !== "approved" ||
+        !quote.expires_at ||
+        new Date(quote.expires_at).getTime() <= Date.now(),
+    )
+  ) {
+    throw new Error("A quote version is no longer eligible for checkout.");
+  }
 
   const normalizedPhone = normalizePhone((addressData.phone as string) ?? "");
   const trimmedAddress = {
@@ -1281,16 +1376,16 @@ export async function verifyCartPaymentAndCreateOrder(params: {
     );
 
     const overheadPercent = Number(item.overheadPercentage ?? 0);
-    const overheadAmount =
-      overheadPercent > 0
-        ? roundMoney(itemSubtotal * (overheadPercent / 100))
-        : normalizeNumber(Number(item.overheadAmount ?? 0), "overhead amount");
+    const overheadAmount = normalizeNumber(
+      Number(item.overheadAmount ?? 0),
+      "overhead amount",
+    );
 
     const marginPercent = Number(item.marginPercentage ?? 0);
-    const marginAmount =
-      marginPercent > 0
-        ? roundMoney((itemSubtotal + overheadAmount) * (marginPercent / 100))
-        : normalizeNumber(Number(item.marginAmount ?? 0), "margin amount");
+    const marginAmount = normalizeNumber(
+      Number(item.marginAmount ?? 0),
+      "margin amount",
+    );
 
     const totalPrice = normalizeNumber(
       Number(item.totalPrice ?? 0),
@@ -1298,10 +1393,10 @@ export async function verifyCartPaymentAndCreateOrder(params: {
     );
     const cartDiscountPercent = Number(pricingData.cartDiscountPercent ?? 0);
     const itemCount = itemsData.length;
-    const cartDiscountForItem =
-      itemCount > 0
-        ? roundMoney(Number(pricingData.cartDiscountAmount ?? 0) / itemCount)
-        : 0;
+    const cartDiscountForItem = normalizeNumber(
+      Number(item.cartDiscountAmount ?? 0),
+      "quote discount",
+    );
     const couponDiscountForItem =
       itemCount > 0
         ? roundMoney(Number(pricingData.couponDiscountAmount ?? 0) / itemCount)
@@ -1310,10 +1405,10 @@ export async function verifyCartPaymentAndCreateOrder(params: {
       itemCount > 0
         ? roundMoney(Number(pricingData.offerDiscountAmount ?? 0) / itemCount)
         : 0;
-    const itemDelivery =
-      itemCount > 0
-        ? roundMoney(Number(pricingData.deliveryCharge ?? 0) / itemCount)
-        : 0;
+    const itemDelivery = normalizeNumber(
+      Number(item.deliveryCharge ?? 0),
+      "delivery charge",
+    );
     const finalPrice =
       totalPrice -
       cartDiscountForItem -
@@ -1325,6 +1420,7 @@ export async function verifyCartPaymentAndCreateOrder(params: {
     orderItems.push({
       user_id: auth.user.id,
       group_id: groupId,
+      quote_version_id: item.quoteVersionId,
       file_url: normalizeOwnedStoragePath(item.fileUrl as string, auth.user.id),
       material: (item.material as string)?.trim() ?? "",
       color: (item.color as string)?.trim() ?? "",
@@ -1336,7 +1432,20 @@ export async function verifyCartPaymentAndCreateOrder(params: {
       post_processing_level: item.postProcessingLevel ?? "none",
       supports: Boolean(item.supports),
       quantity: normalizedQuantity,
-      weight: roundMoney(Number(item.weight ?? 0)),
+      weight: roundMoney(Number(item.finishedPartWeightGrams ?? 0)),
+      finished_weight_grams: Number(item.finishedPartWeightGrams ?? 0),
+      consumed_material_grams: Number(item.billableMaterialGrams ?? 0),
+      solid_volume_mm3: Number(item.modelVolumeMm3 ?? 0),
+      normalized_dimensions_mm: item.dimensions ?? {},
+      plate_count: Number(item.plateCount ?? 0),
+      slicer_time_seconds: Number(item.elapsedSeconds ?? 0),
+      quote_profile_versions: item.profileVersions ?? {},
+      quote_audit_snapshot: {
+        quoteVersionId: item.quoteVersionId,
+        pricing: item,
+        analysisJobId: item.analysisJobId,
+        analysisResultId: item.analysisResultId,
+      },
       difficulty_factor: normalizeNumber(
         Number(item.difficultyFactor ?? 1),
         "difficulty factor",
@@ -1434,49 +1543,35 @@ export async function verifyCartPaymentAndCreateOrder(params: {
       { onConflict: "user_id,file_url", ignoreDuplicates: false },
     );
 
-    const { data: qvRow } = await adminSupabase
-      .from("quote_versions")
-      .insert({
-        quote_id: `F3D-${orderNumber}`,
-        order_id: order.id,
-        user_id: auth.user.id,
-        version_number: 1,
-        status: "approved",
-        snapshot_schema_version: 1,
-        approved_at: new Date().toISOString(),
-        approved_by: auth.user.id,
-        pricing_snapshot: redactSensitiveValues({
-          totalPrice: Number(cartItem?.totalPrice ?? 0),
-          finalPrice: Number(cartItem?.finalPrice ?? 0),
-          grandTotal: Number(cartItem?.grandTotal ?? 0),
-          materialCost: Number(cartItem?.materialCost ?? 0),
-          machineCost: Number(cartItem?.machineCost ?? 0),
-          postProcessingCharges: Number(cartItem?.postProcessingCharges ?? 0),
-        }),
-        material_id: (cartItem?.material as string)?.trim() ?? "",
-        config: {},
-        model_metadata: redactSensitiveValues({
-          fileName: cartItem?.fileName ?? "",
-          fileSize: 0,
-          extension: (cartItem?.fileName as string)?.split(".").pop() ?? "",
-          dimensions: cartItem?.dimensions ?? { x: 0, y: 0, z: 0 },
-        }),
-      })
-      .select("id")
-      .maybeSingle();
-
-    if (qvRow?.id) {
-      await logQuoteEvent({
-        quoteVersionId: qvRow.id,
-        orderId: order.id,
-        actorId: auth.user.id,
-        actorRole: "customer",
-        eventType: "created",
-        previousStatus: null,
-        newStatus: "approved",
-        note: `Cart order — item ${i + 1} of ${insertedOrders.length}`,
-      });
+    const quoteVersionId = String(cartItem?.quoteVersionId ?? "");
+    const { data: acceptedQuote, error: acceptedQuoteError } =
+      await adminSupabase
+        .from("quote_versions")
+        .update({
+          order_id: order.id,
+          status: "accepted",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", quoteVersionId)
+        .eq("user_id", auth.user.id)
+        .eq("status", "approved")
+        .select("id")
+        .single();
+    if (acceptedQuoteError || !acceptedQuote) {
+      throw new Error(
+        acceptedQuoteError?.message ?? "Could not accept the paid quote version.",
+      );
     }
+    await logQuoteEvent({
+      quoteVersionId,
+      orderId: order.id,
+      actorId: auth.user.id,
+      actorRole: "customer",
+      eventType: "submitted",
+      previousStatus: "approved",
+      newStatus: "accepted",
+      note: `Paid cart order — item ${i + 1} of ${insertedOrders.length}`,
+    });
   }
 
   // Track coupon/offer redemptions

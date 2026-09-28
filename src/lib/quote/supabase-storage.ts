@@ -10,8 +10,8 @@ import type { QuoteConfig, UploadState } from '@/lib/quote/types'
 
 const MAX_FILE_SIZE_MB = 100
 const ALLOWED_EXTENSIONS = [
-  'stl', 'obj', '3mf', 'step', 'iges', 'igs', 'brep',
-  'glb', 'gltf', 'fbx', 'ply', 'dae', 'amf', 'vrl', 'dxf', 'dwg',
+  'stl', 'obj', '3mf', 'step', 'stp', 'iges', 'igs', 'brep',
+  'glb', 'gltf', 'fbx', 'ply', 'dae', 'amf', 'wrl', 'vrml', 'dxf', 'dwg',
 ]
 
 function getExtension(fileName: string) {
@@ -27,6 +27,10 @@ export function validateModelFile(file: File) {
 
   if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
     return `File is too large. Maximum allowed size is ${MAX_FILE_SIZE_MB}MB.`
+  }
+
+  if (!Number.isSafeInteger(file.size) || file.size < 1) {
+    return 'The selected file is empty or has an invalid size.'
   }
 
   return null

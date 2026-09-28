@@ -47,7 +47,7 @@ export default function UploadSection({
             Upload your file
           </h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-[#6F7192]">
-            Drop in your STL, OBJ, 3MF, GLB, GLTF, FBX, PLY, DAE, AMF, STEP, IGES, BREP, DWG, or DXF file to instantly begin a polished quote workflow built for speed, accuracy, and production-ready decisions.
+            Drop in STL, OBJ, 3MF, GLB, GLTF, FBX, PLY, DAE, AMF, STEP/STP, IGES, BREP, WRL/VRML, DWG, or DXF to begin the quote workflow.
           </p>
         </div>
         <motion.div
@@ -91,7 +91,7 @@ export default function UploadSection({
             Click to browse or drop your printable file here. From the first upload, the experience is designed to feel fast, premium, and effortless.
           </p>
 <div className="mt-4 inline-flex rounded-full border border-[#6d28d9]/10 bg-white px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">
-  STL · OBJ · 3MF · GLB · GLTF · FBX · PLY · DAE · AMF · STEP · IGES · BREP · DWG · DXF
+  STL · OBJ · 3MF · GLB · GLTF · FBX · PLY · DAE · AMF · STEP/STP · IGES · BREP · WRL/VRML · DWG · DXF
 </div>
         </div>
       </motion.div>

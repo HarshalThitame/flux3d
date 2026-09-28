@@ -9,6 +9,8 @@ function generateReference(): string {
 
 export async function createQuoteCapture(params: {
   userId: string
+  quoteVersionId?: string
+  checkoutKey?: string
   amountPaise: number
   draftData: Record<string, unknown>
   addressData: Record<string, unknown>
@@ -23,6 +25,8 @@ export async function createQuoteCapture(params: {
     .from('quote_captures')
     .insert({
       user_id: params.userId,
+      quote_version_id: params.quoteVersionId ?? null,
+      checkout_key: params.checkoutKey ?? null,
       reference,
       status: 'pending',
       amount_paise: params.amountPaise,
@@ -105,6 +109,7 @@ function mapQuoteCapture(data: Record<string, unknown>): QuoteCapture {
   return {
     id: data.id as string,
     userId: data.user_id as string,
+    quoteVersionId: data.quote_version_id as string | null,
     reference: data.reference as string,
     status: data.status as QuoteCapture['status'],
     amountPaise: Number(data.amount_paise),

@@ -25,7 +25,6 @@ import {
   ArrowRight,
   AlertTriangle,
   FileArchive,
-  Move3D,
   Cuboid,
 } from "lucide-react";
 import EmptyState from "@/components/admin/EmptyState";
@@ -40,13 +39,13 @@ import {
 import type { PricingSettingsInput } from "@/lib/quote/pricing-waterfall";
 import {
   getSignedModelUrl,
-  saveQuoteToSupabase,
   uploadFileToSupabaseStorage,
   validateModelFile,
 } from "@/lib/quote/supabase-storage";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
 import { trackFeatureUsage } from "@/lib/tracking/featureTracker";
 import type { ModelMetadata } from "@/lib/quote/server-pricing";
+import type { QuoteAnalysisResponse } from "@/lib/quote/analysis-types";
 import type {
   ParsedModel,
   QuoteConfig,
@@ -98,7 +97,6 @@ export default function InstantQuoteWorkspace({
   pricingSettings,
   bulkOrderContact,
 }: InstantQuoteWorkspaceProps) {
-  const shouldReduceMotion = useReducedMotion();
   if (materials.length === 0) {
     return (
       <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-8 text-[#070b1d] md:px-8 md:pt-10 xl:px-10">
@@ -232,6 +230,11 @@ function CartEnabledWorkspace({
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedModel, setSelectedModel] = useState<ParsedModel | null>(null);
+  const [analysis, setAnalysis] = useState<QuoteAnalysisResponse | null>(null);
+  const [geometryAnalysisId, setGeometryAnalysisId] = useState<string | null>(null);
+  const [activeAnalysisId, setActiveAnalysisId] = useState<string | null>(null);
+  const [unitConfirmed, setUnitConfirmed] = useState(false);
+  const [unitChoice, setUnitChoice] = useState<"mm" | "cm" | "m" | "in" | "ft">("mm");
   const defaultConfig: QuoteConfig = {
     materialId: defaultMaterial.id,
     color: defaultMaterial.colors[0]?.name ?? "Default",
@@ -259,6 +262,7 @@ function CartEnabledWorkspace({
   const settingsRef = useRef<HTMLDivElement>(null);
   const trackedQuoteRef = useRef<string | null>(null);
   const prefilledModelRef = useRef(false);
+  const configuredSignatureRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -275,18 +279,180 @@ function CartEnabledWorkspace({
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  const priceBreakdown = useMemo(
-    () =>
-      selectedModel?.requiresReview
-        ? null
-        : calculateInstantQuote(
-            selectedModel,
-            config,
-            materials,
-            pricingSettings,
-          ),
-    [selectedModel, config, materials, pricingSettings],
-  );
+  useEffect(() => {
+    if (!activeAnalysisId) return;
+    let cancelled = false;
+    let timer: number | undefined;
+    let attempt = 0;
+
+    const poll = async () => {
+      try {
+        const response = await fetch(`/api/quote/analyses/${activeAnalysisId}`, {
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error("Could not load analysis status.");
+        const next = (await response.json()) as QuoteAnalysisResponse;
+        if (cancelled) return;
+        setAnalysis(next);
+        if (["ready", "manual_review", "failed"].includes(next.status)) return;
+        const delay = Math.min(8000, 1000 * 2 ** Math.min(attempt++, 3));
+        timer = window.setTimeout(poll, delay);
+      } catch {
+        if (cancelled) return;
+        const delay = Math.min(10000, 1500 * 2 ** Math.min(attempt++, 3));
+        timer = window.setTimeout(poll, delay);
+      }
+    };
+
+    void poll();
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [activeAnalysisId]);
+
+  useEffect(() => {
+    if (
+      !geometryAnalysisId ||
+      !analysis ||
+      analysis.status !== "ready" ||
+      (analysis.requiresUnitConfirmation && !unitConfirmed)
+    ) {
+      return;
+    }
+
+    const authoritativeConfig = {
+      materialId: config.materialId,
+      color: config.color,
+      layerHeight:
+        config.layerHeight === 0.08 || config.layerHeight === 0.12
+          ? config.layerHeight
+          : (0.2 as const),
+      infill: config.infill,
+      quantity: config.quantity,
+      supports: config.supports ? ("always" as const) : ("auto" as const),
+      postProcessingLevel: config.postProcessingLevel,
+      unitConfirmed: !analysis.requiresUnitConfirmation || unitConfirmed,
+      orientationPolicy: "automatic" as const,
+    };
+    const signature = JSON.stringify(authoritativeConfig);
+    if (configuredSignatureRef.current === signature) return;
+    configuredSignatureRef.current = signature;
+
+    void fetch(`/api/quote/analyses/${geometryAnalysisId}/config`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: signature,
+    })
+      .then(async (response) => {
+        const body = (await response.json()) as {
+          analysisId?: string;
+          error?: string;
+        };
+        if (!response.ok || !body.analysisId) {
+          throw new Error(body.error ?? "Could not queue slicing.");
+        }
+        setActiveAnalysisId(body.analysisId);
+        setAnalysis(null);
+      })
+      .catch((error) => {
+        configuredSignatureRef.current = null;
+        setToast({
+          type: "error",
+          message: error instanceof Error ? error.message : "Could not queue slicing.",
+        });
+      });
+  }, [analysis, config, geometryAnalysisId, unitConfirmed]);
+
+  const confirmUnitScale = useCallback(async () => {
+    if (unitChoice === "mm") {
+      setUnitConfirmed(true);
+      return;
+    }
+    if (!uploadState.path) return;
+    try {
+      const response = await fetch("/api/quote/analyses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          storagePath: uploadState.path,
+          unitOverride: unitChoice,
+        }),
+      });
+      const body = (await response.json()) as {
+        analysisId?: string;
+        error?: string;
+      };
+      if (!response.ok || !body.analysisId) {
+        throw new Error(body.error ?? "Could not apply the selected unit scale.");
+      }
+      configuredSignatureRef.current = null;
+      setUnitConfirmed(true);
+      setGeometryAnalysisId(body.analysisId);
+      setActiveAnalysisId(body.analysisId);
+      setAnalysis(null);
+    } catch (error) {
+      setToast({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not apply the selected unit scale.",
+      });
+    }
+  }, [unitChoice, uploadState.path]);
+
+  const priceBreakdown = useMemo(() => {
+    if (!selectedModel || !analysis?.quote || !analysis.result) return null;
+    const authoritativeModel: ParsedModel = {
+      ...selectedModel,
+      dimensionsMm: analysis.result.dimensionsMm,
+      volumeMm3: analysis.result.solidVolumeMm3,
+      surfaceAreaMm2:
+        analysis.result.surfaceAreaMm2 ?? selectedModel.surfaceAreaMm2,
+      triangleCount:
+        analysis.result.triangleCount ?? selectedModel.triangleCount,
+      supportVolumeMm3: 0,
+      requiresReview: false,
+    };
+    const base = calculateInstantQuote(
+      authoritativeModel,
+      config,
+      materials,
+      pricingSettings,
+    );
+    if (!base) return null;
+    const metrics = analysis.result.slicerMetrics;
+    const quote = analysis.quote;
+    const breakdown = quote.breakdown;
+    const subtotal = quote.subtotalPaise / 100;
+    const finalPrice =
+      (quote.subtotalPaise - quote.discountPaise + quote.gstPaise) / 100;
+    return {
+      ...base,
+      materialWeightGrams:
+        metrics?.finishedPartWeightGrams ?? base.materialWeightGrams,
+      supportWeightGrams:
+        metrics?.supportWeightGrams ?? base.supportWeightGrams,
+      estimatedMinutes: metrics ? metrics.elapsedSeconds / 60 : base.estimatedMinutes,
+      estimatedHours: metrics ? metrics.elapsedSeconds / 3600 : base.estimatedHours,
+      dimensionsMm: analysis.result.dimensionsMm,
+      materialCost: breakdown.materialPaise / 100,
+      machineCost: breakdown.machinePaise / 100,
+      postProcessingCharges: breakdown.postProcessingPaise / 100,
+      overheadAmount: breakdown.overheadPaise / 100,
+      marginAmount: breakdown.marginPaise / 100,
+      subtotal,
+      priceBeforeDiscount: subtotal,
+      totalPrice: subtotal,
+      cartDiscountAmount: quote.discountPaise / 100,
+      finalPrice,
+      deliveryCharge: quote.deliveryPaise / 100,
+      grandTotal: quote.totalPaise / 100,
+      price: finalPrice,
+      pricePerUnit: subtotal / Math.max(1, config.quantity),
+    };
+  }, [analysis, config, materials, pricingSettings, selectedModel]);
 
   useEffect(() => {
     if (
@@ -327,6 +493,8 @@ function CartEnabledWorkspace({
       !selectedMaterial ||
       !selectedModel ||
       !priceBreakdown ||
+      !analysis?.quote ||
+      !analysis.result ||
       uploadState.status !== "success" ||
       !uploadState.path
     ) {
@@ -334,6 +502,7 @@ function CartEnabledWorkspace({
     }
 
     return {
+      quoteVersionId: analysis.quote.quoteVersionId,
       quoteId: initialQuoteId,
       fileUrl: uploadState.path,
       material: selectedMaterial.name,
@@ -386,15 +555,16 @@ function CartEnabledWorkspace({
         fileName: selectedModel.fileName,
         fileSize: selectedModel.fileSize,
         extension: selectedModel.extension,
-        volumeMm3: selectedModel.volumeMm3,
-        surfaceAreaMm2: selectedModel.surfaceAreaMm2,
-        supportVolumeMm3: selectedModel.supportVolumeMm3,
-        dimensionsMm: selectedModel.dimensionsMm,
-        triangleCount: selectedModel.triangleCount,
+        volumeMm3: analysis.result.solidVolumeMm3,
+        surfaceAreaMm2: analysis.result.surfaceAreaMm2 ?? 0,
+        supportVolumeMm3: 0,
+        dimensionsMm: analysis.result.dimensionsMm,
+        triangleCount: analysis.result.triangleCount ?? 0,
         suggestedMaterialId: selectedModel.suggestedMaterialId,
       } satisfies ModelMetadata,
     };
   }, [
+    analysis,
     config.infill,
     config.layerHeight,
     config.quantity,
@@ -440,6 +610,12 @@ function CartEnabledWorkspace({
 
       setFileError(null);
       setSelectedFile(file);
+      setAnalysis(null);
+      setGeometryAnalysisId(null);
+      setActiveAnalysisId(null);
+      setUnitConfirmed(false);
+      setUnitChoice("mm");
+      configuredSignatureRef.current = null;
       setViewerLoading(true);
       setUploadState({
         status: "uploading",
@@ -447,15 +623,66 @@ function CartEnabledWorkspace({
       });
 
       try {
-        const { parseModelFile } = await import("@/lib/quote/model-utils");
-        const parsedModel = await parseModelFile(file);
+        if (user && supabaseEnabled) {
+          const uploadResult = await uploadFileToSupabaseStorage(
+            file,
+            user.id,
+            newQuoteId,
+            (progress) => setUploadState({ status: "uploading", progress }),
+          );
+          setUploadState(uploadResult);
+
+          const analysisResponse = await fetch("/api/quote/analyses", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              storagePath: uploadResult.path,
+            }),
+          });
+          const analysisBody = (await analysisResponse.json()) as {
+            analysisId?: string;
+            error?: string;
+          };
+          if (!analysisResponse.ok || !analysisBody.analysisId) {
+            throw new Error(
+              analysisBody.error ?? "Could not start authoritative model analysis.",
+            );
+          }
+          setGeometryAnalysisId(analysisBody.analysisId);
+          setActiveAnalysisId(analysisBody.analysisId);
+        } else {
+          setUploadState({
+            status: "success",
+            progress: 100,
+          });
+        }
+
+        let parsedModel: ParsedModel;
+        try {
+          const { parseModelFile } = await import("@/lib/quote/model-utils");
+          parsedModel = await parseModelFile(file);
+        } catch {
+          parsedModel = {
+            fileName: file.name,
+            fileSize: file.size,
+            extension: file.name.split(".").pop()?.toLowerCase() ?? "",
+            object: null as unknown as ParsedModel["object"],
+            dimensionsMm: { x: 0, y: 0, z: 0 },
+            volumeMm3: 0,
+            surfaceAreaMm2: 0,
+            supportVolumeMm3: 0,
+            triangleCount: 0,
+            suggestedMaterialId: materials[0]?.id ?? "pla",
+            requiresReview: true,
+          };
+        }
         setSelectedModel(parsedModel);
 
         if (parsedModel.requiresReview) {
           setToast({
             type: "info",
             message:
-              "File accepted for manual review. Our team will calculate pricing and contact you.",
+              "The browser preview is unavailable; secure server analysis will determine printability and pricing.",
           });
         } else if (!hasUserSelectedMaterial) {
           const suggestedMaterial =
@@ -474,35 +701,6 @@ function CartEnabledWorkspace({
           setToast({
             type: "info",
             message: `Suggested material: ${suggestedMaterial.name} based on your model size.`,
-          });
-        }
-
-        if (user && supabaseEnabled) {
-          const uploadResult = await uploadFileToSupabaseStorage(
-            file,
-            user.id,
-            newQuoteId,
-            (progress) => setUploadState({ status: "uploading", progress }),
-          );
-          setUploadState(uploadResult);
-
-          void fetch("/api/quote/model-metadata", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              fileUrl: uploadResult.path,
-              volumeMm3: parsedModel.volumeMm3,
-              dimensionsMm: parsedModel.dimensionsMm,
-              triangleCount: parsedModel.triangleCount,
-              fileName: file.name,
-              fileSize: file.size,
-              extension: parsedModel.extension,
-            }),
-          }).catch(() => {});
-        } else {
-          setUploadState({
-            status: "success",
-            progress: 100,
           });
         }
       } catch (error) {
@@ -598,44 +796,20 @@ function CartEnabledWorkspace({
       return;
     }
 
-    if (!selectedModel || !priceBreakdown) {
+    if (!analysis?.quote) {
       setToast({
         type: "error",
-        message: "Upload a model before saving a quote.",
+        message: "Wait for authoritative slicing to finish before saving.",
       });
       return;
     }
 
-    try {
-      setSavingQuote(true);
-      await saveQuoteToSupabase({
-        userId: user.id,
-        quoteId: initialQuoteId,
-        name: user.name,
-        email: user.email,
-        phone: "",
-        filePath: uploadState.path,
-        config,
-        notes: "",
-        estimate: {
-          total: priceBreakdown.grandTotal,
-          estimatedHours: priceBreakdown.estimatedHours,
-          dimensions: priceBreakdown.dimensionsMm,
-        },
-      });
-      setToast({
-        type: "success",
-        message: `Quote ${initialQuoteId} saved to your account.`,
-      });
-    } catch (error) {
-      setToast({
-        type: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to save quote.",
-      });
-    } finally {
-      setSavingQuote(false);
-    }
+    setSavingQuote(true);
+    setToast({
+      type: "success",
+      message: "This authoritative quote is already saved to your account.",
+    });
+    setSavingQuote(false);
   };
 
   const cartItemCheck = isInCart(initialQuoteId);
@@ -645,7 +819,8 @@ function CartEnabledWorkspace({
       !priceBreakdown ||
       !selectedModel ||
       !selectedMaterial ||
-      !initialQuoteId
+      !initialQuoteId ||
+      !analysis?.quote
     ) {
       if (selectedModel?.requiresReview) {
         setToast({
@@ -675,6 +850,7 @@ function CartEnabledWorkspace({
       id: initialQuoteId,
       name: selectedModel?.fileName ?? "model",
       quoteId: initialQuoteId,
+      quoteVersionId: analysis.quote.quoteVersionId,
       fileUrl: uploadState.path,
       fileName: selectedModel?.fileName ?? "model",
       material: selectedMaterial.name,
@@ -978,6 +1154,69 @@ function CartEnabledWorkspace({
                       <div className="mt-3 flex items-center gap-2 text-xs text-emerald-700">
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         Upload complete
+                      </div>
+                    )}
+                    {analysis && (
+                      <div className="mt-4 rounded-xl border border-[#6d28d9]/15 bg-[#6d28d9]/5 p-3">
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span className="inline-flex items-center gap-2 font-medium text-[#070b1d]">
+                            {!['ready', 'manual_review', 'failed'].includes(analysis.status) && (
+                              <LoaderCircle className="h-3.5 w-3.5 animate-spin text-[#6d28d9]" />
+                            )}
+                            {analysis.status === 'uploaded' && 'Preparing analysis'}
+                            {analysis.status === 'queued' && 'Queued for secure processing'}
+                            {analysis.status === 'converting' && 'Converting geometry'}
+                            {analysis.status === 'validating' && 'Validating printability'}
+                            {analysis.status === 'orienting' && 'Optimizing orientation'}
+                            {analysis.status === 'slicing' && 'Slicing on Bambu Lab A1'}
+                            {analysis.status === 'ready' && (analysis.quote ? 'Authoritative quote ready' : 'Geometry verified')}
+                            {analysis.status === 'manual_review' && 'Manual review required'}
+                            {analysis.status === 'failed' && 'Analysis failed'}
+                          </span>
+                          <span className="tabular-nums text-[#6F7192]">{analysis.progress}%</span>
+                        </div>
+                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white">
+                          <div
+                            className="h-full rounded-full bg-[#6d28d9] transition-all duration-500"
+                            style={{ width: `${analysis.progress}%` }}
+                          />
+                        </div>
+                        {analysis.requiresUnitConfirmation && !unitConfirmed && (
+                          <div className="mt-3 rounded-lg border border-amber-300/50 bg-amber-50 p-3 text-xs text-amber-900">
+                            <p>STL, OBJ, and PLY do not declare units. Confirm that the displayed dimensions use millimetres before slicing.</p>
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              <label htmlFor="model-unit" className="font-semibold">
+                                Source unit
+                              </label>
+                              <select
+                                id="model-unit"
+                                value={unitChoice}
+                                onChange={(event) =>
+                                  setUnitChoice(
+                                    event.target.value as "mm" | "cm" | "m" | "in" | "ft",
+                                  )
+                                }
+                                className="rounded-lg border border-amber-300 bg-white px-2 py-2 text-amber-950"
+                              >
+                                <option value="mm">Millimetres</option>
+                                <option value="cm">Centimetres</option>
+                                <option value="m">Metres</option>
+                                <option value="in">Inches</option>
+                                <option value="ft">Feet</option>
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => void confirmUnitScale()}
+                                className="rounded-lg bg-amber-900 px-3 py-2 font-semibold text-white"
+                              >
+                                Confirm scale
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        {analysis.failure?.message && (
+                          <p className="mt-2 text-xs text-amber-800">{analysis.failure.message}</p>
+                        )}
                       </div>
                     )}
                     {uploadState.status === "error" && uploadState.error && (
@@ -1298,6 +1537,7 @@ function CartEnabledWorkspace({
                           onClick={handleSaveQuote}
                           disabled={
                             !selectedModel ||
+                            !analysis?.quote ||
                             savingQuote ||
                             uploadState.status === "uploading"
                           }
@@ -1518,7 +1758,7 @@ function CartEnabledWorkspace({
 
                       {/* Actions */}
                       <div className="mt-5 space-y-2.5">
-                        {selectedModel?.requiresReview ? (
+                        {analysis?.status === "manual_review" ? (
                           <div className="quote-primary-action flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400/15 px-4 py-3 text-sm font-semibold text-amber-800">
                             <AlertTriangle className="h-4 w-4" />
                             Manual review required — contact for custom quote
@@ -1529,6 +1769,7 @@ function CartEnabledWorkspace({
                             onClick={handleAddToCart}
                             disabled={
                               !selectedModel ||
+                              !analysis?.quote ||
                               uploadState.status === "uploading"
                             }
                             className={`quote-primary-action inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${

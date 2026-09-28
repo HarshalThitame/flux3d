@@ -1,31 +1,16 @@
 import { fileTypeFromBuffer } from 'file-type'
 
 export const MODEL_EXTENSIONS = new Set([
-  'stl', 'obj', '3mf', 'step', 'iges', 'igs', 'brep',
-  'glb', 'gltf', 'fbx', 'ply', 'dae', 'amf', 'vrl', 'dxf', 'dwg',
+  'stl', 'obj', '3mf', 'step', 'stp', 'iges', 'igs', 'brep',
+  'glb', 'gltf', 'fbx', 'ply', 'dae', 'amf', 'wrl', 'vrml', 'dxf', 'dwg',
 ])
 export const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp'])
-
-const MODEL_MIME_TYPES = new Set([
-  'model/stl',
-  'application/sla',
-  'application/octet-stream',
-  'text/plain',
-  'model/3mf',
-  'image/vnd.dwg',
-  'application/acad',
-  'model/gltf-binary',
-  'model/gltf+json',
-  'application/fbx',
-  'application/x-ply',
-  'application/xml',
-])
 
 // Extensions where the extension alone is sufficient validation (magic bytes
 // are unreliable, absent, or the format is complex to detect programmatically).
 const EXTENSION_TRUSTED_FORMATS = new Set([
-  'step', 'iges', 'igs', 'brep', 'dwg', 'dxf',
-  'glb', 'gltf', 'fbx', 'ply', 'dae', 'amf', 'vrl',
+  'step', 'stp', 'iges', 'igs', 'brep', 'dwg', 'dxf',
+  'glb', 'gltf', 'fbx', 'ply', 'dae', 'amf', 'wrl', 'vrml',
 ])
 
 const IMAGE_MIME_TYPES = new Set([

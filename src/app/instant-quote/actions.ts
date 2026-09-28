@@ -1,6 +1,5 @@
 "use server";
 
-import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { requireUser } from "@/lib/auth/server";
@@ -9,8 +8,10 @@ import {
   normalizePhone,
   validateAddressFields,
   type CreateOrderInput,
+  type PrepareAuthoritativeQuotePaymentInput,
   type OrderConfirmation,
 } from "@/lib/orders";
+import { prepareAuthoritativeQuotePayment } from "@/lib/quote/checkout";
 import {
   isMissingSupabaseTableError,
   ORDERS_TABLE_UNAVAILABLE_MESSAGE,
@@ -35,12 +36,10 @@ import {
   createQuoteCapture,
   getQuoteCapture,
   markQuoteCapturePaid,
-  cancelQuoteCapture,
 } from "@/lib/quote/capture";
 import {
   createRazorpayOrder,
   getRazorpayConfig,
-  makeCheckoutSession,
   makeReceipt,
   verifyRazorpayCheckoutSignature,
   fetchRazorpayPayment,
@@ -49,13 +48,10 @@ import {
 import {
   upsertPaymentAttempt,
   insertPaymentAuditLog,
-  updatePaymentAttempt,
 } from "@/lib/payments/repository";
 import { updatePaymentAttemptStatus } from "@/lib/payments/state";
 import { notifyPaymentCaptured } from "@/lib/payments/email-triggers";
 import { reportError } from "@/lib/error-handling";
-import { getSettings } from "@/lib/settings";
-import { buildPublicBusinessProfile } from "@/lib/public-business";
 
 function normalizeNumber(value: number, field: string) {
   if (!Number.isFinite(value) || value < 0) {
@@ -65,7 +61,10 @@ function normalizeNumber(value: number, field: string) {
   return value;
 }
 
-export async function createOrderAction(
+// Retained only to read historical capture payloads during the rollout. It is
+// deliberately not exported as a Server Action and cannot be invoked by a client.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function legacyCreateOrderAction(
   input: CreateOrderInput,
 ): Promise<OrderConfirmation> {
   const auth = await requireUser("/instant-quote");
@@ -474,6 +473,7 @@ export async function createOrderAction(
 
 export type PrepareQuotePaymentResult = {
   reference: string;
+  quoteVersionId: string;
   session: {
     keyId: string;
     orderId: string;
@@ -488,6 +488,29 @@ export type PrepareQuotePaymentResult = {
 };
 
 export async function prepareQuotePaymentAction(
+  input: PrepareAuthoritativeQuotePaymentInput,
+): Promise<PrepareQuotePaymentResult> {
+  const auth = await requireUser("/instant-quote");
+  const headersList = await headers();
+  const forwarded = headersList.get("x-forwarded-for") ?? "";
+  const clientIp = forwarded.split(",")[0]?.trim() || "unknown";
+  const rateLimit = await rateLimitCheck(
+    `prepare_authoritative_payment:${auth.user.id}:${clientIp}`,
+    60,
+    10,
+  );
+  if (!rateLimit.success) {
+    throw new Error("Too many requests. Please wait a moment and try again.");
+  }
+
+  return prepareAuthoritativeQuotePayment(
+    { userId: auth.user.id, email: auth.user.email ?? "" },
+    input,
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function prepareLegacyQuotePaymentAction(
   input: CreateOrderInput,
 ): Promise<PrepareQuotePaymentResult> {
   const auth = await requireUser("/instant-quote");
@@ -614,8 +637,6 @@ export async function prepareQuotePaymentAction(
   const razorpayConfig = getRazorpayConfig();
   if (!razorpayConfig) throw new Error("Payment gateway is not configured.");
 
-  const settings = await getSettings();
-  const businessProfile = buildPublicBusinessProfile(settings);
   const receipt = makeReceipt(
     capture.reference.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 10) || "QC",
     1,
@@ -704,6 +725,7 @@ export async function prepareQuotePaymentAction(
 
   return {
     reference: capture.reference,
+    quoteVersionId: "legacy-client-quote",
     session: {
       keyId: getPublicRazorpayKeyId(),
       orderId: providerOrder.id,
@@ -731,6 +753,15 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
   if (capture.status !== "pending")
     throw new Error("Quote capture is not in pending state.");
   if (capture.userId !== auth.user.id) throw new Error("Unauthorized.");
+  if (!capture.quoteVersionId) {
+    throw new Error("Legacy client-calculated quote drafts are no longer payable.");
+  }
+  if (
+    !capture.razorpayOrderId ||
+    capture.razorpayOrderId !== params.razorpayOrderId
+  ) {
+    throw new Error("Payment order does not match this quote version.");
+  }
 
   const signatureValid = verifyRazorpayCheckoutSignature({
     orderId: params.razorpayOrderId,
@@ -741,6 +772,9 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
     throw new Error("Payment signature verification failed.");
 
   const razorpayPayment = await fetchRazorpayPayment(params.razorpayPaymentId);
+  if (razorpayPayment.order_id !== params.razorpayOrderId) {
+    throw new Error("Payment provider order does not match this checkout.");
+  }
   const isCaptured = razorpayPayment.status === "captured";
   const isAuthorized = razorpayPayment.status === "authorized";
   if (!isCaptured && !isAuthorized) {
@@ -762,6 +796,22 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
   const configData = capture.configData as Record<string, unknown>;
   const pricingData = capture.pricingData as Record<string, unknown>;
   const modelMetadata = capture.modelMetadata as Record<string, unknown>;
+
+  const { data: payableQuote, error: payableQuoteError } = await adminSupabase
+    .from("quote_versions")
+    .select("id, status, expires_at")
+    .eq("id", capture.quoteVersionId)
+    .eq("user_id", auth.user.id)
+    .maybeSingle();
+  if (
+    payableQuoteError ||
+    !payableQuote ||
+    payableQuote.status !== "approved" ||
+    !payableQuote.expires_at ||
+    new Date(payableQuote.expires_at).getTime() <= Date.now()
+  ) {
+    throw new Error("The authoritative quote has expired or is no longer payable.");
+  }
 
   const normalizedQuantity = Math.max(
     1,
@@ -828,7 +878,10 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
     .insert({
       user_id: auth.user.id,
       file_url: (draftData.fileUrl as string) ?? "",
-      material: (configData.material as string) ?? "",
+      material:
+        (configData.materialId as string) ??
+        (configData.material as string) ??
+        "",
       color: (configData.color as string) ?? "",
       infill: Math.round(
         normalizeNumber(Number(configData.infill || 0), "infill"),
@@ -841,7 +894,24 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
       post_processing_level:
         (configData.postProcessingLevel as string) ?? "none",
       post_processing_charges: Number(pricingData.postProcessingCharges ?? 0),
-      weight: Number((modelMetadata as Record<string, unknown>).fileSize ?? 0),
+      weight: Number(modelMetadata.finishedPartWeightGrams ?? 0),
+      finished_weight_grams: Number(modelMetadata.finishedPartWeightGrams ?? 0),
+      consumed_material_grams: Number(modelMetadata.billableMaterialGrams ?? 0),
+      solid_volume_mm3: Number(
+        modelMetadata.solidVolumeMm3 ?? modelMetadata.volumeMm3 ?? 0,
+      ),
+      normalized_dimensions_mm:
+        modelMetadata.dimensionsMm ?? modelMetadata.normalizedDimensionsMm ?? {},
+      plate_count: Number(modelMetadata.plateCount ?? 0),
+      slicer_time_seconds: Number(modelMetadata.elapsedSeconds ?? 0),
+      quote_profile_versions: modelMetadata.profileVersions ?? {},
+      quote_version_id: capture.quoteVersionId,
+      quote_audit_snapshot: {
+        quoteVersionId: capture.quoteVersionId,
+        pricing: pricingData,
+        config: configData,
+        model: modelMetadata,
+      },
       difficulty_factor: Number(draftData.difficultyFactor ?? 1),
       supports: Boolean(configData.supports),
       material_cost: Number(pricingData.materialCost ?? 0),
@@ -939,7 +1009,10 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
   const itemsEmail = [
     {
       name: (draftData.fileUrl as string)?.split("/").pop() ?? "Model",
-      material: (configData.material as string) ?? "",
+      material:
+        (configData.materialId as string) ??
+        (configData.material as string) ??
+        "",
       color: (configData.color as string) ?? "",
       quantity: Math.max(1, Math.floor(Number(configData.quantity || 1))),
       price: String(Number(pricingData.grandTotal ?? 0)),
@@ -999,41 +1072,44 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
       user_id: auth.user.id,
       file_name: fileName,
       file_url: draftData.fileUrl as string,
-      material: configData.material as string,
+      material:
+        (configData.materialId as string) ??
+        (configData.material as string) ??
+        "",
       status: "ordered",
       uploaded_at: new Date().toISOString(),
     },
     { onConflict: "user_id,file_url", ignoreDuplicates: false },
   );
 
-  const { data: insertedQuoteVersion } = await adminSupabase
+  const { data: acceptedQuoteVersion, error: quoteVersionError } =
+    await adminSupabase
     .from("quote_versions")
-    .insert({
-      quote_id: `F3D-${orderNumber}`,
+    .update({
       order_id: insertedOrder.id,
-      user_id: auth.user.id,
-      version_number: 1,
-      status: "approved",
-      snapshot_schema_version: 1,
-      approved_at: new Date().toISOString(),
-      approved_by: auth.user.id,
-      pricing_snapshot: redactSensitiveValues(pricingData),
-      material_id: configData.material as string,
-      config: configData,
-      model_metadata: redactSensitiveValues(modelMetadata),
+      status: "accepted",
     })
+    .eq("id", capture.quoteVersionId)
+    .eq("user_id", auth.user.id)
+    .eq("status", "approved")
     .select("id")
     .maybeSingle();
 
-  if (insertedQuoteVersion?.id) {
+  if (quoteVersionError || !acceptedQuoteVersion?.id) {
+    throw new Error(
+      quoteVersionError?.message ?? "Quote version could not be accepted.",
+    );
+  }
+
+  if (acceptedQuoteVersion.id) {
     await logQuoteEvent({
-      quoteVersionId: insertedQuoteVersion.id,
+      quoteVersionId: acceptedQuoteVersion.id,
       orderId: insertedOrder.id,
       actorId: auth.user.id,
       actorRole: "customer",
-      eventType: "created",
-      previousStatus: null,
-      newStatus: "approved",
+      eventType: "submitted",
+      previousStatus: "approved",
+      newStatus: "accepted",
       note: `Order ${orderNumber} created and paid via Razorpay`,
     });
   }

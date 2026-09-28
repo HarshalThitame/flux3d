@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   Loader2,
   MapPin,
-  PackageCheck,
   ShieldCheck,
   Truck,
   TriangleAlert,
@@ -16,13 +15,11 @@ import { useRouter } from "next/navigation";
 import {
   prepareQuotePaymentAction,
   verifyQuotePaymentAndCreateOrder,
-  type PrepareQuotePaymentResult,
 } from "@/app/instant-quote/actions";
 import { useGlobalLoading } from "@/hooks/useGlobalLoading";
 import AddressForm from "@/components/instant-quote/AddressForm";
 import Toast, { type ToastState } from "@/components/quote/Toast";
 import type { AppUserProfile } from "@/lib/auth/server";
-import { normalizeOwnedStoragePath } from "@/lib/quote/storage-path";
 import { getClientCspNonce } from "@/lib/csp-client";
 import {
   addressesEqual,
@@ -60,14 +57,9 @@ export default function DeliveryStepClient({
 
     try {
       const parsed = JSON.parse(raw) as OrderDraft;
-      if (!parsed.fileUrl?.trim() || !parsed.material?.trim()) {
+      if (!parsed.quoteVersionId?.trim()) {
         return null;
       }
-
-      const normalizedFileUrl = normalizeOwnedStoragePath(
-        parsed.fileUrl,
-        user.id,
-      );
       return {
         ...parsed,
         priceBreakdown: parsed.priceBreakdown ?? {
@@ -89,7 +81,6 @@ export default function DeliveryStepClient({
           priceBeforeMinimum:
             parsed.priceBeforeMinimum ?? parsed.finalPrice ?? 0,
         },
-        fileUrl: normalizedFileUrl,
       };
     } catch {
       return null;
@@ -300,27 +291,15 @@ export default function DeliveryStepClient({
       return;
     }
 
-    if (!draft.modelMetadata) {
+    if (!draft.quoteVersionId) {
       setToast({
         type: "error",
         message:
-          "Your quote is missing model metadata. Re-upload the model and try again.",
+          "Your authoritative quote version is missing. Re-analyze the model and try again.",
       });
       return;
     }
-
-    try {
-      normalizeOwnedStoragePath(draft.fileUrl, user.id);
-    } catch (error) {
-      setToast({
-        type: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Your quote file is missing or invalid. Re-upload the model from instant quote.",
-      });
-      return;
-    }
+    const quoteVersionId = draft.quoteVersionId;
 
     const validationErrors = validateAddressFields(address);
     if (Object.keys(validationErrors).length > 0) {
@@ -339,15 +318,7 @@ export default function DeliveryStepClient({
 
       const paymentResult = await withLoading(async () => {
         const result = await prepareQuotePaymentAction({
-          quoteId: draft.quoteId,
-          fileUrl: draft.fileUrl,
-          material: draft.material,
-          color: draft.color,
-          infill: draft.infill,
-          layerHeight: draft.layerHeight,
-          quantity: draft.quantity,
-          postProcessingLevel: draft.postProcessingLevel,
-          supports: draft.supports,
+          quoteVersionId,
           fullName: address.fullName,
           phone: address.phone,
           addressLine1: address.addressLine1,
@@ -357,25 +328,6 @@ export default function DeliveryStepClient({
           pincode: address.pincode,
           landmark: address.landmark,
           notes: draft.notes,
-          modelMetadata: draft.modelMetadata,
-          materialCost: draft.materialCost,
-          machineCost: draft.machineCost,
-          subtotal: draft.subtotal,
-          postProcessingCharges: draft.postProcessingCharges,
-          overheadPercentage: draft.overheadPercentage,
-          overheadAmount: draft.overheadAmount,
-          marginPercentage: draft.marginPercentage,
-          marginAmount: draft.marginAmount,
-          totalPrice: draft.totalPrice,
-          cartDiscountAmount: draft.cartDiscountAmount,
-          cartDiscountPercent: draft.cartDiscountPercent,
-          finalPrice: draft.finalPrice,
-          deliveryCharge: draft.deliveryCharge,
-          grandTotal: draft.grandTotal,
-          price: draft.price,
-          estimatedTime: draft.estimatedTime,
-          weight: draft.weight,
-          difficultyFactor: draft.difficultyFactor,
           // Meta pixel browser identifiers for CAPI match quality
           fbp: document.cookie.match(/_fbp=([^;]+)/)?.[1] ?? undefined,
           fbc: document.cookie.match(/_fbc=([^;]+)/)?.[1] ?? undefined,
