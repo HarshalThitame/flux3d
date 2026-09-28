@@ -144,7 +144,18 @@ export async function createQuoteAnalysis(input: {
     .info(storagePath);
   if (fileError || !fileInfo) throw new Error("Uploaded file was not found.");
 
-  const fileSize = Number(fileInfo.metadata?.size ?? 0);
+  // Storage API responses have returned both `metadata.size` and
+  // `metadata.contentLength` across Storage API versions. Keep the server
+  // limit authoritative, but do not reject a valid upload just because the
+  // response uses the alternate field or exposes size at the top level.
+  const metadata = asRecord(fileInfo.metadata);
+  const fileSize = Number(
+    metadata.size ??
+      metadata.contentLength ??
+      (fileInfo as { size?: unknown }).size ??
+      (fileInfo as { contentLength?: unknown }).contentLength ??
+      0,
+  );
   if (!Number.isSafeInteger(fileSize) || fileSize < 1 || fileSize > 100 * 1024 * 1024) {
     throw new Error("Uploaded file size is invalid or exceeds 100 MB.");
   }
