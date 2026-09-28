@@ -4,13 +4,11 @@ import { useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
   Box,
-  Compass,
   Cuboid,
   Eye,
   Grid3X3,
   Layers,
   Maximize2,
-  Minimize2,
   Move3D,
   Scissors,
   Sparkles,
@@ -232,7 +230,7 @@ export default function ViewerSection({
           {/* Soft seam — light chrome bleeds gently into the dark canvas */}
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-16 bg-gradient-to-b from-[#faf9f7]/45 via-[#faf9f7]/10 to-transparent" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-gradient-to-t from-[#faf9f7]/25 to-transparent" />
-          {model ? (
+          {model?.object ? (
             <>
               <ModelPreviewCanvas
                 object={model.object}
@@ -262,10 +260,12 @@ export default function ViewerSection({
                 <Move3D className="h-7 w-7" />
               </motion.div>
               <div className="font-[var(--font-syne)] text-2xl font-semibold text-white">
-                Awaiting 3D Model
+                {model?.requiresReview ? 'Preview unavailable' : 'Awaiting 3D Model'}
               </div>
               <p className="max-w-md text-sm leading-7 text-white/50">
-                Upload an STL, OBJ, or 3MF file above to render a studio-quality PBR 3D preview with dynamic materials, environment lighting, and inspection tools.
+                {model?.requiresReview
+                  ? 'This file was uploaded successfully, but the browser preview could not decode it. Server analysis or manual review will determine printability.'
+                  : 'Upload an STL, OBJ, or 3MF file above to render a studio-quality PBR 3D preview with dynamic materials, environment lighting, and inspection tools.'}
               </p>
             </div>
           )}

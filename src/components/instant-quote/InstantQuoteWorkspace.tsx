@@ -1573,10 +1573,45 @@ function CartEnabledWorkspace({
                   </div>
 
                   {!priceBreakdown ? (
-                    <div className="space-y-3">
-                      <div className="h-12 animate-pulse rounded-xl bg-gray-50" />
-                      <div className="h-12 animate-pulse rounded-xl bg-gray-50" />
-                      <div className="h-20 animate-pulse rounded-xl bg-gray-50" />
+                    <div className="rounded-xl border border-[#6d28d9]/10 bg-white p-4 text-sm text-[#6F7192]">
+                      {analysis?.status === "manual_review" ? (
+                        <>
+                          <div className="font-medium text-amber-800">Manual review required</div>
+                          <p className="mt-1 text-xs leading-5">
+                            {analysis.failure?.message ??
+                              "This model cannot receive an automatic price yet."}
+                          </p>
+                        </>
+                      ) : analysis?.status === "failed" ? (
+                        <>
+                          <div className="font-medium text-rose-700">Analysis failed</div>
+                          <p className="mt-1 text-xs leading-5">
+                            {analysis.failure?.message ??
+                              "We could not analyse this model. Please try another export."}
+                          </p>
+                        </>
+                      ) : analysis ? (
+                        <>
+                          <div className="font-medium text-[#070b1d]">Calculating authoritative price…</div>
+                          <p className="mt-1 text-xs leading-5">
+                            The model is being validated and sliced on the configured printer. The price will appear when slicing completes.
+                          </p>
+                        </>
+                      ) : !user ? (
+                        <>
+                          <div className="font-medium text-[#070b1d]">Sign in to calculate your price</div>
+                          <p className="mt-1 text-xs leading-5">
+                            Uploading a model anonymously only enables a local preview. Sign in to run the authoritative server analysis.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <div className="font-medium text-[#070b1d]">Upload a model to calculate your price</div>
+                          <p className="mt-1 text-xs leading-5">
+                            Your price will be calculated from the server-side slicing result, not browser estimates.
+                          </p>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <>
