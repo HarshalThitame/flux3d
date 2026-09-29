@@ -400,6 +400,21 @@ body {
   background: var(--lux-bg-base);
 }
 
+/*
+ * This heading intentionally reads as an eyebrow, not a display headline.
+ * The app-wide h1 rule is unlayered, so it outranks Tailwind's layered text
+ * utilities in production and previously expanded this line to 72px. Keep the
+ * hero contract unlayered and more specific so it cannot collide with the
+ * carousel at laptop viewport sizes.
+ */
+.public-shell .lux-store-tagline {
+  font-size: clamp(0.5625rem, 0.65vw, 0.6875rem);
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  text-wrap: nowrap;
+}
+
 .lux-hero-slide {
   position: absolute;
   inset: 0;

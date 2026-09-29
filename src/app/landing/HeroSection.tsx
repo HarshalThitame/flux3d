@@ -82,7 +82,7 @@ export default function HeroSection({ shopData }: { shopData: ShopHomeData }) {
           initial={{ opacity: 0, x: -15 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, ease: EASE_OUT_EXPO, delay: 0.1 }}
-          className="text-[8px] font-bold tracking-widest uppercase text-[var(--lux-text-primary)] opacity-80 sm:text-[9px] whitespace-nowrap"
+          className="lux-store-tagline font-bold uppercase text-[var(--lux-text-primary)] opacity-80"
         >
           Shop ready-made 3D printed products
         </motion.h1>
