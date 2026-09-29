@@ -19,6 +19,10 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  getDepthCarouselDimensions,
+  type DepthCarouselDimensions,
+} from "@/lib/shop/depth-carousel-layout";
 
 export interface DepthBlurCarouselItem {
   id: string;
@@ -34,45 +38,6 @@ export interface DepthBlurCarouselProps {
   onActiveIndexChangeAction?: (index: number) => void;
   className?: string;
   ariaLabel?: string;
-}
-
-interface Dimensions {
-  itemWidth: number;
-  itemHeight: number;
-  sideItemWidth: number;
-  sideItemHeight: number;
-  gap: number;
-}
-
-function pickDimensions(width: number): Dimensions {
-  if (width <= 480) {
-    const center = Math.min(width * 0.72, 300);
-    return {
-      itemWidth: Math.round(center),
-      itemHeight: Math.round(center * 1.18),
-      sideItemWidth: Math.round(center * 0.58),
-      sideItemHeight: Math.round(center * 0.92),
-      gap: 22,
-    };
-  }
-  if (width <= 768) {
-    const center = Math.min(width * 0.5, 380);
-    return {
-      itemWidth: Math.round(center),
-      itemHeight: Math.round(center * 1.05),
-      sideItemWidth: Math.round(center * 0.62),
-      sideItemHeight: Math.round(center * 0.9),
-      gap: 36,
-    };
-  }
-  const center = Math.min(width * 0.34, 440);
-  return {
-    itemWidth: Math.round(center),
-    itemHeight: Math.round(center * 1.08),
-    sideItemWidth: Math.round(center * 0.64),
-    sideItemHeight: Math.round(center * 0.94),
-    gap: 56,
-  };
 }
 
 const PLACEHOLDER_GRADIENTS = [
@@ -99,7 +64,7 @@ interface CardProps {
   index: number;
   total: number;
   smoothScroll: MotionValue<number>;
-  dims: Dimensions;
+  dims: DepthCarouselDimensions;
   maxRotation: number;
   borderRadius: string;
   onSelect: (originalIndex: number, cardIndex: number) => void;
@@ -437,7 +402,10 @@ export default function DepthBlurCarousel({
 
   const arrowIconClass = "h-5 w-5 md:h-6 md:w-6";
 
-  const dims = useMemo(() => pickDimensions(size.width), [size.width]);
+  const dims = useMemo(
+    () => getDepthCarouselDimensions(size.width, size.height),
+    [size.width, size.height],
+  );
   const isMobile = size.width <= 480;
   const perspective = isMobile ? 700 : 1100;
   const blurStrength = isMobile ? 16 : 26;
