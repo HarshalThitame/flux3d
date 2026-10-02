@@ -276,8 +276,8 @@ export function BlockBuilder({
             )}
           </div>
           {preview && (
-            <div className="rounded-2xl border border-[var(--shop-border-light)] bg-[var(--shop-bg-elevated)] p-5 shadow-[var(--shop-shadow-sm)] md:p-8">
-              <div className="mb-6 flex items-center justify-between">
+            <div className="min-w-0 rounded-2xl border border-[var(--shop-border-gold)] bg-[var(--shop-bg-base)] p-4 shadow-[var(--shop-shadow-sm)] md:p-8">
+              <div className="mb-6 flex items-center justify-between border-b border-[var(--shop-border-light)] pb-5 md:mb-8">
                 <div>
                   <div className="text-sm font-semibold text-[#0F1B3D]">
                     Live Preview
@@ -287,7 +287,7 @@ export function BlockBuilder({
                   </div>
                 </div>
               </div>
-              <div className="[&_[style]]:transition [&_.motion-safe]:transition">
+              <div className="min-w-0">
                 <LuxuryDescriptionBlocks blocks={blocks} />
               </div>
             </div>

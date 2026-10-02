@@ -70,6 +70,7 @@ import { trackMetaEvent } from "@/lib/meta/event-utils";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import { sanitizeShopRichHtml } from "@/lib/shop/rich-text";
 import LuxuryDescriptionBlocks from "@/components/shop/blocks/LuxuryDescriptionBlocks";
+import SpecificationsTable from "@/components/shop/SpecificationsTable";
 
 function useScrollLock(locked: boolean) {
   useEffect(() => {
@@ -206,27 +207,7 @@ function SpecificationsSection({
     { label: "Volume", value: volumeValue ?? "Select options" },
   ];
   return (
-    <section className="mx-auto max-w-5xl">
-      <h2 className="font-[var(--shop-font-heading)] text-2xl font-semibold text-[var(--shop-text-primary)] md:text-3xl">
-        Specifications
-      </h2>
-      <div className="mt-8 grid gap-4 md:grid-cols-2">
-        {rows.map((row) => (
-          <div
-            key={row.label}
-            className="group relative overflow-hidden rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-gold)] bg-white/50 p-5 backdrop-blur-sm transition duration-300 hover:shadow-[var(--shop-shadow-md)]"
-          >
-            <div className="absolute inset-x-0 top-0 h-0.5 origin-left scale-x-0 bg-[var(--shop-gradient-gold)] transition-transform duration-300 group-hover:scale-x-100" />
-            <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--shop-text-muted)]">
-              {row.label}
-            </dt>
-            <dd className="mt-2 text-sm font-medium text-[var(--shop-text-primary)]">
-              {row.value}
-            </dd>
-          </div>
-        ))}
-      </div>
-    </section>
+    <SpecificationsTable title="Specifications" rows={rows} headingLevel={2} />
   );
 }
 
@@ -1473,13 +1454,6 @@ export default function ShopProductDetailClient({
                   </span>
                 )}
               </div>
-
-              {price > 0 && (
-                <p className="mt-1.5 text-xs font-medium text-[var(--shop-text-muted)]">
-                  or {formatShopPrice(Math.round(price / 12))}/mo. with EMI ·
-                  Inclusive of all taxes
-                </p>
-              )}
 
               <TierPriceStrip tierPrices={resolvedSku?.tier_prices ?? []} />
 

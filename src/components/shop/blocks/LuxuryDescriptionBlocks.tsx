@@ -6,6 +6,7 @@ import type { DescriptionBlocks } from "@/lib/shop/blocks";
 import { extractTextFromBlock } from "@/lib/shop/blocks";
 import { sanitizeShopRichHtml } from "@/lib/shop/rich-text";
 import { resolveIcon } from "./block-icons";
+import SpecificationsTable from "@/components/shop/SpecificationsTable";
 
 const reveal = {
   hidden: { opacity: 0, y: 32 },
@@ -87,53 +88,6 @@ function ParagraphBlock({ html }: { html: string }) {
       className="mx-auto max-w-3xl"
     >
       <Prose html={html} />
-    </motion.div>
-  );
-}
-
-function SpecsTableBlock({
-  title,
-  rows,
-}: {
-  title?: string;
-  rows: { label: string; value: string }[];
-}) {
-  return (
-    <motion.div
-      variants={reveal}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-80px" }}
-      className="mx-auto max-w-5xl"
-    >
-      {title && (
-        <h3 className="mb-8 text-center font-[var(--shop-font-heading)] text-2xl font-semibold text-[var(--shop-text-primary)] md:text-3xl">
-          {title}
-        </h3>
-      )}
-      <motion.dl
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-80px" }}
-        className="grid gap-4 sm:grid-cols-2"
-      >
-        {rows.map((row, index) => (
-          <motion.div
-            key={index}
-            variants={staggerItem}
-            className="group relative overflow-hidden rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-gold)] bg-white/50 p-5 backdrop-blur-sm transition duration-300 hover:shadow-[var(--shop-shadow-md)]"
-          >
-            <div className="absolute inset-x-0 top-0 h-0.5 origin-left scale-x-0 bg-[var(--shop-gradient-gold)] transition-transform duration-300 group-hover:scale-x-100" />
-            <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--shop-text-muted)]">
-              {row.label}
-            </dt>
-            <dd className="mt-2 text-sm font-medium leading-6 text-[var(--shop-text-primary)]">
-              {row.value}
-            </dd>
-          </motion.div>
-        ))}
-      </motion.dl>
     </motion.div>
   );
 }
@@ -371,7 +325,7 @@ function BlockRenderer({ block }: { block: DescriptionBlocks[number] }) {
     case "paragraph":
       return <ParagraphBlock html={block.html} />;
     case "specs_table":
-      return <SpecsTableBlock title={block.title} rows={block.rows} />;
+      return <SpecificationsTable title={block.title} rows={block.rows} />;
     case "feature_grid":
       return <FeatureGridBlock title={block.title} items={block.items} />;
     case "image_text_split":
