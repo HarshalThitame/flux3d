@@ -1598,6 +1598,43 @@ function CartEnabledWorkspace({
                           Your estimate is saved securely before checkout. We’ll contact you if the model needs a price adjustment before production.
                         </p>
                       </div>
+                      <button
+                        type="button"
+                        onClick={handleAddToCart}
+                        disabled={
+                          !selectedModel ||
+                          !uploadState.path ||
+                          !user ||
+                          addingEstimate ||
+                          uploadState.status === "uploading"
+                        }
+                        className={`quote-primary-action inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
+                          cartItemCheck
+                            ? "border border-emerald-700/30 bg-emerald-700/10 text-emerald-700"
+                            : "bg-[#6d28d9] text-white hover:opacity-95"
+                        }`}
+                      >
+                        {cartItemCheck ? (
+                          <>
+                            <PackageCheck className="h-4 w-4" />
+                            Added to Cart
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="h-4 w-4" />
+                            {addingEstimate ? "Saving estimate..." : "Add Estimate to Cart"}
+                          </>
+                        )}
+                      </button>
+                      {cartItemCheck && (
+                        <Link
+                          href="/cart"
+                          className="quote-secondary-action inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#6d28d9]/30 bg-[#6d28d9]/10 px-4 text-xs font-medium text-[#6d28d9] transition-colors hover:bg-[#6d28d9]/20"
+                        >
+                          View Cart
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      )}
                     </div>
                   ) : !priceBreakdown ? (
                     <div className="rounded-xl border border-[#6d28d9]/10 bg-white p-4 text-sm text-[#6F7192]">
