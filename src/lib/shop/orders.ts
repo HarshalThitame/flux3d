@@ -96,6 +96,7 @@ export type ShopOrder = {
   payment_amount_paise: number;
   payment_currency: string;
   payment_snapshot: Record<string, unknown>;
+  order_price_snapshot?: Record<string, unknown>;
   payment_verified_at: string | null;
   payment_failed_at: string | null;
   payment_refund_status: string | null;
@@ -545,6 +546,7 @@ export function mapShopOrderRow(row: Record<string, unknown>): ShopOrder {
       ? String(row.payment_currency)
       : "INR",
     payment_snapshot: asRecord(row.payment_snapshot),
+    order_price_snapshot: asRecord(row.order_price_snapshot),
     payment_verified_at: row.payment_verified_at
       ? String(row.payment_verified_at)
       : null,

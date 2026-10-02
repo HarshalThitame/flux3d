@@ -15,6 +15,8 @@ import {
 import { formatShopPrice } from '@/lib/shop/selection'
 import { getShopCartTotals, useShopCartStore } from '@/stores/shopCartStore'
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scroll-lock'
+import { useShopQuote } from '@/components/shop/useShopQuote'
+import ShopQuoteSummary from '@/components/shop/ShopQuoteSummary'
 
 export function ShopCartNavButton({ mobile = false, onOpenAction }: { mobile?: boolean; onOpenAction?: () => void }) {
   const itemCount = useShopCartStore((state) => getShopCartTotals(state).itemCount)
@@ -77,6 +79,7 @@ export default function ShopCartDrawer({
   )
 
   useShopCartPromotionSync(totals.subtotal)
+  const pricing = useShopQuote(undefined, isCartOpen)
 
   const closeCart = onCloseAction ?? storeCloseCart
 
@@ -195,29 +198,6 @@ export default function ShopCartDrawer({
                 </div>
 
                 <div className="border-t border-[var(--shop-border-light)] bg-white p-5">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between text-[var(--shop-text-secondary)]">
-                      <span>Subtotal</span>
-                      <span className="font-semibold text-[var(--shop-text-primary)]">{formatShopPrice(totals.subtotal)}</span>
-                    </div>
-                    {totals.couponDiscountAmount > 0 && totals.appliedCoupon && (
-                      <div className="flex justify-between text-[var(--shop-gold)]">
-                        <span>Coupon ({totals.appliedCoupon.code})</span>
-                        <span className="font-semibold">-{formatShopPrice(totals.couponDiscountAmount)}</span>
-                      </div>
-                    )}
-                    {totals.offerDiscountAmount > 0 && totals.appliedOffer && (
-                      <div className="flex justify-between text-[var(--shop-gold)]">
-                        <span>Offer ({totals.appliedOffer.title})</span>
-                        <span className="font-semibold">-{formatShopPrice(totals.offerDiscountAmount)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-[var(--shop-text-secondary)]">
-                      <span>Shipping</span>
-                      <span>{totals.freeShipping ? 'Free with promotion' : 'Calculated at checkout'}</span>
-                    </div>
-                  </div>
-
                   <div className="mt-4 space-y-3">
                     <ShopAppliedOffer offer={totals.appliedOffer} />
                     <ShopCouponInput
@@ -227,9 +207,8 @@ export default function ShopCartDrawer({
                     />
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between border-t border-[var(--shop-border-light)] pt-4">
-                    <span className="text-base font-bold text-[var(--shop-text-primary)]">Total</span>
-                    <span className="text-xl font-bold text-[var(--shop-text-primary)]">{formatShopPrice(totals.total)}</span>
+                  <div className="mt-4 border-t border-[var(--shop-border-light)] pt-4">
+                    <ShopQuoteSummary pricing={pricing} />
                   </div>
                   <div className="mt-4 grid gap-3">
                     <button type="button" onClick={goToCheckout} className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-[var(--shop-radius-lg)] bg-[var(--shop-gold)] px-6 text-base font-semibold text-[var(--luxury-charcoal)] shadow-[var(--shop-shadow-gold)] transition hover:bg-[var(--shop-gold-light)]">

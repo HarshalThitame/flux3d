@@ -41,15 +41,31 @@ export async function generateShopInvoicePdf(
   const invoiceLabel = isPaid ? 'TAX INVOICE' : 'PROFORMA INVOICE'
   const invoiceDate = formatDate(order.placed_at)
 
-  const subtotal = items.reduce((sum, item) => sum + normalizeMoney(item.unitPrice) * normalizeMoney(item.quantity), 0)
-  const discountAmount = normalizeMoney(order.discount_amount)
-  const deliveryCharge = normalizeMoney(order.shipping_charge)
+  const savedSnapshot = order.order_price_snapshot?.version === 2 ? order.order_price_snapshot : order.payment_snapshot
+  const savedMoney = savedSnapshot && typeof savedSnapshot.money === 'object'
+    ? savedSnapshot.money as Record<string, unknown>
+    : null
+  const subtotal = savedMoney?.subtotalPaise != null
+    ? Number(savedMoney.subtotalPaise) / 100
+    : items.reduce((sum, item) => sum + normalizeMoney(item.unitPrice) * normalizeMoney(item.quantity), 0)
+  const discountAmount = savedMoney?.discountPaise != null
+    ? Number(savedMoney.discountPaise) / 100
+    : normalizeMoney(order.discount_amount)
+  const deliveryCharge = savedMoney?.shippingPaise != null
+    ? Number(savedMoney.shippingPaise) / 100
+    : normalizeMoney(order.shipping_charge)
   const finalPrice = Math.max(0, subtotal - discountAmount)
-  const cgstPercent = settings.gstEnabled ? Number(settings.cgstPercent ?? 0) : 0
-  const sgstPercent = settings.gstEnabled ? Number(settings.sgstPercent ?? 0) : 0
-  const cgstAmount = (finalPrice * cgstPercent) / 100
-  const sgstAmount = (finalPrice * sgstPercent) / 100
-  const invoiceTotal = finalPrice + cgstAmount + sgstAmount + deliveryCharge
+  const cgstPercent = savedMoney && savedSnapshot.cgst_percent != null
+    ? Number(savedSnapshot.cgst_percent)
+    : settings.gstEnabled ? Number(settings.cgstPercent ?? 0) : 0
+  const sgstPercent = savedMoney && savedSnapshot.sgst_percent != null
+    ? Number(savedSnapshot.sgst_percent)
+    : settings.gstEnabled ? Number(settings.sgstPercent ?? 0) : 0
+  const cgstAmount = savedMoney?.cgstPaise != null ? Number(savedMoney.cgstPaise) / 100 : (finalPrice * cgstPercent) / 100
+  const sgstAmount = savedMoney?.sgstPaise != null ? Number(savedMoney.sgstPaise) / 100 : (finalPrice * sgstPercent) / 100
+  const invoiceTotal = savedMoney?.totalPaise != null
+    ? Number(savedMoney.totalPaise) / 100
+    : finalPrice + cgstAmount + sgstAmount + deliveryCharge
 
   const companyName = settings.businessName || settings.brandName || 'Flux3D'
   const invoiceLogo = settings.invoiceLogoUrl || settings.logoUrl || ''

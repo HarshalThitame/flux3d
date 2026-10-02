@@ -304,6 +304,19 @@ export async function getSettings(): Promise<BusinessSettings> {
   return settings ?? FALLBACK;
 }
 
+/** Checkout must never substitute cached/default financial settings after a read failure. */
+export async function getCheckoutSettings(): Promise<BusinessSettings> {
+  const { data, error } = await createAdminSupabaseClient()
+    .from("business_settings").select("*").is("deleted_at", null).limit(1).maybeSingle();
+  if (error || !data) throw new Error("Pricing settings are temporarily unavailable. Please retry.");
+  for (const key of ["delivery_charge_threshold", "default_delivery_charge", "cgst_percent", "sgst_percent"] as const) {
+    if (data[key] == null || !Number.isFinite(Number(data[key])) || Number(data[key]) < 0) {
+      throw new Error("Pricing settings require review. Please contact support.");
+    }
+  }
+  return mapRow(data as BusinessSettingsRow);
+}
+
 export type PublicBusinessSettings = Omit<
   BusinessSettings,
   | "smtpHost"

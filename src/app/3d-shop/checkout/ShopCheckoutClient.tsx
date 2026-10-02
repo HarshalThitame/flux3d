@@ -16,17 +16,18 @@ import {
 } from "lucide-react";
 import { useAddresses } from "@/hooks/useAddresses";
 import { useGlobalLoading } from "@/hooks/useGlobalLoading";
-import { calculateDeliveryChargeFromSettings } from "@/lib/quote/pricing-waterfall";
 import { formatShopPrice } from "@/lib/shop/selection";
 import {
   getShopCartTotals,
-  type ShopCartItem,
   useShopCartStore,
 } from "@/stores/shopCartStore";
 import { useShopCartPromotionSync } from "@/components/shop/ShopCartPromotions";
 import { refreshShopCartFromServer } from "@/lib/cart/shop-cart-sync";
 import type { AddressRow } from "../../../../types/database";
 import { trackMetaEvent } from "@/lib/meta/event-utils";
+import { useShopQuote } from "@/components/shop/useShopQuote";
+import ShopPriceSummary from "@/components/shop/ShopPriceSummary";
+import ShopQuoteSummary from "@/components/shop/ShopQuoteSummary";
 
 type AddressFormState = {
   name: string;
@@ -42,8 +43,6 @@ type PincodeState = "idle" | "checking" | "serviceable" | "error";
 
 type ShopCheckoutClientProps = {
   isAuthenticated: boolean;
-  deliveryChargeThreshold: number;
-  defaultDeliveryCharge: number;
 };
 
 const emptyAddressForm: AddressFormState = {
@@ -98,19 +97,6 @@ function validateAddressForm(form: AddressFormState) {
   return errors;
 }
 
-function getSkuWeight(
-  item: ShopCartItem,
-  weightsBySkuId: Record<string, number>,
-) {
-  const storedWeight = Number(
-    (item as ShopCartItem & { weightGrams?: number; weight_grams?: number })
-      .weightGrams ??
-      (item as ShopCartItem & { weight_grams?: number }).weight_grams,
-  );
-  if (Number.isFinite(storedWeight) && storedWeight > 0) return storedWeight;
-  return weightsBySkuId[item.skuId] ?? 0;
-}
-
 const GUEST_SESSION_STORAGE_KEY = "flux3d_guest_session_id";
 
 function getOrCreateGuestSessionId(): string {
@@ -128,11 +114,10 @@ function getOrCreateGuestSessionId(): string {
 
 export default function ShopCheckoutClient({
   isAuthenticated,
-  deliveryChargeThreshold,
-  defaultDeliveryCharge,
 }: ShopCheckoutClientProps) {
   const router = useRouter();
   const orderCompletionRef = useRef(false);
+  const checkoutRequestRef = useRef<{ payload: string; key: string } | null>(null);
   const {
     addresses,
     defaultAddress,
@@ -159,9 +144,6 @@ export default function ShopCheckoutClient({
   >({});
   const [pincodeState, setPincodeState] = useState<PincodeState>("idle");
   const [pincodeMessage, setPincodeMessage] = useState("");
-  const [weightsBySkuId, setWeightsBySkuId] = useState<Record<string, number>>(
-    {},
-  );
   const [isPlacing, setIsPlacing] = useState(false);
   const [toast, setToast] = useState("");
   const [reviewBanner, setReviewBanner] = useState(false);
@@ -188,22 +170,6 @@ export default function ShopCheckoutClient({
   // This heals the state when appliedCoupon metadata was lost on navigation.
   useShopCartPromotionSync(totals.subtotal);
 
-  const shippingCharge = totals.freeShipping
-    ? 0
-    : calculateDeliveryChargeFromSettings(totals.total, {
-        deliveryChargeThreshold,
-        defaultDeliveryCharge,
-      });
-  const qualifiesForFreeShipping = totals.freeShipping || shippingCharge === 0;
-  const payableTotal = totals.total + shippingCharge;
-  const totalWeight = useMemo(
-    () =>
-      items.reduce(
-        (sum, item) => sum + getSkuWeight(item, weightsBySkuId) * item.quantity,
-        0,
-      ),
-    [items, weightsBySkuId],
-  );
   const selectedAddress = useMemo(
     () => addresses.find((address) => address.id === selectedAddressId) ?? null,
     [addresses, selectedAddressId],
@@ -211,6 +177,18 @@ export default function ShopCheckoutClient({
   const isGuest = !isAuthenticated;
   // Guests always fill in the manual address form (no saved addresses).
   const showAddressForm = isGuest || useNewAddress || addresses.length === 0;
+  const quoteDestination = showAddressForm
+    ? /^\d{6}$/.test(addressForm.pincode) && addressForm.state.trim()
+      ? { pincode: addressForm.pincode, state: addressForm.state }
+      : null
+    : selectedAddress && /^\d{6}$/.test(selectedAddress.pincode)
+      ? { pincode: selectedAddress.pincode, state: selectedAddress.state }
+      : null;
+  const authoritativeQuote = useShopQuote(quoteDestination);
+  const authoritativeMoney = authoritativeQuote.quote?.snapshot.money ?? null;
+  const authoritativeTotal = authoritativeMoney
+    ? authoritativeMoney.totalPaise / 100
+    : 0;
 
   useEffect(() => {
     if (items.length === 0 && !orderCompletionRef.current)
@@ -268,40 +246,6 @@ export default function ShopCheckoutClient({
     const timer = window.setTimeout(() => setToast(""), 3500);
     return () => window.clearTimeout(timer);
   }, [toast]);
-
-  useEffect(() => {
-    let active = true;
-    const slugs = Array.from(
-      new Set(items.map((item) => item.productSlug).filter(Boolean)),
-    );
-
-    async function loadWeights() {
-      const next: Record<string, number> = {};
-      await Promise.all(
-        slugs.map(async (slug) => {
-          try {
-            const response = await fetch(`/api/3d-shop/products/${slug}`);
-            const data = (await response.json()) as {
-              product?: {
-                skus?: Array<{ id: string; weight_grams: number | null }>;
-              };
-            };
-            data.product?.skus?.forEach((sku) => {
-              next[sku.id] = Number(sku.weight_grams ?? 0);
-            });
-          } catch {
-            // Weight is not needed for the current flat-rate shipping amount.
-          }
-        }),
-      );
-      if (active) setWeightsBySkuId(next);
-    }
-
-    void loadWeights();
-    return () => {
-      active = false;
-    };
-  }, [items]);
 
   const checkPincode = useCallback(async (pincode: string) => {
     const normalized = pincode.replace(/\D/g, "");
@@ -376,6 +320,12 @@ export default function ShopCheckoutClient({
       return;
     }
 
+    if (!authoritativeQuote.quote || authoritativeQuote.loading || authoritativeQuote.error) {
+      setToast(authoritativeQuote.error || "Please wait while we verify the latest total.");
+      return;
+    }
+    const quote = authoritativeQuote.quote;
+
     if (isGuest) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())) {
         setToast("Enter your email for order updates.");
@@ -446,13 +396,9 @@ export default function ShopCheckoutClient({
             unitPrice: item.price,
             customizationText: item.customizationText || null,
           })),
-          subtotal: totals.subtotal,
-          discountAmount: totals.discount,
-          couponCode: totals.couponCode,
-          appliedCouponId: totals.appliedCoupon?.id ?? null,
-          appliedOfferId: totals.appliedOffer?.id ?? null,
-          shippingCharge,
-          totalAmount: payableTotal,
+          couponCode: quote.couponCode,
+          appliedOfferId: quote.offerId,
+          quoteFingerprint: quote.fingerprint,
           shippingAddress,
           ...(isGuest
             ? {
@@ -465,10 +411,17 @@ export default function ShopCheckoutClient({
             : {}),
         };
 
+        // Keep the same key after a lost response; changed address/pricing/items
+        // create a new request. Stock and promotions are reserved only once.
+        const requestPayload = JSON.stringify(payload);
+        if (checkoutRequestRef.current?.payload !== requestPayload) {
+          checkoutRequestRef.current = { payload: requestPayload, key: globalThis.crypto.randomUUID() };
+        }
+
         const response = await fetch("/api/3d-shop/orders/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ ...payload, checkoutKey: checkoutRequestRef.current.key }),
         });
         const data = (await response.json().catch(() => ({}))) as {
           success?: boolean;
@@ -479,6 +432,7 @@ export default function ShopCheckoutClient({
         if (!response.ok || !data.success || !data.orderId) {
           const message = data.error || "Failed to place order.";
           setToast(message);
+          if (response.status === 409) authoritativeQuote.retry();
           if (/stock|quantity|price|available|refresh/i.test(message)) {
             setReviewBanner(true);
             setAffectedItemIds(
@@ -883,69 +837,33 @@ export default function ShopCheckoutClient({
               ))}
             </div>
 
-            <div className="mt-5 space-y-3 border-t border-[var(--shop-border-light)] pt-5 text-sm">
-              <div className="flex justify-between text-[var(--shop-text-secondary)]">
-                <span>Subtotal</span>
-                <span className="font-bold text-[var(--shop-text-primary)]">
-                  {formatShopPrice(totals.subtotal)}
-                </span>
-              </div>
-              {totals.discount > 0 && (
-                <div className="flex justify-between text-emerald-700">
-                  <span>
-                    Discount
-                    {totals.couponCode && (
-                      <span className="ml-1 text-xs">
-                        ({totals.couponCode})
-                      </span>
-                    )}
-                  </span>
-                  <span className="font-bold">
-                    -{formatShopPrice(totals.discount)}
-                  </span>
-                </div>
+            <div className="mt-5 border-t border-[var(--shop-border-light)] pt-5">
+              {authoritativeQuote.quote ? (
+                <ShopPriceSummary
+                  money={authoritativeQuote.quote.snapshot.money}
+                  estimated={authoritativeQuote.quote.estimated}
+                  couponCode={authoritativeQuote.quote.couponCode}
+                  cgstPercent={authoritativeQuote.quote.snapshot.cgst_percent}
+                  sgstPercent={authoritativeQuote.quote.snapshot.sgst_percent}
+                />
+              ) : (
+                <ShopQuoteSummary pricing={authoritativeQuote} />
               )}
-              <div className="rounded-2xl bg-[var(--shop-bg-soft)] px-3 py-2 text-xs font-semibold text-[var(--shop-text-secondary)]">
-                {qualifiesForFreeShipping
-                  ? "You've got free shipping!"
-                  : `Free shipping on orders above ${formatShopPrice(deliveryChargeThreshold)}`}
-              </div>
-              <div className="flex justify-between text-[var(--shop-text-secondary)]">
-                <span>Shipping</span>
-                <span className="font-bold text-[var(--shop-text-primary)]">
-                  {shippingCharge === 0
-                    ? "Free"
-                    : formatShopPrice(shippingCharge)}
-                </span>
-              </div>
-              <div className="flex justify-between text-xs text-[var(--shop-text-muted)]">
-                <span>Estimated package weight</span>
-                <span>
-                  {totalWeight > 0
-                    ? `${Math.round(totalWeight)} g`
-                    : "Calculated"}
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-5 flex items-center justify-between border-t border-[var(--shop-border-light)] pt-5">
-              <span className="text-lg font-bold text-[var(--shop-text-primary)]">
-                Total
-              </span>
-              <span className="text-2xl font-extrabold text-[var(--shop-text-primary)]">
-                {formatShopPrice(payableTotal)}
-              </span>
             </div>
 
             <button
               type="button"
               onClick={() => void handlePlaceOrder()}
-              disabled={isPlacing}
+              disabled={isPlacing || !authoritativeQuote.quote || authoritativeQuote.loading || Boolean(authoritativeQuote.error)}
               className="mt-5 flex min-h-[54px] w-full items-center justify-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-text-primary)] text-base font-semibold text-white transition hover:bg-[var(--shop-text-secondary)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isPlacing
                 ? "Placing your order..."
-                : `Place Order · ${formatShopPrice(payableTotal)}`}
+                : authoritativeQuote.quote
+                  ? `Place Order · ${formatShopPrice(authoritativeTotal)}`
+                  : authoritativeQuote.error
+                    ? "Retry price verification"
+                    : "Verifying total…"}
             </button>
             <p className="mt-3 text-center text-xs leading-5 text-[var(--shop-text-muted)]">
               By placing this order you agree to our Terms & Conditions and
