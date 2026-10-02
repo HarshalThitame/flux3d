@@ -14,9 +14,17 @@
  */
 import crypto from 'node:crypto'
 import { createAdminSupabaseClient } from '@/lib/admin/server'
+import { getSupabaseServiceRoleKey } from '@/lib/supabase/config'
 
 export function generateGuestAccessToken(): string {
   return crypto.randomBytes(32).toString('base64url')
+}
+
+/** Retrying one checkout returns the same token without storing the raw secret. */
+export function generateGuestCheckoutAccessToken(checkoutKey: string, sessionId: string): string {
+  return crypto.createHmac('sha256', getSupabaseServiceRoleKey())
+    .update(JSON.stringify(['shop-checkout-access-v1', checkoutKey, sessionId]))
+    .digest('base64url')
 }
 
 export function hashGuestAccessToken(token: string): string {

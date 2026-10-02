@@ -5,8 +5,9 @@ import {
   normalizeOrderItems,
   normalizeShippingAddress,
   placeShopOrder,
+  ShopPriceChangedError,
 } from '@/lib/shop/place-order'
-import { generateGuestAccessToken, hashGuestAccessToken } from '@/lib/shop/guest-access'
+import { generateGuestCheckoutAccessToken, hashGuestAccessToken } from '@/lib/shop/guest-access'
 import { recordConsent } from '@/lib/account-linking/consent'
 
 
@@ -18,6 +19,8 @@ type CreateShopOrderBody = {
   couponCode?: unknown
   appliedCouponId?: unknown
   appliedOfferId?: unknown
+  quoteFingerprint?: unknown
+  checkoutKey?: unknown
   shippingAddress?: unknown
   /** Present only for guest (unauthenticated) checkout. */
   guest?: {
@@ -118,8 +121,17 @@ export async function POST(request: Request) {
     const appliedOfferId = typeof body.appliedOfferId === 'string' && body.appliedOfferId.trim()
       ? body.appliedOfferId.trim()
       : null
+    const quoteFingerprint = typeof body.quoteFingerprint === 'string' && /^[a-f0-9]{64}$/i.test(body.quoteFingerprint)
+      ? body.quoteFingerprint.trim().toLowerCase()
+      : null
+    const checkoutKey = typeof body.checkoutKey === 'string' && /^[a-zA-Z0-9_-]{16,128}$/.test(body.checkoutKey)
+      ? body.checkoutKey
+      : null
+    if (!quoteFingerprint || !checkoutKey) {
+      return NextResponse.json({ error: 'Refresh checkout to verify your latest total before placing an order.' }, { status: 400 })
+    }
 
-    const guestAccessToken = userId ? null : generateGuestAccessToken()
+    const guestAccessToken = userId ? null : generateGuestCheckoutAccessToken(checkoutKey, guestSessionId!)
 
     const result = await placeShopOrder({
       userId,
@@ -135,6 +147,8 @@ export async function POST(request: Request) {
       couponCode,
       appliedCouponId,
       appliedOfferId,
+      quoteFingerprint,
+      checkoutKey,
       source: 'shop',
       paymentProvider: 'razorpay',
     })
@@ -168,6 +182,9 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to place order.'
+    if (error instanceof ShopPriceChangedError) {
+      return NextResponse.json({ error: message, quote: error.quote }, { status: 409 })
+    }
     const isValidationError = /out of stock|invalid item|empty|address|pincode|phone|coupon|offer|delivery not available/i.test(message)
     return NextResponse.json({ error: message }, { status: isValidationError ? 400 : 500 })
   }

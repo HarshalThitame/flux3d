@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { ArrowLeft, MapPin, ShieldCheck } from "lucide-react";
+import { ArrowLeft, MapPin } from "lucide-react";
 import ShopShell from "@/components/shop/ShopShell";
 import PaymentPageClient from "./PaymentPageClient";
 import { getCurrentUserProfile } from "@/lib/auth/server";
@@ -10,8 +10,8 @@ import { absoluteUrl } from "@/lib/site";
 import { getSettings } from "@/lib/settings";
 import { buildPublicBusinessProfile } from "@/lib/public-business";
 import { createAdminSupabaseClient } from "@/lib/admin/server";
-import { formatShopPrice } from "@/lib/shop/selection";
-import { mapShopOrderRow, type ShopOrder } from "@/lib/shop/orders";
+import { formatPaise, readOrderMoney, type ShopMoney } from "@/lib/shop/financials";
+import { isShopOrderPaid, mapShopOrderRow, type ShopOrder } from "@/lib/shop/orders";
 import { verifyGuestOrderAccess } from "@/lib/shop/guest-access";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +46,7 @@ async function getOrder(orderId: string) {
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  return data ? mapShopOrderRow(data) : null;
+  return data ? { order: mapShopOrderRow(data), row: data } : null;
 }
 
 function getPrimaryImage(order: ShopOrder) {
@@ -75,8 +75,9 @@ export default async function RazorpayShopPaymentPage({
   const { orderId } = await params;
   const { token: guestToken } = await searchParams;
   const auth = await getCurrentUserProfile();
-  const order = await getOrder(orderId);
-  if (!order) notFound();
+  const record = await getOrder(orderId);
+  if (!record) notFound();
+  const { order } = record;
 
   // Authorization: logged-in orders require the owner; guest orders (no
   // user_id) require the guest access token issued at checkout.
@@ -99,7 +100,7 @@ export default async function RazorpayShopPaymentPage({
 
   const isGuestOrder = !order.user_id;
 
-  if (order.payment_status === "paid") {
+  if (isShopOrderPaid(order.payment_status)) {
     redirect(
       isGuestOrder
         ? `/3d-shop/track/${order.id}?token=${encodeURIComponent(guestToken ?? "")}`
@@ -110,6 +111,23 @@ export default async function RazorpayShopPaymentPage({
   const settings = await getSettings();
   const profile = buildPublicBusinessProfile(settings);
   const primaryImage = getPrimaryImage(order);
+  let savedMoney: ShopMoney;
+  try {
+    savedMoney = readOrderMoney(record.row);
+  } catch (error) {
+    return (
+      <ShopShell transparentNav>
+        <main className="mx-auto max-w-2xl px-6 py-24">
+          <h1 className="text-2xl font-semibold">Review your order total</h1>
+          <p role="alert" className="mt-4 text-sm leading-6">
+            {error instanceof Error ? error.message : "This order needs a pricing review before payment."}
+          </p>
+          <p className="mt-4 text-sm">Order {order.order_number} · Contact {profile.supportEmail} for help.</p>
+          <Link href="/3d-shop/checkout" className="mt-6 inline-block underline">Return to checkout</Link>
+        </main>
+      </ShopShell>
+    );
+  }
 
   return (
     <ShopShell transparentNav>
@@ -207,7 +225,7 @@ export default async function RazorpayShopPaymentPage({
                   : `/3d-shop/order/${order.id}?payment=success`
               }
               orderNumber={order.order_number}
-              amountPaise={Math.round(Number(order.total_amount) * 100)}
+              amountPaise={savedMoney.totalPaise}
               currency="INR"
               title="Payment"
               subtitle=""
@@ -230,33 +248,51 @@ export default async function RazorpayShopPaymentPage({
                       Subtotal
                     </span>
                     <span className="text-[#111111] tracking-wide">
-                      {formatShopPrice(order.subtotal)}
+                      {formatPaise(savedMoney.subtotalPaise)}
                     </span>
                   </div>
-                  {order.discount_amount > 0 && (
+                  {savedMoney.couponDiscountPaise > 0 && (
                     <div className="flex items-center justify-between text-sm text-[#c9a962]">
-                      <span className="font-light tracking-wide">Discount</span>
+                      <span className="font-light tracking-wide">{order.coupon_code ? `Coupon (${order.coupon_code})` : "Discount"}</span>
                       <span className="tracking-wide">
-                        -{formatShopPrice(order.discount_amount)}
+                        -{formatPaise(savedMoney.couponDiscountPaise)}
                       </span>
                     </div>
                   )}
+                  {savedMoney?.offerDiscountPaise ? (
+                    <div className="flex items-center justify-between text-sm text-[#c9a962]">
+                      <span className="font-light tracking-wide">Automatic offer</span>
+                      <span className="tracking-wide">-{formatPaise(savedMoney.offerDiscountPaise)}</span>
+                    </div>
+                  ) : null}
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-neutral-500 font-light tracking-wide">
                       Shipping
                     </span>
                     <span className="text-[#111111] tracking-wide">
-                      {order.shipping_charge === 0
+                      {savedMoney.shippingPaise === 0
                         ? "Complimentary"
-                        : formatShopPrice(order.shipping_charge)}
+                        : formatPaise(savedMoney.shippingPaise)}
                     </span>
                   </div>
+                  {savedMoney?.cgstPaise ? (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-neutral-500 font-light tracking-wide">CGST</span>
+                      <span className="text-[#111111] tracking-wide">{formatPaise(savedMoney.cgstPaise)}</span>
+                    </div>
+                  ) : null}
+                  {savedMoney?.sgstPaise ? (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-neutral-500 font-light tracking-wide">SGST</span>
+                      <span className="text-[#111111] tracking-wide">{formatPaise(savedMoney.sgstPaise)}</span>
+                    </div>
+                  ) : null}
                   <div className="flex items-center justify-between pt-5 mt-5 border-t border-black/10">
                     <span className="text-xs font-semibold tracking-widest uppercase text-neutral-500">
                       Total
                     </span>
                     <span className="text-2xl font-light tracking-wider text-[#111111]">
-                      {formatShopPrice(order.total_amount)}
+                      {formatPaise(savedMoney.totalPaise)}
                     </span>
                   </div>
                 </div>

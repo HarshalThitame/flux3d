@@ -1,4 +1,5 @@
 import { getSettings } from "@/lib/settings";
+import { readOrderMoney, buildShopPaymentPricingSnapshot } from "@/lib/shop/financials";
 import { createAdminSupabaseClient } from "@/lib/admin/server";
 import { buildPublicBusinessProfile } from "@/lib/public-business";
 import { verifyGuestOrderAccess } from "@/lib/shop/guest-access";
@@ -276,14 +277,7 @@ function buildPricingSnapshot(
   type: InternalOrderType,
 ) {
   if (type === "shop_order") {
-    return {
-      subtotal: normalizeMoney(order.subtotal),
-      discount_amount: normalizeMoney(order.discount_amount),
-      shipping_charge: normalizeMoney(order.shipping_charge),
-      total_amount: normalizeMoney(order.total_amount),
-      items: Array.isArray(order.items) ? order.items : [],
-      shipping_address: asRecord(order.shipping_address),
-    };
+    return buildShopPaymentPricingSnapshot(order);
   }
 
   return {
@@ -305,11 +299,9 @@ function buildOrderSnapshot(
   type: InternalOrderType,
 ): PaymentOrderSnapshot {
   const contact = getContactFields(order, type);
-  const amountPaise = snapshotAmount(
-    type === "shop_order"
-      ? normalizeMoney(order.total_amount)
-      : normalizeMoney(order.grand_total ?? order.total_price),
-  );
+  const amountPaise = type === "shop_order"
+    ? readOrderMoney(order).totalPaise
+    : snapshotAmount(normalizeMoney(order.grand_total ?? order.total_price));
   const orderNumber =
     normalizeText(order.order_number) || normalizeText(order.id);
   const currency = normalizeText(order.payment_currency) || "INR";
@@ -755,7 +747,11 @@ export async function verifyCheckoutPayment(params: {
 
   if (
     Number(providerOrder.amount) !== orderSnapshot.amountPaise ||
-    providerOrder.currency !== orderSnapshot.currency
+    providerOrder.currency !== orderSnapshot.currency ||
+    Number(providerPayment.amount) !== orderSnapshot.amountPaise ||
+    providerPayment.currency !== orderSnapshot.currency ||
+    attempt.amount_paise !== orderSnapshot.amountPaise ||
+    attempt.currency !== orderSnapshot.currency
   ) {
     throw new Error(
       `Payment amount mismatch (expected ₹${orderSnapshot.amountPaise / 100} ${orderSnapshot.currency}, provider: ₹${Number(providerOrder.amount) / 100} ${providerOrder.currency}).`,
@@ -1085,6 +1081,14 @@ async function processPaymentLifecycleEvent(
     eventName === "order.paid" ||
     eventName === "payment_link.paid"
   ) {
+    if (attempt.internal_order_type === "shop_order") {
+      const shopOrder = await fetchInternalOrder({ type: "shop_order", id: attempt.internal_order_id });
+      if (!shopOrder) throw new Error("Shop order not found for payment webhook.");
+      const savedMoney = readOrderMoney(shopOrder);
+      if (attempt.amount_paise !== savedMoney.totalPaise) {
+        throw new Error("Payment attempt amount does not match the saved shop order pricing.");
+      }
+    }
     const payment = providerPaymentId
       ? await fetchRazorpayPayment(providerPaymentId)
       : null;
@@ -1094,12 +1098,13 @@ async function processPaymentLifecycleEvent(
     const finalPayment = payment ?? {
       id: providerPaymentId,
       amount: Number(
-        paymentEntity.amount ?? orderEntity.amount ?? attempt.amount_paise,
+        paymentEntity.amount ?? order?.amount ?? orderEntity.amount,
       ),
       currency:
         normalizeText(paymentEntity.currency) ||
+        normalizeText(order?.currency) ||
         normalizeText(orderEntity.currency) ||
-        attempt.currency,
+        "",
       status: providerPaymentStatus || "authorized",
       order_id: providerOrderId || attempt.provider_order_id || "",
       method:
@@ -1108,6 +1113,9 @@ async function processPaymentLifecycleEvent(
         undefined,
       captured: Boolean(paymentEntity.captured),
     };
+    if (Number(finalPayment.amount) !== attempt.amount_paise || String(finalPayment.currency).toUpperCase() !== String(attempt.currency).toUpperCase()) {
+      throw new Error("Payment webhook amount or currency does not match the payment attempt.");
+    }
 
     const paymentLinkStatus = normalizeText(paymentLinkEntity.status);
     const captured =

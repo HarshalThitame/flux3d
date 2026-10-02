@@ -1,22 +1,10 @@
 import { createAdminSupabaseClient } from "@/lib/admin/server";
-import { getSettings } from "@/lib/settings";
-import {
-  buildShopPricingSnapshot,
-  calculateCouponDiscount,
-  calculateShopSubtotal,
-  calculateShopTax,
-  calculateShopTotal,
-  roundMoney,
-  type ShopCouponResult,
-} from "@/lib/shop/pricing";
-import { calculateShippingFromRules } from "@/lib/shop/shipping";
-import {
-  groupRulesByProduct,
-  resolveCartUnitPrice,
-  type CartPriceRule,
-} from "@/lib/shop/cart-price-rules";
 import type { ShopOrderItem, ShopShippingAddress } from "@/lib/shop/orders";
-
+import type { ShopQuote } from "./quote-types";
+import { quoteShopOrder, normalizeOrderItems, normalizeShippingAddress } from "./authoritative-pricing";
+import { readOrderMoney } from "./financials";
+export { normalizeOrderItems, normalizeShippingAddress } from "./authoritative-pricing";
+function isRecord(value: unknown): value is Record<string, unknown> { return Boolean(value && typeof value === "object" && !Array.isArray(value)); }
 export const MAX_ORDER_NUMBER_RETRIES = 5;
 
 export type PlaceOrderItemInput = {
@@ -43,6 +31,8 @@ export type PlaceOrderInput = {
   couponCode?: string | null;
   appliedCouponId?: string | null;
   appliedOfferId?: string | null;
+  quoteFingerprint?: string;
+  checkoutKey?: string;
   source?: string;
   paymentProvider?: string;
 };
@@ -56,291 +46,9 @@ export type PlaceOrderResult = {
   tax: number;
   totalAmount: number;
   items: ShopOrderItem[];
-  pricingSnapshot: ReturnType<typeof buildShopPricingSnapshot>;
+  pricingSnapshot: ShopQuote["snapshot"];
 };
 
-type SkuSnapshot = {
-  id: string;
-  product_id: string;
-  sku_code?: string;
-  price: number | string;
-  stock_quantity: number | string;
-  is_available: boolean | null;
-  weight_grams: number | string | null;
-  variant_combination?: Record<string, string | boolean> | null;
-  variant_label?: string | null;
-};
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === "object" && !Array.isArray(value));
-}
-
-function normalizeText(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-export function normalizeOrderItems(value: unknown): PlaceOrderItemInput[] {
-  if (!Array.isArray(value) || value.length === 0) {
-    throw new Error("Your cart is empty.");
-  }
-
-  return value.map((entry) => {
-    if (!isRecord(entry)) throw new Error("Invalid cart item.");
-
-    const productId = normalizeText(entry.productId);
-    const skuId = normalizeText(entry.skuId);
-    const quantity = Number(entry.quantity);
-
-    if (!productId || !skuId) throw new Error("Invalid cart item.");
-    if (!Number.isInteger(quantity) || quantity <= 0)
-      throw new Error("Invalid item quantity.");
-
-    return {
-      productId,
-      skuId,
-      quantity,
-      customizationText:
-        typeof entry.customizationText === "string"
-          ? entry.customizationText.trim() || null
-          : null,
-    };
-  });
-}
-
-export function normalizeShippingAddress(value: unknown): ShopShippingAddress {
-  if (!isRecord(value)) throw new Error("Delivery address is required.");
-
-  const address: ShopShippingAddress = {
-    name: normalizeText(value.name),
-    phone: normalizeText(value.phone).replace(/\D/g, ""),
-    line1: normalizeText(value.line1),
-    line2: normalizeText(value.line2) || null,
-    city: normalizeText(value.city),
-    state: normalizeText(value.state),
-    pincode: normalizeText(value.pincode).replace(/\D/g, ""),
-  };
-
-  if (!address.name || !address.line1 || !address.city || !address.state) {
-    throw new Error("Complete delivery address is required.");
-  }
-
-  if (!/^\d{10}$/.test(address.phone)) {
-    throw new Error("Enter a valid 10 digit phone number.");
-  }
-
-  if (!/^\d{6}$/.test(address.pincode)) {
-    throw new Error("Enter a valid 6 digit pincode.");
-  }
-
-  return address;
-}
-
-function isLimitReached(limit: unknown, used: unknown) {
-  const usageLimit = Number(limit);
-  if (!Number.isFinite(usageLimit) || usageLimit <= 0) return false;
-  return Number(used ?? 0) >= usageLimit;
-}
-
-async function validateCouponCode(
-  supabase: ReturnType<typeof createAdminSupabaseClient>,
-  couponCode: string,
-  subtotal: number,
-  userId: string | null,
-): Promise<ShopCouponResult | null> {
-  const code = couponCode.trim().toUpperCase();
-  if (!code) return null;
-
-  const today = new Date().toISOString().slice(0, 10);
-  const { data: shopCoupon, error: shopCouponError } = await supabase
-    .from("shelf_coupons")
-    .select("*")
-    .eq("code", code)
-    .maybeSingle();
-
-  if (shopCouponError) throw new Error(shopCouponError.message);
-
-  if (shopCoupon) {
-    if (!shopCoupon.is_active)
-      throw new Error("This coupon is no longer active.");
-    if (shopCoupon.valid_from && today < shopCoupon.valid_from)
-      throw new Error("This coupon is not yet valid.");
-    if (shopCoupon.valid_until && today > shopCoupon.valid_until)
-      throw new Error("This coupon has expired.");
-    if (isLimitReached(shopCoupon.max_uses, shopCoupon.used_count)) {
-      throw new Error("This coupon has reached its usage limit.");
-    }
-    if (subtotal < Number(shopCoupon.min_order_value ?? 0)) {
-      throw new Error(
-        `Minimum order value of ₹${Number(shopCoupon.min_order_value ?? 0).toFixed(0)} required.`,
-      );
-    }
-
-    const discountType = String(shopCoupon.discount_type).toLowerCase() as
-      "percentage" | "fixed_amount" | "free_shipping";
-    const discountValue = Number(shopCoupon.discount_value ?? 0);
-    const freeShipping = discountType === "free_shipping";
-    const calculatedDiscount = freeShipping
-      ? 0
-      : calculateCouponDiscount(subtotal, {
-          discount_type: discountType,
-          discount_value: discountValue,
-          max_discount: shopCoupon.max_discount ?? null,
-        });
-
-    return {
-      code,
-      discountType: freeShipping ? "free_shipping" : discountType,
-      discountValue,
-      maxDiscount: shopCoupon.max_discount ?? null,
-      calculatedDiscount,
-      freeShipping,
-      couponId: shopCoupon.id,
-    };
-  }
-
-  const { data: coupon, error: couponError } = await supabase
-    .from("coupons")
-    .select("*")
-    .eq("code", code)
-    .maybeSingle();
-
-  if (couponError) throw new Error(couponError.message);
-  if (!coupon) throw new Error("Invalid coupon code.");
-
-  const now = new Date().toISOString();
-  if (!coupon.is_active) throw new Error("This coupon is no longer active.");
-  if (coupon.starts_at && now < coupon.starts_at)
-    throw new Error("This coupon is not yet valid.");
-  if (coupon.expires_at && now > coupon.expires_at)
-    throw new Error("This coupon has expired.");
-  if (isLimitReached(coupon.usage_limit, coupon.used_count)) {
-    throw new Error("This coupon has reached its usage limit.");
-  }
-  if (subtotal < Number(coupon.min_order_value ?? 0)) {
-    throw new Error(
-      `Minimum order value of ₹${Number(coupon.min_order_value ?? 0).toFixed(0)} required.`,
-    );
-  }
-
-  if (coupon.usage_per_user && userId) {
-    const { count } = await supabase
-      .from("redemptions")
-      .select("*", { count: "exact", head: true })
-      .eq("coupon_id", coupon.id)
-      .eq("user_id", userId);
-
-    if (count && count >= Number(coupon.usage_per_user)) {
-      throw new Error(
-        "You have already used this coupon the maximum number of times.",
-      );
-    }
-  }
-
-  if (coupon.first_order_only && userId) {
-    const { count } = await supabase
-      .from("orders")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId);
-
-    if (count && count > 0)
-      throw new Error("This coupon is for first-time orders only.");
-  }
-
-  const discountType = String(coupon.discount_type).toLowerCase() as
-    "percentage" | "fixed_amount" | "free_shipping";
-  const discountValue = Number(coupon.discount_value ?? 0);
-  const freeShipping = discountType === "free_shipping";
-  const calculatedDiscount = freeShipping
-    ? 0
-    : calculateCouponDiscount(subtotal, {
-        discount_type: discountType,
-        discount_value: discountValue,
-        max_discount: coupon.max_discount ?? null,
-      });
-
-  return {
-    code,
-    discountType: freeShipping ? "free_shipping" : discountType,
-    discountValue,
-    maxDiscount: coupon.max_discount ?? null,
-    calculatedDiscount,
-    freeShipping,
-    couponId: coupon.id,
-  };
-}
-
-async function validateOfferId(
-  supabase: ReturnType<typeof createAdminSupabaseClient>,
-  offerId: string,
-  orderAmount: number,
-  userId: string | null,
-): Promise<ShopCouponResult | null> {
-  const id = offerId.trim();
-  if (!id) return null;
-
-  const now = new Date().toISOString();
-  const { data: offer, error } = await supabase
-    .from("offers")
-    .select(
-      "id, offer_type, discount_value, max_discount, min_order_value, starts_at, ends_at, is_active, usage_limit, usage_per_user, used_count",
-    )
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  if (!offer) throw new Error("Invalid offer code.");
-
-  if (!offer.is_active) throw new Error("This offer is no longer active.");
-  if (offer.starts_at && now < offer.starts_at)
-    throw new Error("This offer is not yet valid.");
-  if (offer.ends_at && now > offer.ends_at)
-    throw new Error("This offer has expired.");
-  if (isLimitReached(offer.usage_limit, offer.used_count)) {
-    throw new Error("This offer has reached its usage limit.");
-  }
-  if (orderAmount < Number(offer.min_order_value ?? 0)) {
-    throw new Error(
-      `Minimum order value of ₹${Number(offer.min_order_value ?? 0).toFixed(0)} required.`,
-    );
-  }
-
-  if (offer.usage_per_user && userId) {
-    const { count } = await supabase
-      .from("redemptions")
-      .select("*", { count: "exact", head: true })
-      .eq("offer_id", offer.id)
-      .eq("user_id", userId);
-
-    if (count && count >= Number(offer.usage_per_user)) {
-      throw new Error(
-        "You have already used this offer the maximum number of times.",
-      );
-    }
-  }
-
-  const discountType = String(offer.offer_type).toLowerCase() as
-    "percentage" | "fixed_amount" | "free_shipping" | "buy_x_get_y";
-  const discountValue = Number(offer.discount_value ?? 0);
-  const freeShipping = discountType === "free_shipping";
-  const calculatedDiscount =
-    freeShipping || discountType === "buy_x_get_y"
-      ? 0
-      : calculateCouponDiscount(orderAmount, {
-          discount_type: discountType,
-          discount_value: discountValue,
-          max_discount: offer.max_discount ?? null,
-        });
-
-  return {
-    code: id,
-    discountType: freeShipping ? "free_shipping" : discountType,
-    discountValue,
-    maxDiscount: offer.max_discount ?? null,
-    calculatedDiscount,
-    freeShipping,
-    offerId: offer.id,
-  };
-}
 
 export async function generateOrderNumber(
   supabase: ReturnType<typeof createAdminSupabaseClient>,
@@ -368,394 +76,73 @@ export function isDuplicateOrderNumberError(error: unknown) {
   return code === "23505" || message.toLowerCase().includes("duplicate key");
 }
 
-export async function placeShopOrder(
-  input: PlaceOrderInput,
-): Promise<PlaceOrderResult> {
-  const {
-    userId = null,
-    guest = null,
-    items: rawItems,
-    shippingAddress,
-    couponCode,
-    appliedCouponId,
-    appliedOfferId,
-    source = "shop",
-    paymentProvider = "razorpay",
-  } = input;
 
-  if (!userId && !guest) {
-    throw new Error(
-      "Either an authenticated user or guest checkout details are required.",
-    );
-  }
+export class ShopPriceChangedError extends Error {
+  constructor(public quote: ShopQuote) { super("Your order pricing changed. Review the updated total and place your order again."); }
+}
 
+export async function placeShopOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
+  const { userId = null, guest = null, shippingAddress, source = "shop", paymentProvider = "razorpay" } = input;
+  if (!userId && !guest) throw new Error("Either an authenticated user or guest checkout details are required.");
   const supabase = createAdminSupabaseClient();
-  const settings = await getSettings();
-
-  // Guest collision handling (silent): when the guest email matches an existing
-  // account, flag the order internally via claim_candidate_user_id. We never
-  // block checkout and never reveal the match in any response — attaching the
-  // order happens only after that user authenticates (proves inbox ownership).
-  let claimCandidateUserId: string | null = null;
-  if (guest) {
-    const normalizedEmail = guest.email.trim().toLowerCase();
-    const { data: profileMatch } = await supabase
-      .from("profiles")
-      .select("id")
-      .ilike("email", normalizedEmail)
-      .limit(1)
-      .maybeSingle();
-    claimCandidateUserId =
-      profileMatch && typeof profileMatch.id === "string"
-        ? profileMatch.id
-        : null;
-  }
-
-  const skuIds = Array.from(new Set(rawItems.map((item) => item.skuId)));
-  const { data: skuRows, error: skuError } = await supabase
-    .from("shelf_skus")
-    .select(
-      "id, product_id, sku_code, variant_combination, price, stock_quantity, is_available, weight_grams",
-    )
-    .in("id", skuIds);
-
-  if (skuError) throw new Error(skuError.message);
-
-  const skusById = new Map(
-    (skuRows ?? []).map((sku) => [sku.id, sku as SkuSnapshot]),
-  );
-  const skuProductIds = Array.from(
-    new Set(
-      (skuRows ?? []).map((sku) => String(sku.product_id)).filter(Boolean),
-    ),
-  );
-  const { data: cartPriceRuleRows, error: cartPriceRuleError } =
-    skuProductIds.length
-      ? await supabase
-          .from("shelf_product_cart_price_rules")
-          .select("*")
-          .in("product_id", skuProductIds)
-          .eq("is_active", true)
-      : { data: [], error: null };
-  if (cartPriceRuleError) throw new Error(cartPriceRuleError.message);
-  const cartPriceRulesByProduct = groupRulesByProduct(
-    (cartPriceRuleRows ?? []) as CartPriceRule[],
-  );
-
-  const items: ShopOrderItem[] = [];
-  let totalWeightGrams = 0;
-
-  for (const rawItem of rawItems) {
-    const sku = skusById.get(rawItem.skuId);
-    if (!sku) {
-      throw new Error(`Invalid SKU: ${rawItem.skuId}`);
-    }
-
-    if (
-      sku.is_available === false ||
-      Number(sku.stock_quantity ?? 0) < rawItem.quantity
-    ) {
-      throw new Error(
-        `Sorry, ${rawItem.skuId} is no longer available in the requested quantity.`,
-      );
-    }
-
-    const baseUnitPrice = roundMoney(Number(sku.price));
-    const priceAdjustment = resolveCartUnitPrice(
-      baseUnitPrice,
-      cartPriceRulesByProduct.get(sku.product_id) ?? null,
-    );
-    const unitPrice = priceAdjustment?.adjustedUnitPrice ?? baseUnitPrice;
-    const weight = Number(sku.weight_grams ?? 0);
-    totalWeightGrams += weight * rawItem.quantity;
-
-    items.push({
-      productId: rawItem.productId,
-      productName: "",
-      productThumbnail: "",
-      productSlug: null,
-      skuId: rawItem.skuId,
-      skuCode: "",
-      variantCombination: {},
-      variantLabel: "",
-      quantity: rawItem.quantity,
-      unitPrice,
-      pricingAdjustment: priceAdjustment
-        ? {
-            ruleId: priceAdjustment.ruleId,
-            ruleName: priceAdjustment.ruleName,
-            baseUnitPrice,
-            amount: priceAdjustment.amount,
-          }
-        : null,
-      customizationText: rawItem.customizationText ?? null,
-    });
-  }
-
-  const productIds = Array.from(new Set(items.map((item) => item.productId)));
-  const { data: productRows } = await supabase
-    .from("shelf_products")
-    .select("id, name, slug, thumbnail_url")
-    .in("id", productIds);
-
-  const productsById = new Map(
-    (productRows ?? []).map((p) => [p.id, p as Record<string, unknown>]),
-  );
-
-  for (const item of items) {
-    const product = productsById.get(item.productId);
-    item.productName =
-      typeof product?.name === "string" ? product.name : "Product";
-    item.productSlug = typeof product?.slug === "string" ? product.slug : null;
-    item.productThumbnail =
-      typeof product?.thumbnail_url === "string" ? product.thumbnail_url : "";
-
-    const sku = skusById.get(item.skuId);
-    item.skuCode =
-      sku &&
-      typeof (sku as SkuSnapshot).sku_code === "string" &&
-      (sku as SkuSnapshot).sku_code !== ""
-        ? ((sku as SkuSnapshot).sku_code as string)
-        : String(item.skuId).slice(0, 8);
-    const variant =
-      sku &&
-      typeof (sku as SkuSnapshot).variant_combination === "object" &&
-      (sku as SkuSnapshot).variant_combination !== null
-        ? (sku as SkuSnapshot).variant_combination
-        : {};
-    item.variantCombination = variant as Record<string, string | boolean>;
-    item.variantLabel = Object.entries(item.variantCombination)
-      .map(([k, v]) => `${k}: ${v}`)
-      .join(", ");
-  }
-
-  const subtotal = calculateShopSubtotal(items);
-
-  const validatedCoupon = couponCode
-    ? await validateCouponCode(supabase, couponCode, subtotal, userId ?? null)
-    : null;
-  const validatedOffer = appliedOfferId
-    ? await validateOfferId(supabase, appliedOfferId, subtotal, userId ?? null)
-    : null;
-
-  const discountSource = validatedCoupon ?? validatedOffer;
-  const discountAmount = discountSource?.calculatedDiscount ?? 0;
-
-  const shippingResult = await calculateShippingFromRules({
-    pincode: shippingAddress.pincode,
-    state: shippingAddress.state,
-    subtotal,
-    weightGrams: totalWeightGrams,
-    settings,
-  });
-
-  if (!shippingResult.available) {
-    throw new Error(shippingResult.reason || "Delivery not available.");
-  }
-
-  const shippingChargePaise = discountSource?.freeShipping
-    ? 0
-    : shippingResult.chargePaise;
-  const shippingCharge = shippingChargePaise / 100;
-  const taxableAmount = Math.max(0, subtotal - discountAmount);
-  const tax = calculateShopTax(taxableAmount, settings);
-  const totalAmount = calculateShopTotal(
-    subtotal,
-    discountAmount,
-    shippingCharge,
-    tax,
-  );
-
-  const pricingSnapshot = buildShopPricingSnapshot(
-    items,
-    discountSource,
-    subtotal,
-    shippingCharge,
-    tax,
-    totalAmount,
-  );
-
-  const toPaise = (value: number) => Math.round(value * 100);
-
-  for (let attempt = 0; attempt < MAX_ORDER_NUMBER_RETRIES; attempt += 1) {
-    const orderNumber = await generateOrderNumber(supabase, attempt);
-    const { data, error } = await supabase.rpc("create_shelf_order_atomic", {
-      p_user_id: userId ?? null,
-      p_order_number: orderNumber,
-      p_items: items,
-      p_subtotal_paise: toPaise(subtotal),
-      p_discount_amount_paise: toPaise(discountAmount),
-      p_coupon_code: discountSource?.code ?? couponCode ?? "",
-      p_shipping_charge_paise: shippingChargePaise,
-      p_total_amount_paise: toPaise(totalAmount),
-      p_shipping_address: shippingAddress,
-      p_payment_method: paymentProvider,
-    });
-
-    if (!error) {
-      const result = isRecord(data) ? data : {};
-      const orderId = String(result.orderId ?? "");
-      if (orderId) {
-        const { error: sourceError } = await supabase
-          .from("shelf_orders")
-          .update({
-            order_source: source,
-            payment_provider: paymentProvider,
-            payment_status: "pending",
-            payment_purpose: "shop_order",
-            payment_amount_paise: toPaise(totalAmount),
-            payment_currency: "INR",
-            payment_snapshot: {
-              subtotal,
-              discountAmount,
-              shippingCharge,
-              totalAmount,
-              items,
-              shippingAddress,
-              appliedCouponId,
-              appliedOfferId,
-            },
-            order_price_snapshot: pricingSnapshot,
-            ...(guest
-              ? {
-                  guest_session_id: guest.sessionId,
-                  guest_contact: { email: guest.email.trim().toLowerCase() },
-                  // Already a SHA-256 hash of the raw token (hashed once in the
-                  // API route) — store verbatim, do NOT hash again.
-                  guest_access_token_hash: guest.accessTokenHash,
-                  claim_candidate_user_id: claimCandidateUserId,
-                }
-              : {}),
-          })
-          .eq("id", orderId);
-
-        if (sourceError) {
-          console.error("[shop] Failed to update order source", sourceError);
-        }
-
-        if (userId) {
-          const { error: cartConvertError } = await supabase
-            .from("cart_items")
-            .update({ status: "converted", converted_to_order_id: orderId })
-            .eq("user_id", userId)
-            .eq("cart_type", "shop")
-            .eq("status", "active");
-
-          if (cartConvertError) {
-            console.error(
-              "[shop] Failed to mark shop cart converted",
-              cartConvertError,
-            );
-          }
-        } else {
-          // Guest carts live only in the client (zustand persist) — the client
-          // clears the local store after a successful checkout response.
-        }
-
-        // ── Redemption tracking ──────────────────────────────────────────────
-        // Write a redemptions row and bump used_count for the applied coupon
-        // or offer. This is best-effort — a failure here does NOT roll back the
-        // order; the order has already been created atomically above.
-        if (discountSource && discountAmount >= 0) {
-          const redemptionRow: Record<string, unknown> = {
-            order_id: orderId,
-            discount_type: discountSource.discountType,
-            discount_applied: discountAmount,
-            redeemed_at: new Date().toISOString(),
-            ...(userId ? { user_id: userId } : {}),
-          };
-
-          if (discountSource.couponId) {
-            redemptionRow.coupon_id = discountSource.couponId;
-
-            // Try atomic RPC increment first; fall back to read-modify-write.
-            const { error: couponIncrError } = await (supabase.rpc(
-              "increment_coupon_used_count",
-              { coupon_id: discountSource.couponId },
-            ) as unknown as { error: { message: string } | null });
-
-            if (couponIncrError) {
-              // Fallback: read-modify-write increment (non-atomic but better than nothing).
-              try {
-                const { data: c } = await supabase
-                  .from("coupons")
-                  .select("used_count")
-                  .eq("id", discountSource.couponId)
-                  .maybeSingle();
-                if (c) {
-                  await supabase
-                    .from("coupons")
-                    .update({
-                      used_count:
-                        Number((c as { used_count?: number }).used_count ?? 0) +
-                        1,
-                    })
-                    .eq("id", discountSource.couponId);
-                }
-              } catch (e: unknown) {
-                console.warn("[shop] Coupon used_count increment failed", e);
-              }
-            }
-          } else if (discountSource.offerId) {
-            redemptionRow.offer_id = discountSource.offerId;
-
-            try {
-              const { data: o } = await supabase
-                .from("offers")
-                .select("used_count")
-                .eq("id", discountSource.offerId)
-                .maybeSingle();
-              if (o) {
-                await supabase
-                  .from("offers")
-                  .update({
-                    used_count:
-                      Number((o as { used_count?: number }).used_count ?? 0) +
-                      1,
-                  })
-                  .eq("id", discountSource.offerId);
-              }
-            } catch (e: unknown) {
-              console.warn("[shop] Offer used_count increment failed", e);
-            }
-          }
-
-          const { error: redemptionError } = await supabase
-            .from("redemptions")
-            .insert(redemptionRow);
-
-          if (redemptionError) {
-            console.warn(
-              "[shop] Failed to write redemptions row",
-              redemptionError,
-            );
-          }
-        }
-        // ─────────────────────────────────────────────────────────────────────
-      }
-
+  // A response can be lost after the transaction committed. Resolve that
+  // request before rechecking stock or coupon limits consumed by its order.
+  if (input.checkoutKey) {
+    const { data: existing, error } = await supabase.from("shelf_orders").select("*").eq("checkout_key", input.checkoutKey).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (existing) {
+      const guestContact = isRecord(existing.guest_contact) ? existing.guest_contact : {};
+      const sameRequest = existing.user_id === userId &&
+        (!guest || (existing.guest_session_id === guest.sessionId && existing.guest_access_token_hash === guest.accessTokenHash && guestContact.email === guest.email.trim().toLowerCase())) &&
+        (!input.quoteFingerprint || existing.pricing_fingerprint === input.quoteFingerprint) &&
+        JSON.stringify(normalizeOrderItems(existing.items)) === JSON.stringify(normalizeOrderItems(input.items)) &&
+        JSON.stringify(normalizeShippingAddress(existing.shipping_address)) === JSON.stringify(normalizeShippingAddress(shippingAddress)) &&
+        (existing.coupon_code || null) === (input.couponCode?.trim().toUpperCase() || null);
+      if (!sameRequest) throw new Error("Checkout key already used for another request.");
+      if (existing.order_status === "cancelled") throw new Error("This checkout was cancelled. Please start a new checkout.");
+      const money = readOrderMoney(existing);
       return {
-        orderId,
-        orderNumber: String(result.orderNumber ?? orderNumber),
-        subtotal,
-        discountAmount,
-        shippingCharge,
-        tax,
-        totalAmount,
-        items,
-        pricingSnapshot,
+        orderId: existing.id, orderNumber: existing.order_number, items: existing.items,
+        subtotal: money.subtotalPaise / 100, discountAmount: money.discountPaise / 100,
+        shippingCharge: money.shippingPaise / 100, tax: money.taxPaise / 100,
+        totalAmount: money.totalPaise / 100, pricingSnapshot: existing.order_price_snapshot,
       };
     }
-
-    if (
-      isDuplicateOrderNumberError(error) &&
-      attempt < MAX_ORDER_NUMBER_RETRIES - 1
-    ) {
-      continue;
-    }
-
-    throw new Error(error?.message || "Failed to place order.");
   }
-
+  const quote = await quoteShopOrder({ items: input.items, userId, couponCode: input.couponCode, appliedOfferId: input.appliedOfferId, destination: shippingAddress });
+  if (input.quoteFingerprint && input.quoteFingerprint !== quote.fingerprint) throw new ShopPriceChangedError(quote);
+  const money = quote.snapshot.money;
+  const checkoutKey = input.checkoutKey ?? crypto.randomUUID();
+  if (money.totalPaise <= 0) throw new Error("A zero-value order cannot use online payment. Please contact support.");
+  let claimCandidateUserId: string | null = null;
+  if (guest) {
+    const { data } = await supabase.from("profiles").select("id").ilike("email", guest.email.trim().toLowerCase()).limit(1).maybeSingle();
+    claimCandidateUserId = data?.id ?? null;
+  }
+  for (let attempt = 0; attempt < MAX_ORDER_NUMBER_RETRIES; attempt++) {
+    const orderNumber = await generateOrderNumber(supabase, attempt);
+    const { data, error } = await supabase.rpc("create_shelf_order_priced", {
+      p_user_id: userId, p_order_number: orderNumber, p_items: quote.items,
+      p_shipping_address: shippingAddress, p_snapshot: quote.snapshot,
+      p_fingerprint: quote.fingerprint, p_checkout_key: checkoutKey,
+      p_metadata: { order_source: source, payment_provider: paymentProvider,
+        guest_session_id: guest?.sessionId ?? null, guest_contact: guest ? { email: guest.email.trim().toLowerCase() } : null,
+        guest_access_token_hash: guest?.accessTokenHash ?? null, claim_candidate_user_id: claimCandidateUserId },
+    });
+    if (error) {
+      if (isDuplicateOrderNumberError(error) && attempt < MAX_ORDER_NUMBER_RETRIES - 1) continue;
+      throw new Error(error.message || "Failed to place order.");
+    }
+    const result = isRecord(data) ? data : {};
+    const orderId = String(result.orderId ?? "");
+    if (!orderId) throw new Error("Order creation did not return an order.");
+    if (userId) {
+      const { error: cartError } = await supabase.from("cart_items").update({ status: "converted", converted_to_order_id: orderId }).eq("user_id", userId).eq("cart_type", "shop").eq("status", "active");
+      if (cartError) console.error("[shop] Failed to mark cart converted", cartError);
+    }
+    return { orderId, orderNumber: String(result.orderNumber ?? orderNumber), items: quote.items,
+      subtotal: money.subtotalPaise / 100, discountAmount: money.discountPaise / 100, shippingCharge: money.shippingPaise / 100,
+      tax: money.taxPaise / 100, totalAmount: money.totalPaise / 100, pricingSnapshot: quote.snapshot };
+  }
   throw new Error("Could not generate an order number. Please try again.");
 }
