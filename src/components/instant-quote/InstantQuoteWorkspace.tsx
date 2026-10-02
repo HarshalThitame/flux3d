@@ -1613,9 +1613,6 @@ function CartEnabledWorkspace({
                         <p className="mt-2 text-[11px] text-amber-900">
                           About {preliminaryEstimate.materialUsageGramsPerUnit.toFixed(1)} g per piece, including estimated supports when selected.
                         </p>
-                        <p className="mt-2 text-xs leading-5 text-amber-900">
-                          Calculated from the model dimensions, material density, shell thickness, infill, and support setting. Actual material use may vary; the model is checked again before production.
-                        </p>
                         <div className="mt-3 space-y-1.5 border-t border-amber-300/60 pt-3 text-xs text-amber-950">
                           <div className="flex justify-between gap-3">
                             <span>Material</span>
@@ -1635,13 +1632,13 @@ function CartEnabledWorkspace({
                             <span>Post-processing · {postProcessingOptions.find((option) => option.value === config.postProcessingLevel)?.label ?? "None"}</span>
                             <span>₹{preliminaryEstimate.postProcessingCharges.toFixed(2)}</span>
                           </div>
+                          {preliminaryEstimate.deliveryCharge > 0 && (
+                            <div className="flex justify-between gap-3">
+                              <span>Delivery</span>
+                              <span>₹{preliminaryEstimate.deliveryCharge.toFixed(2)}</span>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                      <div className="rounded-xl border border-[#6d28d9]/10 bg-white p-4 text-sm text-[#6F7192]">
-                        <div className="font-medium text-[#070b1d]">Estimate-based checkout</div>
-                        <p className="mt-1 text-xs leading-5">
-                          Your estimate is saved securely before checkout. We’ll contact you if the model needs a price adjustment before production.
-                        </p>
                       </div>
                       <button
                         type="button"
