@@ -454,6 +454,29 @@ function CartEnabledWorkspace({
     };
   }, [analysis, config, materials, pricingSettings, selectedModel]);
 
+  // Show the existing geometry-based calculation for planning while the
+  // server-side slicer is unavailable. This value is display-only: checkout,
+  // saved quotes, and cart insertion continue to require analysis.quote.
+  const preliminaryEstimate = useMemo(() => {
+    if (
+      !selectedModel ||
+      selectedModel.requiresReview ||
+      !Number.isFinite(selectedModel.volumeMm3) ||
+      selectedModel.volumeMm3 <= 0 ||
+      Object.values(selectedModel.dimensionsMm).some(
+        (dimension) => !Number.isFinite(dimension) || dimension <= 0,
+      )
+    ) {
+      return null;
+    }
+    return calculateInstantQuote(
+      selectedModel,
+      config,
+      materials,
+      pricingSettings,
+    );
+  }, [config, materials, pricingSettings, selectedModel]);
+
   useEffect(() => {
     if (
       !selectedModel ||
@@ -1572,7 +1595,56 @@ function CartEnabledWorkspace({
                     </div>
                   </div>
 
-                  {!priceBreakdown ? (
+                  {!priceBreakdown && preliminaryEstimate ? (
+                    <div className="space-y-3">
+                      <div className="rounded-xl border border-amber-300/60 bg-amber-50 p-4">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-800">
+                          Preliminary estimate · not a checkout quote
+                        </div>
+                        <div className="mt-1 font-[var(--font-syne)] text-3xl font-bold text-[#070b1d]">
+                          ₹{preliminaryEstimate.grandTotal.toFixed(0)}
+                        </div>
+                        <div className="mt-3 flex items-center justify-between rounded-lg bg-white/75 px-3 py-2 text-xs text-[#070b1d]">
+                          <span>Estimated filament · {config.quantity} pcs</span>
+                          <span className="font-semibold tabular-nums">
+                            {preliminaryEstimate.materialWeightGrams.toFixed(1)} g
+                          </span>
+                        </div>
+                        <p className="mt-2 text-[11px] text-amber-900">
+                          About {preliminaryEstimate.materialUsageGramsPerUnit.toFixed(1)} g per piece, including estimated supports when selected.
+                        </p>
+                        <p className="mt-2 text-xs leading-5 text-amber-900">
+                          Estimated from model volume, material density, shell thickness, infill, and selected supports. Actual use can change after slicing and review; purge and printer waste are not included.
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-[#6d28d9]/10 bg-white p-4 text-sm text-[#6F7192]">
+                        {analysis?.status === "manual_review" ? (
+                          <>
+                            <div className="font-medium text-amber-800">Manual review required</div>
+                            <p className="mt-1 text-xs leading-5">
+                              {analysis.failure?.message ??
+                                "We’ll confirm the final price after reviewing this model."}
+                            </p>
+                          </>
+                        ) : analysis?.status === "failed" ? (
+                          <>
+                            <div className="font-medium text-rose-700">Server analysis failed</div>
+                            <p className="mt-1 text-xs leading-5">
+                              {analysis.failure?.message ??
+                                "This estimate is for planning only. Contact us to confirm the final price."}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <div className="font-medium text-[#070b1d]">Final price pending slicing</div>
+                            <p className="mt-1 text-xs leading-5">
+                              Checkout unlocks after a server-side quote is ready.
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ) : !priceBreakdown ? (
                     <div className="rounded-xl border border-[#6d28d9]/10 bg-white p-4 text-sm text-[#6F7192]">
                       {analysis?.status === "manual_review" ? (
                         <>
