@@ -478,6 +478,16 @@ function CartEnabledWorkspace({
     );
   }, [config, materials, pricingSettings, selectedModel]);
 
+  const standardLayerEstimate = useMemo(() => {
+    if (!selectedModel || selectedModel.requiresReview) return null;
+    return calculateInstantQuote(
+      selectedModel,
+      { ...config, layerHeight: 0.2 },
+      materials,
+      pricingSettings,
+    );
+  }, [config, materials, pricingSettings, selectedModel]);
+
   useEffect(() => {
     if (
       !selectedModel ||
@@ -507,8 +517,9 @@ function CartEnabledWorkspace({
     user?.id,
   ]);
   const selectedMaterial = getMaterialById(config.materialId, materials);
-  const postProcessingBaseAmount = priceBreakdown
-    ? priceBreakdown.materialCost + priceBreakdown.machineCost
+  const activeEstimate = priceBreakdown ?? preliminaryEstimate;
+  const postProcessingBaseAmount = activeEstimate
+    ? activeEstimate.materialCost + activeEstimate.machineCost
     : 0;
   const selectedColorName = config.color;
   const orderDraft = useMemo<OrderDraft | null>(() => {
@@ -985,6 +996,17 @@ function CartEnabledWorkspace({
     settings: settingsRef,
   };
   const whatsappDigits = bulkOrderContact.whatsappNumber.replace(/[^0-9]/g, "");
+  const multicolourWhatsAppCta = whatsappDigits ? (
+    <a
+      href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent("Hi, I’d like a multicolour 3D print. Please help me with a custom quote.")}`}
+      target="_blank"
+      rel="noreferrer"
+      className="quote-secondary-action inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-600/25 bg-emerald-600/10 px-4 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-600/15"
+    >
+      <MessageCircle className="h-4 w-4" />
+      Want multicolour printing? Contact us on WhatsApp
+    </a>
+  ) : null;
 
   return (
     <>
@@ -1336,17 +1358,6 @@ function CartEnabledWorkspace({
                           );
                         })}
                       </div>
-                      {whatsappDigits && (
-                        <a
-                          href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent("Hi, I’d like a multicolour 3D print. Please help me with a custom quote.")}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-emerald-600/25 bg-emerald-600/10 px-4 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-600/15"
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                          Want multicolour printing? Contact us on WhatsApp
-                        </a>
-                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -1458,7 +1469,7 @@ function CartEnabledWorkspace({
                                   {option.label}
                                 </div>
                                 <div className="text-[10px] uppercase tracking-[0.18em] text-[#6d28d9]">
-                                  {priceBreakdown
+                                  {activeEstimate
                                     ? `₹${getPostProcessingCharge(
                                         option.value,
                                         postProcessingBaseAmount,
@@ -1500,10 +1511,24 @@ function CartEnabledWorkspace({
                                   : "border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10"
                               }`}
                             >
-                              <div
-                                className={`text-xs font-medium ${option.value === config.layerHeight ? "text-[var(--brand-primary)]" : "text-[#070b1d]"}`}
-                              >
-                                {option.label}
+                              <div className="flex items-start justify-between gap-3">
+                                <div
+                                  className={`text-xs font-medium ${option.value === config.layerHeight ? "text-[var(--brand-primary)]" : "text-[#070b1d]"}`}
+                                >
+                                  {option.label}
+                                </div>
+                                {selectedModel && !selectedModel.requiresReview && (
+                                  <span className="shrink-0 text-[10px] font-semibold text-[#6d28d9]">
+                                    ₹{(
+                                      calculateInstantQuote(
+                                        selectedModel,
+                                        { ...config, layerHeight: option.value },
+                                        materials,
+                                        pricingSettings,
+                                      )?.grandTotal ?? 0
+                                    ).toFixed(0)} total
+                                  </span>
+                                )}
                               </div>
                               <div
                                 className={`mt-0.5 text-[10px] ${option.value === config.layerHeight ? "text-[var(--text-secondary)]" : "text-[#6F7192]"}`}
@@ -1591,6 +1616,26 @@ function CartEnabledWorkspace({
                         <p className="mt-2 text-xs leading-5 text-amber-900">
                           Calculated from the model dimensions, material density, shell thickness, infill, and support setting. Actual material use may vary; the model is checked again before production.
                         </p>
+                        <div className="mt-3 space-y-1.5 border-t border-amber-300/60 pt-3 text-xs text-amber-950">
+                          <div className="flex justify-between gap-3">
+                            <span>Material</span>
+                            <span>₹{preliminaryEstimate.materialCost.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <span>Machine time · {config.layerHeight} mm quality included</span>
+                            <span>₹{preliminaryEstimate.machineCost.toFixed(2)}</span>
+                          </div>
+                          {standardLayerEstimate && preliminaryEstimate.grandTotal > standardLayerEstimate.grandTotal && (
+                            <div className="flex justify-between gap-3 text-[#6d28d9]">
+                              <span>Higher-quality layer adjustment · included above</span>
+                              <span>+₹{(preliminaryEstimate.grandTotal - standardLayerEstimate.grandTotal).toFixed(2)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between gap-3">
+                            <span>Post-processing · {postProcessingOptions.find((option) => option.value === config.postProcessingLevel)?.label ?? "None"}</span>
+                            <span>₹{preliminaryEstimate.postProcessingCharges.toFixed(2)}</span>
+                          </div>
+                        </div>
                       </div>
                       <div className="rounded-xl border border-[#6d28d9]/10 bg-white p-4 text-sm text-[#6F7192]">
                         <div className="font-medium text-[#070b1d]">Estimate-based checkout</div>
@@ -1626,6 +1671,7 @@ function CartEnabledWorkspace({
                           </>
                         )}
                       </button>
+                      {multicolourWhatsAppCta}
                       {cartItemCheck && (
                         <Link
                           href="/cart"
@@ -1863,6 +1909,7 @@ function CartEnabledWorkspace({
                               </>
                             )}
                           </button>
+                          {multicolourWhatsAppCta}
 
                         {cartItemCheck && (
                           <Link
