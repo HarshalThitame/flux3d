@@ -1085,8 +1085,8 @@ async function processPaymentLifecycleEvent(
       const shopOrder = await fetchInternalOrder({ type: "shop_order", id: attempt.internal_order_id });
       if (!shopOrder) throw new Error("Shop order not found for payment webhook.");
       const savedMoney = readOrderMoney(shopOrder);
-      if (attempt.amount_paise !== savedMoney.totalPaise) {
-        throw new Error("Payment attempt amount does not match the saved shop order pricing.");
+      if (attempt.amount_paise !== savedMoney.totalPaise || attempt.currency !== "INR") {
+        throw new Error("Payment attempt amount or currency does not match the saved shop order pricing.");
       }
     }
     const payment = providerPaymentId
