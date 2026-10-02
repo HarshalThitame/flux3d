@@ -26,6 +26,7 @@ import {
   AlertTriangle,
   FileArchive,
   Cuboid,
+  MessageCircle,
 } from "lucide-react";
 import EmptyState from "@/components/admin/EmptyState";
 import type { AppUserProfile } from "@/lib/auth/server";
@@ -256,6 +257,7 @@ function CartEnabledWorkspace({
     Boolean(initialMaterialId),
   );
   const [savingQuote, setSavingQuote] = useState(false);
+  const [addingEstimate, setAddingEstimate] = useState(false);
   const uploadRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
   const materialRef = useRef<HTMLDivElement>(null);
@@ -454,9 +456,8 @@ function CartEnabledWorkspace({
     };
   }, [analysis, config, materials, pricingSettings, selectedModel]);
 
-  // Show the existing geometry-based calculation for planning while the
-  // server-side slicer is unavailable. This value is display-only: checkout,
-  // saved quotes, and cart insertion continue to require analysis.quote.
+  // The browser estimate is shown immediately; the server stores the payable
+  // amount before the estimate can enter checkout.
   const preliminaryEstimate = useMemo(() => {
     if (
       !selectedModel ||
@@ -655,24 +656,6 @@ function CartEnabledWorkspace({
           );
           setUploadState(uploadResult);
 
-          const analysisResponse = await fetch("/api/quote/analyses", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              storagePath: uploadResult.path,
-            }),
-          });
-          const analysisBody = (await analysisResponse.json()) as {
-            analysisId?: string;
-            error?: string;
-          };
-          if (!analysisResponse.ok || !analysisBody.analysisId) {
-            throw new Error(
-              analysisBody.error ?? "Could not start authoritative model analysis.",
-            );
-          }
-          setGeometryAnalysisId(analysisBody.analysisId);
-          setActiveAnalysisId(analysisBody.analysisId);
         } else {
           setUploadState({
             status: "success",
@@ -705,7 +688,7 @@ function CartEnabledWorkspace({
           setToast({
             type: "info",
             message:
-              "The browser preview is unavailable; secure server analysis will determine printability and pricing.",
+              "This file could not be estimated in the browser. Please contact us for a manual quote.",
           });
         } else if (!hasUserSelectedMaterial) {
           const suggestedMaterial =
@@ -837,13 +820,13 @@ function CartEnabledWorkspace({
 
   const cartItemCheck = isInCart(initialQuoteId);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (
-      !priceBreakdown ||
+      !preliminaryEstimate ||
       !selectedModel ||
       !selectedMaterial ||
       !initialQuoteId ||
-      !analysis?.quote
+      !user
     ) {
       if (selectedModel?.requiresReview) {
         setToast({
@@ -855,7 +838,7 @@ function CartEnabledWorkspace({
       }
       setToast({
         type: "error",
-        message: "Upload a model and generate a quote before adding to cart.",
+        message: user ? "Upload a supported model to calculate its estimate." : "Sign in to add an estimate to your cart.",
       });
       return;
     }
@@ -869,11 +852,50 @@ function CartEnabledWorkspace({
       return;
     }
 
-    const cartItem: CartItem = {
+    setAddingEstimate(true);
+    try {
+      const response = await fetch("/api/quote/estimates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quoteId: initialQuoteId,
+          storagePath: uploadState.path,
+          config: {
+            materialId: selectedMaterial.id,
+            color: selectedColorName,
+            infill: config.infill,
+            layerHeight: config.layerHeight,
+            quantity: config.quantity,
+            supports: config.supports,
+            postProcessingLevel: config.postProcessingLevel,
+          },
+          model: {
+            fileName: selectedModel.fileName,
+            fileSize: selectedModel.fileSize,
+            extension: selectedModel.extension,
+            volumeMm3: selectedModel.volumeMm3,
+            surfaceAreaMm2: selectedModel.surfaceAreaMm2 ?? 0,
+            supportVolumeMm3: selectedModel.supportVolumeMm3 ?? 0,
+            dimensionsMm: selectedModel.dimensionsMm,
+            triangleCount: selectedModel.triangleCount,
+            suggestedMaterialId: selectedModel.suggestedMaterialId,
+          },
+        }),
+      });
+      const result = (await response.json()) as {
+        quoteVersionId?: string;
+        error?: string;
+        pricing?: typeof preliminaryEstimate;
+      };
+      if (!response.ok || !result.quoteVersionId || !result.pricing) {
+        throw new Error(result.error ?? "Could not save the estimate for checkout.");
+      }
+      const quoted = result.pricing;
+      const cartItem: CartItem = {
       id: initialQuoteId,
       name: selectedModel?.fileName ?? "model",
       quoteId: initialQuoteId,
-      quoteVersionId: analysis.quote.quoteVersionId,
+      quoteVersionId: result.quoteVersionId,
       fileUrl: uploadState.path,
       fileName: selectedModel?.fileName ?? "model",
       material: selectedMaterial.name,
@@ -882,27 +904,27 @@ function CartEnabledWorkspace({
       layerHeight: config.layerHeight,
       quantity: config.quantity,
       supports: config.supports,
-      materialCost: priceBreakdown?.materialCost ?? 0,
-      machineCost: priceBreakdown?.machineCost ?? 0,
-      subtotal: priceBreakdown?.subtotal ?? 0,
-      postProcessingCharges: priceBreakdown?.postProcessingCharges ?? 0,
-      overheadPercentage: priceBreakdown?.overheadPercentage ?? 0,
-      overheadAmount: priceBreakdown?.overheadAmount ?? 0,
-      marginPercentage: priceBreakdown?.marginPercentage ?? 0,
-      marginAmount: priceBreakdown?.marginAmount ?? 0,
-      totalPrice: priceBreakdown?.priceBeforeDiscount ?? 0,
-      cartDiscountAmount: priceBreakdown?.cartDiscountAmount ?? 0,
-      cartDiscountPercent: priceBreakdown?.cartDiscountPercent ?? 0,
-      finalPrice: priceBreakdown?.finalPrice ?? 0,
-      deliveryCharge: priceBreakdown?.deliveryCharge ?? 0,
-      grandTotal: priceBreakdown?.grandTotal ?? 0,
-      price: priceBreakdown?.finalPrice ?? 0,
-      estimatedTime: priceBreakdown?.estimatedHours ?? 0,
-      weight: priceBreakdown?.materialWeightGrams ?? 0,
+      materialCost: quoted.materialCost,
+      machineCost: quoted.machineCost,
+      subtotal: quoted.subtotal,
+      postProcessingCharges: quoted.postProcessingCharges,
+      overheadPercentage: quoted.overheadPercentage,
+      overheadAmount: quoted.overheadAmount,
+      marginPercentage: quoted.marginPercentage,
+      marginAmount: quoted.marginAmount,
+      totalPrice: quoted.priceBeforeDiscount,
+      cartDiscountAmount: quoted.cartDiscountAmount,
+      cartDiscountPercent: quoted.cartDiscountPercent,
+      finalPrice: quoted.finalPrice,
+      deliveryCharge: quoted.deliveryCharge,
+      grandTotal: quoted.grandTotal,
+      price: quoted.finalPrice,
+      estimatedTime: quoted.estimatedHours,
+      weight: quoted.materialWeightGrams,
       modelVolumeMm3: selectedModel?.volumeMm3 ?? 0,
       difficultyFactor:
-        priceBreakdown?.difficultyFactor ?? selectedMaterial.difficultyFactor,
-      dimensions: priceBreakdown?.dimensionsMm ?? { x: 0, y: 0, z: 0 },
+        quoted.difficultyFactor ?? selectedMaterial.difficultyFactor,
+      dimensions: quoted.dimensionsMm,
       config: {
         materialId: selectedMaterial.id,
         color: selectedColorName ?? "",
@@ -913,13 +935,18 @@ function CartEnabledWorkspace({
         supports: config.supports,
       },
       addedAt: new Date().toISOString(),
-    };
+      };
 
-    addItem(cartItem);
-    setToast({
-      type: "success",
-      message: `${selectedModel.fileName} added to cart.`,
-    });
+      addItem(cartItem);
+      setToast({
+        type: "success",
+        message: `${selectedModel.fileName} estimate added to cart.`,
+      });
+    } catch (error) {
+      setToast({ type: "error", message: error instanceof Error ? error.message : "Could not add estimate to cart." });
+    } finally {
+      setAddingEstimate(false);
+    }
   };
 
   const handleStepClick = (ref: React.RefObject<HTMLDivElement | null>) => {
@@ -1179,69 +1206,6 @@ function CartEnabledWorkspace({
                         Upload complete
                       </div>
                     )}
-                    {analysis && (
-                      <div className="mt-4 rounded-xl border border-[#6d28d9]/15 bg-[#6d28d9]/5 p-3">
-                        <div className="flex items-center justify-between gap-3 text-xs">
-                          <span className="inline-flex items-center gap-2 font-medium text-[#070b1d]">
-                            {!['ready', 'manual_review', 'failed'].includes(analysis.status) && (
-                              <LoaderCircle className="h-3.5 w-3.5 animate-spin text-[#6d28d9]" />
-                            )}
-                            {analysis.status === 'uploaded' && 'Preparing analysis'}
-                            {analysis.status === 'queued' && 'Queued for secure processing'}
-                            {analysis.status === 'converting' && 'Converting geometry'}
-                            {analysis.status === 'validating' && 'Validating printability'}
-                            {analysis.status === 'orienting' && 'Optimizing orientation'}
-                            {analysis.status === 'slicing' && 'Slicing on Bambu Lab A1'}
-                            {analysis.status === 'ready' && (analysis.quote ? 'Authoritative quote ready' : 'Geometry verified')}
-                            {analysis.status === 'manual_review' && 'Manual review required'}
-                            {analysis.status === 'failed' && 'Analysis failed'}
-                          </span>
-                          <span className="tabular-nums text-[#6F7192]">{analysis.progress}%</span>
-                        </div>
-                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white">
-                          <div
-                            className="h-full rounded-full bg-[#6d28d9] transition-all duration-500"
-                            style={{ width: `${analysis.progress}%` }}
-                          />
-                        </div>
-                        {analysis.requiresUnitConfirmation && !unitConfirmed && (
-                          <div className="mt-3 rounded-lg border border-amber-300/50 bg-amber-50 p-3 text-xs text-amber-900">
-                            <p>STL, OBJ, and PLY do not declare units. Confirm that the displayed dimensions use millimetres before slicing.</p>
-                            <div className="mt-2 flex flex-wrap items-center gap-2">
-                              <label htmlFor="model-unit" className="font-semibold">
-                                Source unit
-                              </label>
-                              <select
-                                id="model-unit"
-                                value={unitChoice}
-                                onChange={(event) =>
-                                  setUnitChoice(
-                                    event.target.value as "mm" | "cm" | "m" | "in" | "ft",
-                                  )
-                                }
-                                className="rounded-lg border border-amber-300 bg-white px-2 py-2 text-amber-950"
-                              >
-                                <option value="mm">Millimetres</option>
-                                <option value="cm">Centimetres</option>
-                                <option value="m">Metres</option>
-                                <option value="in">Inches</option>
-                                <option value="ft">Feet</option>
-                              </select>
-                              <button
-                                type="button"
-                                onClick={() => void confirmUnitScale()}
-                                className="rounded-lg bg-amber-900 px-3 py-2 font-semibold text-white"
-                              >
-                                Confirm scale
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                        {analysis.failure?.message && (
-                          <p className="mt-2 text-xs text-amber-800">{analysis.failure.message}</p>
-                        )}
-                      </div>
-                    )}
                     {uploadState.status === "error" && uploadState.error && (
                       <div className="mt-3 flex items-start gap-2 text-xs text-rose-600">
                         <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -1372,6 +1336,17 @@ function CartEnabledWorkspace({
                           );
                         })}
                       </div>
+                      {whatsappDigits && (
+                        <a
+                          href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent("Hi, I’d like a multicolour 3D print. Please help me with a custom quote.")}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-emerald-600/25 bg-emerald-600/10 px-4 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-600/15"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          Want multicolour printing? Contact us on WhatsApp
+                        </a>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -1599,7 +1574,7 @@ function CartEnabledWorkspace({
                     <div className="space-y-3">
                       <div className="rounded-xl border border-amber-300/60 bg-amber-50 p-4">
                         <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-800">
-                          Preliminary estimate · not a checkout quote
+                          Browser-based price estimate
                         </div>
                         <div className="mt-1 font-[var(--font-syne)] text-3xl font-bold text-[#070b1d]">
                           ₹{preliminaryEstimate.grandTotal.toFixed(0)}
@@ -1614,73 +1589,30 @@ function CartEnabledWorkspace({
                           About {preliminaryEstimate.materialUsageGramsPerUnit.toFixed(1)} g per piece, including estimated supports when selected.
                         </p>
                         <p className="mt-2 text-xs leading-5 text-amber-900">
-                          Estimated from model volume, material density, shell thickness, infill, and selected supports. Actual use can change after slicing and review; purge and printer waste are not included.
+                          Calculated from the model dimensions, material density, shell thickness, infill, and support setting. Actual material use may vary; the model is checked again before production.
                         </p>
                       </div>
                       <div className="rounded-xl border border-[#6d28d9]/10 bg-white p-4 text-sm text-[#6F7192]">
-                        {analysis?.status === "manual_review" ? (
-                          <>
-                            <div className="font-medium text-amber-800">Manual review required</div>
-                            <p className="mt-1 text-xs leading-5">
-                              {analysis.failure?.message ??
-                                "We’ll confirm the final price after reviewing this model."}
-                            </p>
-                          </>
-                        ) : analysis?.status === "failed" ? (
-                          <>
-                            <div className="font-medium text-rose-700">Server analysis failed</div>
-                            <p className="mt-1 text-xs leading-5">
-                              {analysis.failure?.message ??
-                                "This estimate is for planning only. Contact us to confirm the final price."}
-                            </p>
-                          </>
-                        ) : (
-                          <>
-                            <div className="font-medium text-[#070b1d]">Final price pending slicing</div>
-                            <p className="mt-1 text-xs leading-5">
-                              Checkout unlocks after a server-side quote is ready.
-                            </p>
-                          </>
-                        )}
+                        <div className="font-medium text-[#070b1d]">Estimate-based checkout</div>
+                        <p className="mt-1 text-xs leading-5">
+                          Your estimate is saved securely before checkout. We’ll contact you if the model needs a price adjustment before production.
+                        </p>
                       </div>
                     </div>
                   ) : !priceBreakdown ? (
                     <div className="rounded-xl border border-[#6d28d9]/10 bg-white p-4 text-sm text-[#6F7192]">
-                      {analysis?.status === "manual_review" ? (
+                      {!user ? (
                         <>
-                          <div className="font-medium text-amber-800">Manual review required</div>
+                          <div className="font-medium text-[#070b1d]">Sign in to save your estimate</div>
                           <p className="mt-1 text-xs leading-5">
-                            {analysis.failure?.message ??
-                              "This model cannot receive an automatic price yet."}
-                          </p>
-                        </>
-                      ) : analysis?.status === "failed" ? (
-                        <>
-                          <div className="font-medium text-rose-700">Analysis failed</div>
-                          <p className="mt-1 text-xs leading-5">
-                            {analysis.failure?.message ??
-                              "We could not analyse this model. Please try another export."}
-                          </p>
-                        </>
-                      ) : analysis ? (
-                        <>
-                          <div className="font-medium text-[#070b1d]">Calculating authoritative price…</div>
-                          <p className="mt-1 text-xs leading-5">
-                            The model is being validated and sliced on the configured printer. The price will appear when slicing completes.
-                          </p>
-                        </>
-                      ) : !user ? (
-                        <>
-                          <div className="font-medium text-[#070b1d]">Sign in to calculate your price</div>
-                          <p className="mt-1 text-xs leading-5">
-                            Uploading a model anonymously only enables a local preview. Sign in to run the authoritative server analysis.
+                            The model is estimated in your browser. Sign in to add it to cart and pay securely.
                           </p>
                         </>
                       ) : (
                         <>
-                          <div className="font-medium text-[#070b1d]">Upload a model to calculate your price</div>
+                          <div className="font-medium text-[#070b1d]">Upload a model to calculate an estimate</div>
                           <p className="mt-1 text-xs leading-5">
-                            Your price will be calculated from the server-side slicing result, not browser estimates.
+                            Your estimate will appear here as soon as the model is parsed.
                           </p>
                         </>
                       )}
@@ -1865,18 +1797,15 @@ function CartEnabledWorkspace({
 
                       {/* Actions */}
                       <div className="mt-5 space-y-2.5">
-                        {analysis?.status === "manual_review" ? (
-                          <div className="quote-primary-action flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400/15 px-4 py-3 text-sm font-semibold text-amber-800">
-                            <AlertTriangle className="h-4 w-4" />
-                            Manual review required — contact for custom quote
-                          </div>
-                        ) : (
                           <button
                             type="button"
                             onClick={handleAddToCart}
                             disabled={
                               !selectedModel ||
-                              !analysis?.quote ||
+                              !preliminaryEstimate ||
+                              !uploadState.path ||
+                              !user ||
+                              addingEstimate ||
                               uploadState.status === "uploading"
                             }
                             className={`quote-primary-action inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
@@ -1893,11 +1822,10 @@ function CartEnabledWorkspace({
                             ) : (
                               <>
                                 <ShoppingCart className="h-4 w-4" />
-                                Add to Cart
+                                {addingEstimate ? "Saving estimate..." : "Add Estimate to Cart"}
                               </>
                             )}
                           </button>
-                        )}
 
                         {cartItemCheck && (
                           <Link

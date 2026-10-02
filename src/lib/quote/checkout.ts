@@ -20,6 +20,7 @@ import {
   upsertPaymentAttempt,
 } from "@/lib/payments/repository";
 import { updatePaymentAttemptStatus } from "@/lib/payments/state";
+import { normalizeOwnedStoragePath } from "@/lib/quote/storage-path";
 
 export type AuthoritativePaymentContext = {
   userId: string;
@@ -74,6 +75,19 @@ function requireSafePaise(value: unknown, field: string) {
   return parsed;
 }
 
+async function getOwnedModelPath(
+  supabase: ReturnType<typeof createAdminSupabaseClient>,
+  userId: string,
+  value: unknown,
+) {
+  if (typeof value !== "string") throw new Error("The uploaded model path is missing.");
+  const path = normalizeOwnedStoragePath(value, userId);
+  const bucket = process.env.NEXT_PUBLIC_SUPABASE_QUOTE_BUCKET ?? "quote-models";
+  const { data, error } = await supabase.storage.from(bucket).info(path);
+  if (error || !data) throw new Error("The uploaded model is no longer available.");
+  return path;
+}
+
 export async function prepareAuthoritativeQuotePayment(
   context: AuthoritativePaymentContext,
   input: PrepareAuthoritativeQuotePaymentInput,
@@ -108,36 +122,45 @@ export async function prepareAuthoritativeQuotePayment(
   if (!quote) throw new Error("Quote version not found.");
   if (quote.status !== "approved") throw new Error("This quote is not available for checkout.");
   if (!quote.expires_at || new Date(quote.expires_at).getTime() <= Date.now()) {
-    throw new Error("This quote has expired. Run the analysis again for current pricing.");
+    throw new Error("This estimate has expired. Please calculate a new estimate.");
   }
   if (quote.currency !== "INR") {
     throw new Error("Quote currency or amount is invalid.");
   }
 
-  const { data: job, error: jobError } = await supabase
-    .from("quote_analysis_jobs")
-    .select("storage_path, status")
-    .eq("id", quote.analysis_job_id)
-    .eq("user_id", context.userId)
-    .maybeSingle();
-  if (jobError) throw new Error(jobError.message);
-  if (!job || job.status !== "ready") throw new Error("Authoritative slicing is not complete.");
-
   const metrics = asRecord(quote.authoritative_metrics);
   const config = asRecord(quote.config);
   const modelMetadata = asRecord(quote.model_metadata);
   const pricingSnapshot = asRecord(quote.pricing_snapshot);
+  const profileVersions = asRecord(quote.profile_versions);
+  let modelPath: string;
+  if (profileVersions.source === "browser-estimate-v1") {
+    modelPath = await getOwnedModelPath(supabase, context.userId, modelMetadata.storagePath);
+  } else {
+    const { data: job, error: jobError } = await supabase
+      .from("quote_analysis_jobs")
+      .select("storage_path, status")
+      .eq("id", quote.analysis_job_id)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (jobError) throw new Error(jobError.message);
+    if (!job || job.status !== "ready") throw new Error("Quote is not available for checkout.");
+    modelPath = job.storage_path;
+  }
   const settings = await getSettings();
 
   const quotedSubtotalPaise = requireSafePaise(quote.subtotal_paise, "subtotal");
   const quotedDiscountPaise = requireSafePaise(quote.discount_paise ?? 0, "discount");
   const quotedGstPaise = requireSafePaise(quote.gst_paise ?? 0, "GST");
-  const currentDeliveryPaise =
-    quotedSubtotalPaise >= Math.round(settings.deliveryChargeThreshold * 100)
+  const isBrowserEstimate = profileVersions.source === "browser-estimate-v1";
+  const currentDeliveryPaise = isBrowserEstimate
+    ? requireSafePaise(quote.delivery_paise ?? 0, "delivery")
+    : quotedSubtotalPaise >= Math.round(settings.deliveryChargeThreshold * 100)
       ? 0
       : Math.round(settings.defaultDeliveryCharge * 100);
-  const amountPaise =
-    quotedSubtotalPaise - quotedDiscountPaise + quotedGstPaise + currentDeliveryPaise;
+  const amountPaise = isBrowserEstimate
+    ? requireSafePaise(quote.total_paise, "total")
+    : quotedSubtotalPaise - quotedDiscountPaise + quotedGstPaise + currentDeliveryPaise;
   if (!Number.isSafeInteger(amountPaise) || amountPaise <= 0) {
     throw new Error("Order total must be greater than zero.");
   }
@@ -241,7 +264,7 @@ export async function prepareAuthoritativeQuotePayment(
   const draftData = {
     quoteId: quote.quote_id,
     quoteVersionId: quote.id,
-    fileUrl: job.storage_path,
+    fileUrl: modelPath,
     notes: input.notes?.trim() ?? "",
   };
 
@@ -405,19 +428,22 @@ export async function prepareAuthoritativeCartPayment(
       throw new Error("Every cart item must have an approved authoritative quote.");
     }
     if (!quote.expires_at || new Date(quote.expires_at).getTime() <= now) {
-      throw new Error("A quote in your cart has expired. Run its analysis again.");
+      throw new Error("An estimate in your cart has expired. Please calculate it again.");
     }
     if (quote.currency !== "INR") {
       throw new Error("A quote in your cart has an unsupported currency.");
     }
   }
 
-  const analysisJobIds = quotes.map((quote) => String(quote?.analysis_job_id));
-  const { data: jobRows, error: jobsError } = await supabase
-    .from("quote_analysis_jobs")
-    .select("id, user_id, storage_path, original_file_name, status")
-    .eq("user_id", context.userId)
-    .in("id", analysisJobIds);
+  const slicedQuotes = quotes.filter((quote) => asRecord(quote?.profile_versions).source !== "browser-estimate-v1");
+  const analysisJobIds = slicedQuotes.map((quote) => String(quote?.analysis_job_id));
+  const { data: jobRows, error: jobsError } = analysisJobIds.length
+    ? await supabase
+        .from("quote_analysis_jobs")
+        .select("id, user_id, storage_path, original_file_name, status")
+        .eq("user_id", context.userId)
+        .in("id", analysisJobIds)
+    : { data: [], error: null };
   if (jobsError) throw new Error(jobsError.message);
   const jobById = new Map((jobRows ?? []).map((job) => [job.id as string, job]));
   if (
@@ -463,13 +489,18 @@ export async function prepareAuthoritativeCartPayment(
     landmark: input.landmark?.trim() ?? "",
   };
 
-  const items = quotes.map((quote, index) => {
+  const items = await Promise.all(quotes.map(async (quote, index) => {
     if (!quote) throw new Error("Quote version not found.");
     const config = asRecord(quote.config);
     const metrics = asRecord(quote.authoritative_metrics);
     const model = asRecord(quote.model_metadata);
     const pricing = asRecord(quote.pricing_snapshot);
     const job = jobById.get(String(quote.analysis_job_id));
+    const isBrowserEstimate = asRecord(quote.profile_versions).source === "browser-estimate-v1";
+    const filePath = isBrowserEstimate
+      ? await getOwnedModelPath(supabase, context.userId, model.storagePath)
+      : job?.storage_path ?? "";
+    if (!filePath) throw new Error("The uploaded model is unavailable for an item in your cart.");
     const quantity = Math.max(1, Math.floor(Number(config.quantity ?? 1)));
     const itemSubtotalPaise = requireSafePaise(quote.subtotal_paise, "subtotal");
     const itemDiscountPaise = requireSafePaise(quote.discount_paise ?? 0, "discount");
@@ -481,7 +512,7 @@ export async function prepareAuthoritativeCartPayment(
     return {
       quoteVersionId: quote.id,
       quoteId: quote.quote_id,
-      fileUrl: job?.storage_path ?? "",
+      fileUrl: filePath,
       fileName: job?.original_file_name ?? String(model.fileName ?? "model"),
       material: String(config.materialId ?? ""),
       color: String(config.color ?? ""),
@@ -525,7 +556,7 @@ export async function prepareAuthoritativeCartPayment(
       analysisJobId: quote.analysis_job_id,
       analysisResultId: quote.analysis_result_id,
     };
-  });
+  }));
 
   const checkoutKey = crypto
     .createHash("sha256")
