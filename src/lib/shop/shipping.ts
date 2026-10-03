@@ -85,6 +85,8 @@ export async function calculateShippingFromRules(params: {
       if (effectiveMinOrderValue > 0 && params.subtotal < effectiveMinOrderValue) {
         return { chargePaise: 0, available: false, reason: `This pincode requires a minimum order value of ₹${effectiveMinOrderValue.toFixed(0)}.` }
       }
+      // Keep the global free-delivery threshold consistent with the cart quote, even when a regional flat rate matches.
+      if (params.subtotal >= threshold) return { chargePaise: 0, available: true }
       if (!isGenericRule(best) && best.charge != null) {
         return { chargePaise: Math.round(Number(best.charge) * 100), available: true }
       }

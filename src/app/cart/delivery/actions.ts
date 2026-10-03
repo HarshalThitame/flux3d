@@ -1230,6 +1230,14 @@ export async function verifyCartPaymentAndCreateOrder(params: {
   const pricingData = capture.pricingData as Record<string, unknown>;
   const addressData = capture.addressData as Record<string, unknown>;
   const itemsData = (pricingData.items ?? []) as Array<Record<string, unknown>>;
+  const couponDiscountShares = allocateAmount(
+    Number(pricingData.couponDiscountAmount ?? 0),
+    itemsData.map((item) => Number(item.totalPrice ?? 0)),
+  );
+  const offerDiscountShares = allocateAmount(
+    Number(pricingData.offerDiscountAmount ?? 0),
+    itemsData.map((item) => Number(item.totalPrice ?? 0)),
+  );
   const quoteVersionIds = itemsData.map((item) =>
     String(item.quoteVersionId ?? ""),
   );
@@ -1353,7 +1361,7 @@ export async function verifyCartPaymentAndCreateOrder(params: {
   const afterCouponTotal =
     afterCartTotal - Number(pricingData.couponDiscountAmount ?? 0);
 
-  for (const item of itemsData) {
+  for (const [itemIndex, item] of itemsData.entries()) {
     const normalizedQuantity = Math.max(
       1,
       Math.floor(Number(item.quantity ?? 1)),
@@ -1392,19 +1400,12 @@ export async function verifyCartPaymentAndCreateOrder(params: {
       "total price",
     );
     const cartDiscountPercent = Number(pricingData.cartDiscountPercent ?? 0);
-    const itemCount = itemsData.length;
     const cartDiscountForItem = normalizeNumber(
       Number(item.cartDiscountAmount ?? 0),
       "quote discount",
     );
-    const couponDiscountForItem =
-      itemCount > 0
-        ? roundMoney(Number(pricingData.couponDiscountAmount ?? 0) / itemCount)
-        : 0;
-    const offerDiscountForItem =
-      itemCount > 0
-        ? roundMoney(Number(pricingData.offerDiscountAmount ?? 0) / itemCount)
-        : 0;
+    const couponDiscountForItem = couponDiscountShares[itemIndex] ?? 0;
+    const offerDiscountForItem = offerDiscountShares[itemIndex] ?? 0;
     const itemDelivery = normalizeNumber(
       Number(item.deliveryCharge ?? 0),
       "delivery charge",

@@ -21,6 +21,7 @@ import {
 } from "@/lib/payments/repository";
 import { updatePaymentAttemptStatus } from "@/lib/payments/state";
 import { normalizeOwnedStoragePath } from "@/lib/quote/storage-path";
+import { calculatePromotionDiscount } from "@/lib/quote/pricing-waterfall";
 
 export type AuthoritativePaymentContext = {
   userId: string;
@@ -45,6 +46,8 @@ export type AuthoritativePaymentResult = {
 
 export type PrepareAuthoritativeCartPaymentInput = {
   quoteVersionIds: string[];
+  couponCode?: string | null;
+  offerId?: string | null;
   fullName: string;
   phone: string;
   addressLine1: string;
@@ -468,11 +471,91 @@ export async function prepareAuthoritativeCartPayment(
     (sum, quote) => sum + requireSafePaise(quote?.gst_paise ?? 0, "GST"),
     0,
   );
-  const deliveryPaise =
-    subtotalPaise >= Math.round(settings.deliveryChargeThreshold * 100)
+  const merchandiseAfterQuoteDiscountPaise = Math.max(0, subtotalPaise - discountPaise);
+  const couponCode = input.couponCode?.trim().toUpperCase() || null;
+  let couponId: string | null = null;
+  let couponDiscountPaise = 0;
+  let couponFreeShipping = false;
+  let couponDiscountType: string | null = null;
+  if (couponCode) {
+    const { data: coupon, error } = await supabase.from("coupons").select("*").eq("code", couponCode).maybeSingle();
+    if (error) throw new Error("Unable to verify your coupon. Please retry.");
+    const now = Date.now();
+    if (!coupon || !coupon.is_active || (coupon.starts_at && new Date(coupon.starts_at).getTime() > now) || (coupon.expires_at && new Date(coupon.expires_at).getTime() < now)) {
+      throw new Error("This coupon is no longer valid. Return to your cart and remove it.");
+    }
+    if (merchandiseAfterQuoteDiscountPaise < Math.round(Number(coupon.min_order_value ?? 0) * 100)) throw new Error("Your cart no longer meets this coupon's minimum order value.");
+    const couponMaterials = Array.isArray(coupon.applicable_materials) ? coupon.applicable_materials.map((value: unknown) => String(value).toLowerCase()) : [];
+    const quoteMaterials = quotes.map((quote) => {
+      const config = asRecord(quote?.config);
+      return [config.materialId, config.material, config.materialName].map((value) => String(value ?? "").toLowerCase()).filter(Boolean);
+    });
+    if ((Array.isArray(coupon.applicable_products) && coupon.applicable_products.length) || (Array.isArray(coupon.applicable_categories) && coupon.applicable_categories.length) || (couponMaterials.length && quoteMaterials.some((materials) => !materials.some((material) => couponMaterials.includes(material))))) {
+      throw new Error("This coupon does not apply to every item in your quote cart.");
+    }
+    if (Number(coupon.usage_limit ?? 0) > 0 && Number(coupon.used_count ?? 0) >= Number(coupon.usage_limit)) throw new Error("This coupon has reached its usage limit.");
+    if (Number(coupon.usage_per_user ?? 0) > 0) {
+      const { count, error: usageError } = await supabase.from("redemptions").select("id", { count: "exact", head: true }).eq("coupon_id", coupon.id).eq("user_id", context.userId);
+      if (usageError) throw new Error("Unable to verify coupon eligibility. Please retry.");
+      if ((count ?? 0) >= Number(coupon.usage_per_user)) throw new Error("You have already used this coupon the maximum number of times.");
+    }
+    if (coupon.first_order_only) {
+      const { count, error: orderError } = await supabase.from("orders").select("id", { count: "exact", head: true }).eq("user_id", context.userId);
+      if (orderError) throw new Error("Unable to verify coupon eligibility. Please retry.");
+      if ((count ?? 0) > 0) throw new Error("This coupon is for first-time orders only.");
+    }
+    couponId = String(coupon.id);
+    couponDiscountType = String(coupon.discount_type);
+    couponFreeShipping = coupon.discount_type === "free_shipping";
+    couponDiscountPaise = Math.round(calculatePromotionDiscount(merchandiseAfterQuoteDiscountPaise / 100, {
+      discountType: coupon.discount_type, discountValue: Number(coupon.discount_value ?? 0), maxDiscount: coupon.max_discount == null ? null : Number(coupon.max_discount),
+    }) * 100);
+  }
+
+  const offerId = input.offerId?.trim() || null;
+  let offerDiscountPaise = 0;
+  let offerFreeShipping = false;
+  let appliedOfferId: string | null = null;
+  let offerDiscountType: string | null = null;
+  let offerName: string | null = null;
+  let offerCode: string | null = null;
+  if (offerId) {
+    const { data: offer, error } = await supabase.from("offers").select("*").eq("id", offerId).maybeSingle();
+    if (error) throw new Error("Unable to verify your offer. Please retry.");
+    const now = Date.now();
+    if (!offer?.is_active || (offer.starts_at && new Date(offer.starts_at).getTime() > now) || (offer.ends_at && new Date(offer.ends_at).getTime() < now) || (Number(offer.usage_limit ?? 0) > 0 && Number(offer.used_count ?? 0) >= Number(offer.usage_limit))) {
+      throw new Error("This offer is no longer valid. Refresh your cart to recalculate the total.");
+    }
+    if (Number(offer.usage_per_user ?? 0) > 0) {
+      const { count, error: usageError } = await supabase.from("redemptions").select("id", { count: "exact", head: true }).eq("offer_id", offer.id).eq("user_id", context.userId);
+      if (usageError) throw new Error("Unable to verify offer eligibility. Please retry.");
+      if ((count ?? 0) >= Number(offer.usage_per_user)) throw new Error("You have already used this offer the maximum number of times.");
+    }
+    const afterCouponPaise = Math.max(0, merchandiseAfterQuoteDiscountPaise - couponDiscountPaise);
+    if (afterCouponPaise < Math.round(Number(offer.min_order_value ?? 0) * 100)) throw new Error("Your cart no longer meets this offer's minimum order value.");
+    const offerMaterials = Array.isArray(offer.applicable_materials) ? offer.applicable_materials.map((value: unknown) => String(value).toLowerCase()) : [];
+    const quoteMaterials = quotes.map((quote) => {
+      const config = asRecord(quote?.config);
+      return [config.materialId, config.material, config.materialName].map((value) => String(value ?? "").toLowerCase()).filter(Boolean);
+    });
+    const blockedByScope = (Array.isArray(offer.applicable_products) && offer.applicable_products.length) || (Array.isArray(offer.applicable_categories) && offer.applicable_categories.length) || (offerMaterials.length && quoteMaterials.some((materials) => !materials.some((material) => offerMaterials.includes(material))));
+    if (blockedByScope) throw new Error("This offer does not apply to every item in your quote cart.");
+    appliedOfferId = String(offer.id);
+    offerDiscountType = String(offer.offer_type);
+    offerName = String(offer.title ?? offer.badge_text ?? offer.sale_label ?? "Offer");
+    offerCode = String(offer.code ?? "");
+    offerFreeShipping = offer.offer_type === "free_shipping";
+    offerDiscountPaise = Math.round(calculatePromotionDiscount(afterCouponPaise / 100, {
+      discountType: offer.offer_type, discountValue: Number(offer.discount_value ?? 0), maxDiscount: offer.max_discount == null ? null : Number(offer.max_discount),
+    }) * 100);
+  }
+  const promoDiscountPaise = Math.min(merchandiseAfterQuoteDiscountPaise, couponDiscountPaise + offerDiscountPaise);
+  const finalMerchandisePaise = merchandiseAfterQuoteDiscountPaise - promoDiscountPaise;
+  const deliveryPaise = couponFreeShipping || offerFreeShipping ? 0 :
+    finalMerchandisePaise >= Math.round(settings.deliveryChargeThreshold * 100)
       ? 0
       : Math.round(settings.defaultDeliveryCharge * 100);
-  const amountPaise = subtotalPaise - discountPaise + gstPaise + deliveryPaise;
+  const amountPaise = finalMerchandisePaise + gstPaise + deliveryPaise;
   if (!Number.isSafeInteger(amountPaise) || amountPaise <= 0) {
     throw new Error("Order total must be greater than zero.");
   }
@@ -563,6 +646,9 @@ export async function prepareAuthoritativeCartPayment(
     .update(
       JSON.stringify({
         quoteVersionIds,
+        couponCode,
+        couponId,
+        offerId: appliedOfferId,
         amountPaise,
         addressData,
       }),
@@ -615,9 +701,17 @@ export async function prepareAuthoritativeCartPayment(
       subtotal: rupees(subtotalPaise),
       cartDiscountAmount: rupees(discountPaise),
       cartDiscountPercent: 0,
-      couponDiscountAmount: 0,
-      offerDiscountAmount: 0,
-      finalPrice: rupees(subtotalPaise - discountPaise + gstPaise),
+      couponCode,
+      couponId,
+      couponDiscountType,
+      couponDiscountAmount: rupees(couponDiscountPaise),
+      offerId: appliedOfferId,
+      offerDiscountType,
+      offerName,
+      offerCode,
+      offerDiscountAmount: rupees(offerDiscountPaise),
+      finalPrice: rupees(finalMerchandisePaise + gstPaise),
+      discount: rupees(discountPaise + promoDiscountPaise),
       deliveryCharge: rupees(deliveryPaise),
       grandTotal: rupees(amountPaise),
       items,

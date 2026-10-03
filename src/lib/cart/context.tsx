@@ -37,6 +37,7 @@ import type {
 } from "@/lib/cart/types";
 
 const CART_SKIP_RESTORE_FLAG = "flux3d-cart-skip-restore";
+const CART_PROMOTION_STORAGE_PREFIX = "flux3d-cart-promotions-v1:";
 const AUTH_CART_BOOTSTRAP_PATHS = [
   "/3d-shop",
   "/3d-shop/cart",
@@ -127,6 +128,21 @@ function quoteItemKey(
   );
 }
 
+function readSavedCoupon(storageKey: string): AppliedCoupon | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(`${CART_PROMOTION_STORAGE_PREFIX}${storageKey}`);
+    if (!raw) return null;
+    const value = JSON.parse(raw) as { coupon?: AppliedCoupon | null };
+    const coupon = value?.coupon;
+    return coupon && typeof coupon.id === "string" && typeof coupon.code === "string"
+      ? coupon
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 function lineToCartItem(line: ServerCartLine): CartItem {
   const payloadItem = {
     ...((line.payload ?? {}) as Partial<CartItem>),
@@ -207,7 +223,16 @@ export function CartProvider({
 
   const setAppliedCoupon = useCallback((coupon: AppliedCoupon | null) => {
     setUserCoupon(coupon);
-  }, []);
+    if (typeof window !== "undefined") {
+      try {
+        const key = `${CART_PROMOTION_STORAGE_PREFIX}${storageKey}`;
+        if (coupon) window.localStorage.setItem(key, JSON.stringify({ coupon }));
+        else window.localStorage.removeItem(key);
+      } catch {
+        // The active React state still works if browser storage is unavailable.
+      }
+    }
+  }, [storageKey]);
 
   useEffect(() => {
     if (isLoading || initialSettings) return;
@@ -342,6 +367,7 @@ export function CartProvider({
         }
 
         setStorageKey(getCartStorageKey(null));
+        setUserCoupon(null);
         setCurrentUserId(null);
         setItems([]);
         setIsLoading(false);
@@ -359,6 +385,7 @@ export function CartProvider({
 
         setStorageKey(getCartStorageKey(null));
         setCurrentUserId(null);
+        setUserCoupon(readSavedCoupon(getCartStorageKey(null)));
         setItems(anonymousItems);
         setIsLoading(false);
         return;
@@ -394,6 +421,7 @@ export function CartProvider({
         saveCartToStorage(serverItems, userStorageKey);
         setStorageKey(userStorageKey);
         setCurrentUserId(userId);
+        setUserCoupon(readSavedCoupon(userStorageKey));
         setItems(serverItems);
       } catch (error) {
         console.warn(
@@ -407,6 +435,7 @@ export function CartProvider({
 
         setStorageKey(userStorageKey);
         setCurrentUserId(userId);
+        setUserCoupon(readSavedCoupon(userStorageKey));
         setItems(getCartFromStorage(userStorageKey));
       } finally {
         if (active) setIsLoading(false);
@@ -561,14 +590,14 @@ export function CartProvider({
   const clearItems = useCallback(() => {
     clearCart(storageKey);
     setItems([]);
-    setUserCoupon(null);
+    setAppliedCoupon(null);
 
     if (currentUserId) {
       void clearServerCart("quote").catch((error) =>
         console.warn("[cart] Quote cart clear sync failed", error),
       );
     }
-  }, [currentUserId, storageKey]);
+  }, [currentUserId, setAppliedCoupon, storageKey]);
 
   const resetCartState = useCallback(() => {
     if (typeof window !== "undefined") {

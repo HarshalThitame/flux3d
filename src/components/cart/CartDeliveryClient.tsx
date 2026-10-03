@@ -277,6 +277,8 @@ export default function CartDeliveryClient({
       const paymentResult = await withLoading(async () => {
         const result = await prepareCartPaymentAction({
           quoteVersionIds: quoteVersionIds as string[],
+          couponCode: summary.appliedCoupon?.code ?? null,
+          offerId: summary.appliedOffer?.id ?? null,
           fullName: address.fullName,
           phone: address.phone,
           addressLine1: address.addressLine1,
@@ -343,7 +345,7 @@ export default function CartDeliveryClient({
             setPaymentResult({
               orderId: orderResult.orderId,
               orderNumber: orderResult.orderNumber,
-              amount: payableTotal,
+              amount: paymentResult.session.amount / 100,
             });
             clearItems();
             const successData = {
