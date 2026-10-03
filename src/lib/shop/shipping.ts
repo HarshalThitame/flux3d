@@ -1,7 +1,10 @@
 import type { BusinessSettings } from '@/lib/admin/business-settings'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getCheckoutSettings } from '@/lib/settings'
+import { toPaise } from './financials'
 
-type ShippingRuleRow = {
+export type ShippingRuleRow = {
+  id: string
   state: string | null
   pincode_range_start: string | null
   pincode_range_end: string | null
@@ -11,97 +14,71 @@ type ShippingRuleRow = {
   restricted: boolean
 }
 
-function isGenericRule(rule: ShippingRuleRow): boolean {
-  return !rule.state && !rule.pincode_range_start && !rule.pincode_range_end
-}
-
-function pincodeMatches(rule: ShippingRuleRow, pincode: string): boolean {
-  const start = rule.pincode_range_start ? String(rule.pincode_range_start) : null
-  const end = rule.pincode_range_end ? String(rule.pincode_range_end) : null
-  if (!start && !end) return true
-  return (!start || pincode >= start) && (!end || pincode <= end)
-}
-
-export async function calculateShippingFromRules(params: {
+type ShippingInput = {
   pincode: string
   state: string
+  /** Merchandise after promotions; used for the free-delivery threshold. */
   subtotal: number
+  /** Minimum purchase eligibility keeps its pre-discount meaning. */
+  minimumOrderSubtotal?: number
   weightGrams?: number
   settings?: Pick<BusinessSettings, 'deliveryChargeThreshold' | 'defaultDeliveryCharge' | 'shopMinimumOrderValue'>
-}): Promise<{ chargePaise: number; available: boolean; reason?: string }> {
-  const threshold = Number(params.settings?.deliveryChargeThreshold ?? 499)
-  const charge = Number(params.settings?.defaultDeliveryCharge ?? 50)
-  const globalMinOrderValue = Math.max(0, Number(params.settings?.shopMinimumOrderValue ?? 0))
-  const defaultChargePaise = params.subtotal >= threshold ? 0 : Math.round(charge * 100)
+}
 
-  function belowGlobalMinimum(): { chargePaise: number; available: false; reason: string } {
-    return {
-      chargePaise: 0,
-      available: false,
-      reason: `This pincode requires a minimum order value of ₹${globalMinOrderValue.toFixed(0)}.`,
-    }
+export type ShippingChargeSource = 'threshold' | 'regional_rule' | 'default'
+
+export type ShippingResolution = {
+  chargePaise: number
+  available: boolean
+  reason?: string
+  ruleId?: string
+  /** The rule that produced the charge, retained in the checkout snapshot. */
+  source?: ShippingChargeSource
+}
+
+function specificity(rule: ShippingRuleRow) {
+  return (rule.pincode_range_start || rule.pincode_range_end ? 2 : 0) + (rule.state ? 1 : 0)
+}
+
+export function resolveShippingRules(params: ShippingInput, rules: ShippingRuleRow[]): ShippingResolution {
+  const settings = params.settings
+  if (!settings) throw new Error('Delivery settings are unavailable.')
+  const qualifiesForFreeDelivery = toPaise(params.subtotal) >= toPaise(Number(settings.deliveryChargeThreshold))
+  const defaultChargePaise = qualifiesForFreeDelivery ? 0 : toPaise(Number(settings.defaultDeliveryCharge))
+  // Until destination is known, only show an estimate from the global settings.
+  if (!params.pincode || !params.state) {
+    return { chargePaise: defaultChargePaise, available: true, source: qualifiesForFreeDelivery ? 'threshold' : 'default' }
   }
-
-  try {
-    const pincode = String(params.pincode ?? '').trim()
-    const state = String(params.state ?? '').trim().toLowerCase()
-    const { data: rules, error } = await createAdminClient()
-      .from('shipping_rules')
-      .select('state, pincode_range_start, pincode_range_end, minimum_order_value, maximum_weight_grams, charge, restricted')
-      .eq('is_active', true)
-      .limit(100)
-
-    if (error) {
-      console.error('[shipping] Failed to load shipping rules:', error)
-      return { chargePaise: defaultChargePaise, available: true }
-    }
-
-    if (!rules || rules.length === 0) {
-      if (globalMinOrderValue > 0 && params.subtotal < globalMinOrderValue) return belowGlobalMinimum()
-      return { chargePaise: defaultChargePaise, available: true }
-    }
-
-    const candidates = (rules as ShippingRuleRow[]).filter((rule) => {
-      const ruleState = String(rule.state ?? '').trim().toLowerCase()
-      return (!ruleState || ruleState === state) && pincodeMatches(rule, pincode)
-    })
-
-    if (candidates.some((rule) => rule.restricted)) {
-      return { chargePaise: 0, available: false, reason: 'Sorry, we do not deliver to this pincode yet.' }
-    }
-
-    // Prefer the most specific matching rule (state/pincode-specific over catch-all)
-    const specific = candidates.find((rule) => !isGenericRule(rule))
-    const best = specific ?? candidates[0]
-
-    if (best) {
-      const maxWeightGrams = Number(best.maximum_weight_grams ?? 0)
-      const weightGrams = Number(params.weightGrams ?? 0)
-      if (maxWeightGrams > 0 && weightGrams > maxWeightGrams) {
-        return { chargePaise: 0, available: false, reason: 'Sorry, this order exceeds our delivery weight limit.' }
-      }
-      const minOrderValue = Number(best.minimum_order_value ?? 0)
-      const effectiveMinOrderValue = minOrderValue > 0 ? minOrderValue : globalMinOrderValue
-      if (effectiveMinOrderValue > 0 && params.subtotal < effectiveMinOrderValue) {
-        return { chargePaise: 0, available: false, reason: `This pincode requires a minimum order value of ₹${effectiveMinOrderValue.toFixed(0)}.` }
-      }
-      // Keep the global free-delivery threshold consistent with the cart quote, even when a regional flat rate matches.
-      if (params.subtotal >= threshold) return { chargePaise: 0, available: true }
-      if (!isGenericRule(best) && best.charge != null) {
-        return { chargePaise: Math.round(Number(best.charge) * 100), available: true }
-      }
-    }
-
-    if (globalMinOrderValue > 0 && params.subtotal < globalMinOrderValue) return belowGlobalMinimum()
-    return { chargePaise: defaultChargePaise, available: true }
-  } catch (error) {
-    console.error('[shipping] Shipping rule check failed, falling back to defaults:', error)
-    return { chargePaise: defaultChargePaise, available: true }
+  const pincode = params.pincode.trim()
+  const state = params.state.trim().toLowerCase()
+  const candidates = rules.filter(rule => (!rule.state || rule.state.trim().toLowerCase() === state) &&
+    (!rule.pincode_range_start || pincode >= rule.pincode_range_start) && (!rule.pincode_range_end || pincode <= rule.pincode_range_end))
+    .sort((a, b) => specificity(b) - specificity(a) ||
+      ((Number(a.pincode_range_end || 999999) - Number(a.pincode_range_start || 0)) - (Number(b.pincode_range_end || 999999) - Number(b.pincode_range_start || 0))) || a.id.localeCompare(b.id))
+  if (candidates.some(rule => rule.restricted)) return { chargePaise: 0, available: false, reason: 'Sorry, we do not deliver to this pincode yet.' }
+  const best = candidates[0]
+  const regionalMinimum = Number(best?.minimum_order_value ?? 0)
+  const minimum = regionalMinimum > 0 ? regionalMinimum : Number(settings.shopMinimumOrderValue ?? 0)
+  if ((params.minimumOrderSubtotal ?? params.subtotal) < minimum) return { chargePaise: 0, available: false, reason: `This pincode requires a minimum order value of ₹${minimum}.` }
+  if (Number(best?.maximum_weight_grams ?? 0) > 0 && Number(params.weightGrams ?? 0) > Number(best?.maximum_weight_grams)) return { chargePaise: 0, available: false, reason: 'Sorry, this order exceeds our delivery weight limit.' }
+  // The configured free-delivery threshold is a global checkout rule. A
+  // destination-specific flat rate must not reintroduce shipping after the
+  // discounted merchandise total has qualified for free delivery.
+  if (qualifiesForFreeDelivery) return { chargePaise: 0, available: true, ruleId: best?.id, source: 'threshold' }
+  if (best && specificity(best) > 0 && best.charge != null) {
+    return { chargePaise: toPaise(Number(best.charge)), available: true, ruleId: best.id, source: 'regional_rule' }
   }
+  return { chargePaise: defaultChargePaise, available: true, ruleId: best?.id, source: 'default' }
+}
+
+export async function calculateShippingFromRules(params: ShippingInput) {
+  const settings = params.settings ?? await getCheckoutSettings()
+  const { data, error } = await createAdminClient().from('shipping_rules')
+    .select('id,state,pincode_range_start,pincode_range_end,minimum_order_value,maximum_weight_grams,charge,restricted').eq('is_active', true).order('id')
+  if (error) throw new Error('Unable to verify delivery charges. Please retry.')
+  return resolveShippingRules({ ...params, settings }, (data ?? []) as ShippingRuleRow[])
 }
 
 export function fallbackShippingCharge(subtotal: number, settings: Pick<BusinessSettings, 'deliveryChargeThreshold' | 'defaultDeliveryCharge'>) {
-  const threshold = Number(settings.deliveryChargeThreshold ?? 499)
-  const charge = Number(settings.defaultDeliveryCharge ?? 50)
-  return subtotal >= threshold ? 0 : Math.round(charge * 100)
+  return toPaise(subtotal) >= toPaise(Number(settings.deliveryChargeThreshold)) ? 0 : toPaise(Number(settings.defaultDeliveryCharge))
 }

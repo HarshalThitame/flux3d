@@ -15,6 +15,8 @@ import { getShopCartTotals, useShopCartStore } from "@/stores/shopCartStore";
 import { getCartFromStorage, getCartStorageKey } from "@/lib/cart/utils";
 import { refreshShopCartFromServer } from "@/lib/cart/shop-cart-sync";
 import CartSwitcher from "@/components/cart/CartSwitcher";
+import { useShopQuote } from "@/components/shop/useShopQuote";
+import ShopQuoteSummary from "@/components/shop/ShopQuoteSummary";
 
 function getQuoteCartCount(): number {
   if (typeof window === "undefined") return 0;
@@ -38,7 +40,7 @@ export default function ShopCartPageClient() {
   const priceChangedItemIds = useShopCartStore(
     (state) => state.priceChangedItemIds,
   );
-  const [quoteCartCount, setQuoteCartCount] = useState(() =>
+  const [quoteCartCount] = useState(() =>
     getQuoteCartCount(),
   );
 
@@ -59,6 +61,7 @@ export default function ShopCartPageClient() {
   );
 
   useShopCartPromotionSync(totals.subtotal);
+  const authoritativeQuote = useShopQuote();
 
   if (items.length === 0) {
     return (
@@ -227,31 +230,6 @@ export default function ShopCartPageClient() {
             <h2 className="font-[var(--shop-font-heading)] text-xl font-semibold text-[var(--shop-text-primary)]">
               Order Summary
             </h2>
-            <div className="mt-5 space-y-3 text-sm">
-              <div className="flex justify-between text-[var(--shop-text-secondary)]">
-                <span>Subtotal</span>
-                <span className="font-semibold text-[var(--shop-text-primary)]">
-                  {formatShopPrice(totals.subtotal)}
-                </span>
-              </div>
-              {totals.couponDiscountAmount > 0 && totals.appliedCoupon && (
-                <div className="flex justify-between text-[var(--shop-gold)]">
-                  <span>Coupon ({totals.appliedCoupon.code})</span>
-                  <span className="font-semibold">
-                    -{formatShopPrice(totals.couponDiscountAmount)}
-                  </span>
-                </div>
-              )}
-              {totals.offerDiscountAmount > 0 && totals.appliedOffer && (
-                <div className="flex justify-between text-[var(--shop-gold)]">
-                  <span>Offer ({totals.appliedOffer.title})</span>
-                  <span className="font-semibold">
-                    -{formatShopPrice(totals.offerDiscountAmount)}
-                  </span>
-                </div>
-              )}
-            </div>
-
             <div className="mt-5 space-y-3">
               <ShopAppliedOffer offer={totals.appliedOffer} />
               <ShopCouponInput
@@ -261,20 +239,25 @@ export default function ShopCartPageClient() {
               />
             </div>
 
-            <div className="mt-5 flex items-center justify-between border-t border-[var(--shop-border-light)] pt-5">
-              <span className="text-lg font-semibold text-[var(--shop-text-primary)]">
-                Total
-              </span>
-              <span className="font-[var(--shop-font-heading)] text-2xl font-semibold text-[var(--shop-text-primary)]">
-                {formatShopPrice(totals.total)}
-              </span>
+            <div className="mt-5 border-t border-[var(--shop-border-light)] pt-5">
+              <ShopQuoteSummary pricing={authoritativeQuote} allowDestination />
             </div>
-            <Link
-              href="/3d-shop/checkout"
-              className="mt-5 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[var(--shop-radius-lg)] bg-[var(--shop-gold)] px-6 text-base font-semibold text-[var(--luxury-charcoal)] shadow-[var(--shop-shadow-gold)] transition hover:bg-[var(--shop-gold-light)]"
-            >
-              Proceed to Checkout
-            </Link>
+            {authoritativeQuote.quote && !authoritativeQuote.loading ? (
+              <Link
+                href="/3d-shop/checkout"
+                className="mt-5 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[var(--shop-radius-lg)] bg-[var(--shop-gold)] px-6 text-base font-semibold text-[var(--luxury-charcoal)] shadow-[var(--shop-shadow-gold)] transition hover:bg-[var(--shop-gold-light)]"
+              >
+                Proceed to Checkout
+              </Link>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="mt-5 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[var(--shop-radius-lg)] bg-[var(--shop-gold)] px-6 text-base font-semibold text-[var(--luxury-charcoal)] opacity-60"
+              >
+                {authoritativeQuote.error ? "Verify total to continue" : "Verifying total…"}
+              </button>
+            )}
             <Link
               href="/3d-shop"
               className="mt-4 block text-center text-sm font-semibold text-[var(--shop-text-secondary)] transition hover:text-[var(--shop-gold)]"

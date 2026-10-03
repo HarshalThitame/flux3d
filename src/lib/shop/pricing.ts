@@ -37,6 +37,7 @@ export type ShopCouponResult = {
   freeShipping: boolean;
   couponId?: string | null;
   offerId?: string | null;
+  sourceTable?: "shelf_coupons" | "coupons" | "offers";
 };
 
 export function calculateCouponDiscount(
