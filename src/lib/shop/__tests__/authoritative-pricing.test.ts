@@ -5,9 +5,11 @@ const fixture = vi.hoisted(() => ({
   tables: {} as Record<string, Record<string, unknown>[]>,
   settings: {} as BusinessSettings,
   failures: {} as Record<string, string>,
+  calls: {} as Record<string, number>,
 }));
 
 function query(table: string) {
+  fixture.calls[table] = (fixture.calls[table] ?? 0) + 1;
   const filters: Array<(row: Record<string, unknown>) => boolean> = [];
   let single = false;
   const builder = {
@@ -36,6 +38,7 @@ const input = { items: [{ productId: 'product', skuId: 'sku', quantity: 1 }],
 
 beforeEach(() => {
   fixture.failures = {};
+  fixture.calls = {};
   fixture.settings = { deliveryChargeThreshold: 500, defaultDeliveryCharge: 50,
     shopMinimumOrderValue: 0, gstEnabled: false, cgstPercent: 9, sgstPercent: 9 } as BusinessSettings;
   fixture.tables = {
@@ -94,6 +97,16 @@ describe('authoritative shop quotes', () => {
     expect(quote.snapshot.money).toMatchObject({ couponDiscountPaise: 10000, offerDiscountPaise: 9000,
       shippingPaise: 0, totalPaise: 81000 });
     expect(quote.snapshot.promotions.map(p => p.table)).toEqual(['shelf_coupons', 'offers']);
+  });
+
+  it('does not re-query every automatic offer while calculating delivery', async () => {
+    fixture.tables.offers = [
+      { id: 'expired', is_active: true, offer_type: 'percentage', discount_value: 10, starts_at: '2020-01-01T00:00:00.000Z', ends_at: '2021-01-01T00:00:00.000Z' },
+      { id: 'current', is_active: true, offer_type: 'percentage', discount_value: 10, starts_at: '2020-01-01T00:00:00.000Z', ends_at: '2099-12-31T00:00:00.000Z' },
+    ];
+    const quote = await quoteShopOrder(input);
+    expect(quote.offerId).toBe('current');
+    expect(fixture.calls.offers).toBe(1);
   });
 
   it('includes configured GST in the exact displayed and payable total', async () => {

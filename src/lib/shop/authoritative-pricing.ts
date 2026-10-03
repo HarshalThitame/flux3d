@@ -133,13 +133,16 @@ async function validateCouponCode(
   if (!code) return null;
 
   const today = new Date().toISOString().slice(0, 10);
-  const { data: shopCoupon, error: shopCouponError } = await supabase
-    .from("shelf_coupons")
-    .select("*")
-    .eq("code", code)
-    .maybeSingle();
-
+  // A code can live in either table. Look both up concurrently rather than
+  // waiting for the shop-specific lookup before checking legacy coupons.
+  const [shopCouponResult, couponResult] = await Promise.all([
+    supabase.from("shelf_coupons").select("*").eq("code", code).maybeSingle(),
+    supabase.from("coupons").select("*").eq("code", code).maybeSingle(),
+  ]);
+  const { data: shopCoupon, error: shopCouponError } = shopCouponResult;
+  const { data: coupon, error: couponError } = couponResult;
   if (shopCouponError) throw new Error(shopCouponError.message);
+  if (couponError) throw new Error(couponError.message);
 
   if (shopCoupon) {
     assertPromotionApplicable(shopCoupon, items, products);
@@ -182,13 +185,6 @@ async function validateCouponCode(
     };
   }
 
-  const { data: coupon, error: couponError } = await supabase
-    .from("coupons")
-    .select("*")
-    .eq("code", code)
-    .maybeSingle();
-
-  if (couponError) throw new Error(couponError.message);
   if (!coupon) throw new Error("Invalid coupon code.");
   assertPromotionApplicable(coupon, items, products);
 
@@ -259,18 +255,17 @@ async function validateOfferId(
   userId: string | null,
   items: ShopOrderItem[],
   products: Map<string, Record<string, unknown>>,
+  loadedOffer?: Record<string, unknown>,
 ): Promise<ShopCouponResult | null> {
   const id = offerId.trim();
   if (!id) return null;
 
   const now = new Date().toISOString();
-  const { data: offer, error } = await supabase
-    .from("offers")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
+  const result = loadedOffer
+    ? { data: loadedOffer, error: null }
+    : await supabase.from("offers").select("*").eq("id", id).maybeSingle();
+  const offer = result.data;
+  if (result.error) throw new Error(result.error.message);
   if (!offer) throw new Error("Invalid offer code.");
   assertPromotionApplicable(offer, items, products);
 
@@ -326,16 +321,16 @@ async function validateOfferId(
 
 export async function quoteShopOrder(input: { items: PlaceOrderItemInput[]; userId?: string | null; couponCode?: string | null; appliedOfferId?: string | null; destination?: { pincode: string; state: string } | null }): Promise<ShopQuote> {
   const supabase = createAdminSupabaseClient();
-  const settings = await getCheckoutSettings();
   const rawItems = normalizeOrderItems(input.items);
   const userId = input.userId ?? null;
   const skuIds = Array.from(new Set(rawItems.map((item) => item.skuId)));
-  const { data: skuRows, error: skuError } = await supabase
-    .from("shelf_skus")
-    .select(
-      "id, product_id, sku_code, variant_combination, price, stock_quantity, is_available, weight_grams",
-    )
-    .in("id", skuIds);
+  const [settings, skuResult] = await Promise.all([
+    getCheckoutSettings(),
+    supabase.from("shelf_skus")
+      .select("id, product_id, sku_code, variant_combination, price, stock_quantity, is_available, weight_grams")
+      .in("id", skuIds),
+  ]);
+  const { data: skuRows, error: skuError } = skuResult;
 
   if (skuError) throw new Error(skuError.message);
 
@@ -347,17 +342,29 @@ export async function quoteShopOrder(input: { items: PlaceOrderItemInput[]; user
       (skuRows ?? []).map((sku) => String(sku.product_id)).filter(Boolean),
     ),
   );
-  const { data: cartPriceRuleRows, error: cartPriceRuleError } =
+  const cartPriceRulesPromise =
     skuProductIds.length
-      ? await supabase
+      ? supabase
           .from("shelf_product_cart_price_rules")
           .select("*")
           .in("product_id", skuProductIds)
           .eq("is_active", true)
-      : { data: [], error: null };
+      : Promise.resolve({ data: [], error: null });
+  const [cartPriceRuleResult, productResult] = await Promise.all([
+    cartPriceRulesPromise,
+    supabase.from("shelf_products")
+      .select("id, name, slug, thumbnail_url, is_active, is_archived, category_id, category:shelf_categories(id,name,slug)")
+      .in("id", skuProductIds),
+  ]);
+  const { data: cartPriceRuleRows, error: cartPriceRuleError } = cartPriceRuleResult;
+  const { data: productRows, error: productError } = productResult;
   if (cartPriceRuleError) throw new Error(cartPriceRuleError.message);
+  if (productError) throw new Error("Unable to load products. Please retry.");
   const cartPriceRulesByProduct = groupRulesByProduct(
     (cartPriceRuleRows ?? []) as CartPriceRule[],
+  );
+  const productsById = new Map(
+    (productRows ?? []).map((p) => [p.id, p as Record<string, unknown>]),
   );
 
   const requested = new Map<string, number>();
@@ -412,17 +419,6 @@ export async function quoteShopOrder(input: { items: PlaceOrderItemInput[]; user
     });
   }
 
-  const productIds = Array.from(new Set(items.map((item) => item.productId)));
-  const { data: productRows, error: productError } = await supabase
-    .from("shelf_products")
-    .select("id, name, slug, thumbnail_url, is_active, is_archived, category_id, category:shelf_categories(id,name,slug)")
-    .in("id", productIds);
-
-  if (productError) throw new Error("Unable to load products. Please retry.");
-  const productsById = new Map(
-    (productRows ?? []).map((p) => [p.id, p as Record<string, unknown>]),
-  );
-
   for (const item of items) {
     const product = productsById.get(item.productId);
     if (!product || !product.is_active || product.is_archived) throw new Error("This product is no longer available.");
@@ -454,11 +450,20 @@ export async function quoteShopOrder(input: { items: PlaceOrderItemInput[]; user
 
   const subtotalPaise = items.reduce((sum, item) => sum + toPaise(item.unitPrice) * item.quantity, 0);
   const subtotal = subtotalPaise / 100;
-  const coupon = input.couponCode ? await validateCouponCode(supabase, input.couponCode, subtotal, userId, items, productsById) : null;
+  // Coupon validation and the automatic-offer list are independent. Starting
+  // them together removes a database round-trip from the normal cart refresh.
+  const couponPromise = input.couponCode
+    ? validateCouponCode(supabase, input.couponCode, subtotal, userId, items, productsById)
+    : Promise.resolve(null);
+  const offersPromise = input.appliedOfferId
+    ? Promise.resolve({ data: [] as Record<string, unknown>[], error: null })
+    : supabase.from("offers").select("*").eq("is_active", true)
+      .order("is_featured", { ascending: false }).order("created_at", { ascending: false }).order("id");
+  const [coupon, offersResult] = await Promise.all([couponPromise, offersPromise]);
   const couponDiscountPaise = promotionDiscountPaise(subtotalPaise, coupon);
   const afterCoupon = subtotalPaise - couponDiscountPaise;
   // Offer selection and eligibility live on the server; a stale client cannot suppress an offer.
-  const { data: offers, error: offersError } = await supabase.from("offers").select("*").eq("is_active", true).order("is_featured", { ascending: false }).order("created_at", { ascending: false }).order("id");
+  const { data: offers, error: offersError } = offersResult;
   if (offersError) throw new Error("Unable to load offers. Please retry.");
   let offer: ShopCouponResult | null = null;
   const candidateOffers = input.appliedOfferId
@@ -469,7 +474,14 @@ export async function quoteShopOrder(input: { items: PlaceOrderItemInput[]; user
     // when the lightweight candidate row does not include its offer_type.
     // Automatic offers are restricted to discount types supported by checkout.
     if (!input.appliedOfferId && !["percentage", "fixed_amount", "free_shipping"].includes(String(candidate.offer_type))) continue;
-    try { offer = await validateOfferId(supabase, candidate.id, afterCoupon / 100, userId, items, productsById); break; }
+    try {
+      // Automatic candidates come from the authoritative list above, so do
+      // not re-query the same offer once per candidate. Explicit selections
+      // still fetch by id to reject stale or tampered client input.
+      offer = await validateOfferId(supabase, candidate.id, afterCoupon / 100, userId, items, productsById,
+        input.appliedOfferId ? undefined : candidate as Record<string, unknown>);
+      break;
+    }
     catch (error) {
       const message = error instanceof Error ? error.message : "";
       if (!/no longer active|not yet valid|expired|usage limit|Minimum order|maximum number|does not apply|Sign in/.test(message)) throw error;

@@ -307,7 +307,11 @@ export async function getSettings(): Promise<BusinessSettings> {
 /** Checkout must never substitute cached/default financial settings after a read failure. */
 export async function getCheckoutSettings(): Promise<BusinessSettings> {
   const { data, error } = await createAdminSupabaseClient()
-    .from("business_settings").select("*").is("deleted_at", null).limit(1).maybeSingle();
+    // Checkout only needs financial settings. Avoid loading credentials and
+    // unrelated business-profile fields on every cart refresh.
+    .from("business_settings")
+    .select("id,delivery_charge_threshold,default_delivery_charge,shop_min_order_value,gst_enabled,cgst_percent,sgst_percent")
+    .is("deleted_at", null).limit(1).maybeSingle();
   if (error || !data) throw new Error("Pricing settings are temporarily unavailable. Please retry.");
   for (const key of ["delivery_charge_threshold", "default_delivery_charge", "cgst_percent", "sgst_percent"] as const) {
     if (data[key] == null || !Number.isFinite(Number(data[key])) || Number(data[key]) < 0) {
