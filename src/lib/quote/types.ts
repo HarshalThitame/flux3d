@@ -76,6 +76,8 @@ export type QuoteConfig = {
   quantity: number;
   postProcessingLevel: PostProcessingLevel;
   supports: boolean;
+  /** Uniform customer scale; legacy quotes without it are interpreted as 100%. */
+  scalePercent?: number;
 };
 
 export type CartDiscountTier = {
@@ -84,6 +86,8 @@ export type CartDiscountTier = {
 };
 
 export type PriceBreakdown = {
+  scalePercent: number;
+  scaleFactor: number;
   scaledVolumeCm3: number;
   quantity: number;
   baseWeightGrams: number;

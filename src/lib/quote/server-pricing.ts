@@ -126,6 +126,10 @@ export async function calculateServerQuotePricing(
     cartDiscountTiers: settings.cartDiscountTiers,
     minimumOrderValue: settings.minimumOrderValue,
     gstInclusivePricing: settings.gstInclusivePricing,
+    quoteScaleMinPercent: settings.quoteScaleMinPercent,
+    quoteScaleMaxPercent: settings.quoteScaleMaxPercent,
+    quoteScaleDefaultPercent: settings.quoteScaleDefaultPercent,
+    quoteScaleStepPercent: settings.quoteScaleStepPercent,
   });
 
   if (!breakdown) {

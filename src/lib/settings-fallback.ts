@@ -121,6 +121,10 @@ export const FALLBACK_SETTINGS: BusinessSettings = {
   },
   minimumOrderValue: 100,
   gstInclusivePricing: true,
+  quoteScaleMinPercent: 25,
+  quoteScaleMaxPercent: 200,
+  quoteScaleDefaultPercent: 100,
+  quoteScaleStepPercent: 5,
   cartDiscountEnabled: true,
   cartDiscountTiers: [
     { minCartValue: 2000, discountPercent: 3 },

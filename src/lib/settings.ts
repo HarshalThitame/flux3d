@@ -219,6 +219,10 @@ function mapRow(row: BusinessSettingsRow): BusinessSettings {
     minimumOrderValue: row.minimum_order_value ?? FALLBACK.minimumOrderValue,
     gstInclusivePricing:
       row.gst_inclusive_pricing ?? FALLBACK.gstInclusivePricing,
+    quoteScaleMinPercent: row.quote_scale_min_percent ?? FALLBACK.quoteScaleMinPercent,
+    quoteScaleMaxPercent: row.quote_scale_max_percent ?? FALLBACK.quoteScaleMaxPercent,
+    quoteScaleDefaultPercent: row.quote_scale_default_percent ?? FALLBACK.quoteScaleDefaultPercent,
+    quoteScaleStepPercent: row.quote_scale_step_percent ?? FALLBACK.quoteScaleStepPercent,
     pickupAvailable: bool(row.pickup_available),
     paymentsEnabled: bool(row.payments_enabled ?? true),
     razorpayEnabled: bool(row.razorpay_enabled ?? true),

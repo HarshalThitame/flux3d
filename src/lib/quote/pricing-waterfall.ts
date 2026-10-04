@@ -10,6 +10,7 @@ import type {
   QuoteMaterial,
 } from "@/lib/quote/types";
 import { getMaterialById, layerHeightOptions } from "@/lib/quote/materials";
+import { normalizeQuoteScale, scaleModelForQuote, type QuoteScaleSettings } from '@/lib/quote/scale'
 
 export type DiscountType =
   "percentage" | "fixed_amount" | "free_shipping" | string;
@@ -33,7 +34,7 @@ export type PricingSettingsInput = Pick<
   | "cartDiscountTiers"
   | "minimumOrderValue"
   | "gstInclusivePricing"
->;
+> & Partial<QuoteScaleSettings>;
 
 export type WaterfallInput = {
   materialCost: number;
@@ -282,6 +283,9 @@ export function calculateQuotePricing(
   settings: PricingSettingsInput,
 ): QuotePricingResult | null {
   if (!model) return null;
+  const scalePercent = normalizeQuoteScale(config.scalePercent, settings)
+  const scaleFactor = scalePercent / 100
+  const scaledModel = scaleModelForQuote(model, { scalePercent }, settings)
   const material = getMaterialById(config.materialId, materials);
   if (!material) return null;
 
@@ -291,21 +295,21 @@ export function calculateQuotePricing(
   if (!layerHeight) return null;
 
   const quantity = Math.max(1, Math.floor(config.quantity || 1));
-  const scaledVolumeCm3 = model.volumeMm3 / 1000;
+  const scaledVolumeCm3 = scaledModel.volumeMm3 / 1000;
 
   // Calculate precise part volume using shells and infill
-  const surfaceAreaMm2 = model.surfaceAreaMm2 ?? 0;
+  const surfaceAreaMm2 = scaledModel.surfaceAreaMm2 ?? 0;
   const shellThickness = 1.2; // Assuming 1.2mm shell thickness (3 walls of 0.4mm)
   const shellVolumeMm3 = surfaceAreaMm2 * shellThickness;
-  const solidVolumeMm3 = Math.min(model.volumeMm3, shellVolumeMm3);
-  const interiorVolumeMm3 = Math.max(0, model.volumeMm3 - shellVolumeMm3);
+  const solidVolumeMm3 = Math.min(scaledModel.volumeMm3, shellVolumeMm3);
+  const interiorVolumeMm3 = Math.max(0, scaledModel.volumeMm3 - shellVolumeMm3);
   const infillFraction = config.infill / 100;
   const estimatedPartVolumeMm3 =
     solidVolumeMm3 + interiorVolumeMm3 * infillFraction;
   const estimatedPartVolumeCm3 = estimatedPartVolumeMm3 / 1000;
 
   // Calculate precise support volume
-  const rawSupportVolumeMm3 = model.supportVolumeMm3 ?? 0;
+  const rawSupportVolumeMm3 = scaledModel.supportVolumeMm3 ?? 0;
   const supportDensityFactor = 0.2; // Supports are typically printed at ~20% density
   const supportVolumeCm3 = (rawSupportVolumeMm3 / 1000) * supportDensityFactor;
 
@@ -319,7 +323,7 @@ export function calculateQuotePricing(
     partWeightGramsPerUnit + supportWeightGramsPerUnit;
 
   const infillMultiplier =
-    model.volumeMm3 > 0 ? estimatedPartVolumeMm3 / model.volumeMm3 : 1;
+    scaledModel.volumeMm3 > 0 ? estimatedPartVolumeMm3 / scaledModel.volumeMm3 : 1;
   const materialWeightGramsTotal = materialWeightGramsPerUnit * quantity;
   const supportWeightGramsTotal = supportWeightGramsPerUnit * quantity;
   const materialRatePerKg = material.pricePerGram * 1000;
@@ -386,6 +390,8 @@ export function calculateQuotePricing(
 
   return {
     ...waterfall,
+    scalePercent,
+    scaleFactor,
     scaledVolumeCm3,
     quantity,
     baseWeightGrams,
@@ -408,9 +414,9 @@ export function calculateQuotePricing(
     profitMargin: waterfall.marginAmount,
     difficultyFactor: material.difficultyFactor,
     dimensionsMm: {
-      x: model.dimensionsMm.x,
-      y: model.dimensionsMm.y,
-      z: model.dimensionsMm.z,
+      x: scaledModel.dimensionsMm.x,
+      y: scaledModel.dimensionsMm.y,
+      z: scaledModel.dimensionsMm.z,
     },
   };
 }

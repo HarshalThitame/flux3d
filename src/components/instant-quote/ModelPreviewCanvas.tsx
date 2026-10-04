@@ -29,6 +29,7 @@ export type ModelPreviewCanvasProps = {
   clippingZPercent?: number
   cameraPreset?: 'iso' | 'top' | 'front' | 'side' | null
   onPresetApplied?: () => void
+  scalePercent?: number
 }
 
 function BuildVolumeCage() {
@@ -51,17 +52,20 @@ function ViewerModel({
   colorName,
   displayMode = 'solid',
   clippingZPercent = 100,
+  scalePercent = 100,
 }: {
   object: Object3D
   materialId?: string
   colorName?: string
   displayMode?: 'solid' | 'wireframe' | 'xray'
   clippingZPercent?: number
+  scalePercent?: number
 }) {
   const pbr = useMemo(() => getMaterialShaderProps(materialId, colorName), [materialId, colorName])
 
   const { clone, clippingPlanes } = useMemo(() => {
     const cloned = object.clone(true)
+    cloned.scale.setScalar(Math.max(0.01, scalePercent / 100))
     cloned.updateMatrixWorld(true)
 
     const box = new Box3().setFromObject(cloned)
@@ -118,7 +122,7 @@ function ViewerModel({
     })
 
     return { clone: cloned, clippingPlanes: planes }
-  }, [object, pbr, displayMode, clippingZPercent])
+  }, [object, pbr, displayMode, clippingZPercent, scalePercent])
 
   return <primitive object={clone} />
 }
@@ -132,6 +136,7 @@ export default function ModelPreviewCanvas({
   clippingZPercent = 100,
   cameraPreset,
   onPresetApplied,
+  scalePercent = 100,
 }: ModelPreviewCanvasProps) {
   const [contextLost, setContextLost] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -236,6 +241,7 @@ export default function ModelPreviewCanvas({
           colorName={colorName}
           displayMode={displayMode}
           clippingZPercent={clippingZPercent}
+          scalePercent={scalePercent}
         />
       </Bounds>
 

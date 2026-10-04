@@ -5,6 +5,11 @@ import { createAdminSupabaseClient } from "@/lib/admin/server";
 import { rateLimitResponse } from "@/lib/rate-limit";
 import { calculateServerQuotePricing, type ModelMetadata } from "@/lib/quote/server-pricing";
 import { normalizeOwnedStoragePath } from "@/lib/quote/storage-path";
+import { getSettings } from "@/lib/settings";
+import {
+  exceedsStandardQuoteBuildVolume,
+  isQuoteScaleAllowed,
+} from "@/lib/quote/scale";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -25,6 +30,7 @@ const requestSchema = z.object({
     quantity: z.number().int().min(1).max(100),
     supports: z.boolean(),
     postProcessingLevel: z.enum(["none", "sanded", "sanded-painted"]),
+    scalePercent: z.number().finite().min(1).max(1000).default(100),
   }),
   model: z.object({
     fileName: z.string().trim().min(1).max(255),
@@ -60,6 +66,26 @@ export async function POST(request: Request) {
 
   const parsed = requestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid estimate request." }, { status: 400 });
+
+  const settings = await getSettings();
+  if (!isQuoteScaleAllowed(parsed.data.config.scalePercent, settings)) {
+    return NextResponse.json(
+      { error: "The selected scale is outside the configured quote scale range." },
+      { status: 400 },
+    );
+  }
+  if (
+    exceedsStandardQuoteBuildVolume(
+      parsed.data.model.dimensionsMm,
+      parsed.data.config,
+      settings,
+    )
+  ) {
+    return NextResponse.json(
+      { error: "The scaled model exceeds the standard build volume and requires manual review." },
+      { status: 409 },
+    );
+  }
 
   try {
     const storagePath = normalizeOwnedStoragePath(parsed.data.storagePath, data.user.id);

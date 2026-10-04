@@ -68,6 +68,7 @@ export type CreateOrderInput = {
   infill: number
   layerHeight: number
   quantity: number
+  scalePercent?: number
   postProcessingLevel: 'none' | 'sanded' | 'sanded-painted'
   supports: boolean
   notes?: string
@@ -150,6 +151,7 @@ export type OrderDraft = {
   infill: number
   layerHeight: number
   quantity: number
+  scalePercent?: number
   postProcessingLevel: 'none' | 'sanded' | 'sanded-painted'
   postProcessingCharges: number
   supports: boolean

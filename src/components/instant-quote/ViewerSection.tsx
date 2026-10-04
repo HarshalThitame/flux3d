@@ -22,6 +22,7 @@ type ViewerSectionProps = {
   isLoading: boolean
   materialId?: string
   colorName?: string
+  scalePercent?: number
 }
 
 export default function ViewerSection({
@@ -29,6 +30,7 @@ export default function ViewerSection({
   isLoading,
   materialId = 'pla',
   colorName = 'Default',
+  scalePercent = 100,
 }: ViewerSectionProps) {
   const shouldReduceMotion = useReducedMotion()
   const [displayMode, setDisplayMode] = useState<'solid' | 'wireframe' | 'xray'>('solid')
@@ -246,6 +248,7 @@ export default function ViewerSection({
                 clippingZPercent={clippingZPercent}
                 cameraPreset={cameraPreset}
                 onPresetApplied={() => setCameraPreset(null)}
+                scalePercent={scalePercent}
               />
 
               {/* Material Live Badge Overlay */}
@@ -294,7 +297,7 @@ export default function ViewerSection({
             <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Bounding Box</div>
             <div className="mt-2 text-sm text-[#070b1d]">
               {model
-                ? `${model.dimensionsMm.x.toFixed(1)} × ${model.dimensionsMm.y.toFixed(1)} × ${model.dimensionsMm.z.toFixed(1)} mm`
+                ? `${(model.dimensionsMm.x * scalePercent / 100).toFixed(1)} × ${(model.dimensionsMm.y * scalePercent / 100).toFixed(1)} × ${(model.dimensionsMm.z * scalePercent / 100).toFixed(1)} mm`
                 : 'Waiting for geometry'}
             </div>
           </motion.div>
@@ -337,6 +340,7 @@ export default function ViewerSection({
               clippingZPercent={clippingZPercent}
               cameraPreset={cameraPreset}
               onPresetApplied={() => setCameraPreset(null)}
+              scalePercent={scalePercent}
             />
           </div>
         </div>

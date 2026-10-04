@@ -134,6 +134,10 @@ export type BusinessSettings = {
   cartDiscountTiers: CartDiscountTier[]
   minimumOrderValue: number
   gstInclusivePricing: boolean
+  quoteScaleMinPercent: number
+  quoteScaleMaxPercent: number
+  quoteScaleDefaultPercent: number
+  quoteScaleStepPercent: number
   pickupAvailable: boolean
   paymentsEnabled: boolean
   razorpayEnabled: boolean
@@ -166,6 +170,30 @@ const SENSITIVE_SETTING_FIELDS: (keyof BusinessSettings)[] = [
 ]
 
 export const BUSINESS_SETTING_SECRET_MASK = '••••••••'
+
+export function validateQuoteScaleSettings(settings: Partial<BusinessSettings>) {
+  const values = [
+    settings.quoteScaleMinPercent,
+    settings.quoteScaleMaxPercent,
+    settings.quoteScaleDefaultPercent,
+    settings.quoteScaleStepPercent,
+  ]
+  if (values.every((value) => value == null)) return null
+
+  const min = Number(settings.quoteScaleMinPercent)
+  const max = Number(settings.quoteScaleMaxPercent)
+  const defaultValue = Number(settings.quoteScaleDefaultPercent)
+  const step = Number(settings.quoteScaleStepPercent)
+  if (![min, max, defaultValue, step].every(Number.isFinite)) return 'Quote scale settings must be valid numbers.'
+  if (min <= 0 || max < min || defaultValue < min || defaultValue > max || step <= 0) {
+    return 'Quote scale minimum, maximum, default, and step must form a valid positive range.'
+  }
+  const offset = (defaultValue - min) / step
+  if (Math.abs(offset - Math.round(offset)) > 0.000001) {
+    return 'Quote scale default must align with the configured step.'
+  }
+  return null
+}
 
 export function maskBusinessSettingsSecrets(settings: BusinessSettings): BusinessSettings {
   const masked = { ...settings }
@@ -317,6 +345,10 @@ export type BusinessSettingsRow = {
   cart_discount_tiers: unknown | null
   minimum_order_value: number | null
   gst_inclusive_pricing: boolean | null
+  quote_scale_min_percent: number | null
+  quote_scale_max_percent: number | null
+  quote_scale_default_percent: number | null
+  quote_scale_step_percent: number | null
   pickup_available: boolean | null
   payments_enabled: boolean | null
   razorpay_enabled: boolean | null
@@ -521,6 +553,10 @@ export function mapBusinessSettingsRow(row: BusinessSettingsRow): BusinessSettin
     cartDiscountTiers: parseCartDiscountTiers(row.cart_discount_tiers),
     minimumOrderValue: num(row.minimum_order_value ?? 100),
     gstInclusivePricing: bool(row.gst_inclusive_pricing ?? true),
+    quoteScaleMinPercent: num(row.quote_scale_min_percent ?? 25),
+    quoteScaleMaxPercent: num(row.quote_scale_max_percent ?? 200),
+    quoteScaleDefaultPercent: num(row.quote_scale_default_percent ?? 100),
+    quoteScaleStepPercent: num(row.quote_scale_step_percent ?? 5),
     pickupAvailable: bool(row.pickup_available),
     paymentsEnabled: bool(row.payments_enabled ?? true),
     razorpayEnabled: bool(row.razorpay_enabled ?? true),
@@ -660,6 +696,10 @@ export function toSnakeCase(data: Partial<BusinessSettings>): Record<string, unk
     cartDiscountTiers: 'cart_discount_tiers',
     minimumOrderValue: 'minimum_order_value',
     gstInclusivePricing: 'gst_inclusive_pricing',
+    quoteScaleMinPercent: 'quote_scale_min_percent',
+    quoteScaleMaxPercent: 'quote_scale_max_percent',
+    quoteScaleDefaultPercent: 'quote_scale_default_percent',
+    quoteScaleStepPercent: 'quote_scale_step_percent',
     pickupAvailable: 'pickup_available',
     paymentsEnabled: 'payments_enabled',
     razorpayEnabled: 'razorpay_enabled',

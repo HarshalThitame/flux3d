@@ -778,6 +778,10 @@ function InvoicingTab({ form, updateField, f, fn, fb, triggerFileInput, uploadin
             onChange={(v) => updateField('minimumOrderValue', Number(v))}
             placeholder="100"
           />
+          <InputField label="Quote scale minimum (%)" type="number" value={String(fn('quoteScaleMinPercent'))} onChange={(v) => updateField('quoteScaleMinPercent', Number(v))} placeholder="25" />
+          <InputField label="Quote scale maximum (%)" type="number" value={String(fn('quoteScaleMaxPercent'))} onChange={(v) => updateField('quoteScaleMaxPercent', Number(v))} placeholder="200" />
+          <InputField label="Quote scale default (%)" type="number" value={String(fn('quoteScaleDefaultPercent'))} onChange={(v) => updateField('quoteScaleDefaultPercent', Number(v))} placeholder="100" />
+          <InputField label="Quote scale step (%)" type="number" value={String(fn('quoteScaleStepPercent'))} onChange={(v) => updateField('quoteScaleStepPercent', Number(v))} placeholder="5" />
           <ToggleField
             label="GST Inclusive Pricing Display"
             description="Show 'Prices inclusive of all applicable taxes' on instant quotes even before GST registration."
@@ -786,6 +790,7 @@ function InvoicingTab({ form, updateField, f, fn, fb, triggerFileInput, uploadin
           />
           <InputField label="SAC / HSN Code" value={f('sacHsnCode')} onChange={(v) => updateField('sacHsnCode', v)} placeholder="9983" />
         </div>
+        <p className="mt-4 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-xs leading-5 text-violet-900">Scale is uniform. The instant quote recalculates material, print time, finishing, and total price from the scaled model dimensions.</p>
         <Divider />
         <TextAreaField label="Payment Terms" value={f('paymentTerms')} onChange={(v) => updateField('paymentTerms', v)} rows={2} placeholder="Payment due within 15 days from invoice date." />
       </SectionCard>

@@ -6,6 +6,7 @@ import {
   upsertBusinessSettings,
   maskBusinessSettingsSecrets,
   stripMaskedSecretUpdates,
+  validateQuoteScaleSettings,
   type BusinessSettings,
 } from '@/lib/admin/business-settings'
 import { logAdminAction } from '@/lib/admin/auditLog'
@@ -35,6 +36,8 @@ export async function PUT(request: Request) {
     const body = (await request.json()) as Partial<BusinessSettings>
     const safeUpdates = stripMaskedSecretUpdates(body)
     const oldSettings = await getBusinessSettings()
+    const validationError = validateQuoteScaleSettings({ ...(oldSettings ?? {}), ...safeUpdates })
+    if (validationError) return NextResponse.json({ error: validationError }, { status: 400 })
     const settings = await upsertBusinessSettings(safeUpdates)
     await logAdminAction({
       admin_id: auth.user.id,

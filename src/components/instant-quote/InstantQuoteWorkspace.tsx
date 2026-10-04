@@ -58,6 +58,11 @@ import type { CartItem } from "@/lib/cart/types";
 import Toast, { type ToastState } from "@/components/quote/Toast";
 import Link from "next/link";
 import { ORDER_DRAFT_STORAGE_KEY, type OrderDraft } from "@/lib/orders";
+import {
+  exceedsStandardQuoteBuildVolume,
+  getQuoteScaleSettings,
+  normalizeQuoteScale,
+} from "@/lib/quote/scale";
 
 const initialUploadState: UploadState = {
   status: "idle",
@@ -244,10 +249,18 @@ function CartEnabledWorkspace({
     quantity: 1,
     postProcessingLevel: "none",
     supports: false,
+    scalePercent: getQuoteScaleSettings(pricingSettings).defaultPercent,
   };
-  const [config, setConfig] = useState<QuoteConfig>(() =>
-    getInitialWorkspaceConfig(defaultConfig, Boolean(initialMaterialId)),
-  );
+  const [config, setConfig] = useState<QuoteConfig>(() => {
+    const savedConfig = getInitialWorkspaceConfig(
+      defaultConfig,
+      Boolean(initialMaterialId),
+    );
+    return {
+      ...savedConfig,
+      scalePercent: normalizeQuoteScale(savedConfig.scalePercent, pricingSettings),
+    };
+  });
   const [uploadState, setUploadState] =
     useState<UploadState>(initialUploadState);
   const [viewerLoading, setViewerLoading] = useState(false);
@@ -432,6 +445,8 @@ function CartEnabledWorkspace({
       (quote.subtotalPaise - quote.discountPaise + quote.gstPaise) / 100;
     return {
       ...base,
+      scalePercent: normalizeQuoteScale(config.scalePercent, pricingSettings),
+      scaleFactor: normalizeQuoteScale(config.scalePercent, pricingSettings) / 100,
       materialWeightGrams:
         metrics?.finishedPartWeightGrams ?? base.materialWeightGrams,
       supportWeightGrams:
@@ -488,6 +503,19 @@ function CartEnabledWorkspace({
     );
   }, [config, materials, pricingSettings, selectedModel]);
 
+  const scaledBuildVolumeExceeded = useMemo(
+    () =>
+      Boolean(
+        selectedModel &&
+          exceedsStandardQuoteBuildVolume(
+            selectedModel.dimensionsMm,
+            config,
+            pricingSettings,
+          ),
+      ),
+    [config, pricingSettings, selectedModel],
+  );
+
   useEffect(() => {
     if (
       !selectedModel ||
@@ -505,6 +533,7 @@ function CartEnabledWorkspace({
       materialId: config.materialId,
       color: config.color,
       quantity: config.quantity,
+      scalePercent: config.scalePercent,
       grandTotal: priceBreakdown.grandTotal,
     }).catch(() => {});
   }, [
@@ -545,6 +574,7 @@ function CartEnabledWorkspace({
       infill: config.infill,
       layerHeight: config.layerHeight,
       quantity: config.quantity,
+      scalePercent: config.scalePercent,
       postProcessingLevel: config.postProcessingLevel,
       materialCost: priceBreakdown.materialCost,
       machineCost: priceBreakdown.machineCost,
@@ -603,6 +633,7 @@ function CartEnabledWorkspace({
     config.infill,
     config.layerHeight,
     config.quantity,
+    config.scalePercent,
     config.postProcessingLevel,
     config.supports,
     initialQuoteId,
@@ -854,6 +885,15 @@ function CartEnabledWorkspace({
       return;
     }
 
+    if (scaledBuildVolumeExceeded) {
+      setToast({
+        type: "error",
+        message:
+          "This scaled model exceeds the standard build volume. Please request a manual production quote.",
+      });
+      return;
+    }
+
     if (!uploadState.path) {
       setToast({
         type: "error",
@@ -879,6 +919,7 @@ function CartEnabledWorkspace({
             quantity: config.quantity,
             supports: config.supports,
             postProcessingLevel: config.postProcessingLevel,
+            scalePercent: normalizeQuoteScale(config.scalePercent, pricingSettings),
           },
           model: {
             fileName: selectedModel.fileName,
@@ -944,6 +985,7 @@ function CartEnabledWorkspace({
         quantity: config.quantity,
         postProcessingLevel: config.postProcessingLevel,
         supports: config.supports,
+        scalePercent: normalizeQuoteScale(config.scalePercent, pricingSettings),
       },
       addedAt: new Date().toISOString(),
       };
@@ -1045,7 +1087,7 @@ function CartEnabledWorkspace({
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <div className="quote-hero-kicker inline-flex items-center gap-2 rounded-full border border-[#6d28d9]/25 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#6d28d9]">
-                  Instant Pricing Experience
+                  Quote Studio · Live geometry pricing
                 </div>
                 <h1 className="quote-hero-title mt-4 font-[var(--font-syne)] text-[clamp(1.8rem,4vw,3.2rem)] font-extrabold leading-[0.98] tracking-[-2px] text-[#070b1d]">
                   Get Your{" "}
@@ -1255,6 +1297,7 @@ function CartEnabledWorkspace({
                     isLoading={viewerLoading}
                     materialId={config.materialId}
                     colorName={config.color}
+                    scalePercent={normalizeQuoteScale(config.scalePercent, pricingSettings)}
                   />
                 </motion.div>
 
@@ -1385,6 +1428,143 @@ function CartEnabledWorkspace({
                     </div>
 
                     <div className="grid gap-6 sm:grid-cols-2">
+                      {/* Scale */}
+                      <div className="sm:col-span-2 min-w-0 rounded-2xl border border-violet-200 bg-[linear-gradient(135deg,rgba(109,40,217,0.08),rgba(34,211,238,0.07))] p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-[#070b1d]">
+                              Scale & dimensions
+                            </div>
+                            <p className="mt-1 break-words text-xs leading-5 text-[#6F7192] [overflow-wrap:anywhere]">
+                              Uniform scaling updates material use, print time,
+                              and your estimated price.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setConfig((c) => ({
+                                ...c,
+                                scalePercent:
+                                  getQuoteScaleSettings(pricingSettings)
+                                    .defaultPercent,
+                              }))
+                            }
+                            className="shrink-0 rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-50"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                        <div className="mt-4 grid gap-4 md:grid-cols-[1fr_104px] md:items-center">
+                          <input
+                            type="range"
+                            min={getQuoteScaleSettings(pricingSettings).minPercent}
+                            max={getQuoteScaleSettings(pricingSettings).maxPercent}
+                            step={getQuoteScaleSettings(pricingSettings).stepPercent}
+                            value={normalizeQuoteScale(
+                              config.scalePercent,
+                              pricingSettings,
+                            )}
+                            onChange={(e) =>
+                              setConfig((c) => ({
+                                ...c,
+                                scalePercent: Number(e.target.value),
+                              }))
+                            }
+                            className="w-full accent-[#6d28d9]"
+                            aria-label="Model scale percentage"
+                          />
+                          <label className="relative block">
+                            <span className="sr-only">Scale percentage</span>
+                            <input
+                              type="number"
+                              min={getQuoteScaleSettings(pricingSettings).minPercent}
+                              max={getQuoteScaleSettings(pricingSettings).maxPercent}
+                              step={getQuoteScaleSettings(pricingSettings).stepPercent}
+                              value={normalizeQuoteScale(
+                                config.scalePercent,
+                                pricingSettings,
+                              )}
+                              onChange={(e) =>
+                                setConfig((c) => ({
+                                  ...c,
+                                  scalePercent: normalizeQuoteScale(
+                                    e.target.value,
+                                    pricingSettings,
+                                  ),
+                                }))
+                              }
+                              className="w-full rounded-xl border border-violet-200 bg-white px-3 py-2 text-sm font-semibold text-[#070b1d] outline-none"
+                            />
+                            <span className="pointer-events-none absolute right-3 top-2.5 text-xs text-[#6F7192]">
+                              %
+                            </span>
+                          </label>
+                        </div>
+                        {selectedModel && (
+                          <div className="mt-4 grid gap-2 text-xs text-[#6F7192] sm:grid-cols-3">
+                            <div className="min-w-0 rounded-xl bg-white/75 px-3 py-2 break-words [overflow-wrap:anywhere]">
+                              <span className="block text-[10px] uppercase tracking-[0.14em]">
+                                Original
+                              </span>
+                              {selectedModel.dimensionsMm.x.toFixed(1)} ×{" "}
+                              {selectedModel.dimensionsMm.y.toFixed(1)} ×{" "}
+                              {selectedModel.dimensionsMm.z.toFixed(1)} mm
+                            </div>
+                            <div className="min-w-0 rounded-xl bg-white/75 px-3 py-2 break-words [overflow-wrap:anywhere]">
+                              <span className="block text-[10px] uppercase tracking-[0.14em]">
+                                Scaled
+                              </span>
+                              {(
+                                (selectedModel.dimensionsMm.x *
+                                  normalizeQuoteScale(
+                                    config.scalePercent,
+                                    pricingSettings,
+                                  )) /
+                                100
+                              ).toFixed(1)}{" "}
+                              ×{" "}
+                              {(
+                                (selectedModel.dimensionsMm.y *
+                                  normalizeQuoteScale(
+                                    config.scalePercent,
+                                    pricingSettings,
+                                  )) /
+                                100
+                              ).toFixed(1)}{" "}
+                              ×{" "}
+                              {(
+                                (selectedModel.dimensionsMm.z *
+                                  normalizeQuoteScale(
+                                    config.scalePercent,
+                                    pricingSettings,
+                                  )) /
+                                100
+                              ).toFixed(1)} mm
+                            </div>
+                            <div className="min-w-0 rounded-xl bg-white/75 px-3 py-2">
+                              <span className="block text-[10px] uppercase tracking-[0.14em]">
+                                Volume effect
+                              </span>
+                              ×
+                              {(
+                                (normalizeQuoteScale(
+                                  config.scalePercent,
+                                  pricingSettings,
+                                ) / 100) ** 3
+                              )
+                                .toFixed(2)}
+                            </div>
+                          </div>
+                        )}
+                        {scaledBuildVolumeExceeded && (
+                          <p className="mt-3 break-words rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900 [overflow-wrap:anywhere]">
+                            This scale exceeds the standard build volume. Please
+                            request a manual production quote instead of using
+                            automatic checkout.
+                          </p>
+                        )}
+                      </div>
                       {/* Infill */}
                       <div>
                         <div className="mb-2 flex items-center justify-between text-sm">

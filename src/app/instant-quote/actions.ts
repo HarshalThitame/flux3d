@@ -239,6 +239,7 @@ async function legacyCreateOrderAction(
       infill: Math.round(normalizeNumber(input.infill, "infill")),
       layer_height: normalizeNumber(input.layerHeight, "layer height"),
       quantity: normalizedQuantity,
+      scale_percent: Number(input.scalePercent ?? 100),
       post_processing_level: input.postProcessingLevel,
       post_processing_charges: breakdown.postProcessingCharges,
       weight: input.modelMetadata.fileSize,
@@ -891,6 +892,7 @@ export async function verifyQuotePaymentAndCreateOrder(params: {
         "layer height",
       ),
       quantity: normalizedQuantity,
+      scale_percent: Number(configData.scalePercent ?? 100),
       post_processing_level:
         (configData.postProcessingLevel as string) ?? "none",
       post_processing_charges: Number(pricingData.postProcessingCharges ?? 0),

@@ -293,6 +293,41 @@ body::-webkit-scrollbar {
   text-align: right;
 }
 
+/* Quote Studio: precise, light industrial surfaces for the advanced quote workflow. */
+.instant-quote-workspace {
+  background:
+    radial-gradient(circle at 8% 8%, rgba(109, 40, 217, 0.11), transparent 28rem),
+    radial-gradient(circle at 90% 18%, rgba(34, 211, 238, 0.1), transparent 24rem),
+    linear-gradient(180deg, #fbfcff 0%, #f5f2fb 48%, #faf9f7 100%);
+}
+
+.instant-quote-workspace::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.45;
+  background-image: linear-gradient(rgba(109, 40, 217, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(109, 40, 217, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.instant-quote-workspace > :not([aria-hidden='true']) {
+  position: relative;
+}
+
+.quote-premium-card,
+.quote-summary-card {
+  box-shadow: 0 18px 44px rgba(41, 29, 76, 0.09), inset 0 1px rgba(255, 255, 255, 0.9);
+}
+
+.quote-summary-card {
+  border-color: rgba(109, 40, 217, 0.16);
+}
+
+.quote-step-nav {
+  box-shadow: 0 12px 32px rgba(45, 29, 86, 0.08);
+}
+
 body::before {
   content: "";
   position: fixed;
