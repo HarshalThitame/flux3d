@@ -1,625 +1,67 @@
-'use client'
+"use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { AnimatePresence, motion, useReducedMotion, type Variants } from 'framer-motion'
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Box,
-  Camera,
-  CheckCircle2,
-  ChevronRight,
-  Filter,
-  Layers,
-  Play,
-  Printer,
-  Sparkles,
-  X,
-  Zap,
-} from 'lucide-react'
-import DeferredHeroVideo from '@/components/DeferredHeroVideo'
-import { useIsFinePointer } from '@/hooks/useMediaQuery'
-import { createRafThrottledCallback } from '@/lib/raf-throttle'
+import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ArrowRight, ArrowUpRight, Camera, ChevronRight, Grid2X2, Layers3, Maximize2, Sparkles, X } from "lucide-react";
+import type { GalleryItem } from "@/lib/gallery/types";
 
-type GalleryCategory = 'All' | 'Prototypes' | 'Functional' | 'Showcase' | 'Precision' | 'Architecture'
-type ProjectCategory = Exclude<GalleryCategory, 'All'>
-type ProjectMedia =
-  | { type: 'image'; src: string; alt: string; fit?: 'contain' | 'cover' }
-  | { type: 'video'; src: string; label: string }
+type GalleryClientProps = { items: GalleryItem[] };
 
-type GalleryProject = {
-  title: string
-  category: ProjectCategory
-  eyebrow: string
-  summary: string
-  material: string
-  finish: string
-  lead: string
-  accent: string
-  backdrop: string
-  media: ProjectMedia
-  metrics: Array<{ label: string; value: string }>
+function itemGridClass(index: number) {
+  if (index === 0) return "sm:col-span-2 sm:row-span-2";
+  if (index % 7 === 4) return "xl:col-span-2";
+  if (index % 7 === 6) return "sm:row-span-2";
+  return "";
 }
 
-const categories: GalleryCategory[] = ['All', 'Prototypes', 'Functional', 'Showcase', 'Precision', 'Architecture']
-
-const stats = [
-  { label: 'Finish families', value: '14', icon: Sparkles },
-  { label: 'Prototype cycles', value: '48h', icon: Zap },
-  { label: 'Print modes', value: 'FDM + Resin', icon: Printer },
-  { label: 'Visual QA', value: 'Every build', icon: CheckCircle2 },
-]
-
-const tickerItems = [
-  'Prototype reviews',
-  'Surface finish',
-  'Form fit checks',
-  'Studio models',
-  'Functional parts',
-  'Dispatch-ready builds',
-]
-
-const projects: GalleryProject[] = [
-  {
-    title: 'Ceramic-Style Planter',
-    category: 'Showcase',
-    eyebrow: 'Matte product study',
-    summary: 'A clean consumer object focused on wall thickness, curve quality, and paint-ready finishing.',
-    material: 'PLA matte',
-    finish: 'Sanded satin',
-    lead: 'Display ready',
-    accent: '#67e8f9',
-    backdrop: 'linear-gradient(135deg, #070b1d 0%, #0f766e 48%, #fbbf24 140%)',
-    media: { type: 'image', src: '/pot.webp', alt: 'Matte 3D printed planter sample', fit: 'contain' },
-    metrics: [
-      { label: 'Layer height', value: '0.16 mm' },
-      { label: 'Finish', value: 'Satin' },
-    ],
-  },
-  {
-    title: 'Live Printer Run',
-    category: 'Functional',
-    eyebrow: 'Production floor',
-    summary: 'A live build pass showing machine motion, bed adhesion, and repeatable print setup.',
-    material: 'PLA / PETG',
-    finish: 'As printed',
-    lead: 'Build validated',
-    accent: '#fbbf24',
-    backdrop: 'linear-gradient(135deg, #070b1d 0%, #6d28d9 52%, #f97316 138%)',
-    media: { type: 'video', src: '/printer-optimized.mp4', label: '3D printer running a live print job' },
-    metrics: [
-      { label: 'Setup', value: 'Calibrated' },
-      { label: 'Use case', value: 'Functional' },
-    ],
-  },
-  {
-    title: 'Form-Fit Prototype',
-    category: 'Prototypes',
-    eyebrow: 'Product validation',
-    summary: 'Fast geometry review for teams checking ergonomics, enclosure proportions, and assembly space.',
-    material: 'PLA pro',
-    finish: 'Fine texture',
-    lead: 'Iteration ready',
-    accent: '#a78bfa',
-    backdrop: 'linear-gradient(135deg, #070b1d 0%, #334155 42%, #7c3aed 128%)',
-    media: { type: 'image', src: '/pot.webp', alt: '3D printed prototype object on a clean background', fit: 'contain' },
-    metrics: [
-      { label: 'Cycle', value: '2 days' },
-      { label: 'Review', value: 'Fit check' },
-    ],
-  },
-  {
-    title: 'Brand Desk Object',
-    category: 'Showcase',
-    eyebrow: 'Identity object',
-    summary: 'A compact branded piece suited for events, packaging inserts, and customer-facing displays.',
-    material: 'Silk PLA',
-    finish: 'Gloss accent',
-    lead: 'Presentation finish',
-    accent: '#f472b6',
-    backdrop: 'linear-gradient(135deg, #070b1d 0%, #831843 48%, #22d3ee 145%)',
-    media: { type: 'image', src: '/logo.webp', alt: 'Flux3D brand mark used as a printed display reference', fit: 'contain' },
-    metrics: [
-      { label: 'Detail', value: 'Clean edges' },
-      { label: 'Color', value: 'Brand match' },
-    ],
-  },
-  {
-    title: 'Architectural Volume',
-    category: 'Architecture',
-    eyebrow: 'Scale study',
-    summary: 'A presentation model direction for massing studies, site review, and studio communication.',
-    material: 'PLA white',
-    finish: 'Low sheen',
-    lead: 'Studio model',
-    accent: '#34d399',
-    backdrop: 'linear-gradient(135deg, #070b1d 0%, #166534 50%, #e0f2fe 152%)',
-    media: { type: 'image', src: '/pot.webp', alt: 'White 3D printed model used as architectural form reference', fit: 'contain' },
-    metrics: [
-      { label: 'Scale', value: 'Compact' },
-      { label: 'Readability', value: 'High' },
-    ],
-  },
-  {
-    title: 'Detail Surface Sample',
-    category: 'Precision',
-    eyebrow: 'Fine geometry',
-    summary: 'A small-object finish study for crisp edges, detail retention, and close-view inspection.',
-    material: 'Resin / PLA',
-    finish: 'Smooth pass',
-    lead: 'Detail checked',
-    accent: '#38bdf8',
-    backdrop: 'linear-gradient(135deg, #070b1d 0%, #075985 50%, #fef3c7 150%)',
-    media: { type: 'image', src: '/pot.webp', alt: 'Detailed 3D printed sample for surface quality review', fit: 'contain' },
-    metrics: [
-      { label: 'Tolerance', value: 'Tight' },
-      { label: 'Surface', value: 'Smooth' },
-    ],
-  },
-]
-
-const pageVariants: Variants = {
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.08 },
-  },
+function GalleryImage({ item, preload = false }: { item: GalleryItem; preload?: boolean }) {
+  return <Image src={item.image_url} alt={item.alt_text || item.title} fill preload={preload} sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover transition duration-700 ease-out group-hover:scale-[1.035]" />;
 }
 
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 18 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.62, ease: [0.16, 1, 0.3, 1] },
-  },
-}
-
-function projectDetails(project: GalleryProject) {
-  return [
-    { label: 'Material', value: project.material },
-    { label: 'Finish', value: project.finish },
-    { label: 'Status', value: project.lead },
-  ]
-}
-
-function visualStyle(project: GalleryProject) {
-  return {
-    '--gallery-accent': project.accent,
-    '--gallery-visual-bg': project.backdrop,
-  } as CSSProperties
-}
-
-function GalleryPremiumFX() {
-  const meterRef = useRef<HTMLSpanElement | null>(null)
-  const isFinePointer = useIsFinePointer()
+export default function GalleryClient({ items }: GalleryClientProps) {
+  const [activeCategory, setActiveCategory] = useState("All work");
+  const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
+  const reduceMotion = useReducedMotion();
+  const categories = useMemo(() => ["All work", ...Array.from(new Set(items.map((item) => item.category))).sort()], [items]);
+  const visibleItems = useMemo(() => activeCategory === "All work" ? items : items.filter((item) => item.category === activeCategory), [activeCategory, items]);
+  const featured = items.find((item) => item.is_featured) ?? items[0] ?? null;
 
   useEffect(() => {
-    if (!isFinePointer) return
-
-    let pointerFrame = 0
-    let pointerX = 0
-
-    const updatePointer = (event: PointerEvent) => {
-      if (!window.matchMedia('(pointer: fine)').matches) return
-      pointerX = event.clientX
-      if (pointerFrame) return
-      pointerFrame = window.requestAnimationFrame(() => {
-        pointerFrame = 0
-        document.documentElement.style.setProperty('--gallery-pointer-x', `${pointerX}px`)
-      })
-    }
-
-    const updateProgress = () => {
-      const page = document.documentElement
-      const maxScroll = Math.max(page.scrollHeight - window.innerHeight, 1)
-      const progress = Math.min(Math.max(window.scrollY / maxScroll, 0), 1)
-      if (meterRef.current) {
-        meterRef.current.style.transform = `scaleX(${progress})`
-      }
-    }
-    const scheduleProgress = createRafThrottledCallback(updateProgress)
-
-    updateProgress()
-    window.addEventListener('pointermove', updatePointer, { passive: true })
-    window.addEventListener('scroll', scheduleProgress, { passive: true })
-    window.addEventListener('resize', scheduleProgress)
-
-    return () => {
-      if (pointerFrame) window.cancelAnimationFrame(pointerFrame)
-      scheduleProgress.cancel()
-      window.removeEventListener('pointermove', updatePointer)
-      window.removeEventListener('scroll', scheduleProgress)
-      window.removeEventListener('resize', scheduleProgress)
-    }
-  }, [])
+    if (!selectedItem) return;
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") setSelectedItem(null); };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [selectedItem]);
 
   return (
-    <>
-      <div className="gallery-pointer-light" aria-hidden="true" />
-      <div className="gallery-scroll-meter" aria-hidden="true">
-        <span ref={meterRef} />
-      </div>
-    </>
-  )
-}
-
-function ProjectVisual({ project, large = false, priority = false }: { project: GalleryProject; large?: boolean; priority?: boolean }) {
-  const reduceMotion = useReducedMotion()
-
-  return (
-    <div
-      className={`gallery-project-visual relative isolate overflow-hidden rounded-lg ${large ? 'gallery-project-visual-large' : ''}`}
-      style={visualStyle(project)}
-    >
-      <div className="gallery-visual-grid" aria-hidden="true" />
-      <div className="gallery-visual-scan" aria-hidden="true" />
-
-      {project.media.type === 'video' ? (
-        <video
-          src={project.media.src}
-          className="absolute inset-0 h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="none"
-          poster="/printer-poster.webp"
-          aria-label={project.media.label}
-        />
-      ) : (
-        <motion.div
-          className="gallery-visual-object absolute inset-5"
-          animate={reduceMotion ? undefined : { y: [0, -8, 0], rotate: [0, 0.6, 0] }}
-          transition={{ duration: 7.2, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <Image
-            src={project.media.src}
-            alt={project.media.alt}
-            fill
-            priority={priority}
-            sizes={large ? '(min-width: 1024px) 720px, 100vw' : '(min-width: 1024px) 420px, 100vw'}
-            className={project.media.fit === 'cover' ? 'object-cover' : 'object-contain'}
-          />
-        </motion.div>
-      )}
-
-      <div className="gallery-visual-shade" aria-hidden="true" />
-      <div className="gallery-visual-tag">
-        <Camera className="h-3.5 w-3.5" />
-        {project.lead}
-      </div>
-      {project.media.type === 'video' && (
-        <div className="gallery-video-play">
-          <Play className="h-4 w-4 fill-current" />
-        </div>
-      )}
-    </div>
-  )
-}
-
-export default function GalleryClient() {
-  const [activeCategory, setActiveCategory] = useState<GalleryCategory>('All')
-  const [selectedProject, setSelectedProject] = useState<GalleryProject | null>(null)
-  const reduceMotion = useReducedMotion()
-
-  const visibleProjects = useMemo(() => {
-    if (activeCategory === 'All') return projects
-    return projects.filter((project) => project.category === activeCategory)
-  }, [activeCategory])
-
-  const featuredProject = visibleProjects[0] ?? projects[0]
-  const consoleRows = [
-    { label: 'Active board', value: `${visibleProjects.length} works`, width: '74%' },
-    { label: 'Category', value: activeCategory, width: activeCategory === 'All' ? '58%' : '68%' },
-    { label: 'Inspection', value: 'live', width: '46%' },
-    { label: 'Finish signal', value: 'studio', width: '64%' },
-  ]
-
-  return (
-    <main className="gallery-premium-content min-h-screen w-full max-w-[100vw] overflow-hidden text-[#070b1d]">
-      <GalleryPremiumFX />
-
-      <section className="gallery-hero-premium relative isolate w-full max-w-[100vw] overflow-hidden px-4 pb-14 pt-6 text-[#070b1d] sm:px-6 md:px-10 lg:px-12">
-        <Image
-          src="/printer2-poster.webp"
-          alt=""
-          fill
-          preload
-          sizes="100vw"
-          className="gallery-hero-video absolute inset-0 h-full w-full object-cover"
-        />
-        <DeferredHeroVideo
-          src="/printer2-optimized.mp4"
-          className="gallery-hero-video absolute inset-0 h-full w-full object-cover"
-          ariaLabel="Flux3D printer motion behind gallery hero"
-        />
-        <div className="gallery-hero-depth" aria-hidden="true" />
-        <div className="gallery-hero-grid" aria-hidden="true" />
-        <div className="gallery-hero-beam" aria-hidden="true" />
-        <div className="gallery-hero-frame" aria-hidden="true" />
-
-        <motion.div
-          variants={pageVariants}
-          initial="hidden"
-          animate="visible"
-          className="relative z-10 mx-auto flex min-h-[86svh] w-full max-w-[1220px] min-w-0 flex-col justify-start pb-8 pt-8 md:pt-10 lg:pt-12"
-        >
-          <motion.div variants={itemVariants} className="mb-5 flex items-center gap-2 text-sm font-medium text-[#6F7192]">
-            <Link href="/" className="transition hover:text-[#070b1d]">Home</Link>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-[#070b1d]">Gallery</span>
-          </motion.div>
-
-          <div className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-start">
-            <div className="min-w-0">
-              <motion.div
-                variants={itemVariants}
-                className="gallery-hero-kicker inline-flex w-fit items-center gap-2 rounded-lg border border-[#6d28d9]/20 bg-[#f5f3ff] px-4 py-2 text-xs font-black uppercase text-[#6d28d9] shadow-sm"
-              >
-                <Sparkles className="h-4 w-4 text-[#6d28d9]" />
-                Flux3D Gallery
-              </motion.div>
-
-              <motion.h1
-                variants={itemVariants}
-                className="gallery-hero-title mt-5 max-w-[calc(100vw-2rem)] break-words text-[clamp(2.4rem,9vw,5rem)] font-black leading-[1.04] text-[#070b1d] sm:text-6xl sm:leading-[0.96] lg:max-w-5xl lg:text-8xl lg:leading-[0.9]"
-              >
-                A cinematic archive of real 3D print outcomes.
-              </motion.h1>
-
-              <motion.p
-                variants={itemVariants}
-                className="mt-6 max-w-[calc(100vw-2rem)] text-base leading-7 text-[#475569] sm:text-lg lg:max-w-2xl lg:leading-8"
-              >
-                Explore prototypes, functional parts, display pieces, and fine-detail builds through a premium production board designed for fast visual inspection.
-              </motion.p>
-
-              <motion.div variants={itemVariants} className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Link
-                  href="/quote"
-                  className="gallery-primary-action group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#6d28d9] px-6 text-sm font-black text-white shadow-lg transition hover:bg-[#4c1d95]"
-                >
-                  Start a project
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-                <Link
-                  href="/3d-shop"
-                  className="gallery-secondary-action inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 text-sm font-black text-[#070b1d] shadow-sm transition hover:border-[#6d28d9]/30 hover:bg-[#f5f3ff]"
-                >
-                  Shop 3D prints
-                  <Box className="h-4 w-4" />
-                </Link>
-              </motion.div>
-
-              <motion.div variants={itemVariants} className="gallery-hero-stats mt-8 grid gap-3 sm:grid-cols-4">
-                {stats.map((stat) => {
-                  const Icon = stat.icon
-                  return (
-                    <div key={stat.label} className="min-w-0 rounded-lg border border-gray-200 bg-white/80 p-4 shadow-sm backdrop-blur">
-                      <div className="flex items-center gap-2 text-sm font-black text-[#070b1d]">
-                        <Icon className="h-4 w-4 text-[#6d28d9]" />
-                        {stat.value}
-                      </div>
-                      <div className="mt-2 text-xs font-bold uppercase text-[#6F7192]">{stat.label}</div>
-                    </div>
-                  )
-                })}
-              </motion.div>
-
-              <motion.div variants={itemVariants} className="gallery-intel-ticker mt-6" aria-hidden="true">
-                <div>
-                  {[...tickerItems, ...tickerItems].map((entry, index) => (
-                    <span key={`${entry}-${index}`}>
-                      <Sparkles className="h-3.5 w-3.5" />
-                      {entry}
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
+    <main className="min-h-screen overflow-hidden bg-[#f8f7f4] pt-20 text-[#111827]">
+      <section className="relative overflow-hidden border-b border-[#e7e4dd] bg-[#f8f7f4] px-4 pb-14 pt-10 sm:px-6 md:px-10 lg:px-12 lg:pb-20">
+        <div aria-hidden="true" className="absolute left-[-8rem] top-[-9rem] h-80 w-80 rounded-full bg-violet-200/40 blur-3xl" />
+        <div aria-hidden="true" className="absolute bottom-[-10rem] right-[-4rem] h-80 w-80 rounded-full bg-amber-100/80 blur-3xl" />
+        <div className="relative mx-auto grid max-w-[1320px] gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(360px,.9fr)] lg:items-end">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/80 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.17em] text-violet-800 shadow-sm"><Camera className="h-3.5 w-3.5" />The Flux3D edit</div>
+            <h1 className="mt-5 max-w-4xl font-[var(--font-display)] text-5xl font-semibold leading-[0.98] tracking-[-0.045em] text-[#111827] sm:text-6xl lg:text-8xl">Made to be looked at closely.</h1>
+            <p className="mt-6 max-w-2xl text-base font-medium leading-7 text-slate-600 sm:text-lg">An unfiltered study of the products, prototypes, surfaces, and small details leaving our studio. Every frame is a real Flux3D build.</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/quote" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-[#17122a] px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(23,18,42,.18)] transition hover:-translate-y-0.5 hover:bg-violet-900">Start a custom project <ArrowRight className="h-4 w-4" /></Link>
+              <a href="#the-collection" className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-[#d9d5cc] bg-white px-5 text-sm font-bold text-[#272235] transition hover:border-violet-300 hover:bg-violet-50">Explore the collection <ChevronRight className="h-4 w-4" /></a>
             </div>
-
-            <motion.aside
-              variants={itemVariants}
-              animate={reduceMotion ? undefined : { y: [0, -4, 0] }}
-              transition={reduceMotion ? undefined : { duration: 7.4, repeat: Infinity, ease: 'easeInOut' }}
-              className="gallery-curation-panel grid min-w-0 gap-3"
-            >
-              <div className="gallery-console-topline">
-                <span>Visual console</span>
-                <strong>live</strong>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSelectedProject(featuredProject)}
-                className="gallery-console-feature group grid min-w-0 gap-3 text-left"
-              >
-                <div className="gallery-console-feature-media">
-                  <ProjectVisual project={featuredProject} priority />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-black uppercase tracking-[0.16em] text-[#6d28d9]">{featuredProject.category}</div>
-                  <h2 className="mt-2 line-clamp-2 text-xl font-black leading-tight text-[#070b1d]">{featuredProject.title}</h2>
-                  <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-[#6F7192]">
-                    {featuredProject.summary}
-                  </p>
-                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-black text-[#6d28d9]">
-                    Open preview
-                    <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                  </span>
-                </div>
-              </button>
-
-              <div className="gallery-console-stack">
-                {consoleRows.map((entry, index) => (
-                  <motion.div
-                    key={entry.label}
-                    animate={reduceMotion ? undefined : { x: [0, index % 2 === 0 ? 2 : -2, 0] }}
-                    transition={reduceMotion ? undefined : { duration: 5.2 + index * 0.35, repeat: Infinity, ease: 'easeInOut' }}
-                  >
-                    <span>{entry.label}</span>
-                    <strong>{entry.value}</strong>
-                    <i style={{ width: entry.width }} />
-                  </motion.div>
-                ))}
-              </div>
-            </motion.aside>
           </div>
-        </motion.div>
-      </section>
-
-      <section className="gallery-premium-section relative overflow-hidden px-4 py-20 sm:px-6 md:px-10 lg:px-12">
-        <div className="gallery-section-grid" aria-hidden="true" />
-        <div className="relative z-10 mx-auto w-full max-w-[1220px]">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="min-w-0">
-              <motion.div
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-[#6d28d9]"
-              >
-                <Layers className="h-4 w-4" />
-                Selected Work
-              </motion.div>
-              <motion.h2
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-3 max-w-2xl text-[clamp(2rem,6vw,3rem)] font-black leading-tight text-[#070b1d] sm:text-5xl"
-              >
-                A board built for visual proof, finish detail, and fast project selection.
-              </motion.h2>
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
-              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="gallery-filter-bar"
-            >
-              <Filter className="ml-3 h-4 w-4 shrink-0 text-[#6d28d9]" />
-              {categories.map((category) => {
-                const active = activeCategory === category
-                return (
-                  <button
-                    key={category}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => setActiveCategory(category)}
-                    className={`gallery-filter-chip ${active ? 'is-active' : ''}`}
-                  >
-                    {category}
-                  </button>
-                )
-              })}
-            </motion.div>
+          <div className="rounded-2xl border border-[#e4e0d8] bg-white/90 p-3 shadow-[0_20px_60px_rgba(32,26,42,.10)] backdrop-blur">
+            {featured ? <button type="button" onClick={() => setSelectedItem(featured)} className="group block w-full text-left"><div className="relative aspect-[1.18] overflow-hidden rounded-xl bg-[#eae7e0]"><GalleryImage item={featured} preload /><div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent p-5 text-white"><div className="flex items-end justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/80">Featured study</p><p className="mt-1 text-lg font-bold">{featured.title}</p></div><span className="grid h-9 w-9 place-items-center rounded-full border border-white/30 bg-white/15 backdrop-blur transition group-hover:bg-white group-hover:text-[#17122a]"><ArrowUpRight className="h-4 w-4" /></span></div></div></div></button> : <div className="flex aspect-[1.18] flex-col items-center justify-center rounded-xl border border-dashed border-[#d9d5cc] bg-[#fbfaf7] px-8 text-center"><Sparkles className="h-7 w-7 text-violet-700" /><p className="mt-4 text-lg font-bold text-[#282235]">The next frame is in the studio.</p><p className="mt-2 text-sm leading-6 text-slate-600">Published work will appear here as your team curates it.</p></div>}
           </div>
-
-          <motion.div layout className="mt-9 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            <AnimatePresence mode="popLayout">
-              {visibleProjects.map((project, index) => (
-                <motion.button
-                  key={project.title}
-                  type="button"
-                  layout
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.18 } }}
-                  whileHover={reduceMotion ? undefined : { y: -7 }}
-                  transition={{ duration: 0.38, delay: index * 0.03, ease: [0.16, 1, 0.3, 1] }}
-                  onClick={() => setSelectedProject(project)}
-                  className="gallery-project-card group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6d28d9]/40"
-                  style={visualStyle(project)}
-                >
-                  <ProjectVisual project={project} />
-                  <div className="p-5">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <span className="gallery-card-category">{project.category}</span>
-                      <span className="text-xs font-bold text-[#6b7280]">{project.eyebrow}</span>
-                    </div>
-                    <h3 className="mt-4 text-xl font-black tracking-[0] text-[#070b1d]">{project.title}</h3>
-                    <p className="mt-3 min-h-[72px] text-sm font-semibold leading-6 text-[#374151]">
-                      {project.summary}
-                    </p>
-                    <div className="mt-5 grid grid-cols-2 gap-3">
-                      {project.metrics.map((metric) => (
-                        <div key={metric.label} className="gallery-card-metric">
-                          <div className="text-sm font-black text-[#070b1d]">{metric.value}</div>
-                          <div className="mt-1 text-xs font-bold text-[#6b7280]">{metric.label}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </motion.button>
-              ))}
-            </AnimatePresence>
-          </motion.div>
         </div>
       </section>
 
-      <AnimatePresence>
-        {selectedProject && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="gallery-modal-backdrop fixed inset-0 z-[120] grid place-items-center px-4 py-8"
-            onClick={() => setSelectedProject(null)}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 18, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 12, scale: 0.98 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="gallery-modal-panel w-full max-w-5xl overflow-y-auto p-4"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="flex items-center justify-between gap-4 pb-4">
-                <div className="min-w-0">
-                  <div className="text-sm font-black uppercase tracking-[0.16em] text-[#6d28d9]">{selectedProject.category}</div>
-                  <h2 className="mt-1 text-2xl font-black tracking-[0] text-[#070b1d]">{selectedProject.title}</h2>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedProject(null)}
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-[#6d28d9]/15 bg-white text-[#475569] transition hover:bg-[#f5f3ff] hover:text-[#070b1d]"
-                  aria-label="Close gallery preview"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+      <section id="the-collection" className="mx-auto max-w-[1320px] px-4 py-14 sm:px-6 md:px-10 lg:px-12 lg:py-20">
+        <div className="flex flex-col gap-6 border-b border-[#e4e0d8] pb-7 lg:flex-row lg:items-end lg:justify-between"><div><div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-violet-800"><Layers3 className="h-4 w-4" />Selected work</div><h2 className="mt-3 text-3xl font-bold tracking-[-0.035em] text-[#111827] sm:text-4xl">The material library, in real life.</h2></div><div className="flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">{categories.map((category) => { const active = activeCategory === category; return <button key={category} type="button" onClick={() => setActiveCategory(category)} aria-pressed={active} className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition ${active ? "bg-[#17122a] text-white shadow-sm" : "border border-[#dfdbd3] bg-white text-slate-700 hover:border-violet-300 hover:bg-violet-50"}`}>{category}</button>; })}</div></div>
+        {visibleItems.length ? <motion.div layout className="mt-8 grid auto-rows-[250px] grid-cols-1 gap-4 sm:grid-cols-2 sm:auto-rows-[220px] xl:grid-cols-4 xl:auto-rows-[205px]"><AnimatePresence mode="popLayout">{visibleItems.map((item, index) => <motion.button key={item.id} type="button" layout initial={{ opacity: 0, y: reduceMotion ? 0 : 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.35, delay: reduceMotion ? 0 : Math.min(index * 0.025, 0.2) }} onClick={() => setSelectedItem(item)} className={`group relative overflow-hidden rounded-2xl bg-[#e9e6df] text-left shadow-sm ring-1 ring-black/[.03] focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-300 ${itemGridClass(index)}`}><GalleryImage item={item} /><div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent opacity-90 transition group-hover:from-black/80" /><div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-5"><div className="flex items-end justify-between gap-3"><div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/75">{item.category}</p><h3 className="mt-1 truncate text-base font-bold sm:text-lg">{item.title}</h3></div><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/30 bg-white/10 opacity-0 backdrop-blur transition group-hover:opacity-100"><Maximize2 className="h-4 w-4" /></span></div></div></motion.button>)}</AnimatePresence></motion.div> : <div className="mt-8 rounded-2xl border border-dashed border-[#d9d5cc] bg-white p-10 text-center"><Grid2X2 className="mx-auto h-7 w-7 text-violet-700" /><h3 className="mt-4 text-xl font-bold text-[#17122a]">No published work in this view yet.</h3><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">Try another collection, or return soon—new raw studio work is added as it is approved.</p></div>}
+      </section>
 
-              <div className="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)]">
-                <ProjectVisual project={selectedProject} large />
-                <div className="gallery-modal-detail p-5">
-                  <p className="text-sm font-semibold leading-7 text-[#475569]">{selectedProject.summary}</p>
-                  <div className="mt-5 space-y-3">
-                    {projectDetails(selectedProject).map((detail) => (
-                      <div key={detail.label} className="flex items-center justify-between gap-4 border-b border-[#6d28d9]/10 pb-3 text-sm last:border-b-0">
-                        <span className="font-bold text-[#6F7192]">{detail.label}</span>
-                        <span className="text-right font-black text-[#070b1d]">{detail.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <Link
-                    href="/quote"
-                    className="gallery-primary-action mt-6 inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-lg bg-[#6d28d9] px-5 text-sm font-black text-white shadow-lg transition hover:bg-[#4c1d95]"
-                  >
-                    Request similar work
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <AnimatePresence>{selectedItem && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[120] overflow-y-auto bg-[#15111f]/80 p-4 backdrop-blur-sm sm:p-8" role="dialog" aria-modal="true" aria-label={`${selectedItem.title} details`} onMouseDown={() => setSelectedItem(null)}><motion.div initial={{ opacity: 0, y: reduceMotion ? 0 : 18, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.98 }} transition={{ duration: 0.26 }} className="mx-auto grid min-h-full max-w-6xl overflow-hidden rounded-2xl bg-[#fbfaf7] shadow-2xl lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,.65fr)]" onMouseDown={(event) => event.stopPropagation()}><div className="relative min-h-[42svh] bg-[#e9e6df] lg:min-h-[70svh]"><GalleryImage item={selectedItem} /></div><aside className="flex flex-col p-6 sm:p-8"><div className="flex items-start justify-between gap-5"><div><p className="text-[11px] font-bold uppercase tracking-[0.17em] text-violet-800">{selectedItem.category}</p><h2 className="mt-2 text-3xl font-bold tracking-[-0.035em] text-[#111827]">{selectedItem.title}</h2></div><button type="button" onClick={() => setSelectedItem(null)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#ded9d0] bg-white text-[#302a3d] transition hover:bg-violet-50" aria-label="Close image detail"><X className="h-5 w-5" /></button></div>{selectedItem.description && <p className="mt-6 text-sm font-medium leading-7 text-slate-600">{selectedItem.description}</p>}{selectedItem.materials.length > 0 && <div className="mt-7 border-t border-[#e7e3db] pt-5"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Material & process</p><div className="mt-3 flex flex-wrap gap-2">{selectedItem.materials.map((material) => <span key={material} className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-900">{material}</span>)}</div></div>}<div className="mt-auto pt-8"><Link href="/quote" className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#17122a] px-5 text-sm font-bold text-white transition hover:bg-violet-900">Create something similar <ArrowRight className="h-4 w-4" /></Link></div></aside></motion.div></motion.div>}</AnimatePresence>
     </main>
-  )
+  );
 }

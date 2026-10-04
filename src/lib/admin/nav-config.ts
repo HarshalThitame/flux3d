@@ -33,6 +33,7 @@ import {
   FolderOpen,
   Warehouse,
   Megaphone,
+  Camera,
 } from 'lucide-react'
 
 export type NavItem = {
@@ -71,6 +72,7 @@ export const adminNavItems: NavItem[] = [
   { label: '3D Shop Orders', href: '/admin/3d-shop/orders', icon: ShoppingBag, section: 'shop' },
   { label: '3D Shop Reviews', href: '/admin/3d-shop/reviews', icon: Star, section: 'shop' },
   { label: '3D Shop Notify Me', href: '/admin/3d-shop/notify-me', icon: Bell, section: 'shop' },
+  { label: 'Gallery', href: '/admin/gallery', icon: Camera, section: 'shop' },
   { label: 'Support Tickets', href: '/admin/tickets', icon: Ticket, section: 'secondary' },
   { label: 'Team & Roles', href: '/admin/team', icon: ShieldCheck, section: 'secondary' },
   { label: 'Users', href: '/admin/users', icon: UserCog, section: 'secondary' },

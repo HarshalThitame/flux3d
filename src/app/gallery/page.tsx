@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 
 import Navbar from '@/components/Navbar'
-import GalleryClientBoundary from './GalleryClientBoundary'
+import GalleryClient from './GalleryClient'
+import { getPublishedGalleryItems } from '@/lib/gallery/public-data'
 
 export const metadata: Metadata = {
   title: {
@@ -14,11 +15,13 @@ export const metadata: Metadata = {
   },
 }
 
-export default function GalleryPage() {
+export default async function GalleryPage() {
+  const items = await getPublishedGalleryItems().catch(() => [])
+
   return (
-    <div className="gallery-premium-shell min-h-screen overflow-hidden">
+    <div className="min-h-screen overflow-hidden bg-[#f8f7f4]">
       <Navbar transparent />
-      <GalleryClientBoundary />
+      <GalleryClient items={items} />
     </div>
   )
 }
