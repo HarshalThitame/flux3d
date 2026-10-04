@@ -152,12 +152,20 @@ export function stripHtml(html: string) {
 }
 
 export function sanitizeBlogHtml(html: string) {
-  return html
+  const allowedTags = new Set(['a', 'blockquote', 'br', 'code', 'em', 'h2', 'h3', 'h4', 'img', 'li', 'ol', 'p', 'pre', 'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr', 'ul'])
+  const withoutDangerousTags = html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/\son\w+=(["']).*?\1/gi, '')
-    .replace(/\son\w+=\{[^}]*\}/gi, '')
+    .replace(/<(iframe|object|embed|svg|math|base|form|input|button)[\s\S]*?<\/\1>/gi, '')
+    .replace(/<(iframe|object|embed|svg|math|base|form|input|button)\b[^>]*>/gi, '')
+    .replace(/\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replace(/\s+(?:style|srcdoc)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
     .replace(/javascript:/gi, '')
+    .replace(/data\s*:\s*text\/html/gi, '')
+
+  return withoutDangerousTags.replace(/<\/?([a-z0-9]+)(?:\s[^>]*)?>/gi, (tag, name: string) => {
+    return allowedTags.has(name.toLowerCase()) ? tag : ''
+  })
 }
 
 export function wordCountFromHtml(html: string) {

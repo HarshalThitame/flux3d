@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { after } from 'next/server'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, Calendar, Tag } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Calendar, Tag } from 'lucide-react'
 import { createAdminSupabaseClient, isCurrentUserAdmin } from '@/lib/admin/server'
 import { absoluteUrl, siteConfig } from '@/lib/site'
 import Navbar from '@/components/Navbar'
@@ -79,6 +79,25 @@ async function getPost(slug: string, preview: boolean): Promise<BlogPostWithAuth
 
   const author = await getAuthor(data.author_id)
   return { ...data, author }
+}
+
+async function getRelatedPosts(post: BlogPostWithAuthor): Promise<BlogPost[]> {
+  try {
+    const supabase = createAdminSupabaseClient()
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('status', 'published')
+      .neq('id', post.id)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .limit(24)
+    if (error || !data) return []
+    const terms = new Set([post.category, post.focus_keyword, post.primary_keyword, ...(post.tags || [])].filter(Boolean).map((value) => String(value).toLowerCase()))
+    return (data as BlogPost[]).map((item) => ({ item, score: [item.category, item.focus_keyword, item.primary_keyword, ...(item.tags || [])].filter(Boolean).reduce((score, value) => score + (terms.has(String(value).toLowerCase()) ? 1 : 0), 0) }))
+      .sort((left, right) => right.score - left.score || String(right.item.published_at).localeCompare(String(left.item.published_at)))
+      .slice(0, 3)
+      .map(({ item }) => item)
+  } catch { return [] }
 }
 
 function getKeywords(post: BlogPostWithAuthor) {
@@ -300,6 +319,7 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
   const authorName = post.author?.name || post.author_name || 'Flux3D Team'
   const authorImage = post.author?.photo_url || post.author_avatar
   const readMinutes = post.reading_time_minutes || post.read_time || 1
+  const relatedPosts = await getRelatedPosts(post)
 
   return (
     <div className="public-shell bg-white">
@@ -429,6 +449,13 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
                 </div>
               </div>
             </div>
+
+            <section className="mt-10 rounded-2xl border border-violet-200 bg-violet-50 p-6">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#4c1d95]">Build it with Flux3D</p>
+              <h2 className="mt-2 font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">Need a custom part or prototype?</h2>
+              <p className="mt-2 text-sm leading-6 text-[#30364c]">Flux3D can help turn your design into a practical 3D-printed part.</p>
+              <Link href="/instant-quote" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#4c1d95]">Get an instant quote <ArrowRight className="h-4 w-4" /></Link>
+            </section>
           </article>
 
           {showToc && (
@@ -451,6 +478,24 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
           )}
         </div>
       </main>
+      {relatedPosts.length > 0 && (
+        <section className="border-t border-[var(--border)] px-6 py-16 md:px-12">
+          <div className="mx-auto max-w-[1120px]">
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#4c1d95]">Keep reading</p>
+            <h2 className="mt-2 font-[var(--font-syne)] text-3xl font-bold text-[var(--text-primary)]">Related 3D printing insights</h2>
+            <div className="mt-7 grid gap-5 md:grid-cols-3">
+              {relatedPosts.map((related) => (
+                <Link key={related.id} href={`/blog/${related.slug}`} className="group rounded-2xl border border-[var(--border)] bg-white p-5 transition hover:-translate-y-1 hover:shadow-lg">
+                  {related.category && <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#4c1d95]">{related.category}</p>}
+                  <h3 className="mt-3 font-[var(--font-syne)] text-lg font-bold leading-tight text-[var(--text-primary)]">{related.title}</h3>
+                  <p className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--text-secondary)]">{related.excerpt}</p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#4c1d95]">Read article <ArrowRight className="h-4 w-4" /></span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   )
 }

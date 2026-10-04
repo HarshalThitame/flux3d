@@ -30,6 +30,7 @@ export interface BlogPost {
   seo_title?: string
   meta_description?: string
   focus_keyword?: string
+  primary_keyword?: string
   secondary_keywords?: string[]
   canonical_url?: string
   og_title?: string
@@ -44,6 +45,18 @@ export interface BlogPost {
   toc_enabled?: boolean
   language?: 'en' | 'hi' | 'mr'
   seo_score?: number
+  ai_generated?: boolean
+  ai_model?: string | null
+  topic_fingerprint?: string | null
+  topic_category?: string | null
+  ai_topic_score?: number | null
+  research_data?: Record<string, unknown> | null
+  featured_image_prompt?: string | null
+  quality_score?: number | null
+  seo_quality_score?: number | null
+  uniqueness_score?: number | null
+  readability_score?: number | null
+  generation_id?: string | null
   status: 'draft' | 'published' | 'archived'
   read_time?: number
   views?: number

@@ -241,6 +241,7 @@ export default function AdminBlogPage() {
   const [lastAutosaveAt, setLastAutosaveAt] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [aiLoading, setAiLoading] = useState<AiAction | null>(null)
+  const [generatingArticle, setGeneratingArticle] = useState(false)
   const [aiTitleOptions, setAiTitleOptions] = useState<string[]>([])
   const [aiInternalLinks, setAiInternalLinks] = useState<LinkSuggestion[]>([])
   const [formData, setFormData] = useState<BlogFormData>(() => createEmptyForm())
@@ -629,6 +630,33 @@ export default function AdminBlogPage() {
     }
   }
 
+  async function generateFullArticle(customTopic?: string) {
+    setGeneratingArticle(true)
+    setToast({ type: 'success', message: customTopic ? 'Researching and writing your custom topic…' : 'Researching unique 3D-printing topics…' })
+    try {
+      const res = await fetch('/api/admin/blog/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: customTopic || '', autoPublish: false }),
+      })
+      const result = await res.json()
+      if (!res.ok || result.status === 'failed') {
+        setToast({ type: 'error', message: result.error || 'AI article generation failed.' })
+        return
+      }
+      const refreshedResponse = await fetch('/api/blog?status=all&limit=100')
+      const refreshed = refreshedResponse.ok ? (await refreshedResponse.json()).posts || [] : []
+      setPosts(refreshed)
+      const generated = refreshed.find((post: BlogPost) => post.id === result.blogId) as BlogPost | undefined
+      if (generated) handleEdit(generated)
+      setToast({ type: 'success', message: 'AI article saved as a draft. Review and publish when ready.' })
+    } catch {
+      setToast({ type: 'error', message: 'AI article generation failed.' })
+    } finally {
+      setGeneratingArticle(false)
+    }
+  }
+
   function insertInternalLink(link: LinkSuggestion) {
     updateForm({
       content: `${formData.content || ''}<p>Related: <a href="${link.url}">${link.title}</a></p>`,
@@ -681,6 +709,29 @@ export default function AdminBlogPage() {
                 </h1>
                 <p className="mt-2 text-sm text-[#6F7192]">Create SEO-ready blog posts for Flux3D.</p>
               </div>
+              <div className="flex flex-wrap gap-2">
+              <Link href="/admin/blog/automation" className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#0F1B3D] hover:bg-gray-50">
+                <Settings className="h-4 w-4" />AI Automation
+              </Link>
+              <button
+                disabled={generatingArticle}
+                onClick={() => generateFullArticle()}
+                className="inline-flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-[#4c1d95] hover:bg-violet-100 disabled:opacity-60"
+              >
+                <Sparkles className="h-4 w-4" />
+                {generatingArticle ? 'Generating…' : 'Generate with AI'}
+              </button>
+              <button
+                disabled={generatingArticle}
+                onClick={() => {
+                  const topic = window.prompt('Enter the 3D-printing topic to research and draft:')?.trim()
+                  if (topic) void generateFullArticle(topic)
+                }}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#0F1B3D] hover:bg-gray-50 disabled:opacity-60"
+              >
+                <Sparkles className="h-4 w-4" />
+                Custom Topic
+              </button>
               <button
                 onClick={() => {
                   resetForm()
@@ -691,6 +742,7 @@ export default function AdminBlogPage() {
                 <Plus className="h-4 w-4" />
                 New Post
               </button>
+              </div>
             </div>
           </motion.div>
 
@@ -1493,6 +1545,9 @@ export default function AdminBlogPage() {
                               Draft
                             </span>
                           )}
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${post.ai_generated ? 'bg-violet-50 text-violet-700' : 'bg-slate-100 text-slate-700'}`}>
+                            {post.ai_generated ? 'AI Generated' : 'Manual'}
+                          </span>
                           <span className={`rounded-full border px-2 py-0.5 text-xs ${scoreClasses((post.seo_score || 0) >= 75 ? 'green' : (post.seo_score || 0) >= 50 ? 'orange' : 'red')}`}>
                             SEO {post.seo_score || 0}/100
                           </span>

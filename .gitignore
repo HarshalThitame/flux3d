@@ -50,3 +50,8 @@ next-env.d.ts
 /playwright-report/
 /test-results/
 scratch-*.js
+
+# Large binaries
+blender_lamp_project/
+*.blend
+*.blend1

@@ -7,6 +7,9 @@ const envSchema = z.object({
 
   // OpenAI
   OPENAI_API_KEY: z.string().min(1).optional(),
+  OPENAI_BLOG_MODEL: z.string().optional(),
+  OPENAI_BLOG_RESEARCH_MODEL: z.string().optional(),
+  OPENAI_BLOG_EMBEDDING_MODEL: z.string().optional(),
 
   // Shop AI writing assist
   SHOP_AI_MODEL: z.string().default('gpt-4.1-mini'),

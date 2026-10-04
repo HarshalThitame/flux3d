@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 import RouteChunkLoader from '@/components/RouteChunkLoader'
 import type { BlogPost } from '@/lib/blog/types'
 
-const BlogClient = dynamic(() => import('./BlogClient'), {
+const BlogClient = dynamic(() => import('./BlogLightClient'), {
   ssr: false,
   loading: () => <RouteChunkLoader className="text-[#070b1d]" minHeight="86svh" label="Loading blog" />,
 })

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createAdminSupabaseClient, isCurrentUserAdmin } from '@/lib/admin/server'
 import {
   BLOG_SCHEMA_TYPES,
@@ -234,6 +235,10 @@ export async function POST(request: Request) {
       const status = error.code === '23505' ? 409 : 500
       return NextResponse.json({ error: error.code === '23505' ? 'A post with this slug already exists.' : error.message }, { status })
     }
+
+    revalidatePath('/blog')
+    revalidatePath(`/blog/${data.slug}`)
+    revalidatePath('/sitemap.xml')
 
     return NextResponse.json(data, { status: 201 })
   } catch {

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createAdminSupabaseClient, isCurrentUserAdmin } from '@/lib/admin/server'
 import {
   BLOG_SCHEMA_TYPES,
@@ -248,6 +249,11 @@ export async function PUT(
       return NextResponse.json({ error: error.code === '23505' ? 'A post with this slug already exists.' : error.message }, { status })
     }
 
+    revalidatePath('/blog')
+    revalidatePath(`/blog/${data.slug}`)
+    if (slug !== data.slug) revalidatePath(`/blog/${slug}`)
+    revalidatePath('/sitemap.xml')
+
     return NextResponse.json(data)
   } catch {
     return NextResponse.json({ error: 'Failed to update blog post' }, { status: 500 })
@@ -274,6 +280,10 @@ export async function DELETE(
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    revalidatePath('/blog')
+    revalidatePath(`/blog/${slug}`)
+    revalidatePath('/sitemap.xml')
 
     return NextResponse.json({ success: true })
   } catch {

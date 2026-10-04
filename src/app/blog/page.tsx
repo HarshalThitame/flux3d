@@ -66,7 +66,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   const params = await searchParams;
   const pageParam = Array.isArray(params.page) ? params.page[0] : params.page;
   const page = Math.max(parseInt(pageParam || "1", 10) || 1, 1);
-  const limit = 9;
+  const limit = 60;
   const offset = (page - 1) * limit;
 
   try {
@@ -89,7 +89,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   }
 
   return (
-    <div className="blog-premium-shell min-h-screen overflow-hidden">
+    <div className="public-shell min-h-screen overflow-hidden bg-[#f9f7f4]">
       <Navbar transparent />
       <BlogClientBoundary
         posts={posts}
