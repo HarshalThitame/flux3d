@@ -53,7 +53,7 @@ export default async function InstantQuotePage({ searchParams }: InstantQuotePag
   const settings = await getPublicSettings()
 
   return (
-    <div className="instant-quote-premium-shell min-h-screen overflow-hidden">
+    <div className="instant-quote-premium-shell min-h-screen">
       <Navbar transparent />
       <CartProvider initialSettings={settings}>
         <InstantQuoteWorkspaceBoundary

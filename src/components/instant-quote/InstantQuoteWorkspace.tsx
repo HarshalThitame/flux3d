@@ -100,7 +100,7 @@ export default function InstantQuoteWorkspace({
 }: InstantQuoteWorkspaceProps) {
   if (materials.length === 0) {
     return (
-      <div className="min-h-screen bg-[#FFFFFF] px-4 pb-16 pt-8 text-[#070b1d] md:px-8 md:pt-10 xl:px-10">
+      <div className="min-h-screen bg-[#FFFFFF] pb-[calc(6rem+env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-8 text-[#070b1d] md:pt-10 lg:pb-16 lg:px-8 xl:px-10">
         <div className="mx-auto max-w-[1100px]">
           <EmptyState
             title="No materials available"
@@ -1010,37 +1010,37 @@ function CartEnabledWorkspace({
 
   return (
     <>
-      <div className="instant-quote-workspace relative min-h-screen overflow-hidden">
-        <div className="quote-premium-grid" aria-hidden="true" />
-        <div className="quote-premium-beam" aria-hidden="true" />
-        <div className="quote-premium-frame" aria-hidden="true" />
-        <motion.div
-          aria-hidden
-          animate={
-            shouldReduceMotion ? undefined : { x: [0, 50, 0], y: [0, -20, 0] }
-          }
-          transition={
-            shouldReduceMotion
-              ? undefined
-              : { duration: 16, repeat: Infinity, ease: "easeInOut" }
-          }
-          className="quote-orb quote-orb-left pointer-events-none absolute left-[-8rem] top-28 h-72 w-72 rounded-full bg-[#6d28d9]/8 blur-3xl"
-        />
-        <motion.div
-          aria-hidden
-          animate={
-            shouldReduceMotion ? undefined : { x: [0, -45, 0], y: [0, 25, 0] }
-          }
-          transition={
-            shouldReduceMotion
-              ? undefined
-              : { duration: 18, repeat: Infinity, ease: "easeInOut" }
-          }
-          className="quote-orb quote-orb-right pointer-events-none absolute right-[-7rem] top-36 h-80 w-80 rounded-full bg-cyan-400/8 blur-3xl"
-        />
+      <div className="instant-quote-workspace relative min-h-screen">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+          <div className="quote-premium-grid" />
+          <div className="quote-premium-beam" />
+          <div className="quote-premium-frame" />
+          <motion.div
+            animate={
+              shouldReduceMotion ? undefined : { x: [0, 50, 0], y: [0, -20, 0] }
+            }
+            transition={
+              shouldReduceMotion
+                ? undefined
+                : { duration: 16, repeat: Infinity, ease: "easeInOut" }
+            }
+            className="quote-orb quote-orb-left absolute left-[-8rem] top-28 h-72 w-72 rounded-full bg-[#6d28d9]/8 blur-3xl"
+          />
+          <motion.div
+            animate={
+              shouldReduceMotion ? undefined : { x: [0, -45, 0], y: [0, 25, 0] }
+            }
+            transition={
+              shouldReduceMotion
+                ? undefined
+                : { duration: 18, repeat: Infinity, ease: "easeInOut" }
+            }
+            className="quote-orb quote-orb-right absolute right-[-7rem] top-36 h-80 w-80 rounded-full bg-cyan-400/8 blur-3xl"
+          />
+        </div>
 
         {/* Header */}
-        <div className="quote-hero relative px-4 pb-6 pt-8 md:px-8 md:pt-10 xl:px-10">
+        <div data-testid="quote-hero" className="quote-hero relative pb-6 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-8 md:px-8 md:pt-10 xl:px-10">
           <div className="mx-auto max-w-[1500px]">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div>
@@ -1060,7 +1060,7 @@ function CartEnabledWorkspace({
               </div>
 
               {/* Step Navigator */}
-              <div className="quote-step-nav flex items-center gap-1 overflow-x-auto rounded-2xl border border-[#6d28d9]/10 bg-white p-1.5 shadow-sm scrollbar-hide">
+              <div data-testid="quote-step-nav" className="quote-step-nav grid w-full grid-cols-2 gap-1 rounded-2xl border border-[#6d28d9]/10 bg-white p-1.5 shadow-sm sm:flex sm:w-auto sm:items-center">
                 {stepConfigs.map((step, i) => {
                   const done = getStepDone(step.id);
                   const ref = stepRefs[step.id as keyof typeof stepRefs];
@@ -1068,7 +1068,7 @@ function CartEnabledWorkspace({
                     <button
                       key={step.id}
                       onClick={() => handleStepClick(ref)}
-                      className={`quote-step-button ${done ? "quote-step-button-done" : ""} flex min-h-[44px] flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 py-2.5 text-xs font-medium transition-colors hover:bg-gray-100`}
+                      className={`quote-step-button ${done ? "quote-step-button-done" : ""} flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl px-2.5 py-2.5 text-xs font-medium transition-colors hover:bg-gray-100 sm:w-auto sm:flex-shrink-0 sm:justify-start sm:whitespace-nowrap`}
                     >
                       <span
                         className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
@@ -1089,7 +1089,7 @@ function CartEnabledWorkspace({
                         {step.label}
                       </span>
                       {i < stepConfigs.length - 1 && (
-                        <ArrowRight className="ml-1 h-3 w-3 text-[#070b1d]/20" />
+                        <ArrowRight className="ml-1 hidden h-3 w-3 text-[#070b1d]/20 sm:block" />
                       )}
                     </button>
                   );
@@ -1100,18 +1100,18 @@ function CartEnabledWorkspace({
         </div>
 
         {/* Main Content */}
-        <div className="px-4 pb-16 md:px-8 xl:px-10">
+        <div className="pb-[calc(6rem+env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:px-8 lg:pb-16 xl:px-10">
           <div className="mx-auto max-w-[1500px]">
-            <div className="quote-layout-grid grid gap-6 lg:gap-8 xl:grid-cols-[1fr_380px]">
+            <div className="quote-layout-grid grid gap-6 lg:gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
               {/* Left Column */}
-              <div className="space-y-6">
-                <div className="quote-bulk-strip rounded-2xl border border-cyan-400/15 bg-cyan-400/8 px-4 py-3 text-sm text-[#070b1d]">
+              <div className="min-w-0 space-y-6">
+                <div className="quote-bulk-strip break-words rounded-2xl border border-cyan-400/15 bg-cyan-400/8 px-4 py-3 text-sm text-[#070b1d] [overflow-wrap:anywhere]">
                   For bulk orders contact{" "}
                   <a
                     className="font-medium text-[#6d28d9] hover:underline"
                     href={`mailto:${bulkOrderContact.email}`}
                   >
-                    {bulkOrderContact.email}
+                    <span className="[overflow-wrap:anywhere]">{bulkOrderContact.email}</span>
                   </a>{" "}
                   or{" "}
                   <a
@@ -1132,7 +1132,7 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.05 }}
                 >
-                  <div className="quote-premium-card quote-upload-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div data-testid="quote-upload-card" className="quote-premium-card quote-upload-card min-w-0 rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
                       <div className="quote-section-icon rounded-xl border border-[#6d28d9]/20 bg-[#6d28d9]/10 p-2.5 text-[#6d28d9]">
                         <UploadCloud className="h-5 w-5" />
@@ -1184,7 +1184,7 @@ function CartEnabledWorkspace({
                         >
                           <UploadCloud className="h-6 w-6" />
                         </motion.div>
-                        <div className="text-base font-semibold text-[#070b1d]">
+                        <div className="break-words text-base font-semibold text-[#070b1d] [overflow-wrap:anywhere]">
                           {selectedFile
                             ? selectedFile.name
                             : "Drop your file or click to browse"}
@@ -1196,7 +1196,7 @@ function CartEnabledWorkspace({
                           </div>
                         )}
                         {selectedFile && (
-                          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#6d28d9]/10 bg-white px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
+                          <div className="mt-2 inline-flex max-w-full items-center gap-1.5 break-all rounded-full border border-[#6d28d9]/10 bg-white px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#6F7192]">
                             <FileArchive className="h-3 w-3" />
                             {selectedFile.name}
                           </div>
@@ -1265,7 +1265,7 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.15 }}
                 >
-                  <div className="quote-premium-card quote-material-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div className="quote-premium-card quote-material-card min-w-0 rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
                       <div className="quote-section-icon rounded-xl border border-violet-400/20 bg-violet-400/10 p-2.5 text-violet-200">
                         <Palette className="h-5 w-5" />
@@ -1369,7 +1369,7 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.2 }}
                 >
-                  <div className="quote-premium-card quote-settings-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div data-testid="quote-settings-card" className="quote-premium-card quote-settings-card min-w-0 rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
                       <div className="quote-section-icon rounded-xl border border-sky-400/20 bg-sky-50 p-2.5 text-sky-700">
                         <Layers3 className="h-5 w-5" />
@@ -1580,9 +1580,9 @@ function CartEnabledWorkspace({
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.25 }}
-                className="quote-summary-shell xl:sticky xl:top-24 xl:self-start"
+                className="quote-summary-shell min-w-0 xl:sticky xl:top-24 xl:self-start"
               >
-                <div className="quote-summary-card rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-5 shadow-[0_10px_40px_rgba(0,0,0,0.2)] sm:p-6 sm:shadow-[0_18px_70px_rgba(0,0,0,0.3)]">
+                <div data-testid="quote-summary-card" className="quote-summary-card min-w-0 rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.96))] p-5 shadow-[0_10px_40px_rgba(0,0,0,0.2)] sm:p-6 sm:shadow-[0_18px_70px_rgba(0,0,0,0.3)]">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
                       <h2 className="text-lg font-semibold text-[#070b1d]">
@@ -1701,7 +1701,7 @@ function CartEnabledWorkspace({
                     <>
                       {/* Config Summary */}
                       <div className="quote-config-pill mb-4 rounded-xl border border-[#6d28d9]/10 bg-white p-3">
-                        <div className="flex items-center gap-2 text-xs">
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
                           <span className="text-[#070b1d]">
                             {selectedMaterial?.name ?? "Material"}
                           </span>

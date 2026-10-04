@@ -43,7 +43,8 @@ export default function ViewerSection({
       <motion.section
         whileHover={{ y: -4 }}
         transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-        className="group relative flex h-full flex-col overflow-hidden rounded-[28px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.94))] p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)] transition-all duration-300 hover:border-cyan-400/20 hover:shadow-[0_24px_90px_rgba(56,189,248,0.08)]"
+        data-testid="quote-viewer"
+        className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[28px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.94))] p-4 shadow-[0_18px_70px_rgba(0,0,0,0.28)] transition-all duration-300 hover:border-cyan-400/20 hover:shadow-[0_24px_90px_rgba(56,189,248,0.08)] sm:p-6"
       >
         <motion.div
           aria-hidden
@@ -53,13 +54,13 @@ export default function ViewerSection({
         />
 
         {/* Header */}
-        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="font-[var(--font-syne)] text-2xl font-bold text-[#070b1d]">
+        <div className="mb-5 flex min-w-0 flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="min-w-0 font-[var(--font-syne)] text-xl font-bold text-[#070b1d] sm:text-2xl">
                 3D File Viewer
               </h2>
-              <span className="inline-flex items-center gap-1 rounded-full border border-purple-500/20 bg-purple-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-700">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-purple-500/20 bg-purple-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-700">
                 <Sparkles className="h-3 w-3" /> PBR Engine 5.0
               </span>
             </div>
@@ -70,7 +71,7 @@ export default function ViewerSection({
           <motion.div
             animate={shouldReduceMotion ? undefined : { rotate: [0, 4, 0, -4, 0] }}
             transition={shouldReduceMotion ? undefined : { duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-            className="rounded-2xl border border-cyan-400/20 bg-cyan-50 p-3 text-cyan-700"
+            className="hidden shrink-0 rounded-2xl border border-cyan-400/20 bg-cyan-50 p-3 text-cyan-700 sm:block"
           >
             <Cuboid className="h-5 w-5" />
           </motion.div>
@@ -78,13 +79,13 @@ export default function ViewerSection({
 
         {/* 3D Inspection Toolbar */}
         {model && (
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#6d28d9]/10 bg-white/80 p-2 backdrop-blur-md">
+          <div className="mb-3 flex flex-wrap items-stretch justify-between gap-2 rounded-2xl border border-[#6d28d9]/10 bg-white/80 p-2 backdrop-blur-md sm:items-center">
             {/* Shading Mode */}
-            <div className="flex items-center gap-1">
+            <div className="grid w-full grid-cols-3 gap-1 sm:flex sm:w-auto">
               <button
                 type="button"
                 onClick={() => setDisplayMode('solid')}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-2 py-1.5 text-xs font-medium transition-all sm:px-3 ${
                   displayMode === 'solid'
                     ? 'bg-[#6d28d9] text-white shadow-sm'
                     : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#070b1d]'
@@ -95,7 +96,7 @@ export default function ViewerSection({
               <button
                 type="button"
                 onClick={() => setDisplayMode('wireframe')}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-2 py-1.5 text-xs font-medium transition-all sm:px-3 ${
                   displayMode === 'wireframe'
                     ? 'bg-[#6d28d9] text-white shadow-sm'
                     : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#070b1d]'
@@ -106,7 +107,7 @@ export default function ViewerSection({
               <button
                 type="button"
                 onClick={() => setDisplayMode('xray')}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-2 py-1.5 text-xs font-medium transition-all sm:px-3 ${
                   displayMode === 'xray'
                     ? 'bg-[#6d28d9] text-white shadow-sm'
                     : 'text-[#6F7192] hover:bg-gray-100 hover:text-[#070b1d]'
@@ -117,7 +118,7 @@ export default function ViewerSection({
             </div>
 
             {/* Quick Actions & Toggles */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex w-full flex-wrap items-center gap-1.5 sm:w-auto">
               {/* Build Box Cage */}
               <button
                 type="button"
@@ -188,7 +189,7 @@ export default function ViewerSection({
                 onClick={() => setIsFullScreen(true)}
                 title="Full Screen Inspection"
                 aria-label="Enter fullscreen inspection"
-                className="rounded-xl border border-[#6d28d9]/10 bg-white p-1.5 text-[#6F7192] hover:bg-gray-50 hover:text-[#070b1d]"
+                className="ml-auto rounded-xl border border-[#6d28d9]/10 bg-white p-1.5 text-[#6F7192] hover:bg-gray-50 hover:text-[#070b1d] sm:ml-0"
               >
                 <Maximize2 className="h-4 w-4" />
               </button>
@@ -198,26 +199,30 @@ export default function ViewerSection({
 
         {/* Slice Slider Bar */}
         {showClippingSlider && model && (
-          <div className="mb-3 flex items-center gap-3 rounded-xl border border-purple-400/20 bg-purple-50/80 px-4 py-2 text-xs text-purple-900">
-            <span className="shrink-0 font-medium">Cross-Section Cut:</span>
+          <div className="mb-3 grid gap-2 rounded-xl border border-purple-400/20 bg-purple-50/80 px-4 py-2 text-xs text-purple-900 sm:flex sm:items-center sm:gap-3">
+            <div className="flex items-center justify-between gap-3 sm:contents">
+              <span className="shrink-0 font-medium">Cross-Section Cut:</span>
+              <div className="flex shrink-0 items-center gap-3 sm:order-3">
+                <span className="font-mono text-[11px]">{clippingZPercent}%</span>
+                {clippingZPercent < 100 && (
+                  <button
+                    type="button"
+                    onClick={() => setClippingZPercent(100)}
+                    className="text-[10px] text-purple-700 underline underline-offset-2"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
             <input
               type="range"
               min={5}
               max={100}
               value={clippingZPercent}
               onChange={(e) => setClippingZPercent(Number(e.target.value))}
-              className="w-full accent-[#6d28d9]"
+              className="min-w-0 w-full accent-[#6d28d9] sm:flex-1"
             />
-            <span className="shrink-0 font-mono text-[11px]">{clippingZPercent}%</span>
-            {clippingZPercent < 100 && (
-              <button
-                type="button"
-                onClick={() => setClippingZPercent(100)}
-                className="text-[10px] text-purple-700 underline underline-offset-2"
-              >
-                Reset
-              </button>
-            )}
           </div>
         )}
 
@@ -244,7 +249,7 @@ export default function ViewerSection({
               />
 
               {/* Material Live Badge Overlay */}
-              <div className="pointer-events-none absolute left-4 top-4 rounded-xl border border-white/10 bg-[#070a12]/80 px-3 py-1.5 text-xs text-white/90 backdrop-blur-md">
+              <div className="pointer-events-none absolute left-4 top-4 max-w-[calc(100%-2rem)] break-words rounded-xl border border-white/10 bg-[#070a12]/80 px-3 py-1.5 text-xs text-white/90 backdrop-blur-md [overflow-wrap:anywhere]">
                 <span className="text-white/40">Shading:</span>{' '}
                 <span className="font-semibold text-cyan-400">{materialId.toUpperCase()}</span> ·{' '}
                 <span className="text-purple-300">{colorName}</span>
@@ -259,7 +264,7 @@ export default function ViewerSection({
               >
                 <Move3D className="h-7 w-7" />
               </motion.div>
-              <div className="font-[var(--font-syne)] text-2xl font-semibold text-white">
+              <div className="break-words font-[var(--font-syne)] text-2xl font-semibold text-white [overflow-wrap:anywhere]">
                 {model?.requiresReview ? 'Preview unavailable' : 'Awaiting 3D Model'}
               </div>
               <p className="max-w-md text-sm leading-7 text-white/50">
@@ -281,11 +286,11 @@ export default function ViewerSection({
 
         {/* Stats Grid */}
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3">
+          <motion.div whileHover={{ y: -2 }} className="min-w-0 rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3">
             <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Controls</div>
             <div className="mt-2 text-sm text-[#070b1d]">Rotate · Zoom · Pan</div>
           </motion.div>
-          <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3">
+          <motion.div whileHover={{ y: -2 }} className="min-w-0 rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3">
             <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Bounding Box</div>
             <div className="mt-2 text-sm text-[#070b1d]">
               {model
@@ -293,7 +298,7 @@ export default function ViewerSection({
                 : 'Waiting for geometry'}
             </div>
           </motion.div>
-          <motion.div whileHover={{ y: -2 }} className="rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3">
+          <motion.div whileHover={{ y: -2 }} className="min-w-0 rounded-2xl border border-[#6d28d9]/10 bg-white px-4 py-3">
             <div className="text-[11px] uppercase tracking-[0.22em] text-[#6F7192]">Mesh Density</div>
             <div className="mt-2 text-sm text-[#070b1d]">
               {model ? `${model.triangleCount.toLocaleString()} tris` : '0 tris'}
@@ -304,11 +309,11 @@ export default function ViewerSection({
 
       {/* Full Screen Viewport Modal */}
       {isFullScreen && model && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-[#070a12] p-4 text-white">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <h3 className="font-[var(--font-syne)] text-xl font-bold">{model.fileName}</h3>
-              <span className="rounded-full bg-purple-500/20 px-3 py-1 text-xs text-purple-300">
+        <div className="fixed inset-0 z-50 flex flex-col bg-[#070a12] pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(1rem,env(safe-area-inset-top))] text-white">
+          <div className="mb-4 flex min-w-0 items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <h3 className="truncate font-[var(--font-syne)] text-xl font-bold">{model.fileName}</h3>
+              <span className="w-fit max-w-full break-words rounded-full bg-purple-500/20 px-3 py-1 text-xs text-purple-300 [overflow-wrap:anywhere]">
                 {materialId.toUpperCase()} ({colorName})
               </span>
             </div>
@@ -316,7 +321,7 @@ export default function ViewerSection({
               type="button"
               onClick={() => setIsFullScreen(false)}
               aria-label="Exit fullscreen inspection"
-              className="rounded-xl border border-white/10 bg-white/5 p-2 text-white hover:bg-white/10"
+              className="shrink-0 rounded-xl border border-white/10 bg-white/5 p-2 text-white hover:bg-white/10"
             >
               <X className="h-5 w-5" />
             </button>
