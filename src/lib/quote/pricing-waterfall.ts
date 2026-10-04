@@ -83,6 +83,8 @@ export type PricingWaterfall = {
 };
 
 export type QuotePricingResult = PricingWaterfall & {
+  scalePercent: number;
+  scaleFactor: number;
   scaledVolumeCm3: number;
   quantity: number;
   baseWeightGrams: number;
