@@ -1265,16 +1265,16 @@ function CartEnabledWorkspace({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.15 }}
                 >
-                  <div className="quote-premium-card quote-material-card min-w-0 rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
+                  <div data-testid="quote-material-card" className="quote-premium-card quote-material-card min-w-0 rounded-[24px] border border-[#6d28d9]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92))] p-5 sm:p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)]">
                     <div className="mb-5 flex items-center gap-3">
                       <div className="quote-section-icon rounded-xl border border-violet-400/20 bg-violet-400/10 p-2.5 text-violet-200">
                         <Palette className="h-5 w-5" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <h2 className="text-lg font-semibold text-[#070b1d]">
                           3. Material & Color
                         </h2>
-                        <p className="text-xs text-[#6F7192]">
+                        <p className="break-words text-xs text-[#6F7192] [overflow-wrap:anywhere]">
                           Choose the best material and finish for your part
                         </p>
                       </div>
@@ -1285,7 +1285,7 @@ function CartEnabledWorkspace({
                       <label className="mb-2 block text-xs font-medium text-[#6F7192]">
                         Material
                       </label>
-                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {materials.map((material) => {
                           const isActive = material.id === config.materialId;
                           return (
@@ -1293,7 +1293,7 @@ function CartEnabledWorkspace({
                               key={material.id}
                               type="button"
                               onClick={() => handleMaterialChange(material.id)}
-                              className={`quote-option-card ${isActive ? "quote-option-card-active" : ""} flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
+                              className={`quote-option-card ${isActive ? "quote-option-card-active" : ""} flex min-w-0 items-center gap-3 rounded-xl border p-3 text-left transition-all ${
                                 isActive
                                   ? "border-[#6d28d9]/35 bg-[var(--brand-faint)] shadow-[0_4px_16px_rgba(109, 40, 217,0.1)]"
                                   : "border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10"
@@ -1303,7 +1303,7 @@ function CartEnabledWorkspace({
                                 {material.icon}
                               </span>
                               <div className="min-w-0 flex-1">
-                                <div className="flex items-center justify-between gap-2">
+                                <div className="flex min-w-0 items-center justify-between gap-2">
                                   <span
                                     className={`truncate text-sm font-medium ${isActive ? "text-[var(--brand-primary)]" : "text-[#070b1d]"}`}
                                   >
@@ -1314,7 +1314,7 @@ function CartEnabledWorkspace({
                                   )}
                                 </div>
                                 <p
-                                  className={`mt-0.5 truncate text-[11px] ${isActive ? "text-[var(--text-secondary)]" : "text-[#6F7192]"}`}
+                                  className={`mt-0.5 break-words whitespace-normal text-[11px] leading-4 [overflow-wrap:anywhere] ${isActive ? "text-[var(--text-secondary)]" : "text-[#6F7192]"}`}
                                 >
                                   {material.summary}
                                 </p>
@@ -1327,7 +1327,7 @@ function CartEnabledWorkspace({
 
                     {/* Color Selection */}
                     <div>
-                      <label className="mb-2 block text-xs font-medium text-[#6F7192]">
+                      <label className="mb-2 block break-words text-xs font-medium text-[#6F7192] [overflow-wrap:anywhere]">
                         Color — {selectedMaterial?.name ?? "Material"}
                       </label>
                       <div className="flex flex-wrap gap-2">
@@ -1340,14 +1340,14 @@ function CartEnabledWorkspace({
                               onClick={() =>
                                 setConfig((c) => ({ ...c, color: color.name }))
                               }
-                              className={`quote-option-card ${isActive ? "quote-option-card-active" : ""} flex min-h-11 items-center gap-2 rounded-xl border px-4 text-left transition-all ${
+                              className={`quote-option-card ${isActive ? "quote-option-card-active" : ""} flex min-h-11 max-w-full items-center gap-2 rounded-xl border px-4 text-left transition-all ${
                                 isActive
                                   ? "border-[#6d28d9]/40 bg-[var(--brand-faint)]"
                                   : "border-[#6d28d9]/10 bg-white hover:border-[#6d28d9]/10"
                               }`}
                             >
                               <span
-                                className={`text-xs font-medium ${isActive ? "text-[var(--brand-primary)]" : "text-[#070b1d]"}`}
+                                className={`break-words text-xs font-medium [overflow-wrap:anywhere] ${isActive ? "text-[var(--brand-primary)]" : "text-[#070b1d]"}`}
                               >
                                 {color.name}
                               </span>

@@ -15,6 +15,7 @@ const boundedRegions = [
   'quote-step-nav',
   'quote-upload-card',
   'quote-viewer',
+  'quote-material-card',
   'quote-settings-card',
   'quote-summary-card',
 ]
@@ -50,6 +51,15 @@ test.describe('Instant Quote — mobile layouts', () => {
         expect(box, `${testId} should have a layout box`).not.toBeNull()
         expect(box!.x, `${testId} should not extend left of the viewport`).toBeGreaterThanOrEqual(-1)
         expect(box!.x + box!.width, `${testId} should not extend right of the viewport`).toBeLessThanOrEqual(viewport.width + 1)
+      }
+
+      const materialDescriptions = page.getByTestId('quote-material-card').locator('p')
+      const descriptionCount = await materialDescriptions.count()
+      for (let index = 0; index < descriptionCount; index += 1) {
+        const box = await materialDescriptions.nth(index).boundingBox()
+        expect(box, `material description ${index} should have a layout box`).not.toBeNull()
+        expect(box!.x, `material description ${index} should not extend left`).toBeGreaterThanOrEqual(-1)
+        expect(box!.x + box!.width, `material description ${index} should not extend right`).toBeLessThanOrEqual(viewport.width + 1)
       }
 
       const steps = page.getByTestId('quote-step-nav').getByRole('button')
