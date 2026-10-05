@@ -61,7 +61,13 @@ import type {
 const PAGE_SIZE = CUSTOMER_PAGE_SIZE;
 type SortKey = "newest" | "most-orders" | "highest-spend" | "last-active";
 type DrawerTab =
-  "profile" | "orders" | "files" | "invoices" | "notes" | "activity";
+  | "profile"
+  | "orders"
+  | "files"
+  | "invoices"
+  | "notes"
+  | "activity"
+  | "carts";
 type ActivitySectionKey =
   "sessions" | "pageVisits" | "featureUsage" | "searchLogs";
 
@@ -70,6 +76,45 @@ const SORT_TO_SERVER: Record<SortKey, CustomerSort> = {
   "most-orders": { sortBy: "total_orders", sortDir: "desc" },
   "highest-spend": { sortBy: "total_spent", sortDir: "desc" },
   "last-active": { sortBy: "last_seen_at", sortDir: "desc" },
+};
+
+type CustomerCartSummary = {
+  lineCount: number;
+  quantityTotal: number;
+  estimatedSubtotal: number;
+};
+
+type CustomerShopCartItem = {
+  id: string;
+  productName: string;
+  skuCode: string | null;
+  variantLabel: string | null;
+  customizationText: string | null;
+  quantity: number;
+  estimatedCost: number;
+  updatedAt: string | null;
+};
+
+type CustomerQuoteCartItem = {
+  id: string;
+  name: string;
+  quoteId: string | null;
+  material: string | null;
+  color: string | null;
+  infill: number | null;
+  layerHeight: number | null;
+  supports: boolean | null;
+  weightGrams: number | null;
+  estimatedHours: number | null;
+  dimensions: { x: number; y: number; z: number } | null;
+  quantity: number;
+  estimatedCost: number;
+  updatedAt: string | null;
+};
+
+type CustomerCarts = {
+  shopCart: { summary: CustomerCartSummary; items: CustomerShopCartItem[] };
+  quoteCart: { summary: CustomerCartSummary; items: CustomerQuoteCartItem[] };
 };
 
 function formatMoney(value?: number) {
@@ -664,6 +709,11 @@ function CustomerDrawer({
       label: "Activity",
       icon: <ActivityIcon className="h-4 w-4" />,
     },
+    {
+      id: "carts",
+      label: "Carts",
+      icon: <ShoppingCart className="h-4 w-4" />,
+    },
   ];
 
   return (
@@ -965,6 +1015,7 @@ function CustomerDrawer({
           )}
 
           {activeTab === "activity" && <ActivityTab customerId={customer.id} />}
+          {activeTab === "carts" && <CustomerCartsTab customerId={customer.id} />}
         </div>
       </motion.aside>
     </motion.div>
@@ -999,6 +1050,198 @@ function DrawerListEmpty<T>({
     );
   }
   return <>{children}</>;
+}
+
+function CustomerCartsTab({ customerId }: { customerId: string }) {
+  const [carts, setCarts] = useState<CustomerCarts | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+
+    async function loadCarts() {
+      try {
+        const response = await fetch(`/api/admin/customers/${customerId}/carts`, {
+          signal: controller.signal,
+        });
+        const body = (await response.json().catch(() => ({}))) as {
+          carts?: CustomerCarts;
+          error?: string;
+        };
+        if (!response.ok) {
+          throw new Error(body.error ?? "Failed to load customer carts.");
+        }
+        if (active) setCarts(body.carts ?? null);
+      } catch (loadError) {
+        if (!active || (loadError as Error).name === "AbortError") return;
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Failed to load customer carts.",
+        );
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void loadCarts();
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [customerId]);
+
+  if (loading) {
+    return (
+      <div className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 shadow-sm">
+        <Loader2 className="h-4 w-4 animate-spin text-violet-600" />
+        Loading active carts
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        {error}
+      </div>
+    );
+  }
+
+  const shopCart = carts?.shopCart ?? {
+    summary: { lineCount: 0, quantityTotal: 0, estimatedSubtotal: 0 },
+    items: [],
+  };
+  const quoteCart = carts?.quoteCart ?? {
+    summary: { lineCount: 0, quantityTotal: 0, estimatedSubtotal: 0 },
+    items: [],
+  };
+
+  return (
+    <div className="space-y-6">
+      <DrawerCartHeader title="3D Shop Cart" summary={shopCart.summary} />
+      {shopCart.items.length === 0 ? (
+        <DrawerCartEmpty message="No active 3D Shop items." />
+      ) : (
+        <div className="space-y-3">
+          {shopCart.items.map((item) => (
+            <div key={item.id} className="rounded-xl border border-gray-200 p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="truncate font-semibold text-gray-900">
+                    {item.productName}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-gray-500">
+                    {item.skuCode && <span>SKU: {item.skuCode}</span>}
+                    {item.variantLabel && <span>{item.variantLabel}</span>}
+                    {item.customizationText && <span>Custom: {item.customizationText}</span>}
+                  </div>
+                  {item.updatedAt && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      Updated {formatDate(item.updatedAt)}
+                    </div>
+                  )}
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className="font-semibold text-gray-900">
+                    {formatMoney(item.estimatedCost)}
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">Qty {item.quantity}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <DrawerCartHeader title="Instant Quote Cart" summary={quoteCart.summary} />
+      {quoteCart.items.length === 0 ? (
+        <DrawerCartEmpty message="No active Instant Quote items." />
+      ) : (
+        <div className="space-y-3">
+          {quoteCart.items.map((item) => {
+            const details = [
+              item.material,
+              item.color,
+              item.infill !== null ? `${item.infill}% infill` : null,
+              item.layerHeight !== null ? `${item.layerHeight} mm layer` : null,
+              item.weightGrams !== null ? `${item.weightGrams.toFixed(1)} g` : null,
+              item.estimatedHours !== null
+                ? `${Math.floor(item.estimatedHours)}h ${String(Math.round((item.estimatedHours % 1) * 60)).padStart(2, "0")}m`
+                : null,
+            ].filter((detail): detail is string => Boolean(detail));
+
+            return (
+              <div key={item.id} className="rounded-xl border border-gray-200 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold text-gray-900">{item.name}</div>
+                    <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-gray-500">
+                      {item.quoteId && <span>Quote: {item.quoteId}</span>}
+                      {details.map((detail, index) => <span key={`${detail}-${index}`}>{detail}</span>)}
+                      {item.supports === true && <span>Supports included</span>}
+                    </div>
+                    {item.dimensions && (
+                      <div className="mt-2 text-xs text-gray-500">
+                        {item.dimensions.x.toFixed(0)} × {item.dimensions.y.toFixed(0)} × {item.dimensions.z.toFixed(0)} mm
+                      </div>
+                    )}
+                    {item.updatedAt && (
+                      <div className="mt-2 text-xs text-gray-500">
+                        Updated {formatDate(item.updatedAt)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <div className="font-semibold text-gray-900">
+                      {formatMoney(item.estimatedCost)}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">Qty {item.quantity}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <p className="text-xs text-gray-500">
+        Estimates are cart snapshots; checkout recalculates the final price.
+      </p>
+    </div>
+  );
+}
+
+function DrawerCartHeader({
+  title,
+  summary,
+}: {
+  title: string;
+  summary: CustomerCartSummary;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+      <div>
+        <h3 className="font-semibold text-gray-900">{title}</h3>
+        <p className="mt-1 text-xs text-gray-500">
+          {summary.lineCount} line{summary.lineCount === 1 ? "" : "s"} · {summary.quantityTotal} item{summary.quantityTotal === 1 ? "" : "s"}
+        </p>
+      </div>
+      <div className="text-right">
+        <div className="font-semibold text-gray-900">{formatMoney(summary.estimatedSubtotal)}</div>
+        <div className="mt-1 text-xs text-gray-500">Saved estimate</div>
+      </div>
+    </div>
+  );
+}
+
+function DrawerCartEmpty({ message }: { message: string }) {
+  return (
+    <div className="rounded-xl border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500">
+      {message}
+    </div>
+  );
 }
 
 function ActivityTab({ customerId }: { customerId: string }) {
