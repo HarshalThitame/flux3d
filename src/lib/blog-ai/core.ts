@@ -7,10 +7,11 @@ import type { BlogPost } from '@/lib/blog/types'
 import { BLOG_VOICE } from './prompts'
 import { generatedArticleSchema, researchSchema, topicCandidateSchema, type BlogGenerationResult, type BlogQualityValidation, type BlogResearch, type BlogResearchSource, type BlogTopicCandidate } from './types'
 
-// The automation runs three times every week; Luna keeps a complete
-// research/write/validation run within the requested low per-article budget.
-const DEFAULT_GENERATION_MODEL = 'gpt-6-luna'
-const DEFAULT_RESEARCH_MODEL = 'gpt-6-luna'
+// These models retain low operating cost while reliably supporting the
+// Responses API's strict Structured Outputs. Research additionally needs a
+// model that supports the hosted web_search tool.
+const DEFAULT_GENERATION_MODEL = 'gpt-4o-mini'
+const DEFAULT_RESEARCH_MODEL = 'gpt-4.1-mini'
 const DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small'
 
 export function getBlogModels(settings?: { generation_model?: string | null; research_model?: string | null }) {
@@ -51,6 +52,32 @@ function parseResponse<T>(text: string, schema: z.ZodType<T>): T {
   try { return schema.parse(JSON.parse(text)) } catch (error) { throw new Error(`AI structured output failed validation: ${error instanceof Error ? error.message : 'unknown error'}`) }
 }
 
+type StructuredResponse = { output_text: string }
+
+async function requestStructured<T, TResponse extends StructuredResponse>(stage: string, schema: z.ZodType<T>, request: (repairAttempt: boolean) => Promise<TResponse>) {
+  const first = await request(false)
+  try {
+    return { data: parseResponse(first.output_text, schema), response: first }
+  } catch (firstError) {
+    // Strict output may still be incomplete when a response is interrupted.
+    // Retry exactly once so malformed AI output never creates a broken post.
+    const repaired = await request(true)
+    try {
+      return { data: parseResponse(repaired.output_text, schema), response: repaired }
+    } catch (repairError) {
+      const firstMessage = firstError instanceof Error ? firstError.message : 'unknown structured-output error'
+      const repairMessage = repairError instanceof Error ? repairError.message : 'unknown repair error'
+      throw new Error(`${stage} output was invalid after one repair retry. First attempt: ${firstMessage}. Retry: ${repairMessage}`)
+    }
+  }
+}
+
+function instructionsFor(repairAttempt: boolean) {
+  return repairAttempt
+    ? `${BLOG_VOICE}\n\nReturn one complete, valid JSON object only. The previous attempt was incomplete or malformed. Do not truncate any JSON string.`
+    : BLOG_VOICE
+}
+
 function sourceList(response: { output?: unknown[] }): BlogResearchSource[] {
   const seen = new Set<string>()
   const sources: BlogResearchSource[] = []
@@ -71,46 +98,24 @@ function sourceList(response: { output?: unknown[] }): BlogResearchSource[] {
 }
 
 export async function generateCandidates(prompt: string, model: string): Promise<BlogTopicCandidate[]> {
-  const response = await client().responses.create({ model, instructions: BLOG_VOICE, input: prompt, text: jsonSchema('blog_topic_candidates', schemaForCandidates()), max_output_tokens: 1800, store: false })
-  return parseResponse(response.output_text, candidatesSchema).candidates
+  const result = await requestStructured('AI topic candidate', candidatesSchema, (repairAttempt) => client().responses.create({
+    model, instructions: instructionsFor(repairAttempt), input: prompt, text: jsonSchema('blog_topic_candidates', schemaForCandidates()), max_output_tokens: 1800, store: false,
+  }))
+  return result.data.candidates
 }
 
 export async function researchTopic(prompt: string, model: string): Promise<BlogResearch> {
-  const response = await client().responses.create({ model, instructions: BLOG_VOICE, input: prompt, tools: [{ type: 'web_search' }], tool_choice: 'required', include: ['web_search_call.action.sources'], text: jsonSchema('blog_research', schemaForResearch()), max_output_tokens: 3000, store: false })
-  const research = parseResponse(response.output_text, researchSchema)
-  return { ...research, sources: sourceList(response) }
+  const result = await requestStructured('AI research', researchSchema, (repairAttempt) => client().responses.create({
+    model, instructions: instructionsFor(repairAttempt), input: prompt, tools: [{ type: 'web_search' }], tool_choice: 'required', include: ['web_search_call.action.sources'], text: jsonSchema('blog_research', schemaForResearch()), max_output_tokens: 3000, store: false,
+  }))
+  return { ...result.data, sources: sourceList(result.response) }
 }
 
 export async function generateArticle(prompt: string, model: string): Promise<BlogGenerationResult> {
-  const createResponse = (repairAttempt: boolean) => client().responses.create({
-    model,
-    instructions: repairAttempt
-      ? `${BLOG_VOICE}\n\nReturn one complete, valid JSON object only. The previous attempt was incomplete or malformed. Keep the article within the requested word range and do not truncate any JSON string.`
-      : BLOG_VOICE,
-    input: prompt,
-    text: jsonSchema('blog_article', schemaForArticle()),
-    max_output_tokens: 6000,
-    store: false,
-  })
-
-  let response = await createResponse(false)
-  try {
-    const article = parseResponse(response.output_text, generatedArticleSchema)
-    return { ...article, content: sanitizeBlogHtml(article.content), slug: slugifyTitle(article.slug) }
-  } catch (firstError) {
-    // A response can be incomplete (for example due to an output-token limit),
-    // even with Structured Outputs enabled. Retry once with explicit completion
-    // instructions; bounded retries prevent both runaway cost and broken drafts.
-    response = await createResponse(true)
-    try {
-      const article = parseResponse(response.output_text, generatedArticleSchema)
-      return { ...article, content: sanitizeBlogHtml(article.content), slug: slugifyTitle(article.slug) }
-    } catch (repairError) {
-      const firstMessage = firstError instanceof Error ? firstError.message : 'unknown structured-output error'
-      const repairMessage = repairError instanceof Error ? repairError.message : 'unknown repair error'
-      throw new Error(`AI article output was invalid after one repair retry. First attempt: ${firstMessage}. Retry: ${repairMessage}`)
-    }
-  }
+  const result = await requestStructured('AI article', generatedArticleSchema, (repairAttempt) => client().responses.create({
+    model, instructions: instructionsFor(repairAttempt), input: prompt, text: jsonSchema('blog_article', schemaForArticle()), max_output_tokens: 6000, store: false,
+  }))
+  return { ...result.data, content: sanitizeBlogHtml(result.data.content), slug: slugifyTitle(result.data.slug) }
 }
 
 export function fingerprint(value: string) {

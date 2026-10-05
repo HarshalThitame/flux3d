@@ -1,6 +1,6 @@
 # AI blog automation
 
-The blog engine uses `OPENAI_API_KEY` exclusively in server-side routes. Configure `OPENAI_BLOG_MODEL`, `OPENAI_BLOG_RESEARCH_MODEL`, and `OPENAI_BLOG_EMBEDDING_MODEL` in Vercel. Both blog models default to `gpt-6-luna`, with bounded outputs, to keep routine generation below the requested low-cost budget.
+The blog engine uses `OPENAI_API_KEY` exclusively in server-side routes. Configure `OPENAI_BLOG_MODEL`, `OPENAI_BLOG_RESEARCH_MODEL`, and `OPENAI_BLOG_EMBEDDING_MODEL` in Vercel. It defaults to `gpt-4o-mini` for structured article generation and `gpt-4.1-mini` for web-backed research, with bounded outputs to keep routine generation low-cost.
 
 Run the Supabase migration `20261005143000_blog_ai_engine.sql`, then create the signed QStash schedule once:
 
