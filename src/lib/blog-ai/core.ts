@@ -7,8 +7,10 @@ import type { BlogPost } from '@/lib/blog/types'
 import { BLOG_VOICE } from './prompts'
 import { generatedArticleSchema, researchSchema, topicCandidateSchema, type BlogGenerationResult, type BlogQualityValidation, type BlogResearch, type BlogResearchSource, type BlogTopicCandidate } from './types'
 
-const DEFAULT_GENERATION_MODEL = 'gpt-6-astra'
-const DEFAULT_RESEARCH_MODEL = 'gpt-6-astra'
+// The automation runs three times every week; Luna keeps a complete
+// research/write/validation run within the requested low per-article budget.
+const DEFAULT_GENERATION_MODEL = 'gpt-6-luna'
+const DEFAULT_RESEARCH_MODEL = 'gpt-6-luna'
 const DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small'
 
 export function getBlogModels(settings?: { generation_model?: string | null; research_model?: string | null }) {
@@ -69,18 +71,18 @@ function sourceList(response: { output?: unknown[] }): BlogResearchSource[] {
 }
 
 export async function generateCandidates(prompt: string, model: string): Promise<BlogTopicCandidate[]> {
-  const response = await client().responses.create({ model, instructions: BLOG_VOICE, input: prompt, text: jsonSchema('blog_topic_candidates', schemaForCandidates()), max_output_tokens: 4000, store: false })
+  const response = await client().responses.create({ model, instructions: BLOG_VOICE, input: prompt, text: jsonSchema('blog_topic_candidates', schemaForCandidates()), max_output_tokens: 1800, store: false })
   return parseResponse(response.output_text, candidatesSchema).candidates
 }
 
 export async function researchTopic(prompt: string, model: string): Promise<BlogResearch> {
-  const response = await client().responses.create({ model, instructions: BLOG_VOICE, input: prompt, tools: [{ type: 'web_search' }], tool_choice: 'required', include: ['web_search_call.action.sources'], text: jsonSchema('blog_research', schemaForResearch()), max_output_tokens: 6000, store: false })
+  const response = await client().responses.create({ model, instructions: BLOG_VOICE, input: prompt, tools: [{ type: 'web_search' }], tool_choice: 'required', include: ['web_search_call.action.sources'], text: jsonSchema('blog_research', schemaForResearch()), max_output_tokens: 3000, store: false })
   const research = parseResponse(response.output_text, researchSchema)
   return { ...research, sources: sourceList(response) }
 }
 
 export async function generateArticle(prompt: string, model: string): Promise<BlogGenerationResult> {
-  const response = await client().responses.create({ model, instructions: BLOG_VOICE, input: prompt, text: jsonSchema('blog_article', schemaForArticle()), max_output_tokens: 14_000, store: false })
+  const response = await client().responses.create({ model, instructions: BLOG_VOICE, input: prompt, text: jsonSchema('blog_article', schemaForArticle()), max_output_tokens: 6000, store: false })
   const article = parseResponse(response.output_text, generatedArticleSchema)
   return { ...article, content: sanitizeBlogHtml(article.content), slug: slugifyTitle(article.slug) }
 }
