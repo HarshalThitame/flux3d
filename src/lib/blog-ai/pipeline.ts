@@ -6,7 +6,7 @@ import { logError, logInfo, logWarn } from '@/lib/logger'
 import type { BlogPost } from '@/lib/blog/types'
 import { publicBlogUrl } from '@/lib/blog/seo'
 import { articlePrompt, candidatePrompt, researchPrompt } from './prompts'
-import { generateArticle, generateCandidates, generateEmbedding, getBlogModels, researchTopic, selectUniqueCandidate, validateArticle } from './core'
+import { generateArticle, generateCandidates, generateEmbedding, getBlogModels, rankUniqueCandidates, researchTopic, validateArticle } from './core'
 import type { BlogAISettings, BlogGenerationResult, BlogQualityValidation } from './types'
 
 type RunRow = { id: string; schedule_key: string; status: string; attempt_number: number }
@@ -96,15 +96,39 @@ export async function runBlogGeneration(input: GenerationInput): Promise<Generat
     const candidates = input.customTopic
       ? [{ topic: input.customTopic, title: input.customTopic, primaryKeyword: input.customTopic, category: 'Guides' as const, searchIntent: 'Educational', audience: '3D printing customers', reason: 'Admin-selected topic', trendReason: 'Admin request', score: 100 }]
       : await generateCandidates(candidatePrompt(compactPosts(posts), config.excluded_topics), models.research)
-    const selected = selectUniqueCandidate(candidates, posts, config.minimum_uniqueness_score)
-    if (!selected) throw new Error('No sufficiently unique topic candidate was available.')
-    const candidateEmbedding = await generateEmbedding(`${selected.candidate.topic} ${selected.candidate.primaryKeyword}`, models.embedding).catch(() => null)
-    if (candidateEmbedding) {
+    const rankedCandidates = rankUniqueCandidates(candidates, posts, config.minimum_uniqueness_score)
+    if (!rankedCandidates.length) throw new Error('No sufficiently unique topic candidate was available.')
+
+    // Embeddings are useful for catching reworded duplicates, but every 3D-printing
+    // subject has baseline semantic similarity. A 72% "uniqueness" setting must not
+    // be converted to a 0.28 vector threshold: that rejects almost every valid topic.
+    // Try the best candidates in order and only reject very-near semantic matches.
+    let selected: typeof rankedCandidates[number] | undefined
+    let candidateEmbedding: number[] | null = null
+    for (const ranked of rankedCandidates) {
+      const embedding = await generateEmbedding(`${ranked.candidate.topic} ${ranked.candidate.primaryKeyword}`, models.embedding).catch(() => null)
+      if (!embedding) {
+        selected = ranked
+        candidateEmbedding = null
+        break
+      }
       const supabase = createAdminSupabaseClient()
-      const { data: matches } = await supabase.rpc('match_blog_topic_embeddings', { query_embedding: JSON.stringify(candidateEmbedding), match_limit: 1 })
-      const similarity = Array.isArray(matches) && typeof matches[0]?.similarity === 'number' ? matches[0].similarity : 0
-      if (similarity > 1 - config.minimum_uniqueness_score / 100) throw new Error('Selected topic is semantically too similar to an existing article.')
+      const { data, error } = await supabase.rpc('match_blog_topic_embeddings', { query_embedding: JSON.stringify(embedding), match_limit: 1 })
+      if (error) {
+        logWarn('Blog topic semantic lookup failed; using deterministic duplicate detection.', { module: 'blog-ai', error: new Error(error.message) })
+        selected = ranked
+        candidateEmbedding = embedding
+        break
+      }
+      const similarity = Array.isArray(data) && typeof data[0]?.similarity === 'number' ? data[0].similarity : 0
+      if (similarity < 0.88) {
+        selected = ranked
+        candidateEmbedding = embedding
+        break
+      }
+      logInfo('Blog AI candidate rejected as a semantic duplicate.', { module: 'blog-ai', metadata: { runId: run.id, topic: ranked.candidate.topic, similarity } })
     }
+    if (!selected) throw new Error('All generated topic candidates were too similar to existing articles. Try a custom topic or retry later.')
     await updateRun(run.id, { selected_topic: selected.candidate.topic, selected_candidate: selected.candidate, status: 'generating', model: models.generation })
     logInfo('Blog AI topic selected.', { module: 'blog-ai', metadata: { runId: run.id, topic: selected.candidate.topic, uniqueness: selected.uniqueness } })
 

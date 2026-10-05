@@ -110,13 +110,22 @@ export function duplicateScore(candidate: Pick<BlogTopicCandidate, 'topic' | 'ti
   return Math.round((title * 0.45 + keyword * 0.25 + topic * 0.3) * 100)
 }
 
-export function selectUniqueCandidate(candidates: BlogTopicCandidate[], posts: DuplicateComparablePost[], minimumUniqueness: number) {
-  const scored = candidates.map((candidate) => {
+export type RankedTopicCandidate = {
+  candidate: BlogTopicCandidate
+  uniqueness: number
+  composite: number
+}
+
+export function rankUniqueCandidates(candidates: BlogTopicCandidate[], posts: DuplicateComparablePost[], minimumUniqueness: number): RankedTopicCandidate[] {
+  return candidates.map((candidate) => {
     const similarity = Math.max(0, ...posts.map((post) => duplicateScore(candidate, post)))
     const uniqueness = 100 - similarity
     return { candidate, uniqueness, composite: candidate.score * 0.65 + uniqueness * 0.35 }
   }).filter((entry) => entry.uniqueness >= minimumUniqueness).sort((a, b) => b.composite - a.composite)
-  return scored[0] ?? null
+}
+
+export function selectUniqueCandidate(candidates: BlogTopicCandidate[], posts: DuplicateComparablePost[], minimumUniqueness: number) {
+  return rankUniqueCandidates(candidates, posts, minimumUniqueness)[0] ?? null
 }
 
 export async function generateEmbedding(text: string, model: string): Promise<number[] | null> {

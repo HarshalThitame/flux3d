@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { duplicateScore, validateArticle } from '../core'
+import { duplicateScore, rankUniqueCandidates, validateArticle } from '../core'
 import { isScheduledBlogDay, kolkataScheduleKey } from '../schedule'
 
 describe('blog AI deterministic guards', () => {
@@ -9,6 +9,14 @@ describe('blog AI deterministic guards', () => {
       { title: 'PLA vs PETG: Which Is Better?', slug: 'pla-vs-petg', focus_keyword: 'PLA vs PETG', primary_keyword: 'PLA vs PETG', category: 'Comparisons', excerpt: 'A material comparison for 3D printed parts.' },
     )
     expect(score).toBeGreaterThanOrEqual(45)
+  })
+
+  it('keeps independently useful topics ranked after deterministic duplicate checks', () => {
+    const ranked = rankUniqueCandidates([
+      { topic: 'How nozzle diameter changes FDM print speed and detail', title: 'Choosing an FDM nozzle diameter', primaryKeyword: 'FDM nozzle diameter', category: 'Guides', searchIntent: 'Educational', audience: 'FDM users', reason: 'Useful setup guidance for functional parts.', trendReason: 'Evergreen technical question.', score: 88 },
+    ], [{ title: '3D Printing Tolerances and Clearances', slug: '3d-printing-tolerances-clearances', focus_keyword: '3D printing tolerances', primary_keyword: '3D printing tolerances', category: 'Guides', excerpt: 'Validate fit with small test prints.' }], 72)
+    expect(ranked).toHaveLength(1)
+    expect(ranked[0]?.candidate.primaryKeyword).toBe('FDM nozzle diameter')
   })
 
   it('rejects unsafe, too-short content', () => {
