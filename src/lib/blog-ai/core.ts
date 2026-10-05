@@ -82,9 +82,35 @@ export async function researchTopic(prompt: string, model: string): Promise<Blog
 }
 
 export async function generateArticle(prompt: string, model: string): Promise<BlogGenerationResult> {
-  const response = await client().responses.create({ model, instructions: BLOG_VOICE, input: prompt, text: jsonSchema('blog_article', schemaForArticle()), max_output_tokens: 6000, store: false })
-  const article = parseResponse(response.output_text, generatedArticleSchema)
-  return { ...article, content: sanitizeBlogHtml(article.content), slug: slugifyTitle(article.slug) }
+  const createResponse = (repairAttempt: boolean) => client().responses.create({
+    model,
+    instructions: repairAttempt
+      ? `${BLOG_VOICE}\n\nReturn one complete, valid JSON object only. The previous attempt was incomplete or malformed. Keep the article within the requested word range and do not truncate any JSON string.`
+      : BLOG_VOICE,
+    input: prompt,
+    text: jsonSchema('blog_article', schemaForArticle()),
+    max_output_tokens: 6000,
+    store: false,
+  })
+
+  let response = await createResponse(false)
+  try {
+    const article = parseResponse(response.output_text, generatedArticleSchema)
+    return { ...article, content: sanitizeBlogHtml(article.content), slug: slugifyTitle(article.slug) }
+  } catch (firstError) {
+    // A response can be incomplete (for example due to an output-token limit),
+    // even with Structured Outputs enabled. Retry once with explicit completion
+    // instructions; bounded retries prevent both runaway cost and broken drafts.
+    response = await createResponse(true)
+    try {
+      const article = parseResponse(response.output_text, generatedArticleSchema)
+      return { ...article, content: sanitizeBlogHtml(article.content), slug: slugifyTitle(article.slug) }
+    } catch (repairError) {
+      const firstMessage = firstError instanceof Error ? firstError.message : 'unknown structured-output error'
+      const repairMessage = repairError instanceof Error ? repairError.message : 'unknown repair error'
+      throw new Error(`AI article output was invalid after one repair retry. First attempt: ${firstMessage}. Retry: ${repairMessage}`)
+    }
+  }
 }
 
 export function fingerprint(value: string) {
