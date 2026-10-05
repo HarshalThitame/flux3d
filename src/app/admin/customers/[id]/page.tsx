@@ -68,12 +68,53 @@ type CustomerQuote = {
   convertedToOrder?: boolean
 }
 
-type CustomerCart = {
+type CustomerCartSummary = {
+  lineCount: number
+  quantityTotal: number
+  estimatedSubtotal: number
+}
+
+type CustomerShopCartItem = {
   id: string
-  material?: string
-  weightGrams?: number
-  estimatedCost?: number
-  status?: string
+  productName: string
+  thumbnail: string | null
+  skuCode: string | null
+  variantLabel: string | null
+  customizationText: string | null
+  quantity: number
+  estimatedCost: number
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+type CustomerQuoteCartItem = {
+  id: string
+  name: string
+  quoteId: string | null
+  quoteVersionId: string | null
+  material: string | null
+  color: string | null
+  infill: number | null
+  layerHeight: number | null
+  supports: boolean | null
+  weightGrams: number | null
+  estimatedHours: number | null
+  dimensions: { x: number; y: number; z: number } | null
+  quantity: number
+  estimatedCost: number
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+type CustomerCarts = {
+  shopCart: {
+    summary: CustomerCartSummary
+    items: CustomerShopCartItem[]
+  }
+  quoteCart: {
+    summary: CustomerCartSummary
+    items: CustomerQuoteCartItem[]
+  }
 }
 
 type CustomerOrder = {
@@ -140,6 +181,31 @@ type CustomerProfileResponse = {
   files?: CustomerFile[]
 }
 
+function formatMoney(value: number) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+function formatUpdatedAt(value: string | null) {
+  if (!value || Number.isNaN(new Date(value).getTime())) return null
+  return new Date(value).toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function formatEstimatedHours(hours: number | null) {
+  if (hours === null || !Number.isFinite(hours)) return null
+  const totalMinutes = Math.max(0, Math.round(hours * 60))
+  return `${Math.floor(totalMinutes / 60)}h ${String(totalMinutes % 60).padStart(2, '0')}m`
+}
+
 const statusBadgeClass = (value: string | undefined, highlight: string, danger: string, warning: string) => {
   const v = value?.toLowerCase() ?? ''
   if (v === 'resolved' || v === 'delivered' || v === 'paid' || v === 'captured' || v === 'active' || v === 'processed') {
@@ -165,7 +231,7 @@ export default function CustomerProfilePage() {
 
   const [sessions, setSessions] = useState<CustomerSession[] | null>(null)
   const [quotes, setQuotes] = useState<CustomerQuote[] | null>(null)
-  const [carts, setCarts] = useState<CustomerCart[] | null>(null)
+  const [carts, setCarts] = useState<CustomerCarts | null>(null)
   const [whatsappMessages, setWhatsappMessages] = useState<CustomerWhatsAppMessage[] | null>(null)
   const [supportTickets, setSupportTickets] = useState<CustomerSupportTicket[] | null>(null)
   const [payments, setPayments] = useState<CustomerPayment[] | null>(null)
@@ -245,7 +311,7 @@ export default function CustomerProfilePage() {
       if (tab === 'sessions') setSessions(json.sessions || [])
       if (tab === 'pages') setPageViews(json.pageViews || [])
       if (tab === 'quotes') setQuotes(json.quotes || [])
-      if (tab === 'cart') setCarts(json.carts || [])
+      if (tab === 'cart') setCarts(json.carts || null)
       if (tab === 'tickets') setSupportTickets(json.tickets || [])
       if (tab === 'whatsapp') setWhatsappMessages(json.messages || [])
       if (tab === 'payments') setPayments(json.payments || [])
@@ -580,41 +646,100 @@ export default function CustomerProfilePage() {
           {/* Cart & Wishlist Tab */}
           {activeTab === 'cart' && (
             <div className="space-y-6">
-              <div className="rounded-2xl border border-gray-200 bg-white p-6">
-                <h2 className="mb-4 text-lg font-semibold text-[#0F1B3D]">Cart Items</h2>
-                {isLoading('cart') ? (
-                  <SkeletonBlock className="h-40 w-full" />
-                ) : !carts || carts.length === 0 ? (
-                  <div className="rounded-xl bg-white p-8 text-center text-sm text-[#6F7192]">
-                    No cart items yet.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {carts.map((cart) => (
-                      <div key={cart.id} className="rounded-xl bg-white p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium text-[#0F1B3D]">{cart.material}</div>
-                            <div className="text-xs text-[#6F7192]">
-                              {cart.weightGrams || 0}g · ₹{cart.estimatedCost || 0}
+              {isLoading('cart') ? (
+                <SkeletonBlock className="h-80 w-full" />
+              ) : (
+                <>
+                  <CartSectionHeader
+                    title="3D Shop Cart"
+                    summary={carts?.shopCart.summary}
+                  />
+                  {!carts || carts.shopCart.items.length === 0 ? (
+                    <CartEmptyState message="No active 3D Shop items." />
+                  ) : (
+                    <div className="space-y-3 rounded-2xl border border-gray-200 bg-white p-6">
+                      {carts.shopCart.items.map((item) => {
+                        const updatedAt = formatUpdatedAt(item.updatedAt)
+                        return (
+                          <div key={item.id} className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-gray-50/50 p-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="flex min-w-0 gap-3">
+                              {item.thumbnail ? (
+                                // eslint-disable-next-line @next/next/no-img-element -- cart thumbnails may come from the configured Supabase media host or legacy catalog URLs.
+                                <img
+                                  src={item.thumbnail}
+                                  alt=""
+                                  className="h-12 w-12 shrink-0 rounded-lg border border-gray-200 bg-white object-cover"
+                                />
+                              ) : (
+                                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-semibold text-[#6F7192]">
+                                  3D
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <div className="truncate font-medium text-[#0F1B3D]">{item.productName}</div>
+                                <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-[#6F7192]">
+                                  {item.skuCode && <span>SKU: {item.skuCode}</span>}
+                                  {item.variantLabel && <span>{item.variantLabel}</span>}
+                                  {item.customizationText && <span>Custom: {item.customizationText}</span>}
+                                </div>
+                                {updatedAt && <div className="mt-2 text-xs text-[#6F7192]">Updated {updatedAt}</div>}
+                              </div>
+                            </div>
+                            <div className="shrink-0 text-left sm:text-right">
+                              <div className="text-sm font-semibold text-[#0F1B3D]">{formatMoney(item.estimatedCost)}</div>
+                              <div className="mt-1 text-xs text-[#6F7192]">Qty {item.quantity} · Saved estimate</div>
                             </div>
                           </div>
-                          <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                            statusBadgeClass(
-                              cart.status,
-                              'bg-emerald-100 text-emerald-700',
-                              'bg-rose-400/20 text-rose-400',
-                              'bg-blue-100 text-blue-700',
-                            )
-                          }`}>
-                            {cart.status}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  <CartSectionHeader
+                    title="Instant Quote Cart"
+                    summary={carts?.quoteCart.summary}
+                  />
+                  {!carts || carts.quoteCart.items.length === 0 ? (
+                    <CartEmptyState message="No active Instant Quote items." />
+                  ) : (
+                    <div className="space-y-3 rounded-2xl border border-gray-200 bg-white p-6">
+                      {carts.quoteCart.items.map((item) => {
+                        const details = [
+                          item.material,
+                          item.color,
+                          item.infill !== null ? `${item.infill}% infill` : null,
+                          item.layerHeight !== null ? `${item.layerHeight} mm layer` : null,
+                          item.weightGrams !== null ? `${item.weightGrams.toFixed(1)} g` : null,
+                          formatEstimatedHours(item.estimatedHours),
+                        ].filter((detail): detail is string => Boolean(detail))
+                        const updatedAt = formatUpdatedAt(item.updatedAt)
+                        return (
+                          <div key={item.id} className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-gray-50/50 p-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
+                              <div className="truncate font-medium text-[#0F1B3D]">{item.name}</div>
+                              <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-[#6F7192]">
+                                {item.quoteId && <span>Quote: {item.quoteId}</span>}
+                                {details.map((detail, index) => <span key={`${detail}-${index}`}>{detail}</span>)}
+                                {item.supports === true && <span>Supports included</span>}
+                              </div>
+                              {item.dimensions && (
+                                <div className="mt-2 text-xs text-[#6F7192]">
+                                  {item.dimensions.x.toFixed(0)} × {item.dimensions.y.toFixed(0)} × {item.dimensions.z.toFixed(0)} mm
+                                </div>
+                              )}
+                              {updatedAt && <div className="mt-2 text-xs text-[#6F7192]">Updated {updatedAt}</div>}
+                            </div>
+                            <div className="shrink-0 text-left sm:text-right">
+                              <div className="text-sm font-semibold text-[#0F1B3D]">{formatMoney(item.estimatedCost)}</div>
+                              <div className="mt-1 text-xs text-[#6F7192]">Qty {item.quantity} · Saved estimate</div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
 
               <div className="rounded-2xl border border-gray-200 bg-white p-6">
                 <div className="mb-4 flex items-center gap-2">
@@ -894,6 +1019,41 @@ export default function CustomerProfilePage() {
           )}
         </motion.div>
       </AnimatePresence>
+    </div>
+  )
+}
+
+function CartSectionHeader({
+  title,
+  summary,
+}: {
+  title: string
+  summary?: CustomerCartSummary
+}) {
+  const lineCount = summary?.lineCount ?? 0
+  const quantityTotal = summary?.quantityTotal ?? 0
+  const estimatedSubtotal = summary?.estimatedSubtotal ?? 0
+
+  return (
+    <div className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 className="text-lg font-semibold text-[#0F1B3D]">{title}</h2>
+        <p className="mt-1 text-xs text-[#6F7192]">
+          {lineCount} line{lineCount === 1 ? '' : 's'} · {quantityTotal} item{quantityTotal === 1 ? '' : 's'}
+        </p>
+      </div>
+      <div className="text-left sm:text-right">
+        <div className="text-sm font-semibold text-[#0F1B3D]">{formatMoney(estimatedSubtotal)}</div>
+        <div className="mt-1 text-xs text-[#6F7192]">Saved estimate</div>
+      </div>
+    </div>
+  )
+}
+
+function CartEmptyState({ message }: { message: string }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-[#6F7192]">
+      {message}
     </div>
   )
 }
