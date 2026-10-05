@@ -25,5 +25,5 @@ export function articlePrompt(research: BlogResearch, internalLinks: string, min
 Write a complete Flux3D article from this research brief. Return safe semantic HTML only in content: p, h2, h3, ul, ol, li, table, thead, tbody, tr, th, td, blockquote, strong, em, code, pre, and a. Do not include h1, script, style, iframe, images, raw markdown, or external URLs not found in the supplied research sources. Include 2-5 relevant supplied internal links naturally when they genuinely help. The article should normally be ${minWords}-${maxWords} words; do not pad a simple topic. Add an FAQ only when it suits the topic. ${includeCta ? 'End with one subtle Flux3D custom-part/prototype CTA.' : 'Do not include a commercial CTA.'}
 Research:\n${JSON.stringify(research)}
 Available internal links:\n${internalLinks || 'None'}
-` 
+`
 }
