@@ -4,6 +4,10 @@ import type {
   ShopProductHotspot,
 } from "@/lib/shop/admin-types";
 import { descriptionBlocksSchema } from "@/lib/shop/blocks";
+import {
+  DEFAULT_INVITATION_CONFIG,
+  invitationFieldKeys,
+} from "@/lib/shop/invitation";
 
 export const productHotspotSchema: z.ZodType<ShopProductHotspot> = z.object({
   id: z.string().min(1),
@@ -107,6 +111,18 @@ export const productFormSchema = z.object({
   customization_is_required: z.boolean(),
   customization_min_length: z.number().int().min(0),
   customization_max_length: z.number().int().min(1),
+  invitation_config: z
+    .object({
+      enabled: z.boolean(),
+      sampleSkuId: z.string().uuid().nullable(),
+      minFinalQuantity: z.number().int().min(1).max(10000),
+      creditExpiryDays: z.number().int().min(1).max(365),
+      fields: z
+        .array(z.enum(invitationFieldKeys))
+        .min(1)
+        .max(invitationFieldKeys.length),
+    })
+    .default(DEFAULT_INVITATION_CONFIG),
   is_featured: z.boolean(),
   is_active: z.boolean(),
   is_archived: z.boolean(),

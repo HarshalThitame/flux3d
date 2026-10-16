@@ -1,3 +1,5 @@
+import type { ShopInvitationCustomization } from "@/lib/shop/public-types";
+
 export const shopOrderStatuses = [
   "placed",
   "confirmed",
@@ -51,6 +53,7 @@ export type ShopOrderItem = {
     amount: number;
   } | null;
   customizationText: string | null;
+  customizationData?: ShopInvitationCustomization | null;
 };
 
 export type ShopShippingAddress = {

@@ -2,25 +2,64 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { createAdminSupabaseClient } from "@/lib/admin/server";
 import { getCheckoutSettings } from "@/lib/settings";
-import { buildShopPricingSnapshot, calculateCouponDiscount, type ShopCouponResult } from "@/lib/shop/pricing";
+import {
+  buildShopPricingSnapshot,
+  calculateCouponDiscount,
+  type ShopCouponResult,
+} from "@/lib/shop/pricing";
 import { calculateShippingFromRules } from "@/lib/shop/shipping";
-import { groupRulesByProduct, resolveCartUnitPrice, type CartPriceRule } from "@/lib/shop/cart-price-rules";
+import {
+  groupRulesByProduct,
+  resolveCartUnitPrice,
+  type CartPriceRule,
+} from "@/lib/shop/cart-price-rules";
 import type { ShopOrderItem, ShopShippingAddress } from "@/lib/shop/orders";
-import { calculateShopMoney, promotionDiscountPaise, toPaise } from "./financials";
+import {
+  calculateShopMoney,
+  promotionDiscountPaise,
+  toPaise,
+} from "./financials";
 import type { PlaceOrderItemInput } from "./place-order";
 import type { ShopQuote } from "./quote-types";
+import {
+  normalizeInvitationConfig,
+  normalizeInvitationDetails,
+  validateInvitationDetails,
+} from "./invitation";
+import type { ShopInvitationCustomization } from "./public-types";
 
-function assertPromotionApplicable(promotion: Record<string, unknown>, items: ShopOrderItem[], products: Map<string, Record<string, unknown>>) {
-  const token = (v: unknown) => String(v ?? "").trim().toLowerCase();
-  const categories = items.flatMap(item => { const p = products.get(item.productId); const c = p?.category as Record<string, unknown> | null; return [p?.category_id, c?.id, c?.name, c?.slug]; });
+function assertPromotionApplicable(
+  promotion: Record<string, unknown>,
+  items: ShopOrderItem[],
+  products: Map<string, Record<string, unknown>>,
+) {
+  const token = (v: unknown) =>
+    String(v ?? "")
+      .trim()
+      .toLowerCase();
+  const categories = items.flatMap((item) => {
+    const p = products.get(item.productId);
+    const c = p?.category as Record<string, unknown> | null;
+    return [p?.category_id, c?.id, c?.name, c?.slug];
+  });
   const candidates: Record<string, unknown[]> = {
-    applicable_products: items.flatMap(item => [item.productId, item.productSlug, item.productName]),
+    applicable_products: items.flatMap((item) => [
+      item.productId,
+      item.productSlug,
+      item.productName,
+    ]),
     applicable_categories: categories,
-    applicable_materials: items.flatMap(item => Object.values(item.variantCombination)),
+    applicable_materials: items.flatMap((item) =>
+      Object.values(item.variantCombination),
+    ),
   };
   for (const [key, values] of Object.entries(candidates)) {
     const required = promotion[key];
-    if (Array.isArray(required) && required.length && !required.some(v => values.some(c => token(c) === token(v)))) {
+    if (
+      Array.isArray(required) &&
+      required.length &&
+      !required.some((v) => values.some((c) => token(c) === token(v)))
+    ) {
       throw new Error("This promotion does not apply to these products.");
     }
   }
@@ -70,6 +109,23 @@ export function normalizeOrderItems(value: unknown): PlaceOrderItemInput[] {
         typeof entry.customizationText === "string"
           ? entry.customizationText.trim() || null
           : null,
+      customizationData:
+        isRecord(entry.customizationData) &&
+        entry.customizationData.kind === "invitation"
+          ? ({
+              kind: "invitation",
+              details: normalizeInvitationDetails(
+                entry.customizationData.details,
+              ) ?? {
+                hostNames: "",
+                eventDate: "",
+                venue: "",
+                rsvp: "",
+                wording: "",
+              },
+              isSample: Boolean(entry.customizationData.isSample),
+            } satisfies ShopInvitationCustomization)
+          : null,
     };
   });
 }
@@ -108,17 +164,35 @@ function isLimitReached(limit: unknown, used: unknown) {
   return Number(used ?? 0) >= usageLimit;
 }
 
-async function promotionUsage(supabase: ReturnType<typeof createAdminSupabaseClient>, table: "coupons" | "offers", id: string, userId: string) {
+async function promotionUsage(
+  supabase: ReturnType<typeof createAdminSupabaseClient>,
+  table: "coupons" | "offers",
+  id: string,
+  userId: string,
+) {
   const [reservations, redemptions] = await Promise.all([
-    supabase.from("shop_promotion_reservations").select("order_id,released_at")
-      .eq("source_table", table).eq("promotion_id", id).eq("user_id", userId),
-    supabase.from("redemptions").select("order_id")
-      .eq(table === "offers" ? "offer_id" : "coupon_id", id).eq("user_id", userId),
+    supabase
+      .from("shop_promotion_reservations")
+      .select("order_id,released_at")
+      .eq("source_table", table)
+      .eq("promotion_id", id)
+      .eq("user_id", userId),
+    supabase
+      .from("redemptions")
+      .select("order_id")
+      .eq(table === "offers" ? "offer_id" : "coupon_id", id)
+      .eq("user_id", userId),
   ]);
-  if (reservations.error || redemptions.error) throw new Error("Unable to verify promotion usage. Please retry.");
-  const versionedOrders = new Set((reservations.data ?? []).map(row => row.order_id));
-  return (reservations.data ?? []).filter(row => !row.released_at).length +
-    (redemptions.data ?? []).filter(row => !versionedOrders.has(row.order_id)).length;
+  if (reservations.error || redemptions.error)
+    throw new Error("Unable to verify promotion usage. Please retry.");
+  const versionedOrders = new Set(
+    (reservations.data ?? []).map((row) => row.order_id),
+  );
+  return (
+    (reservations.data ?? []).filter((row) => !row.released_at).length +
+    (redemptions.data ?? []).filter((row) => !versionedOrders.has(row.order_id))
+      .length
+  );
 }
 
 async function validateCouponCode(
@@ -126,6 +200,7 @@ async function validateCouponCode(
   couponCode: string,
   subtotal: number,
   userId: string | null,
+  customerEmail: string | null | undefined,
   items: ShopOrderItem[],
   products: Map<string, Record<string, unknown>>,
 ): Promise<ShopCouponResult | null> {
@@ -159,6 +234,43 @@ async function validateCouponCode(
       throw new Error(
         `Minimum order value of ₹${Number(shopCoupon.min_order_value ?? 0).toFixed(0)} required.`,
       );
+    }
+    if (shopCoupon.sample_credit_id) {
+      const { data: credit, error: creditError } = await supabase
+        .from("shop_sample_credits")
+        .select(
+          "owner_user_id,owner_email,product_id,min_final_quantity,expires_at,redeemed_order_id",
+        )
+        .eq("id", shopCoupon.sample_credit_id)
+        .maybeSingle();
+      if (creditError || !credit)
+        throw new Error("This sample credit is no longer available.");
+      const normalizedEmail = customerEmail?.trim().toLowerCase() || null;
+      const ownsCredit =
+        (credit.owner_user_id && credit.owner_user_id === userId) ||
+        (credit.owner_email &&
+          normalizedEmail &&
+          credit.owner_email === normalizedEmail);
+      if (!ownsCredit)
+        throw new Error("This sample credit belongs to a different customer.");
+      if (
+        credit.redeemed_order_id ||
+        new Date(credit.expires_at).getTime() < Date.now()
+      ) {
+        throw new Error("This sample credit has expired or was already used.");
+      }
+      const qualifyingQuantity = items
+        .filter(
+          (item) =>
+            item.productId === credit.product_id &&
+            !item.customizationData?.isSample,
+        )
+        .reduce((sum, item) => sum + item.quantity, 0);
+      if (qualifyingQuantity < Number(credit.min_final_quantity)) {
+        throw new Error(
+          `Use this sample credit with at least ${credit.min_final_quantity} invitation cards.`,
+        );
+      }
     }
 
     const discountType = String(shopCoupon.discount_type).toLowerCase() as
@@ -212,14 +324,16 @@ async function validateCouponCode(
     }
   }
 
-  if ((coupon.first_order_only || coupon.usage_per_user) && !userId) throw new Error("Sign in to use this coupon.");
+  if ((coupon.first_order_only || coupon.usage_per_user) && !userId)
+    throw new Error("Sign in to use this coupon.");
   if (coupon.first_order_only && userId) {
     const { count, error: usageError } = await supabase
       .from("shelf_orders")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId);
 
-    if (usageError) throw new Error("Unable to verify promotion usage. Please retry.");
+    if (usageError)
+      throw new Error("Unable to verify promotion usage. Please retry.");
     if (count && count > 0)
       throw new Error("This coupon is for first-time orders only.");
   }
@@ -283,7 +397,8 @@ async function validateOfferId(
     );
   }
 
-  if (offer.usage_per_user && !userId) throw new Error("Sign in to use this offer.");
+  if (offer.usage_per_user && !userId)
+    throw new Error("Sign in to use this offer.");
   if (offer.usage_per_user && userId) {
     const count = await promotionUsage(supabase, "offers", offer.id, userId);
     if (count && count >= Number(offer.usage_per_user)) {
@@ -318,16 +433,25 @@ async function validateOfferId(
   };
 }
 
-
-export async function quoteShopOrder(input: { items: PlaceOrderItemInput[]; userId?: string | null; couponCode?: string | null; appliedOfferId?: string | null; destination?: { pincode: string; state: string } | null }): Promise<ShopQuote> {
+export async function quoteShopOrder(input: {
+  items: PlaceOrderItemInput[];
+  userId?: string | null;
+  customerEmail?: string | null;
+  couponCode?: string | null;
+  appliedOfferId?: string | null;
+  destination?: { pincode: string; state: string } | null;
+}): Promise<ShopQuote> {
   const supabase = createAdminSupabaseClient();
   const rawItems = normalizeOrderItems(input.items);
   const userId = input.userId ?? null;
   const skuIds = Array.from(new Set(rawItems.map((item) => item.skuId)));
   const [settings, skuResult] = await Promise.all([
     getCheckoutSettings(),
-    supabase.from("shelf_skus")
-      .select("id, product_id, sku_code, variant_combination, price, stock_quantity, is_available, weight_grams")
+    supabase
+      .from("shelf_skus")
+      .select(
+        "id, product_id, sku_code, variant_combination, price, stock_quantity, is_available, weight_grams",
+      )
       .in("id", skuIds),
   ]);
   const { data: skuRows, error: skuError } = skuResult;
@@ -342,21 +466,24 @@ export async function quoteShopOrder(input: { items: PlaceOrderItemInput[]; user
       (skuRows ?? []).map((sku) => String(sku.product_id)).filter(Boolean),
     ),
   );
-  const cartPriceRulesPromise =
-    skuProductIds.length
-      ? supabase
-          .from("shelf_product_cart_price_rules")
-          .select("*")
-          .in("product_id", skuProductIds)
-          .eq("is_active", true)
-      : Promise.resolve({ data: [], error: null });
+  const cartPriceRulesPromise = skuProductIds.length
+    ? supabase
+        .from("shelf_product_cart_price_rules")
+        .select("*")
+        .in("product_id", skuProductIds)
+        .eq("is_active", true)
+    : Promise.resolve({ data: [], error: null });
   const [cartPriceRuleResult, productResult] = await Promise.all([
     cartPriceRulesPromise,
-    supabase.from("shelf_products")
-      .select("id, name, slug, thumbnail_url, is_active, is_archived, category_id, category:shelf_categories(id,name,slug)")
+    supabase
+      .from("shelf_products")
+      .select(
+        "id, name, slug, thumbnail_url, is_active, is_archived, category_id, invitation_config, category:shelf_categories(id,name,slug)",
+      )
       .in("id", skuProductIds),
   ]);
-  const { data: cartPriceRuleRows, error: cartPriceRuleError } = cartPriceRuleResult;
+  const { data: cartPriceRuleRows, error: cartPriceRuleError } =
+    cartPriceRuleResult;
   const { data: productRows, error: productError } = productResult;
   if (cartPriceRuleError) throw new Error(cartPriceRuleError.message);
   if (productError) throw new Error("Unable to load products. Please retry.");
@@ -368,7 +495,8 @@ export async function quoteShopOrder(input: { items: PlaceOrderItemInput[]; user
   );
 
   const requested = new Map<string, number>();
-  for (const item of rawItems) requested.set(item.skuId, (requested.get(item.skuId) ?? 0) + item.quantity);
+  for (const item of rawItems)
+    requested.set(item.skuId, (requested.get(item.skuId) ?? 0) + item.quantity);
   const items: ShopOrderItem[] = [];
   let totalWeightGrams = 0;
 
@@ -416,17 +544,51 @@ export async function quoteShopOrder(input: { items: PlaceOrderItemInput[]; user
           }
         : null,
       customizationText: rawItem.customizationText ?? null,
+      customizationData: rawItem.customizationData ?? null,
     });
   }
 
   for (const item of items) {
     const product = productsById.get(item.productId);
-    if (!product || !product.is_active || product.is_archived) throw new Error("This product is no longer available.");
+    if (!product || !product.is_active || product.is_archived)
+      throw new Error("This product is no longer available.");
     item.productName =
       typeof product?.name === "string" ? product.name : "Product";
     item.productSlug = typeof product?.slug === "string" ? product.slug : null;
     item.productThumbnail =
       typeof product?.thumbnail_url === "string" ? product.thumbnail_url : "";
+    const invitationConfig = normalizeInvitationConfig(
+      product.invitation_config,
+    );
+    if (invitationConfig.enabled) {
+      const isSample =
+        item.customizationData?.kind === "invitation" &&
+        item.customizationData.isSample;
+      if (isSample) {
+        if (
+          !invitationConfig.sampleSkuId ||
+          item.skuId !== invitationConfig.sampleSkuId ||
+          item.quantity !== 1
+        ) {
+          throw new Error("This invitation sample is no longer available.");
+        }
+      } else {
+        if (item.quantity < invitationConfig.minFinalQuantity) {
+          throw new Error(
+            `Invitation orders require at least ${invitationConfig.minFinalQuantity} cards.`,
+          );
+        }
+        const details = validateInvitationDetails(
+          item.customizationData?.details,
+          invitationConfig,
+        );
+        item.customizationData = {
+          kind: "invitation",
+          details,
+          isSample: false,
+        };
+      }
+    }
 
     const sku = skusById.get(item.skuId);
     item.skuCode =
@@ -447,19 +609,37 @@ export async function quoteShopOrder(input: { items: PlaceOrderItemInput[]; user
       .join(", ");
   }
 
-
-  const subtotalPaise = items.reduce((sum, item) => sum + toPaise(item.unitPrice) * item.quantity, 0);
+  const subtotalPaise = items.reduce(
+    (sum, item) => sum + toPaise(item.unitPrice) * item.quantity,
+    0,
+  );
   const subtotal = subtotalPaise / 100;
   // Coupon validation and the automatic-offer list are independent. Starting
   // them together removes a database round-trip from the normal cart refresh.
   const couponPromise = input.couponCode
-    ? validateCouponCode(supabase, input.couponCode, subtotal, userId, items, productsById)
+    ? validateCouponCode(
+        supabase,
+        input.couponCode,
+        subtotal,
+        userId,
+        input.customerEmail,
+        items,
+        productsById,
+      )
     : Promise.resolve(null);
   const offersPromise = input.appliedOfferId
     ? Promise.resolve({ data: [] as Record<string, unknown>[], error: null })
-    : supabase.from("offers").select("*").eq("is_active", true)
-      .order("is_featured", { ascending: false }).order("created_at", { ascending: false }).order("id");
-  const [coupon, offersResult] = await Promise.all([couponPromise, offersPromise]);
+    : supabase
+        .from("offers")
+        .select("*")
+        .eq("is_active", true)
+        .order("is_featured", { ascending: false })
+        .order("created_at", { ascending: false })
+        .order("id");
+  const [coupon, offersResult] = await Promise.all([
+    couponPromise,
+    offersPromise,
+  ]);
   const couponDiscountPaise = promotionDiscountPaise(subtotalPaise, coupon);
   const afterCoupon = subtotalPaise - couponDiscountPaise;
   // Offer selection and eligibility live on the server; a stale client cannot suppress an offer.
@@ -468,39 +648,141 @@ export async function quoteShopOrder(input: { items: PlaceOrderItemInput[]; user
   let offer: ShopCouponResult | null = null;
   const candidateOffers = input.appliedOfferId
     ? [{ id: input.appliedOfferId, offer_type: undefined }]
-    : offers ?? [];
+    : (offers ?? []);
   for (const candidate of candidateOffers) {
     // An explicitly selected offer must be validated by validateOfferId even
     // when the lightweight candidate row does not include its offer_type.
     // Automatic offers are restricted to discount types supported by checkout.
-    if (!input.appliedOfferId && !["percentage", "fixed_amount", "free_shipping"].includes(String(candidate.offer_type))) continue;
+    if (
+      !input.appliedOfferId &&
+      !["percentage", "fixed_amount", "free_shipping"].includes(
+        String(candidate.offer_type),
+      )
+    )
+      continue;
     try {
       // Automatic candidates come from the authoritative list above, so do
       // not re-query the same offer once per candidate. Explicit selections
       // still fetch by id to reject stale or tampered client input.
-      offer = await validateOfferId(supabase, candidate.id, afterCoupon / 100, userId, items, productsById,
-        input.appliedOfferId ? undefined : candidate as Record<string, unknown>);
+      offer = await validateOfferId(
+        supabase,
+        candidate.id,
+        afterCoupon / 100,
+        userId,
+        items,
+        productsById,
+        input.appliedOfferId
+          ? undefined
+          : (candidate as Record<string, unknown>),
+      );
       break;
-    }
-    catch (error) {
+    } catch (error) {
       const message = error instanceof Error ? error.message : "";
-      if (!/no longer active|not yet valid|expired|usage limit|Minimum order|maximum number|does not apply|Sign in/.test(message)) throw error;
+      if (
+        !/no longer active|not yet valid|expired|usage limit|Minimum order|maximum number|does not apply|Sign in/.test(
+          message,
+        )
+      )
+        throw error;
     }
   }
   const offerDiscountPaise = promotionDiscountPaise(afterCoupon, offer);
   const discountedSubtotal = (afterCoupon - offerDiscountPaise) / 100;
-  const destination = input.destination?.pincode && input.destination.state ? { pincode: input.destination.pincode.trim(), state: input.destination.state.trim() } : null;
-  if (destination && !/^\d{6}$/.test(destination.pincode)) throw new Error("Enter a valid 6 digit pincode.");
-  const shipping = await calculateShippingFromRules({ pincode: destination?.pincode ?? "", state: destination?.state ?? "", subtotal: discountedSubtotal, minimumOrderSubtotal: subtotal, weightGrams: totalWeightGrams, settings });
-  if (!shipping.available) throw new Error(shipping.reason || "Delivery not available.");
-  const promotionProvidesFreeDelivery = Boolean(coupon?.freeShipping || offer?.freeShipping);
-  const shippingPaise = promotionProvidesFreeDelivery ? 0 : shipping.chargePaise;
-  const deliverySource = promotionProvidesFreeDelivery ? "promotion" as const : shipping.source ?? "default";
+  const destination =
+    input.destination?.pincode && input.destination.state
+      ? {
+          pincode: input.destination.pincode.trim(),
+          state: input.destination.state.trim(),
+        }
+      : null;
+  if (destination && !/^\d{6}$/.test(destination.pincode))
+    throw new Error("Enter a valid 6 digit pincode.");
+  const shipping = await calculateShippingFromRules({
+    pincode: destination?.pincode ?? "",
+    state: destination?.state ?? "",
+    subtotal: discountedSubtotal,
+    minimumOrderSubtotal: subtotal,
+    weightGrams: totalWeightGrams,
+    settings,
+  });
+  if (!shipping.available)
+    throw new Error(shipping.reason || "Delivery not available.");
+  const promotionProvidesFreeDelivery = Boolean(
+    coupon?.freeShipping || offer?.freeShipping,
+  );
+  const shippingPaise = promotionProvidesFreeDelivery
+    ? 0
+    : shipping.chargePaise;
+  const deliverySource = promotionProvidesFreeDelivery
+    ? ("promotion" as const)
+    : (shipping.source ?? "default");
   const cgstPercent = settings.gstEnabled ? settings.cgstPercent : 0;
   const sgstPercent = settings.gstEnabled ? settings.sgstPercent : 0;
-  const money = calculateShopMoney({ subtotalPaise, couponDiscountPaise, offerDiscountPaise, shippingPaise, cgstPercent, sgstPercent });
-  const promotions = [coupon, offer].filter((v): v is ShopCouponResult => Boolean(v)).map(p => ({ table: p.sourceTable!, id: (p.couponId ?? p.offerId)!, code: p.code, discountType: p.discountType, discountValue: p.discountValue, discountPaise: p === coupon ? couponDiscountPaise : offerDiscountPaise }));
-  const snapshot = { ...buildShopPricingSnapshot(items, coupon, subtotal, shippingPaise / 100, money.taxPaise / 100, money.totalPaise / 100), version: 2 as const, currency: "INR" as const, money, discount: money.discountPaise / 100, applied_offer_id: offer?.offerId ?? null, cgst_percent: cgstPercent, sgst_percent: sgstPercent, promotions, delivery_rule_id: shipping.ruleId ?? null, delivery_source: deliverySource, delivery_threshold: settings.deliveryChargeThreshold, default_delivery_charge: settings.defaultDeliveryCharge };
-  const fingerprint = createHash("sha256").update(JSON.stringify({ userId, items, destination, money, promotions, cgstPercent, sgstPercent, ruleId: shipping.ruleId ?? null, deliverySource, threshold: settings.deliveryChargeThreshold, delivery: settings.defaultDeliveryCharge })).digest("hex");
-  return { items, snapshot, fingerprint, estimated: !destination, destination, couponCode: coupon?.code ?? null, offerId: offer?.offerId ?? null, offerLabel: offer?.code ?? null };
+  const money = calculateShopMoney({
+    subtotalPaise,
+    couponDiscountPaise,
+    offerDiscountPaise,
+    shippingPaise,
+    cgstPercent,
+    sgstPercent,
+  });
+  const promotions = [coupon, offer]
+    .filter((v): v is ShopCouponResult => Boolean(v))
+    .map((p) => ({
+      table: p.sourceTable!,
+      id: (p.couponId ?? p.offerId)!,
+      code: p.code,
+      discountType: p.discountType,
+      discountValue: p.discountValue,
+      discountPaise: p === coupon ? couponDiscountPaise : offerDiscountPaise,
+    }));
+  const snapshot = {
+    ...buildShopPricingSnapshot(
+      items,
+      coupon,
+      subtotal,
+      shippingPaise / 100,
+      money.taxPaise / 100,
+      money.totalPaise / 100,
+    ),
+    version: 2 as const,
+    currency: "INR" as const,
+    money,
+    discount: money.discountPaise / 100,
+    applied_offer_id: offer?.offerId ?? null,
+    cgst_percent: cgstPercent,
+    sgst_percent: sgstPercent,
+    promotions,
+    delivery_rule_id: shipping.ruleId ?? null,
+    delivery_source: deliverySource,
+    delivery_threshold: settings.deliveryChargeThreshold,
+    default_delivery_charge: settings.defaultDeliveryCharge,
+  };
+  const fingerprint = createHash("sha256")
+    .update(
+      JSON.stringify({
+        userId,
+        items,
+        destination,
+        money,
+        promotions,
+        cgstPercent,
+        sgstPercent,
+        ruleId: shipping.ruleId ?? null,
+        deliverySource,
+        threshold: settings.deliveryChargeThreshold,
+        delivery: settings.defaultDeliveryCharge,
+      }),
+    )
+    .digest("hex");
+  return {
+    items,
+    snapshot,
+    fingerprint,
+    estimated: !destination,
+    destination,
+    couponCode: coupon?.code ?? null,
+    offerId: offer?.offerId ?? null,
+    offerLabel: offer?.code ?? null,
+  };
 }

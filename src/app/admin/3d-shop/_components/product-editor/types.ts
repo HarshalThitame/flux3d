@@ -4,6 +4,10 @@ import type {
   ShopVariantOption,
 } from "@/lib/shop/admin-types";
 import type { ProductForm } from "@/lib/shop/product-schema";
+import {
+  DEFAULT_INVITATION_CONFIG,
+  normalizeInvitationConfig,
+} from "@/lib/shop/invitation";
 
 export type { ProductForm };
 
@@ -47,6 +51,7 @@ export const emptyProduct: ProductForm = {
   customization_is_required: false,
   customization_min_length: 1,
   customization_max_length: 50,
+  invitation_config: DEFAULT_INVITATION_CONFIG,
   is_featured: false,
   is_active: false,
   is_archived: false,
@@ -113,6 +118,7 @@ export function toProductForm(product: ShopProduct): ProductForm {
     customization_is_required: product.customization_is_required ?? false,
     customization_min_length: product.customization_min_length ?? 1,
     customization_max_length: product.customization_max_length ?? 50,
+    invitation_config: normalizeInvitationConfig(product.invitation_config),
     is_featured: product.is_featured ?? false,
     is_active: product.is_active ?? false,
     is_archived: product.is_archived ?? false,
@@ -190,6 +196,7 @@ export function buildProductPayload(
     customization_is_required: product.customization_is_required,
     customization_min_length: product.customization_min_length,
     customization_max_length: product.customization_max_length,
+    invitation_config: product.invitation_config,
     is_featured: product.is_featured,
     is_active:
       status === "publish"

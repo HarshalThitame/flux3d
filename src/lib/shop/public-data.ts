@@ -19,6 +19,7 @@ import type {
   ShopPublicReview,
   ShopReviewsResult,
 } from "@/lib/shop/public-types";
+import { normalizeInvitationConfig } from "@/lib/shop/invitation";
 import { normalizeShopNumber } from "@/lib/shop/selection";
 import { toCatalogRetailerId } from "@/lib/meta/catalog";
 import {
@@ -188,6 +189,7 @@ type RawProduct = {
   customization_is_required?: boolean | null;
   customization_min_length?: number | null;
   customization_max_length?: number | null;
+  invitation_config?: unknown;
   is_featured?: boolean | null;
   is_active?: boolean | null;
   is_archived?: boolean | null;
@@ -243,6 +245,7 @@ const PRODUCT_SELECT = `
   customization_is_required,
   customization_min_length,
   customization_max_length,
+  invitation_config,
   is_featured,
   is_active,
   is_archived,
@@ -530,6 +533,7 @@ function mapProduct(
     customization_is_required: row.customization_is_required ?? null,
     customization_min_length: row.customization_min_length ?? null,
     customization_max_length: row.customization_max_length ?? null,
+    invitation_config: normalizeInvitationConfig(row.invitation_config),
     is_featured: Boolean(row.is_featured),
     is_active: row.is_active !== false,
     is_archived: Boolean(row.is_archived),

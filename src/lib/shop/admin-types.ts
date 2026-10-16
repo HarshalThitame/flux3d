@@ -1,4 +1,5 @@
 import type { DescriptionBlocks } from "@/lib/shop/blocks";
+import type { InvitationConfig } from "@/lib/shop/invitation";
 
 export type DimensionUnit = "mm" | "cm" | "inch";
 export type WeightUnit = "g" | "kg" | "oz" | "lb";
@@ -177,6 +178,7 @@ export type ShopProduct = {
   customization_is_required: boolean | null;
   customization_min_length: number | null;
   customization_max_length: number | null;
+  invitation_config?: InvitationConfig | null;
   is_featured: boolean | null;
   is_active: boolean | null;
   is_archived: boolean | null;

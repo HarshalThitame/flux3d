@@ -1,5 +1,8 @@
 import { getSettings } from "@/lib/settings";
-import { readOrderMoney, buildShopPaymentPricingSnapshot } from "@/lib/shop/financials";
+import {
+  readOrderMoney,
+  buildShopPaymentPricingSnapshot,
+} from "@/lib/shop/financials";
 import { createAdminSupabaseClient } from "@/lib/admin/server";
 import { buildPublicBusinessProfile } from "@/lib/public-business";
 import { verifyGuestOrderAccess } from "@/lib/shop/guest-access";
@@ -9,6 +12,7 @@ import {
   notifyRefundProcessed,
 } from "./email-triggers";
 import { notifyWhatsAppOrderConfirmed } from "@/lib/whatsapp/notifications";
+import { issueInvitationSampleCredit } from "@/lib/shop/sample-credit";
 import { sendCapiEvents, buildPurchaseEvent } from "@/lib/meta/conversions-api";
 import { generateEventId } from "@/lib/meta/event-utils";
 import { toCatalogRetailerId } from "@/lib/meta/catalog";
@@ -299,9 +303,10 @@ function buildOrderSnapshot(
   type: InternalOrderType,
 ): PaymentOrderSnapshot {
   const contact = getContactFields(order, type);
-  const amountPaise = type === "shop_order"
-    ? readOrderMoney(order).totalPaise
-    : snapshotAmount(normalizeMoney(order.grand_total ?? order.total_price));
+  const amountPaise =
+    type === "shop_order"
+      ? readOrderMoney(order).totalPaise
+      : snapshotAmount(normalizeMoney(order.grand_total ?? order.total_price));
   const orderNumber =
     normalizeText(order.order_number) || normalizeText(order.id);
   const currency = normalizeText(order.payment_currency) || "INR";
@@ -844,6 +849,20 @@ export async function verifyCheckoutPayment(params: {
       }
     }
 
+    if (params.internalOrderType === "shop_order") {
+      try {
+        await issueInvitationSampleCredit(params.internalOrderId);
+      } catch (error) {
+        reportError(error, "Failed to issue invitation sample credit", {
+          module: "payments",
+          tags: {
+            flow: "checkout_verify_credit",
+            orderId: params.internalOrderId,
+          },
+        });
+      }
+    }
+
     await insertPaymentAuditLog({
       actor_id: params.customerId ?? null,
       actor_role: "customer",
@@ -1082,11 +1101,20 @@ async function processPaymentLifecycleEvent(
     eventName === "payment_link.paid"
   ) {
     if (attempt.internal_order_type === "shop_order") {
-      const shopOrder = await fetchInternalOrder({ type: "shop_order", id: attempt.internal_order_id });
-      if (!shopOrder) throw new Error("Shop order not found for payment webhook.");
+      const shopOrder = await fetchInternalOrder({
+        type: "shop_order",
+        id: attempt.internal_order_id,
+      });
+      if (!shopOrder)
+        throw new Error("Shop order not found for payment webhook.");
       const savedMoney = readOrderMoney(shopOrder);
-      if (attempt.amount_paise !== savedMoney.totalPaise || attempt.currency !== "INR") {
-        throw new Error("Payment attempt amount or currency does not match the saved shop order pricing.");
+      if (
+        attempt.amount_paise !== savedMoney.totalPaise ||
+        attempt.currency !== "INR"
+      ) {
+        throw new Error(
+          "Payment attempt amount or currency does not match the saved shop order pricing.",
+        );
       }
     }
     const payment = providerPaymentId
@@ -1113,8 +1141,14 @@ async function processPaymentLifecycleEvent(
         undefined,
       captured: Boolean(paymentEntity.captured),
     };
-    if (Number(finalPayment.amount) !== attempt.amount_paise || String(finalPayment.currency).toUpperCase() !== String(attempt.currency).toUpperCase()) {
-      throw new Error("Payment webhook amount or currency does not match the payment attempt.");
+    if (
+      Number(finalPayment.amount) !== attempt.amount_paise ||
+      String(finalPayment.currency).toUpperCase() !==
+        String(attempt.currency).toUpperCase()
+    ) {
+      throw new Error(
+        "Payment webhook amount or currency does not match the payment attempt.",
+      );
     }
 
     const paymentLinkStatus = normalizeText(paymentLinkEntity.status);
@@ -1198,6 +1232,20 @@ async function processPaymentLifecycleEvent(
         reportError(error, "Webhook failed to convert inventory reservations", {
           module: "payments",
           tags: { flow: "webhook_capture", orderId: attempt.internal_order_id },
+        });
+      }
+    }
+
+    if (captured && attempt.internal_order_type === "shop_order") {
+      try {
+        await issueInvitationSampleCredit(attempt.internal_order_id);
+      } catch (error) {
+        reportError(error, "Webhook failed to issue invitation sample credit", {
+          module: "payments",
+          tags: {
+            flow: "webhook_capture_credit",
+            orderId: attempt.internal_order_id,
+          },
         });
       }
     }

@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { AppliedCoupon, AppliedOffer } from "@/lib/cart/types";
+import type { ShopInvitationCustomization } from "@/lib/shop/public-types";
 import { calculatePricingWaterfall } from "@/lib/quote/pricing-waterfall";
 
 type ShopCartSyncModule = typeof import("@/lib/cart/shop-cart-sync");
@@ -33,6 +34,7 @@ export type ShopCartItem = {
   variantCombination: Record<string, string | boolean>;
   variantLabel: string;
   customizationText: string;
+  customizationData?: ShopInvitationCustomization | null;
   price: number;
   /** Immutable SKU catalog price before any active cart price rule. */
   basePrice?: number;
@@ -78,7 +80,9 @@ function clampQuantity(quantity: number, maxStock: number) {
 function sameShopCartEntry(left: ShopCartItem, right: ShopCartAddItem) {
   return (
     left.skuId === right.skuId &&
-    left.customizationText.trim() === right.customizationText.trim()
+    left.customizationText.trim() === right.customizationText.trim() &&
+    JSON.stringify(left.customizationData ?? null) ===
+      JSON.stringify(right.customizationData ?? null)
   );
 }
 

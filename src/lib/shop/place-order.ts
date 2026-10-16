@@ -1,10 +1,20 @@
 import { createAdminSupabaseClient } from "@/lib/admin/server";
 import type { ShopOrderItem, ShopShippingAddress } from "@/lib/shop/orders";
+import type { ShopInvitationCustomization } from "@/lib/shop/public-types";
 import type { ShopQuote } from "./quote-types";
-import { quoteShopOrder, normalizeOrderItems, normalizeShippingAddress } from "./authoritative-pricing";
+import {
+  quoteShopOrder,
+  normalizeOrderItems,
+  normalizeShippingAddress,
+} from "./authoritative-pricing";
 import { readOrderMoney } from "./financials";
-export { normalizeOrderItems, normalizeShippingAddress } from "./authoritative-pricing";
-function isRecord(value: unknown): value is Record<string, unknown> { return Boolean(value && typeof value === "object" && !Array.isArray(value)); }
+export {
+  normalizeOrderItems,
+  normalizeShippingAddress,
+} from "./authoritative-pricing";
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
 export const MAX_ORDER_NUMBER_RETRIES = 5;
 
 export type PlaceOrderItemInput = {
@@ -12,6 +22,7 @@ export type PlaceOrderItemInput = {
   skuId: string;
   quantity: number;
   customizationText?: string | null;
+  customizationData?: ShopInvitationCustomization | null;
 };
 
 export type GuestCheckoutInput = {
@@ -49,7 +60,6 @@ export type PlaceOrderResult = {
   pricingSnapshot: ShopQuote["snapshot"];
 };
 
-
 export async function generateOrderNumber(
   supabase: ReturnType<typeof createAdminSupabaseClient>,
   offset = 0,
@@ -76,73 +86,155 @@ export function isDuplicateOrderNumberError(error: unknown) {
   return code === "23505" || message.toLowerCase().includes("duplicate key");
 }
 
-
 export class ShopPriceChangedError extends Error {
-  constructor(public quote: ShopQuote) { super("Your order pricing changed. Review the updated total and place your order again."); }
+  constructor(public quote: ShopQuote) {
+    super(
+      "Your order pricing changed. Review the updated total and place your order again.",
+    );
+  }
 }
 
-export async function placeShopOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
-  const { userId = null, guest = null, shippingAddress, source = "shop", paymentProvider = "razorpay" } = input;
-  if (!userId && !guest) throw new Error("Either an authenticated user or guest checkout details are required.");
+export async function placeShopOrder(
+  input: PlaceOrderInput,
+): Promise<PlaceOrderResult> {
+  const {
+    userId = null,
+    guest = null,
+    shippingAddress,
+    source = "shop",
+    paymentProvider = "razorpay",
+  } = input;
+  if (!userId && !guest)
+    throw new Error(
+      "Either an authenticated user or guest checkout details are required.",
+    );
   const supabase = createAdminSupabaseClient();
   // A response can be lost after the transaction committed. Resolve that
   // request before rechecking stock or coupon limits consumed by its order.
   if (input.checkoutKey) {
-    const { data: existing, error } = await supabase.from("shelf_orders").select("*").eq("checkout_key", input.checkoutKey).maybeSingle();
+    const { data: existing, error } = await supabase
+      .from("shelf_orders")
+      .select("*")
+      .eq("checkout_key", input.checkoutKey)
+      .maybeSingle();
     if (error) throw new Error(error.message);
     if (existing) {
-      const guestContact = isRecord(existing.guest_contact) ? existing.guest_contact : {};
-      const sameRequest = existing.user_id === userId &&
-        (!guest || (existing.guest_session_id === guest.sessionId && existing.guest_access_token_hash === guest.accessTokenHash && guestContact.email === guest.email.trim().toLowerCase())) &&
-        (!input.quoteFingerprint || existing.pricing_fingerprint === input.quoteFingerprint) &&
-        JSON.stringify(normalizeOrderItems(existing.items)) === JSON.stringify(normalizeOrderItems(input.items)) &&
-        JSON.stringify(normalizeShippingAddress(existing.shipping_address)) === JSON.stringify(normalizeShippingAddress(shippingAddress)) &&
-        (existing.coupon_code || null) === (input.couponCode?.trim().toUpperCase() || null);
-      if (!sameRequest) throw new Error("Checkout key already used for another request.");
-      if (existing.order_status === "cancelled") throw new Error("This checkout was cancelled. Please start a new checkout.");
+      const guestContact = isRecord(existing.guest_contact)
+        ? existing.guest_contact
+        : {};
+      const sameRequest =
+        existing.user_id === userId &&
+        (!guest ||
+          (existing.guest_session_id === guest.sessionId &&
+            existing.guest_access_token_hash === guest.accessTokenHash &&
+            guestContact.email === guest.email.trim().toLowerCase())) &&
+        (!input.quoteFingerprint ||
+          existing.pricing_fingerprint === input.quoteFingerprint) &&
+        JSON.stringify(normalizeOrderItems(existing.items)) ===
+          JSON.stringify(normalizeOrderItems(input.items)) &&
+        JSON.stringify(normalizeShippingAddress(existing.shipping_address)) ===
+          JSON.stringify(normalizeShippingAddress(shippingAddress)) &&
+        (existing.coupon_code || null) ===
+          (input.couponCode?.trim().toUpperCase() || null);
+      if (!sameRequest)
+        throw new Error("Checkout key already used for another request.");
+      if (existing.order_status === "cancelled")
+        throw new Error(
+          "This checkout was cancelled. Please start a new checkout.",
+        );
       const money = readOrderMoney(existing);
       return {
-        orderId: existing.id, orderNumber: existing.order_number, items: existing.items,
-        subtotal: money.subtotalPaise / 100, discountAmount: money.discountPaise / 100,
-        shippingCharge: money.shippingPaise / 100, tax: money.taxPaise / 100,
-        totalAmount: money.totalPaise / 100, pricingSnapshot: existing.order_price_snapshot,
+        orderId: existing.id,
+        orderNumber: existing.order_number,
+        items: existing.items,
+        subtotal: money.subtotalPaise / 100,
+        discountAmount: money.discountPaise / 100,
+        shippingCharge: money.shippingPaise / 100,
+        tax: money.taxPaise / 100,
+        totalAmount: money.totalPaise / 100,
+        pricingSnapshot: existing.order_price_snapshot,
       };
     }
   }
-  const quote = await quoteShopOrder({ items: input.items, userId, couponCode: input.couponCode, appliedOfferId: input.appliedOfferId, destination: shippingAddress });
-  if (input.quoteFingerprint && input.quoteFingerprint !== quote.fingerprint) throw new ShopPriceChangedError(quote);
+  const quote = await quoteShopOrder({
+    items: input.items,
+    userId,
+    customerEmail: guest?.email ?? null,
+    couponCode: input.couponCode,
+    appliedOfferId: input.appliedOfferId,
+    destination: shippingAddress,
+  });
+  if (input.quoteFingerprint && input.quoteFingerprint !== quote.fingerprint)
+    throw new ShopPriceChangedError(quote);
   const money = quote.snapshot.money;
   const checkoutKey = input.checkoutKey ?? crypto.randomUUID();
-  if (money.totalPaise <= 0) throw new Error("A zero-value order cannot use online payment. Please contact support.");
+  if (money.totalPaise <= 0)
+    throw new Error(
+      "A zero-value order cannot use online payment. Please contact support.",
+    );
   let claimCandidateUserId: string | null = null;
   if (guest) {
-    const { data } = await supabase.from("profiles").select("id").ilike("email", guest.email.trim().toLowerCase()).limit(1).maybeSingle();
+    const { data } = await supabase
+      .from("profiles")
+      .select("id")
+      .ilike("email", guest.email.trim().toLowerCase())
+      .limit(1)
+      .maybeSingle();
     claimCandidateUserId = data?.id ?? null;
   }
   for (let attempt = 0; attempt < MAX_ORDER_NUMBER_RETRIES; attempt++) {
     const orderNumber = await generateOrderNumber(supabase, attempt);
     const { data, error } = await supabase.rpc("create_shelf_order_priced", {
-      p_user_id: userId, p_order_number: orderNumber, p_items: quote.items,
-      p_shipping_address: shippingAddress, p_snapshot: quote.snapshot,
-      p_fingerprint: quote.fingerprint, p_checkout_key: checkoutKey,
-      p_metadata: { order_source: source, payment_provider: paymentProvider,
-        guest_session_id: guest?.sessionId ?? null, guest_contact: guest ? { email: guest.email.trim().toLowerCase() } : null,
-        guest_access_token_hash: guest?.accessTokenHash ?? null, claim_candidate_user_id: claimCandidateUserId },
+      p_user_id: userId,
+      p_order_number: orderNumber,
+      p_items: quote.items,
+      p_shipping_address: shippingAddress,
+      p_snapshot: quote.snapshot,
+      p_fingerprint: quote.fingerprint,
+      p_checkout_key: checkoutKey,
+      p_metadata: {
+        order_source: source,
+        payment_provider: paymentProvider,
+        guest_session_id: guest?.sessionId ?? null,
+        guest_contact: guest
+          ? { email: guest.email.trim().toLowerCase() }
+          : null,
+        guest_access_token_hash: guest?.accessTokenHash ?? null,
+        claim_candidate_user_id: claimCandidateUserId,
+      },
     });
     if (error) {
-      if (isDuplicateOrderNumberError(error) && attempt < MAX_ORDER_NUMBER_RETRIES - 1) continue;
+      if (
+        isDuplicateOrderNumberError(error) &&
+        attempt < MAX_ORDER_NUMBER_RETRIES - 1
+      )
+        continue;
       throw new Error(error.message || "Failed to place order.");
     }
     const result = isRecord(data) ? data : {};
     const orderId = String(result.orderId ?? "");
     if (!orderId) throw new Error("Order creation did not return an order.");
     if (userId) {
-      const { error: cartError } = await supabase.from("cart_items").update({ status: "converted", converted_to_order_id: orderId }).eq("user_id", userId).eq("cart_type", "shop").eq("status", "active");
-      if (cartError) console.error("[shop] Failed to mark cart converted", cartError);
+      const { error: cartError } = await supabase
+        .from("cart_items")
+        .update({ status: "converted", converted_to_order_id: orderId })
+        .eq("user_id", userId)
+        .eq("cart_type", "shop")
+        .eq("status", "active");
+      if (cartError)
+        console.error("[shop] Failed to mark cart converted", cartError);
     }
-    return { orderId, orderNumber: String(result.orderNumber ?? orderNumber), items: quote.items,
-      subtotal: money.subtotalPaise / 100, discountAmount: money.discountPaise / 100, shippingCharge: money.shippingPaise / 100,
-      tax: money.taxPaise / 100, totalAmount: money.totalPaise / 100, pricingSnapshot: quote.snapshot };
+    return {
+      orderId,
+      orderNumber: String(result.orderNumber ?? orderNumber),
+      items: quote.items,
+      subtotal: money.subtotalPaise / 100,
+      discountAmount: money.discountPaise / 100,
+      shippingCharge: money.shippingPaise / 100,
+      tax: money.taxPaise / 100,
+      totalAmount: money.totalPaise / 100,
+      pricingSnapshot: quote.snapshot,
+    };
   }
   throw new Error("Could not generate an order number. Please try again.");
 }

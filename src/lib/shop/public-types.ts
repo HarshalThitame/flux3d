@@ -8,6 +8,10 @@ import type {
   ShopVariantOptionImage,
 } from "@/lib/shop/admin-types";
 import type { DescriptionBlocks } from "@/lib/shop/blocks";
+import type {
+  InvitationConfig,
+  InvitationDetails,
+} from "@/lib/shop/invitation";
 
 export type ShopPublicCategory = {
   id: string;
@@ -56,6 +60,7 @@ export type ShopPublicProduct = {
   customization_is_required: boolean | null;
   customization_min_length: number | null;
   customization_max_length: number | null;
+  invitation_config?: InvitationConfig;
   is_featured: boolean;
   is_active: boolean;
   is_archived: boolean;
@@ -108,6 +113,12 @@ export type ShopPublicReview = {
   helpful_count: number;
   not_helpful_count: number;
   user_vote: boolean | null;
+};
+
+export type ShopInvitationCustomization = {
+  kind: "invitation";
+  details: InvitationDetails;
+  isSample: boolean;
 };
 
 export type ShopReviewsResult = {

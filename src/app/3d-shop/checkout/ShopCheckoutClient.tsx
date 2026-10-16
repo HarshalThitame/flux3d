@@ -17,10 +17,7 @@ import {
 import { useAddresses } from "@/hooks/useAddresses";
 import { useGlobalLoading } from "@/hooks/useGlobalLoading";
 import { formatShopPrice } from "@/lib/shop/selection";
-import {
-  getShopCartTotals,
-  useShopCartStore,
-} from "@/stores/shopCartStore";
+import { getShopCartTotals, useShopCartStore } from "@/stores/shopCartStore";
 import { useShopCartPromotionSync } from "@/components/shop/ShopCartPromotions";
 import { refreshShopCartFromServer } from "@/lib/cart/shop-cart-sync";
 import type { AddressRow } from "../../../../types/database";
@@ -117,7 +114,9 @@ export default function ShopCheckoutClient({
 }: ShopCheckoutClientProps) {
   const router = useRouter();
   const orderCompletionRef = useRef(false);
-  const checkoutRequestRef = useRef<{ payload: string; key: string } | null>(null);
+  const checkoutRequestRef = useRef<{ payload: string; key: string } | null>(
+    null,
+  );
   const {
     addresses,
     defaultAddress,
@@ -184,7 +183,11 @@ export default function ShopCheckoutClient({
     : selectedAddress && /^\d{6}$/.test(selectedAddress.pincode)
       ? { pincode: selectedAddress.pincode, state: selectedAddress.state }
       : null;
-  const authoritativeQuote = useShopQuote(quoteDestination);
+  const authoritativeQuote = useShopQuote(
+    quoteDestination,
+    true,
+    isGuest ? guestEmail : null,
+  );
   const authoritativeMoney = authoritativeQuote.quote?.snapshot.money ?? null;
   const authoritativeTotal = authoritativeMoney
     ? authoritativeMoney.totalPaise / 100
@@ -320,8 +323,15 @@ export default function ShopCheckoutClient({
       return;
     }
 
-    if (!authoritativeQuote.quote || authoritativeQuote.loading || authoritativeQuote.error) {
-      setToast(authoritativeQuote.error || "Please wait while we verify the latest total.");
+    if (
+      !authoritativeQuote.quote ||
+      authoritativeQuote.loading ||
+      authoritativeQuote.error
+    ) {
+      setToast(
+        authoritativeQuote.error ||
+          "Please wait while we verify the latest total.",
+      );
       return;
     }
     const quote = authoritativeQuote.quote;
@@ -395,6 +405,7 @@ export default function ShopCheckoutClient({
             quantity: item.quantity,
             unitPrice: item.price,
             customizationText: item.customizationText || null,
+            customizationData: item.customizationData ?? null,
           })),
           couponCode: quote.couponCode,
           appliedOfferId: quote.offerId,
@@ -415,13 +426,19 @@ export default function ShopCheckoutClient({
         // create a new request. Stock and promotions are reserved only once.
         const requestPayload = JSON.stringify(payload);
         if (checkoutRequestRef.current?.payload !== requestPayload) {
-          checkoutRequestRef.current = { payload: requestPayload, key: globalThis.crypto.randomUUID() };
+          checkoutRequestRef.current = {
+            payload: requestPayload,
+            key: globalThis.crypto.randomUUID(),
+          };
         }
 
         const response = await fetch("/api/3d-shop/orders/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...payload, checkoutKey: checkoutRequestRef.current.key }),
+          body: JSON.stringify({
+            ...payload,
+            checkoutKey: checkoutRequestRef.current.key,
+          }),
         });
         const data = (await response.json().catch(() => ({}))) as {
           success?: boolean;
@@ -854,7 +871,12 @@ export default function ShopCheckoutClient({
             <button
               type="button"
               onClick={() => void handlePlaceOrder()}
-              disabled={isPlacing || !authoritativeQuote.quote || authoritativeQuote.loading || Boolean(authoritativeQuote.error)}
+              disabled={
+                isPlacing ||
+                !authoritativeQuote.quote ||
+                authoritativeQuote.loading ||
+                Boolean(authoritativeQuote.error)
+              }
               className="mt-5 flex min-h-[54px] w-full items-center justify-center rounded-[var(--shop-radius-lg)] bg-[var(--shop-text-primary)] text-base font-semibold text-white transition hover:bg-[var(--shop-text-secondary)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isPlacing

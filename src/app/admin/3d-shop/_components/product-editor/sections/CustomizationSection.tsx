@@ -4,7 +4,8 @@ import { useProductEditor } from "../editor-context";
 import { Section, Toggle, inputClass } from "../ui";
 
 export function CustomizationSection() {
-  const { product, updateProduct } = useProductEditor();
+  const { product, updateProduct, skus } = useProductEditor();
+  const invitation = product.invitation_config;
 
   return (
     <Section
@@ -114,6 +115,83 @@ export function CustomizationSection() {
           </div>
         </div>
       )}
+
+      <div className="mt-6 border-t border-gray-100 pt-5">
+        <Toggle
+          checked={invitation.enabled}
+          onChange={(enabled) =>
+            updateProduct("invitation_config", { ...invitation, enabled })
+          }
+          label="Enable Invitation Studio"
+          description="Adds guided wedding/invitation details, a paid sample CTA, and WhatsApp consultation to this product."
+        />
+        {invitation.enabled && (
+          <div className="mt-4 grid gap-4 rounded-2xl border border-amber-200 bg-amber-50/50 p-4 lg:grid-cols-3">
+            <label className="block text-xs font-medium text-[#6F7192]">
+              Physical sample SKU
+              <select
+                value={invitation.sampleSkuId ?? ""}
+                onChange={(event) =>
+                  updateProduct("invitation_config", {
+                    ...invitation,
+                    sampleSkuId: event.target.value || null,
+                  })
+                }
+                className={`${inputClass} mt-1.5`}
+              >
+                <option value="">Select a sample SKU</option>
+                {skus.map((sku) => (
+                  <option key={sku.id} value={sku.id}>
+                    {sku.sku_code} · ₹{sku.price}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-xs font-medium text-[#6F7192]">
+              Minimum final cards
+              <input
+                type="number"
+                min="1"
+                value={invitation.minFinalQuantity}
+                onChange={(event) =>
+                  updateProduct("invitation_config", {
+                    ...invitation,
+                    minFinalQuantity: Math.max(
+                      1,
+                      Number(event.target.value) || 1,
+                    ),
+                  })
+                }
+                className={`${inputClass} mt-1.5`}
+              />
+            </label>
+            <label className="block text-xs font-medium text-[#6F7192]">
+              Sample credit validity (days)
+              <input
+                type="number"
+                min="1"
+                max="365"
+                value={invitation.creditExpiryDays}
+                onChange={(event) =>
+                  updateProduct("invitation_config", {
+                    ...invitation,
+                    creditExpiryDays: Math.min(
+                      365,
+                      Math.max(1, Number(event.target.value) || 1),
+                    ),
+                  })
+                }
+                className={`${inputClass} mt-1.5`}
+              />
+            </label>
+            <p className="lg:col-span-3 text-xs leading-5 text-[#6F7192]">
+              The paid sample&apos;s product value becomes a one-time credit for
+              the same customer&apos;s qualifying final order. Use a dedicated
+              sample SKU with quantity one.
+            </p>
+          </div>
+        )}
+      </div>
     </Section>
   );
 }

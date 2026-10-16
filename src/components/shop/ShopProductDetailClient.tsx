@@ -71,6 +71,15 @@ import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 import { sanitizeShopRichHtml } from "@/lib/shop/rich-text";
 import LuxuryDescriptionBlocks from "@/components/shop/blocks/LuxuryDescriptionBlocks";
 import SpecificationsTable from "@/components/shop/SpecificationsTable";
+import InvitationStudio from "@/components/shop/InvitationStudio";
+import { useBusinessSettings } from "@/lib/settings-context";
+import {
+  buildInvitationWhatsAppMessage,
+  invitationSummary,
+  normalizeInvitationConfig,
+  validateInvitationDetails,
+  type InvitationDetails,
+} from "@/lib/shop/invitation";
 
 function useScrollLock(locked: boolean) {
   useEffect(() => {
@@ -305,6 +314,7 @@ export default function ShopProductDetailClient({
   currentUser: AppUserProfile | null;
 }) {
   const router = useRouter();
+  const { settings } = useBusinessSettings();
   const addItem = useShopCartStore((state) => state.addItem);
   const openCart = useShopCartStore((state) => state.openCart);
   const baseImages = useMemo(() => getShopProductImages(product), [product]);
@@ -346,7 +356,20 @@ export default function ShopProductDetailClient({
   const safeMediaPos = Math.min(mediaPos, Math.max(0, mediaItems.length - 1));
   const activeMedia = mediaItems[safeMediaPos] ?? null;
   const [customizationText, setCustomizationText] = useState("");
-  const [quantity, setQuantity] = useState(1);
+  const invitationConfig = normalizeInvitationConfig(product.invitation_config);
+  const isInvitationStudio = invitationConfig.enabled;
+  const [invitationDetails, setInvitationDetails] = useState<InvitationDetails>(
+    {
+      hostNames: "",
+      eventDate: "",
+      venue: "",
+      rsvp: "",
+      wording: "",
+    },
+  );
+  const [quantity, setQuantity] = useState(() =>
+    invitationConfig.enabled ? invitationConfig.minFinalQuantity : 1,
+  );
   const [pincode, setPincode] = useState("");
   const [pincodeStatus, setPincodeStatus] = useState<string | null>(null);
   const [checkingPincode, setCheckingPincode] = useState(false);
@@ -583,7 +606,9 @@ export default function ShopProductDetailClient({
   }
   const stock = getShopStockLabel(resolvedSku);
   const maxStock = resolvedSku?.pre_order_eta
-    ? 10
+    ? isInvitationStudio
+      ? 10000
+      : 10
     : (resolvedSku?.stock_quantity ?? 1);
   const canAdd = Boolean(
     resolvedSku &&
@@ -595,6 +620,18 @@ export default function ShopProductDetailClient({
     resolvedSku &&
     !resolvedSku.pre_order_eta &&
     (resolvedSku.stock_quantity <= 0 || isSkuBlockedByStatus(resolvedSku)),
+  );
+  const sampleSku = useMemo(
+    () =>
+      product.skus.find((sku) => sku.id === invitationConfig.sampleSkuId) ??
+      null,
+    [invitationConfig.sampleSkuId, product.skus],
+  );
+  const canOrderSample = Boolean(
+    sampleSku &&
+    sampleSku.is_available !== false &&
+    !isSkuBlockedByStatus(sampleSku) &&
+    (sampleSku.stock_quantity > 0 || sampleSku.pre_order_eta),
   );
   const price = resolvedSku?.price ?? product.display_price;
   const compareAt = resolvedSku?.compare_at_price ?? product.compare_at_price;
@@ -675,7 +712,32 @@ export default function ShopProductDetailClient({
   function addCurrentToCart(goToCheckout = false) {
     if (!resolvedSku || !canAdd) return;
 
-    if (product.is_customizable) {
+    let invitationData: {
+      kind: "invitation";
+      details: InvitationDetails;
+      isSample: boolean;
+    } | null = null;
+    let resolvedCustomizationText = customizationText;
+    if (isInvitationStudio) {
+      try {
+        const details = validateInvitationDetails(
+          invitationDetails,
+          invitationConfig,
+        );
+        invitationData = { kind: "invitation", details, isSample: false };
+        resolvedCustomizationText = invitationSummary(details);
+      } catch (error) {
+        addToast({
+          type: "error",
+          title: "Invitation details needed",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Complete the invitation details.",
+        });
+        return;
+      }
+    } else if (product.is_customizable) {
       const minLen = Math.max(product.customization_min_length || 1, 1);
       if (
         product.customization_is_required &&
@@ -708,7 +770,8 @@ export default function ShopProductDetailClient({
         resolvedSku.catalog_retailer_id ?? resolvedSku.sku_code,
       variantCombination: resolvedSku.variant_combination,
       variantLabel: formatVariantLabel(resolvedSku.variant_combination),
-      customizationText,
+      customizationText: resolvedCustomizationText,
+      customizationData: invitationData,
       price: resolvedSku.price,
       compareAtPrice: resolvedSku.compare_at_price,
       quantity,
@@ -735,6 +798,64 @@ export default function ShopProductDetailClient({
     if (goToCheckout) {
       router.push("/3d-shop/checkout");
     }
+  }
+
+  function addInvitationSample() {
+    if (!sampleSku || !canOrderSample) return;
+    const rawThumb =
+      sampleSku.variant_image_url || product.thumbnail_url || images[0] || "";
+    addItem({
+      productId: product.id,
+      productSlug: product.slug,
+      productName: `${product.name} — Sample`,
+      categoryId: product.category_id,
+      categoryName: product.category_name,
+      categorySlug: product.category_slug,
+      thumbnail: rawThumb.length > 2000 ? "" : rawThumb,
+      skuId: sampleSku.id,
+      skuCode: sampleSku.sku_code,
+      catalogRetailerId: sampleSku.catalog_retailer_id ?? sampleSku.sku_code,
+      variantCombination: sampleSku.variant_combination,
+      variantLabel: `${formatVariantLabel(sampleSku.variant_combination)} · Sample`,
+      customizationText: "Invitation sample",
+      customizationData: {
+        kind: "invitation",
+        details: invitationDetails,
+        isSample: true,
+      },
+      price: sampleSku.price,
+      compareAtPrice: sampleSku.compare_at_price,
+      quantity: 1,
+      maxStock: sampleSku.pre_order_eta ? 1 : sampleSku.stock_quantity,
+    });
+    addToast({
+      type: "success",
+      title: "Sample added to cart",
+      description:
+        "Its value becomes credit toward a qualifying final invitation order.",
+    });
+    openCart();
+  }
+
+  function discussInvitationOnWhatsApp() {
+    const phone = (settings.whatsappNumber || "+919623023480").replace(
+      /[^0-9]/g,
+      "",
+    );
+    const message = buildInvitationWhatsAppMessage({
+      productName: product.name,
+      productUrl: window.location.href,
+      variantLabel: resolvedSku
+        ? formatVariantLabel(resolvedSku.variant_combination)
+        : "",
+      quantity,
+      details: invitationDetails,
+    });
+    window.open(
+      `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   }
 
   async function checkPincode() {
@@ -1531,7 +1652,17 @@ export default function ShopProductDetailClient({
                 {stock.label}
               </p>
 
-              {product.is_customizable && (
+              {isInvitationStudio ? (
+                <InvitationStudio
+                  config={invitationConfig}
+                  details={invitationDetails}
+                  quantity={quantity}
+                  sampleAvailable={canOrderSample}
+                  onChange={setInvitationDetails}
+                  onOrderSample={addInvitationSample}
+                  onDiscuss={discussInvitationOnWhatsApp}
+                />
+              ) : product.is_customizable ? (
                 <label className="mt-5 block">
                   <span className="mb-1.5 block text-sm font-semibold text-[var(--shop-text-primary)]">
                     {product.customization_label || "Customization"}
@@ -1555,7 +1686,7 @@ export default function ShopProductDetailClient({
                     </span>
                   </span>
                 </label>
-              )}
+              ) : null}
 
               {canAdd && (
                 <div className="mt-5">
