@@ -24,6 +24,8 @@ import type { ShopQuote } from "./quote-types";
 import {
   normalizeInvitationConfig,
   normalizeInvitationDetails,
+  getInvitationSampleVariant,
+  getInvitationVariantPolicy,
   validateInvitationDetails,
 } from "./invitation";
 import type { ShopInvitationCustomization } from "./public-types";
@@ -124,6 +126,8 @@ export function normalizeOrderItems(value: unknown): PlaceOrderItemInput[] {
                 wording: "",
               },
               isSample: Boolean(entry.customizationData.isSample),
+              sampleForSkuId:
+                normalizeText(entry.customizationData.sampleForSkuId) || null,
             } satisfies ShopInvitationCustomization)
           : null,
     };
@@ -565,17 +569,22 @@ export async function quoteShopOrder(input: {
         item.customizationData?.kind === "invitation" &&
         item.customizationData.isSample;
       if (isSample) {
+        const sampleForSkuId = item.customizationData?.sampleForSkuId ?? "";
+        const mapping = sampleForSkuId
+          ? getInvitationSampleVariant(invitationConfig, sampleForSkuId)
+          : null;
         if (
-          !invitationConfig.sampleSkuId ||
-          item.skuId !== invitationConfig.sampleSkuId ||
+          !mapping ||
+          item.skuId !== mapping.sampleSkuId ||
           item.quantity !== 1
         ) {
           throw new Error("This invitation sample is no longer available.");
         }
       } else {
-        if (item.quantity < invitationConfig.minFinalQuantity) {
+        const policy = getInvitationVariantPolicy(invitationConfig, item.skuId);
+        if (item.quantity < policy.minFinalQuantity) {
           throw new Error(
-            `Invitation orders require at least ${invitationConfig.minFinalQuantity} cards.`,
+            `Invitation orders require at least ${policy.minFinalQuantity} cards.`,
           );
         }
         const details = validateInvitationDetails(
@@ -586,6 +595,7 @@ export async function quoteShopOrder(input: {
           kind: "invitation",
           details,
           isSample: false,
+          sampleForSkuId: null,
         };
       }
     }
@@ -607,6 +617,22 @@ export async function quoteShopOrder(input: {
     item.variantLabel = Object.entries(item.variantCombination)
       .map(([k, v]) => `${k}: ${v}`)
       .join(", ");
+  }
+
+  const hasInvitationSample = items.some(
+    (item) =>
+      item.customizationData?.kind === "invitation" &&
+      item.customizationData.isSample,
+  );
+  const hasInvitationFinal = items.some(
+    (item) =>
+      item.customizationData?.kind === "invitation" &&
+      !item.customizationData.isSample,
+  );
+  if (hasInvitationSample && hasInvitationFinal) {
+    throw new Error(
+      "Please check out invitation samples separately from final cards.",
+    );
   }
 
   const subtotalPaise = items.reduce(
@@ -687,7 +713,122 @@ export async function quoteShopOrder(input: {
     }
   }
   const offerDiscountPaise = promotionDiscountPaise(afterCoupon, offer);
-  const discountedSubtotal = (afterCoupon - offerDiscountPaise) / 100;
+  let customerEmail = normalizeText(input.customerEmail).toLowerCase();
+  if (!customerEmail && userId) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", userId)
+      .maybeSingle();
+    if (profileError)
+      throw new Error("Unable to verify your sample credits. Please retry.");
+    customerEmail = normalizeText(profile?.email).toLowerCase();
+  }
+  if (hasInvitationSample && !customerEmail) {
+    throw new Error(
+      "An email address is required to reserve an invitation sample credit.",
+    );
+  }
+  const sampleCreditsResult = customerEmail
+    ? await supabase.from("shop_sample_credits").select("*")
+    : { data: [] as Record<string, unknown>[], error: null };
+  if (sampleCreditsResult.error)
+    throw new Error("Unable to check sample credits. Please retry.");
+  const now = Date.now();
+  const requestedSampleTargets = items
+    .filter(
+      (item) =>
+        item.customizationData?.kind === "invitation" &&
+        item.customizationData.isSample,
+    )
+    .map((item) => item.customizationData?.sampleForSkuId ?? "")
+    .filter(Boolean);
+  if (new Set(requestedSampleTargets).size !== requestedSampleTargets.length) {
+    throw new Error(
+      "Only one sample may be ordered for each invitation variant.",
+    );
+  }
+  if (
+    hasInvitationSample &&
+    (sampleCreditsResult.data ?? []).some((credit) => {
+      const expiresAt = Date.parse(normalizeText(credit.expires_at));
+      return (
+        normalizeText(credit.owner_email).toLowerCase() === customerEmail &&
+        requestedSampleTargets.includes(normalizeText(credit.target_sku_id)) &&
+        (credit.status === "active" || credit.status === "reserved") &&
+        (!Number.isFinite(expiresAt) || expiresAt > now)
+      );
+    })
+  ) {
+    throw new Error(
+      "You already have an active sample credit for this invitation variant.",
+    );
+  }
+  const promotionDiscountPaiseTotal = couponDiscountPaise + offerDiscountPaise;
+  const sampleCredits = (sampleCreditsResult.data ?? [])
+    .filter((credit) => {
+      const targetSkuId = normalizeText(credit.target_sku_id);
+      const ownerEmail = normalizeText(credit.owner_email).toLowerCase();
+      const expiresAt = Date.parse(normalizeText(credit.expires_at));
+      return (
+        credit.status === "active" &&
+        ownerEmail === customerEmail &&
+        targetSkuId &&
+        (!Number.isFinite(expiresAt) || expiresAt > now) &&
+        items.some(
+          (item) =>
+            item.skuId === targetSkuId &&
+            item.customizationData?.kind === "invitation" &&
+            !item.customizationData.isSample,
+        )
+      );
+    })
+    .sort((a, b) => normalizeText(a.id).localeCompare(normalizeText(b.id)))
+    .reduce<
+      Array<{
+        id: string;
+        targetSkuId: string;
+        amountPaise: number;
+        discountPaise: number;
+      }>
+    >((accepted, credit) => {
+      const targetSkuId = normalizeText(credit.target_sku_id);
+      if (accepted.some((entry) => entry.targetSkuId === targetSkuId))
+        return accepted;
+      const item = items.find((candidate) => candidate.skuId === targetSkuId)!;
+      const linePaise = toPaise(item.unitPrice) * item.quantity;
+      // Pro-rate ordinary promotions first. The sample credit can never discount
+      // tax, shipping, another SKU, or more than the remaining matching line.
+      const ordinaryShare = Math.floor(
+        (promotionDiscountPaiseTotal * linePaise) / Math.max(1, subtotalPaise),
+      );
+      const amountPaise = Math.max(
+        0,
+        Math.round(Number(credit.amount_paise)) ||
+          toPaise(Number(credit.amount) || 0),
+      );
+      const discountPaise = Math.min(
+        amountPaise,
+        Math.max(0, linePaise - ordinaryShare),
+      );
+      return discountPaise > 0
+        ? [
+            ...accepted,
+            {
+              id: normalizeText(credit.id),
+              targetSkuId,
+              amountPaise,
+              discountPaise,
+            },
+          ]
+        : accepted;
+    }, []);
+  const sampleCreditDiscountPaise = sampleCredits.reduce(
+    (sum, credit) => sum + credit.discountPaise,
+    0,
+  );
+  const discountedSubtotal =
+    (afterCoupon - offerDiscountPaise - sampleCreditDiscountPaise) / 100;
   const destination =
     input.destination?.pincode && input.destination.state
       ? {
@@ -722,6 +863,7 @@ export async function quoteShopOrder(input: {
     subtotalPaise,
     couponDiscountPaise,
     offerDiscountPaise,
+    sampleCreditDiscountPaise,
     shippingPaise,
     cgstPercent,
     sgstPercent,
@@ -753,6 +895,7 @@ export async function quoteShopOrder(input: {
     cgst_percent: cgstPercent,
     sgst_percent: sgstPercent,
     promotions,
+    sample_credits: sampleCredits,
     delivery_rule_id: shipping.ruleId ?? null,
     delivery_source: deliverySource,
     delivery_threshold: settings.deliveryChargeThreshold,
@@ -766,6 +909,7 @@ export async function quoteShopOrder(input: {
         destination,
         money,
         promotions,
+        sampleCredits,
         cgstPercent,
         sgstPercent,
         ruleId: shipping.ruleId ?? null,

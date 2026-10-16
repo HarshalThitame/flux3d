@@ -16,6 +16,12 @@ export type ShopPriceSnapshot = ShopPricingSnapshot & {
     discountValue: number;
     discountPaise: number;
   }>;
+  sample_credits?: Array<{
+    id: string;
+    targetSkuId: string;
+    amountPaise: number;
+    discountPaise: number;
+  }>;
   delivery_rule_id: string | null;
   delivery_source: "promotion" | "threshold" | "regional_rule" | "default";
   delivery_threshold: number;

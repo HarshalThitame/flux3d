@@ -12,10 +12,22 @@ export type InvitationFieldKey = (typeof invitationFieldKeys)[number];
 
 export type InvitationConfig = {
   enabled: boolean;
+  /** Legacy fallback. New products must use sampleVariants. */
   sampleSkuId: string | null;
   minFinalQuantity: number;
   creditExpiryDays: number;
   fields: InvitationFieldKey[];
+  sampleVariants: InvitationSampleVariant[];
+};
+
+export type InvitationSampleVariant = {
+  /** The final-card SKU that this physical sample can be redeemed against. */
+  finalSkuId: string;
+  sampleSkuId: string;
+  /** Null inherits the product-wide minimum. */
+  minFinalQuantity: number | null;
+  /** Null inherits the product-wide credit expiry. */
+  creditExpiryDays: number | null;
 };
 
 export type InvitationDetails = {
@@ -32,6 +44,7 @@ export const DEFAULT_INVITATION_CONFIG: InvitationConfig = {
   minFinalQuantity: 25,
   creditExpiryDays: 90,
   fields: ["hostNames", "eventDate", "venue", "rsvp", "wording"],
+  sampleVariants: [],
 };
 
 const configSchema = z.object({
@@ -44,6 +57,29 @@ const configSchema = z.object({
     .min(1)
     .max(invitationFieldKeys.length)
     .default(DEFAULT_INVITATION_CONFIG.fields),
+  sampleVariants: z
+    .array(
+      z.object({
+        finalSkuId: z.string().uuid(),
+        sampleSkuId: z.string().uuid(),
+        minFinalQuantity: z
+          .number()
+          .int()
+          .min(1)
+          .max(10000)
+          .nullable()
+          .default(null),
+        creditExpiryDays: z
+          .number()
+          .int()
+          .min(1)
+          .max(365)
+          .nullable()
+          .default(null),
+      }),
+    )
+    .max(100)
+    .default([]),
 });
 
 export const invitationDetailsSchema = z.object({
@@ -57,7 +93,52 @@ export const invitationDetailsSchema = z.object({
 export function normalizeInvitationConfig(value: unknown): InvitationConfig {
   const parsed = configSchema.safeParse(value);
   if (!parsed.success) return DEFAULT_INVITATION_CONFIG;
-  return { ...DEFAULT_INVITATION_CONFIG, ...parsed.data };
+  const variants = parsed.data.sampleVariants.filter(
+    (variant, index, all) =>
+      variant.finalSkuId !== variant.sampleSkuId &&
+      all.findIndex(
+        (candidate) => candidate.finalSkuId === variant.finalSkuId,
+      ) === index,
+  );
+  return {
+    ...DEFAULT_INVITATION_CONFIG,
+    ...parsed.data,
+    sampleVariants: variants,
+  };
+}
+
+/** Finds the exact sample policy for the selected final-card SKU.
+ * The legacy single-SKU setting remains a temporary fallback for existing products.
+ */
+export function getInvitationSampleVariant(
+  config: InvitationConfig,
+  finalSkuId: string,
+): InvitationSampleVariant | null {
+  return (
+    config.sampleVariants.find(
+      (variant) => variant.finalSkuId === finalSkuId,
+    ) ??
+    (config.sampleSkuId
+      ? {
+          finalSkuId,
+          sampleSkuId: config.sampleSkuId,
+          minFinalQuantity: null,
+          creditExpiryDays: null,
+        }
+      : null)
+  );
+}
+
+export function getInvitationVariantPolicy(
+  config: InvitationConfig,
+  finalSkuId: string,
+) {
+  const variant = getInvitationSampleVariant(config, finalSkuId);
+  return {
+    variant,
+    minFinalQuantity: variant?.minFinalQuantity ?? config.minFinalQuantity,
+    creditExpiryDays: variant?.creditExpiryDays ?? config.creditExpiryDays,
+  };
 }
 
 export function normalizeInvitationDetails(

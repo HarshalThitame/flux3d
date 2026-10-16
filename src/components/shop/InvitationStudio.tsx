@@ -10,6 +10,7 @@ type Props = {
   config: InvitationConfig;
   details: InvitationDetails;
   quantity: number;
+  minFinalQuantity?: number;
   sampleAvailable: boolean;
   onChange: (details: InvitationDetails) => void;
   onOrderSample: () => void;
@@ -52,6 +53,7 @@ export default function InvitationStudio({
   config,
   details,
   quantity,
+  minFinalQuantity,
   sampleAvailable,
   onChange,
   onOrderSample,
@@ -113,7 +115,7 @@ export default function InvitationStudio({
       <div className="grid gap-2 border-t border-[var(--shop-gold)]/20 bg-white/70 p-4 sm:grid-cols-2">
         <div className="rounded-xl bg-[var(--shop-gold-faint)] px-3 py-2.5 text-xs leading-5 text-[var(--shop-text-secondary)]">
           <strong className="block text-[var(--shop-text-primary)]">
-            Final order from {config.minFinalQuantity} cards
+            Final order from {minFinalQuantity ?? config.minFinalQuantity} cards
           </strong>
           Your selected quantity: {quantity} cards.
         </div>

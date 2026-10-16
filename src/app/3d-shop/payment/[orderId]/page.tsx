@@ -10,8 +10,16 @@ import { absoluteUrl } from "@/lib/site";
 import { getSettings } from "@/lib/settings";
 import { buildPublicBusinessProfile } from "@/lib/public-business";
 import { createAdminSupabaseClient } from "@/lib/admin/server";
-import { formatPaise, readOrderMoney, type ShopMoney } from "@/lib/shop/financials";
-import { isShopOrderPaid, mapShopOrderRow, type ShopOrder } from "@/lib/shop/orders";
+import {
+  formatPaise,
+  readOrderMoney,
+  type ShopMoney,
+} from "@/lib/shop/financials";
+import {
+  isShopOrderPaid,
+  mapShopOrderRow,
+  type ShopOrder,
+} from "@/lib/shop/orders";
 import { verifyGuestOrderAccess } from "@/lib/shop/guest-access";
 
 export const dynamic = "force-dynamic";
@@ -120,10 +128,20 @@ export default async function RazorpayShopPaymentPage({
         <main className="mx-auto max-w-2xl px-6 py-24">
           <h1 className="text-2xl font-semibold">Review your order total</h1>
           <p role="alert" className="mt-4 text-sm leading-6">
-            {error instanceof Error ? error.message : "This order needs a pricing review before payment."}
+            {error instanceof Error
+              ? error.message
+              : "This order needs a pricing review before payment."}
           </p>
-          <p className="mt-4 text-sm">Order {order.order_number} · Contact {profile.supportEmail} for help.</p>
-          <Link href="/3d-shop/checkout" className="mt-6 inline-block underline">Return to checkout</Link>
+          <p className="mt-4 text-sm">
+            Order {order.order_number} · Contact {profile.supportEmail} for
+            help.
+          </p>
+          <Link
+            href="/3d-shop/checkout"
+            className="mt-6 inline-block underline"
+          >
+            Return to checkout
+          </Link>
         </main>
       </ShopShell>
     );
@@ -253,7 +271,11 @@ export default async function RazorpayShopPaymentPage({
                   </div>
                   {savedMoney.couponDiscountPaise > 0 && (
                     <div className="flex items-center justify-between text-sm text-[#c9a962]">
-                      <span className="font-light tracking-wide">{order.coupon_code ? `Coupon (${order.coupon_code})` : "Discount"}</span>
+                      <span className="font-light tracking-wide">
+                        {order.coupon_code
+                          ? `Coupon (${order.coupon_code})`
+                          : "Discount"}
+                      </span>
                       <span className="tracking-wide">
                         -{formatPaise(savedMoney.couponDiscountPaise)}
                       </span>
@@ -261,10 +283,24 @@ export default async function RazorpayShopPaymentPage({
                   )}
                   {savedMoney?.offerDiscountPaise ? (
                     <div className="flex items-center justify-between text-sm text-[#c9a962]">
-                      <span className="font-light tracking-wide">Automatic offer</span>
-                      <span className="tracking-wide">-{formatPaise(savedMoney.offerDiscountPaise)}</span>
+                      <span className="font-light tracking-wide">
+                        Automatic offer
+                      </span>
+                      <span className="tracking-wide">
+                        -{formatPaise(savedMoney.offerDiscountPaise)}
+                      </span>
                     </div>
                   ) : null}
+                  {savedMoney.sampleCreditDiscountPaise > 0 && (
+                    <div className="flex items-center justify-between text-sm text-[#c9a962]">
+                      <span className="font-light tracking-wide">
+                        Invitation sample credit
+                      </span>
+                      <span className="tracking-wide">
+                        -{formatPaise(savedMoney.sampleCreditDiscountPaise)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-neutral-500 font-light tracking-wide">
                       Shipping
@@ -277,14 +313,22 @@ export default async function RazorpayShopPaymentPage({
                   </div>
                   {savedMoney?.cgstPaise ? (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-neutral-500 font-light tracking-wide">CGST</span>
-                      <span className="text-[#111111] tracking-wide">{formatPaise(savedMoney.cgstPaise)}</span>
+                      <span className="text-neutral-500 font-light tracking-wide">
+                        CGST
+                      </span>
+                      <span className="text-[#111111] tracking-wide">
+                        {formatPaise(savedMoney.cgstPaise)}
+                      </span>
                     </div>
                   ) : null}
                   {savedMoney?.sgstPaise ? (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-neutral-500 font-light tracking-wide">SGST</span>
-                      <span className="text-[#111111] tracking-wide">{formatPaise(savedMoney.sgstPaise)}</span>
+                      <span className="text-neutral-500 font-light tracking-wide">
+                        SGST
+                      </span>
+                      <span className="text-[#111111] tracking-wide">
+                        {formatPaise(savedMoney.sgstPaise)}
+                      </span>
                     </div>
                   ) : null}
                   <div className="flex items-center justify-between pt-5 mt-5 border-t border-black/10">

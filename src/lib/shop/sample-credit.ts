@@ -20,3 +20,12 @@ export async function issueInvitationSampleCredit(orderId: string) {
     code: typeof result.code === "string" ? result.code : null,
   };
 }
+
+/** Captures previously reserved automatic credits once the payment is final. */
+export async function captureInvitationSampleCredits(orderId: string) {
+  const supabase = createAdminSupabaseClient();
+  const { error } = await supabase.rpc("capture_invitation_sample_credits", {
+    p_order_id: orderId,
+  });
+  if (error) throw new Error(error.message);
+}

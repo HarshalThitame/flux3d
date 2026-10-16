@@ -99,6 +99,8 @@ ON CONFLICT (id) DO NOTHING;
 ALTER TABLE public.blog_generation_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blog_ai_settings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admin can manage blog generation runs" ON public.blog_generation_runs;
+DROP POLICY IF EXISTS "Admin can manage blog AI settings" ON public.blog_ai_settings;
 CREATE POLICY "Admin can manage blog generation runs" ON public.blog_generation_runs
   FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 CREATE POLICY "Admin can manage blog AI settings" ON public.blog_ai_settings

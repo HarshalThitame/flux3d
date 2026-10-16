@@ -121,6 +121,16 @@ export const productFormSchema = z.object({
         .array(z.enum(invitationFieldKeys))
         .min(1)
         .max(invitationFieldKeys.length),
+      sampleVariants: z
+        .array(
+          z.object({
+            finalSkuId: z.string().uuid(),
+            sampleSkuId: z.string().uuid(),
+            minFinalQuantity: z.number().int().min(1).max(10000).nullable(),
+            creditExpiryDays: z.number().int().min(1).max(365).nullable(),
+          }),
+        )
+        .max(100),
     })
     .default(DEFAULT_INVITATION_CONFIG),
   is_featured: z.boolean(),

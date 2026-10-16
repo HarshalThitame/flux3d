@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   buildInvitationWhatsAppMessage,
+  getInvitationSampleVariant,
+  getInvitationVariantPolicy,
   invitationSummary,
   normalizeInvitationConfig,
   validateInvitationDetails,
@@ -13,6 +15,7 @@ const config: InvitationConfig = {
   minFinalQuantity: 25,
   creditExpiryDays: 90,
   fields: ["hostNames", "eventDate", "venue", "rsvp", "wording"],
+  sampleVariants: [],
 };
 
 const details = {
@@ -36,6 +39,33 @@ describe("Invitation Studio helpers", () => {
     expect(() =>
       validateInvitationDetails({ ...details, venue: "" }, config),
     ).toThrow("Enter the venue");
+  });
+
+  it("maps each sample to its matching final SKU and inherits defaults", () => {
+    const finalSkuId = "11111111-1111-4111-8111-111111111111";
+    const sampleSkuId = "22222222-2222-4222-8222-222222222222";
+    const mapped = {
+      ...config,
+      sampleVariants: [
+        {
+          finalSkuId,
+          sampleSkuId,
+          minFinalQuantity: null,
+          creditExpiryDays: 30,
+        },
+      ],
+    };
+    expect(getInvitationSampleVariant(mapped, finalSkuId)?.sampleSkuId).toBe(
+      sampleSkuId,
+    );
+    expect(
+      getInvitationSampleVariant(mapped, "33333333-3333-4333-8333-333333333333")
+        ?.sampleSkuId,
+    ).toBe(config.sampleSkuId);
+    expect(getInvitationVariantPolicy(mapped, finalSkuId)).toMatchObject({
+      minFinalQuantity: 25,
+      creditExpiryDays: 30,
+    });
   });
 
   it("keeps the readable card brief and WhatsApp brief aligned", () => {
