@@ -75,8 +75,6 @@ import InvitationStudio from "@/components/shop/InvitationStudio";
 import { useBusinessSettings } from "@/lib/settings-context";
 import {
   buildInvitationWhatsAppMessage,
-  getInvitationSampleVariant,
-  getInvitationVariantPolicy,
   invitationSummary,
   normalizeInvitationConfig,
   validateInvitationDetails,
@@ -370,7 +368,7 @@ export default function ShopProductDetailClient({
     },
   );
   const [quantity, setQuantity] = useState(() =>
-    invitationConfig.enabled ? invitationConfig.minFinalQuantity : 1,
+    invitationConfig.enabled ? invitationConfig.minOrderQuantity : 1,
   );
   const [pincode, setPincode] = useState("");
   const [pincodeStatus, setPincodeStatus] = useState<string | null>(null);
@@ -623,33 +621,6 @@ export default function ShopProductDetailClient({
     !resolvedSku.pre_order_eta &&
     (resolvedSku.stock_quantity <= 0 || isSkuBlockedByStatus(resolvedSku)),
   );
-  const selectedSampleVariant = useMemo(
-    () =>
-      resolvedSku
-        ? getInvitationSampleVariant(invitationConfig, resolvedSku.id)
-        : null,
-    [invitationConfig, resolvedSku],
-  );
-  const sampleSku = useMemo(
-    () =>
-      product.skus.find(
-        (sku) => sku.id === selectedSampleVariant?.sampleSkuId,
-      ) ?? null,
-    [product.skus, selectedSampleVariant?.sampleSkuId],
-  );
-  const canOrderSample = Boolean(
-    sampleSku &&
-    sampleSku.is_available !== false &&
-    !isSkuBlockedByStatus(sampleSku) &&
-    (sampleSku.stock_quantity > 0 || sampleSku.pre_order_eta),
-  );
-  const selectedInvitationPolicy = useMemo(
-    () =>
-      resolvedSku
-        ? getInvitationVariantPolicy(invitationConfig, resolvedSku.id)
-        : null,
-    [invitationConfig, resolvedSku],
-  );
   const price = resolvedSku?.price ?? product.display_price;
   const compareAt = resolvedSku?.compare_at_price ?? product.compare_at_price;
   const savings = compareAt && compareAt > price ? compareAt - price : 0;
@@ -732,8 +703,6 @@ export default function ShopProductDetailClient({
     let invitationData: {
       kind: "invitation";
       details: InvitationDetails;
-      isSample: boolean;
-      sampleForSkuId: string | null;
     } | null = null;
     let resolvedCustomizationText = customizationText;
     if (isInvitationStudio) {
@@ -745,8 +714,6 @@ export default function ShopProductDetailClient({
         invitationData = {
           kind: "invitation",
           details,
-          isSample: false,
-          sampleForSkuId: null,
         };
         resolvedCustomizationText = invitationSummary(details);
       } catch (error) {
@@ -823,50 +790,16 @@ export default function ShopProductDetailClient({
     }
   }
 
-  function addInvitationSample() {
-    if (!sampleSku || !canOrderSample || !resolvedSku || !selectedSampleVariant)
-      return;
-    const rawThumb =
-      sampleSku.variant_image_url || product.thumbnail_url || images[0] || "";
-    addItem({
-      productId: product.id,
-      productSlug: product.slug,
-      productName: `${product.name} — Sample`,
-      categoryId: product.category_id,
-      categoryName: product.category_name,
-      categorySlug: product.category_slug,
-      thumbnail: rawThumb.length > 2000 ? "" : rawThumb,
-      skuId: sampleSku.id,
-      skuCode: sampleSku.sku_code,
-      catalogRetailerId: sampleSku.catalog_retailer_id ?? sampleSku.sku_code,
-      variantCombination: sampleSku.variant_combination,
-      variantLabel: `${formatVariantLabel(sampleSku.variant_combination)} · Sample`,
-      customizationText: "Invitation sample",
-      customizationData: {
-        kind: "invitation",
-        details: invitationDetails,
-        isSample: true,
-        sampleForSkuId: resolvedSku.id,
-      },
-      price: sampleSku.price,
-      compareAtPrice: sampleSku.compare_at_price,
-      quantity: 1,
-      maxStock: sampleSku.pre_order_eta ? 1 : sampleSku.stock_quantity,
-    });
-    addToast({
-      type: "success",
-      title: "Sample added to cart",
-      description:
-        "Its value becomes credit toward a qualifying final invitation order.",
-    });
-    openCart();
-  }
-
   function discussInvitationOnWhatsApp() {
-    const phone = (settings.whatsappNumber || "+919623023480").replace(
-      /[^0-9]/g,
-      "",
-    );
+    const phone = settings.whatsappNumber.replace(/[^0-9]/g, "");
+    if (!phone) {
+      addToast({
+        type: "error",
+        title: "WhatsApp is unavailable",
+        description: "Please contact us through the website contact page.",
+      });
+      return;
+    }
     const message = buildInvitationWhatsAppMessage({
       productName: product.name,
       productUrl: window.location.href,
@@ -1682,10 +1615,7 @@ export default function ShopProductDetailClient({
                   config={invitationConfig}
                   details={invitationDetails}
                   quantity={quantity}
-                  minFinalQuantity={selectedInvitationPolicy?.minFinalQuantity}
-                  sampleAvailable={canOrderSample}
                   onChange={setInvitationDetails}
-                  onOrderSample={addInvitationSample}
                   onDiscuss={discussInvitationOnWhatsApp}
                 />
               ) : product.is_customizable ? (
@@ -1718,13 +1648,13 @@ export default function ShopProductDetailClient({
                 <div className="mt-5">
                   <QuantityStepper
                     value={quantity}
-                    min={selectedInvitationPolicy?.minFinalQuantity ?? 1}
+                    min={invitationConfig.minOrderQuantity}
                     max={maxStock}
                     onChangeAction={(nextQuantity) =>
                       setQuantity(
                         Math.max(
                           nextQuantity,
-                          selectedInvitationPolicy?.minFinalQuantity ?? 1,
+                          invitationConfig.minOrderQuantity,
                         ),
                       )
                     }

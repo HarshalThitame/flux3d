@@ -27,14 +27,6 @@ export default function ShopPriceSummary({
     ...(money.offerDiscountPaise
       ? [{ label: "Automatic offer", value: -money.offerDiscountPaise }]
       : []),
-    ...(money.sampleCreditDiscountPaise
-      ? [
-          {
-            label: "Invitation sample credit",
-            value: -money.sampleCreditDiscountPaise,
-          },
-        ]
-      : []),
     {
       label: estimated ? "Delivery (estimated)" : "Delivery",
       value: money.shippingPaise,

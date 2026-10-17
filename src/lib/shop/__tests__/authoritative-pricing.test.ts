@@ -313,10 +313,9 @@ describe("authoritative shop quotes", () => {
     );
   });
 
-  it("auto-applies only an active credit for the matching invitation SKU", async () => {
+  it("enforces final-card minimum quantity and rejects retired sample payloads", async () => {
     const productId = "11111111-1111-4111-8111-111111111111";
     const finalSkuId = "22222222-2222-4222-8222-222222222222";
-    const sampleSkuId = "33333333-3333-4333-8333-333333333333";
     fixture.tables.shelf_skus = [
       {
         id: finalSkuId,
@@ -338,56 +337,50 @@ describe("authoritative shop quotes", () => {
         is_archived: false,
         invitation_config: {
           enabled: true,
-          sampleSkuId: null,
-          minFinalQuantity: 25,
-          creditExpiryDays: 90,
+          minOrderQuantity: 25,
           fields: ["hostNames", "eventDate", "venue", "rsvp", "wording"],
-          sampleVariants: [
-            {
-              finalSkuId,
-              sampleSkuId,
-              minFinalQuantity: null,
-              creditExpiryDays: null,
-            },
-          ],
         },
       },
     ];
-    fixture.tables.shop_sample_credits = [
-      {
-        id: "credit",
-        status: "active",
-        owner_email: "buyer@example.com",
-        target_sku_id: finalSkuId,
-        amount_paise: 5000,
-        expires_at: "2099-01-01T00:00:00.000Z",
+    const invitationItem = {
+      productId,
+      skuId: finalSkuId,
+      quantity: 25,
+      customizationData: {
+        kind: "invitation" as const,
+        details: {
+          hostNames: "A & B",
+          eventDate: "2026-12-12",
+          venue: "Pune",
+          rsvp: "",
+          wording: "Welcome",
+        },
       },
-    ];
-    const quote = await quoteShopOrder({
-      customerEmail: "buyer@example.com",
-      destination: input.destination,
-      items: [
-        {
-          productId,
-          skuId: finalSkuId,
-          quantity: 25,
-          customizationData: {
-            kind: "invitation",
-            isSample: false,
-            details: {
-              hostNames: "A & B",
-              eventDate: "2026-12-12",
-              venue: "Pune",
-              rsvp: "",
-              wording: "Welcome",
-            },
+    };
+    await expect(
+      quoteShopOrder({
+        destination: input.destination,
+        items: [{ ...invitationItem, quantity: 24 }],
+      }),
+    ).rejects.toThrow(/at least 25 cards/);
+    await expect(
+      quoteShopOrder({
+        destination: input.destination,
+        items: [
+          {
+            ...invitationItem,
+            customizationData: {
+              ...invitationItem.customizationData,
+              isSample: true,
+            } as unknown as typeof invitationItem.customizationData,
           },
-        },
-      ],
+        ],
+      }),
+    ).rejects.toThrow(/samples are no longer available/);
+    const quote = await quoteShopOrder({
+      destination: input.destination,
+      items: [invitationItem],
     });
-    expect(quote.snapshot.money.sampleCreditDiscountPaise).toBe(5000);
-    expect(quote.snapshot.sample_credits).toEqual([
-      expect.objectContaining({ id: "credit", targetSkuId: finalSkuId }),
-    ]);
+    expect(quote.snapshot.money.totalPaise).toBeGreaterThan(0);
   });
 });

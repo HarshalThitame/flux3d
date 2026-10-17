@@ -10,7 +10,6 @@ import {
   Check,
   CircleDot,
   Clock3,
-  Gift,
   MapPin,
   PackageCheck,
   ReceiptText,
@@ -90,18 +89,6 @@ async function getSuccessOrder(orderId: string, userId: string) {
   return data ? mapShopOrderRow(data) : null;
 }
 
-async function getInvitationSampleCredit(orderId: string) {
-  const supabase = createAdminSupabaseClient();
-  const { data, error } = await supabase
-    .from("shop_sample_credits")
-    .select("code, amount_paise, min_final_quantity, expires_at")
-    .eq("sample_order_id", orderId)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  return data;
-}
-
 export default async function ShopOrderSuccessPage({
   searchParams,
 }: ShopOrderSuccessPageProps) {
@@ -120,8 +107,6 @@ export default async function ShopOrderSuccessPage({
 
   const order = await getSuccessOrder(orderId, auth.profile.id);
   if (!order) redirect("/3d-shop/orders");
-  const sampleCredit = await getInvitationSampleCredit(order.id);
-
   const itemCount = getOrderItemCount(order);
   const primaryImage = getPrimaryImage(order);
   const previewItems = order.items.slice(0, 4);
@@ -164,37 +149,6 @@ export default async function ShopOrderSuccessPage({
                 We have reserved your items, captured the delivery details, and
                 queued the order for fulfillment.
               </p>
-
-              {sampleCredit && (
-                <div className="mt-6 max-w-2xl rounded-[var(--shop-radius-lg)] border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] p-4 shadow-[var(--shop-shadow-sm)]">
-                  <div className="flex items-start gap-3">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-[var(--shop-gold)] shadow-[var(--shop-shadow-sm)]">
-                      <Gift className="h-5 w-5" />
-                    </span>
-                    <div>
-                      <p className="text-sm font-bold text-[var(--shop-text-primary)]">
-                        Your invitation sample credit is ready
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-[var(--shop-text-secondary)]">
-                        Use this one-time code on{" "}
-                        {sampleCredit.min_final_quantity}+ cards to credit{" "}
-                        {formatShopPrice(
-                          Number(sampleCredit.amount_paise) / 100,
-                        )}{" "}
-                        from this sample. It expires{" "}
-                        {new Date(sampleCredit.expires_at).toLocaleDateString(
-                          "en-IN",
-                          { day: "numeric", month: "short", year: "numeric" },
-                        )}
-                        .
-                      </p>
-                      <code className="mt-3 inline-flex rounded-lg border border-[var(--shop-border-gold)] bg-white px-3 py-2 text-sm font-bold tracking-[0.12em] text-[var(--shop-text-primary)]">
-                        {sampleCredit.code}
-                      </code>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link

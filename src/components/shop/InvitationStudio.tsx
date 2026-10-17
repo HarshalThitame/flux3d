@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle, PackageCheck, Sparkles } from "lucide-react";
+import { MessageCircle, Sparkles } from "lucide-react";
 import type {
   InvitationConfig,
   InvitationDetails,
@@ -10,10 +10,7 @@ type Props = {
   config: InvitationConfig;
   details: InvitationDetails;
   quantity: number;
-  minFinalQuantity?: number;
-  sampleAvailable: boolean;
   onChange: (details: InvitationDetails) => void;
-  onOrderSample: () => void;
   onDiscuss: () => void;
 };
 
@@ -53,10 +50,7 @@ export default function InvitationStudio({
   config,
   details,
   quantity,
-  minFinalQuantity,
-  sampleAvailable,
   onChange,
-  onOrderSample,
   onDiscuss,
 }: Props) {
   return (
@@ -112,36 +106,20 @@ export default function InvitationStudio({
           ))}
       </div>
 
-      <div className="grid gap-2 border-t border-[var(--shop-gold)]/20 bg-white/70 p-4 sm:grid-cols-2">
+      <div className="border-t border-[var(--shop-gold)]/20 bg-white/70 p-4">
         <div className="rounded-xl bg-[var(--shop-gold-faint)] px-3 py-2.5 text-xs leading-5 text-[var(--shop-text-secondary)]">
           <strong className="block text-[var(--shop-text-primary)]">
-            Final order from {minFinalQuantity ?? config.minFinalQuantity} cards
+            Final order from {config.minOrderQuantity} cards
           </strong>
           Your selected quantity: {quantity} cards.
         </div>
-        <div className="rounded-xl bg-[var(--shop-bg-soft)] px-3 py-2.5 text-xs leading-5 text-[var(--shop-text-secondary)]">
-          <strong className="block text-[var(--shop-text-primary)]">
-            Sample credit promise
-          </strong>
-          Your sample value becomes credit toward a qualifying final order.
-        </div>
       </div>
 
-      <div className="flex flex-col gap-2 px-4 pb-4 sm:flex-row">
-        {sampleAvailable ? (
-          <button
-            type="button"
-            onClick={onOrderSample}
-            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--shop-text-primary)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--shop-text-secondary)]"
-          >
-            <PackageCheck className="h-4 w-4" aria-hidden /> Order a physical
-            sample
-          </button>
-        ) : null}
+      <div className="px-4 pb-4">
         <button
           type="button"
           onClick={onDiscuss}
-          className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--shop-gold)] bg-white px-4 text-sm font-semibold text-[var(--shop-text-primary)] transition hover:bg-[var(--shop-gold-faint)]"
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--shop-gold)] bg-white px-4 text-sm font-semibold text-[var(--shop-text-primary)] transition hover:bg-[var(--shop-gold-faint)]"
         >
           <MessageCircle
             className="h-4 w-4 text-[var(--shop-gold)]"

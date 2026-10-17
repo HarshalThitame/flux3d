@@ -118,9 +118,6 @@ export type ShopPublicReview = {
 export type ShopInvitationCustomization = {
   kind: "invitation";
   details: InvitationDetails;
-  isSample: boolean;
-  /** The final-card SKU this sample credit can be used against. */
-  sampleForSkuId?: string | null;
 };
 
 export type ShopReviewsResult = {

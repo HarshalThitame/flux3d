@@ -24,8 +24,6 @@ import type { ShopQuote } from "./quote-types";
 import {
   normalizeInvitationConfig,
   normalizeInvitationDetails,
-  getInvitationSampleVariant,
-  getInvitationVariantPolicy,
   validateInvitationDetails,
 } from "./invitation";
 import type { ShopInvitationCustomization } from "./public-types";
@@ -102,6 +100,14 @@ export function normalizeOrderItems(value: unknown): PlaceOrderItemInput[] {
     if (!productId || !skuId) throw new Error("Invalid cart item.");
     if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity > 10000)
       throw new Error("Invalid item quantity.");
+    if (
+      isRecord(entry.customizationData) &&
+      entry.customizationData.kind === "invitation" &&
+      ("isSample" in entry.customizationData ||
+        "sampleForSkuId" in entry.customizationData)
+    ) {
+      throw new Error("Invitation samples are no longer available.");
+    }
 
     return {
       productId,
@@ -125,9 +131,6 @@ export function normalizeOrderItems(value: unknown): PlaceOrderItemInput[] {
                 rsvp: "",
                 wording: "",
               },
-              isSample: Boolean(entry.customizationData.isSample),
-              sampleForSkuId:
-                normalizeText(entry.customizationData.sampleForSkuId) || null,
             } satisfies ShopInvitationCustomization)
           : null,
     };
@@ -239,44 +242,6 @@ async function validateCouponCode(
         `Minimum order value of ₹${Number(shopCoupon.min_order_value ?? 0).toFixed(0)} required.`,
       );
     }
-    if (shopCoupon.sample_credit_id) {
-      const { data: credit, error: creditError } = await supabase
-        .from("shop_sample_credits")
-        .select(
-          "owner_user_id,owner_email,product_id,min_final_quantity,expires_at,redeemed_order_id",
-        )
-        .eq("id", shopCoupon.sample_credit_id)
-        .maybeSingle();
-      if (creditError || !credit)
-        throw new Error("This sample credit is no longer available.");
-      const normalizedEmail = customerEmail?.trim().toLowerCase() || null;
-      const ownsCredit =
-        (credit.owner_user_id && credit.owner_user_id === userId) ||
-        (credit.owner_email &&
-          normalizedEmail &&
-          credit.owner_email === normalizedEmail);
-      if (!ownsCredit)
-        throw new Error("This sample credit belongs to a different customer.");
-      if (
-        credit.redeemed_order_id ||
-        new Date(credit.expires_at).getTime() < Date.now()
-      ) {
-        throw new Error("This sample credit has expired or was already used.");
-      }
-      const qualifyingQuantity = items
-        .filter(
-          (item) =>
-            item.productId === credit.product_id &&
-            !item.customizationData?.isSample,
-        )
-        .reduce((sum, item) => sum + item.quantity, 0);
-      if (qualifyingQuantity < Number(credit.min_final_quantity)) {
-        throw new Error(
-          `Use this sample credit with at least ${credit.min_final_quantity} invitation cards.`,
-        );
-      }
-    }
-
     const discountType = String(shopCoupon.discount_type).toLowerCase() as
       "percentage" | "fixed_amount" | "free_shipping";
     const discountValue = Number(shopCoupon.discount_value ?? 0);
@@ -565,39 +530,19 @@ export async function quoteShopOrder(input: {
       product.invitation_config,
     );
     if (invitationConfig.enabled) {
-      const isSample =
-        item.customizationData?.kind === "invitation" &&
-        item.customizationData.isSample;
-      if (isSample) {
-        const sampleForSkuId = item.customizationData?.sampleForSkuId ?? "";
-        const mapping = sampleForSkuId
-          ? getInvitationSampleVariant(invitationConfig, sampleForSkuId)
-          : null;
-        if (
-          !mapping ||
-          item.skuId !== mapping.sampleSkuId ||
-          item.quantity !== 1
-        ) {
-          throw new Error("This invitation sample is no longer available.");
-        }
-      } else {
-        const policy = getInvitationVariantPolicy(invitationConfig, item.skuId);
-        if (item.quantity < policy.minFinalQuantity) {
-          throw new Error(
-            `Invitation orders require at least ${policy.minFinalQuantity} cards.`,
-          );
-        }
-        const details = validateInvitationDetails(
-          item.customizationData?.details,
-          invitationConfig,
+      if (item.quantity < invitationConfig.minOrderQuantity) {
+        throw new Error(
+          `Invitation orders require at least ${invitationConfig.minOrderQuantity} cards.`,
         );
-        item.customizationData = {
-          kind: "invitation",
-          details,
-          isSample: false,
-          sampleForSkuId: null,
-        };
       }
+      const details = validateInvitationDetails(
+        item.customizationData?.details,
+        invitationConfig,
+      );
+      item.customizationData = {
+        kind: "invitation",
+        details,
+      };
     }
 
     const sku = skusById.get(item.skuId);
@@ -617,22 +562,6 @@ export async function quoteShopOrder(input: {
     item.variantLabel = Object.entries(item.variantCombination)
       .map(([k, v]) => `${k}: ${v}`)
       .join(", ");
-  }
-
-  const hasInvitationSample = items.some(
-    (item) =>
-      item.customizationData?.kind === "invitation" &&
-      item.customizationData.isSample,
-  );
-  const hasInvitationFinal = items.some(
-    (item) =>
-      item.customizationData?.kind === "invitation" &&
-      !item.customizationData.isSample,
-  );
-  if (hasInvitationSample && hasInvitationFinal) {
-    throw new Error(
-      "Please check out invitation samples separately from final cards.",
-    );
   }
 
   const subtotalPaise = items.reduce(
@@ -713,122 +642,7 @@ export async function quoteShopOrder(input: {
     }
   }
   const offerDiscountPaise = promotionDiscountPaise(afterCoupon, offer);
-  let customerEmail = normalizeText(input.customerEmail).toLowerCase();
-  if (!customerEmail && userId) {
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("id", userId)
-      .maybeSingle();
-    if (profileError)
-      throw new Error("Unable to verify your sample credits. Please retry.");
-    customerEmail = normalizeText(profile?.email).toLowerCase();
-  }
-  if (hasInvitationSample && !customerEmail) {
-    throw new Error(
-      "An email address is required to reserve an invitation sample credit.",
-    );
-  }
-  const sampleCreditsResult = customerEmail
-    ? await supabase.from("shop_sample_credits").select("*")
-    : { data: [] as Record<string, unknown>[], error: null };
-  if (sampleCreditsResult.error)
-    throw new Error("Unable to check sample credits. Please retry.");
-  const now = Date.now();
-  const requestedSampleTargets = items
-    .filter(
-      (item) =>
-        item.customizationData?.kind === "invitation" &&
-        item.customizationData.isSample,
-    )
-    .map((item) => item.customizationData?.sampleForSkuId ?? "")
-    .filter(Boolean);
-  if (new Set(requestedSampleTargets).size !== requestedSampleTargets.length) {
-    throw new Error(
-      "Only one sample may be ordered for each invitation variant.",
-    );
-  }
-  if (
-    hasInvitationSample &&
-    (sampleCreditsResult.data ?? []).some((credit) => {
-      const expiresAt = Date.parse(normalizeText(credit.expires_at));
-      return (
-        normalizeText(credit.owner_email).toLowerCase() === customerEmail &&
-        requestedSampleTargets.includes(normalizeText(credit.target_sku_id)) &&
-        (credit.status === "active" || credit.status === "reserved") &&
-        (!Number.isFinite(expiresAt) || expiresAt > now)
-      );
-    })
-  ) {
-    throw new Error(
-      "You already have an active sample credit for this invitation variant.",
-    );
-  }
-  const promotionDiscountPaiseTotal = couponDiscountPaise + offerDiscountPaise;
-  const sampleCredits = (sampleCreditsResult.data ?? [])
-    .filter((credit) => {
-      const targetSkuId = normalizeText(credit.target_sku_id);
-      const ownerEmail = normalizeText(credit.owner_email).toLowerCase();
-      const expiresAt = Date.parse(normalizeText(credit.expires_at));
-      return (
-        credit.status === "active" &&
-        ownerEmail === customerEmail &&
-        targetSkuId &&
-        (!Number.isFinite(expiresAt) || expiresAt > now) &&
-        items.some(
-          (item) =>
-            item.skuId === targetSkuId &&
-            item.customizationData?.kind === "invitation" &&
-            !item.customizationData.isSample,
-        )
-      );
-    })
-    .sort((a, b) => normalizeText(a.id).localeCompare(normalizeText(b.id)))
-    .reduce<
-      Array<{
-        id: string;
-        targetSkuId: string;
-        amountPaise: number;
-        discountPaise: number;
-      }>
-    >((accepted, credit) => {
-      const targetSkuId = normalizeText(credit.target_sku_id);
-      if (accepted.some((entry) => entry.targetSkuId === targetSkuId))
-        return accepted;
-      const item = items.find((candidate) => candidate.skuId === targetSkuId)!;
-      const linePaise = toPaise(item.unitPrice) * item.quantity;
-      // Pro-rate ordinary promotions first. The sample credit can never discount
-      // tax, shipping, another SKU, or more than the remaining matching line.
-      const ordinaryShare = Math.floor(
-        (promotionDiscountPaiseTotal * linePaise) / Math.max(1, subtotalPaise),
-      );
-      const amountPaise = Math.max(
-        0,
-        Math.round(Number(credit.amount_paise)) ||
-          toPaise(Number(credit.amount) || 0),
-      );
-      const discountPaise = Math.min(
-        amountPaise,
-        Math.max(0, linePaise - ordinaryShare),
-      );
-      return discountPaise > 0
-        ? [
-            ...accepted,
-            {
-              id: normalizeText(credit.id),
-              targetSkuId,
-              amountPaise,
-              discountPaise,
-            },
-          ]
-        : accepted;
-    }, []);
-  const sampleCreditDiscountPaise = sampleCredits.reduce(
-    (sum, credit) => sum + credit.discountPaise,
-    0,
-  );
-  const discountedSubtotal =
-    (afterCoupon - offerDiscountPaise - sampleCreditDiscountPaise) / 100;
+  const discountedSubtotal = (afterCoupon - offerDiscountPaise) / 100;
   const destination =
     input.destination?.pincode && input.destination.state
       ? {
@@ -863,7 +677,6 @@ export async function quoteShopOrder(input: {
     subtotalPaise,
     couponDiscountPaise,
     offerDiscountPaise,
-    sampleCreditDiscountPaise,
     shippingPaise,
     cgstPercent,
     sgstPercent,
@@ -895,7 +708,6 @@ export async function quoteShopOrder(input: {
     cgst_percent: cgstPercent,
     sgst_percent: sgstPercent,
     promotions,
-    sample_credits: sampleCredits,
     delivery_rule_id: shipping.ruleId ?? null,
     delivery_source: deliverySource,
     delivery_threshold: settings.deliveryChargeThreshold,
@@ -909,7 +721,6 @@ export async function quoteShopOrder(input: {
         destination,
         money,
         promotions,
-        sampleCredits,
         cgstPercent,
         sgstPercent,
         ruleId: shipping.ruleId ?? null,

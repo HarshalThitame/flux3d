@@ -2,7 +2,6 @@ export type ShopMoney = {
   subtotalPaise: number;
   couponDiscountPaise: number;
   offerDiscountPaise: number;
-  sampleCreditDiscountPaise: number;
   discountPaise: number;
   shippingPaise: number;
   cgstPaise: number;
@@ -62,7 +61,6 @@ export function calculateShopMoney(input: {
   subtotalPaise: number;
   couponDiscountPaise: number;
   offerDiscountPaise: number;
-  sampleCreditDiscountPaise?: number;
   shippingPaise: number;
   cgstPercent: number;
   sgstPercent: number;
@@ -73,16 +71,13 @@ export function calculateShopMoney(input: {
     offerDiscountPaise,
     shippingPaise,
   } = input;
-  const sampleCreditDiscountPaise = input.sampleCreditDiscountPaise ?? 0;
   [
     subtotalPaise,
     couponDiscountPaise,
     offerDiscountPaise,
-    sampleCreditDiscountPaise,
     shippingPaise,
   ].forEach(assertPaise);
-  const discountPaise =
-    couponDiscountPaise + offerDiscountPaise + sampleCreditDiscountPaise;
+  const discountPaise = couponDiscountPaise + offerDiscountPaise;
   if (discountPaise > subtotalPaise)
     throw new Error("Discount exceeds merchandise total.");
   for (const rate of [input.cgstPercent, input.sgstPercent]) {
@@ -98,7 +93,6 @@ export function calculateShopMoney(input: {
     subtotalPaise,
     couponDiscountPaise,
     offerDiscountPaise,
-    sampleCreditDiscountPaise,
     discountPaise,
     shippingPaise,
     cgstPaise,
@@ -122,10 +116,7 @@ export function readOrderMoney(order: Record<string, unknown>): ShopMoney {
   const snapshot = order.order_price_snapshot as
     { version?: number; currency?: string; money?: ShopMoney } | undefined;
   const rawMoney = snapshot?.money;
-  const money = rawMoney && {
-    ...rawMoney,
-    sampleCreditDiscountPaise: rawMoney.sampleCreditDiscountPaise ?? 0,
-  };
+  const money = rawMoney;
   if (snapshot?.version !== 2 || snapshot.currency !== "INR" || !money) {
     throw new Error(
       "This order needs a pricing review. Please return to checkout before paying.",
@@ -135,7 +126,6 @@ export function readOrderMoney(order: Record<string, unknown>): ShopMoney {
     "subtotalPaise",
     "couponDiscountPaise",
     "offerDiscountPaise",
-    "sampleCreditDiscountPaise",
     "discountPaise",
     "shippingPaise",
     "cgstPaise",
@@ -147,9 +137,7 @@ export function readOrderMoney(order: Record<string, unknown>): ShopMoney {
   }
   if (
     money.discountPaise !==
-      money.couponDiscountPaise +
-        money.offerDiscountPaise +
-        money.sampleCreditDiscountPaise ||
+      money.couponDiscountPaise + money.offerDiscountPaise ||
     money.taxPaise !== money.cgstPaise + money.sgstPaise ||
     money.discountPaise > money.subtotalPaise ||
     money.totalPaise !==

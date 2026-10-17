@@ -12,10 +12,6 @@ import {
   notifyRefundProcessed,
 } from "./email-triggers";
 import { notifyWhatsAppOrderConfirmed } from "@/lib/whatsapp/notifications";
-import {
-  captureInvitationSampleCredits,
-  issueInvitationSampleCredit,
-} from "@/lib/shop/sample-credit";
 import { sendCapiEvents, buildPurchaseEvent } from "@/lib/meta/conversions-api";
 import { generateEventId } from "@/lib/meta/event-utils";
 import { toCatalogRetailerId } from "@/lib/meta/catalog";
@@ -852,21 +848,6 @@ export async function verifyCheckoutPayment(params: {
       }
     }
 
-    if (params.internalOrderType === "shop_order") {
-      try {
-        await captureInvitationSampleCredits(params.internalOrderId);
-        await issueInvitationSampleCredit(params.internalOrderId);
-      } catch (error) {
-        reportError(error, "Failed to issue invitation sample credit", {
-          module: "payments",
-          tags: {
-            flow: "checkout_verify_credit",
-            orderId: params.internalOrderId,
-          },
-        });
-      }
-    }
-
     await insertPaymentAuditLog({
       actor_id: params.customerId ?? null,
       actor_role: "customer",
@@ -1236,21 +1217,6 @@ async function processPaymentLifecycleEvent(
         reportError(error, "Webhook failed to convert inventory reservations", {
           module: "payments",
           tags: { flow: "webhook_capture", orderId: attempt.internal_order_id },
-        });
-      }
-    }
-
-    if (captured && attempt.internal_order_type === "shop_order") {
-      try {
-        await captureInvitationSampleCredits(attempt.internal_order_id);
-        await issueInvitationSampleCredit(attempt.internal_order_id);
-      } catch (error) {
-        reportError(error, "Webhook failed to issue invitation sample credit", {
-          module: "payments",
-          tags: {
-            flow: "webhook_capture_credit",
-            orderId: attempt.internal_order_id,
-          },
         });
       }
     }

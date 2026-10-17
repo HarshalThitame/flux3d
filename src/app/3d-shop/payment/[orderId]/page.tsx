@@ -291,16 +291,6 @@ export default async function RazorpayShopPaymentPage({
                       </span>
                     </div>
                   ) : null}
-                  {savedMoney.sampleCreditDiscountPaise > 0 && (
-                    <div className="flex items-center justify-between text-sm text-[#c9a962]">
-                      <span className="font-light tracking-wide">
-                        Invitation sample credit
-                      </span>
-                      <span className="tracking-wide">
-                        -{formatPaise(savedMoney.sampleCreditDiscountPaise)}
-                      </span>
-                    </div>
-                  )}
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-neutral-500 font-light tracking-wide">
                       Shipping

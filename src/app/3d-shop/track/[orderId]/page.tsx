@@ -5,7 +5,6 @@ import {
   BadgeCheck,
   CheckCircle2,
   Clock,
-  Gift,
   MapPin,
   Package,
   PackageCheck,
@@ -116,12 +115,6 @@ export default async function TrackOrderPage({
   if (error || !data) notFound();
 
   const order = mapShopOrderRow(data);
-  const { data: sampleCredit } = await supabase
-    .from("shop_sample_credits")
-    .select("code, amount_paise, min_final_quantity, expires_at")
-    .eq("sample_order_id", orderId)
-    .maybeSingle();
-
   // If the guest has since claimed this order into an account, celebrate (or
   // ask them to log in to see it).
   if (order.user_id) {
@@ -251,30 +244,6 @@ export default async function TrackOrderPage({
               </div>
             )}
           </section>
-
-          {sampleCredit && (
-            <section className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-gold)] bg-[var(--shop-gold-faint)] p-5 shadow-[var(--shop-shadow-sm)]">
-              <h2 className="flex items-center gap-2 text-lg font-bold text-[var(--shop-text-primary)]">
-                <Gift className="h-5 w-5 text-[var(--shop-gold)]" />
-                Your invitation sample credit
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-[var(--shop-text-secondary)]">
-                Use this code on {sampleCredit.min_final_quantity}+ cards to
-                credit{" "}
-                {formatShopPrice(Number(sampleCredit.amount_paise) / 100)} from
-                your paid sample. It expires{" "}
-                {new Date(sampleCredit.expires_at).toLocaleDateString("en-IN", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-                .
-              </p>
-              <code className="mt-3 inline-flex rounded-lg border border-[var(--shop-border-gold)] bg-white px-3 py-2 text-sm font-bold tracking-[0.12em] text-[var(--shop-text-primary)]">
-                {sampleCredit.code}
-              </code>
-            </section>
-          )}
 
           <section className="rounded-[var(--shop-radius-xl)] border border-[var(--shop-border-light)] bg-white p-5 shadow-[var(--shop-shadow-sm)]">
             <h2 className="flex items-center gap-2 text-lg font-bold text-[var(--shop-text-primary)]">

@@ -49,18 +49,17 @@ describe("authoritative shop money", () => {
     expect(formatPaise(money.totalPaise)).toMatch(/522/);
   });
 
-  it("applies a matching sample credit after coupons and offers, before GST", () => {
+  it("calculates ordinary discounts before GST without hidden credit adjustments", () => {
     const money = calculateShopMoney({
       subtotalPaise: 40000,
       couponDiscountPaise: 1000,
       offerDiscountPaise: 2000,
-      sampleCreditDiscountPaise: 5000,
       shippingPaise: 0,
       cgstPercent: 9,
       sgstPercent: 9,
     });
-    expect(money.discountPaise).toBe(8000);
-    expect(money.totalPaise).toBe(37760);
+    expect(money.discountPaise).toBe(3000);
+    expect(money.totalPaise).toBe(43660);
   });
 
   it("never allows a promotion to exceed the merchandise total", () => {

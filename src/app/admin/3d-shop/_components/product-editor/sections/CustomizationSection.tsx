@@ -1,63 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { useProductEditor } from "../editor-context";
 import { Section, Toggle, inputClass } from "../ui";
 
 export function CustomizationSection() {
-  const {
-    product,
-    updateProduct,
-    skus,
-    generateInvitationSampleSkus,
-    setToast,
-  } = useProductEditor();
+  const { product, updateProduct } = useProductEditor();
   const invitation = product.invitation_config;
-  const [samplePrice, setSamplePrice] = useState("");
-  const [sampleStock, setSampleStock] = useState("10");
-  const [generatingSamples, setGeneratingSamples] = useState(false);
-
-  async function createSampleSkus() {
-    setGeneratingSamples(true);
-    try {
-      const mappings = await generateInvitationSampleSkus({
-        samplePrice: samplePrice.trim() ? Number(samplePrice) : null,
-        stockQuantity: Number(sampleStock) || 0,
-      });
-      const generatedMappings = mappings.map((mapping) => ({
-        ...mapping,
-        minFinalQuantity: null,
-        creditExpiryDays: null,
-      }));
-      updateProduct("invitation_config", {
-        ...invitation,
-        sampleSkuId: null,
-        sampleVariants: [
-          ...invitation.sampleVariants.filter(
-            (existing) =>
-              !generatedMappings.some(
-                (generated) => generated.finalSkuId === existing.finalSkuId,
-              ),
-          ),
-          ...generatedMappings,
-        ],
-      });
-      setToast({
-        type: "success",
-        message: `${generatedMappings.length} dedicated sample SKU${generatedMappings.length === 1 ? "" : "s"} created and mapped.`,
-      });
-    } catch (error) {
-      setToast({
-        type: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to create sample SKUs.",
-      });
-    } finally {
-      setGeneratingSamples(false);
-    }
-  }
 
   return (
     <Section
@@ -175,20 +123,20 @@ export function CustomizationSection() {
             updateProduct("invitation_config", { ...invitation, enabled })
           }
           label="Enable Invitation Studio"
-          description="Adds guided wedding/invitation details, a paid sample CTA, and WhatsApp consultation to this product."
+          description="Adds guided invitation details, a minimum final-card quantity, and WhatsApp consultation to this product."
         />
         {invitation.enabled && (
-          <div className="mt-4 grid gap-4 rounded-2xl border border-amber-200 bg-amber-50/50 p-4 lg:grid-cols-3">
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/50 p-4">
             <label className="block text-xs font-medium text-[#6F7192]">
-              Minimum final cards
+              Minimum final-card quantity
               <input
                 type="number"
                 min="1"
-                value={invitation.minFinalQuantity}
+                value={invitation.minOrderQuantity}
                 onChange={(event) =>
                   updateProduct("invitation_config", {
                     ...invitation,
-                    minFinalQuantity: Math.max(
+                    minOrderQuantity: Math.max(
                       1,
                       Number(event.target.value) || 1,
                     ),
@@ -197,205 +145,6 @@ export function CustomizationSection() {
                 className={`${inputClass} mt-1.5`}
               />
             </label>
-            <label className="block text-xs font-medium text-[#6F7192]">
-              Sample credit validity (days)
-              <input
-                type="number"
-                min="1"
-                max="365"
-                value={invitation.creditExpiryDays}
-                onChange={(event) =>
-                  updateProduct("invitation_config", {
-                    ...invitation,
-                    creditExpiryDays: Math.min(
-                      365,
-                      Math.max(1, Number(event.target.value) || 1),
-                    ),
-                  })
-                }
-                className={`${inputClass} mt-1.5`}
-              />
-            </label>
-            <div className="lg:col-span-3 rounded-xl border border-amber-200 bg-white/80 p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <p className="text-sm font-semibold text-[#0F1B3D]">
-                    Variant sample mapping
-                  </p>
-                  <p className="mt-0.5 text-xs text-[#6F7192]">
-                    Each sample is credited only toward its matching final-card
-                    SKU. Blank overrides inherit the defaults above.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateProduct("invitation_config", {
-                      ...invitation,
-                      sampleSkuId: null,
-                      sampleVariants: [
-                        ...invitation.sampleVariants,
-                        {
-                          finalSkuId: skus[0]?.id ?? "",
-                          sampleSkuId: skus[1]?.id ?? skus[0]?.id ?? "",
-                          minFinalQuantity: null,
-                          creditExpiryDays: null,
-                        },
-                      ],
-                    })
-                  }
-                  disabled={skus.length < 2}
-                  className="rounded-lg bg-[#0F1B3D] px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Add mapping
-                </button>
-              </div>
-              <div className="mt-3 grid gap-2 rounded-lg border border-dashed border-amber-300 bg-amber-50/70 p-3 md:grid-cols-[1fr_140px_auto]">
-                <label className="text-xs font-medium text-[#6F7192]">
-                  Sample price (optional)
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={samplePrice}
-                    onChange={(event) => setSamplePrice(event.target.value)}
-                    placeholder="Copy each final price"
-                    className={`${inputClass} mt-1.5`}
-                  />
-                </label>
-                <label className="text-xs font-medium text-[#6F7192]">
-                  Sample stock
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={sampleStock}
-                    onChange={(event) => setSampleStock(event.target.value)}
-                    className={`${inputClass} mt-1.5`}
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={() => void createSampleSkus()}
-                  disabled={generatingSamples || skus.length === 0}
-                  className="self-end rounded-lg bg-amber-600 px-3 py-2.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {generatingSamples
-                    ? "Creating samples…"
-                    : "Auto-create sample SKUs"}
-                </button>
-                <p className="md:col-span-3 text-xs leading-5 text-[#6F7192]">
-                  Creates one hidden-use sample SKU for every final SKU, copies
-                  its options and media, and maps it automatically. A blank
-                  price copies each final SKU price.
-                </p>
-              </div>
-              {invitation.sampleVariants.length === 0 ? (
-                <p className="mt-3 text-xs text-amber-800">
-                  No dedicated mappings yet. Add one for each final size (Small,
-                  Medium, Large).
-                  {invitation.sampleSkuId
-                    ? " This product is currently using the legacy sample fallback."
-                    : ""}
-                </p>
-              ) : null}
-              <div className="mt-3 space-y-2">
-                {invitation.sampleVariants.map((mapping, index) => {
-                  const updateMapping = (patch: Partial<typeof mapping>) =>
-                    updateProduct("invitation_config", {
-                      ...invitation,
-                      sampleSkuId: null,
-                      sampleVariants: invitation.sampleVariants.map(
-                        (entry, entryIndex) =>
-                          entryIndex === index ? { ...entry, ...patch } : entry,
-                      ),
-                    });
-                  return (
-                    <div
-                      key={`${mapping.finalSkuId}-${index}`}
-                      className="grid gap-2 rounded-lg border border-gray-100 p-2 md:grid-cols-[1fr_1fr_130px_130px_auto]"
-                    >
-                      <select
-                        value={mapping.finalSkuId}
-                        onChange={(event) =>
-                          updateMapping({ finalSkuId: event.target.value })
-                        }
-                        className={inputClass}
-                      >
-                        <option value="">Final SKU</option>
-                        {skus.map((sku) => (
-                          <option key={sku.id} value={sku.id}>
-                            {sku.sku_code} · ₹{sku.price}
-                          </option>
-                        ))}
-                      </select>
-                      <select
-                        value={mapping.sampleSkuId}
-                        onChange={(event) =>
-                          updateMapping({ sampleSkuId: event.target.value })
-                        }
-                        className={inputClass}
-                      >
-                        <option value="">Sample SKU</option>
-                        {skus.map((sku) => (
-                          <option key={sku.id} value={sku.id}>
-                            {sku.sku_code} · ₹{sku.price}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        type="number"
-                        min="1"
-                        placeholder="Min default"
-                        value={mapping.minFinalQuantity ?? ""}
-                        onChange={(event) =>
-                          updateMapping({
-                            minFinalQuantity: event.target.value
-                              ? Math.max(1, Number(event.target.value))
-                              : null,
-                          })
-                        }
-                        className={inputClass}
-                        aria-label="Minimum final cards override"
-                      />
-                      <input
-                        type="number"
-                        min="1"
-                        max="365"
-                        placeholder="Days default"
-                        value={mapping.creditExpiryDays ?? ""}
-                        onChange={(event) =>
-                          updateMapping({
-                            creditExpiryDays: event.target.value
-                              ? Math.min(
-                                  365,
-                                  Math.max(1, Number(event.target.value)),
-                                )
-                              : null,
-                          })
-                        }
-                        className={inputClass}
-                        aria-label="Credit expiry override"
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateProduct("invitation_config", {
-                            ...invitation,
-                            sampleVariants: invitation.sampleVariants.filter(
-                              (_, entryIndex) => entryIndex !== index,
-                            ),
-                          })
-                        }
-                        className="px-2 text-xs font-semibold text-red-600"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         )}
       </div>
