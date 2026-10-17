@@ -133,9 +133,20 @@ describe("getPublishBlockers", () => {
 });
 
 describe("buildProductPayload", () => {
-  it("sets is_active true for publish and false for draft", () => {
+  it("sets is_active true for publish and false for an explicit draft", () => {
     expect(buildProductPayload(validProduct, "publish").is_active).toBe(true);
     expect(buildProductPayload(validProduct, "draft").is_active).toBe(false);
+  });
+
+  it("preserves storefront visibility for ordinary and background saves", () => {
+    expect(
+      buildProductPayload({ ...validProduct, is_active: true }, "preserve")
+        .is_active,
+    ).toBe(true);
+    expect(
+      buildProductPayload({ ...validProduct, is_active: false }, "preserve")
+        .is_active,
+    ).toBe(false);
   });
 
   it("keeps existing is_active when no status is given", () => {

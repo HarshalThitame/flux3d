@@ -24,7 +24,14 @@ export type UploadState = Record<
   { status: "uploading" | "done" | "error"; progress: number }
 >;
 
-export type SaveStatus = "draft" | "publish";
+/**
+ * Visibility intent for a product write.
+ *
+ * `preserve` is deliberately the default for background and ordinary saves.
+ * A product being edited must never disappear from the storefront merely
+ * because the editor saved a changed description, image, or SKU.
+ */
+export type SaveStatus = "draft" | "publish" | "preserve";
 
 export const emptyProduct: ProductForm = {
   name: "",
@@ -198,6 +205,9 @@ export function buildProductPayload(
     customization_max_length: product.customization_max_length,
     invitation_config: product.invitation_config,
     is_featured: product.is_featured,
+    // Only an explicit Publish or Save Draft action may change visibility.
+    // Autosave and normal Save Changes use `preserve` and retain the current
+    // state. This protects live products from accidental unpublishing.
     is_active:
       status === "publish"
         ? true

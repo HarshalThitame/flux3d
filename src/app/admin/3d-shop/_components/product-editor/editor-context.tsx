@@ -764,8 +764,17 @@ export function ProductEditorProvider({
         if (!response.ok || !data.product)
           throw new Error(data.error || "Failed to save product.");
 
-        // Do NOT replace local state with the server echo here — local state
-        // may contain newer edits made while the PATCH was in flight.
+        // Keep the server-authoritative visibility fields in the local form.
+        // Without this, a later autosave could replay the old `is_active`
+        // value and immediately undo a successful publish.
+        form.patchLocal({
+          is_active: data.product.is_active ?? false,
+          is_archived: data.product.is_archived ?? false,
+          published_at: data.product.published_at ?? null,
+        });
+
+        // Do NOT replace the rest of the local state with the server echo —
+        // it may contain newer edits made while the PATCH was in flight.
         form.setDirty(true);
         await saveAllVariants();
         await saveAllVariantDimensions();
@@ -811,7 +820,6 @@ export function ProductEditorProvider({
             type: "error",
             message: `Publish blocked: ${blockers.join(" · ")}`,
           });
-          await persist("draft", { silent: true });
           return;
         }
       }
@@ -1396,7 +1404,7 @@ export function ProductEditorProvider({
         setVariantOptionImages(target.variant_option_images ?? []);
         setSkuImages(target.sku_images ?? {});
         setToast({ type: "info", message: "Snapshot restored — saving…" });
-        await persist("draft");
+        await persist("preserve");
       } catch (error) {
         setToast({
           type: "error",
@@ -1423,7 +1431,8 @@ export function ProductEditorProvider({
     if (!form.dirty) return;
     if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = window.setTimeout(() => {
-      void persist("draft", { silent: true });
+      // Background saves must never change the storefront visibility.
+      void persist("preserve", { silent: true });
     }, AUTOSAVE_DELAY);
     return () => {
       if (autosaveTimerRef.current)
@@ -1445,7 +1454,7 @@ export function ProductEditorProvider({
 
       if (mod && key === "s") {
         event.preventDefault();
-        void saveProduct("draft");
+        void saveProduct("preserve");
         return;
       }
       if (mod && event.shiftKey && key === "p") {

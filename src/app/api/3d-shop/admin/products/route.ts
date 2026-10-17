@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminApiErrorResponse } from "@/lib/admin/api";
 import { requireAdminRequest } from "@/lib/admin/request";
 import { createAdminSupabaseClient } from "@/lib/admin/server";
+import { normalizeInvitationConfig } from "@/lib/shop/invitation";
 import { invalidateShopDataCache } from "@/lib/shop/public-data";
 
 type ProductPayload = {
@@ -31,6 +32,7 @@ type ProductPayload = {
   customization_is_required?: boolean;
   customization_min_length?: number;
   customization_max_length?: number;
+  invitation_config?: unknown;
   is_featured?: boolean;
   is_active?: boolean;
   is_archived?: boolean;
@@ -167,6 +169,10 @@ function normalizeProductPayload(body: ProductPayload, partial = false) {
     customization_is_required: body.customization_is_required ?? false,
     customization_min_length: body.customization_min_length ?? 0,
     customization_max_length: body.customization_max_length ?? null,
+    // Keep the customer-facing invitation configuration on every product
+    // write. Previously this field was sent by the editor but silently
+    // dropped by the API, so enabling Invitation Studio could not persist.
+    invitation_config: normalizeInvitationConfig(body.invitation_config),
     is_featured: body.is_featured ?? false,
     is_active: body.is_active ?? true,
     is_archived: body.is_archived ?? false,
