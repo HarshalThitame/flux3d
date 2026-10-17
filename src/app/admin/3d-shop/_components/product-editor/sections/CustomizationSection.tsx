@@ -1,11 +1,63 @@
 "use client";
 
+import { useState } from "react";
 import { useProductEditor } from "../editor-context";
 import { Section, Toggle, inputClass } from "../ui";
 
 export function CustomizationSection() {
-  const { product, updateProduct, skus } = useProductEditor();
+  const {
+    product,
+    updateProduct,
+    skus,
+    generateInvitationSampleSkus,
+    setToast,
+  } = useProductEditor();
   const invitation = product.invitation_config;
+  const [samplePrice, setSamplePrice] = useState("");
+  const [sampleStock, setSampleStock] = useState("10");
+  const [generatingSamples, setGeneratingSamples] = useState(false);
+
+  async function createSampleSkus() {
+    setGeneratingSamples(true);
+    try {
+      const mappings = await generateInvitationSampleSkus({
+        samplePrice: samplePrice.trim() ? Number(samplePrice) : null,
+        stockQuantity: Number(sampleStock) || 0,
+      });
+      const generatedMappings = mappings.map((mapping) => ({
+        ...mapping,
+        minFinalQuantity: null,
+        creditExpiryDays: null,
+      }));
+      updateProduct("invitation_config", {
+        ...invitation,
+        sampleSkuId: null,
+        sampleVariants: [
+          ...invitation.sampleVariants.filter(
+            (existing) =>
+              !generatedMappings.some(
+                (generated) => generated.finalSkuId === existing.finalSkuId,
+              ),
+          ),
+          ...generatedMappings,
+        ],
+      });
+      setToast({
+        type: "success",
+        message: `${generatedMappings.length} dedicated sample SKU${generatedMappings.length === 1 ? "" : "s"} created and mapped.`,
+      });
+    } catch (error) {
+      setToast({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to create sample SKUs.",
+      });
+    } finally {
+      setGeneratingSamples(false);
+    }
+  }
 
   return (
     <Section
@@ -197,6 +249,46 @@ export function CustomizationSection() {
                 >
                   Add mapping
                 </button>
+              </div>
+              <div className="mt-3 grid gap-2 rounded-lg border border-dashed border-amber-300 bg-amber-50/70 p-3 md:grid-cols-[1fr_140px_auto]">
+                <label className="text-xs font-medium text-[#6F7192]">
+                  Sample price (optional)
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={samplePrice}
+                    onChange={(event) => setSamplePrice(event.target.value)}
+                    placeholder="Copy each final price"
+                    className={`${inputClass} mt-1.5`}
+                  />
+                </label>
+                <label className="text-xs font-medium text-[#6F7192]">
+                  Sample stock
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={sampleStock}
+                    onChange={(event) => setSampleStock(event.target.value)}
+                    className={`${inputClass} mt-1.5`}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void createSampleSkus()}
+                  disabled={generatingSamples || skus.length === 0}
+                  className="self-end rounded-lg bg-amber-600 px-3 py-2.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {generatingSamples
+                    ? "Creating samples…"
+                    : "Auto-create sample SKUs"}
+                </button>
+                <p className="md:col-span-3 text-xs leading-5 text-[#6F7192]">
+                  Creates one hidden-use sample SKU for every final SKU, copies
+                  its options and media, and maps it automatically. A blank
+                  price copies each final SKU price.
+                </p>
               </div>
               {invitation.sampleVariants.length === 0 ? (
                 <p className="mt-3 text-xs text-amber-800">

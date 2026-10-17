@@ -116,7 +116,9 @@ type ProductEditorContextValue = {
   setAiTone: (tone: AiTone) => void;
   generateAi: (kind: AiGenerationKind) => Promise<void>;
   generateAiField: (fieldContext: string, draftText: string) => Promise<string>;
-  generateAiSpecsRows: (draftText: string) => Promise<{ label: string; value: string }[]>;
+  generateAiSpecsRows: (
+    draftText: string,
+  ) => Promise<{ label: string; value: string }[]>;
   setDefaultWeight: (value: string) => void;
   setDefaultCost: (value: string) => void;
   setDefaultCompareAt: (value: string) => void;
@@ -199,6 +201,10 @@ type ProductEditorContextValue = {
   skuPatternTemplates: SkuPatternTemplate[];
   generateSkuPreview: () => Promise<SkuDraftRow[]>;
   generateSkus: (rows?: SkuDraftRow[]) => Promise<void>;
+  generateInvitationSampleSkus: (input?: {
+    samplePrice?: number | null;
+    stockQuantity?: number;
+  }) => Promise<Array<{ finalSkuId: string; sampleSkuId: string }>>;
 
   tierPrices: Record<string, ShopSkuTierPrice[]>;
   updateTierPrices: (
@@ -2488,6 +2494,95 @@ export function ProductEditorProvider({
     ],
   );
 
+  const generateInvitationSampleSkus = useCallback(
+    async (input?: { samplePrice?: number | null; stockQuantity?: number }) => {
+      const id = await ensureProductId();
+      const samplePrice = input?.samplePrice;
+      const stockQuantity = Math.max(0, Math.floor(input?.stockQuantity ?? 10));
+      if (
+        samplePrice != null &&
+        (!Number.isFinite(samplePrice) || samplePrice < 0)
+      ) {
+        throw new Error("Enter a valid sample price.");
+      }
+
+      const currentSkus = skusRef.current;
+      const finals = currentSkus.filter(
+        (sku) => !Boolean(sku.variant_combination.__invitation_sample_for),
+      );
+      if (finals.length === 0) {
+        throw new Error(
+          "Create at least one final-card SKU before generating samples.",
+        );
+      }
+
+      const existingSampleFor = new Set(
+        currentSkus
+          .map((sku) => sku.variant_combination.__invitation_sample_for)
+          .filter((value): value is string => typeof value === "string"),
+      );
+      const sampleRows = finals
+        .filter((sku) => !existingSampleFor.has(sku.id))
+        .map((sku) => ({
+          sku_code: `${sku.sku_code}-SAMPLE`,
+          variant_combination: {
+            ...sku.variant_combination,
+            __invitation_sample_for: sku.id,
+          },
+          price: samplePrice ?? sku.price,
+          compare_at_price: null,
+          cost_price: sku.cost_price ?? null,
+          stock_quantity: stockQuantity,
+          low_stock_threshold: sku.low_stock_threshold ?? 5,
+          weight_grams: sku.weight_grams ?? null,
+          variant_image_url: sku.variant_image_url ?? null,
+          model_url: sku.model_url ?? null,
+          is_available: true,
+          status: "active",
+        }));
+
+      if (sampleRows.length > 0) {
+        const response = await fetch(`/api/3d-shop/admin/products/${id}/skus`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ skus: sampleRows }),
+        });
+        const data = (await response.json().catch(() => ({}))) as {
+          skus?: ShopSku[];
+          error?: string;
+        };
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to create sample SKUs.");
+        }
+        setSkus(data.skus ?? []);
+        await loadTierPrices((data.skus ?? []).map((sku) => sku.id));
+      }
+
+      const allSkus = sampleRows.length > 0 ? await loadSkus(id) : currentSkus;
+      const sampleByFinalId = new Map(
+        allSkus
+          .map(
+            (sku) =>
+              [sku.variant_combination.__invitation_sample_for, sku] as const,
+          )
+          .filter(
+            (entry): entry is [string, ShopSku] => typeof entry[0] === "string",
+          ),
+      );
+      const mappings = finals.flatMap((finalSku) => {
+        const sampleSku = sampleByFinalId.get(finalSku.id);
+        return sampleSku
+          ? [{ finalSkuId: finalSku.id, sampleSkuId: sampleSku.id }]
+          : [];
+      });
+      if (mappings.length === 0) {
+        throw new Error("No invitation sample SKUs were created.");
+      }
+      return mappings;
+    },
+    [ensureProductId, loadSkus, loadTierPrices],
+  );
+
   const updateTierPrices = useCallback(
     async (skuId: string, prices: { tier_name: string; price: number }[]) => {
       try {
@@ -3157,6 +3252,7 @@ export function ProductEditorProvider({
     skuPatternTemplates,
     generateSkuPreview,
     generateSkus,
+    generateInvitationSampleSkus,
     tierPrices,
     updateTierPrices,
     generateSkuQr,
