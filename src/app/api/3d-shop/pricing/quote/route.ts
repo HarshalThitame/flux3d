@@ -4,6 +4,7 @@ import {
   quoteShopOrder,
   normalizeOrderItems,
 } from "@/lib/shop/authoritative-pricing";
+import { isQuoteValidationError } from "@/lib/shop/quote-validation";
 import { rateLimitResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -94,10 +95,7 @@ export async function POST(request: Request) {
       error instanceof Error
         ? error.message
         : "Unable to calculate pricing. Please retry.";
-    const validation =
-      /cart|quantity|SKU|coupon|promotion|pincode|product|stock|delivery|Sign in|minimum/i.test(
-        message,
-      );
+    const validation = isQuoteValidationError(message);
     const duration = Math.round(performance.now() - startedAt);
     console.error("[shop-quote] Quote failed", {
       duration,
