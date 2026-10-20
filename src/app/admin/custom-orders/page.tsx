@@ -4,7 +4,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminShell from '@/components/admin/AdminShell';
 import DataTable from '@/components/admin/DataTable';
 import { OmsStatusBadge } from '@/components/admin/oms/OrderStatusBadges';
 import { Plus } from 'lucide-react';
@@ -13,11 +12,13 @@ export default function CustomOrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetch('/api/admin/oms/orders?limit=100')
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('Unable to load manual orders.'); return r.json(); })
       .then(d => { setOrders(d.orders || []); })
+      .catch(() => setError('Manual orders could not be loaded. Refresh to try again.'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -101,19 +102,25 @@ export default function CustomOrdersPage() {
   ];
 
   return (
-    <AdminShell>
+    <div className="space-y-5">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7c58c9]">Operations / Offline sales</p>
+        <h1 className="mt-1 text-2xl font-bold text-[#182540]">Manual orders</h1>
+      </div>
+      {error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
       <DataTable
+        loading={loading}
         title="Manual Orders"
         description="WhatsApp, walk-in, phone, and all offline orders."
         data={orders}
         columns={columns}
-        searchPlaceholder="Search by order number, customer name, phone..."
+        searchPlaceholder="Search order number or source"
         searchKeys={['order_number', 'source']}
         onRowClick={(row) => router.push(`/admin/custom-orders/${row.id}`)}
         action={
           <button
             onClick={() => router.push('/admin/custom-orders/create')}
-            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#5720ae]"
           >
             <Plus className="w-4 h-4" />
             <span>Create Order</span>
@@ -121,6 +128,6 @@ export default function CustomOrdersPage() {
         }
         emptyTitle="No manual orders yet"
       />
-    </AdminShell>
+    </div>
   );
 }

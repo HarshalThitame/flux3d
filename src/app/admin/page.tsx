@@ -7,7 +7,7 @@ import DonutChartCard from '@/components/admin/DonutChartCard'
 import LineChartCard from '@/components/admin/LineChartCard'
 import SkeletonBlock from '@/components/admin/SkeletonBlock'
 import StatusBadge from '@/components/admin/StatusBadge'
-import { Eye, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { type AdminOrder } from '@/lib/admin/types'
 import { useProfile } from '@/hooks/useProfile'
@@ -177,16 +177,17 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[32px] border border-gray-200 bg-[radial-gradient(circle_at_top_left,rgba(109, 40, 217,0.18),transparent_28%),radial-gradient(circle_at_right,rgba(168, 85, 247,0.14),transparent_24%),rgba(10,16,31,0.92)] p-6 shadow-[0_20px_70px_rgba(0,0,0,0.24)]">
-        <div className="inline-flex rounded-full border border-[#6d28d9]/25 bg-[#6d28d9]/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#d8b4fe]">
-          Command Center
+
+      <section className="flex flex-wrap items-end justify-between gap-5 rounded-2xl border border-[#e4e8ef] bg-white px-6 py-6 shadow-[0_3px_18px_rgba(25,35,65,0.035)] sm:px-7">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7c58c9]">Flux3D / Operations</p>
+          <h1 className="mt-2 font-[var(--font-syne)] text-[clamp(1.8rem,3vw,2.5rem)] font-bold tracking-[-0.04em] text-[#182540]">Business overview</h1>
+          <p className="mt-2 text-sm text-[#66758d]">A live view of sales, production and work that needs attention.</p>
         </div>
-          <h1 className="mt-5 font-[var(--font-syne)] text-[clamp(2.4rem,5vw,4.7rem)] font-extrabold tracking-[-2px] text-white">
-            Run the entire 3D printing operation from one <span className="text-[#d8b4fe]">calm, structured dashboard</span>
-          </h1>
-          <p className="mt-4 max-w-3xl text-base leading-8 text-[#B0BBD5]">
-          Monitor orders, approve quotes, track material utilization, and keep the production floor moving without drowning in tabs.
-        </p>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/custom-orders/create" className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#5720ae]">Create manual order <span aria-hidden="true">→</span></Link>
+          <Link href="/admin/orders" className="inline-flex min-h-10 items-center rounded-xl border border-[#dce2ec] bg-white px-4 py-2 text-sm font-semibold text-[#273b58] transition hover:bg-[#f5f2fc]">View orders</Link>
+        </div>
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -212,6 +213,35 @@ export default function AdminDashboardPage() {
 
       <DashboardCards metrics={data.metrics} />
 
+      <section aria-labelledby="attention-heading" className="rounded-2xl border border-[#e4e8ef] bg-white p-5 shadow-[0_3px_18px_rgba(25,35,65,0.035)] sm:p-6">
+        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="attention-heading" className="text-base font-bold text-[#182540]">Work requiring attention</h2>
+          <span className="text-xs text-[#8190a5]">Current operations and recent quotes</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Link href="/admin/orders?status=pending" className="group rounded-xl border border-[#ede6f8] bg-[#faf7ff] p-4 transition hover:border-[#bda6eb] hover:shadow-sm">
+            <span className="block text-xs font-semibold text-[#695681]">Pending requests</span>
+            <strong className="mt-2 block text-2xl font-bold text-[#372453]">{data.metrics[2]?.value ?? '0'}</strong>
+            <span className="mt-2 flex items-center justify-between text-xs text-[#7b63a8]">Review new orders <span aria-hidden="true" className="transition group-hover:translate-x-1">→</span></span>
+          </Link>
+          <Link href="/admin/production" className="group rounded-xl border border-[#dce9f6] bg-[#f6faff] p-4 transition hover:border-[#9cc5e8] hover:shadow-sm">
+            <span className="block text-xs font-semibold text-[#536d87]">Active prints</span>
+            <strong className="mt-2 block text-2xl font-bold text-[#233d5c]">{data.metrics[3]?.value ?? '0'}</strong>
+            <span className="mt-2 flex items-center justify-between text-xs text-[#5b7c9b]">Open production <span aria-hidden="true" className="transition group-hover:translate-x-1">→</span></span>
+          </Link>
+          <Link href="/admin/quotes" className="group rounded-xl border border-[#e5ece5] bg-[#f7faf7] p-4 transition hover:border-[#a9cfb2] hover:shadow-sm">
+            <span className="block text-xs font-semibold text-[#607d67]">Recent quotes</span>
+            <strong className="mt-2 block text-2xl font-bold text-[#294d35]">{data.quotes.length}</strong>
+            <span className="mt-2 flex items-center justify-between text-xs text-[#62896b]">Open quotes <span aria-hidden="true" className="transition group-hover:translate-x-1">→</span></span>
+          </Link>
+          <Link href="/admin/refunds" className="group rounded-xl border border-[#f2e8df] bg-[#fffaf5] p-4 transition hover:border-[#deb99a] hover:shadow-sm">
+            <span className="block text-xs font-semibold text-[#8a715c]">Refund rate</span>
+            <strong className="mt-2 block text-2xl font-bold text-[#604730]">{data.metrics[6]?.value ?? '0%'}</strong>
+            <span className="mt-2 flex items-center justify-between text-xs text-[#a07e60]">Review refunds <span aria-hidden="true" className="transition group-hover:translate-x-1">→</span></span>
+          </Link>
+        </div>
+      </section>
+
       {error && (
         <div className="rounded-xl border border-rose-400/15 bg-rose-50 p-4 text-sm text-rose-600">
           {error}
@@ -220,45 +250,19 @@ export default function AdminDashboardPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <LineChartCard
-          title="Orders Over Time"
+          title="Order volume"
           subtitle={`Order velocity ${chartGranularity} across all print request channels (last ${days} days).`}
           points={chartOrders}
         />
         <DonutChartCard
-          title="Orders by Material"
+          title="Material mix"
           subtitle={`Share of print orders by material family (last ${days} days).`}
           slices={data.materialUsage}
         />
       </div>
 
-      <DataTable
-        title="Recent Activity"
-        description={`High-signal operational events from quotes, orders, user access, and inventory (last ${days} days).`}
-        data={data.orders.slice(0, 8)}
-        searchPlaceholder="Search recent activity"
-        searchKeys={['id', 'material', 'fullName', 'notes']}
-        exportFilename="recent-activity.csv"
-        columns={[
-          {
-            key: 'id',
-            label: 'Activity',
-            sortable: true,
-            sortValue: (row) => row.id,
-            exportValue: (row) => `${row.orderNumber ?? row.id} – ${row.fullName}`,
-            render: (row) => (
-              <div>
-                <div className="font-medium text-[#0F1B3D]">{row.orderNumber ?? row.id}</div>
-                  <div className="mt-1 text-xs text-[#6F7192]">{row.fullName}</div>
-              </div>
-            ),
-          },
-          { key: 'status', label: 'Status', sortable: true, sortValue: (row) => row.status, exportValue: (row) => row.status, render: (row) => <StatusBadge status={row.status} /> },
-          { key: 'createdAt', label: 'Time', sortable: true, sortValue: (row) => row.createdAt, exportValue: (row) => new Date(row.createdAt).toISOString(), render: (row) => new Date(row.createdAt).toLocaleString('en-IN') },
-        ]}
-      />
-
        <DataTable
-         title="Live Order Queue"
+         title="Recent orders"
          description={`The most recent jobs moving through review, approval, printing, and completion (last ${days} days).`}
          data={data.orders}
          searchPlaceholder="Search orders"
@@ -287,15 +291,7 @@ export default function AdminDashboardPage() {
          ]}
        />
 
-       <div className="mt-6 flex items-center gap-4">
-         <Link
-           href="/admin/blog"
-           className="inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
-         >
-           <Eye className="h-4 w-4" />
-           Manage Blog Posts
-         </Link>
-       </div>
+       <p className="pt-1 text-xs text-[#8997a9]">Metrics reflect the selected period. Production counts show current workflow state.</p>
      </div>
    )
 }

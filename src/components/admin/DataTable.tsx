@@ -118,13 +118,13 @@ function FilterDropdown({
     <select
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="rounded-lg border border-gray-700 bg-[#0B1220] px-3 py-2 text-xs text-gray-300 outline-none"
+      className="rounded-lg border border-[#dbe3ed] bg-white px-3 py-2 text-xs text-[#34465e] outline-none"
     >
-      <option value="all" className="bg-[#0B1220]">
+      <option value="all" className="bg-white">
         {label}: All
       </option>
       {options.map((option) => (
-        <option key={option.value} value={option.value} className="bg-[#0B1220]">
+        <option key={option.value} value={option.value} className="bg-white">
           {option.label}
         </option>
       ))}
@@ -144,14 +144,14 @@ function MobileCard<T>({
   return (
     <div
       onClick={() => onClick?.(row)}
-      className={`rounded-2xl border border-gray-800 bg-[#0B1220] p-4 ${onClick ? 'cursor-pointer' : ''}`}
+      className={`rounded-2xl border border-[#e4eaf0] bg-white p-4 ${onClick ? 'cursor-pointer' : ''}`}
     >
       {columns.slice(0, 4).map((column) => (
         <div key={column.key} className="flex items-center justify-between py-1.5">
-          <span className="text-[10px] uppercase tracking-[0.15em] text-gray-500">
+          <span className="text-[10px] uppercase tracking-[0.15em] text-[#8290a2]">
             {column.label}
           </span>
-          <span className="text-sm text-gray-300">{column.render(row)}</span>
+          <span className="text-sm text-[#34465e]">{column.render(row)}</span>
         </div>
       ))}
     </div>
@@ -180,7 +180,7 @@ function Pagination({
         onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
         disabled={currentPage === 1}
         aria-label="Previous page"
-        className="rounded-lg border border-gray-700 bg-[#0B1220] p-2 text-gray-400 transition hover:enabled:bg-gray-800 disabled:opacity-30"
+        className="rounded-lg border border-[#dbe3ed] bg-white p-2 text-[#77869b] transition hover:enabled:bg-[#f4f1fb] disabled:opacity-30"
       >
         <ChevronLeft size={14} />
       </button>
@@ -190,7 +190,7 @@ function Pagination({
           type="button"
           onClick={() => onPageChange(page)}
           className={`h-9 min-w-[36px] rounded-lg text-xs font-medium transition ${
-            page === currentPage ? 'bg-indigo-500/15 text-indigo-300' : 'text-gray-400 hover:bg-gray-800'
+            page === currentPage ? 'bg-indigo-500/15 text-[#6d28d9]' : 'text-[#77869b] hover:bg-[#f4f1fb]'
           }`}
         >
           {page}
@@ -201,7 +201,7 @@ function Pagination({
         onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
         disabled={currentPage === totalPages}
         aria-label="Next page"
-        className="rounded-lg border border-gray-700 bg-[#0B1220] p-2 text-gray-400 transition hover:enabled:bg-gray-800 disabled:opacity-30"
+        className="rounded-lg border border-[#dbe3ed] bg-white p-2 text-[#77869b] transition hover:enabled:bg-[#f4f1fb] disabled:opacity-30"
       >
         <ChevronRight size={14} />
       </button>
@@ -357,10 +357,10 @@ export default function DataTable<T>({
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-24 animate-pulse rounded-2xl bg-gray-800/50" />
+        <div className="h-24 animate-pulse rounded-2xl bg-[#eef2f7]" />
         <div className="space-y-3">
           {[0, 1, 2].map((item) => (
-            <div key={item} className="h-14 animate-pulse rounded-xl bg-gray-800/50" />
+            <div key={item} className="h-14 animate-pulse rounded-xl bg-[#eef2f7]" />
           ))}
         </div>
       </div>
@@ -368,11 +368,11 @@ export default function DataTable<T>({
   }
 
   return (
-    <div>
+    <div className="rounded-2xl border border-[#e4e8ef] bg-white p-4 shadow-[0_3px_18px_rgba(25,35,65,0.035)] sm:p-5">
       <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          {title && <h2 className="text-base font-semibold text-white">{title}</h2>}
-          {description && <p className="text-xs text-gray-500">{description}</p>}
+          {title && <h2 className="text-base font-bold text-[#182540]">{title}</h2>}
+          {description && <p className="text-xs text-[#8290a2]">{description}</p>}
         </div>
         {exportFilename || action ? (
           <div className="flex items-center gap-2">
@@ -381,7 +381,7 @@ export default function DataTable<T>({
               <button
                 type="button"
                 onClick={() => exportRowsToCsv(filteredByFilters, columns, exportFilename)}
-                className="rounded-lg border border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 transition hover:bg-gray-800"
+                className="rounded-lg border border-[#dbe3ed] px-3 py-1.5 text-xs font-medium text-[#34465e] transition hover:bg-[#f4f1fb]"
               >
                 <span className="inline-flex items-center gap-1.5"><Download size={14} /> Export</span>
               </button>
@@ -393,14 +393,14 @@ export default function DataTable<T>({
       <div className="flex flex-wrap items-center gap-3">
         {searchKeys.length > 0 && (
           <div className="relative w-full sm:w-64">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8290a2]" />
             <input
               type="text"
               value={query}
               onChange={(event) => handleSearchChange(event.target.value)}
               placeholder={searchPlaceholder ?? 'Search...'}
               aria-label={searchPlaceholder ?? 'Search'}
-              className="w-full rounded-lg border border-gray-800 bg-[#0B1220] py-2 pl-9 pr-3 text-sm text-gray-200 outline-none transition focus:border-indigo-500"
+              className="w-full rounded-lg border border-[#e4eaf0] bg-white py-2 pl-9 pr-3 text-sm text-[#34465e] outline-none transition focus:border-indigo-500"
             />
           </div>
         )}
@@ -409,14 +409,14 @@ export default function DataTable<T>({
             <button
               type="button"
               onClick={() => setShowFilters((current) => !current)}
-              className={`inline-flex items-center gap-1.5 rounded-lg border border-gray-800 px-3 py-2 text-xs font-medium transition ${
-                showFilters ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/50' : 'text-gray-300 hover:bg-gray-800'
+              className={`inline-flex items-center gap-1.5 rounded-lg border border-[#e4eaf0] px-3 py-2 text-xs font-medium transition ${
+                showFilters ? 'bg-indigo-500/10 text-[#6d28d9] border-indigo-500/50' : 'text-[#34465e] hover:bg-[#f4f1fb]'
               }`}
             >
               <Filter size={14} />
               Filters
               {Object.values(activeFilters).some((value) => value !== 'all') && (
-                <span className="rounded-full bg-indigo-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                <span className="rounded-full bg-[#6d28d9] px-1.5 py-0.5 text-[10px] font-bold text-white">
                   {Object.values(activeFilters).filter((value) => value !== 'all').length}
                 </span>
               )}
@@ -447,21 +447,21 @@ export default function DataTable<T>({
 
       {selectedIds.size > 0 && bulkActions && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-4 py-3">
-          <p className="text-xs font-medium text-indigo-200">{selectedIds.size} selected</p>
+          <p className="text-xs font-medium text-[#6d28d9]">{selectedIds.size} selected</p>
           <div className="flex items-center gap-2">{bulkActions}</div>
         </div>
       )}
 
       <div className="mt-3 hidden overflow-x-auto md:block">
         {rows.length === 0 ? (
-          <div className="rounded-2xl border border-gray-800 bg-[#0B1220] px-6 py-12 text-center">
-            <p className="text-sm font-medium text-gray-300">{emptyTitle}</p>
-            <p className="mt-1 text-xs text-gray-500">{emptyDescription}</p>
+          <div className="rounded-2xl border border-[#e4eaf0] bg-white px-6 py-12 text-center">
+            <p className="text-sm font-medium text-[#34465e]">{emptyTitle}</p>
+            <p className="mt-1 text-xs text-[#8290a2]">{emptyDescription}</p>
           </div>
         ) : (
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="border-b border-gray-800">
+              <tr className="border-b border-[#e4eaf0]">
                 {onSelectionChange && (
                   <th className="px-4 py-3">
                     <input
@@ -479,13 +479,13 @@ export default function DataTable<T>({
                       <button
                         type="button"
                         onClick={() => handleSort(column.key)}
-                        className="inline-flex items-center text-xs font-medium text-gray-400 transition hover:text-white"
+                        className="inline-flex items-center text-xs font-medium text-[#77869b] transition hover:text-[#6d28d9]"
                       >
                         {column.label}
                         <SortIcon active={sortKey === column.key} direction={sortDirection} />
                       </button>
                     ) : (
-                      <span className="inline-flex items-center text-xs font-medium text-gray-400">
+                      <span className="inline-flex items-center text-xs font-medium text-[#77869b]">
                         {column.label}
                       </span>
                     )}
@@ -500,7 +500,7 @@ export default function DataTable<T>({
                   <tr
                     key={rowId}
                     onClick={() => onRowClick?.(row)}
-                    className="cursor-pointer border-b border-gray-800/60 transition hover:bg-gray-800/30"
+                    className={`border-b border-[#e9edf3] transition hover:bg-[#f5f8fc] ${onRowClick ? "cursor-pointer" : ""}`}
                   >
                     {onSelectionChange && (
                       <td className="px-4 py-3">
@@ -531,9 +531,9 @@ export default function DataTable<T>({
 
       <div className="mt-3 grid gap-3 md:hidden">
         {rows.length === 0 ? (
-          <div className="rounded-2xl border border-gray-800 bg-[#0B1220] px-6 py-12 text-center">
-            <p className="text-sm font-medium text-gray-300">{emptyTitle}</p>
-            <p className="mt-1 text-xs text-gray-500">{emptyDescription}</p>
+          <div className="rounded-2xl border border-[#e4eaf0] bg-white px-6 py-12 text-center">
+            <p className="text-sm font-medium text-[#34465e]">{emptyTitle}</p>
+            <p className="mt-1 text-xs text-[#8290a2]">{emptyDescription}</p>
           </div>
         ) : (
           rows.map((row) => (
@@ -559,7 +559,7 @@ export default function DataTable<T>({
       </div>
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-[#8290a2]">
           Showing {from}–{to} of {effectiveTotal} records
         </p>
         <Pagination

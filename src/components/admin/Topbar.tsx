@@ -113,7 +113,7 @@ export default function Topbar({
   const attentionCount = attention?.total ?? 0
 
   return (
-    <header className="sticky top-0 z-30 border-b border-gray-200 bg-white px-4 py-4 md:px-6">
+    <header className="sticky top-0 z-30 border-b border-[#e4e8ef] bg-white/95 px-4 py-3 backdrop-blur-xl md:px-7 lg:px-9">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -127,13 +127,13 @@ export default function Topbar({
         <label className="relative flex-1">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6F7192]" />
           <input
-            placeholder="Search orders, users, files, printers..."
+            placeholder="Search orders by ID, customer or material..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') submitSearch()
             }}
-            className="w-full rounded-[18px] border border-gray-200 bg-gray-100 py-3 pl-11 pr-4 text-sm text-[#0F1B3D] outline-none transition focus:border-[#6d28d9]/40"
+            className="w-full rounded-xl border border-[#e4e8ef] bg-[#f7f8fb] py-2.5 pl-11 pr-4 text-sm text-[#182540] outline-none transition focus:border-[#6d28d9]/40"
           />
         </label>
 
