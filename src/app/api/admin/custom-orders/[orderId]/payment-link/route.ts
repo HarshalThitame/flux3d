@@ -1,84 +1,113 @@
-/* eslint-disable */
-// @ts-nocheck
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAdminUser } from '@/lib/admin/server';
-import Razorpay from 'razorpay';
+import { NextResponse } from "next/server";
+import Razorpay from "razorpay";
+import { requireAdminUser } from "@/lib/admin/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-type ParamsType = { orderId: string };
+type Params = { orderId: string };
+
+type Customer = {
+  full_name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+};
+
+function getCustomer(order: {
+  customers?: Customer | Customer[] | null;
+}): Customer {
+  return Array.isArray(order.customers)
+    ? (order.customers[0] ?? {})
+    : (order.customers ?? {});
+}
+
+function indianMobileNumber(phone: string | null | undefined) {
+  const digits = phone?.replace(/\D/g, "") ?? "";
+  const mobile = digits.slice(-10);
+  return mobile.length === 10 ? mobile : null;
+}
 
 export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<ParamsType> }
+  _request: Request,
+  { params }: { params: Promise<Params> },
 ) {
   try {
     await requireAdminUser();
-    
-    // Await params per Next.js 16 conventions
-    const resolvedParams = await params;
-    const { orderId } = resolvedParams;
+    const { orderId } = await params;
+    const supabase = createAdminClient();
 
-    const supabase = await createAdminClient();
-
-    // Fetch the order
+    // This admin page is backed by the unified OMS, not the legacy
+    // custom_orders table. Read from OMS so the UUID and amount match the UI.
     const { data: order, error: orderError } = await supabase
-      .from('custom_orders')
-      .select('*')
-      .eq('id', orderId)
-      .single();
+      .from("oms_orders")
+      .select(
+        "id, order_number, payment_status, total_amount, amount_paid, amount_due, customers(full_name, phone, email)",
+      )
+      .eq("id", orderId)
+      .maybeSingle();
 
-    if (orderError) throw orderError;
+    if (orderError) throw new Error(orderError.message);
     if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-      return NextResponse.json({ error: 'Razorpay keys are not configured' }, { status: 500 });
+    const amountDue = Number(order.amount_due);
+    if (!Number.isFinite(amountDue) || amountDue <= 0) {
+      return NextResponse.json(
+        { error: "This order has no outstanding balance to collect." },
+        { status: 422 },
+      );
     }
 
-    const razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
-    });
+    const customer = getCustomer(order);
+    const contact = indianMobileNumber(customer.phone);
+    if (!contact) {
+      return NextResponse.json(
+        {
+          error:
+            "A valid customer mobile number is required to create a payment link.",
+        },
+        { status: 422 },
+      );
+    }
 
-    // Create a Razorpay Payment Link
-    const paymentLinkRequest = {
-      amount: Math.round(order.total * 100), // Amount in paise
-      currency: 'INR',
+    const keyId = process.env.RAZORPAY_KEY_ID?.trim();
+    const keySecret = process.env.RAZORPAY_KEY_SECRET?.trim();
+    if (!keyId || !keySecret) {
+      return NextResponse.json(
+        { error: "Razorpay keys are not configured." },
+        { status: 503 },
+      );
+    }
+
+    const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
+    const paymentLink = await razorpay.paymentLink.create({
+      amount: Math.round(amountDue * 100),
+      currency: "INR",
       accept_partial: false,
-      description: `Payment for Custom Order: ${order.display_id}`,
+      description: `Payment for Flux3D order ${order.order_number}`,
       customer: {
-        name: order.customer_name,
-        email: order.customer_email || undefined,
-        contact: order.customer_phone || undefined,
+        name: customer.full_name?.trim() || "Flux3D customer",
+        contact,
+        ...(customer.email?.trim() ? { email: customer.email.trim() } : {}),
       },
-      notify: {
-        sms: true,
-        email: true,
-      },
+      notify: { sms: true, email: Boolean(customer.email?.trim()) },
       reminder_enable: true,
-      reference_id: order.id,
+      reference_id: `OMS-${order.order_number}`.slice(0, 40),
       notes: {
-        order_type: 'custom_order'
-      }
-    };
+        order_id: order.id,
+        order_number: order.order_number,
+        order_type: "oms_custom_order",
+      },
+    } as never);
 
-    const paymentLink = await razorpay.paymentLink.create(paymentLinkRequest);
-
-    // Save payment link id to the order
-    const { error: updateError } = await supabase
-      .from('custom_orders')
-      .update({ payment_link_id: paymentLink.id, status: 'pending' })
-      .eq('id', orderId);
-
-    if (updateError) throw updateError;
-
-    return NextResponse.json({ paymentLink: paymentLink.short_url });
-
-  } catch (err: any) {
-    console.error('Create payment link error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({
+      paymentLink: paymentLink.short_url,
+      paymentLinkId: paymentLink.id,
+      amountPaise: Math.round(amountDue * 100),
+    });
+  } catch (error: unknown) {
+    console.error("Create OMS payment link error:", error);
+    const message =
+      error instanceof Error ? error.message : "Unable to create payment link.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
